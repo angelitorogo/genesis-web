@@ -1,0 +1,30 @@
+<section
+  class="genesis-state"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  data-testid="loading-state"
+>
+  <div
+    class="genesis-state__visual"
+    aria-hidden="true"
+  >
+    <span class="genesis-loading-spinner"></span>
+  </div>
+
+  <div class="genesis-state__content">
+    <h3
+      class="genesis-state__title"
+      data-testid="loading-title"
+    >
+      {{ title() }}
+    </h3>
+
+    <p
+      class="genesis-state__message"
+      data-testid="loading-message"
+    >
+      {{ message() }}
+    </p>
+  </div>
+</section>

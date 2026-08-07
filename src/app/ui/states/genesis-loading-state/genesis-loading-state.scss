@@ -1,0 +1,36 @@
+@use '../state-shared' as state;
+
+@include state.state-panel;
+
+:host {
+  --genesis-state-accent:
+    var(--genesis-color-primary);
+}
+
+.genesis-loading-spinner {
+  width: 1.45rem;
+  height: 1.45rem;
+
+  border:
+    2px solid
+    var(--genesis-color-border);
+
+  border-top-color:
+    var(--genesis-color-primary);
+
+  border-radius:
+    var(--genesis-radius-round);
+
+  animation:
+    genesis-loading-spin
+    900ms
+    linear
+    infinite;
+}
+
+@keyframes genesis-loading-spin {
+  to {
+    transform:
+      rotate(360deg);
+  }
+}

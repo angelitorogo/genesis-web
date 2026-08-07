@@ -1,0 +1,34 @@
+<section
+  class="genesis-state"
+  role="alert"
+  aria-live="assertive"
+  data-testid="error-state"
+>
+  <div
+    class="genesis-state__visual"
+    aria-hidden="true"
+  >
+    !
+  </div>
+
+  <div class="genesis-state__content">
+    <h3
+      class="genesis-state__title"
+      data-testid="error-title"
+    >
+      {{ title() }}
+    </h3>
+
+    <p
+      class="genesis-state__message"
+      data-testid="error-message"
+    >
+      {{ message() }}
+    </p>
+
+    <div class="genesis-state__actions">
+      <ng-content select="[genesis-state-action]">
+      </ng-content>
+    </div>
+  </div>
+</section>

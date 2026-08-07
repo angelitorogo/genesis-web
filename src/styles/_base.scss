@@ -1,0 +1,32 @@
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+
+  font-family:
+    var(--genesis-font-sans);
+
+  font-size:
+    var(--genesis-font-size-md);
+
+  line-height: 1.5;
+
+  text-rendering: optimizeLegibility;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+app-root {
+  display: block;
+  min-height: 100vh;
+}

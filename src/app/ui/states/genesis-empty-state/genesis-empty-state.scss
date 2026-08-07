@@ -1,0 +1,8 @@
+@use '../state-shared' as state;
+
+@include state.state-panel;
+
+:host {
+  --genesis-state-accent:
+    var(--genesis-color-text-subtle);
+}

@@ -1,0 +1,26 @@
+<header class="genesis-section-title">
+  @if (eyebrow()) {
+    <p
+      class="genesis-section-title__eyebrow"
+      data-testid="section-eyebrow"
+    >
+      {{ eyebrow() }}
+    </p>
+  }
+
+  <h2
+    class="genesis-section-title__title"
+    data-testid="section-title"
+  >
+    {{ title() }}
+  </h2>
+
+  @if (description()) {
+    <p
+      class="genesis-section-title__description"
+      data-testid="section-description"
+    >
+      {{ description() }}
+    </p>
+  }
+</header>

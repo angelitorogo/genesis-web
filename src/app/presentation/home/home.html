@@ -1,0 +1,136 @@
+<genesis-screen>
+  <main
+    class="genesis-home"
+    data-testid="home-page"
+  >
+    <section
+      class="genesis-home__hero"
+      aria-labelledby="genesis-title"
+    >
+      <p class="genesis-home__eyebrow">
+        GENESIS WEB
+        <span aria-hidden="true">/</span>
+        PLATAFORMA PROCEDURAL
+      </p>
+
+      <h1
+        id="genesis-title"
+        class="genesis-home__title"
+        data-testid="home-title"
+      >
+        {{ facade.title() }}
+      </h1>
+
+      <p
+        class="genesis-home__subtitle"
+        data-testid="home-subtitle"
+      >
+        {{ facade.subtitle() }}
+      </p>
+    </section>
+
+    <section
+      class="genesis-home__modules"
+      aria-labelledby="modules-title"
+    >
+      <genesis-section-title
+        eyebrow="MÓDULOS"
+        title="Exploración"
+        description="Accesos provisionales a las áreas principales de GENESIS."
+      ></genesis-section-title>
+
+      <div
+        id="modules-title"
+        class="genesis-home__module-grid"
+        data-testid="module-navigation"
+      >
+        <a
+          class="genesis-home__module-link"
+          routerLink="/galaxy-map"
+          data-testid="galaxy-map-link"
+        >
+          <span class="genesis-home__module-code">
+            01
+          </span>
+
+          <strong>Mapa galáctico</strong>
+
+          <span>
+            Explorar sectores y descubrimientos.
+          </span>
+        </a>
+
+        <a
+          class="genesis-home__module-link"
+          routerLink="/observatory"
+          data-testid="observatory-link"
+        >
+          <span class="genesis-home__module-code">
+            02
+          </span>
+
+          <strong>Observatorio</strong>
+
+          <span>
+            Analizar señales y observaciones.
+          </span>
+        </a>
+
+        <a
+          class="genesis-home__module-link"
+          routerLink="/archive"
+          data-testid="archive-link"
+        >
+          <span class="genesis-home__module-code">
+            03
+          </span>
+
+          <strong>Archivo GENESIS</strong>
+
+          <span>
+            Consultar el conocimiento catalogado.
+          </span>
+        </a>
+
+        <a
+          class="genesis-home__module-link"
+          routerLink="/settings"
+          data-testid="settings-link"
+        >
+          <span class="genesis-home__module-code">
+            04
+          </span>
+
+          <strong>Ajustes</strong>
+
+          <span>
+            Configuración local de la aplicación.
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <genesis-card
+      class="genesis-home__status-card"
+    >
+      <genesis-section-title
+        eyebrow="ESTADO DEL SISTEMA"
+        title="Núcleo web preparado"
+        description="La base de presentación, navegación y estado reactivo de GENESIS está operativa."
+      ></genesis-section-title>
+
+      <div class="genesis-home__status">
+        <span
+          class="genesis-home__status-indicator"
+          aria-hidden="true"
+        ></span>
+
+        <span
+          data-testid="navigation-status"
+        >
+          {{ facade.navigationStatus() }}
+        </span>
+      </div>
+    </genesis-card>
+  </main>
+</genesis-screen>

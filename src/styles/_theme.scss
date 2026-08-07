@@ -1,0 +1,46 @@
+html {
+  background:
+    var(--genesis-color-background);
+}
+
+body {
+  background:
+    var(--genesis-color-background);
+
+  color:
+    var(--genesis-color-text);
+}
+
+::selection {
+  background:
+    var(--genesis-color-primary);
+
+  color:
+    var(--genesis-color-background);
+}
+
+a {
+  color:
+    var(--genesis-color-primary);
+}
+
+:focus-visible {
+  outline:
+    2px solid
+    var(--genesis-color-primary);
+
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
+  }
+}

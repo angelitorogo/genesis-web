@@ -1,0 +1,38 @@
+<genesis-screen>
+  <main
+    class="genesis-placeholder"
+    [attr.data-testid]="testId()"
+  >
+    <section class="genesis-placeholder__header">
+      <genesis-section-title
+        [eyebrow]="eyebrow()"
+        [title]="title()"
+        [description]="description()"
+      ></genesis-section-title>
+    </section>
+
+    <genesis-card>
+      <div class="genesis-placeholder__content">
+        <span
+          class="genesis-placeholder__marker"
+          aria-hidden="true"
+        >
+          ◇
+        </span>
+
+        <div>
+          <p class="genesis-placeholder__label">
+            MÓDULO PREPARADO
+          </p>
+
+          <p
+            class="genesis-placeholder__status"
+            data-testid="placeholder-status"
+          >
+            {{ status() }}
+          </p>
+        </div>
+      </div>
+    </genesis-card>
+  </main>
+</genesis-screen>

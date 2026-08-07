@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.genesis-screen {
+  position: relative;
+
+  min-height: 100vh;
+
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(
+      circle at 18% 10%,
+      rgba(106, 215, 255, 0.09) 0,
+      transparent 28rem
+    ),
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(91, 114, 255, 0.05) 0,
+      transparent 24rem
+    ),
+    var(--genesis-color-background);
+
+  color:
+    var(--genesis-color-text);
+
+  &__content {
+    position: relative;
+
+    width: min(
+      100%,
+      var(--genesis-content-max-width)
+    );
+
+    min-height: 100vh;
+
+    margin-inline: auto;
+
+    padding:
+      clamp(
+        var(--genesis-space-5),
+        4vw,
+        var(--genesis-space-8)
+      );
+  }
+}

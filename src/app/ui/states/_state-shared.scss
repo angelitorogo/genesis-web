@@ -1,0 +1,137 @@
+@mixin state-panel {
+  :host {
+    display: block;
+  }
+
+  .genesis-state {
+    display: grid;
+
+    grid-template-columns:
+      auto
+      minmax(0, 1fr);
+
+    align-items: center;
+
+    gap:
+      var(--genesis-space-5);
+
+    width: 100%;
+
+    padding:
+      clamp(
+        var(--genesis-space-5),
+        4vw,
+        var(--genesis-space-6)
+      );
+
+    border:
+      1px solid
+      var(--genesis-color-border-subtle);
+
+    border-radius:
+      var(--genesis-radius-xl);
+
+    background:
+      linear-gradient(
+        145deg,
+        rgba(24, 30, 46, 0.72),
+        rgba(15, 19, 31, 0.82)
+      );
+
+    box-shadow:
+      var(--genesis-shadow-sm);
+
+    &__visual {
+      display: grid;
+
+      width: 3.75rem;
+      height: 3.75rem;
+
+      place-items: center;
+
+      border:
+        1px solid
+        var(--genesis-color-border-subtle);
+
+      border-radius:
+        var(--genesis-radius-round);
+
+      background:
+        rgba(255, 255, 255, 0.025);
+
+      color:
+        var(--genesis-state-accent);
+
+      font-family:
+        var(--genesis-font-mono);
+
+      font-size: 1.25rem;
+
+      font-weight: 700;
+
+      box-shadow:
+        0 0 30px
+        rgba(0, 0, 0, 0.14);
+    }
+
+    &__content {
+      min-width: 0;
+    }
+
+    &__title {
+      margin: 0;
+
+      color:
+        var(--genesis-color-text);
+
+      font-size:
+        var(--genesis-font-size-lg);
+
+      font-weight: 650;
+    }
+
+    &__message {
+      max-width: 46rem;
+
+      margin:
+        var(--genesis-space-2)
+        0
+        0;
+
+      color:
+        var(--genesis-color-text-muted);
+
+      font-size:
+        var(--genesis-font-size-sm);
+
+      line-height: 1.7;
+    }
+
+    &__actions {
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap:
+        var(--genesis-space-3);
+
+      margin-top:
+        var(--genesis-space-5);
+    }
+
+    &__actions:empty {
+      display: none;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .genesis-state {
+      grid-template-columns: 1fr;
+
+      &__visual {
+        width: 3rem;
+        height: 3rem;
+      }
+    }
+  }
+}

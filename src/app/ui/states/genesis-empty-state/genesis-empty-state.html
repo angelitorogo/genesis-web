@@ -1,0 +1,34 @@
+<section
+  class="genesis-state"
+  role="status"
+  aria-live="polite"
+  data-testid="empty-state"
+>
+  <div
+    class="genesis-state__visual"
+    aria-hidden="true"
+  >
+    ∅
+  </div>
+
+  <div class="genesis-state__content">
+    <h3
+      class="genesis-state__title"
+      data-testid="empty-title"
+    >
+      {{ title() }}
+    </h3>
+
+    <p
+      class="genesis-state__message"
+      data-testid="empty-message"
+    >
+      {{ message() }}
+    </p>
+
+    <div class="genesis-state__actions">
+      <ng-content select="[genesis-state-action]">
+      </ng-content>
+    </div>
+  </div>
+</section>

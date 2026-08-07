@@ -1,0 +1,57 @@
+:host {
+  display: block;
+}
+
+.genesis-card {
+  position: relative;
+
+  padding:
+    clamp(
+      var(--genesis-space-5),
+      3vw,
+      var(--genesis-space-6)
+    );
+
+  overflow: hidden;
+
+  border:
+    1px solid
+    var(--genesis-color-border-subtle);
+
+  border-radius:
+    var(--genesis-radius-xl);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(24, 30, 46, 0.92),
+      rgba(15, 19, 31, 0.94)
+    );
+
+  box-shadow:
+    var(--genesis-shadow-md),
+    var(--genesis-shadow-glow);
+
+  backdrop-filter:
+    blur(18px);
+
+  &::before {
+    position: absolute;
+
+    top: 0;
+    left: 10%;
+
+    width: 80%;
+    height: 1px;
+
+    content: '';
+
+    background:
+      linear-gradient(
+        90deg,
+        transparent,
+        rgba(106, 215, 255, 0.45),
+        transparent
+      );
+  }
+}

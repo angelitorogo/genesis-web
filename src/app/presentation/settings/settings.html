@@ -1,0 +1,58 @@
+<genesis-screen>
+  <main
+    class="genesis-settings"
+    data-testid="settings-page"
+  >
+    <genesis-section-title
+      eyebrow="CONFIGURACIÓN"
+      title="Ajustes"
+      description="Configuración local de GENESIS y diagnóstico de las capacidades de ejecución de la aplicación."
+    ></genesis-section-title>
+
+    <genesis-card>
+      <section
+        class="genesis-settings__runtime"
+        aria-labelledby="worker-runtime-title"
+      >
+        <div>
+          <p class="genesis-settings__eyebrow">
+            RUNTIME PROCEDURAL
+          </p>
+
+          <h2
+            id="worker-runtime-title"
+            class="genesis-settings__runtime-title"
+          >
+            Web Worker de cálculo
+          </h2>
+
+          <p
+            class="genesis-settings__runtime-status"
+            [attr.data-status]="workerDiagnostic().status"
+            data-testid="worker-diagnostic-status"
+          >
+            {{ workerDiagnostic().message }}
+          </p>
+        </div>
+
+        <button
+          genesis-primary-button
+          type="button"
+          [disabled]="workerDiagnostic().status === 'checking'"
+          data-testid="worker-diagnostic-button"
+          (click)="verifyWorker()"
+        >
+          Comprobar Worker
+        </button>
+      </section>
+    </genesis-card>
+
+    <genesis-card>
+      <genesis-section-title
+        eyebrow="PENDIENTE"
+        title="Configuración funcional"
+        description="La gestión de seeds, preferencias y parámetros reales se incorporará en sus puntos correspondientes de la hoja de ruta."
+      ></genesis-section-title>
+    </genesis-card>
+  </main>
+</genesis-screen>
