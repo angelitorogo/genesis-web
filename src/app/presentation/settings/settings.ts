@@ -22,6 +22,10 @@ import {
   ProceduralWorkerClient,
 } from '../runtime/procedural-worker/procedural-worker.client';
 
+import {
+  UniverseSeedSettings,
+} from './universe-seed-settings/universe-seed-settings';
+
 type WorkerDiagnosticStatus =
   | 'idle'
   | 'checking'
@@ -44,6 +48,7 @@ interface WorkerDiagnostic {
     GenesisPrimaryButton,
     GenesisScreen,
     GenesisSectionTitle,
+    UniverseSeedSettings,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss',

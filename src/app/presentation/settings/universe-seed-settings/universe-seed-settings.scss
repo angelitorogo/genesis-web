@@ -1,0 +1,393 @@
+:host {
+  display: block;
+}
+
+.seed-panel {
+  display: grid;
+  gap: 1.5rem;
+
+  padding: 1.5rem;
+
+  border:
+    1px solid
+    rgba(
+      106,
+      215,
+      255,
+      0.16
+    );
+
+  border-radius:
+    1rem;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        24,
+        30,
+        46,
+        0.96
+      ),
+      rgba(
+        15,
+        19,
+        31,
+        0.96
+      )
+    );
+
+  box-shadow:
+    0 1.25rem 3rem
+    rgba(
+      0,
+      0,
+      0,
+      0.22
+    );
+}
+
+.seed-panel__header {
+  display: flex;
+  align-items:
+    flex-start;
+  justify-content:
+    space-between;
+  gap: 1.5rem;
+
+  h2 {
+    margin:
+      0.35rem
+      0
+      0.45rem;
+
+    color:
+      #f5f8ff;
+
+    font-size:
+      1.25rem;
+
+    font-weight:
+      650;
+  }
+
+  p {
+    margin: 0;
+
+    color:
+      #9ba8c2;
+
+    line-height:
+      1.55;
+  }
+}
+
+.seed-panel__eyebrow,
+.seed-panel__label {
+  color:
+    #6ad7ff;
+
+  font-size:
+    0.75rem;
+
+  font-weight:
+    700;
+
+  letter-spacing:
+    0.08em;
+
+  text-transform:
+    uppercase;
+}
+
+.seed-panel__badge {
+  flex: none;
+
+  padding:
+    0.4rem
+    0.65rem;
+
+  border:
+    1px solid
+    rgba(
+      106,
+      215,
+      255,
+      0.25
+    );
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      106,
+      215,
+      255,
+      0.07
+    );
+
+  color:
+    #6ad7ff;
+
+  font-family:
+    monospace;
+
+  font-size:
+    0.7rem;
+
+  letter-spacing:
+    0.08em;
+}
+
+.seed-panel__active {
+  display: grid;
+  gap: 0.65rem;
+
+  padding:
+    1rem;
+
+  border:
+    1px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.07
+    );
+
+  border-radius:
+    0.8rem;
+
+  background:
+    #0f131f;
+}
+
+.seed-panel__value {
+  overflow-wrap:
+    anywhere;
+
+  color:
+    #f4f8ff;
+
+  font-size:
+    clamp(
+      0.85rem,
+      2vw,
+      1rem
+    );
+
+  letter-spacing:
+    0.04em;
+}
+
+.seed-panel__normalized {
+  overflow-wrap:
+    anywhere;
+
+  color:
+    #77849e;
+
+  font-family:
+    monospace;
+
+  font-size:
+    0.72rem;
+}
+
+.seed-panel__actions,
+.seed-panel__manual-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.seed-panel__manual {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.seed-panel__input {
+  width: 100%;
+
+  box-sizing:
+    border-box;
+
+  padding:
+    0.9rem
+    1rem;
+
+  border:
+    1px solid
+    #2e384e;
+
+  border-radius:
+    0.7rem;
+
+  outline:
+    none;
+
+  background:
+    #05070d;
+
+  color:
+    #f4f8ff;
+
+  font-family:
+    monospace;
+
+  font-size:
+    0.9rem;
+
+  letter-spacing:
+    0.035em;
+
+  transition:
+    border-color
+    120ms ease,
+    box-shadow
+    120ms ease;
+
+  &:focus {
+    border-color:
+      #6ad7ff;
+
+    box-shadow:
+      0 0 0 3px
+      rgba(
+        106,
+        215,
+        255,
+        0.1
+      );
+  }
+
+  &[aria-invalid='true'] {
+    border-color:
+      rgba(
+        255,
+        116,
+        116,
+        0.75
+      );
+  }
+}
+
+.seed-panel__button {
+  min-height:
+    2.6rem;
+
+  padding:
+    0.65rem
+    1rem;
+
+  border:
+    1px solid
+    #2e384e;
+
+  border-radius:
+    0.65rem;
+
+  background:
+    #181e2e;
+
+  color:
+    #dce5f7;
+
+  font:
+    inherit;
+
+  font-weight:
+    600;
+
+  cursor:
+    pointer;
+
+  transition:
+    transform
+    120ms ease,
+    border-color
+    120ms ease,
+    background
+    120ms ease;
+
+  &:hover {
+    border-color:
+      rgba(
+        106,
+        215,
+        255,
+        0.55
+      );
+
+    background:
+      #20283b;
+  }
+
+  &:active {
+    transform:
+      translateY(1px);
+  }
+}
+
+.seed-panel__button--primary {
+  border-color:
+    #6ad7ff;
+
+  background:
+    #6ad7ff;
+
+  color:
+    #05070d;
+
+  &:hover {
+    background:
+      #8ae1ff;
+  }
+}
+
+.seed-panel__feedback {
+  min-height:
+    1.25rem;
+
+  margin: 0;
+
+  color:
+    #8f9bb3;
+
+  font-size:
+    0.85rem;
+
+  &[data-status='success'] {
+    color:
+      #84e6bc;
+  }
+
+  &[data-status='error'] {
+    color:
+      #ff9292;
+  }
+}
+
+@media (
+  max-width: 640px
+) {
+  .seed-panel {
+    padding:
+      1.15rem;
+  }
+
+  .seed-panel__header {
+    flex-direction:
+      column;
+  }
+
+  .seed-panel__manual-actions,
+  .seed-panel__actions {
+    display: grid;
+  }
+
+  .seed-panel__button {
+    width: 100%;
+  }
+}

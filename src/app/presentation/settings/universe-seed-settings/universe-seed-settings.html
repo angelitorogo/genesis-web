@@ -1,0 +1,105 @@
+<section
+  class="seed-panel"
+  data-testid="universe-seed-panel"
+>
+  <div class="seed-panel__header">
+    <div>
+      <span class="seed-panel__eyebrow">
+        Identidad procedural
+      </span>
+
+      <h2>
+        Universe Seed
+      </h2>
+
+      <p>
+        Semilla raíz de 128 bits utilizada por
+        GENESIS.
+      </p>
+    </div>
+
+    <span class="seed-panel__badge">
+      128 BIT
+    </span>
+  </div>
+
+  <div class="seed-panel__active">
+    <span class="seed-panel__label">
+      Seed activa
+    </span>
+
+    <code
+      class="seed-panel__value"
+      data-testid="universe-seed-active"
+    >
+      {{ seed.serializedSeed() }}
+    </code>
+
+    <span class="seed-panel__normalized">
+      {{ seed.normalizedSeed() }}
+    </span>
+  </div>
+
+  <div class="seed-panel__actions">
+    <button
+      type="button"
+      class="seed-panel__button"
+      data-testid="universe-seed-copy-button"
+      (click)="copySeed()"
+    >
+      Copiar seed
+    </button>
+  </div>
+
+  <div class="seed-panel__manual">
+    <label
+      for="universe-seed-input"
+      class="seed-panel__label"
+    >
+      Introducir seed manualmente
+    </label>
+
+    <input
+      id="universe-seed-input"
+      class="seed-panel__input"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      maxlength="39"
+      placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
+      data-testid="universe-seed-input"
+      [value]="seed.draft()"
+      [attr.aria-invalid]="!seed.draftIsValid()"
+      (input)="onSeedInput($event)"
+    />
+
+    <div class="seed-panel__manual-actions">
+      <button
+        type="button"
+        class="seed-panel__button seed-panel__button--primary"
+        data-testid="universe-seed-apply-button"
+        (click)="applySeed()"
+      >
+        Usar seed
+      </button>
+
+      <button
+        type="button"
+        class="seed-panel__button"
+        data-testid="universe-seed-restore-button"
+        (click)="restoreSeed()"
+      >
+        Restaurar
+      </button>
+    </div>
+  </div>
+
+  <p
+    class="seed-panel__feedback"
+    data-testid="universe-seed-status"
+    [attr.data-status]="seed.feedback().kind"
+    aria-live="polite"
+  >
+    {{ seed.feedback().message }}
+  </p>
+</section>
