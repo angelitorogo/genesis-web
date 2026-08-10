@@ -1,0 +1,100 @@
+<genesis-card>
+  <section
+    class="storage-health"
+    aria-labelledby="storage-health-title"
+    data-testid="storage-health"
+  >
+    <div class="storage-health__content">
+      <p class="storage-health__eyebrow">
+        ALMACENAMIENTO LOCAL
+      </p>
+
+      <h2
+        id="storage-health-title"
+        class="storage-health__title"
+      >
+        IndexedDB y persistencia
+      </h2>
+
+      <p
+        class="storage-health__status"
+        [attr.data-status]="status()"
+        data-testid="storage-health-status"
+      >
+        {{ statusMessage() }}
+      </p>
+
+      <div class="storage-health__details">
+        <p data-testid="storage-quota">
+          {{ quotaMessage() }}
+        </p>
+
+        <p data-testid="storage-persistence">
+          {{ persistenceMessage() }}
+        </p>
+
+        <p data-testid="storage-write-policy">
+          {{ writePolicyMessage() }}
+        </p>
+      </div>
+
+      @if (
+        health()?.shouldOfferBackupRestore
+      ) {
+        <p
+          class="storage-health__recovery"
+          data-testid="storage-recovery-warning"
+        >
+          El almacenamiento anterior no se reconstruirá ni se inventará
+          automáticamente. Utiliza un backup válido para recuperar el
+          conocimiento observado y el progreso que estuviera exportado.
+        </p>
+      }
+
+      @if (
+        unexpectedError()
+      ) {
+        <p
+          class="storage-health__error"
+          data-testid="storage-health-error"
+        >
+          {{ unexpectedError() }}
+        </p>
+      }
+    </div>
+
+    <div class="storage-health__actions">
+      <button
+        genesis-primary-button
+        type="button"
+        [disabled]="checking()"
+        data-testid="storage-health-refresh"
+        (click)="refresh()"
+      >
+        {{
+          checking()
+            ? 'Comprobando...'
+            : 'Comprobar almacenamiento'
+        }}
+      </button>
+
+      @if (
+        canRequestPersistence()
+      ) {
+        <button
+          genesis-primary-button
+          type="button"
+          [disabled]="requestingPersistence()"
+          data-testid="storage-persistence-request"
+          (click)="requestPersistence()"
+        >
+          {{
+            requestingPersistence()
+              ? 'Solicitando...'
+              : 'Solicitar persistencia'
+          }}
+        </button>
+      }
+    </div>
+  </section>
+</genesis-card>

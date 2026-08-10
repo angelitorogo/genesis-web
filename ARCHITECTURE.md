@@ -791,3 +791,1009 @@ La identidad procedural completa se forma combinando:
 Cualquier modificación futura que cambie uno de los vectores oficiales V1 debe romper los tests de regresión.
 
 Un cambio intencionadamente incompatible deberá introducir una nueva GeneratorVersion.
+
+
+
+### Persistencia local Web
+
+IndexedDB es el almacenamiento local principal de GENESIS Web.
+
+La infraestructura IndexedDB vive exclusivamente dentro de:
+
+`src/app/data/local`
+
+La implementación base utiliza Dexie como capa sobre IndexedDB.
+
+Clase raíz:
+
+`GenesisIndexedDb`
+
+Nombre canónico de la base:
+
+`genesis-web`
+
+Reglas:
+
+- data/local no depende de Angular.
+- data/local no depende de componentes ni de presentation.
+- IndexedDB es la fuente persistente principal de estado local.
+- localStorage no sustituye a IndexedDB para estado crítico.
+- Ground Truth procedural no debe materializarse completamente en IndexedDB.
+- UniverseSeed + GeneratorVersion permiten regenerar Ground Truth.
+- IndexedDB almacenará principalmente progreso y conocimiento observado.
+- La infraestructura de 3.1 no define todavía stores funcionales.
+- Las entidades, stores, claves e índices se definirán en 3.2.
+- Las migraciones versionadas se implementarán en 3.7.
+- La gestión de disponibilidad, cuota, persistencia y pérdida de almacenamiento corresponde a 3.10.
+
+Dexie permanece encapsulado en data/local.
+
+Los tests de IndexedDB utilizan fake-indexeddb y no dependen del navegador real.
+
+
+
+### IndexedDB schema v1
+
+El esquema inicial de IndexedDB se define en:
+
+`src/app/data/local/indexed-db/genesis-indexed-db-schema.ts`
+
+Schema version inicial:
+
+`1`
+
+Storage format version inicial:
+
+`1`
+
+Stores definidos en el Punto 3.2:
+
+- `universes`
+- `galaxies`
+- `discoveries`
+- `observations`
+- `progress`
+- `metadata`
+
+No se crea `favorites` porque actualmente no forma parte del modelo funcional.
+
+No se crea todavía ningún store específico de navegación; corresponde al Punto 3.3.
+
+#### Universe identity
+
+La identidad persistente de un universo es:
+
+`UniverseSeed + GeneratorVersion`
+
+Clave IndexedDB:
+
+`[universeSeed+generatorVersionCode]`
+
+#### 64-bit procedural identities
+
+Los valores procedurales que representan Kotlin Long no se almacenan como JavaScript Number.
+
+Se serializan en representación decimal string:
+
+- galaxyIndex
+- sectorKey
+- galacticObjectIndex
+- bodyIndex
+- civilizationIndex
+- discoveryPoints cuando corresponda
+
+Esto evita pérdida de precisión en JavaScript y permite persistencia portable.
+
+#### Ground Truth
+
+IndexedDB no contiene una copia materializada del universo.
+
+No se persisten como parte de estas entidades:
+
+- masas
+- radios
+- temperaturas
+- poblaciones estelares
+- propiedades físicas completas de galaxias
+- sistemas materiales completos
+- planetas o cuerpos generados únicamente como Ground Truth
+
+El Ground Truth se regenera mediante:
+
+`UniverseSeed + GeneratorVersion + ProceduralLocator`
+
+IndexedDB almacena principalmente:
+
+- identidad de universos
+- conocimiento de galaxias
+- targets conocidos
+- observaciones
+- progreso
+- metadatos de persistencia
+
+#### Discoveries
+
+La clave primaria de un descubrimiento es:
+
+`[universeSeed+generatorVersionCode+targetTypeCode+targetSeed]`
+
+Se conserva también el lineage procedural necesario para reconstrucción y consultas.
+
+La semántica exacta de:
+
+- UNKNOWN
+- DETECTED
+- DISCOVERED
+- VISITED
+- CATALOGUED
+- CONFIRMED
+
+se implementará en el Punto 3.5.
+
+#### Progress
+
+El store `progress` admite scopes globales y de galaxia.
+
+Las reglas de Puntos de Descubrimiento y su persistencia se implementarán en el Punto 3.4.
+
+#### Observations
+
+El store `observations` persiste Observed Knowledge mediante un envelope versionado:
+
+- observationKind
+- payloadVersion
+- payloadJson
+
+El contenido científico concreto será definido por las fases posteriores de observación.
+
+#### Version metadata
+
+El store `metadata` permite registrar schemaVersion y storageFormatVersion.
+
+Las migraciones entre schemas corresponden al Punto 3.7.
+
+#### Repositories
+
+En 3.2 solo se definen entidades y stores.
+
+No se implementan repositorios todavía.
+
+Los repositorios locales corresponden al Punto 3.8.
+
+
+### Persistencia de navegación
+
+El Punto 3.3 añade persistencia de navegación por universo.
+
+Store:
+
+`navigation`
+
+Clave primaria:
+
+`[universeSeed+generatorVersionCode]`
+
+Existe como máximo un registro de navegación para cada:
+
+`UniverseSeed + GeneratorVersion`
+
+La entidad persistida es:
+
+`UniverseNavigationEntity`
+
+Campos:
+
+- universeSeed
+- generatorVersionCode
+- activeGalaxyIndex
+- recentGalaxyIndices
+- updatedAtEpochMs
+
+#### Galaxia activa
+
+activeGalaxyIndex representa la galaxia actualmente enfocada.
+
+Es conceptualmente equivalente al activeGalaxyIndex de GENESIS Android.
+
+El índice procedural es Long signed no negativo.
+
+En Web se almacena como decimal string para evitar pérdida de precisión mediante JavaScript Number.
+
+El valor lógico inicial cuando todavía no exista navegación persistida será:
+
+`0`
+
+La aplicación de este valor por defecto corresponderá a la futura capa Repository.
+
+#### Navegación reciente
+
+recentGalaxyIndices conserva los índices de galaxias visitadas recientemente.
+
+Los valores se almacenan como decimal string.
+
+El orden persistido es significativo:
+
+- posición 0 = más reciente
+- posiciones posteriores = visitas anteriores
+
+El Punto 3.3 únicamente persiste esta información.
+
+La política futura de:
+
+- deduplicación
+- número máximo de entradas
+- actualización automática
+- restauración del foco
+
+pertenecerá a la capa de repositorio/estado correspondiente.
+
+#### Schema
+
+El schema IndexedDB evoluciona:
+
+`v1 -> v2`
+
+v1 corresponde al esquema cerrado en 3.2.
+
+v2 añade únicamente el store:
+
+`navigation`
+
+Se conserva explícitamente la declaración del schema v1.
+
+No se introducen todavía transformaciones personalizadas mediante `upgrade()`.
+
+La estrategia completa de migraciones y validación histórica corresponde al Punto 3.7.
+
+#### Separación procedural
+
+La navegación es estado de usuario.
+
+No forma parte del Ground Truth.
+
+Cambiar activeGalaxyIndex o recentGalaxyIndices:
+
+- no cambia ninguna seed
+- no cambia ningún resultado procedural
+- no materializa galaxias
+- no modifica GeneratorVersion
+
+
+
+### Persistencia de Puntos de Descubrimiento
+
+El Punto 3.4 fija la persistencia de Puntos de Descubrimiento globales y por galaxia.
+
+Se reutiliza el store IndexedDB:
+
+`progress`
+
+No se modifica el schema IndexedDB.
+
+Schema actual:
+
+`v2`
+
+#### Scopes
+
+Existen dos scopes persistentes:
+
+- GLOBAL = 0
+- GALAXY = 1
+
+Progreso global:
+
+`scopeCode = GLOBAL`
+`scopeKey = "GLOBAL"`
+`galaxyIndex = null`
+
+Progreso de galaxia:
+
+`scopeCode = GALAXY`
+`scopeKey = galaxyIndex`
+`galaxyIndex = galaxyIndex`
+
+La clave primaria continúa siendo:
+
+`[universeSeed+generatorVersionCode+scopeCode+scopeKey]`
+
+Esto permite que un mismo universo mantenga:
+
+- un único contador global
+- un contador independiente por cada galaxia
+- progreso independiente entre GeneratorVersion
+
+#### Representación de 64 bits
+
+Los Puntos de Descubrimiento son enteros Long no negativos.
+
+Rango válido:
+
+`0 .. 9223372036854775807`
+
+No se almacenan mediante JavaScript Number.
+
+Se reciben como BigInt y se serializan a decimal string antes de persistir.
+
+Los galaxyIndex siguen la misma regla.
+
+Esto evita cualquier pérdida de precisión.
+
+#### Separación entre PD globales y por galaxia
+
+Los PD globales y los PD de galaxia son estados persistentes distintos.
+
+Actualizar los PD globales no modifica automáticamente los PD de galaxia.
+
+Actualizar los PD de una galaxia no modifica automáticamente:
+
+- los PD globales
+- los PD de otra galaxia
+
+Las reglas futuras que determinen cuándo y cuánto se recompensa pertenecen a la fase de ExplorationEngine.
+
+El Punto 3.4 únicamente fija la persistencia y la identidad de esos contadores.
+
+#### Ground Truth
+
+Los PD son estado de progreso del usuario.
+
+No forman parte del Ground Truth procedural.
+
+Modificar los PD:
+
+- no modifica UniverseSeed
+- no modifica GeneratorVersion
+- no modifica las seeds derivadas
+- no modifica el universo procedural
+
+
+### Estados de descubrimiento
+
+El Punto 3.5 fija el contrato persistente de DiscoveryState.
+
+Los códigos son compatibles con GENESIS Android:
+
+- UNKNOWN = 0
+- DETECTED = 1
+- DISCOVERED = 2
+- VISITED = 3
+- CATALOGUED = 4
+- CONFIRMED = 5
+
+Los códigos son parte del contrato persistente y no deben cambiar dentro de la misma GeneratorVersion sin una migración explícita.
+
+#### UNKNOWN
+
+UNKNOWN representa ausencia de conocimiento observado.
+
+No se materializa una fila DiscoveryEntity para UNKNOWN.
+
+Por tanto:
+
+`ausencia de DiscoveryEntity = DiscoveryState.UNKNOWN`
+
+Los estados materializados son exclusivamente:
+
+- DETECTED
+- DISCOVERED
+- VISITED
+- CATALOGUED
+- CONFIRMED
+
+Esto evita almacenar explícitamente objetos todavía desconocidos y mantiene la persistencia compatible con la generación lazy.
+
+#### DiscoveryEntity
+
+discoveryStateCode solo admite códigos persistentes conocidos:
+
+`1 .. 5`
+
+La identidad de una fila continúa siendo:
+
+`[universeSeed+generatorVersionCode+targetTypeCode+targetSeed]`
+
+Cambiar el estado de un mismo target sustituye el conocimiento observado asociado a esa misma identidad.
+
+#### GeneratorVersion
+
+Los estados de conocimiento quedan aislados por GeneratorVersion mediante la propia clave primaria.
+
+Una misma UniverseSeed puede tener conocimiento observado distinto bajo versiones procedurales diferentes.
+
+#### Ground Truth
+
+DiscoveryState pertenece a Observed Knowledge.
+
+No modifica Ground Truth.
+
+Cambiar:
+
+DETECTED -> DISCOVERED -> VISITED -> CATALOGUED -> CONFIRMED
+
+no altera:
+
+- UniverseSeed
+- GeneratorVersion
+- targetSeed
+- propiedades físicas procedurales
+
+#### Reglas de transición
+
+El Punto 3.5 no introduce reglas de transición.
+
+La persistencia admite los estados conocidos pero no decide qué acciones permiten avanzar entre ellos.
+
+Tampoco concede PD automáticamente.
+
+La lógica de exploración y recompensas se implementará en su fase correspondiente.
+
+
+
+### Ground Truth regenerable
+
+El Punto 3.6 establece que Ground Truth no se materializa como estado persistente.
+
+La identidad procedural completa de un target es:
+
+`UniverseGenerationKey + ProceduralLocator`
+
+ProceduralTargetResolver reconstruye determinísticamente la seed exacta del target.
+
+Jerarquía V1:
+
+UniverseSeed
+-> GalaxySeed
+-> SectorSeed
+-> GalacticObjectSeed
+-> SystemSeed
+-> BodySeed
+-> HistorySeed
+-> EvolutionSeed
+-> CivilizationSeed
+
+Los vectores producidos deben permanecer compatibles con GENESIS Android.
+
+#### Persistencia
+
+IndexedDB guarda principalmente conocimiento observado y progreso.
+
+DiscoveryEntity conserva:
+
+- universeSeed
+- generatorVersionCode
+- targetTypeCode
+- targetSeed
+- lineage procedural
+- discoveryStateCode
+- timestamps de conocimiento
+
+No almacena propiedades físicas completas del target.
+
+No se almacenan como Ground Truth materializado:
+
+- masa
+- radio
+- temperatura
+- composición física
+- órbitas completas
+- propiedades estelares
+- propiedades planetarias
+- posiciones procedurales regenerables
+- modelos físicos completos
+
+Estas propiedades serán regeneradas desde la seed correspondiente cuando se necesiten.
+
+#### Lineage
+
+El lineage persistido permite reconstruir ProceduralLocator.
+
+Matriz:
+
+GALAXY:
+- galaxyIndex requerido
+
+SECTOR:
+- galaxyIndex
+- sectorKey
+
+GALACTIC_OBJECT:
+- galaxyIndex
+- sectorKey
+- galacticObjectIndex
+
+SYSTEM:
+- galaxyIndex
+- sectorKey
+- galacticObjectIndex
+
+BODY:
+- galaxyIndex
+- sectorKey
+- galacticObjectIndex
+- bodyIndex
+
+CIVILIZATION:
+- galaxyIndex
+- sectorKey
+- galacticObjectIndex
+- bodyIndex
+- civilizationIndex
+
+Los campos que no pertenecen al target deben ser null.
+
+#### targetSeed
+
+targetSeed es una identidad derivada compacta.
+
+No sustituye al lineage procedural.
+
+Debe poder regenerarse siempre a partir de:
+
+`UniverseGenerationKey + ProceduralLocator`
+
+#### Separación de capas
+
+data/local reconstruye únicamente la referencia procedural persistida.
+
+data/local no depende de simulation.
+
+simulation/regeneration contiene la regeneración determinista de Ground Truth.
+
+La combinación entre persistencia y regeneración se realiza fuera de ambas capas cuando sea necesario.
+
+#### Schema
+
+El Punto 3.6 no modifica la estructura IndexedDB.
+
+`GENESIS_INDEXED_DB_SCHEMA_VERSION = 2`
+
+No se añade ningún store.
+
+No se implementan todavía migraciones ni repositorios.
+
+
+### Migraciones IndexedDB
+
+El Punto 3.7 formaliza la cadena histórica de migraciones IndexedDB.
+
+Schema actual:
+
+`schemaVersion = 2`
+
+Cadena existente:
+
+`v1 -> v2`
+
+La migración v1 -> v2 añade el store navigation definido en el Punto 3.3.
+
+Dexie conserva explícitamente las definiciones históricas:
+
+- schema v1
+- schema v2
+
+No se redefine retrospectivamente un schema antiguo.
+
+#### Registro de migraciones
+
+GENESIS_INDEXED_DB_MIGRATIONS contiene la cadena histórica ordenada.
+
+Cada migración declara:
+
+- id
+- fromSchemaVersion
+- toSchemaVersion
+- estrategia respecto a GeneratorVersion
+
+La cadena debe:
+
+- comenzar en el primer schema soportado
+- no contener huecos
+- avanzar exactamente una versión por migración
+- terminar en GENESIS_INDEXED_DB_SCHEMA_VERSION
+
+Una cadena inválida impide abrir la base.
+
+#### schemaVersion
+
+schemaVersion representa exclusivamente la estructura de persistencia IndexedDB.
+
+Cambiar schemaVersion puede implicar:
+
+- añadir/eliminar stores
+- cambiar índices
+- transformar representación persistida
+- validar datos históricos
+
+No cambia por sí mismo el universo procedural.
+
+#### GeneratorVersion
+
+GeneratorVersion pertenece a la identidad procedural:
+
+`UniverseSeed + GeneratorVersion`
+
+Una migración de schema no debe modificar GeneratorVersion silenciosamente.
+
+La estrategia actual para v1 -> v2 es:
+
+`PRESERVE`
+
+Los generatorVersionCode persistidos permanecen intactos.
+
+Si una futura modificación estructural necesitase una transformación dependiente de GeneratorVersion, deberá declararse e implementarse explícitamente.
+
+Nunca se asumirá que:
+
+`schemaVersion == GeneratorVersion`
+
+Son versionados independientes.
+
+#### Migración v1 -> v2
+
+La migración:
+
+- conserva universes
+- conserva galaxies
+- conserva discoveries
+- conserva observations
+- conserva progress
+- crea navigation vacío
+- actualiza metadata.schemaVersion de 1 a 2 cuando existe metadata
+- conserva storageFormatVersion
+- conserva updatedAtEpochMs
+- conserva generatorVersionCode
+
+Si no existe metadata, la migración no inventa una fila.
+
+#### Corrupción y datos no reconstruibles
+
+Las migraciones son no destructivas.
+
+Si una transformación no puede hacerse con certeza:
+
+- no se inventan datos
+- no se cambian seeds
+- no se cambia GeneratorVersion
+- no se usa fallback destructivo
+
+La migración debe abortar con un error explícito.
+
+#### Ground Truth
+
+Las migraciones IndexedDB actúan sobre persistencia local.
+
+No materializan Ground Truth.
+
+El universo sigue regenerándose mediante:
+
+`UniverseSeed + GeneratorVersion + ProceduralLocator`
+
+#### storageFormatVersion
+
+storageFormatVersion permanece actualmente en:
+
+`1`
+
+No se incrementa por la migración de schema v1 -> v2.
+
+Su evolución corresponde al formato portable de persistencia/exportación y es independiente de schemaVersion.
+
+
+### Repositorios locales
+
+El Punto 3.8 encapsula IndexedDB detrás de repositorios locales independientes de Angular y de la UI.
+
+Contratos actuales:
+
+- UniverseRepository
+- UniverseNavigationRepository
+- DiscoveryPointsRepository
+- DiscoveryRepository
+
+Los contratos viven en domain/repository y no importan Angular, Dexie, DOM ni componentes de presentación.
+
+Las implementaciones viven en data/local/repository:
+
+- DexieUniverseRepository
+- DexieUniverseNavigationRepository
+- DexieDiscoveryPointsRepository
+- DexieDiscoveryRepository
+
+#### UniverseRepository
+
+Responsabilidades:
+
+- createIfAbsent
+- exists
+- getAll
+- delete
+
+La identidad continúa siendo:
+
+`UniverseSeed + GeneratorVersion`
+
+IndexedDB no dispone de foreign keys ni ON DELETE CASCADE.
+
+Por ello delete ejecuta una transacción Dexie y elimina:
+
+- navigation
+- galaxies
+- discoveries
+- observations
+- progress
+- universe
+
+No se elimina metadata global.
+
+#### UniverseNavigationRepository
+
+Un universo existente sin fila navigation devuelve:
+
+- activeGalaxyIndex = 0
+- recentGalaxyIndices = []
+
+Los índices se exponen como BigInt y se persisten como decimal string.
+
+#### DiscoveryPointsRepository
+
+Mantiene independientemente:
+
+- PD globales
+- PD por galaxia
+
+La ausencia de una fila devuelve 0.
+
+No existen recompensas automáticas ni sincronización automática entre scopes.
+
+#### DiscoveryRepository
+
+La ausencia de fila equivale a UNKNOWN.
+
+Persistir UNKNOWN elimina la fila.
+
+Los estados conocidos se almacenan mediante upsert.
+
+La actualización de un estado conserva firstKnownAtEpochMs y actualiza updatedAtEpochMs.
+
+getKnownDiscoveries devuelve modelos de dominio KnownDiscovery.
+
+#### ProceduralTargetSeedResolver
+
+data/local no importa simulation.
+
+DexieDiscoveryRepository recibe por inyección una abstracción capaz de resolver targetSeed desde:
+
+`UniverseGenerationKey + ProceduralLocator`
+
+Esto conserva la separación estricta entre simulation y persistencia.
+
+La implementación real puede delegar posteriormente en ProceduralTargetResolver sin acoplar el repositorio a simulation.
+
+#### Corrupción
+
+Los repositorios rechazan explícitamente:
+
+- UniverseSeed persistida inválida
+- GeneratorVersion desconocida
+- Long decimal inválido
+- índices negativos o fuera de rango
+- lineage corrupto
+- DiscoveryState.UNKNOWN materializado
+- targetSeed incompatible con la identidad procedural
+
+No se inventan datos para reparar corrupción.
+
+#### Angular
+
+Los repositorios no utilizan:
+
+- Injectable
+- inject()
+- Signals
+- RxJS
+- Component
+- Router
+- DOM
+
+Angular queda reservado para orquestación/presentación.
+
+
+### Backup portable
+
+El Punto 3.9 introduce el formato portable de exportación/importación.
+
+BackupFormatVersion actual:
+
+`V1 = 1`
+
+BackupFormatVersion es independiente de:
+
+- IndexedDB schemaVersion
+- storageFormatVersion
+- GeneratorVersion
+
+#### Contenido V1
+
+El snapshot raíz contiene:
+
+- formatVersion
+- exportedAtEpochMs
+- universes
+
+Cada universo conserva:
+
+- UniverseSeed
+- GeneratorVersion
+- timestamps de identidad persistida
+- navegación
+- galaxias conocidas materializadas
+- descubrimientos
+- observaciones
+- progreso global y por galaxia
+
+No contiene:
+
+- metadata interna IndexedDB
+- schemaVersion
+- propiedades Ground Truth regenerables
+- estado completo materializado del universo
+
+#### Validación estricta
+
+Antes de importar se valida completamente el snapshot.
+
+Se rechazan:
+
+- formatVersion desconocido
+- campos ausentes
+- campos adicionales
+- tipos JSON incorrectos
+- UniverseSeed no canónica
+- GeneratorVersion desconocida
+- universos duplicados
+- índices Long no canónicos
+- Long fuera de rango
+- estados UNKNOWN materializados
+- DiscoveryState desconocido
+- DiscoveryTargetType desconocido
+- lineage procedural incoherente
+- targetSeed incoherente con UniverseGenerationKey + ProceduralLocator
+- discoveries duplicados
+- observations con id duplicado
+- payloadJson inválido
+- progress duplicado o incoherente
+- navegación corrupta
+
+No se modifica IndexedDB si el snapshot no supera toda la validación.
+
+#### Importación
+
+La importación V1 es una restauración completa.
+
+Una vez validado el snapshot, una única transacción reemplaza:
+
+- universes
+- navigation
+- galaxies
+- discoveries
+- observations
+- progress
+
+metadata se conserva.
+
+No existe importación parcial ni reparación silenciosa.
+
+#### JSON
+
+exportJson produce JSON portable.
+
+importJson acepta exclusivamente JSON que cumpla el formato V1.
+
+La capa data/local no utiliza:
+
+- Angular
+- DOM
+- File API
+- Blob
+- descarga del navegador
+- selectores de archivos
+
+La futura UI podrá transportar el JSON sin que el formato portable dependa de Angular.
+
+
+
+### Browser storage health — Punto 3.10
+
+GENESIS gestiona el estado del almacenamiento del navegador sin alterar el
+modelo procedural ni materializar Ground Truth.
+
+No cambia:
+
+- IndexedDB schemaVersion = 2
+- storageFormatVersion = 1
+- BackupFormatVersion V1 = 1
+- GeneratorVersion
+
+La capa `data/local/storage` es independiente de Angular y de la UI.
+
+#### Cuota
+
+La cuota del origen se consulta cuando la API del navegador está disponible.
+
+Estados:
+
+- NORMAL: uso inferior al 80 %
+- HIGH: uso desde el 80 %
+- CRITICAL: uso desde el 95 %
+- UNKNOWN: estimación no disponible o inválida
+
+HIGH y CRITICAL producen:
+
+- operatingMode = LIMITED
+- writePolicy = ESSENTIAL_ONLY
+
+La estimación de cuota es diagnóstica y no forma parte del estado canónico
+del universo.
+
+#### Persistencia
+
+Estados:
+
+- PERSISTENT
+- BEST_EFFORT
+- UNSUPPORTED
+- UNKNOWN
+
+La persistencia se solicita únicamente mediante una acción explícita.
+No se solicita automáticamente al arrancar la aplicación.
+
+Una negativa del navegador no se trata como corrupción.
+
+#### IndexedDB no disponible
+
+Si IndexedDB no existe o no puede abrirse:
+
+- availability = UNAVAILABLE
+- operatingMode = VOLATILE
+- writePolicy = BLOCKED
+- no se considera disponible el progreso persistido
+
+El Ground Truth sigue siendo regenerable desde la seed y GeneratorVersion,
+pero Observed Knowledge y progreso no deben fingirse como persistidos.
+
+#### Detección de limpieza
+
+La continuidad se comprueba mediante dos marcadores:
+
+1. un identificador externo en localStorage;
+2. una fila centinela correspondiente en el store metadata de IndexedDB.
+
+Si el marcador externo existe pero la fila IndexedDB ya no existe:
+
+- availability = CLEARED
+- continuity = CLEARED
+- operatingMode = RECOVERY_REQUIRED
+- writePolicy = BLOCKED
+- shouldOfferBackupRestore = true
+
+GENESIS no recrea automáticamente el progreso perdido y no inventa
+Observed Knowledge.
+
+La continuidad únicamente puede restablecerse mediante una operación
+explícita posterior a una recuperación o a una decisión explícita de
+comenzar de nuevo.
+
+Si navegador/origen elimina simultáneamente IndexedDB y localStorage,
+una aplicación ejecutándose únicamente dentro de ese mismo origen no puede
+distinguir de forma fiable ese borrado total de una primera ejecución.
+En ese caso GENESIS inicializa una nueva continuidad sin afirmar que haya
+recuperado datos antiguos.
+
+#### Backup
+
+Los marcadores internos de continuidad pertenecen a metadata y no forman
+parte del backup portable del Punto 3.9.
+
+Una futura restauración de backup deberá restablecer explícitamente la
+continuidad después de completar satisfactoriamente la importación.

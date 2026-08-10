@@ -8,12 +8,15 @@ import {
 import {
   GenesisCard,
 } from '../../ui/components/genesis-card/genesis-card';
+
 import {
   GenesisPrimaryButton,
 } from '../../ui/components/genesis-primary-button/genesis-primary-button';
+
 import {
   GenesisSectionTitle,
 } from '../../ui/components/genesis-section-title/genesis-section-title';
+
 import {
   GenesisScreen,
 } from '../../ui/layout/genesis-screen/genesis-screen';
@@ -21,6 +24,10 @@ import {
 import {
   ProceduralWorkerClient,
 } from '../runtime/procedural-worker/procedural-worker.client';
+
+import {
+  StorageHealthSettings,
+} from './storage-health-settings/storage-health-settings';
 
 import {
   UniverseSeedSettings,
@@ -37,25 +44,37 @@ interface WorkerDiagnostic {
   readonly status:
     WorkerDiagnosticStatus;
 
-  readonly message: string;
+  readonly message:
+    string;
 }
 
 @Component({
-  selector: 'app-settings',
-  standalone: true,
+  selector:
+    'app-settings',
+
+  standalone:
+    true,
+
   imports: [
     GenesisCard,
     GenesisPrimaryButton,
     GenesisScreen,
     GenesisSectionTitle,
+    StorageHealthSettings,
     UniverseSeedSettings,
   ],
-  templateUrl: './settings.html',
-  styleUrl: './settings.scss',
+
+  templateUrl:
+    './settings.html',
+
+  styleUrl:
+    './settings.scss',
+
   changeDetection:
     ChangeDetectionStrategy.OnPush,
 })
 export class Settings {
+
   private readonly workerClient =
     inject(
       ProceduralWorkerClient,
@@ -63,13 +82,16 @@ export class Settings {
 
   readonly workerDiagnostic =
     signal<WorkerDiagnostic>({
-      status: 'idle',
+      status:
+        'idle',
 
       message:
         'El runtime procedural todavía no se ha comprobado.',
     });
 
-  async verifyWorker(): Promise<void> {
+  async verifyWorker():
+    Promise<void> {
+
     if (
       this.workerDiagnostic()
         .status ===
@@ -121,7 +143,8 @@ export class Settings {
           'error',
 
         message:
-          error instanceof Error
+          error instanceof
+            Error
             ? error.message
             : 'No se ha podido comprobar el Web Worker.',
       });
