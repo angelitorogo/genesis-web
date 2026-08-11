@@ -3,6 +3,18 @@ import Dexie, {
 } from 'dexie';
 
 import {
+  type DiscoveryEntity,
+} from '../entity/discovery.entity';
+
+import {
+  attachDiscoverySectorCoordinates,
+} from '../entity/discovery-sector-coordinates';
+
+import {
+  rehydrateDiscoveryLocator,
+} from '../entity/discovery-locator-rehydrator';
+
+import {
   type StorageMetadataEntity,
 } from '../entity/storage-metadata.entity';
 
@@ -10,8 +22,10 @@ import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V1,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
   GENESIS_INDEXED_DB_STORES,
   GENESIS_INDEXED_DB_V1_STORES,
+  GENESIS_INDEXED_DB_V2_STORES,
 } from './genesis-indexed-db-schema';
 
 export const GeneratorVersionMigrationStrategy =
@@ -58,6 +72,21 @@ export const GENESIS_INDEXED_DB_MIGRATIONS:
 
       toSchemaVersion:
         GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+
+      generatorVersionStrategy:
+        GeneratorVersionMigrationStrategy
+          .PRESERVE,
+    }),
+
+    Object.freeze({
+      id:
+        'v2-to-v3',
+
+      fromSchemaVersion:
+        GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+
+      toSchemaVersion:
+        GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
 
       generatorVersionStrategy:
         GeneratorVersionMigrationStrategy
@@ -149,6 +178,18 @@ export async function migrateGenesisIndexedDbV1ToV2(
     Transaction,
 ): Promise<void> {
 
+  await migrateMetadataSchemaVersion(
+    transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V1,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+  );
+}
+
+export async function migrateGenesisIndexedDbV2ToV3(
+  transaction:
+    Transaction,
+): Promise<void> {
+
   const metadataTable =
     transaction
       .table<
@@ -158,45 +199,80 @@ export async function migrateGenesisIndexedDbV1ToV2(
         'metadata',
       );
 
+  const discoveryTable =
+    transaction
+      .table<DiscoveryEntity>(
+        'discoveries',
+      );
+
   const metadata =
     await metadataTable
       .toArray();
 
+  validateMetadataSchemaVersion(
+    metadata,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+  );
+
+  const discoveries =
+    await discoveryTable
+      .toArray();
+
+  const migratedDiscoveries =
+    discoveries.map(
+      (
+        discovery,
+      ) => {
+        try {
+          rehydrateDiscoveryLocator(
+            discovery,
+          );
+
+          return attachDiscoverySectorCoordinates(
+            discovery,
+          );
+        } catch {
+          throw new GenesisIndexedDbMigrationError(
+            [
+              'Cannot migrate discovery coordinates:',
+              `targetTypeCode=${discovery.targetTypeCode}`,
+              `targetSeed=${discovery.targetSeed}`,
+              `sectorKey=${discovery.sectorKey ?? 'null'}.`,
+            ].join(' '),
+          );
+        }
+      },
+    );
+
   if (
-    metadata.length ===
+    migratedDiscoveries.length >
     0
   ) {
-    return;
-  }
-
-  for (
-    const entry
-    of metadata
-  ) {
-    if (
-      entry.schemaVersion !==
-      GENESIS_INDEXED_DB_SCHEMA_VERSION_V1
-    ) {
-      throw new GenesisIndexedDbMigrationError(
-        `Cannot migrate metadata '${entry.key}': expected schemaVersion ${GENESIS_INDEXED_DB_SCHEMA_VERSION_V1}, got ${entry.schemaVersion}.`,
+    await discoveryTable
+      .bulkPut(
+        migratedDiscoveries,
       );
-    }
   }
 
-  await metadataTable
-    .bulkPut(
-      metadata.map(
-        (
-          entry,
-        ):
-          StorageMetadataEntity => ({
-          ...entry,
+  if (
+    metadata.length >
+    0
+  ) {
+    await metadataTable
+      .bulkPut(
+        metadata.map(
+          (
+            entry,
+          ):
+            StorageMetadataEntity => ({
+            ...entry,
 
-          schemaVersion:
-            GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
-        }),
-      ),
-    );
+            schemaVersion:
+              GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+          }),
+        ),
+      );
+  }
 }
 
 export function registerGenesisIndexedDbVersions(
@@ -219,9 +295,95 @@ export function registerGenesisIndexedDbVersions(
       GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
     )
     .stores(
-      GENESIS_INDEXED_DB_STORES,
+      GENESIS_INDEXED_DB_V2_STORES,
     )
     .upgrade(
       migrateGenesisIndexedDbV1ToV2,
     );
+
+  database
+    .version(
+      GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+    )
+    .stores(
+      GENESIS_INDEXED_DB_STORES,
+    )
+    .upgrade(
+      migrateGenesisIndexedDbV2ToV3,
+    );
+}
+
+async function migrateMetadataSchemaVersion(
+  transaction:
+    Transaction,
+
+  fromSchemaVersion:
+    number,
+
+  toSchemaVersion:
+    number,
+): Promise<void> {
+
+  const metadataTable =
+    transaction
+      .table<
+        StorageMetadataEntity,
+        string
+      >(
+        'metadata',
+      );
+
+  const metadata =
+    await metadataTable
+      .toArray();
+
+  validateMetadataSchemaVersion(
+    metadata,
+    fromSchemaVersion,
+  );
+
+  if (
+    metadata.length ===
+    0
+  ) {
+    return;
+  }
+
+  await metadataTable
+    .bulkPut(
+      metadata.map(
+        (
+          entry,
+        ):
+          StorageMetadataEntity => ({
+          ...entry,
+
+          schemaVersion:
+            toSchemaVersion,
+        }),
+      ),
+    );
+}
+
+function validateMetadataSchemaVersion(
+  metadata:
+    readonly StorageMetadataEntity[],
+
+  expectedSchemaVersion:
+    number,
+): void {
+
+  for (
+    const entry
+    of metadata
+  ) {
+    if (
+      entry.schemaVersion !==
+      expectedSchemaVersion
+    ) {
+      throw new GenesisIndexedDbMigrationError(
+        `Cannot migrate metadata '${entry.key}': expected schemaVersion ${expectedSchemaVersion}, got ${entry.schemaVersion}.`,
+      );
+    }
+  }
 }

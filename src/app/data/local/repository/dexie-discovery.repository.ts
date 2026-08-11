@@ -30,9 +30,22 @@ import {
 } from '../../../domain/repository/genesis-repositories';
 
 import {
+  type GalaxySectorCoordinates,
+} from '../../../domain/sector/galaxy-sector-coordinates';
+
+import {
+  GalaxySectorKeyCodec,
+} from '../../../domain/sector/galaxy-sector-key-codec';
+
+import {
   createDiscoveryEntity,
   discoveryStateFromEntity,
+  type DiscoveryEntity,
 } from '../entity/discovery.entity';
+
+import {
+  assertPersistedDiscoverySectorCoordinates,
+} from '../entity/discovery-sector-coordinates';
 
 import {
   rehydrateDiscoveryLocator,
@@ -125,6 +138,10 @@ export class DexieDiscoveryRepository
       return DiscoveryState
         .UNKNOWN;
     }
+
+    this.assertSpatialIntegrity(
+      entity,
+    );
 
     const restoredLocator =
       rehydrateDiscoveryLocator(
@@ -224,6 +241,15 @@ export class DexieDiscoveryRepository
           key,
         );
 
+    if (
+      existing !==
+      undefined
+    ) {
+      this.assertSpatialIntegrity(
+        existing,
+      );
+    }
+
     const now =
       this.clock();
 
@@ -303,80 +329,163 @@ export class DexieDiscoveryRepository
         ])
         .toArray();
 
-    entities.sort(
-      (
-        left,
-        right,
-      ) => {
-        const typeDifference =
-          left.targetTypeCode -
-          right.targetTypeCode;
-
-        if (
-          typeDifference !==
-          0
-        ) {
-          return typeDifference;
-        }
-
-        return left.targetSeed
-          .localeCompare(
-            right.targetSeed,
-          );
-      },
+    sortDiscoveryEntities(
+      entities,
     );
 
     return entities.map(
       (
         entity,
-      ) => {
-        const locator =
-          rehydrateDiscoveryLocator(
-            entity,
-          );
-
-        const expectedTargetSeed =
-          this.resolveTargetSeed(
-            generationKey,
-            locator,
-          );
-
-        const storedTargetSeed =
-          normalizeTargetSeed(
-            entity.targetSeed,
-          );
-
-        if (
-          storedTargetSeed !==
-          expectedTargetSeed
-        ) {
-          throw new CorruptLocalDataError(
-            'Persisted targetSeed does not match regenerated procedural identity.',
-          );
-        }
-
-        const state =
-          discoveryStateFromEntity(
-            entity,
-          );
-
-        if (
-          !DiscoveryState.isKnown(
-            state,
-          )
-        ) {
-          throw new CorruptLocalDataError(
-            'Known discoveries cannot contain DiscoveryState.UNKNOWN.',
-          );
-        }
-
-        return new KnownDiscovery(
+      ) =>
+        this.toKnownDiscovery(
           generationKey,
-          locator,
-          state,
-        );
-      },
+          entity,
+        ),
     );
+  }
+
+  async getKnownDiscoveriesInSector(
+    generationKey:
+      UniverseGenerationKey,
+
+    galaxyIndex:
+      bigint,
+
+    coordinates:
+      GalaxySectorCoordinates,
+  ): Promise<
+    readonly KnownDiscovery[]
+  > {
+
+    await ensureUniverseExists(
+      this.database,
+      generationKey,
+    );
+
+    const sectorLocator =
+      new SectorLocator(
+        galaxyIndex,
+        GalaxySectorKeyCodec
+          .encode(
+            coordinates,
+          ),
+      );
+
+    const {
+      universeSeed,
+      generatorVersionCode,
+    } =
+      generationKeyStorageParts(
+        generationKey,
+      );
+
+    const entities =
+      await this.database
+        .discoveries
+        .where(
+          '[universeSeed+generatorVersionCode+galaxyIndex+sectorX+sectorY]',
+        )
+        .equals([
+          universeSeed,
+          generatorVersionCode,
+          sectorLocator
+            .galaxyIndex
+            .toString(
+              10,
+            ),
+          coordinates.x,
+          coordinates.y,
+        ])
+        .toArray();
+
+    sortDiscoveryEntities(
+      entities,
+    );
+
+    return entities.map(
+      (
+        entity,
+      ) =>
+        this.toKnownDiscovery(
+          generationKey,
+          entity,
+        ),
+    );
+  }
+
+  private toKnownDiscovery(
+    generationKey:
+      UniverseGenerationKey,
+
+    entity:
+      DiscoveryEntity,
+  ): KnownDiscovery {
+
+    this.assertSpatialIntegrity(
+      entity,
+    );
+
+    const locator =
+      rehydrateDiscoveryLocator(
+        entity,
+      );
+
+    const expectedTargetSeed =
+      this.resolveTargetSeed(
+        generationKey,
+        locator,
+      );
+
+    const storedTargetSeed =
+      normalizeTargetSeed(
+        entity.targetSeed,
+      );
+
+    if (
+      storedTargetSeed !==
+      expectedTargetSeed
+    ) {
+      throw new CorruptLocalDataError(
+        'Persisted targetSeed does not match regenerated procedural identity.',
+      );
+    }
+
+    const state =
+      discoveryStateFromEntity(
+        entity,
+      );
+
+    if (
+      !DiscoveryState.isKnown(
+        state,
+      )
+    ) {
+      throw new CorruptLocalDataError(
+        'Known discoveries cannot contain DiscoveryState.UNKNOWN.',
+      );
+    }
+
+    return new KnownDiscovery(
+      generationKey,
+      locator,
+      state,
+    );
+  }
+
+  private assertSpatialIntegrity(
+    entity:
+      DiscoveryEntity,
+  ): void {
+
+    try {
+      assertPersistedDiscoverySectorCoordinates(
+        entity,
+      );
+    } catch {
+      throw new CorruptLocalDataError(
+        'Persisted discovery sector coordinates are inconsistent with sectorKey.',
+      );
+    }
   }
 
   private resolveTargetSeed(
@@ -395,6 +504,35 @@ export class DexieDiscoveryRepository
         ),
     );
   }
+}
+
+function sortDiscoveryEntities(
+  entities:
+    DiscoveryEntity[],
+): void {
+
+  entities.sort(
+    (
+      left,
+      right,
+    ) => {
+      const typeDifference =
+        left.targetTypeCode -
+        right.targetTypeCode;
+
+      if (
+        typeDifference !==
+        0
+      ) {
+        return typeDifference;
+      }
+
+      return left.targetSeed
+        .localeCompare(
+          right.targetSeed,
+        );
+    },
+  );
 }
 
 function locatorToPersistedLineage(

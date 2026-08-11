@@ -146,7 +146,7 @@ describe(
     );
 
     it(
-      'should use schema version 2',
+      'should use schema version 3',
       async () => {
         await database
           .openDatabase();
@@ -159,7 +159,7 @@ describe(
 
         expect(
           database.verno,
-        ).toBe(2);
+        ).toBe(3);
       },
     );
 
@@ -255,6 +255,40 @@ describe(
           'targetTypeCode',
           'targetSeed',
         ]);
+      },
+    );
+
+    it(
+      'should index discovery sector coordinates for spatial queries',
+      async () => {
+        await database
+          .openDatabase();
+
+        const coordinateIndex =
+          database
+            .discoveries
+            .schema
+            .indexes
+            .find(
+              (
+                index,
+              ) =>
+                Array.isArray(
+                  index.keyPath,
+                ) &&
+                index.keyPath.join('|') ===
+                  [
+                    'universeSeed',
+                    'generatorVersionCode',
+                    'galaxyIndex',
+                    'sectorX',
+                    'sectorY',
+                  ].join('|'),
+            );
+
+        expect(
+          coordinateIndex,
+        ).toBeDefined();
       },
     );
 

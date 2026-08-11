@@ -14,6 +14,10 @@ import {
   type UniverseGenerationKey,
 } from '../generation/universe-generation-key';
 
+import {
+  type GalaxySectorCoordinates,
+} from '../sector/galaxy-sector-coordinates';
+
 export class UniverseNotFoundError
   extends Error {
 
@@ -138,6 +142,19 @@ export interface DiscoveryRepository {
   getKnownDiscoveries(
     generationKey:
       UniverseGenerationKey,
+  ): Promise<
+    readonly KnownDiscovery[]
+  >;
+
+  getKnownDiscoveriesInSector(
+    generationKey:
+      UniverseGenerationKey,
+
+    galaxyIndex:
+      bigint,
+
+    coordinates:
+      GalaxySectorCoordinates,
   ): Promise<
     readonly KnownDiscovery[]
   >;

@@ -21,7 +21,9 @@ import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V1,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
   GENESIS_INDEXED_DB_V1_STORES,
+  GENESIS_INDEXED_DB_V2_STORES,
   GENESIS_STORAGE_FORMAT_VERSION,
 } from './genesis-indexed-db-schema';
 
@@ -94,6 +96,39 @@ describe(
     }
 
     
+    function createLegacyV2Database():
+      Dexie {
+
+      const legacy =
+        new Dexie(
+          databaseName,
+          {
+            autoOpen:
+              false,
+
+            ...TEST_INDEXED_DB_DEPENDENCIES,
+          },
+        );
+
+      legacy
+        .version(
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V1,
+        )
+        .stores(
+          GENESIS_INDEXED_DB_V1_STORES,
+        );
+
+      legacy
+        .version(
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+        )
+        .stores(
+          GENESIS_INDEXED_DB_V2_STORES,
+        );
+
+      return legacy;
+    }
+
     function createCurrentDatabase():
         GenesisIndexedDb {
 
@@ -104,7 +139,7 @@ describe(
     }
 
     it(
-      'should expose the exact historical v1 to v2 migration',
+      'should expose the exact canonical migration chain through v3',
       () => {
         expect(
           GENESIS_INDEXED_DB_MIGRATIONS,
@@ -118,6 +153,21 @@ describe(
 
             toSchemaVersion:
               2,
+
+            generatorVersionStrategy:
+              GeneratorVersionMigrationStrategy
+                .PRESERVE,
+          },
+
+          {
+            id:
+              'v2-to-v3',
+
+            fromSchemaVersion:
+              2,
+
+            toSchemaVersion:
+              3,
 
             generatorVersionStrategy:
               GeneratorVersionMigrationStrategy
@@ -138,7 +188,7 @@ describe(
         expect(
           GENESIS_INDEXED_DB_SCHEMA_VERSION,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
         );
       },
     );
@@ -234,7 +284,7 @@ describe(
     );
 
     it(
-      'should migrate an empty v1 database to v2 without inventing metadata',
+      'should migrate an empty v1 database through v3 without inventing metadata',
       async () => {
         legacyDatabase =
           createLegacyV1Database();
@@ -254,7 +304,7 @@ describe(
         expect(
           database.verno,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
         );
 
         expect(
@@ -291,7 +341,7 @@ describe(
     );
 
     it(
-      'should migrate v1 to v2 preserving data and GeneratorVersion',
+      'should migrate v1 through v3 preserving data and GeneratorVersion',
       async () => {
         const universeSeed =
           '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
@@ -482,7 +532,7 @@ describe(
             'storage',
 
           schemaVersion:
-            2,
+            3,
 
           storageFormatVersion:
             1,
@@ -539,6 +589,26 @@ describe(
         ).toBe(1);
 
         expect(
+          await database
+            .discoveries
+            .get([
+              universeSeed,
+              1,
+              4,
+              '58691B1E4E539DBA3EB173F795FDE7E2',
+            ]),
+        ).toMatchObject({
+          sectorKey:
+            '123456789',
+
+          sectorX:
+            0,
+
+          sectorY:
+            123456789,
+        });
+
+        expect(
           (
             await database
               .observations
@@ -584,6 +654,250 @@ describe(
             .navigation
             .count(),
         ).toBe(0);
+      },
+    );
+
+    it(
+      'should migrate v2 discovery coordinates from canonical sectorKey values',
+      async () => {
+        const universeSeed =
+          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
+
+        legacyDatabase =
+          createLegacyV2Database();
+
+        await legacyDatabase
+          .open();
+
+        await legacyDatabase
+          .table(
+            'metadata',
+          )
+          .put({
+            key:
+              'storage',
+
+            schemaVersion:
+              2,
+
+            storageFormatVersion:
+              GENESIS_STORAGE_FORMAT_VERSION,
+
+            updatedAtEpochMs:
+              1,
+          });
+
+        await legacyDatabase
+          .table(
+            'discoveries',
+          )
+          .bulkPut([
+            {
+              universeSeed,
+
+              generatorVersionCode:
+                1,
+
+              targetTypeCode:
+                1,
+
+              targetSeed:
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+
+              galaxyIndex:
+                '0',
+
+              sectorKey:
+                null,
+
+              galacticObjectIndex:
+                null,
+
+              bodyIndex:
+                null,
+
+              civilizationIndex:
+                null,
+
+              discoveryStateCode:
+                1,
+
+              firstKnownAtEpochMs:
+                1,
+
+              updatedAtEpochMs:
+                1,
+            },
+
+            {
+              universeSeed,
+
+              generatorVersionCode:
+                1,
+
+              targetTypeCode:
+                4,
+
+              targetSeed:
+                'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+
+              galaxyIndex:
+                '0',
+
+              sectorKey:
+                '-51539607518',
+
+              galacticObjectIndex:
+                '7',
+
+              bodyIndex:
+                null,
+
+              civilizationIndex:
+                null,
+
+              discoveryStateCode:
+                1,
+
+              firstKnownAtEpochMs:
+                1,
+
+              updatedAtEpochMs:
+                1,
+            },
+          ]);
+
+        legacyDatabase
+          .close();
+
+        database =
+          createCurrentDatabase();
+
+        await database
+          .openDatabase();
+
+        expect(
+          database.verno,
+        ).toBe(
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+        );
+
+        expect(
+          await database
+            .metadata
+            .get(
+              'storage',
+            ),
+        ).toMatchObject({
+          schemaVersion:
+            3,
+        });
+
+        expect(
+          await database
+            .discoveries
+            .get([
+              universeSeed,
+              1,
+              1,
+              'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+            ]),
+        ).toMatchObject({
+          sectorKey:
+            null,
+
+          sectorX:
+            null,
+
+          sectorY:
+            null,
+        });
+
+        expect(
+          await database
+            .discoveries
+            .get([
+              universeSeed,
+              1,
+              4,
+              'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+            ]),
+        ).toMatchObject({
+          sectorKey:
+            '-51539607518',
+
+          sectorX:
+            -12,
+
+          sectorY:
+            34,
+        });
+      },
+    );
+
+    it(
+      'should abort v2 to v3 migration when sectorKey is not canonical',
+      async () => {
+        legacyDatabase =
+          createLegacyV2Database();
+
+        await legacyDatabase
+          .open();
+
+        await legacyDatabase
+          .table(
+            'discoveries',
+          )
+          .put({
+            universeSeed:
+              '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+
+            generatorVersionCode:
+              1,
+
+            targetTypeCode:
+              4,
+
+            targetSeed:
+              'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+
+            galaxyIndex:
+              '0',
+
+            sectorKey:
+              '0001',
+
+            galacticObjectIndex:
+              '7',
+
+            bodyIndex:
+              null,
+
+            civilizationIndex:
+              null,
+
+            discoveryStateCode:
+              1,
+
+            firstKnownAtEpochMs:
+              1,
+
+            updatedAtEpochMs:
+              1,
+          });
+
+        legacyDatabase
+          .close();
+
+        database =
+          createCurrentDatabase();
+
+        await expect(
+          database
+            .openDatabase(),
+        ).rejects.toThrow(
+          /Cannot migrate discovery coordinates/,
+        );
       },
     );
 

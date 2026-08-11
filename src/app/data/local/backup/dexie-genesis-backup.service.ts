@@ -10,6 +10,11 @@ import {
 } from '../entity/discovery.entity';
 
 import {
+  assertPersistedDiscoverySectorCoordinates,
+  attachDiscoverySectorCoordinates,
+} from '../entity/discovery-sector-coordinates';
+
+import {
   type GalaxyEntity,
 } from '../entity/galaxy.entity';
 
@@ -279,15 +284,17 @@ export class DexieGenesisBackupService
         const discovery
         of universe.discoveries
       ) {
-        discoveries.push({
-          universeSeed:
-            universe.universeSeed,
+        discoveries.push(
+          attachDiscoverySectorCoordinates({
+            universeSeed:
+              universe.universeSeed,
 
-          generatorVersionCode:
-            universe.generatorVersionCode,
+            generatorVersionCode:
+              universe.generatorVersionCode,
 
-          ...discovery,
-        });
+            ...discovery,
+          }),
+        );
       }
 
       for (
@@ -632,51 +639,63 @@ export class DexieGenesisBackupService
         ),
 
       discoveries:
-  discoveries.map(
-    (
-      discovery,
-    ) => ({
-      targetTypeCode:
-        DiscoveryTargetType
-          .fromCode(
-            discovery
-              .targetTypeCode,
-          )
-          .code,
+        discoveries.map(
+          (
+            discovery,
+          ) => {
+            try {
+              assertPersistedDiscoverySectorCoordinates(
+                discovery,
+              );
+            } catch {
+              throw new GenesisBackupValidationError(
+                'Persisted discovery sector coordinates are inconsistent with sectorKey.',
+              );
+            }
 
-      targetSeed:
-        discovery.targetSeed,
+            return {
+              targetTypeCode:
+                DiscoveryTargetType
+                  .fromCode(
+                    discovery
+                      .targetTypeCode,
+                  )
+                  .code,
 
-      galaxyIndex:
-        discovery.galaxyIndex,
+              targetSeed:
+                discovery.targetSeed,
 
-      sectorKey:
-        discovery.sectorKey,
+              galaxyIndex:
+                discovery.galaxyIndex,
 
-      galacticObjectIndex:
-        discovery
-          .galacticObjectIndex,
+              sectorKey:
+                discovery.sectorKey,
 
-      bodyIndex:
-        discovery.bodyIndex,
+              galacticObjectIndex:
+                discovery
+                  .galacticObjectIndex,
 
-      civilizationIndex:
-        discovery
-          .civilizationIndex,
+              bodyIndex:
+                discovery.bodyIndex,
 
-      discoveryStateCode:
-        discovery
-          .discoveryStateCode,
+              civilizationIndex:
+                discovery
+                  .civilizationIndex,
 
-      firstKnownAtEpochMs:
-        discovery
-          .firstKnownAtEpochMs,
+              discoveryStateCode:
+                discovery
+                  .discoveryStateCode,
 
-      updatedAtEpochMs:
-        discovery
-          .updatedAtEpochMs,
-    }),
-  ),
+              firstKnownAtEpochMs:
+                discovery
+                  .firstKnownAtEpochMs,
+
+              updatedAtEpochMs:
+                discovery
+                  .updatedAtEpochMs,
+            };
+          },
+        ),
 
       observations:
   observations.map(

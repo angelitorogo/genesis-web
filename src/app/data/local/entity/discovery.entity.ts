@@ -4,6 +4,11 @@ import {
   type KnownDiscoveryStateCode,
 } from '../../../domain/discovery/discovery-state';
 
+import {
+  attachDiscoverySectorCoordinates,
+  type DiscoverySectorCoordinatesFields,
+} from './discovery-sector-coordinates';
+
 export interface DiscoveryEntity {
   readonly universeSeed:
     string;
@@ -52,6 +57,16 @@ export interface DiscoveryEntity {
     number;
 }
 
+/**
+ * Current IndexedDB representation from schema V3 onward.
+ *
+ * sectorX / sectorY are derived from sectorKey and therefore
+ * never constitute a second procedural source of truth.
+ */
+export interface PersistedDiscoveryEntityV3
+  extends DiscoveryEntity,
+    DiscoverySectorCoordinatesFields {}
+
 export interface DiscoveryEntityInput {
   readonly universeSeed:
     string;
@@ -99,7 +114,7 @@ export interface DiscoveryEntityInput {
 export function createDiscoveryEntity(
   input:
     DiscoveryEntityInput,
-): DiscoveryEntity | null {
+): PersistedDiscoveryEntityV3 | null {
 
   const state =
     DiscoveryState.fromCode(
@@ -114,7 +129,7 @@ export function createDiscoveryEntity(
     return null;
   }
 
-  return {
+  return attachDiscoverySectorCoordinates({
     universeSeed:
       input.universeSeed,
 
@@ -150,10 +165,7 @@ export function createDiscoveryEntity(
 
     updatedAtEpochMs:
       input.updatedAtEpochMs,
-  };
-
-
-  
+  });
 }
 
 /**
