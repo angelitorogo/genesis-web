@@ -1,12 +1,14 @@
 :host {
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .genesis-screen {
   position: relative;
 
   min-height: 100vh;
+  min-height: 100dvh;
 
   overflow-x: hidden;
 
@@ -29,20 +31,53 @@
   &__content {
     position: relative;
 
+    box-sizing: border-box;
+
     width: min(
       100%,
       var(--genesis-content-max-width)
     );
 
+    min-width: 0;
     min-height: 100vh;
+    min-height: 100dvh;
 
     margin-inline: auto;
 
-    padding:
-      clamp(
-        var(--genesis-space-5),
-        4vw,
-        var(--genesis-space-8)
+    padding-top:
+      calc(
+        clamp(
+          var(--genesis-space-5),
+          4vw,
+          var(--genesis-space-8)
+        ) + env(safe-area-inset-top, 0px)
+      );
+
+    padding-right:
+      calc(
+        clamp(
+          var(--genesis-space-5),
+          4vw,
+          var(--genesis-space-8)
+        ) + env(safe-area-inset-right, 0px)
+      );
+
+    padding-bottom:
+      calc(
+        clamp(
+          var(--genesis-space-5),
+          4vw,
+          var(--genesis-space-8)
+        ) + env(safe-area-inset-bottom, 0px)
+      );
+
+    padding-left:
+      calc(
+        clamp(
+          var(--genesis-space-5),
+          4vw,
+          var(--genesis-space-8)
+        ) + env(safe-area-inset-left, 0px)
       );
   }
 }

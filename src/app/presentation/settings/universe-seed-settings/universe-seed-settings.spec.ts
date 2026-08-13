@@ -3,6 +3,14 @@ import {
 } from '@angular/core/testing';
 
 import {
+  type UniverseGenerationKey,
+} from '../../../domain/generation/universe-generation-key';
+
+import {
+  UniverseBootstrapService,
+} from '../../universe/universe-bootstrap.service';
+
+import {
   DEFAULT_UNIVERSE_SEED,
   UniverseSeedFacade,
 } from '../../universe/universe-seed.facade';
@@ -14,12 +22,62 @@ import {
 describe(
   'UniverseSeedSettings',
   () => {
+    let bootstrapCreated:
+      boolean;
+
+    let bootstrapFailure:
+      Error | null;
+
+    let bootstrappedKeys:
+      UniverseGenerationKey[];
+
     beforeEach(
       async () => {
+        bootstrapCreated =
+          true;
+
+        bootstrapFailure =
+          null;
+
+        bootstrappedKeys =
+          [];
+
         await TestBed
           .configureTestingModule({
             imports: [
               UniverseSeedSettings,
+            ],
+
+            providers: [
+              {
+                provide:
+                  UniverseBootstrapService,
+
+                useValue: {
+                  ensureInitialized:
+                    async (
+                      generationKey:
+                        UniverseGenerationKey,
+                    ) => {
+                      bootstrappedKeys.push(
+                        generationKey,
+                      );
+
+                      if (
+                        bootstrapFailure !==
+                          null
+                      ) {
+                        throw bootstrapFailure;
+                      }
+
+                      return {
+                        generationKey,
+                        created:
+                          bootstrapCreated,
+                      };
+                    },
+                },
+              },
             ],
           })
           .compileComponents();
@@ -55,8 +113,8 @@ describe(
     );
 
     it(
-      'should apply a manual seed from the UI',
-      () => {
+      'should apply bootstrap and persist a new universe before reporting success',
+      async () => {
         const fixture =
           TestBed.createComponent(
             UniverseSeedSettings,
@@ -80,14 +138,9 @@ describe(
           ),
         );
 
-        const button =
-          fixture
-            .nativeElement
-            .querySelector(
-              '[data-testid="universe-seed-apply-button"]',
-            ) as HTMLButtonElement;
-
-        button.click();
+        await fixture
+          .componentInstance
+          .applySeed();
 
         fixture.detectChanges();
 
@@ -101,12 +154,71 @@ describe(
         ).toBe(
           'ABCD-0000-0000-0000-0000-0000-0000-0001',
         );
+
+        expect(
+          bootstrappedKeys,
+        ).toHaveLength(
+          1,
+        );
+
+        expect(
+          bootstrappedKeys[
+            0
+          ]
+          ?.universeSeed
+          .serialize(),
+        ).toBe(
+          'ABCD-0000-0000-0000-0000-0000-0000-0001',
+        );
+
+        expect(
+          facade.feedback(),
+        ).toEqual({
+          kind:
+            'success',
+
+          message:
+            'Universo creado y activado correctamente.',
+        });
       },
     );
 
     it(
-      'should reject invalid manual seed input',
-      () => {
+      'should report activation without resetting an already persisted universe',
+      async () => {
+        bootstrapCreated =
+          false;
+
+        const fixture =
+          TestBed.createComponent(
+            UniverseSeedSettings,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .applySeed();
+
+        expect(
+          TestBed
+            .inject(
+              UniverseSeedFacade,
+            )
+            .feedback(),
+        ).toEqual({
+          kind:
+            'success',
+
+          message:
+            'Universo activado correctamente.',
+        });
+      },
+    );
+
+    it(
+      'should reject invalid manual seed input without invoking bootstrap',
+      async () => {
         const fixture =
           TestBed.createComponent(
             UniverseSeedSettings,
@@ -130,14 +242,9 @@ describe(
           ),
         );
 
-        const button =
-          fixture
-            .nativeElement
-            .querySelector(
-              '[data-testid="universe-seed-apply-button"]',
-            ) as HTMLButtonElement;
-
-        button.click();
+        await fixture
+          .componentInstance
+          .applySeed();
 
         fixture.detectChanges();
 
@@ -155,6 +262,47 @@ describe(
         ).toBe(
           'error',
         );
+
+        expect(
+          bootstrappedKeys,
+        ).toEqual(
+          [],
+        );
+      },
+    );
+
+    it(
+      'should expose a bootstrap error when local universe initialization fails',
+      async () => {
+        bootstrapFailure =
+          new Error(
+            'IndexedDB unavailable.',
+          );
+
+        const fixture =
+          TestBed.createComponent(
+            UniverseSeedSettings,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .applySeed();
+
+        expect(
+          TestBed
+            .inject(
+              UniverseSeedFacade,
+            )
+            .feedback(),
+        ).toEqual({
+          kind:
+            'error',
+
+          message:
+            'No se pudo crear o activar el universo local.',
+        });
       },
     );
 

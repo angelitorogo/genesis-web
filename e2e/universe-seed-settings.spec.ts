@@ -3,6 +3,41 @@ import {
   test,
 } from '@playwright/test';
 
+const CANONICAL_SEED_PATTERN =
+  /^[0-9A-F]{4}(?:-[0-9A-F]{4}){7}$/;
+
+async function readCanonicalActiveSeed(
+  page:
+    import('@playwright/test').Page,
+): Promise<string> {
+
+  const activeSeed =
+    page.getByTestId(
+      'universe-seed-active',
+    );
+
+  await expect
+    .poll(
+      async () =>
+        (
+          await activeSeed
+            .textContent()
+        )
+          ?.trim() ??
+        '',
+    )
+    .toMatch(
+      CANONICAL_SEED_PATTERN,
+    );
+
+  return (
+    await activeSeed
+      .textContent()
+  )
+    ?.trim() ??
+    '';
+}
+
 test.describe(
   'GENESIS Universe Seed settings',
   () => {
@@ -15,34 +50,61 @@ test.describe(
           '/settings',
         );
 
-        await page
-          .getByTestId(
+        const input =
+          page.getByTestId(
             'universe-seed-input',
-          )
-          .fill(
-            'abcd-0000-0000-0000-0000-0000-0000-0001',
           );
 
-        await page
-          .getByTestId(
+        const applyButton =
+          page.getByTestId(
             'universe-seed-apply-button',
-          )
-          .click();
+          );
 
-        await expect(
+        const activeSeed =
           page.getByTestId(
             'universe-seed-active',
-          ),
+          );
+
+        const status =
+          page.getByTestId(
+            'universe-seed-status',
+          );
+
+        await expect(
+          input,
+        ).toBeVisible();
+
+        await input.fill(
+          'abcd-0000-0000-0000-0000-0000-0000-0001',
+        );
+
+        await applyButton.click();
+
+        await expect(
+          activeSeed,
         ).toContainText(
           'ABCD-0000-0000-0000-0000-0000-0000-0001',
         );
 
+        /*
+         * Do not stop at data-status="success".
+         *
+         * UniverseSeedFacade briefly reports
+         * "Seed aplicada correctamente." before the asynchronous
+         * universe bootstrap finishes. The final bootstrap message
+         * is the real completion signal.
+         */
         await expect(
-          page.getByTestId(
-            'universe-seed-status',
-          ),
+          status,
         ).toContainText(
-          'Seed aplicada correctamente',
+          'Universo creado y activado correctamente.',
+        );
+
+        await expect(
+          status,
+        ).toHaveAttribute(
+          'data-status',
+          'success',
         );
       },
     );
@@ -56,43 +118,63 @@ test.describe(
           '/settings',
         );
 
-        const active =
+        const activeSeed =
           page.getByTestId(
             'universe-seed-active',
           );
 
-        const original =
-          (
-            await active.textContent()
-          )?.trim();
-
-        await page
-          .getByTestId(
+        const input =
+          page.getByTestId(
             'universe-seed-input',
-          )
-          .fill(
-            'INVALID',
           );
 
-        await page
-          .getByTestId(
+        const applyButton =
+          page.getByTestId(
             'universe-seed-apply-button',
-          )
-          .click();
+          );
 
-        await expect(
+        const status =
           page.getByTestId(
             'universe-seed-status',
-          ),
+          );
+
+        const original =
+          await readCanonicalActiveSeed(
+            page,
+          );
+
+        await input.fill(
+          'INVALID',
+        );
+
+        await applyButton.click();
+
+        await expect(
+          status,
+        ).toHaveAttribute(
+          'data-status',
+          'error',
+        );
+
+        await expect(
+          status,
         ).toContainText(
           'formato válido',
         );
 
-        await expect(
-          active,
-        ).toContainText(
-          original ?? '',
-        );
+        await expect
+          .poll(
+            async () =>
+              (
+                await activeSeed
+                  .textContent()
+              )
+                ?.trim() ??
+              '',
+          )
+          .toBe(
+            original,
+          );
       },
     );
 
@@ -113,12 +195,14 @@ test.describe(
                 value: {
                   writeText:
                     async (
-                      value: string,
+                      value:
+                        string,
                     ) => {
-                      sessionStorage.setItem(
-                        'genesis-test-copied-seed',
-                        value,
-                      );
+                      sessionStorage
+                        .setItem(
+                          'genesis-test-copied-seed',
+                          value,
+                        );
                     },
                 },
               },
@@ -130,42 +214,50 @@ test.describe(
           '/settings',
         );
 
-        const active =
-          (
-            await page
-              .getByTestId(
-                'universe-seed-active',
-              )
-              .textContent()
-          )?.trim();
-
-        await page
-          .getByTestId(
+        const copyButton =
+          page.getByTestId(
             'universe-seed-copy-button',
-          )
-          .click();
-
-        const copied =
-          await page.evaluate(
-            () =>
-              sessionStorage.getItem(
-                'genesis-test-copied-seed',
-              ),
           );
 
-        expect(
-          copied,
-        ).toBe(
-          active,
+        const status =
+          page.getByTestId(
+            'universe-seed-status',
+          );
+
+        const active =
+          await readCanonicalActiveSeed(
+            page,
+          );
+
+        await copyButton.click();
+
+        await expect(
+          status,
+        ).toHaveAttribute(
+          'data-status',
+          'success',
         );
 
         await expect(
-          page.getByTestId(
-            'universe-seed-status',
-          ),
+          status,
         ).toContainText(
           'Seed copiada',
         );
+
+        await expect
+          .poll(
+            async () =>
+              page.evaluate(
+                () =>
+                  sessionStorage
+                    .getItem(
+                      'genesis-test-copied-seed',
+                    ),
+              ),
+          )
+          .toBe(
+            active,
+          );
       },
     );
   },

@@ -13,6 +13,16 @@ export const genesisRoutes: Routes = [
     title: 'GENESIS',
   },
   {
+    path: 'exploration',
+    loadComponent: () =>
+      import(
+        './presentation/exploration/exploration'
+      ).then(
+        (module) => module.Exploration,
+      ),
+    title: 'Exploración | GENESIS',
+  },
+  {
     path: 'galaxy-map',
     loadComponent: () =>
       import(
@@ -41,6 +51,16 @@ export const genesisRoutes: Routes = [
         (module) => module.Observatory,
       ),
     title: 'Observatorio | GENESIS',
+  },
+  {
+    path: 'statistics',
+    loadComponent: () =>
+      import(
+        './presentation/statistics/statistics'
+      ).then(
+        (module) => module.Statistics,
+      ),
+    title: 'Estadísticas | GENESIS',
   },
   {
     path: 'settings',

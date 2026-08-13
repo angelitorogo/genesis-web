@@ -1,8 +1,8 @@
 import {
-  type HomeDashboardModel,
-} from './home-dashboard-model';
+  type ExplorationEntryModel,
+} from './exploration-entry-model';
 
-export type HomeUiState =
+export type ExplorationUiState =
   | {
     readonly kind:
       'loading';
@@ -11,8 +11,8 @@ export type HomeUiState =
     readonly kind:
       'content';
 
-    readonly dashboard:
-      HomeDashboardModel;
+    readonly entry:
+      ExplorationEntryModel;
   }
   | {
     readonly kind:
@@ -26,8 +26,8 @@ export type HomeUiState =
       string;
   };
 
-export const INITIAL_HOME_UI_STATE =
+export const INITIAL_EXPLORATION_UI_STATE =
   Object.freeze({
     kind:
       'loading',
-  }) satisfies HomeUiState;
+  }) satisfies ExplorationUiState;

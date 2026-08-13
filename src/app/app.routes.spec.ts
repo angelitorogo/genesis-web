@@ -42,6 +42,19 @@ describe('GENESIS routes', () => {
     expect(router.url).toBe('/');
   });
 
+  it('should navigate to Exploration', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/exploration',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="exploration-page"]',
+      ),
+    ).toBeTruthy();
+  });
+
   it('should navigate to Galaxy Map', async () => {
     const harness =
       await RouterTestingHarness.create(
@@ -77,6 +90,19 @@ describe('GENESIS routes', () => {
     expect(
       harness.routeNativeElement?.querySelector(
         '[data-testid="genesis-archive-page"]',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('should navigate to Statistics', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/statistics',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="statistics-page"]',
       ),
     ).toBeTruthy();
   });

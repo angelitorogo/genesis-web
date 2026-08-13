@@ -1,6 +1,7 @@
 :host {
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .genesis-archive {
@@ -11,9 +12,17 @@
     64rem
   );
 
+  min-width: 0;
+
   min-height:
     calc(
       100vh -
+      (var(--genesis-space-8) * 2)
+    );
+
+  min-height:
+    calc(
+      100dvh -
       (var(--genesis-space-8) * 2)
     );
 
@@ -26,4 +35,10 @@
 
   padding-block:
     var(--genesis-space-7);
+}
+
+@media (max-width: 40rem) {
+  .genesis-archive {
+    align-content: start;
+  }
 }

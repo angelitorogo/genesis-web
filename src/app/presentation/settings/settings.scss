@@ -1,6 +1,7 @@
 :host {
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .genesis-settings {
@@ -11,9 +12,17 @@
     64rem
   );
 
+  min-width: 0;
+
   min-height:
     calc(
       100vh -
+      (var(--genesis-space-8) * 2)
+    );
+
+  min-height:
+    calc(
+      100dvh -
       (var(--genesis-space-8) * 2)
     );
 
@@ -27,8 +36,14 @@
   padding-block:
     var(--genesis-space-7);
 
+  > * {
+    min-width: 0;
+  }
+
   &__runtime {
     display: flex;
+
+    min-width: 0;
 
     align-items: center;
     justify-content:
@@ -36,6 +51,10 @@
 
     gap:
       var(--genesis-space-6);
+  }
+
+  &__runtime > div {
+    min-width: 0;
   }
 
   &__eyebrow {
@@ -80,6 +99,8 @@
       0
       0;
 
+    overflow-wrap: anywhere;
+
     color:
       var(--genesis-color-text-muted);
 
@@ -113,6 +134,8 @@
 
 @media (max-width: 40rem) {
   .genesis-settings {
+    align-content: start;
+
     &__runtime {
       align-items:
         stretch;

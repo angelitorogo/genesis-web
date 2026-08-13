@@ -5,6 +5,10 @@ import {
 } from '@angular/core';
 
 import {
+  UniverseBootstrapService,
+} from '../../universe/universe-bootstrap.service';
+
+import {
   UniverseSeedFacade,
 } from '../../universe/universe-seed.facade';
 
@@ -30,6 +34,11 @@ export class UniverseSeedSettings {
       UniverseSeedFacade,
     );
 
+  private readonly bootstrap =
+    inject(
+      UniverseBootstrapService,
+    );
+
   onSeedInput(
     event: Event,
   ): void {
@@ -42,9 +51,38 @@ export class UniverseSeedSettings {
     );
   }
 
-  applySeed():
-    void {
-    this.seed.applyDraft();
+  async applySeed():
+    Promise<void> {
+
+    if (
+      !this.seed.applyDraft()
+    ) {
+      return;
+    }
+
+    try {
+      const result =
+        await this
+          .bootstrap
+          .ensureInitialized(
+            this
+              .seed
+              .activeGenerationKey(),
+          );
+
+      if (
+        result.created
+      ) {
+        this.seed
+          .markUniverseCreated();
+      } else {
+        this.seed
+          .markUniverseActivated();
+      }
+    } catch {
+      this.seed
+        .markUniverseActivationFailed();
+    }
   }
 
   restoreSeed():

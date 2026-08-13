@@ -200,6 +200,42 @@ export class UniverseSeedFacade {
     return true;
   }
 
+  markUniverseCreated():
+    void {
+
+    this.feedbackState.set({
+      kind:
+        'success',
+
+      message:
+        'Universo creado y activado correctamente.',
+    });
+  }
+
+  markUniverseActivated():
+    void {
+
+    this.feedbackState.set({
+      kind:
+        'success',
+
+      message:
+        'Universo activado correctamente.',
+    });
+  }
+
+  markUniverseActivationFailed():
+    void {
+
+    this.feedbackState.set({
+      kind:
+        'error',
+
+      message:
+        'No se pudo crear o activar el universo local.',
+    });
+  }
+
   restoreActiveSeed():
     void {
 
