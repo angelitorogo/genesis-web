@@ -28,7 +28,7 @@ export const genesisRoutes: Routes = [
       import(
         './presentation/galaxy-map/galaxy-map'
       ).then(
-        (module) => module.GalaxyMap,
+        (module) => module.GalacticMapPage,
       ),
     title: 'Mapa galáctico | GENESIS',
   },

@@ -34,6 +34,7 @@
     "@noble/hashes": "^2.3.0",
     "dexie": "4.4.4",
     "rxjs": "~7.8.0",
+    "three": "0.185.1",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
@@ -42,6 +43,7 @@
     "@angular/compiler-cli": "^22.1.0",
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.2",
+    "@types/three": "0.185.4",
     "@vitest/coverage-v8": "^4.1.10",
     "fake-indexeddb": "6.2.5",
     "jsdom": "^28.0.0",

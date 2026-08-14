@@ -1,0 +1,53 @@
+<div
+  #sceneHost
+  class="galactic-map-scene"
+  data-testid="galactic-map-scene"
+  [attr.data-render-state]="renderState()"
+  [attr.data-particle-count]="particleCount()"
+>
+  <canvas
+    #sceneCanvas
+    class="galactic-map-scene__canvas"
+    data-testid="galactic-map-canvas"
+    aria-label="Representación tridimensional de la galaxia activa"
+  ></canvas>
+
+  <div
+    class="galactic-map-scene__vignette"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="galactic-map-scene__label"
+    aria-hidden="true"
+  >
+    THREE.JS / WEBGL2
+  </div>
+
+  @if (renderState() === 'initializing') {
+    <div
+      class="galactic-map-scene__message"
+      data-testid="galactic-map-scene-loading"
+    >
+      Inicializando render galáctico…
+    </div>
+  }
+
+  @if (renderState() === 'unavailable') {
+    <div
+      class="galactic-map-scene__message"
+      data-testid="galactic-map-scene-unavailable"
+    >
+      La escena WebGL solo está disponible en el navegador.
+    </div>
+  }
+
+  @if (renderState() === 'error') {
+    <div
+      class="galactic-map-scene__message galactic-map-scene__message--error"
+      data-testid="galactic-map-scene-error"
+    >
+      No se pudo inicializar la escena Three.js en este dispositivo.
+    </div>
+  }
+</div>
