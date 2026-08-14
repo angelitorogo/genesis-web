@@ -31,6 +31,11 @@ import {
 } from './galactic-map-camera-controller';
 
 import {
+  createGalacticMapDiscoveryMarkerOverlay,
+  type GalacticMapDiscoveryMarkerOverlay,
+} from './galactic-map-discovery-marker-overlay';
+
+import {
   type GalacticMapModel,
 } from './galactic-map-model';
 
@@ -138,11 +143,12 @@ interface PointerGesture {
 }
 
 /**
- * Point-10.3 Angular host for the Three.js scene.
+ * Point-10.4 Angular host for the Three.js scene.
  *
- * It preserves the point-10.2 camera/selection behavior and adds a read-only
- * binary sector coverage overlay. The overlay is cartographic only: it maps
- * persisted SectorLocator addresses, never sector content or physical stars.
+ * It preserves the approved point-10.2 camera/selection behavior and point-10.3
+ * sector coverage while adding one read-only persistent discovery-marker layer.
+ * Markers are derived from persisted SystemLocator/GalacticObjectLocator rows;
+ * they remain completely separate from selectable GPU render samples.
  */
 @Component({
   selector:
@@ -795,6 +801,10 @@ class ThreeGalacticMapSceneRuntime
     GalacticMapSectorOverlay | null =
     null;
 
+  private discoveryMarkerOverlay:
+    GalacticMapDiscoveryMarkerOverlay | null =
+    null;
+
   private selectionMarker:
     THREE.Mesh<
       THREE.SphereGeometry,
@@ -945,6 +955,12 @@ class ThreeGalacticMapSceneRuntime
         this.pixelRatio;
     }
 
+    this
+      .discoveryMarkerOverlay
+      ?.setPixelRatio(
+        this.pixelRatio,
+      );
+
     this.renderFrame();
     this.emitCameraState();
   }
@@ -1065,6 +1081,40 @@ class ThreeGalacticMapSceneRuntime
 
       this.sectorOverlay =
         sectorOverlay;
+    }
+
+    const discoveryMarkers =
+      model.discoveryMarkers;
+
+    if (
+      discoveryMarkers !==
+      null
+    ) {
+      if (
+        explorationCoverage ===
+        null
+      ) {
+        throw new RangeError(
+          'Persistent discovery markers require exploration coverage.',
+        );
+      }
+
+      const discoveryMarkerOverlay =
+        createGalacticMapDiscoveryMarkerOverlay(
+          discoveryMarkers,
+          explorationCoverage,
+          visual
+            .regions
+            .haloOuterRadiusNormalized,
+          this.pixelRatio,
+        );
+
+      galaxyGroup.add(
+        discoveryMarkerOverlay.object3d,
+      );
+
+      this.discoveryMarkerOverlay =
+        discoveryMarkerOverlay;
     }
 
     galaxyGroup.add(
@@ -1336,10 +1386,17 @@ class ThreeGalacticMapSceneRuntime
       .sectorOverlay
       ?.dispose();
 
+    this
+      .discoveryMarkerOverlay
+      ?.dispose();
+
     this.points =
       null;
 
     this.sectorOverlay =
+      null;
+
+    this.discoveryMarkerOverlay =
       null;
 
     this.galaxyGroup =

@@ -6,17 +6,27 @@ import {
 } from '@angular/core';
 
 import {
+  type KnownDiscovery,
+} from '../../domain/discovery/known-discovery';
+
+import {
   DiscoveryState,
 } from '../../domain/discovery/discovery-state';
 
 import {
+  GalacticObjectLocator,
   GalaxyLocator,
   SectorLocator,
+  SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+
+import {
+  type GalaxySectorGrid,
+} from '../../domain/sector/galaxy-sector-grid';
 
 import {
   type Galaxy,
@@ -29,6 +39,10 @@ import {
 import {
   GalaxySectorGridGenerator,
 } from '../../simulation/sector/galaxy-sector-grid-generator';
+
+import {
+  GalaxySectorObjectLocationResolver,
+} from '../../simulation/sector/galaxy-sector-object-location-resolver';
 
 import {
   GalaxyGenerator,
@@ -47,6 +61,11 @@ import {
 } from '../universe/universe-seed.facade';
 
 import {
+  GalacticMapDiscoveryMarker,
+  GalacticMapDiscoveryMarkers,
+} from './galactic-map-discovery-markers';
+
+import {
   GalacticMapExplorationCoverage,
 } from './galactic-map-exploration-coverage';
 
@@ -60,12 +79,19 @@ import {
 } from './galactic-map-ui-state';
 
 /**
- * Point-10.3 read-only application facade for the galactic map.
+ * Point-10.4 read-only application facade for the galactic map.
  *
- * Besides the already-approved galaxy scene, it reads the persisted known
- * discovery snapshot once and extracts only SectorLocator entries belonging
- * to the active galaxy. Those locators become binary explored/unexplored map
- * coverage. It never generates sector content, reads PD or performs writes.
+ * A discovered galaxy reads one persisted KnownDiscovery snapshot and reuses
+ * it for both point-10.3 sector coverage and point-10.4 object markers.
+ *
+ * Marker eligibility is intentionally narrow at this stage:
+ * - SystemLocator;
+ * - GalacticObjectLocator.
+ *
+ * GalaxyLocator is the focused map itself, SectorLocator is already represented
+ * by 10.3 coverage, and BodyLocator/CivilizationLocator do not yet have a
+ * galactic-scale placement contract. Transient events have no persistent
+ * locator. No sector content is generated and no persistence is mutated.
  */
 @Injectable({
   providedIn:
@@ -258,15 +284,48 @@ export class GalacticMapFacade {
                 detailedGalaxy,
               );
 
-      const explorationCoverage =
-        detailedGalaxy ===
-          null
-          ? null
-          : await this
-              .prepareExplorationCoverage(
-                generationKey,
-                detailedGalaxy,
-              );
+      let explorationCoverage:
+        GalacticMapExplorationCoverage | null =
+        null;
+
+      let discoveryMarkers:
+        GalacticMapDiscoveryMarkers | null =
+        null;
+
+      if (
+        detailedGalaxy !==
+        null
+      ) {
+        const grid =
+          GalaxySectorGridGenerator
+            .generate(
+              detailedGalaxy,
+            );
+
+        const knownDiscoveries =
+          await this
+            .repositories
+            .discoveryRepository
+            .getKnownDiscoveries(
+              generationKey,
+            );
+
+        explorationCoverage =
+          this.prepareExplorationCoverage(
+            generationKey,
+            detailedGalaxy,
+            grid,
+            knownDiscoveries,
+          );
+
+        discoveryMarkers =
+          this.prepareDiscoveryMarkers(
+            generationKey,
+            detailedGalaxy,
+            grid,
+            knownDiscoveries,
+          );
+      }
 
       if (
         refreshId !==
@@ -291,6 +350,7 @@ export class GalacticMapFacade {
                 ?.type ??
                 null,
               explorationCoverage,
+              discoveryMarkers,
             ),
         });
     } catch (
@@ -322,27 +382,19 @@ export class GalacticMapFacade {
     }
   }
 
-  private async prepareExplorationCoverage(
+  private prepareExplorationCoverage(
     generationKey:
       UniverseGenerationKey,
 
     galaxy:
       Galaxy,
-  ): Promise<GalacticMapExplorationCoverage> {
 
-    const grid =
-      GalaxySectorGridGenerator
-        .generate(
-          galaxy,
-        );
+    grid:
+      GalaxySectorGrid,
 
-    const knownDiscoveries =
-      await this
-        .repositories
-        .discoveryRepository
-        .getKnownDiscoveries(
-          generationKey,
-        );
+    knownDiscoveries:
+      readonly KnownDiscovery[],
+  ): GalacticMapExplorationCoverage {
 
     const exploredSectors =
       knownDiscoveries
@@ -380,6 +432,94 @@ export class GalacticMapFacade {
       galaxy.index,
       grid,
       exploredSectors,
+    );
+  }
+
+  private prepareDiscoveryMarkers(
+    generationKey:
+      UniverseGenerationKey,
+
+    galaxy:
+      Galaxy,
+
+    grid:
+      GalaxySectorGrid,
+
+    knownDiscoveries:
+      readonly KnownDiscovery[],
+  ): GalacticMapDiscoveryMarkers {
+
+    const markers:
+      GalacticMapDiscoveryMarker[] =
+      [];
+
+    for (
+      const discovery
+      of knownDiscoveries
+    ) {
+      const locator =
+        discovery
+          .locator;
+
+      if (
+        locator.galaxyIndex !==
+        galaxy.index
+      ) {
+        continue;
+      }
+
+      if (
+        locator instanceof
+        SystemLocator
+      ) {
+        const location =
+          GalaxySectorObjectLocationResolver
+            .resolve(
+              generationKey,
+              locator,
+            );
+
+        markers.push(
+          new GalacticMapDiscoveryMarker(
+            locator,
+            discovery.state,
+            location.sectorCoordinates,
+            location.normalizedX,
+            location.normalizedY,
+          ),
+        );
+
+        continue;
+      }
+
+      if (
+        locator instanceof
+        GalacticObjectLocator
+      ) {
+        const location =
+          GalaxySectorObjectLocationResolver
+            .resolve(
+              generationKey,
+              locator,
+            );
+
+        markers.push(
+          new GalacticMapDiscoveryMarker(
+            locator,
+            discovery.state,
+            location.sectorCoordinates,
+            location.normalizedX,
+            location.normalizedY,
+          ),
+        );
+      }
+    }
+
+    return new GalacticMapDiscoveryMarkers(
+      generationKey,
+      galaxy.index,
+      grid,
+      markers,
     );
   }
 }

@@ -3,6 +3,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  SystemLocator,
+} from '../../domain/generation/procedural-locator';
+
+import {
   GeneratorVersion,
 } from '../../domain/generation/generator-version';
 
@@ -17,6 +21,10 @@ import {
 import {
   GalaxySectorGrid,
 } from '../../domain/sector/galaxy-sector-grid';
+
+import {
+  GalaxySectorKeyCodec,
+} from '../../domain/sector/galaxy-sector-key-codec';
 
 import {
   GalaxyType,
@@ -37,6 +45,11 @@ import {
 import {
   GalaxyVisualStructureGenerator,
 } from '../../simulation/universe/galaxy-visual-structure-generator';
+
+import {
+  GalacticMapDiscoveryMarker,
+  GalacticMapDiscoveryMarkers,
+} from './galactic-map-discovery-markers';
 
 import {
   GalacticMapExplorationCoverage,
@@ -77,6 +90,60 @@ describe(
           galaxy,
         );
 
+    function coverageAndMarkers() {
+      const grid =
+        new GalaxySectorGrid(
+          generationKey,
+          0n,
+          1000,
+          2,
+        );
+
+      const coordinates =
+        new GalaxySectorCoordinates(
+          0,
+          0,
+        );
+
+      const coverage =
+        new GalacticMapExplorationCoverage(
+          generationKey,
+          0n,
+          grid,
+          [
+            coordinates,
+          ],
+        );
+
+      const markers =
+        new GalacticMapDiscoveryMarkers(
+          generationKey,
+          0n,
+          grid,
+          [
+            new GalacticMapDiscoveryMarker(
+              new SystemLocator(
+                0n,
+                GalaxySectorKeyCodec
+                  .encode(
+                    coordinates,
+                  ),
+                0n,
+              ),
+              DiscoveryState.DETECTED,
+              coordinates,
+              0.25,
+              0.75,
+            ),
+          ],
+        );
+
+      return {
+        coverage,
+        markers,
+      };
+    }
+
     it(
       'should expose the safe designation, detailed-scene flag and exact type for a discovered galaxy',
       () => {
@@ -116,7 +183,7 @@ describe(
     );
 
     it(
-      'should allow a detected galaxy only without detailed visual or exact morphological Ground Truth',
+      'should allow a detected galaxy only without detailed visual, coverage, markers or exact morphological Ground Truth',
       () => {
         const information =
           ExternalGalaxyPreliminaryInformationGenerator
@@ -142,6 +209,14 @@ describe(
 
         expect(
           model.galaxyType,
+        ).toBeNull();
+
+        expect(
+          model.explorationCoverage,
+        ).toBeNull();
+
+        expect(
+          model.discoveryMarkers,
         ).toBeNull();
       },
     );
@@ -229,28 +304,13 @@ describe(
     );
 
     it(
-      'should expose matching point-10.3 exploration coverage while preserving the detailed galaxy identity',
+      'should expose matching point-10.3 coverage and point-10.4 persistent markers together',
       () => {
-        const grid =
-          new GalaxySectorGrid(
-            generationKey,
-            0n,
-            1000,
-            2,
-          );
-
-        const coverage =
-          new GalacticMapExplorationCoverage(
-            generationKey,
-            0n,
-            grid,
-            [
-              new GalaxySectorCoordinates(
-                0,
-                0,
-              ),
-            ],
-          );
+        const {
+          coverage,
+          markers,
+        } =
+          coverageAndMarkers();
 
         const model =
           new GalacticMapModel(
@@ -260,6 +320,7 @@ describe(
             visualStructure,
             galaxy.type,
             coverage,
+            markers,
           );
 
         expect(
@@ -269,9 +330,13 @@ describe(
         );
 
         expect(
-          model
-            .explorationCoverage
-            ?.exploredSectorCount,
+          model.discoveryMarkers,
+        ).toBe(
+          markers,
+        );
+
+        expect(
+          model.discoveryMarkers?.markerCount,
         ).toBe(
           1,
         );
@@ -319,13 +384,30 @@ describe(
           RangeError,
         );
 
-        const foreignCoverage =
-          new GalacticMapExplorationCoverage(
-            generationKey,
-            1n,
-            detectedGrid,
-            [],
-          );
+        expect(
+          () =>
+            new GalacticMapModel(
+              generationKey,
+              0n,
+              discoveredInformation,
+              visualStructure,
+              galaxy.type,
+              detectedCoverage,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject persistent markers before DISCOVERED or without the matching point-10.3 coverage grid',
+      () => {
+        const {
+          coverage,
+          markers,
+        } =
+          coverageAndMarkers();
 
         expect(
           () =>
@@ -335,13 +417,36 @@ describe(
               discoveredInformation,
               visualStructure,
               galaxy.type,
-              foreignCoverage,
+              null,
+              markers,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const detectedInformation =
+          ExternalGalaxyPreliminaryInformationGenerator
+            .generate(
+              generationKey,
+              0n,
+              DiscoveryState.DETECTED,
+            );
+
+        expect(
+          () =>
+            new GalacticMapModel(
+              generationKey,
+              0n,
+              detectedInformation,
+              null,
+              null,
+              coverage,
+              markers,
             ),
         ).toThrow(
           RangeError,
         );
       },
     );
-
   },
 );

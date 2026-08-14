@@ -12,6 +12,8 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  BodyLocator,
+  GalacticObjectLocator,
   GalaxyLocator,
   SectorLocator,
   SystemLocator,
@@ -51,6 +53,10 @@ import {
 } from '../universe/universe-seed.facade';
 
 import {
+  GalacticMapDiscoveryMarkerKind,
+} from './galactic-map-discovery-markers';
+
+import {
   GalacticMapFacade,
 } from './galactic-map.facade';
 
@@ -64,6 +70,23 @@ describe(
         ),
         GeneratorVersion.V1,
       );
+
+    function sectorKey(
+      x:
+        number,
+
+      y:
+        number,
+    ): bigint {
+
+      return GalaxySectorKeyCodec
+        .encode(
+          new GalaxySectorCoordinates(
+            x,
+            y,
+          ),
+        );
+    }
 
     function knownSector(
       galaxyIndex:
@@ -84,13 +107,10 @@ describe(
         generationKey,
         new SectorLocator(
           galaxyIndex,
-          GalaxySectorKeyCodec
-            .encode(
-              new GalaxySectorCoordinates(
-                x,
-                y,
-              ),
-            ),
+          sectorKey(
+            x,
+            y,
+          ),
         ),
         state,
       );
@@ -124,13 +144,13 @@ describe(
         universeRepository: {
           async createIfAbsent() {
             throw new Error(
-              '10.3 must not create universes.',
+              '10.4 must not create universes.',
             );
           },
 
           async exists() {
             throw new Error(
-              '10.3 uses the persisted universe list.',
+              '10.4 uses the persisted universe list.',
             );
           },
 
@@ -140,7 +160,7 @@ describe(
 
           async delete() {
             throw new Error(
-              '10.3 must not delete universes.',
+              '10.4 must not delete universes.',
             );
           },
         },
@@ -156,7 +176,7 @@ describe(
 
           async setNavigation() {
             throw new Error(
-              '10.3 must not mutate navigation.',
+              '10.4 must not mutate navigation.',
             );
           },
         },
@@ -164,25 +184,25 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.3 must not read PD.',
+              '10.4 must not read PD.',
             );
           },
 
           async setGlobalDiscoveryPoints() {
             throw new Error(
-              '10.3 must not write PD.',
+              '10.4 must not write PD.',
             );
           },
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.3 must not read galaxy PD.',
+              '10.4 must not read galaxy PD.',
             );
           },
 
           async setGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.3 must not write galaxy PD.',
+              '10.4 must not write galaxy PD.',
             );
           },
         },
@@ -205,7 +225,7 @@ describe(
 
           async setState() {
             throw new Error(
-              '10.3 must not mutate DiscoveryState.',
+              '10.4 must not mutate DiscoveryState.',
             );
           },
 
@@ -217,7 +237,7 @@ describe(
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.3 must not issue one repository query per sector.',
+              '10.4 must not issue one repository query per sector.',
             );
           },
         },
@@ -247,8 +267,11 @@ describe(
     }
 
     it(
-      'should prepare the discovered active galaxy with binary explored-sector coverage from persisted SectorLocators only',
+      'should reuse one persisted discovery snapshot for 10.3 sector coverage and 10.4 static object markers',
       async () => {
+        let knownDiscoveryReads =
+          0;
+
         const facade =
           configure(
             repositories(
@@ -280,14 +303,36 @@ describe(
                   generationKey,
                   new SystemLocator(
                     0n,
-                    GalaxySectorKeyCodec
-                      .encode(
-                        new GalaxySectorCoordinates(
-                          2,
-                          2,
-                        ),
-                      ),
+                    sectorKey(
+                      2,
+                      2,
+                    ),
                     0n,
+                  ),
+                  DiscoveryState.DETECTED,
+                ),
+                new KnownDiscovery(
+                  generationKey,
+                  new GalacticObjectLocator(
+                    0n,
+                    sectorKey(
+                      -2,
+                      1,
+                    ),
+                    3n,
+                  ),
+                  DiscoveryState.CONFIRMED,
+                ),
+                new KnownDiscovery(
+                  generationKey,
+                  new BodyLocator(
+                    0n,
+                    sectorKey(
+                      0,
+                      0,
+                    ),
+                    0n,
+                    1n,
                   ),
                   DiscoveryState.CONFIRMED,
                 ),
@@ -296,7 +341,23 @@ describe(
                   0,
                   0,
                 ),
+                new KnownDiscovery(
+                  generationKey,
+                  new SystemLocator(
+                    1n,
+                    sectorKey(
+                      0,
+                      0,
+                    ),
+                    0n,
+                  ),
+                  DiscoveryState.CONFIRMED,
+                ),
               ],
+              () => {
+                knownDiscoveryReads +=
+                  1;
+              },
             ),
           );
 
@@ -354,23 +415,96 @@ describe(
         expect(
           model
             ?.explorationCoverage
-            ?.exploredSectorCount,
+            ?.totalSectorCount,
+        ).toBe(
+          29_929n,
+        );
+
+        expect(
+          model
+            ?.discoveryMarkers
+            ?.markerCount,
         ).toBe(
           2,
         );
 
         expect(
           model
-            ?.explorationCoverage
-            ?.totalSectorCount,
+            ?.discoveryMarkers
+            ?.systemMarkerCount,
         ).toBe(
-          29_929n,
+          1,
+        );
+
+        expect(
+          model
+            ?.discoveryMarkers
+            ?.galacticObjectMarkerCount,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          new Set(
+            model
+              ?.discoveryMarkers
+              ?.markers
+              .map(
+                (
+                  marker,
+                ) =>
+                  marker.kind,
+              ),
+          ),
+        ).toEqual(
+          new Set([
+            GalacticMapDiscoveryMarkerKind.SYSTEM,
+            GalacticMapDiscoveryMarkerKind.GALACTIC_OBJECT,
+          ]),
+        );
+
+        for (
+          const marker
+          of model
+            ?.discoveryMarkers
+            ?.markers ??
+            []
+        ) {
+          expect(
+            marker.normalizedX,
+          ).toBeGreaterThanOrEqual(
+            0,
+          );
+
+          expect(
+            marker.normalizedX,
+          ).toBeLessThan(
+            1,
+          );
+
+          expect(
+            marker.normalizedY,
+          ).toBeGreaterThanOrEqual(
+            0,
+          );
+
+          expect(
+            marker.normalizedY,
+          ).toBeLessThan(
+            1,
+          );
+        }
+
+        expect(
+          knownDiscoveryReads,
+        ).toBe(
+          1,
         );
       },
     );
 
     it(
-      'should keep a merely detected galaxy on the safe preliminary projection without reading sector coverage',
+      'should keep a merely detected galaxy on the safe preliminary projection without reading coverage or markers',
       async () => {
         let knownDiscoveryReads =
           0;
@@ -408,6 +542,10 @@ describe(
 
         expect(
           model?.explorationCoverage,
+        ).toBeNull();
+
+        expect(
+          model?.discoveryMarkers,
         ).toBeNull();
 
         expect(
@@ -483,7 +621,7 @@ describe(
     );
 
     it(
-      'should read one known-discovery snapshot but never PD, per-sector queries or sector content generation for point 10.3',
+      'should read one known-discovery snapshot but never PD, per-sector queries or sector content generation for point 10.4',
       async () => {
         let knownDiscoveryReads =
           0;
@@ -523,6 +661,15 @@ describe(
             .model()
             ?.explorationCoverage
             ?.exploredSectorCount,
+        ).toBe(
+          0,
+        );
+
+        expect(
+          facade
+            .model()
+            ?.discoveryMarkers
+            ?.markerCount,
         ).toBe(
           0,
         );

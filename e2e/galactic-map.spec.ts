@@ -33,6 +33,119 @@ async function ensureActiveUniverse(
   );
 }
 
+
+async function persistOneStaticDiscovery(
+  page:
+    import('@playwright/test').Page,
+): Promise<string> {
+
+  const coordinates =
+    [
+      [0, 0],
+      [0, 2],
+      [1, 0],
+      [-1, 0],
+      [1, 1],
+      [-1, -1],
+      [2, -1],
+      [-2, 1],
+      [2, 2],
+    ] as const;
+
+  for (
+    const [
+      x,
+      y,
+    ]
+    of coordinates
+  ) {
+    await page
+      .getByTestId(
+        'sector-x-input',
+      )
+      .fill(
+        String(
+          x,
+        ),
+      );
+
+    await page
+      .getByTestId(
+        'sector-y-input',
+      )
+      .fill(
+        String(
+          y,
+        ),
+      );
+
+    await page
+      .getByTestId(
+        'scan-sector-action',
+      )
+      .click();
+
+    await expect(
+      page.getByTestId(
+        'scanned-sector-coordinates',
+      ),
+    ).toContainText(
+      `(${x}, ${y})`,
+    );
+
+    const result =
+      page.getByTestId(
+        'exploration-result',
+      );
+
+    await expect(
+      result,
+    ).toBeVisible();
+
+    const kind =
+      await result.getAttribute(
+        'data-result-kind',
+      );
+
+    await expect(
+      page.getByTestId(
+        'exploration-sector-state',
+      ),
+    ).toContainText(
+      'Detectada',
+    );
+
+    if (
+      kind !==
+      'TRANSIENT_EVENT' &&
+      kind !==
+      null
+    ) {
+      await expect(
+        page.getByTestId(
+          'exploration-result-state',
+        ),
+      ).toContainText(
+        'Detectada',
+      );
+
+      return kind;
+    }
+
+    await expect(
+      page.getByTestId(
+        'exploration-result-state',
+      ),
+    ).toContainText(
+      'Evento no persistido',
+    );
+  }
+
+  throw new Error(
+    'The frozen central point-10.4 E2E sample did not produce a static persistent discovery.',
+  );
+}
+
 async function numericAttribute(
   locator:
     import('@playwright/test').Locator,
@@ -63,10 +176,10 @@ async function numericAttribute(
 }
 
 test.describe(
-  'GENESIS point-10.3 galactic exploration coverage',
+  'GENESIS point-10.4 persistent galactic discovery markers',
   () => {
     test(
-      'should persist an explored sector, distinguish explored/unexplored map zones and preserve point-10.2 camera interaction',
+      'should persist a static discovery, render it as a marker across reloads and preserve 10.2/10.3 behavior',
       async ({
         page,
       }) => {
@@ -84,34 +197,20 @@ test.describe(
           ),
         ).toBeVisible();
 
-        await page
-          .getByTestId(
-            'sector-x-input',
-          )
-          .fill(
-            '0',
+        const persistedResultKind =
+          await persistOneStaticDiscovery(
+            page,
           );
 
-        await page
-          .getByTestId(
-            'sector-y-input',
-          )
-          .fill(
-            '0',
-          );
-
-        await page
-          .getByTestId(
-            'scan-sector-action',
-          )
-          .click();
-
-        await expect(
-          page.getByTestId(
-            'exploration-sector-state',
-          ),
-        ).toContainText(
-          'Detectada',
+        expect(
+          [
+            'SYSTEM',
+            'NEBULA',
+            'STAR_CLUSTER',
+            'EXTREME_OBJECT',
+          ],
+        ).toContain(
+          persistedResultKind,
         );
 
         await page.goto(
@@ -212,6 +311,60 @@ test.describe(
           'data-sector-grid-side',
           '173',
         );
+
+        const markers =
+          page.getByTestId(
+            'galactic-map-markers',
+          );
+
+        await expect(
+          markers,
+        ).toBeVisible();
+
+        const markerCountBeforeReload =
+          Number(
+            await scene.getAttribute(
+              'data-discovery-marker-count',
+            ),
+          );
+
+        expect(
+          markerCountBeforeReload,
+        ).toBeGreaterThanOrEqual(
+          1,
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-discovery-marker-count',
+          ),
+        ).toContainText(
+          String(
+            markerCountBeforeReload,
+          ),
+        );
+
+        await page.reload();
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-render-state',
+          'ready',
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-discovery-marker-count',
+          String(
+            markerCountBeforeReload,
+          ),
+        );
+
+        await expect(
+          markers,
+        ).toBeVisible();
 
         const particleCount =
           Number(
@@ -547,11 +700,17 @@ test.describe(
           0,
         );
 
+        await expect(
+          page.getByTestId(
+            'galactic-map-markers',
+          ),
+        ).toBeVisible();
+
         for (
           const testId
           of [
-            'galactic-map-markers',
             'galactic-map-layers',
+            'galactic-map-marker-link',
             'galactic-map-relative-position',
           ]
         ) {
@@ -569,7 +728,7 @@ test.describe(
             'galactic-map-point-boundary',
           ),
         ).toContainText(
-          '10.4–10.9',
+          '10.5–10.9',
         );
       },
     );

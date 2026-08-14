@@ -20,6 +20,7 @@ import {
 
 import {
   SectorLocator,
+  SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
@@ -111,7 +112,7 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.3 page must not read PD.',
+              '10.4 page must not read PD.',
             );
           },
 
@@ -119,7 +120,7 @@ describe(
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.3 page must not read galaxy PD.',
+              '10.4 page must not read galaxy PD.',
             );
           },
 
@@ -144,12 +145,21 @@ describe(
                 ),
                 DiscoveryState.DETECTED,
               ),
+              new KnownDiscovery(
+                generationKey,
+                new SystemLocator(
+                  0n,
+                  0n,
+                  0n,
+                ),
+                DiscoveryState.DETECTED,
+              ),
             ];
           },
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.3 page must not query or materialize sector content.',
+              '10.4 page must not query or materialize sector content.',
             );
           },
         },
@@ -290,7 +300,7 @@ describe(
     }
 
     it(
-      'should expose the point-10.3 interactive map with persisted explored/unexplored sector coverage',
+      'should expose the point-10.4 interactive map with persisted coverage and discovery markers',
       async () => {
         const element =
           await renderedPage();
@@ -352,6 +362,20 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galactic-map-explored-sector-count"]',
+          )?.textContent,
+        ).toContain(
+          '1',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-markers"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-discovery-marker-count"]',
           )?.textContent,
         ).toContain(
           '1',
@@ -559,7 +583,7 @@ describe(
     );
 
     it(
-      'should expose point-10.3 coverage while keeping point-10.4-plus capabilities absent',
+      'should expose point-10.4 markers while keeping 10.5-plus capabilities absent',
       async () => {
         const element =
           await renderedPage();
@@ -578,6 +602,12 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="galactic-map-markers"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
             '[data-testid="galactic-map-selection"]',
           ),
         ).toBeNull();
@@ -585,8 +615,8 @@ describe(
         for (
           const testId
           of [
-            'galactic-map-markers',
             'galactic-map-layers',
+            'galactic-map-marker-link',
             'galactic-map-relative-position',
           ]
         ) {
@@ -602,7 +632,7 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '10.4–10.9',
+          '10.5–10.9',
         );
 
         expect(
@@ -610,7 +640,7 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          'Zoom, pan, rotación opcional',
+          'SystemLocator',
         );
       },
     );

@@ -7,6 +7,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  SystemLocator,
+} from '../../domain/generation/procedural-locator';
+
+import {
   GeneratorVersion,
 } from '../../domain/generation/generator-version';
 
@@ -17,6 +21,10 @@ import {
 import {
   GalaxySectorCoordinates,
 } from '../../domain/sector/galaxy-sector-coordinates';
+
+import {
+  GalaxySectorKeyCodec,
+} from '../../domain/sector/galaxy-sector-key-codec';
 
 import {
   UniverseSeed,
@@ -42,6 +50,11 @@ import {
   type GalacticMapCameraState,
   type GalacticMapVisualSelection,
 } from './galactic-map-camera-controller';
+
+import {
+  GalacticMapDiscoveryMarker,
+  GalacticMapDiscoveryMarkers,
+} from './galactic-map-discovery-markers';
 
 import {
   GalacticMapExplorationCoverage,
@@ -87,15 +100,41 @@ describe(
             galaxy,
           );
 
+      const markerCoordinates =
+        new GalaxySectorCoordinates(
+          0,
+          0,
+        );
+
       const coverage =
         new GalacticMapExplorationCoverage(
           generationKey,
           galaxyIndex,
           grid,
           [
-            new GalaxySectorCoordinates(
-              0,
-              0,
+            markerCoordinates,
+          ],
+        );
+
+      const discoveryMarkers =
+        new GalacticMapDiscoveryMarkers(
+          generationKey,
+          galaxyIndex,
+          grid,
+          [
+            new GalacticMapDiscoveryMarker(
+              new SystemLocator(
+                galaxyIndex,
+                GalaxySectorKeyCodec
+                  .encode(
+                    markerCoordinates,
+                  ),
+                0n,
+              ),
+              DiscoveryState.DETECTED,
+              markerCoordinates,
+              0.25,
+              0.75,
             ),
           ],
         );
@@ -115,6 +154,7 @@ describe(
           ),
         galaxy.type,
         coverage,
+        discoveryMarkers,
       );
     }
 
@@ -343,7 +383,7 @@ describe(
     );
 
     it(
-      'should initialize the interactive renderer host and render the supplied map model without requiring WebGL in unit tests',
+      'should initialize the interactive renderer host with 10.3 coverage and 10.4 persistent markers without requiring WebGL in unit tests',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -380,6 +420,12 @@ describe(
         ).toBeTruthy();
 
         expect(
+          element.querySelector(
+            '[data-testid="galactic-map-markers"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
           element
             .querySelector(
               '[data-testid="galactic-map-scene"]',
@@ -388,6 +434,26 @@ describe(
               'data-explored-sector-count',
             ),
         ).toBe(
+          '1',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-discovery-marker-count',
+            ),
+        ).toBe(
+          '1',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-discovery-marker-count"]',
+          )?.textContent,
+        ).toContain(
           '1',
         );
 

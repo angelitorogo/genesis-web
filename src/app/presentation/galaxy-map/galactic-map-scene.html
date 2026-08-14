@@ -15,6 +15,9 @@
   [attr.data-explored-sector-count]="model.explorationCoverage?.exploredSectorCount ?? null"
   [attr.data-total-sector-count]="model.explorationCoverage ? model.explorationCoverage.totalSectorCount.toString() : null"
   [attr.data-sector-grid-side]="model.explorationCoverage ? model.explorationCoverage.grid.sideLengthInSectors.toString() : null"
+  [attr.data-discovery-marker-count]="model.discoveryMarkers?.markerCount ?? null"
+  [attr.data-system-marker-count]="model.discoveryMarkers?.systemMarkerCount ?? null"
+  [attr.data-galactic-object-marker-count]="model.discoveryMarkers?.galacticObjectMarkerCount ?? null"
 >
   <canvas
     #sceneCanvas
@@ -79,6 +82,38 @@
         las celdas resaltadas ya tienen un SectorLocator persistido en estado
         DETECTED o superior.
       </p>
+
+      @if (model.discoveryMarkers; as discoveryMarkers) {
+        <div
+          class="galactic-map-scene__markers"
+          data-testid="galactic-map-markers"
+        >
+          <small>
+            MARCADORES PERSISTENTES
+          </small>
+
+          <div class="galactic-map-scene__coverage-row">
+            <span
+              class="galactic-map-scene__marker-swatch"
+              aria-hidden="true"
+            ></span>
+
+            <strong>
+              Objetos localizados
+            </strong>
+
+            <code data-testid="galactic-map-discovery-marker-count">
+              {{ discoveryMarkers.markerCount }}
+            </code>
+          </div>
+
+          <p>
+            Los marcadores proceden de descubrimientos persistidos con
+            SystemLocator o GalacticObjectLocator. Su posición se regenera de
+            forma determinista y no se confunde con las muestras GPU.
+          </p>
+        </div>
+      }
     </aside>
   }
 

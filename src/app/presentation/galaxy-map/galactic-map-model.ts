@@ -20,6 +20,10 @@ import {
 } from '../../domain/observation/galaxy/external-galaxy-preliminary-information';
 
 import {
+  type GalacticMapDiscoveryMarkers,
+} from './galactic-map-discovery-markers';
+
+import {
   type GalacticMapExplorationCoverage,
 } from './galactic-map-exploration-coverage';
 
@@ -27,16 +31,18 @@ const SIGNED_LONG_MAX =
   9_223_372_036_854_775_807n;
 
 /**
- * Point-10.3 read-only projection for the currently focused galactic map.
+ * Point-10.4 read-only projection for the currently focused galactic map.
  *
  * The public page always receives the safe point-7.6 preliminary observation.
  * Exact renderer-independent visual geometry and the canonical GalaxyType are
  * available only once the active galaxy has reached DISCOVERED or a later
  * knowledge state.
  *
- * Point 10.3 may additionally expose a binary explored/unexplored sector
- * coverage projection. It still contains no sector content, markers, physical
- * stars/systems, LOD data or persistence mutations.
+ * Point 10.3 contributes binary explored/unexplored sector coverage. Point
+ * 10.4 additionally exposes persistent object markers reconstructed from the
+ * KnownDiscovery snapshot. Marker placement is still read-only and contains no
+ * layer toggles, marker navigation, LOD, visible-sector materialization or
+ * persistence mutation.
  */
 export class GalacticMapModel {
 
@@ -65,6 +71,10 @@ export class GalacticMapModel {
 
     readonly explorationCoverage:
       GalacticMapExplorationCoverage | null =
+        null,
+
+    readonly discoveryMarkers:
+      GalacticMapDiscoveryMarkers | null =
         null,
   ) {
     assertNonNegativeSignedLong(
@@ -168,6 +178,74 @@ export class GalacticMapModel {
     ) {
       throw new RangeError(
         'Exploration coverage cannot be exposed before the detailed galactic map is available.',
+      );
+    }
+
+    if (
+      discoveryMarkers !==
+        null &&
+      (
+        !sameGenerationKey(
+          generationKey,
+          discoveryMarkers
+            .generationKey,
+        ) ||
+        discoveryMarkers
+          .galaxyIndex !==
+          galaxyIndex
+      )
+    ) {
+      throw new RangeError(
+        'discoveryMarkers must belong to the active generationKey and galaxyIndex.',
+      );
+    }
+
+    if (
+      canonicalKnowledgeState.code <
+        DiscoveryState
+          .DISCOVERED
+          .code &&
+      discoveryMarkers !==
+        null
+    ) {
+      throw new RangeError(
+        'Persistent discovery markers cannot be exposed before the detailed galactic map is available.',
+      );
+    }
+
+    if (
+      discoveryMarkers !==
+        null &&
+      explorationCoverage ===
+        null
+    ) {
+      throw new RangeError(
+        'Persistent discovery markers require the point-10.3 exploration coverage grid.',
+      );
+    }
+
+    if (
+      discoveryMarkers !==
+        null &&
+      explorationCoverage !==
+        null &&
+      (
+        discoveryMarkers
+          .grid
+          .minCoordinate !==
+          explorationCoverage
+            .grid
+            .minCoordinate ||
+        discoveryMarkers
+          .grid
+          .maxCoordinate !==
+          explorationCoverage
+            .grid
+            .maxCoordinate
+      )
+    ) {
+      throw new RangeError(
+        'discoveryMarkers and explorationCoverage must use the same active galaxy grid.',
       );
     }
 
