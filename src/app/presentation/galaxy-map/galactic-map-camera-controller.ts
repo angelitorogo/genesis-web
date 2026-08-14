@@ -5,7 +5,7 @@ import {
 } from 'three/addons/controls/OrbitControls.js';
 
 const MIN_CAMERA_DISTANCE =
-  1.45;
+  0.25;
 
 const MAX_CAMERA_DISTANCE =
   7.20;

@@ -44,7 +44,7 @@
 
           <div>
             <small class="galactic-map__meta">
-              RENDER / 10.2
+              RENDER / 10.3
             </small>
 
             <strong>
@@ -166,13 +166,14 @@
                 class="galactic-map__row galactic-map__viewport-footer"
               >
                 <span class="galactic-map__meta">
-                  NUBE VISUAL GPU / CÁMARA 10.2
+                  NUBE VISUAL GPU / COBERTURA 10.3
                 </span>
 
                 <p>
-                  Los puntos continúan siendo muestras de render. La cámara puede
-                  navegar y seleccionar una muestra visual sin materializar una
-                  estrella o sistema físico.
+                  Los puntos continúan siendo muestras de render. La cuadrícula
+                  superpuesta representa únicamente direcciones sectoriales y marca
+                  como explorados los sectores ya persistidos, sin materializar su
+                  contenido físico.
                 </p>
               </div>
             </section>
@@ -202,15 +203,16 @@
             data-testid="galactic-map-point-boundary"
           >
             <span>
-              10.2
+              10.3
             </span>
 
             <p>
-              Zoom, pan, rotación opcional, restablecimiento de cámara y selección
-              precisa de muestras GPU. Sin zonas exploradas, marcadores persistentes,
-              capas, navegación desde marcadores, posición relativa, LOD, sectores
-              físicos materializados ni cálculo nuevo en Web Worker; esas capacidades
-              pertenecen a 10.3–10.9.
+              Zoom, pan, rotación opcional y selección precisa se mantienen desde
+              10.2. El mapa diferencia ahora sectores explorados y no explorados a
+              partir de SectorLocator persistidos, sin generar el contenido de esos
+              sectores. Marcadores persistentes, capas, navegación desde marcadores,
+              posición relativa, LOD y generación por sectores visibles pertenecen a
+              10.4–10.9.
             </p>
           </section>
         }

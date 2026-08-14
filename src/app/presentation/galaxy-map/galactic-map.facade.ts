@@ -11,6 +11,7 @@ import {
 
 import {
   GalaxyLocator,
+  SectorLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
@@ -18,8 +19,16 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  type Galaxy,
+} from '../../domain/universe/galaxy';
+
+import {
   ExternalGalaxyPreliminaryInformationGenerator,
 } from '../../simulation/observation/galaxy/external-galaxy-preliminary-information-generator';
+
+import {
+  GalaxySectorGridGenerator,
+} from '../../simulation/sector/galaxy-sector-grid-generator';
 
 import {
   GalaxyGenerator,
@@ -38,6 +47,10 @@ import {
 } from '../universe/universe-seed.facade';
 
 import {
+  GalacticMapExplorationCoverage,
+} from './galactic-map-exploration-coverage';
+
+import {
   GalacticMapModel,
 } from './galactic-map-model';
 
@@ -47,11 +60,12 @@ import {
 } from './galactic-map-ui-state';
 
 /**
- * Point-10.1 read-only application facade for the galactic map.
+ * Point-10.3 read-only application facade for the galactic map.
  *
- * It resolves the persisted active universe/galaxy and prepares the visual
- * scene without reading PD, sector contents or discovery marker collections.
- * It performs no writes.
+ * Besides the already-approved galaxy scene, it reads the persisted known
+ * discovery snapshot once and extracts only SectorLocator entries belonging
+ * to the active galaxy. Those locators become binary explored/unexplored map
+ * coverage. It never generates sector content, reads PD or performs writes.
  */
 @Injectable({
   providedIn:
@@ -244,6 +258,23 @@ export class GalacticMapFacade {
                 detailedGalaxy,
               );
 
+      const explorationCoverage =
+        detailedGalaxy ===
+          null
+          ? null
+          : await this
+              .prepareExplorationCoverage(
+                generationKey,
+                detailedGalaxy,
+              );
+
+      if (
+        refreshId !==
+        this.refreshSequence
+      ) {
+        return;
+      }
+
       this
         .stateSignal
         .set({
@@ -259,6 +290,7 @@ export class GalacticMapFacade {
               detailedGalaxy
                 ?.type ??
                 null,
+              explorationCoverage,
             ),
         });
     } catch (
@@ -288,6 +320,67 @@ export class GalacticMapFacade {
               : 'No se pudo preparar el mapa galáctico.',
         });
     }
+  }
+
+  private async prepareExplorationCoverage(
+    generationKey:
+      UniverseGenerationKey,
+
+    galaxy:
+      Galaxy,
+  ): Promise<GalacticMapExplorationCoverage> {
+
+    const grid =
+      GalaxySectorGridGenerator
+        .generate(
+          galaxy,
+        );
+
+    const knownDiscoveries =
+      await this
+        .repositories
+        .discoveryRepository
+        .getKnownDiscoveries(
+          generationKey,
+        );
+
+    const exploredSectors =
+      knownDiscoveries
+        .filter(
+          (
+            discovery,
+          ) =>
+            discovery
+              .locator instanceof
+              SectorLocator &&
+            discovery
+              .locator
+              .galaxyIndex ===
+              galaxy.index,
+        )
+        .map(
+          (
+            discovery,
+          ) => {
+            const locator =
+              discovery
+                .locator as
+                SectorLocator;
+
+            return grid
+              .coordinatesFor(
+                locator
+                  .sectorKey,
+              );
+          },
+        );
+
+    return new GalacticMapExplorationCoverage(
+      generationKey,
+      galaxy.index,
+      grid,
+      exploredSectors,
+    );
   }
 }
 

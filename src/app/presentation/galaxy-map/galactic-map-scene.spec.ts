@@ -15,12 +15,20 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  GalaxySectorCoordinates,
+} from '../../domain/sector/galaxy-sector-coordinates';
+
+import {
   UniverseSeed,
 } from '../../domain/universe/universe-seed';
 
 import {
   ExternalGalaxyPreliminaryInformationGenerator,
 } from '../../simulation/observation/galaxy/external-galaxy-preliminary-information-generator';
+
+import {
+  GalaxySectorGridGenerator,
+} from '../../simulation/sector/galaxy-sector-grid-generator';
 
 import {
   GalaxyGenerator,
@@ -34,6 +42,10 @@ import {
   type GalacticMapCameraState,
   type GalacticMapVisualSelection,
 } from './galactic-map-camera-controller';
+
+import {
+  GalacticMapExplorationCoverage,
+} from './galactic-map-exploration-coverage';
 
 import {
   GalacticMapModel,
@@ -69,6 +81,25 @@ describe(
           galaxyIndex,
         );
 
+      const grid =
+        GalaxySectorGridGenerator
+          .generate(
+            galaxy,
+          );
+
+      const coverage =
+        new GalacticMapExplorationCoverage(
+          generationKey,
+          galaxyIndex,
+          grid,
+          [
+            new GalaxySectorCoordinates(
+              0,
+              0,
+            ),
+          ],
+        );
+
       return new GalacticMapModel(
         generationKey,
         galaxyIndex,
@@ -83,6 +114,7 @@ describe(
             galaxy,
           ),
         galaxy.type,
+        coverage,
       );
     }
 
@@ -340,6 +372,44 @@ describe(
             '[data-testid="galactic-map-controls"]',
           ),
         ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-exploration-coverage"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-explored-sector-count',
+            ),
+        ).toBe(
+          '1',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-sector-grid-side',
+            ),
+        ).toBe(
+          '173',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-exploration-coverage"]',
+          )?.textContent,
+        ).toContain(
+          'No explorado',
+        );
 
         expect(
           renderCalls,

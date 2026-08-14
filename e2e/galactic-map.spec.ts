@@ -63,15 +63,55 @@ async function numericAttribute(
 }
 
 test.describe(
-  'GENESIS point-10.2 galactic map interaction',
+  'GENESIS point-10.3 galactic exploration coverage',
   () => {
     test(
-      'should provide bounded camera navigation and precise render-sample selection without pulling point-10.3-plus capabilities forward',
+      'should persist an explored sector, distinguish explored/unexplored map zones and preserve point-10.2 camera interaction',
       async ({
         page,
       }) => {
         await ensureActiveUniverse(
           page,
+        );
+
+        await page.goto(
+          '/exploration',
+        );
+
+        await expect(
+          page.getByTestId(
+            'scan-sector-action',
+          ),
+        ).toBeVisible();
+
+        await page
+          .getByTestId(
+            'sector-x-input',
+          )
+          .fill(
+            '0',
+          );
+
+        await page
+          .getByTestId(
+            'sector-y-input',
+          )
+          .fill(
+            '0',
+          );
+
+        await page
+          .getByTestId(
+            'scan-sector-action',
+          )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'exploration-sector-state',
+          ),
+        ).toContainText(
+          'Detectada',
         );
 
         await page.goto(
@@ -118,6 +158,60 @@ test.describe(
             'galactic-map-controls',
           ),
         ).toBeVisible();
+
+        const coverage =
+          page.getByTestId(
+            'galactic-map-exploration-coverage',
+          );
+
+        await expect(
+          coverage,
+        ).toBeVisible();
+
+        await expect(
+          coverage,
+        ).toContainText(
+          'Explorado',
+        );
+
+        await expect(
+          coverage,
+        ).toContainText(
+          'No explorado',
+        );
+
+        const exploredSectorCount =
+          Number(
+            await scene.getAttribute(
+              'data-explored-sector-count',
+            ),
+          );
+
+        const totalSectorCount =
+          Number(
+            await scene.getAttribute(
+              'data-total-sector-count',
+            ),
+          );
+
+        expect(
+          exploredSectorCount,
+        ).toBeGreaterThanOrEqual(
+          1,
+        );
+
+        expect(
+          totalSectorCount,
+        ).toBeGreaterThan(
+          exploredSectorCount,
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-sector-grid-side',
+          '173',
+        );
 
         const particleCount =
           Number(
@@ -475,7 +569,7 @@ test.describe(
             'galactic-map-point-boundary',
           ),
         ).toContainText(
-          '10.3–10.9',
+          '10.4–10.9',
         );
       },
     );

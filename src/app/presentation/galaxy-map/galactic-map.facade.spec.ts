@@ -3,12 +3,18 @@ import {
 } from '@angular/core/testing';
 
 import {
+  KnownDiscovery,
+} from '../../domain/discovery/known-discovery';
+
+import {
   DiscoveryState,
   type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
 
 import {
   GalaxyLocator,
+  SectorLocator,
+  SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
@@ -20,12 +26,20 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
-  UniverseSeed,
-} from '../../domain/universe/universe-seed';
-
-import {
   ExternalGalaxyMorphologyHint,
 } from '../../domain/observation/galaxy/external-galaxy-preliminary-information';
+
+import {
+  GalaxySectorCoordinates,
+} from '../../domain/sector/galaxy-sector-coordinates';
+
+import {
+  GalaxySectorKeyCodec,
+} from '../../domain/sector/galaxy-sector-key-codec';
+
+import {
+  UniverseSeed,
+} from '../../domain/universe/universe-seed';
 
 import {
   GENESIS_LOCAL_REPOSITORIES,
@@ -51,6 +65,37 @@ describe(
         GeneratorVersion.V1,
       );
 
+    function knownSector(
+      galaxyIndex:
+        bigint,
+
+      x:
+        number,
+
+      y:
+        number,
+
+      state:
+        DiscoveryStateValue =
+          DiscoveryState.DETECTED,
+    ): KnownDiscovery {
+
+      return new KnownDiscovery(
+        generationKey,
+        new SectorLocator(
+          galaxyIndex,
+          GalaxySectorKeyCodec
+            .encode(
+              new GalaxySectorCoordinates(
+                x,
+                y,
+              ),
+            ),
+        ),
+        state,
+      );
+    }
+
     function repositories(
       universes:
         readonly UniverseGenerationKey[] =
@@ -65,19 +110,27 @@ describe(
         DiscoveryStateValue =
           DiscoveryState
             .DISCOVERED,
+
+      knownDiscoveries:
+        readonly KnownDiscovery[] =
+          [],
+
+      onKnownDiscoveriesRead:
+        (() => void) | null =
+          null,
     ): GenesisLocalRepositories {
 
       return {
         universeRepository: {
           async createIfAbsent() {
             throw new Error(
-              '10.1 must not create universes.',
+              '10.3 must not create universes.',
             );
           },
 
           async exists() {
             throw new Error(
-              '10.1 uses the persisted universe list.',
+              '10.3 uses the persisted universe list.',
             );
           },
 
@@ -87,7 +140,7 @@ describe(
 
           async delete() {
             throw new Error(
-              '10.1 must not delete universes.',
+              '10.3 must not delete universes.',
             );
           },
         },
@@ -103,7 +156,7 @@ describe(
 
           async setNavigation() {
             throw new Error(
-              '10.1 must not mutate navigation.',
+              '10.3 must not mutate navigation.',
             );
           },
         },
@@ -111,25 +164,25 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.1 must not read PD.',
+              '10.3 must not read PD.',
             );
           },
 
           async setGlobalDiscoveryPoints() {
             throw new Error(
-              '10.1 must not write PD.',
+              '10.3 must not write PD.',
             );
           },
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.1 must not read galaxy PD.',
+              '10.3 must not read galaxy PD.',
             );
           },
 
           async setGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.1 must not write galaxy PD.',
+              '10.3 must not write galaxy PD.',
             );
           },
         },
@@ -152,19 +205,19 @@ describe(
 
           async setState() {
             throw new Error(
-              '10.1 must not mutate DiscoveryState.',
+              '10.3 must not mutate DiscoveryState.',
             );
           },
 
           async getKnownDiscoveries() {
-            throw new Error(
-              '10.1 must not materialize marker collections.',
-            );
+            onKnownDiscoveriesRead?.();
+
+            return knownDiscoveries;
           },
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.1 must not materialize sector discoveries.',
+              '10.3 must not issue one repository query per sector.',
             );
           },
         },
@@ -194,11 +247,57 @@ describe(
     }
 
     it(
-      'should prepare the discovered active galaxy with detailed renderer-independent visual structure',
+      'should prepare the discovered active galaxy with binary explored-sector coverage from persisted SectorLocators only',
       async () => {
         const facade =
           configure(
-            repositories(),
+            repositories(
+              [
+                generationKey,
+              ],
+              0n,
+              DiscoveryState.DISCOVERED,
+              [
+                new KnownDiscovery(
+                  generationKey,
+                  new GalaxyLocator(
+                    0n,
+                  ),
+                  DiscoveryState.DISCOVERED,
+                ),
+                knownSector(
+                  0n,
+                  0,
+                  0,
+                ),
+                knownSector(
+                  0n,
+                  1,
+                  -1,
+                  DiscoveryState.CONFIRMED,
+                ),
+                new KnownDiscovery(
+                  generationKey,
+                  new SystemLocator(
+                    0n,
+                    GalaxySectorKeyCodec
+                      .encode(
+                        new GalaxySectorCoordinates(
+                          2,
+                          2,
+                        ),
+                      ),
+                    0n,
+                  ),
+                  DiscoveryState.CONFIRMED,
+                ),
+                knownSector(
+                  1n,
+                  0,
+                  0,
+                ),
+              ],
+            ),
           );
 
         await facade.refresh();
@@ -238,16 +337,44 @@ describe(
         );
 
         expect(
-          model?.designationCode,
-        ).toMatch(
-          /^GEN-V1-G0-/,
+          model
+            ?.explorationCoverage
+            ?.exploredSectors,
+        ).toEqual([
+          new GalaxySectorCoordinates(
+            0,
+            0,
+          ),
+          new GalaxySectorCoordinates(
+            1,
+            -1,
+          ),
+        ]);
+
+        expect(
+          model
+            ?.explorationCoverage
+            ?.exploredSectorCount,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          model
+            ?.explorationCoverage
+            ?.totalSectorCount,
+        ).toBe(
+          29_929n,
         );
       },
     );
 
     it(
-      'should keep a merely detected galaxy on the safe preliminary projection without detailed visual Ground Truth',
+      'should keep a merely detected galaxy on the safe preliminary projection without reading sector coverage',
       async () => {
+        let knownDiscoveryReads =
+          0;
+
         const facade =
           configure(
             repositories(
@@ -256,6 +383,11 @@ describe(
               ],
               1n,
               DiscoveryState.DETECTED,
+              [],
+              () => {
+                knownDiscoveryReads +=
+                  1;
+              },
             ),
           );
 
@@ -273,6 +405,16 @@ describe(
         expect(
           model?.visualStructure,
         ).toBeNull();
+
+        expect(
+          model?.explorationCoverage,
+        ).toBeNull();
+
+        expect(
+          knownDiscoveryReads,
+        ).toBe(
+          0,
+        );
 
         expect(
           model
@@ -341,11 +483,25 @@ describe(
     );
 
     it(
-      'should not read progression or discovery collections while preparing point 10.1',
+      'should read one known-discovery snapshot but never PD, per-sector queries or sector content generation for point 10.3',
       async () => {
+        let knownDiscoveryReads =
+          0;
+
         const facade =
           configure(
-            repositories(),
+            repositories(
+              [
+                generationKey,
+              ],
+              0n,
+              DiscoveryState.DISCOVERED,
+              [],
+              () => {
+                knownDiscoveryReads +=
+                  1;
+              },
+            ),
           );
 
         await facade.refresh();
@@ -354,6 +510,21 @@ describe(
           facade.state().kind,
         ).toBe(
           'content',
+        );
+
+        expect(
+          knownDiscoveryReads,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          facade
+            .model()
+            ?.explorationCoverage
+            ?.exploredSectorCount,
+        ).toBe(
+          0,
         );
       },
     );

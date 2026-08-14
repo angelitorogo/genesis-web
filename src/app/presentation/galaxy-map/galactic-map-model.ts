@@ -19,19 +19,24 @@ import {
   type ExternalGalaxyPreliminaryInformation,
 } from '../../domain/observation/galaxy/external-galaxy-preliminary-information';
 
+import {
+  type GalacticMapExplorationCoverage,
+} from './galactic-map-exploration-coverage';
+
 const SIGNED_LONG_MAX =
   9_223_372_036_854_775_807n;
 
 /**
- * Point-10.1 read-only projection for the currently focused galactic map.
+ * Point-10.3 read-only projection for the currently focused galactic map.
  *
  * The public page always receives the safe point-7.6 preliminary observation.
  * Exact renderer-independent visual geometry and the canonical GalaxyType are
  * available only once the active galaxy has reached DISCOVERED or a later
  * knowledge state.
  *
- * The model contains no sector content, markers, selectable targets, LOD data,
- * camera controls, physical star entities or persistence mutations.
+ * Point 10.3 may additionally expose a binary explored/unexplored sector
+ * coverage projection. It still contains no sector content, markers, physical
+ * stars/systems, LOD data or persistence mutations.
  */
 export class GalacticMapModel {
 
@@ -56,6 +61,10 @@ export class GalacticMapModel {
 
     galaxyType:
       GalaxyType | null =
+        null,
+
+    readonly explorationCoverage:
+      GalacticMapExplorationCoverage | null =
         null,
   ) {
     assertNonNegativeSignedLong(
@@ -126,7 +135,39 @@ export class GalacticMapModel {
         null
     ) {
       throw new RangeError(
-        'DISCOVERED or later galaxies require their visual structure in point 10.1.',
+        'DISCOVERED or later galaxies require their detailed visual structure.',
+      );
+    }
+
+    if (
+      explorationCoverage !==
+        null &&
+      (
+        !sameGenerationKey(
+          generationKey,
+          explorationCoverage
+            .generationKey,
+        ) ||
+        explorationCoverage
+          .galaxyIndex !==
+          galaxyIndex
+      )
+    ) {
+      throw new RangeError(
+        'explorationCoverage must belong to the active generationKey and galaxyIndex.',
+      );
+    }
+
+    if (
+      canonicalKnowledgeState.code <
+        DiscoveryState
+          .DISCOVERED
+          .code &&
+      explorationCoverage !==
+        null
+    ) {
+      throw new RangeError(
+        'Exploration coverage cannot be exposed before the detailed galactic map is available.',
       );
     }
 
@@ -158,6 +199,30 @@ export class GalacticMapModel {
       .visualStructure !==
       null;
   }
+}
+
+function sameGenerationKey(
+  left:
+    UniverseGenerationKey,
+
+  right:
+    UniverseGenerationKey,
+): boolean {
+
+  return (
+    left
+      .generatorVersion
+      .code ===
+      right
+        .generatorVersion
+        .code &&
+    left
+      .universeSeed
+      .serialize() ===
+      right
+        .universeSeed
+        .serialize()
+  );
 }
 
 function assertNonNegativeSignedLong(

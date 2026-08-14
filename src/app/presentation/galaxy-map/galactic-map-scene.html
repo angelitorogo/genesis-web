@@ -12,6 +12,9 @@
   [attr.data-camera-target-y]="cameraState()?.targetY ?? null"
   [attr.data-camera-target-z]="cameraState()?.targetZ ?? null"
   [attr.data-selected-sample-index]="selection()?.sampleIndex ?? null"
+  [attr.data-explored-sector-count]="model.explorationCoverage?.exploredSectorCount ?? null"
+  [attr.data-total-sector-count]="model.explorationCoverage ? model.explorationCoverage.totalSectorCount.toString() : null"
+  [attr.data-sector-grid-side]="model.explorationCoverage ? model.explorationCoverage.grid.sideLengthInSectors.toString() : null"
 >
   <canvas
     #sceneCanvas
@@ -36,6 +39,48 @@
   >
     THREE.JS / WEBGL2 / INTERACTIVO
   </div>
+
+  @if (model.explorationCoverage; as coverage) {
+    <aside
+      class="galactic-map-scene__coverage"
+      data-testid="galactic-map-exploration-coverage"
+      aria-label="Cobertura de exploración por sectores"
+    >
+      <small>COBERTURA DE EXPLORACIÓN</small>
+
+      <div class="galactic-map-scene__coverage-row">
+        <span
+          class="galactic-map-scene__coverage-swatch galactic-map-scene__coverage-swatch--explored"
+          aria-hidden="true"
+        ></span>
+
+        <strong>Explorado</strong>
+
+        <code data-testid="galactic-map-explored-sector-count">
+          {{ coverage.exploredSectorCount }}
+        </code>
+      </div>
+
+      <div class="galactic-map-scene__coverage-row">
+        <span
+          class="galactic-map-scene__coverage-swatch galactic-map-scene__coverage-swatch--unexplored"
+          aria-hidden="true"
+        ></span>
+
+        <strong>No explorado</strong>
+
+        <code data-testid="galactic-map-total-sector-count">
+          {{ coverage.totalSectorCount.toString() }} total
+        </code>
+      </div>
+
+      <p>
+        La cuadrícula tenue representa el espacio sectorial aún no escaneado;
+        las celdas resaltadas ya tienen un SectorLocator persistido en estado
+        DETECTED o superior.
+      </p>
+    </aside>
+  }
 
   @if (renderState() === 'ready') {
     <div

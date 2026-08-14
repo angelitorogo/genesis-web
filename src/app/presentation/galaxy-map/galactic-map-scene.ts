@@ -38,6 +38,11 @@ import {
   GalacticMapParticleLayoutGenerator,
 } from './galactic-map-particle-layout';
 
+import {
+  createGalacticMapSectorOverlay,
+  type GalacticMapSectorOverlay,
+} from './galactic-map-sector-overlay';
+
 const CLICK_MAX_MOVEMENT_PX =
   6;
 
@@ -133,11 +138,11 @@ interface PointerGesture {
 }
 
 /**
- * Point-10.2 Angular host for the Three.js scene.
+ * Point-10.3 Angular host for the Three.js scene.
  *
- * The component owns renderer lifecycle, resize, camera-control UI and click
- * versus drag semantics. The runtime owns OrbitControls, raycasting and the
- * transient selection marker. A selected GPU sample remains render-only data.
+ * It preserves the point-10.2 camera/selection behavior and adds a read-only
+ * binary sector coverage overlay. The overlay is cartographic only: it maps
+ * persisted SectorLocator addresses, never sector content or physical stars.
  */
 @Component({
   selector:
@@ -786,6 +791,10 @@ class ThreeGalacticMapSceneRuntime
     > | null =
     null;
 
+  private sectorOverlay:
+    GalacticMapSectorOverlay | null =
+    null;
+
   private selectionMarker:
     THREE.Mesh<
       THREE.SphereGeometry,
@@ -1035,6 +1044,29 @@ class ThreeGalacticMapSceneRuntime
         model,
       );
 
+    const explorationCoverage =
+      model.explorationCoverage;
+
+    if (
+      explorationCoverage !==
+      null
+    ) {
+      const sectorOverlay =
+        createGalacticMapSectorOverlay(
+          explorationCoverage,
+          visual
+            .regions
+            .haloOuterRadiusNormalized,
+        );
+
+      galaxyGroup.add(
+        sectorOverlay.object3d,
+      );
+
+      this.sectorOverlay =
+        sectorOverlay;
+    }
+
     galaxyGroup.add(
       points,
     );
@@ -1268,13 +1300,6 @@ class ThreeGalacticMapSceneRuntime
     void {
 
     if (
-      this.points ===
-      null
-    ) {
-      return;
-    }
-
-    if (
       this.galaxyGroup !==
       null
     ) {
@@ -1283,23 +1308,38 @@ class ThreeGalacticMapSceneRuntime
       );
 
       this.galaxyGroup.clear();
-    } else {
+    } else if (
+      this.points !==
+      null
+    ) {
       this.scene.remove(
         this.points,
       );
     }
 
-    this
-      .points
-      .geometry
-      .dispose();
+    if (
+      this.points !==
+      null
+    ) {
+      this
+        .points
+        .geometry
+        .dispose();
+
+      this
+        .points
+        .material
+        .dispose();
+    }
 
     this
-      .points
-      .material
-      .dispose();
+      .sectorOverlay
+      ?.dispose();
 
     this.points =
+      null;
+
+    this.sectorOverlay =
       null;
 
     this.galaxyGroup =

@@ -11,6 +11,14 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  GalaxySectorCoordinates,
+} from '../../domain/sector/galaxy-sector-coordinates';
+
+import {
+  GalaxySectorGrid,
+} from '../../domain/sector/galaxy-sector-grid';
+
+import {
   GalaxyType,
 } from '../../domain/universe/galaxy-type';
 
@@ -29,6 +37,10 @@ import {
 import {
   GalaxyVisualStructureGenerator,
 } from '../../simulation/universe/galaxy-visual-structure-generator';
+
+import {
+  GalacticMapExplorationCoverage,
+} from './galactic-map-exploration-coverage';
 
 import {
   GalacticMapModel,
@@ -215,5 +227,121 @@ describe(
         );
       },
     );
+
+    it(
+      'should expose matching point-10.3 exploration coverage while preserving the detailed galaxy identity',
+      () => {
+        const grid =
+          new GalaxySectorGrid(
+            generationKey,
+            0n,
+            1000,
+            2,
+          );
+
+        const coverage =
+          new GalacticMapExplorationCoverage(
+            generationKey,
+            0n,
+            grid,
+            [
+              new GalaxySectorCoordinates(
+                0,
+                0,
+              ),
+            ],
+          );
+
+        const model =
+          new GalacticMapModel(
+            generationKey,
+            0n,
+            discoveredInformation,
+            visualStructure,
+            galaxy.type,
+            coverage,
+          );
+
+        expect(
+          model.explorationCoverage,
+        ).toBe(
+          coverage,
+        );
+
+        expect(
+          model
+            .explorationCoverage
+            ?.exploredSectorCount,
+        ).toBe(
+          1,
+        );
+      },
+    );
+
+    it(
+      'should reject exploration coverage before DISCOVERED or from another galaxy',
+      () => {
+        const detectedInformation =
+          ExternalGalaxyPreliminaryInformationGenerator
+            .generate(
+              generationKey,
+              1n,
+              DiscoveryState.DETECTED,
+            );
+
+        const detectedGrid =
+          new GalaxySectorGrid(
+            generationKey,
+            1n,
+            1000,
+            2,
+          );
+
+        const detectedCoverage =
+          new GalacticMapExplorationCoverage(
+            generationKey,
+            1n,
+            detectedGrid,
+            [],
+          );
+
+        expect(
+          () =>
+            new GalacticMapModel(
+              generationKey,
+              1n,
+              detectedInformation,
+              null,
+              null,
+              detectedCoverage,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const foreignCoverage =
+          new GalacticMapExplorationCoverage(
+            generationKey,
+            1n,
+            detectedGrid,
+            [],
+          );
+
+        expect(
+          () =>
+            new GalacticMapModel(
+              generationKey,
+              0n,
+              discoveredInformation,
+              visualStructure,
+              galaxy.type,
+              foreignCoverage,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
   },
 );

@@ -11,8 +11,16 @@ import {
 } from 'vitest';
 
 import {
+  KnownDiscovery,
+} from '../../domain/discovery/known-discovery';
+
+import {
   DiscoveryState,
 } from '../../domain/discovery/discovery-state';
+
+import {
+  SectorLocator,
+} from '../../domain/generation/procedural-locator';
 
 import {
   GeneratorVersion,
@@ -103,7 +111,7 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.2 page must not read PD.',
+              '10.3 page must not read PD.',
             );
           },
 
@@ -111,7 +119,7 @@ describe(
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.2 page must not read galaxy PD.',
+              '10.3 page must not read galaxy PD.',
             );
           },
 
@@ -127,14 +135,21 @@ describe(
           async setState() {},
 
           async getKnownDiscoveries() {
-            throw new Error(
-              '10.2 page must not materialize persistent marker collections.',
-            );
+            return [
+              new KnownDiscovery(
+                generationKey,
+                new SectorLocator(
+                  0n,
+                  0n,
+                ),
+                DiscoveryState.DETECTED,
+              ),
+            ];
           },
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.2 page must not materialize sector content.',
+              '10.3 page must not query or materialize sector content.',
             );
           },
         },
@@ -275,7 +290,7 @@ describe(
     }
 
     it(
-      'should expose the point-10.2 interactive Angular + Three.js galactic map page',
+      'should expose the point-10.3 interactive map with persisted explored/unexplored sector coverage',
       async () => {
         const element =
           await renderedPage();
@@ -315,6 +330,32 @@ describe(
             '[data-testid="galactic-map-reset-view"]',
           ),
         ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-exploration-coverage"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-explored-sector-count',
+            ),
+        ).toBe(
+          '1',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-explored-sector-count"]',
+          )?.textContent,
+        ).toContain(
+          '1',
+        );
 
         expect(
           element.querySelector(
@@ -518,7 +559,7 @@ describe(
     );
 
     it(
-      'should expose only point-10.2 interactions and keep point-10.3-plus capabilities absent',
+      'should expose point-10.3 coverage while keeping point-10.4-plus capabilities absent',
       async () => {
         const element =
           await renderedPage();
@@ -526,6 +567,12 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galactic-map-controls"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-exploration-coverage"]',
           ),
         ).toBeTruthy();
 
@@ -555,7 +602,7 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '10.3–10.9',
+          '10.4–10.9',
         );
 
         expect(
