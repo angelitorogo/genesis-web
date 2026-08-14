@@ -4,12 +4,25 @@
   data-testid="galactic-map-scene"
   [attr.data-render-state]="renderState()"
   [attr.data-particle-count]="particleCount()"
+  [attr.data-rotation-enabled]="cameraState()?.rotationEnabled ?? null"
+  [attr.data-camera-distance]="cameraState()?.distance ?? null"
+  [attr.data-camera-azimuth]="cameraState()?.azimuthRadians ?? null"
+  [attr.data-camera-polar]="cameraState()?.polarRadians ?? null"
+  [attr.data-camera-target-x]="cameraState()?.targetX ?? null"
+  [attr.data-camera-target-y]="cameraState()?.targetY ?? null"
+  [attr.data-camera-target-z]="cameraState()?.targetZ ?? null"
+  [attr.data-selected-sample-index]="selection()?.sampleIndex ?? null"
 >
   <canvas
     #sceneCanvas
     class="galactic-map-scene__canvas"
     data-testid="galactic-map-canvas"
-    aria-label="Representación tridimensional de la galaxia activa"
+    aria-label="Representación tridimensional interactiva de la galaxia activa"
+    (pointerdown)="onCanvasPointerDown($event)"
+    (pointermove)="onCanvasPointerMove($event)"
+    (pointerup)="onCanvasPointerUp($event)"
+    (pointercancel)="onCanvasPointerCancel($event)"
+    (contextmenu)="onCanvasContextMenu($event)"
   ></canvas>
 
   <div
@@ -21,8 +34,86 @@
     class="galactic-map-scene__label"
     aria-hidden="true"
   >
-    THREE.JS / WEBGL2
+    THREE.JS / WEBGL2 / INTERACTIVO
   </div>
+
+  @if (renderState() === 'ready') {
+    <div
+      class="galactic-map-scene__controls"
+      data-testid="galactic-map-controls"
+      aria-label="Controles del mapa galáctico"
+    >
+      <button
+        type="button"
+        class="galactic-map-scene__control-button"
+        data-testid="galactic-map-rotation-toggle"
+        [attr.aria-pressed]="cameraState()?.rotationEnabled ?? false"
+        (click)="toggleRotation()"
+      >
+        Rotación
+        <strong>
+          {{ cameraState()?.rotationEnabled ? 'ACTIVA' : 'BLOQUEADA' }}
+        </strong>
+      </button>
+
+      <button
+        type="button"
+        class="galactic-map-scene__control-button"
+        data-testid="galactic-map-reset-view"
+        (click)="resetView()"
+      >
+        Restablecer vista
+      </button>
+    </div>
+
+    <div
+      class="galactic-map-scene__help"
+      data-testid="galactic-map-control-help"
+    >
+      <span>
+        Arrastrar: rotar
+      </span>
+
+      <span>
+        Botón derecho / Ctrl: desplazar
+      </span>
+
+      <span>
+        Rueda / pellizco: zoom
+      </span>
+
+      <span>
+        Clic: seleccionar muestra
+      </span>
+    </div>
+  }
+
+  @if (selection(); as selected) {
+    <aside
+      class="galactic-map-scene__selection"
+      data-testid="galactic-map-selection"
+      aria-live="polite"
+    >
+      <small>
+        SELECCIÓN VISUAL / GPU
+      </small>
+
+      <strong data-testid="galactic-map-selected-sample">
+        Muestra #{{ selected.sampleIndex }}
+      </strong>
+
+      <code>
+        X {{ selected.renderX.toFixed(3) }} ·
+        Y {{ selected.renderY.toFixed(3) }} ·
+        Z {{ selected.renderZ.toFixed(3) }}
+      </code>
+
+      <p>
+        Esta selección identifica una muestra de render. No representa una
+        estrella, sistema, descubrimiento o entidad física materializada.
+      </p>
+    </aside>
+  }
 
   @if (renderState() === 'initializing') {
     <div

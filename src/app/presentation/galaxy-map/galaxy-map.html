@@ -20,7 +20,7 @@
         </h1>
 
         <p class="galactic-map__subtitle">
-          Primera escena tridimensional real de la galaxia actualmente en foco.
+          Escena tridimensional interactiva de la galaxia actualmente en foco.
         </p>
       </div>
 
@@ -44,7 +44,7 @@
 
           <div>
             <small class="galactic-map__meta">
-              RENDER / 10.1
+              RENDER / 10.2
             </small>
 
             <strong>
@@ -156,7 +156,7 @@
           @if (model.hasDetailedScene) {
             <section
               class="galactic-map__viewport"
-              aria-label="Escena galáctica Three.js"
+              aria-label="Escena galáctica Three.js interactiva"
             >
               <app-galactic-map-scene
                 [model]="model"
@@ -166,12 +166,13 @@
                 class="galactic-map__row galactic-map__viewport-footer"
               >
                 <span class="galactic-map__meta">
-                  NUBE VISUAL GPU
+                  NUBE VISUAL GPU / CÁMARA 10.2
                 </span>
 
                 <p>
-                  Los puntos representan muestras de render, no estrellas ni
-                  sistemas materializados individualmente.
+                  Los puntos continúan siendo muestras de render. La cámara puede
+                  navegar y seleccionar una muestra visual sin materializar una
+                  estrella o sistema físico.
                 </p>
               </div>
             </section>
@@ -201,13 +202,15 @@
             data-testid="galactic-map-point-boundary"
           >
             <span>
-              10.1
+              10.2
             </span>
 
             <p>
-              Escena Angular + Three.js. Sin zoom, pan, selección, marcadores,
-              capas, LOD, sectores físicos materializados ni cálculo nuevo en
-              Web Worker; esas capacidades pertenecen a 10.2–10.9.
+              Zoom, pan, rotación opcional, restablecimiento de cámara y selección
+              precisa de muestras GPU. Sin zonas exploradas, marcadores persistentes,
+              capas, navegación desde marcadores, posición relativa, LOD, sectores
+              físicos materializados ni cálculo nuevo en Web Worker; esas capacidades
+              pertenecen a 10.3–10.9.
             </p>
           </section>
         }

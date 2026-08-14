@@ -31,6 +31,11 @@ import {
 } from '../../simulation/universe/galaxy-visual-structure-generator';
 
 import {
+  type GalacticMapCameraState,
+  type GalacticMapVisualSelection,
+} from './galactic-map-camera-controller';
+
+import {
   GalacticMapModel,
 } from './galactic-map-model';
 
@@ -81,6 +86,28 @@ describe(
       );
     }
 
+    function pointerEvent(
+      pointerId:
+        number,
+
+      clientX:
+        number,
+
+      clientY:
+        number,
+    ): PointerEvent {
+
+      return {
+        pointerId,
+        clientX,
+        clientY,
+        pointerType:
+          'mouse',
+        button:
+          0,
+      } as PointerEvent;
+    }
+
     let renderCalls:
       GalacticMapModel[];
 
@@ -94,6 +121,36 @@ describe(
     let disposeCalls:
       number;
 
+    let resetCalls:
+      number;
+
+    let selectCalls:
+      Array<readonly [
+        number,
+        number,
+      ]>;
+
+    let cameraState:
+      GalacticMapCameraState;
+
+    let cameraStateListener:
+      ((state: GalacticMapCameraState) => void) | null;
+
+    const selectedSample:
+      GalacticMapVisualSelection =
+      Object.freeze({
+        sampleIndex:
+          321,
+        renderX:
+          0.12,
+        renderY:
+          -0.34,
+        renderZ:
+          0.05,
+        pixelDistance:
+          2.1,
+      });
+
     beforeEach(
       async () => {
         renderCalls =
@@ -104,6 +161,33 @@ describe(
 
         disposeCalls =
           0;
+
+        resetCalls =
+          0;
+
+        selectCalls =
+          [];
+
+        cameraStateListener =
+          null;
+
+        cameraState =
+          Object.freeze({
+            distance:
+              3.5,
+            azimuthRadians:
+              0,
+            polarRadians:
+              0.9,
+            targetX:
+              0,
+            targetY:
+              0,
+            targetZ:
+              0,
+            rotationEnabled:
+              true,
+          });
 
         const runtime:
           GalacticMapSceneRuntime =
@@ -133,6 +217,73 @@ describe(
               };
             },
 
+            cameraState() {
+              return cameraState;
+            },
+
+            setCameraStateListener(
+              listener,
+            ) {
+              cameraStateListener =
+                listener;
+            },
+
+            setRotationEnabled(
+              enabled,
+            ) {
+              cameraState =
+                Object.freeze({
+                  ...cameraState,
+                  rotationEnabled:
+                    enabled,
+                });
+
+              cameraStateListener?.(
+                cameraState,
+              );
+            },
+
+            resetView() {
+              resetCalls +=
+                1;
+
+              cameraState =
+                Object.freeze({
+                  distance:
+                    3.5,
+                  azimuthRadians:
+                    0,
+                  polarRadians:
+                    0.9,
+                  targetX:
+                    0,
+                  targetY:
+                    0,
+                  targetZ:
+                    0,
+                  rotationEnabled:
+                    cameraState.rotationEnabled,
+                });
+
+              cameraStateListener?.(
+                cameraState,
+              );
+            },
+
+            selectAt(
+              clientX,
+              clientY,
+            ) {
+              selectCalls.push([
+                clientX,
+                clientY,
+              ]);
+
+              return selectedSample;
+            },
+
+            clearSelection() {},
+
             dispose() {
               disposeCalls +=
                 1;
@@ -160,7 +311,7 @@ describe(
     );
 
     it(
-      'should initialize the renderer host and render the supplied map model without requiring WebGL in unit tests',
+      'should initialize the interactive renderer host and render the supplied map model without requiring WebGL in unit tests',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -181,6 +332,12 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galactic-map-canvas"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-controls"]',
           ),
         ).toBeTruthy();
 
@@ -206,6 +363,18 @@ describe(
             ),
         ).toBe(
           'ready',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-rotation-enabled',
+            ),
+        ).toBe(
+          'true',
         );
       },
     );
@@ -254,7 +423,246 @@ describe(
     );
 
     it(
-      'should dispose the renderer runtime when Angular destroys the scene',
+      'should toggle optional camera rotation while keeping the scene ready',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapScene,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          model(),
+        );
+
+        fixture.detectChanges();
+
+        fixture
+          .componentInstance
+          .toggleRotation();
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          cameraState.rotationEnabled,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-rotation-enabled',
+            ),
+        ).toBe(
+          'false',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-rotation-toggle"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'BLOQUEADA',
+        );
+      },
+    );
+
+    it(
+      'should select a GPU sample only for a click-sized primary gesture',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapScene,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          model(),
+        );
+
+        fixture.detectChanges();
+
+        fixture
+          .componentInstance
+          .onCanvasPointerDown(
+            pointerEvent(
+              7,
+              120,
+              140,
+            ),
+          );
+
+        fixture
+          .componentInstance
+          .onCanvasPointerUp(
+            pointerEvent(
+              7,
+              122,
+              143,
+            ),
+          );
+
+        fixture.detectChanges();
+
+        expect(
+          selectCalls,
+        ).toEqual([
+          [
+            122,
+            143,
+          ],
+        ]);
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-selection"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-selected-sample"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Muestra #321',
+        );
+      },
+    );
+
+    it(
+      'should not accidentally select a GPU sample after a drag gesture',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapScene,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          model(),
+        );
+
+        fixture.detectChanges();
+
+        fixture
+          .componentInstance
+          .onCanvasPointerDown(
+            pointerEvent(
+              9,
+              100,
+              100,
+            ),
+          );
+
+        fixture
+          .componentInstance
+          .onCanvasPointerMove(
+            pointerEvent(
+              9,
+              150,
+              120,
+            ),
+          );
+
+        fixture
+          .componentInstance
+          .onCanvasPointerUp(
+            pointerEvent(
+              9,
+              150,
+              120,
+            ),
+          );
+
+        expect(
+          selectCalls,
+        ).toHaveLength(
+          0,
+        );
+      },
+    );
+
+    it(
+      'should reset the camera and clear Angular selection state',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapScene,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          model(),
+        );
+
+        fixture.detectChanges();
+
+        fixture
+          .componentInstance
+          .onCanvasPointerDown(
+            pointerEvent(
+              4,
+              200,
+              200,
+            ),
+          );
+
+        fixture
+          .componentInstance
+          .onCanvasPointerUp(
+            pointerEvent(
+              4,
+              200,
+              200,
+            ),
+          );
+
+        fixture.detectChanges();
+
+        expect(
+          fixture
+            .componentInstance
+            .selection(),
+        ).not.toBeNull();
+
+        fixture
+          .componentInstance
+          .resetView();
+
+        fixture.detectChanges();
+
+        expect(
+          resetCalls,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .selection(),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should dispose the interactive renderer runtime when Angular destroys the scene',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -274,9 +682,12 @@ describe(
         ).toBe(
           1,
         );
+
+        expect(
+          cameraStateListener,
+        ).toBeNull();
       },
     );
-
 
     it(
       'should apply the frozen 20-degree depth tilt to both spiral families only',
@@ -329,9 +740,8 @@ describe(
       },
     );
 
-
     it(
-      'should apply morphology-specific inspection framing without changing approved spiral or spheroidal framing',
+      'should preserve morphology-specific framing while point 10.2 changes only the camera interaction layer',
       () => {
         const spheroidal =
           model(

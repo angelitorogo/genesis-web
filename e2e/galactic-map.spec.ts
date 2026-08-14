@@ -33,11 +33,40 @@ async function ensureActiveUniverse(
   );
 }
 
+async function numericAttribute(
+  locator:
+    import('@playwright/test').Locator,
+
+  name:
+    string,
+): Promise<number> {
+
+  const raw =
+    await locator.getAttribute(
+      name,
+    );
+
+  const value =
+    Number(
+      raw,
+    );
+
+  expect(
+    Number.isFinite(
+      value,
+    ),
+  ).toBe(
+    true,
+  );
+
+  return value;
+}
+
 test.describe(
-  'GENESIS point-10.1 galactic map',
+  'GENESIS point-10.2 galactic map interaction',
   () => {
     test(
-      'should render the real Three.js scene for the discovered active galaxy without pulling future map capabilities forward',
+      'should provide bounded camera navigation and precise render-sample selection without pulling point-10.3-plus capabilities forward',
       async ({
         page,
       }) => {
@@ -68,6 +97,11 @@ test.describe(
             'galactic-map-scene',
           );
 
+        const canvas =
+          page.getByTestId(
+            'galactic-map-canvas',
+          );
+
         await expect(
           scene,
         ).toBeVisible();
@@ -78,6 +112,12 @@ test.describe(
           'data-render-state',
           'ready',
         );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-controls',
+          ),
+        ).toBeVisible();
 
         const particleCount =
           Number(
@@ -93,22 +133,18 @@ test.describe(
         );
 
         const canvasSize =
-          await page
-            .getByTestId(
-              'galactic-map-canvas',
-            )
-            .evaluate(
-              (
-                canvas,
-              ) => ({
-                width:
-                  (canvas as HTMLCanvasElement)
-                    .width,
-                height:
-                  (canvas as HTMLCanvasElement)
-                    .height,
-              }),
-            );
+          await canvas.evaluate(
+            (
+              value,
+            ) => ({
+              width:
+                (value as HTMLCanvasElement)
+                  .width,
+              height:
+                (value as HTMLCanvasElement)
+                  .height,
+            }),
+          );
 
         expect(
           canvasSize.width,
@@ -122,11 +158,304 @@ test.describe(
           1,
         );
 
+        const initialDistance =
+          await numericAttribute(
+            scene,
+            'data-camera-distance',
+          );
+
+        await canvas.hover();
+
+        await page.mouse.wheel(
+          0,
+          -620,
+        );
+
+        await expect
+          .poll(
+            async () =>
+              numericAttribute(
+                scene,
+                'data-camera-distance',
+              ),
+          )
+          .toBeLessThan(
+            initialDistance -
+            0.05,
+          );
+
+        const bounds =
+          await canvas.boundingBox();
+
+        expect(
+          bounds,
+        ).not.toBeNull();
+
+        if (
+          bounds ===
+          null
+        ) {
+          return;
+        }
+
+        const centerX =
+          bounds.x +
+          bounds.width /
+          2;
+
+        const centerY =
+          bounds.y +
+          bounds.height /
+          2;
+
+        const initialAzimuth =
+          await numericAttribute(
+            scene,
+            'data-camera-azimuth',
+          );
+
+        await page.mouse.move(
+          centerX,
+          centerY,
+        );
+
+        await page.mouse.down({
+          button:
+            'left',
+        });
+
+        await page.mouse.move(
+          centerX +
+            90,
+          centerY +
+            24,
+          {
+            steps:
+              5,
+          },
+        );
+
+        await page.mouse.up({
+          button:
+            'left',
+        });
+
+        await expect
+          .poll(
+            async () =>
+              Math.abs(
+                await numericAttribute(
+                  scene,
+                  'data-camera-azimuth',
+                ) -
+                initialAzimuth,
+              ),
+          )
+          .toBeGreaterThan(
+            0.02,
+          );
+
+        const initialTargetX =
+          await numericAttribute(
+            scene,
+            'data-camera-target-x',
+          );
+
+        const initialTargetY =
+          await numericAttribute(
+            scene,
+            'data-camera-target-y',
+          );
+
+        await page.mouse.move(
+          centerX,
+          centerY,
+        );
+
+        await page.mouse.down({
+          button:
+            'right',
+        });
+
+        await page.mouse.move(
+          centerX +
+            70,
+          centerY -
+            42,
+          {
+            steps:
+              5,
+          },
+        );
+
+        await page.mouse.up({
+          button:
+            'right',
+        });
+
+        await expect
+          .poll(
+            async () => {
+              const targetX =
+                await numericAttribute(
+                  scene,
+                  'data-camera-target-x',
+                );
+
+              const targetY =
+                await numericAttribute(
+                  scene,
+                  'data-camera-target-y',
+                );
+
+              return Math.hypot(
+                targetX -
+                  initialTargetX,
+                targetY -
+                  initialTargetY,
+              );
+            },
+          )
+          .toBeGreaterThan(
+            0.01,
+          );
+
+        await page
+          .getByTestId(
+            'galactic-map-rotation-toggle',
+          )
+          .click();
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-rotation-enabled',
+          'false',
+        );
+
+        await page
+          .getByTestId(
+            'galactic-map-rotation-toggle',
+          )
+          .click();
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-rotation-enabled',
+          'true',
+        );
+
+        await page
+          .getByTestId(
+            'galactic-map-reset-view',
+          )
+          .click();
+
+        await expect
+          .poll(
+            async () =>
+              Math.abs(
+                await numericAttribute(
+                  scene,
+                  'data-camera-distance',
+                ) -
+                initialDistance,
+              ),
+          )
+          .toBeLessThan(
+            0.001,
+          );
+
+        await canvas.click({
+          position: {
+            x:
+              bounds.width /
+              2,
+            y:
+              bounds.height /
+              2,
+          },
+        });
+
+        const selection =
+          page.getByTestId(
+            'galactic-map-selection',
+          );
+
+        await expect(
+          selection,
+        ).toBeVisible();
+
+        await expect(
+          selection,
+        ).toContainText(
+          'SELECCIÓN VISUAL / GPU',
+        );
+
+        await expect(
+          selection,
+        ).toContainText(
+          'No representa una estrella',
+        );
+
+        const selectedIndex =
+          await scene.getAttribute(
+            'data-selected-sample-index',
+          );
+
+        expect(
+          selectedIndex,
+        ).not.toBeNull();
+
+        await page.mouse.move(
+          centerX,
+          centerY,
+        );
+
+        await page.mouse.down({
+          button:
+            'left',
+        });
+
+        await page.mouse.move(
+          centerX +
+            75,
+          centerY,
+          {
+            steps:
+              4,
+          },
+        );
+
+        await page.mouse.up({
+          button:
+            'left',
+        });
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-selected-sample-index',
+          selectedIndex ??
+            '',
+        );
+
+        await page
+          .getByTestId(
+            'galactic-map-reset-view',
+          )
+          .click();
+
+        await expect(
+          selection,
+        ).toHaveCount(
+          0,
+        );
+
         for (
           const testId
           of [
-            'galactic-map-controls',
-            'galactic-map-selection',
             'galactic-map-markers',
             'galactic-map-layers',
             'galactic-map-relative-position',
@@ -140,6 +469,14 @@ test.describe(
             0,
           );
         }
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-point-boundary',
+          ),
+        ).toContainText(
+          '10.3–10.9',
+        );
       },
     );
   },

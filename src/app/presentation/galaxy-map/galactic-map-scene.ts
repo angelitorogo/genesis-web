@@ -25,12 +25,21 @@ import {
 } from '../../domain/universe/galaxy-type';
 
 import {
+  GalacticMapCameraController,
+  type GalacticMapCameraState,
+  type GalacticMapVisualSelection,
+} from './galactic-map-camera-controller';
+
+import {
   type GalacticMapModel,
 } from './galactic-map-model';
 
 import {
   GalacticMapParticleLayoutGenerator,
 } from './galactic-map-particle-layout';
+
+const CLICK_MAX_MOVEMENT_PX =
+  6;
 
 export interface GalacticMapSceneRenderInfo {
   readonly particleCount:
@@ -53,6 +62,33 @@ export interface GalacticMapSceneRuntime {
     model:
       GalacticMapModel,
   ): GalacticMapSceneRenderInfo;
+
+  cameraState():
+    GalacticMapCameraState;
+
+  setCameraStateListener(
+    listener:
+      ((state: GalacticMapCameraState) => void) | null,
+  ): void;
+
+  setRotationEnabled(
+    enabled:
+      boolean,
+  ): void;
+
+  resetView():
+    void;
+
+  selectAt(
+    clientX:
+      number,
+
+    clientY:
+      number,
+  ): GalacticMapVisualSelection | null;
+
+  clearSelection():
+    void;
 
   dispose():
     void;
@@ -82,12 +118,26 @@ type SceneRenderState =
   | 'unavailable'
   | 'error';
 
+interface PointerGesture {
+  readonly pointerId:
+    number;
+
+  readonly startX:
+    number;
+
+  readonly startY:
+    number;
+
+  moved:
+    boolean;
+}
+
 /**
- * Point-10.1 Angular host for the Three.js scene.
+ * Point-10.2 Angular host for the Three.js scene.
  *
- * Camera interaction, selection and controls are deliberately absent until
- * point 10.2. This component owns renderer lifecycle, resize and one static
- * deterministic point-cloud render.
+ * The component owns renderer lifecycle, resize, camera-control UI and click
+ * versus drag semantics. The runtime owns OrbitControls, raycasting and the
+ * transient selection marker. A selected GPU sample remains render-only data.
  */
 @Component({
   selector:
@@ -159,6 +209,16 @@ export class GalacticMapScene
   private listeningToWindowResize =
     false;
 
+  private pointerGesture:
+    PointerGesture | null =
+    null;
+
+  private readonly activePointerIds =
+    new Set<number>();
+
+  private multiPointerGesture =
+    false;
+
   private readonly onWindowResize =
     () => {
       this.resizeRuntime();
@@ -174,6 +234,16 @@ export class GalacticMapScene
       0,
     );
 
+  private readonly cameraStateSignal =
+    signal<GalacticMapCameraState | null>(
+      null,
+    );
+
+  private readonly selectionSignal =
+    signal<GalacticMapVisualSelection | null>(
+      null,
+    );
+
   readonly renderState =
     this
       .renderStateSignal
@@ -182,6 +252,16 @@ export class GalacticMapScene
   readonly particleCount =
     this
       .particleCountSignal
+      .asReadonly();
+
+  readonly cameraState =
+    this
+      .cameraStateSignal
+      .asReadonly();
+
+  readonly selection =
+    this
+      .selectionSignal
       .asReadonly();
 
   ngAfterViewInit():
@@ -209,6 +289,24 @@ export class GalacticMapScene
               .sceneCanvasRef
               .nativeElement,
           );
+
+      this.runtime.setCameraStateListener(
+        (
+          state,
+        ) => {
+          this
+            .cameraStateSignal
+            .set(
+              state,
+            );
+        },
+      );
+
+      this
+        .cameraStateSignal
+        .set(
+          this.runtime.cameraState(),
+        );
 
       this.installResizeHandling();
       this.resizeRuntime();
@@ -264,12 +362,246 @@ export class GalacticMapScene
     this.listeningToWindowResize =
       false;
 
+    this.pointerGesture =
+      null;
+
+    this.activePointerIds.clear();
+    this.multiPointerGesture =
+      false;
+
+    this
+      .runtime
+      ?.setCameraStateListener(
+        null,
+      );
+
     this
       .runtime
       ?.dispose();
 
     this.runtime =
       null;
+  }
+
+  toggleRotation():
+    void {
+
+    if (
+      this.runtime ===
+      null
+    ) {
+      return;
+    }
+
+    const enabled =
+      !this
+        .runtime
+        .cameraState()
+        .rotationEnabled;
+
+    this.runtime.setRotationEnabled(
+      enabled,
+    );
+
+    this
+      .cameraStateSignal
+      .set(
+        this.runtime.cameraState(),
+      );
+  }
+
+  resetView():
+    void {
+
+    if (
+      this.runtime ===
+      null
+    ) {
+      return;
+    }
+
+    this.runtime.resetView();
+
+    this
+      .selectionSignal
+      .set(
+        null,
+      );
+
+    this
+      .cameraStateSignal
+      .set(
+        this.runtime.cameraState(),
+      );
+  }
+
+  onCanvasPointerDown(
+    event:
+      PointerEvent,
+  ): void {
+
+    this.activePointerIds.add(
+      event.pointerId,
+    );
+
+    if (
+      this.activePointerIds.size >
+      1
+    ) {
+      this.multiPointerGesture =
+        true;
+
+      this.pointerGesture =
+        null;
+
+      return;
+    }
+
+    if (
+      event.pointerType ===
+        'mouse' &&
+      event.button !==
+        0
+    ) {
+      this.pointerGesture =
+        null;
+
+      return;
+    }
+
+    this.pointerGesture =
+      {
+        pointerId:
+          event.pointerId,
+
+        startX:
+          event.clientX,
+
+        startY:
+          event.clientY,
+
+        moved:
+          false,
+      };
+  }
+
+  onCanvasPointerMove(
+    event:
+      PointerEvent,
+  ): void {
+
+    const gesture =
+      this.pointerGesture;
+
+    if (
+      gesture ===
+        null ||
+      gesture.pointerId !==
+        event.pointerId
+    ) {
+      return;
+    }
+
+    const deltaX =
+      event.clientX -
+      gesture.startX;
+
+    const deltaY =
+      event.clientY -
+      gesture.startY;
+
+    if (
+      deltaX *
+        deltaX +
+      deltaY *
+        deltaY >
+      CLICK_MAX_MOVEMENT_PX *
+        CLICK_MAX_MOVEMENT_PX
+    ) {
+      gesture.moved =
+        true;
+    }
+  }
+
+  onCanvasPointerUp(
+    event:
+      PointerEvent,
+  ): void {
+
+    const gesture =
+      this.pointerGesture;
+
+    const multiPointerGesture =
+      this.multiPointerGesture;
+
+    this.activePointerIds.delete(
+      event.pointerId,
+    );
+
+    if (
+      this.activePointerIds.size ===
+      0
+    ) {
+      this.multiPointerGesture =
+        false;
+    }
+
+    this.pointerGesture =
+      null;
+
+    if (
+      multiPointerGesture ||
+      gesture ===
+        null ||
+      gesture.pointerId !==
+        event.pointerId ||
+      gesture.moved ||
+      this.runtime ===
+        null
+    ) {
+      return;
+    }
+
+    const selection =
+      this.runtime.selectAt(
+        event.clientX,
+        event.clientY,
+      );
+
+    this
+      .selectionSignal
+      .set(
+        selection,
+      );
+  }
+
+  onCanvasPointerCancel(
+    event:
+      PointerEvent,
+  ): void {
+
+    this.activePointerIds.delete(
+      event.pointerId,
+    );
+
+    if (
+      this.activePointerIds.size ===
+      0
+    ) {
+      this.multiPointerGesture =
+        false;
+    }
+
+    this.pointerGesture =
+      null;
+  }
+
+  onCanvasContextMenu(
+    event:
+      MouseEvent,
+  ): void {
+
+    event.preventDefault();
   }
 
   private installResizeHandling():
@@ -357,6 +689,12 @@ export class GalacticMapScene
     }
 
     try {
+      this
+        .selectionSignal
+        .set(
+          null,
+        );
+
       const info =
         this
           .runtime
@@ -371,6 +709,12 @@ export class GalacticMapScene
         );
 
       this
+        .cameraStateSignal
+        .set(
+          this.runtime.cameraState(),
+        );
+
+      this
         .renderStateSignal
         .set(
           'ready',
@@ -380,6 +724,12 @@ export class GalacticMapScene
         .particleCountSignal
         .set(
           0,
+        );
+
+      this
+        .selectionSignal
+        .set(
+          null,
         );
 
       this
@@ -418,6 +768,13 @@ class ThreeGalacticMapSceneRuntime
       20,
     );
 
+  private readonly cameraController:
+    GalacticMapCameraController;
+
+  private cameraStateListener:
+    ((state: GalacticMapCameraState) => void) | null =
+    null;
+
   private galaxyGroup:
     THREE.Group | null =
     null;
@@ -426,6 +783,13 @@ class ThreeGalacticMapSceneRuntime
     THREE.Points<
       THREE.BufferGeometry,
       THREE.ShaderMaterial
+    > | null =
+    null;
+
+  private selectionMarker:
+    THREE.Mesh<
+      THREE.SphereGeometry,
+      THREE.MeshBasicMaterial
     > | null =
     null;
 
@@ -478,6 +842,16 @@ class ThreeGalacticMapSceneRuntime
         0,
         0,
         0,
+      );
+
+    this.cameraController =
+      new GalacticMapCameraController(
+        this.camera,
+        canvas,
+        () => {
+          this.renderFrame();
+          this.emitCameraState();
+        },
       );
   }
 
@@ -563,6 +937,7 @@ class ThreeGalacticMapSceneRuntime
     }
 
     this.renderFrame();
+    this.emitCameraState();
   }
 
   render(
@@ -571,6 +946,7 @@ class ThreeGalacticMapSceneRuntime
   ): GalacticMapSceneRenderInfo {
 
     this.disposePoints();
+    this.clearSelection();
 
     const layout =
       GalacticMapParticleLayoutGenerator
@@ -681,14 +1057,200 @@ class ThreeGalacticMapSceneRuntime
     });
   }
 
+  cameraState():
+    GalacticMapCameraState {
+
+    return this
+      .cameraController
+      .cameraState();
+  }
+
+  setCameraStateListener(
+    listener:
+      ((state: GalacticMapCameraState) => void) | null,
+  ): void {
+
+    this.cameraStateListener =
+      listener;
+
+    this.emitCameraState();
+  }
+
+  setRotationEnabled(
+    enabled:
+      boolean,
+  ): void {
+
+    this
+      .cameraController
+      .setRotationEnabled(
+        enabled,
+      );
+  }
+
+  resetView():
+    void {
+
+    this.clearSelection();
+
+    this
+      .cameraController
+      .resetView();
+
+    this.renderFrame();
+  }
+
+  selectAt(
+    clientX:
+      number,
+
+    clientY:
+      number,
+  ): GalacticMapVisualSelection | null {
+
+    if (
+      this.points ===
+      null
+    ) {
+      this.clearSelection();
+      return null;
+    }
+
+    const selection =
+      this
+        .cameraController
+        .selectPoint(
+          this.points,
+          clientX,
+          clientY,
+        );
+
+    if (
+      selection ===
+      null
+    ) {
+      this.clearSelection();
+      return null;
+    }
+
+    this.showSelectionMarker(
+      selection,
+    );
+
+    return selection;
+  }
+
+  clearSelection():
+    void {
+
+    if (
+      this.selectionMarker ===
+      null
+    ) {
+      return;
+    }
+
+    this.scene.remove(
+      this.selectionMarker,
+    );
+
+    this
+      .selectionMarker
+      .geometry
+      .dispose();
+
+    this
+      .selectionMarker
+      .material
+      .dispose();
+
+    this.selectionMarker =
+      null;
+
+    this.renderFrame();
+  }
+
   dispose():
     void {
 
+    this.cameraStateListener =
+      null;
+
+    this.clearSelection();
     this.disposePoints();
+
+    this
+      .cameraController
+      .dispose();
 
     this
       .renderer
       .dispose();
+  }
+
+  private emitCameraState():
+    void {
+
+    this.cameraStateListener?.(
+      this.cameraState(),
+    );
+  }
+
+  private showSelectionMarker(
+    selection:
+      GalacticMapVisualSelection,
+  ): void {
+
+    this.clearSelection();
+
+    const geometry =
+      new THREE.SphereGeometry(
+        0.036,
+        12,
+        8,
+      );
+
+    const material =
+      new THREE.MeshBasicMaterial({
+        color:
+          0x6ad7ff,
+        transparent:
+          true,
+        opacity:
+          0.92,
+        wireframe:
+          true,
+        depthTest:
+          false,
+        depthWrite:
+          false,
+        toneMapped:
+          false,
+      });
+
+    const marker =
+      new THREE.Mesh(
+        geometry,
+        material,
+      );
+
+    marker.position.set(
+      selection.renderX,
+      selection.renderY,
+      selection.renderZ,
+    );
+
+    marker.renderOrder =
+      1000;
+
+    this.scene.add(
+      marker,
+    );
+
+    this.selectionMarker =
+      marker;
+
+    this.renderFrame();
   }
 
   private renderFrame():
@@ -746,21 +1308,10 @@ class ThreeGalacticMapSceneRuntime
 }
 
 /**
- * Static point-10.1 disk presentation tilt.
+ * Point-10.1 framing multiplier frozen by the visual-approval pass.
  *
- * Rotating around Z would only spin the projected disk. A 20-degree X-axis tilt
- * changes depth instead: with the current camera the upper half recedes and
- * the lower half comes forward. This is renderer presentation only; it does
- * not modify GalaxyVisualStructure or any Ground Truth coordinates.
- */
-/**
- * Point-10.1 framing multiplier.
- *
- * The active-galaxy view is an inspection view rather than a physically
- * comparative scale chart. DWARF receives a closer static framing for its
- * low-surface-brightness stellar body, while IRREGULAR receives a smaller
- * 20-percent framing increase so its asymmetric silhouette and embedded
- * regions are easier to inspect. Ground Truth coordinates remain unchanged.
+ * Point 10.2 manipulates only the camera. These morphology-specific framing
+ * values therefore remain unchanged.
  */
 export function staticPresentationScaleMultiplier(
   model:
@@ -784,6 +1335,12 @@ export function staticPresentationScaleMultiplier(
   return 1;
 }
 
+/**
+ * Static point-10.1 disk presentation tilt, frozen at 20 degrees.
+ *
+ * OrbitControls in 10.2 move the camera around this already-approved renderer
+ * presentation; the Ground Truth visual structure remains untouched.
+ */
 export function staticPresentationTiltRadians(
   model:
     GalacticMapModel,

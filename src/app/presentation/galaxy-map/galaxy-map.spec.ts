@@ -31,6 +31,10 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  type GalacticMapCameraState,
+} from './galactic-map-camera-controller';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
@@ -99,7 +103,7 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.1 page must not read PD.',
+              '10.2 page must not read PD.',
             );
           },
 
@@ -107,7 +111,7 @@ describe(
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.1 page must not read galaxy PD.',
+              '10.2 page must not read galaxy PD.',
             );
           },
 
@@ -124,13 +128,13 @@ describe(
 
           async getKnownDiscoveries() {
             throw new Error(
-              '10.1 page must not materialize marker collections.',
+              '10.2 page must not materialize persistent marker collections.',
             );
           },
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.1 page must not materialize sector content.',
+              '10.2 page must not materialize sector content.',
             );
           },
         },
@@ -144,6 +148,29 @@ describe(
 
     beforeEach(
       async () => {
+        let cameraState:
+          GalacticMapCameraState =
+          Object.freeze({
+            distance:
+              3.5,
+            azimuthRadians:
+              0,
+            polarRadians:
+              0.9,
+            targetX:
+              0,
+            targetY:
+              0,
+            targetZ:
+              0,
+            rotationEnabled:
+              true,
+          });
+
+        let listener:
+          ((state: GalacticMapCameraState) => void) | null =
+          null;
+
         const runtime:
           GalacticMapSceneRuntime =
           {
@@ -155,6 +182,40 @@ describe(
                   12_000,
               };
             },
+
+            cameraState() {
+              return cameraState;
+            },
+
+            setCameraStateListener(
+              value,
+            ) {
+              listener =
+                value;
+            },
+
+            setRotationEnabled(
+              enabled,
+            ) {
+              cameraState =
+                Object.freeze({
+                  ...cameraState,
+                  rotationEnabled:
+                    enabled,
+                });
+
+              listener?.(
+                cameraState,
+              );
+            },
+
+            resetView() {},
+
+            selectAt() {
+              return null;
+            },
+
+            clearSelection() {},
 
             dispose() {},
           };
@@ -214,7 +275,7 @@ describe(
     }
 
     it(
-      'should replace the point-9 placeholder with the real point-10.1 Angular + Three.js map page',
+      'should expose the point-10.2 interactive Angular + Three.js galactic map page',
       async () => {
         const element =
           await renderedPage();
@@ -234,6 +295,24 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galactic-map-canvas"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-controls"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-rotation-toggle"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-reset-view"]',
           ),
         ).toBeTruthy();
 
@@ -347,7 +426,7 @@ describe(
     );
 
     it(
-      'should preserve the consolidated point-10.1 presentation classes for the empty state',
+      'should preserve the consolidated presentation classes for the empty state',
       async () => {
         vi
           .spyOn(
@@ -439,16 +518,26 @@ describe(
     );
 
     it(
-      'should keep all future phase-10 interactions outside point 10.1',
+      'should expose only point-10.2 interactions and keep point-10.3-plus capabilities absent',
       async () => {
         const element =
           await renderedPage();
 
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-controls"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-selection"]',
+          ),
+        ).toBeNull();
+
         for (
           const testId
           of [
-            'galactic-map-controls',
-            'galactic-map-selection',
             'galactic-map-markers',
             'galactic-map-layers',
             'galactic-map-relative-position',
@@ -466,7 +555,15 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '10.2–10.9',
+          '10.3–10.9',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-point-boundary"]',
+          )?.textContent,
+        ).toContain(
+          'Zoom, pan, rotación opcional',
         );
       },
     );
