@@ -251,6 +251,8 @@ describe(
               0,
             polarRadians:
               0.9,
+            rollRadians:
+              0,
             targetX:
               0,
             targetY:
@@ -327,6 +329,8 @@ describe(
                     0,
                   polarRadians:
                     0.9,
+                  rollRadians:
+                    0,
                   targetX:
                     0,
                   targetY:
@@ -511,6 +515,38 @@ describe(
             ),
         ).toBe(
           'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-camera-roll',
+            ),
+        ).toBe(
+          '0',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-control-help"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Botón derecho + horizontal: alabeo',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-control-help"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Ctrl + arrastrar: desplazar',
         );
       },
     );

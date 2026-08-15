@@ -514,6 +514,10 @@ test.describe(
             'data-camera-target-y',
           );
 
+        await page.keyboard.down(
+          'Control',
+        );
+
         await page.mouse.move(
           centerX,
           centerY,
@@ -521,7 +525,7 @@ test.describe(
 
         await page.mouse.down({
           button:
-            'right',
+            'left',
         });
 
         await page.mouse.move(
@@ -537,8 +541,12 @@ test.describe(
 
         await page.mouse.up({
           button:
-            'right',
+            'left',
         });
+
+        await page.keyboard.up(
+          'Control',
+        );
 
         await expect
           .poll(
@@ -566,6 +574,122 @@ test.describe(
           .toBeGreaterThan(
             0.01,
           );
+
+        const targetBeforeRollX =
+          await numericAttribute(
+            scene,
+            'data-camera-target-x',
+          );
+
+        const targetBeforeRollY =
+          await numericAttribute(
+            scene,
+            'data-camera-target-y',
+          );
+
+        const targetBeforeRollZ =
+          await numericAttribute(
+            scene,
+            'data-camera-target-z',
+          );
+
+        const distanceBeforeRoll =
+          await numericAttribute(
+            scene,
+            'data-camera-distance',
+          );
+
+        const initialRoll =
+          await numericAttribute(
+            scene,
+            'data-camera-roll',
+          );
+
+        await page.mouse.move(
+          centerX,
+          centerY,
+        );
+
+        await page.mouse.down({
+          button:
+            'right',
+        });
+
+        await page.mouse.move(
+          centerX +
+            80,
+          centerY,
+          {
+            steps:
+              5,
+          },
+        );
+
+        await page.mouse.up({
+          button:
+            'right',
+        });
+
+        await expect
+          .poll(
+            async () =>
+              Math.abs(
+                await numericAttribute(
+                  scene,
+                  'data-camera-roll',
+                ) -
+                initialRoll,
+              ),
+          )
+          .toBeGreaterThan(
+            0.20,
+          );
+
+        const targetAfterRollX =
+          await numericAttribute(
+            scene,
+            'data-camera-target-x',
+          );
+
+        const targetAfterRollY =
+          await numericAttribute(
+            scene,
+            'data-camera-target-y',
+          );
+
+        const targetAfterRollZ =
+          await numericAttribute(
+            scene,
+            'data-camera-target-z',
+          );
+
+        const distanceAfterRoll =
+          await numericAttribute(
+            scene,
+            'data-camera-distance',
+          );
+
+        expect(
+          Math.hypot(
+            targetAfterRollX -
+              targetBeforeRollX,
+            targetAfterRollY -
+              targetBeforeRollY,
+            targetAfterRollZ -
+              targetBeforeRollZ,
+          ),
+        ).toBeLessThan(
+          0.001,
+        );
+
+        expect(
+          Math.abs(
+            distanceAfterRoll -
+              distanceBeforeRoll,
+          ),
+        ).toBeLessThan(
+          0.001,
+        );
 
         await page
           .getByTestId(
@@ -608,6 +732,20 @@ test.describe(
                   'data-camera-distance',
                 ) -
                 initialDistance,
+              ),
+          )
+          .toBeLessThan(
+            0.001,
+          );
+
+        await expect
+          .poll(
+            async () =>
+              Math.abs(
+                await numericAttribute(
+                  scene,
+                  'data-camera-roll',
+                ),
               ),
           )
           .toBeLessThan(

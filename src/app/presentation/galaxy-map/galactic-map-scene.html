@@ -8,6 +8,7 @@
   [attr.data-camera-distance]="cameraState()?.distance ?? null"
   [attr.data-camera-azimuth]="cameraState()?.azimuthRadians ?? null"
   [attr.data-camera-polar]="cameraState()?.polarRadians ?? null"
+  [attr.data-camera-roll]="cameraState()?.rollRadians ?? null"
   [attr.data-camera-target-x]="cameraState()?.targetX ?? null"
   [attr.data-camera-target-y]="cameraState()?.targetY ?? null"
   [attr.data-camera-target-z]="cameraState()?.targetZ ?? null"
@@ -155,7 +156,11 @@
       </span>
 
       <span>
-        Botón derecho / Ctrl: desplazar
+        Botón derecho + horizontal: alabeo
+      </span>
+
+      <span>
+        Ctrl + arrastrar: desplazar
       </span>
 
       <span>

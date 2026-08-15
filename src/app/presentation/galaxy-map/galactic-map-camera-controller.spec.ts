@@ -6,6 +6,7 @@ import * as THREE from 'three';
 
 import {
   GalacticMapCameraController,
+  rollRadiansForHorizontalDrag,
   selectionRaycastThreshold,
 } from './galactic-map-camera-controller';
 
@@ -80,6 +81,56 @@ describe(
       return value;
     }
 
+    function pointerEvent(
+      type:
+        string,
+
+      init:
+        Readonly<{
+          pointerId: number;
+          clientX: number;
+          clientY: number;
+          button?: number;
+          pointerType?: string;
+        }>,
+    ): PointerEvent {
+
+      const event =
+        new MouseEvent(
+          type,
+          {
+            bubbles:
+              true,
+            cancelable:
+              true,
+            clientX:
+              init.clientX,
+            clientY:
+              init.clientY,
+            button:
+              init.button ??
+              0,
+          },
+        ) as unknown as PointerEvent;
+
+      Object.defineProperties(
+        event,
+        {
+          pointerId: {
+            value:
+              init.pointerId,
+          },
+          pointerType: {
+            value:
+              init.pointerType ??
+              'mouse',
+          },
+        },
+      );
+
+      return event;
+    }
+
     it(
       'should initialize bounded zoom, pan target and optional rotation from the frozen point-10.1 camera',
       () => {
@@ -127,6 +178,12 @@ describe(
           state.rotationEnabled,
         ).toBe(
           true,
+        );
+
+        expect(
+          state.rollRadians,
+        ).toBe(
+          0,
         );
 
         controller.dispose();
@@ -184,20 +241,266 @@ describe(
     );
 
     it(
+      'should convert horizontal secondary-button drag into camera-local roll without moving the orbit target',
+      () => {
+        const sceneCamera =
+          camera();
+
+        const sceneCanvas =
+          canvas();
+
+        let changes =
+          0;
+
+        const controller =
+          new GalacticMapCameraController(
+            sceneCamera,
+            sceneCanvas,
+            () => {
+              changes +=
+                1;
+            },
+          );
+
+        const initialPosition =
+          sceneCamera.position.clone();
+
+        const initialState =
+          controller.cameraState();
+
+        sceneCanvas.dispatchEvent(
+          pointerEvent(
+            'pointerdown',
+            {
+              pointerId:
+                7,
+              clientX:
+                160,
+              clientY:
+                200,
+              button:
+                2,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointermove',
+            {
+              pointerId:
+                7,
+              clientX:
+                230,
+              clientY:
+                240,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointerup',
+            {
+              pointerId:
+                7,
+              clientX:
+                230,
+              clientY:
+                240,
+              button:
+                2,
+            },
+          ),
+        );
+
+        const rolled =
+          controller.cameraState();
+
+        expect(
+          rolled.rollRadians,
+        ).toBeCloseTo(
+          rollRadiansForHorizontalDrag(
+            70,
+          ),
+          12,
+        );
+
+        expect(
+          rolled.targetX,
+        ).toBeCloseTo(
+          initialState.targetX,
+          12,
+        );
+
+        expect(
+          rolled.targetY,
+        ).toBeCloseTo(
+          initialState.targetY,
+          12,
+        );
+
+        expect(
+          rolled.targetZ,
+        ).toBeCloseTo(
+          initialState.targetZ,
+          12,
+        );
+
+        expect(
+          sceneCamera.position.distanceTo(
+            initialPosition,
+          ),
+        ).toBeLessThan(
+          1e-12,
+        );
+
+        expect(
+          changes,
+        ).toBeGreaterThanOrEqual(
+          1,
+        );
+
+        controller.dispose();
+      },
+    );
+
+    it(
+      'should include secondary-button roll in the rotation toggle contract',
+      () => {
+        const sceneCanvas =
+          canvas();
+
+        const controller =
+          new GalacticMapCameraController(
+            camera(),
+            sceneCanvas,
+            () => {},
+          );
+
+        controller.setRotationEnabled(
+          false,
+        );
+
+        sceneCanvas.dispatchEvent(
+          pointerEvent(
+            'pointerdown',
+            {
+              pointerId:
+                9,
+              clientX:
+                120,
+              clientY:
+                180,
+              button:
+                2,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointermove',
+            {
+              pointerId:
+                9,
+              clientX:
+                220,
+              clientY:
+                180,
+            },
+          ),
+        );
+
+        expect(
+          controller
+            .cameraState()
+            .rollRadians,
+        ).toBe(
+          0,
+        );
+
+        controller.dispose();
+      },
+    );
+
+    it(
       'should reset the camera to the saved point-10.1 inspection view',
       () => {
         const sceneCamera =
           camera();
 
+        const sceneCanvas =
+          canvas();
+
         const controller =
           new GalacticMapCameraController(
             sceneCamera,
-            canvas(),
+            sceneCanvas,
             () => {},
           );
 
         const initial =
           controller.cameraState();
+
+        const initialQuaternion =
+          sceneCamera.quaternion.clone();
+
+        sceneCanvas.dispatchEvent(
+          pointerEvent(
+            'pointerdown',
+            {
+              pointerId:
+                11,
+              clientX:
+                180,
+              clientY:
+                200,
+              button:
+                2,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointermove',
+            {
+              pointerId:
+                11,
+              clientX:
+                250,
+              clientY:
+                200,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointerup',
+            {
+              pointerId:
+                11,
+              clientX:
+                250,
+              clientY:
+                200,
+              button:
+                2,
+            },
+          ),
+        );
+
+        expect(
+          Math.abs(
+            controller
+              .cameraState()
+              .rollRadians,
+          ),
+        ).toBeGreaterThan(
+          0.1,
+        );
 
         sceneCamera.position.set(
           1.5,
@@ -233,6 +536,23 @@ describe(
         ).toBeCloseTo(
           initial.polarRadians,
           12,
+        );
+
+        expect(
+          reset.rollRadians,
+        ).toBe(
+          0,
+        );
+
+        expect(
+          1 -
+          Math.abs(
+            sceneCamera.quaternion.dot(
+              initialQuaternion,
+            ),
+          ),
+        ).toBeLessThan(
+          1e-12,
         );
 
         controller.dispose();

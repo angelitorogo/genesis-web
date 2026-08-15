@@ -29,6 +29,9 @@ const MIN_SELECTION_THRESHOLD =
 const MAX_SELECTION_THRESHOLD =
   0.070;
 
+const ROLL_RADIANS_PER_HORIZONTAL_PIXEL =
+  0.006;
+
 export interface GalacticMapCameraState {
   readonly distance:
     number;
@@ -37,6 +40,9 @@ export interface GalacticMapCameraState {
     number;
 
   readonly polarRadians:
+    number;
+
+  readonly rollRadians:
     number;
 
   readonly targetX:
@@ -74,6 +80,11 @@ export interface GalacticMapVisualSelection {
  *
  * The selected index identifies one GPU render sample only. It is not a star,
  * system, discovery, locator or persisted Ground Truth entity.
+ *
+ * The point-10.2 interaction extension keeps the approved OrbitControls
+ * azimuth/polar orbit on the primary button and adds camera-local roll on a
+ * horizontal secondary-button drag. Pan remains available through the
+ * OrbitControls modifier + primary-button gesture.
  */
 export class GalacticMapCameraController {
 
@@ -95,9 +106,175 @@ export class GalacticMapCameraController {
   private readonly projected =
     new THREE.Vector3();
 
+  private rollRadiansValue =
+    0;
+
+  private rollPointerId:
+    number | null =
+    null;
+
+  private rollPointerLastClientX =
+    0;
+
+  private suppressControlsChange =
+    false;
+
   private readonly onControlsChange =
     () => {
+      if (
+        this.suppressControlsChange
+      ) {
+        return;
+      }
+
+      this.applyStoredRoll();
       this.onChange();
+    };
+
+  private readonly onRollPointerDown =
+    (
+      event:
+        PointerEvent,
+    ) => {
+      if (
+        event.pointerType !==
+          'mouse' ||
+        event.button !==
+          2
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      if (
+        !this.controls.enableRotate
+      ) {
+        return;
+      }
+
+      this.rollPointerId =
+        event.pointerId;
+
+      this.rollPointerLastClientX =
+        event.clientX;
+
+      if (
+        typeof this.canvas.setPointerCapture ===
+          'function'
+      ) {
+        try {
+          this.canvas.setPointerCapture(
+            event.pointerId,
+          );
+        } catch {
+          // Pointer capture is an interaction aid only. The gesture still
+          // works while the pointer remains over the canvas.
+        }
+      }
+
+      const ownerDocument =
+        this.canvas.ownerDocument;
+
+      ownerDocument.addEventListener(
+        'pointermove',
+        this.onRollPointerMove,
+        true,
+      );
+
+      ownerDocument.addEventListener(
+        'pointerup',
+        this.onRollPointerUp,
+        true,
+      );
+
+      ownerDocument.addEventListener(
+        'pointercancel',
+        this.onRollPointerCancel,
+        true,
+      );
+    };
+
+  private readonly onRollPointerMove =
+    (
+      event:
+        PointerEvent,
+    ) => {
+      if (
+        event.pointerId !==
+          this.rollPointerId
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      const deltaX =
+        event.clientX -
+        this.rollPointerLastClientX;
+
+      this.rollPointerLastClientX =
+        event.clientX;
+
+      if (
+        deltaX ===
+          0
+      ) {
+        return;
+      }
+
+      this.rollRadiansValue =
+        normalizeSignedRadians(
+          this.rollRadiansValue +
+          rollRadiansForHorizontalDrag(
+            deltaX,
+          ),
+        );
+
+      this.rebuildCameraOrientationWithStoredRoll();
+      this.onChange();
+    };
+
+  private readonly onRollPointerUp =
+    (
+      event:
+        PointerEvent,
+    ) => {
+      if (
+        event.pointerId !==
+          this.rollPointerId
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      this.finishRollGesture(
+        event.pointerId,
+      );
+    };
+
+  private readonly onRollPointerCancel =
+    (
+      event:
+        PointerEvent,
+    ) => {
+      if (
+        event.pointerId !==
+          this.rollPointerId
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      this.finishRollGesture(
+        event.pointerId,
+      );
     };
 
   constructor(
@@ -195,6 +372,12 @@ export class GalacticMapCameraController {
       'change',
       this.onControlsChange,
     );
+
+    this.canvas.addEventListener(
+      'pointerdown',
+      this.onRollPointerDown,
+      true,
+    );
   }
 
   cameraState():
@@ -209,6 +392,9 @@ export class GalacticMapCameraController {
 
       polarRadians:
         this.controls.getPolarAngle(),
+
+      rollRadians:
+        this.rollRadiansValue,
 
       targetX:
         this.controls.target.x,
@@ -232,14 +418,40 @@ export class GalacticMapCameraController {
     this.controls.enableRotate =
       enabled;
 
+    if (
+      !enabled &&
+      this.rollPointerId !==
+        null
+    ) {
+      this.finishRollGesture(
+        this.rollPointerId,
+      );
+    }
+
     this.onChange();
   }
 
   resetView():
     void {
 
-    this.controls.reset();
-    this.controls.update();
+    this.rollRadiansValue =
+      0;
+
+    this.suppressControlsChange =
+      true;
+
+    try {
+      this.controls.reset();
+      this.controls.update();
+    } finally {
+      this.suppressControlsChange =
+        false;
+    }
+
+    this.camera.updateMatrixWorld(
+      true,
+    );
+
     this.onChange();
   }
 
@@ -431,12 +643,111 @@ export class GalacticMapCameraController {
   dispose():
     void {
 
+    if (
+      this.rollPointerId !==
+        null
+    ) {
+      this.finishRollGesture(
+        this.rollPointerId,
+      );
+    }
+
+    this.canvas.removeEventListener(
+      'pointerdown',
+      this.onRollPointerDown,
+      true,
+    );
+
     this.controls.removeEventListener(
       'change',
       this.onControlsChange,
     );
 
     this.controls.dispose();
+  }
+
+  private rebuildCameraOrientationWithStoredRoll():
+    void {
+
+    this.suppressControlsChange =
+      true;
+
+    try {
+      this.controls.update();
+    } finally {
+      this.suppressControlsChange =
+        false;
+    }
+
+    this.applyStoredRoll();
+  }
+
+  private applyStoredRoll():
+    void {
+
+    if (
+      this.rollRadiansValue !==
+        0
+    ) {
+      this.camera.rotateZ(
+        this.rollRadiansValue,
+      );
+    }
+
+    this.camera.updateMatrixWorld(
+      true,
+    );
+  }
+
+  private finishRollGesture(
+    pointerId:
+      number,
+  ): void {
+
+    const ownerDocument =
+      this.canvas.ownerDocument;
+
+    ownerDocument.removeEventListener(
+      'pointermove',
+      this.onRollPointerMove,
+      true,
+    );
+
+    ownerDocument.removeEventListener(
+      'pointerup',
+      this.onRollPointerUp,
+      true,
+    );
+
+    ownerDocument.removeEventListener(
+      'pointercancel',
+      this.onRollPointerCancel,
+      true,
+    );
+
+    if (
+      typeof this.canvas.releasePointerCapture ===
+        'function'
+    ) {
+      try {
+        if (
+          typeof this.canvas.hasPointerCapture !==
+            'function' ||
+          this.canvas.hasPointerCapture(
+            pointerId,
+          )
+        ) {
+          this.canvas.releasePointerCapture(
+            pointerId,
+          );
+        }
+      } catch {
+        // Pointer capture is not required for cleanup correctness.
+      }
+    }
+
+    this.rollPointerId =
+      null;
   }
 }
 
@@ -451,4 +762,27 @@ export function selectionRaycastThreshold(
     MIN_SELECTION_THRESHOLD,
     MAX_SELECTION_THRESHOLD,
   );
+}
+
+export function rollRadiansForHorizontalDrag(
+  deltaX:
+    number,
+): number {
+
+  return -deltaX *
+    ROLL_RADIANS_PER_HORIZONTAL_PIXEL;
+}
+
+function normalizeSignedRadians(
+  radians:
+    number,
+): number {
+
+  return THREE.MathUtils.euclideanModulo(
+    radians +
+      Math.PI,
+    Math.PI *
+      2,
+  ) -
+  Math.PI;
 }

@@ -182,6 +182,8 @@ describe(
               0,
             polarRadians:
               0.9,
+            rollRadians:
+              0,
             targetX:
               0,
             targetY:
