@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 import {
   TestBed,
 } from '@angular/core/testing';
@@ -77,6 +79,7 @@ import {
 } from './galactic-map-model';
 
 import {
+  applyGalaxyVisualRotation,
   GALACTIC_MAP_SCENE_RUNTIME_FACTORY,
   GalacticMapScene,
   staticPresentationScaleMultiplier,
@@ -232,6 +235,12 @@ describe(
     let cameraStateListener:
       ((state: GalacticMapCameraState) => void) | null;
 
+    let galaxySpinRadians:
+      number;
+
+    let galaxySpinStateListener:
+      ((radians: number) => void) | null;
+
     const selectedSample:
       GalacticMapVisualSelection =
       Object.freeze({
@@ -270,6 +279,12 @@ describe(
         cameraStateListener =
           null;
 
+        galaxySpinRadians =
+          0;
+
+        galaxySpinStateListener =
+          null;
+
         cameraState =
           Object.freeze({
             distance:
@@ -278,8 +293,6 @@ describe(
               0,
             polarRadians:
               0.9,
-            rollRadians:
-              0,
             targetX:
               0,
             targetY:
@@ -322,11 +335,26 @@ describe(
               return cameraState;
             },
 
+            galaxySpinRadians() {
+              return galaxySpinRadians;
+            },
+
             setCameraStateListener(
               listener,
             ) {
               cameraStateListener =
                 listener;
+            },
+
+            setGalaxySpinStateListener(
+              listener,
+            ) {
+              galaxySpinStateListener =
+                listener;
+
+              galaxySpinStateListener?.(
+                galaxySpinRadians,
+              );
             },
 
             setRotationEnabled(
@@ -356,6 +384,13 @@ describe(
               resetCalls +=
                 1;
 
+              galaxySpinRadians =
+                0;
+
+              galaxySpinStateListener?.(
+                galaxySpinRadians,
+              );
+
               cameraState =
                 Object.freeze({
                   distance:
@@ -364,8 +399,6 @@ describe(
                     0,
                   polarRadians:
                     0.9,
-                  rollRadians:
-                    0,
                   targetX:
                     0,
                   targetY:
@@ -580,7 +613,7 @@ describe(
               '[data-testid="galactic-map-scene"]',
             )
             ?.getAttribute(
-              'data-camera-roll',
+              'data-galaxy-spin',
             ),
         ).toBe(
           '0',
@@ -593,7 +626,7 @@ describe(
             )
             ?.textContent,
         ).toContain(
-          'Botón derecho + horizontal: alabeo',
+          'Botón derecho + horizontal: girar la galaxia sobre sí misma',
         );
 
         expect(
@@ -1018,7 +1051,91 @@ describe(
     );
 
     it(
-      'should apply the frozen 20-degree depth tilt to both spiral families only',
+      'should compose visual galaxy spin around the galaxy local axis without changing its plane normal',
+      () => {
+        const group =
+          new THREE.Group();
+
+        const tiltRadians =
+          THREE.MathUtils.degToRad(
+            -20,
+          );
+
+        const initialLocalXAxis =
+          new THREE.Vector3(
+            1,
+            0,
+            0,
+          );
+
+        const localPlaneNormal =
+          new THREE.Vector3(
+            0,
+            0,
+            1,
+          );
+
+        applyGalaxyVisualRotation(
+          group,
+          tiltRadians,
+          0,
+        );
+
+        const initialPlaneNormal =
+          localPlaneNormal
+            .clone()
+            .applyQuaternion(
+              group.quaternion,
+            );
+
+        const initialXAxis =
+          initialLocalXAxis
+            .clone()
+            .applyQuaternion(
+              group.quaternion,
+            );
+
+        applyGalaxyVisualRotation(
+          group,
+          tiltRadians,
+          Math.PI /
+            2,
+        );
+
+        const spunPlaneNormal =
+          localPlaneNormal
+            .clone()
+            .applyQuaternion(
+              group.quaternion,
+            );
+
+        const spunXAxis =
+          initialLocalXAxis
+            .clone()
+            .applyQuaternion(
+              group.quaternion,
+            );
+
+        expect(
+          spunPlaneNormal.distanceTo(
+            initialPlaneNormal,
+          ),
+        ).toBeLessThan(
+          1e-12,
+        );
+
+        expect(
+          spunXAxis.distanceTo(
+            initialXAxis,
+          ),
+        ).toBeGreaterThan(
+          1,
+        );
+      },
+    );
+
+    it(
+      'should use the same zero presentation tilt for every galactic morphology',
       () => {
         const spheroidal =
           model(
@@ -1035,36 +1152,33 @@ describe(
             3n,
           );
 
-        const expectedTilt =
-          -20 *
-          Math.PI /
-          180;
+        const dwarf =
+          model(
+            4n,
+          );
 
-        expect(
-          staticPresentationTiltRadians(
-            barred,
-          ),
-        ).toBeCloseTo(
-          expectedTilt,
-          12,
-        );
+        const irregular =
+          model(
+            10n,
+          );
 
-        expect(
-          staticPresentationTiltRadians(
-            spiral,
-          ),
-        ).toBeCloseTo(
-          expectedTilt,
-          12,
-        );
-
-        expect(
-          staticPresentationTiltRadians(
+        for (
+          const candidate of [
             spheroidal,
-          ),
-        ).toBe(
-          0,
-        );
+            barred,
+            spiral,
+            dwarf,
+            irregular,
+          ]
+        ) {
+          expect(
+            staticPresentationTiltRadians(
+              candidate,
+            ),
+          ).toBe(
+            0,
+          );
+        }
       },
     );
 

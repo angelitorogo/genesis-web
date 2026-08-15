@@ -745,34 +745,46 @@ test.describe(
             0.01,
           );
 
-        const targetBeforeRollX =
+        const targetBeforeGalaxySpinX =
           await numericAttribute(
             scene,
             'data-camera-target-x',
           );
 
-        const targetBeforeRollY =
+        const targetBeforeGalaxySpinY =
           await numericAttribute(
             scene,
             'data-camera-target-y',
           );
 
-        const targetBeforeRollZ =
+        const targetBeforeGalaxySpinZ =
           await numericAttribute(
             scene,
             'data-camera-target-z',
           );
 
-        const distanceBeforeRoll =
+        const distanceBeforeGalaxySpin =
           await numericAttribute(
             scene,
             'data-camera-distance',
           );
 
-        const initialRoll =
+        const azimuthBeforeGalaxySpin =
           await numericAttribute(
             scene,
-            'data-camera-roll',
+            'data-camera-azimuth',
+          );
+
+        const polarBeforeGalaxySpin =
+          await numericAttribute(
+            scene,
+            'data-camera-polar',
+          );
+
+        const initialGalaxySpin =
+          await numericAttribute(
+            scene,
+            'data-galaxy-spin',
           );
 
         await page.mouse.move(
@@ -806,47 +818,69 @@ test.describe(
               Math.abs(
                 await numericAttribute(
                   scene,
-                  'data-camera-roll',
+                  'data-galaxy-spin',
                 ) -
-                initialRoll,
+                initialGalaxySpin,
               ),
           )
           .toBeGreaterThan(
             0.20,
           );
 
-        const targetAfterRollX =
+        const targetAfterGalaxySpinX =
           await numericAttribute(
             scene,
             'data-camera-target-x',
           );
 
-        const targetAfterRollY =
+        const targetAfterGalaxySpinY =
           await numericAttribute(
             scene,
             'data-camera-target-y',
           );
 
-        const targetAfterRollZ =
+        const targetAfterGalaxySpinZ =
           await numericAttribute(
             scene,
             'data-camera-target-z',
           );
 
-        const distanceAfterRoll =
+        const distanceAfterGalaxySpin =
           await numericAttribute(
             scene,
             'data-camera-distance',
           );
 
-        expect(
+        const azimuthAfterGalaxySpin =
+          await numericAttribute(
+            scene,
+            'data-camera-azimuth',
+          );
+
+        const polarAfterGalaxySpin =
+          await numericAttribute(
+            scene,
+            'data-camera-polar',
+          );
+
+        const targetRadiusBeforeGalaxySpin =
           Math.hypot(
-            targetAfterRollX -
-              targetBeforeRollX,
-            targetAfterRollY -
-              targetBeforeRollY,
-            targetAfterRollZ -
-              targetBeforeRollZ,
+            targetBeforeGalaxySpinX,
+            targetBeforeGalaxySpinY,
+            targetBeforeGalaxySpinZ,
+          );
+
+        const targetRadiusAfterGalaxySpin =
+          Math.hypot(
+            targetAfterGalaxySpinX,
+            targetAfterGalaxySpinY,
+            targetAfterGalaxySpinZ,
+          );
+
+        expect(
+          Math.abs(
+            targetRadiusAfterGalaxySpin -
+              targetRadiusBeforeGalaxySpin,
           ),
         ).toBeLessThan(
           0.001,
@@ -854,8 +888,53 @@ test.describe(
 
         expect(
           Math.abs(
-            distanceAfterRoll -
-              distanceBeforeRoll,
+            distanceAfterGalaxySpin -
+              distanceBeforeGalaxySpin,
+          ),
+        ).toBeLessThan(
+          0.001,
+        );
+
+        expect(
+          Math.abs(
+            azimuthAfterGalaxySpin -
+              azimuthBeforeGalaxySpin,
+          ),
+        ).toBeLessThan(
+          0.001,
+        );
+
+        expect(
+          Math.abs(
+            polarAfterGalaxySpin -
+              polarBeforeGalaxySpin,
+          ),
+        ).toBeLessThan(
+          0.001,
+        );
+
+        expect(
+          Math.abs(
+            targetAfterGalaxySpinX -
+              targetBeforeGalaxySpinX,
+          ),
+        ).toBeLessThan(
+          0.001,
+        );
+
+        expect(
+          Math.abs(
+            targetAfterGalaxySpinY -
+              targetBeforeGalaxySpinY,
+          ),
+        ).toBeLessThan(
+          0.001,
+        );
+
+        expect(
+          Math.abs(
+            targetAfterGalaxySpinZ -
+              targetBeforeGalaxySpinZ,
           ),
         ).toBeLessThan(
           0.001,
@@ -914,7 +993,7 @@ test.describe(
               Math.abs(
                 await numericAttribute(
                   scene,
-                  'data-camera-roll',
+                  'data-galaxy-spin',
                 ),
               ),
           )

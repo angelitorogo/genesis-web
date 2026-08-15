@@ -6,7 +6,7 @@ import * as THREE from 'three';
 
 import {
   GalacticMapCameraController,
-  rollRadiansForHorizontalDrag,
+  galaxySpinRadiansForHorizontalDrag,
   selectionRaycastThreshold,
 } from './galactic-map-camera-controller';
 
@@ -64,8 +64,8 @@ describe(
 
       value.position.set(
         0,
-        -2.72,
-        2.18,
+        -3.18,
+        1.42,
       );
 
       value.lookAt(
@@ -132,7 +132,7 @@ describe(
     }
 
     it(
-      'should initialize bounded zoom, pan target and optional rotation from the frozen point-10.1 camera',
+      'should initialize bounded zoom, pan target and optional rotation from the default inclined inspection camera',
       () => {
         const controller =
           new GalacticMapCameraController(
@@ -180,11 +180,6 @@ describe(
           true,
         );
 
-        expect(
-          state.rollRadians,
-        ).toBe(
-          0,
-        );
 
         controller.dispose();
       },
@@ -241,7 +236,7 @@ describe(
     );
 
     it(
-      'should convert horizontal secondary-button drag into camera-local roll without moving the orbit target',
+      'should emit visual galaxy spin from a horizontal secondary-button drag without moving the camera',
       () => {
         const sceneCamera =
           camera();
@@ -249,21 +244,29 @@ describe(
         const sceneCanvas =
           canvas();
 
-        let changes =
-          0;
+        const spinSteps:
+          number[] =
+          [];
 
         const controller =
           new GalacticMapCameraController(
             sceneCamera,
             sceneCanvas,
-            () => {
-              changes +=
-                1;
+            () => {},
+            (
+              radians,
+            ) => {
+              spinSteps.push(
+                radians,
+              );
             },
           );
 
         const initialPosition =
           sceneCamera.position.clone();
+
+        const initialQuaternion =
+          sceneCamera.quaternion.clone();
 
         const initialState =
           controller.cameraState();
@@ -314,38 +317,13 @@ describe(
           ),
         );
 
-        const rolled =
-          controller.cameraState();
-
         expect(
-          rolled.rollRadians,
-        ).toBeCloseTo(
-          rollRadiansForHorizontalDrag(
+          spinSteps,
+        ).toEqual([
+          galaxySpinRadiansForHorizontalDrag(
             70,
           ),
-          12,
-        );
-
-        expect(
-          rolled.targetX,
-        ).toBeCloseTo(
-          initialState.targetX,
-          12,
-        );
-
-        expect(
-          rolled.targetY,
-        ).toBeCloseTo(
-          initialState.targetY,
-          12,
-        );
-
-        expect(
-          rolled.targetZ,
-        ).toBeCloseTo(
-          initialState.targetZ,
-          12,
-        );
+        ]);
 
         expect(
           sceneCamera.position.distanceTo(
@@ -356,9 +334,59 @@ describe(
         );
 
         expect(
-          changes,
-        ).toBeGreaterThanOrEqual(
-          1,
+          1 -
+          Math.abs(
+            sceneCamera.quaternion.dot(
+              initialQuaternion,
+            ),
+          ),
+        ).toBeLessThan(
+          1e-12,
+        );
+
+        const finalState =
+          controller.cameraState();
+
+        expect(
+          finalState.distance,
+        ).toBeCloseTo(
+          initialState.distance,
+          12,
+        );
+
+        expect(
+          finalState.azimuthRadians,
+        ).toBeCloseTo(
+          initialState.azimuthRadians,
+          12,
+        );
+
+        expect(
+          finalState.polarRadians,
+        ).toBeCloseTo(
+          initialState.polarRadians,
+          12,
+        );
+
+        expect(
+          finalState.targetX,
+        ).toBeCloseTo(
+          initialState.targetX,
+          12,
+        );
+
+        expect(
+          finalState.targetY,
+        ).toBeCloseTo(
+          initialState.targetY,
+          12,
+        );
+
+        expect(
+          finalState.targetZ,
+        ).toBeCloseTo(
+          initialState.targetZ,
+          12,
         );
 
         controller.dispose();
@@ -366,16 +394,123 @@ describe(
     );
 
     it(
-      'should include secondary-button roll in the rotation toggle contract',
+      'should use horizontal secondary-button movement only for visual galaxy spin',
       () => {
         const sceneCanvas =
           canvas();
+
+        const spinSteps:
+          number[] =
+          [];
 
         const controller =
           new GalacticMapCameraController(
             camera(),
             sceneCanvas,
             () => {},
+            (
+              radians,
+            ) => {
+              spinSteps.push(
+                radians,
+              );
+            },
+          );
+
+        sceneCanvas.dispatchEvent(
+          pointerEvent(
+            'pointerdown',
+            {
+              pointerId:
+                8,
+              clientX:
+                150,
+              clientY:
+                180,
+              button:
+                2,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointermove',
+            {
+              pointerId:
+                8,
+              clientX:
+                150,
+              clientY:
+                280,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointermove',
+            {
+              pointerId:
+                8,
+              clientX:
+                240,
+              clientY:
+                340,
+            },
+          ),
+        );
+
+        document.dispatchEvent(
+          pointerEvent(
+            'pointerup',
+            {
+              pointerId:
+                8,
+              clientX:
+                240,
+              clientY:
+                340,
+              button:
+                2,
+            },
+          ),
+        );
+
+        expect(
+          spinSteps,
+        ).toEqual([
+          galaxySpinRadiansForHorizontalDrag(
+            90,
+          ),
+        ]);
+
+        controller.dispose();
+      },
+    );
+
+    it(
+      'should include secondary-button galaxy spin in the rotation toggle contract',
+      () => {
+        const sceneCanvas =
+          canvas();
+
+        const spinSteps:
+          number[] =
+          [];
+
+        const controller =
+          new GalacticMapCameraController(
+            camera(),
+            sceneCanvas,
+            () => {},
+            (
+              radians,
+            ) => {
+              spinSteps.push(
+                radians,
+              );
+            },
           );
 
         controller.setRotationEnabled(
@@ -413,10 +548,8 @@ describe(
         );
 
         expect(
-          controller
-            .cameraState()
-            .rollRadians,
-        ).toBe(
+          spinSteps,
+        ).toHaveLength(
           0,
         );
 
@@ -425,87 +558,37 @@ describe(
     );
 
     it(
-      'should reset the camera to the saved point-10.1 inspection view',
+      'should reset the camera to the saved default inclined inspection view',
       () => {
         const sceneCamera =
           camera();
 
-        const sceneCanvas =
-          canvas();
-
         const controller =
           new GalacticMapCameraController(
             sceneCamera,
-            sceneCanvas,
+            canvas(),
             () => {},
           );
 
         const initial =
           controller.cameraState();
 
+        const initialPosition =
+          sceneCamera.position.clone();
+
         const initialQuaternion =
           sceneCamera.quaternion.clone();
-
-        sceneCanvas.dispatchEvent(
-          pointerEvent(
-            'pointerdown',
-            {
-              pointerId:
-                11,
-              clientX:
-                180,
-              clientY:
-                200,
-              button:
-                2,
-            },
-          ),
-        );
-
-        document.dispatchEvent(
-          pointerEvent(
-            'pointermove',
-            {
-              pointerId:
-                11,
-              clientX:
-                250,
-              clientY:
-                200,
-            },
-          ),
-        );
-
-        document.dispatchEvent(
-          pointerEvent(
-            'pointerup',
-            {
-              pointerId:
-                11,
-              clientX:
-                250,
-              clientY:
-                200,
-              button:
-                2,
-            },
-          ),
-        );
-
-        expect(
-          Math.abs(
-            controller
-              .cameraState()
-              .rollRadians,
-          ),
-        ).toBeGreaterThan(
-          0.1,
-        );
 
         sceneCamera.position.set(
           1.5,
           -1.7,
           1.2,
+        );
+
+        sceneCamera.lookAt(
+          0.2,
+          -0.1,
+          0.05,
         );
 
         sceneCamera.updateMatrixWorld(
@@ -539,9 +622,11 @@ describe(
         );
 
         expect(
-          reset.rollRadians,
-        ).toBe(
-          0,
+          sceneCamera.position.distanceTo(
+            initialPosition,
+          ),
+        ).toBeLessThan(
+          1e-12,
         );
 
         expect(

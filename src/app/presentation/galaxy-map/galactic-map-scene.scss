@@ -138,6 +138,10 @@
     margin-top: 0.65rem;
     padding-top: 0.6rem;
     border-top: 1px solid rgba(255, 190, 82, 0.16);
+
+    .galactic-map-scene__coverage-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
   }
 
   &__controls {

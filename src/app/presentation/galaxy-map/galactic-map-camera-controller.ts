@@ -29,7 +29,7 @@ const MIN_SELECTION_THRESHOLD =
 const MAX_SELECTION_THRESHOLD =
   0.070;
 
-const ROLL_RADIANS_PER_HORIZONTAL_PIXEL =
+const GALAXY_SPIN_RADIANS_PER_HORIZONTAL_PIXEL =
   0.006;
 
 export interface GalacticMapCameraState {
@@ -40,9 +40,6 @@ export interface GalacticMapCameraState {
     number;
 
   readonly polarRadians:
-    number;
-
-  readonly rollRadians:
     number;
 
   readonly targetX:
@@ -82,9 +79,9 @@ export interface GalacticMapVisualSelection {
  * system, discovery, locator or persisted Ground Truth entity.
  *
  * The point-10.2 interaction extension keeps the approved OrbitControls
- * azimuth/polar orbit on the primary button and adds camera-local roll on a
- * horizontal secondary-button drag. Pan remains available through the
- * OrbitControls modifier + primary-button gesture.
+ * free orbit on the primary button and uses a horizontal secondary-button drag
+ * to spin the rendered galaxy around its own local axis while the camera remains
+ * unchanged. Pan remains available through Ctrl + primary-button drag.
  */
 export class GalacticMapCameraController {
 
@@ -106,14 +103,11 @@ export class GalacticMapCameraController {
   private readonly projected =
     new THREE.Vector3();
 
-  private rollRadiansValue =
-    0;
-
-  private rollPointerId:
+  private galaxySpinPointerId:
     number | null =
     null;
 
-  private rollPointerLastClientX =
+  private galaxySpinPointerLastClientX =
     0;
 
   private suppressControlsChange =
@@ -127,11 +121,10 @@ export class GalacticMapCameraController {
         return;
       }
 
-      this.applyStoredRoll();
       this.onChange();
     };
 
-  private readonly onRollPointerDown =
+  private readonly onGalaxySpinPointerDown =
     (
       event:
         PointerEvent,
@@ -154,10 +147,10 @@ export class GalacticMapCameraController {
         return;
       }
 
-      this.rollPointerId =
+      this.galaxySpinPointerId =
         event.pointerId;
 
-      this.rollPointerLastClientX =
+      this.galaxySpinPointerLastClientX =
         event.clientX;
 
       if (
@@ -179,31 +172,31 @@ export class GalacticMapCameraController {
 
       ownerDocument.addEventListener(
         'pointermove',
-        this.onRollPointerMove,
+        this.onGalaxySpinPointerMove,
         true,
       );
 
       ownerDocument.addEventListener(
         'pointerup',
-        this.onRollPointerUp,
+        this.onGalaxySpinPointerUp,
         true,
       );
 
       ownerDocument.addEventListener(
         'pointercancel',
-        this.onRollPointerCancel,
+        this.onGalaxySpinPointerCancel,
         true,
       );
     };
 
-  private readonly onRollPointerMove =
+  private readonly onGalaxySpinPointerMove =
     (
       event:
         PointerEvent,
     ) => {
       if (
         event.pointerId !==
-          this.rollPointerId
+          this.galaxySpinPointerId
       ) {
         return;
       }
@@ -213,9 +206,9 @@ export class GalacticMapCameraController {
 
       const deltaX =
         event.clientX -
-        this.rollPointerLastClientX;
+        this.galaxySpinPointerLastClientX;
 
-      this.rollPointerLastClientX =
+      this.galaxySpinPointerLastClientX =
         event.clientX;
 
       if (
@@ -225,26 +218,24 @@ export class GalacticMapCameraController {
         return;
       }
 
-      this.rollRadiansValue =
-        normalizeSignedRadians(
-          this.rollRadiansValue +
-          rollRadiansForHorizontalDrag(
-            deltaX,
-          ),
+      const stepRadians =
+        galaxySpinRadiansForHorizontalDrag(
+          deltaX,
         );
 
-      this.rebuildCameraOrientationWithStoredRoll();
-      this.onChange();
+      this.onGalaxySpinStep(
+        stepRadians,
+      );
     };
 
-  private readonly onRollPointerUp =
+  private readonly onGalaxySpinPointerUp =
     (
       event:
         PointerEvent,
     ) => {
       if (
         event.pointerId !==
-          this.rollPointerId
+          this.galaxySpinPointerId
       ) {
         return;
       }
@@ -252,19 +243,19 @@ export class GalacticMapCameraController {
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      this.finishRollGesture(
+      this.finishGalaxySpinGesture(
         event.pointerId,
       );
     };
 
-  private readonly onRollPointerCancel =
+  private readonly onGalaxySpinPointerCancel =
     (
       event:
         PointerEvent,
     ) => {
       if (
         event.pointerId !==
-          this.rollPointerId
+          this.galaxySpinPointerId
       ) {
         return;
       }
@@ -272,7 +263,7 @@ export class GalacticMapCameraController {
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      this.finishRollGesture(
+      this.finishGalaxySpinGesture(
         event.pointerId,
       );
     };
@@ -286,6 +277,10 @@ export class GalacticMapCameraController {
 
     private readonly onChange:
       () => void,
+
+    private readonly onGalaxySpinStep:
+      (radians: number) => void =
+      () => {},
   ) {
     this.controls =
       new OrbitControls(
@@ -375,7 +370,7 @@ export class GalacticMapCameraController {
 
     this.canvas.addEventListener(
       'pointerdown',
-      this.onRollPointerDown,
+      this.onGalaxySpinPointerDown,
       true,
     );
   }
@@ -392,9 +387,6 @@ export class GalacticMapCameraController {
 
       polarRadians:
         this.controls.getPolarAngle(),
-
-      rollRadians:
-        this.rollRadiansValue,
 
       targetX:
         this.controls.target.x,
@@ -420,11 +412,11 @@ export class GalacticMapCameraController {
 
     if (
       !enabled &&
-      this.rollPointerId !==
+      this.galaxySpinPointerId !==
         null
     ) {
-      this.finishRollGesture(
-        this.rollPointerId,
+      this.finishGalaxySpinGesture(
+        this.galaxySpinPointerId,
       );
     }
 
@@ -433,9 +425,6 @@ export class GalacticMapCameraController {
 
   resetView():
     void {
-
-    this.rollRadiansValue =
-      0;
 
     this.suppressControlsChange =
       true;
@@ -644,17 +633,17 @@ export class GalacticMapCameraController {
     void {
 
     if (
-      this.rollPointerId !==
+      this.galaxySpinPointerId !==
         null
     ) {
-      this.finishRollGesture(
-        this.rollPointerId,
+      this.finishGalaxySpinGesture(
+        this.galaxySpinPointerId,
       );
     }
 
     this.canvas.removeEventListener(
       'pointerdown',
-      this.onRollPointerDown,
+      this.onGalaxySpinPointerDown,
       true,
     );
 
@@ -666,40 +655,7 @@ export class GalacticMapCameraController {
     this.controls.dispose();
   }
 
-  private rebuildCameraOrientationWithStoredRoll():
-    void {
-
-    this.suppressControlsChange =
-      true;
-
-    try {
-      this.controls.update();
-    } finally {
-      this.suppressControlsChange =
-        false;
-    }
-
-    this.applyStoredRoll();
-  }
-
-  private applyStoredRoll():
-    void {
-
-    if (
-      this.rollRadiansValue !==
-        0
-    ) {
-      this.camera.rotateZ(
-        this.rollRadiansValue,
-      );
-    }
-
-    this.camera.updateMatrixWorld(
-      true,
-    );
-  }
-
-  private finishRollGesture(
+  private finishGalaxySpinGesture(
     pointerId:
       number,
   ): void {
@@ -709,19 +665,19 @@ export class GalacticMapCameraController {
 
     ownerDocument.removeEventListener(
       'pointermove',
-      this.onRollPointerMove,
+      this.onGalaxySpinPointerMove,
       true,
     );
 
     ownerDocument.removeEventListener(
       'pointerup',
-      this.onRollPointerUp,
+      this.onGalaxySpinPointerUp,
       true,
     );
 
     ownerDocument.removeEventListener(
       'pointercancel',
-      this.onRollPointerCancel,
+      this.onGalaxySpinPointerCancel,
       true,
     );
 
@@ -746,7 +702,7 @@ export class GalacticMapCameraController {
       }
     }
 
-    this.rollPointerId =
+    this.galaxySpinPointerId =
       null;
   }
 }
@@ -764,25 +720,12 @@ export function selectionRaycastThreshold(
   );
 }
 
-export function rollRadiansForHorizontalDrag(
+export function galaxySpinRadiansForHorizontalDrag(
   deltaX:
     number,
 ): number {
 
   return -deltaX *
-    ROLL_RADIANS_PER_HORIZONTAL_PIXEL;
+    GALAXY_SPIN_RADIANS_PER_HORIZONTAL_PIXEL;
 }
 
-function normalizeSignedRadians(
-  radians:
-    number,
-): number {
-
-  return THREE.MathUtils.euclideanModulo(
-    radians +
-      Math.PI,
-    Math.PI *
-      2,
-  ) -
-  Math.PI;
-}

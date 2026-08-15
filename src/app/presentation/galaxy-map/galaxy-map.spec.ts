@@ -182,8 +182,6 @@ describe(
               0,
             polarRadians:
               0.9,
-            rollRadians:
-              0,
             targetX:
               0,
             targetY:
@@ -196,6 +194,13 @@ describe(
 
         let listener:
           ((state: GalacticMapCameraState) => void) | null =
+          null;
+
+        let galaxySpinRadians =
+          0;
+
+        let galaxySpinListener:
+          ((radians: number) => void) | null =
           null;
 
         const runtime:
@@ -214,11 +219,26 @@ describe(
               return cameraState;
             },
 
+            galaxySpinRadians() {
+              return galaxySpinRadians;
+            },
+
             setCameraStateListener(
               value,
             ) {
               listener =
                 value;
+            },
+
+            setGalaxySpinStateListener(
+              value,
+            ) {
+              galaxySpinListener =
+                value;
+
+              galaxySpinListener?.(
+                galaxySpinRadians,
+              );
             },
 
             setRotationEnabled(
@@ -238,7 +258,14 @@ describe(
 
             setLayerVisibility() {},
 
-            resetView() {},
+            resetView() {
+              galaxySpinRadians =
+                0;
+
+              galaxySpinListener?.(
+                galaxySpinRadians,
+              );
+            },
 
             selectAt() {
               return null;

@@ -27,6 +27,11 @@ describe(
           INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
         );
 
+        fixture.componentRef.setInput(
+          'hasHabitableZone',
+          true,
+        );
+
         const emitted:
           unknown[] =
           [];
@@ -73,6 +78,77 @@ describe(
               false,
           },
         ]);
+      },
+    );
+
+    it(
+      'should state explicitly whether the active galaxy has a favorable galactic habitability region',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapLayerControls,
+          );
+
+        fixture.componentRef.setInput(
+          'visibility',
+          INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
+        );
+
+        fixture.componentRef.setInput(
+          'hasHabitableZone',
+          false,
+        );
+
+        fixture.detectChanges();
+
+        const root =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const status =
+          root.querySelector(
+            '[data-testid="galactic-map-habitability-status"]',
+          ) as HTMLElement;
+
+        expect(
+          status.getAttribute(
+            'data-has-habitable-zone',
+          ),
+        ).toBe(
+          'false',
+        );
+
+        expect(
+          status.textContent,
+        ).toContain(
+          'Sin región favorable identificada',
+        );
+
+        fixture.componentRef.setInput(
+          'hasHabitableZone',
+          true,
+        );
+
+        fixture.detectChanges();
+
+        const updatedStatus =
+          root.querySelector(
+            '[data-testid="galactic-map-habitability-status"]',
+          ) as HTMLElement;
+
+        expect(
+          updatedStatus.getAttribute(
+            'data-has-habitable-zone',
+          ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          updatedStatus.textContent,
+        ).toContain(
+          'Región favorable identificada',
+        );
       },
     );
   },

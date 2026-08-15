@@ -53,6 +53,13 @@ export class GalacticMapLayerControls {
   visibility!:
     GalacticMapLayerVisibility;
 
+  @Input({
+    required:
+      true,
+  })
+  hasHabitableZone!:
+    boolean;
+
   @Output()
   readonly visibilityChange =
     new EventEmitter<GalacticMapLayerVisibilityChange>();

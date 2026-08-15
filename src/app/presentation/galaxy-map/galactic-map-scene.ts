@@ -92,9 +92,17 @@ export interface GalacticMapSceneRuntime {
   cameraState():
     GalacticMapCameraState;
 
+  galaxySpinRadians():
+    number;
+
   setCameraStateListener(
     listener:
       ((state: GalacticMapCameraState) => void) | null,
+  ): void;
+
+  setGalaxySpinStateListener(
+    listener:
+      ((radians: number) => void) | null,
   ): void;
 
   setRotationEnabled(
@@ -166,8 +174,9 @@ interface PointerGesture {
 /**
  * Point-10.5 Angular host for the Three.js scene.
  *
- * It preserves the approved point-10.2 camera/selection behavior, point-10.3
- * sector coverage and point-10.4 persistent markers. Point 10.5 adds six
+ * It preserves the approved point-10.2 camera/selection behavior. The
+ * secondary mouse button now spins the complete rendered galaxy around its own
+ * local axis without moving the camera. Point-10.3 sector coverage and point-10.4 persistent markers. Point 10.5 adds six
  * independently switchable thematic layers without changing persistence or
  * turning GPU samples into physical targets.
  */
@@ -275,6 +284,11 @@ export class GalacticMapScene
       null,
     );
 
+  private readonly galaxySpinRadiansSignal =
+    signal<number>(
+      0,
+    );
+
   private readonly selectionSignal =
     signal<GalacticMapVisualSelection | null>(
       null,
@@ -298,6 +312,11 @@ export class GalacticMapScene
   readonly cameraState =
     this
       .cameraStateSignal
+      .asReadonly();
+
+  readonly galaxySpinRadians =
+    this
+      .galaxySpinRadiansSignal
       .asReadonly();
 
   readonly selection =
@@ -348,10 +367,28 @@ export class GalacticMapScene
         },
       );
 
+      this.runtime.setGalaxySpinStateListener(
+        (
+          radians,
+        ) => {
+          this
+            .galaxySpinRadiansSignal
+            .set(
+              radians,
+            );
+        },
+      );
+
       this
         .cameraStateSignal
         .set(
           this.runtime.cameraState(),
+        );
+
+      this
+        .galaxySpinRadiansSignal
+        .set(
+          this.runtime.galaxySpinRadians(),
         );
 
       this.runtime.setLayerVisibility(
@@ -422,6 +459,12 @@ export class GalacticMapScene
     this
       .runtime
       ?.setCameraStateListener(
+        null,
+      );
+
+    this
+      .runtime
+      ?.setGalaxySpinStateListener(
         null,
       );
 
@@ -507,6 +550,12 @@ export class GalacticMapScene
       .cameraStateSignal
       .set(
         this.runtime.cameraState(),
+      );
+
+    this
+      .galaxySpinRadiansSignal
+      .set(
+        this.runtime.galaxySpinRadians(),
       );
   }
 
@@ -794,6 +843,12 @@ export class GalacticMapScene
         );
 
       this
+        .galaxySpinRadiansSignal
+        .set(
+          this.runtime.galaxySpinRadians(),
+        );
+
+      this
         .renderStateSignal
         .set(
           'ready',
@@ -853,6 +908,16 @@ class ThreeGalacticMapSceneRuntime
   private cameraStateListener:
     ((state: GalacticMapCameraState) => void) | null =
     null;
+
+  private galaxySpinStateListener:
+    ((radians: number) => void) | null =
+    null;
+
+  private galaxySpinRadiansValue =
+    0;
+
+  private staticGalaxyTiltRadians =
+    0;
 
   private galaxyGroup:
     THREE.Group | null =
@@ -927,8 +992,8 @@ class ThreeGalacticMapSceneRuntime
       .position
       .set(
         0,
-        -2.72,
-        2.18,
+        -3.18,
+        1.42,
       );
 
     this
@@ -946,6 +1011,13 @@ class ThreeGalacticMapSceneRuntime
         () => {
           this.renderFrame();
           this.emitCameraState();
+        },
+        (
+          stepRadians,
+        ) => {
+          this.rotateGalaxyVisual(
+            stepRadians,
+          );
         },
       );
   }
@@ -1131,10 +1203,19 @@ class ThreeGalacticMapSceneRuntime
       normalization,
     );
 
-    galaxyGroup.rotation.x =
+    this.staticGalaxyTiltRadians =
       staticPresentationTiltRadians(
         model,
       );
+
+    this.galaxySpinRadiansValue =
+      0;
+
+    applyGalaxyVisualRotation(
+      galaxyGroup,
+      this.staticGalaxyTiltRadians,
+      this.galaxySpinRadiansValue,
+    );
 
     const explorationCoverage =
       model.explorationCoverage;
@@ -1229,6 +1310,7 @@ class ThreeGalacticMapSceneRuntime
 
     this.applyLayerVisibility();
     this.renderFrame();
+    this.emitGalaxySpinState();
 
     return Object.freeze({
       particleCount:
@@ -1244,6 +1326,12 @@ class ThreeGalacticMapSceneRuntime
       .cameraState();
   }
 
+  galaxySpinRadians():
+    number {
+
+    return this.galaxySpinRadiansValue;
+  }
+
   setCameraStateListener(
     listener:
       ((state: GalacticMapCameraState) => void) | null,
@@ -1253,6 +1341,17 @@ class ThreeGalacticMapSceneRuntime
       listener;
 
     this.emitCameraState();
+  }
+
+  setGalaxySpinStateListener(
+    listener:
+      ((radians: number) => void) | null,
+  ): void {
+
+    this.galaxySpinStateListener =
+      listener;
+
+    this.emitGalaxySpinState();
   }
 
   setRotationEnabled(
@@ -1285,6 +1384,12 @@ class ThreeGalacticMapSceneRuntime
     void {
 
     this.clearSelection();
+
+    this.galaxySpinRadiansValue =
+      0;
+
+    this.applyCurrentGalaxyVisualRotation();
+    this.emitGalaxySpinState();
 
     this
       .cameraController
@@ -1343,9 +1448,7 @@ class ThreeGalacticMapSceneRuntime
       return;
     }
 
-    this.scene.remove(
-      this.selectionMarker,
-    );
+    this.selectionMarker.removeFromParent();
 
     this
       .selectionMarker
@@ -1367,6 +1470,9 @@ class ThreeGalacticMapSceneRuntime
     void {
 
     this.cameraStateListener =
+      null;
+
+    this.galaxySpinStateListener =
       null;
 
     this.clearSelection();
@@ -1408,6 +1514,54 @@ class ThreeGalacticMapSceneRuntime
 
     this.cameraStateListener?.(
       this.cameraState(),
+    );
+  }
+
+  private emitGalaxySpinState():
+    void {
+
+    this.galaxySpinStateListener?.(
+      this.galaxySpinRadiansValue,
+    );
+  }
+
+  private rotateGalaxyVisual(
+    stepRadians:
+      number,
+  ): void {
+
+    if (
+      this.galaxyGroup ===
+        null
+    ) {
+      return;
+    }
+
+    this.galaxySpinRadiansValue =
+      normalizeSignedRadians(
+        this.galaxySpinRadiansValue +
+        stepRadians,
+      );
+
+    this.applyCurrentGalaxyVisualRotation();
+    this.renderFrame();
+    this.emitGalaxySpinState();
+  }
+
+  private applyCurrentGalaxyVisualRotation():
+    void {
+
+    if (
+      this.galaxyGroup ===
+        null
+    ) {
+      return;
+    }
+
+    applyGalaxyVisualRotation(
+      this.galaxyGroup,
+      this.staticGalaxyTiltRadians,
+      this.galaxySpinRadiansValue,
     );
   }
 
@@ -1458,9 +1612,31 @@ class ThreeGalacticMapSceneRuntime
     marker.renderOrder =
       1000;
 
-    this.scene.add(
-      marker,
-    );
+    if (
+      this.galaxyGroup !==
+        null
+    ) {
+      this
+        .galaxyGroup
+        .updateWorldMatrix(
+          true,
+          false,
+        );
+
+      this
+        .galaxyGroup
+        .worldToLocal(
+          marker.position,
+        );
+
+      this.galaxyGroup.add(
+        marker,
+      );
+    } else {
+      this.scene.add(
+        marker,
+      );
+    }
 
     this.selectionMarker =
       marker;
@@ -1541,14 +1717,76 @@ class ThreeGalacticMapSceneRuntime
 
     this.galaxyGroup =
       null;
+
+    this.galaxySpinRadiansValue =
+      0;
+
+    this.staticGalaxyTiltRadians =
+      0;
   }
+}
+
+export function applyGalaxyVisualRotation(
+  group:
+    THREE.Object3D,
+
+  staticTiltRadians:
+    number,
+
+  galaxySpinRadians:
+    number,
+): void {
+
+  const staticTilt =
+    new THREE.Quaternion()
+      .setFromAxisAngle(
+        new THREE.Vector3(
+          1,
+          0,
+          0,
+        ),
+        staticTiltRadians,
+      );
+
+  const localSpin =
+    new THREE.Quaternion()
+      .setFromAxisAngle(
+        new THREE.Vector3(
+          0,
+          0,
+          1,
+        ),
+        galaxySpinRadians,
+      );
+
+  group.quaternion
+    .copy(
+      staticTilt,
+    )
+    .multiply(
+      localSpin,
+    );
+}
+
+function normalizeSignedRadians(
+  radians:
+    number,
+): number {
+
+  return THREE.MathUtils.euclideanModulo(
+    radians +
+      Math.PI,
+    Math.PI *
+      2,
+  ) -
+  Math.PI;
 }
 
 /**
  * Point-10.1 framing multiplier frozen by the visual-approval pass.
  *
- * Point 10.2 manipulates only the camera. These morphology-specific framing
- * values therefore remain unchanged.
+ * Point 10.2 camera interaction and the secondary-button visual galaxy spin do
+ * not change these morphology-specific framing values.
  */
 export function staticPresentationScaleMultiplier(
   model:
@@ -1575,25 +1813,18 @@ export function staticPresentationScaleMultiplier(
 /**
  * Static point-10.1 disk presentation tilt, frozen at 20 degrees.
  *
- * OrbitControls in 10.2 move the camera around this already-approved renderer
- * presentation; the Ground Truth visual structure remains untouched.
+ * OrbitControls move the camera around this already-approved renderer
+ * presentation. Secondary-button spin composes a local visual Z rotation after
+ * this tilt; Ground Truth visual structure remains untouched.
  */
 export function staticPresentationTiltRadians(
-  model:
+  _model:
     GalacticMapModel,
 ): number {
 
-  if (
-    model.galaxyType ===
-      GalaxyType.BARRED_SPIRAL ||
-    model.galaxyType ===
-      GalaxyType.SPIRAL
-  ) {
-    return THREE.MathUtils.degToRad(
-      -20,
-    );
-  }
-
+  // Point-10.2 presentation contract: every galactic morphology starts from
+  // the same visual plane. The shared camera position defines the initial
+  // inclination; morphology must not add a second, hidden presentation tilt.
   return 0;
 }
 

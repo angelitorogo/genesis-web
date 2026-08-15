@@ -70,9 +70,21 @@
     </button>
   </div>
 
-  <p>
-    Región de habitabilidad galáctica. Entorno galáctico comparativamente más
-    favorable para la habitabilidad; no implica presencia de vida ni de planetas
-    habitables.
-  </p>
+  @if (hasHabitableZone) {
+    <p
+      data-testid="galactic-map-habitability-status"
+      data-has-habitable-zone="true"
+    >
+      Región favorable identificada por el modelo SPECULATIVE_SIMPLIFIED V1.
+      No implica presencia de vida ni de planetas habitables.
+    </p>
+  } @else {
+    <p
+      data-testid="galactic-map-habitability-status"
+      data-has-habitable-zone="false"
+    >
+      Sin región favorable identificada por el modelo SPECULATIVE_SIMPLIFIED V1.
+      Esto no implica ausencia de zonas habitables en sistemas concretos.
+    </p>
+  }
 </aside>

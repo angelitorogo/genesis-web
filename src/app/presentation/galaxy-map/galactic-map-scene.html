@@ -8,7 +8,7 @@
   [attr.data-camera-distance]="cameraState()?.distance ?? null"
   [attr.data-camera-azimuth]="cameraState()?.azimuthRadians ?? null"
   [attr.data-camera-polar]="cameraState()?.polarRadians ?? null"
-  [attr.data-camera-roll]="cameraState()?.rollRadians ?? null"
+  [attr.data-galaxy-spin]="galaxySpinRadians()"
   [attr.data-camera-target-x]="cameraState()?.targetX ?? null"
   [attr.data-camera-target-y]="cameraState()?.targetY ?? null"
   [attr.data-camera-target-z]="cameraState()?.targetZ ?? null"
@@ -21,7 +21,7 @@
   [attr.data-nebula-marker-count]="model.discoveryMarkers?.nebulaMarkerCount ?? null"
   [attr.data-star-cluster-marker-count]="model.discoveryMarkers?.starClusterMarkerCount ?? null"
   [attr.data-extreme-object-marker-count]="model.discoveryMarkers?.extremeObjectMarkerCount ?? null"
-  [attr.data-habitable-ring-count]="model.environmentalLayers?.habitabilityRings?.length ?? null"
+  [attr.data-habitable-ring-count]="model.environmentalLayers ? model.environmentalLayers.habitabilityRings.length : null"
   [attr.data-habitability-model]="model.environmentalLayers?.habitabilityModelStatus ?? null"
   [attr.data-layer-systems-visible]="layerVisibility().systems"
   [attr.data-layer-nebulae-visible]="layerVisibility().nebulae"
@@ -166,7 +166,7 @@
       </span>
 
       <span>
-        Botón derecho + horizontal: alabeo
+        Botón derecho + horizontal: girar la galaxia sobre sí misma
       </span>
 
       <span>
