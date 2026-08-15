@@ -3,6 +3,11 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationResultKind,
+  type ExplorationLocatedResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   GalacticObjectLocator,
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
@@ -82,6 +87,7 @@ describe(
             ),
           index,
         ),
+        ExplorationResultKind.SYSTEM,
         DiscoveryState.DETECTED,
         coordinates,
         0.25,
@@ -98,6 +104,10 @@ describe(
 
       index:
         bigint,
+
+      resultKind:
+        ExplorationLocatedResultKind =
+        ExplorationResultKind.NEBULA,
     ): GalacticMapDiscoveryMarker {
 
       const coordinates =
@@ -115,6 +125,7 @@ describe(
             ),
           index,
         ),
+        resultKind,
         DiscoveryState.CONFIRMED,
         coordinates,
         0.80,
@@ -123,7 +134,7 @@ describe(
     }
 
     it(
-      'should expose canonical persistent marker kinds and counts without inventing scientific families',
+      'should expose persistent locator kinds plus the four frozen 9.4 thematic result families',
       () => {
         const markers =
           new GalacticMapDiscoveryMarkers(
@@ -131,15 +142,28 @@ describe(
             0n,
             grid,
             [
-              objectMarker(
-                1,
-                -1,
-                4n,
-              ),
               systemMarker(
                 0,
                 0,
                 2n,
+              ),
+              objectMarker(
+                1,
+                -1,
+                4n,
+                ExplorationResultKind.NEBULA,
+              ),
+              objectMarker(
+                -1,
+                1,
+                5n,
+                ExplorationResultKind.STAR_CLUSTER,
+              ),
+              objectMarker(
+                1,
+                1,
+                6n,
+                ExplorationResultKind.EXTREME_OBJECT,
               ),
             ],
           );
@@ -147,7 +171,7 @@ describe(
         expect(
           markers.markerCount,
         ).toBe(
-          2,
+          4,
         );
 
         expect(
@@ -158,6 +182,24 @@ describe(
 
         expect(
           markers.galacticObjectMarkerCount,
+        ).toBe(
+          3,
+        );
+
+        expect(
+          markers.nebulaMarkerCount,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          markers.starClusterMarkerCount,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          markers.extremeObjectMarkerCount,
         ).toBe(
           1,
         );
@@ -195,6 +237,7 @@ describe(
             -1,
             1,
             2n,
+            ExplorationResultKind.STAR_CLUSTER,
           );
 
         const forward =
@@ -228,19 +271,26 @@ describe(
     );
 
     it(
-      'should preserve known DiscoveryState and normalized intra-sector placement',
+      'should preserve known DiscoveryState, frozen result family and normalized intra-sector placement',
       () => {
         const marker =
           objectMarker(
             0,
             0,
             1n,
+            ExplorationResultKind.EXTREME_OBJECT,
           );
 
         expect(
           marker.state,
         ).toBe(
           DiscoveryState.CONFIRMED,
+        );
+
+        expect(
+          marker.resultKind,
+        ).toBe(
+          ExplorationResultKind.EXTREME_OBJECT,
         );
 
         expect(
@@ -253,6 +303,72 @@ describe(
           marker.normalizedY,
         ).toBe(
           0.10,
+        );
+      },
+    );
+
+    it(
+      'should reject locator/result-family mismatches and transient marker taxonomy',
+      () => {
+        const coordinates =
+          new GalaxySectorCoordinates(
+            0,
+            0,
+          );
+
+        expect(
+          () =>
+            new GalacticMapDiscoveryMarker(
+              new SystemLocator(
+                0n,
+                0n,
+                0n,
+              ),
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DETECTED,
+              coordinates,
+              0.5,
+              0.5,
+            ),
+        ).toThrow(
+          TypeError,
+        );
+
+        expect(
+          () =>
+            new GalacticMapDiscoveryMarker(
+              new GalacticObjectLocator(
+                0n,
+                0n,
+                0n,
+              ),
+              ExplorationResultKind.SYSTEM,
+              DiscoveryState.DETECTED,
+              coordinates,
+              0.5,
+              0.5,
+            ),
+        ).toThrow(
+          TypeError,
+        );
+
+        expect(
+          () =>
+            new GalacticMapDiscoveryMarker(
+              new GalacticObjectLocator(
+                0n,
+                0n,
+                0n,
+              ),
+              ExplorationResultKind.TRANSIENT_EVENT as
+                ExplorationLocatedResultKind,
+              DiscoveryState.DETECTED,
+              coordinates,
+              0.5,
+              0.5,
+            ),
+        ).toThrow(
+          RangeError,
         );
       },
     );
@@ -298,6 +414,7 @@ describe(
                 ),
               1n,
             ),
+            ExplorationResultKind.SYSTEM,
             DiscoveryState.DETECTED,
             foreignCoordinates,
             0.5,
@@ -343,6 +460,7 @@ describe(
           () =>
             new GalacticMapDiscoveryMarker(
               locator,
+              ExplorationResultKind.SYSTEM,
               DiscoveryState.UNKNOWN,
               coordinates,
               0.5,
@@ -356,6 +474,7 @@ describe(
           () =>
             new GalacticMapDiscoveryMarker(
               locator,
+              ExplorationResultKind.SYSTEM,
               DiscoveryState.DETECTED,
               coordinates,
               1,
@@ -369,6 +488,7 @@ describe(
           () =>
             new GalacticMapDiscoveryMarker(
               locator,
+              ExplorationResultKind.SYSTEM,
               DiscoveryState.DETECTED,
               new GalaxySectorCoordinates(
                 1,

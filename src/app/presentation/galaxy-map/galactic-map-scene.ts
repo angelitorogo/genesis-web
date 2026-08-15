@@ -36,6 +36,22 @@ import {
 } from './galactic-map-discovery-marker-overlay';
 
 import {
+  createGalacticMapEnvironmentalOverlay,
+  type GalacticMapEnvironmentalOverlay,
+} from './galactic-map-environmental-overlay';
+
+import {
+  GalacticMapLayerControls,
+  type GalacticMapLayerVisibilityChange,
+} from './galactic-map-layer-controls';
+
+import {
+  INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
+  type GalacticMapLayerVisibility,
+  withGalacticMapLayerVisibility,
+} from './galactic-map-layer-state';
+
+import {
   type GalacticMapModel,
 } from './galactic-map-model';
 
@@ -84,6 +100,11 @@ export interface GalacticMapSceneRuntime {
   setRotationEnabled(
     enabled:
       boolean,
+  ): void;
+
+  setLayerVisibility(
+    visibility:
+      GalacticMapLayerVisibility,
   ): void;
 
   resetView():
@@ -143,12 +164,12 @@ interface PointerGesture {
 }
 
 /**
- * Point-10.4 Angular host for the Three.js scene.
+ * Point-10.5 Angular host for the Three.js scene.
  *
- * It preserves the approved point-10.2 camera/selection behavior and point-10.3
- * sector coverage while adding one read-only persistent discovery-marker layer.
- * Markers are derived from persisted SystemLocator/GalacticObjectLocator rows;
- * they remain completely separate from selectable GPU render samples.
+ * It preserves the approved point-10.2 camera/selection behavior, point-10.3
+ * sector coverage and point-10.4 persistent markers. Point 10.5 adds six
+ * independently switchable thematic layers without changing persistence or
+ * turning GPU samples into physical targets.
  */
 @Component({
   selector:
@@ -156,6 +177,10 @@ interface PointerGesture {
 
   standalone:
     true,
+
+  imports: [
+    GalacticMapLayerControls,
+  ],
 
   templateUrl:
     './galactic-map-scene.html',
@@ -255,6 +280,11 @@ export class GalacticMapScene
       null,
     );
 
+  private readonly layerVisibilitySignal =
+    signal<GalacticMapLayerVisibility>(
+      INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
+    );
+
   readonly renderState =
     this
       .renderStateSignal
@@ -273,6 +303,11 @@ export class GalacticMapScene
   readonly selection =
     this
       .selectionSignal
+      .asReadonly();
+
+  readonly layerVisibility =
+    this
+      .layerVisibilitySignal
       .asReadonly();
 
   ngAfterViewInit():
@@ -318,6 +353,10 @@ export class GalacticMapScene
         .set(
           this.runtime.cameraState(),
         );
+
+      this.runtime.setLayerVisibility(
+        this.layerVisibilitySignal(),
+      );
 
       this.installResizeHandling();
       this.resizeRuntime();
@@ -418,6 +457,31 @@ export class GalacticMapScene
       .cameraStateSignal
       .set(
         this.runtime.cameraState(),
+      );
+  }
+
+  onLayerVisibilityChange(
+    change:
+      GalacticMapLayerVisibilityChange,
+  ): void {
+
+    const nextVisibility =
+      withGalacticMapLayerVisibility(
+        this.layerVisibilitySignal(),
+        change.layerId,
+        change.visible,
+      );
+
+    this
+      .layerVisibilitySignal
+      .set(
+        nextVisibility,
+      );
+
+    this
+      .runtime
+      ?.setLayerVisibility(
+        nextVisibility,
       );
   }
 
@@ -713,6 +777,10 @@ export class GalacticMapScene
             this.model,
           );
 
+      this.runtime.setLayerVisibility(
+        this.layerVisibilitySignal(),
+      );
+
       this
         .particleCountSignal
         .set(
@@ -804,6 +872,14 @@ class ThreeGalacticMapSceneRuntime
   private discoveryMarkerOverlay:
     GalacticMapDiscoveryMarkerOverlay | null =
     null;
+
+  private environmentalOverlay:
+    GalacticMapEnvironmentalOverlay | null =
+    null;
+
+  private layerVisibility:
+    GalacticMapLayerVisibility =
+    INITIAL_GALACTIC_MAP_LAYER_VISIBILITY;
 
   private selectionMarker:
     THREE.Mesh<
@@ -1083,6 +1159,26 @@ class ThreeGalacticMapSceneRuntime
         sectorOverlay;
     }
 
+    const environmentalLayers =
+      model.environmentalLayers;
+
+    if (
+      environmentalLayers !==
+      null
+    ) {
+      const environmentalOverlay =
+        createGalacticMapEnvironmentalOverlay(
+          environmentalLayers,
+        );
+
+      galaxyGroup.add(
+        environmentalOverlay.object3d,
+      );
+
+      this.environmentalOverlay =
+        environmentalOverlay;
+    }
+
     const discoveryMarkers =
       model.discoveryMarkers;
 
@@ -1131,6 +1227,7 @@ class ThreeGalacticMapSceneRuntime
     this.points =
       points;
 
+    this.applyLayerVisibility();
     this.renderFrame();
 
     return Object.freeze({
@@ -1168,6 +1265,20 @@ class ThreeGalacticMapSceneRuntime
       .setRotationEnabled(
         enabled,
       );
+  }
+
+  setLayerVisibility(
+    visibility:
+      GalacticMapLayerVisibility,
+  ): void {
+
+    this.layerVisibility =
+      Object.freeze({
+        ...visibility,
+      });
+
+    this.applyLayerVisibility();
+    this.renderFrame();
   }
 
   resetView():
@@ -1268,6 +1379,28 @@ class ThreeGalacticMapSceneRuntime
     this
       .renderer
       .dispose();
+  }
+
+  private applyLayerVisibility():
+    void {
+
+    this
+      .discoveryMarkerOverlay
+      ?.setLayerVisibility(
+        this.layerVisibility,
+      );
+
+    this
+      .environmentalOverlay
+      ?.setRegionsVisible(
+        this.layerVisibility.regions,
+      );
+
+    this
+      .environmentalOverlay
+      ?.setHabitabilityVisible(
+        this.layerVisibility.habitableZone,
+      );
   }
 
   private emitCameraState():
@@ -1390,6 +1523,10 @@ class ThreeGalacticMapSceneRuntime
       .discoveryMarkerOverlay
       ?.dispose();
 
+    this
+      .environmentalOverlay
+      ?.dispose();
+
     this.points =
       null;
 
@@ -1397,6 +1534,9 @@ class ThreeGalacticMapSceneRuntime
       null;
 
     this.discoveryMarkerOverlay =
+      null;
+
+    this.environmentalOverlay =
       null;
 
     this.galaxyGroup =

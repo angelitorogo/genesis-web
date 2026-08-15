@@ -26,6 +26,14 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  GalaxySectorContentGenerator,
+} from '../sector/galaxy-sector-content-generator';
+
+import {
+  GalaxyGenerator,
+} from '../universe/galaxy-generator';
+
+import {
   ExplorationSectorResultEngine,
 } from './exploration-sector-result-engine';
 
@@ -289,7 +297,105 @@ describe(
     );
 
     it(
-      'should reject unsupported generator versions before resolving point-9.4 content',
+      'should expose the exact frozen 9.4 galactic-object family classifier for point-10.5 layers',
+      () => {
+        const galaxy =
+          GalaxyGenerator.generate(
+            generationKey,
+            0n,
+          );
+
+        const kinds =
+          new Set<string>();
+
+        for (
+          let x =
+            -12;
+          x <=
+            12;
+          x +=
+            1
+        ) {
+          for (
+            let y =
+              -12;
+            y <=
+              12;
+            y +=
+              1
+          ) {
+            const selection =
+              ExplorationSectorScanEngine
+                .prepareSector(
+                  generationKey,
+                  0n,
+                  x,
+                  y,
+                );
+
+            const content =
+              GalaxySectorContentGenerator
+                .generate(
+                  galaxy,
+                  selection.coordinates,
+                );
+
+            for (
+              const locator
+              of content.galacticObjectLocators
+            ) {
+              const first =
+                ExplorationSectorResultEngine
+                  .resolveGalacticObjectKind(
+                    generationKey,
+                    locator,
+                  );
+
+              const second =
+                ExplorationSectorResultEngine
+                  .resolveGalacticObjectKind(
+                    generationKey,
+                    locator,
+                  );
+
+              expect(
+                second,
+              ).toBe(
+                first,
+              );
+
+              expect(
+                [
+                  ExplorationResultKind.NEBULA,
+                  ExplorationResultKind.STAR_CLUSTER,
+                  ExplorationResultKind.EXTREME_OBJECT,
+                ],
+              ).toContain(
+                first,
+              );
+
+              kinds.add(
+                first,
+              );
+            }
+          }
+        }
+
+        expect(
+          kinds,
+        ).toEqual(
+          new Set([
+            ExplorationResultKind.NEBULA,
+            ExplorationResultKind.STAR_CLUSTER,
+            ExplorationResultKind.EXTREME_OBJECT,
+          ]),
+        );
+      },
+      15_000,
+    );
+
+    it(
+      'should reject unsupported generator versions before resolving point-9.4 content or point-10.5 object family',
       () => {
         const unsupported =
           {
@@ -333,6 +439,21 @@ describe(
             ExplorationSectorResultEngine
               .resolve(
                 forged,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            ExplorationSectorResultEngine
+              .resolveGalacticObjectKind(
+                unsupported,
+                new GalacticObjectLocator(
+                  0n,
+                  0n,
+                  0n,
+                ),
               ),
         ).toThrow(
           RangeError,

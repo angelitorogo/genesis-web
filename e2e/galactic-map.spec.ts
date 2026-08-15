@@ -1,4 +1,4 @@
-import {
+﻿import {
   expect,
   test,
 } from '@playwright/test';
@@ -142,7 +142,7 @@ async function persistOneStaticDiscovery(
   }
 
   throw new Error(
-    'The frozen central point-10.4 E2E sample did not produce a static persistent discovery.',
+    'The frozen central point-10.5 E2E sample did not produce a static persistent discovery.',
   );
 }
 
@@ -176,10 +176,10 @@ async function numericAttribute(
 }
 
 test.describe(
-  'GENESIS point-10.4 persistent galactic discovery markers',
+  'GENESIS point-10.5 galactic thematic layers',
   () => {
     test(
-      'should persist a static discovery, render it as a marker across reloads and preserve 10.2/10.3 behavior',
+      'should render and toggle all six thematic layers while preserving persistent markers and 10.2/10.3 interaction',
       async ({
         page,
       }) => {
@@ -257,6 +257,36 @@ test.describe(
             'galactic-map-controls',
           ),
         ).toBeVisible();
+
+        const layers =
+          page.getByTestId(
+            'galactic-map-layers',
+          );
+
+        await expect(
+          layers,
+        ).toBeVisible();
+
+        for (
+          const testId
+          of [
+            'galactic-map-layer-systems',
+            'galactic-map-layer-nebulae',
+            'galactic-map-layer-star-clusters',
+            'galactic-map-layer-extreme-objects',
+            'galactic-map-layer-regions',
+            'galactic-map-layer-habitable-zone',
+          ]
+        ) {
+          await expect(
+            page.getByTestId(
+              testId,
+            ),
+          ).toHaveAttribute(
+            'aria-pressed',
+            'true',
+          );
+        }
 
         const coverage =
           page.getByTestId(
@@ -342,6 +372,126 @@ test.describe(
           String(
             markerCountBeforeReload,
           ),
+        );
+
+        const markerLayer =
+          persistedResultKind ===
+            'SYSTEM'
+            ? {
+                testId:
+                  'galactic-map-layer-systems',
+                sceneAttribute:
+                  'data-layer-systems-visible',
+              }
+            : persistedResultKind ===
+                'NEBULA'
+              ? {
+                  testId:
+                    'galactic-map-layer-nebulae',
+                  sceneAttribute:
+                    'data-layer-nebulae-visible',
+                }
+              : persistedResultKind ===
+                  'STAR_CLUSTER'
+                ? {
+                    testId:
+                      'galactic-map-layer-star-clusters',
+                    sceneAttribute:
+                      'data-layer-star-clusters-visible',
+                  }
+                : {
+                    testId:
+                      'galactic-map-layer-extreme-objects',
+                    sceneAttribute:
+                      'data-layer-extreme-objects-visible',
+                  };
+
+        await page
+          .getByTestId(
+            markerLayer.testId,
+          )
+          .click();
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          markerLayer.sceneAttribute,
+          'false',
+        );
+
+        await page
+          .getByTestId(
+            markerLayer.testId,
+          )
+          .click();
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          markerLayer.sceneAttribute,
+          'true',
+        );
+
+        for (
+          const item
+          of [
+            {
+              testId:
+                'galactic-map-layer-regions',
+              sceneAttribute:
+                'data-layer-regions-visible',
+            },
+            {
+              testId:
+                'galactic-map-layer-habitable-zone',
+              sceneAttribute:
+                'data-layer-habitable-zone-visible',
+            },
+          ]
+        ) {
+          await page
+            .getByTestId(
+              item.testId,
+            )
+            .click();
+
+          await expect(
+            scene,
+          ).toHaveAttribute(
+            item.sceneAttribute,
+            'false',
+          );
+
+          await page
+            .getByTestId(
+              item.testId,
+            )
+            .click();
+
+          await expect(
+            scene,
+          ).toHaveAttribute(
+            item.sceneAttribute,
+            'true',
+          );
+        }
+
+        expect(
+          Number(
+            await scene.getAttribute(
+              'data-habitable-ring-count',
+            ),
+          ),
+        ).toBeGreaterThan(
+          0,
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-point-boundary',
+          ),
+        ).toContainText(
+          'SPECULATIVE_SIMPLIFIED',
         );
 
         await page.reload();
@@ -844,10 +994,15 @@ test.describe(
           ),
         ).toBeVisible();
 
+        await expect(
+          page.getByTestId(
+            'galactic-map-layers',
+          ),
+        ).toBeVisible();
+
         for (
           const testId
           of [
-            'galactic-map-layers',
             'galactic-map-marker-link',
             'galactic-map-relative-position',
           ]
@@ -866,7 +1021,7 @@ test.describe(
             'galactic-map-point-boundary',
           ),
         ).toContainText(
-          '10.5–10.9',
+          '10.6–10.9',
         );
       },
     );

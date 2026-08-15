@@ -27,6 +27,10 @@ import {
 } from '../../domain/generation/generator-version';
 
 import {
+  type UniverseGenerationKey,
+} from '../../domain/generation/universe-generation-key';
+
+import {
   LocatedObservationObject,
   ObservationClassification,
   ObservationTransientCandidate,
@@ -77,6 +81,12 @@ const V1_EVENT_ID_LABEL =
 const SIGNED_LONG_MAX =
   9_223_372_036_854_775_807n;
 
+export type ExplorationGalacticObjectResultKind =
+  Exclude<
+    ExplorationLocatedResultKind,
+    typeof ExplorationResultKind.SYSTEM
+  >;
+
 interface LocatedCandidate {
   readonly kind:
     ExplorationLocatedResultKind;
@@ -121,7 +131,11 @@ interface ResultBucket {
  *   already-observed 9.3 signal/anomaly cue without inventing a static object;
  * - one transient event candidate is deterministic per scanned sector.
  *
- * This point performs no repository access, DiscoveryState mutation,
+ * Point 10.5 reuses resolveGalacticObjectKind() as the single canonical source
+ * for the already-frozen coarse galactic-object family. This does not promote
+ * the result to a formal scientific classification.
+ *
+ * This engine performs no repository access, DiscoveryState mutation,
  * Discovery Point read/write, reward calculation, clock/UUID use or transient
  * persistence. Point 9.5 owns progression/reward effects.
  */
@@ -212,7 +226,7 @@ export class ExplorationSectorResultEngine {
     ) {
       candidates.push({
         kind:
-          coarseGalacticObjectKindV1(
+          this.resolveGalacticObjectKind(
             generationKey,
             locator,
           ),
@@ -288,19 +302,39 @@ export class ExplorationSectorResultEngine {
       ),
     );
   }
+
+  static resolveGalacticObjectKind(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      GalacticObjectLocator,
+  ): ExplorationGalacticObjectResultKind {
+
+    if (
+      generationKey
+        .generatorVersion !==
+      GeneratorVersion.V1
+    ) {
+      throw new RangeError(
+        `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+      );
+    }
+
+    return coarseGalacticObjectKindV1(
+      generationKey,
+      locator,
+    );
+  }
 }
 
 function coarseGalacticObjectKindV1(
   generationKey:
-    ExplorationSectorScanResult[
-      'selection'
-    ][
-      'generationKey'
-    ],
+    UniverseGenerationKey,
 
   locator:
     GalacticObjectLocator,
-): ExplorationLocatedResultKind {
+): ExplorationGalacticObjectResultKind {
 
   const targetSeed =
     ProceduralTargetResolver

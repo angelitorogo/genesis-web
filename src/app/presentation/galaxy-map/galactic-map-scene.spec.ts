@@ -7,6 +7,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -57,8 +61,16 @@ import {
 } from './galactic-map-discovery-markers';
 
 import {
+  buildGalacticMapEnvironmentalLayers,
+} from './galactic-map-environmental-layers';
+
+import {
   GalacticMapExplorationCoverage,
 } from './galactic-map-exploration-coverage';
+
+import {
+  type GalacticMapLayerVisibility,
+} from './galactic-map-layer-state';
 
 import {
   GalacticMapModel,
@@ -131,6 +143,7 @@ describe(
                   ),
                 0n,
               ),
+              ExplorationResultKind.SYSTEM,
               DiscoveryState.DETECTED,
               markerCoordinates,
               0.25,
@@ -155,6 +168,14 @@ describe(
         galaxy.type,
         coverage,
         discoveryMarkers,
+        buildGalacticMapEnvironmentalLayers(
+          galaxy,
+          grid,
+          GalaxyVisualStructureGenerator
+            .generate(
+              galaxy,
+            ),
+        ),
       );
     }
 
@@ -202,6 +223,9 @@ describe(
         number,
       ]>;
 
+    let layerVisibilityCalls:
+      GalacticMapLayerVisibility[];
+
     let cameraState:
       GalacticMapCameraState;
 
@@ -238,6 +262,9 @@ describe(
           0;
 
         selectCalls =
+          [];
+
+        layerVisibilityCalls =
           [];
 
         cameraStateListener =
@@ -317,6 +344,14 @@ describe(
               );
             },
 
+            setLayerVisibility(
+              visibility,
+            ) {
+              layerVisibilityCalls.push(
+                visibility,
+              );
+            },
+
             resetView() {
               resetCalls +=
                 1;
@@ -387,7 +422,7 @@ describe(
     );
 
     it(
-      'should initialize the interactive renderer host with 10.3 coverage and 10.4 persistent markers without requiring WebGL in unit tests',
+      'should initialize the interactive renderer host with coverage, persistent markers and six point-10.5 layer controls',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -547,6 +582,105 @@ describe(
             ?.textContent,
         ).toContain(
           'Ctrl + arrastrar: desplazar',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-layers"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid^="galactic-map-layer-"]',
+          ),
+        ).toHaveLength(
+          6,
+        );
+
+        expect(
+          layerVisibilityCalls.length,
+        ).toBeGreaterThanOrEqual(
+          2,
+        );
+      },
+    );
+
+    it(
+      'should toggle one thematic layer without mutating the other five visibility flags',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapScene,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          model(),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const nebulaButton =
+          element.querySelector(
+            '[data-testid="galactic-map-layer-nebulae"]',
+          ) as HTMLButtonElement;
+
+        expect(
+          nebulaButton.getAttribute(
+            'aria-pressed',
+          ),
+        ).toBe(
+          'true',
+        );
+
+        nebulaButton.click();
+        fixture.detectChanges();
+
+        expect(
+          nebulaButton.getAttribute(
+            'aria-pressed',
+          ),
+        ).toBe(
+          'false',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-layer-nebulae-visible',
+            ),
+        ).toBe(
+          'false',
+        );
+
+        const latest =
+          layerVisibilityCalls[
+            layerVisibilityCalls.length -
+            1
+          ];
+
+        expect(
+          latest.nebulae,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          latest.systems &&
+          latest.starClusters &&
+          latest.extremeObjects &&
+          latest.regions &&
+          latest.habitableZone,
+        ).toBe(
+          true,
         );
       },
     );

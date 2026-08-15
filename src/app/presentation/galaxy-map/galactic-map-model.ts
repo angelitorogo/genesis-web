@@ -24,6 +24,10 @@ import {
 } from './galactic-map-discovery-markers';
 
 import {
+  type GalacticMapEnvironmentalLayers,
+} from './galactic-map-environmental-layers';
+
+import {
   type GalacticMapExplorationCoverage,
 } from './galactic-map-exploration-coverage';
 
@@ -31,18 +35,17 @@ const SIGNED_LONG_MAX =
   9_223_372_036_854_775_807n;
 
 /**
- * Point-10.4 read-only projection for the currently focused galactic map.
+ * Point-10.5 read-only projection for the currently focused galactic map.
  *
  * The public page always receives the safe point-7.6 preliminary observation.
  * Exact renderer-independent visual geometry and the canonical GalaxyType are
- * available only once the active galaxy has reached DISCOVERED or a later
- * knowledge state.
+ * available only once the active galaxy has reached DISCOVERED or later.
  *
- * Point 10.3 contributes binary explored/unexplored sector coverage. Point
- * 10.4 additionally exposes persistent object markers reconstructed from the
- * KnownDiscovery snapshot. Marker placement is still read-only and contains no
- * layer toggles, marker navigation, LOD, visible-sector materialization or
- * persistence mutation.
+ * Point 10.3 contributes binary sector coverage; point 10.4 persistent object
+ * markers; point 10.5 adds thematic marker families plus region/GHZ metadata.
+ * All of them are derived read-only projections. No map-specific persistence,
+ * marker navigation, relative-position model, LOD or visible-sector
+ * materialization is introduced here.
  */
 export class GalacticMapModel {
 
@@ -75,6 +78,10 @@ export class GalacticMapModel {
 
     readonly discoveryMarkers:
       GalacticMapDiscoveryMarkers | null =
+        null,
+
+    readonly environmentalLayers:
+      GalacticMapEnvironmentalLayers | null =
         null,
   ) {
     assertNonNegativeSignedLong(
@@ -149,67 +156,43 @@ export class GalacticMapModel {
       );
     }
 
-    if (
-      explorationCoverage !==
-        null &&
-      (
-        !sameGenerationKey(
-          generationKey,
-          explorationCoverage
-            .generationKey,
-        ) ||
-        explorationCoverage
-          .galaxyIndex !==
-          galaxyIndex
-      )
-    ) {
-      throw new RangeError(
-        'explorationCoverage must belong to the active generationKey and galaxyIndex.',
-      );
-    }
+    assertSnapshotIdentity(
+      generationKey,
+      galaxyIndex,
+      explorationCoverage,
+      'explorationCoverage',
+    );
+
+    assertSnapshotIdentity(
+      generationKey,
+      galaxyIndex,
+      discoveryMarkers,
+      'discoveryMarkers',
+    );
+
+    assertSnapshotIdentity(
+      generationKey,
+      galaxyIndex,
+      environmentalLayers,
+      'environmentalLayers',
+    );
 
     if (
       canonicalKnowledgeState.code <
         DiscoveryState
           .DISCOVERED
           .code &&
-      explorationCoverage !==
-        null
-    ) {
-      throw new RangeError(
-        'Exploration coverage cannot be exposed before the detailed galactic map is available.',
-      );
-    }
-
-    if (
-      discoveryMarkers !==
-        null &&
       (
-        !sameGenerationKey(
-          generationKey,
-          discoveryMarkers
-            .generationKey,
-        ) ||
-        discoveryMarkers
-          .galaxyIndex !==
-          galaxyIndex
+        explorationCoverage !==
+          null ||
+        discoveryMarkers !==
+          null ||
+        environmentalLayers !==
+          null
       )
     ) {
       throw new RangeError(
-        'discoveryMarkers must belong to the active generationKey and galaxyIndex.',
-      );
-    }
-
-    if (
-      canonicalKnowledgeState.code <
-        DiscoveryState
-          .DISCOVERED
-          .code &&
-      discoveryMarkers !==
-        null
-    ) {
-      throw new RangeError(
-        'Persistent discovery markers cannot be exposed before the detailed galactic map is available.',
+        'Detailed cartographic layers cannot be exposed before the detailed galactic map is available.',
       );
     }
 
@@ -225,27 +208,39 @@ export class GalacticMapModel {
     }
 
     if (
+      environmentalLayers !==
+        null &&
+      explorationCoverage ===
+        null
+    ) {
+      throw new RangeError(
+        'Point-10.5 environmental layers require the active exploration coverage grid.',
+      );
+    }
+
+    if (
       discoveryMarkers !==
         null &&
       explorationCoverage !==
-        null &&
-      (
-        discoveryMarkers
-          .grid
-          .minCoordinate !==
-          explorationCoverage
-            .grid
-            .minCoordinate ||
-        discoveryMarkers
-          .grid
-          .maxCoordinate !==
-          explorationCoverage
-            .grid
-            .maxCoordinate
-      )
+        null
     ) {
-      throw new RangeError(
-        'discoveryMarkers and explorationCoverage must use the same active galaxy grid.',
+      assertSameGrid(
+        discoveryMarkers.grid,
+        explorationCoverage.grid,
+        'discoveryMarkers',
+      );
+    }
+
+    if (
+      environmentalLayers !==
+        null &&
+      explorationCoverage !==
+        null
+    ) {
+      assertSameGrid(
+        environmentalLayers.grid,
+        explorationCoverage.grid,
+        'environmentalLayers',
       );
     }
 
@@ -276,6 +271,81 @@ export class GalacticMapModel {
     return this
       .visualStructure !==
       null;
+  }
+}
+
+interface GalacticMapGridSnapshot {
+  readonly generationKey:
+    UniverseGenerationKey;
+
+  readonly galaxyIndex:
+    bigint;
+
+  readonly grid:
+    {
+      readonly minCoordinate:
+        number;
+
+      readonly maxCoordinate:
+        number;
+    };
+}
+
+function assertSnapshotIdentity(
+  generationKey:
+    UniverseGenerationKey,
+
+  galaxyIndex:
+    bigint,
+
+  snapshot:
+    GalacticMapGridSnapshot | null,
+
+  propertyName:
+    string,
+): void {
+
+  if (
+    snapshot ===
+    null
+  ) {
+    return;
+  }
+
+  if (
+    !sameGenerationKey(
+      generationKey,
+      snapshot.generationKey,
+    ) ||
+    snapshot.galaxyIndex !==
+      galaxyIndex
+  ) {
+    throw new RangeError(
+      `${propertyName} must belong to the active generationKey and galaxyIndex.`,
+    );
+  }
+}
+
+function assertSameGrid(
+  candidate:
+    GalacticMapGridSnapshot['grid'],
+
+  coverage:
+    GalacticMapGridSnapshot['grid'],
+
+  propertyName:
+    string,
+): void {
+
+  if (
+    candidate.minCoordinate !==
+      coverage.minCoordinate ||
+    candidate.maxCoordinate !==
+      coverage.maxCoordinate
+  ) {
+    throw new RangeError(
+      `${propertyName} and explorationCoverage must use the same active galaxy grid.`,
+    );
   }
 }
 

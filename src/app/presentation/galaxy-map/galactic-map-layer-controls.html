@@ -1,0 +1,78 @@
+<aside
+  class="galactic-map-layers"
+  data-testid="galactic-map-layers"
+  aria-label="Capas temáticas del mapa galáctico"
+>
+  <div class="galactic-map-layers__heading">
+    <small>CAPAS / 10.5</small>
+    <span>VISIBILIDAD</span>
+  </div>
+
+  <div class="galactic-map-layers__grid">
+    <button
+      type="button"
+      data-testid="galactic-map-layer-systems"
+      [attr.aria-pressed]="visibility.systems"
+      (click)="toggle(layerId.SYSTEMS)"
+    >
+      <i class="galactic-map-layers__swatch galactic-map-layers__swatch--systems" aria-hidden="true"></i>
+      Sistemas
+    </button>
+
+    <button
+      type="button"
+      data-testid="galactic-map-layer-nebulae"
+      [attr.aria-pressed]="visibility.nebulae"
+      (click)="toggle(layerId.NEBULAE)"
+    >
+      <i class="galactic-map-layers__swatch galactic-map-layers__swatch--nebulae" aria-hidden="true"></i>
+      Nebulosas
+    </button>
+
+    <button
+      type="button"
+      data-testid="galactic-map-layer-star-clusters"
+      [attr.aria-pressed]="visibility.starClusters"
+      (click)="toggle(layerId.STAR_CLUSTERS)"
+    >
+      <i class="galactic-map-layers__swatch galactic-map-layers__swatch--clusters" aria-hidden="true"></i>
+      Cúmulos
+    </button>
+
+    <button
+      type="button"
+      data-testid="galactic-map-layer-extreme-objects"
+      [attr.aria-pressed]="visibility.extremeObjects"
+      (click)="toggle(layerId.EXTREME_OBJECTS)"
+    >
+      <i class="galactic-map-layers__swatch galactic-map-layers__swatch--extreme" aria-hidden="true"></i>
+      Extremos
+    </button>
+
+    <button
+      type="button"
+      data-testid="galactic-map-layer-regions"
+      [attr.aria-pressed]="visibility.regions"
+      (click)="toggle(layerId.REGIONS)"
+    >
+      <i class="galactic-map-layers__swatch galactic-map-layers__swatch--regions" aria-hidden="true"></i>
+      Regiones
+    </button>
+
+    <button
+      type="button"
+      data-testid="galactic-map-layer-habitable-zone"
+      [attr.aria-pressed]="visibility.habitableZone"
+      (click)="toggle(layerId.HABITABLE_ZONE)"
+    >
+      <i class="galactic-map-layers__swatch galactic-map-layers__swatch--habitable" aria-hidden="true"></i>
+      Región de habitabilidad galáctica
+    </button>
+  </div>
+
+  <p>
+    Región de habitabilidad galáctica. Entorno galáctico comparativamente más
+    favorable para la habitabilidad; no implica presencia de vida ni de planetas
+    habitables.
+  </p>
+</aside>

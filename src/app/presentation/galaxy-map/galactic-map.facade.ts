@@ -14,6 +14,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   GalacticObjectLocator,
   GalaxyLocator,
   SectorLocator,
@@ -31,6 +35,10 @@ import {
 import {
   type Galaxy,
 } from '../../domain/universe/galaxy';
+
+import {
+  ExplorationSectorResultEngine,
+} from '../../simulation/exploration/exploration-sector-result-engine';
 
 import {
   ExternalGalaxyPreliminaryInformationGenerator,
@@ -66,6 +74,11 @@ import {
 } from './galactic-map-discovery-markers';
 
 import {
+  buildGalacticMapEnvironmentalLayers,
+  type GalacticMapEnvironmentalLayers,
+} from './galactic-map-environmental-layers';
+
+import {
   GalacticMapExplorationCoverage,
 } from './galactic-map-exploration-coverage';
 
@@ -79,19 +92,17 @@ import {
 } from './galactic-map-ui-state';
 
 /**
- * Point-10.4 read-only application facade for the galactic map.
+ * Point-10.5 read-only application facade for the galactic map.
  *
  * A discovered galaxy reads one persisted KnownDiscovery snapshot and reuses
- * it for both point-10.3 sector coverage and point-10.4 object markers.
+ * it for both point-10.3 sector coverage and point-10.4/10.5 object markers.
+ * Point 10.5 additionally builds deterministic region/GHZ map metadata from
+ * already-existing V1 environmental generators without enumerating the full
+ * 2D grid or persisting any new map state.
  *
- * Marker eligibility is intentionally narrow at this stage:
- * - SystemLocator;
- * - GalacticObjectLocator.
- *
- * GalaxyLocator is the focused map itself, SectorLocator is already represented
- * by 10.3 coverage, and BodyLocator/CivilizationLocator do not yet have a
- * galactic-scale placement contract. Transient events have no persistent
- * locator. No sector content is generated and no persistence is mutated.
+ * Marker families reuse the exact frozen point-9.4 operational taxonomy:
+ * SYSTEM, NEBULA, STAR_CLUSTER and EXTREME_OBJECT. This taxonomy remains
+ * separate from formal scientific classification.
  */
 @Injectable({
   providedIn:
@@ -292,9 +303,15 @@ export class GalacticMapFacade {
         GalacticMapDiscoveryMarkers | null =
         null;
 
+      let environmentalLayers:
+        GalacticMapEnvironmentalLayers | null =
+        null;
+
       if (
         detailedGalaxy !==
-        null
+          null &&
+        visualStructure !==
+          null
       ) {
         const grid =
           GalaxySectorGridGenerator
@@ -325,6 +342,13 @@ export class GalacticMapFacade {
             grid,
             knownDiscoveries,
           );
+
+        environmentalLayers =
+          buildGalacticMapEnvironmentalLayers(
+            detailedGalaxy,
+            grid,
+            visualStructure,
+          );
       }
 
       if (
@@ -351,6 +375,7 @@ export class GalacticMapFacade {
                 null,
               explorationCoverage,
               discoveryMarkers,
+              environmentalLayers,
             ),
         });
     } catch (
@@ -482,6 +507,7 @@ export class GalacticMapFacade {
         markers.push(
           new GalacticMapDiscoveryMarker(
             locator,
+            ExplorationResultKind.SYSTEM,
             discovery.state,
             location.sectorCoordinates,
             location.normalizedX,
@@ -506,6 +532,11 @@ export class GalacticMapFacade {
         markers.push(
           new GalacticMapDiscoveryMarker(
             locator,
+            ExplorationSectorResultEngine
+              .resolveGalacticObjectKind(
+                generationKey,
+                locator,
+              ),
             discovery.state,
             location.sectorCoordinates,
             location.normalizedX,

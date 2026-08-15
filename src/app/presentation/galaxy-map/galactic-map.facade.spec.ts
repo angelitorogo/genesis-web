@@ -12,6 +12,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   BodyLocator,
   GalacticObjectLocator,
   GalaxyLocator,
@@ -144,13 +148,13 @@ describe(
         universeRepository: {
           async createIfAbsent() {
             throw new Error(
-              '10.4 must not create universes.',
+              '10.5 must not create universes.',
             );
           },
 
           async exists() {
             throw new Error(
-              '10.4 uses the persisted universe list.',
+              '10.5 uses the persisted universe list.',
             );
           },
 
@@ -160,7 +164,7 @@ describe(
 
           async delete() {
             throw new Error(
-              '10.4 must not delete universes.',
+              '10.5 must not delete universes.',
             );
           },
         },
@@ -176,7 +180,7 @@ describe(
 
           async setNavigation() {
             throw new Error(
-              '10.4 must not mutate navigation.',
+              '10.5 must not mutate navigation.',
             );
           },
         },
@@ -184,25 +188,25 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.4 must not read PD.',
+              '10.5 must not read PD.',
             );
           },
 
           async setGlobalDiscoveryPoints() {
             throw new Error(
-              '10.4 must not write PD.',
+              '10.5 must not write PD.',
             );
           },
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.4 must not read galaxy PD.',
+              '10.5 must not read galaxy PD.',
             );
           },
 
           async setGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.4 must not write galaxy PD.',
+              '10.5 must not write galaxy PD.',
             );
           },
         },
@@ -225,7 +229,7 @@ describe(
 
           async setState() {
             throw new Error(
-              '10.4 must not mutate DiscoveryState.',
+              '10.5 must not mutate DiscoveryState.',
             );
           },
 
@@ -237,7 +241,7 @@ describe(
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.4 must not issue one repository query per sector.',
+              '10.5 must not issue one repository query per sector.',
             );
           },
         },
@@ -267,7 +271,7 @@ describe(
     }
 
     it(
-      'should reuse one persisted discovery snapshot for 10.3 sector coverage and 10.4 static object markers',
+      'should reuse one persisted discovery snapshot for 10.3 sector coverage and 10.4 persistent markers and 10.5 thematic/environmental layers',
       async () => {
         let knownDiscoveryReads =
           0;
@@ -445,6 +449,77 @@ describe(
         );
 
         expect(
+          model
+            ?.discoveryMarkers
+            ?.markers
+            .find(
+              (
+                marker,
+              ) =>
+                marker.kind ===
+                GalacticMapDiscoveryMarkerKind.SYSTEM,
+            )
+            ?.resultKind,
+        ).toBe(
+          ExplorationResultKind.SYSTEM,
+        );
+
+        const galacticObjectMarker =
+          model
+            ?.discoveryMarkers
+            ?.markers
+            .find(
+              (
+                marker,
+              ) =>
+                marker.kind ===
+                GalacticMapDiscoveryMarkerKind.GALACTIC_OBJECT,
+            );
+
+        expect(
+          [
+            ExplorationResultKind.NEBULA,
+            ExplorationResultKind.STAR_CLUSTER,
+            ExplorationResultKind.EXTREME_OBJECT,
+          ],
+        ).toContain(
+          galacticObjectMarker?.resultKind,
+        );
+
+        expect(
+          (
+            model?.discoveryMarkers?.nebulaMarkerCount ??
+            0
+          ) +
+          (
+            model?.discoveryMarkers?.starClusterMarkerCount ??
+            0
+          ) +
+          (
+            model?.discoveryMarkers?.extremeObjectMarkerCount ??
+            0
+          ),
+        ).toBe(
+          1,
+        );
+
+        expect(
+          model?.environmentalLayers,
+        ).not.toBeNull();
+
+        expect(
+          model?.environmentalLayers?.radialSampleCount,
+        ).toBe(
+          87,
+        );
+
+        expect(
+          model?.environmentalLayers?.habitabilityRings.length,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
           new Set(
             model
               ?.discoveryMarkers
@@ -504,7 +579,7 @@ describe(
     );
 
     it(
-      'should keep a merely detected galaxy on the safe preliminary projection without reading coverage or markers',
+      'should keep a merely detected galaxy on the safe preliminary projection without reading detailed coverage, markers or environmental layers',
       async () => {
         let knownDiscoveryReads =
           0;
@@ -546,6 +621,10 @@ describe(
 
         expect(
           model?.discoveryMarkers,
+        ).toBeNull();
+
+        expect(
+          model?.environmentalLayers,
         ).toBeNull();
 
         expect(
@@ -621,7 +700,7 @@ describe(
     );
 
     it(
-      'should read one known-discovery snapshot but never PD, per-sector queries or sector content generation for point 10.4',
+      'should read one known-discovery snapshot but never PD, per-sector queries or sector content generation for point 10.5',
       async () => {
         let knownDiscoveryReads =
           0;
@@ -672,6 +751,16 @@ describe(
             ?.markerCount,
         ).toBe(
           0,
+        );
+
+
+        expect(
+          facade
+            .model()
+            ?.environmentalLayers
+            ?.radialSampleCount,
+        ).toBe(
+          87,
         );
       },
     );

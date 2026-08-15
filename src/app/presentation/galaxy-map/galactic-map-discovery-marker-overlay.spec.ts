@@ -5,6 +5,11 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationResultKind,
+  type ExplorationLocatedResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   GalacticObjectLocator,
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
@@ -47,6 +52,10 @@ import {
   GalacticMapExplorationCoverage,
 } from './galactic-map-exploration-coverage';
 
+import {
+  INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
+} from './galactic-map-layer-state';
+
 describe(
   'GalacticMapDiscoveryMarkerOverlay',
   () => {
@@ -80,9 +89,8 @@ describe(
       );
 
     function marker(
-      kind:
-        'system' |
-        'object',
+      resultKind:
+        ExplorationLocatedResultKind,
 
       x:
         number,
@@ -95,6 +103,9 @@ describe(
 
       normalizedY:
         number,
+
+      index =
+        0n,
     ): GalacticMapDiscoveryMarker {
 
       const coordinates =
@@ -110,18 +121,19 @@ describe(
           );
 
       return new GalacticMapDiscoveryMarker(
-        kind ===
-          'system'
+        resultKind ===
+          ExplorationResultKind.SYSTEM
           ? new SystemLocator(
               0n,
               sectorKey,
-              0n,
+              index,
             )
           : new GalacticObjectLocator(
               0n,
               sectorKey,
-              1n,
+              index,
             ),
+        resultKind,
         DiscoveryState.DETECTED,
         coordinates,
         normalizedX,
@@ -135,7 +147,7 @@ describe(
         const center =
           discoveryMarkerLocalPosition(
             marker(
-              'system',
+              ExplorationResultKind.SYSTEM,
               0,
               0,
               0.5,
@@ -162,7 +174,7 @@ describe(
         const offset =
           discoveryMarkerLocalPosition(
             marker(
-              'object',
+              ExplorationResultKind.NEBULA,
               1,
               -1,
               1 -
@@ -188,7 +200,7 @@ describe(
     );
 
     it(
-      'should build one lightweight generic THREE.Points marker layer for all persistent objects',
+      'should create one independent Points group for each populated point-10.5 marker family',
       () => {
         const markers =
           new GalacticMapDiscoveryMarkers(
@@ -197,18 +209,36 @@ describe(
             grid,
             [
               marker(
-                'system',
+                ExplorationResultKind.SYSTEM,
                 0,
                 0,
-                0.2,
-                0.8,
+                0.5,
+                0.5,
+                0n,
               ),
               marker(
-                'object',
+                ExplorationResultKind.NEBULA,
+                0,
+                0,
+                0.3,
+                0.4,
+                1n,
+              ),
+              marker(
+                ExplorationResultKind.STAR_CLUSTER,
                 1,
                 0,
+                0.4,
+                0.6,
+                2n,
+              ),
+              marker(
+                ExplorationResultKind.EXTREME_OBJECT,
+                -1,
+                0,
                 0.7,
-                0.3,
+                0.2,
+                3n,
               ),
             ],
           );
@@ -221,58 +251,56 @@ describe(
             1,
           );
 
-        expect(
-          overlay.object3d.name,
-        ).toBe(
-          'galactic-map-discovery-markers',
-        );
-
-        const points =
-          overlay
-            .object3d
-            .getObjectByName(
-              'galactic-map-discovery-marker-points',
-            );
-
-        expect(
-          points,
-        ).toBeInstanceOf(
-          THREE.Points,
-        );
-
-        expect(
-          (
-            points as
-              THREE.Points
-          )
-            .geometry
-            .getAttribute(
-              'position',
-            )
-            .count,
-        ).toBe(
-          2,
-        );
+        for (
+          const name
+          of [
+            'galactic-map-system-markers',
+            'galactic-map-nebula-markers',
+            'galactic-map-star-cluster-markers',
+            'galactic-map-extreme-object-markers',
+          ]
+        ) {
+          expect(
+            overlay
+              .object3d
+              .getObjectByName(
+                name,
+              ),
+          ).toBeInstanceOf(
+            THREE.Points,
+          );
+        }
 
         overlay.dispose();
-
-        expect(
-          overlay.object3d.children,
-        ).toHaveLength(
-          0,
-        );
       },
     );
 
     it(
-      'should keep an empty marker snapshot allocation-light and accept renderer pixel-ratio changes',
+      'should switch marker-family visibility independently and preserve pixel-ratio updates',
       () => {
         const markers =
           new GalacticMapDiscoveryMarkers(
             generationKey,
             0n,
             grid,
-            [],
+            [
+              marker(
+                ExplorationResultKind.SYSTEM,
+                0,
+                0,
+                0.5,
+                0.5,
+                0n,
+              ),
+              marker(
+                ExplorationResultKind.NEBULA,
+                0,
+                0,
+                0.3,
+                0.4,
+                1n,
+              ),
+            ],
           );
 
         const overlay =
@@ -283,61 +311,109 @@ describe(
             1,
           );
 
+        overlay.setLayerVisibility({
+          ...INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
+          nebulae:
+            false,
+        });
+
         expect(
           overlay
             .object3d
             .getObjectByName(
-              'galactic-map-discovery-marker-points',
-            ),
-        ).toBeUndefined();
+              'galactic-map-system-markers',
+            )
+            ?.visible,
+        ).toBe(
+          true,
+        );
 
         expect(
-          () =>
-            overlay.setPixelRatio(
-              2,
-            ),
-        ).not.toThrow();
+          overlay
+            .object3d
+            .getObjectByName(
+              'galactic-map-nebula-markers',
+            )
+            ?.visible,
+        ).toBe(
+          false,
+        );
+
+        overlay.setPixelRatio(
+          2,
+        );
+
+        const systemPoints =
+          overlay
+            .object3d
+            .getObjectByName(
+              'galactic-map-system-markers',
+            ) as
+            THREE.Points<
+              THREE.BufferGeometry,
+              THREE.ShaderMaterial
+            >;
+
+        expect(
+          systemPoints
+            .material
+            .uniforms[
+              'uPixelRatio'
+            ]
+            .value,
+        ).toBe(
+          2,
+        );
 
         overlay.dispose();
       },
     );
 
     it(
-      'should reject invalid renderer scale or snapshots from incompatible galaxy grids',
+      'should reject incompatible marker/coverage snapshots and dispose renderer resources',
       () => {
         const markers =
           new GalacticMapDiscoveryMarkers(
             generationKey,
             0n,
             grid,
-            [],
+            [
+              marker(
+                ExplorationResultKind.SYSTEM,
+                0,
+                0,
+                0.5,
+                0.5,
+              ),
+            ],
           );
+
+        const overlay =
+          createGalacticMapDiscoveryMarkerOverlay(
+            markers,
+            coverage,
+            1,
+            1,
+          );
+
+        overlay.dispose();
 
         expect(
-          () =>
-            createGalacticMapDiscoveryMarkerOverlay(
-              markers,
-              coverage,
-              0,
-              1,
-            ),
-        ).toThrow(
-          RangeError,
+          overlay.object3d.children,
+        ).toHaveLength(
+          0,
         );
-
-        const foreignGrid =
-          new GalaxySectorGrid(
-            generationKey,
-            1n,
-            1000,
-            2,
-          );
 
         const foreignCoverage =
           new GalacticMapExplorationCoverage(
             generationKey,
             1n,
-            foreignGrid,
+            new GalaxySectorGrid(
+              generationKey,
+              1n,
+              1000,
+              2,
+            ),
             [],
           );
 

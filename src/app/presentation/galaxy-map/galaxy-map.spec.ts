@@ -112,7 +112,7 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.4 page must not read PD.',
+              '10.5 page must not read PD.',
             );
           },
 
@@ -120,7 +120,7 @@ describe(
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.4 page must not read galaxy PD.',
+              '10.5 page must not read galaxy PD.',
             );
           },
 
@@ -159,7 +159,7 @@ describe(
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.4 page must not query or materialize sector content.',
+              '10.5 page must not query or materialize sector content.',
             );
           },
         },
@@ -236,6 +236,8 @@ describe(
               );
             },
 
+            setLayerVisibility() {},
+
             resetView() {},
 
             selectAt() {
@@ -302,7 +304,7 @@ describe(
     }
 
     it(
-      'should expose the point-10.4 interactive map with persisted coverage and discovery markers',
+      'should expose the point-10.5 interactive map with persisted coverage, markers and thematic layers',
       async () => {
         const element =
           await renderedPage();
@@ -381,6 +383,21 @@ describe(
           )?.textContent,
         ).toContain(
           '1',
+        );
+
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-layers"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid^="galactic-map-layer-"]',
+          ),
+        ).toHaveLength(
+          6,
         );
 
         expect(
@@ -585,7 +602,7 @@ describe(
     );
 
     it(
-      'should expose point-10.4 markers while keeping 10.5-plus capabilities absent',
+      'should expose all six point-10.5 layers while keeping 10.6-plus capabilities absent',
       async () => {
         const element =
           await renderedPage();
@@ -614,10 +631,15 @@ describe(
           ),
         ).toBeNull();
 
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-layers"]',
+          ),
+        ).toBeTruthy();
+
         for (
           const testId
           of [
-            'galactic-map-layers',
             'galactic-map-marker-link',
             'galactic-map-relative-position',
           ]
@@ -634,7 +656,7 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '10.5–10.9',
+          '10.6–10.9',
         );
 
         expect(
@@ -642,7 +664,7 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          'SystemLocator',
+          'SPECULATIVE_SIMPLIFIED',
         );
       },
     );

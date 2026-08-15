@@ -18,7 +18,17 @@
   [attr.data-sector-grid-side]="model.explorationCoverage ? model.explorationCoverage.grid.sideLengthInSectors.toString() : null"
   [attr.data-discovery-marker-count]="model.discoveryMarkers?.markerCount ?? null"
   [attr.data-system-marker-count]="model.discoveryMarkers?.systemMarkerCount ?? null"
-  [attr.data-galactic-object-marker-count]="model.discoveryMarkers?.galacticObjectMarkerCount ?? null"
+  [attr.data-nebula-marker-count]="model.discoveryMarkers?.nebulaMarkerCount ?? null"
+  [attr.data-star-cluster-marker-count]="model.discoveryMarkers?.starClusterMarkerCount ?? null"
+  [attr.data-extreme-object-marker-count]="model.discoveryMarkers?.extremeObjectMarkerCount ?? null"
+  [attr.data-habitable-ring-count]="model.environmentalLayers ? model.environmentalLayers.habitabilityRings.length : null"
+  [attr.data-habitability-model]="model.environmentalLayers?.habitabilityModelStatus ?? null"
+  [attr.data-layer-systems-visible]="layerVisibility().systems"
+  [attr.data-layer-nebulae-visible]="layerVisibility().nebulae"
+  [attr.data-layer-star-clusters-visible]="layerVisibility().starClusters"
+  [attr.data-layer-extreme-objects-visible]="layerVisibility().extremeObjects"
+  [attr.data-layer-regions-visible]="layerVisibility().regions"
+  [attr.data-layer-habitable-zone-visible]="layerVisibility().habitableZone"
 >
   <canvas
     #sceneCanvas
@@ -109,9 +119,9 @@
           </div>
 
           <p>
-            Los marcadores proceden de descubrimientos persistidos con
-            SystemLocator o GalacticObjectLocator. Su posición se regenera de
-            forma determinista y no se confunde con las muestras GPU.
+            Sistemas y objetos galácticos conservan su identidad persistida;
+            10.5 los separa por familia operacional sin convertir esa familia
+            en una clasificación científica definitiva.
           </p>
         </div>
       }
@@ -146,6 +156,11 @@
         Restablecer vista
       </button>
     </div>
+
+    <app-galactic-map-layer-controls
+      [visibility]="layerVisibility()"
+      (visibilityChange)="onLayerVisibilityChange($event)"
+    ></app-galactic-map-layer-controls>
 
     <div
       class="galactic-map-scene__help"

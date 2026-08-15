@@ -4,6 +4,11 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationResultKind,
+  type ExplorationLocatedResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   GalacticObjectLocator,
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
@@ -43,12 +48,13 @@ export type GalacticMapDiscoveryMarkerLocator =
   GalacticObjectLocator;
 
 /**
- * One persistent point-10.4 map marker.
+ * One persistent point-10.5 map marker.
  *
- * The persisted identity/state comes from KnownDiscovery. The normalized
- * intra-sector coordinates remain regenerated Ground Truth and are never
- * persisted redundantly. A marker is therefore a read-only cartographic
- * projection, not a new discovery entity and not a GPU render sample.
+ * Point 10.4 established the persistent SystemLocator/GalacticObjectLocator
+ * identity and deterministic intra-sector placement. Point 10.5 adds only the
+ * already-frozen point-9.4 operational result family used for thematic map
+ * filtering. resultKind is not a formal scientific classification and does not
+ * reveal additional physical Ground Truth.
  */
 export class GalacticMapDiscoveryMarker {
 
@@ -64,6 +70,9 @@ export class GalacticMapDiscoveryMarker {
   constructor(
     readonly locator:
       GalacticMapDiscoveryMarkerLocator,
+
+    readonly resultKind:
+      ExplorationLocatedResultKind,
 
     state:
       DiscoveryStateValue,
@@ -84,7 +93,44 @@ export class GalacticMapDiscoveryMarker {
         GalacticObjectLocator)
     ) {
       throw new TypeError(
-        'Point-10.4 discovery markers support only SystemLocator and GalacticObjectLocator.',
+        'Point-10.5 discovery markers support only SystemLocator and GalacticObjectLocator.',
+      );
+    }
+
+    if (
+      ![
+        ExplorationResultKind.SYSTEM,
+        ExplorationResultKind.NEBULA,
+        ExplorationResultKind.STAR_CLUSTER,
+        ExplorationResultKind.EXTREME_OBJECT,
+      ].includes(
+        resultKind,
+      )
+    ) {
+      throw new RangeError(
+        `Unsupported persistent marker result kind: ${String(resultKind)}.`,
+      );
+    }
+
+    if (
+      locator instanceof
+        SystemLocator &&
+      resultKind !==
+        ExplorationResultKind.SYSTEM
+    ) {
+      throw new TypeError(
+        'SystemLocator markers must use ExplorationResultKind.SYSTEM.',
+      );
+    }
+
+    if (
+      locator instanceof
+        GalacticObjectLocator &&
+      resultKind ===
+        ExplorationResultKind.SYSTEM
+    ) {
+      throw new TypeError(
+        'GalacticObjectLocator markers must use NEBULA, STAR_CLUSTER or EXTREME_OBJECT.',
       );
     }
 
@@ -149,7 +195,7 @@ export class GalacticMapDiscoveryMarker {
 }
 
 /**
- * Canonical, order-independent point-10.4 marker snapshot for one galaxy.
+ * Canonical, order-independent point-10.5 marker snapshot for one galaxy.
  */
 export class GalacticMapDiscoveryMarkers {
 
@@ -285,17 +331,9 @@ export class GalacticMapDiscoveryMarkers {
   get systemMarkerCount():
     number {
 
-    return this
-      .markers
-      .filter(
-        (
-          marker,
-        ) =>
-          marker.kind ===
-          GalacticMapDiscoveryMarkerKind
-            .SYSTEM,
-      )
-      .length;
+    return this.countResultKind(
+      ExplorationResultKind.SYSTEM,
+    );
   }
 
   get galacticObjectMarkerCount():
@@ -310,6 +348,47 @@ export class GalacticMapDiscoveryMarkers {
           marker.kind ===
           GalacticMapDiscoveryMarkerKind
             .GALACTIC_OBJECT,
+      )
+      .length;
+  }
+
+  get nebulaMarkerCount():
+    number {
+
+    return this.countResultKind(
+      ExplorationResultKind.NEBULA,
+    );
+  }
+
+  get starClusterMarkerCount():
+    number {
+
+    return this.countResultKind(
+      ExplorationResultKind.STAR_CLUSTER,
+    );
+  }
+
+  get extremeObjectMarkerCount():
+    number {
+
+    return this.countResultKind(
+      ExplorationResultKind.EXTREME_OBJECT,
+    );
+  }
+
+  private countResultKind(
+    resultKind:
+      ExplorationLocatedResultKind,
+  ): number {
+
+    return this
+      .markers
+      .filter(
+        (
+          marker,
+        ) =>
+          marker.resultKind ===
+          resultKind,
       )
       .length;
   }

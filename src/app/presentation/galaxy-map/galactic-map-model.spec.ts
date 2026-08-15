@@ -3,6 +3,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -50,6 +54,10 @@ import {
   GalacticMapDiscoveryMarker,
   GalacticMapDiscoveryMarkers,
 } from './galactic-map-discovery-markers';
+
+import {
+  buildGalacticMapEnvironmentalLayers,
+} from './galactic-map-environmental-layers';
 
 import {
   GalacticMapExplorationCoverage,
@@ -130,6 +138,7 @@ describe(
                   ),
                 0n,
               ),
+              ExplorationResultKind.SYSTEM,
               DiscoveryState.DETECTED,
               coordinates,
               0.25,
@@ -217,6 +226,10 @@ describe(
 
         expect(
           model.discoveryMarkers,
+        ).toBeNull();
+
+        expect(
+          model.environmentalLayers,
         ).toBeNull();
       },
     );
@@ -312,6 +325,13 @@ describe(
         } =
           coverageAndMarkers();
 
+        const environmentalLayers =
+          buildGalacticMapEnvironmentalLayers(
+            galaxy,
+            coverage.grid,
+            visualStructure,
+          );
+
         const model =
           new GalacticMapModel(
             generationKey,
@@ -321,6 +341,7 @@ describe(
             galaxy.type,
             coverage,
             markers,
+            environmentalLayers,
           );
 
         expect(
@@ -340,6 +361,16 @@ describe(
         ).toBe(
           1,
         );
+
+        expect(
+          model.environmentalLayers,
+        ).toBe(
+          environmentalLayers,
+        );
+
+        expect(
+          model.environmentalLayers?.habitabilityModelStatus,
+        ).toBeTruthy();
       },
     );
 
@@ -442,6 +473,40 @@ describe(
               null,
               coverage,
               markers,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+
+    it(
+      'should reject point-10.5 environmental layers without the matching coverage grid',
+      () => {
+        const {
+          coverage,
+        } =
+          coverageAndMarkers();
+
+        const environmentalLayers =
+          buildGalacticMapEnvironmentalLayers(
+            galaxy,
+            coverage.grid,
+            visualStructure,
+          );
+
+        expect(
+          () =>
+            new GalacticMapModel(
+              generationKey,
+              0n,
+              discoveredInformation,
+              visualStructure,
+              galaxy.type,
+              null,
+              null,
+              environmentalLayers,
             ),
         ).toThrow(
           RangeError,

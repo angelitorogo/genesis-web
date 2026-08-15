@@ -1,6 +1,11 @@
 import * as THREE from 'three';
 
 import {
+  ExplorationResultKind,
+  type ExplorationLocatedResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
 
@@ -14,6 +19,10 @@ import {
 } from './galactic-map-exploration-coverage';
 
 import {
+  type GalacticMapLayerVisibility,
+} from './galactic-map-layer-state';
+
+import {
   sectorCellSize,
   sectorLocalPosition,
 } from './galactic-map-sector-overlay';
@@ -23,6 +32,65 @@ const MARKER_Z_OFFSET =
 
 const MARKER_RENDER_ORDER =
   70;
+
+interface MarkerFamilyStyle {
+  readonly resultKind:
+    ExplorationLocatedResultKind;
+
+  readonly objectName:
+    string;
+
+  readonly color:
+    THREE.ColorRepresentation;
+
+  readonly pointSize:
+    number;
+}
+
+const MARKER_FAMILY_STYLES:
+  readonly MarkerFamilyStyle[] =
+  Object.freeze([
+    Object.freeze({
+      resultKind:
+        ExplorationResultKind.SYSTEM,
+      objectName:
+        'galactic-map-system-markers',
+      color:
+        0xffc15c,
+      pointSize:
+        9.0,
+    }),
+    Object.freeze({
+      resultKind:
+        ExplorationResultKind.NEBULA,
+      objectName:
+        'galactic-map-nebula-markers',
+      color:
+        0xbc8cff,
+      pointSize:
+        10.0,
+    }),
+    Object.freeze({
+      resultKind:
+        ExplorationResultKind.STAR_CLUSTER,
+      objectName:
+        'galactic-map-star-cluster-markers',
+      color:
+        0x6ad7ff,
+      pointSize:
+        9.5,
+    }),
+    Object.freeze({
+      resultKind:
+        ExplorationResultKind.EXTREME_OBJECT,
+      objectName:
+        'galactic-map-extreme-object-markers',
+      color:
+        0xff6b7a,
+      pointSize:
+        10.5,
+    }),
+  ]);
 
 export interface GalacticMapDiscoveryMarkerRenderPosition {
   readonly x:
@@ -44,8 +112,24 @@ export interface GalacticMapDiscoveryMarkerOverlay {
       number,
   ): void;
 
+  setLayerVisibility(
+    visibility:
+      GalacticMapLayerVisibility,
+  ): void;
+
   dispose():
     void;
+}
+
+interface MarkerRenderFamily {
+  readonly resultKind:
+    ExplorationLocatedResultKind;
+
+  readonly points:
+    THREE.Points<
+      THREE.BufferGeometry,
+      THREE.ShaderMaterial
+    >;
 }
 
 /**
@@ -105,9 +189,12 @@ export function discoveryMarkerLocalPosition(
 }
 
 /**
- * Builds one lightweight Points layer for all persistent point-10.4 markers.
- * Marker appearance is deliberately generic. Object-family layers and toggles
- * remain point 10.5, while marker navigation remains point 10.6.
+ * Point-10.5 persistent marker renderer.
+ *
+ * The point-10.4 marker identities and deterministic positions stay intact;
+ * only the already-known point-9.4 operational result family determines the
+ * visual sub-layer. These groups remain read-only and are not selectable
+ * physical entities. Marker navigation belongs to point 10.6.
  */
 export function createGalacticMapDiscoveryMarkerOverlay(
   discoveryMarkers:
@@ -144,92 +231,46 @@ export function createGalacticMapDiscoveryMarkerOverlay(
   group.name =
     'galactic-map-discovery-markers';
 
-  let geometry:
-    THREE.BufferGeometry | null =
-    null;
+  const families:
+    MarkerRenderFamily[] =
+    [];
 
-  let material:
-    THREE.ShaderMaterial | null =
-    null;
-
-  if (
-    discoveryMarkers.markerCount >
-    0
+  for (
+    const style
+    of MARKER_FAMILY_STYLES
   ) {
-    const positions =
-      new Float32Array(
-        discoveryMarkers.markerCount *
-        3,
-      );
-
-    for (
-      let index =
-        0;
-      index <
-        discoveryMarkers.markerCount;
-      index +=
-        1
-    ) {
-      const position =
-        discoveryMarkerLocalPosition(
-          discoveryMarkers.markers[
-            index
-          ],
-          coverage,
-          haloOuterRadiusNormalized,
+    const matchingMarkers =
+      discoveryMarkers
+        .markers
+        .filter(
+          (
+            marker,
+          ) =>
+            marker.resultKind ===
+            style.resultKind,
         );
 
-      const offset =
-        index *
-        3;
-
-      positions[
-        offset
-      ] =
-        position.x;
-
-      positions[
-        offset +
-        1
-      ] =
-        position.y;
-
-      positions[
-        offset +
-        2
-      ] =
-        position.z;
+    if (
+      matchingMarkers.length ===
+      0
+    ) {
+      continue;
     }
 
-    geometry =
-      new THREE.BufferGeometry();
-
-    geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(
-        positions,
-        3,
-      ),
-    );
-
-    geometry.computeBoundingSphere();
-
-    material =
-      createMarkerMaterial(
-        pixelRatio,
-      );
-
     const points =
-      new THREE.Points(
-        geometry,
-        material,
+      createMarkerFamilyPoints(
+        matchingMarkers,
+        coverage,
+        haloOuterRadiusNormalized,
+        pixelRatio,
+        style,
       );
 
-    points.name =
-      'galactic-map-discovery-marker-points';
-
-    points.renderOrder =
-      MARKER_RENDER_ORDER;
+    families.push({
+      resultKind:
+        style.resultKind,
+      points,
+    });
 
     group.add(
       points,
@@ -249,14 +290,34 @@ export function createGalacticMapDiscoveryMarkerOverlay(
         'pixelRatio',
       );
 
-      if (
-        material !==
-        null
+      for (
+        const family
+        of families
       ) {
-        material.uniforms[
-          'uPixelRatio'
-        ].value =
+        family
+          .points
+          .material
+          .uniforms[
+            'uPixelRatio'
+          ]
+          .value =
           nextPixelRatio;
+      }
+    },
+
+    setLayerVisibility(
+      visibility:
+        GalacticMapLayerVisibility,
+    ): void {
+      for (
+        const family
+        of families
+      ) {
+        family.points.visible =
+          markerFamilyVisible(
+            family.resultKind,
+            visibility,
+          );
       }
     },
 
@@ -265,22 +326,144 @@ export function createGalacticMapDiscoveryMarkerOverlay(
 
       group.clear();
 
-      geometry?.dispose();
-      material?.dispose();
+      for (
+        const family
+        of families
+      ) {
+        family
+          .points
+          .geometry
+          .dispose();
 
-      geometry =
-        null;
+        family
+          .points
+          .material
+          .dispose();
+      }
 
-      material =
-        null;
+      families.splice(
+        0,
+        families.length,
+      );
     },
   };
+}
+
+function createMarkerFamilyPoints(
+  markers:
+    readonly GalacticMapDiscoveryMarker[],
+
+  coverage:
+    GalacticMapExplorationCoverage,
+
+  haloOuterRadiusNormalized:
+    number,
+
+  pixelRatio:
+    number,
+
+  style:
+    MarkerFamilyStyle,
+): THREE.Points<
+  THREE.BufferGeometry,
+  THREE.ShaderMaterial
+> {
+
+  const positions =
+    new Float32Array(
+      markers.length *
+      3,
+    );
+
+  for (
+    let index =
+      0;
+    index <
+      markers.length;
+    index +=
+      1
+  ) {
+    const position =
+      discoveryMarkerLocalPosition(
+        markers[
+          index
+        ],
+        coverage,
+        haloOuterRadiusNormalized,
+      );
+
+    const offset =
+      index *
+      3;
+
+    positions[
+      offset
+    ] =
+      position.x;
+
+    positions[
+      offset +
+      1
+    ] =
+      position.y;
+
+    positions[
+      offset +
+      2
+    ] =
+      position.z;
+  }
+
+  const geometry =
+    new THREE.BufferGeometry();
+
+  geometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(
+      positions,
+      3,
+    ),
+  );
+
+  geometry.computeBoundingSphere();
+
+  const material =
+    createMarkerMaterial(
+      pixelRatio,
+      style.color,
+      style.pointSize,
+    );
+
+  const points =
+    new THREE.Points(
+      geometry,
+      material,
+    );
+
+  points.name =
+    style.objectName;
+
+  points.renderOrder =
+    MARKER_RENDER_ORDER;
+
+  return points;
 }
 
 function createMarkerMaterial(
   pixelRatio:
     number,
+
+  color:
+    THREE.ColorRepresentation,
+
+  pointSize:
+    number,
 ): THREE.ShaderMaterial {
+
+  const markerColor =
+    new THREE.Color(
+      color,
+    );
 
   return new THREE.ShaderMaterial({
     uniforms: {
@@ -288,19 +471,30 @@ function createMarkerMaterial(
         value:
           pixelRatio,
       },
+      uPointSize: {
+        value:
+          pointSize,
+      },
+      uColor: {
+        value:
+          markerColor,
+      },
     },
 
     vertexShader: `
       uniform float uPixelRatio;
+      uniform float uPointSize;
 
       void main() {
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-        gl_PointSize = 9.0 * uPixelRatio;
+        gl_PointSize = uPointSize * uPixelRatio;
         gl_Position = projectionMatrix * mvPosition;
       }
     `,
 
     fragmentShader: `
+      uniform vec3 uColor;
+
       void main() {
         vec2 centered = gl_PointCoord - vec2(0.5);
         float radius = length(centered);
@@ -316,7 +510,7 @@ function createMarkerMaterial(
         float alpha = max(ring * 0.96, core * 0.88);
 
         gl_FragColor = vec4(
-          vec3(1.0, 0.74, 0.28),
+          uColor,
           alpha
         );
       }
@@ -337,6 +531,35 @@ function createMarkerMaterial(
     toneMapped:
       false,
   });
+}
+
+function markerFamilyVisible(
+  resultKind:
+    ExplorationLocatedResultKind,
+
+  visibility:
+    GalacticMapLayerVisibility,
+): boolean {
+
+  switch (
+    resultKind
+  ) {
+    case ExplorationResultKind.SYSTEM:
+      return visibility.systems;
+
+    case ExplorationResultKind.NEBULA:
+      return visibility.nebulae;
+
+    case ExplorationResultKind.STAR_CLUSTER:
+      return visibility.starClusters;
+
+    case ExplorationResultKind.EXTREME_OBJECT:
+      return visibility.extremeObjects;
+  }
+
+  throw new RangeError(
+    `Unsupported persistent marker result kind: ${String(resultKind)}.`,
+  );
 }
 
 function assertCompatibleMarkerCoverage(
