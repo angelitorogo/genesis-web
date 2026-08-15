@@ -465,6 +465,28 @@ describe(
         ).toBeTruthy();
 
         expect(
+          element.querySelector(
+            '[data-testid="galactic-map-markers"]',
+          )?.textContent,
+        ).toContain(
+          'Descubrimientos localizados',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-markers"]',
+          )?.textContent,
+        ).not.toContain(
+          'Objetos localizados',
+        );
+
+        expect(
+          element.querySelector(
+            '.galactic-map-scene__marker-swatch',
+          ),
+        ).toBeNull();
+
+        expect(
           element
             .querySelector(
               '[data-testid="galactic-map-scene"]',

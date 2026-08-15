@@ -1,4 +1,4 @@
-﻿import {
+import {
   expect,
   test,
 } from '@playwright/test';
@@ -350,6 +350,26 @@ test.describe(
         await expect(
           markers,
         ).toBeVisible();
+
+        await expect(
+          markers,
+        ).toContainText(
+          'Descubrimientos localizados',
+        );
+
+        await expect(
+          markers,
+        ).not.toContainText(
+          'Objetos localizados',
+        );
+
+        await expect(
+          markers.locator(
+            '.galactic-map-scene__marker-swatch',
+          ),
+        ).toHaveCount(
+          0,
+        );
 
         const markerCountBeforeReload =
           Number(

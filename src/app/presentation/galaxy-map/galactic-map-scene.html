@@ -21,7 +21,7 @@
   [attr.data-nebula-marker-count]="model.discoveryMarkers?.nebulaMarkerCount ?? null"
   [attr.data-star-cluster-marker-count]="model.discoveryMarkers?.starClusterMarkerCount ?? null"
   [attr.data-extreme-object-marker-count]="model.discoveryMarkers?.extremeObjectMarkerCount ?? null"
-  [attr.data-habitable-ring-count]="model.environmentalLayers ? model.environmentalLayers.habitabilityRings.length : null"
+  [attr.data-habitable-ring-count]="model.environmentalLayers?.habitabilityRings?.length ?? null"
   [attr.data-habitability-model]="model.environmentalLayers?.habitabilityModelStatus ?? null"
   [attr.data-layer-systems-visible]="layerVisibility().systems"
   [attr.data-layer-nebulae-visible]="layerVisibility().nebulae"
@@ -104,13 +104,8 @@
           </small>
 
           <div class="galactic-map-scene__coverage-row">
-            <span
-              class="galactic-map-scene__marker-swatch"
-              aria-hidden="true"
-            ></span>
-
             <strong>
-              Objetos localizados
+              Descubrimientos localizados
             </strong>
 
             <code data-testid="galactic-map-discovery-marker-count">
@@ -119,9 +114,9 @@
           </div>
 
           <p>
-            Sistemas y objetos galácticos conservan su identidad persistida;
-            10.5 los separa por familia operacional sin convertir esa familia
-            en una clasificación científica definitiva.
+            Los descubrimientos localizados conservan su posición entre sesiones.
+            El color de cada marcador identifica su familia observacional:
+            sistemas, nebulosas, cúmulos u objetos extremos.
           </p>
         </div>
       }
