@@ -142,7 +142,7 @@ async function persistOneStaticDiscovery(
   }
 
   throw new Error(
-    'The frozen central point-10.6 E2E sample did not produce a static persistent discovery.',
+    'The frozen central point-10.7 E2E sample did not produce a static persistent discovery.',
   );
 }
 
@@ -176,10 +176,10 @@ async function numericAttribute(
 }
 
 test.describe(
-  'GENESIS point-10.6 marker navigation into Archive',
+  'GENESIS point-10.7 marker relative position and Archive navigation',
   () => {
     test(
-      'should select a persistent marker before GPU samples and navigate to its read-only Archive record',
+      'should expose galactocentric position for a persistent marker before navigating to its read-only Archive record',
       async ({
         page,
       }) => {
@@ -1272,12 +1272,108 @@ test.describe(
           '1',
         );
 
-        await expect(
+        const relativePosition =
           page.getByTestId(
             'galactic-map-relative-position',
+          );
+
+        await expect(
+          relativePosition,
+        ).toBeVisible();
+
+        await expect(
+          relativePosition,
+        ).toContainText(
+          'POSICIÓN RELATIVA EN LA GALAXIA',
+        );
+
+        await expect(
+          relativePosition,
+        ).toContainText(
+          'Distancia al centro',
+        );
+
+        await expect(
+          relativePosition,
+        ).toContainText(
+          'Radio galactocéntrico',
+        );
+
+        await expect(
+          relativePosition,
+        ).toContainText(
+          'Azimut',
+        );
+
+        await expect(
+          relativePosition,
+        ).toContainText(
+          'Región',
+        );
+
+        const relativeX =
+          await numericAttribute(
+            relativePosition,
+            'data-relative-x-light-years',
+          );
+
+        const relativeY =
+          await numericAttribute(
+            relativePosition,
+            'data-relative-y-light-years',
+          );
+
+        const distanceFromCenter =
+          await numericAttribute(
+            relativePosition,
+            'data-distance-from-center-light-years',
+          );
+
+        const normalizedRadius =
+          await numericAttribute(
+            relativePosition,
+            'data-normalized-radius',
+          );
+
+        const azimuthDegrees =
+          await numericAttribute(
+            relativePosition,
+            'data-azimuth-degrees',
+          );
+
+        expect(
+          distanceFromCenter,
+        ).toBeCloseTo(
+          Math.hypot(
+            relativeX,
+            relativeY,
           ),
-        ).toHaveCount(
+          8,
+        );
+
+        expect(
+          normalizedRadius,
+        ).toBeGreaterThanOrEqual(
           0,
+        );
+
+        expect(
+          azimuthDegrees,
+        ).toBeGreaterThanOrEqual(
+          0,
+        );
+
+        expect(
+          azimuthDegrees,
+        ).toBeLessThan(
+          360,
+        );
+
+        await expect(
+          relativePosition,
+        ).toHaveAttribute(
+          'data-galactic-region',
+          /^(?:CENTRAL|INNER|MIDDLE|OUTER|OUTSIDE_NOMINAL)$/,
         );
 
         await expect(
@@ -1285,7 +1381,7 @@ test.describe(
             'galactic-map-point-boundary',
           ),
         ).toContainText(
-          '10.7–10.9',
+          '10.8–10.9',
         );
 
         await markerLink.click();

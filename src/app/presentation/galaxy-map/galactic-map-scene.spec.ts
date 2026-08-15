@@ -968,7 +968,7 @@ describe(
     );
 
     it(
-      'should give a persistent marker priority over GPU sample selection and expose its archive link',
+      'should give a persistent marker priority over GPU samples, expose 10.7 relative position and keep its archive link',
       () => {
         markerSelectionResult =
           selectedMarker;
@@ -1068,6 +1068,77 @@ describe(
           )?.textContent,
         ).toContain(
           'Detectado',
+        );
+
+        const relativePosition =
+          element.querySelector(
+            '[data-testid="galactic-map-relative-position"]',
+          );
+
+        expect(
+          relativePosition,
+        ).toBeTruthy();
+
+        expect(
+          relativePosition?.textContent,
+        ).toContain(
+          'POSICIÓN RELATIVA EN LA GALAXIA',
+        );
+
+        expect(
+          relativePosition?.getAttribute(
+            'data-relative-x-light-years',
+          ),
+        ).toBe(
+          '0',
+        );
+
+        expect(
+          relativePosition?.getAttribute(
+            'data-relative-y-light-years',
+          ),
+        ).toBe(
+          '0',
+        );
+
+        expect(
+          relativePosition?.getAttribute(
+            'data-distance-from-center-light-years',
+          ),
+        ).toBe(
+          '0',
+        );
+
+        expect(
+          relativePosition?.getAttribute(
+            'data-normalized-radius',
+          ),
+        ).toBe(
+          '0',
+        );
+
+        expect(
+          relativePosition?.getAttribute(
+            'data-azimuth-degrees',
+          ),
+        ).toBe(
+          '0',
+        );
+
+        expect(
+          relativePosition?.getAttribute(
+            'data-galactic-region',
+          ),
+        ).toBe(
+          'CENTRAL',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-relative-region"]',
+          )?.textContent,
+        ).toContain(
+          'Región central',
         );
 
         expect(

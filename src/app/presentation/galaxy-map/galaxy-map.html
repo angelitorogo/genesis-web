@@ -166,15 +166,15 @@
                 class="galactic-map__row galactic-map__viewport-footer"
               >
                 <span class="galactic-map__meta">
-                  NUBE VISUAL GPU / COBERTURA / CAPAS / NAVEGACIÓN 10.6
+                  NUBE VISUAL GPU / COBERTURA / POSICIÓN 10.7
                 </span>
 
                 <p>
                   Los puntos continúan siendo muestras de render. La cuadrícula
-                  representa cobertura sectorial persistida y las capas permiten
-                  filtrar sistemas, nebulosas, cúmulos, objetos extremos, regiones y
-                  la región de habitabilidad galáctica sin materializar contenido
-                  adicional del sector.
+                  representa cobertura sectorial persistida, las capas permiten
+                  filtrar el conocimiento ya localizado y cada marcador persistente
+                  seleccionado muestra ahora su posición relativa respecto al centro
+                  galáctico sin materializar contenido adicional del sector.
                 </p>
               </div>
             </section>
@@ -204,20 +204,20 @@
             data-testid="galactic-map-point-boundary"
           >
             <span>
-              10.6
+              10.7
             </span>
 
             <p>
               El mapa conserva la interacción 10.2, la cobertura 10.3, los
-              marcadores persistentes 10.4 y las seis capas temáticas 10.5.
-              Los marcadores de SystemLocator y GalacticObjectLocator ya pueden
-              seleccionarse con prioridad sobre las muestras GPU y enlazan con una
-              ficha real y recargable del Archivo GENESIS. La ficha reutiliza solo
-              identidad procedural, sector, familia operacional y DiscoveryState ya
-              conocidos; no materializa contenido adicional ni revela Ground Truth.
-              La región de habitabilidad galáctica mantiene el modelo V1
-              SPECULATIVE_SIMPLIFIED. Posición relativa, LOD, sectores visibles y
-              cálculo pesado pertenecen a 10.7–10.9.
+              marcadores persistentes 10.4, las seis capas temáticas 10.5 y la
+              navegación al Archivo 10.6. Cada marcador persistente seleccionado
+              muestra ahora su desplazamiento X/Y, distancia al centro, radio
+              galactocéntrico, azimut y región radial usando únicamente la cuadrícula
+              conocida, su posición determinista dentro del sector y las fronteras
+              visuales ya congeladas. Las muestras GPU siguen sin adquirir identidad
+              física. La región de habitabilidad galáctica mantiene el modelo V1
+              SPECULATIVE_SIMPLIFIED. LOD, generación por sectores visibles y cálculo
+              pesado pertenecen a 10.8–10.9.
             </p>
           </section>
         }

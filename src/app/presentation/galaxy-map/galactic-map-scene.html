@@ -215,6 +215,80 @@
         {{ markerStateLabel(selectedMarker.state) }}
       </code>
 
+      @if (markerRelativePosition(selectedMarker); as relativePosition) {
+        <section
+          class="galactic-map-scene__relative-position"
+          data-testid="galactic-map-relative-position"
+          [attr.data-relative-x-light-years]="relativePosition.xLightYears"
+          [attr.data-relative-y-light-years]="relativePosition.yLightYears"
+          [attr.data-distance-from-center-light-years]="relativePosition.distanceFromCenterLightYears"
+          [attr.data-normalized-radius]="relativePosition.normalizedRadius"
+          [attr.data-azimuth-degrees]="relativePosition.azimuthDegrees"
+          [attr.data-galactic-region]="relativePosition.region"
+          aria-label="Posición relativa del descubrimiento dentro de la galaxia"
+        >
+          <small class="galactic-map-scene__relative-position-title">
+            POSICIÓN RELATIVA EN LA GALAXIA
+          </small>
+
+          <dl class="galactic-map-scene__relative-position-grid">
+            <div>
+              <dt>Sector</dt>
+              <dd>
+                ({{ selectedMarker.sectorCoordinates.x }}, {{ selectedMarker.sectorCoordinates.y }})
+              </dd>
+            </div>
+
+            <div>
+              <dt>Desplazamiento X</dt>
+              <dd data-testid="galactic-map-relative-x">
+                {{ formatSignedKilolightYears(relativePosition.xLightYears) }} kly
+              </dd>
+            </div>
+
+            <div>
+              <dt>Desplazamiento Y</dt>
+              <dd data-testid="galactic-map-relative-y">
+                {{ formatSignedKilolightYears(relativePosition.yLightYears) }} kly
+              </dd>
+            </div>
+
+            <div>
+              <dt>Distancia al centro</dt>
+              <dd data-testid="galactic-map-relative-distance">
+                {{ formatKilolightYears(relativePosition.distanceFromCenterLightYears) }} kly
+              </dd>
+            </div>
+
+            <div>
+              <dt>Radio galactocéntrico</dt>
+              <dd data-testid="galactic-map-relative-radius">
+                {{ (relativePosition.normalizedRadius * 100).toFixed(1) }} %
+              </dd>
+            </div>
+
+            <div>
+              <dt>Azimut</dt>
+              <dd data-testid="galactic-map-relative-azimuth">
+                {{ relativePosition.azimuthDegrees.toFixed(1) }}°
+              </dd>
+            </div>
+
+            <div>
+              <dt>Región</dt>
+              <dd data-testid="galactic-map-relative-region">
+                {{ relativeRegionLabel(relativePosition.region) }}
+              </dd>
+            </div>
+          </dl>
+
+          <p class="galactic-map-scene__relative-position-note">
+            Coordenadas relativas al centro galáctico calculadas desde el sector
+            persistido y la posición determinista conocida dentro de esa celda.
+          </p>
+        </section>
+      }
+
       <p>
         Este marcador corresponde a un descubrimiento persistido. La ficha del
         Archivo muestra únicamente conocimiento ya disponible y no revela

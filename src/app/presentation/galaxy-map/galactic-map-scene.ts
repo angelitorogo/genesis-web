@@ -74,6 +74,13 @@ import {
 } from './galactic-map-model';
 
 import {
+  galacticMapRelativeRegionLabel,
+  resolveGalacticMapRelativePosition,
+  type GalacticMapRelativePosition,
+  type GalacticMapRelativeRegion,
+} from './galactic-map-relative-position';
+
+import {
   GalacticMapParticleLayoutGenerator,
 } from './galactic-map-particle-layout';
 
@@ -198,13 +205,15 @@ interface PointerGesture {
 }
 
 /**
- * Point-10.6 Angular host for the Three.js scene.
+ * Point-10.7 Angular host for the Three.js scene.
  *
  * It preserves the approved point-10.2 camera/selection behavior, 10.3 sector
  * coverage, 10.4 persistent markers and 10.5 thematic layers. Point 10.6 makes
  * persisted SystemLocator/GalacticObjectLocator markers selectable with
  * priority over GPU samples and exposes navigation to a read-only archive
- * record without materializing hidden Ground Truth.
+ * record without materializing hidden Ground Truth. Point 10.7 projects the
+ * selected persistent marker into read-only galactocentric coordinates, physical
+ * offsets, normalized radius, azimuth and the already-known radial region.
  */
 @Component({
   selector:
@@ -927,6 +936,79 @@ export class GalacticMapScene
         : 'OBJ';
 
     return `${prefix}-${marker.locator.galacticObjectIndex.toString(10)}`;
+  }
+
+  markerRelativePosition(
+    marker:
+      GalacticMapDiscoveryMarker,
+  ): GalacticMapRelativePosition | null {
+
+    const coverage =
+      this.model
+        .explorationCoverage;
+
+    const environmentalLayers =
+      this.model
+        .environmentalLayers;
+
+    if (
+      coverage ===
+        null ||
+      environmentalLayers ===
+        null
+    ) {
+      return null;
+    }
+
+    return resolveGalacticMapRelativePosition(
+      marker,
+      coverage.grid,
+      environmentalLayers.regionRadii,
+    );
+  }
+
+  relativeRegionLabel(
+    region:
+      GalacticMapRelativeRegion,
+  ): string {
+
+    return galacticMapRelativeRegionLabel(
+      region,
+    );
+  }
+
+  formatSignedKilolightYears(
+    lightYears:
+      number,
+  ): string {
+
+    const value =
+      lightYears /
+      1000;
+
+    if (
+      Math.abs(
+        value,
+      ) <
+        0.0005
+    ) {
+      return '0.00';
+    }
+
+    return `${value > 0 ? '+' : ''}${value.toFixed(2)}`;
+  }
+
+  formatKilolightYears(
+    lightYears:
+      number,
+  ): string {
+
+    return (
+      lightYears /
+      1000
+    ).toFixed(
+      2,
+    );
   }
 
   markerStateLabel(

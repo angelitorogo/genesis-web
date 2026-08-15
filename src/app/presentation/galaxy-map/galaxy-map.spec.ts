@@ -112,7 +112,7 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.6 page must not read PD.',
+              '10.7 page must not read PD.',
             );
           },
 
@@ -120,7 +120,7 @@ describe(
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.6 page must not read galaxy PD.',
+              '10.7 page must not read galaxy PD.',
             );
           },
 
@@ -159,7 +159,7 @@ describe(
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.6 page must not query or materialize sector content.',
+              '10.7 page must not query or materialize sector content.',
             );
           },
         },
@@ -335,7 +335,7 @@ describe(
     }
 
     it(
-      'should expose the point-10.6 interactive map with persisted marker navigation and thematic layers',
+      'should expose the point-10.7 interactive map with persistent marker navigation and relative-position support',
       async () => {
         const element =
           await renderedPage();
@@ -633,7 +633,7 @@ describe(
     );
 
     it(
-      'should expose point-10.6 marker-navigation capability while keeping 10.7-plus capabilities absent before marker selection',
+      'should keep point-10.7 relative position contextual to a selected persistent marker and reserve 10.8-plus capabilities',
       async () => {
         const element =
           await renderedPage();
@@ -685,7 +685,7 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '10.7–10.9',
+          '10.8–10.9',
         );
 
         expect(
