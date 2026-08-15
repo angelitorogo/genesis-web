@@ -18,7 +18,20 @@ import {
   ViewChild,
 } from '@angular/core';
 
+import {
+  RouterLink,
+} from '@angular/router';
+
 import * as THREE from 'three';
+
+import {
+  DiscoveryState,
+  type DiscoveryStateValue,
+} from '../../domain/discovery/discovery-state';
+
+import {
+  ExplorationResultKind,
+} from '../../domain/exploration/exploration-sector-result';
 
 import {
   GalaxyType,
@@ -34,6 +47,11 @@ import {
   createGalacticMapDiscoveryMarkerOverlay,
   type GalacticMapDiscoveryMarkerOverlay,
 } from './galactic-map-discovery-marker-overlay';
+
+import {
+  GalacticMapDiscoveryMarkerKind,
+  type GalacticMapDiscoveryMarker,
+} from './galactic-map-discovery-markers';
 
 import {
   createGalacticMapEnvironmentalOverlay,
@@ -118,6 +136,14 @@ export interface GalacticMapSceneRuntime {
   resetView():
     void;
 
+  selectDiscoveryMarkerAt(
+    clientX:
+      number,
+
+    clientY:
+      number,
+  ): GalacticMapDiscoveryMarker | null;
+
   selectAt(
     clientX:
       number,
@@ -172,13 +198,13 @@ interface PointerGesture {
 }
 
 /**
- * Point-10.5 Angular host for the Three.js scene.
+ * Point-10.6 Angular host for the Three.js scene.
  *
- * It preserves the approved point-10.2 camera/selection behavior. The
- * secondary mouse button now spins the complete rendered galaxy around its own
- * local axis without moving the camera. Point-10.3 sector coverage and point-10.4 persistent markers. Point 10.5 adds six
- * independently switchable thematic layers without changing persistence or
- * turning GPU samples into physical targets.
+ * It preserves the approved point-10.2 camera/selection behavior, 10.3 sector
+ * coverage, 10.4 persistent markers and 10.5 thematic layers. Point 10.6 makes
+ * persisted SystemLocator/GalacticObjectLocator markers selectable with
+ * priority over GPU samples and exposes navigation to a read-only archive
+ * record without materializing hidden Ground Truth.
  */
 @Component({
   selector:
@@ -189,6 +215,7 @@ interface PointerGesture {
 
   imports: [
     GalacticMapLayerControls,
+    RouterLink,
   ],
 
   templateUrl:
@@ -294,6 +321,11 @@ export class GalacticMapScene
       null,
     );
 
+  private readonly markerSelectionSignal =
+    signal<GalacticMapDiscoveryMarker | null>(
+      null,
+    );
+
   private readonly layerVisibilitySignal =
     signal<GalacticMapLayerVisibility>(
       INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
@@ -322,6 +354,11 @@ export class GalacticMapScene
   readonly selection =
     this
       .selectionSignal
+      .asReadonly();
+
+  readonly markerSelection =
+    this
+      .markerSelectionSignal
       .asReadonly();
 
   readonly layerVisibility =
@@ -526,6 +563,24 @@ export class GalacticMapScene
       ?.setLayerVisibility(
         nextVisibility,
       );
+
+    const selectedMarker =
+      this.markerSelectionSignal();
+
+    if (
+      selectedMarker !==
+        null &&
+      !markerVisibleInLayers(
+        selectedMarker.resultKind,
+        nextVisibility,
+      )
+    ) {
+      this
+        .markerSelectionSignal
+        .set(
+          null,
+        );
+    }
   }
 
   resetView():
@@ -542,6 +597,12 @@ export class GalacticMapScene
 
     this
       .selectionSignal
+      .set(
+        null,
+      );
+
+    this
+      .markerSelectionSignal
       .set(
         null,
       );
@@ -686,10 +747,45 @@ export class GalacticMapScene
       return;
     }
 
+    const markerSelection =
+      this
+        .runtime
+        .selectDiscoveryMarkerAt(
+          event.clientX,
+          event.clientY,
+        );
+
+    if (
+      markerSelection !==
+        null
+    ) {
+      this.runtime.clearSelection();
+
+      this
+        .selectionSignal
+        .set(
+          null,
+        );
+
+      this
+        .markerSelectionSignal
+        .set(
+          markerSelection,
+        );
+
+      return;
+    }
+
     const selection =
       this.runtime.selectAt(
         event.clientX,
         event.clientY,
+      );
+
+    this
+      .markerSelectionSignal
+      .set(
+        null,
       );
 
     this
@@ -726,6 +822,160 @@ export class GalacticMapScene
   ): void {
 
     event.preventDefault();
+  }
+
+  markerArchiveLink(
+    marker:
+      GalacticMapDiscoveryMarker,
+  ): string[] {
+
+    const routeKind =
+      marker.kind ===
+        GalacticMapDiscoveryMarkerKind
+          .SYSTEM
+        ? 'system'
+        : 'galactic-object';
+
+    return [
+      '/archive',
+      routeKind,
+      marker
+        .locator
+        .galaxyIndex
+        .toString(
+          10,
+        ),
+      marker
+        .locator
+        .sectorKey
+        .toString(
+          10,
+        ),
+      marker
+        .locator
+        .galacticObjectIndex
+        .toString(
+          10,
+        ),
+    ];
+  }
+
+  markerArchiveQueryParams(): {
+    readonly seed:
+      string;
+
+    readonly version:
+      string;
+  } {
+
+    return {
+      seed:
+        this
+          .model
+          .generationKey
+          .universeSeed
+          .serialize(),
+
+      version:
+        this
+          .model
+          .generationKey
+          .generatorVersion
+          .code
+          .toString(
+            10,
+          ),
+    };
+  }
+
+  markerFamilyLabel(
+    marker:
+      GalacticMapDiscoveryMarker,
+  ): string {
+
+    switch (
+      marker.resultKind
+    ) {
+      case ExplorationResultKind.SYSTEM:
+        return 'Sistema';
+
+      case ExplorationResultKind.NEBULA:
+        return 'Nebulosa';
+
+      case ExplorationResultKind.STAR_CLUSTER:
+        return 'Cúmulo estelar';
+
+      case ExplorationResultKind.EXTREME_OBJECT:
+        return 'Objeto extremo';
+    }
+
+    throw new RangeError(
+      `Unsupported marker result kind: ${String(marker.resultKind)}.`,
+    );
+  }
+
+  markerIdentity(
+    marker:
+      GalacticMapDiscoveryMarker,
+  ): string {
+
+    const prefix =
+      marker.kind ===
+        GalacticMapDiscoveryMarkerKind
+          .SYSTEM
+        ? 'SYS'
+        : 'OBJ';
+
+    return `${prefix}-${marker.locator.galacticObjectIndex.toString(10)}`;
+  }
+
+  markerStateLabel(
+    state:
+      DiscoveryStateValue,
+  ): string {
+
+    const canonical =
+      DiscoveryState
+        .fromCode(
+          state.code,
+        );
+
+    if (
+      canonical ===
+        DiscoveryState.DETECTED
+    ) {
+      return 'Detectado';
+    }
+
+    if (
+      canonical ===
+        DiscoveryState.DISCOVERED
+    ) {
+      return 'Descubierto';
+    }
+
+    if (
+      canonical ===
+        DiscoveryState.VISITED
+    ) {
+      return 'Visitado';
+    }
+
+    if (
+      canonical ===
+        DiscoveryState.CATALOGUED
+    ) {
+      return 'Catalogado';
+    }
+
+    if (
+      canonical ===
+        DiscoveryState.CONFIRMED
+    ) {
+      return 'Confirmado';
+    }
+
+    return 'Desconocido';
   }
 
   private installResizeHandling():
@@ -819,6 +1069,12 @@ export class GalacticMapScene
           null,
         );
 
+      this
+        .markerSelectionSignal
+        .set(
+          null,
+        );
+
       const info =
         this
           .runtime
@@ -867,12 +1123,47 @@ export class GalacticMapScene
         );
 
       this
+        .markerSelectionSignal
+        .set(
+          null,
+        );
+
+      this
         .renderStateSignal
         .set(
           'error',
         );
     }
   }
+}
+
+function markerVisibleInLayers(
+  resultKind:
+    GalacticMapDiscoveryMarker['resultKind'],
+
+  visibility:
+    GalacticMapLayerVisibility,
+): boolean {
+
+  switch (
+    resultKind
+  ) {
+    case ExplorationResultKind.SYSTEM:
+      return visibility.systems;
+
+    case ExplorationResultKind.NEBULA:
+      return visibility.nebulae;
+
+    case ExplorationResultKind.STAR_CLUSTER:
+      return visibility.starClusters;
+
+    case ExplorationResultKind.EXTREME_OBJECT:
+      return visibility.extremeObjects;
+  }
+
+  throw new RangeError(
+    `Unsupported marker result kind: ${String(resultKind)}.`,
+  );
 }
 
 function createThreeGalacticMapSceneRuntime(
@@ -887,6 +1178,9 @@ function createThreeGalacticMapSceneRuntime(
 
 class ThreeGalacticMapSceneRuntime
   implements GalacticMapSceneRuntime {
+
+  private readonly canvas:
+    HTMLCanvasElement;
 
   private readonly renderer:
     THREE.WebGLRenderer;
@@ -960,6 +1254,9 @@ class ThreeGalacticMapSceneRuntime
     canvas:
       HTMLCanvasElement,
   ) {
+    this.canvas =
+      canvas;
+
     this.renderer =
       new THREE.WebGLRenderer({
         canvas,
@@ -1396,6 +1693,31 @@ class ThreeGalacticMapSceneRuntime
       .resetView();
 
     this.renderFrame();
+  }
+
+  selectDiscoveryMarkerAt(
+    clientX:
+      number,
+
+    clientY:
+      number,
+  ): GalacticMapDiscoveryMarker | null {
+
+    if (
+      this.discoveryMarkerOverlay ===
+        null
+    ) {
+      return null;
+    }
+
+    return this
+      .discoveryMarkerOverlay
+      .pickMarker(
+        this.camera,
+        this.canvas,
+        clientX,
+        clientY,
+      );
   }
 
   selectAt(

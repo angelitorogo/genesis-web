@@ -142,7 +142,7 @@ async function persistOneStaticDiscovery(
   }
 
   throw new Error(
-    'The frozen central point-10.5 E2E sample did not produce a static persistent discovery.',
+    'The frozen central point-10.6 E2E sample did not produce a static persistent discovery.',
   );
 }
 
@@ -176,10 +176,10 @@ async function numericAttribute(
 }
 
 test.describe(
-  'GENESIS point-10.5 galactic thematic layers',
+  'GENESIS point-10.6 marker navigation into Archive',
   () => {
     test(
-      'should render and toggle all six thematic layers while preserving persistent markers and 10.2/10.3 interaction',
+      'should select a persistent marker before GPU samples and navigate to its read-only Archive record',
       async ({
         page,
       }) => {
@@ -1001,6 +1001,20 @@ test.describe(
             0.001,
           );
 
+        // A hidden marker family must not steal the existing GPU-sample click.
+        await page
+          .getByTestId(
+            markerLayer.testId,
+          )
+          .click();
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          markerLayer.sceneAttribute,
+          'false',
+        );
+
         await canvas.click({
           position: {
             x:
@@ -1087,40 +1101,239 @@ test.describe(
           0,
         );
 
-        await expect(
-          page.getByTestId(
-            'galactic-map-markers',
-          ),
-        ).toBeVisible();
+        // Restore the persistent family and select the real marker. The static
+        // discovery is always in the frozen central ±2 sector sample, so a
+        // compact grid around the visual centre avoids depending on one exact
+        // deterministic intra-sector offset.
+        await page
+          .getByTestId(
+            markerLayer.testId,
+          )
+          .click();
 
         await expect(
+          scene,
+        ).toHaveAttribute(
+          markerLayer.sceneAttribute,
+          'true',
+        );
+
+        const markerSelection =
           page.getByTestId(
-            'galactic-map-layers',
-          ),
-        ).toBeVisible();
+            'galactic-map-marker-selection',
+          );
+
+        let markerFound =
+          false;
 
         for (
-          const testId
+          const offsetY
           of [
-            'galactic-map-marker-link',
-            'galactic-map-relative-position',
+            -18,
+            0,
+            18,
           ]
         ) {
-          await expect(
-            page.getByTestId(
-              testId,
-            ),
-          ).toHaveCount(
-            0,
-          );
+          for (
+            const offsetX
+            of [
+              -18,
+              0,
+              18,
+            ]
+          ) {
+            await canvas.click({
+              position: {
+                x:
+                  bounds.width /
+                    2 +
+                  offsetX,
+                y:
+                  bounds.height /
+                    2 +
+                  offsetY,
+              },
+            });
+
+            if (
+              await markerSelection.count() >
+                0
+            ) {
+              markerFound =
+                true;
+
+              break;
+            }
+          }
+
+          if (
+            markerFound
+          ) {
+            break;
+          }
         }
+
+        expect(
+          markerFound,
+        ).toBe(
+          true,
+        );
+
+        await expect(
+          markerSelection,
+        ).toBeVisible();
+
+        await expect(
+          selection,
+        ).toHaveCount(
+          0,
+        );
+
+        const expectedFamilyLabel =
+          persistedResultKind ===
+            'SYSTEM'
+            ? 'Sistema'
+            : persistedResultKind ===
+                'NEBULA'
+              ? 'Nebulosa'
+              : persistedResultKind ===
+                  'STAR_CLUSTER'
+                ? 'Cúmulo estelar'
+                : 'Objeto extremo';
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-selected-marker-family',
+          ),
+        ).toContainText(
+          expectedFamilyLabel,
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-selected-marker-identity',
+          ),
+        ).toContainText(
+          /^(?:\s*)(?:SYS|OBJ)-\d+/,
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-selected-marker-state',
+          ),
+        ).toContainText(
+          'Detectado',
+        );
+
+        const markerLink =
+          page.getByTestId(
+            'galactic-map-marker-link',
+          );
+
+        await expect(
+          markerLink,
+        ).toBeVisible();
+
+        const markerHref =
+          await markerLink.getAttribute(
+            'href',
+          );
+
+        expect(
+          markerHref,
+        ).not.toBeNull();
+
+        const markerUrl =
+          new URL(
+            markerHref ??
+              '',
+            'http://localhost',
+          );
+
+        expect(
+          markerUrl.pathname,
+        ).toMatch(
+          /^\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+$/,
+        );
+
+        expect(
+          markerUrl.searchParams.get(
+            'seed',
+          ),
+        ).toBe(
+          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+        );
+
+        expect(
+          markerUrl.searchParams.get(
+            'version',
+          ),
+        ).toBe(
+          '1',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-relative-position',
+          ),
+        ).toHaveCount(
+          0,
+        );
 
         await expect(
           page.getByTestId(
             'galactic-map-point-boundary',
           ),
         ).toContainText(
-          '10.6–10.9',
+          '10.7–10.9',
+        );
+
+        await markerLink.click();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          /\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+\?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1$/,
+        );
+
+        await expect(
+          page.getByTestId(
+            'archive-discovery-detail-page',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'archive-discovery-detail-family',
+          ),
+        ).toContainText(
+          expectedFamilyLabel,
+        );
+
+        await expect(
+          page.getByTestId(
+            'archive-discovery-detail-state',
+          ),
+        ).toContainText(
+          'Detectado',
+        );
+
+        await expect(
+          page.getByTestId(
+            'archive-discovery-detail-record',
+          ),
+        ).toHaveAttribute(
+          'data-result-kind',
+          persistedResultKind,
+        );
+
+        await expect(
+          page.getByTestId(
+            'archive-discovery-detail-map-link',
+          ),
+        ).toHaveAttribute(
+          'href',
+          '/galaxy-map',
         );
       },
     );

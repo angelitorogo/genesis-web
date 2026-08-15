@@ -13,6 +13,7 @@
   [attr.data-camera-target-y]="cameraState()?.targetY ?? null"
   [attr.data-camera-target-z]="cameraState()?.targetZ ?? null"
   [attr.data-selected-sample-index]="selection()?.sampleIndex ?? null"
+  [attr.data-selected-marker-kind]="markerSelection()?.resultKind ?? null"
   [attr.data-explored-sector-count]="model.explorationCoverage?.exploredSectorCount ?? null"
   [attr.data-total-sector-count]="model.explorationCoverage ? model.explorationCoverage.totalSectorCount.toString() : null"
   [attr.data-sector-grid-side]="model.explorationCoverage ? model.explorationCoverage.grid.sideLengthInSectors.toString() : null"
@@ -179,9 +180,57 @@
       </span>
 
       <span>
-        Clic: seleccionar muestra
+        Clic en marcador: seleccionar descubrimiento
+      </span>
+
+      <span>
+        Clic en nube: seleccionar muestra GPU
       </span>
     </div>
+  }
+
+  @if (markerSelection(); as selectedMarker) {
+    <aside
+      class="galactic-map-scene__marker-selection"
+      data-testid="galactic-map-marker-selection"
+      aria-live="polite"
+    >
+      <small>
+        DESCUBRIMIENTO PERSISTENTE
+      </small>
+
+      <strong data-testid="galactic-map-selected-marker-family">
+        {{ markerFamilyLabel(selectedMarker) }}
+      </strong>
+
+      <code data-testid="galactic-map-selected-marker-sector">
+        Sector ({{ selectedMarker.sectorCoordinates.x }}, {{ selectedMarker.sectorCoordinates.y }})
+      </code>
+
+      <code data-testid="galactic-map-selected-marker-identity">
+        {{ markerIdentity(selectedMarker) }}
+      </code>
+
+      <code data-testid="galactic-map-selected-marker-state">
+        {{ markerStateLabel(selectedMarker.state) }}
+      </code>
+
+      <p>
+        Este marcador corresponde a un descubrimiento persistido. La ficha del
+        Archivo muestra únicamente conocimiento ya disponible y no revela
+        Ground Truth adicional.
+      </p>
+
+      <a
+        class="galactic-map-scene__marker-link"
+        data-testid="galactic-map-marker-link"
+        [routerLink]="markerArchiveLink(selectedMarker)"
+        [queryParams]="markerArchiveQueryParams()"
+      >
+        Abrir ficha en Archivo
+        <span aria-hidden="true">→</span>
+      </a>
+    </aside>
   }
 
   @if (selection(); as selected) {

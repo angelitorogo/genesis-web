@@ -167,7 +167,8 @@
   }
 
   &__help,
-  &__selection {
+  &__selection,
+  &__marker-selection {
     position: absolute;
     z-index: 4;
     bottom: 1rem;
@@ -176,6 +177,10 @@
     border-radius: 0.7rem;
     background: rgba(5, 7, 13, 0.78);
     color: var(--genesis-color-text-subtle);
+  }
+
+  &__help,
+  &__selection {
     pointer-events: none;
   }
 
@@ -187,7 +192,8 @@
     font-size: 0.58rem;
   }
 
-  &__selection {
+  &__selection,
+  &__marker-selection {
     left: 1rem;
     width: min(23rem, calc(100% - 2rem));
 
@@ -200,6 +206,49 @@
     p {
       margin: 0.4rem 0 0;
       font-size: 0.68rem;
+      line-height: 1.45;
+    }
+  }
+
+  &__marker-selection {
+    z-index: 6;
+    border-color: rgba(255, 193, 92, 0.28);
+    background: rgba(5, 7, 13, 0.9);
+    pointer-events: auto;
+
+    small {
+      color: #ffc15c;
+      font-family: var(--genesis-font-mono);
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    strong {
+      margin-top: 0.2rem;
+      color: var(--genesis-color-text);
+    }
+
+    code {
+      margin-top: 0.16rem;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.64rem;
+    }
+  }
+
+  &__marker-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+    color: var(--genesis-color-primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
     }
   }
 
@@ -252,7 +301,8 @@
       font-size: 0.53rem;
     }
 
-    &__selection {
+    &__selection,
+    &__marker-selection {
       bottom: 5rem;
       left: 0.75rem;
       width: min(21rem, calc(100% - 1.5rem));

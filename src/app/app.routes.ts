@@ -33,6 +33,34 @@ export const genesisRoutes: Routes = [
     title: 'Mapa galáctico | GENESIS',
   },
   {
+    path: 'archive/system/:galaxyIndex/:sectorKey/:galacticObjectIndex',
+    data: {
+      archiveDiscoveryLocatorKind:
+        'system',
+    },
+    loadComponent: () =>
+      import(
+        './presentation/genesis-archive/archive-discovery-detail'
+      ).then(
+        (module) => module.ArchiveDiscoveryDetail,
+      ),
+    title: 'Ficha de sistema | Archivo GENESIS',
+  },
+  {
+    path: 'archive/galactic-object/:galaxyIndex/:sectorKey/:galacticObjectIndex',
+    data: {
+      archiveDiscoveryLocatorKind:
+        'galactic-object',
+    },
+    loadComponent: () =>
+      import(
+        './presentation/genesis-archive/archive-discovery-detail'
+      ).then(
+        (module) => module.ArchiveDiscoveryDetail,
+      ),
+    title: 'Ficha de objeto galáctico | Archivo GENESIS',
+  },
+  {
     path: 'archive',
     loadComponent: () =>
       import(

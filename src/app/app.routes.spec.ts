@@ -94,6 +94,83 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   });
 
+
+  it('should expose the point-10.6 SystemLocator Archive detail route before the base Archive route', () => {
+    const detailIndex =
+      genesisRoutes.findIndex(
+        (route) =>
+          route.path ===
+          'archive/system/:galaxyIndex/:sectorKey/:galacticObjectIndex',
+      );
+
+    const archiveIndex =
+      genesisRoutes.findIndex(
+        (route) =>
+          route.path ===
+          'archive',
+      );
+
+    expect(
+      detailIndex,
+    ).toBeGreaterThanOrEqual(
+      0,
+    );
+
+    expect(
+      detailIndex,
+    ).toBeLessThan(
+      archiveIndex,
+    );
+
+    expect(
+      genesisRoutes[
+        detailIndex
+      ]?.data?.[
+        'archiveDiscoveryLocatorKind'
+      ],
+    ).toBe(
+      'system',
+    );
+  });
+
+  it('should expose the point-10.6 GalacticObjectLocator Archive detail route before the base Archive route', () => {
+    const detailIndex =
+      genesisRoutes.findIndex(
+        (route) =>
+          route.path ===
+          'archive/galactic-object/:galaxyIndex/:sectorKey/:galacticObjectIndex',
+      );
+
+    const archiveIndex =
+      genesisRoutes.findIndex(
+        (route) =>
+          route.path ===
+          'archive',
+      );
+
+    expect(
+      detailIndex,
+    ).toBeGreaterThanOrEqual(
+      0,
+    );
+
+    expect(
+      detailIndex,
+    ).toBeLessThan(
+      archiveIndex,
+    );
+
+    expect(
+      genesisRoutes[
+        detailIndex
+      ]?.data?.[
+        'archiveDiscoveryLocatorKind'
+      ],
+    ).toBe(
+      'galactic-object',
+    );
+  });
+
   it('should navigate to Statistics', async () => {
     const harness =
       await RouterTestingHarness.create(

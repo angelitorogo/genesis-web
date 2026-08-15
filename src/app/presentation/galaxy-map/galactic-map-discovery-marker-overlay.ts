@@ -33,6 +33,12 @@ const MARKER_Z_OFFSET =
 const MARKER_RENDER_ORDER =
   70;
 
+const MARKER_PICK_PADDING_PX =
+  12;
+
+const MARKER_PICK_MIN_RADIUS_PX =
+  22;
+
 interface MarkerFamilyStyle {
   readonly resultKind:
     ExplorationLocatedResultKind;
@@ -117,6 +123,20 @@ export interface GalacticMapDiscoveryMarkerOverlay {
       GalacticMapLayerVisibility,
   ): void;
 
+  pickMarker(
+    camera:
+      THREE.Camera,
+
+    canvas:
+      HTMLCanvasElement,
+
+    clientX:
+      number,
+
+    clientY:
+      number,
+  ): GalacticMapDiscoveryMarker | null;
+
   dispose():
     void;
 }
@@ -124,6 +144,12 @@ export interface GalacticMapDiscoveryMarkerOverlay {
 interface MarkerRenderFamily {
   readonly resultKind:
     ExplorationLocatedResultKind;
+
+  readonly markers:
+    readonly GalacticMapDiscoveryMarker[];
+
+  readonly pointSize:
+    number;
 
   readonly points:
     THREE.Points<
@@ -189,12 +215,12 @@ export function discoveryMarkerLocalPosition(
 }
 
 /**
- * Point-10.5 persistent marker renderer.
+ * Point-10.6 persistent marker renderer.
  *
  * The point-10.4 marker identities and deterministic positions stay intact;
  * only the already-known point-9.4 operational result family determines the
- * visual sub-layer. These groups remain read-only and are not selectable
- * physical entities. Marker navigation belongs to point 10.6.
+ * visual sub-layer. Point 10.6 adds screen-space picking for these persisted
+ * markers while keeping them read-only and separate from GPU render samples.
  */
 export function createGalacticMapDiscoveryMarkerOverlay(
   discoveryMarkers:
@@ -269,6 +295,10 @@ export function createGalacticMapDiscoveryMarkerOverlay(
     families.push({
       resultKind:
         style.resultKind,
+      markers:
+        matchingMarkers,
+      pointSize:
+        style.pointSize,
       points,
     });
 
@@ -321,6 +351,28 @@ export function createGalacticMapDiscoveryMarkerOverlay(
       }
     },
 
+    pickMarker(
+      camera:
+        THREE.Camera,
+
+      canvas:
+        HTMLCanvasElement,
+
+      clientX:
+        number,
+
+      clientY:
+        number,
+    ): GalacticMapDiscoveryMarker | null {
+      return pickClosestVisibleMarker(
+        families,
+        camera,
+        canvas,
+        clientX,
+        clientY,
+      );
+    },
+
     dispose():
       void {
 
@@ -347,6 +399,183 @@ export function createGalacticMapDiscoveryMarkerOverlay(
       );
     },
   };
+}
+
+
+function pickClosestVisibleMarker(
+  families:
+    readonly MarkerRenderFamily[],
+
+  camera:
+    THREE.Camera,
+
+  canvas:
+    HTMLCanvasElement,
+
+  clientX:
+    number,
+
+  clientY:
+    number,
+): GalacticMapDiscoveryMarker | null {
+
+  if (
+    !Number.isFinite(
+      clientX,
+    ) ||
+    !Number.isFinite(
+      clientY,
+    )
+  ) {
+    return null;
+  }
+
+  const bounds =
+    canvas
+      .getBoundingClientRect();
+
+  if (
+    bounds.width <=
+      0 ||
+    bounds.height <=
+      0
+  ) {
+    return null;
+  }
+
+  camera.updateMatrixWorld();
+
+  const projected =
+    new THREE.Vector3();
+
+  let closest:
+    GalacticMapDiscoveryMarker | null =
+    null;
+
+  let closestDistanceSquared =
+    Number.POSITIVE_INFINITY;
+
+  for (
+    const family
+    of families
+  ) {
+    if (
+      !family.points.visible
+    ) {
+      continue;
+    }
+
+    family
+      .points
+      .updateWorldMatrix(
+        true,
+        false,
+      );
+
+    const positionAttribute =
+      family
+        .points
+        .geometry
+        .getAttribute(
+          'position',
+        );
+
+    const pickRadius =
+      Math.max(
+        MARKER_PICK_MIN_RADIUS_PX,
+        family.pointSize /
+          2 +
+          MARKER_PICK_PADDING_PX,
+      );
+
+    const pickRadiusSquared =
+      pickRadius *
+      pickRadius;
+
+    for (
+      let index =
+        0;
+      index <
+        family.markers.length;
+      index +=
+        1
+    ) {
+      projected
+        .fromBufferAttribute(
+          positionAttribute as
+            THREE.BufferAttribute,
+          index,
+        )
+        .applyMatrix4(
+          family
+            .points
+            .matrixWorld,
+        )
+        .project(
+          camera,
+        );
+
+      if (
+        projected.z <
+          -1 ||
+        projected.z >
+          1
+      ) {
+        continue;
+      }
+
+      const screenX =
+        bounds.left +
+        (
+          projected.x *
+            0.5 +
+          0.5
+        ) *
+        bounds.width;
+
+      const screenY =
+        bounds.top +
+        (
+          -projected.y *
+            0.5 +
+          0.5
+        ) *
+        bounds.height;
+
+      const deltaX =
+        clientX -
+        screenX;
+
+      const deltaY =
+        clientY -
+        screenY;
+
+      const distanceSquared =
+        deltaX *
+          deltaX +
+        deltaY *
+          deltaY;
+
+      if (
+        distanceSquared <=
+          pickRadiusSquared &&
+        distanceSquared <
+          closestDistanceSquared
+      ) {
+        closest =
+          family
+            .markers[
+              index
+            ] ??
+          null;
+
+        closestDistanceSquared =
+          distanceSquared;
+      }
+    }
+  }
+
+  return closest;
 }
 
 function createMarkerFamilyPoints(

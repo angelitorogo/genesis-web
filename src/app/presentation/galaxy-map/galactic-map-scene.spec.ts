@@ -5,6 +5,10 @@ import {
 } from '@angular/core/testing';
 
 import {
+  provideRouter,
+} from '@angular/router';
+
+import {
   DiscoveryState,
 } from '../../domain/discovery/discovery-state';
 
@@ -220,11 +224,20 @@ describe(
     let resetCalls:
       number;
 
+    let markerSelectCalls:
+      Array<readonly [
+        number,
+        number,
+      ]>;
+
     let selectCalls:
       Array<readonly [
         number,
         number,
       ]>;
+
+    let markerSelectionResult:
+      GalacticMapDiscoveryMarker | null;
 
     let layerVisibilityCalls:
       GalacticMapLayerVisibility[];
@@ -256,6 +269,23 @@ describe(
           2.1,
       });
 
+    const selectedMarker =
+      new GalacticMapDiscoveryMarker(
+        new SystemLocator(
+          0n,
+          0n,
+          0n,
+        ),
+        ExplorationResultKind.SYSTEM,
+        DiscoveryState.DETECTED,
+        new GalaxySectorCoordinates(
+          0,
+          0,
+        ),
+        0.5,
+        0.5,
+      );
+
     beforeEach(
       async () => {
         renderCalls =
@@ -270,8 +300,14 @@ describe(
         resetCalls =
           0;
 
+        markerSelectCalls =
+          [];
+
         selectCalls =
           [];
+
+        markerSelectionResult =
+          null;
 
         layerVisibilityCalls =
           [];
@@ -414,6 +450,18 @@ describe(
               );
             },
 
+            selectDiscoveryMarkerAt(
+              clientX,
+              clientY,
+            ) {
+              markerSelectCalls.push([
+                clientX,
+                clientY,
+              ]);
+
+              return markerSelectionResult;
+            },
+
             selectAt(
               clientX,
               clientY,
@@ -441,6 +489,10 @@ describe(
             ],
 
             providers: [
+              provideRouter(
+                [],
+              ),
+
               {
                 provide:
                   GALACTIC_MAP_SCENE_RUNTIME_FACTORY,
@@ -876,6 +928,15 @@ describe(
         fixture.detectChanges();
 
         expect(
+          markerSelectCalls,
+        ).toEqual([
+          [
+            122,
+            143,
+          ],
+        ]);
+
+        expect(
           selectCalls,
         ).toEqual([
           [
@@ -903,6 +964,148 @@ describe(
         ).toContain(
           'Muestra #321',
         );
+      },
+    );
+
+    it(
+      'should give a persistent marker priority over GPU sample selection and expose its archive link',
+      () => {
+        markerSelectionResult =
+          selectedMarker;
+
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapScene,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          model(),
+        );
+
+        fixture.detectChanges();
+
+        fixture
+          .componentInstance
+          .onCanvasPointerDown(
+            pointerEvent(
+              12,
+              180,
+              160,
+            ),
+          );
+
+        fixture
+          .componentInstance
+          .onCanvasPointerUp(
+            pointerEvent(
+              12,
+              180,
+              160,
+            ),
+          );
+
+        fixture.detectChanges();
+
+        expect(
+          markerSelectCalls,
+        ).toEqual([
+          [
+            180,
+            160,
+          ],
+        ]);
+
+        expect(
+          selectCalls,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .selection(),
+        ).toBeNull();
+
+        expect(
+          fixture
+            .componentInstance
+            .markerSelection(),
+        ).toBe(
+          selectedMarker,
+        );
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-marker-selection"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-selected-marker-family"]',
+          )?.textContent,
+        ).toContain(
+          'Sistema',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-selected-marker-identity"]',
+          )?.textContent,
+        ).toContain(
+          'SYS-0',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-selected-marker-state"]',
+          )?.textContent,
+        ).toContain(
+          'Detectado',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-marker-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/archive/system/0/0/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1',
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .markerArchiveQueryParams(),
+        ).toEqual({
+          seed:
+            '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+          version:
+            '1',
+        });
+
+
+        fixture
+          .componentInstance
+          .onLayerVisibilityChange({
+            layerId:
+              'systems',
+            visible:
+              false,
+          });
+
+        expect(
+          fixture
+            .componentInstance
+            .markerSelection(),
+        ).toBeNull();
       },
     );
 
@@ -1018,6 +1221,12 @@ describe(
           fixture
             .componentInstance
             .selection(),
+        ).toBeNull();
+
+        expect(
+          fixture
+            .componentInstance
+            .markerSelection(),
         ).toBeNull();
       },
     );

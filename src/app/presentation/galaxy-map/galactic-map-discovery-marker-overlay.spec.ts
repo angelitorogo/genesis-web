@@ -370,6 +370,115 @@ describe(
     );
 
     it(
+      'should pick the closest visible persistent marker in screen space and ignore hidden families',
+      () => {
+        const selectedMarker =
+          marker(
+            ExplorationResultKind.SYSTEM,
+            0,
+            0,
+            0.5,
+            0.5,
+          );
+
+        const markers =
+          new GalacticMapDiscoveryMarkers(
+            generationKey,
+            0n,
+            grid,
+            [
+              selectedMarker,
+            ],
+          );
+
+        const overlay =
+          createGalacticMapDiscoveryMarkerOverlay(
+            markers,
+            coverage,
+            1,
+            1,
+          );
+
+        const camera =
+          new THREE.PerspectiveCamera(
+            40,
+            1,
+            0.1,
+            20,
+          );
+
+        camera.position.set(
+          0,
+          0,
+          2,
+        );
+
+        camera.lookAt(
+          0,
+          0,
+          0,
+        );
+
+        const canvas =
+          document.createElement(
+            'canvas',
+          );
+
+        canvas.getBoundingClientRect =
+          () =>
+            ({
+              x:
+                0,
+              y:
+                0,
+              left:
+                0,
+              top:
+                0,
+              right:
+                200,
+              bottom:
+                200,
+              width:
+                200,
+              height:
+                200,
+              toJSON() {
+                return {};
+              },
+            }) as DOMRect;
+
+        expect(
+          overlay.pickMarker(
+            camera,
+            canvas,
+            100,
+            100,
+          ),
+        ).toBe(
+          selectedMarker,
+        );
+
+        overlay.setLayerVisibility({
+          ...INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
+          systems:
+            false,
+        });
+
+        expect(
+          overlay.pickMarker(
+            camera,
+            canvas,
+            100,
+            100,
+          ),
+        ).toBeNull();
+
+        overlay.dispose();
+      },
+    );
+
+    it(
       'should reject incompatible marker/coverage snapshots and dispose renderer resources',
       () => {
         const markers =
