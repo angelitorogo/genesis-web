@@ -56,6 +56,15 @@ const SPIRAL_PARTICLE_COUNT =
 const BARRED_SPIRAL_PARTICLE_COUNT =
   186_000;
 
+const BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
+  54_000;
+
+const BAR_PARTICLE_COUNT =
+  8_000;
+
+const SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
+  58_000;
+
 const DWARF_PARTICLE_COUNT =
   444_000;
 
@@ -150,8 +159,7 @@ describe(
         ).toEqual(
           first.opacities,
         );
-      },
-      15_000,
+      },15_000,
     );
 
     it(
@@ -270,6 +278,398 @@ describe(
             .visualStructure
             ?.bar,
         ).toBeNull();
+      },
+    );
+
+    it(
+      'should make barred-spiral arms begin inside the canonical gap while tapering the outer arm',
+      () => {
+        const target =
+          model(
+            1n,
+          );
+
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const profile =
+          spiralReinforcementRadialProfile(
+            layout,
+            target,
+            CORE_PARTICLE_COUNT +
+              BODY_PARTICLE_COUNT,
+            CORE_PARTICLE_COUNT +
+              BODY_PARTICLE_COUNT +
+              BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT,
+          );
+
+        expect(
+          profile.insideCanonicalStartFraction,
+        ).toBeGreaterThan(
+          0.05,
+        );
+
+        expect(
+          profile.innerFraction,
+        ).toBeGreaterThan(
+          0.52,
+        );
+
+        expect(
+          profile.outerFraction,
+        ).toBeLessThan(
+          0.22,
+        );
+
+        expect(
+          profile.innerFraction,
+        ).toBeGreaterThan(
+          profile.outerFraction *
+          2.4,
+        );
+      },
+    );
+
+    it(
+      'should visibly populate both barred-spiral bar ends through the arm-root transition',
+      () => {
+        const target =
+          model(
+            1n,
+          );
+
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const bar =
+          target
+            .visualStructure
+            ?.bar;
+
+        if (
+          bar ===
+            null ||
+          bar ===
+            undefined
+        ) {
+          throw new Error(
+            'Bar-end coverage test requires a discovered barred spiral.',
+          );
+        }
+
+        const start =
+          layout.count -
+          BAR_PARTICLE_COUNT;
+
+        let positiveEnd =
+          0;
+
+        let negativeEnd =
+          0;
+
+        const cosine =
+          Math.cos(
+            bar
+              .angleRadians,
+          );
+
+        const sine =
+          Math.sin(
+            bar
+              .angleRadians,
+          );
+
+        for (
+          let particle =
+            start;
+          particle <
+            layout.count;
+          particle +=
+            1
+        ) {
+          const x =
+            layout.positions[
+              particle *
+              3
+            ];
+
+          const y =
+            layout.positions[
+              particle *
+                3 +
+              1
+            ];
+
+          const along =
+            x *
+              cosine +
+            y *
+              sine;
+
+          if (
+            Math.abs(
+              along,
+            ) >=
+            bar
+              .halfLengthNormalized *
+              0.62
+          ) {
+            if (
+              along <
+              0
+            ) {
+              negativeEnd +=
+                1;
+            } else {
+              positiveEnd +=
+                1;
+            }
+          }
+        }
+
+        expect(
+          (
+            positiveEnd +
+            negativeEnd
+          ) /
+          BAR_PARTICLE_COUNT,
+        ).toBeGreaterThan(
+          0.28,
+        );
+
+        expect(
+          positiveEnd /
+          BAR_PARTICLE_COUNT,
+        ).toBeGreaterThan(
+          0.12,
+        );
+
+        expect(
+          negativeEnd /
+          BAR_PARTICLE_COUNT,
+        ).toBeGreaterThan(
+          0.12,
+        );
+      },
+    );
+
+    it(
+      'should curve both barred-spiral bar ends into the arm roots instead of keeping a ruler-straight centerline',
+      () => {
+        const target =
+          model(
+            1n,
+          );
+
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const bar =
+          target
+            .visualStructure
+            ?.bar;
+
+        if (
+          bar ===
+            null ||
+          bar ===
+            undefined
+        ) {
+          throw new Error(
+            'Curved bar-transition test requires a discovered barred spiral.',
+          );
+        }
+
+        const start =
+          layout.count -
+          BAR_PARTICLE_COUNT;
+
+        const cosine =
+          Math.cos(
+            bar
+              .angleRadians,
+          );
+
+        const sine =
+          Math.sin(
+            bar
+              .angleRadians,
+          );
+
+        let positiveCount =
+          0;
+
+        let negativeCount =
+          0;
+
+        let positiveAcross =
+          0;
+
+        let negativeAcross =
+          0;
+
+        for (
+          let particle =
+            start;
+          particle <
+            layout.count;
+          particle +=
+            1
+        ) {
+          const x =
+            layout.positions[
+              particle *
+              3
+            ];
+
+          const y =
+            layout.positions[
+              particle *
+                3 +
+              1
+            ];
+
+          const along =
+            x *
+              cosine +
+            y *
+              sine;
+
+          if (
+            Math.abs(
+              along,
+            ) <
+            bar
+              .halfLengthNormalized *
+              0.68
+          ) {
+            continue;
+          }
+
+          const across =
+            -x *
+              sine +
+            y *
+              cosine;
+
+          if (
+            along <
+            0
+          ) {
+            negativeCount +=
+              1;
+
+            negativeAcross +=
+              across;
+          } else {
+            positiveCount +=
+              1;
+
+            positiveAcross +=
+              across;
+          }
+        }
+
+        expect(
+          positiveCount,
+        ).toBeGreaterThan(
+          400,
+        );
+
+        expect(
+          negativeCount,
+        ).toBeGreaterThan(
+          400,
+        );
+
+        const positiveMeanAcross =
+          positiveAcross /
+          positiveCount;
+
+        const negativeMeanAcross =
+          negativeAcross /
+          negativeCount;
+
+        expect(
+          Math.abs(
+            positiveMeanAcross,
+          ),
+        ).toBeGreaterThan(
+          bar
+            .widthNormalized *
+            0.08,
+        );
+
+        expect(
+          Math.abs(
+            negativeMeanAcross,
+          ),
+        ).toBeGreaterThan(
+          bar
+            .widthNormalized *
+            0.08,
+        );
+      },
+    );
+
+    it(
+      'should extend normal-spiral arms into the bulge overlap while preserving a softer outer taper',
+      () => {
+        const target =
+          model(
+            3n,
+          );
+
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const profile =
+          spiralReinforcementRadialProfile(
+            layout,
+            target,
+            CORE_PARTICLE_COUNT +
+              BODY_PARTICLE_COUNT,
+            CORE_PARTICLE_COUNT +
+              BODY_PARTICLE_COUNT +
+              SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT,
+          );
+
+        expect(
+          profile.insideCanonicalStartFraction,
+        ).toBeGreaterThan(
+          0.08,
+        );
+
+        expect(
+          profile.innerFraction,
+        ).toBeGreaterThan(
+          0.48,
+        );
+
+        expect(
+          profile.outerFraction,
+        ).toBeLessThan(
+          0.24,
+        );
+
+        expect(
+          profile.innerFraction,
+        ).toBeGreaterThan(
+          profile.outerFraction *
+          2.0,
+        );
       },
     );
 
@@ -925,6 +1325,161 @@ function projectedFractionWithinRadius(
       end -
         start,
     );
+}
+
+interface SpiralReinforcementRadialProfile {
+  readonly insideCanonicalStartFraction:
+    number;
+
+  readonly innerFraction:
+    number;
+
+  readonly outerFraction:
+    number;
+}
+
+function spiralReinforcementRadialProfile(
+  layout:
+    GalacticMapParticleLayout,
+
+  model:
+    GalacticMapModel,
+
+  start:
+    number,
+
+  end:
+    number,
+): SpiralReinforcementRadialProfile {
+
+  const visual =
+    model.visualStructure;
+
+  if (
+    visual ===
+      null ||
+    visual.arms.length ===
+      0
+  ) {
+    throw new Error(
+      'Spiral reinforcement profile requires a discovered galaxy with visual arms.',
+    );
+  }
+
+  const radialStart =
+    Math.min(
+      ...visual.arms.map(
+        arm =>
+          arm.radialStartNormalized,
+      ),
+    );
+
+  const radialEnd =
+    Math.max(
+      ...visual.arms.map(
+        arm =>
+          arm.radialEndNormalized,
+      ),
+    );
+
+  const radialSpan =
+    Math.max(
+      1e-9,
+      radialEnd -
+        radialStart,
+    );
+
+  const innerLimit =
+    radialStart +
+    radialSpan *
+      0.48;
+
+  const outerLimit =
+    radialStart +
+    radialSpan *
+      0.78;
+
+  let insideCanonicalStart =
+    0;
+
+  let inner =
+    0;
+
+  let outer =
+    0;
+
+  for (
+    let particle =
+      start;
+    particle <
+      end;
+    particle +=
+      1
+  ) {
+    const x =
+      layout.positions[
+        particle *
+        3
+      ];
+
+    const y =
+      layout.positions[
+        particle *
+          3 +
+        1
+      ];
+
+    const radius =
+      Math.hypot(
+        x,
+        y,
+      );
+
+    if (
+      radius <
+      radialStart
+    ) {
+      insideCanonicalStart +=
+        1;
+    }
+
+    if (
+      radius <=
+      innerLimit
+    ) {
+      inner +=
+        1;
+    }
+
+    if (
+      radius >=
+      outerLimit
+    ) {
+      outer +=
+        1;
+    }
+  }
+
+  const count =
+    Math.max(
+      1,
+      end -
+        start,
+    );
+
+  return {
+    insideCanonicalStartFraction:
+      insideCanonicalStart /
+      count,
+
+    innerFraction:
+      inner /
+      count,
+
+    outerFraction:
+      outer /
+      count,
+  };
 }
 
 function bodyDepthRms(

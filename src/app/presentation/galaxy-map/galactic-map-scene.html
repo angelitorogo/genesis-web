@@ -154,6 +154,7 @@
 
     <app-galactic-map-layer-controls
       [visibility]="layerVisibility()"
+      [hasHabitableZone]="model.environmentalLayers ? model.environmentalLayers.hasHabitableZone : false"
       (visibilityChange)="onLayerVisibilityChange($event)"
     ></app-galactic-map-layer-controls>
 

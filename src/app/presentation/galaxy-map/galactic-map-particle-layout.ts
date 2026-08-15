@@ -57,6 +57,52 @@ const SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
   58_000;
 
 /**
+ * Smooth radial taper applied only to spiral-arm render samples.
+ *
+ * The value is the exponential decay strength used by
+ * decayingArmProgress(). Higher values concentrate more samples near the
+ * arm origin while progressively thinning the outer arm without changing
+ * the total particle budget.
+ *
+ * BARRED_SPIRAL intentionally receives the stronger taper because the arms
+ * must visually emerge from the dense bar/bulge neighbourhood and dissolve
+ * more decisively toward their outer ends.
+ */
+const BARRED_SPIRAL_ARM_RADIAL_DECAY_STRENGTH =
+  1.70;
+
+const SPIRAL_ARM_RADIAL_DECAY_STRENGTH =
+  1.25;
+
+/**
+ * Render-only arm-root geometry.
+ *
+ * Spiral arms are extended inward as the SAME logarithmic structure instead
+ * of adding a secondary bridge population. Normal spirals overlap the outer
+ * bulge, while barred spirals start slightly inside the physical end of the
+ * stellar bar and are anchored to the nearest bar endpoint.
+ */
+const SPIRAL_ARM_BULGE_OVERLAP_FACTOR =
+  0.78;
+
+const BARRED_SPIRAL_ARM_BAR_OVERLAP_WIDTH_FACTOR =
+  0.42;
+
+/**
+ * The final section of a barred-spiral bar bends into the tangent of the
+ * corresponding arm root. The central 62% remains a recognizably straight
+ * stellar bar; only the outer section becomes the organic transition.
+ */
+const BARRED_SPIRAL_BAR_CURVE_START_FACTOR =
+  0.62;
+
+const BARRED_SPIRAL_BAR_END_TANGENT_SCALE =
+  0.72;
+
+const BARRED_SPIRAL_BAR_TRANSITION_WIDTH_BOOST =
+  0.18;
+
+/**
  * Extra render-only stellar samples used only by DWARF.
  *
  * Dwarf galaxies need a visibly continuous low-surface-brightness stellar
@@ -1272,8 +1318,34 @@ function writeDiskBody(
       model,
     );
 
+  const renderArms =
+    spiralRenderArms(
+      visual.arms,
+      visual
+        .windingDirection,
+      visual
+        .bulgeRadiusNormalized,
+      visual.bar ===
+        null
+        ? null
+        : visual.bar
+            .angleRadians,
+      visual.bar ===
+        null
+        ? null
+        : visual.bar
+            .halfLengthNormalized,
+      visual.bar ===
+        null
+        ? null
+        : visual.bar
+            .widthNormalized,
+      barred,
+      spiral,
+    );
+
   const armProbability =
-    visual.arms.length ===
+    renderArms.length ===
       0
       ? 0
       : barred
@@ -1285,7 +1357,7 @@ function writeDiskBody(
             averageCoherence;
 
   const interArmProbability =
-    visual.arms.length ===
+    renderArms.length ===
       0
       ? 0
       : barred
@@ -1304,7 +1376,7 @@ function writeDiskBody(
   ) {
     const point =
       selectDiskPoint(
-        visual.arms,
+        renderArms,
         visual
           .windingDirection,
         visual
@@ -1496,6 +1568,32 @@ function writeBarredSpiralArmReinforcement(
     return start;
   }
 
+  const renderArms =
+    spiralRenderArms(
+      visual.arms,
+      visual
+        .windingDirection,
+      visual
+        .bulgeRadiusNormalized,
+      visual.bar ===
+        null
+        ? null
+        : visual.bar
+            .angleRadians,
+      visual.bar ===
+        null
+        ? null
+        : visual.bar
+            .halfLengthNormalized,
+      visual.bar ===
+        null
+        ? null
+        : visual.bar
+            .widthNormalized,
+      true,
+      false,
+    );
+
   for (
     let index =
       0;
@@ -1510,12 +1608,13 @@ function writeBarredSpiralArmReinforcement(
 
     const point =
       spiralDensityPoint(
-        visual.arms,
+        renderArms,
         visual
           .windingDirection,
         sampler,
         sampleIndex,
         0.78,
+        BARRED_SPIRAL_ARM_RADIAL_DECAY_STRENGTH,
       );
 
     const thickness =
@@ -1636,6 +1735,20 @@ function writeSpiralArmReinforcement(
     return start;
   }
 
+  const renderArms =
+    spiralRenderArms(
+      visual.arms,
+      visual
+        .windingDirection,
+      visual
+        .bulgeRadiusNormalized,
+      null,
+      null,
+      null,
+      false,
+      true,
+    );
+
   for (
     let index =
       0;
@@ -1651,12 +1764,13 @@ function writeSpiralArmReinforcement(
 
     const point =
       spiralDensityPoint(
-        visual.arms,
+        renderArms,
         visual
           .windingDirection,
         sampler,
         sampleIndex,
         0.86,
+        SPIRAL_ARM_RADIAL_DECAY_STRENGTH,
       );
 
     const thickness =
@@ -4143,6 +4257,62 @@ function writeBar(
     return start;
   }
 
+  const barredSpiral =
+    isBarredSpiral(
+      model,
+    );
+
+  const renderArms =
+    barredSpiral &&
+    visual.arms.length >
+      0
+      ? spiralRenderArms(
+          visual.arms,
+          visual
+            .windingDirection,
+          visual
+            .bulgeRadiusNormalized,
+          bar
+            .angleRadians,
+          bar
+            .halfLengthNormalized,
+          bar
+            .widthNormalized,
+          true,
+          false,
+        )
+      : visual.arms;
+
+  /*
+   * The bar and the barred-spiral arms are one continuous stellar structure.
+   * The middle of the bar stays straight, but its outer sections now bend
+   * progressively into the real tangent of the corresponding arm root.
+   *
+   * No connector population is added: these are still the same 8k bar
+   * samples. Their centerline simply changes from straight bar -> curved
+   * transition -> arm root, which removes the ruler-straight appearance while
+   * preserving the physical bar and the existing arm geometry.
+   */
+  const armRootRadius =
+    renderArms.length ===
+      0
+      ? bar
+          .halfLengthNormalized
+      : Math.max(
+          ...renderArms.map(
+            arm =>
+              arm
+                .radialStartNormalized,
+          ),
+        );
+
+  const visibleHalfLength =
+    Math.max(
+      bar
+        .halfLengthNormalized,
+      armRootRadius,
+    );
+
   for (
     let index =
       0;
@@ -4151,14 +4321,127 @@ function writeBar(
     index +=
       1
   ) {
-    const along =
-      sampler.normal(
+    const reinforceEnd =
+      barredSpiral &&
+      sampler.sample01(
         index,
-        120,
-      ) *
-      bar
-        .halfLengthNormalized *
-      0.68;
+        128,
+      ) <
+        0.44;
+
+    let along:
+      number;
+
+    if (
+      reinforceEnd
+    ) {
+      const sign =
+        sampler.sample01(
+          index,
+          129,
+        ) <
+          0.5
+          ? -1
+          : 1;
+
+      const endProgress =
+        Math.pow(
+          sampler.sample01(
+            index,
+            130,
+          ),
+          0.72,
+        );
+
+      along =
+        sign *
+        visibleHalfLength *
+        (
+          0.48 +
+          0.52 *
+          endProgress
+        );
+    } else {
+      along =
+        sampler.normal(
+          index,
+          120,
+        ) *
+        visibleHalfLength *
+        0.62;
+    }
+
+    const clampedAlong =
+      clamp(
+        along,
+        -visibleHalfLength,
+        visibleHalfLength,
+      );
+
+    const alongFraction =
+      Math.min(
+        1,
+        Math.abs(
+          clampedAlong,
+        ) /
+          Math.max(
+            EPSILON,
+            visibleHalfLength,
+          ),
+      );
+
+    const centerline =
+      barredSpiral &&
+      renderArms.length >
+        0
+        ? curvedBarCenterlineSample(
+            Math.abs(
+              clampedAlong,
+            ),
+            clampedAlong <
+              0
+              ? -1
+              : 1,
+            bar
+              .angleRadians,
+            visibleHalfLength,
+            renderArms,
+            visual
+              .windingDirection,
+          )
+        : straightBarCenterlineSample(
+            Math.abs(
+              clampedAlong,
+            ),
+            clampedAlong <
+              0
+              ? -1
+              : 1,
+            bar
+              .angleRadians,
+          );
+
+    /*
+     * Keep a broad central bar, then let the transition breathe slightly as
+     * it bends into the arm. This avoids a thin bright tube and creates a
+     * natural overlap between the outer bar and the arm-root overdensity.
+     */
+    const acrossEnvelope =
+      0.82 -
+      0.22 *
+      Math.pow(
+        alongFraction,
+        1.35,
+      );
+
+    const transitionWidthFactor =
+      1 +
+      BARRED_SPIRAL_BAR_TRANSITION_WIDTH_BOOST *
+      Math.sin(
+        Math.PI *
+        centerline
+          .transitionProgress,
+      );
 
     const across =
       sampler.normal(
@@ -4167,21 +4450,33 @@ function writeBar(
       ) *
       bar
         .widthNormalized *
-      0.78;
+      acrossEnvelope *
+      transitionWidthFactor;
 
-    const rotated =
-      rotate2d(
-        clamp(
-          along,
-          -bar
-            .halfLengthNormalized,
-          bar
-            .halfLengthNormalized,
-        ),
-        across,
-        bar
-          .angleRadians,
-      );
+    const tangentialJitter =
+      sampler.normal(
+        index,
+        131,
+      ) *
+      bar
+        .widthNormalized *
+      0.10 *
+      centerline
+        .transitionProgress;
+
+    const x =
+      centerline.x +
+      centerline.normalX *
+        across +
+      centerline.tangentX *
+        tangentialJitter;
+
+    const y =
+      centerline.y +
+      centerline.normalY *
+        across +
+      centerline.tangentY *
+        tangentialJitter;
 
     const rareBright =
       sampler.sample01(
@@ -4190,19 +4485,33 @@ function writeBar(
       ) <
       0.018;
 
+    const transitionBrightness =
+      1 -
+      0.10 *
+      centerline
+        .transitionProgress;
+
     writeParticle(
       buffers,
       start +
         index,
-      rotated.x,
-      rotated.y,
+      x,
+      y,
       sampler.normal(
         index,
         125,
       ) *
         bar
           .widthNormalized *
-        0.58,
+        0.58 *
+        (
+          0.72 +
+          0.28 *
+          (
+            1 -
+            alongFraction
+          )
+        ),
       0.90,
       0.76,
       0.54,
@@ -4214,24 +4523,521 @@ function writeBar(
           127,
         )
       ) *
+        transitionBrightness *
         (
           rareBright
             ? 1.85
             : 1
         ),
-      0.16 +
+      (
+        0.16 +
         0.18 *
         bar.strength +
+        (
+          reinforceEnd
+            ? 0.025
+            : 0
+        ) +
         (
           rareBright
             ? 0.14
             : 0
-        ),
+        )
+      ) *
+        transitionBrightness,
     );
   }
 
   return start +
     BAR_PARTICLE_COUNT;
+}
+
+interface BarCenterlineSample {
+  readonly x:
+    number;
+
+  readonly y:
+    number;
+
+  readonly tangentX:
+    number;
+
+  readonly tangentY:
+    number;
+
+  readonly normalX:
+    number;
+
+  readonly normalY:
+    number;
+
+  readonly transitionProgress:
+    number;
+}
+
+function straightBarCenterlineSample(
+  radius:
+    number,
+
+  sign:
+    -1 | 1,
+
+  barAngleRadians:
+    number,
+): BarCenterlineSample {
+
+  const angle =
+    barAngleRadians +
+    (
+      sign <
+        0
+        ? Math.PI
+        : 0
+    );
+
+  const tangentX =
+    Math.cos(
+      angle,
+    );
+
+  const tangentY =
+    Math.sin(
+      angle,
+    );
+
+  return {
+    x:
+      radius *
+      tangentX,
+
+    y:
+      radius *
+      tangentY,
+
+    tangentX,
+    tangentY,
+
+    normalX:
+      -tangentY,
+
+    normalY:
+      tangentX,
+
+    transitionProgress:
+      0,
+  };
+}
+
+function curvedBarCenterlineSample(
+  radius:
+    number,
+
+  sign:
+    -1 | 1,
+
+  barAngleRadians:
+    number,
+
+  visibleHalfLength:
+    number,
+
+  arms:
+    readonly GalaxyVisualArm[],
+
+  windingDirection:
+    typeof GalaxyWindingDirection[
+      keyof typeof GalaxyWindingDirection
+    ],
+): BarCenterlineSample {
+
+  const endpointAngle =
+    barAngleRadians +
+    (
+      sign <
+        0
+        ? Math.PI
+        : 0
+    );
+
+  const arm =
+    nearestArmAtAngle(
+      arms,
+      endpointAngle,
+    );
+
+  if (
+    arm ===
+    null
+  ) {
+    return straightBarCenterlineSample(
+      radius,
+      sign,
+      barAngleRadians,
+    );
+  }
+
+  const rootRadius =
+    Math.max(
+      0.02,
+      Math.min(
+        visibleHalfLength,
+        arm
+          .radialStartNormalized,
+      ),
+    );
+
+  const transitionStartRadius =
+    rootRadius *
+    BARRED_SPIRAL_BAR_CURVE_START_FACTOR;
+
+  if (
+    radius <=
+      transitionStartRadius +
+      EPSILON
+  ) {
+    return straightBarCenterlineSample(
+      radius,
+      sign,
+      barAngleRadians,
+    );
+  }
+
+  const segmentLength =
+    Math.max(
+      EPSILON,
+      rootRadius -
+        transitionStartRadius,
+    );
+
+  const progress =
+    clamp01(
+      (
+        Math.min(
+          radius,
+          rootRadius,
+        ) -
+        transitionStartRadius
+      ) /
+      segmentLength,
+    );
+
+  const radialX =
+    Math.cos(
+      endpointAngle,
+    );
+
+  const radialY =
+    Math.sin(
+      endpointAngle,
+    );
+
+  const startX =
+    transitionStartRadius *
+    radialX;
+
+  const startY =
+    transitionStartRadius *
+    radialY;
+
+  const endX =
+    rootRadius *
+    radialX;
+
+  const endY =
+    rootRadius *
+    radialY;
+
+  const armTangent =
+    logarithmicArmTangentAtRadius(
+      arm,
+      windingDirection,
+      rootRadius,
+    );
+
+  const startTangentScale =
+    segmentLength *
+    1.05;
+
+  const endTangentScale =
+    segmentLength *
+    BARRED_SPIRAL_BAR_END_TANGENT_SCALE;
+
+  const startTangentX =
+    radialX *
+    startTangentScale;
+
+  const startTangentY =
+    radialY *
+    startTangentScale;
+
+  const endTangentX =
+    armTangent.x *
+    endTangentScale;
+
+  const endTangentY =
+    armTangent.y *
+    endTangentScale;
+
+  const u =
+    progress;
+
+  const u2 =
+    u *
+    u;
+
+  const u3 =
+    u2 *
+    u;
+
+  const h00 =
+    2 *
+    u3 -
+    3 *
+    u2 +
+    1;
+
+  const h10 =
+    u3 -
+    2 *
+    u2 +
+    u;
+
+  const h01 =
+    -2 *
+    u3 +
+    3 *
+    u2;
+
+  const h11 =
+    u3 -
+    u2;
+
+  const x =
+    h00 *
+      startX +
+    h10 *
+      startTangentX +
+    h01 *
+      endX +
+    h11 *
+      endTangentX;
+
+  const y =
+    h00 *
+      startY +
+    h10 *
+      startTangentY +
+    h01 *
+      endY +
+    h11 *
+      endTangentY;
+
+  const dh00 =
+    6 *
+    u2 -
+    6 *
+    u;
+
+  const dh10 =
+    3 *
+    u2 -
+    4 *
+    u +
+    1;
+
+  const dh01 =
+    -6 *
+    u2 +
+    6 *
+    u;
+
+  const dh11 =
+    3 *
+    u2 -
+    2 *
+    u;
+
+  const derivativeX =
+    dh00 *
+      startX +
+    dh10 *
+      startTangentX +
+    dh01 *
+      endX +
+    dh11 *
+      endTangentX;
+
+  const derivativeY =
+    dh00 *
+      startY +
+    dh10 *
+      startTangentY +
+    dh01 *
+      endY +
+    dh11 *
+      endTangentY;
+
+  const derivativeLength =
+    Math.max(
+      EPSILON,
+      Math.hypot(
+        derivativeX,
+        derivativeY,
+      ),
+    );
+
+  const tangentX =
+    derivativeX /
+    derivativeLength;
+
+  const tangentY =
+    derivativeY /
+    derivativeLength;
+
+  return {
+    x,
+    y,
+    tangentX,
+    tangentY,
+
+    normalX:
+      -tangentY,
+
+    normalY:
+      tangentX,
+
+    transitionProgress:
+      progress,
+  };
+}
+
+function nearestArmAtAngle(
+  arms:
+    readonly GalaxyVisualArm[],
+
+  angleRadians:
+    number,
+): GalaxyVisualArm | null {
+
+  let nearest:
+    GalaxyVisualArm | null =
+      null;
+
+  let nearestDistance =
+    Number.POSITIVE_INFINITY;
+
+  for (
+    const arm of
+    arms
+  ) {
+    const distance =
+      Math.abs(
+        shortestSignedAngleDelta(
+          angleRadians,
+          arm
+            .phaseRadians,
+        ),
+      );
+
+    if (
+      distance <
+      nearestDistance
+    ) {
+      nearest =
+        arm;
+
+      nearestDistance =
+        distance;
+    }
+  }
+
+  return nearest;
+}
+
+function logarithmicArmTangentAtRadius(
+  arm:
+    GalaxyVisualArm,
+
+  windingDirection:
+    typeof GalaxyWindingDirection[
+      keyof typeof GalaxyWindingDirection
+    ],
+
+  radius:
+    number,
+): {
+  readonly x:
+    number;
+
+  readonly y:
+    number;
+} {
+
+  const angle =
+    logarithmicArmAngleAtRadius(
+      arm,
+      windingDirection,
+      radius,
+    );
+
+  const pitchRadians =
+    Math.max(
+      0.05,
+      arm
+        .pitchAngleDegrees *
+      Math.PI /
+      180,
+    );
+
+  const windingSign =
+    windingDirection ===
+    GalaxyWindingDirection
+      .CLOCKWISE
+      ? -1
+      : 1;
+
+  const inverseTanPitch =
+    windingSign /
+    Math.tan(
+      pitchRadians,
+    );
+
+  const tangentX =
+    Math.cos(
+      angle,
+    ) -
+    Math.sin(
+      angle,
+    ) *
+    inverseTanPitch;
+
+  const tangentY =
+    Math.sin(
+      angle,
+    ) +
+    Math.cos(
+      angle,
+    ) *
+    inverseTanPitch;
+
+  const length =
+    Math.max(
+      EPSILON,
+      Math.hypot(
+        tangentX,
+        tangentY,
+      ),
+    );
+
+  return {
+    x:
+      tangentX /
+      length,
+
+    y:
+      tangentY /
+      length,
+  };
 }
 
 function selectDiskPoint(
@@ -4296,6 +5102,11 @@ function selectDiskPoint(
         : spiral
           ? 0.90
           : 1,
+      barred
+        ? BARRED_SPIRAL_ARM_RADIAL_DECAY_STRENGTH
+        : spiral
+          ? SPIRAL_ARM_RADIAL_DECAY_STRENGTH
+          : null,
     );
   }
 
@@ -4592,6 +5403,367 @@ function interarmDiskPoint(
   });
 }
 
+/**
+ * Returns the render-only arm geometry for spiral families.
+ *
+ * This deliberately changes where the SAME arm begins. No connector or
+ * bridge particle population is created. The normal spiral is an inward
+ * continuation of its canonical logarithmic curve. The barred spiral starts
+ * at the nearest physical bar endpoint and continues outward as one arm.
+ */
+function spiralRenderArms(
+  arms:
+    readonly GalaxyVisualArm[],
+
+  windingDirection:
+    typeof GalaxyWindingDirection[
+      keyof typeof GalaxyWindingDirection
+    ],
+
+  bulgeRadiusNormalized:
+    number,
+
+  barAngleRadians:
+    number | null,
+
+  barHalfLengthNormalized:
+    number | null,
+
+  barWidthNormalized:
+    number | null,
+
+  barred:
+    boolean,
+
+  spiral:
+    boolean,
+): readonly GalaxyVisualArm[] {
+
+  if (
+    arms.length ===
+      0 ||
+    (
+      !barred &&
+      !spiral
+    )
+  ) {
+    return arms;
+  }
+
+  if (
+    barred &&
+    barAngleRadians !==
+      null &&
+    barHalfLengthNormalized !==
+      null &&
+    barWidthNormalized !==
+      null
+  ) {
+    return Object.freeze(
+      arms.map(
+        arm =>
+          barredSpiralRenderArm(
+            arm,
+            windingDirection,
+            bulgeRadiusNormalized,
+            barAngleRadians,
+            barHalfLengthNormalized,
+            barWidthNormalized,
+          ),
+      ),
+    );
+  }
+
+  if (
+    spiral
+  ) {
+    return Object.freeze(
+      arms.map(
+        arm =>
+          normalSpiralRenderArm(
+            arm,
+            windingDirection,
+            bulgeRadiusNormalized,
+          ),
+      ),
+    );
+  }
+
+  return arms;
+}
+
+function normalSpiralRenderArm(
+  arm:
+    GalaxyVisualArm,
+
+  windingDirection:
+    typeof GalaxyWindingDirection[
+      keyof typeof GalaxyWindingDirection
+    ],
+
+  bulgeRadiusNormalized:
+    number,
+): GalaxyVisualArm {
+
+  const canonicalStart =
+    arm
+      .radialStartNormalized;
+
+  const renderStart =
+    Math.max(
+      0.02,
+      Math.min(
+        canonicalStart,
+        bulgeRadiusNormalized *
+          SPIRAL_ARM_BULGE_OVERLAP_FACTOR,
+      ),
+    );
+
+  if (
+    renderStart >=
+    canonicalStart -
+      EPSILON
+  ) {
+    return arm;
+  }
+
+  /*
+   * Rebase the logarithmic spiral so every point at or beyond the canonical
+   * start keeps exactly the same centerline. Only the previously empty inner
+   * continuation becomes visible.
+   */
+  const phaseRadians =
+    logarithmicArmAngleAtRadius(
+      arm,
+      windingDirection,
+      renderStart,
+    );
+
+  return Object.freeze({
+    ...arm,
+    radialStartNormalized:
+      renderStart,
+    phaseRadians,
+  });
+}
+
+function barredSpiralRenderArm(
+  arm:
+    GalaxyVisualArm,
+
+  windingDirection:
+    typeof GalaxyWindingDirection[
+      keyof typeof GalaxyWindingDirection
+    ],
+
+  bulgeRadiusNormalized:
+    number,
+
+  barAngleRadians:
+    number,
+
+  barHalfLengthNormalized:
+    number,
+
+  barWidthNormalized:
+    number,
+): GalaxyVisualArm {
+
+  const canonicalStart =
+    arm
+      .radialStartNormalized;
+
+  /*
+   * Begin slightly inside the visible bar end so the bar and arm overlap as
+   * one continuous stellar structure instead of meeting at a hard seam.
+   */
+  const barRootRadius =
+    Math.max(
+      0.02,
+      barHalfLengthNormalized -
+        barWidthNormalized *
+          BARRED_SPIRAL_ARM_BAR_OVERLAP_WIDTH_FACTOR,
+    );
+
+  const renderStart =
+    Math.max(
+      0.02,
+      Math.min(
+        canonicalStart,
+        Math.max(
+          bulgeRadiusNormalized *
+            0.72,
+          barRootRadius,
+        ),
+      ),
+    );
+
+  if (
+    renderStart >=
+    canonicalStart -
+      EPSILON
+  ) {
+    return arm;
+  }
+
+  const canonicalRootAngle =
+    logarithmicArmAngleAtRadius(
+      arm,
+      windingDirection,
+      renderStart,
+    );
+
+  const firstBarEndAngle =
+    barAngleRadians;
+
+  const secondBarEndAngle =
+    barAngleRadians +
+    Math.PI;
+
+  const firstDistance =
+    Math.abs(
+      shortestSignedAngleDelta(
+        canonicalRootAngle,
+        firstBarEndAngle,
+      ),
+    );
+
+  const secondDistance =
+    Math.abs(
+      shortestSignedAngleDelta(
+        canonicalRootAngle,
+        secondBarEndAngle,
+      ),
+    );
+
+  const phaseRadians =
+    firstDistance <=
+      secondDistance
+      ? firstBarEndAngle
+      : secondBarEndAngle;
+
+  return Object.freeze({
+    ...arm,
+    radialStartNormalized:
+      renderStart,
+    phaseRadians,
+  });
+}
+
+function logarithmicArmAngleAtRadius(
+  arm:
+    GalaxyVisualArm,
+
+  windingDirection:
+    typeof GalaxyWindingDirection[
+      keyof typeof GalaxyWindingDirection
+    ],
+
+  radius:
+    number,
+): number {
+
+  const pitchRadians =
+    arm
+      .pitchAngleDegrees *
+    Math.PI /
+    180;
+
+  const windingSign =
+    windingDirection ===
+    GalaxyWindingDirection
+      .CLOCKWISE
+      ? -1
+      : 1;
+
+  return arm
+    .phaseRadians +
+    windingSign *
+      Math.log(
+        Math.max(
+          radius,
+          0.001,
+        ) /
+          Math.max(
+            arm
+              .radialStartNormalized,
+            0.001,
+          ),
+      ) /
+      Math.tan(
+        Math.max(
+          0.05,
+          pitchRadians,
+        ),
+      );
+}
+
+function shortestSignedAngleDelta(
+  from:
+    number,
+
+  to:
+    number,
+): number {
+
+  return Math.atan2(
+    Math.sin(
+      to -
+        from,
+    ),
+    Math.cos(
+      to -
+        from,
+    ),
+  );
+}
+
+/**
+ * Maps a uniform deterministic sample to a smooth truncated exponential
+ * distribution over [0, 1]. The resulting density decreases continuously
+ * along the arm: no hard radial bands or particle-count changes are needed.
+ */
+function decayingArmProgress(
+  sample:
+    number,
+
+  decayStrength:
+    number,
+): number {
+
+  if (
+    decayStrength <=
+    EPSILON
+  ) {
+    return clamp01(
+      sample,
+    );
+  }
+
+  const normalizedSample =
+    clamp01(
+      sample,
+    );
+
+  const normalization =
+    1 -
+    Math.exp(
+      -decayStrength,
+    );
+
+  return clamp01(
+    -Math.log(
+      Math.max(
+        EPSILON,
+        1 -
+          normalizedSample *
+          normalization,
+      ),
+    ) /
+      decayStrength,
+  );
+}
+
 function spiralDensityPoint(
   arms:
     readonly GalaxyVisualArm[],
@@ -4609,6 +5781,9 @@ function spiralDensityPoint(
 
   scatterScale:
     number,
+
+  radialDecayStrength:
+    number | null,
 ): PlanarPoint {
 
   if (
@@ -4638,14 +5813,23 @@ function spiralDensityPoint(
       armIndex
     ];
 
-  const radialT =
-    Math.pow(
-      sampler.sample01(
-        index,
-        151,
-      ),
-      0.78,
+  const radialSample =
+    sampler.sample01(
+      index,
+      151,
     );
+
+  const radialT =
+    radialDecayStrength ===
+      null
+      ? Math.pow(
+          radialSample,
+          0.78,
+        )
+      : decayingArmProgress(
+          radialSample,
+          radialDecayStrength,
+        );
 
   const radius =
     arm
