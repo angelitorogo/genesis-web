@@ -283,12 +283,6 @@ test.describe(
             '/galaxies/0',
           );
 
-          await expect(
-            page.getByTestId(
-              'galaxy-detail-progress',
-            ),
-          ).toBeVisible();
-
           if (
             viewport.name ===
             'mobile-pwa'

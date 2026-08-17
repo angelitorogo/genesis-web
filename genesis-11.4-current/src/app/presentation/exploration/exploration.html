@@ -1,0 +1,713 @@
+<genesis-screen>
+  <main
+    class="exploration"
+    data-testid="exploration-page"
+  >
+    <header class="exploration__header">
+      <div>
+        <p class="exploration__eyebrow">
+          FLUJO PRINCIPAL
+          <span aria-hidden="true">/</span>
+          EXPLORACIÓN
+        </p>
+
+        <h1>
+          Realizar exploración
+        </h1>
+
+        <p>
+          Selecciona un sector, ejecuta el barrido y resuelve qué clase de resultado operativo se encuentra detrás de la firma.
+        </p>
+      </div>
+
+      <a
+        class="exploration__back"
+        routerLink="/"
+        data-testid="exploration-home-link"
+      >
+        ← Volver a Home
+      </a>
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section
+          class="exploration__state"
+          data-testid="exploration-loading"
+          aria-live="polite"
+        >
+          <span class="exploration__pulse"></span>
+
+          <p class="exploration__label">
+            PREPARANDO CONTEXTO
+          </p>
+
+          <h2>
+            Recuperando galaxia activa
+          </h2>
+
+          <p>
+            Verificando el universo seleccionado y su conocimiento persistido.
+          </p>
+        </section>
+      }
+
+      @case ('empty') {
+        <section
+          class="exploration__state"
+          data-testid="exploration-empty"
+        >
+          <p class="exploration__label">
+            SIN UNIVERSO ACTIVO
+          </p>
+
+          <h2>
+            No hay un universo persistido para explorar
+          </h2>
+
+          <p>
+            Configura y activa un universo antes de entrar en el flujo de exploración.
+          </p>
+
+          <a
+            class="exploration__action"
+            routerLink="/settings"
+          >
+            Configurar universo
+          </a>
+        </section>
+      }
+
+      @case ('error') {
+        <section
+          class="exploration__state exploration__state--error"
+          data-testid="exploration-error"
+          role="alert"
+        >
+          <p class="exploration__label">
+            CONTEXTO NO DISPONIBLE
+          </p>
+
+          <h2>
+            No se pudo preparar la exploración
+          </h2>
+
+          <p>
+            {{ facade.errorMessage() }}
+          </p>
+
+          <button
+            type="button"
+            class="exploration__action"
+            (click)="facade.refresh()"
+          >
+            Reintentar
+          </button>
+        </section>
+      }
+
+      @case ('content') {
+        @if (facade.entry(); as entry) {
+          @if (facade.selectedSector(); as sector) {
+            <section
+              class="exploration__workspace"
+              data-testid="exploration-context"
+            >
+              <div class="exploration__context-top">
+                <div>
+                  <p class="exploration__label">
+                    OBJETIVO ACTIVO
+                  </p>
+
+                  <h2
+                    data-testid="exploration-active-galaxy"
+                  >
+                    @if (entry.activeGalaxyKnownName; as activeGalaxyKnownName) {
+                      {{ activeGalaxyKnownName }}
+                    } @else {
+                      Galaxia
+                      {{ entry.activeGalaxyIndex }}
+                    }
+                  </h2>
+
+                  @if (entry.activeGalaxyKnownName) {
+                    <span
+                      class="exploration__label"
+                      data-testid="exploration-active-galaxy-index"
+                    >
+                      GALAXIA {{ entry.activeGalaxyIndex }}
+                    </span>
+                  }
+                </div>
+
+                <span class="exploration__ready">
+                  CONTEXTO PREPARADO
+                </span>
+              </div>
+
+              <dl class="exploration__facts">
+                <div>
+                  <dt>
+                    Estado de conocimiento
+                  </dt>
+
+                  <dd
+                    data-testid="exploration-active-galaxy-state"
+                  >
+                    {{
+                      discoveryStateLabel(
+                        entry.activeGalaxyDiscoveryState
+                      )
+                    }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    Cuadrícula operativa
+                  </dt>
+
+                  <dd
+                    data-testid="exploration-sector-range"
+                  >
+                    {{ sector.minCoordinate }}
+                    …
+                    {{ sector.maxCoordinate }}
+                  </dd>
+                </div>
+              </dl>
+
+              <section
+                class="exploration__flow"
+                aria-labelledby="exploration-flow-title"
+              >
+                <div class="exploration__flow-heading">
+                  <div>
+                    <p class="exploration__label">
+                      SECUENCIA 9.5
+                    </p>
+
+                    <h3 id="exploration-flow-title">
+                      Sector → escaneo → firma → clasificación → resultado
+                    </h3>
+                  </div>
+
+                  <span class="exploration__transient">
+                    SESIÓN LOCAL
+                  </span>
+                </div>
+
+                <ol class="exploration__steps">
+                  <li class="exploration__step exploration__step--active">
+                    <span>01</span>
+
+                    <div>
+                      <strong>
+                        Sector
+                      </strong>
+
+                      <small>
+                        Coordenadas seleccionadas
+                      </small>
+                    </div>
+                  </li>
+
+                  <li
+                    class="exploration__step"
+                    [class.exploration__step--active]="facade.scanResult() !== null"
+                  >
+                    <span>02</span>
+
+                    <div>
+                      <strong>
+                        Escaneo
+                      </strong>
+
+                      <small>
+                        Barrido determinista
+                      </small>
+                    </div>
+                  </li>
+
+                  <li
+                    class="exploration__step"
+                    [class.exploration__step--active]="facade.scanResult() !== null"
+                  >
+                    <span>03</span>
+
+                    <div>
+                      <strong>
+                        Firma
+                      </strong>
+
+                      <small>
+                        Señal o anomalía
+                      </small>
+                    </div>
+                  </li>
+
+                  <li
+                    class="exploration__step"
+                    [class.exploration__step--active]="facade.scanResult() !== null"
+                  >
+                    <span>04</span>
+
+                    <div>
+                      <strong>
+                        Clasificación
+                      </strong>
+
+                      <small>
+                        Evaluación preliminar
+                      </small>
+                    </div>
+                  </li>
+
+                  <li
+                    class="exploration__step"
+                    [class.exploration__step--active]="facade.explorationResult() !== null"
+                  >
+                    <span>05</span>
+
+                    <div>
+                      <strong>
+                        Resultado
+                      </strong>
+
+                      <small>
+                        Familia operativa V1
+                      </small>
+                    </div>
+                  </li>
+                </ol>
+
+                <div class="exploration__console">
+                  <section class="exploration__selector">
+                    <div class="exploration__selector-heading">
+                      <div>
+                        <p class="exploration__label">
+                          01 / SELECCIÓN DE SECTOR
+                        </p>
+
+                        <h4>
+                          Coordenadas galácticas
+                        </h4>
+                      </div>
+
+                      <code
+                        data-testid="selected-sector-key"
+                      >
+                        KEY {{ sector.sectorLocator.sectorKey }}
+                      </code>
+                    </div>
+
+                    <div class="exploration__coordinates">
+                      <label>
+                        <span>
+                          EJE X
+                        </span>
+
+                        <input
+                          #sectorXInput
+                          type="number"
+                          step="1"
+                          inputmode="numeric"
+                          [min]="sector.minCoordinate"
+                          [max]="sector.maxCoordinate"
+                          [value]="sector.sectorX"
+                          data-testid="sector-x-input"
+                        >
+                      </label>
+
+                      <span
+                        class="exploration__coordinate-mark"
+                        aria-hidden="true"
+                      >
+                        ×
+                      </span>
+
+                      <label>
+                        <span>
+                          EJE Y
+                        </span>
+
+                        <input
+                          #sectorYInput
+                          type="number"
+                          step="1"
+                          inputmode="numeric"
+                          [min]="sector.minCoordinate"
+                          [max]="sector.maxCoordinate"
+                          [value]="sector.sectorY"
+                          data-testid="sector-y-input"
+                        >
+                      </label>
+                    </div>
+
+                    <p class="exploration__range-note">
+                      Rango permitido en esta galaxia:
+                      <strong>
+                        {{ sector.minCoordinate }}…{{ sector.maxCoordinate }}
+                      </strong>
+                      en ambos ejes.
+                    </p>
+
+                    <button
+                      type="button"
+                      class="exploration__scan"
+                      data-testid="scan-sector-action"
+                      [disabled]="facade.progressPending()"
+                      (click)="scanSector(sectorXInput.value, sectorYInput.value)"
+                    >
+                      <span aria-hidden="true">◎</span>
+
+                      {{ facade.progressPending() ? 'GUARDANDO...' : 'ESCANEAR SECTOR' }}
+                    </button>
+
+                    @if (facade.scanErrorMessage()) {
+                      <p
+                        class="exploration__scan-error"
+                        data-testid="sector-scan-error"
+                        role="alert"
+                      >
+                        {{ facade.scanErrorMessage() }}
+                      </p>
+                    }
+                  </section>
+
+                  <section
+                    class="exploration__reading"
+                    data-testid="sector-scan-reading"
+                  >
+                    @if (facade.scanResult(); as result) {
+                      <div
+                        class="exploration__detection"
+                        [class.exploration__detection--anomaly]="result.isAnomaly"
+                      >
+                        <span class="exploration__radar" aria-hidden="true">
+                          <i></i>
+                          <i></i>
+                          <i></i>
+                        </span>
+
+                        <div>
+                          <p class="exploration__label">
+                            03 / FIRMA OBSERVADA
+                          </p>
+
+                          <h4
+                            data-testid="sector-detection-kind"
+                          >
+                            {{ detectionLabel(result.detectionKind) }}
+                          </h4>
+
+                          <p>
+                            {{ detectionDescription(result.detectionKind) }}
+                          </p>
+                        </div>
+                      </div>
+
+                      <dl class="exploration__scan-facts">
+                        <div>
+                          <dt>
+                            Sector escaneado
+                          </dt>
+
+                          <dd
+                            data-testid="scanned-sector-coordinates"
+                          >
+                            ({{ result.selection.sectorX }}, {{ result.selection.sectorY }})
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Clasificación preliminar
+                          </dt>
+
+                          <dd
+                            data-testid="preliminary-classification"
+                          >
+                            {{ preliminaryClassificationLabel(result) }}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <div class="exploration__classification">
+                        <span aria-hidden="true">◌</span>
+
+                        <div>
+                          <strong>
+                            CLASIFICACIÓN PRELIMINAR
+                          </strong>
+
+                          <p>
+                            La clasificación científica formal permanece en «Sin clasificar». La recompensa de 9.5 registra únicamente conocimiento observado y no revela Ground Truth oculto.
+                          </p>
+                        </div>
+                      </div>
+                    } @else {
+                      <div class="exploration__waiting">
+                        <span class="exploration__radar exploration__radar--idle" aria-hidden="true">
+                          <i></i>
+                          <i></i>
+                          <i></i>
+                        </span>
+
+                        <p class="exploration__label">
+                          02 / ESCANEO PENDIENTE
+                        </p>
+
+                        <h4>
+                          Esperando barrido de sector
+                        </h4>
+
+                        <p>
+                          Ajusta las coordenadas y ejecuta el escaneo para obtener una firma preliminar.
+                        </p>
+                      </div>
+                    }
+                  </section>
+                </div>
+
+                @if (facade.explorationResult(); as explorationResult) {
+                  <section
+                    class="exploration__result"
+                    data-testid="exploration-result"
+                    [attr.data-result-kind]="explorationResult.resultKind"
+                    aria-labelledby="exploration-result-title"
+                  >
+                    <div class="exploration__result-visual" aria-hidden="true">
+                      <span class="exploration__result-core"></span>
+                    </div>
+
+                    <div class="exploration__result-copy">
+                      <div class="exploration__result-heading exploration__selector-heading">
+                        <div>
+                          <p class="exploration__label">
+                            05 / RESULTADO RESUELTO
+                          </p>
+
+                          <span
+                            class="exploration__result-kind"
+                            data-testid="exploration-result-kind"
+                          >
+                            {{ resultKindLabel(explorationResult.resultKind) }}
+                          </span>
+                        </div>
+
+                        <code data-testid="exploration-result-identity">
+                          {{ resultIdentity(explorationResult) }}
+                        </code>
+                      </div>
+
+                      <h4
+                        id="exploration-result-title"
+                        data-testid="exploration-result-headline"
+                      >
+                        {{ resultHeadline(explorationResult.resultKind) }}
+                      </h4>
+
+                      <p>
+                        {{ resultDescription(explorationResult.resultKind) }}
+                      </p>
+
+                      <dl class="exploration__scan-facts exploration__result-facts">
+                        <div>
+                          <dt>
+                            Naturaleza del sujeto
+                          </dt>
+
+                          <dd data-testid="exploration-result-subject">
+                            {{ resultSubjectLabel(explorationResult) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Sector de origen
+                          </dt>
+
+                          <dd>
+                            ({{ explorationResult.scanResult.selection.sectorX }}, {{ explorationResult.scanResult.selection.sectorY }})
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Firma previa
+                          </dt>
+
+                          <dd>
+                            {{ detectionLabel(explorationResult.scanResult.detectionKind) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Clasificación científica
+                          </dt>
+
+                          <dd data-testid="exploration-result-scientific-classification">
+                            Sin clasificar
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </section>
+                }
+
+                @if (facade.progressPending()) {
+                  <section
+                    class="exploration__result"
+                    data-testid="exploration-progress-pending"
+                    aria-live="polite"
+                  >
+                    <div class="exploration__result-visual" aria-hidden="true">
+                      <span class="exploration__result-core"></span>
+                    </div>
+
+                    <div class="exploration__result-copy">
+                      <p class="exploration__label">
+                        06 / REGISTRANDO PROGRESO
+                      </p>
+
+                      <h4>
+                        Guardando conocimiento observado
+                      </h4>
+
+                      <p>
+                        DiscoveryState y PD se están consolidando de forma atómica.
+                      </p>
+                    </div>
+                  </section>
+                }
+
+                @if (facade.progressResult(); as progress) {
+                  <section
+                    class="exploration__result"
+                    data-testid="exploration-reward"
+                    aria-labelledby="exploration-reward-title"
+                  >
+                    <div class="exploration__result-visual" aria-hidden="true">
+                      <span class="exploration__result-core"></span>
+                    </div>
+
+                    <div class="exploration__result-copy">
+                      <div class="exploration__result-heading exploration__selector-heading">
+                        <div>
+                          <p class="exploration__label">
+                            06 / RECOMPENSA Y PROGRESO
+                          </p>
+
+                          <span
+                            class="exploration__result-kind"
+                            data-testid="exploration-reward-points"
+                          >
+                            +{{ progress.awardedDiscoveryPoints }} PD
+                          </span>
+                        </div>
+
+                        <code>
+                          {{ progress.didAwardDiscoveryPoints ? 'NUEVO CONOCIMIENTO' : 'YA REGISTRADO' }}
+                        </code>
+                      </div>
+
+                      <h4 id="exploration-reward-title">
+                        {{ progress.didAwardDiscoveryPoints ? 'Progreso registrado' : 'Sin recompensa duplicada' }}
+                      </h4>
+
+                      <p>
+                        Solo se registra el estado observado DETECTED. No se revelan propiedades físicas, clasificación científica definitiva ni contenido adicional del sector.
+                      </p>
+
+                      <dl class="exploration__scan-facts exploration__result-facts">
+                        <div>
+                          <dt>
+                            PD globales
+                          </dt>
+
+                          <dd data-testid="exploration-global-points">
+                            {{ progress.globalDiscoveryPointsAfter }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Progreso de galaxia
+                          </dt>
+
+                          <dd data-testid="exploration-galaxy-progress">
+                            {{ progress.galaxyProgressUnitsAfter }}
+                            <small>(+{{ progress.galaxyProgressDelta }})</small>
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Sector
+                          </dt>
+
+                          <dd data-testid="exploration-sector-state">
+                            {{ discoveryStateLabel(progress.sectorState) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Resultado estático
+                          </dt>
+
+                          <dd data-testid="exploration-result-state">
+                            {{ progress.resultState === null ? 'Evento no persistido' : discoveryStateLabel(progress.resultState) }}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
+                  </section>
+                }
+
+                @if (facade.progressErrorMessage()) {
+                  <section
+                    class="exploration__result"
+                    data-testid="exploration-progress-error"
+                    role="alert"
+                  >
+                    <div class="exploration__result-visual" aria-hidden="true">
+                      <span class="exploration__result-core"></span>
+                    </div>
+
+                    <div class="exploration__result-copy">
+                      <p class="exploration__label">
+                        PROGRESO NO GUARDADO
+                      </p>
+
+                      <h4>
+                        El resultado se resolvió, pero la transacción no se consolidó
+                      </h4>
+
+                      <p>
+                        {{ facade.progressErrorMessage() }}
+                      </p>
+                    </div>
+                  </section>
+                }
+
+                <aside class="exploration__scope">
+                  <span aria-hidden="true">◇</span>
+
+                  <p>
+                    <strong>
+                      Límite del punto 9.5.
+                    </strong>
+                    El escaneo puede registrar DETECTED y conceder PD una sola vez, pero no promociona a DISCOVERED, VISITED, CATALOGUED o CONFIRMED ni revela Ground Truth oculto. Los eventos transitorios siguen sin locator persistente.
+                  </p>
+                </aside>
+              </section>
+            </section>
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>

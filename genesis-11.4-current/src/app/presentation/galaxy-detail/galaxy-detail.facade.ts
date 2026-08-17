@@ -14,10 +14,6 @@ import {
 } from '../../domain/exploration/galaxy-general-profile';
 
 import {
-  type GalaxyKnowledgeStatistics,
-} from '../../domain/exploration/galaxy-knowledge-statistics';
-
-import {
   GalaxyLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -28,10 +24,6 @@ import {
 import {
   GalaxyGeneralProfileEngine,
 } from '../../simulation/exploration/galaxy-general-profile-engine';
-
-import {
-  GalaxyKnowledgeStatisticsEngine,
-} from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
 
 import {
   GENESIS_LOCAL_REPOSITORIES,
@@ -48,9 +40,6 @@ const SIGNED_LONG_MAX =
 export interface GalaxyDetailModel {
   readonly profile:
     GalaxyGeneralProfile;
-
-  readonly statistics:
-    GalaxyKnowledgeStatistics;
 
   readonly isCurrentFocus:
     boolean;
@@ -95,17 +84,11 @@ const INITIAL_STATE:
   });
 
 /**
- * Point-11.4 read-only facade for a reloadable galaxy record with its own
- * knowledge statistics and structural exploration progress.
+ * Point-11.3 read-only facade for a reloadable general galaxy record.
  *
  * The URL never creates knowledge. A requested GalaxyLocator must already be
- * persisted at DETECTED or later. Once the galaxy is known, 11.4 reads the
- * persisted KnownDiscovery snapshot and derives only records that belong to
- * that galaxy.
- *
- * It does not read/write Discovery Points, mutate DiscoveryState, materialize
- * hidden procedural content, calculate a fictitious completion percentage or
- * change navigation focus.
+ * persisted at DETECTED or later. The facade does not enumerate sector content,
+ * read/write PD, mutate DiscoveryState or change navigation focus.
  */
 @Injectable({
   providedIn:
@@ -284,72 +267,12 @@ export class GalaxyDetailFacade {
         return;
       }
 
-      const knownDiscoveries =
-        await this
-          .repositories
-          .discoveryRepository
-          .getKnownDiscoveries(
-            generationKey,
-          );
-
-      if (
-        loadId !==
-        this.loadSequence
-      ) {
-        return;
-      }
-
-      const persistedGalaxyRecord =
-        knownDiscoveries
-          .find(
-            (
-              discovery,
-            ) =>
-              discovery
-                .locator instanceof
-                GalaxyLocator &&
-              discovery
-                .locator
-                .galaxyIndex ===
-                galaxyIndex,
-          );
-
-      if (
-        persistedGalaxyRecord ===
-          undefined ||
-        DiscoveryState
-          .fromCode(
-            persistedGalaxyRecord
-              .state
-              .code,
-          )
-          .code !==
-        DiscoveryState
-          .fromCode(
-            discoveryState
-              .code,
-          )
-          .code
-      ) {
-        throw new RangeError(
-          'El estado de la galaxia no coincide con el catálogo de conocimiento persistido.',
-        );
-      }
-
       const profile =
         GalaxyGeneralProfileEngine
           .build(
             generationKey,
             galaxyIndex,
             discoveryState,
-          );
-
-      const statistics =
-        GalaxyKnowledgeStatisticsEngine
-          .build(
-            generationKey,
-            galaxyIndex,
-            knownDiscoveries,
           );
 
       this
@@ -361,7 +284,6 @@ export class GalaxyDetailFacade {
           model:
             Object.freeze({
               profile,
-              statistics,
 
               isCurrentFocus:
                 navigation

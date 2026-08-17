@@ -1,0 +1,202 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.genesis-statistics {
+  width: min(100%, 76rem);
+  min-width: 0;
+  margin: auto;
+  padding-block: clamp(1.5rem, 5vw, 4rem);
+
+  &__header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--genesis-space-5);
+    margin-bottom: clamp(1.5rem, 6vw, 4rem);
+  }
+
+  &__header > div,
+  &__panel-copy {
+    min-width: 0;
+  }
+
+  &__eyebrow,
+  &__panel-kicker,
+  &__status,
+  &__boundary {
+    font-family: var(--genesis-font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  &__eyebrow {
+    margin: 0 0 0.75rem;
+    color: var(--genesis-color-primary);
+
+    span {
+      color: var(--genesis-color-text-subtle);
+    }
+  }
+
+  &__title {
+    margin: 0;
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    line-height: 0.95;
+    letter-spacing: 0.04em;
+  }
+
+  &__subtitle {
+    max-width: 42rem;
+    margin: 0.9rem 0 0;
+    color: var(--genesis-color-text-muted);
+    line-height: 1.65;
+  }
+
+  &__home-link {
+    display: inline-flex;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    gap: var(--genesis-space-3);
+    flex: 0 0 auto;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--genesis-color-border-subtle);
+    border-radius: var(--genesis-radius-md);
+    color: var(--genesis-color-text-muted);
+    font-family: var(--genesis-font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: border-color 160ms ease, color 160ms ease, transform 160ms ease;
+
+    &:hover,
+    &:focus-visible {
+      border-color: rgba(106, 215, 255, 0.48);
+      color: var(--genesis-color-primary);
+      transform: translateY(-1px);
+    }
+  }
+
+  &__panel {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    min-width: 0;
+    min-height: 24rem;
+    align-content: space-between;
+    gap: clamp(2rem, 6vw, 4rem);
+    padding: clamp(1.5rem, 5vw, 3.5rem);
+    border: 1px solid var(--genesis-color-border-subtle);
+    border-radius: var(--genesis-radius-lg);
+    background:
+      radial-gradient(
+        circle at 82% 20%,
+        rgba(106, 215, 255, 0.12),
+        transparent 30%
+      ),
+      linear-gradient(
+        145deg,
+        rgba(24, 30, 46, 0.76),
+        rgba(15, 19, 31, 0.86)
+      );
+    box-shadow: var(--genesis-shadow-sm);
+  }
+
+  &__status {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--genesis-color-primary);
+
+    span {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 1rem rgba(106, 215, 255, 0.7);
+    }
+  }
+
+  &__panel-copy {
+    max-width: 48rem;
+
+    h2 {
+      max-width: 38rem;
+      margin: 0.6rem 0 1rem;
+      font-size: clamp(1.8rem, 4vw, 3.2rem);
+      line-height: 1.08;
+    }
+
+    p:last-child {
+      margin: 0;
+      color: var(--genesis-color-text-muted);
+      line-height: 1.75;
+    }
+  }
+
+  &__panel-kicker {
+    margin: 0;
+    color: var(--genesis-color-text-subtle);
+  }
+
+  &__boundary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--genesis-space-4);
+    padding-top: var(--genesis-space-4);
+    border-top: 1px solid var(--genesis-color-border-subtle);
+    color: var(--genesis-color-text-subtle);
+
+    > span {
+      color: var(--genesis-color-primary);
+      font-size: 1rem;
+    }
+
+    p {
+      min-width: 0;
+      margin: 0;
+      overflow-wrap: anywhere;
+      line-height: 1.6;
+      text-transform: none;
+      letter-spacing: 0.03em;
+    }
+  }
+}
+
+@media (max-width: 800px) {
+  .genesis-statistics {
+    &__header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    &__home-link {
+      max-width: 100%;
+    }
+
+    &__panel {
+      min-height: 21rem;
+    }
+
+    &__boundary {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .genesis-statistics__home-link {
+    transition: none;
+  }
+}

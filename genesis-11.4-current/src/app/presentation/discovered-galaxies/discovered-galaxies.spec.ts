@@ -529,7 +529,7 @@ describe(
             '[data-testid="discovered-galaxies-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.4',
+          '11.3',
         );
       },
       15_000,

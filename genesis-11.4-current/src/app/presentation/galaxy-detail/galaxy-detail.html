@@ -9,7 +9,7 @@
         <p class="gd__eyebrow">
           CATÁLOGO INTERGALÁCTICO
           <span aria-hidden="true">/</span>
-          11.4
+          11.3
         </p>
 
         <h1
@@ -20,9 +20,8 @@
         </h1>
 
         <p class="gd__subtitle">
-          Identidad, perfil observacional, estadísticas y progreso local
-          derivados únicamente del conocimiento ya persistido para esta
-          galaxia.
+          Identidad y perfil observacional disponibles para una galaxia ya
+          conocida, respetando su estado actual de conocimiento.
         </p>
       </div>
 
@@ -276,154 +275,16 @@
           </section>
 
           <section
-            class="gd__section"
-            data-testid="galaxy-detail-progress"
-            aria-labelledby="gd-progress-title"
-          >
-            <div class="gd__section-heading">
-              <small>11.4 / PROGRESO PROPIO</small>
-
-              <h3 id="gd-progress-title">
-                Conocimiento acumulado en esta galaxia
-              </h3>
-            </div>
-
-            <dl class="gd__facts">
-              <div>
-                <dt>UNIDADES DE PROGRESO</dt>
-
-                <dd data-testid="galaxy-detail-progress-units">
-                  {{ model.statistics.progressUnits }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>REGISTROS CONOCIDOS</dt>
-
-                <dd data-testid="galaxy-detail-known-records">
-                  {{ model.statistics.knownRecords }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>SECTORES</dt>
-
-                <dd data-testid="galaxy-detail-known-sectors">
-                  {{ model.statistics.targetCounts.sectors }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>SISTEMAS</dt>
-
-                <dd data-testid="galaxy-detail-known-systems">
-                  {{ model.statistics.targetCounts.systems }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>OBJETOS GALÁCTICOS</dt>
-
-                <dd data-testid="galaxy-detail-known-galactic-objects">
-                  {{ model.statistics.targetCounts.galacticObjects }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CUERPOS</dt>
-
-                <dd data-testid="galaxy-detail-known-bodies">
-                  {{ model.statistics.targetCounts.bodies }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CIVILIZACIONES</dt>
-
-                <dd data-testid="galaxy-detail-known-civilizations">
-                  {{ model.statistics.targetCounts.civilizations }}
-                </dd>
-              </div>
-            </dl>
-
-            <div class="gd__section-heading">
-              <small>DISTRIBUCIÓN DE CONOCIMIENTO</small>
-
-              <h3>
-                Registros por estado
-              </h3>
-            </div>
-
-            <dl class="gd__facts">
-              <div>
-                <dt>DETECTADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-detected">
-                  {{ model.statistics.stateCounts.detected }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>DESCUBIERTAS</dt>
-
-                <dd data-testid="galaxy-detail-state-discovered">
-                  {{ model.statistics.stateCounts.discovered }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>VISITADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-visited">
-                  {{ model.statistics.stateCounts.visited }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CATALOGADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-catalogued">
-                  {{ model.statistics.stateCounts.catalogued }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CONFIRMADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-confirmed">
-                  {{ model.statistics.stateCounts.confirmed }}
-                </dd>
-              </div>
-            </dl>
-
-            <div
-              class="gd__boundary"
-              data-testid="galaxy-detail-progress-no-percentage"
-            >
-              <span>PROGRESO</span>
-
-              <p>
-                Las unidades son la suma estructural de los estados persistidos:
-                Detectada ×1, Descubierta ×2, Visitada ×3, Catalogada ×4 y
-                Confirmada ×5. No son PD ni un porcentaje. GENESIS no
-                materializa contenido procedural desconocido para inventar un
-                denominador de completitud.
-              </p>
-            </div>
-          </section>
-
-          <section
             class="gd__boundary"
             data-testid="galaxy-detail-boundary"
           >
-            <span>11.4</span>
+            <span>11.3</span>
 
             <p>
-              La ficha combina el perfil seguro de 11.3 con estadísticas
-              derivadas únicamente de KnownDiscovery persistidos y el progreso
-              estructural congelado en 7.3. No expone totales ocultos, no
-              convierte estas unidades en PD y no cambia el foco de exploración;
-              ese cambio pertenece a 11.5.
+              Esta ficha no expone edad, diámetro, masa, población estelar
+              exacta, metalicidad, tasa de formación estelar ni propiedades
+              exactas del agujero negro central. Tampoco calcula el progreso
+              propio de 11.4 ni cambia el foco de exploración de 11.5.
             </p>
           </section>
 

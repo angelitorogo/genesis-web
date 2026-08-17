@@ -13,16 +13,7 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
-  KnownDiscovery,
-} from '../../domain/discovery/known-discovery';
-
-import {
-  BodyLocator,
-  CivilizationLocator,
-  GalacticObjectLocator,
   GalaxyLocator,
-  SectorLocator,
-  SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
@@ -69,70 +60,27 @@ describe(
         GeneratorVersion.V1,
       );
 
-    const defaultStates =
-      new Map<
-        bigint,
-        DiscoveryStateValue
-      >([
-        [
-          0n,
-          DiscoveryState
-            .DISCOVERED,
-        ],
-        [
-          1n,
-          DiscoveryState
-            .DETECTED,
-        ],
-      ]);
-
-    function galaxyDiscoveriesFromStates(
-      states:
-        ReadonlyMap<
-          bigint,
-          DiscoveryStateValue
-        >,
-    ): readonly KnownDiscovery[] {
-
-      return [
-        ...states,
-      ]
-        .filter(
-          (
-            [
-              ,
-              state,
-            ],
-          ) =>
-            DiscoveryState
-              .isKnown(
-                state,
-              ),
-        )
-        .map(
-          (
-            [
-              galaxyIndex,
-              state,
-            ],
-          ) =>
-            new KnownDiscovery(
-              generationKey,
-              new GalaxyLocator(
-                galaxyIndex,
-              ),
-              state,
-            ),
-        );
-    }
-
     function repositories(
       states:
         ReadonlyMap<
           bigint,
           DiscoveryStateValue
         > =
-          defaultStates,
+          new Map<
+            bigint,
+            DiscoveryStateValue
+          >([
+            [
+              0n,
+              DiscoveryState
+                .DISCOVERED,
+            ],
+            [
+              1n,
+              DiscoveryState
+                .DETECTED,
+            ],
+          ]),
 
       activeGalaxyIndex =
         0n,
@@ -142,12 +90,6 @@ describe(
           [
             generationKey,
           ],
-
-      knownDiscoveries:
-        readonly KnownDiscovery[] =
-          galaxyDiscoveriesFromStates(
-            states,
-          ),
     ): GenesisLocalRepositories {
 
       return {
@@ -181,7 +123,7 @@ describe(
 
           async setNavigation() {
             throw new Error(
-              '11.4 must not change the active galaxy.',
+              '11.3 must not change the active galaxy.',
             );
           },
         },
@@ -189,25 +131,25 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '11.4 must not read global PD.',
+              '11.3 must not read global PD.',
             );
           },
 
           async setGlobalDiscoveryPoints() {
             throw new Error(
-              '11.4 must not write global PD.',
+              '11.3 must not write global PD.',
             );
           },
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '11.4 structural progress must not be conflated with per-galaxy PD.',
+              '11.3 must not read per-galaxy PD.',
             );
           },
 
           async setGalaxyDiscoveryPoints() {
             throw new Error(
-              '11.4 must not write per-galaxy PD.',
+              '11.3 must not write per-galaxy PD.',
             );
           },
         },
@@ -224,7 +166,7 @@ describe(
               )
             ) {
               throw new Error(
-                '11.4 must query exactly one GalaxyLocator before loading statistics.',
+                '11.3 must query exactly one GalaxyLocator.',
               );
             }
 
@@ -240,17 +182,19 @@ describe(
 
           async setState() {
             throw new Error(
-              '11.4 must not mutate DiscoveryState.',
+              '11.3 must not mutate DiscoveryState.',
             );
           },
 
           async getKnownDiscoveries() {
-            return knownDiscoveries;
+            throw new Error(
+              '11.3 must not enumerate the complete discovery catalogue.',
+            );
           },
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '11.4 must not materialize sector content.',
+              '11.3 must not materialize sector content.',
             );
           },
         },
@@ -309,7 +253,7 @@ describe(
     }
 
     it(
-      'should load canonical Caeloria with its own bootstrap statistics without reading PD or changing focus',
+      'should load the canonical Caeloria general profile without reading PD or changing focus',
       async () => {
         configure(
           '0',
@@ -351,30 +295,6 @@ describe(
 
         expect(
           model
-            ?.statistics
-            .progressUnits,
-        ).toBe(
-          2n,
-        );
-
-        expect(
-          model
-            ?.statistics
-            .knownRecords,
-        ).toBe(
-          1n,
-        );
-
-        expect(
-          model
-            ?.statistics
-            .internalKnownRecords,
-        ).toBe(
-          0n,
-        );
-
-        expect(
-          model
             ?.isCurrentFocus,
         ).toBe(true);
 
@@ -387,7 +307,7 @@ describe(
     );
 
     it(
-      'should render the point-11.4 profile, local progress and known-record statistics',
+      'should render the point-11.3 discovered-galaxy identity and safe observational profile',
       async () => {
         configure(
           '0',
@@ -488,52 +408,6 @@ describe(
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-progress"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-detail-progress-units"]',
-          )?.textContent,
-        ).toContain(
-          '2',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-detail-known-records"]',
-          )?.textContent,
-        ).toContain(
-          '1',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-detail-known-sectors"]',
-          )?.textContent,
-        ).toContain(
-          '0',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-detail-state-discovered"]',
-          )?.textContent,
-        ).toContain(
-          '1',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-detail-progress-no-percentage"]',
-          )?.textContent,
-        ).toContain(
-          'No son PD ni un porcentaje',
-        );
-
-        expect(
-          element.querySelector(
             '[data-testid="galaxy-detail-focus-badge"]',
           ),
         ).toBeTruthy();
@@ -555,184 +429,8 @@ describe(
             '[data-testid="galaxy-detail-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.4',
+          '11.3',
         );
-      },
-      15_000,
-    );
-
-    it(
-      'should derive statistics from every known locator in the requested galaxy only',
-      async () => {
-        const knownDiscoveries =
-          [
-            new KnownDiscovery(
-              generationKey,
-              new GalaxyLocator(
-                0n,
-              ),
-              DiscoveryState
-                .DISCOVERED,
-            ),
-
-            new KnownDiscovery(
-              generationKey,
-              new SectorLocator(
-                0n,
-                10n,
-              ),
-              DiscoveryState
-                .DETECTED,
-            ),
-
-            new KnownDiscovery(
-              generationKey,
-              new GalacticObjectLocator(
-                0n,
-                10n,
-                1n,
-              ),
-              DiscoveryState
-                .VISITED,
-            ),
-
-            new KnownDiscovery(
-              generationKey,
-              new SystemLocator(
-                0n,
-                10n,
-                2n,
-              ),
-              DiscoveryState
-                .CONFIRMED,
-            ),
-
-            new KnownDiscovery(
-              generationKey,
-              new BodyLocator(
-                0n,
-                10n,
-                2n,
-                4n,
-              ),
-              DiscoveryState
-                .CATALOGUED,
-            ),
-
-            new KnownDiscovery(
-              generationKey,
-              new CivilizationLocator(
-                0n,
-                10n,
-                2n,
-                4n,
-                1n,
-              ),
-              DiscoveryState
-                .DISCOVERED,
-            ),
-
-            new KnownDiscovery(
-              generationKey,
-              new GalaxyLocator(
-                1n,
-              ),
-              DiscoveryState
-                .CONFIRMED,
-            ),
-
-            new KnownDiscovery(
-              generationKey,
-              new SystemLocator(
-                1n,
-                20n,
-                3n,
-              ),
-              DiscoveryState
-                .CONFIRMED,
-            ),
-          ];
-
-        configure(
-          '0',
-          repositories(
-            defaultStates,
-            0n,
-            [
-              generationKey,
-            ],
-            knownDiscoveries,
-          ),
-        );
-
-        const facade =
-          TestBed.inject(
-            GalaxyDetailFacade,
-          );
-
-        await facade
-          .load(
-            '0',
-          );
-
-        const statistics =
-          facade
-            .model()
-            ?.statistics;
-
-        expect(
-          statistics
-            ?.progressUnits,
-        ).toBe(
-          17n,
-        );
-
-        expect(
-          statistics
-            ?.knownRecords,
-        ).toBe(
-          6n,
-        );
-
-        expect(
-          statistics
-            ?.targetCounts,
-        ).toEqual({
-          sectors:
-            1n,
-
-          galacticObjects:
-            1n,
-
-          systems:
-            1n,
-
-          bodies:
-            1n,
-
-          civilizations:
-            1n,
-        });
-
-        expect(
-          statistics
-            ?.stateCounts,
-        ).toEqual({
-          detected:
-            1n,
-
-          discovered:
-            2n,
-
-          visited:
-            1n,
-
-          catalogued:
-            1n,
-
-          confirmed:
-            1n,
-        });
       },
       15_000,
     );
@@ -821,22 +519,6 @@ describe(
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-progress-units"]',
-          )?.textContent,
-        ).toContain(
-          '1',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-detail-known-records"]',
-          )?.textContent,
-        ).toContain(
-          '1',
-        );
-
-        expect(
-          element.querySelector(
             '[data-testid="galaxy-detail-map-link"]',
           ),
         ).toBeNull();
@@ -845,31 +527,10 @@ describe(
     );
 
     it(
-      'should expose not-found for an UNKNOWN URL target without enumerating hidden content',
+      'should expose not-found for an UNKNOWN URL target instead of materializing it',
       async () => {
-        const baseRepositories =
-          repositories();
-
-        const repositoryBundle:
-          GenesisLocalRepositories =
-          {
-            ...baseRepositories,
-
-            discoveryRepository: {
-              ...baseRepositories
-                .discoveryRepository,
-
-              async getKnownDiscoveries() {
-                throw new Error(
-                  'UNKNOWN targets must be rejected before statistics are enumerated.',
-                );
-              },
-            },
-          };
-
         configure(
           '99',
-          repositoryBundle,
         );
 
         const facade =
@@ -905,7 +566,6 @@ describe(
               DiscoveryStateValue
             >(),
             0n,
-            [],
             [],
           ),
         );
