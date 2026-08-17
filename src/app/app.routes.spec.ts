@@ -68,6 +68,19 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   });
 
+  it('should navigate to Discovered Galaxies', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/galaxies',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="discovered-galaxies-page"]',
+      ),
+    ).toBeTruthy();
+  }, 15_000);
+
   it('should navigate to Observatory', async () => {
     const harness =
       await RouterTestingHarness.create(
