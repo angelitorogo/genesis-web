@@ -42,6 +42,7 @@ describe(
             3n,
             DiscoveryState
               .DISCOVERED,
+            'Velthea',
           );
 
         expect(
@@ -51,6 +52,7 @@ describe(
         ).toEqual([
           'generationKey',
           'activeGalaxyIndex',
+          'activeGalaxyKnownName',
           'activeGalaxyDiscoveryState',
         ]);
 
@@ -71,6 +73,12 @@ describe(
         ).toBe(
           DiscoveryState
             .DISCOVERED,
+        );
+
+        expect(
+          model.activeGalaxyKnownName,
+        ).toBe(
+          'Velthea',
         );
 
         expect(

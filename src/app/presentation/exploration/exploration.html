@@ -122,9 +122,22 @@
                   <h2
                     data-testid="exploration-active-galaxy"
                   >
-                    Galaxia
-                    {{ entry.activeGalaxyIndex }}
+                    @if (entry.activeGalaxyKnownName; as activeGalaxyKnownName) {
+                      {{ activeGalaxyKnownName }}
+                    } @else {
+                      Galaxia
+                      {{ entry.activeGalaxyIndex }}
+                    }
                   </h2>
+
+                  @if (entry.activeGalaxyKnownName) {
+                    <span
+                      class="exploration__label"
+                      data-testid="exploration-active-galaxy-index"
+                    >
+                      GALAXIA {{ entry.activeGalaxyIndex }}
+                    </span>
+                  }
                 </div>
 
                 <span class="exploration__ready">

@@ -44,6 +44,7 @@ describe(
               .DISCOVERED,
             2n,
             0n,
+            'Caeloria',
           );
 
         expect(
@@ -76,6 +77,12 @@ describe(
           dashboard.discoveryPoints,
         ).toBe(
           0n,
+        );
+
+        expect(
+          dashboard.activeGalaxyKnownName,
+        ).toBe(
+          'Caeloria',
         );
 
         expect(
@@ -182,6 +189,41 @@ describe(
             RangeError,
           );
         }
+      },
+    );
+
+    it(
+      'should reject blank names and proper names before DISCOVERED',
+      () => {
+        expect(
+          () =>
+            new HomeDashboardModel(
+              generationKey,
+              0n,
+              DiscoveryState
+                .DISCOVERED,
+              0n,
+              0n,
+              '   ',
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new HomeDashboardModel(
+              generationKey,
+              1n,
+              DiscoveryState
+                .DETECTED,
+              0n,
+              0n,
+              'Hidden-name',
+            ),
+        ).toThrow(
+          RangeError,
+        );
       },
     );
 

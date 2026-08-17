@@ -149,12 +149,27 @@
                   </div>
 
                   <div class="genesis-home__galaxy-title-row">
-                    <h2
-                      data-testid="active-galaxy-index"
-                    >
-                      Galaxia
-                      {{ dashboard.activeGalaxyIndex }}
-                    </h2>
+                    @if (dashboard.activeGalaxyKnownName; as activeGalaxyKnownName) {
+                      <h2
+                        data-testid="active-galaxy-name"
+                      >
+                        {{ activeGalaxyKnownName }}
+                      </h2>
+
+                      <span
+                        class="genesis-home__origin-badge"
+                        data-testid="active-galaxy-index"
+                      >
+                        GALAXIA {{ dashboard.activeGalaxyIndex }}
+                      </span>
+                    } @else {
+                      <h2
+                        data-testid="active-galaxy-index"
+                      >
+                        Galaxia
+                        {{ dashboard.activeGalaxyIndex }}
+                      </h2>
+                    }
 
                     @if (isOriginGalaxy(dashboard.activeGalaxyIndex)) {
                       <span

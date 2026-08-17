@@ -239,11 +239,21 @@ describe(
         expect(
           element
             .querySelector(
+              '[data-testid="active-galaxy-name"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Caeloria',
+        );
+
+        expect(
+          element
+            .querySelector(
               '[data-testid="active-galaxy-index"]',
             )
             ?.textContent,
         ).toContain(
-          'Galaxia 0',
+          'GALAXIA 0',
         );
 
         expect(

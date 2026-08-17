@@ -99,6 +99,13 @@ describe(
         );
 
         expect(
+          dashboard
+            .activeGalaxyKnownName,
+        ).toBe(
+          'Caeloria',
+        );
+
+        expect(
           dashboard.galaxyProgressUnits,
         ).toBe(
           2n,
@@ -187,6 +194,11 @@ describe(
           DiscoveryState
             .DETECTED,
         );
+
+        expect(
+          dashboard
+            .activeGalaxyKnownName,
+        ).toBeNull();
 
         expect(
           dashboard.galaxyProgressUnits,

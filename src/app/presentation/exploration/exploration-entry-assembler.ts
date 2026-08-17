@@ -21,6 +21,10 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  GalaxyKnownNameResolver,
+} from '../../simulation/exploration/galaxy-known-name-resolver';
+
+import {
   ExplorationEntryModel,
 } from './exploration-entry-model';
 
@@ -149,6 +153,13 @@ export class ExplorationEntryAssembler {
       activeGalaxyIndex,
       activeGalaxyDiscovery
         .state,
+      GalaxyKnownNameResolver
+        .resolve(
+          generationKey,
+          activeGalaxyIndex,
+          activeGalaxyDiscovery
+            .state,
+        ),
     );
   }
 }

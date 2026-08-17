@@ -43,6 +43,10 @@ export class ExplorationEntryModel {
 
     activeGalaxyDiscoveryState:
       DiscoveryStateValue,
+
+    readonly activeGalaxyKnownName:
+      string | null =
+        null,
   ) {
     assertNonNegativeSignedLong(
       activeGalaxyIndex,
@@ -63,6 +67,32 @@ export class ExplorationEntryModel {
     ) {
       throw new RangeError(
         'activeGalaxyDiscoveryState must be >= DETECTED.',
+      );
+    }
+
+    if (
+      activeGalaxyKnownName !==
+        null &&
+      activeGalaxyKnownName
+        .trim()
+        .length ===
+        0
+    ) {
+      throw new RangeError(
+        'activeGalaxyKnownName must be null or non-blank.',
+      );
+    }
+
+    if (
+      canonicalState.code <
+        DiscoveryState
+          .DISCOVERED
+          .code &&
+      activeGalaxyKnownName !==
+        null
+    ) {
+      throw new RangeError(
+        'A DETECTED active galaxy cannot expose its proper name.',
       );
     }
 

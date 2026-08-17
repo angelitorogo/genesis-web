@@ -1,0 +1,388 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.galactic-map-scene {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: clamp(24rem, 62dvh, 46rem);
+  min-height: 20rem;
+  overflow: hidden;
+  border-radius: var(--genesis-radius-lg);
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(96, 124, 180, 0.11), transparent 34%),
+    radial-gradient(circle at 50% 52%, #0b1120 0%, #05070d 66%, #020308 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.52;
+    background-image:
+      linear-gradient(rgba(106, 215, 255, 0.014) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(106, 215, 255, 0.014) 1px, transparent 1px);
+    background-size: 3.5rem 3.5rem;
+    mask-image: radial-gradient(circle, black 0%, transparent 79%);
+  }
+
+  &__canvas {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  &__vignette {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    pointer-events: none;
+    box-shadow:
+      inset 0 0 8rem rgba(0, 0, 0, 0.76),
+      inset 0 0 2rem rgba(4, 8, 18, 0.52);
+  }
+
+  &__label {
+    position: absolute;
+    z-index: 3;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid rgba(106, 215, 255, 0.2);
+    border-radius: 999px;
+    background: rgba(5, 7, 13, 0.72);
+    color: var(--genesis-color-text-subtle);
+    font-family: var(--genesis-font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    pointer-events: none;
+  }
+
+  &__coverage {
+    position: absolute;
+    z-index: 4;
+    top: 3.65rem;
+    left: 1rem;
+    width: min(20rem, calc(100% - 2rem));
+    padding: 0.7rem 0.75rem;
+    border: 1px solid rgba(106, 215, 255, 0.16);
+    border-radius: 0.75rem;
+    background: rgba(5, 7, 13, 0.76);
+    color: var(--genesis-color-text-subtle);
+    pointer-events: none;
+
+    small {
+      display: block;
+      margin-bottom: 0.55rem;
+      color: var(--genesis-color-primary);
+      font-family: var(--genesis-font-mono);
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.11em;
+    }
+
+    p {
+      margin: 0.55rem 0 0;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.62rem;
+      line-height: 1.45;
+    }
+  }
+
+  &__coverage-row {
+    display: grid;
+    grid-template-columns: 0.8rem 1fr auto;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 1.35rem;
+
+    strong,
+    code {
+      font-family: var(--genesis-font-mono);
+      font-size: 0.61rem;
+    }
+
+    strong {
+      color: var(--genesis-color-text-muted);
+    }
+
+    code {
+      color: var(--genesis-color-text-subtle);
+    }
+  }
+
+  &__coverage-swatch {
+    display: block;
+    width: 0.72rem;
+    height: 0.72rem;
+    border: 1px solid rgba(106, 215, 255, 0.3);
+
+    &--explored {
+      border-color: rgba(106, 215, 255, 0.9);
+      background: rgba(106, 215, 255, 0.28);
+    }
+
+    &--unexplored {
+      background: rgba(106, 215, 255, 0.025);
+    }
+  }
+
+  &__lod-status {
+    margin-top: 0.65rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(106, 215, 255, 0.16);
+
+    > small {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: var(--genesis-color-primary);
+      font-family: var(--genesis-font-mono);
+      font-size: 0.56rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .galactic-map-scene__coverage-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    p {
+      margin-top: 0.45rem;
+    }
+  }
+
+  &__markers {
+    margin-top: 0.65rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255, 190, 82, 0.16);
+
+    .galactic-map-scene__coverage-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+  }
+
+  &__controls {
+    position: absolute;
+    z-index: 5;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.45rem;
+  }
+
+  &__control-button {
+    min-height: 2.2rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid rgba(106, 215, 255, 0.25);
+    border-radius: 0.65rem;
+    background: rgba(5, 7, 13, 0.82);
+    color: var(--genesis-color-text-muted);
+    font: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  &__help,
+  &__selection,
+  &__marker-selection {
+    position: absolute;
+    z-index: 4;
+    bottom: 1rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgba(106, 215, 255, 0.16);
+    border-radius: 0.7rem;
+    background: rgba(5, 7, 13, 0.78);
+    color: var(--genesis-color-text-subtle);
+  }
+
+  &__help,
+  &__selection {
+    pointer-events: none;
+  }
+
+  &__help {
+    right: 1rem;
+    display: flex;
+    gap: 0.65rem;
+    font-family: var(--genesis-font-mono);
+    font-size: 0.58rem;
+  }
+
+  &__selection,
+  &__marker-selection {
+    left: 1rem;
+    width: min(23rem, calc(100% - 2rem));
+
+    small,
+    strong,
+    code {
+      display: block;
+    }
+
+    p {
+      margin: 0.4rem 0 0;
+      font-size: 0.68rem;
+      line-height: 1.45;
+    }
+  }
+
+  &__marker-selection {
+    z-index: 6;
+    border-color: rgba(255, 193, 92, 0.28);
+    background: rgba(5, 7, 13, 0.9);
+    pointer-events: auto;
+
+    small {
+      color: #ffc15c;
+      font-family: var(--genesis-font-mono);
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+
+    strong {
+      margin-top: 0.2rem;
+      color: var(--genesis-color-text);
+    }
+
+    code {
+      margin-top: 0.16rem;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.64rem;
+    }
+  }
+
+  &__relative-position {
+    margin-top: 0.6rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid rgba(106, 215, 255, 0.14);
+
+    &-title {
+      margin-bottom: 0.42rem;
+      color: var(--genesis-color-primary) !important;
+    }
+
+    &-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.36rem 0.75rem;
+      margin: 0;
+
+      div {
+        min-width: 0;
+      }
+
+      dt {
+        color: var(--genesis-color-text-subtle);
+        font-family: var(--genesis-font-mono);
+        font-size: 0.55rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      dd {
+        margin: 0.08rem 0 0;
+        color: var(--genesis-color-text-muted);
+        font-family: var(--genesis-font-mono);
+        font-size: 0.63rem;
+        font-weight: 700;
+      }
+    }
+
+    &-note {
+      margin-top: 0.45rem !important;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.6rem !important;
+    }
+  }
+
+  &__marker-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+    color: var(--genesis-color-primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      text-decoration: underline;
+    }
+  }
+
+  &__message {
+    position: absolute;
+    z-index: 6;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 2rem;
+    background: rgba(5, 7, 13, 0.72);
+    color: var(--genesis-color-text-muted);
+    text-align: center;
+
+    &--error {
+      color: #ffb6b6;
+    }
+  }
+}
+
+@media (max-width: 40rem) {
+  .galactic-map-scene {
+    height: min(58dvh, 32rem);
+    min-height: 22rem;
+    border-radius: var(--genesis-radius-md);
+
+    &__controls {
+      top: 0.75rem;
+      right: 0.75rem;
+      display: grid;
+    }
+
+    &__coverage {
+      top: 3.45rem;
+      left: 0.75rem;
+      width: min(18rem, calc(100% - 7.25rem));
+      padding: 0.55rem 0.6rem;
+
+      p {
+        display: none;
+      }
+    }
+
+    &__help {
+      right: 0.75rem;
+      bottom: 0.75rem;
+      left: 0.75rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      font-size: 0.53rem;
+    }
+
+    &__selection,
+    &__marker-selection {
+      bottom: 5rem;
+      left: 0.75rem;
+      width: min(21rem, calc(100% - 1.5rem));
+    }
+
+    &__marker-selection {
+      max-height: calc(100% - 8rem);
+      overflow: auto;
+    }
+
+    &__relative-position-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

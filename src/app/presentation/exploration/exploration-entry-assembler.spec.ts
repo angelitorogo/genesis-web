@@ -104,12 +104,43 @@ describe(
         );
 
         expect(
+          model.activeGalaxyKnownName,
+        ).toBe(
+          'Caeloria',
+        );
+
+        expect(
           model.activeGalaxyLocator,
         ).toEqual(
           new GalaxyLocator(
             0n,
           ),
         );
+      },
+    );
+
+    it(
+      'should keep a merely DETECTED active galaxy proper name hidden',
+      () => {
+        const model =
+          ExplorationEntryAssembler
+            .assemble(
+              generationKey,
+              1n,
+              [
+                known(
+                  new GalaxyLocator(
+                    1n,
+                  ),
+                  DiscoveryState
+                    .DETECTED,
+                ),
+              ],
+            );
+
+        expect(
+          model.activeGalaxyKnownName,
+        ).toBeNull();
       },
     );
 

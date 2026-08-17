@@ -25,6 +25,10 @@ import {
 } from '../../simulation/exploration/exploration-progress-overview-engine';
 
 import {
+  GalaxyKnownNameResolver,
+} from '../../simulation/exploration/galaxy-known-name-resolver';
+
+import {
   HomeDashboardModel,
 } from './home-dashboard-model';
 
@@ -169,6 +173,13 @@ export class HomeDashboardAssembler {
         .galaxyProgressUnits,
       overview
         .globalDiscoveryPoints,
+      GalaxyKnownNameResolver
+        .resolve(
+          generationKey,
+          activeGalaxyIndex,
+          activeGalaxyDiscovery
+            .state,
+        ),
     );
   }
 }
