@@ -17,7 +17,7 @@ import {
 } from '../../domain/universe/universe-seed';
 
 export const DEFAULT_UNIVERSE_SEED =
-  '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
+  '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5';
 
 export type UniverseSeedFeedbackKind =
   | 'idle'

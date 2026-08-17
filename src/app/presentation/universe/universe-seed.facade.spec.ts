@@ -34,6 +34,12 @@ describe(
       'should expose the default canonical seed',
       () => {
         expect(
+          DEFAULT_UNIVERSE_SEED,
+        ).toBe(
+          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
+        );
+
+        expect(
           facade.serializedSeed(),
         ).toBe(
           DEFAULT_UNIVERSE_SEED,
