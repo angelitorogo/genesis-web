@@ -260,6 +260,161 @@ test.describe(
 
 
     test(
+      'should open the point-11.3 general galaxy record from the discovered-galaxy catalogue',
+      async ({
+        page,
+      }) => {
+        await page.goto(
+          '/settings',
+        );
+
+        await page
+          .getByTestId(
+            'universe-seed-apply-button',
+          )
+          .click();
+
+        const seedStatus =
+          page.getByTestId(
+            'universe-seed-status',
+          );
+
+        await expect(
+          seedStatus,
+        ).toContainText(
+          /Universo (?:creado y )?activado correctamente\./,
+        );
+
+        await page.goto(
+          '/galaxies',
+        );
+
+        const detailLink =
+          page.getByTestId(
+            'discovered-galaxy-detail-link',
+          );
+
+        await expect(
+          detailLink,
+        ).toBeVisible();
+
+        await detailLink
+          .click();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          /\/galaxies\/0$/,
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-page',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-name',
+          ),
+        ).toContainText(
+          'Caeloria',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-index',
+          ),
+        ).toContainText(
+          'Galaxia 0',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-state',
+          ),
+        ).toContainText(
+          'Descubierta',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-exact-type',
+          ),
+        ).toContainText(
+          'Elíptica',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-morphology',
+          ),
+        ).toContainText(
+          'Esferoidal',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-scale',
+          ),
+        ).toContainText(
+          'Grande',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-population',
+          ),
+        ).toContainText(
+          'Alta',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-nuclear',
+          ),
+        ).toContainText(
+          'Sin actividad nuclear clara',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-focus-badge',
+          ),
+        ).toContainText(
+          'EN FOCO',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-origin-badge',
+          ),
+        ).toContainText(
+          'GALAXIA NATAL',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-boundary',
+          ),
+        ).toBeVisible();
+
+        await page
+          .getByTestId(
+            'galaxy-detail-catalog-link',
+          )
+          .click();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          /\/galaxies$/,
+        );
+      },
+    );
+
+
+    test(
       'should enter Exploration from the REALIZAR EXPLORACIÓN Home action',
       async ({
         page,

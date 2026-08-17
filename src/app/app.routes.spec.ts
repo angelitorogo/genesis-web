@@ -81,6 +81,47 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 15_000);
 
+  it('should navigate to the point-11.3 Galaxy general detail route', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/galaxies/0',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="galaxy-detail-page"]',
+      ),
+    ).toBeTruthy();
+  }, 15_000);
+
+  it('should expose the point-11.3 Galaxy detail route before the catalogue route', () => {
+    const detailIndex =
+      genesisRoutes.findIndex(
+        (route) =>
+          route.path ===
+          'galaxies/:galaxyIndex',
+      );
+
+    const catalogueIndex =
+      genesisRoutes.findIndex(
+        (route) =>
+          route.path ===
+          'galaxies',
+      );
+
+    expect(
+      detailIndex,
+    ).toBeGreaterThanOrEqual(
+      0,
+    );
+
+    expect(
+      detailIndex,
+    ).toBeLessThan(
+      catalogueIndex,
+    );
+  });
+
   it('should navigate to Observatory', async () => {
     const harness =
       await RouterTestingHarness.create(

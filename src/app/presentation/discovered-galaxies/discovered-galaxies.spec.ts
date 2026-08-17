@@ -493,12 +493,43 @@ describe(
           'Desconocida',
         );
 
+        const detailLinks =
+          element.querySelectorAll(
+            '[data-testid="discovered-galaxy-detail-link"]',
+          );
+
+        expect(
+          detailLinks.length,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          detailLinks[
+            0
+          ]?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/0',
+        );
+
+        expect(
+          detailLinks[
+            1
+          ]?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/1',
+        );
+
         expect(
           element.querySelector(
             '[data-testid="discovered-galaxies-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.2',
+          '11.3',
         );
       },
       15_000,

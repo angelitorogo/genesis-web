@@ -9,7 +9,7 @@
         <p class="dg__eyebrow">
           CATÁLOGO INTERGALÁCTICO
           <span aria-hidden="true">/</span>
-          11.2
+          11.3
         </p>
 
         <h1
@@ -223,6 +223,20 @@
                     </dd>
                   </div>
                 </dl>
+
+                <div class="dg__card-top">
+                  <a
+                    class="dg__link"
+                    [routerLink]="[
+                      '/galaxies',
+                      entry.galaxyIndex.toString()
+                    ]"
+                    data-testid="discovered-galaxy-detail-link"
+                  >
+                    Abrir ficha general
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </div>
               </article>
             }
           </section>
@@ -266,13 +280,13 @@
             class="dg__boundary"
             data-testid="discovered-galaxies-point-boundary"
           >
-            <span>11.2</span>
+            <span>11.3</span>
 
             <p>
-              11.2 define únicamente la proyección de estados del catálogo.
-              No cambia DiscoveryState, no persiste transiciones y no modifica
-              el foco. La ficha pertenece a 11.3, el progreso por galaxia a 11.4
-              y el cambio real de foco a 11.5.
+              11.3 añade acceso de solo lectura a la ficha general de cada
+              galaxia conocida. La URL no crea conocimiento ni cambia el foco;
+              el progreso por galaxia pertenece a 11.4 y el cambio real de foco
+              a 11.5.
             </p>
           </section>
         }

@@ -536,6 +536,7 @@ describe(
           'GALAXIA 0',
         );
       },
+      15_000,
     );
 
     it(

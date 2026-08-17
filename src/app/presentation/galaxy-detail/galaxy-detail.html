@@ -1,0 +1,323 @@
+<genesis-screen>
+  <main
+    class="gd"
+    data-testid="galaxy-detail-page"
+    aria-labelledby="gd-title"
+  >
+    <header class="gd__header">
+      <div>
+        <p class="gd__eyebrow">
+          CATÁLOGO INTERGALÁCTICO
+          <span aria-hidden="true">/</span>
+          11.3
+        </p>
+
+        <h1
+          id="gd-title"
+          class="gd__title"
+        >
+          Ficha general de galaxia
+        </h1>
+
+        <p class="gd__subtitle">
+          Identidad y perfil observacional disponibles para una galaxia ya
+          conocida, respetando su estado actual de conocimiento.
+        </p>
+      </div>
+
+      <a
+        class="gd__action"
+        routerLink="/galaxies"
+        data-testid="galaxy-detail-catalog-link"
+      >
+        <span aria-hidden="true">←</span>
+        Volver a Galaxias
+      </a>
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section
+          class="gd__state"
+          data-testid="galaxy-detail-loading"
+        >
+          <span
+            class="gd__pulse"
+            aria-hidden="true"
+          ></span>
+
+          <div>
+            <small>FICHA / LECTURA LOCAL</small>
+            <strong>Resolviendo galaxia conocida…</strong>
+          </div>
+        </section>
+      }
+
+      @case ('empty') {
+        <section
+          class="gd__state"
+          data-testid="galaxy-detail-empty"
+        >
+          <small>SIN UNIVERSO ACTIVO</small>
+          <strong>No existe una galaxia que pueda consultarse.</strong>
+
+          <p>
+            Crea o activa primero un universo desde Ajustes.
+          </p>
+
+          <a
+            class="gd__action"
+            routerLink="/settings"
+          >
+            Ir a Ajustes
+          </a>
+        </section>
+      }
+
+      @case ('not-found') {
+        <section
+          class="gd__state"
+          data-testid="galaxy-detail-not-found"
+        >
+          <small>GALAXIA NO DISPONIBLE</small>
+          <strong>La galaxia solicitada no forma parte del conocimiento persistido.</strong>
+
+          <p>
+            Abrir una URL no detecta ni materializa galaxias desconocidas.
+          </p>
+        </section>
+      }
+
+      @case ('error') {
+        <section
+          class="gd__state gd__state--error"
+          data-testid="galaxy-detail-error"
+        >
+          <small>ERROR DE FICHA</small>
+          <strong>{{ facade.errorMessage() }}</strong>
+        </section>
+      }
+
+      @case ('content') {
+        @if (facade.model(); as model) {
+          <article
+            class="gd__hero"
+            data-testid="galaxy-detail-record"
+            [attr.data-galaxy-state]="model.profile.galaxyKnowledgeState.name"
+          >
+            <div class="gd__badges">
+              <span
+                class="gd__badge gd__badge--primary"
+                data-testid="galaxy-detail-state"
+              >
+                {{ galaxyStateLabel(model.profile.galaxyKnowledgeState) }}
+              </span>
+
+              @if (model.isCurrentFocus) {
+                <span
+                  class="gd__badge"
+                  data-testid="galaxy-detail-focus-badge"
+                >
+                  EN FOCO
+                </span>
+              }
+
+              @if (model.isOriginGalaxy) {
+                <span
+                  class="gd__badge"
+                  data-testid="galaxy-detail-origin-badge"
+                >
+                  GALAXIA NATAL
+                </span>
+              }
+            </div>
+
+            <div class="gd__identity">
+              <small>OBJETIVO GALÁCTICO</small>
+
+              @if (model.profile.knownName; as knownName) {
+                <h2 data-testid="galaxy-detail-name">
+                  {{ knownName }}
+                </h2>
+
+                <p data-testid="galaxy-detail-index">
+                  Galaxia {{ model.profile.galaxyIndex }}
+                </p>
+              } @else {
+                <h2 data-testid="galaxy-detail-index">
+                  Galaxia {{ model.profile.galaxyIndex }}
+                </h2>
+
+                <p data-testid="galaxy-detail-name-restricted">
+                  Nombre propio aún no resuelto
+                </p>
+              }
+
+              <code data-testid="galaxy-detail-designation">
+                {{ model.profile.designationCode }}
+              </code>
+            </div>
+
+            <div
+              class="gd__visual"
+              aria-hidden="true"
+            >
+              <span class="gd__halo"></span>
+              <span class="gd__orbit gd__orbit--a"></span>
+              <span class="gd__orbit gd__orbit--b"></span>
+              <span class="gd__core"></span>
+            </div>
+          </article>
+
+          <section
+            class="gd__section"
+            aria-labelledby="gd-identity-title"
+          >
+            <div class="gd__section-heading">
+              <small>IDENTIDAD Y CONOCIMIENTO</small>
+
+              <h3 id="gd-identity-title">
+                Estado general
+              </h3>
+            </div>
+
+            <dl class="gd__facts">
+              <div>
+                <dt>ESTADO GALÁCTICO</dt>
+
+                <dd>
+                  {{ galaxyStateLabel(model.profile.galaxyKnowledgeState) }}
+                </dd>
+              </div>
+
+              <div>
+                <dt>DISCOVERY STATE</dt>
+
+                <dd data-testid="galaxy-detail-global-state">
+                  {{ discoveryStateLabel(model.profile.knowledgeState) }}
+                </dd>
+              </div>
+
+              <div>
+                <dt>TIPO GALÁCTICO</dt>
+
+                @if (model.profile.galaxyType; as galaxyType) {
+                  <dd data-testid="galaxy-detail-exact-type">
+                    {{ galaxyTypeLabel(galaxyType) }}
+                  </dd>
+                } @else {
+                  <dd data-testid="galaxy-detail-exact-type-restricted">
+                    Aún no resuelto
+                  </dd>
+                }
+              </div>
+
+              <div>
+                <dt>IDENTIDAD PROCEDURAL</dt>
+
+                <dd>
+                  @if (model.profile.knownName) {
+                    Conocida
+                  } @else {
+                    Restringida hasta Descubierta
+                  }
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            class="gd__section"
+            data-testid="galaxy-detail-observational-profile"
+            aria-labelledby="gd-observation-title"
+          >
+            <div class="gd__section-heading">
+              <small>PROYECCIÓN OBSERVACIONAL SEGURA</small>
+
+              <h3 id="gd-observation-title">
+                Perfil disponible
+              </h3>
+            </div>
+
+            <dl class="gd__facts gd__facts--observation">
+              <div>
+                <dt>MORFOLOGÍA OBSERVADA</dt>
+
+                <dd data-testid="galaxy-detail-morphology">
+                  {{ morphologyLabel(model.profile.preliminaryInformation.morphologyHint) }}
+                </dd>
+              </div>
+
+              <div>
+                <dt>ESCALA OBSERVADA</dt>
+
+                <dd data-testid="galaxy-detail-scale">
+                  {{ scaleLabel(model.profile.preliminaryInformation.scaleHint) }}
+                </dd>
+              </div>
+
+              <div>
+                <dt>POBLACIÓN ESTELAR</dt>
+
+                <dd data-testid="galaxy-detail-population">
+                  {{ stellarPopulationLabel(model.profile.preliminaryInformation.stellarPopulationHint) }}
+                </dd>
+              </div>
+
+              <div>
+                <dt>ACTIVIDAD NUCLEAR</dt>
+
+                <dd data-testid="galaxy-detail-nuclear">
+                  {{ nuclearActivityLabel(model.profile.preliminaryInformation.nuclearActivityHint) }}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section
+            class="gd__boundary"
+            data-testid="galaxy-detail-boundary"
+          >
+            <span>11.3</span>
+
+            <p>
+              Esta ficha no expone edad, diámetro, masa, población estelar
+              exacta, metalicidad, tasa de formación estelar ni propiedades
+              exactas del agujero negro central. Tampoco calcula el progreso
+              propio de 11.4 ni cambia el foco de exploración de 11.5.
+            </p>
+          </section>
+
+          <nav
+            class="gd__actions"
+            aria-label="Navegación de la ficha de galaxia"
+          >
+            <a
+              class="gd__action"
+              routerLink="/galaxies"
+            >
+              ← Volver al catálogo
+            </a>
+
+            @if (model.isCurrentFocus) {
+              <a
+                class="gd__action gd__action--primary"
+                routerLink="/galaxy-map"
+                data-testid="galaxy-detail-map-link"
+              >
+                Abrir mapa galáctico
+              </a>
+            }
+
+            <a
+              class="gd__action"
+              routerLink="/"
+            >
+              Home
+            </a>
+          </nav>
+        }
+      }
+    }
+  </main>
+</genesis-screen>

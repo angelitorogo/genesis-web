@@ -39,6 +39,10 @@ const responsiveDestinations = [
     testId: 'discovered-galaxies-page',
   },
   {
+    route: '/galaxies/0',
+    testId: 'galaxy-detail-page',
+  },
+  {
     route: '/galaxy-map',
     testId: 'galaxy-map-page',
   },
@@ -274,6 +278,31 @@ test.describe(
               page,
             );
           }
+
+          await page.goto(
+            '/galaxies/0',
+          );
+
+          if (
+            viewport.name ===
+            'mobile-pwa'
+          ) {
+            await expectTouchTarget(
+              page.getByTestId(
+                'galaxy-detail-catalog-link',
+              ),
+            );
+
+            await expectTouchTarget(
+              page.getByTestId(
+                'galaxy-detail-map-link',
+              ),
+            );
+          }
+
+          await expectNoHorizontalOverflow(
+            page,
+          );
 
           await page.goto('/');
 
