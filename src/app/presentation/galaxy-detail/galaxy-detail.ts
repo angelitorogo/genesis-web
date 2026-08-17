@@ -93,6 +93,14 @@ export class GalaxyDetailPage
       );
   }
 
+  changeFocus():
+    void {
+
+    void this
+      .facade
+      .changeFocusToDisplayedGalaxy();
+  }
+
   galaxyStateLabel(
     state:
       GalaxyKnowledgeStateValue,

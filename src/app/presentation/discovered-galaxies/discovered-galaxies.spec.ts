@@ -405,6 +405,22 @@ describe(
           'EN FOCO',
         );
 
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galaxy-visitable-badge"]',
+          ).length,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-visitable-badge"]',
+          )?.textContent,
+        ).toContain(
+          'VISITABLE',
+        );
+
         const galaxyCards =
           element.querySelectorAll(
             '[data-testid="discovered-galaxy-card"]',
@@ -529,7 +545,7 @@ describe(
             '[data-testid="discovered-galaxies-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.4',
+          '11.5',
         );
       },
       15_000,

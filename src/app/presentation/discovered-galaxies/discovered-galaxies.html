@@ -9,7 +9,7 @@
         <p class="dg__eyebrow">
           CATÁLOGO INTERGALÁCTICO
           <span aria-hidden="true">/</span>
-          11.4
+          11.5
         </p>
 
         <h1
@@ -152,6 +152,13 @@
                       >
                         EN FOCO
                       </span>
+                    } @else {
+                      <span
+                        class="dg__badge"
+                        data-testid="galaxy-visitable-badge"
+                      >
+                        VISITABLE
+                      </span>
                     }
 
                     @if (isOriginGalaxy(entry.galaxyIndex)) {
@@ -280,13 +287,13 @@
             class="dg__boundary"
             data-testid="discovered-galaxies-point-boundary"
           >
-            <span>11.4</span>
+            <span>11.5</span>
 
             <p>
-              Cada ficha conocida incorpora estadísticas y progreso propios
-              derivados únicamente de los KnownDiscovery persistidos de esa
-              galaxia. No se materializan objetivos desconocidos para calcular
-              porcentajes y el cambio real de foco continúa reservado a 11.5.
+              Toda galaxia conocida que no sea el foco actual es visitable desde
+              su ficha general. El cambio explícito de foco la registra como
+              mínimo en Visitada y actualiza el contexto persistido sin gastar
+              PD, sin materializar Ground Truth y sin representar viaje FTL.
             </p>
           </section>
         }

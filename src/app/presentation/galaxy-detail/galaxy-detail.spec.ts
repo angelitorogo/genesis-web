@@ -42,6 +42,11 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  GALAXY_FOCUS_RUNTIME,
+  type GalaxyFocusRuntime,
+} from '../runtime/galaxy-focus.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
@@ -181,7 +186,7 @@ describe(
 
           async setNavigation() {
             throw new Error(
-              '11.4 must not change the active galaxy.',
+              'GalaxyDetailFacade must not write navigation directly.',
             );
           },
         },
@@ -189,25 +194,25 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '11.4 must not read global PD.',
+              '11.5 must not read global PD.',
             );
           },
 
           async setGlobalDiscoveryPoints() {
             throw new Error(
-              '11.4 must not write global PD.',
+              '11.5 must not write global PD.',
             );
           },
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '11.4 structural progress must not be conflated with per-galaxy PD.',
+              '11.5 structural progress must not be conflated with per-galaxy PD.',
             );
           },
 
           async setGalaxyDiscoveryPoints() {
             throw new Error(
-              '11.4 must not write per-galaxy PD.',
+              '11.5 must not write per-galaxy PD.',
             );
           },
         },
@@ -224,7 +229,7 @@ describe(
               )
             ) {
               throw new Error(
-                '11.4 must query exactly one GalaxyLocator before loading statistics.',
+                'Galaxy detail must query exactly one GalaxyLocator before loading statistics.',
               );
             }
 
@@ -240,7 +245,7 @@ describe(
 
           async setState() {
             throw new Error(
-              '11.4 must not mutate DiscoveryState.',
+              'GalaxyDetailFacade must not mutate DiscoveryState directly.',
             );
           },
 
@@ -250,7 +255,7 @@ describe(
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '11.4 must not materialize sector content.',
+              '11.5 must not materialize sector content.',
             );
           },
         },
@@ -264,6 +269,16 @@ describe(
       repositoryBundle:
         GenesisLocalRepositories =
           repositories(),
+
+      focusRuntime:
+        GalaxyFocusRuntime =
+          {
+            async changeFocus() {
+              throw new Error(
+                '11.5 focus mutation was not expected in this test.',
+              );
+            },
+          },
     ): void {
 
       TestBed.configureTestingModule({
@@ -303,6 +318,14 @@ describe(
 
             useValue:
               repositoryBundle,
+          },
+
+          {
+            provide:
+              GALAXY_FOCUS_RUNTIME,
+
+            useValue:
+              focusRuntime,
           },
         ],
       });
@@ -380,6 +403,11 @@ describe(
 
         expect(
           model
+            ?.isVisitable,
+        ).toBe(false);
+
+        expect(
+          model
             ?.isOriginGalaxy,
         ).toBe(true);
       },
@@ -387,7 +415,7 @@ describe(
     );
 
     it(
-      'should render the point-11.4 profile, local progress and known-record statistics',
+      'should render the point-11.5 profile, local progress and current-focus control',
       async () => {
         configure(
           '0',
@@ -552,10 +580,30 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="galaxy-detail-focus-control"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-focus-current"]',
+          )?.textContent,
+        ).toContain(
+          'Esta galaxia ya define el contexto activo',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-change-focus-action"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
             '[data-testid="galaxy-detail-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.4',
+          '11.5',
         );
       },
       15_000,
@@ -838,6 +886,347 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-map-link"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-change-focus-action"]',
+          )?.textContent,
+        ).toContain(
+          'Establecer como foco de exploración',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-focus-semantics"]',
+          )?.textContent,
+        ).toContain(
+          'no representa ni afirma un',
+        );
+      },
+      15_000,
+    );
+
+    it(
+      'should change focus explicitly, promote a DETECTED galaxy to VISITED and reload its newly available identity',
+      async () => {
+        const mutableStates =
+          new Map<
+            bigint,
+            DiscoveryStateValue
+          >([
+            [
+              0n,
+              DiscoveryState
+                .DISCOVERED,
+            ],
+            [
+              1n,
+              DiscoveryState
+                .DETECTED,
+            ],
+          ]);
+
+        let activeGalaxyIndex =
+          0n;
+
+        let recentGalaxyIndices:
+          readonly bigint[] =
+          [];
+
+        const repositoryBundle:
+          GenesisLocalRepositories =
+          {
+            universeRepository: {
+              async createIfAbsent() {
+                return false;
+              },
+
+              async exists() {
+                return true;
+              },
+
+              async getAll() {
+                return [
+                  generationKey,
+                ];
+              },
+
+              async delete() {
+                return false;
+              },
+            },
+
+            navigationRepository: {
+              async getNavigation() {
+                return {
+                  activeGalaxyIndex,
+                  recentGalaxyIndices,
+                };
+              },
+
+              async setNavigation(
+                _generationKey,
+                navigation,
+              ) {
+                activeGalaxyIndex =
+                  navigation
+                    .activeGalaxyIndex;
+
+                recentGalaxyIndices =
+                  [
+                    ...navigation
+                      .recentGalaxyIndices,
+                  ];
+              },
+            },
+
+            pointsRepository: {
+              async getGlobalDiscoveryPoints() {
+                throw new Error(
+                  '11.5 must not read global PD.',
+                );
+              },
+
+              async setGlobalDiscoveryPoints() {
+                throw new Error(
+                  '11.5 must not write global PD.',
+                );
+              },
+
+              async getGalaxyDiscoveryPoints() {
+                throw new Error(
+                  '11.5 must not read per-galaxy PD.',
+                );
+              },
+
+              async setGalaxyDiscoveryPoints() {
+                throw new Error(
+                  '11.5 must not write per-galaxy PD.',
+                );
+              },
+            },
+
+            discoveryRepository: {
+              async getState(
+                _generationKey,
+                locator,
+              ) {
+                if (
+                  !(
+                    locator instanceof
+                    GalaxyLocator
+                  )
+                ) {
+                  throw new Error(
+                    '11.5 focus tests query GalaxyLocator state only.',
+                  );
+                }
+
+                return (
+                  mutableStates.get(
+                    locator
+                      .galaxyIndex,
+                  ) ??
+                  DiscoveryState
+                    .UNKNOWN
+                );
+              },
+
+              async setState(
+                _generationKey,
+                locator,
+                state,
+              ) {
+                if (
+                  !(
+                    locator instanceof
+                    GalaxyLocator
+                  )
+                ) {
+                  throw new Error(
+                    '11.5 focus tests mutate GalaxyLocator state only.',
+                  );
+                }
+
+                mutableStates.set(
+                  locator
+                    .galaxyIndex,
+                  state,
+                );
+              },
+
+              async getKnownDiscoveries() {
+                return galaxyDiscoveriesFromStates(
+                  mutableStates,
+                );
+              },
+
+              async getKnownDiscoveriesInSector() {
+                throw new Error(
+                  '11.5 must not materialize sector content.',
+                );
+              },
+            },
+          };
+
+        const focusRuntime:
+          GalaxyFocusRuntime =
+          {
+            async changeFocus(
+              _generationKey,
+              targetGalaxyIndex,
+            ) {
+              const targetStateBefore =
+                mutableStates.get(
+                  targetGalaxyIndex,
+                ) ??
+                DiscoveryState
+                  .UNKNOWN;
+
+              mutableStates.set(
+                targetGalaxyIndex,
+                DiscoveryState
+                  .VISITED,
+              );
+
+              const previousFocusGalaxyIndex =
+                activeGalaxyIndex;
+
+              activeGalaxyIndex =
+                targetGalaxyIndex;
+
+              recentGalaxyIndices =
+                [
+                  previousFocusGalaxyIndex,
+                ];
+
+              return Object.freeze({
+                previousFocusGalaxyIndex,
+                activeGalaxyIndex:
+                  targetGalaxyIndex,
+                targetStateBefore,
+                targetStateAfter:
+                  DiscoveryState
+                    .VISITED,
+                didPromoteTargetToVisited:
+                  true,
+                recentGalaxyIndices,
+              });
+            },
+          };
+
+        configure(
+          '1',
+          repositoryBundle,
+          focusRuntime,
+        );
+
+        await TestBed
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            GalaxyDetailPage,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .facade
+          .load(
+            '1',
+          );
+
+        fixture.detectChanges();
+
+        const before =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          before.querySelector(
+            '[data-testid="galaxy-detail-name-restricted"]',
+          ),
+        ).toBeTruthy();
+
+        await fixture
+          .componentInstance
+          .facade
+          .changeFocusToDisplayedGalaxy();
+
+        fixture.detectChanges();
+
+        const after =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          activeGalaxyIndex,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          recentGalaxyIndices,
+        ).toEqual([
+          0n,
+        ]);
+
+        expect(
+          mutableStates.get(
+            1n,
+          ),
+        ).toBe(
+          DiscoveryState
+            .VISITED,
+        );
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-state"]',
+          )?.textContent,
+        ).toContain(
+          'Visitada',
+        );
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-name"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-exact-type"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-focus-badge"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-map-link"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-focus-success"]',
+          )?.textContent,
+        ).toContain(
+          'Visitada',
+        );
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-change-focus-action"]',
           ),
         ).toBeNull();
       },

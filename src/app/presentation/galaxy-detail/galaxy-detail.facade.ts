@@ -34,6 +34,10 @@ import {
 } from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
 
 import {
+  GALAXY_FOCUS_RUNTIME,
+} from '../runtime/galaxy-focus.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
 
@@ -53,6 +57,9 @@ export interface GalaxyDetailModel {
     GalaxyKnowledgeStatistics;
 
   readonly isCurrentFocus:
+    boolean;
+
+  readonly isVisitable:
     boolean;
 
   readonly isOriginGalaxy:
@@ -87,6 +94,14 @@ export type GalaxyDetailUiState =
         GalaxyDetailModel;
     }>;
 
+interface LoadedGalaxyContext {
+  readonly generationKey:
+    UniverseGenerationKey;
+
+  readonly galaxyIndex:
+    bigint;
+}
+
 const INITIAL_STATE:
   GalaxyDetailUiState =
   Object.freeze({
@@ -95,17 +110,20 @@ const INITIAL_STATE:
   });
 
 /**
- * Point-11.4 read-only facade for a reloadable galaxy record with its own
- * knowledge statistics and structural exploration progress.
+ * Point-11.5 galaxy-detail facade.
  *
- * The URL never creates knowledge. A requested GalaxyLocator must already be
- * persisted at DETECTED or later. Once the galaxy is known, 11.4 reads the
- * persisted KnownDiscovery snapshot and derives only records that belong to
- * that galaxy.
+ * Loading remains knowledge-safe exactly as in 11.3/11.4: a requested
+ * GalaxyLocator must already exist at DETECTED or later and statistics are
+ * derived only from persisted KnownDiscovery rows.
  *
- * It does not read/write Discovery Points, mutate DiscoveryState, materialize
- * hidden procedural content, calculate a fictitious completion percentage or
- * change navigation focus.
+ * 11.5 adds one explicit mutation: a non-current known galaxy can become the
+ * exploration focus through GALAXY_FOCUS_RUNTIME. That runtime atomically
+ * persists activeGalaxyIndex and promotes the target to at least VISITED.
+ *
+ * The facade still does not read/write Discovery Points, materialize hidden
+ * procedural content, expose fictitious completion percentages, implement a
+ * "return to previous galaxy" flow (11.6) or model/animate physical FTL travel
+ * (11.7).
  */
 @Injectable({
   providedIn:
@@ -118,6 +136,11 @@ export class GalaxyDetailFacade {
       GENESIS_LOCAL_REPOSITORIES,
     );
 
+  private readonly focusRuntime =
+    inject(
+      GALAXY_FOCUS_RUNTIME,
+    );
+
   private readonly universeSeedFacade =
     inject(
       UniverseSeedFacade,
@@ -128,7 +151,30 @@ export class GalaxyDetailFacade {
       INITIAL_STATE,
     );
 
+  private readonly loadedContextSignal =
+    signal<LoadedGalaxyContext | null>(
+      null,
+    );
+
+  private readonly focusPendingSignal =
+    signal<boolean>(
+      false,
+    );
+
+  private readonly focusSuccessSignal =
+    signal<string>(
+      '',
+    );
+
+  private readonly focusErrorSignal =
+    signal<string>(
+      '',
+    );
+
   private loadSequence =
+    0;
+
+  private focusSequence =
     0;
 
   readonly state =
@@ -162,6 +208,21 @@ export class GalaxyDetailFacade {
       },
     );
 
+  readonly focusPending =
+    this
+      .focusPendingSignal
+      .asReadonly();
+
+  readonly focusSuccessMessage =
+    this
+      .focusSuccessSignal
+      .asReadonly();
+
+  readonly focusErrorMessage =
+    this
+      .focusErrorSignal
+      .asReadonly();
+
   async load(
     galaxyIndexValue:
       string | null,
@@ -170,6 +231,24 @@ export class GalaxyDetailFacade {
     const loadId =
       ++this
         .loadSequence;
+
+    this
+      .loadedContextSignal
+      .set(
+        null,
+      );
+
+    this
+      .focusSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .focusErrorSignal
+      .set(
+        '',
+      );
 
     this
       .stateSignal
@@ -352,6 +431,20 @@ export class GalaxyDetailFacade {
             knownDiscoveries,
           );
 
+      const isCurrentFocus =
+        navigation
+          .activeGalaxyIndex ===
+        galaxyIndex;
+
+      this
+        .loadedContextSignal
+        .set(
+          Object.freeze({
+            generationKey,
+            galaxyIndex,
+          }),
+        );
+
       this
         .stateSignal
         .set({
@@ -362,11 +455,10 @@ export class GalaxyDetailFacade {
             Object.freeze({
               profile,
               statistics,
+              isCurrentFocus,
 
-              isCurrentFocus:
-                navigation
-                  .activeGalaxyIndex ===
-                galaxyIndex,
+              isVisitable:
+                !isCurrentFocus,
 
               isOriginGalaxy:
                 galaxyIndex ===
@@ -399,6 +491,159 @@ export class GalaxyDetailFacade {
               ? error.message
               : 'No se pudo cargar la ficha general de galaxia.',
         });
+    }
+  }
+
+  async changeFocusToDisplayedGalaxy():
+    Promise<void> {
+
+    const focusId =
+      ++this
+        .focusSequence;
+
+    this
+      .focusSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .focusErrorSignal
+      .set(
+        '',
+      );
+
+    const context =
+      this
+        .loadedContextSignal();
+
+    const model =
+      this
+        .model();
+
+    if (
+      context ===
+        null ||
+      model ===
+        null
+    ) {
+      this
+        .focusErrorSignal
+        .set(
+          'No hay una galaxia conocida cargada para cambiar el foco.',
+        );
+
+      return;
+    }
+
+    if (
+      !model
+        .isVisitable
+    ) {
+      this
+        .focusErrorSignal
+        .set(
+          'Esta galaxia ya es el foco de exploración.',
+        );
+
+      return;
+    }
+
+    this
+      .focusPendingSignal
+      .set(
+        true,
+      );
+
+    try {
+      const result =
+        await this
+          .focusRuntime
+          .changeFocus(
+            context
+              .generationKey,
+            context
+              .galaxyIndex,
+          );
+
+      if (
+        focusId !==
+        this.focusSequence
+      ) {
+        return;
+      }
+
+      await this
+        .load(
+          result
+            .activeGalaxyIndex
+            .toString(
+              10,
+            ),
+        );
+
+      if (
+        focusId !==
+        this.focusSequence
+      ) {
+        return;
+      }
+
+      const refreshed =
+        this.model();
+
+      if (
+        refreshed ===
+          null ||
+        !refreshed
+          .isCurrentFocus
+      ) {
+        throw new Error(
+          'El foco se persistió, pero la ficha no pudo confirmar el nuevo contexto activo.',
+        );
+      }
+
+      this
+        .focusSuccessSignal
+        .set(
+          result
+            .didPromoteTargetToVisited
+            ? 'Foco actualizado. La galaxia queda registrada como Visitada.'
+            : 'Foco de exploración actualizado.',
+        );
+    } catch (
+      error
+    ) {
+      if (
+        focusId !==
+        this.focusSequence
+      ) {
+        return;
+      }
+
+      this
+        .focusErrorSignal
+        .set(
+          error instanceof
+            Error &&
+          error.message
+            .trim()
+            .length >
+            0
+            ? error.message
+            : 'No se pudo cambiar el foco de exploración.',
+        );
+    } finally {
+      if (
+        focusId ===
+        this.focusSequence
+      ) {
+        this
+          .focusPendingSignal
+          .set(
+            false,
+          );
+      }
     }
   }
 }

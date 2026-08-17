@@ -9,7 +9,7 @@
         <p class="gd__eyebrow">
           CATÁLOGO INTERGALÁCTICO
           <span aria-hidden="true">/</span>
-          11.4
+          11.5
         </p>
 
         <h1
@@ -20,9 +20,8 @@
         </h1>
 
         <p class="gd__subtitle">
-          Identidad, perfil observacional, estadísticas y progreso local
-          derivados únicamente del conocimiento ya persistido para esta
-          galaxia.
+          Identidad, perfil observacional, progreso local y control explícito
+          del foco de exploración para galaxias ya conocidas.
         </p>
       </div>
 
@@ -413,17 +412,100 @@
           </section>
 
           <section
+            class="gd__section"
+            data-testid="galaxy-detail-focus-control"
+            aria-labelledby="gd-focus-title"
+          >
+            <div class="gd__section-heading">
+              <small>11.5 / FOCO DE EXPLORACIÓN</small>
+
+              <h3 id="gd-focus-title">
+                Contexto galáctico activo
+              </h3>
+            </div>
+
+            @if (model.isCurrentFocus) {
+              <div
+                class="gd__boundary"
+                data-testid="galaxy-detail-focus-current"
+              >
+                <span>EN FOCO</span>
+
+                <p>
+                  Esta galaxia ya define el contexto activo de Home,
+                  Exploración y Mapa galáctico.
+                </p>
+              </div>
+            } @else {
+              <div class="gd__actions">
+                <button
+                  class="gd__action gd__action--primary"
+                  type="button"
+                  data-testid="galaxy-detail-change-focus-action"
+                  [disabled]="facade.focusPending()"
+                  (click)="changeFocus()"
+                >
+                  @if (facade.focusPending()) {
+                    Actualizando foco…
+                  } @else {
+                    Establecer como foco de exploración
+                  }
+                </button>
+              </div>
+            }
+
+            @if (facade.focusSuccessMessage()) {
+              <div
+                class="gd__boundary"
+                data-testid="galaxy-detail-focus-success"
+                role="status"
+              >
+                <span>ACTUALIZADO</span>
+
+                <p>{{ facade.focusSuccessMessage() }}</p>
+              </div>
+            }
+
+            @if (facade.focusErrorMessage()) {
+              <div
+                class="gd__boundary"
+                data-testid="galaxy-detail-focus-error"
+                role="alert"
+              >
+                <span>NO APLICADO</span>
+
+                <p>{{ facade.focusErrorMessage() }}</p>
+              </div>
+            }
+
+            <div
+              class="gd__boundary"
+              data-testid="galaxy-detail-focus-semantics"
+            >
+              <span>ALCANCE</span>
+
+              <p>
+                Cambiar el foco actualiza únicamente el contexto persistido de
+                exploración. Una galaxia conocida pasa como mínimo a Visitada;
+                Catalogada y Confirmada conservan su estado exacto. No se
+                leen ni gastan PD y esta acción no representa ni afirma un
+                viaje físico o FTL.
+              </p>
+            </div>
+          </section>
+
+          <section
             class="gd__boundary"
             data-testid="galaxy-detail-boundary"
           >
-            <span>11.4</span>
+            <span>11.5</span>
 
             <p>
-              La ficha combina el perfil seguro de 11.3 con estadísticas
-              derivadas únicamente de KnownDiscovery persistidos y el progreso
-              estructural congelado en 7.3. No expone totales ocultos, no
-              convierte estas unidades en PD y no cambia el foco de exploración;
-              ese cambio pertenece a 11.5.
+              11.5 integra la decisión pura de foco ya existente con
+              persistencia atómica de activeGalaxyIndex y del estado Visitada
+              cuando procede. El historial reciente se conserva sin exponer
+              todavía el flujo de regreso de 11.6, y no se añade la transición
+              visual reservada a 11.7.
             </p>
           </section>
 

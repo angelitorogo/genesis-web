@@ -629,13 +629,73 @@ test.describe(
         ).toContainText(
           'No son PD ni un porcentaje',
         );
+      },
+    );
+
+
+    test(
+      'should expose the point-11.5 focus control without offering a redundant change for the current galaxy',
+      async ({
+        page,
+      }) => {
+        await page.goto(
+          '/settings',
+        );
+
+        await page
+          .getByTestId(
+            'universe-seed-apply-button',
+          )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'universe-seed-status',
+          ),
+        ).toContainText(
+          /Universo (?:creado y )?activado correctamente\./,
+        );
+
+        await page.goto(
+          '/galaxies/0',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-focus-control',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-focus-current',
+          ),
+        ).toContainText(
+          'Esta galaxia ya define el contexto activo',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-change-focus-action',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-focus-semantics',
+          ),
+        ).toContainText(
+          'no representa ni afirma un viaje físico o FTL',
+        );
 
         await expect(
           page.getByTestId(
             'galaxy-detail-boundary',
           ),
         ).toContainText(
-          '11.4',
+          '11.5',
         );
       },
     );

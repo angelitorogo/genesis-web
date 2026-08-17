@@ -289,6 +289,12 @@ test.describe(
             ),
           ).toBeVisible();
 
+          await expect(
+            page.getByTestId(
+              'galaxy-detail-focus-control',
+            ),
+          ).toBeVisible();
+
           if (
             viewport.name ===
             'mobile-pwa'
