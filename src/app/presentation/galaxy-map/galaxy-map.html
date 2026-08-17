@@ -166,15 +166,16 @@
                 class="galactic-map__row galactic-map__viewport-footer"
               >
                 <span class="galactic-map__meta">
-                  NUBE VISUAL GPU / COBERTURA / POSICIÓN 10.7
+                  NUBE VISUAL GPU / LOD / WEB WORKER 10.9
                 </span>
 
                 <p>
-                  Los puntos continúan siendo muestras de render. La cuadrícula
-                  representa cobertura sectorial persistida, las capas permiten
-                  filtrar el conocimiento ya localizado y cada marcador persistente
-                  seleccionado muestra ahora su posición relativa respecto al centro
-                  galáctico sin materializar contenido adicional del sector.
+                  Los puntos continúan siendo muestras de render. 10.9 mantiene la
+                  selección visible y el LOD de 10.8, pero el layout determinista, el
+                  índice espacial y la compactación de buffers se ejecutan en el Web
+                  Worker. El hilo principal conserva cámara, controles y Three.js, y
+                  nunca materializa por ello sistemas, estrellas físicas, planetas ni
+                  Ground Truth de sectores no solicitados.
                 </p>
               </div>
             </section>
@@ -204,7 +205,7 @@
             data-testid="galactic-map-point-boundary"
           >
             <span>
-              10.7
+              10.9
             </span>
 
             <p>
@@ -216,8 +217,14 @@
               conocida, su posición determinista dentro del sector y las fronteras
               visuales ya congeladas. Las muestras GPU siguen sin adquirir identidad
               física. La región de habitabilidad galáctica mantiene el modelo V1
-              SPECULATIVE_SIMPLIFIED. LOD, generación por sectores visibles y cálculo
-              pesado pertenecen a 10.8–10.9.
+              SPECULATIVE_SIMPLIFIED. El render 10.8 conserva la distribución visual
+              determinista de 10.1 y limita la materialización al viewport y su margen de
+              precarga. 10.9 mueve al Web Worker la generación pesada del layout, el índice
+              espacial y la compactación LOD, transfiere ArrayBuffers sin copia adicional y
+              descarta respuestas antiguas mediante revisiones monotónicas. Mientras llega
+              una actualización, Three.js conserva el último batch válido y los controles
+              permanecen en el hilo principal. No se materializa contenido físico de
+              sectores no solicitados.
             </p>
           </section>
         }

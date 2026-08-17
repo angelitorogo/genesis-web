@@ -14,6 +14,18 @@
   [attr.data-camera-target-z]="cameraState()?.targetZ ?? null"
   [attr.data-selected-sample-index]="selection()?.sampleIndex ?? null"
   [attr.data-selected-marker-kind]="markerSelection()?.resultKind ?? null"
+  [attr.data-source-particle-count]="lodState()?.sourceParticleCount ?? null"
+  [attr.data-materialized-particle-count]="lodState()?.materializedParticleCount ?? null"
+  [attr.data-visible-sector-count]="lodState()?.visibleSectorCount ?? null"
+  [attr.data-active-sector-count]="lodState()?.activeSectorCount ?? null"
+  [attr.data-lod-level]="lodState()?.lodLevel ?? null"
+  [attr.data-lod-retention]="lodState()?.particleRetentionRatio ?? null"
+  [attr.data-sector-cache-entries]="lodState()?.cacheEntryCount ?? null"
+  [attr.data-worker-status]="workerState().status"
+  [attr.data-worker-runtime]="workerState().runtime ?? null"
+  [attr.data-worker-request-revision]="workerState().requestRevision"
+  [attr.data-worker-applied-revision]="workerState().appliedRevision"
+  [attr.data-worker-pending]="workerState().pending"
   [attr.data-explored-sector-count]="model.explorationCoverage?.exploredSectorCount ?? null"
   [attr.data-total-sector-count]="model.explorationCoverage ? model.explorationCoverage.totalSectorCount.toString() : null"
   [attr.data-sector-grid-side]="model.explorationCoverage ? model.explorationCoverage.grid.sideLengthInSectors.toString() : null"
@@ -94,6 +106,76 @@
         las celdas resaltadas ya tienen un SectorLocator persistido en estado
         DETECTED o superior.
       </p>
+
+      @if (lodState(); as lod) {
+        <div
+          class="galactic-map-scene__lod-status"
+          data-testid="galactic-map-lod-status"
+          aria-label="Estado de detalle adaptativo y sectores activos"
+        >
+          <small>
+            RENDER ADAPTATIVO / WORKER 10.9
+          </small>
+
+          <div class="galactic-map-scene__coverage-row">
+            <strong>
+              Sectores visibles
+            </strong>
+
+            <code data-testid="galactic-map-visible-sector-count">
+              {{ lod.visibleSectorCount }}
+            </code>
+          </div>
+
+          <div class="galactic-map-scene__coverage-row">
+            <strong>
+              Sectores activos
+            </strong>
+
+            <code data-testid="galactic-map-active-sector-count">
+              {{ lod.activeSectorCount }}
+            </code>
+          </div>
+
+          <div class="galactic-map-scene__coverage-row">
+            <strong>
+              LOD
+            </strong>
+
+            <code data-testid="galactic-map-lod-level">
+              {{ lod.lodLevel }}
+            </code>
+          </div>
+
+          <div class="galactic-map-scene__coverage-row">
+            <strong>
+              Worker
+            </strong>
+
+            <code data-testid="galactic-map-worker-status">
+              {{ workerState().status }}
+            </code>
+          </div>
+
+          <div class="galactic-map-scene__coverage-row">
+            <strong>
+              Revisión
+            </strong>
+
+            <code data-testid="galactic-map-worker-revision">
+              {{ workerState().appliedRevision }}/{{ workerState().requestRevision }}
+            </code>
+          </div>
+
+          <p>
+            Solo el viewport y un pequeño anillo de precarga mantienen muestras
+            GPU materializadas. El layout determinista, el índice espacial y la
+            compactación LOD se calculan fuera del hilo principal; las respuestas
+            antiguas se descartan por revisión y la escena conserva el último batch
+            válido mientras llega el siguiente.
+          </p>
+        </div>
+      }
 
       @if (model.discoveryMarkers; as discoveryMarkers) {
         <div

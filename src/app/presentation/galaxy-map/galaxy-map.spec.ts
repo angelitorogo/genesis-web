@@ -54,8 +54,13 @@ import {
 
 import {
   GALACTIC_MAP_SCENE_RUNTIME_FACTORY,
+  GalacticMapWorkerStatus,
   type GalacticMapSceneRuntime,
 } from './galactic-map-scene';
+
+import {
+  GalacticMapLodLevel,
+} from './galactic-map-visible-sector-lod';
 
 import {
   GalacticMapPage,
@@ -112,7 +117,7 @@ describe(
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
             throw new Error(
-              '10.7 page must not read PD.',
+              '10.9 page must not read PD.',
             );
           },
 
@@ -120,7 +125,7 @@ describe(
 
           async getGalaxyDiscoveryPoints() {
             throw new Error(
-              '10.7 page must not read galaxy PD.',
+              '10.9 page must not read galaxy PD.',
             );
           },
 
@@ -159,7 +164,7 @@ describe(
 
           async getKnownDiscoveriesInSector() {
             throw new Error(
-              '10.7 page must not query or materialize sector content.',
+              '10.9 page must not query or materialize physical sector content.',
             );
           },
         },
@@ -238,6 +243,48 @@ describe(
 
               galaxySpinListener?.(
                 galaxySpinRadians,
+              );
+            },
+
+            setLodStateListener(
+              value,
+            ) {
+              value?.(
+                Object.freeze({
+                  sourceParticleCount:
+                    182_000,
+                  materializedParticleCount:
+                    12_000,
+                  visibleSectorCount:
+                    84,
+                  activeSectorCount:
+                    112,
+                  lodLevel:
+                    GalacticMapLodLevel.OVERVIEW,
+                  particleRetentionRatio:
+                    0.88,
+                  cacheEntryCount:
+                    1,
+                }),
+              );
+            },
+
+            setWorkerStateListener(
+              value,
+            ) {
+              value?.(
+                Object.freeze({
+                  status:
+                    GalacticMapWorkerStatus.READY,
+                  runtime:
+                    'worker',
+                  requestRevision:
+                    3,
+                  appliedRevision:
+                    3,
+                  pending:
+                    false,
+                }),
               );
             },
 
@@ -335,7 +382,7 @@ describe(
     }
 
     it(
-      'should expose the point-10.7 interactive map with persistent marker navigation and relative-position support',
+      'should expose the point-10.9 worker-backed map while preserving visible-sector LOD, marker navigation and relative position',
       async () => {
         const element =
           await renderedPage();
@@ -422,6 +469,48 @@ describe(
             '[data-testid="galactic-map-layers"]',
           ),
         ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-lod-status"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-lod-level',
+            ),
+        ).toBe(
+          'OVERVIEW',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-worker-status',
+            ),
+        ).toBe(
+          'READY',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-scene"]',
+            )
+            ?.getAttribute(
+              'data-worker-runtime',
+            ),
+        ).toBe(
+          'worker',
+        );
 
         expect(
           element.querySelectorAll(
@@ -633,7 +722,7 @@ describe(
     );
 
     it(
-      'should keep point-10.7 relative position contextual to a selected persistent marker and reserve 10.8-plus capabilities',
+      'should keep 10.7 relative position contextual while exposing the completed point-10.9 worker rendering boundary',
       async () => {
         const element =
           await renderedPage();
@@ -685,7 +774,7 @@ describe(
             '[data-testid="galactic-map-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '10.8–10.9',
+          '10.9',
         );
 
         expect(

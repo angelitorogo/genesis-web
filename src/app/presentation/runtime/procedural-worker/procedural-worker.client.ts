@@ -6,10 +6,6 @@ import {
 } from '@angular/core';
 
 import {
-  handleProceduralWorkerRequest,
-} from './procedural-worker.handler';
-
-import {
   AnyProceduralWorkerRequest,
   AnyProceduralWorkerResponse,
   ProceduralWorkerPayload,
@@ -159,6 +155,13 @@ class InlineProceduralWorkerPort
     message: AnyProceduralWorkerRequest,
   ): Promise<void> {
     try {
+      const {
+        handleProceduralWorkerRequest,
+      } =
+        await import(
+          './procedural-worker.handler'
+        );
+
       const response =
         await handleProceduralWorkerRequest(
           message,

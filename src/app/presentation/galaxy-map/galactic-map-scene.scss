@@ -134,6 +134,30 @@
     }
   }
 
+  &__lod-status {
+    margin-top: 0.65rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(106, 215, 255, 0.16);
+
+    > small {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: var(--genesis-color-primary);
+      font-family: var(--genesis-font-mono);
+      font-size: 0.56rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .galactic-map-scene__coverage-row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    p {
+      margin-top: 0.45rem;
+    }
+  }
+
   &__markers {
     margin-top: 0.65rem;
     padding-top: 0.6rem;

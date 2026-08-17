@@ -35,6 +35,10 @@ import {
   type GalacticMapParticleLayout,
 } from './galactic-map-particle-layout';
 
+import {
+  createGalacticMapParticleRenderInput,
+} from './galactic-map-particle-render-input';
+
 const CORE_PARTICLE_COUNT =
   20_000;
 
@@ -160,6 +164,66 @@ describe(
           first.opacities,
         );
       },15_000,
+    );
+
+    it(
+      'should preserve exact frozen GPU buffers when the same render input is structured-clone safe for point-10.9',
+      () => {
+        const target =
+          model(
+            0n,
+          );
+
+        const synchronous =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const workerInput =
+          structuredClone(
+            createGalacticMapParticleRenderInput(
+              target,
+            ),
+          );
+
+        const workerEquivalent =
+          GalacticMapParticleLayoutGenerator
+            .generateFromRenderInput(
+              workerInput,
+            );
+
+        expect(
+          workerEquivalent.count,
+        ).toBe(
+          synchronous.count,
+        );
+
+        expect(
+          workerEquivalent.positions,
+        ).toEqual(
+          synchronous.positions,
+        );
+
+        expect(
+          workerEquivalent.colors,
+        ).toEqual(
+          synchronous.colors,
+        );
+
+        expect(
+          workerEquivalent.sizes,
+        ).toEqual(
+          synchronous.sizes,
+        );
+
+        expect(
+          workerEquivalent.opacities,
+        ).toEqual(
+          synchronous.opacities,
+        );
+      },
+      15_000,
     );
 
     it(

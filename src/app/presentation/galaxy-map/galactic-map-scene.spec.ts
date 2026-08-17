@@ -88,8 +88,15 @@ import {
   GalacticMapScene,
   staticPresentationScaleMultiplier,
   staticPresentationTiltRadians,
+  GalacticMapWorkerStatus,
+  type GalacticMapLodState,
   type GalacticMapSceneRuntime,
+  type GalacticMapWorkerState,
 } from './galactic-map-scene';
+
+import {
+  GalacticMapLodLevel,
+} from './galactic-map-visible-sector-lod';
 
 describe(
   'GalacticMapScene',
@@ -254,6 +261,46 @@ describe(
     let galaxySpinStateListener:
       ((radians: number) => void) | null;
 
+    let lodStateListener:
+      ((state: GalacticMapLodState) => void) | null;
+
+    let workerStateListener:
+      ((state: GalacticMapWorkerState) => void) | null;
+
+    const lodState:
+      GalacticMapLodState =
+      Object.freeze({
+        sourceParticleCount:
+          182_000,
+        materializedParticleCount:
+          12_000,
+        visibleSectorCount:
+          84,
+        activeSectorCount:
+          112,
+        lodLevel:
+          GalacticMapLodLevel.OVERVIEW,
+        particleRetentionRatio:
+          0.88,
+        cacheEntryCount:
+          1,
+      });
+
+    const workerState:
+      GalacticMapWorkerState =
+      Object.freeze({
+        status:
+          GalacticMapWorkerStatus.READY,
+        runtime:
+          'worker',
+        requestRevision:
+          4,
+        appliedRevision:
+          4,
+        pending:
+          false,
+      });
+
     const selectedSample:
       GalacticMapVisualSelection =
       Object.freeze({
@@ -319,6 +366,12 @@ describe(
           0;
 
         galaxySpinStateListener =
+          null;
+
+        lodStateListener =
+          null;
+
+        workerStateListener =
           null;
 
         cameraState =
@@ -390,6 +443,28 @@ describe(
 
               galaxySpinStateListener?.(
                 galaxySpinRadians,
+              );
+            },
+
+            setLodStateListener(
+              listener,
+            ) {
+              lodStateListener =
+                listener;
+
+              lodStateListener?.(
+                lodState,
+              );
+            },
+
+            setWorkerStateListener(
+              listener,
+            ) {
+              workerStateListener =
+                listener;
+
+              workerStateListener?.(
+                workerState,
               );
             },
 
@@ -507,7 +582,7 @@ describe(
     );
 
     it(
-      'should initialize the interactive renderer host with coverage, persistent markers and six point-10.5 layer controls',
+      'should initialize the point-10.9 worker-backed renderer with visible-sector LOD, coverage, markers and six thematic layers',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -621,6 +696,89 @@ describe(
           )?.textContent,
         ).toContain(
           'No explorado',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-lod-status"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-lod-level"]',
+          )?.textContent,
+        ).toContain(
+          'OVERVIEW',
+        );
+
+        const scene =
+          element.querySelector(
+            '[data-testid="galactic-map-scene"]',
+          );
+
+        expect(
+          scene?.getAttribute(
+            'data-source-particle-count',
+          ),
+        ).toBe(
+          '182000',
+        );
+
+        expect(
+          scene?.getAttribute(
+            'data-materialized-particle-count',
+          ),
+        ).toBe(
+          '12000',
+        );
+
+        expect(
+          scene?.getAttribute(
+            'data-visible-sector-count',
+          ),
+        ).toBe(
+          '84',
+        );
+
+        expect(
+          scene?.getAttribute(
+            'data-active-sector-count',
+          ),
+        ).toBe(
+          '112',
+        );
+
+        expect(
+          scene?.getAttribute(
+            'data-worker-status',
+          ),
+        ).toBe(
+          'READY',
+        );
+
+        expect(
+          scene?.getAttribute(
+            'data-worker-runtime',
+          ),
+        ).toBe(
+          'worker',
+        );
+
+        expect(
+          scene?.getAttribute(
+            'data-worker-pending',
+          ),
+        ).toBe(
+          'false',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-worker-status"]',
+          )?.textContent,
+        ).toContain(
+          'READY',
         );
 
         expect(
@@ -1326,6 +1484,10 @@ describe(
 
         expect(
           cameraStateListener,
+        ).toBeNull();
+
+        expect(
+          lodStateListener,
         ).toBeNull();
       },
     );

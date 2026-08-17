@@ -142,7 +142,7 @@ async function persistOneStaticDiscovery(
   }
 
   throw new Error(
-    'The frozen central point-10.7 E2E sample did not produce a static persistent discovery.',
+    'The frozen central point-10.9 E2E sample did not produce a static persistent discovery.',
   );
 }
 
@@ -176,10 +176,10 @@ async function numericAttribute(
 }
 
 test.describe(
-  'GENESIS point-10.7 marker relative position and Archive navigation',
+  'GENESIS point-10.9 worker-backed visible-sector LOD and marker navigation',
   () => {
     test(
-      'should expose galactocentric position for a persistent marker before navigating to its read-only Archive record',
+      'should offload particle generation and visible-sector LOD to the Web Worker while preserving marker position and Archive navigation',
       async ({
         page,
       }) => {
@@ -250,6 +250,49 @@ test.describe(
         ).toHaveAttribute(
           'data-render-state',
           'ready',
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-worker-status',
+          'READY',
+          {
+            timeout:
+              20_000,
+          },
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-worker-runtime',
+          'worker',
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-worker-pending',
+          'false',
+        );
+
+        const initialWorkerRequestRevision =
+          await numericAttribute(
+            scene,
+            'data-worker-request-revision',
+          );
+
+        const initialWorkerAppliedRevision =
+          await numericAttribute(
+            scene,
+            'data-worker-applied-revision',
+          );
+
+        expect(
+          initialWorkerAppliedRevision,
+        ).toBe(
+          initialWorkerRequestRevision,
         );
 
         await expect(
@@ -526,6 +569,23 @@ test.describe(
         await expect(
           scene,
         ).toHaveAttribute(
+          'data-worker-status',
+          'READY',
+          {
+            timeout:
+              20_000,
+          },
+        );
+
+        const reloadedWorkerRequestRevision =
+          await numericAttribute(
+            scene,
+            'data-worker-request-revision',
+          );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
           'data-discovery-marker-count',
           String(
             markerCountBeforeReload,
@@ -548,6 +608,67 @@ test.describe(
         ).toBeGreaterThan(
           0,
         );
+
+        const sourceParticleCount =
+          await numericAttribute(
+            scene,
+            'data-source-particle-count',
+          );
+
+        const initialMaterializedParticleCount =
+          await numericAttribute(
+            scene,
+            'data-materialized-particle-count',
+          );
+
+        const initialVisibleSectorCount =
+          await numericAttribute(
+            scene,
+            'data-visible-sector-count',
+          );
+
+        const initialActiveSectorCount =
+          await numericAttribute(
+            scene,
+            'data-active-sector-count',
+          );
+
+        expect(
+          initialMaterializedParticleCount,
+        ).toBeLessThan(
+          sourceParticleCount,
+        );
+
+        expect(
+          initialVisibleSectorCount,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
+          initialActiveSectorCount,
+        ).toBeGreaterThanOrEqual(
+          initialVisibleSectorCount,
+        );
+
+        expect(
+          initialActiveSectorCount,
+        ).toBeLessThanOrEqual(
+          totalSectorCount,
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-lod-level',
+          'OVERVIEW',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-lod-status',
+          ),
+        ).toBeVisible();
 
         const canvasSize =
           await canvas.evaluate(
@@ -600,6 +721,118 @@ test.describe(
             initialDistance -
             0.05,
           );
+
+        for (
+          let attempt =
+            0;
+          attempt <
+            8;
+          attempt +=
+            1
+        ) {
+          const distance =
+            await numericAttribute(
+              scene,
+              'data-camera-distance',
+            );
+
+          if (
+            distance <=
+              2.55
+          ) {
+            break;
+          }
+
+          await page.mouse.wheel(
+            0,
+            -900,
+          );
+        }
+
+        await expect
+          .poll(
+            async () =>
+              numericAttribute(
+                scene,
+                'data-camera-distance',
+              ),
+          )
+          .toBeLessThanOrEqual(
+            2.60,
+          );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-lod-level',
+          /^(?:BALANCED|DETAIL)$/,
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-worker-status',
+          'READY',
+          {
+            timeout:
+              20_000,
+          },
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-worker-pending',
+          'false',
+        );
+
+        const zoomWorkerRequestRevision =
+          await numericAttribute(
+            scene,
+            'data-worker-request-revision',
+          );
+
+        const zoomWorkerAppliedRevision =
+          await numericAttribute(
+            scene,
+            'data-worker-applied-revision',
+          );
+
+        expect(
+          zoomWorkerRequestRevision,
+        ).toBeGreaterThan(
+          reloadedWorkerRequestRevision,
+        );
+
+        expect(
+          zoomWorkerAppliedRevision,
+        ).toBe(
+          zoomWorkerRequestRevision,
+        );
+
+        const zoomedVisibleSectorCount =
+          await numericAttribute(
+            scene,
+            'data-visible-sector-count',
+          );
+
+        const zoomedActiveSectorCount =
+          await numericAttribute(
+            scene,
+            'data-active-sector-count',
+          );
+
+        expect(
+          zoomedVisibleSectorCount,
+        ).toBeLessThanOrEqual(
+          initialVisibleSectorCount,
+        );
+
+        expect(
+          zoomedActiveSectorCount,
+        ).toBeLessThanOrEqual(
+          initialActiveSectorCount,
+        );
 
         const bounds =
           await canvas.boundingBox();
@@ -1381,7 +1614,7 @@ test.describe(
             'galactic-map-point-boundary',
           ),
         ).toContainText(
-          '10.8–10.9',
+          '10.9',
         );
 
         await markerLink.click();

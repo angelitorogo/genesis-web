@@ -25,6 +25,19 @@ import {
 import * as THREE from 'three';
 
 import {
+  ProceduralWorkerClient,
+} from '../runtime/procedural-worker/procedural-worker.client';
+
+import {
+  type ProceduralWorkerRuntime,
+} from '../runtime/procedural-worker/procedural-worker.protocol';
+
+import {
+  type GalacticMapWorkerParticleBatch,
+  type GalacticMapWorkerParticleWindow,
+} from '../runtime/procedural-worker/galactic-map-particle-worker-session';
+
+import {
   DiscoveryState,
   type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
@@ -81,20 +94,96 @@ import {
 } from './galactic-map-relative-position';
 
 import {
-  GalacticMapParticleLayoutGenerator,
-} from './galactic-map-particle-layout';
+  createGalacticMapParticleRenderInput,
+} from './galactic-map-particle-render-input';
+
+import {
+  galacticMapParticleSectorIndexConfig,
+} from './galactic-map-particle-sector-index-config';
 
 import {
   createGalacticMapSectorOverlay,
   type GalacticMapSectorOverlay,
 } from './galactic-map-sector-overlay';
 
+import {
+  GalacticMapLodLevel,
+  resolveGalacticMapVisibleSectorWindow,
+  type GalacticMapVisibleSectorWindow,
+} from './galactic-map-visible-sector-lod';
+
 const CLICK_MAX_MOVEMENT_PX =
   6;
+
+let galacticMapParticleSessionSequence =
+  0;
 
 export interface GalacticMapSceneRenderInfo {
   readonly particleCount:
     number;
+}
+
+export interface GalacticMapLodState {
+  readonly sourceParticleCount:
+    number;
+
+  readonly materializedParticleCount:
+    number;
+
+  readonly visibleSectorCount:
+    number;
+
+  readonly activeSectorCount:
+    number;
+
+  readonly lodLevel:
+    GalacticMapLodLevel;
+
+  readonly particleRetentionRatio:
+    number;
+
+  readonly cacheEntryCount:
+    number;
+}
+
+export const GalacticMapWorkerStatus =
+  Object.freeze({
+    IDLE:
+      'IDLE',
+
+    INITIALIZING:
+      'INITIALIZING',
+
+    READY:
+      'READY',
+
+    UPDATING:
+      'UPDATING',
+
+    ERROR:
+      'ERROR',
+  } as const);
+
+export type GalacticMapWorkerStatus =
+  typeof GalacticMapWorkerStatus[
+    keyof typeof GalacticMapWorkerStatus
+  ];
+
+export interface GalacticMapWorkerState {
+  readonly status:
+    GalacticMapWorkerStatus;
+
+  readonly runtime:
+    ProceduralWorkerRuntime | null;
+
+  readonly requestRevision:
+    number;
+
+  readonly appliedRevision:
+    number;
+
+  readonly pending:
+    boolean;
 }
 
 export interface GalacticMapSceneRuntime {
@@ -128,6 +217,16 @@ export interface GalacticMapSceneRuntime {
   setGalaxySpinStateListener(
     listener:
       ((radians: number) => void) | null,
+  ): void;
+
+  setLodStateListener(
+    listener:
+      ((state: GalacticMapLodState) => void) | null,
+  ): void;
+
+  setWorkerStateListener?(
+    listener:
+      ((state: GalacticMapWorkerState) => void) | null,
   ): void;
 
   setRotationEnabled(
@@ -179,8 +278,21 @@ export const GALACTIC_MAP_SCENE_RUNTIME_FACTORY =
       providedIn:
         'root',
 
-      factory: () =>
-        createThreeGalacticMapSceneRuntime,
+      factory: () => {
+        const workerClient =
+          inject(
+            ProceduralWorkerClient,
+          );
+
+        return (
+          canvas:
+            HTMLCanvasElement,
+        ) =>
+          createThreeGalacticMapSceneRuntime(
+            canvas,
+            workerClient,
+          );
+      },
     },
   );
 
@@ -205,15 +317,14 @@ interface PointerGesture {
 }
 
 /**
- * Point-10.7 Angular host for the Three.js scene.
+ * Point-10.9 Angular host for the Three.js scene.
  *
- * It preserves the approved point-10.2 camera/selection behavior, 10.3 sector
- * coverage, 10.4 persistent markers and 10.5 thematic layers. Point 10.6 makes
- * persisted SystemLocator/GalacticObjectLocator markers selectable with
- * priority over GPU samples and exposes navigation to a read-only archive
- * record without materializing hidden Ground Truth. Point 10.7 projects the
- * selected persistent marker into read-only galactocentric coordinates, physical
- * offsets, normalized radius, azimuth and the already-known radial region.
+ * It preserves the approved 10.2-10.8 interaction, observation and visible-
+ * sector LOD contracts. Heavy renderer-only particle generation, spatial
+ * indexing and compact-buffer materialization now run in the procedural Web
+ * Worker. The main thread keeps Three.js, camera and controls responsive, drops
+ * stale worker responses by monotonic revision and never generates physical
+ * sector content or hidden Ground Truth through this optimization layer.
  */
 @Component({
   selector:
@@ -335,6 +446,27 @@ export class GalacticMapScene
       null,
     );
 
+  private readonly lodStateSignal =
+    signal<GalacticMapLodState | null>(
+      null,
+    );
+
+  private readonly workerStateSignal =
+    signal<GalacticMapWorkerState>(
+      Object.freeze({
+        status:
+          GalacticMapWorkerStatus.IDLE,
+        runtime:
+          null,
+        requestRevision:
+          0,
+        appliedRevision:
+          0,
+        pending:
+          false,
+      }),
+    );
+
   private readonly layerVisibilitySignal =
     signal<GalacticMapLayerVisibility>(
       INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
@@ -368,6 +500,16 @@ export class GalacticMapScene
   readonly markerSelection =
     this
       .markerSelectionSignal
+      .asReadonly();
+
+  readonly lodState =
+    this
+      .lodStateSignal
+      .asReadonly();
+
+  readonly workerState =
+    this
+      .workerStateSignal
       .asReadonly();
 
   readonly layerVisibility =
@@ -421,6 +563,36 @@ export class GalacticMapScene
             .galaxySpinRadiansSignal
             .set(
               radians,
+            );
+        },
+      );
+
+      this.runtime.setLodStateListener(
+        (
+          state,
+        ) => {
+          this
+            .lodStateSignal
+            .set(
+              state,
+            );
+
+          this
+            .particleCountSignal
+            .set(
+              state.materializedParticleCount,
+            );
+        },
+      );
+
+      this.runtime.setWorkerStateListener?.(
+        (
+          state,
+        ) => {
+          this
+            .workerStateSignal
+            .set(
+              state,
             );
         },
       );
@@ -511,6 +683,18 @@ export class GalacticMapScene
     this
       .runtime
       ?.setGalaxySpinStateListener(
+        null,
+      );
+
+    this
+      .runtime
+      ?.setLodStateListener(
+        null,
+      );
+
+    this
+      .runtime
+      ?.setWorkerStateListener?.(
         null,
       );
 
@@ -1211,6 +1395,29 @@ export class GalacticMapScene
         );
 
       this
+        .lodStateSignal
+        .set(
+          null,
+        );
+
+      this
+        .workerStateSignal
+        .set(
+          Object.freeze({
+            status:
+              GalacticMapWorkerStatus.ERROR,
+            runtime:
+              null,
+            requestRevision:
+              0,
+            appliedRevision:
+              0,
+            pending:
+              false,
+          }),
+        );
+
+      this
         .renderStateSignal
         .set(
           'error',
@@ -1251,10 +1458,14 @@ function markerVisibleInLayers(
 function createThreeGalacticMapSceneRuntime(
   canvas:
     HTMLCanvasElement,
+
+  workerClient:
+    ProceduralWorkerClient,
 ): GalacticMapSceneRuntime {
 
   return new ThreeGalacticMapSceneRuntime(
     canvas,
+    workerClient,
   );
 }
 
@@ -1263,6 +1474,9 @@ class ThreeGalacticMapSceneRuntime
 
   private readonly canvas:
     HTMLCanvasElement;
+
+  private readonly workerClient:
+    ProceduralWorkerClient;
 
   private readonly renderer:
     THREE.WebGLRenderer;
@@ -1289,6 +1503,48 @@ class ThreeGalacticMapSceneRuntime
     ((radians: number) => void) | null =
     null;
 
+  private lodStateListener:
+    ((state: GalacticMapLodState) => void) | null =
+    null;
+
+  private workerStateListener:
+    ((state: GalacticMapWorkerState) => void) | null =
+    null;
+
+  private workerStateValue:
+    GalacticMapWorkerState =
+    Object.freeze({
+      status:
+        GalacticMapWorkerStatus.IDLE,
+      runtime:
+        null,
+      requestRevision:
+        0,
+      appliedRevision:
+        0,
+      pending:
+        false,
+    });
+
+  private lodStateValue:
+    GalacticMapLodState =
+    Object.freeze({
+      sourceParticleCount:
+        0,
+      materializedParticleCount:
+        0,
+      visibleSectorCount:
+        0,
+      activeSectorCount:
+        0,
+      lodLevel:
+        GalacticMapLodLevel.OVERVIEW,
+      particleRetentionRatio:
+        0.88,
+      cacheEntryCount:
+        0,
+    });
+
   private galaxySpinRadiansValue =
     0;
 
@@ -1305,6 +1561,49 @@ class ThreeGalacticMapSceneRuntime
       THREE.ShaderMaterial
     > | null =
     null;
+
+  private pointMaterial:
+    THREE.ShaderMaterial | null =
+    null;
+
+  private particleSessionId:
+    string | null =
+    null;
+
+  private particleSessionReady =
+    false;
+
+  private particleRequestRevision =
+    0;
+
+  private particleAppliedRevision =
+    0;
+
+  private pendingWindowSignature:
+    string | null =
+    null;
+
+  private deferredWindow:
+    GalacticMapVisibleSectorWindow | null =
+    null;
+
+  private disposed =
+    false;
+
+  private activeSourceIndices:
+    Uint32Array =
+    new Uint32Array();
+
+  private activeWindowSignature:
+    string | null =
+    null;
+
+  private activeCoverage:
+    GalacticMapModel['explorationCoverage'] =
+    null;
+
+  private activeHaloOuterRadiusNormalized =
+    0;
 
   private sectorOverlay:
     GalacticMapSectorOverlay | null =
@@ -1335,9 +1634,15 @@ class ThreeGalacticMapSceneRuntime
   constructor(
     canvas:
       HTMLCanvasElement,
+
+    workerClient:
+      ProceduralWorkerClient,
   ) {
     this.canvas =
       canvas;
+
+    this.workerClient =
+      workerClient;
 
     this.renderer =
       new THREE.WebGLRenderer({
@@ -1388,6 +1693,7 @@ class ThreeGalacticMapSceneRuntime
         this.camera,
         canvas,
         () => {
+          this.updateVisibleSectorMaterialization();
           this.renderFrame();
           this.emitCameraState();
         },
@@ -1469,12 +1775,11 @@ class ThreeGalacticMapSceneRuntime
       .updateProjectionMatrix();
 
     if (
-      this.points !==
+      this.pointMaterial !==
       null
     ) {
       this
-        .points
-        .material
+        .pointMaterial
         .uniforms[
           'uPixelRatio'
         ]
@@ -1488,6 +1793,7 @@ class ThreeGalacticMapSceneRuntime
         this.pixelRatio,
       );
 
+    this.updateVisibleSectorMaterialization();
     this.renderFrame();
     this.emitCameraState();
   }
@@ -1499,12 +1805,6 @@ class ThreeGalacticMapSceneRuntime
 
     this.disposePoints();
     this.clearSelection();
-
-    const layout =
-      GalacticMapParticleLayoutGenerator
-        .generate(
-          model,
-        );
 
     const visual =
       model.visualStructure;
@@ -1518,52 +1818,12 @@ class ThreeGalacticMapSceneRuntime
       );
     }
 
-    const geometry =
-      new THREE.BufferGeometry();
+    this.disposed =
+      false;
 
-    geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(
-        layout.positions,
-        3,
-      ),
-    );
-
-    geometry.setAttribute(
-      'customColor',
-      new THREE.BufferAttribute(
-        layout.colors,
-        3,
-      ),
-    );
-
-    geometry.setAttribute(
-      'aSize',
-      new THREE.BufferAttribute(
-        layout.sizes,
-        1,
-      ),
-    );
-
-    geometry.setAttribute(
-      'aOpacity',
-      new THREE.BufferAttribute(
-        layout.opacities,
-        1,
-      ),
-    );
-
-    geometry.computeBoundingSphere();
-
-    const material =
+    this.pointMaterial =
       createGalaxyPointMaterial(
         this.pixelRatio,
-      );
-
-    const points =
-      new THREE.Points(
-        geometry,
-        material,
       );
 
     const galaxyGroup =
@@ -1598,6 +1858,14 @@ class ThreeGalacticMapSceneRuntime
 
     const explorationCoverage =
       model.explorationCoverage;
+
+    this.activeCoverage =
+      explorationCoverage;
+
+    this.activeHaloOuterRadiusNormalized =
+      visual
+        .regions
+        .haloOuterRadiusNormalized;
 
     if (
       explorationCoverage !==
@@ -1673,10 +1941,6 @@ class ThreeGalacticMapSceneRuntime
         discoveryMarkerOverlay;
     }
 
-    galaxyGroup.add(
-      points,
-    );
-
     this.scene.add(
       galaxyGroup,
     );
@@ -1684,16 +1948,19 @@ class ThreeGalacticMapSceneRuntime
     this.galaxyGroup =
       galaxyGroup;
 
-    this.points =
-      points;
-
     this.applyLayerVisibility();
     this.renderFrame();
     this.emitGalaxySpinState();
+    this.emitLodState();
+
+    this.startParticleWorkerSession(
+      model,
+    );
 
     return Object.freeze({
       particleCount:
-        layout.count,
+        this.lodStateValue
+          .materializedParticleCount,
     });
   }
 
@@ -1731,6 +1998,28 @@ class ThreeGalacticMapSceneRuntime
       listener;
 
     this.emitGalaxySpinState();
+  }
+
+  setLodStateListener(
+    listener:
+      ((state: GalacticMapLodState) => void) | null,
+  ): void {
+
+    this.lodStateListener =
+      listener;
+
+    this.emitLodState();
+  }
+
+  setWorkerStateListener(
+    listener:
+      ((state: GalacticMapWorkerState) => void) | null,
+  ): void {
+
+    this.workerStateListener =
+      listener;
+
+    this.emitWorkerState();
   }
 
   setRotationEnabled(
@@ -1835,11 +2124,26 @@ class ThreeGalacticMapSceneRuntime
       return null;
     }
 
+    const sourceSampleIndex =
+      this.activeSourceIndices[
+        selection.sampleIndex
+      ];
+
+    const canonicalSelection =
+      Object.freeze({
+        ...selection,
+        sampleIndex:
+          sourceSampleIndex ===
+            undefined
+            ? selection.sampleIndex
+            : sourceSampleIndex,
+      });
+
     this.showSelectionMarker(
-      selection,
+      canonicalSelection,
     );
 
-    return selection;
+    return canonicalSelection;
   }
 
   clearSelection():
@@ -1878,6 +2182,15 @@ class ThreeGalacticMapSceneRuntime
 
     this.galaxySpinStateListener =
       null;
+
+    this.lodStateListener =
+      null;
+
+    this.workerStateListener =
+      null;
+
+    this.disposed =
+      true;
 
     this.clearSelection();
     this.disposePoints();
@@ -1929,6 +2242,22 @@ class ThreeGalacticMapSceneRuntime
     );
   }
 
+  private emitLodState():
+    void {
+
+    this.lodStateListener?.(
+      this.lodStateValue,
+    );
+  }
+
+  private emitWorkerState():
+    void {
+
+    this.workerStateListener?.(
+      this.workerStateValue,
+    );
+  }
+
   private rotateGalaxyVisual(
     stepRadians:
       number,
@@ -1948,6 +2277,7 @@ class ThreeGalacticMapSceneRuntime
       );
 
     this.applyCurrentGalaxyVisualRotation();
+    this.updateVisibleSectorMaterialization();
     this.renderFrame();
     this.emitGalaxySpinState();
   }
@@ -1967,6 +2297,558 @@ class ThreeGalacticMapSceneRuntime
       this.staticGalaxyTiltRadians,
       this.galaxySpinRadiansValue,
     );
+  }
+
+  private startParticleWorkerSession(
+    model:
+      GalacticMapModel,
+  ): void {
+
+    const sessionId =
+      `galactic-map-particles-${++galacticMapParticleSessionSequence}`;
+
+    this.particleSessionId =
+      sessionId;
+
+    this.particleSessionReady =
+      false;
+
+    this.particleRequestRevision =
+      1;
+
+    this.particleAppliedRevision =
+      0;
+
+    this.activeWindowSignature =
+      null;
+
+    this.pendingWindowSignature =
+      null;
+
+    this.deferredWindow =
+      null;
+
+    const coverage =
+      this.activeCoverage;
+
+    const initialWindow =
+      coverage ===
+        null
+        ? null
+        : this.resolveCurrentVisibleWindow();
+
+    this.pendingWindowSignature =
+      initialWindow?.signature ??
+      '__FULL__';
+
+    this.setWorkerState(
+      GalacticMapWorkerStatus.INITIALIZING,
+      null,
+      true,
+      this.particleRequestRevision,
+      this.particleAppliedRevision,
+    );
+
+    const indexConfig =
+      coverage ===
+        null
+        ? null
+        : galacticMapParticleSectorIndexConfig(
+            coverage,
+            this.activeHaloOuterRadiusNormalized,
+          );
+
+    const revision =
+      this.particleRequestRevision;
+
+    void this.workerClient
+      .execute(
+        'galactic-map-particle-session',
+        {
+          sessionId,
+          renderInput:
+            createGalacticMapParticleRenderInput(
+              model,
+            ),
+          indexConfig,
+          window:
+            initialWindow ===
+              null
+              ? null
+              : workerParticleWindow(
+                  initialWindow,
+                ),
+        },
+      )
+      .then(
+        (
+          result,
+        ) => {
+          if (
+            !this.workerResponseStillCurrent(
+              sessionId,
+              revision,
+            )
+          ) {
+            return;
+          }
+
+          this.particleSessionReady =
+            coverage !==
+              null;
+
+          this.applyWorkerParticleBatch(
+            result.batch,
+            initialWindow,
+          );
+
+          this.particleAppliedRevision =
+            revision;
+
+          this.pendingWindowSignature =
+            null;
+
+          this.setWorkerState(
+            GalacticMapWorkerStatus.READY,
+            result.runtime,
+            false,
+            this.particleRequestRevision,
+            this.particleAppliedRevision,
+          );
+
+          const deferred =
+            this.deferredWindow;
+
+          this.deferredWindow =
+            null;
+
+          if (
+            deferred !==
+              null &&
+            deferred.signature !==
+              this.activeWindowSignature &&
+            this.particleSessionReady
+          ) {
+            this.requestParticleWindow(
+              deferred,
+            );
+          }
+        },
+      )
+      .catch(
+        (
+          error: unknown,
+        ) => {
+          if (
+            this.workerResponseStillCurrent(
+              sessionId,
+              revision,
+            )
+          ) {
+            this.handleParticleWorkerFailure(
+              error,
+            );
+          }
+        },
+      );
+  }
+
+  private updateVisibleSectorMaterialization(
+    force =
+      false,
+  ): boolean {
+
+    if (
+      this.activeCoverage ===
+        null ||
+      this.galaxyGroup ===
+        null ||
+      this.activeHaloOuterRadiusNormalized <=
+        0 ||
+      this.particleSessionId ===
+        null
+    ) {
+      return false;
+    }
+
+    const window =
+      this.resolveCurrentVisibleWindow();
+
+    if (
+      !force &&
+      (
+        window.signature ===
+          this.activeWindowSignature ||
+        window.signature ===
+          this.pendingWindowSignature
+      )
+    ) {
+      return false;
+    }
+
+    if (
+      !this.particleSessionReady
+    ) {
+      this.deferredWindow =
+        window;
+
+      return true;
+    }
+
+    this.requestParticleWindow(
+      window,
+    );
+
+    return true;
+  }
+
+  private resolveCurrentVisibleWindow():
+    GalacticMapVisibleSectorWindow {
+
+    if (
+      this.activeCoverage ===
+        null ||
+      this.galaxyGroup ===
+        null ||
+      this.activeHaloOuterRadiusNormalized <=
+        0
+    ) {
+      throw new Error(
+        'Cannot resolve a visible sector window without active galactic coverage.',
+      );
+    }
+
+    return resolveGalacticMapVisibleSectorWindow(
+      this.camera,
+      this.galaxyGroup,
+      this.activeCoverage,
+      this.activeHaloOuterRadiusNormalized,
+      this.cameraState().distance,
+    );
+  }
+
+  private requestParticleWindow(
+    window:
+      GalacticMapVisibleSectorWindow,
+  ): void {
+
+    const sessionId =
+      this.particleSessionId;
+
+    if (
+      sessionId ===
+        null
+    ) {
+      return;
+    }
+
+    const revision =
+      ++this.particleRequestRevision;
+
+    this.pendingWindowSignature =
+      window.signature;
+
+    this.setWorkerState(
+      GalacticMapWorkerStatus.UPDATING,
+      this.workerStateValue.runtime,
+      true,
+      revision,
+      this.particleAppliedRevision,
+    );
+
+    void this.workerClient
+      .execute(
+        'galactic-map-particle-window',
+        {
+          sessionId,
+          window:
+            workerParticleWindow(
+              window,
+            ),
+        },
+      )
+      .then(
+        (
+          result,
+        ) => {
+          if (
+            !this.workerResponseStillCurrent(
+              sessionId,
+              revision,
+            )
+          ) {
+            return;
+          }
+
+          this.applyWorkerParticleBatch(
+            result.batch,
+            window,
+          );
+
+          this.particleAppliedRevision =
+            revision;
+
+          this.pendingWindowSignature =
+            null;
+
+          this.setWorkerState(
+            GalacticMapWorkerStatus.READY,
+            result.runtime,
+            false,
+            revision,
+            revision,
+          );
+        },
+      )
+      .catch(
+        (
+          error: unknown,
+        ) => {
+          if (
+            this.workerResponseStillCurrent(
+              sessionId,
+              revision,
+            )
+          ) {
+            this.handleParticleWorkerFailure(
+              error,
+            );
+          }
+        },
+      );
+  }
+
+  private applyWorkerParticleBatch(
+    batch:
+      GalacticMapWorkerParticleBatch,
+
+    window:
+      GalacticMapVisibleSectorWindow | null,
+  ): void {
+
+    this.replaceMaterializedPoints(
+      batch,
+    );
+
+    this.activeWindowSignature =
+      window?.signature ??
+      '__FULL__';
+
+    this.lodStateValue =
+      Object.freeze({
+        sourceParticleCount:
+          batch.sourceCount,
+        materializedParticleCount:
+          batch.count,
+        visibleSectorCount:
+          window?.visibleSectorCount ??
+          0,
+        activeSectorCount:
+          window?.activeSectorCount ??
+          0,
+        lodLevel:
+          window?.lodLevel ??
+          GalacticMapLodLevel.DETAIL,
+        particleRetentionRatio:
+          window?.particleRetentionRatio ??
+          1,
+        cacheEntryCount:
+          batch.cacheEntryCount,
+      });
+
+    this.emitLodState();
+    this.renderFrame();
+  }
+
+  private workerResponseStillCurrent(
+    sessionId:
+      string,
+
+    revision:
+      number,
+  ): boolean {
+
+    return !this.disposed &&
+      this.particleSessionId ===
+        sessionId &&
+      this.particleRequestRevision ===
+        revision;
+  }
+
+  private handleParticleWorkerFailure(
+    _error:
+      unknown,
+  ): void {
+
+    this.pendingWindowSignature =
+      null;
+
+    this.deferredWindow =
+      null;
+
+    this.setWorkerState(
+      GalacticMapWorkerStatus.ERROR,
+      this.workerStateValue.runtime,
+      false,
+      this.particleRequestRevision,
+      this.particleAppliedRevision,
+    );
+  }
+
+  private setWorkerState(
+    status:
+      GalacticMapWorkerStatus,
+
+    runtime:
+      ProceduralWorkerRuntime | null,
+
+    pending:
+      boolean,
+
+    requestRevision:
+      number,
+
+    appliedRevision:
+      number,
+  ): void {
+
+    this.workerStateValue =
+      Object.freeze({
+        status,
+        runtime,
+        requestRevision,
+        appliedRevision,
+        pending,
+      });
+
+    this.emitWorkerState();
+  }
+
+  private releaseActiveParticleSession():
+    void {
+
+    const sessionId =
+      this.particleSessionId;
+
+    this.particleSessionId =
+      null;
+
+    this.particleSessionReady =
+      false;
+
+    this.pendingWindowSignature =
+      null;
+
+    this.deferredWindow =
+      null;
+
+    if (
+      sessionId ===
+        null
+    ) {
+      return;
+    }
+
+    void this.workerClient
+      .execute(
+        'galactic-map-particle-release',
+        {
+          sessionId,
+        },
+      )
+      .catch(
+        () => {
+          // Releasing renderer-only cache state is best-effort.
+        },
+      );
+  }
+
+  private replaceMaterializedPoints(
+    materialized:
+      GalacticMapWorkerParticleBatch,
+  ): void {
+
+    if (
+      this.galaxyGroup ===
+        null ||
+      this.pointMaterial ===
+        null
+    ) {
+      return;
+    }
+
+    if (
+      this.points !==
+        null
+    ) {
+      this.points.removeFromParent();
+      this.points.geometry.dispose();
+      this.points =
+        null;
+    }
+
+    this.activeSourceIndices =
+      materialized.sourceIndices;
+
+    if (
+      materialized.count ===
+        0
+    ) {
+      return;
+    }
+
+    const geometry =
+      new THREE.BufferGeometry();
+
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(
+        materialized.positions,
+        3,
+      ),
+    );
+
+    geometry.setAttribute(
+      'customColor',
+      new THREE.BufferAttribute(
+        materialized.colors,
+        3,
+      ),
+    );
+
+    geometry.setAttribute(
+      'aSize',
+      new THREE.BufferAttribute(
+        materialized.sizes,
+        1,
+      ),
+    );
+
+    geometry.setAttribute(
+      'aOpacity',
+      new THREE.BufferAttribute(
+        materialized.opacities,
+        1,
+      ),
+    );
+
+    geometry.computeBoundingSphere();
+
+    const points =
+      new THREE.Points(
+        geometry,
+        this.pointMaterial,
+      );
+
+    points.name =
+      'galactic-map-active-particle-batch';
+
+    this.galaxyGroup.add(
+      points,
+    );
+
+    this.points =
+      points;
   }
 
   private showSelectionMarker(
@@ -2062,6 +2944,8 @@ class ThreeGalacticMapSceneRuntime
   private disposePoints():
     void {
 
+    this.releaseActiveParticleSession();
+
     if (
       this.galaxyGroup !==
       null
@@ -2088,12 +2972,11 @@ class ThreeGalacticMapSceneRuntime
         .points
         .geometry
         .dispose();
-
-      this
-        .points
-        .material
-        .dispose();
     }
+
+    this
+      .pointMaterial
+      ?.dispose();
 
     this
       .sectorOverlay
@@ -2109,6 +2992,59 @@ class ThreeGalacticMapSceneRuntime
 
     this.points =
       null;
+
+    this.pointMaterial =
+      null;
+
+    this.activeSourceIndices =
+      new Uint32Array();
+
+    this.activeWindowSignature =
+      null;
+
+    this.activeCoverage =
+      null;
+
+    this.activeHaloOuterRadiusNormalized =
+      0;
+
+    this.particleRequestRevision =
+      0;
+
+    this.particleAppliedRevision =
+      0;
+
+    this.lodStateValue =
+      Object.freeze({
+        sourceParticleCount:
+          0,
+        materializedParticleCount:
+          0,
+        visibleSectorCount:
+          0,
+        activeSectorCount:
+          0,
+        lodLevel:
+          GalacticMapLodLevel.OVERVIEW,
+        particleRetentionRatio:
+          0.88,
+        cacheEntryCount:
+          0,
+      });
+
+    this.workerStateValue =
+      Object.freeze({
+        status:
+          GalacticMapWorkerStatus.IDLE,
+        runtime:
+          null,
+        requestRevision:
+          0,
+        appliedRevision:
+          0,
+        pending:
+          false,
+      });
 
     this.sectorOverlay =
       null;
@@ -2127,7 +3063,37 @@ class ThreeGalacticMapSceneRuntime
 
     this.staticGalaxyTiltRadians =
       0;
+
+    this.emitLodState();
+    this.emitWorkerState();
   }
+
+}
+
+function workerParticleWindow(
+  window:
+    GalacticMapVisibleSectorWindow,
+): GalacticMapWorkerParticleWindow {
+
+  return Object.freeze({
+    active:
+      Object.freeze({
+        minX:
+          window.active.minX,
+        maxX:
+          window.active.maxX,
+        minY:
+          window.active.minY,
+        maxY:
+          window.active.maxY,
+      }),
+    activeSectorCount:
+      window.activeSectorCount,
+    lodLevel:
+      window.lodLevel,
+    signature:
+      window.signature,
+  });
 }
 
 export function applyGalaxyVisualRotation(

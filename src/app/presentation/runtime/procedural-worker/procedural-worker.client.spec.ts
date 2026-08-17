@@ -238,6 +238,62 @@ describe(
     );
 
     it(
+      'should route point-10.9 galactic particle tasks through the same long-lived worker port',
+      async () => {
+        const client =
+          TestBed.inject(
+            ProceduralWorkerClient,
+          );
+
+        const promise =
+          client.execute(
+            'galactic-map-particle-release',
+            {
+              sessionId:
+                'galaxy-session-1',
+            },
+          );
+
+        const request =
+          fakeWorker.messages[0];
+
+        expect(
+          request.task,
+        ).toBe(
+          'galactic-map-particle-release',
+        );
+
+        fakeWorker.respond({
+          id:
+            request.id,
+          task:
+            'galactic-map-particle-release',
+          ok:
+            true,
+          result: {
+            runtime:
+              'worker',
+            sessionId:
+              'galaxy-session-1',
+            released:
+              true,
+          },
+        });
+
+        await expect(
+          promise,
+        ).resolves.toEqual({
+          runtime:
+            'worker',
+          sessionId:
+            'galaxy-session-1',
+          released:
+            true,
+        });
+      },
+    );
+
+    it(
       'should reject a failed task response',
       async () => {
         const client =

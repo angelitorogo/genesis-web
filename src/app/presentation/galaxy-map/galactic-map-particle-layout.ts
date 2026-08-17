@@ -15,6 +15,11 @@ import {
   type GalacticMapModel,
 } from './galactic-map-model';
 
+import {
+  createGalacticMapParticleRenderInput,
+  type GalacticMapParticleRenderInput,
+} from './galactic-map-particle-render-input';
+
 const TWO_PI =
   Math.PI *
   2;
@@ -231,6 +236,18 @@ export class GalacticMapParticleLayoutGenerator {
       GalacticMapModel,
   ): GalacticMapParticleLayout {
 
+    return this.generateFromRenderInput(
+      createGalacticMapParticleRenderInput(
+        model,
+      ),
+    );
+  }
+
+  static generateFromRenderInput(
+    model:
+      GalacticMapParticleRenderInput,
+  ): GalacticMapParticleLayout {
+
     const visual =
       requiredVisual(
         model,
@@ -435,7 +452,7 @@ export class GalacticMapParticleLayoutGenerator {
 
 function writeCore(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -454,7 +471,6 @@ function writeCore(
 
   const morphology =
     model
-      .preliminaryInformation
       .morphologyHint;
 
   const spheroidal =
@@ -662,7 +678,7 @@ function writeCore(
 
 function writeIrregularCore(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -838,7 +854,7 @@ function writeIrregularCore(
 
 function writeDwarfCore(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -1026,7 +1042,7 @@ function writeDwarfCore(
 
 function writeBody(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -1040,7 +1056,6 @@ function writeBody(
 
   const morphology =
     model
-      .preliminaryInformation
       .morphologyHint;
 
   if (
@@ -1092,7 +1107,7 @@ function writeBody(
 
 function writeSpheroidalBody(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -1276,7 +1291,7 @@ function writeSpheroidalBody(
 
 function writeDiskBody(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -1541,7 +1556,7 @@ function writeDiskBody(
 
 function writeBarredSpiralArmReinforcement(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -1708,7 +1723,7 @@ function writeBarredSpiralArmReinforcement(
 
 function writeSpiralArmReinforcement(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -1863,7 +1878,7 @@ function writeSpiralArmReinforcement(
 
 function writeIrregularBody(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -2188,7 +2203,7 @@ function writeIrregularBody(
 
 function writeDwarfBody(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -2599,7 +2614,7 @@ function writeDwarfBody(
 
 function writeIrregularStellarBodyReinforcement(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -2926,7 +2941,7 @@ function writeIrregularStellarBodyReinforcement(
 
 function writeDwarfStellarBodyReinforcement(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -3115,7 +3130,7 @@ function writeDwarfStellarBodyReinforcement(
 
 function writeDwarfEnvelope(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -3689,7 +3704,7 @@ function irregularExtensionPoint(
 
 function writeIrregularEnvelope(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -4052,7 +4067,7 @@ function dwarfRegionAnchor(
 
 function writeHalo(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -4097,7 +4112,6 @@ function writeHalo(
 
   const morphology =
     model
-      .preliminaryInformation
       .morphologyHint;
 
   const innerRadius =
@@ -4230,7 +4244,7 @@ function writeHalo(
 
 function writeBar(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 
   sampler:
     DeterministicSampler,
@@ -6100,7 +6114,7 @@ function unitSphereDirection(
 
 function isIrregular(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 ): boolean {
 
   return model.galaxyType ===
@@ -6109,7 +6123,7 @@ function isIrregular(
 
 function isDwarf(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 ): boolean {
 
   return model.galaxyType ===
@@ -6118,7 +6132,7 @@ function isDwarf(
 
 function isSpiral(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 ): boolean {
 
   return model.galaxyType ===
@@ -6127,7 +6141,7 @@ function isSpiral(
 
 function isBarredSpiral(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 ): boolean {
 
   if (
@@ -6146,7 +6160,7 @@ function isBarredSpiral(
 
 function requiredVisual(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 ) {
   const visual =
     model.visualStructure;
@@ -6156,7 +6170,7 @@ function requiredVisual(
     null
   ) {
     throw new RangeError(
-      'GalacticMapModel has no detailed visual structure.',
+      'GalacticMapParticleRenderInput has no detailed visual structure.',
     );
   }
 
@@ -6165,7 +6179,7 @@ function requiredVisual(
 
 function createSampler(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 ): DeterministicSampler {
 
   const seed =
@@ -6237,21 +6251,13 @@ function createSampler(
 
 function seedFromModel(
   model:
-    GalacticMapModel,
+    GalacticMapParticleRenderInput,
 ): number {
 
   const source = [
-    model
-      .generationKey
-      .universeSeed
-      .normalizedValue,
-    model
-      .generationKey
-      .generatorVersion
-      .code,
-    model
-      .galaxyIndex
-      .toString(),
+    model.universeSeedNormalizedValue,
+    model.generatorVersionCode,
+    model.galaxyIndex,
     'GENESIS-GALACTIC-MAP-VISUAL-SAMPLING-V1',
   ].join(
     '|',
