@@ -32,6 +32,7 @@ const MAX_SELECTION_THRESHOLD =
 const GALAXY_SPIN_RADIANS_PER_HORIZONTAL_PIXEL =
   0.006;
 
+
 export interface GalacticMapCameraState {
   readonly distance:
     number;

@@ -525,7 +525,7 @@ describe(
             '[data-testid="galactic-map-active-galaxy"]',
           )?.textContent,
         ).toContain(
-          'Caeloria',
+          'Elixisis',
         );
 
         expect(
@@ -558,7 +558,7 @@ describe(
             '[data-testid="galactic-map-galaxy-type"]',
           )?.textContent,
         ).toContain(
-          'Elíptica',
+          'Espiral barrada',
         );
 
         expect(

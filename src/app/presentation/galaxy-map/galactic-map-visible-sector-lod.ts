@@ -78,10 +78,20 @@ const SCREEN_SAMPLE_NDC:
   ] as const);
 
 /**
- * Resolves the part of the canonical sector grid intersected by the current
- * camera viewport on the galaxy local Z=0 plane. The active bounds include a
- * one-sector prefetch ring so small camera movements do not immediately force
- * another GPU-buffer materialization.
+ * Resolves the conservative part of the canonical sector grid needed by the
+ * current camera viewport.
+ *
+ * When every viewport sample intersects the galaxy local Z=0 plane, the exact
+ * planar bounds plus the prefetch ring are used.
+ *
+ * When even one sample ray does not intersect that plane, the viewport is
+ * crossing the galactic horizon. In that configuration a partial planar
+ * rectangle is NOT a safe visibility proxy: using only the successful rays can
+ * cut away an entire far-side strip of renderer-only particles while those
+ * particles are still visible on screen. In that ambiguous case the visual
+ * cloud falls back to the complete canonical grid. This is intentionally
+ * conservative and affects only GPU render samples; it never materializes
+ * physical systems, stars, planets or hidden Ground Truth.
  */
 export function resolveGalacticMapVisibleSectorWindow(
   camera:
@@ -250,8 +260,8 @@ export function resolveGalacticMapVisibleSectorWindow(
     GalacticMapSectorBounds;
 
   if (
-    intersectionCount <
-      3
+    intersectionCount !==
+      SCREEN_SAMPLE_NDC.length
   ) {
     visible =
       Object.freeze({

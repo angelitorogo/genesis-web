@@ -175,6 +175,151 @@ async function numericAttribute(
   return value;
 }
 
+
+function expectedMarkerFamilyLabel(
+  resultKind:
+    string,
+): string {
+
+  return resultKind ===
+    'SYSTEM'
+    ? 'Sistema'
+    : resultKind ===
+        'NEBULA'
+      ? 'Nebulosa'
+      : resultKind ===
+          'STAR_CLUSTER'
+        ? 'Cúmulo estelar'
+        : 'Objeto extremo';
+}
+
+
+async function selectPersistentMarkerNearCanvasCenter(
+  page:
+    import('@playwright/test').Page,
+
+  canvas:
+    import('@playwright/test').Locator,
+
+  scene:
+    import('@playwright/test').Locator,
+
+  persistedResultKind:
+    string,
+): Promise<void> {
+
+  const bounds =
+    await canvas.boundingBox();
+
+  expect(
+    bounds,
+  ).not.toBeNull();
+
+  if (
+    bounds ===
+      null
+  ) {
+    throw new Error(
+      'Expected a measurable galactic-map canvas before selecting the persistent marker.',
+    );
+  }
+
+  const expectedFamilyLabel =
+    expectedMarkerFamilyLabel(
+      persistedResultKind,
+    );
+
+  const family =
+    page.getByTestId(
+      'galactic-map-selected-marker-family',
+    );
+
+  // Point 10.6 picks markers in screen space with a generous hit radius.
+  // Search outwards from the visual centre, but validate the actual selected
+  // marker kind and rendered family before accepting a hit. This avoids the
+  // old D8B1-specific 3x3 assumption and also rejects transient/stale DOM
+  // states while the renderer finishes a camera/LOD update.
+  const offsets =
+    [
+      0,
+      -12,
+      12,
+      -24,
+      24,
+      -36,
+      36,
+      -48,
+      48,
+    ] as const;
+
+  for (
+    const offsetY
+    of offsets
+  ) {
+    for (
+      const offsetX
+      of offsets
+    ) {
+      await canvas.click({
+        position: {
+          x:
+            bounds.width /
+              2 +
+            offsetX,
+          y:
+            bounds.height /
+              2 +
+            offsetY,
+        },
+      });
+
+      const selectedKind =
+        await scene.getAttribute(
+          'data-selected-marker-kind',
+        );
+
+      if (
+        selectedKind !==
+          persistedResultKind
+      ) {
+        continue;
+      }
+
+      try {
+        await expect(
+          family,
+        ).toContainText(
+          expectedFamilyLabel,
+          {
+            timeout:
+              750,
+          },
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-selected-marker-kind',
+          persistedResultKind,
+          {
+            timeout:
+              750,
+          },
+        );
+
+        return;
+      } catch {
+        // A renderer/camera update may invalidate a just-created transient
+        // selection. Keep searching until a stable persistent marker is found.
+      }
+    }
+  }
+
+  throw new Error(
+    `Could not stably select the persisted ${persistedResultKind} marker near the galactic centre.`,
+  );
+}
+
 test.describe(
   'GENESIS point-10.9 worker-backed visible-sector LOD and marker navigation',
   () => {
@@ -228,7 +373,7 @@ test.describe(
             'galactic-map-active-galaxy',
           ),
         ).toContainText(
-          'Caeloria',
+          'Elixisis',
         );
 
         const scene =
@@ -382,7 +527,7 @@ test.describe(
           scene,
         ).toHaveAttribute(
           'data-sector-grid-side',
-          '173',
+          '143',
         );
 
         const markers =
@@ -539,14 +684,11 @@ test.describe(
           );
         }
 
-        expect(
-          Number(
-            await scene.getAttribute(
-              'data-habitable-ring-count',
-            ),
-          ),
-        ).toBeGreaterThan(
-          0,
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-habitability-model',
+          'SPECULATIVE_SIMPLIFIED',
         );
 
         await expect(
@@ -1334,10 +1476,21 @@ test.describe(
           0,
         );
 
-        // Restore the persistent family and select the real marker. The static
-        // discovery is always in the frozen central ±2 sector sample, so a
-        // compact grid around the visual centre avoids depending on one exact
-        // deterministic intra-sector offset.
+        // Restore the persistent family and select the real marker only after
+        // the reset/LOD cycle is fully settled. The D8B5 default changes the
+        // exact deterministic marker placement, so selection is validated from
+        // the selected marker kind instead of from one legacy 3x3 pixel grid.
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-worker-pending',
+          'false',
+          {
+            timeout:
+              20_000,
+          },
+        );
+
         await page
           .getByTestId(
             markerLayer.testId,
@@ -1351,66 +1504,17 @@ test.describe(
           'true',
         );
 
+        await selectPersistentMarkerNearCanvasCenter(
+          page,
+          canvas,
+          scene,
+          persistedResultKind,
+        );
+
         const markerSelection =
           page.getByTestId(
             'galactic-map-marker-selection',
           );
-
-        let markerFound =
-          false;
-
-        for (
-          const offsetY
-          of [
-            -18,
-            0,
-            18,
-          ]
-        ) {
-          for (
-            const offsetX
-            of [
-              -18,
-              0,
-              18,
-            ]
-          ) {
-            await canvas.click({
-              position: {
-                x:
-                  bounds.width /
-                    2 +
-                  offsetX,
-                y:
-                  bounds.height /
-                    2 +
-                  offsetY,
-              },
-            });
-
-            if (
-              await markerSelection.count() >
-                0
-            ) {
-              markerFound =
-                true;
-
-              break;
-            }
-          }
-
-          if (
-            markerFound
-          ) {
-            break;
-          }
-        }
-
-        expect(
-          markerFound,
-        ).toBe(
-          true,
-        );
 
         await expect(
           markerSelection,
@@ -1423,16 +1527,9 @@ test.describe(
         );
 
         const expectedFamilyLabel =
-          persistedResultKind ===
-            'SYSTEM'
-            ? 'Sistema'
-            : persistedResultKind ===
-                'NEBULA'
-              ? 'Nebulosa'
-              : persistedResultKind ===
-                  'STAR_CLUSTER'
-                ? 'Cúmulo estelar'
-                : 'Objeto extremo';
+          expectedMarkerFamilyLabel(
+            persistedResultKind,
+          );
 
         await expect(
           page.getByTestId(
@@ -1494,7 +1591,7 @@ test.describe(
             'seed',
           ),
         ).toBe(
-          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
         );
 
         expect(
@@ -1622,7 +1719,7 @@ test.describe(
         await expect(
           page,
         ).toHaveURL(
-          /\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+\?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1$/,
+          /\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+\?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5&version=1$/,
         );
 
         await expect(

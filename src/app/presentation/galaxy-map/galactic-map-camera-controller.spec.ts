@@ -185,6 +185,7 @@ describe(
       },
     );
 
+
     it(
       'should enable and disable camera rotation without disabling zoom or pan',
       () => {

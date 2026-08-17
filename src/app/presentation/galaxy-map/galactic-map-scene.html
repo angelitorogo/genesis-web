@@ -168,11 +168,14 @@
           </div>
 
           <p>
-            Solo el viewport y un pequeño anillo de precarga mantienen muestras
-            GPU materializadas. El layout determinista, el índice espacial y la
-            compactación LOD se calculan fuera del hilo principal; las respuestas
-            antiguas se descartan por revisión y la escena conserva el último batch
-            válido mientras llega el siguiente.
+            Sectores visibles y activos describen la ventana espacial de cámara y
+            precarga, pero ya no expulsan muestras de la galaxia visual. La nube
+            renderer-only permanece residente para todo el grid y solo cambia su
+            retención al cruzar un nivel LOD; por ello órbita, pan o zoom dentro del
+            mismo LOD no pueden hacer desaparecer brazos o poblaciones estelares. El
+            layout determinista, el índice espacial y la compactación LOD se calculan
+            fuera del hilo principal, sin materializar sistemas, estrellas físicas,
+            planetas ni Ground Truth.
           </p>
         </div>
       }

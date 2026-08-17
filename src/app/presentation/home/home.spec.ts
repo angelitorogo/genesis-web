@@ -243,7 +243,7 @@ describe(
             )
             ?.textContent,
         ).toContain(
-          'Caeloria',
+          'Elixisis',
         );
 
         expect(

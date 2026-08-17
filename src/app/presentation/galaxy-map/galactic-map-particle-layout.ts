@@ -49,7 +49,7 @@ const BAR_PARTICLE_COUNT =
  * point size, adding glow or materializing physical stars.
  */
 const BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
-  54_000;
+  150_000;
 
 /**
  * Extra visual samples used only by SPIRAL.
@@ -59,7 +59,7 @@ const BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
  * both disk morphologies remain immediately distinguishable.
  */
 const SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
-  58_000;
+  154_000;
 
 /**
  * Smooth radial taper applied only to spiral-arm render samples.

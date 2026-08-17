@@ -84,6 +84,8 @@ import {
 
 import {
   applyGalaxyVisualRotation,
+  galacticMapPointVisibilityProfile,
+  galacticMapRendererParticleResidencyWindow,
   GALACTIC_MAP_SCENE_RUNTIME_FACTORY,
   GalacticMapScene,
   staticPresentationScaleMultiplier,
@@ -1621,6 +1623,229 @@ describe(
             0,
           );
         }
+      },
+    );
+
+    it(
+      'should keep the renderer-only galaxy cloud resident across camera-sector window changes and vary it only by LOD',
+      () => {
+        const activeModel =
+          model();
+
+        const coverage =
+          activeModel
+            .explorationCoverage;
+
+        expect(
+          coverage,
+        ).not.toBeNull();
+
+        if (
+          coverage ===
+            null
+        ) {
+          throw new Error(
+            'Expected exploration coverage.',
+          );
+        }
+
+        const baseWindow =
+          Object.freeze({
+            visible:
+              Object.freeze({
+                minX:
+                  -8,
+                maxX:
+                  8,
+                minY:
+                  -5,
+                maxY:
+                  5,
+              }),
+            active:
+              Object.freeze({
+                minX:
+                  -9,
+                maxX:
+                  9,
+                minY:
+                  -6,
+                maxY:
+                  6,
+              }),
+            visibleSectorCount:
+              187,
+            activeSectorCount:
+              247,
+            prefetchMarginSectors:
+              1,
+            lodLevel:
+              GalacticMapLodLevel.BALANCED,
+            particleRetentionRatio:
+              0.96,
+            signature:
+              'BALANCED:-9:9:-6:6',
+          });
+
+        const zoomedWindow =
+          Object.freeze({
+            ...baseWindow,
+            visible:
+              Object.freeze({
+                minX:
+                  -2,
+                maxX:
+                  2,
+                minY:
+                  -2,
+                maxY:
+                  2,
+              }),
+            active:
+              Object.freeze({
+                minX:
+                  -3,
+                maxX:
+                  3,
+                minY:
+                  -3,
+                maxY:
+                  3,
+              }),
+            visibleSectorCount:
+              25,
+            activeSectorCount:
+              49,
+            signature:
+              'BALANCED:-3:3:-3:3',
+          });
+
+        const baseResidency =
+          galacticMapRendererParticleResidencyWindow(
+            baseWindow,
+            coverage,
+          );
+
+        const zoomedResidency =
+          galacticMapRendererParticleResidencyWindow(
+            zoomedWindow,
+            coverage,
+          );
+
+        expect(
+          baseResidency.active,
+        ).toEqual({
+          minX:
+            coverage.grid
+              .minCoordinate,
+          maxX:
+            coverage.grid
+              .maxCoordinate,
+          minY:
+            coverage.grid
+              .minCoordinate,
+          maxY:
+            coverage.grid
+              .maxCoordinate,
+        });
+
+        expect(
+          baseResidency.activeSectorCount,
+        ).toBe(
+          Number(
+            coverage
+              .totalSectorCount,
+          ),
+        );
+
+        expect(
+          zoomedResidency.active,
+        ).toEqual(
+          baseResidency.active,
+        );
+
+        expect(
+          zoomedResidency.signature,
+        ).toBe(
+          baseResidency.signature,
+        );
+
+        expect(
+          baseResidency.signature,
+        ).toBe(
+          'RENDER_FULL:BALANCED',
+        );
+
+        const detailResidency =
+          galacticMapRendererParticleResidencyWindow(
+            Object.freeze({
+              ...zoomedWindow,
+              lodLevel:
+                GalacticMapLodLevel.DETAIL,
+              particleRetentionRatio:
+                1,
+              signature:
+                'DETAIL:-3:3:-3:3',
+            }),
+            coverage,
+          );
+
+        expect(
+          detailResidency.signature,
+        ).toBe(
+          'RENDER_FULL:DETAIL',
+        );
+      },
+    );
+
+    it(
+      'should keep whole-galaxy particles legible at OVERVIEW without altering DETAIL presentation',
+      () => {
+        const overview =
+          galacticMapPointVisibilityProfile(
+            GalacticMapLodLevel.OVERVIEW,
+          );
+
+        const balanced =
+          galacticMapPointVisibilityProfile(
+            GalacticMapLodLevel.BALANCED,
+          );
+
+        const detail =
+          galacticMapPointVisibilityProfile(
+            GalacticMapLodLevel.DETAIL,
+          );
+
+        expect(
+          overview.pointScale,
+        ).toBeGreaterThan(
+          balanced.pointScale,
+        );
+
+        expect(
+          balanced.pointScale,
+        ).toBeGreaterThan(
+          detail.pointScale,
+        );
+
+        expect(
+          overview.opacityScale *
+          overview.outerVisibilityScale,
+        ).toBeGreaterThan(
+          balanced.opacityScale *
+          balanced.outerVisibilityScale,
+        );
+
+        expect(
+          detail,
+        ).toEqual({
+          pointScale:
+            1,
+          opacityScale:
+            1,
+          outerVisibilityScale:
+            1,
+        });
       },
     );
 

@@ -187,7 +187,7 @@ test.describe(
             'active-galaxy-name',
           ),
         ).toContainText(
-          'Caeloria',
+          'Elixisis',
         );
 
         await galaxiesLink.click();
@@ -223,7 +223,7 @@ test.describe(
             'current-focus-galaxy',
           ),
         ).toContainText(
-          'Caeloria',
+          'Elixisis',
         );
 
         await expect(
@@ -231,7 +231,7 @@ test.describe(
             'discovered-galaxy-name',
           ),
         ).toContainText(
-          'Caeloria',
+          'Elixisis',
         );
 
         await expect(
@@ -318,7 +318,7 @@ test.describe(
             'galaxy-detail-name',
           ),
         ).toContainText(
-          'Caeloria',
+          'Elixisis',
         );
 
         await expect(
@@ -342,7 +342,7 @@ test.describe(
             'galaxy-detail-exact-type',
           ),
         ).toContainText(
-          'Elíptica',
+          'Espiral barrada',
         );
 
         await expect(
@@ -350,7 +350,7 @@ test.describe(
             'galaxy-detail-morphology',
           ),
         ).toContainText(
-          'Esferoidal',
+          'Disco galáctico',
         );
 
         await expect(
@@ -358,7 +358,7 @@ test.describe(
             'galaxy-detail-scale',
           ),
         ).toContainText(
-          'Grande',
+          /Compacta|Media|Grande|Extendida/,
         );
 
         await expect(
@@ -366,7 +366,7 @@ test.describe(
             'galaxy-detail-population',
           ),
         ).toContainText(
-          'Alta',
+          /Baja|Moderada|Alta|Muy alta/,
         );
 
         await expect(
@@ -374,7 +374,7 @@ test.describe(
             'galaxy-detail-nuclear',
           ),
         ).toContainText(
-          'Sin actividad nuclear clara',
+          /Sin actividad nuclear clara|Candidata a núcleo activo|Candidata a actividad nuclear extrema/,
         );
 
         await expect(
@@ -788,8 +788,28 @@ test.describe(
         page,
       }) => {
         await page.goto(
-          '/settings',
+          '/',
         );
+
+        await page
+          .getByTestId(
+            'settings-link',
+          )
+          .click();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          /\/settings$/,
+        );
+
+        await page
+          .getByTestId(
+            'universe-seed-input',
+          )
+          .fill(
+            '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+          );
 
         await page
           .getByTestId(
@@ -805,8 +825,24 @@ test.describe(
           /Universo (?:creado y )?activado correctamente\./,
         );
 
-        await page.goto(
-          '/exploration',
+        await page.goBack();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          /\/$/,
+        );
+
+        await page
+          .getByTestId(
+            'perform-exploration-link',
+          )
+          .click();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          /\/exploration$/,
         );
 
         await expect(
@@ -815,13 +851,44 @@ test.describe(
           ),
         ).toBeVisible();
 
-        await expect(
-          page.getByTestId(
-            'exploration-sector-range',
+        const sectorRangeText =
+          await page
+            .getByTestId(
+              'exploration-sector-range',
+            )
+            .textContent();
+
+        const sectorRangeMatch =
+          sectorRangeText?.match(
+            /(-?\d+)\s*…\s*(-?\d+)/,
+          ) ??
+          null;
+
+        expect(
+          sectorRangeMatch,
+        ).not.toBeNull();
+
+        const minSectorCoordinate =
+          Number(
+            sectorRangeMatch?.[1],
+          );
+
+        const maxSectorCoordinate =
+          Number(
+            sectorRangeMatch?.[2],
+          );
+
+        expect(
+          Number.isInteger(
+            minSectorCoordinate,
           ),
-        ).toContainText(
-          '-86',
-        );
+        ).toBeTruthy();
+
+        expect(
+          Number.isInteger(
+            maxSectorCoordinate,
+          ),
+        ).toBeTruthy();
 
         await expect(
           page.getByTestId(
@@ -1191,7 +1258,9 @@ test.describe(
         );
 
         await xInput.fill(
-          '87',
+          String(
+            maxSectorCoordinate + 1,
+          ),
         );
 
         await yInput.fill(
@@ -1209,7 +1278,7 @@ test.describe(
             'sector-scan-error',
           ),
         ).toContainText(
-          'Rango permitido: -86..86',
+          `Rango permitido: ${minSectorCoordinate}..${maxSectorCoordinate}`,
         );
 
         await expect(

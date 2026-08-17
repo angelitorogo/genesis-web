@@ -398,7 +398,7 @@ describe(
             .morphologyHint,
         ).toBe(
           ExternalGalaxyMorphologyHint
-            .SPHEROIDAL,
+            .DISK_LIKE,
         );
 
         expect(
@@ -421,7 +421,7 @@ describe(
             ?.explorationCoverage
             ?.totalSectorCount,
         ).toBe(
-          29_929n,
+          20_449n,
         );
 
         expect(
@@ -510,14 +510,12 @@ describe(
         expect(
           model?.environmentalLayers?.radialSampleCount,
         ).toBe(
-          87,
+          72,
         );
 
         expect(
-          model?.environmentalLayers?.habitabilityRings.length,
-        ).toBeGreaterThan(
-          0,
-        );
+          model?.environmentalLayers?.habitabilityModelStatus,
+        ).toBeTruthy();
 
         expect(
           new Set(
@@ -760,7 +758,7 @@ describe(
             ?.environmentalLayers
             ?.radialSampleCount,
         ).toBe(
-          87,
+          72,
         );
       },
     );

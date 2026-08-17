@@ -231,8 +231,11 @@
               visuales ya congeladas. Las muestras GPU siguen sin adquirir identidad
               física. La región de habitabilidad galáctica mantiene el modelo V1
               SPECULATIVE_SIMPLIFIED. El render 10.8 conserva la distribución visual
-              determinista de 10.1 y limita la materialización al viewport y su margen de
-              precarga. 10.9 mueve al Web Worker la generación pesada del layout, el índice
+              determinista de 10.1. La ventana sectorial sigue calculándose para cobertura,
+              selección y contexto espacial, pero la nube renderer-only permanece residente
+              para todo el grid y solo cambia al cruzar un nivel LOD. Así órbita, pan y zoom
+              no expulsan partículas visuales todavía relevantes. 10.9 mueve al Web Worker la
+              generación pesada del layout, el índice
               espacial y la compactación LOD, transfiere ArrayBuffers sin copia adicional y
               descarta respuestas antiguas mediante revisiones monotónicas. Mientras llega
               una actualización, Three.js conserva el último batch válido y los controles

@@ -254,6 +254,91 @@ describe(
     );
 
     it(
+      'should keep the full visual cloud resident when an oblique viewport crosses the galactic horizon',
+      () => {
+        const camera =
+          new THREE.PerspectiveCamera(
+            40,
+            1,
+            0.1,
+            20,
+          );
+
+        /*
+         * Half vertical FOV is 20 degrees, while this camera looks down at the
+         * galaxy plane by less than that. The upper viewport rays therefore do
+         * not intersect Z=0. The old resolver incorrectly used only the lower
+         * successful rays and removed roughly half of the visual galaxy.
+         */
+        camera.position.set(
+          0,
+          -3,
+          0.5,
+        );
+
+        camera.lookAt(
+          0,
+          0,
+          0,
+        );
+
+        const group =
+          new THREE.Group();
+
+        group.scale.setScalar(
+          1.52,
+        );
+
+        const window =
+          resolveGalacticMapVisibleSectorWindow(
+            camera,
+            group,
+            coverage,
+            1,
+            3.1,
+            1,
+          );
+
+        expect(
+          window.visible,
+        ).toEqual({
+          minX:
+            grid.minCoordinate,
+          maxX:
+            grid.maxCoordinate,
+          minY:
+            grid.minCoordinate,
+          maxY:
+            grid.maxCoordinate,
+        });
+
+        expect(
+          window.active,
+        ).toEqual(
+          window.visible,
+        );
+
+        expect(
+          window.visibleSectorCount,
+        ).toBe(
+          25,
+        );
+
+        expect(
+          window.activeSectorCount,
+        ).toBe(
+          25,
+        );
+
+        expect(
+          window.lodLevel,
+        ).toBe(
+          GalacticMapLodLevel.OVERVIEW,
+        );
+      },
+    );
+
+    it(
       'should reject invalid camera distance and malformed local bounds',
       () => {
         expect(

@@ -146,6 +146,130 @@ export interface GalacticMapLodState {
     number;
 }
 
+export interface GalacticMapPointVisibilityProfile {
+  readonly pointScale:
+    number;
+
+  readonly opacityScale:
+    number;
+
+  readonly outerVisibilityScale:
+    number;
+}
+
+/**
+ * Render-only visibility compensation for the active LOD.
+ *
+ * OVERVIEW keeps almost all deterministic samples, but their projected size
+ * and deliberately low per-particle opacity make a complete galaxy look
+ * artificially sparse at the default camera distance. This profile restores
+ * apparent surface brightness without creating physical stars, changing
+ * deterministic positions or increasing the Web Worker particle budget.
+ *
+ * The outer-disk factor is strongest in OVERVIEW so spiral arms remain
+ * legible without overexposing the already bright galactic core. DETAIL keeps
+ * the original 1:1 presentation.
+ */
+export function galacticMapPointVisibilityProfile(
+  lodLevel:
+    GalacticMapLodLevel,
+): GalacticMapPointVisibilityProfile {
+
+  switch (
+    lodLevel
+  ) {
+    case GalacticMapLodLevel.OVERVIEW:
+      return Object.freeze({
+        pointScale:
+          1.18,
+        opacityScale:
+          1.38,
+        outerVisibilityScale:
+          1.28,
+      });
+
+    case GalacticMapLodLevel.BALANCED:
+      return Object.freeze({
+        pointScale:
+          1.08,
+        opacityScale:
+          1.16,
+        outerVisibilityScale:
+          1.14,
+      });
+
+    case GalacticMapLodLevel.DETAIL:
+      return Object.freeze({
+        pointScale:
+          1,
+        opacityScale:
+          1,
+        outerVisibilityScale:
+          1,
+      });
+  }
+
+  throw new RangeError(
+    `Unsupported galactic map LOD level: ${String(lodLevel)}.`,
+  );
+}
+
+
+/**
+ * Renderer-only particle residency contract.
+ *
+ * The visible/prefetch sector window remains useful for diagnostics, explored
+ * coverage and future physical/procedural requests, but it is no longer used
+ * to evict samples from the visual galaxy cloud. Camera orbit, pan and zoom
+ * must never make already-visible stellar render samples disappear merely
+ * because the Z=0 sector projection becomes smaller.
+ *
+ * Only the LOD retention tier changes the GPU sample set. This keeps a stable
+ * visual galaxy across camera movement while preserving the Web Worker,
+ * deterministic layout and 10.8/10.9 LOD policy.
+ */
+export function galacticMapRendererParticleResidencyWindow(
+  window:
+    GalacticMapVisibleSectorWindow,
+
+  coverage:
+    NonNullable<
+      GalacticMapModel[
+        'explorationCoverage'
+      ]
+    >,
+): GalacticMapWorkerParticleWindow {
+
+  const grid =
+    coverage.grid;
+
+  const side =
+    grid.maxCoordinate -
+    grid.minCoordinate +
+    1;
+
+  return Object.freeze({
+    active:
+      Object.freeze({
+        minX:
+          grid.minCoordinate,
+        maxX:
+          grid.maxCoordinate,
+        minY:
+          grid.minCoordinate,
+        maxY:
+          grid.maxCoordinate,
+      }),
+    activeSectorCount:
+      side *
+      side,
+    lodLevel:
+      window.lodLevel,
+    signature:
+      `RENDER_FULL:${window.lodLevel}`,
+  });
+}
+
 export const GalacticMapWorkerStatus =
   Object.freeze({
     IDLE:
@@ -1824,6 +1948,8 @@ class ThreeGalacticMapSceneRuntime
     this.pointMaterial =
       createGalaxyPointMaterial(
         this.pixelRatio,
+        this.lodStateValue
+          .lodLevel,
       );
 
     const galaxyGroup =
@@ -2337,8 +2463,19 @@ class ThreeGalacticMapSceneRuntime
         ? null
         : this.resolveCurrentVisibleWindow();
 
+    const initialWorkerWindow =
+      initialWindow ===
+          null ||
+        coverage ===
+          null
+        ? null
+        : galacticMapRendererParticleResidencyWindow(
+            initialWindow,
+            coverage,
+          );
+
     this.pendingWindowSignature =
-      initialWindow?.signature ??
+      initialWorkerWindow?.signature ??
       '__FULL__';
 
     this.setWorkerState(
@@ -2372,12 +2509,7 @@ class ThreeGalacticMapSceneRuntime
             ),
           indexConfig,
           window:
-            initialWindow ===
-              null
-              ? null
-              : workerParticleWindow(
-                  initialWindow,
-                ),
+            initialWorkerWindow,
         },
       )
       .then(
@@ -2400,6 +2532,8 @@ class ThreeGalacticMapSceneRuntime
           this.applyWorkerParticleBatch(
             result.batch,
             initialWindow,
+            initialWorkerWindow?.signature ??
+              '__FULL__',
           );
 
           this.particleAppliedRevision =
@@ -2425,13 +2559,29 @@ class ThreeGalacticMapSceneRuntime
           if (
             deferred !==
               null &&
-            deferred.signature !==
-              this.activeWindowSignature &&
-            this.particleSessionReady
+            this.particleSessionReady &&
+            this.activeCoverage !==
+              null
           ) {
-            this.requestParticleWindow(
-              deferred,
-            );
+            const deferredSignature =
+              galacticMapRendererParticleResidencyWindow(
+                deferred,
+                this.activeCoverage,
+              )
+                .signature;
+
+            if (
+              deferredSignature !==
+                this.activeWindowSignature
+            ) {
+              this.requestParticleWindow(
+                deferred,
+              );
+            } else {
+              this.refreshVisibleWindowDiagnostics(
+                deferred,
+              );
+            }
           }
         },
       )
@@ -2474,15 +2624,36 @@ class ThreeGalacticMapSceneRuntime
     const window =
       this.resolveCurrentVisibleWindow();
 
+    const residencyWindow =
+      galacticMapRendererParticleResidencyWindow(
+        window,
+        this.activeCoverage,
+      );
+
     if (
       !force &&
-      (
-        window.signature ===
-          this.activeWindowSignature ||
-        window.signature ===
-          this.pendingWindowSignature
-      )
+      residencyWindow.signature ===
+        this.activeWindowSignature
     ) {
+      this.refreshVisibleWindowDiagnostics(
+        window,
+      );
+
+      return false;
+    }
+
+    if (
+      !force &&
+      residencyWindow.signature ===
+        this.pendingWindowSignature
+    ) {
+      this.deferredWindow =
+        window;
+
+      this.refreshVisibleWindowDiagnostics(
+        window,
+      );
+
       return false;
     }
 
@@ -2491,6 +2662,10 @@ class ThreeGalacticMapSceneRuntime
     ) {
       this.deferredWindow =
         window;
+
+      this.refreshVisibleWindowDiagnostics(
+        window,
+      );
 
       return true;
     }
@@ -2542,11 +2717,27 @@ class ThreeGalacticMapSceneRuntime
       return;
     }
 
+    const coverage =
+      this.activeCoverage;
+
+    if (
+      coverage ===
+        null
+    ) {
+      return;
+    }
+
+    const residencyWindow =
+      galacticMapRendererParticleResidencyWindow(
+        window,
+        coverage,
+      );
+
     const revision =
       ++this.particleRequestRevision;
 
     this.pendingWindowSignature =
-      window.signature;
+      residencyWindow.signature;
 
     this.setWorkerState(
       GalacticMapWorkerStatus.UPDATING,
@@ -2562,9 +2753,7 @@ class ThreeGalacticMapSceneRuntime
         {
           sessionId,
           window:
-            workerParticleWindow(
-              window,
-            ),
+            residencyWindow,
         },
       )
       .then(
@@ -2580,9 +2769,13 @@ class ThreeGalacticMapSceneRuntime
             return;
           }
 
+          const latestWindow =
+            this.resolveCurrentVisibleWindow();
+
           this.applyWorkerParticleBatch(
             result.batch,
-            window,
+            latestWindow,
+            residencyWindow.signature,
           );
 
           this.particleAppliedRevision =
@@ -2624,6 +2817,9 @@ class ThreeGalacticMapSceneRuntime
 
     window:
       GalacticMapVisibleSectorWindow | null,
+
+    residencySignature:
+      string,
   ): void {
 
     this.replaceMaterializedPoints(
@@ -2631,8 +2827,7 @@ class ThreeGalacticMapSceneRuntime
     );
 
     this.activeWindowSignature =
-      window?.signature ??
-      '__FULL__';
+      residencySignature;
 
     this.lodStateValue =
       Object.freeze({
@@ -2656,8 +2851,83 @@ class ThreeGalacticMapSceneRuntime
           batch.cacheEntryCount,
       });
 
+    this.applyPointVisibilityProfile(
+      this.lodStateValue
+        .lodLevel,
+    );
+
     this.emitLodState();
     this.renderFrame();
+  }
+
+  private refreshVisibleWindowDiagnostics(
+    window:
+      GalacticMapVisibleSectorWindow,
+  ): void {
+
+    this.lodStateValue =
+      Object.freeze({
+        ...this.lodStateValue,
+        visibleSectorCount:
+          window.visibleSectorCount,
+        activeSectorCount:
+          window.activeSectorCount,
+        lodLevel:
+          window.lodLevel,
+        particleRetentionRatio:
+          window.particleRetentionRatio,
+      });
+
+    this.applyPointVisibilityProfile(
+      window.lodLevel,
+    );
+
+    this.emitLodState();
+  }
+
+  private applyPointVisibilityProfile(
+    lodLevel:
+      GalacticMapLodLevel,
+  ): void {
+
+    if (
+      this.pointMaterial ===
+        null
+    ) {
+      return;
+    }
+
+    const profile =
+      galacticMapPointVisibilityProfile(
+        lodLevel,
+      );
+
+    this
+      .pointMaterial
+      .uniforms[
+        'uPointScale'
+      ]
+      .value =
+      profile
+        .pointScale;
+
+    this
+      .pointMaterial
+      .uniforms[
+        'uOpacityScale'
+      ]
+      .value =
+      profile
+        .opacityScale;
+
+    this
+      .pointMaterial
+      .uniforms[
+        'uOuterVisibilityScale'
+      ]
+      .value =
+      profile
+        .outerVisibilityScale;
   }
 
   private workerResponseStillCurrent(
@@ -3070,32 +3340,6 @@ class ThreeGalacticMapSceneRuntime
 
 }
 
-function workerParticleWindow(
-  window:
-    GalacticMapVisibleSectorWindow,
-): GalacticMapWorkerParticleWindow {
-
-  return Object.freeze({
-    active:
-      Object.freeze({
-        minX:
-          window.active.minX,
-        maxX:
-          window.active.maxX,
-        minY:
-          window.active.minY,
-        maxY:
-          window.active.maxY,
-      }),
-    activeSectorCount:
-      window.activeSectorCount,
-    lodLevel:
-      window.lodLevel,
-    signature:
-      window.signature,
-  });
-}
-
 export function applyGalaxyVisualRotation(
   group:
     THREE.Object3D,
@@ -3201,13 +3445,39 @@ export function staticPresentationTiltRadians(
 function createGalaxyPointMaterial(
   pixelRatio:
     number,
+
+  lodLevel:
+    GalacticMapLodLevel,
 ): THREE.ShaderMaterial {
+
+  const visibility =
+    galacticMapPointVisibilityProfile(
+      lodLevel,
+    );
 
   return new THREE.ShaderMaterial({
     uniforms: {
       uPixelRatio: {
         value:
           pixelRatio,
+      },
+
+      uPointScale: {
+        value:
+          visibility
+            .pointScale,
+      },
+
+      uOpacityScale: {
+        value:
+          visibility
+            .opacityScale,
+      },
+
+      uOuterVisibilityScale: {
+        value:
+          visibility
+            .outerVisibilityScale,
       },
     },
 
@@ -3220,10 +3490,29 @@ function createGalaxyPointMaterial(
       varying float vOpacity;
 
       uniform float uPixelRatio;
+      uniform float uPointScale;
+      uniform float uOpacityScale;
+      uniform float uOuterVisibilityScale;
 
       void main() {
         vColor = customColor;
-        vOpacity = aOpacity;
+
+        float radialVisibility = mix(
+          1.0,
+          uOuterVisibilityScale,
+          smoothstep(
+            0.18,
+            0.92,
+            length(position.xy)
+          )
+        );
+
+        vOpacity = min(
+          1.0,
+          aOpacity *
+          uOpacityScale *
+          radialVisibility
+        );
 
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
         float distanceScale = clamp(
@@ -3236,6 +3525,7 @@ function createGalaxyPointMaterial(
           aSize *
           uPixelRatio *
           0.92 *
+          uPointScale *
           distanceScale;
         gl_Position = projectionMatrix * mvPosition;
       }
@@ -3265,9 +3555,12 @@ function createGalaxyPointMaterial(
           distanceFromCenter
         );
 
-        float alpha = vOpacity * (
-          0.38 * glow +
-          0.62 * core
+        float alpha = min(
+          1.0,
+          vOpacity * (
+            0.38 * glow +
+            0.62 * core
+          )
         );
 
         gl_FragColor = vec4(vColor, alpha);

@@ -45,7 +45,7 @@ import {
 } from '../runtime/genesis-local-repositories';
 
 import {
-  DEFAULT_UNIVERSE_SEED,
+  UniverseSeedFacade,
 } from '../universe/universe-seed.facade';
 
 import {
@@ -55,10 +55,13 @@ import {
 describe(
   'ExplorationFacade point 9.5',
   () => {
+    const POINT_9_5_FIXTURE_SEED =
+      '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
+
     const generationKey =
       new UniverseGenerationKey(
         UniverseSeed.parse(
-          DEFAULT_UNIVERSE_SEED,
+          POINT_9_5_FIXTURE_SEED,
         ),
         GeneratorVersion.V1,
       );
@@ -164,6 +167,16 @@ describe(
 
             useValue:
               runtime,
+          },
+          {
+            provide:
+              UniverseSeedFacade,
+
+            useValue: {
+              activeGenerationKey:
+                () =>
+                  generationKey,
+            },
           },
         ],
       });

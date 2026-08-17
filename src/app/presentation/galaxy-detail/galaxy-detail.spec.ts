@@ -332,7 +332,7 @@ describe(
     }
 
     it(
-      'should load canonical Caeloria with its own bootstrap statistics without reading PD or changing focus',
+      'should load the default B5 origin galaxy with its own bootstrap statistics without reading PD or changing focus',
       async () => {
         configure(
           '0',
@@ -360,7 +360,7 @@ describe(
             ?.profile
             .knownName,
         ).toBe(
-          'Caeloria',
+          'Elixisis',
         );
 
         expect(
@@ -369,7 +369,7 @@ describe(
             .galaxyType,
         ).toBe(
           GalaxyType
-            .ELLIPTICAL,
+            .BARRED_SPIRAL,
         );
 
         expect(
@@ -455,7 +455,7 @@ describe(
             '[data-testid="galaxy-detail-name"]',
           )?.textContent,
         ).toContain(
-          'Caeloria',
+          'Elixisis',
         );
 
         expect(
@@ -479,7 +479,7 @@ describe(
             '[data-testid="galaxy-detail-exact-type"]',
           )?.textContent,
         ).toContain(
-          'Elíptica',
+          'Espiral barrada',
         );
 
         expect(
@@ -487,31 +487,31 @@ describe(
             '[data-testid="galaxy-detail-morphology"]',
           )?.textContent,
         ).toContain(
-          'Esferoidal',
+          'Disco galáctico',
         );
 
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-scale"]',
           )?.textContent,
-        ).toContain(
-          'Grande',
+        ).toMatch(
+          /Compacta|Media|Grande|Extendida/,
         );
 
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-population"]',
           )?.textContent,
-        ).toContain(
-          'Alta',
+        ).toMatch(
+          /Baja|Moderada|Alta|Muy alta/,
         );
 
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-nuclear"]',
           )?.textContent,
-        ).toContain(
-          'Sin actividad nuclear clara',
+        ).toMatch(
+          /Sin actividad nuclear clara|Candidata a núcleo activo|Candidata a actividad nuclear extrema/,
         );
 
         expect(

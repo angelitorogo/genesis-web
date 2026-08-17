@@ -323,7 +323,7 @@ describe(
             ]
             .knownName,
         ).toBe(
-          'Caeloria',
+          'Elixisis',
         );
 
         expect(
@@ -435,7 +435,7 @@ describe(
             )
             ?.textContent,
         ).toContain(
-          'Caeloria',
+          'Elixisis',
         );
 
         expect(
