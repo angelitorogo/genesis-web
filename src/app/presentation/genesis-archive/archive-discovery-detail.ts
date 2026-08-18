@@ -11,6 +11,10 @@ import {
 } from '@angular/router';
 
 import {
+  GenesisPrimaryButton,
+} from '../../ui/components/genesis-primary-button/genesis-primary-button';
+
+import {
   GenesisSectionTitle,
 } from '../../ui/components/genesis-section-title/genesis-section-title';
 
@@ -22,6 +26,10 @@ import {
   ArchiveDiscoveryDetailFacade,
 } from './archive-discovery-detail.facade';
 
+import {
+  GalacticObjectProceduralRender,
+} from './galactic-object-procedural-render';
+
 @Component({
   selector:
     'app-archive-discovery-detail',
@@ -32,7 +40,9 @@ import {
   imports: [
     GenesisScreen,
     GenesisSectionTitle,
+    GenesisPrimaryButton,
     RouterLink,
+    GalacticObjectProceduralRender,
   ],
 
   templateUrl:
@@ -56,6 +66,14 @@ export class ArchiveDiscoveryDetail
     inject(
       ActivatedRoute,
     );
+
+  performScientificAction():
+    void {
+
+    void this
+      .facade
+      .performScientificAction();
+  }
 
   ngOnInit():
     void {

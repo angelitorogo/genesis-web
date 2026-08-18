@@ -1,0 +1,161 @@
+<figure
+  class="galactic-object-render"
+  data-testid="galactic-object-procedural-render"
+  [attr.data-render-kind]="descriptor().kind"
+  [attr.data-knowledge-level]="descriptor().knowledgeLevel"
+>
+  @if (renderModel(); as model) {
+    <svg
+      class="galactic-object-render__svg"
+      viewBox="0 0 640 360"
+      role="img"
+      [attr.aria-label]="descriptor().accessibleLabel"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <radialGradient id="archive-object-core" cx="50%" cy="50%" r="50%">
+          <stop
+            offset="0%"
+            [attr.stop-color]="model.palette.highlight"
+            stop-opacity="0.95"
+          ></stop>
+
+          <stop
+            offset="42%"
+            [attr.stop-color]="model.palette.primary"
+            stop-opacity="0.58"
+          ></stop>
+
+          <stop
+            offset="100%"
+            [attr.stop-color]="model.palette.accent"
+            stop-opacity="0"
+          ></stop>
+        </radialGradient>
+
+        <linearGradient id="archive-object-filament" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop
+            offset="0%"
+            [attr.stop-color]="model.palette.primary"
+          ></stop>
+
+          <stop
+            offset="100%"
+            [attr.stop-color]="model.palette.secondary"
+          ></stop>
+        </linearGradient>
+
+        <filter id="archive-object-glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="4.8" result="blur"></feGaussianBlur>
+          <feMerge>
+            <feMergeNode in="blur"></feMergeNode>
+            <feMergeNode in="SourceGraphic"></feMergeNode>
+          </feMerge>
+        </filter>
+
+        <filter id="archive-object-cloud" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="11"></feGaussianBlur>
+        </filter>
+      </defs>
+
+      <rect
+        class="galactic-object-render__background"
+        width="640"
+        height="360"
+        rx="24"
+      ></rect>
+
+      <ellipse
+        class="galactic-object-render__ambient"
+        cx="320"
+        cy="180"
+        rx="250"
+        ry="145"
+        [attr.fill]="model.palette.accent"
+      ></ellipse>
+
+      @for (cloud of model.clouds; track $index) {
+        <ellipse
+          class="galactic-object-render__cloud"
+          [attr.cx]="cloud.x"
+          [attr.cy]="cloud.y"
+          [attr.rx]="cloud.radiusX"
+          [attr.ry]="cloud.radiusY"
+          [attr.opacity]="cloud.opacity"
+          [attr.fill]="cloud.tone === 0 ? model.palette.primary : model.palette.secondary"
+          [attr.transform]="'rotate(' + cloud.rotationDegrees + ' ' + cloud.x + ' ' + cloud.y + ')'"
+          filter="url(#archive-object-cloud)"
+        ></ellipse>
+      }
+
+      @for (ring of model.rings; track $index) {
+        <ellipse
+          class="galactic-object-render__ring"
+          cx="320"
+          cy="180"
+          fill="none"
+          [attr.rx]="ring.radiusX"
+          [attr.ry]="ring.radiusY"
+          [attr.stroke]="model.palette.primary"
+          [attr.stroke-width]="ring.strokeWidth"
+          [attr.opacity]="ring.opacity"
+          [attr.transform]="'rotate(' + ring.rotationDegrees + ' 320 180)'"
+          filter="url(#archive-object-glow)"
+        ></ellipse>
+      }
+
+      @for (filament of model.filaments; track $index) {
+        <path
+          class="galactic-object-render__filament"
+          fill="none"
+          stroke-linecap="round"
+          [attr.d]="filament.path"
+          [attr.stroke]="filament.tone === 0 ? 'url(#archive-object-filament)' : model.palette.accent"
+          [attr.stroke-width]="filament.strokeWidth"
+          [attr.opacity]="filament.opacity"
+          filter="url(#archive-object-glow)"
+        ></path>
+      }
+
+      <circle
+        class="galactic-object-render__core"
+        cx="320"
+        cy="180"
+        [attr.r]="model.coreRadius"
+        [attr.opacity]="model.coreOpacity"
+        fill="url(#archive-object-core)"
+        filter="url(#archive-object-glow)"
+      ></circle>
+
+      @for (star of model.stars; track $index) {
+        <circle
+          class="galactic-object-render__star"
+          [attr.cx]="star.x"
+          [attr.cy]="star.y"
+          [attr.r]="star.radius"
+          [attr.opacity]="star.opacity"
+          [attr.fill]="star.tone === 0 ? model.palette.highlight : star.tone === 1 ? model.palette.primary : model.palette.secondary"
+        ></circle>
+      }
+
+      <rect
+        class="galactic-object-render__scanline"
+        x="20"
+        y="20"
+        width="600"
+        height="320"
+        rx="18"
+      ></rect>
+    </svg>
+  }
+
+  <figcaption class="galactic-object-render__caption">
+    <span>
+      RENDER PROCEDURAL / 12.8
+    </span>
+
+    <code>
+      {{ descriptor().knowledgeLevel }}
+    </code>
+  </figcaption>
+</figure>

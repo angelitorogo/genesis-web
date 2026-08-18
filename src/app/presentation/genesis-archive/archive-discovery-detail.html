@@ -6,7 +6,7 @@
     <genesis-section-title
       eyebrow="ARCHIVO GENESIS / DESCUBRIMIENTO"
       title="Ficha de descubrimiento"
-      description="Registro mínimo y recargable del marcador persistente seleccionado en el mapa galáctico."
+      description="Registro recargable del descubrimiento persistente, con render procedural y detalle científico limitado por el estado observado."
     ></genesis-section-title>
 
     @switch (facade.state().kind) {
@@ -70,93 +70,304 @@
               </span>
             </header>
 
-            <dl class="archive-discovery-detail__facts">
-              <div>
-                <dt>
-                  UNIVERSO
-                </dt>
+            @if (model.galacticObjectCard; as card) {
+              <section
+                class="archive-discovery-detail__science-card"
+                data-testid="archive-galactic-object-card"
+                [attr.data-knowledge-level]="card.knowledgeLevel"
+                [attr.data-scientific-subject]="card.scientificSubject"
+              >
+                <app-galactic-object-procedural-render
+                  [descriptor]="card.render"
+                ></app-galactic-object-procedural-render>
 
-                <dd data-testid="archive-discovery-detail-universe-seed">
-                  {{ model.universeSeed }}
-                </dd>
-              </div>
+                <div class="archive-discovery-detail__science-copy">
+                  <div>
+                    <small class="archive-discovery-detail__eyebrow">
+                      CLASIFICACIÓN CIENTÍFICA / 12.8
+                    </small>
 
-              <div>
-                <dt>
-                  GENERADOR
-                </dt>
+                    <h3 data-testid="archive-galactic-object-title">
+                      {{ card.title }}
+                    </h3>
 
-                <dd data-testid="archive-discovery-detail-generator-version">
-                  V{{ model.generatorVersionCode }}
-                </dd>
-              </div>
+                    <p data-testid="archive-galactic-object-summary">
+                      {{ card.summary }}
+                    </p>
+                  </div>
 
-              <div>
-                <dt>
-                  LOCALIZADOR
-                </dt>
+                  <dl class="archive-discovery-detail__science-status">
+                    <div>
+                      <dt>
+                        NIVEL DE CONOCIMIENTO
+                      </dt>
 
-                <dd data-testid="archive-discovery-detail-locator-kind">
-                  {{ model.locatorKindLabel }}
-                </dd>
-              </div>
+                      <dd data-testid="archive-galactic-object-knowledge-level">
+                        {{ card.knowledgeLevelLabel }}
+                      </dd>
+                    </div>
 
-              <div>
-                <dt>
-                  GALAXIA
-                </dt>
+                    <div>
+                      <dt>
+                        SIGUIENTE PASO CIENTÍFICO
+                      </dt>
 
-                <dd data-testid="archive-discovery-detail-galaxy-index">
-                  {{ model.galaxyIndex.toString() }}
-                </dd>
-              </div>
+                      <dd data-testid="archive-galactic-object-next-step">
+                        {{ card.nextScientificStep }}
+                      </dd>
+                    </div>
+                  </dl>
 
-              <div>
-                <dt>
-                  SECTOR
-                </dt>
+                  @if (model.scientificAction; as action) {
+                    <section
+                      class="archive-discovery-detail__scientific-action"
+                      data-testid="archive-galactic-object-scientific-action"
+                    >
+                      <div class="archive-discovery-detail__scientific-action-header">
+                        <div>
+                          <small class="archive-discovery-detail__eyebrow">
+                            ACCIÓN CIENTÍFICA DISPONIBLE
+                          </small>
 
-                <dd data-testid="archive-discovery-detail-sector">
-                  ({{ model.sectorX }}, {{ model.sectorY }})
-                </dd>
-              </div>
+                          <strong data-testid="archive-galactic-object-action-label">
+                            {{ action.label }}
+                          </strong>
+                        </div>
 
-              <div>
-                <dt>
-                  SECTOR KEY
-                </dt>
+                        <span data-testid="archive-galactic-object-action-reward">
+                          +{{ action.awardedDiscoveryPoints }} PD
+                        </span>
+                      </div>
 
-                <dd>
-                  {{ model.sectorKey.toString() }}
-                </dd>
-              </div>
+                      <ul class="archive-discovery-detail__instrument-list">
+                        @for (instrument of action.instrumentOptions; track instrument.instrumentType) {
+                          <li
+                            [class.archive-discovery-detail__instrument--available]="instrument.isAvailable"
+                          >
+                            <span>
+                              {{ instrument.label }} · Nivel {{ instrument.minimumLevelRank }}
+                            </span>
 
-              <div>
-                <dt>
-                  ÍNDICE PROCEDURAL
-                </dt>
+                            <small>
+                              {{ instrument.statusLabel }}
+                            </small>
+                          </li>
+                        }
+                      </ul>
 
-                <dd data-testid="archive-discovery-detail-object-index">
-                  {{ model.galacticObjectIndex.toString() }}
-                </dd>
-              </div>
+                      @if (action.canExecute) {
+                        <p class="archive-discovery-detail__selected-instrument">
+                          Se usará {{ action.selectedInstrumentLabel }} · Nivel {{ action.minimumInstrumentLevelRank }}.
+                          El resultado avanzará a {{ action.targetDiscoveryStateLabel }}.
+                        </p>
 
-              <div>
-                <dt>
-                  IDENTIDAD
-                </dt>
+                        <button
+                          genesis-primary-button
+                          type="button"
+                          data-testid="archive-galactic-object-action-button"
+                          [disabled]="facade.actionPending()"
+                          (click)="performScientificAction()"
+                        >
+                          @if (facade.actionPending()) {
+                            Procesando…
+                          } @else {
+                            {{ action.buttonLabel }}
+                          }
+                        </button>
+                      } @else {
+                        <p
+                          class="archive-discovery-detail__action-blocked"
+                          data-testid="archive-galactic-object-action-blocked"
+                        >
+                          El Observatorio todavía no dispone de un instrumento compatible
+                          con el nivel científico requerido.
+                        </p>
 
-                <dd data-testid="archive-discovery-detail-identity">
-                  {{ model.proceduralIdentity }}
-                </dd>
-              </div>
-            </dl>
+                        @if (action.pendingRequirements; as pending) {
+                          <section
+                            class="archive-discovery-detail__restricted archive-discovery-detail__pending-requirements"
+                            data-testid="archive-galactic-object-pending-requirements"
+                          >
+                            <small class="archive-discovery-detail__eyebrow">
+                              REQUISITOS PENDIENTES
+                            </small>
 
-            <p class="archive-discovery-detail__boundary">
-              Esta ficha reutiliza exclusivamente identidad procedural,
-              DiscoveryState y familia operacional ya conocidas. No genera
-              propiedades físicas nuevas, no entra en el contenido del sector y
-              no revela Ground Truth oculto.
+                            <ul>
+                              @for (requirement of pending.items; track requirement) {
+                                <li>{{ requirement }}</li>
+                              }
+                            </ul>
+                          </section>
+                        }
+                      }
+
+                      @if (facade.actionFeedback(); as feedback) {
+                        <p
+                          class="archive-discovery-detail__action-feedback"
+                          data-testid="archive-galactic-object-action-feedback"
+                        >
+                          {{ feedback }}
+                        </p>
+                      }
+
+                      @if (facade.actionError(); as actionError) {
+                        <p
+                          class="archive-discovery-detail__action-error"
+                          data-testid="archive-galactic-object-action-error"
+                        >
+                          {{ actionError }}
+                        </p>
+                      }
+                    </section>
+                  }
+                </div>
+              </section>
+
+              @if (card.facts.length > 0) {
+                <section
+                  class="archive-discovery-detail__physical-section"
+                  data-testid="archive-galactic-object-physical-facts"
+                >
+                  <header>
+                    <small class="archive-discovery-detail__eyebrow">
+                      DATOS FÍSICOS AUTORIZADOS
+                    </small>
+
+                    <p>
+                      Solo se muestran magnitudes desbloqueadas por la progresión
+                      científica persistida.
+                    </p>
+                  </header>
+
+                  <dl class="archive-discovery-detail__physical-facts">
+                    @for (fact of card.facts; track fact.label) {
+                      <div>
+                        <dt>
+                          {{ fact.label }}
+                        </dt>
+
+                        <dd>
+                          {{ fact.value }}
+                        </dd>
+                      </div>
+                    }
+                  </dl>
+                </section>
+              } @else {
+                <section
+                  class="archive-discovery-detail__restricted"
+                  data-testid="archive-galactic-object-physical-restricted"
+                >
+                  <small class="archive-discovery-detail__eyebrow">
+                    DATOS FÍSICOS RESTRINGIDOS
+                  </small>
+
+                  <p>
+                    La ficha no regenera ni muestra magnitudes físicas hasta que
+                    el estado científico alcance Catalogado.
+                  </p>
+                </section>
+              }
+            }
+
+            <section class="archive-discovery-detail__identity-section">
+              <small class="archive-discovery-detail__eyebrow">
+                IDENTIDAD PROCEDURAL PERSISTENTE
+              </small>
+
+              <dl class="archive-discovery-detail__facts">
+                <div>
+                  <dt>
+                    UNIVERSO
+                  </dt>
+
+                  <dd data-testid="archive-discovery-detail-universe-seed">
+                    {{ model.universeSeed }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    GENERADOR
+                  </dt>
+
+                  <dd data-testid="archive-discovery-detail-generator-version">
+                    V{{ model.generatorVersionCode }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    LOCALIZADOR
+                  </dt>
+
+                  <dd data-testid="archive-discovery-detail-locator-kind">
+                    {{ model.locatorKindLabel }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    GALAXIA
+                  </dt>
+
+                  <dd data-testid="archive-discovery-detail-galaxy-index">
+                    {{ model.galaxyIndex.toString() }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    SECTOR
+                  </dt>
+
+                  <dd data-testid="archive-discovery-detail-sector">
+                    ({{ model.sectorX }}, {{ model.sectorY }})
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    SECTOR KEY
+                  </dt>
+
+                  <dd>
+                    {{ model.sectorKey.toString() }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    ÍNDICE PROCEDURAL
+                  </dt>
+
+                  <dd data-testid="archive-discovery-detail-object-index">
+                    {{ model.galacticObjectIndex.toString() }}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    IDENTIDAD
+                  </dt>
+
+                  <dd data-testid="archive-discovery-detail-identity">
+                    {{ model.proceduralIdentity }}
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
+            <p
+              class="archive-discovery-detail__boundary"
+              data-testid="archive-discovery-detail-boundary"
+            >
+              12.8 conserva la identidad persistida y regenera únicamente el
+              Ground Truth que el DiscoveryState permite mostrar. DETECTED no
+              resuelve especialización física; DISCOVERED puede mostrar la
+              identidad científica; CATALOGUED habilita una ficha física básica;
+              CONFIRMED completa sus magnitudes V1. El render es renderer-only y
+              no modifica la simulación ni persiste propiedades duplicadas.
             </p>
           </article>
         }

@@ -3,6 +3,10 @@ import {
 } from '@angular/core/testing';
 
 import {
+  KnownDiscovery,
+} from '../../domain/discovery/known-discovery';
+
+import {
   DiscoveryState,
   type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
@@ -10,6 +14,14 @@ import {
 import {
   ExplorationResultKind,
 } from '../../domain/exploration/exploration-sector-result';
+
+import {
+  GalacticObjectScientificActionType,
+} from '../../domain/galactic-object/galactic-object-scientific-action';
+
+import {
+  GalacticObjectScientificSubject,
+} from '../../domain/galactic-object/galactic-object-scientific-subject';
 
 import {
   GalacticObjectLocator,
@@ -34,6 +46,18 @@ import {
 } from '../../domain/sector/galaxy-sector-key-codec';
 
 import {
+  ObservationInstrumentType,
+} from '../../domain/observation/observation-instrument';
+
+import {
+  type LeveledInstrumentObservationSession,
+} from '../../domain/observation/observation-instrument-capability';
+
+import {
+  vi,
+} from 'vitest';
+
+import {
   UniverseSeed,
 } from '../../domain/universe/universe-seed';
 
@@ -43,12 +67,25 @@ import {
 } from '../runtime/genesis-local-repositories';
 
 import {
+  ExplorationSectorResultEngine,
+} from '../../simulation/exploration/exploration-sector-result-engine';
+
+import {
+  GalacticObjectScientificSubjectResolver,
+} from '../../simulation/galactic-object/galactic-object-scientific-subject-resolver';
+
+import {
+  GALACTIC_OBJECT_SCIENTIFIC_ACTION_RUNTIME,
+} from '../runtime/galactic-object-scientific-action.runtime';
+
+import {
   DEFAULT_UNIVERSE_SEED,
 } from '../universe/universe-seed.facade';
 
 import {
   ArchiveDiscoveryDetailFacade,
   ArchiveDiscoveryLocatorKind,
+  type ArchiveScientificInstrumentOption,
 } from './archive-discovery-detail.facade';
 
 describe(
@@ -319,6 +356,10 @@ describe(
         ).toBe(
           `G0 / S${sectorKey.toString(10)} / O7`,
         );
+
+        expect(
+          model?.galacticObjectCard,
+        ).toBeNull();
       },
     );
 
@@ -336,8 +377,8 @@ describe(
 
         const coordinates =
           new GalaxySectorCoordinates(
-            1,
-            -1,
+            0,
+            0,
           );
 
         const sectorKey =
@@ -356,7 +397,7 @@ describe(
               10,
             ),
           galacticObjectIndex:
-            '3',
+            '0',
           universeSeed:
             generationKey
               .universeSeed
@@ -371,7 +412,7 @@ describe(
           new GalacticObjectLocator(
             0n,
             sectorKey,
-            3n,
+            0n,
           ),
         ]);
 
@@ -383,23 +424,15 @@ describe(
         ).not.toBeNull();
 
         expect(
-          [
-            ExplorationResultKind.NEBULA,
-            ExplorationResultKind.STAR_CLUSTER,
-            ExplorationResultKind.EXTREME_OBJECT,
-          ],
-        ).toContain(
           model?.resultKind,
+        ).toBe(
+          ExplorationResultKind.EXTREME_OBJECT,
         );
 
         expect(
-          [
-            'Nebulosa',
-            'Cúmulo estelar',
-            'Objeto extremo',
-          ],
-        ).toContain(
           model?.familyLabel,
+        ).toBe(
+          'Objeto extremo',
         );
 
         expect(
@@ -412,6 +445,22 @@ describe(
           model?.discoveryStateLabel,
         ).toBe(
           'Confirmado',
+        );
+
+        expect(
+          model?.galacticObjectCard,
+        ).not.toBeNull();
+
+        expect(
+          model?.galacticObjectCard?.knowledgeLevel,
+        ).toBe(
+          'CONFIRMED',
+        );
+
+        expect(
+          model?.galacticObjectCard?.title,
+        ).toBe(
+          'Remanente de supernova',
         );
       },
     );
@@ -869,6 +918,686 @@ describe(
             0n,
           ),
         ]);
+      },
+    );
+
+    it(
+      'should expose an executable DETECTED star-cluster survey with the unlocked optical level and reveal the physical subject after commit',
+      async () => {
+        const locator =
+          (() => {
+            for (
+              let galacticObjectIndex = 0n;
+              galacticObjectIndex < 4096n;
+              galacticObjectIndex += 1n
+            ) {
+              const candidate =
+                new GalacticObjectLocator(
+                  0n,
+                  0n,
+                  galacticObjectIndex,
+                );
+
+              if (
+                ExplorationSectorResultEngine
+                  .resolveGalacticObjectKind(
+                    generationKey,
+                    candidate,
+                  ) ===
+                ExplorationResultKind.STAR_CLUSTER
+              ) {
+                return candidate;
+              }
+            }
+
+            throw new Error(
+              'Expected at least one deterministic STAR_CLUSTER locator in the V1 sample.',
+            );
+          })();
+
+        let persistedState:
+          DiscoveryStateValue =
+          DiscoveryState.DETECTED;
+
+        const commitAction =
+          vi.fn(
+            async (
+              session:
+                LeveledInstrumentObservationSession,
+
+              actionType:
+                GalacticObjectScientificActionType,
+            ) => {
+              expect(
+                session.instrumentType,
+              ).toBe(
+                ObservationInstrumentType.OPTICAL,
+              );
+
+              expect(
+                session.level.rank,
+              ).toBe(
+                1,
+              );
+
+              expect(
+                actionType,
+              ).toBe(
+                GalacticObjectScientificActionType.STAR_CLUSTER_SURVEY,
+              );
+
+              persistedState =
+                DiscoveryState.DISCOVERED;
+
+              return {
+                actionResult: {
+                  awardedDiscoveryPoints:
+                    24,
+                  newDiscoveryState:
+                    DiscoveryState.DISCOVERED,
+                },
+                globalDiscoveryPointsBefore:
+                  0n,
+                globalDiscoveryPointsAfter:
+                  24n,
+              };
+            },
+          );
+
+        const repositories:
+          GenesisLocalRepositories =
+          {
+            universeRepository: {
+              async createIfAbsent() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+
+              async exists() {
+                return true;
+              },
+
+              async getAll() {
+                return [
+                  generationKey,
+                ];
+              },
+
+              async delete() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            navigationRepository: {
+              async getNavigation() {
+                throw new Error(
+                  'Unexpected navigation read.',
+                );
+              },
+
+              async setNavigation() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            pointsRepository: {
+              async getGlobalDiscoveryPoints() {
+                return 0n;
+              },
+
+              async setGlobalDiscoveryPoints() {
+                throw new Error(
+                  'Facade must delegate scientific writes to the 12.7 runtime.',
+                );
+              },
+
+              async getGalaxyDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected galaxy PD read.',
+                );
+              },
+
+              async setGalaxyDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            discoveryRepository: {
+              async getState() {
+                return persistedState;
+              },
+
+              async setState() {
+                throw new Error(
+                  'Facade must delegate scientific writes to the 12.7 runtime.',
+                );
+              },
+
+              async getKnownDiscoveries() {
+                return [
+                  new KnownDiscovery(
+                    generationKey,
+                    locator,
+                    persistedState,
+                  ),
+                ];
+              },
+
+              async getKnownDiscoveriesInSector() {
+                throw new Error(
+                  'Unexpected sector read.',
+                );
+              },
+            },
+          };
+
+        TestBed.resetTestingModule();
+
+        TestBed.configureTestingModule({
+          providers: [
+            {
+              provide:
+                GENESIS_LOCAL_REPOSITORIES,
+              useValue:
+                repositories,
+            },
+            {
+              provide:
+                GALACTIC_OBJECT_SCIENTIFIC_ACTION_RUNTIME,
+              useValue: {
+                commitAction,
+              },
+            },
+          ],
+        });
+
+        const facade =
+          TestBed.inject(
+            ArchiveDiscoveryDetailFacade,
+          );
+
+        const request = {
+          locatorKind:
+            ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex:
+            '0',
+          sectorKey:
+            '0',
+          galacticObjectIndex:
+            locator
+              .galacticObjectIndex
+              .toString(),
+          universeSeed:
+            generationKey.universeSeed.serialize(),
+          generatorVersionCode:
+            '1',
+        };
+
+        await facade.load(
+          request,
+        );
+
+        const detectedAction =
+          facade.model()
+            ?.scientificAction;
+
+        expect(
+          facade.model()?.resultKind,
+        ).toBe(
+          ExplorationResultKind.STAR_CLUSTER,
+        );
+
+        expect(
+          detectedAction?.actionType,
+        ).toBe(
+          GalacticObjectScientificActionType.STAR_CLUSTER_SURVEY,
+        );
+
+        expect(
+          detectedAction?.awardedDiscoveryPoints,
+        ).toBe(
+          24,
+        );
+
+        expect(
+          detectedAction?.selectedInstrumentType,
+        ).toBe(
+          ObservationInstrumentType.OPTICAL,
+        );
+
+        expect(
+          detectedAction?.canExecute,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          detectedAction?.pendingRequirements,
+        ).toBeNull();
+
+        expect(
+          detectedAction?.instrumentOptions
+            .find(
+              (
+                option:
+                  ArchiveScientificInstrumentOption,
+              ) =>
+                option.instrumentType ===
+                ObservationInstrumentType.INFRARED,
+            )
+            ?.isAvailable,
+        ).toBe(
+          false,
+        );
+
+        await facade
+          .performScientificAction();
+
+        expect(
+          commitAction,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          facade.model()?.discoveryState,
+        ).toBe(
+          DiscoveryState.DISCOVERED,
+        );
+
+        expect([
+          'Cúmulo abierto',
+          'Cúmulo globular',
+        ]).toContain(
+          facade.model()
+            ?.galacticObjectCard
+            ?.title,
+        );
+
+        expect(
+          facade.actionFeedback(),
+        ).toContain(
+          '+24 PD',
+        );
+      },
+    );
+
+    it(
+      'should expose the exact pending PD and named milestones for a blocked DISCOVERED nebula characterization',
+      async () => {
+        const locator =
+          (() => {
+            for (
+              let galacticObjectIndex = 0n;
+              galacticObjectIndex < 4096n;
+              galacticObjectIndex += 1n
+            ) {
+              const candidate =
+                new GalacticObjectLocator(
+                  0n,
+                  0n,
+                  galacticObjectIndex,
+                );
+
+              if (
+                ExplorationSectorResultEngine
+                  .resolveGalacticObjectKind(
+                    generationKey,
+                    candidate,
+                  ) ===
+                  ExplorationResultKind.NEBULA &&
+                GalacticObjectScientificSubjectResolver
+                  .resolve(
+                    generationKey,
+                    candidate,
+                    DiscoveryState.DISCOVERED,
+                  ) ===
+                  GalacticObjectScientificSubject.NEBULA
+              ) {
+                return candidate;
+              }
+            }
+
+            throw new Error(
+              'Expected at least one deterministic non-HII NEBULA locator in the V1 sample.',
+            );
+          })();
+
+        const repositories:
+          GenesisLocalRepositories =
+          {
+            universeRepository: {
+              async createIfAbsent() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+              async exists() {
+                return true;
+              },
+              async getAll() {
+                return [
+                  generationKey,
+                ];
+              },
+              async delete() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            navigationRepository: {
+              async getNavigation() {
+                throw new Error(
+                  'Unexpected navigation read.',
+                );
+              },
+              async setNavigation() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            pointsRepository: {
+              async getGlobalDiscoveryPoints() {
+                return 602n;
+              },
+              async setGlobalDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+              async getGalaxyDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected galaxy PD read.',
+                );
+              },
+              async setGalaxyDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            discoveryRepository: {
+              async getState() {
+                return DiscoveryState.DISCOVERED;
+              },
+              async setState() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+              async getKnownDiscoveries() {
+                return [
+                  new KnownDiscovery(
+                    generationKey,
+                    locator,
+                    DiscoveryState.DISCOVERED,
+                  ),
+                ];
+              },
+              async getKnownDiscoveriesInSector() {
+                throw new Error(
+                  'Unexpected sector read.',
+                );
+              },
+            },
+          };
+
+        TestBed.resetTestingModule();
+
+        TestBed.configureTestingModule({
+          providers: [
+            {
+              provide:
+                GENESIS_LOCAL_REPOSITORIES,
+              useValue:
+                repositories,
+            },
+          ],
+        });
+
+        const facade =
+          TestBed.inject(
+            ArchiveDiscoveryDetailFacade,
+          );
+
+        await facade.load({
+          locatorKind:
+            ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex:
+            '0',
+          sectorKey:
+            '0',
+          galacticObjectIndex:
+            locator
+              .galacticObjectIndex
+              .toString(),
+          universeSeed:
+            generationKey.universeSeed.serialize(),
+          generatorVersionCode:
+            '1',
+        });
+
+        const action =
+          facade.model()
+            ?.scientificAction;
+
+        expect(
+          action?.actionType,
+        ).toBe(
+          GalacticObjectScientificActionType.NEBULA_SPECTROSCOPIC_CHARACTERIZATION,
+        );
+
+        expect(
+          action?.canExecute,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          action?.pendingRequirements,
+        ).toEqual({
+          instrumentLabel:
+            'Espectroscopía',
+          minimumLevelRank:
+            2,
+          items: [
+            '1898 PD adicionales',
+            'Descubrir el primer sistema',
+            'Descubrir el primer cuerpo',
+          ],
+        });
+      },
+    );
+
+    it(
+      'should keep a DETECTED extreme-object survey visible but blocked until a compatible level-2 instrument is unlocked',
+      async () => {
+        const locator =
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          );
+
+        const repositories:
+          GenesisLocalRepositories =
+          {
+            universeRepository: {
+              async createIfAbsent() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+              async exists() {
+                return true;
+              },
+              async getAll() {
+                return [
+                  generationKey,
+                ];
+              },
+              async delete() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            navigationRepository: {
+              async getNavigation() {
+                throw new Error(
+                  'Unexpected navigation read.',
+                );
+              },
+              async setNavigation() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            pointsRepository: {
+              async getGlobalDiscoveryPoints() {
+                return 0n;
+              },
+              async setGlobalDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+              async getGalaxyDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected galaxy PD read.',
+                );
+              },
+              async setGalaxyDiscoveryPoints() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+            },
+
+            discoveryRepository: {
+              async getState() {
+                return DiscoveryState.DETECTED;
+              },
+              async setState() {
+                throw new Error(
+                  'Unexpected write.',
+                );
+              },
+              async getKnownDiscoveries() {
+                return [
+                  new KnownDiscovery(
+                    generationKey,
+                    locator,
+                    DiscoveryState.DETECTED,
+                  ),
+                ];
+              },
+              async getKnownDiscoveriesInSector() {
+                throw new Error(
+                  'Unexpected sector read.',
+                );
+              },
+            },
+          };
+
+        TestBed.resetTestingModule();
+
+        TestBed.configureTestingModule({
+          providers: [
+            {
+              provide:
+                GENESIS_LOCAL_REPOSITORIES,
+              useValue:
+                repositories,
+            },
+          ],
+        });
+
+        const facade =
+          TestBed.inject(
+            ArchiveDiscoveryDetailFacade,
+          );
+
+        await facade.load({
+          locatorKind:
+            ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex:
+            '0',
+          sectorKey:
+            '0',
+          galacticObjectIndex:
+            '0',
+          universeSeed:
+            generationKey.universeSeed.serialize(),
+          generatorVersionCode:
+            '1',
+        });
+
+        const action =
+          facade.model()
+            ?.scientificAction;
+
+        expect(
+          action?.actionType,
+        ).toBe(
+          GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+        );
+
+        expect(
+          action?.minimumInstrumentLevelRank,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          action?.canExecute,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          action?.selectedInstrumentType,
+        ).toBeNull();
+
+        expect(
+          action?.instrumentOptions.every(
+            (
+              option:
+                ArchiveScientificInstrumentOption,
+            ) =>
+              !option.isAvailable,
+          ),
+        ).toBe(
+          true,
+        );
+
+        expect(
+          action?.pendingRequirements,
+        ).toEqual({
+          instrumentLabel:
+            'Radio',
+          minimumLevelRank:
+            2,
+          items: [
+            '1000 PD adicionales',
+            'Descubrir el primer sistema',
+          ],
+        });
       },
     );
   },
