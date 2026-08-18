@@ -11,6 +11,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExternalGalaxyFocusChoice,
+} from '../../domain/exploration/external-galaxy-focus';
+
+import {
   ExplorationSectorProgressResult,
 } from '../../domain/exploration/exploration-sector-progress-result';
 
@@ -35,6 +39,28 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  ExternalGalaxyFocusEngine,
+} from '../../simulation/exploration/external-galaxy-focus-engine';
+
+import {
+  ExternalGalaxySearchPityEngine,
+} from '../../simulation/exploration/external-galaxy-search-pity-engine';
+
+import {
+  ExternalGalaxyPreliminaryInformationGenerator,
+} from '../../simulation/observation/galaxy/external-galaxy-preliminary-information-generator';
+
+import {
+  EXTERNAL_GALAXY_SEARCH_RUNTIME,
+  type ExternalGalaxySearchRuntime,
+} from '../runtime/external-galaxy-search.runtime';
+
+import {
+  GALAXY_FOCUS_RUNTIME,
+  type GalaxyFocusRuntime,
+} from '../runtime/galaxy-focus.runtime';
+
+import {
   EXPLORATION_SECTOR_PROGRESS_RUNTIME,
   type ExplorationSectorProgressRuntime,
 } from '../runtime/exploration-sector-progress.runtime';
@@ -53,7 +79,7 @@ import {
 } from './exploration.facade';
 
 describe(
-  'ExplorationFacade point 9.5',
+  'ExplorationFacade point 9.5 plus external-galaxy gameplay integration',
   () => {
     const POINT_9_5_FIXTURE_SEED =
       '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
@@ -143,12 +169,121 @@ describe(
       };
     }
 
+    function externalStatus(
+      globalDiscoveryPoints =
+        0n,
+
+      consecutiveFailedSearches =
+        0n,
+
+      knownExternalGalaxyCount =
+        0n,
+    ) {
+      return Object.freeze({
+        globalDiscoveryPoints,
+        consecutiveFailedSearches,
+        knownExternalGalaxyCount,
+
+        nextSearchProfile:
+          ExternalGalaxySearchPityEngine
+            .evaluateNextSearchProbability(
+              generationKey,
+              globalDiscoveryPoints,
+              consecutiveFailedSearches,
+            ),
+      });
+    }
+
+    function baselineExternalRuntime():
+      ExternalGalaxySearchRuntime {
+
+      return {
+        async getStatus() {
+          return externalStatus();
+        },
+
+        async search() {
+          const used =
+            ExternalGalaxySearchPityEngine
+              .evaluateNextSearchProbability(
+                generationKey,
+                0n,
+                0n,
+              );
+
+          return {
+            detected:
+              false,
+
+            probabilityProfileUsed:
+              used,
+
+            consecutiveFailedSearchesBefore:
+              0n,
+
+            consecutiveFailedSearchesAfter:
+              1n,
+
+            globalDiscoveryPointsBefore:
+              0n,
+
+            globalDiscoveryPointsAfter:
+              0n,
+
+            awardedDiscoveryPoints:
+              0,
+
+            detectedGalaxyIndex:
+              null,
+
+            preliminaryInformation:
+              null,
+
+            focusOffer:
+              null,
+
+            nextSearchProfile:
+              ExternalGalaxySearchPityEngine
+                .evaluateNextSearchProbability(
+                  generationKey,
+                  0n,
+                  1n,
+                ),
+          };
+        },
+      };
+    }
+
+    function noOpFocusRuntime():
+      GalaxyFocusRuntime {
+
+      return {
+        async changeFocus() {
+          throw new Error(
+            'Unexpected focus change.',
+          );
+        },
+
+        async returnToRecentGalaxy() {
+          throw new Error(
+            'Unexpected recent-galaxy return.',
+          );
+        },
+      };
+    }
+
     function configure(
       runtime:
         ExplorationSectorProgressRuntime,
 
       bundle =
         repositories(),
+
+      externalRuntime =
+        baselineExternalRuntime(),
+
+      focusRuntime =
+        noOpFocusRuntime(),
     ): ExplorationFacade {
       TestBed.resetTestingModule();
 
@@ -167,6 +302,20 @@ describe(
 
             useValue:
               runtime,
+          },
+          {
+            provide:
+              EXTERNAL_GALAXY_SEARCH_RUNTIME,
+
+            useValue:
+              externalRuntime,
+          },
+          {
+            provide:
+              GALAXY_FOCUS_RUNTIME,
+
+            useValue:
+              focusRuntime,
           },
           {
             provide:
@@ -257,6 +406,14 @@ describe(
         expect(
           facade.progressResult(),
         ).toBeNull();
+
+        expect(
+          facade.externalSearchStatus()
+            ?.nextSearchProfile
+            .effectiveProbabilityPerNextSearch,
+        ).toBe(
+          0.02,
+        );
 
         expect(
           calls,
@@ -421,6 +578,295 @@ describe(
           kind:
             'empty',
         });
+      },
+    );
+
+    it(
+      'should persistently advance the anti-blocking status after a failed external search',
+      async () => {
+        let failures =
+          0n;
+
+        const externalRuntime:
+          ExternalGalaxySearchRuntime =
+          {
+            async getStatus() {
+              return externalStatus(
+                0n,
+                failures,
+              );
+            },
+
+            async search() {
+              const used =
+                ExternalGalaxySearchPityEngine
+                  .evaluateNextSearchProbability(
+                    generationKey,
+                    0n,
+                    failures,
+                  );
+
+              const before =
+                failures;
+
+              failures +=
+                1n;
+
+              return {
+                detected:
+                  false,
+
+                probabilityProfileUsed:
+                  used,
+
+                consecutiveFailedSearchesBefore:
+                  before,
+
+                consecutiveFailedSearchesAfter:
+                  failures,
+
+                globalDiscoveryPointsBefore:
+                  0n,
+
+                globalDiscoveryPointsAfter:
+                  0n,
+
+                awardedDiscoveryPoints:
+                  0,
+
+                detectedGalaxyIndex:
+                  null,
+
+                preliminaryInformation:
+                  null,
+
+                focusOffer:
+                  null,
+
+                nextSearchProfile:
+                  ExternalGalaxySearchPityEngine
+                    .evaluateNextSearchProbability(
+                      generationKey,
+                      0n,
+                      failures,
+                    ),
+              };
+            },
+          };
+
+        const facade =
+          configure(
+            successfulRuntime(),
+            repositories(),
+            externalRuntime,
+          );
+
+        await facade.refresh();
+        await facade
+          .searchExternalGalaxy();
+
+        expect(
+          facade.externalSearchResult()
+            ?.detected,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          facade.externalSearchStatus()
+            ?.consecutiveFailedSearches,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          facade.externalSearchStatus()
+            ?.nextSearchProfile
+            .effectiveProbabilityPerNextSearch,
+        ).toBeCloseTo(
+          0.118,
+          12,
+        );
+      },
+    );
+
+    it(
+      'should expose safe preliminary information and require an explicit 7.7 choice after detection',
+      async () => {
+        const detectedGalaxyIndex =
+          1n;
+
+        const used =
+          ExternalGalaxySearchPityEngine
+            .evaluateNextSearchProbability(
+              generationKey,
+              0n,
+              9n,
+            );
+
+        const preliminaryInformation =
+          ExternalGalaxyPreliminaryInformationGenerator
+            .generate(
+              generationKey,
+              detectedGalaxyIndex,
+              DiscoveryState.DETECTED,
+            );
+
+        const focusOffer =
+          ExternalGalaxyFocusEngine
+            .buildFocusOffer(
+              generationKey,
+              0n,
+              detectedGalaxyIndex,
+              DiscoveryState.DETECTED,
+            );
+
+        let searched =
+          false;
+
+        const externalRuntime:
+          ExternalGalaxySearchRuntime =
+          {
+            async getStatus() {
+              return searched
+                ? externalStatus(
+                    40n,
+                    0n,
+                    1n,
+                  )
+                : externalStatus();
+            },
+
+            async search() {
+              searched =
+                true;
+
+              return {
+                detected:
+                  true,
+
+                probabilityProfileUsed:
+                  used,
+
+                consecutiveFailedSearchesBefore:
+                  9n,
+
+                consecutiveFailedSearchesAfter:
+                  0n,
+
+                globalDiscoveryPointsBefore:
+                  0n,
+
+                globalDiscoveryPointsAfter:
+                  40n,
+
+                awardedDiscoveryPoints:
+                  40,
+
+                detectedGalaxyIndex,
+                preliminaryInformation,
+                focusOffer,
+
+                nextSearchProfile:
+                  ExternalGalaxySearchPityEngine
+                    .evaluateNextSearchProbability(
+                      generationKey,
+                      40n,
+                      0n,
+                    ),
+              };
+            },
+          };
+
+        const facade =
+          configure(
+            successfulRuntime(),
+            repositories(),
+            externalRuntime,
+          );
+
+        await facade.refresh();
+        await facade
+          .searchExternalGalaxy();
+
+        expect(
+          facade
+            .externalFocusChoiceRequired(),
+        ).toBe(
+          true,
+        );
+
+        expect(
+          facade.externalSearchResult()
+            ?.preliminaryInformation
+            ?.galaxyIndex,
+        ).toBe(
+          detectedGalaxyIndex,
+        );
+
+        expect(
+          facade.externalSearchResult()
+            ?.awardedDiscoveryPoints,
+        ).toBe(
+          40,
+        );
+
+        facade
+          .remainOnCurrentGalaxy();
+
+        expect(
+          facade.externalFocusDecision(),
+        ).toBe(
+          ExternalGalaxyFocusChoice
+            .REMAIN_CURRENT,
+        );
+
+        expect(
+          facade
+            .externalFocusChoiceRequired(),
+        ).toBe(
+          false,
+        );
+
+        expect(
+          facade.externalFocusMessage(),
+        ).toContain(
+          'Galaxias descubiertas',
+        );
+      },
+    );
+
+    it(
+      'should not convert an external search into a sector scan',
+      async () => {
+        const sectorCalls:
+          unknown[] =
+          [];
+
+        const facade =
+          configure(
+            successfulRuntime(
+              sectorCalls,
+            ),
+          );
+
+        await facade.refresh();
+        await facade
+          .searchExternalGalaxy();
+
+        expect(
+          sectorCalls,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          facade.scanResult(),
+        ).toBeNull();
+
+        expect(
+          facade.explorationResult(),
+        ).toBeNull();
       },
     );
   },

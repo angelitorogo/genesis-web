@@ -18,12 +18,21 @@ import {
 } from '../../simulation/exploration/galaxy-archive-engine';
 
 import {
+  GALAXY_FOCUS_RUNTIME,
+} from '../runtime/galaxy-focus.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
 
 import {
   UniverseSeedFacade,
 } from '../universe/universe-seed.facade';
+
+export type DiscoveredGalaxyArchiveEntry =
+  GalaxyArchiveSnapshot[
+    'entries'
+  ][number];
 
 export type DiscoveredGalaxiesUiState =
   | Readonly<{
@@ -45,8 +54,14 @@ export type DiscoveredGalaxiesUiState =
       kind:
         'content';
 
+      generationKey:
+        UniverseGenerationKey;
+
       snapshot:
         GalaxyArchiveSnapshot;
+
+      recentEntries:
+        readonly DiscoveredGalaxyArchiveEntry[];
     }>;
 
 const INITIAL_STATE:
@@ -57,16 +72,16 @@ const INITIAL_STATE:
   });
 
 /**
- * Read-only point-11.1 facade for the discovered-galaxy catalogue.
+ * Point-11.1..11.6 facade for the discovered-galaxy catalogue.
  *
- * The catalogue itself already belongs to the frozen point-7.8 simulation
- * contract. This facade only resolves the active universe, reads persisted
- * navigation + known discoveries and delegates membership/order/preliminary
- * information to GalaxyArchiveEngine.
+ * Catalogue membership and observational projection remain delegated to the
+ * frozen GalaxyArchiveEngine contract. Point 11.6 additionally projects the
+ * persisted recentGalaxyIndices history onto already-known archive entries and
+ * exposes an explicit return action through GALAXY_FOCUS_RUNTIME.
  *
- * Point 11.1 performs no DiscoveryState writes, no navigation writes, no PD
- * reads and no Ground Truth materialization beyond the preliminary observation
- * already permitted by the point-7.6/7.8 contract.
+ * Returning never reads or writes Discovery Points, never materializes hidden
+ * Ground Truth and never invents an UNKNOWN galaxy. The runtime validates the
+ * selected galaxy against the persisted recent history atomically.
  */
 @Injectable({
   providedIn:
@@ -79,6 +94,11 @@ export class DiscoveredGalaxiesFacade {
       GENESIS_LOCAL_REPOSITORIES,
     );
 
+  private readonly focusRuntime =
+    inject(
+      GALAXY_FOCUS_RUNTIME,
+    );
+
   private readonly universeSeedFacade =
     inject(
       UniverseSeedFacade,
@@ -89,7 +109,25 @@ export class DiscoveredGalaxiesFacade {
       INITIAL_STATE,
     );
 
+  private readonly returnPendingGalaxyIndexSignal =
+    signal<bigint | null>(
+      null,
+    );
+
+  private readonly returnSuccessSignal =
+    signal<string>(
+      '',
+    );
+
+  private readonly returnErrorSignal =
+    signal<string>(
+      '',
+    );
+
   private refreshSequence =
+    0;
+
+  private returnSequence =
     0;
 
   readonly state =
@@ -110,6 +148,36 @@ export class DiscoveredGalaxiesFacade {
       },
     );
 
+  readonly recentEntries =
+    computed<
+      readonly DiscoveredGalaxyArchiveEntry[]
+    >(
+      () => {
+        const state =
+          this.state();
+
+        return state.kind ===
+          'content'
+          ? state.recentEntries
+          : [];
+      },
+    );
+
+  readonly returnPendingGalaxyIndex =
+    this
+      .returnPendingGalaxyIndexSignal
+      .asReadonly();
+
+  readonly returnSuccessMessage =
+    this
+      .returnSuccessSignal
+      .asReadonly();
+
+  readonly returnErrorMessage =
+    this
+      .returnErrorSignal
+      .asReadonly();
+
   readonly errorMessage =
     computed<string>(
       () => {
@@ -128,6 +196,18 @@ export class DiscoveredGalaxiesFacade {
 
     const refreshId =
       ++this.refreshSequence;
+
+    this
+      .returnSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .returnErrorSignal
+      .set(
+        '',
+      );
 
     this
       .stateSignal
@@ -225,13 +305,22 @@ export class DiscoveredGalaxiesFacade {
             knownDiscoveries,
           );
 
+      const recentEntries =
+        projectRecentEntries(
+          navigation
+            .recentGalaxyIndices,
+          snapshot,
+        );
+
       this
         .stateSignal
         .set({
           kind:
             'content',
 
+          generationKey,
           snapshot,
+          recentEntries,
         });
     } catch (
       error
@@ -261,6 +350,239 @@ export class DiscoveredGalaxiesFacade {
         });
     }
   }
+
+  isRecentGalaxy(
+    galaxyIndex:
+      bigint,
+  ): boolean {
+
+    return this
+      .recentEntries()
+      .some(
+        (
+          entry,
+        ) =>
+          entry
+            .galaxyIndex ===
+          galaxyIndex,
+      );
+  }
+
+  async returnToRecentGalaxy(
+    galaxyIndex:
+      bigint,
+  ): Promise<void> {
+
+    const returnId =
+      ++this
+        .returnSequence;
+
+    this
+      .returnSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .returnErrorSignal
+      .set(
+        '',
+      );
+
+    const state =
+      this
+        .state();
+
+    if (
+      state.kind !==
+        'content' ||
+      !state
+        .recentEntries
+        .some(
+          (
+            entry,
+          ) =>
+            entry
+              .galaxyIndex ===
+            galaxyIndex,
+        )
+    ) {
+      this
+        .returnErrorSignal
+        .set(
+          'La galaxia seleccionada no pertenece al historial reciente persistido.',
+        );
+
+      return;
+    }
+
+    this
+      .returnPendingGalaxyIndexSignal
+      .set(
+        galaxyIndex,
+      );
+
+    try {
+      const generationKey =
+        state
+          .generationKey;
+
+      const result =
+        await this
+          .focusRuntime
+          .returnToRecentGalaxy(
+            generationKey,
+            galaxyIndex,
+          );
+
+      if (
+        returnId !==
+        this.returnSequence
+      ) {
+        return;
+      }
+
+      await this
+        .refresh();
+
+      if (
+        returnId !==
+        this.returnSequence
+      ) {
+        return;
+      }
+
+      const refreshed =
+        this
+          .snapshot();
+
+      if (
+        refreshed ===
+          null ||
+        refreshed
+          .currentFocusGalaxyIndex !==
+        result
+          .activeGalaxyIndex
+      ) {
+        throw new Error(
+          'El regreso se persistió, pero el catálogo no pudo confirmar el nuevo foco activo.',
+        );
+      }
+
+      this
+        .returnSuccessSignal
+        .set(
+          'Galaxia anterior restaurada como foco. Su progreso persistido se conserva.',
+        );
+    } catch (
+      error
+    ) {
+      if (
+        returnId !==
+        this.returnSequence
+      ) {
+        return;
+      }
+
+      this
+        .returnErrorSignal
+        .set(
+          error instanceof
+            Error &&
+          error.message
+            .trim()
+            .length >
+            0
+            ? error.message
+            : 'No se pudo regresar a la galaxia anterior.',
+        );
+    } finally {
+      if (
+        returnId ===
+        this.returnSequence
+      ) {
+        this
+          .returnPendingGalaxyIndexSignal
+          .set(
+            null,
+          );
+      }
+    }
+  }
+}
+
+function projectRecentEntries(
+  recentGalaxyIndices:
+    readonly bigint[],
+
+  snapshot:
+    GalaxyArchiveSnapshot,
+): readonly DiscoveredGalaxyArchiveEntry[] {
+
+  const byGalaxyIndex =
+    new Map<
+      bigint,
+      DiscoveredGalaxyArchiveEntry
+    >(
+      snapshot
+        .entries
+        .map(
+          (
+            entry,
+          ) =>
+            [
+              entry.galaxyIndex,
+              entry,
+            ] as const,
+        ),
+    );
+
+  const projected:
+    DiscoveredGalaxyArchiveEntry[] =
+    [];
+
+  for (
+    const galaxyIndex
+    of recentGalaxyIndices
+  ) {
+    if (
+      galaxyIndex ===
+        snapshot
+          .currentFocusGalaxyIndex ||
+      projected
+        .some(
+          (
+            entry,
+          ) =>
+            entry
+              .galaxyIndex ===
+            galaxyIndex,
+        )
+    ) {
+      continue;
+    }
+
+    const entry =
+      byGalaxyIndex
+        .get(
+          galaxyIndex,
+        );
+
+    if (
+      entry ===
+        undefined
+    ) {
+      continue;
+    }
+
+    projected.push(
+      entry,
+    );
+  }
+
+  return Object.freeze(
+    projected,
+  );
 }
 
 function resolveActiveGenerationKey(

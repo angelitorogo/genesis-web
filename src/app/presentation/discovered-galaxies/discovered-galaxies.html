@@ -9,7 +9,7 @@
         <p class="dg__eyebrow">
           CATÁLOGO INTERGALÁCTICO
           <span aria-hidden="true">/</span>
-          11.5
+          11.6
         </p>
 
         <h1
@@ -121,6 +121,116 @@
           </section>
 
           <section
+            class="dg__summary"
+            data-testid="galaxy-return-history"
+            aria-label="Historial reciente de galaxias"
+          >
+            <div>
+              <small>11.6 / HISTORIAL RECIENTE</small>
+
+              <strong>
+                {{ facade.recentEntries().length }}
+                {{ facade.recentEntries().length === 1 ? 'galaxia' : 'galaxias' }}
+              </strong>
+            </div>
+
+            @if (facade.recentEntries().length === 0) {
+              <div
+                data-testid="galaxy-return-history-empty"
+              >
+                <small>SIN GALAXIAS ANTERIORES</small>
+
+                <strong>
+                  El foco actual es el único contexto galáctico visitado.
+                </strong>
+              </div>
+
+              <p>
+                El historial se construye únicamente al cambiar de foco y no
+                inventa destinos que todavía no formen parte del conocimiento
+                persistido.
+              </p>
+            } @else {
+              <div>
+                <small>REGRESO DIRECTO</small>
+
+                <strong>
+                  Selecciona una galaxia anterior
+                </strong>
+              </div>
+
+              <div>
+                @for (
+                  entry of facade.recentEntries();
+                  track entry.galaxyIndex;
+                  let position = $index
+                ) {
+                  <div
+                    class="dg__badges"
+                    data-testid="galaxy-return-history-entry"
+                    [attr.data-galaxy-index]="entry.galaxyIndex"
+                  >
+                    <span class="dg__badge">
+                      ANTERIOR {{ position + 1 }}
+                    </span>
+
+                    <span class="dg__badge">
+                      @if (entry.knownName; as knownName) {
+                        {{ knownName }}
+                      } @else {
+                        Galaxia {{ entry.galaxyIndex }}
+                      }
+                    </span>
+
+                    <button
+                      type="button"
+                      class="dg__link"
+                      style="background: transparent; font: inherit; cursor: pointer;"
+                      data-testid="galaxy-return-action"
+                      [attr.data-galaxy-index]="entry.galaxyIndex"
+                      [disabled]="facade.returnPendingGalaxyIndex() !== null"
+                      (click)="returnToGalaxy(entry.galaxyIndex)"
+                    >
+                      @if (
+                        facade.returnPendingGalaxyIndex() ===
+                        entry.galaxyIndex
+                      ) {
+                        Restaurando…
+                      } @else {
+                        Regresar al foco
+                      }
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          @if (facade.returnSuccessMessage()) {
+            <section
+              class="dg__boundary"
+              data-testid="galaxy-return-success"
+              role="status"
+            >
+              <span>ACTUALIZADO</span>
+
+              <p>{{ facade.returnSuccessMessage() }}</p>
+            </section>
+          }
+
+          @if (facade.returnErrorMessage()) {
+            <section
+              class="dg__boundary"
+              data-testid="galaxy-return-error"
+              role="alert"
+            >
+              <span>NO APLICADO</span>
+
+              <p>{{ facade.returnErrorMessage() }}</p>
+            </section>
+          }
+
+          <section
             class="dg__catalog"
             aria-label="Galaxias conocidas"
           >
@@ -158,6 +268,15 @@
                         data-testid="galaxy-visitable-badge"
                       >
                         VISITABLE
+                      </span>
+                    }
+
+                    @if (facade.isRecentGalaxy(entry.galaxyIndex)) {
+                      <span
+                        class="dg__badge"
+                        data-testid="previous-focus-badge"
+                      >
+                        FOCO ANTERIOR
                       </span>
                     }
 
@@ -287,13 +406,15 @@
             class="dg__boundary"
             data-testid="discovered-galaxies-point-boundary"
           >
-            <span>11.5</span>
+            <span>11.6</span>
 
             <p>
-              Toda galaxia conocida que no sea el foco actual es visitable desde
-              su ficha general. El cambio explícito de foco la registra como
-              mínimo en Visitada y actualiza el contexto persistido sin gastar
-              PD, sin materializar Ground Truth y sin representar viaje FTL.
+              El catálogo expone el historial MRU persistido de focos anteriores
+              y permite regresar directamente a cualquiera de esas galaxias.
+              El regreso conserva descubrimientos y progreso local, mantiene el
+              destino como mínimo en Visitada, no lee ni gasta PD, no materializa
+              Ground Truth y no representa viaje FTL. La transición visual
+              pertenece a 11.7.
             </p>
           </section>
         }

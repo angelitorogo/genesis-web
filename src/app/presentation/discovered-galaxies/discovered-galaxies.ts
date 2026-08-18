@@ -80,6 +80,18 @@ export class DiscoveredGalaxiesPage
       .refresh();
   }
 
+  returnToGalaxy(
+    galaxyIndex:
+      bigint,
+  ): void {
+
+    void this
+      .facade
+      .returnToRecentGalaxy(
+        galaxyIndex,
+      );
+  }
+
   isOriginGalaxy(
     galaxyIndex:
       bigint,

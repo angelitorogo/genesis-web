@@ -6,6 +6,10 @@ import {
 } from '@angular/core';
 
 import {
+  ExternalGalaxyFocusChoice,
+} from '../../domain/exploration/external-galaxy-focus';
+
+import {
   type ExplorationSectorProgressResult,
 } from '../../domain/exploration/exploration-sector-progress-result';
 
@@ -19,12 +23,26 @@ import {
 } from '../../domain/exploration/exploration-sector-scan';
 
 import {
+  ExternalGalaxyFocusEngine,
+} from '../../simulation/exploration/external-galaxy-focus-engine';
+
+import {
   ExplorationSectorResultEngine,
 } from '../../simulation/exploration/exploration-sector-result-engine';
 
 import {
   ExplorationSectorScanEngine,
 } from '../../simulation/exploration/exploration-sector-scan-engine';
+
+import {
+  EXTERNAL_GALAXY_SEARCH_RUNTIME,
+  type ExternalGalaxySearchRuntimeResult,
+  type ExternalGalaxySearchStatus,
+} from '../runtime/external-galaxy-search.runtime';
+
+import {
+  GALAXY_FOCUS_RUNTIME,
+} from '../runtime/galaxy-focus.runtime';
 
 import {
   EXPLORATION_SECTOR_PROGRESS_RUNTIME,
@@ -52,15 +70,18 @@ import {
 } from './exploration-ui-state';
 
 /**
- * Point-9.5 exploration facade.
+ * Main exploration facade.
  *
- * 9.3 and 9.4 remain pure deterministic read/resolve stages. Once 9.4 has
- * produced the resolved result, 9.5 commits only observed knowledge:
- * - the scanned sector reaches at least DETECTED;
- * - a static result locator reaches at least DETECTED;
- * - transient events do not invent a locator or persistent event row;
- * - global PD and derived local galaxy progress are exposed after one atomic
- *   persistence operation.
+ * The original point-9.5 sector flow remains unchanged. The missing gameplay
+ * integration for frozen points 7.4..7.8 is exposed as an independent
+ * extragalactic search flow:
+ *
+ * - it never treats another galaxy as content of a sector;
+ * - failed attempts persist the point-7.5 anti-blocking streak;
+ * - a successful attempt persists one external GalaxyLocator at DETECTED,
+ *   awards the frozen galaxy-detection PD and exposes only point-7.6
+ *   preliminary information;
+ * - point 7.7 always requires an explicit remain/change-focus decision.
  */
 @Injectable({
   providedIn:
@@ -76,6 +97,16 @@ export class ExplorationFacade {
   private readonly progressRuntime =
     inject(
       EXPLORATION_SECTOR_PROGRESS_RUNTIME,
+    );
+
+  private readonly externalGalaxySearchRuntime =
+    inject(
+      EXTERNAL_GALAXY_SEARCH_RUNTIME,
+    );
+
+  private readonly focusRuntime =
+    inject(
+      GALAXY_FOCUS_RUNTIME,
     );
 
   private readonly universeSeedFacade =
@@ -123,10 +154,56 @@ export class ExplorationFacade {
       '',
     );
 
+  private readonly externalSearchStatusSignal =
+    signal<ExternalGalaxySearchStatus | null>(
+      null,
+    );
+
+  private readonly externalSearchResultSignal =
+    signal<ExternalGalaxySearchRuntimeResult | null>(
+      null,
+    );
+
+  private readonly externalSearchPendingSignal =
+    signal<boolean>(
+      false,
+    );
+
+  private readonly externalSearchErrorSignal =
+    signal<string>(
+      '',
+    );
+
+  private readonly externalFocusDecisionSignal =
+    signal<ExternalGalaxyFocusChoice | null>(
+      null,
+    );
+
+  private readonly externalFocusPendingSignal =
+    signal<boolean>(
+      false,
+    );
+
+  private readonly externalFocusMessageSignal =
+    signal<string>(
+      '',
+    );
+
+  private readonly externalFocusErrorSignal =
+    signal<string>(
+      '',
+    );
+
   private refreshSequence =
     0;
 
   private scanSequence =
+    0;
+
+  private externalSearchSequence =
+    0;
+
+  private externalFocusSequence =
     0;
 
   readonly state =
@@ -161,6 +238,55 @@ export class ExplorationFacade {
     this.progressErrorSignal
       .asReadonly();
 
+  readonly externalSearchStatus =
+    this.externalSearchStatusSignal
+      .asReadonly();
+
+  readonly externalSearchResult =
+    this.externalSearchResultSignal
+      .asReadonly();
+
+  readonly externalSearchPending =
+    this.externalSearchPendingSignal
+      .asReadonly();
+
+  readonly externalSearchErrorMessage =
+    this.externalSearchErrorSignal
+      .asReadonly();
+
+  readonly externalFocusDecision =
+    this.externalFocusDecisionSignal
+      .asReadonly();
+
+  readonly externalFocusPending =
+    this.externalFocusPendingSignal
+      .asReadonly();
+
+  readonly externalFocusMessage =
+    this.externalFocusMessageSignal
+      .asReadonly();
+
+  readonly externalFocusErrorMessage =
+    this.externalFocusErrorSignal
+      .asReadonly();
+
+  readonly externalFocusChoiceRequired =
+    computed<boolean>(
+      () => {
+        const result =
+          this.externalSearchResult();
+
+        return (
+          result?.detected ===
+            true &&
+          result.focusOffer !==
+            null &&
+          this.externalFocusDecision() ===
+            null
+        );
+      },
+    );
+
   readonly entry =
     computed<ExplorationEntryModel | null>(
       () => {
@@ -194,8 +320,11 @@ export class ExplorationFacade {
       ++this.refreshSequence;
 
     ++this.scanSequence;
+    ++this.externalSearchSequence;
+    ++this.externalFocusSequence;
 
     this.resetOperationalFlow();
+    this.resetExternalTransientFlow();
 
     this.stateSignal
       .set({
@@ -237,6 +366,7 @@ export class ExplorationFacade {
       const [
         navigation,
         knownDiscoveries,
+        externalSearchStatus,
       ] =
         await Promise.all([
           this.repositories
@@ -248,6 +378,11 @@ export class ExplorationFacade {
           this.repositories
             .discoveryRepository
             .getKnownDiscoveries(
+              generationKey,
+            ),
+
+          this.externalGalaxySearchRuntime
+            .getStatus(
               generationKey,
             ),
         ]);
@@ -282,6 +417,11 @@ export class ExplorationFacade {
           centralSector,
         );
 
+      this.externalSearchStatusSignal
+        .set(
+          externalSearchStatus,
+        );
+
       this.stateSignal
         .set({
           kind:
@@ -313,6 +453,312 @@ export class ExplorationFacade {
               ? error.message
               : 'No se pudo preparar el contexto de exploración.',
         });
+    }
+  }
+
+  async searchExternalGalaxy():
+    Promise<void> {
+
+    const searchId =
+      ++this.externalSearchSequence;
+
+    this.externalSearchResultSignal
+      .set(
+        null,
+      );
+
+    this.externalSearchErrorSignal
+      .set(
+        '',
+      );
+
+    this.externalFocusDecisionSignal
+      .set(
+        null,
+      );
+
+    this.externalFocusMessageSignal
+      .set(
+        '',
+      );
+
+    this.externalFocusErrorSignal
+      .set(
+        '',
+      );
+
+    const entry =
+      this.entry();
+
+    if (
+      entry ===
+      null
+    ) {
+      this.externalSearchErrorSignal
+        .set(
+          'No hay un contexto de exploración activo.',
+        );
+
+      return;
+    }
+
+    this.externalSearchPendingSignal
+      .set(
+        true,
+      );
+
+    try {
+      const result =
+        await this
+          .externalGalaxySearchRuntime
+          .search(
+            entry
+              .generationKey,
+          );
+
+      const status =
+        await this
+          .externalGalaxySearchRuntime
+          .getStatus(
+            entry
+              .generationKey,
+          );
+
+      if (
+        searchId !==
+        this.externalSearchSequence
+      ) {
+        return;
+      }
+
+      this.externalSearchResultSignal
+        .set(
+          result,
+        );
+
+      this.externalSearchStatusSignal
+        .set(
+          status,
+        );
+    } catch (
+      error
+    ) {
+      if (
+        searchId !==
+        this.externalSearchSequence
+      ) {
+        return;
+      }
+
+      this.externalSearchErrorSignal
+        .set(
+          error instanceof Error &&
+          error.message
+            .trim()
+            .length >
+            0
+            ? error.message
+            : 'No se pudo ejecutar la búsqueda extragaláctica.',
+        );
+    } finally {
+      if (
+        searchId ===
+        this.externalSearchSequence
+      ) {
+        this.externalSearchPendingSignal
+          .set(
+            false,
+          );
+      }
+    }
+  }
+
+  remainOnCurrentGalaxy():
+    void {
+
+    this.externalFocusErrorSignal
+      .set(
+        '',
+      );
+
+    const entry =
+      this.entry();
+
+    const result =
+      this.externalSearchResult();
+
+    if (
+      entry ===
+        null ||
+      result?.focusOffer ===
+        null ||
+      result?.focusOffer ===
+        undefined
+    ) {
+      this.externalFocusErrorSignal
+        .set(
+          'No existe una detección externa pendiente de decisión.',
+        );
+
+      return;
+    }
+
+    const decision =
+      ExternalGalaxyFocusEngine
+        .resolveFocusChoice(
+          entry
+            .generationKey,
+          result
+            .focusOffer,
+          ExternalGalaxyFocusChoice
+            .REMAIN_CURRENT,
+        );
+
+    if (
+      decision
+        .resultingFocusGalaxyIndex !==
+      entry
+        .activeGalaxyIndex
+    ) {
+      this.externalFocusErrorSignal
+        .set(
+          'La decisión de permanecer no conservó la galaxia activa esperada.',
+        );
+
+      return;
+    }
+
+    this.externalFocusDecisionSignal
+      .set(
+        ExternalGalaxyFocusChoice
+          .REMAIN_CURRENT,
+      );
+
+    this.externalFocusMessageSignal
+      .set(
+        'Permaneces en la galaxia actual. La nueva galaxia detectada queda accesible desde Galaxias descubiertas.',
+      );
+  }
+
+  async focusDetectedGalaxy():
+    Promise<void> {
+
+    const focusId =
+      ++this.externalFocusSequence;
+
+    this.externalFocusErrorSignal
+      .set(
+        '',
+      );
+
+    this.externalFocusMessageSignal
+      .set(
+        '',
+      );
+
+    const entry =
+      this.entry();
+
+    const result =
+      this.externalSearchResult();
+
+    const detectedGalaxyIndex =
+      result
+        ?.detectedGalaxyIndex ??
+      null;
+
+    if (
+      entry ===
+        null ||
+      result?.focusOffer ===
+        null ||
+      result?.focusOffer ===
+        undefined ||
+      detectedGalaxyIndex ===
+        null
+    ) {
+      this.externalFocusErrorSignal
+        .set(
+          'No existe una galaxia externa detectada a la que cambiar el foco.',
+        );
+
+      return;
+    }
+
+    this.externalFocusPendingSignal
+      .set(
+        true,
+      );
+
+    try {
+      const focusResult =
+        await this
+          .focusRuntime
+          .changeFocus(
+            entry
+              .generationKey,
+            detectedGalaxyIndex,
+          );
+
+      if (
+        focusId !==
+        this.externalFocusSequence
+      ) {
+        return;
+      }
+
+      if (
+        focusResult
+          .activeGalaxyIndex !==
+        detectedGalaxyIndex
+      ) {
+        throw new Error(
+          'El cambio de foco no confirmó la galaxia externa detectada.',
+        );
+      }
+
+      await this.refresh();
+
+      this.externalFocusDecisionSignal
+        .set(
+          ExternalGalaxyFocusChoice
+            .FOCUS_DETECTED,
+        );
+
+      this.externalFocusMessageSignal
+        .set(
+          'La galaxia detectada define ahora el foco de exploración. La galaxia anterior queda disponible en el historial persistido de 11.6.',
+        );
+    } catch (
+      error
+    ) {
+      if (
+        focusId !==
+        this.externalFocusSequence
+      ) {
+        return;
+      }
+
+      this.externalFocusErrorSignal
+        .set(
+          error instanceof Error &&
+          error.message
+            .trim()
+            .length >
+            0
+            ? error.message
+            : 'No se pudo cambiar el foco a la galaxia detectada.',
+        );
+    } finally {
+      if (
+        focusId ===
+        this.externalFocusSequence
+      ) {
+        this.externalFocusPendingSignal
+          .set(
+            false,
+          );
+      }
     }
   }
 
@@ -448,6 +894,44 @@ export class ExplorationFacade {
           .set(
             progress,
           );
+
+        try {
+          const status =
+            await this
+              .externalGalaxySearchRuntime
+              .getStatus(
+                entry
+                  .generationKey,
+              );
+
+          if (
+            scanId ===
+            this.scanSequence
+          ) {
+            this.externalSearchStatusSignal
+              .set(
+                status,
+              );
+          }
+        } catch (
+          error
+        ) {
+          if (
+            scanId ===
+            this.scanSequence
+          ) {
+            this.externalSearchErrorSignal
+              .set(
+                error instanceof Error &&
+                error.message
+                  .trim()
+                  .length >
+                  0
+                  ? error.message
+                  : 'El progreso se guardó, pero no se pudo actualizar la probabilidad extragaláctica.',
+              );
+          }
+        }
       } catch (
         error
       ) {
@@ -523,6 +1007,50 @@ export class ExplorationFacade {
 
     this.progressErrorSignal
       .set('');
+  }
+
+  private resetExternalTransientFlow():
+    void {
+
+    this.externalSearchStatusSignal
+      .set(
+        null,
+      );
+
+    this.externalSearchResultSignal
+      .set(
+        null,
+      );
+
+    this.externalSearchPendingSignal
+      .set(
+        false,
+      );
+
+    this.externalSearchErrorSignal
+      .set(
+        '',
+      );
+
+    this.externalFocusDecisionSignal
+      .set(
+        null,
+      );
+
+    this.externalFocusPendingSignal
+      .set(
+        false,
+      );
+
+    this.externalFocusMessageSignal
+      .set(
+        '',
+      );
+
+    this.externalFocusErrorSignal
+      .set(
+        '',
+      );
   }
 }
 

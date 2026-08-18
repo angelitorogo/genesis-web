@@ -27,6 +27,19 @@ export interface UniverseNavigationEntity {
   readonly recentGalaxyIndices:
     readonly string[];
 
+  /**
+   * Universe-wide point-7.5 anti-blocking state.
+   *
+   * This property is deliberately not indexed. Existing V3 navigation rows
+   * created before the gameplay integration do not contain it; absence is
+   * therefore interpreted as the canonical zero-failure state.
+   *
+   * Keeping the value on the universe-scoped navigation row avoids a schema
+   * migration while still persisting the retry streak across reloads.
+   */
+  readonly externalGalaxySearchConsecutiveFailures?:
+    string;
+
   readonly updatedAtEpochMs:
     number;
 }

@@ -127,6 +127,23 @@ export class DexieUniverseNavigationRepository
         generationKey,
       );
 
+    /*
+     * Point 7.5 gameplay integration stores one non-indexed universe-scoped
+     * anti-blocking field on the same row. Navigation writes from 11.5/11.6
+     * must preserve it instead of replacing the complete Dexie object.
+     */
+    const existing =
+      await this.database
+        .navigation
+        .get([
+          universeSeed,
+          generatorVersionCode,
+        ]);
+
+    const externalGalaxySearchConsecutiveFailures =
+      existing
+        ?.externalGalaxySearchConsecutiveFailures;
+
     await this.database
       .navigation
       .put({
@@ -152,6 +169,13 @@ export class DexieUniverseNavigationRepository
                     10,
                   ),
             ),
+
+        ...(externalGalaxySearchConsecutiveFailures ===
+        undefined
+          ? {}
+          : {
+              externalGalaxySearchConsecutiveFailures,
+            }),
 
         updatedAtEpochMs:
           this.clock(),

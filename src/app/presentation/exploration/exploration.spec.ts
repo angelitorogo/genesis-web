@@ -39,6 +39,20 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  ExternalGalaxySearchPityEngine,
+} from '../../simulation/exploration/external-galaxy-search-pity-engine';
+
+import {
+  EXTERNAL_GALAXY_SEARCH_RUNTIME,
+  type ExternalGalaxySearchRuntime,
+} from '../runtime/external-galaxy-search.runtime';
+
+import {
+  GALAXY_FOCUS_RUNTIME,
+  type GalaxyFocusRuntime,
+} from '../runtime/galaxy-focus.runtime';
+
+import {
   EXPLORATION_SECTOR_PROGRESS_RUNTIME,
   type ExplorationSectorProgressRuntime,
 } from '../runtime/exploration-sector-progress.runtime';
@@ -57,7 +71,7 @@ import {
 } from './exploration';
 
 describe(
-  'Exploration point 9.5',
+  'Exploration point 9.5 plus external-galaxy gameplay integration',
   () => {
     const POINT_9_5_FIXTURE_SEED =
       '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
@@ -176,8 +190,111 @@ describe(
         },
       };
 
+    let failures:
+      bigint;
+
+    const externalRuntime:
+      ExternalGalaxySearchRuntime =
+      {
+        async getStatus() {
+          return {
+            globalDiscoveryPoints:
+              0n,
+
+            consecutiveFailedSearches:
+              failures,
+
+            knownExternalGalaxyCount:
+              0n,
+
+            nextSearchProfile:
+              ExternalGalaxySearchPityEngine
+                .evaluateNextSearchProbability(
+                  generationKey,
+                  0n,
+                  failures,
+                ),
+          };
+        },
+
+        async search() {
+          const before =
+            failures;
+
+          const used =
+            ExternalGalaxySearchPityEngine
+              .evaluateNextSearchProbability(
+                generationKey,
+                0n,
+                before,
+              );
+
+          failures +=
+            1n;
+
+          return {
+            detected:
+              false,
+
+            probabilityProfileUsed:
+              used,
+
+            consecutiveFailedSearchesBefore:
+              before,
+
+            consecutiveFailedSearchesAfter:
+              failures,
+
+            globalDiscoveryPointsBefore:
+              0n,
+
+            globalDiscoveryPointsAfter:
+              0n,
+
+            awardedDiscoveryPoints:
+              0,
+
+            detectedGalaxyIndex:
+              null,
+
+            preliminaryInformation:
+              null,
+
+            focusOffer:
+              null,
+
+            nextSearchProfile:
+              ExternalGalaxySearchPityEngine
+                .evaluateNextSearchProbability(
+                  generationKey,
+                  0n,
+                  failures,
+                ),
+          };
+        },
+      };
+
+    const focusRuntime:
+      GalaxyFocusRuntime =
+      {
+        async changeFocus() {
+          throw new Error(
+            'Unexpected focus change.',
+          );
+        },
+
+        async returnToRecentGalaxy() {
+          throw new Error(
+            'Unexpected recent-galaxy return.',
+          );
+        },
+      };
+
     beforeEach(
       async () => {
+        failures =
+          0n;
+
         await TestBed
           .configureTestingModule({
             imports: [
@@ -199,6 +316,20 @@ describe(
 
                 useValue:
                   runtime,
+              },
+              {
+                provide:
+                  EXTERNAL_GALAXY_SEARCH_RUNTIME,
+
+                useValue:
+                  externalRuntime,
+              },
+              {
+                provide:
+                  GALAXY_FOCUS_RUNTIME,
+
+                useValue:
+                  focusRuntime,
               },
               {
                 provide:
@@ -366,6 +497,94 @@ describe(
         ).toContain(
           'Ground Truth oculto',
         );
+      },
+    );
+
+    it(
+      'should render external-galaxy search as a separate global operation with the baseline probability',
+      async () => {
+        const {
+          element,
+        } =
+          await fixtureAndElement();
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-action"]',
+          )?.textContent,
+        ).toContain(
+          'BUSCAR GALAXIA EXTERNA',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-effective-probability"]',
+          )?.textContent,
+        ).toContain(
+          '2%',
+        );
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'no usa coordenadas X/Y',
+        );
+      },
+    );
+
+    it(
+      'should render a failed external search without creating a sector result and show the increased pity state',
+      async () => {
+        const {
+          fixture,
+          element,
+        } =
+          await fixtureAndElement();
+
+        await fixture
+          .componentInstance
+          .facade
+          .searchExternalGalaxy();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-result"]',
+          )?.getAttribute(
+            'data-detected',
+          ),
+        ).toBe(
+          'false',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-failures"]',
+          )?.textContent,
+        ).toContain(
+          '1',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-effective-probability"]',
+          )?.textContent,
+        ).toContain(
+          '11.8%',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="exploration-result"]',
+          ),
+        ).toBeNull();
       },
     );
   },

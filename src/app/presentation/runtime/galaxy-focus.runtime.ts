@@ -74,11 +74,19 @@ export interface GalaxyFocusRuntime {
     targetGalaxyIndex:
       bigint,
   ): Promise<GalaxyFocusChangeResult>;
+
+  returnToRecentGalaxy(
+    generationKey:
+      UniverseGenerationKey,
+
+    targetGalaxyIndex:
+      bigint,
+  ): Promise<GalaxyFocusChangeResult>;
 }
 
 /**
- * Point-11.5 persistence boundary for an explicit inter-galaxy exploration
- * focus change.
+ * Point-11.5/11.6 persistence boundary for explicit inter-galaxy exploration
+ * focus changes.
  *
  * The existing point-7.7 ExternalGalaxyFocusEngine remains the pure source of
  * truth for the explicit choice. This runtime only applies that choice to
@@ -91,13 +99,12 @@ export interface GalaxyFocusRuntime {
  * - activeGalaxyIndex and the target DiscoveryState are committed atomically;
  * - the previous focus is moved to the front of recentGalaxyIndices while the
  *   new active target is removed from that history;
+ * - point 11.6 can require the target to belong to the persisted recent
+ *   history before applying the same atomic focus transition;
  * - no Discovery Points are read, awarded or spent;
+ * - no other discovery rows are mutated;
  * - no procedural Ground Truth is materialized;
  * - no physical or FTL travel is modelled.
- *
- * recentGalaxyIndices is persisted here only so the navigation history is not
- * lost. Point 11.6 remains responsible for exposing a "return to previous
- * galaxies" interaction.
  */
 export class DexieGalaxyFocusRuntime
   implements GalaxyFocusRuntime {
@@ -121,6 +128,41 @@ export class DexieGalaxyFocusRuntime
       bigint,
   ): Promise<GalaxyFocusChangeResult> {
 
+    return this
+      .executeFocusChange(
+        generationKey,
+        targetGalaxyIndex,
+        false,
+      );
+  }
+
+  async returnToRecentGalaxy(
+    generationKey:
+      UniverseGenerationKey,
+
+    targetGalaxyIndex:
+      bigint,
+  ): Promise<GalaxyFocusChangeResult> {
+
+    return this
+      .executeFocusChange(
+        generationKey,
+        targetGalaxyIndex,
+        true,
+      );
+  }
+
+  private async executeFocusChange(
+    generationKey:
+      UniverseGenerationKey,
+
+    targetGalaxyIndex:
+      bigint,
+
+    requireRecentTarget:
+      boolean,
+  ): Promise<GalaxyFocusChangeResult> {
+
     await this
       .database
       .openDatabase();
@@ -136,6 +178,7 @@ export class DexieGalaxyFocusRuntime
           this.changeInsideTransaction(
             generationKey,
             targetGalaxyIndex,
+            requireRecentTarget,
           ),
       );
   }
@@ -146,6 +189,9 @@ export class DexieGalaxyFocusRuntime
 
     targetGalaxyIndex:
       bigint,
+
+    requireRecentTarget:
+      boolean,
   ): Promise<GalaxyFocusChangeResult> {
 
     const navigationBefore =
@@ -158,6 +204,23 @@ export class DexieGalaxyFocusRuntime
     const previousFocusGalaxyIndex =
       navigationBefore
         .activeGalaxyIndex;
+
+    if (
+      requireRecentTarget &&
+      (
+        targetGalaxyIndex ===
+          previousFocusGalaxyIndex ||
+        !navigationBefore
+          .recentGalaxyIndices
+          .includes(
+            targetGalaxyIndex,
+          )
+      )
+    ) {
+      throw new RangeError(
+        'A return target must belong to the persisted recent-galaxy history and cannot already be active.',
+      );
+    }
 
     const [
       currentFocusState,

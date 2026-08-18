@@ -153,6 +153,10 @@ describe(
           galaxyDiscoveriesFromStates(
             states,
           ),
+
+      recentGalaxyIndices:
+        readonly bigint[] =
+          [],
     ): GenesisLocalRepositories {
 
       return {
@@ -179,8 +183,7 @@ describe(
             return {
               activeGalaxyIndex,
 
-              recentGalaxyIndices:
-                [],
+              recentGalaxyIndices,
             };
           },
 
@@ -276,6 +279,12 @@ describe(
             async changeFocus() {
               throw new Error(
                 '11.5 focus mutation was not expected in this test.',
+              );
+            },
+
+            async returnToRecentGalaxy() {
+              throw new Error(
+                '11.6 return mutation was not expected in this test.',
               );
             },
           },
@@ -408,6 +417,11 @@ describe(
 
         expect(
           model
+            ?.isRecentFocus,
+        ).toBe(false);
+
+        expect(
+          model
             ?.isOriginGalaxy,
         ).toBe(true);
       },
@@ -415,7 +429,7 @@ describe(
     );
 
     it(
-      'should render the point-11.5 profile, local progress and current-focus control',
+      'should render the point-11.6 profile, local progress and current-focus control',
       async () => {
         configure(
           '0',
@@ -603,7 +617,7 @@ describe(
             '[data-testid="galaxy-detail-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.5',
+          '11.6',
         );
       },
       15_000,
@@ -1115,6 +1129,12 @@ describe(
                 recentGalaxyIndices,
               });
             },
+
+            async returnToRecentGalaxy() {
+              throw new Error(
+                '11.6 return path was not expected in the 11.5 focus test.',
+              );
+            },
           };
 
         configure(
@@ -1229,6 +1249,220 @@ describe(
             '[data-testid="galaxy-detail-change-focus-action"]',
           ),
         ).toBeNull();
+      },
+      15_000,
+    );
+
+    it(
+      'should recognize a recent galaxy and return through the point-11.6 history path without reading PD',
+      async () => {
+        const states =
+          new Map<
+            bigint,
+            DiscoveryStateValue
+          >([
+            [
+              0n,
+              DiscoveryState
+                .VISITED,
+            ],
+            [
+              1n,
+              DiscoveryState
+                .VISITED,
+            ],
+          ]);
+
+        let activeGalaxyIndex =
+          1n;
+
+        let recentGalaxyIndices:
+          readonly bigint[] =
+          [
+            0n,
+          ];
+
+        const baseRepositories =
+          repositories(
+            states,
+            activeGalaxyIndex,
+            [
+              generationKey,
+            ],
+            galaxyDiscoveriesFromStates(
+              states,
+            ),
+            recentGalaxyIndices,
+          );
+
+        const repositoryBundle:
+          GenesisLocalRepositories =
+          {
+            ...baseRepositories,
+
+            navigationRepository: {
+              async getNavigation() {
+                return {
+                  activeGalaxyIndex,
+                  recentGalaxyIndices,
+                };
+              },
+
+              async setNavigation() {
+                throw new Error(
+                  'GalaxyDetailFacade must delegate 11.6 navigation writes to the runtime.',
+                );
+              },
+            },
+          };
+
+        const focusRuntime:
+          GalaxyFocusRuntime =
+          {
+            async changeFocus() {
+              throw new Error(
+                'A recent galaxy must use the point-11.6 return path.',
+              );
+            },
+
+            async returnToRecentGalaxy(
+              _generationKey,
+              targetGalaxyIndex,
+            ) {
+              expect(
+                targetGalaxyIndex,
+              ).toBe(
+                0n,
+              );
+
+              const previousFocusGalaxyIndex =
+                activeGalaxyIndex;
+
+              activeGalaxyIndex =
+                targetGalaxyIndex;
+
+              recentGalaxyIndices =
+                [
+                  previousFocusGalaxyIndex,
+                ];
+
+              return Object.freeze({
+                previousFocusGalaxyIndex,
+                activeGalaxyIndex:
+                  targetGalaxyIndex,
+                targetStateBefore:
+                  DiscoveryState
+                    .VISITED,
+                targetStateAfter:
+                  DiscoveryState
+                    .VISITED,
+                didPromoteTargetToVisited:
+                  false,
+                recentGalaxyIndices,
+              });
+            },
+          };
+
+        configure(
+          '0',
+          repositoryBundle,
+          focusRuntime,
+        );
+
+        await TestBed
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            GalaxyDetailPage,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .facade
+          .load(
+            '0',
+          );
+
+        fixture.detectChanges();
+
+        const before =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          fixture
+            .componentInstance
+            .facade
+            .model()
+            ?.isRecentFocus,
+        ).toBe(true);
+
+        expect(
+          before.querySelector(
+            '[data-testid="galaxy-detail-recent-badge"]',
+          )?.textContent,
+        ).toContain(
+          'FOCO ANTERIOR',
+        );
+
+        expect(
+          before.querySelector(
+            '[data-testid="galaxy-detail-change-focus-action"]',
+          )?.textContent,
+        ).toContain(
+          'Regresar a esta galaxia',
+        );
+
+        await fixture
+          .componentInstance
+          .facade
+          .changeFocusToDisplayedGalaxy();
+
+        fixture.detectChanges();
+
+        expect(
+          activeGalaxyIndex,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          recentGalaxyIndices,
+        ).toEqual([
+          1n,
+        ]);
+
+        expect(
+          fixture
+            .componentInstance
+            .facade
+            .model()
+            ?.isCurrentFocus,
+        ).toBe(true);
+
+        expect(
+          fixture
+            .componentInstance
+            .facade
+            .model()
+            ?.isRecentFocus,
+        ).toBe(false);
+
+        expect(
+          (
+            fixture.nativeElement as
+              HTMLElement
+          )
+            .querySelector(
+              '[data-testid="galaxy-detail-focus-success"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'sin reiniciar su progreso persistido',
+        );
       },
       15_000,
     );

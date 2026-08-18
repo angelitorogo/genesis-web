@@ -695,7 +695,361 @@ test.describe(
             'galaxy-detail-boundary',
           ),
         ).toContainText(
-          '11.5',
+          '11.6',
+        );
+      },
+    );
+
+
+    test(
+      'should expose the point-11.6 persistent return history without inventing previous galaxies in a fresh universe',
+      async ({
+        page,
+      }) => {
+        await page.goto(
+          '/settings',
+        );
+
+        await page
+          .getByTestId(
+            'universe-seed-apply-button',
+          )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'universe-seed-status',
+          ),
+        ).toContainText(
+          /Universo (?:creado y )?activado correctamente\./,
+        );
+
+        await page.goto(
+          '/galaxies',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-return-history',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'galaxy-return-history-empty',
+          ),
+        ).toContainText(
+          'SIN GALAXIAS ANTERIORES',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-return-action',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        await expect(
+          page.getByTestId(
+            'discovered-galaxies-point-boundary',
+          ),
+        ).toContainText(
+          '11.6',
+        );
+      },
+    );
+
+
+    test(
+      'should complete the real 7.4-7.8 external-galaxy flow and point-11.6 return without losing progress',
+      async ({
+        page,
+      }) => {
+        test.setTimeout(
+          60_000,
+        );
+
+        await page.goto(
+          '/settings',
+        );
+
+        await page
+          .getByTestId(
+            'universe-seed-apply-button',
+          )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'universe-seed-status',
+          ),
+        ).toContainText(
+          /Universo (?:creado y )?activado correctamente\./,
+        );
+
+        await page.goto(
+          '/exploration',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-effective-probability',
+          ),
+        ).toContainText(
+          '2%',
+        );
+
+        const searchAction =
+          page.getByTestId(
+            'external-galaxy-search-action',
+          );
+
+        await searchAction
+          .click();
+
+        const firstSearchResult =
+          page.getByTestId(
+            'external-galaxy-search-result',
+          );
+
+        await expect(
+          firstSearchResult,
+        ).toHaveAttribute(
+          'data-failures-before',
+          '0',
+        );
+
+        await expect(
+          firstSearchResult,
+        ).toHaveAttribute(
+          'data-detected',
+          'false',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-failures',
+          ),
+        ).toHaveText(
+          '1',
+        );
+
+        /*
+         * The anti-blocking streak is persistent gameplay state, not a signal
+         * local to the current Angular component.
+         */
+        await page.reload();
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-failures',
+          ),
+        ).toHaveText(
+          '1',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-effective-probability',
+          ),
+        ).toContainText(
+          '11.8%',
+        );
+
+        let detected =
+          false;
+
+        for (
+          let attempt =
+            0;
+          attempt <
+            9;
+          attempt +=
+            1
+        ) {
+          const failuresBefore =
+            (
+              await page
+                .getByTestId(
+                  'external-galaxy-search-failures',
+                )
+                .textContent()
+            )
+              ?.trim() ??
+            '';
+
+          expect(
+            failuresBefore,
+          ).toMatch(
+            /^\d+$/,
+          );
+
+          await page
+            .getByTestId(
+              'external-galaxy-search-action',
+            )
+            .click();
+
+          const result =
+            page.getByTestId(
+              'external-galaxy-search-result',
+            );
+
+          await expect(
+            result,
+          ).toHaveAttribute(
+            'data-failures-before',
+            failuresBefore,
+          );
+
+          if (
+            await result
+              .getAttribute(
+                'data-detected',
+              ) ===
+            'true'
+          ) {
+            detected =
+              true;
+
+            break;
+          }
+        }
+
+        expect(
+          detected,
+        ).toBe(
+          true,
+        );
+
+        const detectedGalaxyIndex =
+          (
+            await page
+              .getByTestId(
+                'external-galaxy-detection-index',
+              )
+              .textContent()
+          )
+            ?.trim() ??
+          '';
+
+        expect(
+          detectedGalaxyIndex,
+        ).toMatch(
+          /^\d+$/,
+        );
+
+        expect(
+          detectedGalaxyIndex,
+        ).not.toBe(
+          '0',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-detection-reward',
+          ),
+        ).toContainText(
+          '+40 PD',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-focus-action',
+          ),
+        ).toBeVisible();
+
+        await page
+          .getByTestId(
+            'external-galaxy-focus-action',
+          )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-focus-message',
+          ),
+        ).toContainText(
+          'historial persistido de 11.6',
+        );
+
+        await expect(
+          page.getByTestId(
+            'exploration-active-galaxy-index',
+          ),
+        ).toContainText(
+          `GALAXIA ${detectedGalaxyIndex}`,
+        );
+
+        await page.goto(
+          '/galaxies',
+        );
+
+        await expect(
+          page.getByTestId(
+            'current-focus-galaxy',
+          ),
+        ).toContainText(
+          `Galaxia ${detectedGalaxyIndex}`,
+        );
+
+        const originReturn =
+          page.locator(
+            '[data-testid="galaxy-return-action"][data-galaxy-index="0"]',
+          );
+
+        await expect(
+          originReturn,
+        ).toHaveAttribute(
+          'data-galaxy-index',
+          '0',
+        );
+
+        await originReturn
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'galaxy-return-success',
+          ),
+        ).toContainText(
+          'progreso persistido se conserva',
+        );
+
+        await expect(
+          page.getByTestId(
+            'current-focus-galaxy',
+          ),
+        ).toContainText(
+          'Galaxia 0',
+        );
+
+        await expect(
+          page.locator(
+            `[data-testid="discovered-galaxy-card"][data-galaxy-index="${detectedGalaxyIndex}"]`,
+          ),
+        ).toHaveAttribute(
+          'data-galaxy-state',
+          'VISITED',
+        );
+
+        await page.goto(
+          '/exploration',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-global-points',
+          ),
+        ).toHaveText(
+          '40',
         );
       },
     );

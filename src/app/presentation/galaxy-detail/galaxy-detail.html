@@ -9,7 +9,7 @@
         <p class="gd__eyebrow">
           CATÁLOGO INTERGALÁCTICO
           <span aria-hidden="true">/</span>
-          11.5
+          11.6
         </p>
 
         <h1
@@ -119,6 +119,13 @@
                   data-testid="galaxy-detail-focus-badge"
                 >
                   EN FOCO
+                </span>
+              } @else if (model.isRecentFocus) {
+                <span
+                  class="gd__badge"
+                  data-testid="galaxy-detail-recent-badge"
+                >
+                  FOCO ANTERIOR
                 </span>
               }
 
@@ -417,7 +424,7 @@
             aria-labelledby="gd-focus-title"
           >
             <div class="gd__section-heading">
-              <small>11.5 / FOCO DE EXPLORACIÓN</small>
+              <small>11.6 / FOCO DE EXPLORACIÓN</small>
 
               <h3 id="gd-focus-title">
                 Contexto galáctico activo
@@ -447,6 +454,8 @@
                 >
                   @if (facade.focusPending()) {
                     Actualizando foco…
+                  } @else if (model.isRecentFocus) {
+                    Regresar a esta galaxia
                   } @else {
                     Establecer como foco de exploración
                   }
@@ -486,10 +495,12 @@
 
               <p>
                 Cambiar el foco actualiza únicamente el contexto persistido de
-                exploración. Una galaxia conocida pasa como mínimo a Visitada;
-                Catalogada y Confirmada conservan su estado exacto. No se
-                leen ni gastan PD y esta acción no representa ni afirma un
-                viaje físico o FTL.
+                exploración. Si esta galaxia pertenece al historial reciente,
+                regresar valida primero esa relación persistida y conserva su
+                progreso local. Una galaxia conocida queda como mínimo en
+                Visitada; Catalogada y Confirmada conservan su estado exacto.
+                No se leen ni gastan PD y esta acción no representa ni afirma
+                un viaje físico o FTL.
               </p>
             </div>
           </section>
@@ -498,14 +509,14 @@
             class="gd__boundary"
             data-testid="galaxy-detail-boundary"
           >
-            <span>11.5</span>
+            <span>11.6</span>
 
             <p>
-              11.5 integra la decisión pura de foco ya existente con
-              persistencia atómica de activeGalaxyIndex y del estado Visitada
-              cuando procede. El historial reciente se conserva sin exponer
-              todavía el flujo de regreso de 11.6, y no se añade la transición
-              visual reservada a 11.7.
+              11.6 expone el historial reciente persistido como una ruta real
+              de regreso. Volver a una galaxia anterior reutiliza la transición
+              atómica de foco de 11.5, mantiene sus descubrimientos y progreso
+              local y actualiza el historial MRU sin duplicados. La transición
+              visual continúa reservada a 11.7.
             </p>
           </section>
 

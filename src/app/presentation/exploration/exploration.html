@@ -16,7 +16,7 @@
         </h1>
 
         <p>
-          Selecciona un sector, ejecuta el barrido y resuelve qué clase de resultado operativo se encuentra detrás de la firma.
+          Explora sectores de la galaxia activa o ejecuta una búsqueda extragaláctica independiente para detectar nuevos focos de exploración.
         </p>
       </div>
 
@@ -176,6 +176,378 @@
                   </dd>
                 </div>
               </dl>
+
+              @if (facade.externalSearchStatus(); as externalStatus) {
+                <section
+                  class="exploration__flow"
+                  data-testid="external-galaxy-search"
+                  aria-labelledby="external-galaxy-search-title"
+                >
+                  <div class="exploration__flow-heading">
+                    <div>
+                      <p class="exploration__label">
+                        SECUENCIA 7.4–7.8
+                      </p>
+
+                      <h3 id="external-galaxy-search-title">
+                        Búsqueda extragaláctica → detección → información preliminar → decisión de foco
+                      </h3>
+                    </div>
+
+                    <span class="exploration__transient">
+                      CONTEXTO GLOBAL
+                    </span>
+                  </div>
+
+                  <div class="exploration__console">
+                    <section class="exploration__selector">
+                      <div class="exploration__selector-heading">
+                        <div>
+                          <p class="exploration__label">
+                            BÚSQUEDA EXTERNA
+                          </p>
+
+                          <h4>
+                            Detectar una galaxia fuera del foco actual
+                          </h4>
+                        </div>
+
+                        <code>
+                          {{ detectionTierLabel(externalStatus.nextSearchProfile.baseDetectionProfile.tier) }}
+                        </code>
+                      </div>
+
+                      <p class="exploration__range-note">
+                        Esta operación no usa coordenadas X/Y de la galaxia activa. La probabilidad depende de los PD globales y de la protección anti-bloqueo persistida.
+                      </p>
+
+                      <dl class="exploration__scan-facts">
+                        <div>
+                          <dt>
+                            PD globales
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-global-points"
+                          >
+                            {{ externalStatus.globalDiscoveryPoints }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Probabilidad base
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-base-probability"
+                          >
+                            {{ probabilityPercent(externalStatus.nextSearchProfile.baseProbabilityPerFutureSearch) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Fallos consecutivos
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-failures"
+                          >
+                            {{ externalStatus.consecutiveFailedSearches }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Protección anti-bloqueo
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-pity-stage"
+                          >
+                            {{ pityStageLabel(externalStatus.nextSearchProfile.pityStage) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Próximo intento
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-effective-probability"
+                          >
+                            {{ probabilityPercent(externalStatus.nextSearchProfile.effectiveProbabilityPerNextSearch) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Galaxias externas conocidas
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-known-count"
+                          >
+                            {{ externalStatus.knownExternalGalaxyCount }}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <button
+                        type="button"
+                        class="exploration__scan"
+                        data-testid="external-galaxy-search-action"
+                        [disabled]="
+                          facade.externalSearchPending() ||
+                          facade.externalFocusPending() ||
+                          facade.progressPending() ||
+                          facade.externalFocusChoiceRequired()
+                        "
+                        (click)="searchExternalGalaxy()"
+                      >
+                        <span aria-hidden="true">◇</span>
+
+                        {{ facade.externalSearchPending() ? 'BUSCANDO...' : 'BUSCAR GALAXIA EXTERNA' }}
+                      </button>
+
+                      @if (facade.externalSearchErrorMessage()) {
+                        <p
+                          class="exploration__scan-error"
+                          data-testid="external-galaxy-search-error"
+                          role="alert"
+                        >
+                          {{ facade.externalSearchErrorMessage() }}
+                        </p>
+                      }
+                    </section>
+
+                    <section
+                      class="exploration__reading"
+                      data-testid="external-galaxy-search-reading"
+                    >
+                      @if (facade.externalSearchResult(); as searchResult) {
+                        <div
+                          class="exploration__detection"
+                          data-testid="external-galaxy-search-result"
+                          [attr.data-detected]="searchResult.detected"
+                          [attr.data-failures-before]="searchResult.consecutiveFailedSearchesBefore"
+                          [attr.data-failures-after]="searchResult.consecutiveFailedSearchesAfter"
+                          [class.exploration__detection--anomaly]="!searchResult.detected"
+                        >
+                          <span class="exploration__radar" aria-hidden="true">
+                            <i></i>
+                            <i></i>
+                            <i></i>
+                          </span>
+
+                          <div>
+                            @if (
+                              searchResult.preliminaryInformation;
+                              as preliminary
+                            ) {
+                              <p class="exploration__label">
+                                GALAXIA EXTERNA DETECTADA
+                              </p>
+
+                              <h4
+                                data-testid="external-galaxy-detection-code"
+                              >
+                                {{ preliminary.designationCode }}
+                              </h4>
+
+                              <p>
+                                La detección se registra como DETECTED. Solo se muestra información preliminar permitida por 7.6; el nombre propio y las propiedades exactas permanecen ocultos.
+                              </p>
+                            } @else {
+                              <p class="exploration__label">
+                                SIN DETECCIÓN EXTRAGALÁCTICA
+                              </p>
+
+                              <h4>
+                                El barrido no aisló una nueva galaxia
+                              </h4>
+
+                              <p>
+                                El intento queda registrado únicamente para la protección anti-bloqueo. No se inventa ninguna galaxia ni se altera el foco actual.
+                              </p>
+                            }
+                          </div>
+                        </div>
+
+                        @if (
+                          searchResult.preliminaryInformation;
+                          as preliminary
+                        ) {
+                          <dl class="exploration__scan-facts">
+                            <div>
+                              <dt>
+                                Identificador interno
+                              </dt>
+
+                              <dd
+                                data-testid="external-galaxy-detection-index"
+                              >
+                                {{ preliminary.galaxyIndex }}
+                              </dd>
+                            </div>
+
+                            <div>
+                              <dt>
+                                Estado
+                              </dt>
+
+                              <dd>
+                                Detectada
+                              </dd>
+                            </div>
+
+                            <div>
+                              <dt>
+                                Morfología preliminar
+                              </dt>
+
+                              <dd data-testid="external-galaxy-detection-morphology">
+                                {{ morphologyHintLabel(preliminary.morphologyHint) }}
+                              </dd>
+                            </div>
+
+                            <div>
+                              <dt>
+                                Escala preliminar
+                              </dt>
+
+                              <dd>
+                                {{ scaleHintLabel(preliminary.scaleHint) }}
+                              </dd>
+                            </div>
+
+                            <div>
+                              <dt>
+                                Población estelar
+                              </dt>
+
+                              <dd>
+                                {{ stellarPopulationHintLabel(preliminary.stellarPopulationHint) }}
+                              </dd>
+                            </div>
+
+                            <div>
+                              <dt>
+                                Actividad nuclear
+                              </dt>
+
+                              <dd>
+                                {{ nuclearActivityHintLabel(preliminary.nuclearActivityHint) }}
+                              </dd>
+                            </div>
+
+                            <div>
+                              <dt>
+                                Recompensa de detección
+                              </dt>
+
+                              <dd
+                                data-testid="external-galaxy-detection-reward"
+                              >
+                                +{{ searchResult.awardedDiscoveryPoints }} PD
+                              </dd>
+                            </div>
+
+                            <div>
+                              <dt>
+                                PD globales después
+                              </dt>
+
+                              <dd>
+                                {{ searchResult.globalDiscoveryPointsAfter }}
+                              </dd>
+                            </div>
+                          </dl>
+
+                          @if (facade.externalFocusChoiceRequired()) {
+                            <button
+                              type="button"
+                              class="exploration__action"
+                              data-testid="external-galaxy-remain-action"
+                              [disabled]="facade.externalFocusPending()"
+                              (click)="remainOnCurrentGalaxy()"
+                            >
+                              Permanecer en la galaxia actual
+                            </button>
+
+                            <button
+                              type="button"
+                              class="exploration__scan"
+                              data-testid="external-galaxy-focus-action"
+                              [disabled]="facade.externalFocusPending()"
+                              (click)="focusDetectedGalaxy()"
+                            >
+                              {{ facade.externalFocusPending() ? 'CAMBIANDO FOCO...' : 'CAMBIAR FOCO A LA GALAXIA DETECTADA' }}
+                            </button>
+                          }
+                        }
+                      } @else {
+                        <div class="exploration__waiting">
+                          <span class="exploration__radar exploration__radar--idle" aria-hidden="true">
+                            <i></i>
+                            <i></i>
+                            <i></i>
+                          </span>
+
+                          <p class="exploration__label">
+                            BÚSQUEDA DISPONIBLE
+                          </p>
+
+                          <h4>
+                            Ningún barrido extragaláctico ejecutado
+                          </h4>
+
+                          <p>
+                            Cada intento es determinista para la seed y el estado persistido. La protección anti-bloqueo garantiza que la mala suerte no pueda prolongarse indefinidamente.
+                          </p>
+                        </div>
+                      }
+                    </section>
+                  </div>
+
+                  @if (facade.externalFocusMessage()) {
+                    <aside
+                      class="exploration__scope"
+                      data-testid="external-galaxy-focus-message"
+                      aria-live="polite"
+                    >
+                      <span aria-hidden="true">◇</span>
+
+                      <p>
+                        {{ facade.externalFocusMessage() }}
+                      </p>
+                    </aside>
+                  }
+
+                  @if (facade.externalFocusErrorMessage()) {
+                    <p
+                      class="exploration__scan-error"
+                      data-testid="external-galaxy-focus-error"
+                      role="alert"
+                    >
+                      {{ facade.externalFocusErrorMessage() }}
+                    </p>
+                  }
+
+                  <aside class="exploration__scope">
+                    <span aria-hidden="true">◇</span>
+
+                    <p>
+                      <strong>
+                        Límite 7.4–7.8.
+                      </strong>
+                      La búsqueda externa es independiente del escaneo de sectores, no revela Ground Truth exacto y cambiar de galaxia significa únicamente cambiar el foco de exploración; no afirma viaje físico ni FTL.
+                    </p>
+                  </aside>
+                </section>
+              }
 
               <section
                 class="exploration__flow"
@@ -356,7 +728,7 @@
                       type="button"
                       class="exploration__scan"
                       data-testid="scan-sector-action"
-                      [disabled]="facade.progressPending()"
+                      [disabled]="facade.progressPending() || facade.externalSearchPending() || facade.externalFocusPending()"
                       (click)="scanSector(sectorXInput.value, sectorYInput.value)"
                     >
                       <span aria-hidden="true">◎</span>

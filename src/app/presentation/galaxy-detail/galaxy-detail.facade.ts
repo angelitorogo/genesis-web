@@ -62,6 +62,9 @@ export interface GalaxyDetailModel {
   readonly isVisitable:
     boolean;
 
+  readonly isRecentFocus:
+    boolean;
+
   readonly isOriginGalaxy:
     boolean;
 }
@@ -110,20 +113,20 @@ const INITIAL_STATE:
   });
 
 /**
- * Point-11.5 galaxy-detail facade.
+ * Point-11.5/11.6 galaxy-detail facade.
  *
  * Loading remains knowledge-safe exactly as in 11.3/11.4: a requested
  * GalaxyLocator must already exist at DETECTED or later and statistics are
  * derived only from persisted KnownDiscovery rows.
  *
- * 11.5 adds one explicit mutation: a non-current known galaxy can become the
- * exploration focus through GALAXY_FOCUS_RUNTIME. That runtime atomically
- * persists activeGalaxyIndex and promotes the target to at least VISITED.
+ * 11.5 allows any non-current known galaxy to become the exploration focus.
+ * 11.6 additionally recognizes galaxies present in recentGalaxyIndices and
+ * routes that explicit action through returnToRecentGalaxy(), which validates
+ * the persisted history atomically before applying the same focus transition.
  *
  * The facade still does not read/write Discovery Points, materialize hidden
- * procedural content, expose fictitious completion percentages, implement a
- * "return to previous galaxy" flow (11.6) or model/animate physical FTL travel
- * (11.7).
+ * procedural content, expose fictitious completion percentages or
+ * model/animate physical FTL travel (11.7).
  */
 @Injectable({
   providedIn:
@@ -436,6 +439,14 @@ export class GalaxyDetailFacade {
           .activeGalaxyIndex ===
         galaxyIndex;
 
+      const isRecentFocus =
+        !isCurrentFocus &&
+        navigation
+          .recentGalaxyIndices
+          .includes(
+            galaxyIndex,
+          );
+
       this
         .loadedContextSignal
         .set(
@@ -459,6 +470,8 @@ export class GalaxyDetailFacade {
 
               isVisitable:
                 !isCurrentFocus,
+
+              isRecentFocus,
 
               isOriginGalaxy:
                 galaxyIndex ===
@@ -556,15 +569,28 @@ export class GalaxyDetailFacade {
       );
 
     try {
+      const returningToRecentGalaxy =
+        model
+          .isRecentFocus;
+
       const result =
-        await this
-          .focusRuntime
-          .changeFocus(
-            context
-              .generationKey,
-            context
-              .galaxyIndex,
-          );
+        returningToRecentGalaxy
+          ? await this
+              .focusRuntime
+              .returnToRecentGalaxy(
+                context
+                  .generationKey,
+                context
+                  .galaxyIndex,
+              )
+          : await this
+              .focusRuntime
+              .changeFocus(
+                context
+                  .generationKey,
+                context
+                  .galaxyIndex,
+              );
 
       if (
         focusId !==
@@ -606,10 +632,12 @@ export class GalaxyDetailFacade {
       this
         .focusSuccessSignal
         .set(
-          result
-            .didPromoteTargetToVisited
-            ? 'Foco actualizado. La galaxia queda registrada como Visitada.'
-            : 'Foco de exploración actualizado.',
+          returningToRecentGalaxy
+            ? 'Regreso completado. La galaxia vuelve a ser el foco activo sin reiniciar su progreso persistido.'
+            : result
+                .didPromoteTargetToVisited
+              ? 'Foco actualizado. La galaxia queda registrada como Visitada.'
+              : 'Foco de exploración actualizado.',
         );
     } catch (
       error

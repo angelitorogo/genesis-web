@@ -36,6 +36,11 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  GALAXY_FOCUS_RUNTIME,
+  type GalaxyFocusRuntime,
+} from '../runtime/galaxy-focus.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
@@ -105,6 +110,10 @@ describe(
 
       activeGalaxyIndex =
         0n,
+
+      recentGalaxyIndices:
+        readonly bigint[] =
+          [],
     ): GenesisLocalRepositories {
 
       return {
@@ -131,8 +140,7 @@ describe(
             return {
               activeGalaxyIndex,
 
-              recentGalaxyIndices:
-                [],
+              recentGalaxyIndices,
             };
           },
 
@@ -198,6 +206,22 @@ describe(
     function configure(
       repositoryBundle:
         GenesisLocalRepositories,
+
+      focusRuntime:
+        GalaxyFocusRuntime =
+          {
+            async changeFocus() {
+              throw new Error(
+                '11.5 focus mutation was not expected in this catalogue test.',
+              );
+            },
+
+            async returnToRecentGalaxy() {
+              throw new Error(
+                '11.6 return mutation was not expected in this catalogue test.',
+              );
+            },
+          },
     ): void {
 
       TestBed.configureTestingModule({
@@ -216,6 +240,14 @@ describe(
 
             useValue:
               repositoryBundle,
+          },
+
+          {
+            provide:
+              GALAXY_FOCUS_RUNTIME,
+
+            useValue:
+              focusRuntime,
           },
         ],
       });
@@ -545,8 +577,323 @@ describe(
             '[data-testid="discovered-galaxies-point-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.5',
+          '11.6',
         );
+      },
+      15_000,
+    );
+
+    it(
+      'should project the point-11.6 recent-galaxy history in persisted MRU order without active, duplicate or unknown entries',
+      async () => {
+        configure(
+          repositories(
+            [
+              generationKey,
+            ],
+            [
+              new KnownDiscovery(
+                generationKey,
+                new GalaxyLocator(
+                  0n,
+                ),
+                DiscoveryState
+                  .VISITED,
+              ),
+
+              new KnownDiscovery(
+                generationKey,
+                new GalaxyLocator(
+                  1n,
+                ),
+                DiscoveryState
+                  .VISITED,
+              ),
+
+              new KnownDiscovery(
+                generationKey,
+                new GalaxyLocator(
+                  2n,
+                ),
+                DiscoveryState
+                  .CATALOGUED,
+              ),
+            ],
+            2n,
+            [
+              1n,
+              0n,
+              2n,
+              99n,
+              1n,
+            ],
+          ),
+        );
+
+        await TestBed
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            DiscoveredGalaxiesPage,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .facade
+          .refresh();
+
+        fixture.detectChanges();
+
+        expect(
+          fixture
+            .componentInstance
+            .facade
+            .recentEntries()
+            .map(
+              (
+                entry,
+              ) =>
+                entry
+                  .galaxyIndex,
+            ),
+        ).toEqual([
+          1n,
+          0n,
+        ]);
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const historyEntries =
+          element.querySelectorAll(
+            '[data-testid="galaxy-return-history-entry"]',
+          );
+
+        expect(
+          historyEntries.length,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          historyEntries[
+            0
+          ]?.getAttribute(
+            'data-galaxy-index',
+          ),
+        ).toBe(
+          '1',
+        );
+
+        expect(
+          historyEntries[
+            1
+          ]?.getAttribute(
+            'data-galaxy-index',
+          ),
+        ).toBe(
+          '0',
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galaxy-return-action"]',
+          ).length,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="previous-focus-badge"]',
+          ).length,
+        ).toBe(
+          2,
+        );
+      },
+      15_000,
+    );
+
+    it(
+      'should return to a persisted previous galaxy through the point-11.6 runtime and refresh the MRU history',
+      async () => {
+        let activeGalaxyIndex =
+          1n;
+
+        let recentGalaxyIndices:
+          readonly bigint[] =
+          [
+            0n,
+          ];
+
+        const knownDiscoveries =
+          [
+            new KnownDiscovery(
+              generationKey,
+              new GalaxyLocator(
+                0n,
+              ),
+              DiscoveryState
+                .VISITED,
+            ),
+
+            new KnownDiscovery(
+              generationKey,
+              new GalaxyLocator(
+                1n,
+              ),
+              DiscoveryState
+                .VISITED,
+            ),
+          ];
+
+        const baseRepositories =
+          repositories(
+            [
+              generationKey,
+            ],
+            knownDiscoveries,
+            activeGalaxyIndex,
+            recentGalaxyIndices,
+          );
+
+        const repositoryBundle:
+          GenesisLocalRepositories =
+          {
+            ...baseRepositories,
+
+            navigationRepository: {
+              async getNavigation() {
+                return {
+                  activeGalaxyIndex,
+                  recentGalaxyIndices,
+                };
+              },
+
+              async setNavigation() {
+                throw new Error(
+                  'The catalogue must delegate 11.6 navigation writes to the runtime.',
+                );
+              },
+            },
+          };
+
+        const focusRuntime:
+          GalaxyFocusRuntime =
+          {
+            async changeFocus() {
+              throw new Error(
+                'A persisted previous galaxy must use returnToRecentGalaxy().',
+              );
+            },
+
+            async returnToRecentGalaxy(
+              _generationKey,
+              targetGalaxyIndex,
+            ) {
+              expect(
+                targetGalaxyIndex,
+              ).toBe(
+                0n,
+              );
+
+              const previousFocusGalaxyIndex =
+                activeGalaxyIndex;
+
+              activeGalaxyIndex =
+                targetGalaxyIndex;
+
+              recentGalaxyIndices =
+                [
+                  previousFocusGalaxyIndex,
+                ];
+
+              return Object.freeze({
+                previousFocusGalaxyIndex,
+                activeGalaxyIndex:
+                  targetGalaxyIndex,
+                targetStateBefore:
+                  DiscoveryState
+                    .VISITED,
+                targetStateAfter:
+                  DiscoveryState
+                    .VISITED,
+                didPromoteTargetToVisited:
+                  false,
+                recentGalaxyIndices,
+              });
+            },
+          };
+
+        configure(
+          repositoryBundle,
+          focusRuntime,
+        );
+
+        const facade =
+          TestBed.inject(
+            DiscoveredGalaxiesFacade,
+          );
+
+        await facade
+          .refresh();
+
+        expect(
+          facade
+            .recentEntries()
+            .map(
+              (
+                entry,
+              ) =>
+                entry
+                  .galaxyIndex,
+            ),
+        ).toEqual([
+          0n,
+        ]);
+
+        await facade
+          .returnToRecentGalaxy(
+            0n,
+          );
+
+        expect(
+          facade
+            .snapshot()
+            ?.currentFocusGalaxyIndex,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          facade
+            .recentEntries()
+            .map(
+              (
+                entry,
+              ) =>
+                entry
+                  .galaxyIndex,
+            ),
+        ).toEqual([
+          1n,
+        ]);
+
+        expect(
+          facade
+            .returnSuccessMessage(),
+        ).toContain(
+          'progreso persistido se conserva',
+        );
+
+        expect(
+          facade
+            .returnPendingGalaxyIndex(),
+        ).toBeNull();
       },
       15_000,
     );
