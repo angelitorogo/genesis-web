@@ -38,6 +38,10 @@ import {
 } from '../runtime/galaxy-focus.runtime';
 
 import {
+  GalaxyFocusTransitionRuntime,
+} from '../runtime/galaxy-focus-transition.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
 
@@ -126,7 +130,8 @@ const INITIAL_STATE:
  *
  * The facade still does not read/write Discovery Points, materialize hidden
  * procedural content, expose fictitious completion percentages or
- * model/animate physical FTL travel (11.7).
+ * model physical or FTL travel. Point 11.7 is a presentation-only
+ * reorientation shown after the persisted focus has been confirmed.
  */
 @Injectable({
   providedIn:
@@ -142,6 +147,11 @@ export class GalaxyDetailFacade {
   private readonly focusRuntime =
     inject(
       GALAXY_FOCUS_RUNTIME,
+    );
+
+  private readonly focusTransitionRuntime =
+    inject(
+      GalaxyFocusTransitionRuntime,
     );
 
   private readonly universeSeedFacade =
@@ -628,6 +638,18 @@ export class GalaxyDetailFacade {
           'El foco se persistió, pero la ficha no pudo confirmar el nuevo contexto activo.',
         );
       }
+
+      this
+        .focusTransitionRuntime
+        .presentPersistedFocusChange({
+          previousFocusGalaxyIndex:
+            result
+              .previousFocusGalaxyIndex,
+
+          activeGalaxyIndex:
+            result
+              .activeGalaxyIndex,
+        });
 
       this
         .focusSuccessSignal

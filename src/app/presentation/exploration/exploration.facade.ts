@@ -49,6 +49,10 @@ import {
 } from '../runtime/galaxy-focus.runtime';
 
 import {
+  GalaxyFocusTransitionRuntime,
+} from '../runtime/galaxy-focus-transition.runtime';
+
+import {
   EXPLORATION_SECTOR_PROGRESS_RUNTIME,
 } from '../runtime/exploration-sector-progress.runtime';
 
@@ -119,6 +123,11 @@ export class ExplorationFacade {
   private readonly focusRuntime =
     inject(
       GALAXY_FOCUS_RUNTIME,
+    );
+
+  private readonly focusTransitionRuntime =
+    inject(
+      GalaxyFocusTransitionRuntime,
     );
 
   private readonly universeSeedFacade =
@@ -750,6 +759,18 @@ export class ExplorationFacade {
       }
 
       await this.refresh();
+
+      this
+        .focusTransitionRuntime
+        .presentPersistedFocusChange({
+          previousFocusGalaxyIndex:
+            focusResult
+              .previousFocusGalaxyIndex,
+
+          activeGalaxyIndex:
+            focusResult
+              .activeGalaxyIndex,
+        });
 
       this.externalFocusDecisionSignal
         .set(

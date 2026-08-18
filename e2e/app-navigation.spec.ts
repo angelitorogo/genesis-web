@@ -869,7 +869,7 @@ test.describe(
 
 
     test(
-      'should accumulate one external-galaxy attempt every 100 PD, announce new attempts and preserve point-11.6 return',
+      'should accumulate external-galaxy attempts, preserve point-11.6 return and show point-11.7 focus transitions',
       async ({
         page,
       }) => {
@@ -1177,6 +1177,51 @@ test.describe(
           )
           .click();
 
+        const forwardFocusTransition =
+          page.getByTestId(
+            'galaxy-focus-transition',
+          );
+
+        await expect(
+          forwardFocusTransition,
+        ).toBeVisible();
+
+        await expect(
+          forwardFocusTransition,
+        ).toHaveAttribute(
+          'data-from-galaxy',
+          '0',
+        );
+
+        await expect(
+          forwardFocusTransition,
+        ).toHaveAttribute(
+          'data-to-galaxy',
+          detectedGalaxyIndex,
+        );
+
+        await expect(
+          forwardFocusTransition,
+        ).toContainText(
+          'REORIENTANDO EXPLORACIÓN',
+        );
+
+        await expect(
+          forwardFocusTransition,
+        ).toContainText(
+          'no representa desplazamiento físico ni viaje FTL',
+        );
+
+        await expect(
+          forwardFocusTransition,
+        ).toHaveCount(
+          0,
+          {
+            timeout:
+              4_000,
+          },
+        );
+
         await expect(
           page.getByTestId(
             'external-galaxy-focus-message',
@@ -1200,6 +1245,45 @@ test.describe(
 
         await originReturn
           .click();
+
+        const returnFocusTransition =
+          page.getByTestId(
+            'galaxy-focus-transition',
+          );
+
+        await expect(
+          returnFocusTransition,
+        ).toBeVisible();
+
+        await expect(
+          returnFocusTransition,
+        ).toHaveAttribute(
+          'data-from-galaxy',
+          detectedGalaxyIndex,
+        );
+
+        await expect(
+          returnFocusTransition,
+        ).toHaveAttribute(
+          'data-to-galaxy',
+          '0',
+        );
+
+        await expect(
+          returnFocusTransition,
+        ).toContainText(
+          'Transición de interfaz',
+        );
+
+        await expect(
+          returnFocusTransition,
+        ).toHaveCount(
+          0,
+          {
+            timeout:
+              4_000,
+          },
+        );
 
         await expect(
           page.getByTestId(

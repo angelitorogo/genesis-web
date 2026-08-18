@@ -1,0 +1,69 @@
+@if (runtime.state(); as state) {
+  @if (state.kind === 'active') {
+    <section
+      class="gft"
+      data-testid="galaxy-focus-transition"
+      [attr.data-transition-id]="state.transition.id"
+      [attr.data-from-galaxy]="state.transition.previousFocusGalaxyIndex"
+      [attr.data-to-galaxy]="state.transition.activeGalaxyIndex"
+      [attr.data-reduced-motion]="state.transition.reducedMotion"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div
+        class="gft__field"
+        aria-hidden="true"
+      >
+        <span class="gft__ring gft__ring--outer"></span>
+        <span class="gft__ring gft__ring--middle"></span>
+        <span class="gft__ring gft__ring--inner"></span>
+        <span class="gft__core"></span>
+      </div>
+
+      <div class="gft__panel">
+        <p class="gft__eyebrow">
+          11.7 / CAMBIO DE FOCO CONFIRMADO
+        </p>
+
+        <h2>
+          REORIENTANDO EXPLORACIÓN
+        </h2>
+
+        <div
+          class="gft__contexts"
+          aria-label="Cambio de contexto galáctico"
+        >
+          <div class="gft__context">
+            <small>FOCO ANTERIOR</small>
+
+            <strong>
+              G{{ state.transition.previousFocusGalaxyIndex }}
+            </strong>
+          </div>
+
+          <span
+            class="gft__separator"
+            aria-hidden="true"
+          ></span>
+
+          <div class="gft__context gft__context--active">
+            <small>NUEVO FOCO ACTIVO</small>
+
+            <strong>
+              G{{ state.transition.activeGalaxyIndex }}
+            </strong>
+          </div>
+        </div>
+
+        <p class="gft__copy">
+          Actualizando instrumentos, mapa y contexto científico para la galaxia seleccionada.
+        </p>
+
+        <p class="gft__semantics">
+          Transición de interfaz: no representa desplazamiento físico ni viaje FTL.
+        </p>
+      </div>
+    </section>
+  }
+}

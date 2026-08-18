@@ -22,6 +22,10 @@ import {
 } from '../runtime/galaxy-focus.runtime';
 
 import {
+  GalaxyFocusTransitionRuntime,
+} from '../runtime/galaxy-focus-transition.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
 
@@ -97,6 +101,11 @@ export class DiscoveredGalaxiesFacade {
   private readonly focusRuntime =
     inject(
       GALAXY_FOCUS_RUNTIME,
+    );
+
+  private readonly focusTransitionRuntime =
+    inject(
+      GalaxyFocusTransitionRuntime,
     );
 
   private readonly universeSeedFacade =
@@ -468,6 +477,18 @@ export class DiscoveredGalaxiesFacade {
           'El regreso se persistió, pero el catálogo no pudo confirmar el nuevo foco activo.',
         );
       }
+
+      this
+        .focusTransitionRuntime
+        .presentPersistedFocusChange({
+          previousFocusGalaxyIndex:
+            result
+              .previousFocusGalaxyIndex,
+
+          activeGalaxyIndex:
+            result
+              .activeGalaxyIndex,
+        });
 
       this
         .returnSuccessSignal
