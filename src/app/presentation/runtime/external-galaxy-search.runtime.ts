@@ -15,6 +15,10 @@ import {
 } from '../../domain/exploration/discovery-reward-reason';
 
 import {
+  ExplorationBalanceV1,
+} from '../../domain/exploration/exploration-balance';
+
+import {
   type ExternalGalaxyFocusOffer,
 } from '../../domain/exploration/external-galaxy-focus';
 
@@ -106,6 +110,30 @@ export interface ExternalGalaxySearchStatus {
   readonly knownExternalGalaxyCount:
     bigint;
 
+  readonly searchOpportunityAvailable:
+    boolean;
+
+  readonly earnedSearchOpportunities:
+    bigint;
+
+  readonly consumedSearchOpportunities:
+    bigint;
+
+  readonly availableSearchOpportunities:
+    bigint;
+
+  readonly unannouncedSearchOpportunities:
+    bigint;
+
+  readonly nextSearchOpportunityThreshold:
+    bigint;
+
+  readonly discoveryPointsUntilNextOpportunity:
+    bigint;
+
+  readonly searchDiscoveryPointStep:
+    bigint;
+
   readonly nextSearchProfile:
     ExternalGalaxySearchPityProfile;
 }
@@ -155,13 +183,22 @@ export interface ExternalGalaxySearchRuntime {
     generationKey:
       UniverseGenerationKey,
   ): Promise<ExternalGalaxySearchRuntimeResult>;
+
+  acknowledgeOpportunityNotifications(
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<void>;
 }
 
 /**
  * Missing gameplay orchestration for frozen points 7.4..7.8.
  *
- * One external search is committed atomically with its anti-blocking state:
+ * One external search is committed atomically with its anti-blocking and
+ * progression-gate state:
  *
+ * - one non-spendable opportunity is earned per 100 global PD;
+ * - unused opportunities accumulate persistently and the runtime consumes only
+ *   one opportunity per search;
  * - 7.4/7.5 provide the probability profile;
  * - ExternalGalaxySearchEngine performs one deterministic V1 draw;
  * - failed searches persist only the consecutive-failure streak;
@@ -213,7 +250,7 @@ export class DexieExternalGalaxySearchRuntime
         async () => {
           const [
             globalDiscoveryPoints,
-            consecutiveFailedSearches,
+            persistedSearchState,
             knownDiscoveries,
           ] =
             await Promise.all([
@@ -225,7 +262,7 @@ export class DexieExternalGalaxySearchRuntime
 
               this
                 .searchStateRepository
-                .getConsecutiveFailedSearches(
+                .getState(
                   generationKey,
                 ),
 
@@ -241,17 +278,31 @@ export class DexieExternalGalaxySearchRuntime
               knownDiscoveries,
             );
 
+          const opportunity =
+            evaluateSearchOpportunity(
+              globalDiscoveryPoints,
+              persistedSearchState
+                .consumedSearchOpportunities,
+              persistedSearchState
+                .lastAnnouncedEarnedSearchOpportunities,
+            );
+
           return Object.freeze({
             globalDiscoveryPoints,
-            consecutiveFailedSearches,
+            consecutiveFailedSearches:
+              persistedSearchState
+                .consecutiveFailedSearches,
             knownExternalGalaxyCount,
+
+            ...opportunity,
 
             nextSearchProfile:
               ExternalGalaxySearchPityEngine
                 .evaluateNextSearchProbability(
                   generationKey,
                   globalDiscoveryPoints,
-                  consecutiveFailedSearches,
+                  persistedSearchState
+                    .consecutiveFailedSearches,
                 ),
           });
         },
@@ -282,6 +333,68 @@ export class DexieExternalGalaxySearchRuntime
       );
   }
 
+  async acknowledgeOpportunityNotifications(
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<void> {
+
+    await this
+      .database
+      .openDatabase();
+
+    await this
+      .database
+      .transaction(
+        'rw',
+        this.database.universes,
+        this.database.navigation,
+        this.database.progress,
+        async () => {
+          const [
+            globalDiscoveryPoints,
+            persistedSearchState,
+          ] =
+            await Promise.all([
+              this
+                .pointsRepository
+                .getGlobalDiscoveryPoints(
+                  generationKey,
+                ),
+
+              this
+                .searchStateRepository
+                .getState(
+                  generationKey,
+                ),
+            ]);
+
+          const earnedSearchOpportunities =
+            globalDiscoveryPoints /
+            ExplorationBalanceV1
+              .externalGalaxySearchDiscoveryPointStep;
+
+          if (
+            earnedSearchOpportunities <=
+            persistedSearchState
+              .lastAnnouncedEarnedSearchOpportunities
+          ) {
+            return;
+          }
+
+          await this
+            .searchStateRepository
+            .setState(
+              generationKey,
+              {
+                ...persistedSearchState,
+                lastAnnouncedEarnedSearchOpportunities:
+                  earnedSearchOpportunities,
+              },
+            );
+        },
+      );
+  }
+
   private async searchInsideTransaction(
     generationKey:
       UniverseGenerationKey,
@@ -290,7 +403,7 @@ export class DexieExternalGalaxySearchRuntime
     const [
       navigation,
       globalDiscoveryPointsBefore,
-      consecutiveFailedSearchesBefore,
+      persistedSearchState,
       knownDiscoveries,
     ] =
       await Promise.all([
@@ -308,7 +421,7 @@ export class DexieExternalGalaxySearchRuntime
 
         this
           .searchStateRepository
-          .getConsecutiveFailedSearches(
+          .getState(
             generationKey,
           ),
 
@@ -318,6 +431,10 @@ export class DexieExternalGalaxySearchRuntime
             generationKey,
           ),
       ]);
+
+    const consecutiveFailedSearchesBefore =
+      persistedSearchState
+        .consecutiveFailedSearches;
 
     const knownGalaxyIndices =
       collectKnownGalaxyIndices(
@@ -335,6 +452,24 @@ export class DexieExternalGalaxySearchRuntime
     ) {
       throw new RangeError(
         'The active exploration focus must reference a known galaxy before an external search can run.',
+      );
+    }
+
+    const opportunity =
+      evaluateSearchOpportunity(
+        globalDiscoveryPointsBefore,
+        persistedSearchState
+          .consumedSearchOpportunities,
+        persistedSearchState
+          .lastAnnouncedEarnedSearchOpportunities,
+      );
+
+    if (
+      !opportunity
+        .searchOpportunityAvailable
+    ) {
+      throw new RangeError(
+        `External-galaxy search has no available attempts. The next attempt unlocks at ${opportunity.nextSearchOpportunityThreshold.toString(10)} global Discovery Points.`,
       );
     }
 
@@ -383,10 +518,22 @@ export class DexieExternalGalaxySearchRuntime
     ) {
       await this
         .searchStateRepository
-        .setConsecutiveFailedSearches(
+        .setState(
           generationKey,
-          attempt
-            .consecutiveFailedSearchesAfter,
+          {
+            consecutiveFailedSearches:
+              attempt
+                .consecutiveFailedSearchesAfter,
+
+            consumedSearchOpportunities:
+              persistedSearchState
+                .consumedSearchOpportunities +
+              1n,
+
+            lastAnnouncedEarnedSearchOpportunities:
+              persistedSearchState
+                .lastAnnouncedEarnedSearchOpportunities,
+          },
         );
 
       const nextSearchProfile =
@@ -508,9 +655,21 @@ export class DexieExternalGalaxySearchRuntime
 
     await this
       .searchStateRepository
-      .setConsecutiveFailedSearches(
+      .setState(
         generationKey,
-        0n,
+        {
+          consecutiveFailedSearches:
+            0n,
+
+          consumedSearchOpportunities:
+            persistedSearchState
+              .consumedSearchOpportunities +
+            1n,
+
+          lastAnnouncedEarnedSearchOpportunities:
+            persistedSearchState
+              .lastAnnouncedEarnedSearchOpportunities,
+        },
       );
 
     const preliminaryInformation =
@@ -562,6 +721,136 @@ export class DexieExternalGalaxySearchRuntime
           ),
     });
   }
+}
+
+interface ExternalGalaxySearchOpportunity {
+  readonly searchOpportunityAvailable:
+    boolean;
+
+  readonly earnedSearchOpportunities:
+    bigint;
+
+  readonly consumedSearchOpportunities:
+    bigint;
+
+  readonly availableSearchOpportunities:
+    bigint;
+
+  readonly unannouncedSearchOpportunities:
+    bigint;
+
+  readonly nextSearchOpportunityThreshold:
+    bigint;
+
+  readonly discoveryPointsUntilNextOpportunity:
+    bigint;
+
+  readonly searchDiscoveryPointStep:
+    bigint;
+}
+
+function evaluateSearchOpportunity(
+  globalDiscoveryPoints:
+    bigint,
+
+  consumedSearchOpportunities:
+    bigint,
+
+  lastAnnouncedEarnedSearchOpportunities:
+    bigint,
+): ExternalGalaxySearchOpportunity {
+
+  if (
+    globalDiscoveryPoints <
+      0n ||
+    globalDiscoveryPoints >
+      SIGNED_LONG_MAX
+  ) {
+    throw new RangeError(
+      'globalDiscoveryPoints must belong to the non-negative signed-Long range.',
+    );
+  }
+
+  if (
+    consumedSearchOpportunities <
+      0n ||
+    consumedSearchOpportunities >
+      SIGNED_LONG_MAX
+  ) {
+    throw new RangeError(
+      'consumedSearchOpportunities must belong to the non-negative signed-Long range.',
+    );
+  }
+
+  if (
+    lastAnnouncedEarnedSearchOpportunities <
+      0n ||
+    lastAnnouncedEarnedSearchOpportunities >
+      SIGNED_LONG_MAX
+  ) {
+    throw new RangeError(
+      'lastAnnouncedEarnedSearchOpportunities must belong to the non-negative signed-Long range.',
+    );
+  }
+
+  const searchDiscoveryPointStep =
+    ExplorationBalanceV1
+      .externalGalaxySearchDiscoveryPointStep;
+
+  const earnedSearchOpportunities =
+    globalDiscoveryPoints /
+    searchDiscoveryPointStep;
+
+  if (
+    consumedSearchOpportunities >
+    earnedSearchOpportunities
+  ) {
+    throw new RangeError(
+      'Consumed external-galaxy search opportunities cannot exceed earned opportunities.',
+    );
+  }
+
+  if (
+    lastAnnouncedEarnedSearchOpportunities >
+    earnedSearchOpportunities
+  ) {
+    throw new RangeError(
+      'Announced external-galaxy search opportunities cannot exceed earned opportunities.',
+    );
+  }
+
+  const availableSearchOpportunities =
+    earnedSearchOpportunities -
+    consumedSearchOpportunities;
+
+  const unannouncedSearchOpportunities =
+    earnedSearchOpportunities -
+    lastAnnouncedEarnedSearchOpportunities;
+
+  const nextSearchOpportunityThreshold =
+    (
+      earnedSearchOpportunities +
+      1n
+    ) *
+    searchDiscoveryPointStep;
+
+  return Object.freeze({
+    searchOpportunityAvailable:
+      availableSearchOpportunities >
+      0n,
+
+    earnedSearchOpportunities,
+    consumedSearchOpportunities,
+    availableSearchOpportunities,
+    unannouncedSearchOpportunities,
+    nextSearchOpportunityThreshold,
+
+    discoveryPointsUntilNextOpportunity:
+      nextSearchOpportunityThreshold -
+      globalDiscoveryPoints,
+
+    searchDiscoveryPointStep,
+  });
 }
 
 function collectKnownGalaxyIndices(

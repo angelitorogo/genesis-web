@@ -352,6 +352,18 @@ describe(
     );
 
     it(
+      'should freeze one cumulative external-galaxy search opportunity every 100 global PD without spending points',
+      () => {
+        expect(
+          ExplorationBalanceV1
+            .externalGalaxySearchDiscoveryPointStep,
+        ).toBe(
+          100n,
+        );
+      },
+    );
+
+    it(
       'should preserve the complete frozen 7.5 pity table and hard-pity derivations',
       () => {
         expect(
@@ -925,7 +937,7 @@ describe(
           4_288,
         );
       },
-      15_000,
+      30_000,
     );
   },
 );

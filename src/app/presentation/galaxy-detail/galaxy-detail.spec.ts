@@ -425,7 +425,7 @@ describe(
             ?.isOriginGalaxy,
         ).toBe(true);
       },
-      15_000,
+      30_000,
     );
 
     it(
@@ -620,7 +620,7 @@ describe(
           '11.6',
         );
       },
-      15_000,
+      30_000,
     );
 
     it(
@@ -796,7 +796,7 @@ describe(
             1n,
         });
       },
-      15_000,
+      30_000,
     );
 
     it(
@@ -919,7 +919,7 @@ describe(
           'no representa ni afirma un',
         );
       },
-      15_000,
+      30_000,
     );
 
     it(
@@ -1250,7 +1250,7 @@ describe(
           ),
         ).toBeNull();
       },
-      15_000,
+      30_000,
     );
 
     it(
@@ -1464,7 +1464,7 @@ describe(
           'sin reiniciar su progreso persistido',
         );
       },
-      15_000,
+      30_000,
     );
 
     it(

@@ -13,6 +13,17 @@ import {
   parseNonNegativeLongDecimal,
 } from './local-repository-support';
 
+export interface PersistedExternalGalaxySearchState {
+  readonly consecutiveFailedSearches:
+    bigint;
+
+  readonly consumedSearchOpportunities:
+    bigint;
+
+  readonly lastAnnouncedEarnedSearchOpportunities:
+    bigint;
+}
+
 export class DexieExternalGalaxySearchStateRepository {
 
   constructor(
@@ -24,10 +35,10 @@ export class DexieExternalGalaxySearchStateRepository {
         Date.now,
   ) {}
 
-  async getConsecutiveFailedSearches(
+  async getState(
     generationKey:
       UniverseGenerationKey,
-  ): Promise<bigint> {
+  ): Promise<PersistedExternalGalaxySearchState> {
 
     await ensureUniverseExists(
       this.database,
@@ -50,34 +61,63 @@ export class DexieExternalGalaxySearchStateRepository {
           generatorVersionCode,
         ]);
 
-    const persisted =
-      entity
-        ?.externalGalaxySearchConsecutiveFailures;
+    return Object.freeze({
+      consecutiveFailedSearches:
+        entity
+          ?.externalGalaxySearchConsecutiveFailures ===
+        undefined
+          ? 0n
+          : parseNonNegativeLongDecimal(
+              entity
+                .externalGalaxySearchConsecutiveFailures,
+              'externalGalaxySearchConsecutiveFailures',
+            ),
 
-    if (
-      persisted ===
-      undefined
-    ) {
-      return 0n;
-    }
+      consumedSearchOpportunities:
+        entity
+          ?.externalGalaxySearchConsumedOpportunities ===
+        undefined
+          ? 0n
+          : parseNonNegativeLongDecimal(
+              entity
+                .externalGalaxySearchConsumedOpportunities,
+              'externalGalaxySearchConsumedOpportunities',
+            ),
 
-    return parseNonNegativeLongDecimal(
-      persisted,
-      'externalGalaxySearchConsecutiveFailures',
-    );
+      lastAnnouncedEarnedSearchOpportunities:
+        entity
+          ?.externalGalaxySearchLastAnnouncedEarnedOpportunities ===
+        undefined
+          ? 0n
+          : parseNonNegativeLongDecimal(
+              entity
+                .externalGalaxySearchLastAnnouncedEarnedOpportunities,
+              'externalGalaxySearchLastAnnouncedEarnedOpportunities',
+            ),
+    });
   }
 
-  async setConsecutiveFailedSearches(
+  async setState(
     generationKey:
       UniverseGenerationKey,
 
-    consecutiveFailedSearches:
-      bigint,
+    state:
+      PersistedExternalGalaxySearchState,
   ): Promise<void> {
 
     assertNonNegativeLong(
-      consecutiveFailedSearches,
+      state.consecutiveFailedSearches,
       'consecutiveFailedSearches',
+    );
+
+    assertNonNegativeLong(
+      state.consumedSearchOpportunities,
+      'consumedSearchOpportunities',
+    );
+
+    assertNonNegativeLong(
+      state.lastAnnouncedEarnedSearchOpportunities,
+      'lastAnnouncedEarnedSearchOpportunities',
     );
 
     await ensureUniverseExists(
@@ -122,7 +162,22 @@ export class DexieExternalGalaxySearchStateRepository {
               ],
 
         externalGalaxySearchConsecutiveFailures:
-          consecutiveFailedSearches
+          state
+            .consecutiveFailedSearches
+            .toString(
+              10,
+            ),
+
+        externalGalaxySearchConsumedOpportunities:
+          state
+            .consumedSearchOpportunities
+            .toString(
+              10,
+            ),
+
+        externalGalaxySearchLastAnnouncedEarnedOpportunities:
+          state
+            .lastAnnouncedEarnedSearchOpportunities
             .toString(
               10,
             ),
@@ -130,5 +185,40 @@ export class DexieExternalGalaxySearchStateRepository {
         updatedAtEpochMs:
           this.clock(),
       });
+  }
+
+  async getConsecutiveFailedSearches(
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<bigint> {
+
+    return (
+      await this.getState(
+        generationKey,
+      )
+    )
+      .consecutiveFailedSearches;
+  }
+
+  async setConsecutiveFailedSearches(
+    generationKey:
+      UniverseGenerationKey,
+
+    consecutiveFailedSearches:
+      bigint,
+  ): Promise<void> {
+
+    const current =
+      await this.getState(
+        generationKey,
+      );
+
+    await this.setState(
+      generationKey,
+      {
+        ...current,
+        consecutiveFailedSearches,
+      },
+    );
   }
 }

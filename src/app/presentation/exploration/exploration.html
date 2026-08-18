@@ -3,6 +3,54 @@
     class="exploration"
     data-testid="exploration-page"
   >
+    @if (facade.externalSearchOpportunityNotification(); as notification) {
+      <aside
+        class="exploration__opportunity-toast"
+        data-testid="external-galaxy-search-opportunity-toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        <span
+          class="exploration__opportunity-toast-icon"
+          aria-hidden="true"
+        >
+          ◇
+        </span>
+
+        <div class="exploration__opportunity-toast-copy">
+          <p class="exploration__label">
+            NUEVA OPORTUNIDAD EXTRAGALÁCTICA
+          </p>
+
+          <strong
+            data-testid="external-galaxy-search-opportunity-toast-new"
+          >
+            {{ newlyUnlockedSearchOpportunityLabel(notification.newlyUnlockedSearchOpportunities) }}
+          </strong>
+
+          <p>
+            Ahora tienes
+            <b
+              data-testid="external-galaxy-search-opportunity-toast-total"
+            >
+              {{ searchOpportunityCountLabel(notification.availableSearchOpportunities) }}
+            </b>.
+            Los intentos no caducan y no consumen PD.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="exploration__opportunity-toast-close"
+          data-testid="external-galaxy-search-opportunity-toast-close"
+          aria-label="Cerrar aviso de nueva oportunidad de búsqueda"
+          (click)="dismissExternalSearchOpportunityNotification()"
+        >
+          ×
+        </button>
+      </aside>
+    }
     <header class="exploration__header">
       <div>
         <p class="exploration__eyebrow">
@@ -218,10 +266,82 @@
                       </div>
 
                       <p class="exploration__range-note">
-                        Esta operación no usa coordenadas X/Y de la galaxia activa. La probabilidad depende de los PD globales y de la protección anti-bloqueo persistida.
+                        Esta operación no usa coordenadas X/Y de la galaxia activa. La probabilidad depende de los PD globales y de la protección anti-bloqueo persistida. Los PD no se gastan: cada 100 PD globales se añade un intento y todos los intentos no utilizados se acumulan hasta que decidas usarlos.
+                      </p>
+
+                      <p
+                        class="exploration__range-note"
+                        data-testid="external-galaxy-search-gate-status"
+                        [attr.data-available]="externalStatus.searchOpportunityAvailable"
+                      >
+                        @if (externalStatus.searchOpportunityAvailable) {
+                          {{ searchOpportunityCountLabel(externalStatus.availableSearchOpportunities) }} · próxima oportunidad a {{ externalStatus.nextSearchOpportunityThreshold }} PD. Los intentos se acumulan y no consumen PD.
+                        } @else {
+                          BÚSQUEDA BLOQUEADA · próxima oportunidad a {{ externalStatus.nextSearchOpportunityThreshold }} PD. Faltan {{ externalStatus.discoveryPointsUntilNextOpportunity }} PD.
+                        }
                       </p>
 
                       <dl class="exploration__scan-facts">
+                        <div>
+                          <dt>
+                            Intentos disponibles
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-available-attempts"
+                          >
+                            {{ externalStatus.availableSearchOpportunities }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Intentos obtenidos
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-earned-attempts"
+                          >
+                            {{ externalStatus.earnedSearchOpportunities }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Intentos utilizados
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-consumed-attempts"
+                          >
+                            {{ externalStatus.consumedSearchOpportunities }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Próximo desbloqueo
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-opportunity-threshold"
+                          >
+                            {{ externalStatus.nextSearchOpportunityThreshold }} PD
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            PD restantes
+                          </dt>
+
+                          <dd
+                            data-testid="external-galaxy-search-points-remaining"
+                          >
+                            {{ externalStatus.discoveryPointsUntilNextOpportunity }}
+                          </dd>
+                        </div>
+
                         <div>
                           <dt>
                             PD globales
@@ -300,6 +420,7 @@
                         class="exploration__scan"
                         data-testid="external-galaxy-search-action"
                         [disabled]="
+                          !externalStatus.searchOpportunityAvailable ||
                           facade.externalSearchPending() ||
                           facade.externalFocusPending() ||
                           facade.progressPending() ||
@@ -309,7 +430,13 @@
                       >
                         <span aria-hidden="true">◇</span>
 
-                        {{ facade.externalSearchPending() ? 'BUSCANDO...' : 'BUSCAR GALAXIA EXTERNA' }}
+                        @if (facade.externalSearchPending()) {
+                          BUSCANDO...
+                        } @else if (externalStatus.searchOpportunityAvailable) {
+                          BUSCAR GALAXIA EXTERNA · {{ externalStatus.availableSearchOpportunities }} DISPONIBLES
+                        } @else {
+                          BÚSQUEDA BLOQUEADA
+                        }
                       </button>
 
                       @if (facade.externalSearchErrorMessage()) {
@@ -497,7 +624,7 @@
                           </span>
 
                           <p class="exploration__label">
-                            BÚSQUEDA DISPONIBLE
+                            {{ externalStatus.searchOpportunityAvailable ? 'BÚSQUEDA DISPONIBLE' : 'BÚSQUEDA BLOQUEADA' }}
                           </p>
 
                           <h4>

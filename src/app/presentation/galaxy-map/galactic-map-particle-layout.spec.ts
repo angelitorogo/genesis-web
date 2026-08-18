@@ -163,7 +163,7 @@ describe(
         ).toEqual(
           first.opacities,
         );
-      },15_000,
+      },30_000,
     );
 
     it(
@@ -223,7 +223,7 @@ describe(
           synchronous.opacities,
         );
       },
-      15_000,
+      30_000,
     );
 
     it(

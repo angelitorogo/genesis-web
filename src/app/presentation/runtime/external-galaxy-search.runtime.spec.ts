@@ -251,6 +251,62 @@ describe(
 
         expect(
           status
+            .searchOpportunityAvailable,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          status
+            .nextSearchOpportunityThreshold,
+        ).toBe(
+          100n,
+        );
+
+        expect(
+          status
+            .earnedSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          status
+            .consumedSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          status
+            .availableSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          status
+            .unannouncedSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          status
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          100n,
+        );
+
+        expect(
+          status
+            .searchDiscoveryPointStep,
+        ).toBe(
+          100n,
+        );
+
+        expect(
+          status
             .nextSearchProfile
             .effectiveProbabilityPerNextSearch,
         ).toBe(
@@ -260,8 +316,132 @@ describe(
     );
 
     it(
+      'should accumulate every earned 100-PD opportunity and consume exactly one per search',
+      async () => {
+        await expect(
+          runtime
+            .search(
+              generationKey,
+            ),
+        ).rejects
+          .toThrow(
+            'no available attempts',
+          );
+
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            550n,
+          );
+
+        const available =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          available
+            .earnedSearchOpportunities,
+        ).toBe(
+          5n,
+        );
+
+        expect(
+          available
+            .availableSearchOpportunities,
+        ).toBe(
+          5n,
+        );
+
+        expect(
+          available
+            .unannouncedSearchOpportunities,
+        ).toBe(
+          5n,
+        );
+
+        expect(
+          available
+            .nextSearchOpportunityThreshold,
+        ).toBe(
+          600n,
+        );
+
+        await runtime
+          .acknowledgeOpportunityNotifications(
+            generationKey,
+          );
+
+        expect(
+          (
+            await runtime
+              .getStatus(
+                generationKey,
+              )
+          )
+            .unannouncedSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        const first =
+          await runtime
+            .search(
+              generationKey,
+            );
+
+        expect(
+          first.detected,
+        ).toBe(
+          false,
+        );
+
+        const consumed =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          consumed
+            .consumedSearchOpportunities,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          consumed
+            .availableSearchOpportunities,
+        ).toBe(
+          4n,
+        );
+
+        expect(
+          consumed
+            .searchOpportunityAvailable,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          consumed
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          50n,
+        );
+      },
+    );
+
+    it(
       'should persist a failed search streak across a database reopen',
       async () => {
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            200n,
+          );
+
         const first =
           await runtime
             .search(
@@ -330,6 +510,41 @@ describe(
           12,
         );
 
+        expect(
+          reopenedStatus
+            .searchOpportunityAvailable,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          reopenedStatus
+            .earnedSearchOpportunities,
+        ).toBe(
+          2n,
+        );
+
+        expect(
+          reopenedStatus
+            .consumedSearchOpportunities,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          reopenedStatus
+            .availableSearchOpportunities,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          reopenedStatus
+            .nextSearchOpportunityThreshold,
+        ).toBe(
+          300n,
+        );
+
         reopenedDatabase
           .closeDatabase();
       },
@@ -338,6 +553,12 @@ describe(
     it(
       'should detect the frozen B5 external galaxy, persist DETECTED and award the existing 40 PD exactly once',
       async () => {
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            700n,
+          );
+
         let result =
           await runtime
             .search(
@@ -346,10 +567,10 @@ describe(
 
         for (
           let attempt =
-            1;
+            2;
           !result.detected &&
-          attempt <
-            10;
+          attempt <=
+            7;
           attempt +=
             1
         ) {
@@ -382,9 +603,16 @@ describe(
 
         expect(
           result
+            .globalDiscoveryPointsBefore,
+        ).toBe(
+          700n,
+        );
+
+        expect(
+          result
             .globalDiscoveryPointsAfter,
         ).toBe(
-          40n,
+          740n,
         );
 
         expect(
@@ -434,7 +662,7 @@ describe(
               generationKey,
             ),
         ).toBe(
-          40n,
+          740n,
         );
 
         expect(
@@ -444,6 +672,124 @@ describe(
             ),
         ).toBe(
           0n,
+        );
+
+        expect(
+          (
+            await searchStateRepository
+              .getState(
+                generationKey,
+              )
+          )
+            .consumedSearchOpportunities,
+        ).toBe(
+          7n,
+        );
+
+        const nextStatus =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          nextStatus
+            .nextSearchOpportunityThreshold,
+        ).toBe(
+          800n,
+        );
+
+        expect(
+          nextStatus
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          60n,
+        );
+
+        expect(
+          nextStatus
+            .availableSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+      },
+    );
+
+    it(
+      'should add a new accumulated attempt when detection reward crosses the next 100-PD threshold',
+      async () => {
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            790n,
+          );
+
+        await searchStateRepository
+          .setState(
+            generationKey,
+            {
+              consecutiveFailedSearches:
+                6n,
+
+              consumedSearchOpportunities:
+                6n,
+
+              lastAnnouncedEarnedSearchOpportunities:
+                7n,
+            },
+          );
+
+        const result =
+          await runtime
+            .search(
+              generationKey,
+            );
+
+        expect(
+          result.detected,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          result
+            .globalDiscoveryPointsAfter,
+        ).toBe(
+          830n,
+        );
+
+        const status =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          status
+            .earnedSearchOpportunities,
+        ).toBe(
+          8n,
+        );
+
+        expect(
+          status
+            .consumedSearchOpportunities,
+        ).toBe(
+          7n,
+        );
+
+        expect(
+          status
+            .availableSearchOpportunities,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          status
+            .unannouncedSearchOpportunities,
+        ).toBe(
+          1n,
         );
       },
     );
@@ -455,6 +801,12 @@ describe(
           .setConsecutiveFailedSearches(
             generationKey,
             9n,
+          );
+
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            100n,
           );
 
         const result =
@@ -488,9 +840,18 @@ describe(
       'should preserve the pity streak when point-11.5 or 11.6 navigation is updated',
       async () => {
         await searchStateRepository
-          .setConsecutiveFailedSearches(
+          .setState(
             generationKey,
-            5n,
+            {
+              consecutiveFailedSearches:
+                5n,
+
+              consumedSearchOpportunities:
+                3n,
+
+              lastAnnouncedEarnedSearchOpportunities:
+                4n,
+            },
           );
 
         await navigationRepository
@@ -515,6 +876,26 @@ describe(
         ).toBe(
           5n,
         );
+
+        const preserved =
+          await searchStateRepository
+            .getState(
+              generationKey,
+            );
+
+        expect(
+          preserved
+            .consumedSearchOpportunities,
+        ).toBe(
+          3n,
+        );
+
+        expect(
+          preserved
+            .lastAnnouncedEarnedSearchOpportunities,
+        ).toBe(
+          4n,
+        );
       },
     );
 
@@ -525,6 +906,12 @@ describe(
           .setConsecutiveFailedSearches(
             generationKey,
             9n,
+          );
+
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            100n,
           );
 
         const failingPointsRepository:
@@ -587,12 +974,24 @@ describe(
         );
 
         expect(
+          (
+            await searchStateRepository
+              .getState(
+                generationKey,
+              )
+          )
+            .consumedSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
           await pointsRepository
             .getGlobalDiscoveryPoints(
               generationKey,
             ),
         ).toBe(
-          0n,
+          100n,
         );
 
         expect(

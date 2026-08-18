@@ -128,9 +128,10 @@ export class DexieUniverseNavigationRepository
       );
 
     /*
-     * Point 7.5 gameplay integration stores one non-indexed universe-scoped
-     * anti-blocking field on the same row. Navigation writes from 11.5/11.6
-     * must preserve it instead of replacing the complete Dexie object.
+     * Point 7.5 plus the cumulative external-search opportunity gate store non-indexed
+     * universe-scoped search state on this same row. Navigation writes from
+     * 11.5/11.6 must preserve it instead of replacing the complete Dexie
+     * object.
      */
     const existing =
       await this.database
@@ -143,6 +144,14 @@ export class DexieUniverseNavigationRepository
     const externalGalaxySearchConsecutiveFailures =
       existing
         ?.externalGalaxySearchConsecutiveFailures;
+
+    const externalGalaxySearchConsumedOpportunities =
+      existing
+        ?.externalGalaxySearchConsumedOpportunities;
+
+    const externalGalaxySearchLastAnnouncedEarnedOpportunities =
+      existing
+        ?.externalGalaxySearchLastAnnouncedEarnedOpportunities;
 
     await this.database
       .navigation
@@ -175,6 +184,20 @@ export class DexieUniverseNavigationRepository
           ? {}
           : {
               externalGalaxySearchConsecutiveFailures,
+            }),
+
+        ...(externalGalaxySearchConsumedOpportunities ===
+        undefined
+          ? {}
+          : {
+              externalGalaxySearchConsumedOpportunities,
+            }),
+
+        ...(externalGalaxySearchLastAnnouncedEarnedOpportunities ===
+        undefined
+          ? {}
+          : {
+              externalGalaxySearchLastAnnouncedEarnedOpportunities,
             }),
 
         updatedAtEpochMs:

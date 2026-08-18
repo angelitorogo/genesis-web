@@ -66,8 +66,10 @@ import {
   templateUrl:
     './exploration.html',
 
-  styleUrl:
+  styleUrls: [
     './exploration.scss',
+    './exploration-opportunity-toast.scss',
+  ],
 
   changeDetection:
     ChangeDetectionStrategy.OnPush,
@@ -86,6 +88,36 @@ export class Exploration
     void this
       .facade
       .refresh();
+  }
+
+  dismissExternalSearchOpportunityNotification():
+    void {
+
+    this
+      .facade
+      .dismissExternalSearchOpportunityNotification();
+  }
+
+  searchOpportunityCountLabel(
+    count:
+      bigint,
+  ): string {
+
+    return count ===
+      1n
+      ? '1 intento disponible'
+      : `${count.toString(10)} intentos disponibles`;
+  }
+
+  newlyUnlockedSearchOpportunityLabel(
+    count:
+      bigint,
+  ): string {
+
+    return count ===
+      1n
+      ? 'Has obtenido 1 nuevo intento de búsqueda.'
+      : `Has obtenido ${count.toString(10)} nuevos intentos de búsqueda.`;
   }
 
   searchExternalGalaxy():

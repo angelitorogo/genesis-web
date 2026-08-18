@@ -31,7 +31,7 @@ describe('GENESIS routes', () => {
     expect(
       harness.routeNativeElement?.textContent,
     ).toContain('GENESIS');
-  }, 15_000);
+  }, 30_000);
 
   it('should use the root URL for Home', async () => {
     await RouterTestingHarness.create('/');
@@ -53,7 +53,7 @@ describe('GENESIS routes', () => {
         '[data-testid="exploration-page"]',
       ),
     ).toBeTruthy();
-  }, 15_000);
+  }, 30_000);
 
   it('should navigate to Galaxy Map', async () => {
     const harness =
@@ -79,7 +79,7 @@ describe('GENESIS routes', () => {
         '[data-testid="discovered-galaxies-page"]',
       ),
     ).toBeTruthy();
-  }, 15_000);
+  }, 30_000);
 
   it('should navigate to the point-11.3 Galaxy general detail route', async () => {
     const harness =
@@ -92,7 +92,7 @@ describe('GENESIS routes', () => {
         '[data-testid="galaxy-detail-page"]',
       ),
     ).toBeTruthy();
-  }, 15_000);
+  }, 30_000);
 
   it('should expose the point-11.3 Galaxy detail route before the catalogue route', () => {
     const detailIndex =

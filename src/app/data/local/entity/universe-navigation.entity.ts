@@ -40,6 +40,32 @@ export interface UniverseNavigationEntity {
   readonly externalGalaxySearchConsecutiveFailures?:
     string;
 
+  /**
+   * Number of extragalactic-search opportunities already consumed.
+   *
+   * V1 earns one non-spendable opportunity per 100 global Discovery Points.
+   * Earned opportunities accumulate; therefore the current stock is derived as
+   * floor(globalPD / 100) - consumedOpportunities.
+   *
+   * Existing rows created before this refinement omit the property and are
+   * interpreted as zero consumed opportunities, so no IndexedDB schema
+   * migration is required.
+   */
+  readonly externalGalaxySearchConsumedOpportunities?:
+    string;
+
+  /**
+   * Highest total number of earned extragalactic-search opportunities already
+   * announced to the player.
+   *
+   * This is presentation acknowledgement state only; it never changes the
+   * number of available attempts. Persisting it prevents the same unlock toast
+   * from reappearing on every reload while still allowing thresholds reached
+   * elsewhere to be announced the next time Exploration is opened.
+   */
+  readonly externalGalaxySearchLastAnnouncedEarnedOpportunities?:
+    string;
+
   readonly updatedAtEpochMs:
     number;
 }

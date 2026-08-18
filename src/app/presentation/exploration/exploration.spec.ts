@@ -15,6 +15,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  ExplorationBalanceV1,
+} from '../../domain/exploration/exploration-balance';
+
+import {
   ExplorationSectorProgressResult,
 } from '../../domain/exploration/exploration-sector-progress-result';
 
@@ -193,31 +197,95 @@ describe(
     let failures:
       bigint;
 
+    let globalDiscoveryPoints:
+      bigint;
+
+    let consumedSearchOpportunities:
+      bigint;
+
+    let lastAnnouncedEarnedSearchOpportunities:
+      bigint;
+
+    function externalStatus() {
+      const searchDiscoveryPointStep =
+        ExplorationBalanceV1
+          .externalGalaxySearchDiscoveryPointStep;
+
+      const earnedSearchOpportunities =
+        globalDiscoveryPoints /
+        searchDiscoveryPointStep;
+
+      const availableSearchOpportunities =
+        earnedSearchOpportunities -
+        consumedSearchOpportunities;
+
+      const unannouncedSearchOpportunities =
+        earnedSearchOpportunities -
+        lastAnnouncedEarnedSearchOpportunities;
+
+      const nextSearchOpportunityThreshold =
+        (
+          earnedSearchOpportunities +
+          1n
+        ) *
+        searchDiscoveryPointStep;
+
+      return {
+        globalDiscoveryPoints,
+        consecutiveFailedSearches:
+          failures,
+        knownExternalGalaxyCount:
+          0n,
+        searchOpportunityAvailable:
+          availableSearchOpportunities >
+          0n,
+        earnedSearchOpportunities,
+        consumedSearchOpportunities,
+        availableSearchOpportunities,
+        unannouncedSearchOpportunities,
+        nextSearchOpportunityThreshold,
+        discoveryPointsUntilNextOpportunity:
+          nextSearchOpportunityThreshold -
+          globalDiscoveryPoints,
+        searchDiscoveryPointStep,
+
+        nextSearchProfile:
+          ExternalGalaxySearchPityEngine
+            .evaluateNextSearchProbability(
+              generationKey,
+              globalDiscoveryPoints,
+              failures,
+            ),
+      };
+    }
+
     const externalRuntime:
       ExternalGalaxySearchRuntime =
       {
         async getStatus() {
-          return {
-            globalDiscoveryPoints:
-              0n,
+          return externalStatus();
+        },
 
-            consecutiveFailedSearches:
-              failures,
-
-            knownExternalGalaxyCount:
-              0n,
-
-            nextSearchProfile:
-              ExternalGalaxySearchPityEngine
-                .evaluateNextSearchProbability(
-                  generationKey,
-                  0n,
-                  failures,
-                ),
-          };
+        async acknowledgeOpportunityNotifications() {
+          lastAnnouncedEarnedSearchOpportunities =
+            globalDiscoveryPoints /
+            ExplorationBalanceV1
+              .externalGalaxySearchDiscoveryPointStep;
         },
 
         async search() {
+          const status =
+            externalStatus();
+
+          if (
+            !status
+              .searchOpportunityAvailable
+          ) {
+            throw new RangeError(
+              `External-galaxy search has no available attempts. The next attempt unlocks at ${status.nextSearchOpportunityThreshold.toString(10)} global Discovery Points.`,
+            );
+          }
+
           const before =
             failures;
 
@@ -225,11 +293,14 @@ describe(
             ExternalGalaxySearchPityEngine
               .evaluateNextSearchProbability(
                 generationKey,
-                0n,
+                globalDiscoveryPoints,
                 before,
               );
 
           failures +=
+            1n;
+
+          consumedSearchOpportunities +=
             1n;
 
           return {
@@ -246,10 +317,10 @@ describe(
               failures,
 
             globalDiscoveryPointsBefore:
-              0n,
+              globalDiscoveryPoints,
 
             globalDiscoveryPointsAfter:
-              0n,
+              globalDiscoveryPoints,
 
             awardedDiscoveryPoints:
               0,
@@ -267,7 +338,7 @@ describe(
               ExternalGalaxySearchPityEngine
                 .evaluateNextSearchProbability(
                   generationKey,
-                  0n,
+                  globalDiscoveryPoints,
                   failures,
                 ),
           };
@@ -293,6 +364,15 @@ describe(
     beforeEach(
       async () => {
         failures =
+          0n;
+
+        globalDiscoveryPoints =
+          0n;
+
+        consumedSearchOpportunities =
+          0n;
+
+        lastAnnouncedEarnedSearchOpportunities =
           0n;
 
         await TestBed
@@ -514,12 +594,39 @@ describe(
           ),
         ).toBeTruthy();
 
-        expect(
+        const searchAction =
           element.querySelector(
             '[data-testid="external-galaxy-search-action"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          searchAction
+            ?.disabled,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          searchAction
+            ?.textContent,
+        ).toContain(
+          'BÚSQUEDA BLOQUEADA',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-opportunity-threshold"]',
           )?.textContent,
         ).toContain(
-          'BUSCAR GALAXIA EXTERNA',
+          '100',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-points-remaining"]',
+          )?.textContent,
+        ).toContain(
+          '100',
         );
 
         expect(
@@ -546,6 +653,27 @@ describe(
           element,
         } =
           await fixtureAndElement();
+
+        globalDiscoveryPoints =
+          100n;
+
+        await fixture
+          .componentInstance
+          .facade
+          .refresh();
+
+        fixture.detectChanges();
+
+        expect(
+          (
+            element.querySelector(
+              '[data-testid="external-galaxy-search-action"]',
+            ) as HTMLButtonElement | null
+          )
+            ?.disabled,
+        ).toBe(
+          false,
+        );
 
         await fixture
           .componentInstance
@@ -582,7 +710,91 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="external-galaxy-search-opportunity-threshold"]',
+          )?.textContent,
+        ).toContain(
+          '200',
+        );
+
+        expect(
+          (
+            element.querySelector(
+              '[data-testid="external-galaxy-search-action"]',
+            ) as HTMLButtonElement | null
+          )
+            ?.disabled,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          element.querySelector(
             '[data-testid="exploration-result"]',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should announce newly accumulated search attempts once and show the complete available stock',
+      async () => {
+        globalDiscoveryPoints =
+          300n;
+
+        const {
+          fixture,
+          element,
+        } =
+          await fixtureAndElement();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-available-attempts"]',
+          )?.textContent,
+        ).toContain(
+          '3',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-opportunity-toast-new"]',
+          )?.textContent,
+        ).toContain(
+          '3 nuevos intentos',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-opportunity-toast-total"]',
+          )?.textContent,
+        ).toContain(
+          '3 intentos disponibles',
+        );
+
+        fixture
+          .componentInstance
+          .dismissExternalSearchOpportunityNotification();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-opportunity-toast"]',
+          ),
+        ).toBeNull();
+
+        await fixture
+          .componentInstance
+          .facade
+          .refresh();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search-opportunity-toast"]',
           ),
         ).toBeNull();
       },

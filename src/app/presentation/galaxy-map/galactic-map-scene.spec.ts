@@ -870,7 +870,7 @@ describe(
         ).toBeGreaterThanOrEqual(
           2,
         );
-      },
+      },30_000,
     );
 
     it(

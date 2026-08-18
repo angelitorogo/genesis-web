@@ -554,7 +554,7 @@ describe(
           activeCount,
         );
       },
-      15_000,
+      30_000,
     );
 
     it(

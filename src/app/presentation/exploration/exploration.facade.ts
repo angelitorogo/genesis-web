@@ -23,6 +23,10 @@ import {
 } from '../../domain/exploration/exploration-sector-scan';
 
 import {
+  type UniverseGenerationKey,
+} from '../../domain/generation/universe-generation-key';
+
+import {
   ExternalGalaxyFocusEngine,
 } from '../../simulation/exploration/external-galaxy-focus-engine';
 
@@ -83,6 +87,14 @@ import {
  *   preliminary information;
  * - point 7.7 always requires an explicit remain/change-focus decision.
  */
+export interface ExternalGalaxySearchOpportunityNotification {
+  readonly newlyUnlockedSearchOpportunities:
+    bigint;
+
+  readonly availableSearchOpportunities:
+    bigint;
+}
+
 @Injectable({
   providedIn:
     'root',
@@ -156,6 +168,11 @@ export class ExplorationFacade {
 
   private readonly externalSearchStatusSignal =
     signal<ExternalGalaxySearchStatus | null>(
+      null,
+    );
+
+  private readonly externalSearchOpportunityNotificationSignal =
+    signal<ExternalGalaxySearchOpportunityNotification | null>(
       null,
     );
 
@@ -240,6 +257,10 @@ export class ExplorationFacade {
 
   readonly externalSearchStatus =
     this.externalSearchStatusSignal
+      .asReadonly();
+
+  readonly externalSearchOpportunityNotification =
+    this.externalSearchOpportunityNotificationSignal
       .asReadonly();
 
   readonly externalSearchResult =
@@ -417,9 +438,10 @@ export class ExplorationFacade {
           centralSector,
         );
 
-      this.externalSearchStatusSignal
-        .set(
+      await this
+        .publishExternalSearchStatus(
           externalSearchStatus,
+          generationKey,
         );
 
       this.stateSignal
@@ -536,9 +558,10 @@ export class ExplorationFacade {
           result,
         );
 
-      this.externalSearchStatusSignal
-        .set(
+      await this
+        .publishExternalSearchStatus(
           status,
+          entry.generationKey,
         );
     } catch (
       error
@@ -571,6 +594,15 @@ export class ExplorationFacade {
           );
       }
     }
+  }
+
+  dismissExternalSearchOpportunityNotification():
+    void {
+
+    this.externalSearchOpportunityNotificationSignal
+      .set(
+        null,
+      );
   }
 
   remainOnCurrentGalaxy():
@@ -908,9 +940,10 @@ export class ExplorationFacade {
             scanId ===
             this.scanSequence
           ) {
-            this.externalSearchStatusSignal
-              .set(
+            await this
+              .publishExternalSearchStatus(
                 status,
+                entry.generationKey,
               );
           }
         } catch (
@@ -984,6 +1017,55 @@ export class ExplorationFacade {
     }
   }
 
+  private async publishExternalSearchStatus(
+    status:
+      ExternalGalaxySearchStatus,
+
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<void> {
+
+    this.externalSearchStatusSignal
+      .set(
+        status,
+      );
+
+    if (
+      status
+        .unannouncedSearchOpportunities <=
+      0n
+    ) {
+      return;
+    }
+
+    this.externalSearchOpportunityNotificationSignal
+      .set(
+        Object.freeze({
+          newlyUnlockedSearchOpportunities:
+            status
+              .unannouncedSearchOpportunities,
+
+          availableSearchOpportunities:
+            status
+              .availableSearchOpportunities,
+        }),
+      );
+
+    try {
+      await this
+        .externalGalaxySearchRuntime
+        .acknowledgeOpportunityNotifications(
+          generationKey,
+        );
+    } catch {
+      /*
+       * Notification acknowledgement is presentation-only state. The search
+       * opportunity itself is already persisted independently, so an
+       * acknowledgement failure must never revoke or consume an attempt.
+       */
+    }
+  }
+
   private resetOperationalFlow():
     void {
 
@@ -1013,6 +1095,11 @@ export class ExplorationFacade {
     void {
 
     this.externalSearchStatusSignal
+      .set(
+        null,
+      );
+
+    this.externalSearchOpportunityNotificationSignal
       .set(
         null,
       );

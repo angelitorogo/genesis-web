@@ -15,6 +15,10 @@ import {
 } from '../../domain/exploration/external-galaxy-focus';
 
 import {
+  ExplorationBalanceV1,
+} from '../../domain/exploration/exploration-balance';
+
+import {
   ExplorationSectorProgressResult,
 } from '../../domain/exploration/exploration-sector-progress-result';
 
@@ -178,11 +182,54 @@ describe(
 
       knownExternalGalaxyCount =
         0n,
+
+      consumedSearchOpportunities =
+        0n,
+
+      lastAnnouncedEarnedSearchOpportunities =
+        0n,
     ) {
+      const searchDiscoveryPointStep =
+        ExplorationBalanceV1
+          .externalGalaxySearchDiscoveryPointStep;
+
+      const earnedSearchOpportunities =
+        globalDiscoveryPoints /
+        searchDiscoveryPointStep;
+
+      const availableSearchOpportunities =
+        earnedSearchOpportunities -
+        consumedSearchOpportunities;
+
+      const unannouncedSearchOpportunities =
+        earnedSearchOpportunities -
+        lastAnnouncedEarnedSearchOpportunities;
+
+      const nextSearchOpportunityThreshold =
+        (
+          earnedSearchOpportunities +
+          1n
+        ) *
+        searchDiscoveryPointStep;
+
       return Object.freeze({
         globalDiscoveryPoints,
         consecutiveFailedSearches,
         knownExternalGalaxyCount,
+        searchOpportunityAvailable:
+          availableSearchOpportunities >
+          0n,
+        earnedSearchOpportunities,
+        consumedSearchOpportunities,
+        availableSearchOpportunities,
+        unannouncedSearchOpportunities,
+        nextSearchOpportunityThreshold,
+
+        discoveryPointsUntilNextOpportunity:
+          nextSearchOpportunityThreshold -
+          globalDiscoveryPoints,
+
+        searchDiscoveryPointStep,
 
         nextSearchProfile:
           ExternalGalaxySearchPityEngine
@@ -201,6 +248,8 @@ describe(
         async getStatus() {
           return externalStatus();
         },
+
+        async acknowledgeOpportunityNotifications() {},
 
         async search() {
           const used =
@@ -416,6 +465,20 @@ describe(
         );
 
         expect(
+          facade.externalSearchStatus()
+            ?.searchOpportunityAvailable,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          facade.externalSearchStatus()
+            ?.nextSearchOpportunityThreshold,
+        ).toBe(
+          100n,
+        );
+
+        expect(
           calls,
         ).toHaveLength(0);
       },
@@ -587,22 +650,30 @@ describe(
         let failures =
           0n;
 
+        let consumedSearchOpportunities =
+          0n;
+
         const externalRuntime:
           ExternalGalaxySearchRuntime =
           {
             async getStatus() {
               return externalStatus(
-                0n,
+                100n,
                 failures,
+                0n,
+                consumedSearchOpportunities,
+                1n,
               );
             },
+
+            async acknowledgeOpportunityNotifications() {},
 
             async search() {
               const used =
                 ExternalGalaxySearchPityEngine
                   .evaluateNextSearchProbability(
                     generationKey,
-                    0n,
+                    100n,
                     failures,
                   );
 
@@ -610,6 +681,9 @@ describe(
                 failures;
 
               failures +=
+                1n;
+
+              consumedSearchOpportunities +=
                 1n;
 
               return {
@@ -626,10 +700,10 @@ describe(
                   failures,
 
                 globalDiscoveryPointsBefore:
-                  0n,
+                  100n,
 
                 globalDiscoveryPointsAfter:
-                  0n,
+                  100n,
 
                 awardedDiscoveryPoints:
                   0,
@@ -647,7 +721,7 @@ describe(
                   ExternalGalaxySearchPityEngine
                     .evaluateNextSearchProbability(
                       generationKey,
-                      0n,
+                      100n,
                       failures,
                     ),
               };
@@ -687,6 +761,20 @@ describe(
           0.118,
           12,
         );
+
+        expect(
+          facade.externalSearchStatus()
+            ?.searchOpportunityAvailable,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          facade.externalSearchStatus()
+            ?.nextSearchOpportunityThreshold,
+        ).toBe(
+          200n,
+        );
       },
     );
 
@@ -700,7 +788,7 @@ describe(
           ExternalGalaxySearchPityEngine
             .evaluateNextSearchProbability(
               generationKey,
-              0n,
+              100n,
               9n,
             );
 
@@ -730,12 +818,18 @@ describe(
             async getStatus() {
               return searched
                 ? externalStatus(
-                    40n,
+                    140n,
                     0n,
                     1n,
+                    1n,
                   )
-                : externalStatus();
+                : externalStatus(
+                    100n,
+                    9n,
+                  );
             },
+
+            async acknowledgeOpportunityNotifications() {},
 
             async search() {
               searched =
@@ -755,10 +849,10 @@ describe(
                   0n,
 
                 globalDiscoveryPointsBefore:
-                  0n,
+                  100n,
 
                 globalDiscoveryPointsAfter:
-                  40n,
+                  140n,
 
                 awardedDiscoveryPoints:
                   40,
@@ -771,7 +865,7 @@ describe(
                   ExternalGalaxySearchPityEngine
                     .evaluateNextSearchProbability(
                       generationKey,
-                      40n,
+                      140n,
                       0n,
                     ),
               };

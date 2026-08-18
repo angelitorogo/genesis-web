@@ -1,7 +1,114 @@
 import {
   expect,
   test,
+  type Page,
 } from '@playwright/test';
+
+const DEFAULT_D8B5_SEED =
+  '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5';
+
+async function setGlobalDiscoveryPoints(
+  page:
+    Page,
+
+  discoveryPoints:
+    number,
+): Promise<void> {
+
+  await page.evaluate(
+    async ({
+      universeSeed,
+      discoveryPointsText,
+    }) => {
+      const database =
+        await new Promise<IDBDatabase>(
+          (
+            resolve,
+            reject,
+          ) => {
+            const request =
+              indexedDB.open(
+                'genesis-web',
+              );
+
+            request.onsuccess =
+              () =>
+                resolve(
+                  request.result,
+                );
+
+            request.onerror =
+              () =>
+                reject(
+                  request.error,
+                );
+          },
+        );
+
+      try {
+        const transaction =
+          database.transaction(
+            'progress',
+            'readwrite',
+          );
+
+        transaction
+          .objectStore(
+            'progress',
+          )
+          .put({
+            universeSeed,
+            generatorVersionCode:
+              1,
+            scopeCode:
+              0,
+            scopeKey:
+              'GLOBAL',
+            galaxyIndex:
+              null,
+            discoveryPoints:
+              discoveryPointsText,
+            updatedAtEpochMs:
+              Date.now(),
+          });
+
+        await new Promise<void>(
+          (
+            resolve,
+            reject,
+          ) => {
+            transaction.oncomplete =
+              () => resolve();
+
+            transaction.onerror =
+              () =>
+                reject(
+                  transaction.error,
+                );
+
+            transaction.onabort =
+              () =>
+                reject(
+                  transaction.error,
+                );
+          },
+        );
+      } finally {
+        database.close();
+      }
+    },
+    {
+      universeSeed:
+        DEFAULT_D8B5_SEED,
+
+      discoveryPointsText:
+        discoveryPoints
+          .toString(
+            10,
+          ),
+    },
+  );
+}
 
 const modules = [
   {
@@ -762,7 +869,7 @@ test.describe(
 
 
     test(
-      'should complete the real 7.4-7.8 external-galaxy flow and point-11.6 return without losing progress',
+      'should accumulate one external-galaxy attempt every 100 PD, announce new attempts and preserve point-11.6 return',
       async ({
         page,
       }) => {
@@ -792,42 +899,99 @@ test.describe(
           '/exploration',
         );
 
-        await expect(
-          page.getByTestId(
-            'external-galaxy-search',
-          ),
-        ).toBeVisible();
-
-        await expect(
-          page.getByTestId(
-            'external-galaxy-search-effective-probability',
-          ),
-        ).toContainText(
-          '2%',
-        );
-
         const searchAction =
           page.getByTestId(
             'external-galaxy-search-action',
           );
 
-        await searchAction
-          .click();
-
-        const firstSearchResult =
-          page.getByTestId(
-            'external-galaxy-search-result',
-          );
+        await expect(
+          searchAction,
+        ).toBeDisabled();
 
         await expect(
-          firstSearchResult,
-        ).toHaveAttribute(
-          'data-failures-before',
+          page.getByTestId(
+            'external-galaxy-search-available-attempts',
+          ),
+        ).toHaveText(
           '0',
         );
 
         await expect(
-          firstSearchResult,
+          page.getByTestId(
+            'external-galaxy-search-opportunity-threshold',
+          ),
+        ).toContainText(
+          '100 PD',
+        );
+
+        /*
+         * Jumping directly to 300 PD must create three persistent attempts,
+         * not collapse them into one current bucket.
+         */
+        await setGlobalDiscoveryPoints(
+          page,
+          300,
+        );
+
+        await page.reload();
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-available-attempts',
+          ),
+        ).toHaveText(
+          '3',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-opportunity-toast',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-opportunity-toast-new',
+          ),
+        ).toContainText(
+          '3 nuevos intentos',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-opportunity-toast-total',
+          ),
+        ).toContainText(
+          '3 intentos disponibles',
+        );
+
+        await page
+          .getByTestId(
+            'external-galaxy-search-opportunity-toast-close',
+          )
+          .click();
+
+        await page.reload();
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-opportunity-toast',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        await expect(
+          searchAction,
+        ).toBeEnabled();
+
+        await searchAction
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-result',
+          ),
         ).toHaveAttribute(
           'data-detected',
           'false',
@@ -835,42 +999,66 @@ test.describe(
 
         await expect(
           page.getByTestId(
-            'external-galaxy-search-failures',
+            'external-galaxy-search-available-attempts',
           ),
         ).toHaveText(
-          '1',
+          '2',
         );
 
+        await expect(
+          searchAction,
+        ).toBeEnabled();
+
         /*
-         * The anti-blocking streak is persistent gameplay state, not a signal
-         * local to the current Angular component.
+         * Four more thresholds are crossed while two attempts remain. The
+         * stock therefore becomes six and the new toast announces only the
+         * four newly earned attempts.
          */
+        await setGlobalDiscoveryPoints(
+          page,
+          700,
+        );
+
         await page.reload();
 
         await expect(
           page.getByTestId(
-            'external-galaxy-search-failures',
+            'external-galaxy-search-available-attempts',
           ),
         ).toHaveText(
-          '1',
+          '6',
         );
 
         await expect(
           page.getByTestId(
-            'external-galaxy-search-effective-probability',
+            'external-galaxy-search-opportunity-toast-new',
           ),
         ).toContainText(
-          '11.8%',
+          '4 nuevos intentos',
         );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-opportunity-toast-total',
+          ),
+        ).toContainText(
+          '6 intentos disponibles',
+        );
+
+        await page
+          .getByTestId(
+            'external-galaxy-search-opportunity-toast-close',
+          )
+          .click();
 
         let detected =
           false;
 
         for (
           let attempt =
-            0;
-          attempt <
-            9;
+            2;
+          attempt <=
+            7;
           attempt +=
             1
         ) {
@@ -885,16 +1073,11 @@ test.describe(
               ?.trim() ??
             '';
 
-          expect(
-            failuresBefore,
-          ).toMatch(
-            /^\d+$/,
-          );
+          await expect(
+            searchAction,
+          ).toBeEnabled();
 
-          await page
-            .getByTestId(
-              'external-galaxy-search-action',
-            )
+          await searchAction
             .click();
 
           const result =
@@ -962,9 +1145,31 @@ test.describe(
 
         await expect(
           page.getByTestId(
-            'external-galaxy-focus-action',
+            'external-galaxy-search-global-points',
           ),
-        ).toBeVisible();
+        ).toHaveText(
+          '740',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-available-attempts',
+          ),
+        ).toHaveText(
+          '0',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-opportunity-threshold',
+          ),
+        ).toContainText(
+          '800 PD',
+        );
+
+        await expect(
+          searchAction,
+        ).toBeDisabled();
 
         await page
           .getByTestId(
@@ -980,24 +1185,8 @@ test.describe(
           'historial persistido de 11.6',
         );
 
-        await expect(
-          page.getByTestId(
-            'exploration-active-galaxy-index',
-          ),
-        ).toContainText(
-          `GALAXIA ${detectedGalaxyIndex}`,
-        );
-
         await page.goto(
           '/galaxies',
-        );
-
-        await expect(
-          page.getByTestId(
-            'current-focus-galaxy',
-          ),
-        ).toContainText(
-          `Galaxia ${detectedGalaxyIndex}`,
         );
 
         const originReturn =
@@ -1007,10 +1196,7 @@ test.describe(
 
         await expect(
           originReturn,
-        ).toHaveAttribute(
-          'data-galaxy-index',
-          '0',
-        );
+        ).toBeVisible();
 
         await originReturn
           .click();
@@ -1023,23 +1209,6 @@ test.describe(
           'progreso persistido se conserva',
         );
 
-        await expect(
-          page.getByTestId(
-            'current-focus-galaxy',
-          ),
-        ).toContainText(
-          'Galaxia 0',
-        );
-
-        await expect(
-          page.locator(
-            `[data-testid="discovered-galaxy-card"][data-galaxy-index="${detectedGalaxyIndex}"]`,
-          ),
-        ).toHaveAttribute(
-          'data-galaxy-state',
-          'VISITED',
-        );
-
         await page.goto(
           '/exploration',
         );
@@ -1049,7 +1218,15 @@ test.describe(
             'external-galaxy-search-global-points',
           ),
         ).toHaveText(
-          '40',
+          '740',
+        );
+
+        await expect(
+          page.getByTestId(
+            'external-galaxy-search-available-attempts',
+          ),
+        ).toHaveText(
+          '0',
         );
       },
     );

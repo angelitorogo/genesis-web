@@ -396,6 +396,17 @@ const DISCOVERY_REWARD_REASON_BALANCES:
     ),
   ]);
 
+/**
+ * One external-galaxy search opportunity is unlocked for each new 100-PD
+ * global progression bucket. The points are never spent.
+ *
+ * Opportunities accumulate: persistence records how many attempts were already
+ * consumed and the runtime derives the remaining stock from total earned
+ * opportunities minus consumed opportunities.
+ */
+const EXTERNAL_GALAXY_SEARCH_DISCOVERY_POINT_STEP =
+  100n;
+
 const EXTERNAL_GALAXY_DETECTION_TIER_BALANCES:
   readonly ExternalGalaxyDetectionTierBalance[] =
   Object.freeze([
@@ -609,6 +620,8 @@ const REWARD_REASONS_IN_CANONICAL_ORDER:
  * - 7.1 base PD and DiscoveryState milestone multipliers;
  * - 7.2 differentiated bonuses, triggers and target compatibility;
  * - 7.4 external-galaxy detection thresholds and base probabilities;
+ * - external-search opportunity cadence: one non-spendable attempt per 100
+ *   global PD progression bucket; unused opportunities accumulate persistently;
  * - 7.5 pity thresholds and recovery fractions.
  *
  * Deliberately not included:
@@ -636,6 +649,9 @@ export class ExplorationBalanceV1 {
 
   static readonly rewardReasonsInCanonicalOrder =
     REWARD_REASONS_IN_CANONICAL_ORDER;
+
+  static readonly externalGalaxySearchDiscoveryPointStep =
+    EXTERNAL_GALAXY_SEARCH_DISCOVERY_POINT_STEP;
 
   static readonly externalGalaxyDetectionTierBalances =
     EXTERNAL_GALAXY_DETECTION_TIER_BALANCES;
