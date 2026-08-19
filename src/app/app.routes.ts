@@ -101,6 +101,16 @@ export const genesisRoutes: Routes = [
     title: 'Observatorio | GENESIS',
   },
   {
+    path: 'spectroscopy-validation',
+    loadComponent: () =>
+      import(
+        './presentation/spectroscopy-validation/spectroscopy-validation'
+      ).then(
+        (module) => module.SpectroscopyValidationPage,
+      ),
+    title: 'Validación espectroscópica | GENESIS',
+  },
+  {
     path: 'statistics',
     loadComponent: () =>
       import(

@@ -225,6 +225,20 @@ describe('GENESIS routes', () => {
     );
   });
 
+
+  it('should navigate to the temporary phase-13 spectroscopy validation laboratory', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/spectroscopy-validation',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="spectroscopy-validation-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
   it('should navigate to Statistics', async () => {
     const harness =
       await RouterTestingHarness.create(

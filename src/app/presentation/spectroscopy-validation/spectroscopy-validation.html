@@ -1,0 +1,180 @@
+<main
+  class="sv"
+  data-testid="spectroscopy-validation-page"
+>
+  <header class="sv__hero">
+    <div>
+      <p class="sv__eyebrow">
+        FASE 13 · VALIDACIÓN VISUAL
+      </p>
+
+      <h1>
+        Laboratorio espectroscópico
+      </h1>
+
+      <p>
+        Banco temporal de comprobación. Todos los gráficos proceden de los
+        motores científicos reales de GENESIS; esta pantalla no modifica
+        gameplay, Ground Truth ni estados de descubrimiento.
+      </p>
+    </div>
+
+    <span class="sv__status">
+      SOLO VALIDACIÓN
+    </span>
+  </header>
+
+  <section
+    class="sv__controls"
+    aria-label="Controles de validación espectroscópica"
+  >
+    <div>
+      <span class="sv__control-label">
+        FAMILIA ESPECTRAL
+      </span>
+
+      <div class="sv__buttons">
+        @for (
+          caseOption of cases;
+          track caseOption.id
+        ) {
+          <button
+            type="button"
+            data-testid="spectroscopy-case-button"
+            [attr.data-case]="caseOption.id"
+            [class.sv__button--active]="selectedCaseId() === caseOption.id"
+            [attr.aria-pressed]="selectedCaseId() === caseOption.id"
+            (click)="selectCase(caseOption.id)"
+          >
+            {{ caseOption.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div>
+      <span class="sv__control-label">
+        NIVEL INSTRUMENTAL
+      </span>
+
+      <div class="sv__buttons">
+        @for (
+          levelOption of levels;
+          track levelOption.id
+        ) {
+          <button
+            type="button"
+            data-testid="spectroscopy-level-button"
+            [attr.data-level]="levelOption.id"
+            [class.sv__button--active]="selectedLevelId() === levelOption.id"
+            [attr.aria-pressed]="selectedLevelId() === levelOption.id"
+            (click)="selectLevel(levelOption.id)"
+          >
+            {{ levelOption.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="sv__case">
+    <div>
+      <span class="sv__control-label">
+        CASO ACTIVO
+      </span>
+
+      <h2>
+        {{ selectedCase().label }}
+      </h2>
+    </div>
+
+    <p>
+      {{ selectedCase().description }}
+    </p>
+  </section>
+
+  @if (frame(); as activeFrame) {
+    <section class="sv__section">
+      <div class="sv__section-heading">
+        <div>
+          <span class="sv__control-label">
+            SEÑAL BASE
+          </span>
+
+          <h2>
+            Idealizado vs instrumental · {{ selectedLevel().label }}
+          </h2>
+        </div>
+
+        <p>
+          Misma fuente científica. La derecha incorpora exclusivamente la
+          degradación e incertidumbre instrumental de 13.7.
+        </p>
+      </div>
+
+      <div class="sv__grid">
+        <app-spectrum-plot
+          data-testid="spectroscopy-idealized-plot"
+          [spectrum]="activeFrame.idealized"
+          [title]="selectedCase().label + ' · idealizado'"
+          [accessibleLabel]="'Espectro idealizado de validación: ' + selectedCase().label"
+        />
+
+        <app-spectrum-plot
+          data-testid="spectroscopy-instrumental-plot"
+          [spectrum]="activeFrame.instrumental"
+          [title]="selectedCase().label + ' · ' + selectedLevel().label"
+          [accessibleLabel]="'Espectro instrumental de validación: ' + selectedCase().label + ', nivel ' + selectedLevel().label"
+        />
+      </div>
+    </section>
+  }
+
+  @if (comparison(); as levelComparison) {
+    <section class="sv__section">
+      <div class="sv__section-heading">
+        <div>
+          <span class="sv__control-label">
+            PRUEBA 13.7
+          </span>
+
+          <h2>
+            Comparación directa L1 vs L5
+          </h2>
+        </div>
+
+        <p>
+          Mismo caso y mismas muestras idealizadas. Solo cambia la capacidad
+          instrumental.
+        </p>
+      </div>
+
+      <div class="sv__grid">
+        <app-spectrum-plot
+          data-testid="spectroscopy-level1-plot"
+          [spectrum]="levelComparison.level1.instrumental"
+          [title]="selectedCase().label + ' · LEVEL 1'"
+          [accessibleLabel]="'Comparativa LEVEL 1 de ' + selectedCase().label"
+        />
+
+        <app-spectrum-plot
+          data-testid="spectroscopy-level5-plot"
+          [spectrum]="levelComparison.level5.instrumental"
+          [title]="selectedCase().label + ' · LEVEL 5'"
+          [accessibleLabel]="'Comparativa LEVEL 5 de ' + selectedCase().label"
+        />
+      </div>
+    </section>
+  }
+
+  <footer class="sv__checklist">
+    <strong>
+      Qué revisar
+    </strong>
+
+    <span>
+      forma espectral · líneas/bandas · incertidumbre · ejes · metadatos ·
+      L1/L5 · responsive · calidad visual
+    </span>
+  </footer>
+</main>

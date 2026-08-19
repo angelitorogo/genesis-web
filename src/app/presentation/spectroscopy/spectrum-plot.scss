@@ -119,10 +119,8 @@
   }
 
   &__uncertainty {
-    fill: rgba(106, 215, 255, 0.13);
-    stroke: rgba(106, 215, 255, 0.18);
-    stroke-width: 0.8;
-    vector-effect: non-scaling-stroke;
+    fill: rgba(106, 215, 255, 0.09);
+    stroke: none;
   }
 
   &__line {

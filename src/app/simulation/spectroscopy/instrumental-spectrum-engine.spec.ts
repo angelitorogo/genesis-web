@@ -52,6 +52,7 @@ import {
   SpectralContinuumAnchor,
   SpectralFeatureKind,
   SpectralLine,
+  SpectrumSample,
   SynthesizedSpectrum,
 } from '../../domain/spectroscopy/spectrum';
 
@@ -403,6 +404,75 @@ describe(
                 ),
               ),
           ).not.toThrow();
+        }
+      },
+    );
+
+    it(
+      'should project LEVEL_5 normalized flux exactly on decimal uncertainty-bucket boundaries',
+      () => {
+        const source =
+          new SynthesizedSpectrum(
+            session(
+              new SystemLocator(
+                0n,
+                0n,
+                0n,
+              ),
+              ObservationInstrumentLevel
+                .LEVEL_5,
+            ),
+            400,
+            401,
+            [
+              new SpectrumSample(
+                400,
+                0.59,
+              ),
+              new SpectrumSample(
+                401,
+                0.59,
+              ),
+            ],
+          );
+
+        const result =
+          observe(
+            source,
+          );
+
+        expect(
+          result.sampleCount,
+        ).toBe(
+          2,
+        );
+
+        for (
+          const sample
+          of result.samples
+        ) {
+          expect(
+            sample
+              .lowerBoundInclusive,
+          ).toBe(
+            0.59,
+          );
+
+          expect(
+            sample
+              .upperBoundExclusive,
+          ).toBeCloseTo(
+            0.60,
+            12,
+          );
+
+          expect(
+            sample
+              .normalizedFlux,
+          ).toBeCloseTo(
+            0.595,
+            12,
+          );
         }
       },
     );

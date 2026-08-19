@@ -28,8 +28,14 @@ import {
  * V1 uses deterministic quantization rather than random noise:
  *
  * bucketWidth = referenceScale * quantizationFraction
- * bucketIndex = floor(exactValue / bucketWidth)
- * interval = [bucketIndex * bucketWidth, lower + bucketWidth)
+ * provisionalBucketIndex = floor(exactValue / bucketWidth)
+ * interval = [bucketIndex * bucketWidth, (bucketIndex + 1) * bucketWidth)
+ *
+ * JavaScript IEEE-754 can represent a mathematically exact decimal boundary
+ * quotient just below its integer value (for example 0.59 / 0.01). V1 keeps
+ * strict half-open semantics by validating the provisional interval against
+ * the represented exactValue and moving at most one adjacent bucket when
+ * floating-point division crossed that boundary.
  *
  * Point 8.6 deliberately uses:
  * - 0 PRNG draws;
@@ -145,19 +151,14 @@ export class ObservationMeasurementUncertaintyEngine {
       );
     }
 
-    const bucketIndex =
-      Math.floor(
-        exactValue /
+    const {
+      lowerBoundInclusive,
+      upperBoundExclusive,
+    } =
+      deriveHalfOpenBucketBoundsV1(
+        exactValue,
         bucketWidth,
       );
-
-    const lowerBoundInclusive =
-      bucketIndex *
-      bucketWidth;
-
-    const upperBoundExclusive =
-      lowerBoundInclusive +
-      bucketWidth;
 
     const estimate =
       new UncertainScalarEstimate(
@@ -181,6 +182,132 @@ export class ObservationMeasurementUncertaintyEngine {
       profile,
     );
   }
+}
+
+interface HalfOpenBucketBounds {
+  readonly lowerBoundInclusive:
+    number;
+
+  readonly upperBoundExclusive:
+    number;
+}
+
+/**
+ * Derives one canonical V1 half-open quantization bucket.
+ *
+ * The provisional floor quotient is mathematically correct, but binary
+ * floating-point division can place a decimal boundary immediately below the
+ * corresponding integer. Rather than introducing an arbitrary epsilon, the
+ * represented exact value is checked against the represented bucket bounds.
+ *
+ * If it sits on/after the upper boundary, half-open semantics require the next
+ * bucket. If multiplication rounded the lower boundary above the value, the
+ * previous bucket is required. A one-bucket correction is sufficient because
+ * the provisional quotient differs only by floating representation at the
+ * adjacent boundary.
+ */
+function deriveHalfOpenBucketBoundsV1(
+  exactValue:
+    number,
+
+  bucketWidth:
+    number,
+): HalfOpenBucketBounds {
+
+  const quotient =
+    exactValue /
+    bucketWidth;
+
+  if (
+    !Number.isFinite(
+      quotient,
+    )
+  ) {
+    throw new RangeError(
+      'Derived measurement bucket quotient must be finite.',
+    );
+  }
+
+  let bucketIndex =
+    Math.floor(
+      quotient,
+    );
+
+  let bounds =
+    bucketBoundsForIndexV1(
+      bucketIndex,
+      bucketWidth,
+    );
+
+  if (
+    exactValue <
+      bounds
+        .lowerBoundInclusive
+  ) {
+    bucketIndex -=
+      1;
+
+    bounds =
+      bucketBoundsForIndexV1(
+        bucketIndex,
+        bucketWidth,
+      );
+  } else if (
+    exactValue >=
+      bounds
+        .upperBoundExclusive
+  ) {
+    bucketIndex +=
+      1;
+
+    bounds =
+      bucketBoundsForIndexV1(
+        bucketIndex,
+        bucketWidth,
+      );
+  }
+
+  return bounds;
+}
+
+function bucketBoundsForIndexV1(
+  bucketIndex:
+    number,
+
+  bucketWidth:
+    number,
+): HalfOpenBucketBounds {
+
+  const lowerBoundInclusive =
+    bucketIndex *
+    bucketWidth;
+
+  const upperBoundExclusive =
+    (
+      bucketIndex +
+      1
+    ) *
+    bucketWidth;
+
+  if (
+    !Number.isFinite(
+      lowerBoundInclusive,
+    ) ||
+    !Number.isFinite(
+      upperBoundExclusive,
+    ) ||
+    upperBoundExclusive <=
+      lowerBoundInclusive
+  ) {
+    throw new RangeError(
+      'Derived measurement bucket bounds must be finite and strictly ordered.',
+    );
+  }
+
+  return Object.freeze({
+    lowerBoundInclusive,
+    upperBoundExclusive,
+  });
 }
 
 /**

@@ -440,6 +440,144 @@ describe(
     );
 
     it(
+      'should keep decimal LEVEL_5 bucket boundaries in their next canonical half-open bucket despite IEEE-754 quotient drift',
+      () => {
+        for (
+          const exactValue
+          of [
+            0.29,
+            0.58,
+            0.59,
+          ]
+        ) {
+          const measurement =
+            ObservationMeasurementUncertaintyEngine
+              .estimateScalar(
+                canonicalGenerationKey,
+                leveledSession(
+                  ObservationInstrumentLevel
+                    .LEVEL_5,
+                ),
+                exactValue,
+                1.0,
+              );
+
+          expect(
+            measurement
+              .lowerBoundInclusive,
+          ).toBe(
+            exactValue,
+          );
+
+          expect(
+            measurement
+              .upperBoundExclusive,
+          ).toBeCloseTo(
+            exactValue +
+              0.01,
+            12,
+          );
+
+          expect(
+            measurement
+              .estimate
+              .contains(
+                exactValue,
+              ),
+          ).toBe(
+            true,
+          );
+        }
+      },
+    );
+
+    it(
+      'should preserve strict half-open behavior immediately below and across negative decimal boundaries without epsilon promotion',
+      () => {
+        const boundary =
+          0.59;
+
+        const immediatelyBelow =
+          boundary -
+          Number.EPSILON;
+
+        const belowMeasurement =
+          ObservationMeasurementUncertaintyEngine
+            .estimateScalar(
+              canonicalGenerationKey,
+              leveledSession(
+                ObservationInstrumentLevel
+                  .LEVEL_5,
+              ),
+              immediatelyBelow,
+              1.0,
+            );
+
+        expect(
+          belowMeasurement
+            .lowerBoundInclusive,
+        ).toBeCloseTo(
+          0.58,
+          12,
+        );
+
+        expect(
+          belowMeasurement
+            .upperBoundExclusive,
+        ).toBe(
+          boundary,
+        );
+
+        expect(
+          belowMeasurement
+            .estimate
+            .contains(
+              immediatelyBelow,
+            ),
+        ).toBe(
+          true,
+        );
+
+        const negativeBoundary =
+          ObservationMeasurementUncertaintyEngine
+            .estimateScalar(
+              canonicalGenerationKey,
+              leveledSession(
+                ObservationInstrumentLevel
+                  .LEVEL_5,
+              ),
+              -0.59,
+              1.0,
+            );
+
+        expect(
+          negativeBoundary
+            .lowerBoundInclusive,
+        ).toBe(
+          -0.59,
+        );
+
+        expect(
+          negativeBoundary
+            .upperBoundExclusive,
+        ).toBeCloseTo(
+          -0.58,
+          12,
+        );
+
+        expect(
+          negativeBoundary
+            .estimate
+            .contains(
+              -0.59,
+            ),
+        ).toBe(
+          true,
+        );
+      },
+    );
+
+    it(
       'should preserve widths twenty ten five two one across all five levels at reference scale one hundred',
       () => {
         const widths =
