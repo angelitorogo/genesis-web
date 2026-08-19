@@ -101,14 +101,49 @@ export const genesisRoutes: Routes = [
     title: 'Observatorio | GENESIS',
   },
   {
-    path: 'spectroscopy-validation',
+    path: 'laboratory/galaxies',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/galaxies/galaxy-laboratory'
+      ).then(
+        (module) => module.GalaxyLaboratoryPage,
+      ),
+    title: 'Galaxias | Laboratorios GENESIS',
+  },
+  {
+    path: 'laboratory/galactic-objects',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/galactic-objects/galactic-object-laboratory'
+      ).then(
+        (module) => module.GalacticObjectLaboratoryPage,
+      ),
+    title: 'Objetos galácticos | Laboratorios GENESIS',
+  },
+  {
+    path: 'laboratory/spectroscopy',
     loadComponent: () =>
       import(
         './presentation/spectroscopy-validation/spectroscopy-validation'
       ).then(
         (module) => module.SpectroscopyValidationPage,
       ),
-    title: 'Validación espectroscópica | GENESIS',
+    title: 'Espectroscopía | Laboratorios GENESIS',
+  },
+  {
+    path: 'laboratory',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/laboratory'
+      ).then(
+        (module) => module.LaboratoryPage,
+      ),
+    title: 'Laboratorios | GENESIS',
+  },
+  {
+    path: 'spectroscopy-validation',
+    pathMatch: 'full',
+    redirectTo: 'laboratory/spectroscopy',
   },
   {
     path: 'statistics',

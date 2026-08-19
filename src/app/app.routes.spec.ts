@@ -226,11 +226,72 @@ describe('GENESIS routes', () => {
   });
 
 
-  it('should navigate to the temporary phase-13 spectroscopy validation laboratory', async () => {
+  it('should navigate to the permanent GENESIS Visual Laboratory index', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/laboratory',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="laboratory-page"]',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('should navigate to the real five-morphology galaxy laboratory', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/laboratory/galaxies',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="galaxy-laboratory-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
+  it('should navigate to the GalacticObject knowledge-progression laboratory', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/laboratory/galactic-objects',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="galactic-object-laboratory-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
+  it('should navigate to the canonical spectroscopy laboratory route', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/laboratory/spectroscopy',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="spectroscopy-validation-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
+  it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(
         '/spectroscopy-validation',
       );
+
+    const router =
+      TestBed.inject(Router);
+
+    expect(
+      router.url,
+    ).toBe(
+      '/laboratory/spectroscopy',
+    );
 
     expect(
       harness.routeNativeElement?.querySelector(

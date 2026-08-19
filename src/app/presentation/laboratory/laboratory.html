@@ -1,0 +1,124 @@
+<main
+  class="laboratory"
+  data-testid="laboratory-page"
+>
+  <header class="laboratory__hero">
+    <div>
+      <p class="laboratory__eyebrow">
+        GENESIS · VISUAL LABORATORY
+      </p>
+
+      <h1>
+        Laboratorios
+      </h1>
+
+      <p>
+        Zona interna de inspección y regresión visual. Utiliza generadores,
+        modelos y renderers reales de GENESIS sin modificar la partida,
+        persistencia, PD, Ground Truth observado ni estados de descubrimiento.
+      </p>
+    </div>
+
+    <span class="laboratory__badge">
+      READ ONLY / QA
+    </span>
+  </header>
+
+  <section
+    class="laboratory__grid"
+    aria-label="Laboratorios disponibles"
+  >
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-galaxies-link"
+      routerLink="/laboratory/galaxies"
+    >
+      <span class="laboratory__card-index">
+        01
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          MORFOLOGÍA / THREE.JS
+        </p>
+
+        <h2>
+          Galaxias
+        </h2>
+
+        <p>
+          Inspecciona las cinco morfologías V1 con el mismo renderer Three.js,
+          Web Worker y LOD utilizados por el mapa galáctico.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-galactic-objects-link"
+      routerLink="/laboratory/galactic-objects"
+    >
+      <span class="laboratory__card-index">
+        02
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          OBJETOS / DISCOVERY STATE
+        </p>
+
+        <h2>
+          Objetos galácticos
+        </h2>
+
+        <p>
+          Catálogo visual completo actual: nebulosas, H II, cúmulos,
+          remanentes SN, extremos reservados y núcleos galácticos, con
+          progresión de conocimiento cuando corresponde.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-spectroscopy-link"
+      routerLink="/laboratory/spectroscopy"
+    >
+      <span class="laboratory__card-index">
+        03
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          FASE 13 / SVG
+        </p>
+
+        <h2>
+          Espectroscopía
+        </h2>
+
+        <p>
+          Estrella, atmósfera, nebulosa, AGN, QUASAR y remanente de supernova
+          con comparación instrumental L1–L5 e incertidumbre.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+  </section>
+
+  <footer class="laboratory__footer">
+    Los laboratorios muestran únicamente sistemas ya implementados.
+    No anticipan contenido de fases futuras.
+  </footer>
+</main>

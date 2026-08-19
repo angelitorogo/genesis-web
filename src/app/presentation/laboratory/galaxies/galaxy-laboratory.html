@@ -1,0 +1,145 @@
+<main
+  class="galaxy-lab"
+  data-testid="galaxy-laboratory-page"
+>
+  <header class="galaxy-lab__hero">
+    <div>
+      <a
+        class="galaxy-lab__back"
+        routerLink="/laboratory"
+      >
+        ← Laboratorios
+      </a>
+
+      <p class="galaxy-lab__eyebrow">
+        GENESIS VISUAL LABORATORY · GALAXIAS
+      </p>
+
+      <h1>
+        Morfologías galácticas V1
+      </h1>
+
+      <p>
+        Cada caso es una galaxia procedural real de la seed de validación.
+        El laboratorio no fuerza tipos ni modifica la partida: selecciona
+        vectores deterministas y los entrega al mismo renderer Three.js +
+        Web Worker utilizado por el mapa galáctico.
+      </p>
+    </div>
+
+    <span class="galaxy-lab__badge">
+      PRODUCTION RENDERER
+    </span>
+  </header>
+
+  <section
+    class="galaxy-lab__selector"
+    aria-label="Selector de morfología galáctica"
+  >
+    @for (
+      caseOption of cases;
+      track caseOption.id
+    ) {
+      <button
+        type="button"
+        data-testid="galaxy-laboratory-case-button"
+        [attr.data-case]="caseOption.id"
+        [attr.aria-pressed]="selectedCaseId() === caseOption.id"
+        [class.galaxy-lab__button--active]="selectedCaseId() === caseOption.id"
+        (click)="selectCase(caseOption.id)"
+      >
+        <strong>
+          {{ caseOption.label }}
+        </strong>
+
+        <small>
+          G{{ caseOption.galaxyIndex.toString() }}
+        </small>
+      </button>
+    }
+  </section>
+
+  @if (frame(); as activeFrame) {
+    <section
+      class="galaxy-lab__active"
+      data-testid="galaxy-laboratory-active-case"
+      [attr.data-galaxy-type]="activeFrame.galaxy.type.name"
+      [attr.data-galaxy-index]="activeFrame.galaxy.index.toString()"
+    >
+      <div>
+        <p class="galaxy-lab__eyebrow">
+          CASO ACTIVO
+        </p>
+
+        <h2>
+          {{ activeFrame.caseDefinition.label }}
+        </h2>
+
+        <p>
+          {{ activeFrame.caseDefinition.description }}
+        </p>
+      </div>
+
+      <dl>
+        <div>
+          <dt>
+            GalaxyType
+          </dt>
+
+          <dd data-testid="galaxy-laboratory-type">
+            {{ activeFrame.galaxy.type.name }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            Índice procedural
+          </dt>
+
+          <dd data-testid="galaxy-laboratory-index">
+            {{ activeFrame.galaxy.index.toString() }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            Designación
+          </dt>
+
+          <dd>
+            {{ activeFrame.model.designationCode }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="galaxy-lab__scene">
+      <div class="galaxy-lab__scene-heading">
+        <div>
+          <p class="galaxy-lab__eyebrow">
+            MAPA GALÁCTICO / THREE.JS
+          </p>
+
+          <h2>
+            Renderer real
+          </h2>
+        </div>
+
+        <p>
+          Los controles de órbita, giro, pan, zoom, LOD y Web Worker son los
+          mismos del mapa. No hay cobertura, marcadores ni capas de partida.
+        </p>
+      </div>
+
+      <app-galactic-map-scene
+        data-testid="galaxy-laboratory-scene"
+        [model]="activeFrame.model"
+      ></app-galactic-map-scene>
+    </section>
+  }
+
+  <footer class="galaxy-lab__footer">
+    Cambiar de pestaña sustituye únicamente el modelo visual activo.
+    No se escribe ningún estado persistente.
+  </footer>
+</main>

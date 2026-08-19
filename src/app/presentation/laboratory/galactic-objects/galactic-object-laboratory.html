@@ -1,0 +1,400 @@
+<main
+  class="object-lab"
+  data-testid="galactic-object-laboratory-page"
+>
+  <header class="object-lab__hero">
+    <div>
+      <a
+        class="object-lab__back"
+        routerLink="/laboratory"
+      >
+        ← Laboratorios
+      </a>
+
+      <p class="object-lab__eyebrow">
+        GENESIS VISUAL LABORATORY · CATÁLOGO COMPLETO ACTUAL
+      </p>
+
+      <h1>
+        Objetos galácticos ya implementados
+      </h1>
+
+      <p>
+        El laboratorio expone toda la variedad física y visual existente hasta
+        la Fase 13: 14 variantes persistentes con progresión de conocimiento y
+        3 estados de núcleo galáctico. No persiste nada ni altera la partida.
+      </p>
+    </div>
+
+    <span class="object-lab__badge">
+      17 CASOS · READ ONLY
+    </span>
+  </header>
+
+  <section class="object-lab__catalog">
+    @for (
+      group of objectGroups;
+      track group.title
+    ) {
+      <article class="object-lab__group">
+        <header>
+          <p class="object-lab__eyebrow">
+            GALACTIC OBJECT
+          </p>
+
+          <h2>
+            {{ group.title }}
+          </h2>
+        </header>
+
+        <div class="object-lab__buttons">
+          @for (
+            caseOption of group.cases;
+            track caseOption.id
+          ) {
+            <button
+              type="button"
+              data-testid="galactic-object-laboratory-case-button"
+              [attr.data-case]="caseOption.id"
+              [attr.aria-pressed]="isObjectView() && selectedObjectCaseId() === caseOption.id"
+              [class.object-lab__button--active]="isObjectView() && selectedObjectCaseId() === caseOption.id"
+              (click)="selectObjectCase(caseOption.id)"
+            >
+              <strong>
+                {{ caseOption.label }}
+              </strong>
+
+              <small>
+                {{ caseOption.familyLabel }}
+              </small>
+            </button>
+          }
+        </div>
+      </article>
+    }
+
+    <article class="object-lab__group object-lab__group--nuclear">
+      <header>
+        <p class="object-lab__eyebrow">
+          GALAXY-LEVEL SOURCE
+        </p>
+
+        <h2>
+          Núcleos galácticos
+        </h2>
+      </header>
+
+      <div class="object-lab__buttons">
+        @for (
+          caseOption of nuclearCases;
+          track caseOption.id
+        ) {
+          <button
+            type="button"
+            data-testid="galactic-nucleus-laboratory-case-button"
+            [attr.data-case]="caseOption.id"
+            [attr.aria-pressed]="isNucleusView() && selectedNuclearCaseId() === caseOption.id"
+            [class.object-lab__button--active]="isNucleusView() && selectedNuclearCaseId() === caseOption.id"
+            (click)="selectNuclearCase(caseOption.id)"
+          >
+            <strong>
+              {{ caseOption.label }}
+            </strong>
+
+            <small>
+              Galaxia G{{ caseOption.galaxyIndex.toString() }}
+            </small>
+          </button>
+        }
+      </div>
+    </article>
+  </section>
+
+  @if (isObjectView()) {
+    @if (selectedObjectCase(); as activeCase) {
+      <section
+        class="object-lab__active"
+        data-testid="galactic-object-laboratory-active-case"
+        [attr.data-case]="activeCase.id"
+      >
+        <div>
+          <p class="object-lab__eyebrow">
+            CASO ACTIVO · OBJETO PERSISTENTE
+          </p>
+
+          <h2>
+            {{ activeCase.label }}
+          </h2>
+
+          <p>
+            {{ activeCase.description }}
+          </p>
+        </div>
+
+        <div class="object-lab__active-tools">
+          <dl>
+            <div>
+              <dt>
+                Locator
+              </dt>
+
+              <dd>
+                G{{ activeCase.locator.galaxyIndex.toString() }}
+                / S{{ activeCase.locator.sectorKey.toString() }}
+                / O{{ activeCase.locator.galacticObjectIndex.toString() }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Familia 9.4
+              </dt>
+
+              <dd>
+                {{ activeCase.resultKind }}
+              </dd>
+            </div>
+          </dl>
+
+          @if (isEmissionNebulaSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="emission-nebula-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 nebulosas reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de nebulosas de emisión"
+              >
+                @for (
+                  sample of emissionNebulaSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="emission-nebula-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar nebulosa de emisión ' + sample.label"
+                    [attr.aria-pressed]="selectedEmissionNebulaSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedEmissionNebulaSampleIndex() === sample.index"
+                    (click)="selectEmissionNebulaSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <section
+      class="object-lab__progression"
+      data-testid="galactic-object-laboratory-progression"
+    >
+      @for (
+        frame of objectFrames();
+        track frame.state.shortLabel
+      ) {
+        <article
+          class="object-lab__state"
+          data-testid="galactic-object-laboratory-state"
+          [attr.data-state]="frame.state.shortLabel"
+          [attr.data-knowledge-level]="frame.card.knowledgeLevel"
+        >
+          <header class="object-lab__state-header">
+            <div>
+              <span>
+                {{ frame.state.shortLabel }}
+              </span>
+
+              <h2>
+                {{ frame.state.label }}
+              </h2>
+            </div>
+
+            <code>
+              {{ frame.card.knowledgeLevel }}
+            </code>
+          </header>
+
+          <app-galactic-object-procedural-render
+            [descriptor]="frame.card.render"
+          ></app-galactic-object-procedural-render>
+
+          <div class="object-lab__knowledge">
+            <div>
+              <p class="object-lab__eyebrow">
+                IDENTIFICACIÓN VISIBLE
+              </p>
+
+              <h3 data-testid="galactic-object-laboratory-card-title">
+                {{ frame.card.title }}
+              </h3>
+
+              <p>
+                {{ frame.card.summary }}
+              </p>
+            </div>
+
+            @if (frame.card.facts.length > 0) {
+              <dl
+                class="object-lab__facts"
+                data-testid="galactic-object-laboratory-facts"
+              >
+                @for (
+                  fact of frame.card.facts;
+                  track fact.label
+                ) {
+                  <div>
+                    <dt>
+                      {{ fact.label }}
+                    </dt>
+
+                    <dd>
+                      {{ fact.value }}
+                    </dd>
+                  </div>
+                }
+              </dl>
+            } @else {
+              <p
+                class="object-lab__restricted"
+                data-testid="galactic-object-laboratory-restricted"
+              >
+                Sin magnitudes físicas autorizadas en este nivel.
+              </p>
+            }
+
+            <footer>
+              <span>
+                Siguiente paso científico
+              </span>
+
+              <strong>
+                {{ frame.card.nextScientificStep }}
+              </strong>
+            </footer>
+          </div>
+        </article>
+      }
+    </section>
+
+    <aside class="object-lab__note">
+      <strong>VISITED</strong>
+      no se duplica porque 12.8 lo proyecta al mismo nivel
+      <strong>IDENTIFIED</strong>
+      que DISCOVERED.
+    </aside>
+  } @else {
+    @if (nuclearFrame(); as frame) {
+      <section
+        class="object-lab__active"
+        data-testid="galactic-nucleus-laboratory-active-case"
+        [attr.data-case]="frame.caseDefinition.id"
+      >
+        <div>
+          <p class="object-lab__eyebrow">
+            CASO ACTIVO · NÚCLEO DE GALAXIA
+          </p>
+
+          <h2>
+            {{ frame.caseDefinition.label }}
+          </h2>
+
+          <p>
+            {{ frame.caseDefinition.description }}
+          </p>
+        </div>
+
+        <dl>
+          <div>
+            <dt>
+              Galaxia
+            </dt>
+
+            <dd>
+              G{{ frame.galaxy.index.toString() }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>
+              Estado nuclear
+            </dt>
+
+            <dd>
+              {{ frame.galaxy.nucleus?.state }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section
+        class="object-lab__nuclear"
+        data-testid="galactic-nucleus-laboratory-view"
+      >
+        <div class="object-lab__nuclear-meta">
+          <p class="object-lab__eyebrow">
+            NÚCLEO GALÁCTICO · MODELO REAL
+          </p>
+
+          <dl>
+            <div>
+              <dt>Estado</dt>
+              <dd>{{ frame.activity.nucleusState }}</dd>
+            </div>
+
+            <div>
+              <dt>Episodio</dt>
+              <dd>{{ frame.activity.eventKind }}</dd>
+            </div>
+
+            <div>
+              <dt>Rareza</dt>
+              <dd>{{ frame.activity.rarity }}</dd>
+            </div>
+
+            <div>
+              <dt>Activo</dt>
+              <dd>{{ frame.activity.isActiveEpisode ? 'Sí' : 'No' }}</dd>
+            </div>
+
+            <div>
+              <dt>Masa SMBH</dt>
+              <dd>
+                @if (frame.activity.supermassiveBlackHoleMassSolarMasses !== null) {
+                  {{ frame.activity.supermassiveBlackHoleMassSolarMasses.toPrecision(5) }} M☉
+                } @else {
+                  —
+                }
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <app-galactic-map-scene
+          data-testid="galactic-nucleus-laboratory-scene"
+          [model]="frame.model"
+        ></app-galactic-map-scene>
+      </section>
+
+      <aside class="object-lab__note">
+        AGN y QUASAR no se falsean como <strong>GalacticObject</strong>:
+        pertenecen al núcleo de su galaxia y por eso se inspeccionan aquí con
+        el modelo y renderer galácticos reales.
+      </aside>
+    }
+  }
+</main>

@@ -103,6 +103,190 @@ describe(
     );
 
     it(
+      'should namespace internal SVG definitions from the descriptor so parallel renderers cannot collide',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          descriptor,
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const ids =
+          Array.from(
+            element.querySelectorAll(
+              'svg defs [id]',
+            ),
+          ).map(
+            node =>
+              node.id,
+          );
+
+        expect(
+          ids,
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          new Set(
+            ids,
+          ).size,
+        ).toBe(
+          4,
+        );
+
+        for (
+          const id
+          of ids
+        ) {
+          expect(
+            id,
+          ).toMatch(
+            /^archive-object-[0-9a-f]+-/,
+          );
+        }
+
+        const firstIds =
+          [
+            ...ids,
+          ];
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .CONFIRMED,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const confirmedIds =
+          Array.from(
+            element.querySelectorAll(
+              'svg defs [id]',
+            ),
+          ).map(
+            node =>
+              node.id,
+          );
+
+        expect(
+          confirmedIds,
+        ).not.toEqual(
+          firstIds,
+        );
+      },
+    );
+
+    it(
+      'should route generic and EMISSION nebula descriptors through the high-fidelity WebGL renderer',
+      () => {
+        for (
+          const variant
+          of [
+            null,
+            'EMISSION',
+          ] as const
+        ) {
+          const fixture =
+            TestBed.createComponent(
+              GalacticObjectProceduralRender,
+            );
+
+          fixture.componentRef.setInput(
+            'descriptor',
+            Object.freeze({
+              ...descriptor,
+              kind:
+                ArchiveGalacticObjectRenderKind
+                  .NEBULA,
+              variant,
+            }),
+          );
+
+          fixture.detectChanges();
+
+          const element =
+            fixture.nativeElement as
+              HTMLElement;
+
+          expect(
+            element.querySelector(
+              '[data-testid="emission-nebula-render"]',
+            ),
+          ).toBeTruthy();
+
+          expect(
+            element.querySelector(
+              'img',
+            ),
+          ).toBeNull();
+        }
+      },
+    );
+
+    it(
+      'should keep REFLECTION, DARK and PLANETARY on the frozen SVG renderer until their dedicated visual passes',
+      () => {
+        for (
+          const variant
+          of [
+            'REFLECTION',
+            'DARK',
+            'PLANETARY',
+          ] as const
+        ) {
+          const fixture =
+            TestBed.createComponent(
+              GalacticObjectProceduralRender,
+            );
+
+          fixture.componentRef.setInput(
+            'descriptor',
+            Object.freeze({
+              ...descriptor,
+              kind:
+                ArchiveGalacticObjectRenderKind
+                  .NEBULA,
+              variant,
+            }),
+          );
+
+          fixture.detectChanges();
+
+          const element =
+            fixture.nativeElement as
+              HTMLElement;
+
+          expect(
+            element.querySelector(
+              '[data-testid="emission-nebula-render"]',
+            ),
+          ).toBeNull();
+
+          expect(
+            element.querySelector(
+              'svg',
+            ),
+          ).toBeTruthy();
+        }
+      },
+    );
+
+    it(
       'should materialize real SVG primitives instead of a placeholder image',
       () => {
         const fixture =

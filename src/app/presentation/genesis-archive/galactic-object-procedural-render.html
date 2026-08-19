@@ -4,7 +4,12 @@
   [attr.data-render-kind]="descriptor().kind"
   [attr.data-knowledge-level]="descriptor().knowledgeLevel"
 >
-  @if (renderModel(); as model) {
+  @if (usesEmissionNebulaRenderer()) {
+    <app-emission-nebula-render
+      [descriptor]="descriptor()"
+    ></app-emission-nebula-render>
+  } @else {
+    @if (renderModel(); as model) {
     <svg
       class="galactic-object-render__svg"
       viewBox="0 0 640 360"
@@ -13,7 +18,7 @@
       preserveAspectRatio="xMidYMid slice"
     >
       <defs>
-        <radialGradient id="archive-object-core" cx="50%" cy="50%" r="50%">
+        <radialGradient [attr.id]="svgIds().core" cx="50%" cy="50%" r="50%">
           <stop
             offset="0%"
             [attr.stop-color]="model.palette.highlight"
@@ -33,7 +38,7 @@
           ></stop>
         </radialGradient>
 
-        <linearGradient id="archive-object-filament" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient [attr.id]="svgIds().filament" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop
             offset="0%"
             [attr.stop-color]="model.palette.primary"
@@ -45,7 +50,7 @@
           ></stop>
         </linearGradient>
 
-        <filter id="archive-object-glow" x="-80%" y="-80%" width="260%" height="260%">
+        <filter [attr.id]="svgIds().glow" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur stdDeviation="4.8" result="blur"></feGaussianBlur>
           <feMerge>
             <feMergeNode in="blur"></feMergeNode>
@@ -53,7 +58,7 @@
           </feMerge>
         </filter>
 
-        <filter id="archive-object-cloud" x="-80%" y="-80%" width="260%" height="260%">
+        <filter [attr.id]="svgIds().cloud" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur stdDeviation="11"></feGaussianBlur>
         </filter>
       </defs>
@@ -84,7 +89,7 @@
           [attr.opacity]="cloud.opacity"
           [attr.fill]="cloud.tone === 0 ? model.palette.primary : model.palette.secondary"
           [attr.transform]="'rotate(' + cloud.rotationDegrees + ' ' + cloud.x + ' ' + cloud.y + ')'"
-          filter="url(#archive-object-cloud)"
+          [attr.filter]="'url(#' + svgIds().cloud + ')'"
         ></ellipse>
       }
 
@@ -100,7 +105,7 @@
           [attr.stroke-width]="ring.strokeWidth"
           [attr.opacity]="ring.opacity"
           [attr.transform]="'rotate(' + ring.rotationDegrees + ' 320 180)'"
-          filter="url(#archive-object-glow)"
+          [attr.filter]="'url(#' + svgIds().glow + ')'"
         ></ellipse>
       }
 
@@ -110,10 +115,10 @@
           fill="none"
           stroke-linecap="round"
           [attr.d]="filament.path"
-          [attr.stroke]="filament.tone === 0 ? 'url(#archive-object-filament)' : model.palette.accent"
+          [attr.stroke]="filament.tone === 0 ? 'url(#' + svgIds().filament + ')' : model.palette.accent"
           [attr.stroke-width]="filament.strokeWidth"
           [attr.opacity]="filament.opacity"
-          filter="url(#archive-object-glow)"
+          [attr.filter]="'url(#' + svgIds().glow + ')'"
         ></path>
       }
 
@@ -123,8 +128,8 @@
         cy="180"
         [attr.r]="model.coreRadius"
         [attr.opacity]="model.coreOpacity"
-        fill="url(#archive-object-core)"
-        filter="url(#archive-object-glow)"
+        [attr.fill]="'url(#' + svgIds().core + ')'"
+        [attr.filter]="'url(#' + svgIds().glow + ')'"
       ></circle>
 
       @for (star of model.stars; track $index) {
@@ -147,6 +152,8 @@
         rx="18"
       ></rect>
     </svg>
+  }
+
   }
 
   <figcaption class="galactic-object-render__caption">

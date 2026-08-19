@@ -1,0 +1,220 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.galaxy-lab {
+  display: grid;
+  gap: 1rem;
+  width: min(100% - 2rem, 96rem);
+  margin: 0 auto;
+  padding: 1.25rem 0 3rem;
+  color: var(--genesis-color-text);
+
+  &__hero,
+  &__selector,
+  &__active,
+  &__scene,
+  &__footer {
+    border: 1px solid rgba(106, 215, 255, 0.14);
+    border-radius: var(--genesis-radius-lg);
+    background: rgba(15, 19, 31, 0.76);
+  }
+
+  &__hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem;
+
+    h1 {
+      margin: 0.2rem 0 0.55rem;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      line-height: 1;
+    }
+
+    p:not(.galaxy-lab__eyebrow) {
+      max-width: 62rem;
+      margin: 0;
+      color: var(--genesis-color-text-subtle);
+      line-height: 1.5;
+    }
+  }
+
+  &__back {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    color: var(--genesis-color-text-subtle);
+    font: 0.68rem var(--genesis-font-mono);
+    text-decoration: none;
+
+  }
+
+  &__eyebrow {
+    margin: 0;
+    color: var(--genesis-color-primary);
+    font: 700 0.62rem var(--genesis-font-mono);
+    letter-spacing: 0.12em;
+  }
+
+  &__badge {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    padding: 0.42rem 0.62rem;
+    border: 1px solid rgba(106, 215, 255, 0.24);
+    border-radius: 999px;
+    color: var(--genesis-color-primary);
+    font: 0.6rem var(--genesis-font-mono);
+  }
+
+  &__selector {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
+    padding: 0.75rem;
+
+    button {
+      display: grid;
+      gap: 0.25rem;
+      min-height: 3.7rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid rgba(106, 215, 255, 0.14);
+      border-radius: var(--genesis-radius-md);
+      background: rgba(5, 7, 13, 0.68);
+      color: var(--genesis-color-text-subtle);
+      cursor: pointer;
+      text-align: left;
+
+      strong,
+      small {
+        font-family: var(--genesis-font-mono);
+      }
+
+      strong {
+        font-size: 0.7rem;
+      }
+
+      small {
+        color: rgba(255, 255, 255, 0.42);
+      }
+    }
+
+    .galaxy-lab__button--active {
+      border-color: rgba(106, 215, 255, 0.5);
+      background: rgba(106, 215, 255, 0.11);
+      color: var(--genesis-color-primary);
+    }
+  }
+
+  &__active {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+
+    h2 {
+      margin: 0.15rem 0 0.35rem;
+    }
+
+    p:not(.galaxy-lab__eyebrow) {
+      margin: 0;
+      color: var(--genesis-color-text-subtle);
+    }
+
+    dl {
+      display: flex;
+      gap: 1rem;
+      margin: 0;
+    }
+
+    dt,
+    dd {
+      font: 0.62rem var(--genesis-font-mono);
+    }
+
+    dt {
+      color: var(--genesis-color-text-subtle);
+    }
+
+    dd {
+      margin: 0.25rem 0 0;
+      color: var(--genesis-color-primary);
+    }
+  }
+
+  &__scene {
+    display: grid;
+    gap: 0.8rem;
+    padding: 0.8rem;
+  }
+
+  &__scene-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+
+    h2 {
+      margin: 0.15rem 0 0;
+      font-size: 1.1rem;
+    }
+
+    > p {
+      max-width: 40rem;
+      margin: 0;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.75rem;
+      text-align: right;
+    }
+  }
+
+  &__footer {
+    padding: 0.75rem 1rem;
+    color: var(--genesis-color-text-subtle);
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .galaxy-lab {
+    &__selector {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__active {
+      grid-template-columns: 1fr;
+
+      dl {
+        flex-wrap: wrap;
+      }
+    }
+
+    &__scene-heading {
+      display: grid;
+      align-items: start;
+
+      > p {
+        text-align: left;
+      }
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .galaxy-lab {
+    width: min(100% - 1rem, 96rem);
+
+    &__hero {
+      flex-direction: column;
+    }
+
+    &__selector {
+      grid-template-columns: 1fr;
+    }
+
+    &__active dl {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+}
