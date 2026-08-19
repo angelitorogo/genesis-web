@@ -1,0 +1,214 @@
+@if (renderModel(); as model) {
+  <figure
+    class="spectrum-plot"
+    data-testid="spectrum-plot"
+    [attr.data-render-kind]="model.renderKind"
+  >
+    <header class="spectrum-plot__header">
+      <div>
+        <p class="spectrum-plot__eyebrow">
+          ESPECTROSCOPIA · GENESIS
+        </p>
+
+        <h3>
+          {{ title() }}
+        </h3>
+      </div>
+
+      <div class="spectrum-plot__badges">
+        <span>
+          {{ model.sampleCount }} muestras
+        </span>
+
+        <span>
+          {{ model.minimumWavelengthNanometers }}–{{ model.maximumWavelengthNanometers }} nm
+        </span>
+
+        @if (isInstrumental()) {
+          <span class="spectrum-plot__badge--instrumental">
+            Observación instrumental
+          </span>
+        } @else {
+          <span>
+            Señal idealizada
+          </span>
+        }
+      </div>
+    </header>
+
+    <div class="spectrum-plot__viewport">
+      <svg
+        data-testid="spectrum-plot-svg"
+        [attr.viewBox]="'0 0 ' + model.layout.viewBoxWidth + ' ' + model.layout.viewBoxHeight"
+        role="img"
+        [attr.aria-label]="accessibleLabel()"
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <title>
+          {{ accessibleLabel() }}
+        </title>
+
+
+        <rect
+          class="spectrum-plot__background"
+          x="0"
+          y="0"
+          [attr.width]="model.layout.viewBoxWidth"
+          [attr.height]="model.layout.viewBoxHeight"
+          rx="14"
+        ></rect>
+
+        <g
+          class="spectrum-plot__grid"
+          aria-hidden="true"
+        >
+          @for (
+            tick of model.yTicks;
+            track tick.value
+          ) {
+            <line
+              [attr.x1]="model.layout.plotLeft"
+              [attr.x2]="model.layout.plotRight"
+              [attr.y1]="tick.coordinate"
+              [attr.y2]="tick.coordinate"
+            ></line>
+
+            <text
+              class="spectrum-plot__tick-label"
+              [attr.x]="model.layout.plotLeft - 14"
+              [attr.y]="tick.coordinate + 4"
+              text-anchor="end"
+            >
+              {{ tick.label }}
+            </text>
+          }
+
+          @for (
+            tick of model.xTicks;
+            track tick.value
+          ) {
+            <line
+              [attr.x1]="tick.coordinate"
+              [attr.x2]="tick.coordinate"
+              [attr.y1]="model.layout.plotTop"
+              [attr.y2]="model.layout.plotBottom"
+            ></line>
+
+            <text
+              class="spectrum-plot__tick-label"
+              [attr.x]="tick.coordinate"
+              [attr.y]="model.layout.plotBottom + 24"
+              text-anchor="middle"
+            >
+              {{ tick.label }}
+            </text>
+          }
+        </g>
+
+        <path
+          class="spectrum-plot__area"
+          [attr.d]="model.spectrumAreaPath"
+          aria-hidden="true"
+        ></path>
+
+        @if (
+          model.uncertaintyBandPath;
+          as uncertaintyBandPath
+        ) {
+          <path
+            class="spectrum-plot__uncertainty"
+            data-testid="spectrum-plot-uncertainty"
+            [attr.d]="uncertaintyBandPath"
+            aria-hidden="true"
+          ></path>
+        }
+
+        <path
+          class="spectrum-plot__line spectrum-plot__line--glow"
+          [attr.d]="model.spectrumPath"
+          aria-hidden="true"
+        ></path>
+
+        <path
+          class="spectrum-plot__line"
+          data-testid="spectrum-plot-line"
+          [attr.d]="model.spectrumPath"
+          aria-hidden="true"
+        ></path>
+
+        <line
+          class="spectrum-plot__axis"
+          [attr.x1]="model.layout.plotLeft"
+          [attr.x2]="model.layout.plotRight"
+          [attr.y1]="model.layout.plotBottom"
+          [attr.y2]="model.layout.plotBottom"
+        ></line>
+
+        <line
+          class="spectrum-plot__axis"
+          [attr.x1]="model.layout.plotLeft"
+          [attr.x2]="model.layout.plotLeft"
+          [attr.y1]="model.layout.plotTop"
+          [attr.y2]="model.layout.plotBottom"
+        ></line>
+
+        <text
+          class="spectrum-plot__axis-label"
+          [attr.x]="model.layout.plotLeft + model.layout.plotWidth / 2"
+          [attr.y]="model.layout.viewBoxHeight - 12"
+          text-anchor="middle"
+        >
+          Longitud de onda (nm)
+        </text>
+
+        <text
+          class="spectrum-plot__axis-label"
+          x="18"
+          [attr.y]="model.layout.plotTop + model.layout.plotHeight / 2"
+          text-anchor="middle"
+          [attr.transform]="'rotate(-90 18 ' + (model.layout.plotTop + model.layout.plotHeight / 2) + ')'"
+        >
+          Flujo normalizado
+        </text>
+      </svg>
+    </div>
+
+    <figcaption class="spectrum-plot__footer">
+      <span>
+        {{ model.renderKind === 'INSTRUMENTAL' ? 'Con incertidumbre observacional' : 'Espectro científico idealizado' }}
+      </span>
+
+      <div>
+        @if (
+          resolutionLabel();
+          as resolution
+        ) {
+          <span>
+            Resolución efectiva
+            <strong>{{ resolution }}</strong>
+          </span>
+        }
+
+        @if (
+          uncertaintyLabel();
+          as uncertainty
+        ) {
+          <span>
+            Intervalo
+            <strong>{{ uncertainty }}</strong>
+          </span>
+        }
+
+        @if (
+          detectabilityLabel();
+          as detectability
+        ) {
+          <span>
+            Contraste detectable
+            <strong>{{ detectability }}</strong>
+          </span>
+        }
+      </div>
+    </figcaption>
+  </figure>
+}

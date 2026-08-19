@@ -1,0 +1,186 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.spectrum-plot {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0;
+  padding: 1rem;
+  overflow: hidden;
+  border: 1px solid rgba(106, 215, 255, 0.18);
+  border-radius: var(--genesis-radius-lg);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(106, 215, 255, 0.08), transparent 44%),
+    rgba(5, 7, 13, 0.94);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.015),
+    0 1.25rem 3rem rgba(0, 0, 0, 0.2);
+  color: var(--genesis-color-primary);
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+
+    h3 {
+      margin: 0.12rem 0 0;
+      color: var(--genesis-color-text);
+      font-size: clamp(1rem, 1.7vw, 1.35rem);
+      font-weight: 700;
+    }
+  }
+
+  &__eyebrow {
+    margin: 0;
+    color: var(--genesis-color-primary);
+    font-family: var(--genesis-font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+  }
+
+  &__badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+
+    span {
+      padding: 0.32rem 0.5rem;
+      border: 1px solid rgba(106, 215, 255, 0.14);
+      border-radius: 999px;
+      background: rgba(106, 215, 255, 0.045);
+      color: var(--genesis-color-text-subtle);
+      font-family: var(--genesis-font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .spectrum-plot__badge--instrumental {
+      border-color: rgba(106, 215, 255, 0.3);
+      color: var(--genesis-color-primary);
+    }
+  }
+
+  &__viewport {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid rgba(106, 215, 255, 0.1);
+    border-radius: var(--genesis-radius-md);
+    background: #05070d;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    min-height: 15rem;
+    aspect-ratio: 16 / 7;
+  }
+
+  &__background {
+    fill: #05070d;
+  }
+
+  &__grid {
+    line {
+      stroke: rgba(106, 215, 255, 0.075);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+  }
+
+  &__tick-label,
+  &__axis-label {
+    fill: rgba(214, 231, 240, 0.56);
+    font-family: var(--genesis-font-mono);
+    font-size: 11px;
+  }
+
+  &__axis-label {
+    fill: rgba(214, 231, 240, 0.72);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  &__axis {
+    stroke: rgba(106, 215, 255, 0.24);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__area {
+    fill: var(--genesis-color-primary);
+    opacity: 0.1;
+  }
+
+  &__uncertainty {
+    fill: rgba(106, 215, 255, 0.13);
+    stroke: rgba(106, 215, 255, 0.18);
+    stroke-width: 0.8;
+    vector-effect: non-scaling-stroke;
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--genesis-color-primary);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.6;
+    vector-effect: non-scaling-stroke;
+
+    &--glow {
+      opacity: 0.28;
+      stroke-width: 3.4;
+      filter: blur(2px);
+    }
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    color: var(--genesis-color-text-subtle);
+    font-family: var(--genesis-font-mono);
+    font-size: 0.61rem;
+
+    > div {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.7rem;
+    }
+
+    strong {
+      margin-left: 0.2rem;
+      color: var(--genesis-color-primary);
+      font-weight: 700;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .spectrum-plot {
+    padding: 0.75rem;
+
+    &__header,
+    &__footer {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    &__badges,
+    &__footer > div {
+      justify-content: flex-start;
+    }
+
+    svg {
+      min-height: 13rem;
+    }
+  }
+}
