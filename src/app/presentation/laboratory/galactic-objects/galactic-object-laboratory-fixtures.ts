@@ -198,6 +198,17 @@ export interface EmissionNebulaLaboratorySample {
     GalacticObjectLocator;
 }
 
+export interface ReflectionNebulaLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
 export const GALACTIC_OBJECT_LABORATORY_STATES:
   readonly GalacticObjectLaboratoryState[] =
   Object.freeze([
@@ -249,8 +260,15 @@ const NEBULA_SECTOR_KEY =
 const EMISSION_NEBULA_SAMPLE_COUNT =
   8;
 
+const REFLECTION_NEBULA_SAMPLE_COUNT =
+  8;
+
 let cachedEmissionNebulaSamples:
   readonly EmissionNebulaLaboratorySample[] | null =
+    null;
+
+let cachedReflectionNebulaSamples:
+  readonly ReflectionNebulaLaboratorySample[] | null =
     null;
 
 let cachedHiiRepresentatives:
@@ -295,11 +313,32 @@ export class GalacticObjectLaboratoryFixtures {
     return cachedEmissionNebulaSamples;
   }
 
+  static reflectionNebulaSamples():
+    readonly ReflectionNebulaLaboratorySample[] {
+
+    if (
+      cachedReflectionNebulaSamples !==
+        null
+    ) {
+      return cachedReflectionNebulaSamples;
+    }
+
+    cachedReflectionNebulaSamples =
+      Object.freeze(
+        buildReflectionNebulaSamplesV1(),
+      );
+
+    return cachedReflectionNebulaSamples;
+  }
+
   static caseDefinition(
     caseId:
       GalacticObjectLaboratoryCaseId,
 
     emissionSampleIndex =
+      0,
+
+    reflectionSampleIndex =
       0,
   ): GalacticObjectLaboratoryCase {
 
@@ -321,41 +360,76 @@ export class GalacticObjectLaboratoryFixtures {
     }
 
     if (
-      caseId !==
+      caseId ===
         GalacticObjectLaboratoryCaseId
           .NEBULA_EMISSION
     ) {
-      return caseDefinition;
-    }
+      const sample =
+        this
+          .emissionNebulaSamples()[
+            emissionSampleIndex
+          ];
 
-    const sample =
-      this
-        .emissionNebulaSamples()[
-          emissionSampleIndex
-        ];
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported emission-nebula laboratory sample index: ${emissionSampleIndex}.`,
+        );
+      }
 
-    if (
-      sample ===
-        undefined
-    ) {
-      throw new RangeError(
-        `Unsupported emission-nebula laboratory sample index: ${emissionSampleIndex}.`,
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
       );
     }
 
-    return caseOf(
-      caseDefinition.id,
-      caseDefinition.group,
-      caseDefinition.label,
-      caseDefinition.familyLabel,
-      sample.locator,
-      caseDefinition.resultKind,
-      caseDefinition.expectedSubject,
-      caseDefinition.expectedNebulaType,
-      caseDefinition.expectedHiiActivity,
-      caseDefinition.expectedRemnantMorphology,
-      `Muestra ${sample.label} · ${caseDefinition.description}`,
-    );
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .NEBULA_REFLECTION
+    ) {
+      const sample =
+        this
+          .reflectionNebulaSamples()[
+            reflectionSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported reflection-nebula laboratory sample index: ${reflectionSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
+    return caseDefinition;
   }
 
   static frames(
@@ -364,12 +438,16 @@ export class GalacticObjectLaboratoryFixtures {
 
     emissionSampleIndex =
       0,
+
+    reflectionSampleIndex =
+      0,
   ): readonly GalacticObjectLaboratoryFrame[] {
 
     const caseDefinition =
       this.caseDefinition(
         caseId,
         emissionSampleIndex,
+        reflectionSampleIndex,
       );
 
     return Object.freeze(
@@ -512,6 +590,142 @@ function buildEmissionNebulaSamplesV1():
         locator,
       }),
   );
+}
+
+function buildReflectionNebulaSamplesV1():
+  ReflectionNebulaLaboratorySample[] {
+
+  const locators:
+    GalacticObjectLocator[] =
+    [];
+
+  const primary =
+    new GalacticObjectLocator(
+      0n,
+      NEBULA_SECTOR_KEY,
+      8n,
+    );
+
+  requireReflectionNebulaV1(
+    primary,
+  );
+
+  locators.push(
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      4_096n &&
+    locators.length <
+      REFLECTION_NEBULA_SAMPLE_COUNT;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary
+          .galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        NEBULA_SECTOR_KEY,
+        index,
+      );
+
+    if (
+      !NebulaGenerator
+        .isNebulaLocator(
+          GENERATION_KEY,
+          locator,
+        )
+    ) {
+      continue;
+    }
+
+    const nebula =
+      NebulaGenerator
+        .generate(
+          GENERATION_KEY,
+          locator,
+        );
+
+    if (
+      nebula.nebulaType !==
+        NebulaType.REFLECTION
+    ) {
+      continue;
+    }
+
+    locators.push(
+      locator,
+    );
+  }
+
+  if (
+    locators.length !==
+    REFLECTION_NEBULA_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The canonical V1 laboratory sample found ${locators.length}/${REFLECTION_NEBULA_SAMPLE_COUNT} reflection nebulae.`,
+    );
+  }
+
+  return locators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function requireReflectionNebulaV1(
+  locator:
+    GalacticObjectLocator,
+): void {
+
+  if (
+    !NebulaGenerator
+      .isNebulaLocator(
+        GENERATION_KEY,
+        locator,
+      )
+  ) {
+    throw new RangeError(
+      `Frozen locator O${locator.galacticObjectIndex} no longer belongs to the NEBULA family.`,
+    );
+  }
+
+  const nebula =
+    NebulaGenerator
+      .generate(
+        GENERATION_KEY,
+        locator,
+      );
+
+  if (
+    nebula.nebulaType !==
+      NebulaType.REFLECTION
+  ) {
+    throw new RangeError(
+      `Frozen locator O${locator.galacticObjectIndex} is no longer a reflection nebula.`,
+    );
+  }
 }
 
 function requireEmissionNebulaV1(

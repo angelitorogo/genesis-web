@@ -402,5 +402,122 @@ describe(
       30_000,
     );
 
+    it(
+      'should show eight reflection-nebula diversity controls only for the reflection case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="NEBULA_REFLECTION"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="reflection-nebula-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="reflection-nebula-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real reflection-nebula sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="NEBULA_REFLECTION"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="reflection-nebula-diversity-button"][data-sample="E"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="reflection-nebula-diversity-button"][data-sample="E"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
   },
 );

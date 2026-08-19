@@ -239,12 +239,51 @@ describe(
     );
 
     it(
-      'should keep REFLECTION, DARK and PLANETARY on the frozen SVG renderer until their dedicated visual passes',
+      'should route REFLECTION through its dedicated high-fidelity WebGL renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            variant:
+              'REFLECTION',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="reflection-nebula-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            'img',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should keep DARK and PLANETARY on the frozen SVG renderer until their dedicated visual passes',
       () => {
         for (
           const variant
           of [
-            'REFLECTION',
             'DARK',
             'PLANETARY',
           ] as const

@@ -4,7 +4,11 @@
   [attr.data-render-kind]="descriptor().kind"
   [attr.data-knowledge-level]="descriptor().knowledgeLevel"
 >
-  @if (usesEmissionNebulaRenderer()) {
+  @if (usesReflectionNebulaRenderer()) {
+    <app-reflection-nebula-render
+      [descriptor]="descriptor()"
+    ></app-reflection-nebula-render>
+  } @else if (usesEmissionNebulaRenderer()) {
     <app-emission-nebula-render
       [descriptor]="descriptor()"
     ></app-emission-nebula-render>

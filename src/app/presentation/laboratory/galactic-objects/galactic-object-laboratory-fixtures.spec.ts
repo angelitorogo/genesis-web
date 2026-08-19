@@ -637,5 +637,136 @@ describe(
       30_000,
     );
 
+    it(
+      'should expose eight deterministic real reflection-nebula samples with O8 preserved as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .reflectionNebulaSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator
+            .galacticObjectIndex,
+        ).toBe(
+          8n,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            NebulaGenerator
+              .isNebulaLocator(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            true,
+          );
+
+          expect(
+            NebulaGenerator
+              .generate(
+                generationKey,
+                sample.locator,
+              )
+              .nebulaType,
+          ).toBe(
+            NebulaType
+              .REFLECTION,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should give every reflection-nebula sample a unique stable render seed across four knowledge levels',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .reflectionNebulaSamples();
+
+        const confirmedSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .NEBULA_REFLECTION,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card
+                  .render
+                  .seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          confirmedSeeds.push(
+            seeds[
+              3
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            confirmedSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
   },
 );

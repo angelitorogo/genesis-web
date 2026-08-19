@@ -124,6 +124,10 @@ export class GalacticObjectLaboratoryPage {
     GalacticObjectLaboratoryFixtures
       .emissionNebulaSamples();
 
+  readonly reflectionNebulaSamples =
+    GalacticObjectLaboratoryFixtures
+      .reflectionNebulaSamples();
+
   readonly view =
     signal<LaboratoryView>(
       LaboratoryView
@@ -147,6 +151,11 @@ export class GalacticObjectLaboratoryPage {
       0,
     );
 
+  readonly selectedReflectionNebulaSampleIndex =
+    signal(
+      0,
+    );
+
   readonly selectedEmissionNebulaSample =
     computed(
       () =>
@@ -154,6 +163,16 @@ export class GalacticObjectLaboratoryPage {
           .emissionNebulaSamples[
             this
               .selectedEmissionNebulaSampleIndex()
+          ],
+    );
+
+  readonly selectedReflectionNebulaSample =
+    computed(
+      () =>
+        this
+          .reflectionNebulaSamples[
+            this
+              .selectedReflectionNebulaSampleIndex()
           ],
     );
 
@@ -168,6 +187,17 @@ export class GalacticObjectLaboratoryPage {
             .NEBULA_EMISSION,
     );
 
+  readonly isReflectionNebulaSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .NEBULA_REFLECTION,
+    );
+
   readonly selectedObjectCase =
     computed(
       () =>
@@ -177,6 +207,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedObjectCaseId(),
             this
               .selectedEmissionNebulaSampleIndex(),
+            this
+              .selectedReflectionNebulaSampleIndex(),
           ),
     );
 
@@ -189,6 +221,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedObjectCaseId(),
             this
               .selectedEmissionNebulaSampleIndex(),
+            this
+              .selectedReflectionNebulaSampleIndex(),
           ),
     );
 
@@ -267,6 +301,48 @@ export class GalacticObjectLaboratoryPage {
       .set(
         GalacticObjectLaboratoryCaseId
           .NEBULA_EMISSION,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectReflectionNebulaSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .reflectionNebulaSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported reflection-nebula sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedReflectionNebulaSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .NEBULA_REFLECTION,
       );
 
     this

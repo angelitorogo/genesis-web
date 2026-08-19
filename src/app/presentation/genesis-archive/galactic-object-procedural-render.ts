@@ -10,6 +10,10 @@ import {
 } from './emission-nebula-render';
 
 import {
+  ReflectionNebulaRender,
+} from './reflection-nebula-render';
+
+import {
   ArchiveGalacticObjectRenderKind,
   type ArchiveGalacticObjectRenderDescriptor,
 } from './archive-galactic-object-card';
@@ -27,6 +31,7 @@ import {
 
   imports: [
     EmissionNebulaRender,
+    ReflectionNebulaRender,
   ],
 
   templateUrl:
@@ -77,6 +82,22 @@ export class GalacticObjectProceduralRender {
             descriptor.variant ===
               'EMISSION'
           )
+        );
+      },
+    );
+
+  readonly usesReflectionNebulaRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.kind ===
+            ArchiveGalacticObjectRenderKind
+              .NEBULA &&
+          descriptor.variant ===
+            'REFLECTION'
         );
       },
     );
