@@ -322,7 +322,13 @@ describe(
               return null;
             },
 
+            selectSectorAt() {
+              return null;
+            },
+
             clearSelection() {},
+
+            clearSectorSelection() {},
 
             dispose() {},
           };

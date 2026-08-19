@@ -12,8 +12,10 @@
   [attr.data-camera-target-x]="cameraState()?.targetX ?? null"
   [attr.data-camera-target-y]="cameraState()?.targetY ?? null"
   [attr.data-camera-target-z]="cameraState()?.targetZ ?? null"
-  [attr.data-selected-sample-index]="selection()?.sampleIndex ?? null"
   [attr.data-selected-marker-kind]="markerSelection()?.resultKind ?? null"
+  [attr.data-selected-sector-x]="sectorSelection()?.coordinates?.x ?? null"
+  [attr.data-selected-sector-y]="sectorSelection()?.coordinates?.y ?? null"
+  [attr.data-selected-sector-explored]="sectorSelection()?.explored ?? null"
   [attr.data-source-particle-count]="lodState()?.sourceParticleCount ?? null"
   [attr.data-materialized-particle-count]="lodState()?.materializedParticleCount ?? null"
   [attr.data-visible-sector-count]="lodState()?.visibleSectorCount ?? null"
@@ -269,7 +271,7 @@
       </span>
 
       <span>
-        Clic en nube: seleccionar muestra GPU
+        Clic en zona libre: seleccionar sector
       </span>
     </div>
   }
@@ -392,30 +394,51 @@
     </aside>
   }
 
-  @if (selection(); as selected) {
+  @if (sectorSelection(); as selectedSector) {
     <aside
-      class="galactic-map-scene__selection"
-      data-testid="galactic-map-selection"
+      class="galactic-map-scene__marker-selection"
+      data-testid="galactic-map-sector-selection"
       aria-live="polite"
     >
       <small>
-        SELECCIÓN VISUAL / GPU
+        SECTOR GALÁCTICO
       </small>
 
-      <strong data-testid="galactic-map-selected-sample">
-        Muestra #{{ selected.sampleIndex }}
+      <strong data-testid="galactic-map-selected-sector-coordinates">
+        Sector ({{ selectedSector.coordinates.x }}, {{ selectedSector.coordinates.y }})
       </strong>
 
-      <code>
-        X {{ selected.renderX.toFixed(3) }} ·
-        Y {{ selected.renderY.toFixed(3) }} ·
-        Z {{ selected.renderZ.toFixed(3) }}
+      <code data-testid="galactic-map-selected-sector-key">
+        KEY {{ selectedSector.sectorKey }}
       </code>
 
-      <p>
-        Esta selección identifica una muestra de render. No representa una
-        estrella, sistema, descubrimiento o entidad física materializada.
-      </p>
+      <code data-testid="galactic-map-selected-sector-state">
+        {{ sectorStatusLabel(selectedSector) }}
+      </code>
+
+      @if (selectedSector.explored) {
+        <p>
+          Este sector ya forma parte de la cobertura explorada. Sus
+          descubrimientos persistentes se muestran mediante marcadores cuando
+          existen y sus capas están visibles.
+        </p>
+      } @else {
+        <p>
+          Este sector todavía no tiene un SectorLocator persistido. Al iniciar
+          la exploración se ejecutará automáticamente el escaneo científico sin
+          materializar Ground Truth oculto antes de resolverlo.
+        </p>
+
+        <a
+          class="galactic-map-scene__marker-link"
+          data-testid="galactic-map-explore-sector-link"
+          routerLink="/exploration"
+          [queryParams]="sectorExplorationQueryParams(selectedSector)"
+        >
+          Explorar este sector
+          <span aria-hidden="true">→</span>
+        </a>
+      }
     </aside>
   }
 

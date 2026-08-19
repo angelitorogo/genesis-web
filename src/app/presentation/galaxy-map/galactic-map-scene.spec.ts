@@ -75,6 +75,10 @@ import {
 } from './galactic-map-exploration-coverage';
 
 import {
+  type GalacticMapSectorSelection,
+} from './galactic-map-sector-selection';
+
+import {
   type GalacticMapLayerVisibility,
 } from './galactic-map-layer-state';
 
@@ -245,8 +249,17 @@ describe(
         number,
       ]>;
 
+    let sectorSelectCalls:
+      Array<readonly [
+        number,
+        number,
+      ]>;
+
     let markerSelectionResult:
       GalacticMapDiscoveryMarker | null;
+
+    let sectorSelectionResult:
+      GalacticMapSectorSelection | null;
 
     let layerVisibilityCalls:
       GalacticMapLayerVisibility[];
@@ -318,6 +331,28 @@ describe(
           2.1,
       });
 
+    const selectedSector:
+      GalacticMapSectorSelection =
+      Object.freeze({
+        coordinates:
+          new GalaxySectorCoordinates(
+            4,
+            -3,
+          ),
+
+        sectorKey:
+          GalaxySectorKeyCodec
+            .encode(
+              new GalaxySectorCoordinates(
+                4,
+                -3,
+              ),
+            ),
+
+        explored:
+          false,
+      });
+
     const selectedMarker =
       new GalacticMapDiscoveryMarker(
         new SystemLocator(
@@ -355,8 +390,14 @@ describe(
         selectCalls =
           [];
 
+        sectorSelectCalls =
+          [];
+
         markerSelectionResult =
           null;
+
+        sectorSelectionResult =
+          selectedSector;
 
         layerVisibilityCalls =
           [];
@@ -551,7 +592,21 @@ describe(
               return selectedSample;
             },
 
+            selectSectorAt(
+              clientX,
+              clientY,
+            ) {
+              sectorSelectCalls.push([
+                clientX,
+                clientY,
+              ]);
+
+              return sectorSelectionResult;
+            },
+
             clearSelection() {},
+
+            clearSectorSelection() {},
 
             dispose() {
               disposeCalls +=
@@ -1051,7 +1106,7 @@ describe(
     );
 
     it(
-      'should select a GPU sample only for a click-sized primary gesture',
+      'should select a real galactic sector instead of exposing a renderer-only GPU sample',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -1098,12 +1153,26 @@ describe(
 
         expect(
           selectCalls,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          sectorSelectCalls,
         ).toEqual([
           [
             122,
             143,
           ],
         ]);
+
+        expect(
+          fixture
+            .componentInstance
+            .sectorSelection(),
+        ).toBe(
+          selectedSector,
+        );
 
         const element =
           fixture.nativeElement as
@@ -1113,22 +1182,41 @@ describe(
           element.querySelector(
             '[data-testid="galactic-map-selection"]',
           ),
-        ).toBeTruthy();
+        ).toBeNull();
 
         expect(
           element
             .querySelector(
               '[data-testid="galactic-map-selected-sample"]',
+            ),
+        ).toBeNull();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-map-selected-sector-coordinates"]',
             )
             ?.textContent,
         ).toContain(
-          'Muestra #321',
+          'Sector (4, -3)',
+        );
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="galactic-map-explore-sector-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toContain(
+          '/exploration?sectorX=4&sectorY=-3&scan=1',
         );
       },
     );
 
     it(
-      'should give a persistent marker priority over GPU samples, expose 10.7 relative position and keep its archive link',
+      'should give a persistent marker absolute priority over sector selection, expose 10.7 relative position and keep its archive link',
       () => {
         markerSelectionResult =
           selectedMarker;
@@ -1183,9 +1271,21 @@ describe(
         );
 
         expect(
+          sectorSelectCalls,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
           fixture
             .componentInstance
             .selection(),
+        ).toBeNull();
+
+        expect(
+          fixture
+            .componentInstance
+            .sectorSelection(),
         ).toBeNull();
 
         expect(
@@ -1341,7 +1441,7 @@ describe(
     );
 
     it(
-      'should not accidentally select a GPU sample after a drag gesture',
+      'should not accidentally select a sector after a drag gesture',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -1390,11 +1490,17 @@ describe(
         ).toHaveLength(
           0,
         );
+
+        expect(
+          sectorSelectCalls,
+        ).toHaveLength(
+          0,
+        );
       },
     );
 
     it(
-      'should reset the camera and clear Angular selection state',
+      'should reset the camera and clear Angular sector/marker selection state',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -1433,7 +1539,7 @@ describe(
         expect(
           fixture
             .componentInstance
-            .selection(),
+            .sectorSelection(),
         ).not.toBeNull();
 
         fixture
@@ -1452,6 +1558,12 @@ describe(
           fixture
             .componentInstance
             .selection(),
+        ).toBeNull();
+
+        expect(
+          fixture
+            .componentInstance
+            .sectorSelection(),
         ).toBeNull();
 
         expect(

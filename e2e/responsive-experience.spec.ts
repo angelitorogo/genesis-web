@@ -373,22 +373,25 @@ test.describe(
             '/exploration',
           );
 
-          const xInput =
+          await expect(
             page.getByTestId(
-              'sector-x-input',
+              'exploration-open-galaxy-map-link',
+            ),
+          ).toBeVisible();
+
+          if (
+            viewport.name
+            === 'mobile-pwa'
+          ) {
+            await expectTouchTarget(
+              page.getByTestId(
+                'exploration-open-galaxy-map-link',
+              ),
             );
+          }
 
-          const yInput =
-            page.getByTestId(
-              'sector-y-input',
-            );
-
-          await xInput.fill(
-            '0',
-          );
-
-          await yInput.fill(
-            '0',
+          await page.goto(
+            '/exploration?sectorX=0&sectorY=0',
           );
 
           if (

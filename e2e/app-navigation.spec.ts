@@ -545,24 +545,16 @@ test.describe(
         );
 
         await page.goto(
-          '/exploration',
+          '/exploration?sectorX=0&sectorY=0',
         );
 
-        await page
-          .getByTestId(
-            'sector-x-input',
-          )
-          .fill(
-            '0',
-          );
-
-        await page
-          .getByTestId(
-            'sector-y-input',
-          )
-          .fill(
-            '0',
-          );
+        await expect(
+          page.getByTestId(
+            'selected-sector-coordinates',
+          ),
+        ).toContainText(
+          'Sector (0, 0)',
+        );
 
         await page
           .getByTestId(
@@ -1437,7 +1429,7 @@ test.describe(
             'universe-seed-status',
           ),
         ).toContainText(
-          /Universo (?:creado y )?activado correctamente\./,
+          'Universo creado y activado correctamente.',
         );
 
         await page.goBack();
@@ -1458,6 +1450,91 @@ test.describe(
           page,
         ).toHaveURL(
           /\/exploration$/,
+        );
+
+        await expect(
+          page.getByTestId(
+            'exploration-open-galaxy-map-link',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'scan-sector-action',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        const navigateToSectorWithoutReload =
+          async (
+            sectorX:
+              number,
+            sectorY:
+              number,
+          ): Promise<void> => {
+            await page
+              .locator(
+                '[data-testid="exploration-open-galaxy-map-link"], [data-testid="exploration-select-another-sector-link"]',
+              )
+              .click();
+
+            await expect(
+              page,
+            ).toHaveURL(
+              /\/galaxy-map$/,
+            );
+
+            await page.evaluate(
+              ({
+                sectorX,
+                sectorY,
+              }) => {
+                const url =
+                  `/exploration?sectorX=${sectorX}&sectorY=${sectorY}`;
+
+                window.history.pushState(
+                  window.history.state,
+                  '',
+                  url,
+                );
+
+                window.dispatchEvent(
+                  new PopStateEvent(
+                    'popstate',
+                    {
+                      state:
+                        window.history.state,
+                    },
+                  ),
+                );
+              },
+              {
+                sectorX,
+                sectorY,
+              },
+            );
+
+            await expect(
+              page,
+            ).toHaveURL(
+              new RegExp(
+                `/exploration\\?sectorX=${sectorX}&sectorY=${sectorY}$`,
+              ),
+            );
+          };
+
+        await navigateToSectorWithoutReload(
+          0,
+          0,
+        );
+
+        await expect(
+          page.getByTestId(
+            'selected-sector-coordinates',
+          ),
+        ).toContainText(
+          'Sector (0, 0)',
         );
 
         await expect(
@@ -1519,24 +1596,6 @@ test.describe(
           ),
         ).toHaveCount(
           0,
-        );
-
-        const xInput =
-          page.getByTestId(
-            'sector-x-input',
-          );
-
-        const yInput =
-          page.getByTestId(
-            'sector-y-input',
-          );
-
-        await xInput.fill(
-          '0',
-        );
-
-        await yInput.fill(
-          '0',
         );
 
         await page
@@ -1671,11 +1730,19 @@ test.describe(
           ),
         ).toBeTruthy();
 
-        await page
-          .getByTestId(
+        await expect(
+          page.getByTestId(
+            'selected-sector-already-explored',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
             'scan-sector-action',
-          )
-          .click();
+          ),
+        ).toHaveCount(
+          0,
+        );
 
         await expect(
           result,
@@ -1694,14 +1761,6 @@ test.describe(
 
         await expect(
           page.getByTestId(
-            'exploration-reward-points',
-          ),
-        ).toContainText(
-          '+0 PD',
-        );
-
-        await expect(
-          page.getByTestId(
             'exploration-global-points',
           ),
         ).toHaveText(
@@ -1710,16 +1769,17 @@ test.describe(
           ),
         );
 
-        await expect(
-          page.getByTestId(
-            'exploration-galaxy-progress',
-          ),
-        ).toContainText(
-          '(+0)',
+        await navigateToSectorWithoutReload(
+          0,
+          2,
         );
 
-        await yInput.fill(
-          '2',
+        await expect(
+          page.getByTestId(
+            'selected-sector-coordinates',
+          ),
+        ).toContainText(
+          'Sector (0, 2)',
         );
 
         await page
@@ -1768,12 +1828,17 @@ test.describe(
           ),
         ).toBeTruthy();
 
-        await xInput.fill(
-          '86',
+        await navigateToSectorWithoutReload(
+          86,
+          86,
         );
 
-        await yInput.fill(
-          '86',
+        await expect(
+          page.getByTestId(
+            'selected-sector-coordinates',
+          ),
+        ).toContainText(
+          'Sector (86, 86)',
         );
 
         await page
@@ -1850,18 +1915,18 @@ test.describe(
           ),
         );
 
-        await page
-          .getByTestId(
-            'scan-sector-action',
-          )
-          .click();
+        await expect(
+          page.getByTestId(
+            'selected-sector-already-explored',
+          ),
+        ).toBeVisible();
 
         await expect(
           page.getByTestId(
-            'exploration-reward-points',
+            'scan-sector-action',
           ),
-        ).toContainText(
-          '+0 PD',
+        ).toHaveCount(
+          0,
         );
 
         await expect(
@@ -1872,28 +1937,26 @@ test.describe(
           'Evento no persistido',
         );
 
-        await xInput.fill(
-          String(
-            maxSectorCoordinate + 1,
-          ),
+        await navigateToSectorWithoutReload(
+          maxSectorCoordinate +
+            1,
+          0,
         );
-
-        await yInput.fill(
-          '0',
-        );
-
-        await page
-          .getByTestId(
-            'scan-sector-action',
-          )
-          .click();
 
         await expect(
           page.getByTestId(
-            'sector-scan-error',
+            'exploration-error',
           ),
         ).toContainText(
-          `Rango permitido: ${minSectorCoordinate}..${maxSectorCoordinate}`,
+          `Rango permitido: ${minSectorCoordinate}..${maxSectorCoordinate}.`,
+        );
+
+        await expect(
+          page.getByTestId(
+            'scan-sector-action',
+          ),
+        ).toHaveCount(
+          0,
         );
 
         await expect(

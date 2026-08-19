@@ -59,25 +59,17 @@ async function persistOneStaticDiscovery(
     ]
     of coordinates
   ) {
-    await page
-      .getByTestId(
-        'sector-x-input',
-      )
-      .fill(
-        String(
-          x,
-        ),
-      );
+    await page.goto(
+      `/exploration?sectorX=${x}&sectorY=${y}`,
+    );
 
-    await page
-      .getByTestId(
-        'sector-y-input',
-      )
-      .fill(
-        String(
-          y,
-        ),
-      );
+    await expect(
+      page.getByTestId(
+        'selected-sector-coordinates',
+      ),
+    ).toContainText(
+      `Sector (${x}, ${y})`,
+    );
 
     await page
       .getByTestId(
@@ -173,6 +165,119 @@ async function numericAttribute(
   );
 
   return value;
+}
+
+
+async function selectUnexploredSectorOnMap(
+  canvas:
+    import('@playwright/test').Locator,
+
+  scene:
+    import('@playwright/test').Locator,
+): Promise<{
+  readonly x:
+    string;
+
+  readonly y:
+    string;
+}> {
+
+  const bounds =
+    await canvas.boundingBox();
+
+  expect(
+    bounds,
+  ).not.toBeNull();
+
+  if (
+    bounds ===
+      null
+  ) {
+    throw new Error(
+      'Galactic map canvas has no measurable bounds.',
+    );
+  }
+
+  const candidates =
+    [
+      [0.32, 0.50],
+      [0.68, 0.50],
+      [0.50, 0.32],
+      [0.50, 0.68],
+      [0.36, 0.36],
+      [0.64, 0.36],
+      [0.36, 0.64],
+      [0.64, 0.64],
+    ] as const;
+
+  for (
+    const [
+      xRatio,
+      yRatio,
+    ]
+    of candidates
+  ) {
+    await canvas.click({
+      position: {
+        x:
+          bounds.width *
+          xRatio,
+        y:
+          bounds.height *
+          yRatio,
+      },
+    });
+
+    await scene.evaluate(
+      () =>
+        new Promise<void>(
+          (resolve) => {
+            requestAnimationFrame(
+              () => {
+                requestAnimationFrame(
+                  () => {
+                    resolve();
+                  },
+                );
+              },
+            );
+          },
+        ),
+    );
+
+    const explored =
+      await scene.getAttribute(
+        'data-selected-sector-explored',
+      );
+
+    const x =
+      await scene.getAttribute(
+        'data-selected-sector-x',
+      );
+
+    const y =
+      await scene.getAttribute(
+        'data-selected-sector-y',
+      );
+
+    if (
+      explored ===
+        'false' &&
+      x !==
+        null &&
+      y !==
+        null
+    ) {
+      return {
+        x,
+        y,
+      };
+    }
+  }
+
+  throw new Error(
+    'Could not select an unexplored galactic sector from the deterministic map viewport.',
+  );
 }
 
 
@@ -338,9 +443,17 @@ test.describe(
 
         await expect(
           page.getByTestId(
-            'scan-sector-action',
+            'exploration-open-galaxy-map-link',
           ),
         ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'sector-x-input',
+          ),
+        ).toHaveCount(
+          0,
+        );
 
         const persistedResultKind =
           await persistOneStaticDiscovery(
@@ -1376,7 +1489,7 @@ test.describe(
             0.001,
           );
 
-        // A hidden marker family must not steal the existing GPU-sample click.
+        // A hidden marker family must not steal the cartographic sector click.
         await page
           .getByTestId(
             markerLayer.testId,
@@ -1401,34 +1514,39 @@ test.describe(
           },
         });
 
-        const selection =
+        const sectorSelection =
           page.getByTestId(
-            'galactic-map-selection',
+            'galactic-map-sector-selection',
           );
 
         await expect(
-          selection,
+          sectorSelection,
         ).toBeVisible();
 
         await expect(
-          selection,
-        ).toContainText(
-          'SELECCIÓN VISUAL / GPU',
+          page.getByTestId(
+            'galactic-map-selection',
+          ),
+        ).toHaveCount(
+          0,
         );
 
-        await expect(
-          selection,
-        ).toContainText(
-          'No representa una estrella',
-        );
-
-        const selectedIndex =
+        const selectedSectorX =
           await scene.getAttribute(
-            'data-selected-sample-index',
+            'data-selected-sector-x',
+          );
+
+        const selectedSectorY =
+          await scene.getAttribute(
+            'data-selected-sector-y',
           );
 
         expect(
-          selectedIndex,
+          selectedSectorX,
+        ).not.toBeNull();
+
+        expect(
+          selectedSectorY,
         ).not.toBeNull();
 
         await page.mouse.move(
@@ -1459,8 +1577,16 @@ test.describe(
         await expect(
           scene,
         ).toHaveAttribute(
-          'data-selected-sample-index',
-          selectedIndex ??
+          'data-selected-sector-x',
+          selectedSectorX ??
+            '',
+        );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-selected-sector-y',
+          selectedSectorY ??
             '',
         );
 
@@ -1471,7 +1597,7 @@ test.describe(
           .click();
 
         await expect(
-          selection,
+          sectorSelection,
         ).toHaveCount(
           0,
         );
@@ -1521,7 +1647,7 @@ test.describe(
         ).toBeVisible();
 
         await expect(
-          selection,
+          sectorSelection,
         ).toHaveCount(
           0,
         );
@@ -1762,6 +1888,231 @@ test.describe(
           '/galaxy-map',
         );
       },
+    );
+
+    test(
+      'should select an unexplored real sector from the map, auto-scan it without a second click and return with refreshed coverage',
+      async ({
+        page,
+      }) => {
+        await ensureActiveUniverse(
+          page,
+        );
+
+        await page.goto(
+          '/galaxy-map',
+        );
+
+        const scene =
+          page.getByTestId(
+            'galactic-map-scene',
+          );
+
+        const canvas =
+          page.getByTestId(
+            'galactic-map-canvas',
+          );
+
+        await expect(
+          scene,
+        ).toHaveAttribute(
+          'data-render-state',
+          'ready',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-selection',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        const exploredBefore =
+          await numericAttribute(
+            scene,
+            'data-explored-sector-count',
+          );
+
+        const markersBefore =
+          await numericAttribute(
+            scene,
+            'data-discovery-marker-count',
+          );
+
+        const selected =
+          await selectUnexploredSectorOnMap(
+            canvas,
+            scene,
+          );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-sector-selection',
+          ),
+        ).toContainText(
+          `Sector (${selected.x}, ${selected.y})`,
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-selected-sector-state',
+          ),
+        ).toContainText(
+          'No explorado',
+        );
+
+        const exploreLink =
+          page.getByTestId(
+            'galactic-map-explore-sector-link',
+          );
+
+        await expect(
+          exploreLink,
+        ).toBeVisible();
+
+        await expect(
+          exploreLink,
+        ).toHaveAttribute(
+          'href',
+          new RegExp(
+            `/exploration\\?sectorX=${selected.x}&sectorY=${selected.y}&scan=1$`,
+          ),
+        );
+
+        await exploreLink.click();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          new RegExp(
+            `/exploration\\?sectorX=${selected.x}&sectorY=${selected.y}$`,
+          ),
+        );
+
+        await expect(
+          page.getByTestId(
+            'selected-sector-from-map',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'selected-sector-coordinates',
+          ),
+        ).toContainText(
+          `Sector (${selected.x}, ${selected.y})`,
+        );
+
+        await expect(
+          page.getByTestId(
+            'selected-sector-exploration-state',
+          ),
+        ).toContainText(
+          'Explorado',
+        );
+
+        await expect(
+          page.getByTestId(
+            'sector-x-input',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        await expect(
+          page.getByTestId(
+            'sector-y-input',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        await expect(
+          page.getByTestId(
+            'scan-sector-action',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        await expect(
+          page.getByTestId(
+            'exploration-reward',
+          ),
+        ).toBeVisible();
+
+        const resultKind =
+          await page
+            .getByTestId(
+              'exploration-result',
+            )
+            .getAttribute(
+              'data-result-kind',
+            );
+
+        await page
+          .getByTestId(
+            'exploration-return-map-link',
+          )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'galaxy-map-page',
+          ),
+        ).toBeVisible();
+
+        const refreshedScene =
+          page.getByTestId(
+            'galactic-map-scene',
+          );
+
+        await expect(
+          refreshedScene,
+        ).toHaveAttribute(
+          'data-render-state',
+          'ready',
+        );
+
+        await expect
+          .poll(
+            async () =>
+              numericAttribute(
+                refreshedScene,
+                'data-explored-sector-count',
+              ),
+          )
+          .toBe(
+            exploredBefore +
+              1,
+          );
+
+        const markersAfter =
+          await numericAttribute(
+            refreshedScene,
+            'data-discovery-marker-count',
+          );
+
+        if (
+          resultKind !==
+            'TRANSIENT_EVENT'
+        ) {
+          expect(
+            markersAfter,
+          ).toBe(
+            markersBefore +
+              1,
+          );
+        } else {
+          expect(
+            markersAfter,
+          ).toBe(
+            markersBefore,
+          );
+        }
+      },
+
     );
   },
 );

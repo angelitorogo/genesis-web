@@ -28,6 +28,7 @@ import {
 
 import {
   GalaxyLocator,
+  SectorLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
@@ -37,6 +38,15 @@ import {
 import {
   UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+
+
+import {
+  GalaxySectorCoordinates,
+} from '../../domain/sector/galaxy-sector-coordinates';
+
+import {
+  GalaxySectorKeyCodec,
+} from '../../domain/sector/galaxy-sector-key-codec';
 
 import {
   UniverseSeed,
@@ -481,6 +491,152 @@ describe(
         expect(
           calls,
         ).toHaveLength(0);
+      },
+    );
+
+    it(
+      'should accept one sector selected from the galactic map and scan it without manual coordinate input',
+      async () => {
+        const calls:
+          unknown[] =
+          [];
+
+        const facade =
+          configure(
+            successfulRuntime(
+              calls,
+            ),
+          );
+
+        await facade.refresh({
+          sectorX:
+            '4',
+          sectorY:
+            '-3',
+        });
+
+        expect(
+          facade.selectedSectorFromMap(),
+        ).toBe(
+          true,
+        );
+
+        expect(
+          facade.selectedSectorExplored(),
+        ).toBe(
+          false,
+        );
+
+        expect(
+          facade.selectedSector()
+            ?.coordinates,
+        ).toEqual(
+          new GalaxySectorCoordinates(
+            4,
+            -3,
+          ),
+        );
+
+        await facade
+          .scanSelectedSector();
+
+        expect(
+          calls,
+        ).toHaveLength(
+          1,
+        );
+
+        expect(
+          facade.scanResult()
+            ?.selection
+            .coordinates,
+        ).toEqual(
+          new GalaxySectorCoordinates(
+            4,
+            -3,
+          ),
+        );
+
+        expect(
+          facade.progressResult(),
+        ).not.toBeNull();
+      },
+    );
+
+    it(
+      'should identify a map-selected persisted sector as explored and refuse a duplicate map scan',
+      async () => {
+        const calls:
+          unknown[] =
+          [];
+
+        const bundle =
+          repositories();
+
+        const sectorCoordinates =
+          new GalaxySectorCoordinates(
+            4,
+            -3,
+          );
+
+        bundle.discoveryRepository
+          .getKnownDiscoveries =
+          async () => [
+            new KnownDiscovery(
+              generationKey,
+              new GalaxyLocator(
+                0n,
+              ),
+              DiscoveryState.DISCOVERED,
+            ),
+            new KnownDiscovery(
+              generationKey,
+              new SectorLocator(
+                0n,
+                GalaxySectorKeyCodec
+                  .encode(
+                    sectorCoordinates,
+                  ),
+              ),
+              DiscoveryState.DETECTED,
+            ),
+          ];
+
+        const facade =
+          configure(
+            successfulRuntime(
+              calls,
+            ),
+            bundle,
+          );
+
+        await facade.refresh({
+          sectorX:
+            '4',
+          sectorY:
+            '-3',
+        });
+
+        expect(
+          facade.selectedSectorExplored(),
+        ).toBe(
+          true,
+        );
+
+        await facade
+          .scanSelectedSector();
+
+        expect(
+          calls,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          facade.scanErrorMessage(),
+        ).toContain(
+          'ya está explorado',
+        );
       },
     );
 

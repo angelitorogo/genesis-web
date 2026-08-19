@@ -3,9 +3,12 @@ import {
   Component,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 
 import {
+  ActivatedRoute,
+  Router,
   RouterLink,
 } from '@angular/router';
 
@@ -82,12 +85,133 @@ export class Exploration
       ExplorationFacade,
     );
 
+  private readonly route =
+    inject(
+      ActivatedRoute,
+    );
+
+  private readonly router =
+    inject(
+      Router,
+    );
+
+  readonly autoScanPending =
+    signal<boolean>(
+      false,
+    );
+
   ngOnInit():
     void {
 
+    this.reload();
+  }
+
+  reload():
+    void {
+
     void this
-      .facade
-      .refresh();
+      .reloadFromRoute();
+  }
+
+  private async reloadFromRoute():
+    Promise<void> {
+
+    const queryParamMap =
+      this
+        .route
+        .snapshot
+        .queryParamMap;
+
+    const sectorX =
+      queryParamMap
+        .get(
+          'sectorX',
+        );
+
+    const sectorY =
+      queryParamMap
+        .get(
+          'sectorY',
+        );
+
+    const autoScanRequested =
+      queryParamMap
+        .get(
+          'scan',
+        ) ===
+      '1';
+
+    this.autoScanPending
+      .set(
+        autoScanRequested,
+      );
+
+    try {
+      await this
+        .facade
+        .refresh(
+          sectorX !==
+            null &&
+          sectorY !==
+            null
+            ? {
+                sectorX,
+                sectorY,
+              }
+            : null,
+        );
+
+      if (
+        !autoScanRequested
+      ) {
+        return;
+      }
+
+      await this
+        .router
+        .navigate(
+          [],
+          {
+            relativeTo:
+              this.route,
+
+            queryParams: {
+              scan:
+                null,
+            },
+
+            queryParamsHandling:
+              'merge',
+
+            replaceUrl:
+              true,
+          },
+        );
+
+      if (
+        !this
+          .facade
+          .selectedSectorFromMap() ||
+        this
+          .facade
+          .selectedSectorExplored() ||
+        this
+          .facade
+          .entry() ===
+          null
+      ) {
+        return;
+      }
+
+      await this
+        .facade
+        .scanSelectedSector();
+    } finally {
+      this.autoScanPending
+        .set(
+          false,
+        );
+    }
   }
 
   dismissExternalSearchOpportunityNotification():
@@ -144,20 +268,12 @@ export class Exploration
       .focusDetectedGalaxy();
   }
 
-  scanSector(
-    sectorX:
-      string,
+  scanSector():
+    void {
 
-    sectorY:
-      string,
-  ): void {
-
-    this
+    void this
       .facade
-      .scanSector(
-        sectorX,
-        sectorY,
-      );
+      .scanSelectedSector();
   }
 
   probabilityPercent(

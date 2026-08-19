@@ -27,6 +27,11 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  SectorLocator,
+} from '../../domain/generation/procedural-locator';
+
+
+import {
   ExternalGalaxyFocusEngine,
 } from '../../simulation/exploration/external-galaxy-focus-engine';
 
@@ -99,6 +104,14 @@ export interface ExternalGalaxySearchOpportunityNotification {
     bigint;
 }
 
+export interface ExplorationMapSectorSelectionRequest {
+  readonly sectorX:
+    string;
+
+  readonly sectorY:
+    string;
+}
+
 @Injectable({
   providedIn:
     'root',
@@ -143,6 +156,16 @@ export class ExplorationFacade {
   private readonly selectedSectorSignal =
     signal<ExplorationSectorSelection | null>(
       null,
+    );
+
+  private readonly selectedSectorFromMapSignal =
+    signal<boolean>(
+      false,
+    );
+
+  private readonly selectedSectorExploredSignal =
+    signal<boolean>(
+      false,
     );
 
   private readonly scanResultSignal =
@@ -238,6 +261,14 @@ export class ExplorationFacade {
 
   readonly selectedSector =
     this.selectedSectorSignal
+      .asReadonly();
+
+  readonly selectedSectorFromMap =
+    this.selectedSectorFromMapSignal
+      .asReadonly();
+
+  readonly selectedSectorExplored =
+    this.selectedSectorExploredSignal
       .asReadonly();
 
   readonly scanResult =
@@ -343,7 +374,11 @@ export class ExplorationFacade {
       },
     );
 
-  async refresh():
+  async refresh(
+    mapSector:
+      ExplorationMapSectorSelectionRequest | null =
+        null,
+  ):
     Promise<void> {
 
     const refreshId =
@@ -442,9 +477,87 @@ export class ExplorationFacade {
             0,
           );
 
+      let selectedSector =
+        centralSector;
+
+      let selectedSectorFromMap =
+        false;
+
+      let selectedSectorExplored =
+        false;
+
+      if (
+        mapSector !==
+          null
+      ) {
+        const sectorX =
+          parseIntegerCoordinate(
+            mapSector.sectorX,
+            'X',
+          );
+
+        const sectorY =
+          parseIntegerCoordinate(
+            mapSector.sectorY,
+            'Y',
+          );
+
+        assertWithinGrid(
+          sectorX,
+          centralSector.minCoordinate,
+          centralSector.maxCoordinate,
+        );
+
+        assertWithinGrid(
+          sectorY,
+          centralSector.minCoordinate,
+          centralSector.maxCoordinate,
+        );
+
+        selectedSector =
+          ExplorationSectorScanEngine
+            .prepareSector(
+              generationKey,
+              entry.activeGalaxyIndex,
+              sectorX,
+              sectorY,
+            );
+
+        selectedSectorFromMap =
+          true;
+
+        selectedSectorExplored =
+          knownDiscoveries
+            .some(
+              (
+                discovery,
+              ) =>
+                discovery.locator instanceof
+                  SectorLocator &&
+                discovery.locator
+                  .galaxyIndex ===
+                  selectedSector.galaxyIndex &&
+                discovery.locator
+                  .sectorKey ===
+                  selectedSector
+                    .sectorLocator
+                    .sectorKey,
+            );
+      }
+
       this.selectedSectorSignal
         .set(
-          centralSector,
+          selectedSector,
+        );
+
+      this.selectedSectorFromMapSignal
+        .set(
+          selectedSectorFromMap,
+        );
+
+      this.selectedSectorExploredSignal
+        .set(
+          selectedSectorExplored,
         );
 
       await this
@@ -815,6 +928,46 @@ export class ExplorationFacade {
     }
   }
 
+  async scanSelectedSector():
+    Promise<void> {
+
+    const selection =
+      this.selectedSector();
+
+    if (
+      selection ===
+        null ||
+      !this.selectedSectorFromMap()
+    ) {
+      this.scanErrorSignal
+        .set(
+          'Selecciona primero un sector desde el Mapa galáctico.',
+        );
+
+      return;
+    }
+
+    if (
+      this.selectedSectorExplored()
+    ) {
+      this.scanErrorSignal
+        .set(
+          'El sector seleccionado ya está explorado. Selecciona un sector no explorado desde el Mapa galáctico.',
+        );
+
+      return;
+    }
+
+    await this.scanSector(
+      selection
+        .sectorX
+        .toString(),
+      selection
+        .sectorY
+        .toString(),
+    );
+  }
+
   async scanSector(
     sectorXInput:
       string,
@@ -946,6 +1099,11 @@ export class ExplorationFacade {
         this.progressResultSignal
           .set(
             progress,
+          );
+
+        this.selectedSectorExploredSignal
+          .set(
+            true,
           );
 
         try {
@@ -1092,6 +1250,12 @@ export class ExplorationFacade {
 
     this.selectedSectorSignal
       .set(null);
+
+    this.selectedSectorFromMapSignal
+      .set(false);
+
+    this.selectedSectorExploredSignal
+      .set(false);
 
     this.scanResultSignal
       .set(null);

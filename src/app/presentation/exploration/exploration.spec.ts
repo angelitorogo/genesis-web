@@ -473,6 +473,90 @@ describe(
     );
 
     it(
+      'should render a map-selected sector read-only, remove manual X/Y inputs and expose the return-to-map loop',
+      async () => {
+        const {
+          fixture,
+          element,
+        } =
+          await fixtureAndElement();
+
+        await fixture
+          .componentInstance
+          .facade
+          .refresh({
+            sectorX:
+              '4',
+            sectorY:
+              '-3',
+          });
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="sector-x-input"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="sector-y-input"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="selected-sector-coordinates"]',
+          )?.textContent,
+        ).toContain(
+          'Sector (4, -3)',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="selected-sector-exploration-state"]',
+          )?.textContent,
+        ).toContain(
+          'No explorado',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="scan-sector-action"]',
+          ),
+        ).toBeTruthy();
+
+        await fixture
+          .componentInstance
+          .facade
+          .scanSelectedSector();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="selected-sector-exploration-state"]',
+          )?.textContent,
+        ).toContain(
+          'Explorado',
+        );
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="exploration-return-map-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toBe(
+          '/galaxy-map',
+        );
+      },
+    );
+
+    it(
       'should render the resolved result and point-9.5 reward/progress without changing scientific classification',
       async () => {
         const {

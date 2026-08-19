@@ -183,11 +183,12 @@
                 </span>
 
                 <p>
-                  Los puntos continúan siendo muestras de render. 10.9 mantiene la
-                  selección visible y el LOD de 10.8, pero el layout determinista, el
-                  índice espacial y la compactación de buffers se ejecutan en el Web
-                  Worker. El hilo principal conserva cámara, controles y Three.js, y
-                  nunca materializa por ello sistemas, estrellas físicas, planetas ni
+                  Los puntos continúan siendo muestras de render sin identidad
+                  física seleccionable. El clic cartográfico resuelve ahora el sector
+                  real bajo el cursor; el layout determinista, el índice espacial y la
+                  compactación de buffers siguen ejecutándose en el Web Worker. El
+                  hilo principal conserva cámara, controles y Three.js, sin
+                  materializar por ello sistemas, estrellas físicas, planetas ni
                   Ground Truth de sectores no solicitados.
                 </p>
               </div>
@@ -229,7 +230,8 @@
               galactocéntrico, azimut y región radial usando únicamente la cuadrícula
               conocida, su posición determinista dentro del sector y las fronteras
               visuales ya congeladas. Las muestras GPU siguen sin adquirir identidad
-              física. La región de habitabilidad galáctica mantiene el modelo V1
+              física y ya no se exponen como selección jugable: las zonas libres
+              resuelven direcciones de sector reales. La región de habitabilidad galáctica mantiene el modelo V1
               SPECULATIVE_SIMPLIFIED. El render 10.8 conserva la distribución visual
               determinista de 10.1. La ventana sectorial sigue calculándose para cobertura,
               selección y contexto espacial, pero la nube renderer-only permanece residente

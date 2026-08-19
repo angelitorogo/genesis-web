@@ -147,7 +147,7 @@
           <button
             type="button"
             class="exploration__action"
-            (click)="facade.refresh()"
+            (click)="reload()"
           >
             Reintentar
           </button>
@@ -697,7 +697,10 @@
                 </div>
 
                 <ol class="exploration__steps">
-                  <li class="exploration__step exploration__step--active">
+                  <li
+                    class="exploration__step"
+                    [class.exploration__step--active]="facade.selectedSectorFromMap()"
+                  >
                     <span>01</span>
 
                     <div>
@@ -706,7 +709,7 @@
                       </strong>
 
                       <small>
-                        Coordenadas seleccionadas
+                        {{ facade.selectedSectorFromMap() ? 'Seleccionado desde mapa' : 'Pendiente en mapa' }}
                       </small>
                     </div>
                   </li>
@@ -782,86 +785,140 @@
 
                 <div class="exploration__console">
                   <section class="exploration__selector">
-                    <div class="exploration__selector-heading">
-                      <div>
-                        <p class="exploration__label">
-                          01 / SELECCIÓN DE SECTOR
-                        </p>
+                    @if (facade.selectedSectorFromMap()) {
+                      <div class="exploration__selector-heading">
+                        <div>
+                          <p class="exploration__label">
+                            01 / SECTOR SELECCIONADO
+                          </p>
 
-                        <h4>
-                          Coordenadas galácticas
-                        </h4>
+                          <h4 data-testid="selected-sector-coordinates">
+                            Sector ({{ sector.sectorX }}, {{ sector.sectorY }})
+                          </h4>
+                        </div>
+
+                        <code
+                          data-testid="selected-sector-key"
+                        >
+                          KEY {{ sector.sectorLocator.sectorKey }}
+                        </code>
                       </div>
 
-                      <code
-                        data-testid="selected-sector-key"
+                      <dl
+                        class="exploration__scan-facts exploration__selected-sector-facts"
+                        data-testid="selected-sector-from-map"
                       >
-                        KEY {{ sector.sectorLocator.sectorKey }}
-                      </code>
-                    </div>
+                        <div>
+                          <dt>
+                            Eje X
+                          </dt>
 
-                    <div class="exploration__coordinates">
-                      <label>
-                        <span>
-                          EJE X
-                        </span>
+                          <dd data-testid="selected-sector-x">
+                            {{ sector.sectorX }}
+                          </dd>
+                        </div>
 
-                        <input
-                          #sectorXInput
-                          type="number"
-                          step="1"
-                          inputmode="numeric"
-                          [min]="sector.minCoordinate"
-                          [max]="sector.maxCoordinate"
-                          [value]="sector.sectorX"
-                          data-testid="sector-x-input"
+                        <div>
+                          <dt>
+                            Eje Y
+                          </dt>
+
+                          <dd data-testid="selected-sector-y">
+                            {{ sector.sectorY }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>
+                            Estado
+                          </dt>
+
+                          <dd data-testid="selected-sector-exploration-state">
+                            {{ facade.selectedSectorExplored() ? 'Explorado' : 'No explorado' }}
+                          </dd>
+                        </div>
+                      </dl>
+
+                      <p class="exploration__range-note">
+                        Seleccionado desde el Mapa galáctico. La exploración
+                        conserva la secuencia determinista 9.3 → 9.4 → 9.5 y no
+                        materializa Ground Truth oculto antes del escaneo.
+                      </p>
+
+                      @if (facade.selectedSectorExplored()) {
+                        <div
+                          class="exploration__scope"
+                          data-testid="selected-sector-already-explored"
                         >
-                      </label>
+                          <span aria-hidden="true">◇</span>
 
-                      <span
-                        class="exploration__coordinate-mark"
-                        aria-hidden="true"
+                          <p>
+                            Este sector ya está explorado. Selecciona una celda
+                            no explorada en el Mapa galáctico para iniciar un
+                            nuevo escaneo.
+                          </p>
+                        </div>
+
+                        <a
+                          class="exploration__action"
+                          routerLink="/galaxy-map"
+                          data-testid="exploration-select-another-sector-link"
+                        >
+                          ← Seleccionar otro sector
+                        </a>
+                      } @else if (autoScanPending()) {
+                        <div
+                          class="exploration__scope"
+                          data-testid="auto-scan-sector-pending"
+                          aria-live="polite"
+                        >
+                          <span aria-hidden="true">◎</span>
+
+                          <p>
+                            Escaneo automático en curso. Resolviendo el sector
+                            seleccionado desde el Mapa galáctico…
+                          </p>
+                        </div>
+                      } @else {
+                        <button
+                          type="button"
+                          class="exploration__scan"
+                          data-testid="scan-sector-action"
+                          [disabled]="facade.progressPending() || facade.externalSearchPending() || facade.externalFocusPending()"
+                          (click)="scanSector()"
+                        >
+                          <span aria-hidden="true">◎</span>
+
+                          {{ facade.progressPending() ? 'GUARDANDO...' : 'ESCANEAR SECTOR' }}
+                        </button>
+                      }
+                    } @else {
+                      <div class="exploration__selector-heading">
+                        <div>
+                          <p class="exploration__label">
+                            01 / SELECCIÓN DE SECTOR
+                          </p>
+
+                          <h4>
+                            Selecciona dónde explorar desde el mapa
+                          </h4>
+                        </div>
+                      </div>
+
+                      <p class="exploration__range-note">
+                        Las coordenadas manuales dejan de ser el flujo principal.
+                        Elige visualmente un sector de la galaxia activa y vuelve
+                        aquí con su identidad cartográfica ya resuelta.
+                      </p>
+
+                      <a
+                        class="exploration__action"
+                        routerLink="/galaxy-map"
+                        data-testid="exploration-open-galaxy-map-link"
                       >
-                        ×
-                      </span>
-
-                      <label>
-                        <span>
-                          EJE Y
-                        </span>
-
-                        <input
-                          #sectorYInput
-                          type="number"
-                          step="1"
-                          inputmode="numeric"
-                          [min]="sector.minCoordinate"
-                          [max]="sector.maxCoordinate"
-                          [value]="sector.sectorY"
-                          data-testid="sector-y-input"
-                        >
-                      </label>
-                    </div>
-
-                    <p class="exploration__range-note">
-                      Rango permitido en esta galaxia:
-                      <strong>
-                        {{ sector.minCoordinate }}…{{ sector.maxCoordinate }}
-                      </strong>
-                      en ambos ejes.
-                    </p>
-
-                    <button
-                      type="button"
-                      class="exploration__scan"
-                      data-testid="scan-sector-action"
-                      [disabled]="facade.progressPending() || facade.externalSearchPending() || facade.externalFocusPending()"
-                      (click)="scanSector(sectorXInput.value, sectorYInput.value)"
-                    >
-                      <span aria-hidden="true">◎</span>
-
-                      {{ facade.progressPending() ? 'GUARDANDO...' : 'ESCANEAR SECTOR' }}
-                    </button>
+                        Abrir Mapa galáctico →
+                      </a>
+                    }
 
                     @if (facade.scanErrorMessage()) {
                       <p
@@ -962,7 +1019,7 @@
                         </h4>
 
                         <p>
-                          Ajusta las coordenadas y ejecuta el escaneo para obtener una firma preliminar.
+                          Ejecuta el escaneo del sector seleccionado desde el Mapa galáctico para obtener una firma preliminar.
                         </p>
                       </div>
                     }
@@ -1162,6 +1219,14 @@
                           </dd>
                         </div>
                       </dl>
+
+                      <a
+                        class="exploration__action exploration__return-map"
+                        routerLink="/galaxy-map"
+                        data-testid="exploration-return-map-link"
+                      >
+                        ← Volver al Mapa galáctico
+                      </a>
                     </div>
                   </section>
                 }
