@@ -11,14 +11,48 @@ import {
 } from '../../domain/observation/observation-instrument';
 
 import {
+  type LeveledInstrumentObservationSession,
+} from '../../domain/observation/observation-instrument-capability';
+
+import {
   SpectroscopicEvidenceIndicator,
   SpectroscopicInterpretation,
   SpectroscopicSourceClassification,
 } from '../../domain/spectroscopy/spectroscopic-interpretation';
 
-import {
-  type SynthesizedSpectrum,
-} from '../../domain/spectroscopy/spectrum';
+export interface SpectroscopicInterpretationSample {
+  readonly wavelengthNanometers:
+    number;
+
+  readonly normalizedFlux:
+    number;
+}
+
+export interface SpectroscopicInterpretationInput {
+  readonly observationSession:
+    LeveledInstrumentObservationSession;
+
+  readonly minimumWavelengthNanometers:
+    number;
+
+  readonly maximumWavelengthNanometers:
+    number;
+
+  readonly sampleCount:
+    number;
+
+  readonly samples:
+    readonly SpectroscopicInterpretationSample[];
+
+  /**
+   * Optional point-13.7 instrument-dependent relative detectability floor.
+   *
+   * Idealized point-13.1 spectra omit it and therefore preserve the exact
+   * point-13.6 behavior. InstrumentalSpectrum supplies it.
+   */
+  readonly minimumDetectableNormalizedContrast?:
+    number;
+}
 
 const WINDOW_EPSILON_NANOMETERS =
   1e-9;
@@ -81,7 +115,7 @@ const KNOWN_NATURAL_FEATURES_NANOMETERS =
  * Pure point-13.6 interpretation of an already-synthesized spectrum.
  *
  * Architectural boundaries:
- * - consumes only SynthesizedSpectrum / observed spectral shape;
+ * - consumes only a structural spectral frame / observed spectral shape;
  * - does not inspect source Ground Truth objects;
  * - does not infer physical class from ProceduralLocator type;
  * - does not mutate point-8.9 ObservationClassification;
@@ -90,7 +124,9 @@ const KNOWN_NATURAL_FEATURES_NANOMETERS =
  * - biosignatures and technosignatures are candidate evidence only;
  * - no PRNG, I/O, persistence, PD or rendering.
  *
- * Instrument-dependent degradation and uncertainty remain point 13.7.
+ * Point 13.7 may now supply an InstrumentalSpectrum through the same
+ * structural input contract. Idealized point-13.1 spectra remain accepted for
+ * backwards-compatible simulation/regression use.
  */
 export class SpectroscopicInterpretationEngine {
 
@@ -101,7 +137,7 @@ export class SpectroscopicInterpretationEngine {
       UniverseGenerationKey,
 
     spectrum:
-      SynthesizedSpectrum,
+      SpectroscopicInterpretationInput,
   ): SpectroscopicInterpretation {
 
     if (
@@ -127,6 +163,28 @@ export class SpectroscopicInterpretationEngine {
       );
     }
 
+    const minimumDetectableNormalizedContrast =
+      spectrum
+        .minimumDetectableNormalizedContrast;
+
+    if (
+      minimumDetectableNormalizedContrast !==
+        undefined &&
+      (
+        !Number.isFinite(
+          minimumDetectableNormalizedContrast,
+        ) ||
+        minimumDetectableNormalizedContrast <
+          0 ||
+        minimumDetectableNormalizedContrast >
+          1
+      )
+    ) {
+      throw new RangeError(
+        'minimumDetectableNormalizedContrast must be finite and in [0, 1] when provided.',
+      );
+    }
+
     if (
       generationKey
         .generatorVersion ===
@@ -145,7 +203,7 @@ export class SpectroscopicInterpretationEngine {
 
   private static interpretV1(
     spectrum:
-      SynthesizedSpectrum,
+      SpectroscopicInterpretationInput,
   ): SpectroscopicInterpretation {
 
     const sourceClassification =
@@ -191,7 +249,7 @@ export class SpectroscopicInterpretationEngine {
 
 function classifySourceV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): SpectroscopicSourceClassification {
 
   if (
@@ -268,7 +326,7 @@ function classifySourceV1(
 
 function isActiveNucleusPatternV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): boolean {
 
   const ultravioletExcess =
@@ -305,7 +363,7 @@ function isActiveNucleusPatternV1(
 
 function isAtmosphericAbsorptionPatternV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): boolean {
 
   const contrasts = [
@@ -353,7 +411,7 @@ function isAtmosphericAbsorptionPatternV1(
 
 function isStellarPhotosphericPatternV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): boolean {
 
   const absorptionFeatures = [
@@ -398,7 +456,7 @@ function isStellarPhotosphericPatternV1(
 
 function isSupernovaRemnantShockPatternV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): boolean {
 
   return (
@@ -425,7 +483,7 @@ function isSupernovaRemnantShockPatternV1(
 
 function isNebularEmissionPatternV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): boolean {
 
   const hAlpha =
@@ -464,7 +522,7 @@ function isNebularEmissionPatternV1(
 
 function hasOxygenMethaneCandidateV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): boolean {
 
   const oxygenA =
@@ -488,20 +546,26 @@ function hasOxygenMethaneCandidateV1(
       120,
     );
 
+  const detectableContrast =
+    minimumDetectableContrastV1(
+      spectrum,
+      MIN_BIOSIGNATURE_BAND_CONTRAST,
+    );
+
   return (
     oxygenA >=
-      MIN_BIOSIGNATURE_BAND_CONTRAST &&
+      detectableContrast &&
     Math.max(
       methane1650,
       methane2300,
     ) >=
-      MIN_BIOSIGNATURE_BAND_CONTRAST
+      detectableContrast
   );
 }
 
 function hasNarrowIsolatedOpticalEmissionAnomalyV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): boolean {
 
   if (
@@ -603,7 +667,10 @@ function hasNarrowIsolatedOpticalEmissionAnomalyV1(
 
     if (
       prominence <
-      MIN_TECHNOSIGNATURE_PROMINENCE
+      minimumDetectableContrastV1(
+        spectrum,
+        MIN_TECHNOSIGNATURE_PROMINENCE,
+      )
     ) {
       continue;
     }
@@ -650,7 +717,7 @@ function hasNarrowIsolatedOpticalEmissionAnomalyV1(
 
 function firstBelowHalfMaximumLeftV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 
   peakIndex:
     number,
@@ -688,7 +755,7 @@ function firstBelowHalfMaximumLeftV1(
 
 function firstBelowHalfMaximumRightV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 
   peakIndex:
     number,
@@ -742,7 +809,7 @@ function isKnownNaturalFeatureV1(
 
 function matchesWindowV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 
   minimumWavelengthNanometers:
     number,
@@ -769,7 +836,7 @@ function matchesWindowV1(
 
 function emissionContrastV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 
   centerWavelengthNanometers:
     number,
@@ -819,7 +886,7 @@ function emissionContrastV1(
 
 function absorptionContrastV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 
   centerWavelengthNanometers:
     number,
@@ -869,7 +936,7 @@ function absorptionContrastV1(
 
 function containsWavelengthV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 
   wavelengthNanometers:
     number,
@@ -887,7 +954,7 @@ function containsWavelengthV1(
 
 function fluxAtV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 
   wavelengthNanometers:
     number,
@@ -943,7 +1010,7 @@ function fluxAtV1(
 
 function minimumSampleStepV1(
   spectrum:
-    SynthesizedSpectrum,
+    SpectroscopicInterpretationInput,
 ): number {
 
   let minimumStep =
@@ -973,6 +1040,22 @@ function minimumSampleStepV1(
   }
 
   return minimumStep;
+}
+
+function minimumDetectableContrastV1(
+  spectrum:
+    SpectroscopicInterpretationInput,
+
+  baselineThreshold:
+    number,
+): number {
+
+  return Math.max(
+    baselineThreshold,
+    spectrum
+      .minimumDetectableNormalizedContrast ??
+      0,
+  );
 }
 
 function average(
