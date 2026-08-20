@@ -19,6 +19,10 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
 import {
+  StarFormationActivity,
+} from '../../domain/galactic-object/star-formation-activity';
+
+import {
   GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -43,9 +47,14 @@ import {
 } from '../../simulation/galactic-object/hii-region-generator';
 
 import {
+  NebulaGenerator,
+} from '../../simulation/galactic-object/nebula-generator';
+
+import {
   ArchiveGalacticObjectCardAssembler,
   ArchiveGalacticObjectKnowledgeLevel,
   ArchiveGalacticObjectRenderKind,
+  ArchiveGalacticObjectRenderProfile,
 } from './archive-galactic-object-card';
 
 describe(
@@ -66,7 +75,7 @@ describe(
     );
 
     it(
-      'should keep DETECTED on the coarse point-9.4 family without resolving hidden physical Ground Truth',
+      'should keep DETECTED on the coarse point-9.4 family without materializing hidden physical properties',
       () => {
         const resolverSpy =
           vi.spyOn(
@@ -130,6 +139,544 @@ describe(
     );
 
     it(
+      'should preserve a LOW H II volume as an opaque visual profile at DETECTED without materializing H II physical properties',
+      () => {
+        const hiiGenerateSpy =
+          vi.spyOn(
+            HiiRegionGenerator,
+            'generate',
+          );
+
+        const card =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                0n,
+                123456789n,
+                11n,
+              ),
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DETECTED,
+            );
+
+        expect(
+          hiiGenerateSpy,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          card.scientificSubject,
+        ).toBeNull();
+
+        expect(
+          card.facts,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          card.render.variant,
+        ).toBeNull();
+
+        expect(
+          card.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_LOW_VOLUME,
+        );
+      },
+    );
+
+    it(
+      'should preserve the hidden LOW H II morphology at DISCOVERED without revealing activity or numeric facts',
+      () => {
+        const hiiGenerateSpy =
+          vi.spyOn(
+            HiiRegionGenerator,
+            'generate',
+          );
+
+        const card =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                0n,
+                123456789n,
+                11n,
+              ),
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DISCOVERED,
+            );
+
+        expect(
+          hiiGenerateSpy,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          card.scientificSubject,
+        ).toBe(
+          GalacticObjectScientificSubject
+            .HII_REGION,
+        );
+
+        expect(
+          card.render.variant,
+        ).toBeNull();
+
+        expect(
+          card.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_LOW_VOLUME,
+        );
+
+        expect(
+          card.facts,
+        ).toHaveLength(
+          0,
+        );
+      },
+    );
+
+
+    it(
+      'should preserve MODERATE H II as an opaque renderer profile before confirmation and reveal only the activity at CONFIRMED',
+      () => {
+        let locator:
+          GalacticObjectLocator | null =
+          null;
+
+        for (
+          let index =
+            0n;
+          index <
+            2_048n;
+          index +=
+            1n
+        ) {
+          const candidate =
+            new GalacticObjectLocator(
+              0n,
+              123456789n,
+              index,
+            );
+
+          if (
+            HiiRegionGenerator
+              .resolveActivity(
+                generationKey,
+                candidate,
+              ) ===
+            StarFormationActivity.MODERATE
+          ) {
+            locator =
+              candidate;
+
+            break;
+          }
+        }
+
+        if (
+          locator ===
+            null
+        ) {
+          throw new RangeError(
+            'Missing deterministic MODERATE H II representative for renderer-profile test.',
+          );
+        }
+
+        const detected =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DETECTED,
+            );
+
+        const catalogued =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CATALOGUED,
+            );
+
+        const confirmed =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CONFIRMED,
+            );
+
+        expect(
+          detected.render.variant,
+        ).toBeNull();
+
+        expect(
+          detected.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_MODERATE_VOLUME,
+        );
+
+        expect(
+          catalogued.render.variant,
+        ).toBeNull();
+
+        expect(
+          catalogued.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_MODERATE_VOLUME,
+        );
+
+        expect(
+          confirmed.render.variant,
+        ).toBe(
+          StarFormationActivity.MODERATE,
+        );
+
+        expect(
+          confirmed.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_MODERATE_VOLUME,
+        );
+      },
+    );
+
+    it(
+      'should preserve HIGH H II as an opaque renderer profile before confirmation and reveal only the activity at CONFIRMED',
+      () => {
+        let locator:
+          GalacticObjectLocator | null =
+          null;
+
+        for (
+          let index =
+            0n;
+          index <
+            2_048n;
+          index +=
+            1n
+        ) {
+          const candidate =
+            new GalacticObjectLocator(
+              0n,
+              123456789n,
+              index,
+            );
+
+          if (
+            HiiRegionGenerator
+              .resolveActivity(
+                generationKey,
+                candidate,
+              ) ===
+            StarFormationActivity.HIGH
+          ) {
+            locator =
+              candidate;
+
+            break;
+          }
+        }
+
+        if (
+          locator ===
+            null
+        ) {
+          throw new RangeError(
+            'Missing deterministic HIGH H II representative for renderer-profile test.',
+          );
+        }
+
+        const detected =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DETECTED,
+            );
+
+        const catalogued =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CATALOGUED,
+            );
+
+        const confirmed =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CONFIRMED,
+            );
+
+        expect(
+          detected.render.variant,
+        ).toBeNull();
+
+        expect(
+          detected.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_HIGH_VOLUME,
+        );
+
+        expect(
+          catalogued.render.variant,
+        ).toBeNull();
+
+        expect(
+          catalogued.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_HIGH_VOLUME,
+        );
+
+        expect(
+          confirmed.render.variant,
+        ).toBe(
+          StarFormationActivity.HIGH,
+        );
+
+        expect(
+          confirmed.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_HIGH_VOLUME,
+        );
+      },
+    );
+
+    it(
+      'should preserve INTENSE H II as an opaque renderer profile before confirmation and reveal only the activity at CONFIRMED',
+      () => {
+        let locator:
+          GalacticObjectLocator | null =
+          null;
+
+        for (
+          let index =
+            0n;
+          index <
+            2_048n;
+          index +=
+            1n
+        ) {
+          const candidate =
+            new GalacticObjectLocator(
+              0n,
+              123456789n,
+              index,
+            );
+
+          if (
+            HiiRegionGenerator
+              .resolveActivity(
+                generationKey,
+                candidate,
+              ) ===
+            StarFormationActivity.INTENSE
+          ) {
+            locator =
+              candidate;
+
+            break;
+          }
+        }
+
+        if (
+          locator ===
+            null
+        ) {
+          throw new RangeError(
+            'Missing deterministic INTENSE H II representative for renderer-profile test.',
+          );
+        }
+
+        const detected =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DETECTED,
+            );
+
+        const catalogued =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CATALOGUED,
+            );
+
+        const confirmed =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CONFIRMED,
+            );
+
+        expect(
+          detected.render.variant,
+        ).toBeNull();
+
+        expect(
+          detected.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_INTENSE_VOLUME,
+        );
+
+        expect(
+          catalogued.render.variant,
+        ).toBeNull();
+
+        expect(
+          catalogued.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_INTENSE_VOLUME,
+        );
+
+        expect(
+          confirmed.render.variant,
+        ).toBe(
+          StarFormationActivity.INTENSE,
+        );
+
+        expect(
+          confirmed.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_INTENSE_VOLUME,
+        );
+      },
+    );
+
+    it(
+      'should preserve a planetary volume as an opaque visual profile at DETECTED without materializing physical properties',
+      () => {
+        const generateSpy =
+          vi.spyOn(
+            NebulaGenerator,
+            'generate',
+          );
+
+        const resolveTypeSpy =
+          vi.spyOn(
+            NebulaGenerator,
+            'resolveType',
+          );
+
+        const card =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                0n,
+                123456789n,
+                10n,
+              ),
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DETECTED,
+            );
+
+        expect(
+          resolveTypeSpy,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          generateSpy,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          card.scientificSubject,
+        ).toBeNull();
+
+        expect(
+          card.facts,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          card.render.variant,
+        ).toBeNull();
+
+        expect(
+          card.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .PLANETARY_VOLUME,
+        );
+      },
+    );
+
+    it(
+      'should preserve the same hidden planetary render profile at DISCOVERED while subtype and numeric facts stay unavailable',
+      () => {
+        const generateSpy =
+          vi.spyOn(
+            NebulaGenerator,
+            'generate',
+          );
+
+        const card =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                0n,
+                123456789n,
+                10n,
+              ),
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.DISCOVERED,
+            );
+
+        expect(
+          generateSpy,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          card.render.variant,
+        ).toBeNull();
+
+        expect(
+          card.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .PLANETARY_VOLUME,
+        );
+
+        expect(
+          card.facts,
+        ).toHaveLength(
+          0,
+        );
+      },
+    );
+
+    it(
       'should expose HII identity at DISCOVERED without materializing numeric physical facts',
       () => {
         const hiiGenerateSpy =
@@ -176,6 +723,61 @@ describe(
         expect(
           hiiGenerateSpy,
         ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      'should keep the same LOW H II renderer profile at CATALOGUED and CONFIRMED while activity remains hidden until confirmation',
+      () => {
+        const locator =
+          new GalacticObjectLocator(
+            0n,
+            123456789n,
+            11n,
+          );
+
+        const catalogued =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CATALOGUED,
+            );
+
+        const confirmed =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              locator,
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CONFIRMED,
+            );
+
+        expect(
+          catalogued.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_LOW_VOLUME,
+        );
+
+        expect(
+          catalogued.render.variant,
+        ).toBeNull();
+
+        expect(
+          confirmed.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile
+            .HII_LOW_VOLUME,
+        );
+
+        expect(
+          confirmed.render.variant,
+        ).toBe(
+          StarFormationActivity
+            .LOW,
+        );
       },
     );
 

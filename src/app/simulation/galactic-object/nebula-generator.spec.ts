@@ -453,5 +453,67 @@ describe(
       },
       30_000,
     );
+    it(
+      'should resolve the frozen subtype discriminator without materializing a physical Nebula',
+      () => {
+        const vectors = [
+          [
+            3n,
+            NebulaType.EMISSION,
+          ],
+          [
+            8n,
+            NebulaType.REFLECTION,
+          ],
+          [
+            16n,
+            NebulaType.DARK,
+          ],
+          [
+            10n,
+            NebulaType.PLANETARY,
+          ],
+        ] as const;
+
+        for (
+          const [
+            index,
+            expectedType,
+          ]
+          of vectors
+        ) {
+          expect(
+            NebulaGenerator
+              .resolveType(
+                generationKey,
+                locator(
+                  index,
+                ),
+              ),
+          ).toBe(
+            expectedType,
+          );
+        }
+      },
+    );
+
+    it(
+      'should reject resolveType for a locator outside the canonical NEBULA family',
+      () => {
+        expect(
+          () =>
+            NebulaGenerator
+              .resolveType(
+                generationKey,
+                locator(
+                  7n,
+                ),
+              ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
   },
 );

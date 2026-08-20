@@ -235,6 +235,245 @@
               </div>
             </div>
           }
+
+          @if (isDarkNebulaSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="dark-nebula-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 nebulosas reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de nebulosas oscuras"
+              >
+                @for (
+                  sample of darkNebulaSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="dark-nebula-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar nebulosa oscura ' + sample.label"
+                    [attr.aria-pressed]="selectedDarkNebulaSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedDarkNebulaSampleIndex() === sample.index"
+                    (click)="selectDarkNebulaSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isPlanetaryNebulaSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="planetary-nebula-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 nebulosas reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de nebulosas planetarias"
+              >
+                @for (
+                  sample of planetaryNebulaSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="planetary-nebula-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar nebulosa planetaria ' + sample.label"
+                    [attr.aria-pressed]="selectedPlanetaryNebulaSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedPlanetaryNebulaSampleIndex() === sample.index"
+                    (click)="selectPlanetaryNebulaSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+
+          @if (isHiiLowSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="hii-low-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 regiones H II reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de regiones H II de actividad baja"
+              >
+                @for (
+                  sample of hiiLowSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="hii-low-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar región H II baja ' + sample.label"
+                    [attr.aria-pressed]="selectedHiiLowSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedHiiLowSampleIndex() === sample.index"
+                    (click)="selectHiiLowSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isHiiModerateSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="hii-moderate-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 regiones H II reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de regiones H II de actividad moderada"
+              >
+                @for (
+                  sample of hiiModerateSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="hii-moderate-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar región H II moderada ' + sample.label"
+                    [attr.aria-pressed]="selectedHiiModerateSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedHiiModerateSampleIndex() === sample.index"
+                    (click)="selectHiiModerateSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (isHiiHighSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="hii-high-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 regiones H II reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de regiones H II de actividad alta"
+              >
+                @for (
+                  sample of hiiHighSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="hii-high-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar región H II alta ' + sample.label"
+                    [attr.aria-pressed]="selectedHiiHighSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedHiiHighSampleIndex() === sample.index"
+                    (click)="selectHiiHighSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (isHiiIntenseSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="hii-intense-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 regiones H II reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de regiones H II de actividad intensa"
+              >
+                @for (
+                  sample of hiiIntenseSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="hii-intense-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar región H II intensa ' + sample.label"
+                    [attr.aria-pressed]="selectedHiiIntenseSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedHiiIntenseSampleIndex() === sample.index"
+                    (click)="selectHiiIntenseSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
       </section>
     }

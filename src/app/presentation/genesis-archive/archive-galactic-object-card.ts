@@ -109,6 +109,29 @@ export type ArchiveGalacticObjectRenderKind =
     keyof typeof ArchiveGalacticObjectRenderKind
   ];
 
+export const ArchiveGalacticObjectRenderProfile =
+  Object.freeze({
+    PLANETARY_VOLUME:
+      'PLANETARY_VOLUME',
+
+    HII_LOW_VOLUME:
+      'HII_LOW_VOLUME',
+
+    HII_MODERATE_VOLUME:
+      'HII_MODERATE_VOLUME',
+
+    HII_HIGH_VOLUME:
+      'HII_HIGH_VOLUME',
+
+    HII_INTENSE_VOLUME:
+      'HII_INTENSE_VOLUME',
+  } as const);
+
+export type ArchiveGalacticObjectRenderProfile =
+  typeof ArchiveGalacticObjectRenderProfile[
+    keyof typeof ArchiveGalacticObjectRenderProfile
+  ];
+
 export interface ArchiveGalacticObjectFact {
   readonly label:
     string;
@@ -120,9 +143,10 @@ export interface ArchiveGalacticObjectFact {
 /**
  * Point-12.8 renderer-only input.
  *
- * The descriptor deliberately contains only information already allowed by
- * DiscoveryState. In particular, DETECTED never resolves point-12.x physical
- * Ground Truth and DISCOVERED never receives numeric physical properties.
+ * The descriptor never exposes hidden numeric physical properties before
+ * CATALOGUED. `renderProfile` is an opaque visual-observation hint: it may keep
+ * an already-visible morphology stable across knowledge levels without
+ * exposing the scientific subtype through `variant`, labels or facts.
  */
 export interface ArchiveGalacticObjectRenderDescriptor {
   readonly kind:
@@ -139,6 +163,9 @@ export interface ArchiveGalacticObjectRenderDescriptor {
 
   readonly variant:
     string | null;
+
+  readonly renderProfile?:
+    ArchiveGalacticObjectRenderProfile | null;
 
   readonly scale:
     number;
@@ -230,6 +257,13 @@ export class ArchiveGalacticObjectCardAssembler {
         locator,
       );
 
+    const earlyRenderProfile =
+      renderProfileForObservedMorphology(
+        generationKey,
+        locator,
+        coarseFamily,
+      );
+
     if (
       state.code <
       DiscoveryState.DISCOVERED.code
@@ -262,6 +296,7 @@ export class ArchiveGalacticObjectCardAssembler {
             coarseFamily,
             renderSeed,
             title,
+            earlyRenderProfile,
           ),
       });
     }
@@ -343,6 +378,7 @@ export class ArchiveGalacticObjectCardAssembler {
             knowledgeLevel,
             renderSeed,
             title,
+            earlyRenderProfile,
           ),
       });
     }
@@ -488,6 +524,12 @@ function buildPhysicalCard(
             `Render procedural de ${title}`,
           variant:
             nebula.nebulaType,
+          renderProfile:
+            nebula.nebulaType ===
+              NebulaType.PLANETARY
+              ? ArchiveGalacticObjectRenderProfile
+                  .PLANETARY_VOLUME
+              : null,
           scale:
             normalizeLog(
               nebula.physicalProperties.radiusParsecs,
@@ -613,6 +655,24 @@ function buildPhysicalCard(
             confirmed
               ? hii.starFormationProfile.activity
               : null,
+          renderProfile:
+            hii.starFormationProfile.activity ===
+              StarFormationActivity.LOW
+              ? ArchiveGalacticObjectRenderProfile
+                  .HII_LOW_VOLUME
+              : hii.starFormationProfile.activity ===
+                    StarFormationActivity.MODERATE
+                ? ArchiveGalacticObjectRenderProfile
+                    .HII_MODERATE_VOLUME
+                : hii.starFormationProfile.activity ===
+                      StarFormationActivity.HIGH
+                  ? ArchiveGalacticObjectRenderProfile
+                      .HII_HIGH_VOLUME
+                  : hii.starFormationProfile.activity ===
+                        StarFormationActivity.INTENSE
+                    ? ArchiveGalacticObjectRenderProfile
+                        .HII_INTENSE_VOLUME
+                    : null,
           scale:
             normalizeLog(
               hii.hiiPhysicalProperties.radiusParsecs,
@@ -1103,6 +1163,87 @@ function physicalCard(
   });
 }
 
+function renderProfileForObservedMorphology(
+  generationKey:
+    UniverseGenerationKey,
+
+  locator:
+    GalacticObjectLocator,
+
+  coarseFamily:
+    GalacticObjectScientificSurveyFamily,
+): ArchiveGalacticObjectRenderProfile | null {
+
+  if (
+    coarseFamily !==
+      GalacticObjectScientificSurveyFamily.NEBULA
+  ) {
+    return null;
+  }
+
+  /*
+   * Resolve only discriminators, never numeric physical Ground Truth. The
+   * renderer profile is opaque: it preserves an already-observed morphology
+   * without exposing nebular subtype or H II activity through variant/facts.
+   */
+  const nebulaType =
+    NebulaGenerator
+      .resolveType(
+        generationKey,
+        locator,
+      );
+
+  if (
+    nebulaType ===
+      NebulaType.EMISSION
+  ) {
+    const activity =
+      HiiRegionGenerator
+        .resolveActivity(
+          generationKey,
+          locator,
+        );
+
+    if (
+      activity ===
+        StarFormationActivity.LOW
+    ) {
+      return ArchiveGalacticObjectRenderProfile
+        .HII_LOW_VOLUME;
+    }
+
+    if (
+      activity ===
+        StarFormationActivity.MODERATE
+    ) {
+      return ArchiveGalacticObjectRenderProfile
+        .HII_MODERATE_VOLUME;
+    }
+
+    if (
+      activity ===
+        StarFormationActivity.HIGH
+    ) {
+      return ArchiveGalacticObjectRenderProfile
+        .HII_HIGH_VOLUME;
+    }
+
+    if (
+      activity ===
+        StarFormationActivity.INTENSE
+    ) {
+      return ArchiveGalacticObjectRenderProfile
+        .HII_INTENSE_VOLUME;
+    }
+  }
+
+  return nebulaType ===
+    NebulaType.PLANETARY
+    ? ArchiveGalacticObjectRenderProfile
+        .PLANETARY_VOLUME
+    : null;
+}
+
 function createSignalRenderDescriptor(
   coarseFamily:
     GalacticObjectScientificSurveyFamily,
@@ -1112,6 +1253,10 @@ function createSignalRenderDescriptor(
 
   title:
     string,
+
+  renderProfile:
+    ArchiveGalacticObjectRenderProfile | null =
+      null,
 ): ArchiveGalacticObjectRenderDescriptor {
 
   const kind =
@@ -1132,6 +1277,7 @@ function createSignalRenderDescriptor(
       `Render procedural de señal no clasificada: ${title}`,
     variant:
       null,
+    renderProfile,
     scale:
       0.5,
     density:
@@ -1155,6 +1301,10 @@ function createIdentifiedRenderDescriptor(
 
   title:
     string,
+
+  renderProfile:
+    ArchiveGalacticObjectRenderProfile | null =
+      null,
 ): ArchiveGalacticObjectRenderDescriptor {
 
   return Object.freeze({
@@ -1165,6 +1315,7 @@ function createIdentifiedRenderDescriptor(
       `Render procedural científico de ${title}`,
     variant:
       null,
+    renderProfile,
     scale:
       0.5,
     density:

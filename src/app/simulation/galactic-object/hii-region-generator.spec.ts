@@ -1,4 +1,9 @@
 import {
+  afterEach,
+  vi,
+} from 'vitest';
+
+import {
   HiiRegion,
 } from '../../domain/galactic-object/hii-region';
 
@@ -48,6 +53,12 @@ describe(
     const canonicalSectorKey =
       123456789n;
 
+    afterEach(
+      () => {
+        vi.restoreAllMocks();
+      },
+    );
+
     function locator(
       galacticObjectIndex:
         bigint,
@@ -59,6 +70,95 @@ describe(
         galacticObjectIndex,
       );
     }
+
+    it(
+      'should resolve H II candidacy from the nebular subtype discriminator without materializing parent physical properties',
+      () => {
+        const generateSpy =
+          vi.spyOn(
+            NebulaGenerator,
+            'generate',
+          );
+
+        const resolveTypeSpy =
+          vi.spyOn(
+            NebulaGenerator,
+            'resolveType',
+          );
+
+        expect(
+          HiiRegionGenerator
+            .isHiiRegionLocator(
+              generationKey,
+              locator(
+                3n,
+              ),
+            ),
+        ).toBe(
+          true,
+        );
+
+        expect(
+          HiiRegionGenerator
+            .isHiiRegionLocator(
+              generationKey,
+              locator(
+                10n,
+              ),
+            ),
+        ).toBe(
+          false,
+        );
+
+        expect(
+          resolveTypeSpy,
+        ).toHaveBeenCalledTimes(
+          2,
+        );
+
+        expect(
+          generateSpy,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      'should resolve LOW activity without materializing parent or H II physical properties',
+      () => {
+        const generateSpy =
+          vi.spyOn(
+            NebulaGenerator,
+            'generate',
+          );
+
+        expect(
+          HiiRegionGenerator
+            .resolveActivity(
+              generationKey,
+              locator(
+                11n,
+              ),
+            ),
+        ).toBe(
+          StarFormationActivity
+            .LOW,
+        );
+
+        expect(
+          HiiRegionGenerator
+            .resolveActivity(
+              generationKey,
+              locator(
+                10n,
+              ),
+            ),
+        ).toBeNull();
+
+        expect(
+          generateSpy,
+        ).not.toHaveBeenCalled();
+      },
+    );
 
     it(
       'should materialize an H II region only from a qualifying emission nebula',

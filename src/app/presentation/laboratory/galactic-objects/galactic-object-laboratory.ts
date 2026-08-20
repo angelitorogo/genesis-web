@@ -128,6 +128,30 @@ export class GalacticObjectLaboratoryPage {
     GalacticObjectLaboratoryFixtures
       .reflectionNebulaSamples();
 
+  readonly darkNebulaSamples =
+    GalacticObjectLaboratoryFixtures
+      .darkNebulaSamples();
+
+  readonly planetaryNebulaSamples =
+    GalacticObjectLaboratoryFixtures
+      .planetaryNebulaSamples();
+
+  readonly hiiLowSamples =
+    GalacticObjectLaboratoryFixtures
+      .hiiLowSamples();
+
+  readonly hiiModerateSamples =
+    GalacticObjectLaboratoryFixtures
+      .hiiModerateSamples();
+
+  readonly hiiHighSamples =
+    GalacticObjectLaboratoryFixtures
+      .hiiHighSamples();
+
+  readonly hiiIntenseSamples =
+    GalacticObjectLaboratoryFixtures
+      .hiiIntenseSamples();
+
   readonly view =
     signal<LaboratoryView>(
       LaboratoryView
@@ -156,6 +180,36 @@ export class GalacticObjectLaboratoryPage {
       0,
     );
 
+  readonly selectedDarkNebulaSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedPlanetaryNebulaSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedHiiLowSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedHiiModerateSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedHiiHighSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedHiiIntenseSampleIndex =
+    signal(
+      0,
+    );
+
   readonly selectedEmissionNebulaSample =
     computed(
       () =>
@@ -173,6 +227,66 @@ export class GalacticObjectLaboratoryPage {
           .reflectionNebulaSamples[
             this
               .selectedReflectionNebulaSampleIndex()
+          ],
+    );
+
+  readonly selectedDarkNebulaSample =
+    computed(
+      () =>
+        this
+          .darkNebulaSamples[
+            this
+              .selectedDarkNebulaSampleIndex()
+          ],
+    );
+
+  readonly selectedPlanetaryNebulaSample =
+    computed(
+      () =>
+        this
+          .planetaryNebulaSamples[
+            this
+              .selectedPlanetaryNebulaSampleIndex()
+          ],
+    );
+
+  readonly selectedHiiLowSample =
+    computed(
+      () =>
+        this
+          .hiiLowSamples[
+            this
+              .selectedHiiLowSampleIndex()
+          ],
+    );
+
+  readonly selectedHiiModerateSample =
+    computed(
+      () =>
+        this
+          .hiiModerateSamples[
+            this
+              .selectedHiiModerateSampleIndex()
+          ],
+    );
+
+  readonly selectedHiiHighSample =
+    computed(
+      () =>
+        this
+          .hiiHighSamples[
+            this
+              .selectedHiiHighSampleIndex()
+          ],
+    );
+
+  readonly selectedHiiIntenseSample =
+    computed(
+      () =>
+        this
+          .hiiIntenseSamples[
+            this
+              .selectedHiiIntenseSampleIndex()
           ],
     );
 
@@ -198,6 +312,72 @@ export class GalacticObjectLaboratoryPage {
             .NEBULA_REFLECTION,
     );
 
+  readonly isDarkNebulaSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .NEBULA_DARK,
+    );
+
+  readonly isPlanetaryNebulaSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .NEBULA_PLANETARY,
+    );
+
+  readonly isHiiLowSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .HII_LOW,
+    );
+
+  readonly isHiiModerateSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .HII_MODERATE,
+    );
+
+  readonly isHiiHighSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .HII_HIGH,
+    );
+
+  readonly isHiiIntenseSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .HII_INTENSE,
+    );
+
   readonly selectedObjectCase =
     computed(
       () =>
@@ -209,6 +389,18 @@ export class GalacticObjectLaboratoryPage {
               .selectedEmissionNebulaSampleIndex(),
             this
               .selectedReflectionNebulaSampleIndex(),
+            this
+              .selectedDarkNebulaSampleIndex(),
+            this
+              .selectedPlanetaryNebulaSampleIndex(),
+            this
+              .selectedHiiLowSampleIndex(),
+            this
+              .selectedHiiModerateSampleIndex(),
+            this
+              .selectedHiiHighSampleIndex(),
+            this
+              .selectedHiiIntenseSampleIndex(),
           ),
     );
 
@@ -223,6 +415,18 @@ export class GalacticObjectLaboratoryPage {
               .selectedEmissionNebulaSampleIndex(),
             this
               .selectedReflectionNebulaSampleIndex(),
+            this
+              .selectedDarkNebulaSampleIndex(),
+            this
+              .selectedPlanetaryNebulaSampleIndex(),
+            this
+              .selectedHiiLowSampleIndex(),
+            this
+              .selectedHiiModerateSampleIndex(),
+            this
+              .selectedHiiHighSampleIndex(),
+            this
+              .selectedHiiIntenseSampleIndex(),
           ),
     );
 
@@ -343,6 +547,258 @@ export class GalacticObjectLaboratoryPage {
       .set(
         GalacticObjectLaboratoryCaseId
           .NEBULA_REFLECTION,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectDarkNebulaSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .darkNebulaSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported dark-nebula sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedDarkNebulaSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .NEBULA_DARK,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectPlanetaryNebulaSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .planetaryNebulaSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported planetary-nebula sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedPlanetaryNebulaSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .NEBULA_PLANETARY,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectHiiLowSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .hiiLowSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported LOW H II laboratory sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedHiiLowSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .HII_LOW,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectHiiModerateSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .hiiModerateSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported MODERATE H II laboratory sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedHiiModerateSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .HII_MODERATE,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectHiiHighSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .hiiHighSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported HIGH H II laboratory sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedHiiHighSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .HII_HIGH,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectHiiIntenseSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .hiiIntenseSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported INTENSE H II laboratory sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedHiiIntenseSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .HII_INTENSE,
       );
 
     this

@@ -41,7 +41,24 @@ import {
 import {
   ArchiveGalacticObjectKnowledgeLevel,
   ArchiveGalacticObjectRenderKind,
+  ArchiveGalacticObjectRenderProfile,
 } from '../../genesis-archive/archive-galactic-object-card';
+
+import {
+  HiiRegionLowRenderModelBuilder,
+} from '../../genesis-archive/hii-region-low-render-model';
+
+import {
+  HiiRegionModerateRenderModelBuilder,
+} from '../../genesis-archive/hii-region-moderate-render-model';
+
+import {
+  HiiRegionHighRenderModelBuilder,
+} from '../../genesis-archive/hii-region-high-render-model';
+
+import {
+  HiiRegionIntenseRenderModelBuilder,
+} from '../../genesis-archive/hii-region-intense-render-model';
 
 import {
   GalacticObjectLaboratoryCaseId,
@@ -760,6 +777,1175 @@ describe(
         expect(
           new Set(
             confirmedSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight deterministic real dark-nebula samples with O16 preserved as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .darkNebulaSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator
+            .galacticObjectIndex,
+        ).toBe(
+          16n,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            NebulaGenerator
+              .isNebulaLocator(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            true,
+          );
+
+          expect(
+            NebulaGenerator
+              .generate(
+                generationKey,
+                sample.locator,
+              )
+              .nebulaType,
+          ).toBe(
+            NebulaType
+              .DARK,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should give every dark-nebula sample a unique stable render seed across four knowledge levels',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .darkNebulaSamples();
+
+        const confirmedSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .NEBULA_DARK,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card
+                  .render
+                  .seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          confirmedSeeds.push(
+            seeds[
+              3
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            confirmedSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight deterministic real planetary-nebula samples with O10 preserved as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .planetaryNebulaSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator
+            .galacticObjectIndex,
+        ).toBe(
+          10n,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            NebulaGenerator
+              .isNebulaLocator(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            true,
+          );
+
+          expect(
+            NebulaGenerator
+              .generate(
+                generationKey,
+                sample.locator,
+              )
+              .nebulaType,
+          ).toBe(
+            NebulaType
+              .PLANETARY,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should give every planetary-nebula sample a unique stable render seed across four knowledge levels',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .planetaryNebulaSamples();
+
+        const confirmedSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .NEBULA_PLANETARY,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card
+                  .render
+                  .seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          confirmedSeeds.push(
+            seeds[
+              3
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            confirmedSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight deterministic real LOW H II samples while preserving the canonical LOW representative as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiLowSamples();
+
+        const canonicalLow =
+          GALACTIC_OBJECT_LABORATORY_CASES
+            .find(
+              candidate =>
+                candidate.id ===
+                GalacticObjectLaboratoryCaseId
+                  .HII_LOW,
+            );
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator,
+        ).toEqual(
+          canonicalLow
+            ?.locator,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            HiiRegionGenerator
+              .resolveActivity(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            StarFormationActivity
+              .LOW,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should expose the full eight-family V2.2 morphology set across the LOW H II laboratory samples',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiLowSamples();
+
+        const morphologies =
+          samples.map(
+            sample => {
+              const confirmed =
+                GalacticObjectLaboratoryFixtures
+                  .frames(
+                    GalacticObjectLaboratoryCaseId
+                      .HII_LOW,
+                    0,
+                    0,
+                    0,
+                    0,
+                    sample.index,
+                  )[
+                    3
+                  ];
+
+              return HiiRegionLowRenderModelBuilder
+                .build(
+                  confirmed
+                    .card
+                    .render,
+                )
+                .morphologyFamily;
+            },
+          );
+
+        expect(
+          new Set(
+            morphologies,
+          ),
+        ).toEqual(
+          new Set([
+            'BUBBLE',
+            'BLISTER',
+            'CLUMPY',
+            'COMPACT',
+            'PILLARS',
+            'FILAMENTARY',
+            'DOUBLE',
+            'BROKEN_SHELL',
+          ]),
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should keep one unique LOW H II render seed and HII_LOW_VOLUME profile across the four knowledge projections of every sample',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiLowSamples();
+
+        const allSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .HII_LOW,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card.render.seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          for (
+            const frame
+            of frames
+          ) {
+            expect(
+              frame.card.render.renderProfile,
+            ).toBe(
+              ArchiveGalacticObjectRenderProfile
+                .HII_LOW_VOLUME,
+            );
+          }
+
+          expect(
+            frames[
+              0
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              1
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              2
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              3
+            ].card.render.variant,
+          ).toBe(
+            StarFormationActivity
+              .LOW,
+          );
+
+          allSeeds.push(
+            seeds[
+              0
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            allSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight deterministic real MODERATE H II samples while preserving the canonical MODERATE representative as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiModerateSamples();
+
+        const canonicalModerate =
+          GALACTIC_OBJECT_LABORATORY_CASES
+            .find(
+              candidate =>
+                candidate.id ===
+                GalacticObjectLaboratoryCaseId
+                  .HII_MODERATE,
+            );
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator,
+        ).toEqual(
+          canonicalModerate
+            ?.locator,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            HiiRegionGenerator
+              .resolveActivity(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            StarFormationActivity
+              .MODERATE,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should expose all eight renderer morphology families across the MODERATE H II laboratory samples',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiModerateSamples();
+
+        const morphologies =
+          samples.map(
+            sample => {
+              const confirmed =
+                GalacticObjectLaboratoryFixtures
+                  .frames(
+                    GalacticObjectLaboratoryCaseId
+                      .HII_MODERATE,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    sample.index,
+                  )[
+                    3
+                  ];
+
+              return HiiRegionModerateRenderModelBuilder
+                .build(
+                  confirmed
+                    .card
+                    .render,
+                )
+                .morphologyFamily;
+            },
+          );
+
+        expect(
+          new Set(
+            morphologies,
+          ),
+        ).toEqual(
+          new Set([
+            'BUBBLE',
+            'BLISTER',
+            'CLUMPY',
+            'COMPACT',
+            'PILLARS',
+            'FILAMENTARY',
+            'DOUBLE',
+            'BROKEN_SHELL',
+          ]),
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should keep one unique MODERATE H II render seed and HII_MODERATE_VOLUME profile across the four knowledge projections of every sample',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiModerateSamples();
+
+        const allSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .HII_MODERATE,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card.render.seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          for (
+            const frame
+            of frames
+          ) {
+            expect(
+              frame.card.render.renderProfile,
+            ).toBe(
+              ArchiveGalacticObjectRenderProfile
+                .HII_MODERATE_VOLUME,
+            );
+          }
+
+          expect(
+            frames[
+              0
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              1
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              2
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              3
+            ].card.render.variant,
+          ).toBe(
+            StarFormationActivity
+              .MODERATE,
+          );
+
+          allSeeds.push(
+            seeds[
+              0
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            allSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight deterministic real HIGH H II samples while preserving the canonical HIGH representative as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiHighSamples();
+
+        const canonicalHigh =
+          GALACTIC_OBJECT_LABORATORY_CASES
+            .find(
+              candidate =>
+                candidate.id ===
+                GalacticObjectLaboratoryCaseId
+                  .HII_HIGH,
+            );
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator,
+        ).toEqual(
+          canonicalHigh
+            ?.locator,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            HiiRegionGenerator
+              .resolveActivity(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            StarFormationActivity
+              .HIGH,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should expose all eight renderer morphology families across the HIGH H II laboratory samples',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiHighSamples();
+
+        const morphologies =
+          samples.map(
+            sample => {
+              const confirmed =
+                GalacticObjectLaboratoryFixtures
+                  .frames(
+                    GalacticObjectLaboratoryCaseId
+                      .HII_HIGH,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    sample.index,
+                  )[
+                    3
+                  ];
+
+              return HiiRegionHighRenderModelBuilder
+                .build(
+                  confirmed
+                    .card
+                    .render,
+                )
+                .morphologyFamily;
+            },
+          );
+
+        expect(
+          new Set(
+            morphologies,
+          ),
+        ).toEqual(
+          new Set([
+            'BUBBLE',
+            'BLISTER',
+            'CLUMPY',
+            'COMPACT',
+            'PILLARS',
+            'FILAMENTARY',
+            'DOUBLE',
+            'BROKEN_SHELL',
+          ]),
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should keep one unique HIGH H II render seed and HII_HIGH_VOLUME profile across the four knowledge projections of every sample',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiHighSamples();
+
+        const allSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .HII_HIGH,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card.render.seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          for (
+            const frame
+            of frames
+          ) {
+            expect(
+              frame.card.render.renderProfile,
+            ).toBe(
+              ArchiveGalacticObjectRenderProfile
+                .HII_HIGH_VOLUME,
+            );
+          }
+
+          expect(
+            frames[
+              0
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              1
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              2
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              3
+            ].card.render.variant,
+          ).toBe(
+            StarFormationActivity
+              .HIGH,
+          );
+
+          allSeeds.push(
+            seeds[
+              0
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            allSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight deterministic real INTENSE H II samples while preserving the canonical INTENSE representative as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiIntenseSamples();
+
+        const canonicalIntense =
+          GALACTIC_OBJECT_LABORATORY_CASES
+            .find(
+              candidate =>
+                candidate.id ===
+                GalacticObjectLaboratoryCaseId
+                  .HII_INTENSE,
+            );
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator,
+        ).toEqual(
+          canonicalIntense
+            ?.locator,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            HiiRegionGenerator
+              .resolveActivity(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            StarFormationActivity
+              .INTENSE,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should expose all eight renderer morphology families across the INTENSE H II laboratory samples',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiIntenseSamples();
+
+        const morphologies =
+          samples.map(
+            sample => {
+              const confirmed =
+                GalacticObjectLaboratoryFixtures
+                  .frames(
+                    GalacticObjectLaboratoryCaseId
+                      .HII_INTENSE,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    sample.index,
+                  )[
+                    3
+                  ];
+
+              return HiiRegionIntenseRenderModelBuilder
+                .build(
+                  confirmed
+                    .card
+                    .render,
+                )
+                .morphologyFamily;
+            },
+          );
+
+        expect(
+          new Set(
+            morphologies,
+          ),
+        ).toEqual(
+          new Set([
+            'BUBBLE',
+            'BLISTER',
+            'CLUMPY',
+            'COMPACT',
+            'PILLARS',
+            'FILAMENTARY',
+            'DOUBLE',
+            'BROKEN_SHELL',
+          ]),
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should keep one unique INTENSE H II render seed and HII_INTENSE_VOLUME profile across the four knowledge projections of every sample',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .hiiIntenseSamples();
+
+        const allSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .HII_INTENSE,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card.render.seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          for (
+            const frame
+            of frames
+          ) {
+            expect(
+              frame.card.render.renderProfile,
+            ).toBe(
+              ArchiveGalacticObjectRenderProfile
+                .HII_INTENSE_VOLUME,
+            );
+          }
+
+          expect(
+            frames[
+              0
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              1
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              2
+            ].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[
+              3
+            ].card.render.variant,
+          ).toBe(
+            StarFormationActivity
+              .INTENSE,
+          );
+
+          allSeeds.push(
+            seeds[
+              0
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            allSeeds,
           ).size,
         ).toBe(
           8,

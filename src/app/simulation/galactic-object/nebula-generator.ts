@@ -157,6 +157,55 @@ export class NebulaGenerator {
     );
   }
 
+  /**
+   * Resolve only the deterministic V1 nebular subtype discriminator.
+   *
+   * This does not materialize NebulaPhysicalProperties and exists so the
+   * observation renderer may preserve an already-observable morphology before
+   * the scientific subtype label itself is authorized.
+   */
+  static resolveType(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      GalacticObjectLocator,
+  ): NebulaTypeValue {
+
+    if (
+      generationKey
+        .generatorVersion !==
+      GeneratorVersion.V1
+    ) {
+      throw new RangeError(
+        `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+      );
+    }
+
+    if (
+      !this.isNebulaLocator(
+        generationKey,
+        locator,
+      )
+    ) {
+      throw new RangeError(
+        'NebulaGenerator.resolveType requires a GalacticObjectLocator from the canonical point-9.4 NEBULA family.',
+      );
+    }
+
+    const targetSeed =
+      ProceduralTargetResolver
+        .resolveTargetSeed(
+          generationKey,
+          locator,
+        );
+
+    return resolveTypeV1(
+      targetSeed
+        .normalizedValue,
+    );
+  }
+
   static generate(
     generationKey:
       UniverseGenerationKey,
@@ -201,9 +250,9 @@ export class NebulaGenerator {
         );
 
     const nebulaType =
-      resolveTypeV1(
-        targetSeed
-          .normalizedValue,
+      this.resolveType(
+        generationKey,
+        locator,
       );
 
     const profile =

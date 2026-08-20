@@ -60,6 +60,26 @@ import {
   type ArchiveGalacticObjectCardModel,
 } from '../../genesis-archive/archive-galactic-object-card';
 
+import {
+  HiiRegionLowRenderModelBuilder,
+  type HiiRegionLowMorphologyFamily,
+} from '../../genesis-archive/hii-region-low-render-model';
+
+import {
+  HiiRegionModerateRenderModelBuilder,
+  type HiiRegionModerateMorphologyFamily,
+} from '../../genesis-archive/hii-region-moderate-render-model';
+
+import {
+  HiiRegionHighRenderModelBuilder,
+  type HiiRegionHighMorphologyFamily,
+} from '../../genesis-archive/hii-region-high-render-model';
+
+import {
+  HiiRegionIntenseRenderModelBuilder,
+  type HiiRegionIntenseMorphologyFamily,
+} from '../../genesis-archive/hii-region-intense-render-model';
+
 export const GalacticObjectLaboratoryGroup =
   Object.freeze({
     NEBULAE:
@@ -209,6 +229,72 @@ export interface ReflectionNebulaLaboratorySample {
     GalacticObjectLocator;
 }
 
+export interface DarkNebulaLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
+export interface PlanetaryNebulaLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
+export interface HiiLowLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
+export interface HiiModerateLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
+export interface HiiHighLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
+export interface HiiIntenseLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
 export const GALACTIC_OBJECT_LABORATORY_STATES:
   readonly GalacticObjectLaboratoryState[] =
   Object.freeze([
@@ -263,12 +349,54 @@ const EMISSION_NEBULA_SAMPLE_COUNT =
 const REFLECTION_NEBULA_SAMPLE_COUNT =
   8;
 
+const DARK_NEBULA_SAMPLE_COUNT =
+  8;
+
+const PLANETARY_NEBULA_SAMPLE_COUNT =
+  8;
+
+const HII_LOW_SAMPLE_COUNT =
+  8;
+
+const HII_MODERATE_SAMPLE_COUNT =
+  8;
+
+const HII_HIGH_SAMPLE_COUNT =
+  8;
+
+const HII_INTENSE_SAMPLE_COUNT =
+  8;
+
 let cachedEmissionNebulaSamples:
   readonly EmissionNebulaLaboratorySample[] | null =
     null;
 
 let cachedReflectionNebulaSamples:
   readonly ReflectionNebulaLaboratorySample[] | null =
+    null;
+
+let cachedDarkNebulaSamples:
+  readonly DarkNebulaLaboratorySample[] | null =
+    null;
+
+let cachedPlanetaryNebulaSamples:
+  readonly PlanetaryNebulaLaboratorySample[] | null =
+    null;
+
+let cachedHiiLowSamples:
+  readonly HiiLowLaboratorySample[] | null =
+    null;
+
+let cachedHiiModerateSamples:
+  readonly HiiModerateLaboratorySample[] | null =
+    null;
+
+let cachedHiiHighSamples:
+  readonly HiiHighLaboratorySample[] | null =
+    null;
+
+let cachedHiiIntenseSamples:
+  readonly HiiIntenseLaboratorySample[] | null =
     null;
 
 let cachedHiiRepresentatives:
@@ -331,6 +459,114 @@ export class GalacticObjectLaboratoryFixtures {
     return cachedReflectionNebulaSamples;
   }
 
+  static darkNebulaSamples():
+    readonly DarkNebulaLaboratorySample[] {
+
+    if (
+      cachedDarkNebulaSamples !==
+        null
+    ) {
+      return cachedDarkNebulaSamples;
+    }
+
+    cachedDarkNebulaSamples =
+      Object.freeze(
+        buildDarkNebulaSamplesV1(),
+      );
+
+    return cachedDarkNebulaSamples;
+  }
+
+  static planetaryNebulaSamples():
+    readonly PlanetaryNebulaLaboratorySample[] {
+
+    if (
+      cachedPlanetaryNebulaSamples !==
+        null
+    ) {
+      return cachedPlanetaryNebulaSamples;
+    }
+
+    cachedPlanetaryNebulaSamples =
+      Object.freeze(
+        buildPlanetaryNebulaSamplesV1(),
+      );
+
+    return cachedPlanetaryNebulaSamples;
+  }
+
+  static hiiLowSamples():
+    readonly HiiLowLaboratorySample[] {
+
+    if (
+      cachedHiiLowSamples !==
+        null
+    ) {
+      return cachedHiiLowSamples;
+    }
+
+    cachedHiiLowSamples =
+      Object.freeze(
+        buildHiiLowSamplesV1(),
+      );
+
+    return cachedHiiLowSamples;
+  }
+
+  static hiiModerateSamples():
+    readonly HiiModerateLaboratorySample[] {
+
+    if (
+      cachedHiiModerateSamples !==
+        null
+    ) {
+      return cachedHiiModerateSamples;
+    }
+
+    cachedHiiModerateSamples =
+      Object.freeze(
+        buildHiiModerateSamplesV1(),
+      );
+
+    return cachedHiiModerateSamples;
+  }
+
+  static hiiHighSamples():
+    readonly HiiHighLaboratorySample[] {
+
+    if (
+      cachedHiiHighSamples !==
+        null
+    ) {
+      return cachedHiiHighSamples;
+    }
+
+    cachedHiiHighSamples =
+      Object.freeze(
+        buildHiiHighSamplesV1(),
+      );
+
+    return cachedHiiHighSamples;
+  }
+
+  static hiiIntenseSamples():
+    readonly HiiIntenseLaboratorySample[] {
+
+    if (
+      cachedHiiIntenseSamples !==
+        null
+    ) {
+      return cachedHiiIntenseSamples;
+    }
+
+    cachedHiiIntenseSamples =
+      Object.freeze(
+        buildHiiIntenseSamplesV1(),
+      );
+
+    return cachedHiiIntenseSamples;
+  }
+
   static caseDefinition(
     caseId:
       GalacticObjectLaboratoryCaseId,
@@ -339,6 +575,24 @@ export class GalacticObjectLaboratoryFixtures {
       0,
 
     reflectionSampleIndex =
+      0,
+
+    darkSampleIndex =
+      0,
+
+    planetarySampleIndex =
+      0,
+
+    hiiLowSampleIndex =
+      0,
+
+    hiiModerateSampleIndex =
+      0,
+
+    hiiHighSampleIndex =
+      0,
+
+    hiiIntenseSampleIndex =
       0,
   ): GalacticObjectLaboratoryCase {
 
@@ -429,6 +683,216 @@ export class GalacticObjectLaboratoryFixtures {
       );
     }
 
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .NEBULA_DARK
+    ) {
+      const sample =
+        this
+          .darkNebulaSamples()[
+            darkSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported dark-nebula laboratory sample index: ${darkSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .NEBULA_PLANETARY
+    ) {
+      const sample =
+        this
+          .planetaryNebulaSamples()[
+            planetarySampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported planetary-nebula laboratory sample index: ${planetarySampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .HII_LOW
+    ) {
+      const sample =
+        this
+          .hiiLowSamples()[
+            hiiLowSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported LOW H II laboratory sample index: ${hiiLowSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .HII_MODERATE
+    ) {
+      const sample =
+        this
+          .hiiModerateSamples()[
+            hiiModerateSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported MODERATE H II laboratory sample index: ${hiiModerateSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .HII_HIGH
+    ) {
+      const sample =
+        this
+          .hiiHighSamples()[
+            hiiHighSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported HIGH H II laboratory sample index: ${hiiHighSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .HII_INTENSE
+    ) {
+      const sample =
+        this
+          .hiiIntenseSamples()[
+            hiiIntenseSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported INTENSE H II laboratory sample index: ${hiiIntenseSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
     return caseDefinition;
   }
 
@@ -441,6 +905,24 @@ export class GalacticObjectLaboratoryFixtures {
 
     reflectionSampleIndex =
       0,
+
+    darkSampleIndex =
+      0,
+
+    planetarySampleIndex =
+      0,
+
+    hiiLowSampleIndex =
+      0,
+
+    hiiModerateSampleIndex =
+      0,
+
+    hiiHighSampleIndex =
+      0,
+
+    hiiIntenseSampleIndex =
+      0,
   ): readonly GalacticObjectLaboratoryFrame[] {
 
     const caseDefinition =
@@ -448,6 +930,12 @@ export class GalacticObjectLaboratoryFixtures {
         caseId,
         emissionSampleIndex,
         reflectionSampleIndex,
+        darkSampleIndex,
+        planetarySampleIndex,
+        hiiLowSampleIndex,
+        hiiModerateSampleIndex,
+        hiiHighSampleIndex,
+        hiiIntenseSampleIndex,
       );
 
     return Object.freeze(
@@ -469,6 +957,787 @@ export class GalacticObjectLaboratoryFixtures {
             }),
         ),
     );
+  }
+}
+
+function buildHiiModerateSamplesV1():
+  HiiModerateLaboratorySample[] {
+
+  const primary =
+    hiiRepresentativesV1()
+      .get(
+        StarFormationActivity
+          .MODERATE,
+      );
+
+  if (
+    primary ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 MODERATE H II representative.',
+    );
+  }
+
+  const primaryMorphology =
+    hiiModerateMorphologyFamilyV1(
+      primary,
+    );
+
+  const selected =
+    new Map<
+      HiiRegionModerateMorphologyFamily,
+      GalacticObjectLocator
+    >();
+
+  selected.set(
+    primaryMorphology,
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      65_536n &&
+    selected.size <
+      HII_MODERATE_SAMPLE_COUNT;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        NEBULA_SECTOR_KEY,
+        index,
+      );
+
+    if (
+      HiiRegionGenerator
+        .resolveActivity(
+          GENERATION_KEY,
+          locator,
+        ) !==
+      StarFormationActivity
+        .MODERATE
+    ) {
+      continue;
+    }
+
+    const morphology =
+      hiiModerateMorphologyFamilyV1(
+        locator,
+      );
+
+    if (
+      selected.has(
+        morphology,
+      )
+    ) {
+      continue;
+    }
+
+    selected.set(
+      morphology,
+      locator,
+    );
+  }
+
+  if (
+    selected.size !==
+      HII_MODERATE_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The visual laboratory found ${selected.size}/${HII_MODERATE_SAMPLE_COUNT} distinct MODERATE H II morphology families.`,
+    );
+  }
+
+  const orderedLocators =
+    [
+      primary,
+      ...Array.from(
+        selected.values(),
+      ).filter(
+        locator =>
+          locator.galacticObjectIndex !==
+          primary.galacticObjectIndex,
+      ),
+    ];
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function hiiModerateMorphologyFamilyV1(
+  locator:
+    GalacticObjectLocator,
+): HiiRegionModerateMorphologyFamily {
+
+  const confirmed =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.NEBULA,
+        DiscoveryState.CONFIRMED,
+      );
+
+  return HiiRegionModerateRenderModelBuilder
+    .build(
+      confirmed.render,
+    )
+    .morphologyFamily;
+}
+
+function buildHiiHighSamplesV1():
+  HiiHighLaboratorySample[] {
+
+  const primary =
+    hiiRepresentativesV1()
+      .get(
+        StarFormationActivity
+          .HIGH,
+      );
+
+  if (
+    primary ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 HIGH H II representative.',
+    );
+  }
+
+  const primaryMorphology =
+    hiiHighMorphologyFamilyV1(
+      primary,
+    );
+
+  const selected =
+    new Map<
+      HiiRegionHighMorphologyFamily,
+      GalacticObjectLocator
+    >();
+
+  selected.set(
+    primaryMorphology,
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      65_536n &&
+    selected.size <
+      HII_HIGH_SAMPLE_COUNT;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        NEBULA_SECTOR_KEY,
+        index,
+      );
+
+    if (
+      HiiRegionGenerator
+        .resolveActivity(
+          GENERATION_KEY,
+          locator,
+        ) !==
+      StarFormationActivity
+        .HIGH
+    ) {
+      continue;
+    }
+
+    const morphology =
+      hiiHighMorphologyFamilyV1(
+        locator,
+      );
+
+    if (
+      selected.has(
+        morphology,
+      )
+    ) {
+      continue;
+    }
+
+    selected.set(
+      morphology,
+      locator,
+    );
+  }
+
+  if (
+    selected.size !==
+      HII_HIGH_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The visual laboratory found ${selected.size}/${HII_HIGH_SAMPLE_COUNT} distinct HIGH H II morphology families.`,
+    );
+  }
+
+  const orderedLocators =
+    [
+      primary,
+      ...Array.from(
+        selected.values(),
+      ).filter(
+        locator =>
+          locator.galacticObjectIndex !==
+          primary.galacticObjectIndex,
+      ),
+    ];
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function hiiHighMorphologyFamilyV1(
+  locator:
+    GalacticObjectLocator,
+): HiiRegionHighMorphologyFamily {
+
+  const confirmed =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.NEBULA,
+        DiscoveryState.CONFIRMED,
+      );
+
+  return HiiRegionHighRenderModelBuilder
+    .build(
+      confirmed.render,
+    )
+    .morphologyFamily;
+}
+
+function buildHiiIntenseSamplesV1():
+  HiiIntenseLaboratorySample[] {
+
+  const primary =
+    hiiRepresentativesV1()
+      .get(
+        StarFormationActivity
+          .INTENSE,
+      );
+
+  if (
+    primary ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 INTENSE H II representative.',
+    );
+  }
+
+  const primaryMorphology =
+    hiiIntenseMorphologyFamilyV1(
+      primary,
+    );
+
+  const selected =
+    new Map<
+      HiiRegionIntenseMorphologyFamily,
+      GalacticObjectLocator
+    >();
+
+  selected.set(
+    primaryMorphology,
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      65_536n &&
+    selected.size <
+      HII_INTENSE_SAMPLE_COUNT;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        NEBULA_SECTOR_KEY,
+        index,
+      );
+
+    if (
+      HiiRegionGenerator
+        .resolveActivity(
+          GENERATION_KEY,
+          locator,
+        ) !==
+      StarFormationActivity
+        .INTENSE
+    ) {
+      continue;
+    }
+
+    const morphology =
+      hiiIntenseMorphologyFamilyV1(
+        locator,
+      );
+
+    if (
+      selected.has(
+        morphology,
+      )
+    ) {
+      continue;
+    }
+
+    selected.set(
+      morphology,
+      locator,
+    );
+  }
+
+  if (
+    selected.size !==
+      HII_INTENSE_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The visual laboratory found ${selected.size}/${HII_INTENSE_SAMPLE_COUNT} distinct INTENSE H II morphology families.`,
+    );
+  }
+
+  const orderedLocators =
+    [
+      primary,
+      ...Array.from(
+        selected.values(),
+      ).filter(
+        locator =>
+          locator.galacticObjectIndex !==
+          primary.galacticObjectIndex,
+      ),
+    ];
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function hiiIntenseMorphologyFamilyV1(
+  locator:
+    GalacticObjectLocator,
+): HiiRegionIntenseMorphologyFamily {
+
+  const confirmed =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.NEBULA,
+        DiscoveryState.CONFIRMED,
+      );
+
+  return HiiRegionIntenseRenderModelBuilder
+    .build(
+      confirmed.render,
+    )
+    .morphologyFamily;
+}
+
+function buildHiiLowSamplesV1():
+  HiiLowLaboratorySample[] {
+
+  const primary =
+    hiiRepresentativesV1()
+      .get(
+        StarFormationActivity
+          .LOW,
+      );
+
+  if (
+    primary ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 LOW H II representative.',
+    );
+  }
+
+  const primaryMorphology =
+    hiiLowMorphologyFamilyV2(
+      primary,
+    );
+
+  const lockedFamilies =
+    new Set<
+      HiiRegionLowMorphologyFamily
+    >([
+      primaryMorphology,
+    ]);
+
+  const bestByFamily =
+    new Map<
+      HiiRegionLowMorphologyFamily,
+      {
+        readonly locator:
+          GalacticObjectLocator;
+
+        readonly score:
+          number;
+      }
+    >();
+
+  /*
+   * V2.2 laboratory refinement: preserve the canonical LOW representative as A
+   * and still guarantee one sample per morphology family, but do not stop at
+   * the first hit. Search a deterministic real LOW-only window and keep the
+   * strongest visual representative found for each remaining family. This keeps
+   * the scientific grounding intact while separating families more clearly in
+   * the A..H comparison grid.
+   */
+  for (
+    let index =
+      0n;
+    index <
+      65_536n;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        NEBULA_SECTOR_KEY,
+        index,
+      );
+
+    if (
+      HiiRegionGenerator
+        .resolveActivity(
+          GENERATION_KEY,
+          locator,
+        ) !==
+      StarFormationActivity
+        .LOW
+    ) {
+      continue;
+    }
+
+    const model =
+      hiiLowRenderModelV2(
+        locator,
+      );
+
+    const morphology =
+      model.morphologyFamily;
+
+    if (
+      lockedFamilies.has(
+        morphology,
+      )
+    ) {
+      continue;
+    }
+
+    const score =
+      hiiLowRepresentativeScoreV2(
+        model,
+      );
+
+    const currentBest =
+      bestByFamily.get(
+        morphology,
+      );
+
+    if (
+      currentBest ===
+        undefined ||
+      score >
+        currentBest.score
+    ) {
+      bestByFamily.set(
+        morphology,
+        Object.freeze({
+          locator,
+          score,
+        }),
+      );
+    }
+  }
+
+  const orderedFamilies =
+    allHiiLowMorphologyFamiliesV2()
+      .filter(
+        family =>
+          family !==
+          primaryMorphology,
+      );
+
+  const orderedLocators =
+    [
+      primary,
+      ...orderedFamilies.map(
+        family => {
+          const candidate =
+            bestByFamily.get(
+              family,
+            );
+
+          if (
+            candidate ===
+              undefined
+          ) {
+            throw new RangeError(
+              `The V2.2 visual laboratory could not find a representative for LOW H II morphology family ${family}.`,
+            );
+          }
+
+          return candidate.locator;
+        },
+      ),
+    ];
+
+  if (
+    orderedLocators.length !==
+      HII_LOW_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The V2.2 visual laboratory found ${orderedLocators.length}/${HII_LOW_SAMPLE_COUNT} LOW H II morphology representatives.`,
+    );
+  }
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function hiiLowMorphologyFamilyV2(
+  locator:
+    GalacticObjectLocator,
+): HiiRegionLowMorphologyFamily {
+
+  return hiiLowRenderModelV2(
+    locator,
+  )
+    .morphologyFamily;
+}
+
+function hiiLowRenderModelV2(
+  locator:
+    GalacticObjectLocator,
+) {
+
+  const confirmed =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.NEBULA,
+        DiscoveryState.CONFIRMED,
+      );
+
+  return HiiRegionLowRenderModelBuilder
+    .build(
+      confirmed.render,
+    );
+}
+
+function allHiiLowMorphologyFamiliesV2():
+  readonly HiiRegionLowMorphologyFamily[] {
+
+  return Object.freeze([
+    'BUBBLE',
+    'BLISTER',
+    'CLUMPY',
+    'COMPACT',
+    'PILLARS',
+    'FILAMENTARY',
+    'DOUBLE',
+    'BROKEN_SHELL',
+  ]);
+}
+
+function hiiLowRepresentativeScoreV2(
+  model:
+    ReturnType<
+      typeof HiiRegionLowRenderModelBuilder.build
+    >,
+): number {
+
+  const common =
+    model.apparentExtent *
+      0.60 +
+    model.volumeDepth *
+      0.30 +
+    model.edgeSharpness *
+      0.40 +
+    model.paletteAccent *
+      0.18 +
+    model.chromaGain *
+      0.12;
+
+  switch (
+    model.morphologyFamily
+  ) {
+    case 'BUBBLE':
+      return common +
+        model.shellStrength *
+          1.50 +
+        model.cavityStrength *
+          0.90 +
+        model.cavityRadius *
+          0.80 -
+        model.asymmetryStrength *
+          0.22;
+
+    case 'BLISTER':
+      return common +
+        model.asymmetryStrength *
+          1.40 +
+        model.sourceSpread *
+          1.10 +
+        model.edgeSharpness *
+          0.50 +
+        model.pillarStrength *
+          0.20;
+
+    case 'CLUMPY':
+      return common +
+        model.morphologyNoiseScale *
+          1.15 +
+        model.asymmetryStrength *
+          0.60 +
+        model.sourceSpread *
+          0.40;
+
+    case 'COMPACT':
+      return common +
+        (
+          1.20 -
+          model.apparentExtent
+        ) *
+          1.20 +
+        model.concentration *
+          0.70 +
+        model.edgeSharpness *
+          0.30;
+
+    case 'PILLARS':
+      return common +
+        model.pillarStrength *
+          1.80 +
+        model.dustLaneStrength *
+          0.95 +
+        model.asymmetryStrength *
+          0.30;
+
+    case 'FILAMENTARY':
+      return common +
+        model.structureAspect *
+          1.20 +
+        model.morphologyNoiseScale *
+          0.90 +
+        model.edgeSharpness *
+          0.45;
+
+    case 'DOUBLE':
+      return common +
+        model.lobeStrength *
+          1.85 +
+        model.sourceSpread *
+          0.80 +
+        model.apparentExtent *
+          0.25;
+
+    case 'BROKEN_SHELL':
+      return common +
+        model.shellStrength *
+          1.30 +
+        model.asymmetryStrength *
+          1.00 +
+        model.cavityRadius *
+          0.60;
   }
 }
 
@@ -590,6 +1859,281 @@ function buildEmissionNebulaSamplesV1():
         locator,
       }),
   );
+}
+
+function buildPlanetaryNebulaSamplesV1():
+  PlanetaryNebulaLaboratorySample[] {
+
+  const locators:
+    GalacticObjectLocator[] =
+    [];
+
+  /*
+   * Preserve the already-frozen PLANETARY laboratory representative as A.
+   */
+  const primary =
+    new GalacticObjectLocator(
+      0n,
+      NEBULA_SECTOR_KEY,
+      10n,
+    );
+
+  requirePlanetaryNebulaV1(
+    primary,
+  );
+
+  locators.push(
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      4_096n &&
+    locators.length <
+      PLANETARY_NEBULA_SAMPLE_COUNT;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary
+          .galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        NEBULA_SECTOR_KEY,
+        index,
+      );
+
+    if (
+      !NebulaGenerator
+        .isNebulaLocator(
+          GENERATION_KEY,
+          locator,
+        )
+    ) {
+      continue;
+    }
+
+    const nebula =
+      NebulaGenerator
+        .generate(
+          GENERATION_KEY,
+          locator,
+        );
+
+    if (
+      nebula.nebulaType !==
+        NebulaType.PLANETARY
+    ) {
+      continue;
+    }
+
+    locators.push(
+      locator,
+    );
+  }
+
+  if (
+    locators.length !==
+    PLANETARY_NEBULA_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The canonical V1 laboratory sample found ${locators.length}/${PLANETARY_NEBULA_SAMPLE_COUNT} planetary nebulae.`,
+    );
+  }
+
+  return locators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function requirePlanetaryNebulaV1(
+  locator:
+    GalacticObjectLocator,
+): void {
+
+  if (
+    !NebulaGenerator
+      .isNebulaLocator(
+        GENERATION_KEY,
+        locator,
+      )
+  ) {
+    throw new RangeError(
+      `Frozen locator O${locator.galacticObjectIndex} no longer belongs to the NEBULA family.`,
+    );
+  }
+
+  const nebula =
+    NebulaGenerator
+      .generate(
+        GENERATION_KEY,
+        locator,
+      );
+
+  if (
+    nebula.nebulaType !==
+      NebulaType.PLANETARY
+  ) {
+    throw new RangeError(
+      `Frozen locator O${locator.galacticObjectIndex} is no longer a planetary nebula.`,
+    );
+  }
+}
+
+function buildDarkNebulaSamplesV1():
+  DarkNebulaLaboratorySample[] {
+
+  const locators:
+    GalacticObjectLocator[] =
+    [];
+
+  const primary =
+    new GalacticObjectLocator(
+      0n,
+      NEBULA_SECTOR_KEY,
+      16n,
+    );
+
+  requireDarkNebulaV1(
+    primary,
+  );
+
+  locators.push(
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      4_096n &&
+    locators.length <
+      DARK_NEBULA_SAMPLE_COUNT;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary
+          .galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        NEBULA_SECTOR_KEY,
+        index,
+      );
+
+    if (
+      !NebulaGenerator
+        .isNebulaLocator(
+          GENERATION_KEY,
+          locator,
+        )
+    ) {
+      continue;
+    }
+
+    const nebula =
+      NebulaGenerator
+        .generate(
+          GENERATION_KEY,
+          locator,
+        );
+
+    if (
+      nebula.nebulaType !==
+        NebulaType.DARK
+    ) {
+      continue;
+    }
+
+    locators.push(
+      locator,
+    );
+  }
+
+  if (
+    locators.length !==
+    DARK_NEBULA_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The canonical V1 laboratory sample found ${locators.length}/${DARK_NEBULA_SAMPLE_COUNT} dark nebulae.`,
+    );
+  }
+
+  return locators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function requireDarkNebulaV1(
+  locator:
+    GalacticObjectLocator,
+): void {
+
+  if (
+    !NebulaGenerator
+      .isNebulaLocator(
+        GENERATION_KEY,
+        locator,
+      )
+  ) {
+    throw new RangeError(
+      `Frozen locator O${locator.galacticObjectIndex} no longer belongs to the NEBULA family.`,
+    );
+  }
+
+  const nebula =
+    NebulaGenerator
+      .generate(
+        GENERATION_KEY,
+        locator,
+      );
+
+  if (
+    nebula.nebulaType !==
+      NebulaType.DARK
+  ) {
+    throw new RangeError(
+      `Frozen locator O${locator.galacticObjectIndex} is no longer a dark nebula.`,
+    );
+  }
 }
 
 function buildReflectionNebulaSamplesV1():

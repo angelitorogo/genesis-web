@@ -519,5 +519,756 @@ describe(
       30_000,
     );
 
+    it(
+      'should show eight dark-nebula diversity controls only for the dark-nebula case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="NEBULA_DARK"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="dark-nebula-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="dark-nebula-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-diversity-selector"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="reflection-nebula-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real dark-nebula sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="NEBULA_DARK"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="dark-nebula-diversity-button"][data-sample="F"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="dark-nebula-diversity-button"][data-sample="F"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should show eight planetary-nebula diversity controls only for the planetary-nebula case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="NEBULA_PLANETARY"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="planetary-nebula-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="planetary-nebula-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-diversity-selector"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="reflection-nebula-diversity-selector"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="dark-nebula-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real planetary-nebula sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="NEBULA_PLANETARY"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="planetary-nebula-diversity-button"][data-sample="G"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="planetary-nebula-diversity-button"][data-sample="G"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight LOW H II diversity controls only for the LOW H II case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_LOW"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-low-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-low-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="planetary-nebula-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real LOW H II sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_LOW"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="hii-low-diversity-button"][data-sample="F"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="hii-low-diversity-button"][data-sample="F"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-region-low-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight MODERATE H II diversity controls only for the MODERATE H II case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_MODERATE"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-moderate-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-moderate-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-low-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real MODERATE H II sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_MODERATE"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="hii-moderate-diversity-button"][data-sample="F"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="hii-moderate-diversity-button"][data-sample="F"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-region-moderate-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight HIGH H II diversity controls only for the HIGH H II case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_HIGH"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-high-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-high-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-low-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real HIGH H II sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_HIGH"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="hii-high-diversity-button"][data-sample="F"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="hii-high-diversity-button"][data-sample="F"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-region-high-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+    it(
+      'should expose eight INTENSE H II diversity controls only for the INTENSE H II case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_INTENSE"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-intense-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-intense-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-low-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real INTENSE H II sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="HII_INTENSE"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="hii-intense-diversity-button"][data-sample="F"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="hii-intense-diversity-button"][data-sample="F"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="hii-region-intense-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
   },
 );

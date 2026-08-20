@@ -5,6 +5,7 @@ import {
 import {
   ArchiveGalacticObjectKnowledgeLevel,
   ArchiveGalacticObjectRenderKind,
+  ArchiveGalacticObjectRenderProfile,
   type ArchiveGalacticObjectRenderDescriptor,
 } from './archive-galactic-object-card';
 
@@ -279,49 +280,598 @@ describe(
     );
 
     it(
-      'should keep DARK and PLANETARY on the frozen SVG renderer until their dedicated visual passes',
+      'should route DARK through its dedicated extinction-based WebGL renderer',
       () => {
-        for (
-          const variant
-          of [
-            'DARK',
-            'PLANETARY',
-          ] as const
-        ) {
-          const fixture =
-            TestBed.createComponent(
-              GalacticObjectProceduralRender,
-            );
-
-          fixture.componentRef.setInput(
-            'descriptor',
-            Object.freeze({
-              ...descriptor,
-              kind:
-                ArchiveGalacticObjectRenderKind
-                  .NEBULA,
-              variant,
-            }),
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
           );
 
-          fixture.detectChanges();
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            variant:
+              'DARK',
+          }),
+        );
 
-          const element =
-            fixture.nativeElement as
-              HTMLElement;
+        fixture.detectChanges();
 
-          expect(
-            element.querySelector(
-              '[data-testid="emission-nebula-render"]',
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="dark-nebula-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            'img',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route an unclassified LOW H II observation profile through its dedicated renderer without exposing activity',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_LOW_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-low-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-low-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
             ),
-          ).toBeNull();
+        ).toBe(
+          'GENERIC',
+        );
 
-          expect(
-            element.querySelector(
-              'svg',
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-render"]',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route confirmed LOW H II through the same dedicated renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .CONFIRMED,
+            variant:
+              'LOW',
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_LOW_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-low-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-low-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
             ),
-          ).toBeTruthy();
-        }
+        ).toBe(
+          'LOW',
+        );
+      },
+    );
+
+    it(
+      'should route an unclassified MODERATE H II observation profile through its dedicated renderer without exposing activity',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_MODERATE_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-moderate-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-moderate-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
+            ),
+        ).toBe(
+          'GENERIC',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-low-render"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-render"]',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route confirmed MODERATE H II through the same dedicated renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .CONFIRMED,
+            variant:
+              'MODERATE',
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_MODERATE_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-moderate-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-moderate-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
+            ),
+        ).toBe(
+          'MODERATE',
+        );
+      },
+    );
+
+    it(
+      'should route an unclassified HIGH H II observation profile through its dedicated renderer without exposing activity',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_HIGH_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-high-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-high-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
+            ),
+        ).toBe(
+          'GENERIC',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-low-render"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-render"]',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route confirmed HIGH H II through the same dedicated renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .CONFIRMED,
+            variant:
+              'HIGH',
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_HIGH_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-high-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-high-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
+            ),
+        ).toBe(
+          'HIGH',
+        );
+      },
+    );
+
+    it(
+      'should route an unclassified INTENSE H II observation profile through its dedicated renderer without exposing activity',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_INTENSE_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-intense-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-intense-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
+            ),
+        ).toBe(
+          'GENERIC',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-low-render"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-render"]',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route confirmed INTENSE H II through the same dedicated renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .CONFIRMED,
+            variant:
+              'INTENSE',
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .HII_INTENSE_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-region-intense-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="hii-region-intense-render"]',
+            )
+            ?.getAttribute(
+              'data-hii-variant',
+            ),
+        ).toBe(
+          'INTENSE',
+        );
+      },
+    );
+
+    it(
+      'should route an unclassified nebula with PLANETARY_VOLUME profile through the same planetary renderer without exposing the subtype',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .PLANETARY_VOLUME,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="planetary-nebula-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="emission-nebula-render"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="planetary-nebula-render"]',
+            )
+            ?.getAttribute(
+              'data-nebula-variant',
+            ),
+        ).toBe(
+          'GENERIC',
+        );
+      },
+    );
+
+    it(
+      'should route PLANETARY through its dedicated central-star shell WebGL renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .NEBULA,
+            variant:
+              'PLANETARY',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="planetary-nebula-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            'img',
+          ),
+        ).toBeNull();
       },
     );
 

@@ -1,0 +1,18 @@
+<div
+  class="dark-nebula"
+  data-testid="dark-nebula-render"
+  [attr.data-knowledge-level]="descriptor().knowledgeLevel"
+  [attr.data-nebula-variant]="descriptor().variant ?? 'GENERIC'"
+>
+  <canvas
+    #canvas
+    class="dark-nebula__canvas"
+    role="img"
+    [attr.aria-label]="descriptor().accessibleLabel"
+  ></canvas>
+
+  <div
+    class="dark-nebula__optics"
+    aria-hidden="true"
+  ></div>
+</div>

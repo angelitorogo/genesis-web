@@ -14,7 +14,32 @@ import {
 } from './reflection-nebula-render';
 
 import {
+  DarkNebulaRender,
+} from './dark-nebula-render';
+
+import {
+  PlanetaryNebulaRender,
+} from './planetary-nebula-render';
+
+import {
+  HiiRegionLowRender,
+} from './hii-region-low-render';
+
+import {
+  HiiRegionModerateRender,
+} from './hii-region-moderate-render';
+
+import {
+  HiiRegionHighRender,
+} from './hii-region-high-render';
+
+import {
+  HiiRegionIntenseRender,
+} from './hii-region-intense-render';
+
+import {
   ArchiveGalacticObjectRenderKind,
+  ArchiveGalacticObjectRenderProfile,
   type ArchiveGalacticObjectRenderDescriptor,
 } from './archive-galactic-object-card';
 
@@ -32,6 +57,12 @@ import {
   imports: [
     EmissionNebulaRender,
     ReflectionNebulaRender,
+    DarkNebulaRender,
+    PlanetaryNebulaRender,
+    HiiRegionLowRender,
+    HiiRegionModerateRender,
+    HiiRegionHighRender,
+    HiiRegionIntenseRender,
   ],
 
   templateUrl:
@@ -59,12 +90,10 @@ export class GalacticObjectProceduralRender {
 
 
   /**
-   * The new high-fidelity renderer is used for:
-   * - generic NEBULA SIGNAL/IDENTIFIED, where the subtype must stay hidden;
-   * - already-authorized EMISSION nebulae.
-   *
-   * REFLECTION, DARK and PLANETARY keep the frozen 12.8 SVG renderer until
-   * their own visual pass is implemented.
+   * Generic nebulae remain on the frozen diffuse renderer, except when an
+   * opaque renderer-only profile says that the already-observed morphology is
+   * the compact planetary volume. Scientific `variant` still stays null before
+   * CATALOGUED.
    */
   readonly usesEmissionNebulaRenderer =
     computed(
@@ -77,11 +106,150 @@ export class GalacticObjectProceduralRender {
             ArchiveGalacticObjectRenderKind
               .NEBULA &&
           (
-            descriptor.variant ===
-              null ||
+            (
+              descriptor.variant ===
+                null &&
+              descriptor.renderProfile !==
+                ArchiveGalacticObjectRenderProfile
+                  .PLANETARY_VOLUME &&
+              descriptor.renderProfile !==
+                ArchiveGalacticObjectRenderProfile
+                  .HII_LOW_VOLUME &&
+              descriptor.renderProfile !==
+                ArchiveGalacticObjectRenderProfile
+                  .HII_MODERATE_VOLUME
+              &&
+              descriptor.renderProfile !==
+                ArchiveGalacticObjectRenderProfile
+                  .HII_HIGH_VOLUME &&
+              descriptor.renderProfile !==
+                ArchiveGalacticObjectRenderProfile
+                  .HII_INTENSE_VOLUME
+            ) ||
             descriptor.variant ===
               'EMISSION'
           )
+        );
+      },
+    );
+
+  readonly usesHiiRegionLowRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .HII_LOW_VOLUME ||
+          (
+            descriptor.kind ===
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION &&
+            descriptor.variant ===
+              'LOW'
+          )
+        );
+      },
+    );
+
+  readonly usesHiiRegionModerateRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .HII_MODERATE_VOLUME ||
+          (
+            descriptor.kind ===
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION &&
+            descriptor.variant ===
+              'MODERATE'
+          )
+        );
+      },
+    );
+
+  readonly usesHiiRegionHighRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .HII_HIGH_VOLUME ||
+          (
+            descriptor.kind ===
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION &&
+            descriptor.variant ===
+              'HIGH'
+          )
+        );
+      },
+    );
+
+  readonly usesHiiRegionIntenseRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .HII_INTENSE_VOLUME ||
+          (
+            descriptor.kind ===
+              ArchiveGalacticObjectRenderKind
+                .HII_REGION &&
+            descriptor.variant ===
+              'INTENSE'
+          )
+        );
+      },
+    );
+
+  readonly usesPlanetaryNebulaRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.kind ===
+            ArchiveGalacticObjectRenderKind
+              .NEBULA &&
+          (
+            descriptor.variant ===
+              'PLANETARY' ||
+            descriptor.renderProfile ===
+              ArchiveGalacticObjectRenderProfile
+                .PLANETARY_VOLUME
+          )
+        );
+      },
+    );
+
+  readonly usesDarkNebulaRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.kind ===
+            ArchiveGalacticObjectRenderKind
+              .NEBULA &&
+          descriptor.variant ===
+            'DARK'
         );
       },
     );

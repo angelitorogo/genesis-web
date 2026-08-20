@@ -4,7 +4,31 @@
   [attr.data-render-kind]="descriptor().kind"
   [attr.data-knowledge-level]="descriptor().knowledgeLevel"
 >
-  @if (usesReflectionNebulaRenderer()) {
+  @if (usesHiiRegionLowRenderer()) {
+    <app-hii-region-low-render
+      [descriptor]="descriptor()"
+    ></app-hii-region-low-render>
+  } @else if (usesHiiRegionModerateRenderer()) {
+    <app-hii-region-moderate-render
+      [descriptor]="descriptor()"
+    ></app-hii-region-moderate-render>
+  } @else if (usesHiiRegionHighRenderer()) {
+    <app-hii-region-high-render
+      [descriptor]="descriptor()"
+    ></app-hii-region-high-render>
+  } @else if (usesHiiRegionIntenseRenderer()) {
+    <app-hii-region-intense-render
+      [descriptor]="descriptor()"
+    ></app-hii-region-intense-render>
+  } @else if (usesPlanetaryNebulaRenderer()) {
+    <app-planetary-nebula-render
+      [descriptor]="descriptor()"
+    ></app-planetary-nebula-render>
+  } @else if (usesDarkNebulaRenderer()) {
+    <app-dark-nebula-render
+      [descriptor]="descriptor()"
+    ></app-dark-nebula-render>
+  } @else if (usesReflectionNebulaRenderer()) {
     <app-reflection-nebula-render
       [descriptor]="descriptor()"
     ></app-reflection-nebula-render>

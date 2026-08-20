@@ -163,6 +163,31 @@ export class HiiRegionGenerator {
       GalacticObjectLocator,
   ): boolean {
 
+    return (
+      this.resolveActivity(
+        generationKey,
+        locator,
+      ) !==
+      null
+    );
+  }
+
+  /**
+   * Resolves only the deterministic H II activity discriminator.
+   *
+   * This method intentionally does not materialize NebulaPhysicalProperties,
+   * HiiRegionPhysicalProperties or StarFormationProfile. Presentation may use
+   * the result exclusively as an opaque renderer-profile selector while the
+   * activity label and numeric Ground Truth remain hidden by observation state.
+   */
+  static resolveActivity(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      GalacticObjectLocator,
+  ): StarFormationActivityValue | null {
+
     requireV1(
       generationKey,
     );
@@ -174,21 +199,18 @@ export class HiiRegionGenerator {
           locator,
         )
     ) {
-      return false;
+      return null;
     }
 
-    const nebula =
+    if (
       NebulaGenerator
-        .generate(
+        .resolveType(
           generationKey,
           locator,
-        );
-
-    if (
-      nebula.nebulaType !==
+        ) !==
       NebulaType.EMISSION
     ) {
-      return false;
+      return null;
     }
 
     const targetSeed =
@@ -198,12 +220,18 @@ export class HiiRegionGenerator {
           locator,
         );
 
-    return (
+    if (
       unitV1(
         targetSeed.normalizedValue,
         V1_PRESENCE_LABEL,
-      ) <
+      ) >=
       V1_HII_PRESENCE_PROBABILITY
+    ) {
+      return null;
+    }
+
+    return resolveActivityV1(
+      targetSeed.normalizedValue,
     );
   }
 

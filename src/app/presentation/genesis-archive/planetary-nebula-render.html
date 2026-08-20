@@ -1,0 +1,18 @@
+<div
+  class="planetary-nebula"
+  data-testid="planetary-nebula-render"
+  [attr.data-knowledge-level]="descriptor().knowledgeLevel"
+  [attr.data-nebula-variant]="descriptor().variant ?? 'GENERIC'"
+>
+  <canvas
+    #canvas
+    class="planetary-nebula__canvas"
+    role="img"
+    [attr.aria-label]="descriptor().accessibleLabel"
+  ></canvas>
+
+  <div
+    class="planetary-nebula__optics"
+    aria-hidden="true"
+  ></div>
+</div>
