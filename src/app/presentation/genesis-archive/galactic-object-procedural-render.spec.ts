@@ -864,6 +864,96 @@ describe(
     );
 
     it(
+      'should route an unclassified STAR_CLUSTER with GLOBULAR_CLUSTER_FIELD through the dedicated globular-cluster renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .STAR_CLUSTER,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .GLOBULAR_CLUSTER_FIELD,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="globular-cluster-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="open-cluster-render"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector('svg'),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route scientific GLOBULAR_CLUSTER descriptors through the same dedicated renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .GLOBULAR_CLUSTER,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .CONFIRMED,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .GLOBULAR_CLUSTER_FIELD,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="globular-cluster-render"]',
+          ),
+        ).toBeTruthy();
+      },
+    );
+
+    it(
       'should route an unclassified nebula with PLANETARY_VOLUME profile through the same planetary renderer without exposing the subtype',
       () => {
         const fixture =

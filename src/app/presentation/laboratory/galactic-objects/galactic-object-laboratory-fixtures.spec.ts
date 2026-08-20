@@ -35,6 +35,10 @@ import {
 } from '../../../simulation/galactic-object/open-cluster-generator';
 
 import {
+  GlobularClusterGenerator,
+} from '../../../simulation/galactic-object/globular-cluster-generator';
+
+import {
   NebulaGenerator,
 } from '../../../simulation/galactic-object/nebula-generator';
 
@@ -67,6 +71,10 @@ import {
 import {
   OpenClusterRenderModelBuilder,
 } from '../../genesis-archive/open-cluster-render-model';
+
+import {
+  GlobularClusterRenderModelBuilder,
+} from '../../genesis-archive/globular-cluster-render-model';
 
 import {
   GalacticObjectLaboratoryCaseId,
@@ -2174,6 +2182,236 @@ describe(
             seeds[
               0
             ],
+          );
+        }
+
+        expect(
+          new Set(
+            allSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+
+    it(
+      'should expose eight deterministic real globular-cluster samples while preserving O7 as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .globularClusterSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[0].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[0].locator.galacticObjectIndex,
+        ).toBe(
+          7n,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            GlobularClusterGenerator
+              .isGlobularClusterLocator(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            true,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should expose the full eight-family globular-cluster procedural morphology set and several palettes across A to H',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .globularClusterSamples();
+
+        const models =
+          samples.map(
+            sample => {
+              const detected =
+                GalacticObjectLaboratoryFixtures
+                  .frames(
+                    GalacticObjectLaboratoryCaseId
+                      .GLOBULAR_CLUSTER,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    sample.index,
+                  )[0];
+
+              return GlobularClusterRenderModelBuilder
+                .build(
+                  detected.card.render,
+                );
+            },
+          );
+
+        expect(
+          new Set(
+            models.map(
+              model =>
+                model.morphologyFamily,
+            ),
+          ),
+        ).toEqual(
+          new Set([
+            'CLASSIC',
+            'CORE_COLLAPSED',
+            'EXTENDED_HALO',
+            'ELLIPTICAL',
+            'TIDAL_STRETCHED',
+            'ASYMMETRIC_HALO',
+            'GRANULAR_CORE',
+            'RICH_HALO',
+          ]),
+        );
+
+        expect(
+          new Set(
+            models.map(
+              model =>
+                model.paletteFamily,
+            ),
+          ).size,
+        ).toBeGreaterThanOrEqual(
+          5,
+        );
+
+        expect(
+          Math.max(
+            ...models.map(
+              model =>
+                model.apparentExtent,
+            ),
+          ) -
+          Math.min(
+            ...models.map(
+              model =>
+                model.apparentExtent,
+            ),
+          ),
+        ).toBeGreaterThan(
+          0.28,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should preserve one globular-cluster render seed and GLOBULAR_CLUSTER_FIELD profile across all four knowledge levels for every sample',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .globularClusterSamples();
+
+        const allSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .GLOBULAR_CLUSTER,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card.render.seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          for (
+            const frame
+            of frames
+          ) {
+            expect(
+              frame.card.render.renderProfile,
+            ).toBe(
+              ArchiveGalacticObjectRenderProfile
+                .GLOBULAR_CLUSTER_FIELD,
+            );
+          }
+
+          expect(
+            frames[0].card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .STAR_CLUSTER,
+          );
+
+          expect(
+            frames[1].card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .GLOBULAR_CLUSTER,
+          );
+
+          allSeeds.push(
+            seeds[0],
           );
         }
 

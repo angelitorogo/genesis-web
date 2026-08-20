@@ -157,6 +157,10 @@ export class GalacticObjectLaboratoryPage {
     GalacticObjectLaboratoryFixtures
       .openClusterSamples();
 
+  readonly globularClusterSamples =
+    GalacticObjectLaboratoryFixtures
+      .globularClusterSamples();
+
   readonly view =
     signal<LaboratoryView>(
       LaboratoryView
@@ -217,6 +221,11 @@ export class GalacticObjectLaboratoryPage {
 
 
   readonly selectedOpenClusterSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedGlobularClusterSampleIndex =
     signal(
       0,
     );
@@ -309,6 +318,16 @@ export class GalacticObjectLaboratoryPage {
           .openClusterSamples[
             this
               .selectedOpenClusterSampleIndex()
+          ],
+    );
+
+  readonly selectedGlobularClusterSample =
+    computed(
+      () =>
+        this
+          .globularClusterSamples[
+            this
+              .selectedGlobularClusterSampleIndex()
           ],
     );
 
@@ -412,6 +431,17 @@ export class GalacticObjectLaboratoryPage {
             .OPEN_CLUSTER,
     );
 
+  readonly isGlobularClusterSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .GLOBULAR_CLUSTER,
+    );
+
   readonly selectedObjectCase =
     computed(
       () =>
@@ -437,6 +467,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedHiiIntenseSampleIndex(),
             this
               .selectedOpenClusterSampleIndex(),
+            this
+              .selectedGlobularClusterSampleIndex(),
           ),
     );
 
@@ -465,6 +497,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedHiiIntenseSampleIndex(),
             this
               .selectedOpenClusterSampleIndex(),
+            this
+              .selectedGlobularClusterSampleIndex(),
           ),
     );
 
@@ -879,6 +913,48 @@ export class GalacticObjectLaboratoryPage {
       .set(
         GalacticObjectLaboratoryCaseId
           .OPEN_CLUSTER,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectGlobularClusterSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .globularClusterSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported globular-cluster laboratory sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedGlobularClusterSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .GLOBULAR_CLUSTER,
       );
 
     this

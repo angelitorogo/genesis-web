@@ -24,6 +24,10 @@
     <app-open-cluster-render
       [descriptor]="descriptor()"
     ></app-open-cluster-render>
+  } @else if (usesGlobularClusterRenderer()) {
+    <app-globular-cluster-render
+      [descriptor]="descriptor()"
+    ></app-globular-cluster-render>
   } @else if (usesPlanetaryNebulaRenderer()) {
     <app-planetary-nebula-render
       [descriptor]="descriptor()"

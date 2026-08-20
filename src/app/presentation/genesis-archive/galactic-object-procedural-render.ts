@@ -42,6 +42,10 @@ import {
 } from './open-cluster-render';
 
 import {
+  GlobularClusterRender,
+} from './globular-cluster-render';
+
+import {
   ArchiveGalacticObjectRenderKind,
   ArchiveGalacticObjectRenderProfile,
   type ArchiveGalacticObjectRenderDescriptor,
@@ -68,6 +72,7 @@ import {
     HiiRegionHighRender,
     HiiRegionIntenseRender,
     OpenClusterRender,
+    GlobularClusterRender,
   ],
 
   templateUrl:
@@ -235,6 +240,23 @@ export class GalacticObjectProceduralRender {
           descriptor.kind ===
             ArchiveGalacticObjectRenderKind
               .OPEN_CLUSTER
+        );
+      },
+    );
+
+  readonly usesGlobularClusterRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .GLOBULAR_CLUSTER_FIELD ||
+          descriptor.kind ===
+            ArchiveGalacticObjectRenderKind
+              .GLOBULAR_CLUSTER
         );
       },
     );

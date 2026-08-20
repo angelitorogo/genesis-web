@@ -128,6 +128,9 @@ export const ArchiveGalacticObjectRenderProfile =
 
     OPEN_CLUSTER_FIELD:
       'OPEN_CLUSTER_FIELD',
+
+    GLOBULAR_CLUSTER_FIELD:
+      'GLOBULAR_CLUSTER_FIELD',
   } as const);
 
 export type ArchiveGalacticObjectRenderProfile =
@@ -945,6 +948,9 @@ function buildPhysicalCard(
             `Render procedural de ${title}`,
           variant:
             null,
+          renderProfile:
+            ArchiveGalacticObjectRenderProfile
+              .GLOBULAR_CLUSTER_FIELD,
           scale:
             normalizeLog(
               cluster.physicalProperties.halfLightRadiusParsecs,
@@ -1191,7 +1197,8 @@ function renderProfileForObservedMorphology(
       )
       ? ArchiveGalacticObjectRenderProfile
           .OPEN_CLUSTER_FIELD
-      : null;
+      : ArchiveGalacticObjectRenderProfile
+          .GLOBULAR_CLUSTER_FIELD;
   }
 
   if (

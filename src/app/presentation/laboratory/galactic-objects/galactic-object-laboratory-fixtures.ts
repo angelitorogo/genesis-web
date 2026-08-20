@@ -56,6 +56,10 @@ import {
 } from '../../../simulation/galactic-object/open-cluster-generator';
 
 import {
+  GlobularClusterGenerator,
+} from '../../../simulation/galactic-object/globular-cluster-generator';
+
+import {
   SupernovaRemnantGenerator,
 } from '../../../simulation/galactic-object/supernova-remnant-generator';
 
@@ -68,6 +72,11 @@ import {
   OpenClusterRenderModelBuilder,
   type OpenClusterMorphologyFamily,
 } from '../../genesis-archive/open-cluster-render-model';
+
+import {
+  GlobularClusterRenderModelBuilder,
+  type GlobularClusterMorphologyFamily,
+} from '../../genesis-archive/globular-cluster-render-model';
 
 import {
   HiiRegionLowRenderModelBuilder,
@@ -315,6 +324,17 @@ export interface OpenClusterLaboratorySample {
     GalacticObjectLocator;
 }
 
+export interface GlobularClusterLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
 export const GALACTIC_OBJECT_LABORATORY_STATES:
   readonly GalacticObjectLaboratoryState[] =
   Object.freeze([
@@ -391,6 +411,9 @@ const HII_INTENSE_SAMPLE_COUNT =
 const OPEN_CLUSTER_SAMPLE_COUNT =
   8;
 
+const GLOBULAR_CLUSTER_SAMPLE_COUNT =
+  8;
+
 let cachedEmissionNebulaSamples:
   readonly EmissionNebulaLaboratorySample[] | null =
     null;
@@ -426,6 +449,10 @@ let cachedHiiIntenseSamples:
 
 let cachedOpenClusterSamples:
   readonly OpenClusterLaboratorySample[] | null =
+    null;
+
+let cachedGlobularClusterSamples:
+  readonly GlobularClusterLaboratorySample[] | null =
     null;
 
 let cachedHiiRepresentatives:
@@ -615,6 +642,24 @@ export class GalacticObjectLaboratoryFixtures {
     return cachedOpenClusterSamples;
   }
 
+  static globularClusterSamples():
+    readonly GlobularClusterLaboratorySample[] {
+
+    if (
+      cachedGlobularClusterSamples !==
+        null
+    ) {
+      return cachedGlobularClusterSamples;
+    }
+
+    cachedGlobularClusterSamples =
+      Object.freeze(
+        buildGlobularClusterSamplesV1(),
+      );
+
+    return cachedGlobularClusterSamples;
+  }
+
   static caseDefinition(
     caseId:
       GalacticObjectLaboratoryCaseId,
@@ -644,6 +689,9 @@ export class GalacticObjectLaboratoryFixtures {
       0,
 
     openClusterSampleIndex =
+      0,
+
+    globularClusterSampleIndex =
       0,
   ): GalacticObjectLaboratoryCase {
 
@@ -979,6 +1027,41 @@ export class GalacticObjectLaboratoryFixtures {
       );
     }
 
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .GLOBULAR_CLUSTER
+    ) {
+      const sample =
+        this
+          .globularClusterSamples()[
+            globularClusterSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported globular-cluster laboratory sample index: ${globularClusterSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
     return caseDefinition;
   }
 
@@ -1012,6 +1095,9 @@ export class GalacticObjectLaboratoryFixtures {
 
     openClusterSampleIndex =
       0,
+
+    globularClusterSampleIndex =
+      0,
   ): readonly GalacticObjectLaboratoryFrame[] {
 
     const caseDefinition =
@@ -1026,6 +1112,7 @@ export class GalacticObjectLaboratoryFixtures {
         hiiHighSampleIndex,
         hiiIntenseSampleIndex,
         openClusterSampleIndex,
+        globularClusterSampleIndex,
       );
 
     return Object.freeze(
@@ -2102,6 +2189,281 @@ function openClusterTargetPaletteIndexV1(
     morphologyIndex +
     primaryPaletteIndex +
     1
+  ) %
+    6;
+}
+
+function buildGlobularClusterSamplesV1():
+  GlobularClusterLaboratorySample[] {
+
+  const primary =
+    new GalacticObjectLocator(
+      0n,
+      0n,
+      7n,
+    );
+
+  if (
+    !GlobularClusterGenerator
+      .isGlobularClusterLocator(
+        GENERATION_KEY,
+        primary,
+      )
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 globular-cluster representative.',
+    );
+  }
+
+  const primaryModel =
+    globularClusterRenderModelV1(
+      primary,
+    );
+
+  const familyOrder =
+    allGlobularClusterMorphologyFamiliesV1();
+
+  const candidates =
+    new Map<
+      GlobularClusterMorphologyFamily,
+      {
+        readonly preferred:
+          GalacticObjectLocator | null;
+
+        readonly fallback:
+          GalacticObjectLocator | null;
+      }
+    >();
+
+  for (
+    const family
+    of familyOrder
+  ) {
+    candidates.set(
+      family,
+      Object.freeze({
+        preferred:
+          family ===
+            primaryModel.morphologyFamily
+            ? primary
+            : null,
+        fallback:
+          family ===
+            primaryModel.morphologyFamily
+            ? primary
+            : null,
+      }),
+    );
+  }
+
+  for (
+    let index =
+      0n;
+    index <
+      16_384n;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      !GlobularClusterGenerator
+        .isGlobularClusterLocator(
+          GENERATION_KEY,
+          locator,
+        )
+    ) {
+      continue;
+    }
+
+    const model =
+      globularClusterRenderModelV1(
+        locator,
+      );
+
+    if (
+      model.morphologyFamily ===
+        primaryModel.morphologyFamily
+    ) {
+      continue;
+    }
+
+    const current =
+      candidates.get(
+        model.morphologyFamily,
+      );
+
+    if (
+      current ===
+        undefined
+    ) {
+      continue;
+    }
+
+    const targetPalette =
+      globularClusterTargetPaletteIndexV1(
+        model.morphologyIndex,
+        primaryModel.paletteIndex,
+      );
+
+    candidates.set(
+      model.morphologyFamily,
+      Object.freeze({
+        preferred:
+          current.preferred ??
+          (
+            model.paletteIndex ===
+              targetPalette
+              ? locator
+              : null
+          ),
+        fallback:
+          current.fallback ??
+          locator,
+      }),
+    );
+
+    const allPreferredFound =
+      familyOrder.every(
+        family =>
+          family ===
+            primaryModel.morphologyFamily ||
+          (
+            candidates.get(
+              family,
+            )?.preferred ??
+            null
+          ) !==
+            null,
+      );
+
+    if (
+      allPreferredFound
+    ) {
+      break;
+    }
+  }
+
+  const orderedLocators =
+    [
+      primary,
+      ...familyOrder
+        .filter(
+          family =>
+            family !==
+            primaryModel.morphologyFamily,
+        )
+        .map(
+          family => {
+            const candidate =
+              candidates.get(
+                family,
+              );
+
+            const locator =
+              candidate?.preferred ??
+              candidate?.fallback ??
+              null;
+
+            if (
+              locator ===
+                null
+            ) {
+              throw new RangeError(
+                `The globular-cluster visual laboratory could not find morphology family ${family}.`,
+              );
+            }
+
+            return locator;
+          },
+        ),
+    ];
+
+  if (
+    orderedLocators.length !==
+      GLOBULAR_CLUSTER_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The globular-cluster visual laboratory found ${orderedLocators.length}/${GLOBULAR_CLUSTER_SAMPLE_COUNT} morphology representatives.`,
+    );
+  }
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function globularClusterRenderModelV1(
+  locator:
+    GalacticObjectLocator,
+) {
+
+  const detected =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.STAR_CLUSTER,
+        DiscoveryState.DETECTED,
+      );
+
+  return GlobularClusterRenderModelBuilder
+    .build(
+      detected.render,
+    );
+}
+
+function allGlobularClusterMorphologyFamiliesV1():
+  readonly GlobularClusterMorphologyFamily[] {
+
+  return Object.freeze([
+    'CLASSIC',
+    'CORE_COLLAPSED',
+    'EXTENDED_HALO',
+    'ELLIPTICAL',
+    'TIDAL_STRETCHED',
+    'ASYMMETRIC_HALO',
+    'GRANULAR_CORE',
+    'RICH_HALO',
+  ]);
+}
+
+function globularClusterTargetPaletteIndexV1(
+  morphologyIndex:
+    number,
+
+  primaryPaletteIndex:
+    number,
+): number {
+
+  return (
+    morphologyIndex +
+    primaryPaletteIndex +
+    2
   ) %
     6;
 }
