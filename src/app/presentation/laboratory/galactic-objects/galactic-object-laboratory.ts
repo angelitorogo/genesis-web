@@ -152,6 +152,11 @@ export class GalacticObjectLaboratoryPage {
     GalacticObjectLaboratoryFixtures
       .hiiIntenseSamples();
 
+
+  readonly openClusterSamples =
+    GalacticObjectLaboratoryFixtures
+      .openClusterSamples();
+
   readonly view =
     signal<LaboratoryView>(
       LaboratoryView
@@ -206,6 +211,12 @@ export class GalacticObjectLaboratoryPage {
     );
 
   readonly selectedHiiIntenseSampleIndex =
+    signal(
+      0,
+    );
+
+
+  readonly selectedOpenClusterSampleIndex =
     signal(
       0,
     );
@@ -287,6 +298,17 @@ export class GalacticObjectLaboratoryPage {
           .hiiIntenseSamples[
             this
               .selectedHiiIntenseSampleIndex()
+          ],
+    );
+
+
+  readonly selectedOpenClusterSample =
+    computed(
+      () =>
+        this
+          .openClusterSamples[
+            this
+              .selectedOpenClusterSampleIndex()
           ],
     );
 
@@ -378,6 +400,18 @@ export class GalacticObjectLaboratoryPage {
             .HII_INTENSE,
     );
 
+
+  readonly isOpenClusterSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .OPEN_CLUSTER,
+    );
+
   readonly selectedObjectCase =
     computed(
       () =>
@@ -401,6 +435,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedHiiHighSampleIndex(),
             this
               .selectedHiiIntenseSampleIndex(),
+            this
+              .selectedOpenClusterSampleIndex(),
           ),
     );
 
@@ -427,6 +463,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedHiiHighSampleIndex(),
             this
               .selectedHiiIntenseSampleIndex(),
+            this
+              .selectedOpenClusterSampleIndex(),
           ),
     );
 
@@ -799,6 +837,48 @@ export class GalacticObjectLaboratoryPage {
       .set(
         GalacticObjectLaboratoryCaseId
           .HII_INTENSE,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectOpenClusterSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .openClusterSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported open-cluster laboratory sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedOpenClusterSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .OPEN_CLUSTER,
       );
 
     this

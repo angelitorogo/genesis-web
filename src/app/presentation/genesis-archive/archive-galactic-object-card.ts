@@ -125,6 +125,9 @@ export const ArchiveGalacticObjectRenderProfile =
 
     HII_INTENSE_VOLUME:
       'HII_INTENSE_VOLUME',
+
+    OPEN_CLUSTER_FIELD:
+      'OPEN_CLUSTER_FIELD',
   } as const);
 
 export type ArchiveGalacticObjectRenderProfile =
@@ -802,6 +805,9 @@ function buildPhysicalCard(
             `Render procedural de ${title}`,
           variant:
             null,
+          renderProfile:
+            ArchiveGalacticObjectRenderProfile
+              .OPEN_CLUSTER_FIELD,
           scale:
             normalizeLog(
               cluster.physicalProperties.halfMassRadiusParsecs,
@@ -1175,6 +1181,20 @@ function renderProfileForObservedMorphology(
 ): ArchiveGalacticObjectRenderProfile | null {
 
   if (
+    coarseFamily ===
+      GalacticObjectScientificSurveyFamily.STAR_CLUSTER
+  ) {
+    return OpenClusterGenerator
+      .isOpenClusterLocator(
+        generationKey,
+        locator,
+      )
+      ? ArchiveGalacticObjectRenderProfile
+          .OPEN_CLUSTER_FIELD
+      : null;
+  }
+
+  if (
     coarseFamily !==
       GalacticObjectScientificSurveyFamily.NEBULA
   ) {
@@ -1184,7 +1204,8 @@ function renderProfileForObservedMorphology(
   /*
    * Resolve only discriminators, never numeric physical Ground Truth. The
    * renderer profile is opaque: it preserves an already-observed morphology
-   * without exposing nebular subtype or H II activity through variant/facts.
+   * without exposing nebular subtype, H II activity or cluster specialization
+   * through variant/facts.
    */
   const nebulaType =
     NebulaGenerator

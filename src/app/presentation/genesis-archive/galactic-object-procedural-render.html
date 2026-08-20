@@ -20,6 +20,10 @@
     <app-hii-region-intense-render
       [descriptor]="descriptor()"
     ></app-hii-region-intense-render>
+  } @else if (usesOpenClusterRenderer()) {
+    <app-open-cluster-render
+      [descriptor]="descriptor()"
+    ></app-open-cluster-render>
   } @else if (usesPlanetaryNebulaRenderer()) {
     <app-planetary-nebula-render
       [descriptor]="descriptor()"

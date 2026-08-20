@@ -1101,6 +1101,91 @@ describe(
     );
 
     it(
+      'should preserve one open-cluster renderer profile from coarse detection through physical confirmation without leaking the subtype early',
+      () => {
+        const locator =
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            2n,
+          );
+
+        const cards =
+          [
+            DiscoveryState.DETECTED,
+            DiscoveryState.DISCOVERED,
+            DiscoveryState.CATALOGUED,
+            DiscoveryState.CONFIRMED,
+          ].map(
+            state =>
+              ArchiveGalacticObjectCardAssembler
+                .build(
+                  generationKey,
+                  locator,
+                  ExplorationResultKind.STAR_CLUSTER,
+                  state,
+                ),
+          );
+
+        expect(
+          new Set(
+            cards.map(
+              card =>
+                card.render.seed,
+            ),
+          ).size,
+        ).toBe(
+          1,
+        );
+
+        for (
+          const card
+          of cards
+        ) {
+          expect(
+            card.render.renderProfile,
+          ).toBe(
+            ArchiveGalacticObjectRenderProfile
+              .OPEN_CLUSTER_FIELD,
+          );
+        }
+
+        expect(
+          cards[
+            0
+          ].scientificSubject,
+        ).toBeNull();
+
+        expect(
+          cards[
+            0
+          ].render.kind,
+        ).toBe(
+          ArchiveGalacticObjectRenderKind
+            .STAR_CLUSTER,
+        );
+
+        expect(
+          cards[
+            1
+          ].scientificSubject,
+        ).toBe(
+          GalacticObjectScientificSubject
+            .OPEN_CLUSTER,
+        );
+
+        expect(
+          cards[
+            1
+          ].render.kind,
+        ).toBe(
+          ArchiveGalacticObjectRenderKind
+            .OPEN_CLUSTER,
+        );
+      },
+    );
+
+    it(
       'should keep the renderer-only descriptor deterministic for the same persisted identity and state',
       () => {
         const locator =

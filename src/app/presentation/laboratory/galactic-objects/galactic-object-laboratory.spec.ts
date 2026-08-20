@@ -1270,5 +1270,131 @@ describe(
       30_000,
     );
 
+
+    it(
+      'should expose eight open-cluster diversity controls only for the open-cluster case',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="OPEN_CLUSTER"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="open-cluster-diversity-selector"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="open-cluster-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="hii-intense-diversity-selector"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should switch all four knowledge projections to the selected real open-cluster sample',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="OPEN_CLUSTER"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const initialLocator =
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="open-cluster-diversity-button"][data-sample="F"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="open-cluster-diversity-button"][data-sample="F"]',
+            )
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"] dd',
+            )
+            ?.textContent,
+        ).not.toBe(
+          initialLocator,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-state"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="open-cluster-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
   },
 );

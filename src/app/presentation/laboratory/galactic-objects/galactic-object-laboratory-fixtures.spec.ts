@@ -31,6 +31,10 @@ import {
 } from '../../../simulation/galactic-object/hii-region-generator';
 
 import {
+  OpenClusterGenerator,
+} from '../../../simulation/galactic-object/open-cluster-generator';
+
+import {
   NebulaGenerator,
 } from '../../../simulation/galactic-object/nebula-generator';
 
@@ -59,6 +63,10 @@ import {
 import {
   HiiRegionIntenseRenderModelBuilder,
 } from '../../genesis-archive/hii-region-intense-render-model';
+
+import {
+  OpenClusterRenderModelBuilder,
+} from '../../genesis-archive/open-cluster-render-model';
 
 import {
   GalacticObjectLaboratoryCaseId,
@@ -1934,6 +1942,232 @@ describe(
           ).toBe(
             StarFormationActivity
               .INTENSE,
+          );
+
+          allSeeds.push(
+            seeds[
+              0
+            ],
+          );
+        }
+
+        expect(
+          new Set(
+            allSeeds,
+          ).size,
+        ).toBe(
+          8,
+        );
+      },
+      30_000,
+    );
+
+
+    it(
+      'should expose eight deterministic real open-cluster samples while preserving O2 as A',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .openClusterSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          samples[
+            0
+          ].label,
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          samples[
+            0
+          ].locator
+            .galacticObjectIndex,
+        ).toBe(
+          2n,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.locator
+                  .galacticObjectIndex
+                  .toString(),
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            OpenClusterGenerator
+              .isOpenClusterLocator(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            true,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should expose the full eight-family open-cluster procedural morphology set across A to H',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .openClusterSamples();
+
+        const models =
+          samples.map(
+            sample => {
+              const detected =
+                GalacticObjectLaboratoryFixtures
+                  .frames(
+                    GalacticObjectLaboratoryCaseId
+                      .OPEN_CLUSTER,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    sample.index,
+                  )[
+                    0
+                  ];
+
+              return OpenClusterRenderModelBuilder
+                .build(
+                  detected
+                    .card
+                    .render,
+                );
+            },
+          );
+
+        expect(
+          new Set(
+            models.map(
+              model =>
+                model.morphologyFamily,
+            ),
+          ),
+        ).toEqual(
+          new Set([
+            'LOOSE',
+            'COMPACT',
+            'ELONGATED',
+            'SUBCLUSTERED',
+            'CHAIN',
+            'ASYMMETRIC',
+            'HALO',
+            'MULTI_CORE',
+          ]),
+        );
+
+        expect(
+          new Set(
+            models.map(
+              model =>
+                model.paletteFamily,
+            ),
+          ).size,
+        ).toBeGreaterThanOrEqual(
+          5,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should preserve one open-cluster render seed and OPEN_CLUSTER_FIELD profile across all four knowledge levels for every sample',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .openClusterSamples();
+
+        const allSeeds:
+          string[] =
+          [];
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .OPEN_CLUSTER,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const seeds =
+            frames.map(
+              frame =>
+                frame.card.render.seed,
+            );
+
+          expect(
+            new Set(
+              seeds,
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          for (
+            const frame
+            of frames
+          ) {
+            expect(
+              frame.card.render.renderProfile,
+            ).toBe(
+              ArchiveGalacticObjectRenderProfile
+                .OPEN_CLUSTER_FIELD,
+            );
+          }
+
+          expect(
+            frames[
+              0
+            ].card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .STAR_CLUSTER,
+          );
+
+          expect(
+            frames[
+              1
+            ].card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .OPEN_CLUSTER,
           );
 
           allSeeds.push(

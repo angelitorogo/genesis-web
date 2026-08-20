@@ -778,6 +778,92 @@ describe(
     );
 
     it(
+      'should route an unclassified STAR_CLUSTER with OPEN_CLUSTER_FIELD through the dedicated open-cluster renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .STAR_CLUSTER,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .OPEN_CLUSTER_FIELD,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="open-cluster-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            'svg',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route scientific OPEN_CLUSTER descriptors through the same dedicated renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .OPEN_CLUSTER,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .CONFIRMED,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .OPEN_CLUSTER_FIELD,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="open-cluster-render"]',
+          ),
+        ).toBeTruthy();
+      },
+    );
+
+    it(
       'should route an unclassified nebula with PLANETARY_VOLUME profile through the same planetary renderer without exposing the subtype',
       () => {
         const fixture =
