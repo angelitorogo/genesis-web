@@ -77,6 +77,10 @@ import {
 } from '../../genesis-archive/globular-cluster-render-model';
 
 import {
+  SupernovaRemnantRenderModelBuilder,
+} from '../../genesis-archive/supernova-remnant-render-model';
+
+import {
   GalacticObjectLaboratoryCaseId,
   GalacticObjectLaboratoryGroup,
   GALACTIC_OBJECT_LABORATORY_CASES,
@@ -347,6 +351,156 @@ describe(
               .expectedRemnantMorphology,
           );
         }
+      },
+      30_000,
+    );
+
+    it(
+      'should expose eight deterministic SHELL samples covering all eight visual families while preserving one object across knowledge levels',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .supernovaRemnantShellSamples();
+
+        expect(
+          samples.map(
+            sample =>
+              sample.label,
+          ),
+        ).toEqual([
+          'A',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'H',
+        ]);
+
+        const visualFamilies =
+          new Set<string>();
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            SupernovaRemnantGenerator
+              .resolveMorphology(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            SupernovaRemnantMorphology
+              .SHELL,
+          );
+
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .SNR_SHELL,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const models =
+            frames.map(
+              frame =>
+                SupernovaRemnantRenderModelBuilder
+                  .build(
+                    frame.card.render,
+                  ),
+            );
+
+          visualFamilies.add(
+            models[0].morphologyFamily,
+          );
+
+          expect(
+            new Set(
+              models.map(
+                model =>
+                  JSON.stringify({
+                    structureSeedX:
+                      model.structureSeedX,
+                    structureSeedY:
+                      model.structureSeedY,
+                    morphologyFamily:
+                      model.morphologyFamily,
+                    morphologyIndex:
+                      model.morphologyIndex,
+                    paletteFamily:
+                      model.paletteFamily,
+                    paletteIndex:
+                      model.paletteIndex,
+                    orientationRadians:
+                      model.orientationRadians,
+                    shellRadius:
+                      model.shellRadius,
+                    shellThickness:
+                      model.shellThickness,
+                  }),
+              ),
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          expect(
+            frames[0].card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .EXTREME_OBJECT,
+          );
+
+          expect(
+            frames[0].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[0].card.render.renderProfile,
+          ).toBe(
+            ArchiveGalacticObjectRenderProfile
+              .SUPERNOVA_REMNANT_SHELL,
+          );
+
+          expect(
+            frames.slice(1).map(
+              frame =>
+                frame.card.render.seed,
+            ),
+          ).toEqual([
+            frames[0].card.render.seed,
+            frames[0].card.render.seed,
+            frames[0].card.render.seed,
+          ]);
+        }
+
+        expect(
+          visualFamilies,
+        ).toEqual(
+          new Set([
+            'FRACTURED_SHELL',
+            'FILAMENT_RING',
+            'BILOBED_SHELL',
+            'KNOTTY_SHELL',
+            'WISPY_ARC',
+            'BUBBLE_SHELL',
+            'OFFSET_SHELL',
+            'SHOCK_COMPLEX',
+          ]),
+        );
       },
       30_000,
     );

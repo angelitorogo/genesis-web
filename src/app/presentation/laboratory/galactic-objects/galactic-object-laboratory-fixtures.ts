@@ -79,6 +79,11 @@ import {
 } from '../../genesis-archive/globular-cluster-render-model';
 
 import {
+  SupernovaRemnantRenderModelBuilder,
+  type SupernovaRemnantVisualFamily,
+} from '../../genesis-archive/supernova-remnant-render-model';
+
+import {
   HiiRegionLowRenderModelBuilder,
   type HiiRegionLowMorphologyFamily,
 } from '../../genesis-archive/hii-region-low-render-model';
@@ -335,6 +340,17 @@ export interface GlobularClusterLaboratorySample {
     GalacticObjectLocator;
 }
 
+export interface SupernovaRemnantShellLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
 export const GALACTIC_OBJECT_LABORATORY_STATES:
   readonly GalacticObjectLaboratoryState[] =
   Object.freeze([
@@ -414,6 +430,9 @@ const OPEN_CLUSTER_SAMPLE_COUNT =
 const GLOBULAR_CLUSTER_SAMPLE_COUNT =
   8;
 
+const SUPERNOVA_REMNANT_SHELL_SAMPLE_COUNT =
+  8;
+
 let cachedEmissionNebulaSamples:
   readonly EmissionNebulaLaboratorySample[] | null =
     null;
@@ -453,6 +472,10 @@ let cachedOpenClusterSamples:
 
 let cachedGlobularClusterSamples:
   readonly GlobularClusterLaboratorySample[] | null =
+    null;
+
+let cachedSupernovaRemnantShellSamples:
+  readonly SupernovaRemnantShellLaboratorySample[] | null =
     null;
 
 let cachedHiiRepresentatives:
@@ -660,6 +683,24 @@ export class GalacticObjectLaboratoryFixtures {
     return cachedGlobularClusterSamples;
   }
 
+  static supernovaRemnantShellSamples():
+    readonly SupernovaRemnantShellLaboratorySample[] {
+
+    if (
+      cachedSupernovaRemnantShellSamples !==
+        null
+    ) {
+      return cachedSupernovaRemnantShellSamples;
+    }
+
+    cachedSupernovaRemnantShellSamples =
+      Object.freeze(
+        buildSupernovaRemnantShellSamplesV1(),
+      );
+
+    return cachedSupernovaRemnantShellSamples;
+  }
+
   static caseDefinition(
     caseId:
       GalacticObjectLaboratoryCaseId,
@@ -692,6 +733,9 @@ export class GalacticObjectLaboratoryFixtures {
       0,
 
     globularClusterSampleIndex =
+      0,
+
+    supernovaRemnantShellSampleIndex =
       0,
   ): GalacticObjectLaboratoryCase {
 
@@ -1062,6 +1106,41 @@ export class GalacticObjectLaboratoryFixtures {
       );
     }
 
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .SNR_SHELL
+    ) {
+      const sample =
+        this
+          .supernovaRemnantShellSamples()[
+            supernovaRemnantShellSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported SHELL supernova-remnant laboratory sample index: ${supernovaRemnantShellSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
     return caseDefinition;
   }
 
@@ -1098,6 +1177,9 @@ export class GalacticObjectLaboratoryFixtures {
 
     globularClusterSampleIndex =
       0,
+
+    supernovaRemnantShellSampleIndex =
+      0,
   ): readonly GalacticObjectLaboratoryFrame[] {
 
     const caseDefinition =
@@ -1113,6 +1195,7 @@ export class GalacticObjectLaboratoryFixtures {
         hiiIntenseSampleIndex,
         openClusterSampleIndex,
         globularClusterSampleIndex,
+        supernovaRemnantShellSampleIndex,
       );
 
     return Object.freeze(
@@ -2466,6 +2549,203 @@ function globularClusterTargetPaletteIndexV1(
     2
   ) %
     6;
+}
+
+function buildSupernovaRemnantShellSamplesV1():
+  SupernovaRemnantShellLaboratorySample[] {
+
+  const primary =
+    remnantRepresentativesV1()
+      .get(
+        SupernovaRemnantMorphology
+          .SHELL,
+      );
+
+  if (
+    primary ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 SHELL supernova-remnant representative.',
+    );
+  }
+
+  const primaryModel =
+    supernovaRemnantShellRenderModelV1(
+      primary,
+    );
+
+  const familyOrder =
+    allSupernovaRemnantShellVisualFamiliesV1();
+
+  const representatives =
+    new Map<
+      SupernovaRemnantVisualFamily,
+      GalacticObjectLocator
+    >();
+
+  representatives.set(
+    primaryModel.morphologyFamily,
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      16_384n;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      !SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          GENERATION_KEY,
+          locator,
+        )
+    ) {
+      continue;
+    }
+
+    if (
+      SupernovaRemnantGenerator
+        .resolveMorphology(
+          GENERATION_KEY,
+          locator,
+        ) !==
+      SupernovaRemnantMorphology
+        .SHELL
+    ) {
+      continue;
+    }
+
+    const model =
+      supernovaRemnantShellRenderModelV1(
+        locator,
+      );
+
+    if (
+      !representatives.has(
+        model.morphologyFamily,
+      )
+    ) {
+      representatives.set(
+        model.morphologyFamily,
+        locator,
+      );
+    }
+
+    if (
+      representatives.size ===
+        SUPERNOVA_REMNANT_SHELL_SAMPLE_COUNT
+    ) {
+      break;
+    }
+  }
+
+  const orderedLocators =
+    [
+      primary,
+      ...familyOrder
+        .filter(
+          family =>
+            family !==
+              primaryModel.morphologyFamily,
+        )
+        .map(
+          family => {
+            const locator =
+              representatives.get(
+                family,
+              );
+
+            if (
+              locator ===
+                undefined
+            ) {
+              throw new RangeError(
+                `The SHELL supernova-remnant visual laboratory could not find morphology family ${family}.`,
+              );
+            }
+
+            return locator;
+          },
+        ),
+    ];
+
+  if (
+    orderedLocators.length !==
+      SUPERNOVA_REMNANT_SHELL_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The SHELL supernova-remnant visual laboratory found ${orderedLocators.length}/${SUPERNOVA_REMNANT_SHELL_SAMPLE_COUNT} morphology representatives.`,
+    );
+  }
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function supernovaRemnantShellRenderModelV1(
+  locator:
+    GalacticObjectLocator,
+) {
+
+  const detected =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.EXTREME_OBJECT,
+        DiscoveryState.DETECTED,
+      );
+
+  return SupernovaRemnantRenderModelBuilder
+    .build(
+      detected.render,
+    );
+}
+
+function allSupernovaRemnantShellVisualFamiliesV1():
+  readonly SupernovaRemnantVisualFamily[] {
+
+  return Object.freeze([
+    'FRACTURED_SHELL',
+    'FILAMENT_RING',
+    'BILOBED_SHELL',
+    'KNOTTY_SHELL',
+    'WISPY_ARC',
+    'BUBBLE_SHELL',
+    'OFFSET_SHELL',
+    'SHOCK_COMPLEX',
+  ]);
 }
 
 function buildEmissionNebulaSamplesV1():

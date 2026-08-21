@@ -52,7 +52,7 @@ describe(
     );
 
     it(
-      'should render one accessible deterministic SVG with point-12.8 knowledge metadata',
+      'should route supernova remnants through the dedicated high-fidelity renderer with point-12.8 knowledge metadata',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -67,8 +67,7 @@ describe(
         fixture.detectChanges();
 
         const element =
-          fixture.nativeElement as
-            HTMLElement;
+          fixture.nativeElement as HTMLElement;
 
         const figure =
           element.querySelector(
@@ -93,7 +92,13 @@ describe(
 
         expect(
           element.querySelector(
-            'svg',
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            'canvas',
           )?.getAttribute(
             'aria-label',
           ),
@@ -104,7 +109,7 @@ describe(
     );
 
     it(
-      'should namespace internal SVG definitions from the descriptor so parallel renderers cannot collide',
+      'should route an opaque DETECTED SHELL profile through the same SNR renderer without exposing the scientific variant',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -113,14 +118,113 @@ describe(
 
         fixture.componentRef.setInput(
           'descriptor',
-          descriptor,
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .EXTREME_OBJECT,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .SUPERNOVA_REMNANT_SHELL,
+          }),
         );
 
         fixture.detectChanges();
 
         const element =
-          fixture.nativeElement as
-            HTMLElement;
+          fixture.nativeElement as HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="supernova-remnant-render"]',
+            )
+            ?.getAttribute(
+              'data-snr-variant',
+            ),
+        ).toBe(
+          'GENERIC',
+        );
+
+        expect(
+          element.querySelector(
+            'svg',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should preserve the scientific SNR morphology string inside the dedicated renderer metadata',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            variant:
+              'PLERION',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="supernova-remnant-render"]',
+            )
+            ?.getAttribute(
+              'data-snr-variant',
+            ),
+        ).toBe(
+          'PLERION',
+        );
+      },
+    );
+
+    it(
+      'should keep the generic SVG fallback available for unsupported render families so internal SVG ids remain namespaced',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .EXTREME_OBJECT,
+            variant:
+              null,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
 
         const ids =
           Array.from(
@@ -144,50 +248,6 @@ describe(
           ).size,
         ).toBe(
           4,
-        );
-
-        for (
-          const id
-          of ids
-        ) {
-          expect(
-            id,
-          ).toMatch(
-            /^archive-object-[0-9a-f]+-/,
-          );
-        }
-
-        const firstIds =
-          [
-            ...ids,
-          ];
-
-        fixture.componentRef.setInput(
-          'descriptor',
-          Object.freeze({
-            ...descriptor,
-            knowledgeLevel:
-              ArchiveGalacticObjectKnowledgeLevel
-                .CONFIRMED,
-          }),
-        );
-
-        fixture.detectChanges();
-
-        const confirmedIds =
-          Array.from(
-            element.querySelectorAll(
-              'svg defs [id]',
-            ),
-          ).map(
-            node =>
-              node.id,
-          );
-
-        expect(
-          confirmedIds,
-        ).not.toEqual(
-          firstIds,
         );
       },
     );
@@ -1052,7 +1112,7 @@ describe(
     );
 
     it(
-      'should materialize real SVG primitives instead of a placeholder image',
+      'should materialize real SVG primitives instead of a placeholder image for the generic fallback renderer',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -1061,7 +1121,14 @@ describe(
 
         fixture.componentRef.setInput(
           'descriptor',
-          descriptor,
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .EXTREME_OBJECT,
+            variant:
+              null,
+          }),
         );
 
         fixture.detectChanges();

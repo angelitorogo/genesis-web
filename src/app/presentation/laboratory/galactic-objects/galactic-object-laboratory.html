@@ -552,6 +552,46 @@
               </div>
             </div>
           }
+
+          @if (isSupernovaRemnantShellSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="snr-shell-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 remanentes SHELL reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de remanentes de supernova de cáscara"
+              >
+                @for (
+                  sample of supernovaRemnantShellSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="snr-shell-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar remanente SN de cáscara ' + sample.label"
+                    [attr.aria-pressed]="selectedSupernovaRemnantShellSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedSupernovaRemnantShellSampleIndex() === sample.index"
+                    (click)="selectSupernovaRemnantShellSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
       </section>
     }

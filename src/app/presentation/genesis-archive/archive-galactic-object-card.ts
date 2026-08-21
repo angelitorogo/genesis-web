@@ -131,6 +131,9 @@ export const ArchiveGalacticObjectRenderProfile =
 
     GLOBULAR_CLUSTER_FIELD:
       'GLOBULAR_CLUSTER_FIELD',
+
+    SUPERNOVA_REMNANT_SHELL:
+      'SUPERNOVA_REMNANT_SHELL',
   } as const);
 
 export type ArchiveGalacticObjectRenderProfile =
@@ -1091,6 +1094,12 @@ function buildPhysicalCard(
             `Render procedural de ${title}`,
           variant:
             remnant.morphology,
+          renderProfile:
+            remnant.morphology ===
+              SupernovaRemnantMorphology.SHELL
+              ? ArchiveGalacticObjectRenderProfile
+                  .SUPERNOVA_REMNANT_SHELL
+              : null,
           scale:
             normalizeLog(
               remnant.physicalProperties.radiusParsecs,
@@ -1199,6 +1208,31 @@ function renderProfileForObservedMorphology(
           .OPEN_CLUSTER_FIELD
       : ArchiveGalacticObjectRenderProfile
           .GLOBULAR_CLUSTER_FIELD;
+  }
+
+  if (
+    coarseFamily ===
+      GalacticObjectScientificSurveyFamily.EXTREME_OBJECT
+  ) {
+    if (
+      !SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          generationKey,
+          locator,
+        )
+    ) {
+      return null;
+    }
+
+    return SupernovaRemnantGenerator
+      .resolveMorphology(
+        generationKey,
+        locator,
+      ) ===
+        SupernovaRemnantMorphology.SHELL
+      ? ArchiveGalacticObjectRenderProfile
+          .SUPERNOVA_REMNANT_SHELL
+      : null;
   }
 
   if (

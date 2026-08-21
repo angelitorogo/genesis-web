@@ -45,6 +45,11 @@ import {
   GlobularClusterRender,
 } from './globular-cluster-render';
 
+
+import {
+  SupernovaRemnantRender,
+} from './supernova-remnant-render';
+
 import {
   ArchiveGalacticObjectRenderKind,
   ArchiveGalacticObjectRenderProfile,
@@ -73,6 +78,7 @@ import {
     HiiRegionIntenseRender,
     OpenClusterRender,
     GlobularClusterRender,
+    SupernovaRemnantRender,
   ],
 
   templateUrl:
@@ -257,6 +263,24 @@ export class GalacticObjectProceduralRender {
           descriptor.kind ===
             ArchiveGalacticObjectRenderKind
               .GLOBULAR_CLUSTER
+        );
+      },
+    );
+
+
+  readonly usesSupernovaRemnantRenderer =
+    computed(
+      () => {
+        const descriptor =
+          this.descriptor();
+
+        return (
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .SUPERNOVA_REMNANT_SHELL ||
+          descriptor.kind ===
+            ArchiveGalacticObjectRenderKind
+              .SUPERNOVA_REMNANT
         );
       },
     );

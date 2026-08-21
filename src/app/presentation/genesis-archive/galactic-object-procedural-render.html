@@ -28,6 +28,10 @@
     <app-globular-cluster-render
       [descriptor]="descriptor()"
     ></app-globular-cluster-render>
+  } @else if (usesSupernovaRemnantRenderer()) {
+    <app-supernova-remnant-render
+      [descriptor]="descriptor()"
+    ></app-supernova-remnant-render>
   } @else if (usesPlanetaryNebulaRenderer()) {
     <app-planetary-nebula-render
       [descriptor]="descriptor()"

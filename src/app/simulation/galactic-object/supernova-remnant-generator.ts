@@ -181,6 +181,37 @@ export class SupernovaRemnantGenerator {
     );
   }
 
+  static resolveMorphology(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      GalacticObjectLocator,
+  ): SupernovaRemnantMorphologyValue {
+
+    if (
+      !this.isSupernovaRemnantLocator(
+        generationKey,
+        locator,
+      )
+    ) {
+      throw new RangeError(
+        'SupernovaRemnantGenerator requires a GalacticObjectLocator assigned to the point-12.6 supernova-remnant subset of the canonical point-9.4 EXTREME_OBJECT family.',
+      );
+    }
+
+    const targetSeed =
+      ProceduralTargetResolver
+        .resolveTargetSeed(
+          generationKey,
+          locator,
+        );
+
+    return morphologyV1(
+      targetSeed.normalizedValue,
+    );
+  }
+
   static generate(
     generationKey:
       UniverseGenerationKey,

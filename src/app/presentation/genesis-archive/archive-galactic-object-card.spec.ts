@@ -23,6 +23,10 @@ import {
 } from '../../domain/galactic-object/star-formation-activity';
 
 import {
+  SupernovaRemnantMorphology,
+} from '../../domain/galactic-object/supernova-remnant-morphology';
+
+import {
   GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -49,6 +53,10 @@ import {
 import {
   NebulaGenerator,
 } from '../../simulation/galactic-object/nebula-generator';
+
+import {
+  SupernovaRemnantGenerator,
+} from '../../simulation/galactic-object/supernova-remnant-generator';
 
 import {
   ArchiveGalacticObjectCardAssembler,
@@ -970,6 +978,166 @@ describe(
           'Metalicidad',
         );
       },
+    );
+
+    it(
+      'should preserve one SHELL remnant renderer from opaque detection through physical confirmation without leaking morphology at DETECTED',
+      () => {
+        let locator:
+          GalacticObjectLocator | null =
+            null;
+
+        for (
+          let index =
+            0n;
+          index <
+            2_048n;
+          index +=
+            1n
+        ) {
+          const candidate =
+            new GalacticObjectLocator(
+              0n,
+              0n,
+              index,
+            );
+
+          if (
+            !SupernovaRemnantGenerator
+              .isSupernovaRemnantLocator(
+                generationKey,
+                candidate,
+              )
+          ) {
+            continue;
+          }
+
+          if (
+            SupernovaRemnantGenerator
+              .resolveMorphology(
+                generationKey,
+                candidate,
+              ) ===
+            SupernovaRemnantMorphology
+              .SHELL
+          ) {
+            locator =
+              candidate;
+            break;
+          }
+        }
+
+        expect(
+          locator,
+        ).not.toBeNull();
+
+        if (
+          locator ===
+            null
+        ) {
+          throw new RangeError(
+            'Missing deterministic SHELL remnant test locator.',
+          );
+        }
+
+        const cards =
+          [
+            DiscoveryState.DETECTED,
+            DiscoveryState.DISCOVERED,
+            DiscoveryState.CATALOGUED,
+            DiscoveryState.CONFIRMED,
+          ].map(
+            state =>
+              ArchiveGalacticObjectCardAssembler
+                .build(
+                  generationKey,
+                  locator,
+                  ExplorationResultKind
+                    .EXTREME_OBJECT,
+                  state,
+                ),
+          );
+
+        expect(
+          new Set(
+            cards.map(
+              card =>
+                card.render.seed,
+            ),
+          ).size,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          cards.map(
+            card =>
+              card.render.renderProfile,
+          ),
+        ).toEqual([
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_SHELL,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_SHELL,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_SHELL,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_SHELL,
+        ]);
+
+        expect(
+          cards[0].scientificSubject,
+        ).toBeNull();
+
+        expect(
+          cards[0].render.kind,
+        ).toBe(
+          ArchiveGalacticObjectRenderKind
+            .EXTREME_OBJECT,
+        );
+
+        expect(
+          cards[0].render.variant,
+        ).toBeNull();
+
+        for (
+          const card
+          of cards.slice(1)
+        ) {
+          expect(
+            card.scientificSubject,
+          ).toBe(
+            GalacticObjectScientificSubject
+              .SUPERNOVA_REMNANT,
+          );
+
+          expect(
+            card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .SUPERNOVA_REMNANT,
+          );
+        }
+
+        expect(
+          cards[1].render.variant,
+        ).toBeNull();
+
+        expect(
+          cards[2].render.variant,
+        ).toBe(
+          SupernovaRemnantMorphology
+            .SHELL,
+        );
+
+        expect(
+          cards[3].render.variant,
+        ).toBe(
+          SupernovaRemnantMorphology
+            .SHELL,
+        );
+      },
+      30_000,
     );
 
     it(

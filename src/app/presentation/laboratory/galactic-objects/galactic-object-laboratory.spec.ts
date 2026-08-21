@@ -205,6 +205,92 @@ describe(
     );
 
     it(
+      'should expose SHELL A-H and render the same dedicated remnant family in all four knowledge states',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="SNR_SHELL"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const buttons =
+          Array.from(
+            element.querySelectorAll<HTMLButtonElement>(
+              '[data-testid="snr-shell-diversity-button"]',
+            ),
+          );
+
+        expect(
+          buttons,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          buttons.map(
+            button =>
+              button.getAttribute(
+                'data-sample',
+              ),
+          ),
+        ).toEqual([
+          'A',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'H',
+        ]);
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        buttons[7]?.click();
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Muestra H',
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
+    it(
       'should switch to planetary-nebula progression without changing the route',
       () => {
         const fixture =

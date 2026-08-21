@@ -161,6 +161,10 @@ export class GalacticObjectLaboratoryPage {
     GalacticObjectLaboratoryFixtures
       .globularClusterSamples();
 
+  readonly supernovaRemnantShellSamples =
+    GalacticObjectLaboratoryFixtures
+      .supernovaRemnantShellSamples();
+
   readonly view =
     signal<LaboratoryView>(
       LaboratoryView
@@ -226,6 +230,11 @@ export class GalacticObjectLaboratoryPage {
     );
 
   readonly selectedGlobularClusterSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedSupernovaRemnantShellSampleIndex =
     signal(
       0,
     );
@@ -328,6 +337,16 @@ export class GalacticObjectLaboratoryPage {
           .globularClusterSamples[
             this
               .selectedGlobularClusterSampleIndex()
+          ],
+    );
+
+  readonly selectedSupernovaRemnantShellSample =
+    computed(
+      () =>
+        this
+          .supernovaRemnantShellSamples[
+            this
+              .selectedSupernovaRemnantShellSampleIndex()
           ],
     );
 
@@ -442,6 +461,17 @@ export class GalacticObjectLaboratoryPage {
             .GLOBULAR_CLUSTER,
     );
 
+  readonly isSupernovaRemnantShellSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .SNR_SHELL,
+    );
+
   readonly selectedObjectCase =
     computed(
       () =>
@@ -469,6 +499,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedOpenClusterSampleIndex(),
             this
               .selectedGlobularClusterSampleIndex(),
+            this
+              .selectedSupernovaRemnantShellSampleIndex(),
           ),
     );
 
@@ -499,6 +531,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedOpenClusterSampleIndex(),
             this
               .selectedGlobularClusterSampleIndex(),
+            this
+              .selectedSupernovaRemnantShellSampleIndex(),
           ),
     );
 
@@ -955,6 +989,48 @@ export class GalacticObjectLaboratoryPage {
       .set(
         GalacticObjectLaboratoryCaseId
           .GLOBULAR_CLUSTER,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectSupernovaRemnantShellSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .supernovaRemnantShellSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported SHELL supernova-remnant sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedSupernovaRemnantShellSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .SNR_SHELL,
       );
 
     this

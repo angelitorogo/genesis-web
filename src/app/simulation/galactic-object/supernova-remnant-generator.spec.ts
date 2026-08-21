@@ -242,6 +242,31 @@ describe(
     );
 
     it(
+      'should resolve morphology deterministically without requiring full physical materialization',
+      () => {
+        const target =
+          locator(
+            0n,
+          );
+
+        expect(
+          SupernovaRemnantGenerator
+            .resolveMorphology(
+              generationKey,
+              target,
+            ),
+        ).toBe(
+          SupernovaRemnantGenerator
+            .generate(
+              generationKey,
+              target,
+            )
+            .morphology,
+        );
+      },
+    );
+
+    it(
       'should keep all generated physical quantities finite and inside V1 bounds',
       () => {
         let checked =
