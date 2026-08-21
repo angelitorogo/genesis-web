@@ -2580,5 +2580,372 @@ describe(
       30_000,
     );
 
+
+    it(
+      'should expose eight deterministic PLERION samples covering all eight wind-nebula families while preserving one object across knowledge levels',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .supernovaRemnantPlerionSamples();
+
+        expect(
+          samples.map(
+            sample =>
+              sample.label,
+          ),
+        ).toEqual([
+          'A',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'H',
+        ]);
+
+        const visualFamilies =
+          new Set<string>();
+
+        const palettes =
+          new Set<string>();
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            SupernovaRemnantGenerator
+              .resolveMorphology(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            SupernovaRemnantMorphology
+              .PLERION,
+          );
+
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .SNR_PLERION,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const models =
+            frames.map(
+              frame =>
+                SupernovaRemnantRenderModelBuilder
+                  .build(
+                    frame.card.render,
+                  ),
+            );
+
+          visualFamilies.add(
+            models[0].morphologyFamily,
+          );
+
+          palettes.add(
+            models[0].paletteFamily,
+          );
+
+          expect(
+            new Set(
+              models.map(
+                model =>
+                  JSON.stringify({
+                    structureSeedX:
+                      model.structureSeedX,
+                    structureSeedY:
+                      model.structureSeedY,
+                    morphologyFamily:
+                      model.morphologyFamily,
+                    morphologyIndex:
+                      model.morphologyIndex,
+                    paletteFamily:
+                      model.paletteFamily,
+                    paletteIndex:
+                      model.paletteIndex,
+                    orientationRadians:
+                      model.orientationRadians,
+                    structureAspect:
+                      model.structureAspect,
+                    apparentExtent:
+                      model.apparentExtent,
+                    shellRadius:
+                      model.shellRadius,
+                    filamentStrength:
+                      model.filamentStrength,
+                    clumpiness:
+                      model.clumpiness,
+                    interiorGlow:
+                      model.interiorGlow,
+                    haloStrength:
+                      model.haloStrength,
+                    jetStrength:
+                      model.jetStrength,
+                    centralEngineStrength:
+                      model.centralEngineStrength,
+                    coreOffsetX:
+                      model.coreOffsetX,
+                    coreOffsetY:
+                      model.coreOffsetY,
+                  }),
+              ),
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          expect(
+            frames[0].card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .EXTREME_OBJECT,
+          );
+
+          expect(
+            frames[0].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[0].card.render.renderProfile,
+          ).toBe(
+            ArchiveGalacticObjectRenderProfile
+              .SUPERNOVA_REMNANT_PLERION,
+          );
+
+          expect(
+            frames.slice(1).map(
+              frame =>
+                frame.card.render.seed,
+            ),
+          ).toEqual([
+            frames[0].card.render.seed,
+            frames[0].card.render.seed,
+            frames[0].card.render.seed,
+          ]);
+        }
+
+        expect(
+          visualFamilies,
+        ).toEqual(
+          new Set([
+            'FILAMENTARY_WIND_NEBULA',
+            'PETALLED_CORE',
+            'TORUS_JET',
+            'ELLIPTICAL_WISPS',
+            'KNOTTED_SYNCHROTRON',
+            'DOUBLE_HALO',
+            'OFFSET_PLUME',
+            'TURBULENT_WIND_WEB',
+          ]),
+        );
+
+        expect(
+          palettes.size,
+        ).toBeGreaterThanOrEqual(
+          4,
+        );
+      },
+      30_000,
+    );
+
+
+    it(
+      'should expose eight deterministic COMPOSITE samples covering all eight shell-plus-PWN families while preserving one object across knowledge levels',
+      () => {
+        const samples =
+          GalacticObjectLaboratoryFixtures
+            .supernovaRemnantCompositeSamples();
+
+        expect(
+          samples.map(
+            sample =>
+              sample.label,
+          ),
+        ).toEqual([
+          'A',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'H',
+        ]);
+
+        const visualFamilies =
+          new Set<string>();
+
+        const palettes =
+          new Set<string>();
+
+        for (
+          const sample
+          of samples
+        ) {
+          expect(
+            SupernovaRemnantGenerator
+              .resolveMorphology(
+                generationKey,
+                sample.locator,
+              ),
+          ).toBe(
+            SupernovaRemnantMorphology
+              .COMPOSITE,
+          );
+
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                GalacticObjectLaboratoryCaseId
+                  .SNR_COMPOSITE,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                sample.index,
+              );
+
+          const models =
+            frames.map(
+              frame =>
+                SupernovaRemnantRenderModelBuilder
+                  .build(
+                    frame.card.render,
+                  ),
+            );
+
+          visualFamilies.add(
+            models[0].morphologyFamily,
+          );
+
+          palettes.add(
+            models[0].paletteFamily,
+          );
+
+          expect(
+            new Set(
+              models.map(
+                model =>
+                  JSON.stringify({
+                    structureSeedX:
+                      model.structureSeedX,
+                    structureSeedY:
+                      model.structureSeedY,
+                    morphologyFamily:
+                      model.morphologyFamily,
+                    morphologyIndex:
+                      model.morphologyIndex,
+                    paletteFamily:
+                      model.paletteFamily,
+                    paletteIndex:
+                      model.paletteIndex,
+                    orientationRadians:
+                      model.orientationRadians,
+                    structureAspect:
+                      model.structureAspect,
+                    apparentExtent:
+                      model.apparentExtent,
+                    shellRadius:
+                      model.shellRadius,
+                    shellThickness:
+                      model.shellThickness,
+                    filamentStrength:
+                      model.filamentStrength,
+                    interiorGlow:
+                      model.interiorGlow,
+                    haloStrength:
+                      model.haloStrength,
+                    jetStrength:
+                      model.jetStrength,
+                    centralEngineStrength:
+                      model.centralEngineStrength,
+                    coreOffsetX:
+                      model.coreOffsetX,
+                    coreOffsetY:
+                      model.coreOffsetY,
+                  }),
+              ),
+            ).size,
+          ).toBe(
+            1,
+          );
+
+          expect(
+            frames[0].card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind
+              .EXTREME_OBJECT,
+          );
+
+          expect(
+            frames[0].card.render.variant,
+          ).toBeNull();
+
+          expect(
+            frames[0].card.render.renderProfile,
+          ).toBe(
+            ArchiveGalacticObjectRenderProfile
+              .SUPERNOVA_REMNANT_COMPOSITE,
+          );
+
+          expect(
+            frames.slice(1).map(
+              frame =>
+                frame.card.render.seed,
+            ),
+          ).toEqual([
+            frames[0].card.render.seed,
+            frames[0].card.render.seed,
+            frames[0].card.render.seed,
+          ]);
+        }
+
+        expect(
+          visualFamilies,
+        ).toEqual(
+          new Set([
+            'BALANCED_CORE_SHELL',
+            'BIPOLAR_PWN_SHELL',
+            'OFFSET_CORE_SHELL',
+            'FILAMENT_BRIDGE',
+            'BREAKOUT_COMPOSITE',
+            'DOUBLE_ARC_CORE',
+            'KNOTTED_RIM_PULSAR',
+            'WIND_TAIL_SHELL',
+          ]),
+        );
+
+        expect(
+          palettes.size,
+        ).toBeGreaterThanOrEqual(
+          4,
+        );
+      },
+      30_000,
+    );
+
   },
 );

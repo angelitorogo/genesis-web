@@ -165,6 +165,14 @@ export class GalacticObjectLaboratoryPage {
     GalacticObjectLaboratoryFixtures
       .supernovaRemnantShellSamples();
 
+  readonly supernovaRemnantPlerionSamples =
+    GalacticObjectLaboratoryFixtures
+      .supernovaRemnantPlerionSamples();
+
+  readonly supernovaRemnantCompositeSamples =
+    GalacticObjectLaboratoryFixtures
+      .supernovaRemnantCompositeSamples();
+
   readonly view =
     signal<LaboratoryView>(
       LaboratoryView
@@ -235,6 +243,16 @@ export class GalacticObjectLaboratoryPage {
     );
 
   readonly selectedSupernovaRemnantShellSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedSupernovaRemnantPlerionSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedSupernovaRemnantCompositeSampleIndex =
     signal(
       0,
     );
@@ -347,6 +365,26 @@ export class GalacticObjectLaboratoryPage {
           .supernovaRemnantShellSamples[
             this
               .selectedSupernovaRemnantShellSampleIndex()
+          ],
+    );
+
+  readonly selectedSupernovaRemnantPlerionSample =
+    computed(
+      () =>
+        this
+          .supernovaRemnantPlerionSamples[
+            this
+              .selectedSupernovaRemnantPlerionSampleIndex()
+          ],
+    );
+
+  readonly selectedSupernovaRemnantCompositeSample =
+    computed(
+      () =>
+        this
+          .supernovaRemnantCompositeSamples[
+            this
+              .selectedSupernovaRemnantCompositeSampleIndex()
           ],
     );
 
@@ -472,6 +510,28 @@ export class GalacticObjectLaboratoryPage {
             .SNR_SHELL,
     );
 
+  readonly isSupernovaRemnantPlerionSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .SNR_PLERION,
+    );
+
+  readonly isSupernovaRemnantCompositeSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this
+          .selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .SNR_COMPOSITE,
+    );
+
   readonly selectedObjectCase =
     computed(
       () =>
@@ -501,6 +561,10 @@ export class GalacticObjectLaboratoryPage {
               .selectedGlobularClusterSampleIndex(),
             this
               .selectedSupernovaRemnantShellSampleIndex(),
+            this
+              .selectedSupernovaRemnantPlerionSampleIndex(),
+            this
+              .selectedSupernovaRemnantCompositeSampleIndex(),
           ),
     );
 
@@ -533,6 +597,10 @@ export class GalacticObjectLaboratoryPage {
               .selectedGlobularClusterSampleIndex(),
             this
               .selectedSupernovaRemnantShellSampleIndex(),
+            this
+              .selectedSupernovaRemnantPlerionSampleIndex(),
+            this
+              .selectedSupernovaRemnantCompositeSampleIndex(),
           ),
     );
 
@@ -1031,6 +1099,90 @@ export class GalacticObjectLaboratoryPage {
       .set(
         GalacticObjectLaboratoryCaseId
           .SNR_SHELL,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectSupernovaRemnantPlerionSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .supernovaRemnantPlerionSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported PLERION supernova-remnant sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedSupernovaRemnantPlerionSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .SNR_PLERION,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .OBJECT,
+      );
+  }
+
+  selectSupernovaRemnantCompositeSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .supernovaRemnantCompositeSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported COMPOSITE supernova-remnant sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedSupernovaRemnantCompositeSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedObjectCaseId
+      .set(
+        GalacticObjectLaboratoryCaseId
+          .SNR_COMPOSITE,
       );
 
     this

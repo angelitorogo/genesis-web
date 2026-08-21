@@ -391,5 +391,398 @@ describe(
         );
       },
     );
+
+    it(
+      'should accept the opaque DETECTED PLERION profile without exposing a scientific variant',
+      () => {
+        const model =
+          SupernovaRemnantRenderModelBuilder
+            .build(
+              Object.freeze({
+                ...descriptor(
+                  ArchiveGalacticObjectKnowledgeLevel
+                    .SIGNAL,
+                  'SNR-OPAQUE-PLERION-SIGNAL',
+                  null,
+                ),
+                kind:
+                  ArchiveGalacticObjectRenderKind
+                    .EXTREME_OBJECT,
+                renderProfile:
+                  ArchiveGalacticObjectRenderProfile
+                    .SUPERNOVA_REMNANT_PLERION,
+              }),
+            );
+
+        expect(
+          model.scientificMorphology,
+        ).toBe(
+          'PLERION',
+        );
+
+        expect(
+          model.interiorVisibility,
+        ).toBe(
+          0.20,
+        );
+
+        expect(
+          model.detailFactor,
+        ).toBe(
+          0.16,
+        );
+      },
+    );
+
+    it(
+      'should distribute all eight deterministic PLERION visual families',
+      () => {
+        const models =
+          Array.from(
+            {
+              length:
+                512,
+            },
+            (
+              _,
+              index,
+            ) =>
+              SupernovaRemnantRenderModelBuilder
+                .build(
+                  descriptor(
+                    ArchiveGalacticObjectKnowledgeLevel
+                      .CONFIRMED,
+                    `SNR-PLERION-DIVERSITY-${index}`,
+                    'PLERION',
+                  ),
+                ),
+          );
+
+        expect(
+          new Set(
+            models.map(
+              current =>
+                current.morphologyFamily,
+            ),
+          ),
+        ).toEqual(
+          new Set([
+            'FILAMENTARY_WIND_NEBULA',
+            'PETALLED_CORE',
+            'TORUS_JET',
+            'ELLIPTICAL_WISPS',
+            'KNOTTED_SYNCHROTRON',
+            'DOUBLE_HALO',
+            'OFFSET_PLUME',
+            'TURBULENT_WIND_WEB',
+          ]),
+        );
+      },
+    );
+
+    it(
+      'should preserve one PLERION structural identity while progressively recovering filaments, synchrotron glow and chroma',
+      () => {
+        const models =
+          [
+            ArchiveGalacticObjectKnowledgeLevel.SIGNAL,
+            ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED,
+            ArchiveGalacticObjectKnowledgeLevel.CATALOGUED,
+            ArchiveGalacticObjectKnowledgeLevel.CONFIRMED,
+          ].map(
+            knowledgeLevel =>
+              SupernovaRemnantRenderModelBuilder
+                .build(
+                  descriptor(
+                    knowledgeLevel,
+                    'SNR-PLERION-SAME-OBJECT',
+                    'PLERION',
+                  ),
+                ),
+          );
+
+        expect(
+          new Set(
+            models.map(
+              current =>
+                JSON.stringify({
+                  structureSeedX:
+                    current.structureSeedX,
+                  structureSeedY:
+                    current.structureSeedY,
+                  morphologyIndex:
+                    current.morphologyIndex,
+                  morphologyFamily:
+                    current.morphologyFamily,
+                  paletteIndex:
+                    current.paletteIndex,
+                  paletteFamily:
+                    current.paletteFamily,
+                  orientationRadians:
+                    current.orientationRadians,
+                  structureAspect:
+                    current.structureAspect,
+                  apparentExtent:
+                    current.apparentExtent,
+                  shellRadius:
+                    current.shellRadius,
+                  filamentStrength:
+                    current.filamentStrength,
+                  clumpiness:
+                    current.clumpiness,
+                  interiorGlow:
+                    current.interiorGlow,
+                  haloStrength:
+                    current.haloStrength,
+                  jetStrength:
+                    current.jetStrength,
+                  centralEngineStrength:
+                    current.centralEngineStrength,
+                  coreOffsetX:
+                    current.coreOffsetX,
+                  coreOffsetY:
+                    current.coreOffsetY,
+                }),
+            ),
+          ).size,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          models.map(
+            current =>
+              current.filamentVisibility,
+          ),
+        ).toEqual([
+          0.08,
+          0.34,
+          0.74,
+          1,
+        ]);
+
+        expect(
+          models.map(
+            current =>
+              current.interiorVisibility,
+          ),
+        ).toEqual([
+          0.20,
+          0.56,
+          0.86,
+          1,
+        ]);
+
+        expect(
+          models.map(
+            current =>
+              current.chromaGain,
+          ),
+        ).toEqual([
+          0.28,
+          0.58,
+          0.86,
+          1,
+        ]);
+      },
+    );
+
+    it(
+      'should accept the opaque DETECTED COMPOSITE profile without exposing a scientific variant',
+      () => {
+        const model =
+          SupernovaRemnantRenderModelBuilder
+            .build(
+              Object.freeze({
+                ...descriptor(
+                  ArchiveGalacticObjectKnowledgeLevel
+                    .SIGNAL,
+                  'SNR-OPAQUE-COMPOSITE-SIGNAL',
+                  null,
+                ),
+                kind:
+                  ArchiveGalacticObjectRenderKind
+                    .EXTREME_OBJECT,
+                renderProfile:
+                  ArchiveGalacticObjectRenderProfile
+                    .SUPERNOVA_REMNANT_COMPOSITE,
+              }),
+            );
+
+        expect(
+          model.scientificMorphology,
+        ).toBe(
+          'COMPOSITE',
+        );
+
+        expect(
+          model.shellVisibility,
+        ).toBe(
+          0.24,
+        );
+
+        expect(
+          model.interiorVisibility,
+        ).toBe(
+          0.18,
+        );
+
+        expect(
+          model.detailFactor,
+        ).toBe(
+          0.15,
+        );
+      },
+    );
+
+    it(
+      'should distribute all eight deterministic COMPOSITE visual families',
+      () => {
+        const models =
+          Array.from(
+            {
+              length:
+                512,
+            },
+            (
+              _,
+              index,
+            ) =>
+              SupernovaRemnantRenderModelBuilder
+                .build(
+                  descriptor(
+                    ArchiveGalacticObjectKnowledgeLevel
+                      .CONFIRMED,
+                    `SNR-COMPOSITE-DIVERSITY-${index}`,
+                    'COMPOSITE',
+                  ),
+                ),
+          );
+
+        expect(
+          new Set(
+            models.map(
+              current =>
+                current.morphologyFamily,
+            ),
+          ),
+        ).toEqual(
+          new Set([
+            'BALANCED_CORE_SHELL',
+            'BIPOLAR_PWN_SHELL',
+            'OFFSET_CORE_SHELL',
+            'FILAMENT_BRIDGE',
+            'BREAKOUT_COMPOSITE',
+            'DOUBLE_ARC_CORE',
+            'KNOTTED_RIM_PULSAR',
+            'WIND_TAIL_SHELL',
+          ]),
+        );
+      },
+    );
+
+    it(
+      'should preserve one COMPOSITE shell-plus-PWN identity while progressively recovering both zones',
+      () => {
+        const models =
+          [
+            ArchiveGalacticObjectKnowledgeLevel.SIGNAL,
+            ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED,
+            ArchiveGalacticObjectKnowledgeLevel.CATALOGUED,
+            ArchiveGalacticObjectKnowledgeLevel.CONFIRMED,
+          ].map(
+            knowledgeLevel =>
+              SupernovaRemnantRenderModelBuilder
+                .build(
+                  descriptor(
+                    knowledgeLevel,
+                    'SNR-COMPOSITE-SAME-OBJECT',
+                    'COMPOSITE',
+                  ),
+                ),
+          );
+
+        expect(
+          new Set(
+            models.map(
+              current =>
+                JSON.stringify({
+                  structureSeedX:
+                    current.structureSeedX,
+                  structureSeedY:
+                    current.structureSeedY,
+                  morphologyIndex:
+                    current.morphologyIndex,
+                  morphologyFamily:
+                    current.morphologyFamily,
+                  paletteIndex:
+                    current.paletteIndex,
+                  paletteFamily:
+                    current.paletteFamily,
+                  orientationRadians:
+                    current.orientationRadians,
+                  structureAspect:
+                    current.structureAspect,
+                  apparentExtent:
+                    current.apparentExtent,
+                  shellRadius:
+                    current.shellRadius,
+                  shellThickness:
+                    current.shellThickness,
+                  interiorGlow:
+                    current.interiorGlow,
+                  filamentStrength:
+                    current.filamentStrength,
+                  centralEngineStrength:
+                    current.centralEngineStrength,
+                  coreOffsetX:
+                    current.coreOffsetX,
+                  coreOffsetY:
+                    current.coreOffsetY,
+                }),
+            ),
+          ).size,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          models.map(
+            current =>
+              current.shellVisibility,
+          ),
+        ).toEqual([
+          0.24,
+          0.50,
+          0.82,
+          1,
+        ]);
+
+        expect(
+          models.map(
+            current =>
+              current.interiorVisibility,
+          ),
+        ).toEqual([
+          0.18,
+          0.52,
+          0.84,
+          1,
+        ]);
+
+        expect(
+          models.map(
+            current =>
+              current.filamentVisibility,
+          ),
+        ).toEqual([
+          0.08,
+          0.32,
+          0.74,
+          1,
+        ]);
+      },
+    );
+
   },
 );

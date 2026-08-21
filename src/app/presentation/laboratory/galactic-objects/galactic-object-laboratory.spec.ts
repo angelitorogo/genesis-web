@@ -1608,5 +1608,194 @@ describe(
       30_000,
     );
 
+
+    it(
+      'should expose PLERION A-H and render the same dedicated pulsar-wind remnant in all four knowledge states',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="SNR_PLERION"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const buttons =
+          Array.from(
+            element.querySelectorAll<HTMLButtonElement>(
+              '[data-testid="snr-plerion-diversity-button"]',
+            ),
+          );
+
+        expect(
+          buttons,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          buttons.map(
+            button =>
+              button.getAttribute(
+                'data-sample',
+              ),
+          ),
+        ).toEqual([
+          'A',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'H',
+        ]);
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '.galactic-object-render__svg',
+          ),
+        ).toHaveLength(
+          0,
+        );
+
+        buttons[7]?.click();
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Muestra H',
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose COMPOSITE A-H and render the same dedicated shell-plus-PWN remnant in all four knowledge states',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-case="SNR_COMPOSITE"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        const buttons =
+          Array.from(
+            element.querySelectorAll<HTMLButtonElement>(
+              '[data-testid="snr-composite-diversity-button"]',
+            ),
+          );
+
+        expect(
+          buttons,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          buttons.map(
+            button =>
+              button.getAttribute(
+                'data-sample',
+              ),
+          ),
+        ).toEqual([
+          'A',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'H',
+        ]);
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '.galactic-object-render__svg',
+          ),
+        ).toHaveLength(
+          0,
+        );
+
+        buttons[7]?.click();
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galactic-object-laboratory-active-case"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Muestra H',
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+      },
+      30_000,
+    );
+
   },
 );

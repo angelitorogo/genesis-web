@@ -890,6 +890,1799 @@ const FRAGMENT_SHADER =
 
       float largeScale = fbm(centered * (3.4 + uDetail.y * 2.8) + uSeed * 5.0);
       float fineScale = fbm(centered * (11.0 + uDetail.y * 14.0) + uSeed * 17.0 + 14.0);
+
+      if (
+        uScientificMorphology > 1.5
+      ) {
+        float family0 = 1.0 - step(0.25, abs(uMorphology.x - 0.0));
+        float family1 = 1.0 - step(0.25, abs(uMorphology.x - 1.0));
+        float family2 = 1.0 - step(0.25, abs(uMorphology.x - 2.0));
+        float family3 = 1.0 - step(0.25, abs(uMorphology.x - 3.0));
+        float family4 = 1.0 - step(0.25, abs(uMorphology.x - 4.0));
+        float family5 = 1.0 - step(0.25, abs(uMorphology.x - 5.0));
+        float family6 = 1.0 - step(0.25, abs(uMorphology.x - 6.0));
+        float family7 = 1.0 - step(0.25, abs(uMorphology.x - 7.0));
+
+        /* Outer blast-wave shell: irregular, broken and independently
+         * structured from the central pulsar-wind nebula. */
+        vec2 shellCoordinates =
+          centered /
+          max(uMorphology.z, 0.001);
+
+        float shellR =
+          length(shellCoordinates);
+
+        float shellAngle =
+          atan(
+            shellCoordinates.y,
+            shellCoordinates.x
+          );
+
+        float shellCoarse =
+          fbm(
+            shellCoordinates *
+              (3.1 + uDetail.y * 2.2) +
+            uSeed * 7.0
+          );
+
+        float shellFine =
+          fbm(
+            shellCoordinates *
+              (13.0 + uDetail.y * 14.0) +
+            vec2(uSeed.y, uSeed.x) * 31.0 +
+            4.0
+          );
+
+        float shellAngular =
+          sin(
+            shellAngle *
+              (
+                2.0 +
+                family1 * 1.0 +
+                family4 * 2.0 +
+                family5 * 1.0
+              ) +
+            shellCoarse * 4.2 +
+            uSeed.x * 6.28318
+          );
+
+        float shellTarget =
+          uMorphology.w *
+          (
+            1.0 +
+            (shellCoarse - 0.5) *
+              (
+                0.20 +
+                uShapeB.x * 0.16 +
+                family4 * 0.12
+              ) +
+            shellAngular *
+              (
+                0.035 +
+                family1 * 0.018 +
+                family5 * 0.018
+              )
+          );
+
+        float compositeShellThickness =
+          max(0.012, uShell.x) *
+          mix(
+            1.42,
+            1.0,
+            uDetail.y
+          );
+
+        float outerShell =
+          exp(
+            -pow(
+              abs(shellR - shellTarget) /
+                compositeShellThickness,
+              2.0
+            ) *
+            mix(
+              0.86,
+              2.05,
+              uShell.y
+            )
+          );
+
+        float shellBreakNoise =
+          fbm(
+            vec2(
+              shellAngle * 1.65,
+              shellR * 7.5
+            ) +
+            uSeed * 19.0
+          );
+
+        float shellBreakMask =
+          smoothstep(
+            mix(
+              0.32,
+              0.54,
+              uShapeB.w
+            ),
+            0.86,
+            shellBreakNoise +
+              0.16 * shellFine
+          );
+
+        float breakoutBias =
+          smoothstep(
+            -0.25,
+            0.78,
+            cos(
+              shellAngle -
+              uSeed.y * 6.28318
+            )
+          );
+
+        shellBreakMask *=
+          1.0 -
+          family4 *
+            breakoutBias *
+            0.58;
+
+        outerShell *=
+          mix(
+            0.58,
+            1.0,
+            shellBreakMask
+          ) *
+          uKnowledge.x;
+
+        float rimFilamentNoiseA =
+          1.0 -
+          abs(
+            2.0 *
+              fbm(
+                shellCoordinates *
+                  (18.0 + uDetail.y * 20.0) +
+                uSeed * 43.0
+              ) -
+            1.0
+          );
+
+        float rimFilamentNoiseB =
+          1.0 -
+          abs(
+            2.0 *
+              fbm(
+                rotate2d(0.73) *
+                  shellCoordinates *
+                  (14.0 + uDetail.y * 17.0) +
+                vec2(uSeed.y, uSeed.x) * 51.0
+              ) -
+            1.0
+          );
+
+        float rimFilaments =
+          outerShell *
+          pow(
+            clamp(
+              rimFilamentNoiseA * 0.70 +
+              rimFilamentNoiseB * 0.58 -
+              0.56,
+              0.0,
+              1.0
+            ),
+            mix(
+              1.6,
+              1.0,
+              uDetail.y
+            )
+          ) *
+          uShell.z *
+          uKnowledge.y *
+          (
+            0.72 +
+            family3 * 0.58 +
+            family6 * 0.48
+          );
+
+        float rimKnots =
+          pow(
+            clamp(
+              shellCoarse * shellFine,
+              0.0,
+              1.0
+            ),
+            mix(
+              5.8,
+              9.0,
+              uShell.w
+            )
+          ) *
+          outerShell *
+          uKnowledge.y *
+          (
+            0.22 +
+            family6 * 1.35 +
+            family3 * 0.38
+          );
+
+        /* Central PWN: compact, filled and turbulent, never a second shell. */
+        vec2 pwnVector =
+          centered -
+          uOffsets;
+
+        vec2 pwnCoordinates =
+          pwnVector /
+          max(uMorphology.z, 0.001);
+
+        float pwnAspect =
+          1.0 +
+          family1 * 0.42 +
+          family7 * 0.34 +
+          uShapeA.w * 0.18;
+
+        vec2 pwnShapeCoordinates =
+          vec2(
+            pwnCoordinates.x /
+              pwnAspect,
+            pwnCoordinates.y *
+              (
+                1.0 +
+                family1 * 0.12
+              )
+          );
+
+        float pwnR =
+          length(
+            pwnShapeCoordinates
+          );
+
+        float pwnAngle =
+          atan(
+            pwnShapeCoordinates.y,
+            pwnShapeCoordinates.x
+          );
+
+        float pwnCoarse =
+          fbm(
+            pwnShapeCoordinates *
+              (4.0 + uDetail.y * 3.0) +
+            uSeed * 11.0 +
+            3.0
+          );
+
+        float pwnFine =
+          fbm(
+            pwnShapeCoordinates *
+              (12.0 + uDetail.y * 14.0) +
+            vec2(uSeed.y, uSeed.x) * 37.0 +
+            11.0
+          );
+
+        float pwnBaseRadius =
+          uMorphology.w *
+          (
+            0.34 +
+            family0 * 0.04 +
+            family1 * 0.05 +
+            family3 * 0.06 +
+            family5 * 0.03 +
+            family7 * 0.06
+          );
+
+        float pwnAngularDistortion =
+          sin(
+            pwnAngle *
+              (
+                2.0 +
+                family1 * 2.0 +
+                family3 * 3.0
+              ) +
+            pwnCoarse * 4.6 +
+            uSeed.y * 6.28318
+          );
+
+        float pwnTarget =
+          pwnBaseRadius *
+          (
+            1.0 +
+            (pwnCoarse - 0.5) *
+              (
+                0.38 +
+                uShapeB.x * 0.20
+              ) +
+            pwnAngularDistortion *
+              (
+                0.055 +
+                family3 * 0.025
+              )
+          );
+
+        float pwnSoftness =
+          mix(
+            0.070,
+            0.034,
+            uDetail.y
+          );
+
+        float pwnBody =
+          1.0 -
+          smoothstep(
+            pwnTarget - pwnSoftness,
+            pwnTarget + pwnSoftness,
+            pwnR
+          );
+
+        float pwnFill =
+          pwnBody *
+          exp(
+            -pow(
+              pwnR /
+                max(
+                  pwnTarget * 1.18,
+                  0.001
+                ),
+              1.72
+            )
+          ) *
+          (
+            0.58 +
+            0.42 *
+              mix(
+                pwnCoarse,
+                pwnFine,
+                0.38 +
+                0.34 * uDetail.y
+              )
+          ) *
+          uShapeA.y *
+          uKnowledge.z;
+
+        vec2 bridgeCoordinates =
+          rotate2d(
+            0.48 +
+            uSeed.x * 0.62
+          ) *
+          pwnCoordinates;
+
+        float bridgeNoiseA =
+          1.0 -
+          abs(
+            2.0 *
+              fbm(
+                bridgeCoordinates *
+                  (15.0 + uDetail.y * 17.0) +
+                uSeed * 59.0
+              ) -
+            1.0
+          );
+
+        float bridgeNoiseB =
+          1.0 -
+          abs(
+            2.0 *
+              fbm(
+                rotate2d(1.11) *
+                  bridgeCoordinates *
+                  (11.0 + uDetail.y * 15.0) +
+                vec2(uSeed.y, uSeed.x) * 67.0
+              ) -
+            1.0
+          );
+
+        float internalFilaments =
+          pow(
+            clamp(
+              bridgeNoiseA * 0.68 +
+              bridgeNoiseB * 0.60 -
+              0.58,
+              0.0,
+              1.0
+            ),
+            mix(
+              1.55,
+              1.0,
+              uDetail.y
+            )
+          ) *
+          pwnBody *
+          uShell.z *
+          uKnowledge.y *
+          (
+            0.58 +
+            family3 * 0.82 +
+            family7 * 0.34
+          );
+
+        /* Emission linking the PWN to the shell is enhanced only for the
+         * bridge family, preserving a clear two-zone composite morphology. */
+        float bridgeAxis =
+          exp(
+            -pow(
+              bridgeCoordinates.y /
+                (
+                  0.055 +
+                  0.05 * uShapeB.x
+                ),
+              2.0
+            )
+          );
+
+        float bridgeReach =
+          smoothstep(
+            0.16,
+            0.44,
+            abs(bridgeCoordinates.x)
+          ) *
+          (
+            1.0 -
+            smoothstep(
+              0.44,
+              0.76,
+              abs(bridgeCoordinates.x)
+            )
+          );
+
+        float filamentBridge =
+          bridgeAxis *
+          bridgeReach *
+          (
+            0.35 +
+            0.65 * pwnFine
+          ) *
+          family3 *
+          uKnowledge.y;
+
+        float bipolarAxis =
+          exp(
+            -pow(
+              pwnCoordinates.y /
+                mix(
+                  0.040,
+                  0.022,
+                  uDetail.y
+                ),
+              2.0
+            )
+          ) *
+          exp(
+            -pow(
+              abs(pwnCoordinates.x) /
+                (
+                  0.34 +
+                  0.16 * uShapeB.y
+                ),
+              1.55
+            )
+          );
+
+        float bipolarJets =
+          bipolarAxis *
+          uShapeB.y *
+          (
+            family1 * 1.20 +
+            family7 * 0.66 +
+            family2 * 0.20
+          ) *
+          uKnowledge.y;
+
+        float windTail =
+          exp(
+            -pow(
+              pwnCoordinates.y /
+                (
+                  0.10 +
+                  0.06 * uShapeB.x
+                ),
+              2.0
+            )
+          ) *
+          smoothstep(
+            -0.04,
+            0.20,
+            pwnCoordinates.x
+          ) *
+          (
+            1.0 -
+            smoothstep(
+              0.22,
+              0.78,
+              pwnCoordinates.x
+            )
+          ) *
+          family7 *
+          (
+            0.32 +
+            0.68 * pwnFine
+          ) *
+          uKnowledge.z;
+
+        float doubleArcA =
+          exp(
+            -pow(
+              (
+                pwnR -
+                pwnBaseRadius * 0.54
+              ) /
+              mix(
+                0.028,
+                0.014,
+                uDetail.y
+              ),
+              2.0
+            )
+          );
+
+        float doubleArcB =
+          exp(
+            -pow(
+              (
+                pwnR -
+                pwnBaseRadius * 0.82
+              ) /
+              mix(
+                0.032,
+                0.016,
+                uDetail.y
+              ),
+              2.0
+            )
+          );
+
+        float arcBreakup =
+          smoothstep(
+            0.42,
+            0.78,
+            fbm(
+              vec2(
+                pwnAngle * 1.4,
+                pwnR * 9.0
+              ) +
+              uSeed * 23.0
+            )
+          );
+
+        float innerArcs =
+          (
+            doubleArcA +
+            doubleArcB * 0.66
+          ) *
+          arcBreakup *
+          family5 *
+          uKnowledge.y;
+
+        float pulsarGlow =
+          exp(
+            -pwnR * pwnR *
+              mix(
+                130.0,
+                250.0,
+                uShapeB.z
+              )
+          ) *
+          uShapeB.z *
+          (
+            0.16 +
+            0.40 * uKnowledge.z
+          );
+
+        float pulsarPoint =
+          exp(
+            -pwnR * pwnR *
+              mix(
+                1800.0,
+                3200.0,
+                uShapeB.z
+              )
+          ) *
+          (
+            0.18 +
+            0.52 * uShapeB.z
+          );
+
+        float shellHalo =
+          exp(
+            -pow(
+              (
+                shellR -
+                (uMorphology.w + 0.10)
+              ) /
+              (
+                0.15 +
+                uShapeA.z * 0.10
+              ),
+              2.0
+            )
+          ) *
+          uShapeA.z *
+          uKnowledge.w;
+
+        float innerHalo =
+          exp(
+            -pow(
+              pwnR /
+                max(
+                  pwnBaseRadius * 1.72,
+                  0.001
+                ),
+              2.0
+            )
+          ) *
+          (
+            1.0 -
+            pwnBody * 0.48
+          ) *
+          uShapeA.z *
+          uKnowledge.w;
+
+        float shellPhase =
+          clamp(
+            0.5 +
+            0.5 *
+              sin(
+                shellAngle * 2.0 +
+                shellFine * 5.2 +
+                shellCoarse * 2.8
+              ),
+            0.0,
+            1.0
+          );
+
+        shellPhase =
+          mix(
+            0.5,
+            shellPhase,
+            uColorVariance * uDetail.x
+          );
+
+        float pwnPhase =
+          clamp(
+            0.5 +
+            (pwnCoarse - 0.5) * 0.95 +
+            (pwnFine - 0.5) * 0.38,
+            0.0,
+            1.0
+          );
+
+        vec3 outerColor =
+          spectralMix(
+            shellPhase
+          );
+
+        vec3 pwnColor =
+          mix(
+            uHalo,
+            uShellCool,
+            0.54 +
+              0.22 * pwnPhase
+          );
+
+        pwnColor =
+          mix(
+            pwnColor,
+            uCore,
+            0.12 +
+              0.20 *
+                (1.0 - pwnPhase)
+          );
+
+        vec3 hotFilamentColor =
+          mix(
+            uShellHot,
+            uCore,
+            0.22
+          );
+
+        float starDensity =
+          clamp(
+            uDetail.z *
+              (
+                0.34 +
+                0.62 * uPhysical.y
+              ),
+            0.0,
+            1.0
+          );
+
+        float stars =
+          starField(
+            uv +
+              uSeed * 0.17,
+            starDensity
+          );
+
+        stars +=
+          starField(
+            uv * 0.67 +
+              vec2(uSeed.y, uSeed.x) * 0.29 +
+              5.1,
+            clamp(
+              starDensity * 0.44,
+              0.0,
+              1.0
+            )
+          ) *
+          (
+            0.38 +
+            0.72 * uPhysical.z
+          );
+
+        stars *=
+          1.0 -
+          clamp(
+            pwnBody * 0.28 +
+            outerShell * 0.18,
+            0.0,
+            0.54
+          );
+
+        vec3 color =
+          uBackground;
+
+        color +=
+          stars *
+          vec3(
+            0.82,
+            0.88,
+            1.0
+          );
+
+        color +=
+          shellHalo *
+          mix(
+            uHalo,
+            uShellCool,
+            0.32
+          ) *
+          0.52;
+
+        color +=
+          outerShell *
+          outerColor *
+          (
+            0.34 +
+            1.18 * uDetail.w
+          );
+
+        color +=
+          rimFilaments *
+          mix(
+            outerColor,
+            hotFilamentColor,
+            0.34
+          ) *
+          (
+            0.30 +
+            0.96 * uDetail.y
+          );
+
+        color +=
+          rimKnots *
+          hotFilamentColor *
+          0.92;
+
+        color +=
+          innerHalo *
+          mix(
+            uHalo,
+            uShellCool,
+            0.42
+          ) *
+          0.50;
+
+        color +=
+          pwnFill *
+          pwnColor *
+          (
+            0.42 +
+            0.62 * uKnowledge.z
+          );
+
+        color +=
+          internalFilaments *
+          mix(
+            uShellCool,
+            uCore,
+            0.28
+          ) *
+          (
+            0.26 +
+            0.84 * uDetail.y
+          );
+
+        color +=
+          filamentBridge *
+          mix(
+            uShellHot,
+            uShellCool,
+            0.56
+          ) *
+          0.76;
+
+        color +=
+          innerArcs *
+          mix(
+            uShellCool,
+            uCore,
+            0.48
+          ) *
+          0.72;
+
+        color +=
+          bipolarJets *
+          mix(
+            uShellCool,
+            uHalo,
+            0.40
+          ) *
+          0.96;
+
+        color +=
+          windTail *
+          mix(
+            uHalo,
+            uShellCool,
+            0.62
+          ) *
+          0.82;
+
+        color +=
+          pulsarGlow *
+          mix(
+            uCore,
+            uHalo,
+            0.18
+          ) *
+          0.46;
+
+        color +=
+          pulsarPoint *
+          uCore *
+          0.72;
+
+        color *=
+          0.90 +
+          0.30 * uPhysical.x;
+
+        color +=
+          0.014 *
+          shellFine *
+          uDetail.y;
+
+        float compositeLuminance =
+          dot(
+            color,
+            vec3(
+              0.2126,
+              0.7152,
+              0.0722
+            )
+          );
+
+        color =
+          mix(
+            vec3(compositeLuminance),
+            color,
+            mix(
+              0.16,
+              1.0,
+              uDetail.x
+            )
+          );
+
+        gl_FragColor =
+          vec4(
+            clamp(
+              color,
+              0.0,
+              1.0
+            ),
+            1.0
+          );
+
+        return;
+      }
+
+      if (
+        uScientificMorphology > 0.5 &&
+        uScientificMorphology < 1.5
+      ) {
+        float family0 = 1.0 - step(0.25, abs(uMorphology.x - 0.0));
+        float family1 = 1.0 - step(0.25, abs(uMorphology.x - 1.0));
+        float family2 = 1.0 - step(0.25, abs(uMorphology.x - 2.0));
+        float family3 = 1.0 - step(0.25, abs(uMorphology.x - 3.0));
+        float family4 = 1.0 - step(0.25, abs(uMorphology.x - 4.0));
+        float family5 = 1.0 - step(0.25, abs(uMorphology.x - 5.0));
+        float family6 = 1.0 - step(0.25, abs(uMorphology.x - 6.0));
+        float family7 = 1.0 - step(0.25, abs(uMorphology.x - 7.0));
+
+        vec2 pulsarVector = centered - uOffsets;
+        vec2 pulsarNormalized =
+          pulsarVector /
+          max(uMorphology.z, 0.001);
+
+        float pulsarR =
+          length(
+            pulsarNormalized
+          );
+
+        float pulsarAngle =
+          atan(
+            pulsarNormalized.y,
+            pulsarNormalized.x
+          );
+
+        float coarseWind =
+          fbm(
+            pulsarNormalized *
+              (3.0 + uDetail.y * 2.4) +
+            uSeed * 9.0
+          );
+
+        float turbulentWind =
+          fbm(
+            pulsarNormalized *
+              (8.0 + uDetail.y * 11.0) +
+            uSeed * 27.0 +
+            8.0
+          );
+
+        float filamentNoise =
+          1.0 -
+          abs(
+            2.0 *
+              fbm(
+                pulsarNormalized *
+                  (15.0 + uDetail.y * 18.0) +
+                uSeed * 41.0
+              ) -
+            1.0
+          );
+
+        float petalCount =
+          4.0 +
+          family1 * 2.0 +
+          family7 * 1.0;
+
+        float petalWave =
+          0.5 +
+          0.5 *
+          sin(
+            pulsarAngle *
+              petalCount +
+            coarseWind *
+              (2.4 + family1 * 2.8) +
+            uSeed.x *
+              6.28318
+          );
+
+        float angularDistortion =
+          sin(
+            pulsarAngle *
+              (2.0 + family0 * 3.0 + family7 * 4.0) +
+            turbulentWind * 4.4 +
+            uSeed.y * 6.28318
+          );
+
+        float targetWindRadius =
+          uMorphology.w *
+          (
+            1.0 +
+            (coarseWind - 0.5) *
+              (
+                0.30 +
+                uShapeB.x * 0.26 +
+                family0 * 0.10 +
+                family7 * 0.14
+              ) +
+            angularDistortion *
+              (
+                0.060 +
+                family0 * 0.030 +
+                family7 * 0.075
+              ) +
+            (petalWave - 0.5) *
+              family1 *
+              (
+                0.20 +
+                uShapeA.w * 0.14
+              )
+          );
+
+        float boundarySoftness =
+          mix(
+            0.105,
+            0.045,
+            uDetail.y
+          ) +
+          uShell.x * 0.18;
+
+        float windBody =
+          1.0 -
+          smoothstep(
+            targetWindRadius -
+              boundarySoftness,
+            targetWindRadius +
+              boundarySoftness,
+            pulsarR
+          );
+
+        float innerFalloff =
+          exp(
+            -pow(
+              pulsarR /
+                max(
+                  targetWindRadius * 1.08,
+                  0.001
+                ),
+              1.65
+            ) *
+            mix(
+              0.85,
+              1.70,
+              1.0 - uShapeA.y
+            )
+          );
+
+        float synchrotron =
+          windBody *
+          innerFalloff *
+          (
+            0.60 +
+            0.40 *
+            mix(
+              coarseWind,
+              turbulentWind,
+              0.45 + 0.35 * uDetail.y
+            )
+          ) *
+          uShapeA.y *
+          uKnowledge.z;
+
+        float internalFilamentBand =
+          windBody *
+          smoothstep(
+            0.05,
+            0.92,
+            pulsarR /
+              max(
+                targetWindRadius,
+                0.001
+              )
+          );
+
+        vec2 filamentCoordinates =
+          rotate2d(
+            0.61 +
+            uSeed.x * 0.47
+          ) *
+          pulsarNormalized;
+
+        float crossFilamentNoise =
+          1.0 -
+          abs(
+            2.0 *
+              fbm(
+                filamentCoordinates *
+                  (
+                    11.0 +
+                    uDetail.y * 16.0
+                  ) +
+                vec2(
+                  uSeed.y,
+                  uSeed.x
+                ) *
+                  53.0 +
+                9.0
+              ) -
+            1.0
+          );
+
+        float filamentWeb =
+          clamp(
+            filamentNoise * 0.72 +
+            crossFilamentNoise * 0.58 -
+            mix(
+              0.78,
+              0.60,
+              uDetail.y
+            ),
+            0.0,
+            1.0
+          );
+
+        float tendrils =
+          pow(
+            filamentWeb,
+            mix(
+              1.70,
+              1.10,
+              uDetail.y
+            )
+          ) *
+          internalFilamentBand *
+          mix(
+            0.78,
+            1.16,
+            smoothstep(
+              0.42,
+              0.96,
+              pulsarR /
+                max(
+                  targetWindRadius,
+                  0.001
+                )
+            )
+          ) *
+          uShell.z *
+          uKnowledge.y;
+
+        tendrils *=
+          0.70 +
+          family0 * 0.72 +
+          family4 * 0.34 +
+          family7 * 0.62;
+
+        float knotField =
+          pow(
+            clamp(
+              coarseWind *
+                turbulentWind,
+              0.0,
+              1.0
+            ),
+            mix(
+              4.8,
+              8.6,
+              uShell.w
+            )
+          ) *
+          windBody *
+          uKnowledge.y *
+          (
+            0.20 +
+            family0 * 0.52 +
+            family4 * 1.10 +
+            family7 * 0.48
+          );
+
+        vec2 wispCoordinates =
+          vec2(
+            pulsarNormalized.x,
+            pulsarNormalized.y *
+              (
+                1.45 +
+                family3 * 0.28
+              )
+          );
+
+        float wispR =
+          length(
+            wispCoordinates
+          );
+
+        float wispBreakup =
+          smoothstep(
+            0.38,
+            0.76,
+            fbm(
+              vec2(
+                pulsarAngle * 1.35,
+                wispR * 7.0
+              ) +
+              uSeed * 21.0
+            )
+          );
+
+        float wispArcA =
+          exp(
+            -pow(
+              (
+                wispR -
+                (
+                  0.11 +
+                  0.020 * uPhysical.w
+                )
+              ) /
+              mix(
+                0.030,
+                0.014,
+                uDetail.y
+              ),
+              2.0
+            )
+          );
+
+        float wispArcB =
+          exp(
+            -pow(
+              (
+                wispR -
+                (
+                  0.19 +
+                  0.025 * uPhysical.w
+                )
+              ) /
+              mix(
+                0.036,
+                0.018,
+                uDetail.y
+              ),
+              2.0
+            )
+          );
+
+        float wisps =
+          (
+            wispArcA +
+            wispArcB * 0.68
+          ) *
+          wispBreakup *
+          windBody *
+          uKnowledge.y *
+          (
+            family2 * 0.36 +
+            family3 * 1.05
+          );
+
+        vec2 torusCoordinates =
+          vec2(
+            pulsarNormalized.x,
+            pulsarNormalized.y *
+              (
+                2.10 +
+                0.55 *
+                  uShapeA.w
+              )
+          );
+
+        float torusR =
+          length(
+            torusCoordinates
+          );
+
+        float torus =
+          exp(
+            -pow(
+              (
+                torusR -
+                (
+                  0.105 +
+                  0.045 *
+                    uPhysical.w
+                )
+              ) /
+              (
+                0.020 +
+                0.018 *
+                  (1.0 - uDetail.y)
+              ),
+              2.0
+            )
+          ) *
+          (
+            0.10 +
+            family2 * 1.35 +
+            family3 * 0.24
+          ) *
+          uKnowledge.y;
+
+        float jetWidth =
+          mix(
+            0.052,
+            0.020,
+            uDetail.y
+          );
+
+        float bipolarJets =
+          exp(
+            -pow(
+              abs(
+                pulsarNormalized.y
+              ) /
+                jetWidth,
+              2.0
+            )
+          ) *
+          exp(
+            -pow(
+              abs(
+                pulsarNormalized.x
+              ) /
+                (
+                  0.28 +
+                  uShapeB.y * 0.22
+                ),
+              1.45
+            )
+          ) *
+          uShapeB.y *
+          (
+            0.12 +
+            family2 * 1.45 +
+            family6 * 0.45 +
+            family7 * 0.32
+          ) *
+          uKnowledge.y;
+
+        float coreGlow =
+          exp(
+            -pulsarR *
+              pulsarR *
+              mix(
+                88.0,
+                168.0,
+                uShapeB.z
+              )
+          ) *
+          uShapeB.z *
+          (
+            0.14 +
+            0.42 *
+              uKnowledge.z
+          );
+
+        float pulsarPoint =
+          exp(
+            -pulsarR *
+              pulsarR *
+              mix(
+                1350.0,
+                2500.0,
+                uShapeB.z
+              )
+          ) *
+          (
+            0.20 +
+            0.58 *
+              uShapeB.z
+          );
+
+        float diffraction =
+          (
+            exp(
+              -abs(
+                pulsarNormalized.y
+              ) *
+              92.0
+            ) *
+            exp(
+              -abs(
+                pulsarNormalized.x
+              ) *
+              10.0
+            ) +
+            exp(
+              -abs(
+                pulsarNormalized.x
+              ) *
+              92.0
+            ) *
+            exp(
+              -abs(
+                pulsarNormalized.y
+              ) *
+              10.0
+            )
+          ) *
+          pulsarPoint *
+          (
+            0.08 +
+            0.34 * uDetail.y
+          );
+
+        float primaryHalo =
+          exp(
+            -pow(
+              pulsarR /
+              max(
+                targetWindRadius *
+                  (
+                    1.28 +
+                    uShapeA.z * 0.24
+                  ),
+                0.001
+              ),
+              2.15
+            )
+          ) *
+          (
+            1.0 -
+            windBody * 0.46
+          ) *
+          uShapeA.z *
+          uKnowledge.w;
+
+        float secondaryHalo =
+          exp(
+            -pow(
+              pulsarR /
+              max(
+                targetWindRadius * 1.82,
+                0.001
+              ),
+              2.0
+            )
+          ) *
+          (
+            1.0 -
+            windBody * 0.60
+          ) *
+          family5 *
+          uShapeA.z *
+          uKnowledge.w;
+
+        float plumeAxis =
+          exp(
+            -pow(
+              pulsarNormalized.y /
+                (
+                  0.12 +
+                  0.08 * uShapeB.x
+                ),
+              2.0
+            )
+          );
+
+        float plumeLength =
+          smoothstep(
+            -0.08,
+            0.18,
+            pulsarNormalized.x
+          ) *
+          (
+            1.0 -
+            smoothstep(
+              0.18,
+              0.72,
+              pulsarNormalized.x
+            )
+          );
+
+        float offsetPlume =
+          plumeAxis *
+          plumeLength *
+          (
+            0.20 +
+            0.80 *
+              turbulentWind
+          ) *
+          family6 *
+          uKnowledge.z;
+
+        float turbulentWeb =
+          pow(
+            filamentWeb,
+            mix(
+              1.45,
+              0.92,
+              uDetail.y
+            )
+          ) *
+          (
+            0.52 +
+            0.48 *
+              smoothstep(
+                0.32,
+                0.82,
+                turbulentWind
+              )
+          ) *
+          windBody *
+          family7 *
+          uKnowledge.y;
+
+        float petalEmission =
+          pow(
+            petalWave,
+            1.4
+          ) *
+          windBody *
+          family1 *
+          (
+            0.22 +
+            0.78 *
+              uKnowledge.z
+          );
+
+        float radialColor =
+          clamp(
+            pulsarR /
+              max(
+                targetWindRadius,
+                0.001
+              ),
+            0.0,
+            1.0
+          );
+
+        float chromaNoise =
+          clamp(
+            0.5 +
+            0.5 *
+              sin(
+                pulsarAngle * 2.0 +
+                turbulentWind * 6.0 +
+                coarseWind * 3.0
+              ),
+            0.0,
+            1.0
+          );
+
+        chromaNoise =
+          mix(
+            0.5,
+            chromaNoise,
+            uColorVariance *
+              uDetail.x
+          );
+
+        vec3 innerColor =
+          mix(
+            uCore,
+            uShellCool,
+            0.32 +
+              0.46 *
+                radialColor
+          );
+
+        innerColor =
+          mix(
+            innerColor,
+            uHalo,
+            0.16 *
+              radialColor
+          );
+
+        vec3 filamentColor =
+          mix(
+            uShellHot,
+            uShellCool,
+            chromaNoise *
+              (
+                0.34 +
+                0.46 *
+                  family3
+              )
+          );
+
+        vec3 wispColor =
+          mix(
+            uShellCool,
+            uCore,
+            0.52
+          );
+
+        float starDensity =
+          clamp(
+            uDetail.z *
+              (
+                0.36 +
+                0.72 *
+                  uPhysical.y
+              ),
+            0.0,
+            1.0
+          );
+
+        float backgroundStars =
+          starField(
+            uv +
+              uSeed * 0.17,
+            starDensity
+          );
+
+        float brightBackgroundStars =
+          starField(
+            uv * 0.64 +
+              vec2(
+                uSeed.y,
+                uSeed.x
+              ) *
+              0.31 +
+              4.7,
+            clamp(
+              starDensity * 0.48,
+              0.0,
+              1.0
+            )
+          ) *
+          (
+            0.42 +
+            0.94 *
+              uPhysical.z
+          );
+
+        backgroundStars +=
+          brightBackgroundStars;
+
+        backgroundStars *=
+          1.0 -
+          windBody *
+            (
+              0.34 +
+              0.34 *
+                uKnowledge.z
+            );
+
+        vec3 color =
+          uBackground;
+
+        color +=
+          backgroundStars *
+          vec3(
+            0.82,
+            0.88,
+            1.0
+          );
+
+        color +=
+          primaryHalo *
+          mix(
+            uHalo,
+            uShellCool,
+            0.24
+          ) *
+          (
+            0.18 +
+            0.82 *
+              uKnowledge.w
+          );
+
+        color +=
+          secondaryHalo *
+          mix(
+            uHalo,
+            uShellHot,
+            0.18
+          ) *
+          0.78;
+
+        color +=
+          synchrotron *
+          innerColor *
+          (
+            0.30 +
+            0.66 *
+              uKnowledge.z
+          );
+
+        color +=
+          petalEmission *
+          mix(
+            uShellHot,
+            uHalo,
+            0.28
+          ) *
+          0.38;
+
+        color +=
+          wisps *
+          wispColor *
+          (
+            0.18 +
+            0.58 *
+              uDetail.y
+          );
+
+        color +=
+          tendrils *
+          filamentColor *
+          (
+            0.30 +
+            0.92 *
+              uDetail.y
+          );
+
+        color +=
+          knotField *
+          mix(
+            uShellHot,
+            uCore,
+            0.22
+          ) *
+          1.12;
+
+        color +=
+          turbulentWeb *
+          mix(
+            uShellHot,
+            uHalo,
+            0.36
+          ) *
+          0.46;
+
+        color +=
+          torus *
+          mix(
+            uShellCool,
+            uCore,
+            0.58
+          ) *
+          1.34;
+
+        color +=
+          bipolarJets *
+          mix(
+            uShellCool,
+            uHalo,
+            0.42
+          ) *
+          1.28;
+
+        color +=
+          offsetPlume *
+          mix(
+            uHalo,
+            uShellCool,
+            0.55
+          ) *
+          0.92;
+
+        color +=
+          coreGlow *
+          mix(
+            uCore,
+            uHalo,
+            0.16
+          ) *
+          0.48;
+
+        color +=
+          pulsarPoint *
+          uCore *
+          0.82;
+
+        color +=
+          diffraction *
+          mix(
+            uCore,
+            uShellCool,
+            0.32
+          ) *
+          0.38;
+
+        color *=
+          0.88 +
+          0.34 *
+            uPhysical.x;
+
+        color +=
+          0.018 *
+          turbulentWind *
+          uDetail.y;
+
+        float plerionLuminance =
+          dot(
+            color,
+            vec3(
+              0.2126,
+              0.7152,
+              0.0722
+            )
+          );
+
+        color =
+          mix(
+            vec3(
+              plerionLuminance
+            ),
+            color,
+            mix(
+              0.18,
+              1.0,
+              uDetail.x
+            )
+          );
+
+        gl_FragColor =
+          vec4(
+            clamp(
+              color,
+              0.0,
+              1.0
+            ),
+            1.0
+          );
+
+        return;
+      }
+
       float angleWave = sin(angle * (2.0 + floor(mod(uMorphology.x, 4.0))) + uSeed.x * 6.28318);
       float lobeTerm = angleWave * uShapeA.w * 0.16;
       float asymTerm = sin(angle + uSeed.y * 6.28318) * uShapeB.x * 0.10;

@@ -80,6 +80,8 @@ import {
 
 import {
   SupernovaRemnantRenderModelBuilder,
+  type SupernovaRemnantCompositeVisualFamily,
+  type SupernovaRemnantPlerionVisualFamily,
   type SupernovaRemnantVisualFamily,
 } from '../../genesis-archive/supernova-remnant-render-model';
 
@@ -351,6 +353,28 @@ export interface SupernovaRemnantShellLaboratorySample {
     GalacticObjectLocator;
 }
 
+export interface SupernovaRemnantPlerionLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
+export interface SupernovaRemnantCompositeLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly locator:
+    GalacticObjectLocator;
+}
+
 export const GALACTIC_OBJECT_LABORATORY_STATES:
   readonly GalacticObjectLaboratoryState[] =
   Object.freeze([
@@ -433,6 +457,12 @@ const GLOBULAR_CLUSTER_SAMPLE_COUNT =
 const SUPERNOVA_REMNANT_SHELL_SAMPLE_COUNT =
   8;
 
+const SUPERNOVA_REMNANT_PLERION_SAMPLE_COUNT =
+  8;
+
+const SUPERNOVA_REMNANT_COMPOSITE_SAMPLE_COUNT =
+  8;
+
 let cachedEmissionNebulaSamples:
   readonly EmissionNebulaLaboratorySample[] | null =
     null;
@@ -476,6 +506,14 @@ let cachedGlobularClusterSamples:
 
 let cachedSupernovaRemnantShellSamples:
   readonly SupernovaRemnantShellLaboratorySample[] | null =
+    null;
+
+let cachedSupernovaRemnantPlerionSamples:
+  readonly SupernovaRemnantPlerionLaboratorySample[] | null =
+    null;
+
+let cachedSupernovaRemnantCompositeSamples:
+  readonly SupernovaRemnantCompositeLaboratorySample[] | null =
     null;
 
 let cachedHiiRepresentatives:
@@ -701,6 +739,42 @@ export class GalacticObjectLaboratoryFixtures {
     return cachedSupernovaRemnantShellSamples;
   }
 
+  static supernovaRemnantPlerionSamples():
+    readonly SupernovaRemnantPlerionLaboratorySample[] {
+
+    if (
+      cachedSupernovaRemnantPlerionSamples !==
+        null
+    ) {
+      return cachedSupernovaRemnantPlerionSamples;
+    }
+
+    cachedSupernovaRemnantPlerionSamples =
+      Object.freeze(
+        buildSupernovaRemnantPlerionSamplesV1(),
+      );
+
+    return cachedSupernovaRemnantPlerionSamples;
+  }
+
+  static supernovaRemnantCompositeSamples():
+    readonly SupernovaRemnantCompositeLaboratorySample[] {
+
+    if (
+      cachedSupernovaRemnantCompositeSamples !==
+        null
+    ) {
+      return cachedSupernovaRemnantCompositeSamples;
+    }
+
+    cachedSupernovaRemnantCompositeSamples =
+      Object.freeze(
+        buildSupernovaRemnantCompositeSamplesV1(),
+      );
+
+    return cachedSupernovaRemnantCompositeSamples;
+  }
+
   static caseDefinition(
     caseId:
       GalacticObjectLaboratoryCaseId,
@@ -736,6 +810,12 @@ export class GalacticObjectLaboratoryFixtures {
       0,
 
     supernovaRemnantShellSampleIndex =
+      0,
+
+    supernovaRemnantPlerionSampleIndex =
+      0,
+
+    supernovaRemnantCompositeSampleIndex =
       0,
   ): GalacticObjectLaboratoryCase {
 
@@ -1141,6 +1221,76 @@ export class GalacticObjectLaboratoryFixtures {
       );
     }
 
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .SNR_PLERION
+    ) {
+      const sample =
+        this
+          .supernovaRemnantPlerionSamples()[
+            supernovaRemnantPlerionSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported PLERION supernova-remnant laboratory sample index: ${supernovaRemnantPlerionSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
+    if (
+      caseId ===
+        GalacticObjectLaboratoryCaseId
+          .SNR_COMPOSITE
+    ) {
+      const sample =
+        this
+          .supernovaRemnantCompositeSamples()[
+            supernovaRemnantCompositeSampleIndex
+          ];
+
+      if (
+        sample ===
+          undefined
+      ) {
+        throw new RangeError(
+          `Unsupported COMPOSITE supernova-remnant laboratory sample index: ${supernovaRemnantCompositeSampleIndex}.`,
+        );
+      }
+
+      return caseOf(
+        caseDefinition.id,
+        caseDefinition.group,
+        caseDefinition.label,
+        caseDefinition.familyLabel,
+        sample.locator,
+        caseDefinition.resultKind,
+        caseDefinition.expectedSubject,
+        caseDefinition.expectedNebulaType,
+        caseDefinition.expectedHiiActivity,
+        caseDefinition.expectedRemnantMorphology,
+        `Muestra ${sample.label} · ${caseDefinition.description}`,
+      );
+    }
+
     return caseDefinition;
   }
 
@@ -1180,6 +1330,12 @@ export class GalacticObjectLaboratoryFixtures {
 
     supernovaRemnantShellSampleIndex =
       0,
+
+    supernovaRemnantPlerionSampleIndex =
+      0,
+
+    supernovaRemnantCompositeSampleIndex =
+      0,
   ): readonly GalacticObjectLaboratoryFrame[] {
 
     const caseDefinition =
@@ -1196,6 +1352,8 @@ export class GalacticObjectLaboratoryFixtures {
         openClusterSampleIndex,
         globularClusterSampleIndex,
         supernovaRemnantShellSampleIndex,
+        supernovaRemnantPlerionSampleIndex,
+        supernovaRemnantCompositeSampleIndex,
       );
 
     return Object.freeze(
@@ -1722,7 +1880,7 @@ function buildHiiLowSamplesV1():
     let index =
       0n;
     index <
-      65_536n;
+      32_768n;
     index +=
       1n
   ) {
@@ -2747,6 +2905,413 @@ function allSupernovaRemnantShellVisualFamiliesV1():
     'SHOCK_COMPLEX',
   ]);
 }
+
+
+function buildSupernovaRemnantPlerionSamplesV1():
+  SupernovaRemnantPlerionLaboratorySample[] {
+
+  const primary =
+    remnantRepresentativesV1()
+      .get(
+        SupernovaRemnantMorphology
+          .PLERION,
+      );
+
+  if (
+    primary ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 PLERION supernova-remnant representative.',
+    );
+  }
+
+  const primaryModel =
+    supernovaRemnantPlerionRenderModelV1(
+      primary,
+    );
+
+  const familyOrder =
+    allSupernovaRemnantPlerionVisualFamiliesV1();
+
+  const representatives =
+    new Map<
+      SupernovaRemnantPlerionVisualFamily,
+      GalacticObjectLocator
+    >();
+
+  representatives.set(
+    primaryModel.morphologyFamily as
+      SupernovaRemnantPlerionVisualFamily,
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      32_768n;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      !SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          GENERATION_KEY,
+          locator,
+        )
+    ) {
+      continue;
+    }
+
+    if (
+      SupernovaRemnantGenerator
+        .resolveMorphology(
+          GENERATION_KEY,
+          locator,
+        ) !==
+      SupernovaRemnantMorphology
+        .PLERION
+    ) {
+      continue;
+    }
+
+    const model =
+      supernovaRemnantPlerionRenderModelV1(
+        locator,
+      );
+
+    const family =
+      model.morphologyFamily as
+        SupernovaRemnantPlerionVisualFamily;
+
+    if (
+      !representatives.has(
+        family,
+      )
+    ) {
+      representatives.set(
+        family,
+        locator,
+      );
+    }
+
+    if (
+      representatives.size ===
+        SUPERNOVA_REMNANT_PLERION_SAMPLE_COUNT
+    ) {
+      break;
+    }
+  }
+
+  const orderedLocators =
+    [
+      primary,
+      ...familyOrder
+        .filter(
+          family =>
+            family !==
+              primaryModel.morphologyFamily,
+        )
+        .map(
+          family => {
+            const locator =
+              representatives.get(
+                family,
+              );
+
+            if (
+              locator ===
+                undefined
+            ) {
+              throw new RangeError(
+                `The PLERION supernova-remnant visual laboratory could not find morphology family ${family}.`,
+              );
+            }
+
+            return locator;
+          },
+        ),
+    ];
+
+  if (
+    orderedLocators.length !==
+      SUPERNOVA_REMNANT_PLERION_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The PLERION supernova-remnant visual laboratory found ${orderedLocators.length}/${SUPERNOVA_REMNANT_PLERION_SAMPLE_COUNT} morphology representatives.`,
+    );
+  }
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function supernovaRemnantPlerionRenderModelV1(
+  locator:
+    GalacticObjectLocator,
+) {
+
+  const detected =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.EXTREME_OBJECT,
+        DiscoveryState.DETECTED,
+      );
+
+  return SupernovaRemnantRenderModelBuilder
+    .build(
+      detected.render,
+    );
+}
+
+function allSupernovaRemnantPlerionVisualFamiliesV1():
+  readonly SupernovaRemnantPlerionVisualFamily[] {
+
+  return Object.freeze([
+    'FILAMENTARY_WIND_NEBULA',
+    'PETALLED_CORE',
+    'TORUS_JET',
+    'ELLIPTICAL_WISPS',
+    'KNOTTED_SYNCHROTRON',
+    'DOUBLE_HALO',
+    'OFFSET_PLUME',
+    'TURBULENT_WIND_WEB',
+  ]);
+}
+
+function buildSupernovaRemnantCompositeSamplesV1():
+  SupernovaRemnantCompositeLaboratorySample[] {
+
+  const primary =
+    remnantRepresentativesV1()
+      .get(
+        SupernovaRemnantMorphology
+          .COMPOSITE,
+      );
+
+  if (
+    primary ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Missing canonical V1 COMPOSITE supernova-remnant representative.',
+    );
+  }
+
+  const primaryModel =
+    supernovaRemnantCompositeRenderModelV1(
+      primary,
+    );
+
+  const familyOrder =
+    allSupernovaRemnantCompositeVisualFamiliesV1();
+
+  const representatives =
+    new Map<
+      SupernovaRemnantCompositeVisualFamily,
+      GalacticObjectLocator
+    >();
+
+  representatives.set(
+    primaryModel.morphologyFamily as
+      SupernovaRemnantCompositeVisualFamily,
+    primary,
+  );
+
+  for (
+    let index =
+      0n;
+    index <
+      65_536n;
+    index +=
+      1n
+  ) {
+    if (
+      index ===
+        primary.galacticObjectIndex
+    ) {
+      continue;
+    }
+
+    const locator =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      !SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          GENERATION_KEY,
+          locator,
+        )
+    ) {
+      continue;
+    }
+
+    if (
+      SupernovaRemnantGenerator
+        .resolveMorphology(
+          GENERATION_KEY,
+          locator,
+        ) !==
+      SupernovaRemnantMorphology
+        .COMPOSITE
+    ) {
+      continue;
+    }
+
+    const model =
+      supernovaRemnantCompositeRenderModelV1(
+        locator,
+      );
+
+    const family =
+      model.morphologyFamily as
+        SupernovaRemnantCompositeVisualFamily;
+
+    if (
+      !representatives.has(
+        family,
+      )
+    ) {
+      representatives.set(
+        family,
+        locator,
+      );
+    }
+
+    if (
+      representatives.size ===
+        SUPERNOVA_REMNANT_COMPOSITE_SAMPLE_COUNT
+    ) {
+      break;
+    }
+  }
+
+  const orderedLocators =
+    [
+      primary,
+      ...familyOrder
+        .filter(
+          family =>
+            family !==
+              primaryModel.morphologyFamily,
+        )
+        .map(
+          family => {
+            const locator =
+              representatives.get(
+                family,
+              );
+
+            if (
+              locator ===
+                undefined
+            ) {
+              throw new RangeError(
+                `The COMPOSITE supernova-remnant visual laboratory could not find morphology family ${family}.`,
+              );
+            }
+
+            return locator;
+          },
+        ),
+    ];
+
+  if (
+    orderedLocators.length !==
+      SUPERNOVA_REMNANT_COMPOSITE_SAMPLE_COUNT
+  ) {
+    throw new RangeError(
+      `The COMPOSITE supernova-remnant visual laboratory found ${orderedLocators.length}/${SUPERNOVA_REMNANT_COMPOSITE_SAMPLE_COUNT} morphology representatives.`,
+    );
+  }
+
+  return orderedLocators.map(
+    (
+      locator,
+      index,
+    ) =>
+      Object.freeze({
+        index,
+        label:
+          String.fromCharCode(
+            65 +
+            index,
+          ),
+        locator,
+      }),
+  );
+}
+
+function supernovaRemnantCompositeRenderModelV1(
+  locator:
+    GalacticObjectLocator,
+) {
+
+  const detected =
+    ArchiveGalacticObjectCardAssembler
+      .build(
+        GENERATION_KEY,
+        locator,
+        ExplorationResultKind.EXTREME_OBJECT,
+        DiscoveryState.DETECTED,
+      );
+
+  return SupernovaRemnantRenderModelBuilder
+    .build(
+      detected.render,
+    );
+}
+
+function allSupernovaRemnantCompositeVisualFamiliesV1():
+  readonly SupernovaRemnantCompositeVisualFamily[] {
+
+  return Object.freeze([
+    'BALANCED_CORE_SHELL',
+    'BIPOLAR_PWN_SHELL',
+    'OFFSET_CORE_SHELL',
+    'FILAMENT_BRIDGE',
+    'BREAKOUT_COMPOSITE',
+    'DOUBLE_ARC_CORE',
+    'KNOTTED_RIM_PULSAR',
+    'WIND_TAIL_SHELL',
+  ]);
+}
+
+
 
 function buildEmissionNebulaSamplesV1():
   EmissionNebulaLaboratorySample[] {

@@ -134,6 +134,12 @@ export const ArchiveGalacticObjectRenderProfile =
 
     SUPERNOVA_REMNANT_SHELL:
       'SUPERNOVA_REMNANT_SHELL',
+
+    SUPERNOVA_REMNANT_PLERION:
+      'SUPERNOVA_REMNANT_PLERION',
+
+    SUPERNOVA_REMNANT_COMPOSITE:
+      'SUPERNOVA_REMNANT_COMPOSITE',
   } as const);
 
 export type ArchiveGalacticObjectRenderProfile =
@@ -1099,7 +1105,12 @@ function buildPhysicalCard(
               SupernovaRemnantMorphology.SHELL
               ? ArchiveGalacticObjectRenderProfile
                   .SUPERNOVA_REMNANT_SHELL
-              : null,
+              : remnant.morphology ===
+                    SupernovaRemnantMorphology.PLERION
+                ? ArchiveGalacticObjectRenderProfile
+                    .SUPERNOVA_REMNANT_PLERION
+                : ArchiveGalacticObjectRenderProfile
+                    .SUPERNOVA_REMNANT_COMPOSITE,
           scale:
             normalizeLog(
               remnant.physicalProperties.radiusParsecs,
@@ -1224,15 +1235,23 @@ function renderProfileForObservedMorphology(
       return null;
     }
 
-    return SupernovaRemnantGenerator
-      .resolveMorphology(
-        generationKey,
-        locator,
-      ) ===
-        SupernovaRemnantMorphology.SHELL
+    const morphology =
+      SupernovaRemnantGenerator
+        .resolveMorphology(
+          generationKey,
+          locator,
+        );
+
+    return morphology ===
+      SupernovaRemnantMorphology.SHELL
       ? ArchiveGalacticObjectRenderProfile
           .SUPERNOVA_REMNANT_SHELL
-      : null;
+      : morphology ===
+          SupernovaRemnantMorphology.PLERION
+        ? ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_PLERION
+        : ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_COMPOSITE;
   }
 
   if (

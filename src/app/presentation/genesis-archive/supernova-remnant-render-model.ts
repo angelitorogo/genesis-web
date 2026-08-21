@@ -5,7 +5,7 @@ import {
   type ArchiveGalacticObjectRenderDescriptor,
 } from './archive-galactic-object-card';
 
-export type SupernovaRemnantVisualFamily =
+export type SupernovaRemnantShellVisualFamily =
   | 'FRACTURED_SHELL'
   | 'FILAMENT_RING'
   | 'BILOBED_SHELL'
@@ -14,6 +14,31 @@ export type SupernovaRemnantVisualFamily =
   | 'BUBBLE_SHELL'
   | 'OFFSET_SHELL'
   | 'SHOCK_COMPLEX';
+
+export type SupernovaRemnantPlerionVisualFamily =
+  | 'FILAMENTARY_WIND_NEBULA'
+  | 'PETALLED_CORE'
+  | 'TORUS_JET'
+  | 'ELLIPTICAL_WISPS'
+  | 'KNOTTED_SYNCHROTRON'
+  | 'DOUBLE_HALO'
+  | 'OFFSET_PLUME'
+  | 'TURBULENT_WIND_WEB';
+
+export type SupernovaRemnantCompositeVisualFamily =
+  | 'BALANCED_CORE_SHELL'
+  | 'BIPOLAR_PWN_SHELL'
+  | 'OFFSET_CORE_SHELL'
+  | 'FILAMENT_BRIDGE'
+  | 'BREAKOUT_COMPOSITE'
+  | 'DOUBLE_ARC_CORE'
+  | 'KNOTTED_RIM_PULSAR'
+  | 'WIND_TAIL_SHELL';
+
+export type SupernovaRemnantVisualFamily =
+  | SupernovaRemnantShellVisualFamily
+  | SupernovaRemnantPlerionVisualFamily
+  | SupernovaRemnantCompositeVisualFamily;
 
 export type SupernovaRemnantPaletteFamily =
   | 'CYAN_CRIMSON'
@@ -70,7 +95,7 @@ export interface SupernovaRemnantRenderModel {
   readonly physicalConcentration: number;
 }
 
-const VISUAL_FAMILIES =
+const SHELL_VISUAL_FAMILIES =
   Object.freeze([
     'FRACTURED_SHELL',
     'FILAMENT_RING',
@@ -80,6 +105,30 @@ const VISUAL_FAMILIES =
     'BUBBLE_SHELL',
     'OFFSET_SHELL',
     'SHOCK_COMPLEX',
+  ] as const);
+
+const PLERION_VISUAL_FAMILIES =
+  Object.freeze([
+    'FILAMENTARY_WIND_NEBULA',
+    'PETALLED_CORE',
+    'TORUS_JET',
+    'ELLIPTICAL_WISPS',
+    'KNOTTED_SYNCHROTRON',
+    'DOUBLE_HALO',
+    'OFFSET_PLUME',
+    'TURBULENT_WIND_WEB',
+  ] as const);
+
+const COMPOSITE_VISUAL_FAMILIES =
+  Object.freeze([
+    'BALANCED_CORE_SHELL',
+    'BIPOLAR_PWN_SHELL',
+    'OFFSET_CORE_SHELL',
+    'FILAMENT_BRIDGE',
+    'BREAKOUT_COMPOSITE',
+    'DOUBLE_ARC_CORE',
+    'KNOTTED_RIM_PULSAR',
+    'WIND_TAIL_SHELL',
   ] as const);
 
 const PALETTE_FAMILIES =
@@ -94,15 +143,15 @@ const PALETTE_FAMILIES =
   ] as const);
 
 /**
- * Renderer-only shell-first V1 model for persistent supernova remnants.
+ * Renderer-only V1 model for persistent supernova remnants.
  *
- * Current scope:
- * - the diversity laboratory must first cover eight deterministic families of
- *   shell-type supernova remnants;
- * - each seed keeps one stable identity through every knowledge level;
+ * Current visual coverage:
+ * - eight deterministic SHELL families;
+ * - eight deterministic PLERION families;
+ * - eight deterministic COMPOSITE families combining an outer shock shell
+ *   with a central pulsar-wind nebula;
+ * - one seed keeps one stable identity through every knowledge level;
  * - colour variety remains independent from structural variety;
- * - explicit PLERION / COMPOSITE scientific variants stay supported, but the
- *   default fallback is now SHELL so the first laboratory pass is coherent.
  */
 export class SupernovaRemnantRenderModelBuilder {
 
@@ -140,16 +189,27 @@ export class SupernovaRemnantRenderModelBuilder {
     const scientificMorphology =
       scientificMorphologyFrom(
         descriptor.variant,
+        descriptor.renderProfile ??
+          null,
       );
+
+    const visualFamilies =
+      scientificMorphology ===
+        'PLERION'
+        ? PLERION_VISUAL_FAMILIES
+        : scientificMorphology ===
+              'COMPOSITE'
+          ? COMPOSITE_VISUAL_FAMILIES
+          : SHELL_VISUAL_FAMILIES;
 
     const morphologyIndex =
       selectStableIndex(
         morphology[1],
-        VISUAL_FAMILIES.length,
+        visualFamilies.length,
       );
 
     const morphologyFamily =
-      VISUAL_FAMILIES[
+      visualFamilies[
         morphologyIndex
       ];
 
@@ -187,6 +247,7 @@ export class SupernovaRemnantRenderModelBuilder {
     const knowledge =
       knowledgeProfileFor(
         descriptor.knowledgeLevel,
+        scientificMorphology,
       );
 
     return Object.freeze({
@@ -329,6 +390,9 @@ interface KnowledgeProfile {
 function scientificMorphologyFrom(
   variant:
     string | null,
+
+  renderProfile:
+    ArchiveGalacticObjectRenderProfile | null,
 ): SupernovaRemnantScientificMorphology {
 
   if (
@@ -340,6 +404,22 @@ function scientificMorphologyFrom(
       'COMPOSITE'
   ) {
     return variant;
+  }
+
+  if (
+    renderProfile ===
+      ArchiveGalacticObjectRenderProfile
+        .SUPERNOVA_REMNANT_PLERION
+  ) {
+    return 'PLERION';
+  }
+
+  if (
+    renderProfile ===
+      ArchiveGalacticObjectRenderProfile
+        .SUPERNOVA_REMNANT_COMPOSITE
+  ) {
+    return 'COMPOSITE';
   }
 
   return 'SHELL';
@@ -371,9 +451,40 @@ function morphologyProfileFor(
     number,
 ): MorphologyProfile {
 
+  if (
+    scientificMorphology ===
+      'PLERION'
+  ) {
+    return plerionMorphologyProfileFor(
+      family as
+        SupernovaRemnantPlerionVisualFamily,
+      u0,
+      u1,
+      u2,
+      u3,
+      u4,
+      u5,
+    );
+  }
+
+  if (
+    scientificMorphology ===
+      'COMPOSITE'
+  ) {
+    return compositeMorphologyProfileFor(
+      family as
+        SupernovaRemnantCompositeVisualFamily,
+      u0,
+      u1,
+      u2,
+      u3,
+      u4,
+      u5,
+    );
+  }
+
   const base =
-    scientificMorphology === 'SHELL'
-      ? {
+    {
           structureAspect: 1.00,
           apparentExtent: 0.92,
           shellRadius: 0.50,
@@ -391,46 +502,7 @@ function morphologyProfileFor(
           ringBreakup: 0.48,
           coreOffsetRange: 0.07,
           orientationRange: 1.10,
-        }
-      : scientificMorphology === 'PLERION'
-        ? {
-            structureAspect: 0.98,
-            apparentExtent: 0.84,
-            shellRadius: 0.40,
-            shellThickness: 0.100,
-            shellSharpness: 0.42,
-            filamentStrength: 0.74,
-            clumpiness: 0.60,
-            fragmentation: 0.44,
-            interiorGlow: 0.82,
-            haloStrength: 0.48,
-            bilobedStrength: 0.14,
-            asymmetryStrength: 0.28,
-            jetStrength: 0.54,
-            centralEngineStrength: 0.88,
-            ringBreakup: 0.28,
-            coreOffsetRange: 0.15,
-            orientationRange: 1.80,
-          }
-        : {
-            structureAspect: 1.04,
-            apparentExtent: 0.90,
-            shellRadius: 0.48,
-            shellThickness: 0.075,
-            shellSharpness: 0.64,
-            filamentStrength: 0.68,
-            clumpiness: 0.58,
-            fragmentation: 0.52,
-            interiorGlow: 0.60,
-            haloStrength: 0.42,
-            bilobedStrength: 0.18,
-            asymmetryStrength: 0.32,
-            jetStrength: 0.28,
-            centralEngineStrength: 0.62,
-            ringBreakup: 0.42,
-            coreOffsetRange: 0.12,
-            orientationRange: 1.45,
-          };
+        };
 
   const tuned =
     family === 'FRACTURED_SHELL'
@@ -687,6 +759,602 @@ function morphologyProfileFor(
   });
 }
 
+
+function plerionMorphologyProfileFor(
+  family:
+    SupernovaRemnantPlerionVisualFamily,
+
+  u0:
+    number,
+
+  u1:
+    number,
+
+  u2:
+    number,
+
+  u3:
+    number,
+
+  u4:
+    number,
+
+  u5:
+    number,
+): MorphologyProfile {
+
+  const tuned =
+    family ===
+      'FILAMENTARY_WIND_NEBULA'
+      ? {
+          structureAspect: 0.10,
+          apparentExtent: 0.06,
+          shellRadius: 0.06,
+          shellThickness: -0.018,
+          shellSharpness: 0.08,
+          filamentStrength: 0.24,
+          clumpiness: 0.18,
+          fragmentation: 0.20,
+          interiorGlow: 0.02,
+          haloStrength: 0.02,
+          bilobedStrength: 0.02,
+          asymmetryStrength: 0.12,
+          jetStrength: -0.16,
+          centralEngineStrength: -0.08,
+          ringBreakup: 0.20,
+          coreOffsetRange: 0.02,
+        }
+      : family ===
+          'PETALLED_CORE'
+        ? {
+            structureAspect: -0.03,
+            apparentExtent: -0.04,
+            shellRadius: -0.01,
+            shellThickness: 0.018,
+            shellSharpness: -0.08,
+            filamentStrength: 0.06,
+            clumpiness: 0.08,
+            fragmentation: 0.04,
+            interiorGlow: 0.12,
+            haloStrength: 0.12,
+            bilobedStrength: 0.30,
+            asymmetryStrength: 0.06,
+            jetStrength: -0.10,
+            centralEngineStrength: 0.10,
+            ringBreakup: 0.02,
+            coreOffsetRange: 0.01,
+          }
+        : family ===
+            'TORUS_JET'
+          ? {
+              structureAspect: 0.14,
+              apparentExtent: -0.08,
+              shellRadius: -0.04,
+              shellThickness: -0.006,
+              shellSharpness: 0.10,
+              filamentStrength: -0.04,
+              clumpiness: -0.04,
+              fragmentation: -0.08,
+              interiorGlow: 0.10,
+              haloStrength: 0.02,
+              bilobedStrength: 0.10,
+              asymmetryStrength: 0.02,
+              jetStrength: 0.34,
+              centralEngineStrength: 0.12,
+              ringBreakup: -0.06,
+              coreOffsetRange: 0.00,
+            }
+          : family ===
+              'ELLIPTICAL_WISPS'
+            ? {
+                structureAspect: 0.24,
+                apparentExtent: 0.02,
+                shellRadius: 0.02,
+                shellThickness: -0.012,
+                shellSharpness: 0.04,
+                filamentStrength: 0.12,
+                clumpiness: -0.02,
+                fragmentation: 0.00,
+                interiorGlow: 0.08,
+                haloStrength: 0.08,
+                bilobedStrength: 0.04,
+                asymmetryStrength: 0.10,
+                jetStrength: 0.00,
+                centralEngineStrength: 0.02,
+                ringBreakup: 0.24,
+                coreOffsetRange: 0.02,
+              }
+            : family ===
+                'KNOTTED_SYNCHROTRON'
+              ? {
+                  structureAspect: 0.04,
+                  apparentExtent: 0.04,
+                  shellRadius: 0.04,
+                  shellThickness: 0.004,
+                  shellSharpness: 0.02,
+                  filamentStrength: 0.12,
+                  clumpiness: 0.28,
+                  fragmentation: 0.12,
+                  interiorGlow: 0.04,
+                  haloStrength: 0.04,
+                  bilobedStrength: 0.02,
+                  asymmetryStrength: 0.16,
+                  jetStrength: -0.04,
+                  centralEngineStrength: 0.00,
+                  ringBreakup: 0.12,
+                  coreOffsetRange: 0.04,
+                }
+              : family ===
+                  'DOUBLE_HALO'
+                ? {
+                    structureAspect: -0.04,
+                    apparentExtent: 0.08,
+                    shellRadius: 0.08,
+                    shellThickness: 0.020,
+                    shellSharpness: -0.12,
+                    filamentStrength: -0.06,
+                    clumpiness: -0.08,
+                    fragmentation: -0.10,
+                    interiorGlow: 0.14,
+                    haloStrength: 0.28,
+                    bilobedStrength: 0.00,
+                    asymmetryStrength: 0.02,
+                    jetStrength: -0.10,
+                    centralEngineStrength: 0.04,
+                    ringBreakup: -0.04,
+                    coreOffsetRange: 0.01,
+                  }
+                : family ===
+                    'OFFSET_PLUME'
+                  ? {
+                      structureAspect: 0.18,
+                      apparentExtent: 0.10,
+                      shellRadius: 0.04,
+                      shellThickness: 0.006,
+                      shellSharpness: -0.02,
+                      filamentStrength: 0.08,
+                      clumpiness: 0.08,
+                      fragmentation: 0.10,
+                      interiorGlow: 0.08,
+                      haloStrength: 0.10,
+                      bilobedStrength: 0.10,
+                      asymmetryStrength: 0.32,
+                      jetStrength: 0.10,
+                      centralEngineStrength: 0.02,
+                      ringBreakup: 0.10,
+                      coreOffsetRange: 0.12,
+                    }
+                  : {
+                      structureAspect: 0.08,
+                      apparentExtent: 0.08,
+                      shellRadius: 0.06,
+                      shellThickness: -0.006,
+                      shellSharpness: 0.04,
+                      filamentStrength: 0.22,
+                      clumpiness: 0.18,
+                      fragmentation: 0.18,
+                      interiorGlow: 0.06,
+                      haloStrength: 0.12,
+                      bilobedStrength: 0.08,
+                      asymmetryStrength: 0.20,
+                      jetStrength: 0.08,
+                      centralEngineStrength: 0.04,
+                      ringBreakup: 0.28,
+                      coreOffsetRange: 0.05,
+                    };
+
+  return Object.freeze({
+    orientationRange:
+      1.90,
+    structureAspect:
+      clamp01Range(
+        0.96 +
+          tuned.structureAspect +
+          (u0 - 0.5) * 0.20,
+        0.70,
+        1.38,
+      ),
+    apparentExtent:
+      clamp01Range(
+        0.80 +
+          tuned.apparentExtent +
+          (u1 - 0.5) * 0.12,
+        0.60,
+        1.04,
+      ),
+    shellRadius:
+      clamp01Range(
+        0.42 +
+          tuned.shellRadius +
+          (u2 - 0.5) * 0.08,
+        0.28,
+        0.58,
+      ),
+    shellThickness:
+      clamp01Range(
+        0.090 +
+          tuned.shellThickness +
+          (u3 - 0.5) * 0.018,
+        0.050,
+        0.145,
+      ),
+    shellSharpness:
+      clamp01(
+        0.46 +
+          tuned.shellSharpness +
+          (u4 - 0.5) * 0.18,
+      ),
+    filamentStrength:
+      clamp01(
+        0.70 +
+          tuned.filamentStrength +
+          (u5 - 0.5) * 0.18,
+      ),
+    clumpiness:
+      clamp01(
+        0.56 +
+          tuned.clumpiness +
+          (u0 - 0.5) * 0.20,
+      ),
+    fragmentation:
+      clamp01(
+        0.42 +
+          tuned.fragmentation +
+          (u1 - 0.5) * 0.18,
+      ),
+    interiorGlow:
+      clamp01(
+        0.72 +
+          tuned.interiorGlow +
+          (u2 - 0.5) * 0.12,
+      ),
+    haloStrength:
+      clamp01(
+        0.48 +
+          tuned.haloStrength +
+          (u3 - 0.5) * 0.18,
+      ),
+    bilobedStrength:
+      clamp01(
+        0.16 +
+          tuned.bilobedStrength +
+          (u4 - 0.5) * 0.12,
+      ),
+    asymmetryStrength:
+      clamp01(
+        0.26 +
+          tuned.asymmetryStrength +
+          (u5 - 0.5) * 0.18,
+      ),
+    jetStrength:
+      clamp01(
+        0.18 +
+          tuned.jetStrength +
+          (u0 - 0.5) * 0.12,
+      ),
+    centralEngineStrength:
+      clamp01(
+        0.56 +
+          tuned.centralEngineStrength +
+          (u1 - 0.5) * 0.10,
+      ),
+    ringBreakup:
+      clamp01(
+        0.44 +
+          tuned.ringBreakup +
+          (u2 - 0.5) * 0.18,
+      ),
+    coreOffsetRange:
+      clamp01Range(
+        0.035 +
+          tuned.coreOffsetRange,
+        0,
+        0.18,
+      ),
+  });
+}
+
+function compositeMorphologyProfileFor(
+  family:
+    SupernovaRemnantCompositeVisualFamily,
+
+  u0:
+    number,
+
+  u1:
+    number,
+
+  u2:
+    number,
+
+  u3:
+    number,
+
+  u4:
+    number,
+
+  u5:
+    number,
+): MorphologyProfile {
+
+  /*
+   * A COMPOSITE remnant deliberately contains two independently readable
+   * physical zones: the forward-shock shell and a younger pulsar-wind nebula
+   * inside it.  The family only changes their relative geometry; it never
+   * removes either component.
+   */
+  const tuned =
+    family ===
+      'BALANCED_CORE_SHELL'
+      ? {
+          structureAspect: 0.00,
+          apparentExtent: 0.02,
+          shellRadius: 0.04,
+          shellThickness: -0.010,
+          shellSharpness: 0.10,
+          filamentStrength: 0.10,
+          clumpiness: 0.05,
+          fragmentation: 0.04,
+          interiorGlow: 0.08,
+          haloStrength: 0.04,
+          bilobedStrength: 0.02,
+          asymmetryStrength: 0.04,
+          jetStrength: 0.00,
+          centralEngineStrength: 0.04,
+          ringBreakup: 0.04,
+          coreOffsetRange: 0.00,
+        }
+      : family ===
+          'BIPOLAR_PWN_SHELL'
+        ? {
+            structureAspect: 0.12,
+            apparentExtent: 0.02,
+            shellRadius: 0.02,
+            shellThickness: -0.004,
+            shellSharpness: 0.04,
+            filamentStrength: 0.06,
+            clumpiness: 0.02,
+            fragmentation: 0.04,
+            interiorGlow: 0.08,
+            haloStrength: 0.02,
+            bilobedStrength: 0.30,
+            asymmetryStrength: 0.08,
+            jetStrength: 0.30,
+            centralEngineStrength: 0.08,
+            ringBreakup: 0.04,
+            coreOffsetRange: 0.01,
+          }
+        : family ===
+            'OFFSET_CORE_SHELL'
+          ? {
+              structureAspect: 0.04,
+              apparentExtent: 0.04,
+              shellRadius: 0.04,
+              shellThickness: 0.002,
+              shellSharpness: 0.04,
+              filamentStrength: 0.06,
+              clumpiness: 0.08,
+              fragmentation: 0.08,
+              interiorGlow: 0.06,
+              haloStrength: 0.06,
+              bilobedStrength: 0.04,
+              asymmetryStrength: 0.24,
+              jetStrength: 0.06,
+              centralEngineStrength: 0.04,
+              ringBreakup: 0.08,
+              coreOffsetRange: 0.10,
+            }
+          : family ===
+              'FILAMENT_BRIDGE'
+            ? {
+                structureAspect: 0.06,
+                apparentExtent: 0.06,
+                shellRadius: 0.03,
+                shellThickness: -0.008,
+                shellSharpness: 0.12,
+                filamentStrength: 0.26,
+                clumpiness: 0.12,
+                fragmentation: 0.12,
+                interiorGlow: 0.02,
+                haloStrength: 0.02,
+                bilobedStrength: 0.06,
+                asymmetryStrength: 0.12,
+                jetStrength: 0.04,
+                centralEngineStrength: 0.00,
+                ringBreakup: 0.14,
+                coreOffsetRange: 0.03,
+              }
+            : family ===
+                'BREAKOUT_COMPOSITE'
+              ? {
+                  structureAspect: 0.18,
+                  apparentExtent: 0.08,
+                  shellRadius: 0.06,
+                  shellThickness: 0.004,
+                  shellSharpness: -0.02,
+                  filamentStrength: 0.10,
+                  clumpiness: 0.12,
+                  fragmentation: 0.24,
+                  interiorGlow: 0.06,
+                  haloStrength: 0.08,
+                  bilobedStrength: 0.08,
+                  asymmetryStrength: 0.30,
+                  jetStrength: 0.10,
+                  centralEngineStrength: 0.02,
+                  ringBreakup: 0.26,
+                  coreOffsetRange: 0.06,
+                }
+              : family ===
+                  'DOUBLE_ARC_CORE'
+                ? {
+                    structureAspect: -0.04,
+                    apparentExtent: 0.00,
+                    shellRadius: 0.02,
+                    shellThickness: -0.014,
+                    shellSharpness: 0.14,
+                    filamentStrength: 0.14,
+                    clumpiness: 0.02,
+                    fragmentation: 0.08,
+                    interiorGlow: 0.08,
+                    haloStrength: 0.12,
+                    bilobedStrength: 0.12,
+                    asymmetryStrength: 0.06,
+                    jetStrength: 0.02,
+                    centralEngineStrength: 0.06,
+                    ringBreakup: 0.18,
+                    coreOffsetRange: 0.01,
+                  }
+                : family ===
+                    'KNOTTED_RIM_PULSAR'
+                  ? {
+                      structureAspect: 0.02,
+                      apparentExtent: 0.04,
+                      shellRadius: 0.04,
+                      shellThickness: 0.010,
+                      shellSharpness: 0.08,
+                      filamentStrength: 0.16,
+                      clumpiness: 0.26,
+                      fragmentation: 0.14,
+                      interiorGlow: 0.02,
+                      haloStrength: 0.02,
+                      bilobedStrength: 0.04,
+                      asymmetryStrength: 0.10,
+                      jetStrength: 0.00,
+                      centralEngineStrength: 0.08,
+                      ringBreakup: 0.12,
+                      coreOffsetRange: 0.03,
+                    }
+                  : {
+                      structureAspect: 0.20,
+                      apparentExtent: 0.10,
+                      shellRadius: 0.04,
+                      shellThickness: 0.000,
+                      shellSharpness: 0.00,
+                      filamentStrength: 0.12,
+                      clumpiness: 0.10,
+                      fragmentation: 0.16,
+                      interiorGlow: 0.08,
+                      haloStrength: 0.08,
+                      bilobedStrength: 0.08,
+                      asymmetryStrength: 0.28,
+                      jetStrength: 0.20,
+                      centralEngineStrength: 0.04,
+                      ringBreakup: 0.18,
+                      coreOffsetRange: 0.08,
+                    };
+
+  return Object.freeze({
+    orientationRange:
+      1.85,
+    structureAspect:
+      clamp01Range(
+        1.00 +
+          tuned.structureAspect +
+          (u0 - 0.5) * 0.18,
+        0.72,
+        1.42,
+      ),
+    apparentExtent:
+      clamp01Range(
+        0.88 +
+          tuned.apparentExtent +
+          (u1 - 0.5) * 0.10,
+        0.70,
+        1.08,
+      ),
+    shellRadius:
+      clamp01Range(
+        0.50 +
+          tuned.shellRadius +
+          (u2 - 0.5) * 0.07,
+        0.42,
+        0.62,
+      ),
+    shellThickness:
+      clamp01Range(
+        0.062 +
+          tuned.shellThickness +
+          (u3 - 0.5) * 0.016,
+        0.032,
+        0.105,
+      ),
+    shellSharpness:
+      clamp01(
+        0.68 +
+          tuned.shellSharpness +
+          (u4 - 0.5) * 0.16,
+      ),
+    filamentStrength:
+      clamp01(
+        0.66 +
+          tuned.filamentStrength +
+          (u5 - 0.5) * 0.16,
+      ),
+    clumpiness:
+      clamp01(
+        0.52 +
+          tuned.clumpiness +
+          (u0 - 0.5) * 0.18,
+      ),
+    fragmentation:
+      clamp01(
+        0.50 +
+          tuned.fragmentation +
+          (u1 - 0.5) * 0.18,
+      ),
+    interiorGlow:
+      clamp01(
+        0.72 +
+          tuned.interiorGlow +
+          (u2 - 0.5) * 0.12,
+      ),
+    haloStrength:
+      clamp01(
+        0.42 +
+          tuned.haloStrength +
+          (u3 - 0.5) * 0.16,
+      ),
+    bilobedStrength:
+      clamp01(
+        0.14 +
+          tuned.bilobedStrength +
+          (u4 - 0.5) * 0.12,
+      ),
+    asymmetryStrength:
+      clamp01(
+        0.24 +
+          tuned.asymmetryStrength +
+          (u5 - 0.5) * 0.16,
+      ),
+    jetStrength:
+      clamp01(
+        0.16 +
+          tuned.jetStrength +
+          (u0 - 0.5) * 0.12,
+      ),
+    centralEngineStrength:
+      clamp01(
+        0.62 +
+          tuned.centralEngineStrength +
+          (u1 - 0.5) * 0.10,
+      ),
+    ringBreakup:
+      clamp01(
+        0.48 +
+          tuned.ringBreakup +
+          (u2 - 0.5) * 0.16,
+      ),
+    coreOffsetRange:
+      clamp01Range(
+        0.025 +
+          tuned.coreOffsetRange,
+        0,
+        0.17,
+      ),
+  });
+}
+
+
 function paletteProfileFor(
   family:
     SupernovaRemnantPaletteFamily,
@@ -728,7 +1396,28 @@ function paletteProfileFor(
 function knowledgeProfileFor(
   knowledgeLevel:
     ArchiveGalacticObjectKnowledgeLevel,
+
+  scientificMorphology:
+    SupernovaRemnantScientificMorphology,
 ): KnowledgeProfile {
+
+  if (
+    scientificMorphology ===
+      'PLERION'
+  ) {
+    return plerionKnowledgeProfileFor(
+      knowledgeLevel,
+    );
+  }
+
+  if (
+    scientificMorphology ===
+      'COMPOSITE'
+  ) {
+    return compositeKnowledgeProfileFor(
+      knowledgeLevel,
+    );
+  }
 
   switch (
     knowledgeLevel
@@ -779,12 +1468,122 @@ function knowledgeProfileFor(
   }
 }
 
+
+function plerionKnowledgeProfileFor(
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+): KnowledgeProfile {
+
+  switch (
+    knowledgeLevel
+  ) {
+    case ArchiveGalacticObjectKnowledgeLevel.SIGNAL:
+      return Object.freeze({
+        shellVisibility: 0.18,
+        filamentVisibility: 0.08,
+        interiorVisibility: 0.20,
+        haloVisibility: 0.14,
+        chromaGain: 0.28,
+        detailFactor: 0.16,
+        starVisibility: 0.20,
+      });
+
+    case ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED:
+      return Object.freeze({
+        shellVisibility: 0.36,
+        filamentVisibility: 0.34,
+        interiorVisibility: 0.56,
+        haloVisibility: 0.40,
+        chromaGain: 0.58,
+        detailFactor: 0.44,
+        starVisibility: 0.42,
+      });
+
+    case ArchiveGalacticObjectKnowledgeLevel.CATALOGUED:
+      return Object.freeze({
+        shellVisibility: 0.64,
+        filamentVisibility: 0.74,
+        interiorVisibility: 0.86,
+        haloVisibility: 0.74,
+        chromaGain: 0.86,
+        detailFactor: 0.80,
+        starVisibility: 0.74,
+      });
+
+    case ArchiveGalacticObjectKnowledgeLevel.CONFIRMED:
+      return Object.freeze({
+        shellVisibility: 1,
+        filamentVisibility: 1,
+        interiorVisibility: 1,
+        haloVisibility: 1,
+        chromaGain: 1,
+        detailFactor: 1,
+        starVisibility: 1,
+      });
+  }
+}
+
+function compositeKnowledgeProfileFor(
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+): KnowledgeProfile {
+
+  switch (
+    knowledgeLevel
+  ) {
+    case ArchiveGalacticObjectKnowledgeLevel.SIGNAL:
+      return Object.freeze({
+        shellVisibility: 0.24,
+        filamentVisibility: 0.08,
+        interiorVisibility: 0.18,
+        haloVisibility: 0.12,
+        chromaGain: 0.26,
+        detailFactor: 0.15,
+        starVisibility: 0.20,
+      });
+
+    case ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED:
+      return Object.freeze({
+        shellVisibility: 0.50,
+        filamentVisibility: 0.32,
+        interiorVisibility: 0.52,
+        haloVisibility: 0.38,
+        chromaGain: 0.56,
+        detailFactor: 0.42,
+        starVisibility: 0.42,
+      });
+
+    case ArchiveGalacticObjectKnowledgeLevel.CATALOGUED:
+      return Object.freeze({
+        shellVisibility: 0.82,
+        filamentVisibility: 0.74,
+        interiorVisibility: 0.84,
+        haloVisibility: 0.70,
+        chromaGain: 0.84,
+        detailFactor: 0.80,
+        starVisibility: 0.74,
+      });
+
+    case ArchiveGalacticObjectKnowledgeLevel.CONFIRMED:
+      return Object.freeze({
+        shellVisibility: 1,
+        filamentVisibility: 1,
+        interiorVisibility: 1,
+        haloVisibility: 1,
+        chromaGain: 1,
+        detailFactor: 1,
+        starVisibility: 1,
+      });
+  }
+}
+
+
 function requireSupportedDescriptor(
   descriptor:
     ArchiveGalacticObjectRenderDescriptor,
 ): void {
 
-  const opaqueShellSignal =
+  const opaqueRemnantSignal =
     descriptor.kind ===
       ArchiveGalacticObjectRenderKind
         .EXTREME_OBJECT &&
@@ -793,18 +1592,26 @@ function requireSupportedDescriptor(
         .SIGNAL &&
     descriptor.variant ===
       null &&
-    descriptor.renderProfile ===
-      ArchiveGalacticObjectRenderProfile
-        .SUPERNOVA_REMNANT_SHELL;
+    (
+      descriptor.renderProfile ===
+        ArchiveGalacticObjectRenderProfile
+          .SUPERNOVA_REMNANT_SHELL ||
+      descriptor.renderProfile ===
+        ArchiveGalacticObjectRenderProfile
+          .SUPERNOVA_REMNANT_PLERION ||
+      descriptor.renderProfile ===
+        ArchiveGalacticObjectRenderProfile
+          .SUPERNOVA_REMNANT_COMPOSITE
+    );
 
   if (
     descriptor.kind !==
       ArchiveGalacticObjectRenderKind
         .SUPERNOVA_REMNANT &&
-    !opaqueShellSignal
+    !opaqueRemnantSignal
   ) {
     throw new RangeError(
-      `SupernovaRemnantRenderModelBuilder only supports SUPERNOVA_REMNANT descriptors or the opaque SUPERNOVA_REMNANT_SHELL signal profile, received ${descriptor.kind}.`,
+      `SupernovaRemnantRenderModelBuilder only supports SUPERNOVA_REMNANT descriptors or opaque supernova-remnant signal profiles, received ${descriptor.kind}.`,
     );
   }
 }

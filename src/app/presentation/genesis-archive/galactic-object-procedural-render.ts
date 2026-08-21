@@ -278,6 +278,12 @@ export class GalacticObjectProceduralRender {
           descriptor.renderProfile ===
             ArchiveGalacticObjectRenderProfile
               .SUPERNOVA_REMNANT_SHELL ||
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .SUPERNOVA_REMNANT_PLERION ||
+          descriptor.renderProfile ===
+            ArchiveGalacticObjectRenderProfile
+              .SUPERNOVA_REMNANT_COMPOSITE ||
           descriptor.kind ===
             ArchiveGalacticObjectRenderKind
               .SUPERNOVA_REMNANT

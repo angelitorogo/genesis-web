@@ -1160,5 +1160,96 @@ describe(
         ).toBeNull();
       },
     );
+
+    it(
+      'should route an opaque DETECTED PLERION signal to the dedicated WebGL remnant renderer instead of the generic SVG fallback',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .EXTREME_OBJECT,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .SUPERNOVA_REMNANT_PLERION,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '.galactic-object-render__svg',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route an opaque DETECTED COMPOSITE signal to the dedicated WebGL remnant renderer instead of the generic SVG fallback',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind:
+              ArchiveGalacticObjectRenderKind
+                .EXTREME_OBJECT,
+            knowledgeLevel:
+              ArchiveGalacticObjectKnowledgeLevel
+                .SIGNAL,
+            variant:
+              null,
+            renderProfile:
+              ArchiveGalacticObjectRenderProfile
+                .SUPERNOVA_REMNANT_COMPOSITE,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="supernova-remnant-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '.galactic-object-render__svg',
+          ),
+        ).toBeNull();
+      },
+    );
+
   },
 );

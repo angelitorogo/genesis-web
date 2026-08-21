@@ -1487,5 +1487,288 @@ describe(
         );
       },
     );
+
+    it(
+      'should preserve one PLERION renderer from opaque detection through confirmation without leaking morphology at DETECTED',
+      () => {
+        let locator:
+          GalacticObjectLocator | null =
+            null;
+
+        for (
+          let index =
+            0n;
+          index <
+            4_096n;
+          index +=
+            1n
+        ) {
+          const candidate =
+            new GalacticObjectLocator(
+              0n,
+              0n,
+              index,
+            );
+
+          if (
+            !SupernovaRemnantGenerator
+              .isSupernovaRemnantLocator(
+                generationKey,
+                candidate,
+              )
+          ) {
+            continue;
+          }
+
+          if (
+            SupernovaRemnantGenerator
+              .resolveMorphology(
+                generationKey,
+                candidate,
+              ) ===
+            SupernovaRemnantMorphology
+              .PLERION
+          ) {
+            locator =
+              candidate;
+            break;
+          }
+        }
+
+        expect(
+          locator,
+        ).not.toBeNull();
+
+        if (
+          locator ===
+            null
+        ) {
+          throw new RangeError(
+            'Missing deterministic PLERION remnant test locator.',
+          );
+        }
+
+        const cards =
+          [
+            DiscoveryState.DETECTED,
+            DiscoveryState.DISCOVERED,
+            DiscoveryState.CATALOGUED,
+            DiscoveryState.CONFIRMED,
+          ].map(
+            state =>
+              ArchiveGalacticObjectCardAssembler
+                .build(
+                  generationKey,
+                  locator,
+                  ExplorationResultKind
+                    .EXTREME_OBJECT,
+                  state,
+                ),
+          );
+
+        expect(
+          new Set(
+            cards.map(
+              card =>
+                card.render.seed,
+            ),
+          ).size,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          cards.map(
+            card =>
+              card.render.renderProfile,
+          ),
+        ).toEqual([
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_PLERION,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_PLERION,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_PLERION,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_PLERION,
+        ]);
+
+        expect(
+          cards[0].scientificSubject,
+        ).toBeNull();
+
+        expect(
+          cards[0].render.kind,
+        ).toBe(
+          ArchiveGalacticObjectRenderKind
+            .EXTREME_OBJECT,
+        );
+
+        expect(
+          cards[0].render.variant,
+        ).toBeNull();
+
+        expect(
+          cards[1].render.variant,
+        ).toBeNull();
+
+        expect(
+          cards[2].render.variant,
+        ).toBe(
+          SupernovaRemnantMorphology
+            .PLERION,
+        );
+
+        expect(
+          cards[3].render.variant,
+        ).toBe(
+          SupernovaRemnantMorphology
+            .PLERION,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should preserve one COMPOSITE renderer from opaque detection through confirmation without leaking morphology at DETECTED',
+      () => {
+        let locator:
+          GalacticObjectLocator | null =
+            null;
+
+        for (
+          let index =
+            0n;
+          index <
+            8_192n;
+          index +=
+            1n
+        ) {
+          const candidate =
+            new GalacticObjectLocator(
+              0n,
+              0n,
+              index,
+            );
+
+          if (
+            !SupernovaRemnantGenerator
+              .isSupernovaRemnantLocator(
+                generationKey,
+                candidate,
+              )
+          ) {
+            continue;
+          }
+
+          if (
+            SupernovaRemnantGenerator
+              .resolveMorphology(
+                generationKey,
+                candidate,
+              ) ===
+            SupernovaRemnantMorphology
+              .COMPOSITE
+          ) {
+            locator =
+              candidate;
+            break;
+          }
+        }
+
+        expect(
+          locator,
+        ).not.toBeNull();
+
+        if (
+          locator ===
+            null
+        ) {
+          throw new RangeError(
+            'Missing deterministic COMPOSITE remnant test locator.',
+          );
+        }
+
+        const cards =
+          [
+            DiscoveryState.DETECTED,
+            DiscoveryState.DISCOVERED,
+            DiscoveryState.CATALOGUED,
+            DiscoveryState.CONFIRMED,
+          ].map(
+            state =>
+              ArchiveGalacticObjectCardAssembler
+                .build(
+                  generationKey,
+                  locator,
+                  ExplorationResultKind
+                    .EXTREME_OBJECT,
+                  state,
+                ),
+          );
+
+        expect(
+          new Set(
+            cards.map(
+              card =>
+                card.render.seed,
+            ),
+          ).size,
+        ).toBe(
+          1,
+        );
+
+        expect(
+          cards.map(
+            card =>
+              card.render.renderProfile,
+          ),
+        ).toEqual([
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_COMPOSITE,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_COMPOSITE,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_COMPOSITE,
+          ArchiveGalacticObjectRenderProfile
+            .SUPERNOVA_REMNANT_COMPOSITE,
+        ]);
+
+        expect(
+          cards[0].scientificSubject,
+        ).toBeNull();
+
+        expect(
+          cards[0].render.kind,
+        ).toBe(
+          ArchiveGalacticObjectRenderKind
+            .EXTREME_OBJECT,
+        );
+
+        expect(
+          cards[0].render.variant,
+        ).toBeNull();
+
+        expect(
+          cards[1].render.variant,
+        ).toBeNull();
+
+        expect(
+          cards[2].render.variant,
+        ).toBe(
+          SupernovaRemnantMorphology
+            .COMPOSITE,
+        );
+
+        expect(
+          cards[3].render.variant,
+        ).toBe(
+          SupernovaRemnantMorphology
+            .COMPOSITE,
+        );
+      },
+      30_000,
+    );
+
   },
 );

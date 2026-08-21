@@ -592,6 +592,86 @@
               </div>
             </div>
           }
+
+          @if (isSupernovaRemnantPlerionSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="snr-plerion-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 remanentes PLERION reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de remanentes de supernova tipo plerión"
+              >
+                @for (
+                  sample of supernovaRemnantPlerionSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="snr-plerion-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar remanente SN tipo plerión ' + sample.label"
+                    [attr.aria-pressed]="selectedSupernovaRemnantPlerionSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedSupernovaRemnantPlerionSampleIndex() === sample.index"
+                    (click)="selectSupernovaRemnantPlerionSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isSupernovaRemnantCompositeSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="snr-composite-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 remanentes COMPOSITE reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de remanentes de supernova compuestos"
+              >
+                @for (
+                  sample of supernovaRemnantCompositeSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="snr-composite-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · O' + sample.locator.galacticObjectIndex.toString()"
+                    [attr.aria-label]="'Mostrar remanente SN compuesto ' + sample.label"
+                    [attr.aria-pressed]="selectedSupernovaRemnantCompositeSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedSupernovaRemnantCompositeSampleIndex() === sample.index"
+                    (click)="selectSupernovaRemnantCompositeSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
         </div>
       </section>
     }
