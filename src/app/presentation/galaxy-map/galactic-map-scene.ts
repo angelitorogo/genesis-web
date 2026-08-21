@@ -47,10 +47,6 @@ import {
 } from '../../domain/exploration/exploration-sector-result';
 
 import {
-  GalaxyType,
-} from '../../domain/universe/galaxy-type';
-
-import {
   GalacticMapCameraController,
   type GalacticMapCameraState,
   type GalacticMapVisualSelection,
@@ -1797,6 +1793,17 @@ class ThreeGalacticMapSceneRuntime
     THREE.ShaderMaterial | null =
     null;
 
+  private gasPoints:
+    THREE.Points<
+      THREE.BufferGeometry,
+      THREE.ShaderMaterial
+    > | null =
+    null;
+
+  private gasMaterial:
+    THREE.ShaderMaterial | null =
+    null;
+
   private particleSessionId:
     string | null =
     null;
@@ -2025,6 +2032,19 @@ class ThreeGalacticMapSceneRuntime
         this.pixelRatio;
     }
 
+    if (
+      this.gasMaterial !==
+      null
+    ) {
+      this
+        .gasMaterial
+        .uniforms[
+          'uPixelRatio'
+        ]
+        .value =
+        this.pixelRatio;
+    }
+
     this
       .discoveryMarkerOverlay
       ?.setPixelRatio(
@@ -2062,6 +2082,13 @@ class ThreeGalacticMapSceneRuntime
 
     this.pointMaterial =
       createGalaxyPointMaterial(
+        this.pixelRatio,
+        this.lodStateValue
+          .lodLevel,
+      );
+
+    this.gasMaterial =
+      createGalaxyGasMaterial(
         this.pixelRatio,
         this.lodStateValue
           .lodLevel,
@@ -3218,6 +3245,38 @@ class ThreeGalacticMapSceneRuntime
       .value =
       profile
         .outerVisibilityScale;
+
+    if (
+      this.gasMaterial !==
+      null
+    ) {
+      this
+        .gasMaterial
+        .uniforms[
+          'uPointScale'
+        ]
+        .value =
+        profile
+          .pointScale;
+
+      this
+        .gasMaterial
+        .uniforms[
+          'uOpacityScale'
+        ]
+        .value =
+        profile
+          .opacityScale;
+
+      this
+        .gasMaterial
+        .uniforms[
+          'uOuterVisibilityScale'
+        ]
+        .value =
+        profile
+          .outerVisibilityScale;
+    }
   }
 
   private workerResponseStillCurrent(
@@ -3332,6 +3391,8 @@ class ThreeGalacticMapSceneRuntime
       this.galaxyGroup ===
         null ||
       this.pointMaterial ===
+        null ||
+      this.gasMaterial ===
         null
     ) {
       return;
@@ -3347,68 +3408,101 @@ class ThreeGalacticMapSceneRuntime
         null;
     }
 
-    this.activeSourceIndices =
-      materialized.sourceIndices;
+    if (
+      this.gasPoints !==
+        null
+    ) {
+      this.gasPoints.removeFromParent();
+      this.gasPoints.geometry.dispose();
+      this.gasPoints =
+        null;
+    }
 
     if (
       materialized.count ===
         0
     ) {
+      this.activeSourceIndices =
+        new Uint32Array();
       return;
     }
 
-    const geometry =
-      new THREE.BufferGeometry();
-
-    geometry.setAttribute(
-      'position',
-      new THREE.BufferAttribute(
-        materialized.positions,
-        3,
-      ),
-    );
-
-    geometry.setAttribute(
-      'customColor',
-      new THREE.BufferAttribute(
-        materialized.colors,
-        3,
-      ),
-    );
-
-    geometry.setAttribute(
-      'aSize',
-      new THREE.BufferAttribute(
-        materialized.sizes,
-        1,
-      ),
-    );
-
-    geometry.setAttribute(
-      'aOpacity',
-      new THREE.BufferAttribute(
-        materialized.opacities,
-        1,
-      ),
-    );
-
-    geometry.computeBoundingSphere();
-
-    const points =
-      new THREE.Points(
-        geometry,
-        this.pointMaterial,
+    const partition =
+      partitionMaterializedGalaxyPoints(
+        materialized,
       );
 
-    points.name =
-      'galactic-map-active-particle-batch';
+    this.activeSourceIndices =
+      partition
+        .stellarSourceIndices;
 
-    this.galaxyGroup.add(
-      points,
-    );
+    if (
+      partition.stellarCount >
+        0
+    ) {
+      const stellarGeometry =
+        createGalaxyPointGeometry(
+          partition.stellarPositions,
+          partition.stellarColors,
+          partition.stellarSizes,
+          partition.stellarOpacities,
+        );
 
-    this.points =
-      points;
+      const stellarPoints =
+        new THREE.Points(
+          stellarGeometry,
+          this.pointMaterial,
+        );
+
+      stellarPoints.name =
+        'galactic-map-active-particle-batch';
+
+      stellarPoints.renderOrder =
+        1;
+
+      this.galaxyGroup.add(
+        stellarPoints,
+      );
+
+      this.points =
+        stellarPoints;
+    }
+
+    if (
+      partition.gasCount >
+        0
+    ) {
+      const gasGeometry =
+        createGalaxyPointGeometry(
+          partition.gasPositions,
+          partition.gasColors,
+          partition.gasSizes,
+          partition.gasOpacities,
+        );
+
+      const gasPoints =
+        new THREE.Points(
+          gasGeometry,
+          this.gasMaterial,
+        );
+
+      gasPoints.name =
+        'galactic-map-active-gas-batch';
+
+      // Volumetric ISM cloudlets occupy real XYZ positions around the stellar
+      // disk. Render them just before the stellar points with normal alpha
+      // blending: projection/parallax supplies depth while stars remain the
+      // crisp high-frequency structure on top.
+      gasPoints.renderOrder =
+        0;
+
+      this.galaxyGroup.add(
+        gasPoints,
+      );
+
+      this.gasPoints =
+        gasPoints;
+    }
   }
 
   private showSelectionMarker(
@@ -3643,8 +3737,22 @@ class ThreeGalacticMapSceneRuntime
         .dispose();
     }
 
+    if (
+      this.gasPoints !==
+      null
+    ) {
+      this
+        .gasPoints
+        .geometry
+        .dispose();
+    }
+
     this
       .pointMaterial
+      ?.dispose();
+
+    this
+      .gasMaterial
       ?.dispose();
 
     this
@@ -3662,7 +3770,13 @@ class ThreeGalacticMapSceneRuntime
     this.points =
       null;
 
+    this.gasPoints =
+      null;
+
     this.pointMaterial =
+      null;
+
+    this.gasMaterial =
       null;
 
     this.activeSourceIndices =
@@ -3806,22 +3920,31 @@ export function staticPresentationScaleMultiplier(
     GalacticMapModel,
 ): number {
 
+  const galaxyTypeName =
+    model.galaxyType?.name;
+
   if (
-    model.galaxyType ===
-    GalaxyType.DWARF
+    galaxyTypeName ===
+    'DWARF'
   ) {
     return 1.34;
   }
 
   if (
-    model.galaxyType ===
-    GalaxyType.IRREGULAR
+    galaxyTypeName ===
+    'IRREGULAR'
   ) {
     return 1.20;
   }
 
   return 1;
 }
+
+/**
+ * SPIRAL gas is no longer a 2D overlay. Volumetric gas cloudlets are emitted
+ * by GalacticMapParticleLayoutGenerator and travel through the same Worker,
+ * visible-sector and LOD pipeline as the stellar render samples.
+ */
 
 /**
  * Static point-10.1 disk presentation tilt, frozen at 20 degrees.
@@ -3839,6 +3962,279 @@ export function staticPresentationTiltRadians(
   // the same visual plane. The shared camera position defines the initial
   // inclination; morphology must not add a second, hidden presentation tilt.
   return 0;
+}
+
+const GALAXY_GAS_SIZE_THRESHOLD =
+  8.0;
+
+interface PartitionedGalaxyPointBatch {
+  readonly stellarCount: number;
+  readonly stellarPositions: Float32Array;
+  readonly stellarColors: Float32Array;
+  readonly stellarSizes: Float32Array;
+  readonly stellarOpacities: Float32Array;
+  readonly stellarSourceIndices: Uint32Array;
+
+  readonly gasCount: number;
+  readonly gasPositions: Float32Array;
+  readonly gasColors: Float32Array;
+  readonly gasSizes: Float32Array;
+  readonly gasOpacities: Float32Array;
+}
+
+function partitionMaterializedGalaxyPoints(
+  materialized:
+    GalacticMapWorkerParticleBatch,
+): PartitionedGalaxyPointBatch {
+
+  let gasCount =
+    0;
+
+  for (
+    let index = 0;
+    index < materialized.count;
+    index += 1
+  ) {
+    if (
+      materialized.sizes[
+        index
+      ] >=
+      GALAXY_GAS_SIZE_THRESHOLD
+    ) {
+      gasCount += 1;
+    }
+  }
+
+  const stellarCount =
+    materialized.count -
+    gasCount;
+
+  const stellarPositions =
+    new Float32Array(
+      stellarCount * 3,
+    );
+
+  const stellarColors =
+    new Float32Array(
+      stellarCount * 3,
+    );
+
+  const stellarSizes =
+    new Float32Array(
+      stellarCount,
+    );
+
+  const stellarOpacities =
+    new Float32Array(
+      stellarCount,
+    );
+
+  const stellarSourceIndices =
+    new Uint32Array(
+      stellarCount,
+    );
+
+  const gasPositions =
+    new Float32Array(
+      gasCount * 3,
+    );
+
+  const gasColors =
+    new Float32Array(
+      gasCount * 3,
+    );
+
+  const gasSizes =
+    new Float32Array(
+      gasCount,
+    );
+
+  const gasOpacities =
+    new Float32Array(
+      gasCount,
+    );
+
+  let stellarIndex =
+    0;
+
+  let gasIndex =
+    0;
+
+  for (
+    let sourceIndex = 0;
+    sourceIndex < materialized.count;
+    sourceIndex += 1
+  ) {
+    const gas =
+      materialized.sizes[
+        sourceIndex
+      ] >=
+      GALAXY_GAS_SIZE_THRESHOLD;
+
+    const targetIndex =
+      gas
+        ? gasIndex++
+        : stellarIndex++;
+
+    const sourceVectorOffset =
+      sourceIndex * 3;
+
+    const targetVectorOffset =
+      targetIndex * 3;
+
+    const positions =
+      gas
+        ? gasPositions
+        : stellarPositions;
+
+    const colors =
+      gas
+        ? gasColors
+        : stellarColors;
+
+    const sizes =
+      gas
+        ? gasSizes
+        : stellarSizes;
+
+    const opacities =
+      gas
+        ? gasOpacities
+        : stellarOpacities;
+
+    positions[
+      targetVectorOffset
+    ] =
+      materialized.positions[
+        sourceVectorOffset
+      ];
+
+    positions[
+      targetVectorOffset + 1
+    ] =
+      materialized.positions[
+        sourceVectorOffset + 1
+      ];
+
+    positions[
+      targetVectorOffset + 2
+    ] =
+      materialized.positions[
+        sourceVectorOffset + 2
+      ];
+
+    colors[
+      targetVectorOffset
+    ] =
+      materialized.colors[
+        sourceVectorOffset
+      ];
+
+    colors[
+      targetVectorOffset + 1
+    ] =
+      materialized.colors[
+        sourceVectorOffset + 1
+      ];
+
+    colors[
+      targetVectorOffset + 2
+    ] =
+      materialized.colors[
+        sourceVectorOffset + 2
+      ];
+
+    sizes[
+      targetIndex
+    ] =
+      materialized.sizes[
+        sourceIndex
+      ];
+
+    opacities[
+      targetIndex
+    ] =
+      materialized.opacities[
+        sourceIndex
+      ];
+
+    if (!gas) {
+      stellarSourceIndices[
+        targetIndex
+      ] =
+        materialized.sourceIndices[
+          sourceIndex
+        ];
+    }
+  }
+
+  return Object.freeze({
+    stellarCount,
+    stellarPositions,
+    stellarColors,
+    stellarSizes,
+    stellarOpacities,
+    stellarSourceIndices,
+    gasCount,
+    gasPositions,
+    gasColors,
+    gasSizes,
+    gasOpacities,
+  });
+}
+
+function createGalaxyPointGeometry(
+  positions:
+    Float32Array,
+
+  colors:
+    Float32Array,
+
+  sizes:
+    Float32Array,
+
+  opacities:
+    Float32Array,
+): THREE.BufferGeometry {
+
+  const geometry =
+    new THREE.BufferGeometry();
+
+  geometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(
+      positions,
+      3,
+    ),
+  );
+
+  geometry.setAttribute(
+    'customColor',
+    new THREE.BufferAttribute(
+      colors,
+      3,
+    ),
+  );
+
+  geometry.setAttribute(
+    'aSize',
+    new THREE.BufferAttribute(
+      sizes,
+      1,
+    ),
+  );
+
+  geometry.setAttribute(
+    'aOpacity',
+    new THREE.BufferAttribute(
+      opacities,
+      1,
+    ),
+  );
+
+  geometry.computeBoundingSphere();
+
+  return geometry;
 }
 
 function createGalaxyPointMaterial(
@@ -3962,7 +4358,30 @@ function createGalaxyPointMaterial(
           )
         );
 
-        gl_FragColor = vec4(vColor, alpha);
+        vec3 baseColor = clamp(
+          vColor,
+          vec3(0.0),
+          vec3(1.0)
+        );
+
+        float luminance = dot(
+          baseColor,
+          vec3(0.2126, 0.7152, 0.0722)
+        );
+
+        vec3 starColor = clamp(
+          vec3(luminance) +
+          (baseColor - vec3(luminance)) * 1.38,
+          vec3(0.0),
+          vec3(1.0)
+        );
+
+        starColor = pow(
+          starColor,
+          vec3(0.92)
+        );
+
+        gl_FragColor = vec4(starColor, alpha);
 
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -3980,6 +4399,206 @@ function createGalaxyPointMaterial(
 
     blending:
       THREE.AdditiveBlending,
+
+    toneMapped:
+      true,
+  });
+}
+
+function createGalaxyGasMaterial(
+  pixelRatio:
+    number,
+
+  lodLevel:
+    GalacticMapLodLevel,
+): THREE.ShaderMaterial {
+
+  const visibility =
+    galacticMapPointVisibilityProfile(
+      lodLevel,
+    );
+
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uPixelRatio: {
+        value:
+          pixelRatio,
+      },
+
+      uPointScale: {
+        value:
+          visibility
+            .pointScale,
+      },
+
+      uOpacityScale: {
+        value:
+          visibility
+            .opacityScale,
+      },
+
+      uOuterVisibilityScale: {
+        value:
+          visibility
+            .outerVisibilityScale,
+      },
+    },
+
+    vertexShader: `
+      attribute vec3 customColor;
+      attribute float aSize;
+      attribute float aOpacity;
+
+      varying vec3 vColor;
+      varying float vOpacity;
+
+      uniform float uPixelRatio;
+      uniform float uPointScale;
+      uniform float uOpacityScale;
+      uniform float uOuterVisibilityScale;
+
+      void main() {
+        vColor = customColor;
+
+        float radialVisibility = mix(
+          1.0,
+          uOuterVisibilityScale,
+          smoothstep(
+            0.16,
+            0.96,
+            length(position.xy)
+          )
+        );
+
+        vOpacity = min(
+          0.18,
+          aOpacity *
+          uOpacityScale *
+          radialVisibility
+        );
+
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        float distanceScale = clamp(
+          3.0 / max(0.75, -mvPosition.z),
+          0.60,
+          1.36
+        );
+
+        gl_PointSize =
+          aSize *
+          uPixelRatio *
+          uPointScale *
+          distanceScale;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vOpacity;
+
+      void main() {
+        vec2 centered = gl_PointCoord - vec2(0.5);
+        float radius = length(centered) * 2.0;
+
+        if (radius > 1.0) {
+          discard;
+        }
+
+        float asymmetry =
+          0.045 * sin(
+            centered.x * 13.0 +
+            centered.y * 9.0 +
+            dot(vColor, vec3(3.1, 5.7, 7.3))
+          );
+
+        float warpedRadius = clamp(
+          radius + asymmetry * (1.0 - radius),
+          0.0,
+          1.2
+        );
+
+        float envelope = exp(
+          -4.45 * warpedRadius * warpedRadius
+        );
+
+        float feather = 1.0 - smoothstep(
+          0.54,
+          0.97,
+          warpedRadius
+        );
+
+        float mottling =
+          0.72 +
+          0.18 * (
+            0.5 +
+            0.5 * sin(
+              centered.x * 19.0 -
+              centered.y * 17.0 +
+              vColor.b * 11.0
+            )
+          ) +
+          0.10 * (
+            0.5 +
+            0.5 * sin(
+              centered.x * 31.0 +
+              centered.y * 23.0 +
+              vColor.r * 13.0
+            )
+          );
+
+        float alpha =
+          vOpacity *
+          envelope *
+          feather *
+          mottling;
+
+        // Preserve chroma. Gas is intentionally not tone-shifted toward
+        // white: the stellar pass supplies the bright highlights above it.
+        vec3 gasBase = clamp(
+          vColor,
+          vec3(0.0),
+          vec3(1.0)
+        );
+
+        float gasLuminance = dot(
+          gasBase,
+          vec3(0.2126, 0.7152, 0.0722)
+        );
+
+        vec3 gasColor = clamp(
+          vec3(gasLuminance) +
+          (gasBase - vec3(gasLuminance)) * 1.32,
+          vec3(0.0),
+          vec3(1.0)
+        );
+
+        gasColor = pow(
+          gasColor,
+          vec3(0.90)
+        );
+
+        gl_FragColor = vec4(
+          gasColor,
+          alpha
+        );
+
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }
+    `,
+
+    transparent:
+      true,
+
+    depthTest:
+      true,
+
+    depthWrite:
+      false,
+
+    blending:
+      THREE.NormalBlending,
 
     toneMapped:
       true,

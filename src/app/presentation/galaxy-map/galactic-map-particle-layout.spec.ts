@@ -54,8 +54,15 @@ const IRREGULAR_STELLAR_BODY_REINFORCEMENT_PARTICLE_COUNT =
 const ELLIPTICAL_PARTICLE_COUNT =
   124_000;
 
+const SPIRAL_STELLAR_PARTICLE_COUNT =
+  196_000;
+
+const SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT =
+  16_000;
+
 const SPIRAL_PARTICLE_COUNT =
-  278_000;
+  SPIRAL_STELLAR_PARTICLE_COUNT +
+  SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT;
 
 const BARRED_SPIRAL_PARTICLE_COUNT =
   282_000;
@@ -67,7 +74,8 @@ const BAR_PARTICLE_COUNT =
   8_000;
 
 const SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
-  154_000;
+  72_000;
+
 
 const DWARF_PARTICLE_COUNT =
   444_000;
@@ -226,6 +234,73 @@ describe(
       30_000,
     );
 
+
+    it(
+      'should preserve the SPIRAL stellar and volumetric-gas enrichment across the structured-clone Web Worker boundary',
+      () => {
+        const target =
+          model(
+            3n,
+          );
+
+        const synchronous =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const workerInput =
+          structuredClone(
+            createGalacticMapParticleRenderInput(
+              target,
+            ),
+          );
+
+        const workerEquivalent =
+          GalacticMapParticleLayoutGenerator
+            .generateFromRenderInput(
+              workerInput,
+            );
+
+        expect(
+          synchronous.count,
+        ).toBe(
+          SPIRAL_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.count,
+        ).toBe(
+          SPIRAL_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.positions,
+        ).toEqual(
+          synchronous.positions,
+        );
+
+        expect(
+          workerEquivalent.colors,
+        ).toEqual(
+          synchronous.colors,
+        );
+
+        expect(
+          workerEquivalent.sizes,
+        ).toEqual(
+          synchronous.sizes,
+        );
+
+        expect(
+          workerEquivalent.opacities,
+        ).toEqual(
+          synchronous.opacities,
+        );
+      },
+      30_000,
+    );
+
     it(
       'should create the denser point-10.1 visual field without materializing star entities',
       () => {
@@ -272,7 +347,7 @@ describe(
     );
 
     it(
-      'should keep the final spiral-family visual budgets dense while preserving their distinct central structures',
+      'should keep morphology-specific stellar budgets after SPIRAL moves gas and dust to continuous scene overlays',
       () => {
         const ellipticalModel =
           model(
@@ -326,9 +401,15 @@ describe(
         );
 
         expect(
-          barred.count,
-        ).toBeGreaterThan(
           spiral.count,
+        ).toBeLessThan(
+          barred.count,
+        );
+
+        expect(
+          spiral.count,
+        ).toBeGreaterThan(
+          ELLIPTICAL_PARTICLE_COUNT,
         );
 
         expect(
@@ -733,6 +814,362 @@ describe(
         ).toBeGreaterThan(
           profile.outerFraction *
           2.0,
+        );
+      },
+    );
+
+    it(
+      'should embed SPIRAL gas as a sparse chromatic 3D volume instead of a planar overlay',
+      () => {
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              model(
+                3n,
+              ),
+            );
+
+        expect(
+          layout.count,
+        ).toBe(
+          SPIRAL_PARTICLE_COUNT,
+        );
+
+        const gasStart =
+          CORE_PARTICLE_COUNT +
+          BODY_PARTICLE_COUNT +
+          SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT;
+
+        let gasCount =
+          0;
+
+        let positiveDepth =
+          0;
+
+        let negativeDepth =
+          0;
+
+        let blueGas =
+          0;
+
+        let warmOrMagentaGas =
+          0;
+
+        let innerGas =
+          0;
+
+        let maxAbsZ =
+          0;
+
+        for (
+          let particle =
+            gasStart;
+          particle <
+            gasStart +
+              SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT;
+          particle +=
+            1
+        ) {
+          const offset =
+            particle *
+            3;
+
+          const x =
+            layout.positions[
+              offset
+            ];
+
+          const y =
+            layout.positions[
+              offset +
+                1
+            ];
+
+          const z =
+            layout.positions[
+              offset +
+                2
+            ];
+
+          const red =
+            layout.colors[
+              offset
+            ];
+
+          const green =
+            layout.colors[
+              offset +
+                1
+            ];
+
+          const blue =
+            layout.colors[
+              offset +
+                2
+            ];
+
+          expect(
+            layout.sizes[
+              particle
+            ],
+          ).toBeGreaterThanOrEqual(
+            6.35,
+          );
+
+          expect(
+            layout.sizes[
+              particle
+            ],
+          ).toBeLessThanOrEqual(
+            10.7,
+          );
+
+          gasCount +=
+            1;
+
+          if (
+            z >
+            0.006
+          ) {
+            positiveDepth +=
+              1;
+          }
+
+          if (
+            z <
+            -0.006
+          ) {
+            negativeDepth +=
+              1;
+          }
+
+          maxAbsZ =
+            Math.max(
+              maxAbsZ,
+              Math.abs(
+                z,
+              ),
+            );
+
+          if (
+            blue >
+              red +
+                0.12
+          ) {
+            blueGas +=
+              1;
+          }
+
+          if (
+            red >
+              blue -
+                0.02 &&
+            red >
+              green +
+                0.08
+          ) {
+            warmOrMagentaGas +=
+              1;
+          }
+
+          if (
+            Math.hypot(
+              x,
+              y,
+            ) <
+            0.48
+          ) {
+            innerGas +=
+              1;
+          }
+        }
+
+        expect(
+          gasCount,
+        ).toBe(
+          SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT,
+        );
+
+        expect(
+          positiveDepth,
+        ).toBeGreaterThan(
+          2_500,
+        );
+
+        expect(
+          negativeDepth,
+        ).toBeGreaterThan(
+          2_500,
+        );
+
+        expect(
+          maxAbsZ,
+        ).toBeGreaterThan(
+          0.026,
+        );
+
+        expect(
+          blueGas,
+        ).toBeGreaterThan(
+          2_800,
+        );
+
+        expect(
+          warmOrMagentaGas,
+        ).toBeGreaterThan(
+          1_200,
+        );
+
+        expect(
+          innerGas,
+        ).toBeGreaterThan(
+          1_800,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should give a normal spiral visibly mixed stellar temperatures and a warm old central bulge',
+      () => {
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              model(
+                3n,
+              ),
+            );
+
+        let blueStars =
+          0;
+
+        let warmStars =
+          0;
+
+        let brightStars =
+          0;
+
+        const stellarStart =
+          CORE_PARTICLE_COUNT;
+
+        const stellarEnd =
+          CORE_PARTICLE_COUNT +
+          BODY_PARTICLE_COUNT +
+          SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT;
+
+        for (
+          let particle =
+            stellarStart;
+          particle <
+            stellarEnd;
+          particle +=
+            1
+        ) {
+          const offset =
+            particle *
+            3;
+
+          const red =
+            layout.colors[
+              offset
+            ];
+
+          const green =
+            layout.colors[
+              offset +
+                1
+            ];
+
+          const blue =
+            layout.colors[
+              offset +
+                2
+            ];
+
+          if (
+            blue >
+              red +
+                0.16
+          ) {
+            blueStars +=
+              1;
+          }
+
+          if (
+            red >
+              blue +
+                0.16
+          ) {
+            warmStars +=
+              1;
+          }
+
+          if (
+            layout.sizes[
+              particle
+            ] >
+            2.8
+          ) {
+            brightStars +=
+              1;
+          }
+        }
+
+        expect(
+          blueStars,
+        ).toBeGreaterThan(
+          8_000,
+        );
+
+        expect(
+          warmStars,
+        ).toBeGreaterThan(
+          2_000,
+        );
+
+        expect(
+          brightStars,
+        ).toBeGreaterThan(
+          1_000,
+        );
+
+        let coreRed =
+          0;
+
+        let coreBlue =
+          0;
+
+        for (
+          let particle =
+            0;
+          particle <
+            CORE_PARTICLE_COUNT;
+          particle +=
+            1
+        ) {
+          const offset =
+            particle *
+            3;
+
+          coreRed +=
+            layout.colors[
+              offset
+            ];
+
+          coreBlue +=
+            layout.colors[
+              offset +
+                2
+            ];
+        }
+
+        expect(
+          coreRed /
+          CORE_PARTICLE_COUNT,
+        ).toBeGreaterThan(
+          coreBlue /
+          CORE_PARTICLE_COUNT +
+          0.20,
         );
       },
     );

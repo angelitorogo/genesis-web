@@ -59,7 +59,22 @@ const BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
  * both disk morphologies remain immediately distinguishable.
  */
 const SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
-  154_000;
+  72_000;
+
+/**
+ * Volumetric render samples used only by SPIRAL.
+ *
+ * Unlike the discarded planar ISM veil, these are true 3D cloudlets embedded
+ * through the thin stellar disk. Four neighbouring samples share one cloud
+ * anchor, so the medium forms soft irregular volumes instead of luminous
+ * ropes along an arm centre-line. They are renderer-only samples: no physical
+ * nebula, discovery or persisted entity is materialized.
+ */
+const SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT =
+  16_000;
+
+const SPIRAL_GAS_CLOUDLETS_PER_CLUSTER =
+  4;
 
 /**
  * Smooth radial taper applied only to spiral-arm render samples.
@@ -191,6 +206,17 @@ interface PlanarPoint {
     DiskPopulation;
 }
 
+interface RgbColor {
+  readonly red:
+    number;
+
+  readonly green:
+    number;
+
+  readonly blue:
+    number;
+}
+
 interface ParticleBuffers {
   readonly positions:
     Float32Array;
@@ -290,7 +316,8 @@ export class GalacticMapParticleLayoutGenerator {
       ) +
       (
         spiral
-          ? SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT
+          ? SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT +
+            SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT
           : 0
       ) +
       (
@@ -371,6 +398,14 @@ export class GalacticMapParticleLayoutGenerator {
     ) {
       cursor =
         writeSpiralArmReinforcement(
+          model,
+          sampler,
+          buffers,
+          cursor,
+        );
+
+      cursor =
+        writeSpiralVolumetricGas(
           model,
           sampler,
           buffers,
@@ -482,6 +517,11 @@ function writeCore(
     morphology ===
     ExternalGalaxyMorphologyHint
       .DWARF_LIKE;
+
+  const spiral =
+    isSpiral(
+      model,
+    );
 
   if (
     morphology ===
@@ -624,49 +664,91 @@ function writeCore(
       rotated.x,
       rotated.y,
       depth,
-      0.88 +
-        0.12 *
-        brightness +
-        0.06 *
-        warmShift -
-        0.06 *
-        coolShift,
+      spiral
+        ? 0.86 +
+          0.12 *
+          brightness
+        : 0.88 +
+          0.12 *
+          brightness +
+          0.06 *
+          warmShift -
+          0.06 *
+          coolShift,
+      spiral
+        ? 0.48 +
+          0.28 *
+          brightness +
+          0.05 *
+          coolShift
+        : (
+            spheroidal
+              ? 0.74
+              : 0.77
+          ) +
+          0.13 *
+          brightness +
+          0.04 *
+          coolShift,
+      spiral
+        ? 0.24 +
+          0.25 *
+          brightness +
+          0.10 *
+          coolShift -
+          0.04 *
+          warmShift
+        : (
+            spheroidal
+              ? 0.60
+              : 0.64
+          ) +
+          0.16 *
+          brightness +
+          0.16 *
+          coolShift -
+          0.08 *
+          warmShift,
       (
-        spheroidal
-          ? 0.74
-          : 0.77
-      ) +
-        0.13 *
-        brightness +
-        0.04 *
-        coolShift,
-      (
-        spheroidal
-          ? 0.60
-          : 0.64
-      ) +
-        0.16 *
-        brightness +
-        0.16 *
-        coolShift -
-        0.08 *
-        warmShift,
-      (
-        1.28 +
-        1.62 *
-        brightness
+        spiral
+          ? (
+              0.62 +
+              1.15 *
+              brightness
+            ) *
+            (
+              0.72 +
+              0.58 *
+              sampler.sample01(
+                index,
+                10,
+              )
+            )
+          : 1.28 +
+            1.62 *
+            brightness
       ) *
         (
           rareBright
-            ? 1.42
+            ? spiral
+              ? 1.82
+              : 1.42
             : 1
         ),
-      0.15 +
-        0.28 *
-        brightness +
+      (
+        spiral
+          ? 0.068 +
+            0.145 *
+            brightness
+          : 0.15 +
+            0.28 *
+            brightness
+      ) +
         (
           rareBright
-            ? 0.08
+            ? spiral
+              ? 0.080
+              : 0.08
             : 0
         ),
     );
@@ -1279,7 +1361,7 @@ function writeSpheroidalBody(
         centrality +
         (
           rareBright
-            ? 0.12
+            ? 0.17
             : 0
         ),
     );
@@ -1433,11 +1515,11 @@ function writeDiskBody(
       (
         point.population ===
           'arm'
-          ? 0.022
+          ? 0.034
           : point.population ===
               'interarm'
-            ? 0.014
-            : 0.010
+            ? 0.022
+            : 0.014
       );
 
     const armBoost =
@@ -1484,6 +1566,32 @@ function writeDiskBody(
           0.18
         : 0;
 
+    const spiralColor =
+      spiral
+        ? spiralDiskStarColor(
+            point.population,
+            temperature,
+            sampler.sample01(
+              index,
+              53,
+            ),
+          )
+        : null;
+
+    const spiralTemperatureSizeBoost =
+      spiral
+        ? temperature <
+            0.22
+          ? 1.22
+          : temperature >
+              0.93
+            ? 1.42
+            : temperature >
+                0.78
+              ? 1.16
+              : 1
+        : 1;
+
     writeParticle(
       buffers,
       start +
@@ -1491,60 +1599,98 @@ function writeDiskBody(
       point.x,
       point.y,
       thickness,
-      0.56 +
-        0.16 *
-        sampler.sample01(
-          index,
-          49,
-        ) +
-        0.05 *
-        warmShift -
-        0.04 *
-        armBoost,
-      0.69 +
-        0.15 *
-        sampler.sample01(
-          index,
-          50,
-        ) +
-        0.05 *
-        interArmBoost,
-      0.82 +
-        0.08 *
-        armBoost +
-        0.05 *
-        coolShift -
-        0.04 *
-        diffuseBoost,
+      spiralColor?.red ??
+        (
+          0.56 +
+          0.16 *
+          sampler.sample01(
+            index,
+            49,
+          ) +
+          0.05 *
+          warmShift -
+          0.04 *
+          armBoost
+        ),
+      spiralColor?.green ??
+        (
+          0.69 +
+          0.15 *
+          sampler.sample01(
+            index,
+            50,
+          ) +
+          0.05 *
+          interArmBoost
+        ),
+      spiralColor?.blue ??
+        (
+          0.82 +
+          0.08 *
+          armBoost +
+          0.05 *
+          coolShift -
+          0.04 *
+          diffuseBoost
+        ),
       (
-        0.74 +
-        1.04 *
-        sampler.sample01(
-          index,
-          51,
-        )
+        spiral
+          ? (
+              0.50 +
+              1.58 *
+              Math.pow(
+                sampler.sample01(
+                  index,
+                  51,
+                ),
+                1.40,
+              )
+            ) *
+            spiralTemperatureSizeBoost
+          : 0.74 +
+            1.04 *
+            sampler.sample01(
+              index,
+              51,
+            )
       ) *
         (
           rareBright
-            ? 2.15
+            ? spiral
+              ? 2.85
+              : 2.15
             : 1
         ),
-      0.08 +
+      (
+        spiral
+          ? 0.055
+          : 0.08
+      ) +
         (
           barred
             ? 0.17
             : spiral
-              ? 0.15
+              ? 0.085
               : 0.12
         ) *
         armBoost +
-        0.05 *
+        (
+          spiral
+            ? 0.035
+            : 0.05
+        ) *
         interArmBoost +
-        0.03 *
+        (
+          spiral
+            ? 0.018
+            : 0.03
+        ) *
         diffuseBoost +
         (
           rareBright
-            ? 0.18
+            ? spiral
+              ? 0.18
+              : 0.18
             : 0
         ),
     );
@@ -1805,7 +1951,7 @@ function writeSpiralArmReinforcement(
         sampleIndex,
         192,
       ) <
-      0.018;
+      0.034;
 
     const temperature =
       sampler.sample01(
@@ -1813,15 +1959,26 @@ function writeSpiralArmReinforcement(
         193,
       );
 
-    const coolShift =
+    const armColor =
+      spiralArmStarColor(
+        temperature,
+        sampler.sample01(
+          sampleIndex,
+          194,
+        ),
+      );
+
+    const temperatureSizeBoost =
       temperature <
-        0.20
-        ? (
-            0.20 -
-            temperature
-          ) /
-          0.20
-        : 0;
+        0.24
+        ? 1.24
+        : temperature >
+            0.93
+          ? 1.48
+          : temperature >
+              0.80
+            ? 1.18
+            : 1;
 
     writeParticle(
       buffers,
@@ -1830,43 +1987,35 @@ function writeSpiralArmReinforcement(
       point.x,
       point.y,
       thickness,
-      0.53 +
-        0.15 *
-        sampler.sample01(
-          sampleIndex,
-          194,
-        ),
-      0.70 +
-        0.14 *
-        sampler.sample01(
-          sampleIndex,
-          195,
-        ),
-      0.90 +
-        0.08 *
-        coolShift,
+      armColor.red,
+      armColor.green,
+      armColor.blue,
       (
-        0.74 +
-        1.04 *
-        sampler.sample01(
-          sampleIndex,
-          196,
+        0.50 +
+        1.34 *
+        Math.pow(
+          sampler.sample01(
+            sampleIndex,
+            196,
+          ),
+          1.34,
         )
       ) *
+        temperatureSizeBoost *
         (
           rareBright
-            ? 2.05
+            ? 2.95
             : 1
         ),
-      0.16 +
-        0.10 *
+      0.070 +
+        0.085 *
         sampler.sample01(
           sampleIndex,
           197,
         ) +
         (
           rareBright
-            ? 0.16
+            ? 0.12
             : 0
         ),
     );
@@ -1874,6 +2023,508 @@ function writeSpiralArmReinforcement(
 
   return start +
     SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT;
+}
+
+function writeSpiralVolumetricGas(
+  model:
+    GalacticMapParticleRenderInput,
+
+  sampler:
+    DeterministicSampler,
+
+  buffers:
+    ParticleBuffers,
+
+  start:
+    number,
+): number {
+
+  const visual =
+    requiredVisual(
+      model,
+    );
+
+  if (
+    !isSpiral(
+      model,
+    ) ||
+    visual.arms.length ===
+      0
+  ) {
+    return start;
+  }
+
+  const renderArms =
+    spiralRenderArms(
+      visual.arms,
+      visual
+        .windingDirection,
+      visual
+        .bulgeRadiusNormalized,
+      null,
+      null,
+      null,
+      false,
+      true,
+    );
+
+  for (
+    let index =
+      0;
+    index <
+      SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT;
+    index +=
+      1
+  ) {
+    const cloudIndex =
+      Math.floor(
+        index /
+        SPIRAL_GAS_CLOUDLETS_PER_CLUSTER,
+      );
+
+    const cloudletIndex =
+      index %
+      SPIRAL_GAS_CLOUDLETS_PER_CLUSTER;
+
+    const sampleIndex =
+      1_200_000 +
+      cloudIndex;
+
+    const zone =
+      sampler.sample01(
+        sampleIndex,
+        401,
+      );
+
+    let centerX:
+      number;
+
+    let centerY:
+      number;
+
+    let centerRadius:
+      number;
+
+    if (
+      zone <
+      0.76
+    ) {
+      const point =
+        spiralDensityPoint(
+          renderArms,
+          visual
+            .windingDirection,
+          sampler,
+          sampleIndex,
+          2.35,
+          0.78,
+        );
+
+      centerX =
+        point.x;
+      centerY =
+        point.y;
+      centerRadius =
+        point.radius;
+    } else if (
+      zone <
+      0.92
+    ) {
+      centerRadius =
+        clamp(
+          visual.bulgeRadiusNormalized *
+            (
+              0.72 +
+              1.48 *
+              Math.pow(
+                sampler.sample01(
+                  sampleIndex,
+                  403,
+                ),
+                0.72,
+              )
+            ),
+          0.06,
+          0.56,
+        );
+
+      const angle =
+        TWO_PI *
+        sampler.sample01(
+          sampleIndex,
+          404,
+        );
+
+      centerX =
+        Math.cos(
+          angle,
+        ) *
+        centerRadius;
+
+      centerY =
+        Math.sin(
+          angle,
+        ) *
+        centerRadius;
+    } else {
+      centerRadius =
+        0.20 +
+        0.74 *
+        Math.pow(
+          sampler.sample01(
+            sampleIndex,
+            405,
+          ),
+          0.86,
+        );
+
+      const angle =
+        TWO_PI *
+        sampler.sample01(
+          sampleIndex,
+          406,
+        );
+
+      centerX =
+        Math.cos(
+          angle,
+        ) *
+        centerRadius;
+
+      centerY =
+        Math.sin(
+          angle,
+        ) *
+        centerRadius;
+    }
+
+    const cloudRadius =
+      0.015 +
+      0.038 *
+      sampler.sample01(
+        sampleIndex,
+        408,
+      );
+
+    const localAngle =
+      TWO_PI *
+      sampler.sample01(
+        index,
+        409,
+      ) +
+      cloudletIndex *
+      1.61803398875;
+
+    const localRadius =
+      cloudRadius *
+      Math.pow(
+        sampler.sample01(
+          index,
+          410,
+        ),
+        0.62,
+      );
+
+    const x =
+      centerX +
+      Math.cos(
+        localAngle,
+      ) *
+      localRadius;
+
+    const y =
+      centerY +
+      Math.sin(
+        localAngle,
+      ) *
+      localRadius *
+      (
+        0.72 +
+        0.34 *
+        sampler.sample01(
+          sampleIndex,
+          411,
+        )
+      );
+
+    const normalizedRadius =
+      Math.min(
+        1,
+        Math.hypot(
+          x,
+          y,
+        ),
+      );
+
+    const verticalScale =
+      0.018 +
+      0.032 *
+      (
+        1 -
+        0.32 *
+        normalizedRadius
+      );
+
+    const cloudPlaneOffset =
+      sampler.normal(
+        sampleIndex,
+        413,
+      ) *
+      verticalScale;
+
+    const z =
+      cloudPlaneOffset +
+      sampler.normal(
+        index,
+        415,
+      ) *
+      verticalScale *
+      0.62;
+
+    const palette =
+      sampler.sample01(
+        sampleIndex,
+        417,
+      );
+
+    const variation =
+      sampler.sample01(
+        index,
+        418,
+      );
+
+    const color =
+      spiralVolumetricGasColor(
+        normalizedRadius,
+        palette,
+        variation,
+      );
+
+    const innerEmphasis =
+      1 -
+      smoothstep01(
+        0.18,
+        0.68,
+        normalizedRadius,
+      );
+
+    writeParticle(
+      buffers,
+      start +
+        index,
+      x,
+      y,
+      z,
+      color.red,
+      color.green,
+      color.blue,
+      6.4 +
+        3.4 *
+        sampler.sample01(
+          index,
+          420,
+        ) +
+        0.8 *
+        innerEmphasis,
+      0.012 +
+        0.020 *
+        sampler.sample01(
+          index,
+          421,
+        ) +
+        0.006 *
+        innerEmphasis,
+    );
+  }
+
+  return start +
+    SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT;
+}
+
+function spiralVolumetricGasColor(
+  radius:
+    number,
+
+  palette:
+    number,
+
+  variation:
+    number,
+): RgbColor {
+
+  const inner =
+    1 -
+    smoothstep01(
+      0.12,
+      0.58,
+      radius,
+    );
+
+  let outerColor:
+    RgbColor;
+
+  if (
+    palette <
+    0.36
+  ) {
+    outerColor =
+      Object.freeze({
+        red:
+          0.12 +
+          0.07 *
+          variation,
+        green:
+          0.46 +
+          0.11 *
+          variation,
+        blue:
+          0.84 +
+          0.12 *
+          variation,
+      });
+  } else if (
+    palette <
+    0.70
+  ) {
+    outerColor =
+      Object.freeze({
+        red:
+          0.30 +
+          0.10 *
+          variation,
+        green:
+          0.24 +
+          0.08 *
+          variation,
+        blue:
+          0.78 +
+          0.12 *
+          variation,
+      });
+  } else if (
+    palette <
+    0.88
+  ) {
+    outerColor =
+      Object.freeze({
+        red:
+          0.72 +
+          0.10 *
+          variation,
+        green:
+          0.20 +
+          0.07 *
+          variation,
+        blue:
+          0.52 +
+          0.11 *
+          variation,
+      });
+  } else {
+    outerColor =
+      Object.freeze({
+        red:
+          0.76 +
+          0.10 *
+          variation,
+        green:
+          0.47 +
+          0.08 *
+          variation,
+        blue:
+          0.24 +
+          0.06 *
+          variation,
+      });
+  }
+
+  const innerColor:
+    RgbColor =
+    palette <
+      0.56
+      ? Object.freeze({
+          red:
+            0.62 +
+            0.08 *
+            variation,
+          green:
+            0.31 +
+            0.07 *
+            variation,
+          blue:
+            0.63 +
+            0.09 *
+            variation,
+        })
+      : Object.freeze({
+          red:
+            0.82 +
+            0.08 *
+            variation,
+          green:
+            0.53 +
+            0.07 *
+            variation,
+          blue:
+            0.29 +
+            0.05 *
+            variation,
+        });
+
+  const innerMix =
+    inner *
+    0.40;
+
+  return Object.freeze({
+    red:
+      outerColor.red *
+        (1 - innerMix) +
+      innerColor.red *
+        innerMix,
+    green:
+      outerColor.green *
+        (1 - innerMix) +
+      innerColor.green *
+        innerMix,
+    blue:
+      outerColor.blue *
+        (1 - innerMix) +
+      innerColor.blue *
+        innerMix,
+  });
+}
+
+function smoothstep01(
+  edge0:
+    number,
+
+  edge1:
+    number,
+
+  value:
+    number,
+): number {
+
+  const t =
+    clamp01(
+      (
+        value -
+        edge0
+      ) /
+      Math.max(
+        EPSILON,
+        edge1 -
+          edge0,
+      ),
+    );
+
+  return t *
+    t *
+    (
+      3 -
+      2 *
+      t
+    );
 }
 
 function writeIrregularBody(
@@ -6112,6 +6763,190 @@ function unitSphereDirection(
   });
 }
 
+function spiralDiskStarColor(
+  population:
+    DiskPopulation,
+
+  temperature:
+    number,
+
+  variation:
+    number,
+): RgbColor {
+
+  const arm =
+    population ===
+      'arm';
+
+  const hotThreshold =
+    arm
+      ? 0.34
+      : 0.18;
+
+  if (
+    temperature <
+      hotThreshold
+  ) {
+    const heat =
+      1 -
+      temperature /
+        Math.max(
+          EPSILON,
+          hotThreshold,
+        );
+
+    return Object.freeze({
+      red:
+        0.18 +
+        0.16 *
+        variation,
+      green:
+        0.48 +
+        0.18 *
+        variation,
+      blue:
+        0.96 +
+        0.04 *
+        heat,
+    });
+  }
+
+  if (
+    temperature >
+      0.93
+  ) {
+    return Object.freeze({
+      red:
+        0.98 +
+        0.02 *
+        variation,
+      green:
+        0.22 +
+        0.14 *
+        variation,
+      blue:
+        0.14 +
+        0.12 *
+        variation,
+    });
+  }
+
+  if (
+    temperature >
+      0.78
+  ) {
+    return Object.freeze({
+      red:
+        0.94 +
+        0.06 *
+        variation,
+      green:
+        0.52 +
+        0.16 *
+        variation,
+      blue:
+        0.30 +
+        0.14 *
+        variation,
+    });
+  }
+
+  return Object.freeze({
+    red:
+      0.72 +
+      0.18 *
+      variation,
+    green:
+      0.78 +
+      0.14 *
+      variation,
+    blue:
+      0.88 +
+      0.12 *
+      variation,
+  });
+}
+
+function spiralArmStarColor(
+  temperature:
+    number,
+
+  variation:
+    number,
+): RgbColor {
+
+  if (
+    temperature <
+      0.30
+  ) {
+    return Object.freeze({
+      red:
+        0.16 +
+        0.18 *
+        variation,
+      green:
+        0.48 +
+        0.20 *
+        variation,
+      blue:
+        0.96 +
+        0.04 *
+        variation,
+    });
+  }
+
+  if (
+    temperature >
+      0.93
+  ) {
+    return Object.freeze({
+      red:
+        1,
+      green:
+        0.20 +
+        0.16 *
+        variation,
+      blue:
+        0.14 +
+        0.14 *
+        variation,
+    });
+  }
+
+  if (
+    temperature >
+      0.79
+  ) {
+    return Object.freeze({
+      red:
+        0.96,
+      green:
+        0.56 +
+        0.14 *
+        variation,
+      blue:
+        0.34 +
+        0.14 *
+        variation,
+    });
+  }
+
+  return Object.freeze({
+    red:
+      0.64 +
+      0.20 *
+      variation,
+    green:
+      0.76 +
+      0.16 *
+      variation,
+    blue:
+      0.92 +
+      0.08 *
+      variation,
+  });
+}
+
 function isIrregular(
   model:
     GalacticMapParticleRenderInput,
@@ -6135,8 +6970,17 @@ function isSpiral(
     GalacticMapParticleRenderInput,
 ): boolean {
 
-  return model.galaxyType ===
-    GalaxyType.SPIRAL;
+  /*
+   * Point 10.9 sends GalacticMapParticleRenderInput through structuredClone
+   * before it reaches the procedural Web Worker. GalaxyType is a domain
+   * class whose singleton identity does not survive that boundary: the worker
+   * receives a plain { name, code } object. Compare the canonical value rather
+   * than object identity so SPIRAL-only render populations (reinforcement,
+   * stellar colours and interstellar gas) are generated identically on both
+   * sides of the worker boundary.
+   */
+  return model.galaxyType?.name ===
+    GalaxyType.SPIRAL.name;
 }
 
 function isBarredSpiral(
