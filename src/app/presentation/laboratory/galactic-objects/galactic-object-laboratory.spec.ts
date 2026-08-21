@@ -158,6 +158,165 @@ describe(
       30_000,
     );
 
+
+    it(
+      'should render AGN through its dedicated A-H procedural nucleus view',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const agnButton =
+          element.querySelector(
+            '[data-case="NUCLEUS_AGN"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          agnButton,
+        ).toBeTruthy();
+
+        agnButton
+          ?.click();
+        fixture.detectChanges();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="agn-nucleus-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-nucleus-laboratory-agn-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-nucleus-laboratory-scene"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'AGN',
+        );
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'Masa SMBH',
+        );
+
+        const sampleButtons =
+          element.querySelectorAll(
+            '[data-testid="agn-nucleus-diversity-button"]',
+          );
+
+        (sampleButtons[3] as HTMLButtonElement)
+          .click();
+        fixture.detectChanges();
+
+        expect(
+          fixture.componentInstance
+            .selectedAgnNucleusSampleIndex(),
+        ).toBe(
+          3,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should render QUASAR through its dedicated A-H procedural nucleus view',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const quasarButton =
+          element.querySelector(
+            '[data-case="NUCLEUS_QUASAR"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          quasarButton,
+        ).toBeTruthy();
+
+        quasarButton
+          ?.click();
+        fixture.detectChanges();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="quasar-nucleus-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-nucleus-laboratory-quasar-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-nucleus-laboratory-scene"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'QUASAR',
+        );
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'Masa SMBH',
+        );
+
+        const sampleButtons =
+          element.querySelectorAll(
+            '[data-testid="quasar-nucleus-diversity-button"]',
+          );
+
+        (sampleButtons[6] as HTMLButtonElement)
+          .click();
+        fixture.detectChanges();
+
+        expect(
+          fixture.componentInstance
+            .selectedQuasarNucleusSampleIndex(),
+        ).toBe(
+          6,
+        );
+      },
+      30_000,
+    );
+
     it(
       'should start with the non-HII emission nebula and its four knowledge projections',
       () => {

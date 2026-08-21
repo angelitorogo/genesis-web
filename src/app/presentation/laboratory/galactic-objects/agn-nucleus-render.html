@@ -1,0 +1,39 @@
+<div
+  #renderHost
+  class="agn-nucleus-render"
+  data-testid="agn-nucleus-render"
+>
+  <canvas
+    #renderCanvas
+    class="agn-nucleus-render__canvas"
+    aria-label="Representación procedural de un núcleo galáctico activo con agujero negro supermasivo"
+  ></canvas>
+
+  <div class="agn-nucleus-render__badge">
+    THREE.JS / WEBGL / PROCEDURAL / AGN
+  </div>
+
+  <div class="agn-nucleus-render__legend">
+    <span>
+      SOMBRA DEL SMBH
+    </span>
+
+    <span>
+      DISCO DE ACRECIÓN
+    </span>
+
+    <span>
+      LENTE GRAVITATORIA APARENTE
+    </span>
+
+    <span>
+      SIN JET QUASAR DOMINANTE
+    </span>
+  </div>
+
+  @if (renderUnavailable()) {
+    <div class="agn-nucleus-render__fallback">
+      WebGL no está disponible en este entorno.
+    </div>
+  }
+</div>

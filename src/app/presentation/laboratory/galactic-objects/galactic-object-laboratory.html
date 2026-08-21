@@ -672,6 +672,7 @@
               </div>
             </div>
           }
+
         </div>
       </section>
     }
@@ -857,6 +858,86 @@
               </div>
             </div>
           }
+          @if (isAgnNucleusSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="agn-nucleus-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 núcleos AGN reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de núcleos galácticos activos"
+              >
+                @for (
+                  sample of agnNucleusSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="agn-nucleus-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · G' + sample.galaxyIndex.toString()"
+                    [attr.aria-label]="'Mostrar núcleo AGN ' + sample.label"
+                    [attr.aria-pressed]="selectedAgnNucleusSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedAgnNucleusSampleIndex() === sample.index"
+                    (click)="selectAgnNucleusSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isQuasarNucleusSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="quasar-nucleus-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 núcleos QUASAR reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de núcleos galácticos QUASAR"
+              >
+                @for (
+                  sample of quasarNucleusSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="quasar-nucleus-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · G' + sample.galaxyIndex.toString()"
+                    [attr.aria-label]="'Mostrar núcleo QUASAR ' + sample.label"
+                    [attr.aria-pressed]="selectedQuasarNucleusSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedQuasarNucleusSampleIndex() === sample.index"
+                    (click)="selectQuasarNucleusSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
         </div>
       </section>
 
@@ -908,6 +989,16 @@
             data-testid="galactic-nucleus-laboratory-quiescent-render"
             [model]="quiescentRenderModel"
           ></app-quiescent-nucleus-render>
+        } @else if (frame.agnRenderModel; as agnRenderModel) {
+          <app-agn-nucleus-render
+            data-testid="galactic-nucleus-laboratory-agn-render"
+            [model]="agnRenderModel"
+          ></app-agn-nucleus-render>
+        } @else if (frame.quasarRenderModel; as quasarRenderModel) {
+          <app-quasar-nucleus-render
+            data-testid="galactic-nucleus-laboratory-quasar-render"
+            [model]="quasarRenderModel"
+          ></app-quasar-nucleus-render>
         } @else {
           <app-galactic-map-scene
             data-testid="galactic-nucleus-laboratory-scene"
@@ -921,9 +1012,16 @@
           El núcleo quiescente usa un <strong>renderer nuclear dedicado</strong>:
           muestra la concentración de población estelar vieja y la absorción
           tenue por polvo sin fingir disco de acreción, jets ni actividad AGN.
+        } @else if (isAgnNucleusSelected()) {
+          El AGN usa un <strong>renderer nuclear dedicado</strong> centrado en el
+          agujero negro supermasivo real del Ground Truth: sombra central, disco
+          de acreción, asimetría relativista y lente gravitatoria aparente sin
+          convertirlo todavía en un episodio QUASAR extremo.
         } @else {
-          AGN y QUASAR siguen temporalmente con el renderer galáctico existente
-          hasta que se desarrollen sus representaciones nucleares específicas.
+          El QUASAR usa un <strong>renderer nuclear extremo dedicado</strong>:
+          mantiene el SMBH real y añade un disco de acreción hiperluminoso,
+          corona intensa, viento polar y jets relativistas cuando la familia
+          procedural los requiere, sin reutilizar el renderer de galaxia.
         }
       </aside>
     }

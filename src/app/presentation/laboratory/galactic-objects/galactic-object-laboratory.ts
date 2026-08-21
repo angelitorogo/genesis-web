@@ -14,8 +14,16 @@ import {
 } from '../../galaxy-map/galactic-map-scene';
 
 import {
+  AgnNucleusRender,
+} from './agn-nucleus-render';
+
+import {
   QuiescentNucleusRender,
 } from './quiescent-nucleus-render';
+
+import {
+  QuasarNucleusRender,
+} from './quasar-nucleus-render';
 
 import {
   GalacticObjectProceduralRender,
@@ -57,6 +65,8 @@ type LaboratoryView =
 
   imports: [
     GalacticMapScene,
+    AgnNucleusRender,
+    QuasarNucleusRender,
     QuiescentNucleusRender,
     GalacticObjectProceduralRender,
     RouterLink,
@@ -128,6 +138,14 @@ export class GalacticObjectLaboratoryPage {
   readonly quiescentNucleusSamples =
     GalacticNucleusLaboratoryFixtures
       .quiescentSamples();
+
+  readonly agnNucleusSamples =
+    GalacticNucleusLaboratoryFixtures
+      .agnSamples();
+
+  readonly quasarNucleusSamples =
+    GalacticNucleusLaboratoryFixtures
+      .quasarSamples();
 
   readonly emissionNebulaSamples =
     GalacticObjectLaboratoryFixtures
@@ -201,6 +219,16 @@ export class GalacticObjectLaboratoryPage {
     );
 
   readonly selectedQuiescentNucleusSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedAgnNucleusSampleIndex =
+    signal(
+      0,
+    );
+
+  readonly selectedQuasarNucleusSampleIndex =
     signal(
       0,
     );
@@ -627,6 +655,10 @@ export class GalacticObjectLaboratoryPage {
               .selectedNuclearCaseId(),
             this
               .selectedQuiescentNucleusSampleIndex(),
+            this
+              .selectedAgnNucleusSampleIndex(),
+            this
+              .selectedQuasarNucleusSampleIndex(),
           ),
     );
 
@@ -651,6 +683,24 @@ export class GalacticObjectLaboratoryPage {
         this.selectedNuclearCaseId() ===
           GalacticNucleusLaboratoryCaseId
             .QUIESCENT,
+    );
+
+  readonly isAgnNucleusSelected =
+    computed(
+      () =>
+        this.isNucleusView() &&
+        this.selectedNuclearCaseId() ===
+          GalacticNucleusLaboratoryCaseId
+            .AGN,
+    );
+
+  readonly isQuasarNucleusSelected =
+    computed(
+      () =>
+        this.isNucleusView() &&
+        this.selectedNuclearCaseId() ===
+          GalacticNucleusLaboratoryCaseId
+            .QUASAR,
     );
 
   selectObjectCase(
@@ -1250,6 +1300,90 @@ export class GalacticObjectLaboratoryPage {
       .set(
         GalacticNucleusLaboratoryCaseId
           .QUIESCENT,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .NUCLEUS,
+      );
+  }
+
+  selectAgnNucleusSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .agnNucleusSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported AGN nucleus sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedAgnNucleusSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedNuclearCaseId
+      .set(
+        GalacticNucleusLaboratoryCaseId
+          .AGN,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .NUCLEUS,
+      );
+  }
+
+  selectQuasarNucleusSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .quasarNucleusSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported QUASAR nucleus sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedQuasarNucleusSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedNuclearCaseId
+      .set(
+        GalacticNucleusLaboratoryCaseId
+          .QUASAR,
       );
 
     this

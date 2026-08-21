@@ -44,12 +44,28 @@ import {
 } from '../../galaxy-map/galactic-map-model';
 
 import {
+  AGN_NUCLEUS_VISUAL_FAMILIES,
+  createAgnNucleusRenderModel,
+  resolveAgnNucleusVisualFamily,
+  type AgnNucleusRenderModel,
+  type AgnNucleusVisualFamily,
+} from './agn-nucleus-render-model';
+
+import {
   createQuiescentNucleusRenderModel,
   QUIESCENT_NUCLEUS_VISUAL_FAMILIES,
   resolveQuiescentNucleusVisualFamily,
   type QuiescentNucleusRenderModel,
   type QuiescentNucleusVisualFamily,
 } from './quiescent-nucleus-render-model';
+
+import {
+  createQuasarNucleusRenderModel,
+  QUASAR_NUCLEUS_VISUAL_FAMILIES,
+  resolveQuasarNucleusVisualFamily,
+  type QuasarNucleusRenderModel,
+  type QuasarNucleusVisualFamily,
+} from './quasar-nucleus-render-model';
 
 export const GalacticNucleusLaboratoryCaseId =
   Object.freeze({
@@ -99,6 +115,34 @@ export interface GalacticNucleusLaboratorySample {
     QuiescentNucleusVisualFamily;
 }
 
+export interface AgnNucleusLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly galaxyIndex:
+    bigint;
+
+  readonly family:
+    AgnNucleusVisualFamily;
+}
+
+export interface QuasarNucleusLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly galaxyIndex:
+    bigint;
+
+  readonly family:
+    QuasarNucleusVisualFamily;
+}
+
 export interface GalacticNucleusLaboratoryFrame {
   readonly caseDefinition:
     GalacticNucleusLaboratoryCase;
@@ -111,6 +155,12 @@ export interface GalacticNucleusLaboratoryFrame {
 
   readonly quiescentRenderModel:
     QuiescentNucleusRenderModel | null;
+
+  readonly agnRenderModel:
+    AgnNucleusRenderModel | null;
+
+  readonly quasarRenderModel:
+    QuasarNucleusRenderModel | null;
 
   readonly activity:
     ReturnType<
@@ -188,8 +238,28 @@ const QUIESCENT_SAMPLE_LABELS =
 const QUIESCENT_SAMPLE_SCAN_LIMIT =
   4096n;
 
+const AGN_SAMPLE_LABELS =
+  QUIESCENT_SAMPLE_LABELS;
+
+const AGN_SAMPLE_SCAN_LIMIT =
+  8192n;
+
+const QUASAR_SAMPLE_LABELS =
+  QUIESCENT_SAMPLE_LABELS;
+
+const QUASAR_SAMPLE_SCAN_LIMIT =
+  32768n;
+
 let cachedQuiescentSamples:
   readonly GalacticNucleusLaboratorySample[] | null =
+  null;
+
+let cachedAgnSamples:
+  readonly AgnNucleusLaboratorySample[] | null =
+  null;
+
+let cachedQuasarSamples:
+  readonly QuasarNucleusLaboratorySample[] | null =
   null;
 
 export class GalacticNucleusLaboratoryFixtures {
@@ -294,11 +364,283 @@ export class GalacticNucleusLaboratoryFixtures {
     return cachedQuiescentSamples;
   }
 
+  static agnSamples():
+    readonly AgnNucleusLaboratorySample[] {
+
+    if (
+      cachedAgnSamples !==
+        null
+    ) {
+      return cachedAgnSamples;
+    }
+
+    const samples:
+      AgnNucleusLaboratorySample[] =
+      [];
+
+    const seenFamilies =
+      new Set<
+        AgnNucleusVisualFamily
+      >();
+
+    const canonicalGalaxy =
+      GalaxyGenerator.generate(
+        GENERATION_KEY,
+        20n,
+      );
+
+    const canonicalFamily =
+      resolveAgnNucleusVisualFamily(
+        canonicalGalaxy,
+      );
+
+    samples.push(
+      Object.freeze({
+        index:
+          0,
+        label:
+          AGN_SAMPLE_LABELS[0],
+        galaxyIndex:
+          20n,
+        family:
+          canonicalFamily,
+      }),
+    );
+
+    seenFamilies.add(
+      canonicalFamily,
+    );
+
+    for (
+      let galaxyIndex =
+        0n;
+      galaxyIndex <
+        AGN_SAMPLE_SCAN_LIMIT &&
+      samples.length <
+        AGN_NUCLEUS_VISUAL_FAMILIES
+          .length;
+      galaxyIndex +=
+        1n
+    ) {
+      if (
+        galaxyIndex ===
+          20n
+      ) {
+        continue;
+      }
+
+      const galaxy =
+        GalaxyGenerator
+          .generate(
+            GENERATION_KEY,
+            galaxyIndex,
+          );
+
+      if (
+        galaxy.nucleus
+          ?.state !==
+        GalacticNucleusState
+          .AGN
+      ) {
+        continue;
+      }
+
+      const family =
+        resolveAgnNucleusVisualFamily(
+          galaxy,
+        );
+
+      if (
+        seenFamilies
+          .has(
+            family,
+          )
+      ) {
+        continue;
+      }
+
+      const index =
+        samples.length;
+
+      samples.push(
+        Object.freeze({
+          index,
+          label:
+            AGN_SAMPLE_LABELS[
+              index
+            ],
+          galaxyIndex,
+          family,
+        }),
+      );
+
+      seenFamilies.add(
+        family,
+      );
+    }
+
+    if (
+      samples.length !==
+        AGN_NUCLEUS_VISUAL_FAMILIES
+          .length
+    ) {
+      throw new RangeError(
+        `Could not resolve ${AGN_NUCLEUS_VISUAL_FAMILIES.length} distinct AGN nucleus visual families before G${AGN_SAMPLE_SCAN_LIMIT}.`,
+      );
+    }
+
+    cachedAgnSamples =
+      Object.freeze(
+        samples,
+      );
+
+    return cachedAgnSamples;
+  }
+
+  static quasarSamples():
+    readonly QuasarNucleusLaboratorySample[] {
+
+    if (
+      cachedQuasarSamples !==
+        null
+    ) {
+      return cachedQuasarSamples;
+    }
+
+    const samples:
+      QuasarNucleusLaboratorySample[] =
+      [];
+
+    const seenFamilies =
+      new Set<
+        QuasarNucleusVisualFamily
+      >();
+
+    const canonicalGalaxy =
+      GalaxyGenerator.generate(
+        GENERATION_KEY,
+        331n,
+      );
+
+    const canonicalFamily =
+      resolveQuasarNucleusVisualFamily(
+        canonicalGalaxy,
+      );
+
+    samples.push(
+      Object.freeze({
+        index:
+          0,
+        label:
+          QUASAR_SAMPLE_LABELS[0],
+        galaxyIndex:
+          331n,
+        family:
+          canonicalFamily,
+      }),
+    );
+
+    seenFamilies.add(
+      canonicalFamily,
+    );
+
+    for (
+      let galaxyIndex =
+        0n;
+      galaxyIndex <
+        QUASAR_SAMPLE_SCAN_LIMIT &&
+      samples.length <
+        QUASAR_NUCLEUS_VISUAL_FAMILIES
+          .length;
+      galaxyIndex +=
+        1n
+    ) {
+      if (
+        galaxyIndex ===
+          331n
+      ) {
+        continue;
+      }
+
+      const galaxy =
+        GalaxyGenerator
+          .generate(
+            GENERATION_KEY,
+            galaxyIndex,
+          );
+
+      if (
+        galaxy.nucleus
+          ?.state !==
+        GalacticNucleusState
+          .QUASAR
+      ) {
+        continue;
+      }
+
+      const family =
+        resolveQuasarNucleusVisualFamily(
+          galaxy,
+        );
+
+      if (
+        seenFamilies
+          .has(
+            family,
+          )
+      ) {
+        continue;
+      }
+
+      const index =
+        samples.length;
+
+      samples.push(
+        Object.freeze({
+          index,
+          label:
+            QUASAR_SAMPLE_LABELS[
+              index
+            ],
+          galaxyIndex,
+          family,
+        }),
+      );
+
+      seenFamilies.add(
+        family,
+      );
+    }
+
+    if (
+      samples.length !==
+        QUASAR_NUCLEUS_VISUAL_FAMILIES
+          .length
+    ) {
+      throw new RangeError(
+        `Could not resolve ${QUASAR_NUCLEUS_VISUAL_FAMILIES.length} distinct QUASAR nucleus visual families before G${QUASAR_SAMPLE_SCAN_LIMIT}.`,
+      );
+    }
+
+    cachedQuasarSamples =
+      Object.freeze(
+        samples,
+      );
+
+    return cachedQuasarSamples;
+  }
+
   static frame(
     caseId:
       GalacticNucleusLaboratoryCaseId,
 
     quiescentSampleIndex =
+      0,
+
+    agnSampleIndex =
+      0,
+
+    quasarSampleIndex =
       0,
   ): GalacticNucleusLaboratoryFrame {
 
@@ -325,13 +667,33 @@ export class GalacticNucleusLaboratoryFixtures {
           .QUIESCENT
         ? this
             .quiescentSamples()[
-              validateSampleIndex(
+              validateQuiescentSampleIndex(
                 quiescentSampleIndex,
               )
             ]
             .galaxyIndex
-        : caseDefinition
-            .galaxyIndex;
+        : caseId ===
+            GalacticNucleusLaboratoryCaseId
+              .AGN
+          ? this
+              .agnSamples()[
+                validateAgnSampleIndex(
+                  agnSampleIndex,
+                )
+              ]
+              .galaxyIndex
+          : caseId ===
+              GalacticNucleusLaboratoryCaseId
+                .QUASAR
+            ? this
+                .quasarSamples()[
+                  validateQuasarSampleIndex(
+                    quasarSampleIndex,
+                  )
+                ]
+                .galaxyIndex
+            : caseDefinition
+                .galaxyIndex;
 
     const galaxy =
       GalaxyGenerator
@@ -382,6 +744,24 @@ export class GalacticNucleusLaboratoryFixtures {
               galaxy,
             )
           : null,
+      agnRenderModel:
+        galaxy.nucleus
+          ?.state ===
+        GalacticNucleusState
+          .AGN
+          ? createAgnNucleusRenderModel(
+              galaxy,
+            )
+          : null,
+      quasarRenderModel:
+        galaxy.nucleus
+          ?.state ===
+        GalacticNucleusState
+          .QUASAR
+          ? createQuasarNucleusRenderModel(
+              galaxy,
+            )
+          : null,
       activity:
         GalacticNuclearActivityProfileGenerator
           .generate(
@@ -391,7 +771,7 @@ export class GalacticNucleusLaboratoryFixtures {
   }
 }
 
-function validateSampleIndex(
+function validateQuiescentSampleIndex(
   sampleIndex:
     number,
 ): number {
@@ -407,6 +787,51 @@ function validateSampleIndex(
   ) {
     throw new RangeError(
       `Unsupported quiescent nucleus sample index: ${sampleIndex}.`,
+    );
+  }
+
+  return sampleIndex;
+}
+
+
+function validateAgnSampleIndex(
+  sampleIndex:
+    number,
+): number {
+  if (
+    !Number.isInteger(
+      sampleIndex,
+    ) ||
+    sampleIndex <
+      0 ||
+    sampleIndex >=
+      AGN_NUCLEUS_VISUAL_FAMILIES
+        .length
+  ) {
+    throw new RangeError(
+      `Unsupported AGN nucleus sample index: ${sampleIndex}.`,
+    );
+  }
+
+  return sampleIndex;
+}
+
+function validateQuasarSampleIndex(
+  sampleIndex:
+    number,
+): number {
+  if (
+    !Number.isInteger(
+      sampleIndex,
+    ) ||
+    sampleIndex <
+      0 ||
+    sampleIndex >=
+      QUASAR_NUCLEUS_VISUAL_FAMILIES
+        .length
+  ) {
+    throw new RangeError(
+      `Unsupported QUASAR nucleus sample index: ${sampleIndex}.`,
     );
   }
 

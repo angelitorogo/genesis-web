@@ -195,25 +195,210 @@ describe(
       15_000,
     );
 
+
+
+    it(
+      'should expose eight deterministic real AGN samples covering eight visual families',
+      () => {
+        const samples =
+          GalacticNucleusLaboratoryFixtures
+            .agnSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.family,
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        expect(
+          samples[0]
+            .galaxyIndex,
+        ).toBe(
+          20n,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frame =
+            GalacticNucleusLaboratoryFixtures
+              .frame(
+                GalacticNucleusLaboratoryCaseId
+                  .AGN,
+                0,
+                sample.index,
+              );
+
+          expect(
+            frame.galaxy
+              .index,
+          ).toBe(
+            sample.galaxyIndex,
+          );
+
+          expect(
+            frame.galaxy
+              .nucleus
+              ?.state,
+          ).toBe(
+            GalacticNucleusState
+              .AGN,
+          );
+
+          expect(
+            frame.agnRenderModel
+              ?.family,
+          ).toBe(
+            sample.family,
+          );
+
+          expect(
+            frame.agnRenderModel
+              ?.blackHoleMassSolarMasses,
+          ).toBe(
+            frame.galaxy
+              .nucleus
+              ?.supermassiveBlackHole
+              ?.massSolarMasses,
+          );
+        }
+      },
+      15_000,
+    );
+
+    it(
+      'should expose eight deterministic real QUASAR samples covering eight visual families',
+      () => {
+        const samples =
+          GalacticNucleusLaboratoryFixtures
+            .quasarSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.family,
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        expect(
+          samples[0]
+            .galaxyIndex,
+        ).toBe(
+          331n,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frame =
+            GalacticNucleusLaboratoryFixtures
+              .frame(
+                GalacticNucleusLaboratoryCaseId
+                  .QUASAR,
+                0,
+                0,
+                sample.index,
+              );
+
+          expect(
+            frame.galaxy
+              .index,
+          ).toBe(
+            sample.galaxyIndex,
+          );
+
+          expect(
+            frame.galaxy
+              .nucleus
+              ?.state,
+          ).toBe(
+            GalacticNucleusState
+              .QUASAR,
+          );
+
+          expect(
+            frame.quasarRenderModel
+              ?.family,
+          ).toBe(
+            sample.family,
+          );
+
+          expect(
+            frame.quasarRenderModel
+              ?.blackHoleMassSolarMasses,
+          ).toBe(
+            frame.galaxy
+              .nucleus
+              ?.supermassiveBlackHole
+              ?.massSolarMasses,
+          );
+        }
+      },
+      30_000,
+    );
+
     it(
       'should keep dedicated quiescent rendering absent from AGN and QUASAR frames',
       () => {
-        expect(
+        const agn =
           GalacticNucleusLaboratoryFixtures
             .frame(
               GalacticNucleusLaboratoryCaseId
                 .AGN,
-            )
-            .quiescentRenderModel,
-        ).toBeNull();
+            );
 
-        expect(
+        const quasar =
           GalacticNucleusLaboratoryFixtures
             .frame(
               GalacticNucleusLaboratoryCaseId
                 .QUASAR,
-            )
-            .quiescentRenderModel,
+            );
+
+        expect(
+          agn.quiescentRenderModel,
+        ).toBeNull();
+
+        expect(
+          agn.agnRenderModel,
+        ).not.toBeNull();
+
+        expect(
+          quasar.quiescentRenderModel,
+        ).toBeNull();
+
+        expect(
+          quasar.agnRenderModel,
+        ).toBeNull();
+
+        expect(
+          quasar.quasarRenderModel,
+        ).not.toBeNull();
+
+        expect(
+          agn.quasarRenderModel,
         ).toBeNull();
       },
       15_000,

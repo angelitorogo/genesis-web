@@ -1,0 +1,43 @@
+<div
+  #renderHost
+  class="quasar-nucleus-render"
+  data-testid="quasar-nucleus-render"
+>
+  <canvas
+    #renderCanvas
+    class="quasar-nucleus-render__canvas"
+    aria-label="Representación procedural de un quasar con agujero negro supermasivo, disco de acreción, viento polar y posibles jets relativistas"
+  ></canvas>
+
+  <div class="quasar-nucleus-render__badge">
+    THREE.JS / WEBGL / PROCEDURAL / QUASAR
+  </div>
+
+  <div class="quasar-nucleus-render__legend">
+    <span>
+      SMBH
+    </span>
+
+    <span>
+      DISCO HIPERLUMINOSO
+    </span>
+
+    <span>
+      CORONA
+    </span>
+
+    <span>
+      VIENTO POLAR
+    </span>
+
+    <span>
+      JET SEGÚN FAMILIA
+    </span>
+  </div>
+
+  @if (renderUnavailable()) {
+    <div class="quasar-nucleus-render__fallback">
+      WebGL no está disponible en este entorno.
+    </div>
+  }
+</div>
