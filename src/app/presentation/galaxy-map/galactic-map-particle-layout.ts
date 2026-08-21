@@ -77,6 +77,34 @@ const SPIRAL_GAS_CLOUDLETS_PER_CLUSTER =
   4;
 
 /**
+ * V10 visual tuning for normal spirals.
+ *
+ * These factors push the render toward a luminous photographic disk instead
+ * of a sparse skeleton of arm traces: a broader warm bulge, a more populated
+ * inter-arm disk and slightly more varied stellar prominence.
+ */
+const SPIRAL_BODY_ARM_PROBABILITY =
+  0.36;
+
+const SPIRAL_BODY_INTERARM_PROBABILITY =
+  0.40;
+
+const SPIRAL_BULGE_EXTENT_FACTOR =
+  1.62;
+
+const SPIRAL_BULGE_RADIAL_EXPONENT =
+  1.44;
+
+const SPIRAL_BRIGHT_STAR_PROBABILITY_ARM =
+  0.046;
+
+const SPIRAL_BRIGHT_STAR_PROBABILITY_INTERARM =
+  0.028;
+
+const SPIRAL_BRIGHT_STAR_PROBABILITY_DIFFUSE =
+  0.018;
+
+/**
  * Smooth radial taper applied only to spiral-arm render samples.
  *
  * The value is the exponential decay strength used by
@@ -555,7 +583,9 @@ function writeCore(
         ? 1.24
         : dwarfLike
           ? 1.08
-          : 1.0
+          : spiral
+            ? SPIRAL_BULGE_EXTENT_FACTOR
+            : 1.0
     );
 
   const verticalAxis =
@@ -564,10 +594,15 @@ function writeCore(
         0.22 *
         visual
           .bulgeAxisRatio
-      : 0.42 +
-        0.18 *
-        visual
-          .bulgeAxisRatio;
+      : spiral
+        ? 0.34 +
+          0.16 *
+          visual
+            .bulgeAxisRatio
+        : 0.42 +
+          0.18 *
+          visual
+            .bulgeAxisRatio;
 
   for (
     let index =
@@ -586,7 +621,9 @@ function writeCore(
         ),
         spheroidal
           ? 2.15
-          : 1.92,
+          : spiral
+            ? SPIRAL_BULGE_RADIAL_EXPONENT
+            : 1.92,
       );
 
     const direction =
@@ -629,7 +666,11 @@ function writeCore(
         index,
         8,
       ) <
-      0.014;
+      (
+        spiral
+          ? 0.006
+          : 0.014
+      );
 
     const temperature =
       sampler.sample01(
@@ -665,9 +706,11 @@ function writeCore(
       rotated.y,
       depth,
       spiral
-        ? 0.86 +
-          0.12 *
-          brightness
+        ? 0.94 +
+          0.06 *
+          brightness +
+          0.03 *
+          warmShift
         : 0.88 +
           0.12 *
           brightness +
@@ -677,7 +720,7 @@ function writeCore(
           coolShift,
       spiral
         ? 0.48 +
-          0.28 *
+          0.18 *
           brightness +
           0.05 *
           coolShift
@@ -691,12 +734,12 @@ function writeCore(
           0.04 *
           coolShift,
       spiral
-        ? 0.24 +
-          0.25 *
+        ? 0.18 +
+          0.13 *
           brightness +
           0.10 *
           coolShift -
-          0.04 *
+          0.05 *
           warmShift
         : (
             spheroidal
@@ -712,13 +755,13 @@ function writeCore(
       (
         spiral
           ? (
-              0.62 +
-              1.15 *
+              0.82 +
+              1.36 *
               brightness
             ) *
             (
-              0.72 +
-              0.58 *
+              0.78 +
+              0.70 *
               sampler.sample01(
                 index,
                 10,
@@ -731,14 +774,14 @@ function writeCore(
         (
           rareBright
             ? spiral
-              ? 1.82
+              ? 1.46
               : 1.42
             : 1
         ),
       (
         spiral
-          ? 0.068 +
-            0.145 *
+          ? 0.026 +
+            0.058 *
             brightness
           : 0.15 +
             0.28 *
@@ -747,7 +790,7 @@ function writeCore(
         (
           rareBright
             ? spiral
-              ? 0.080
+              ? 0.026
               : 0.08
             : 0
         ),
@@ -1448,7 +1491,7 @@ function writeDiskBody(
       : barred
         ? 0.48
         : spiral
-          ? 0.42
+          ? SPIRAL_BODY_ARM_PROBABILITY
           : 0.23 +
             0.14 *
             averageCoherence;
@@ -1460,7 +1503,7 @@ function writeDiskBody(
       : barred
         ? 0.31
         : spiral
-          ? 0.36
+          ? SPIRAL_BODY_INTERARM_PROBABILITY
           : 0.42;
 
   for (
@@ -1491,7 +1534,11 @@ function writeDiskBody(
         index,
         46,
       ) *
-      0.058 *
+      (
+        spiral
+          ? 0.049
+          : 0.058
+      ) *
       (
         0.34 +
         0.66 *
@@ -1500,11 +1547,17 @@ function writeDiskBody(
       (
         point.population ===
           'diffuse'
-          ? 1.18
+          ? spiral
+            ? 1.42
+            : 1.18
           : point.population ===
               'interarm'
-            ? 0.92
-            : 0.76
+            ? spiral
+              ? 1.08
+              : 0.92
+            : spiral
+              ? 0.88
+              : 0.76
       );
 
     const rareBright =
@@ -1513,13 +1566,21 @@ function writeDiskBody(
         48,
       ) <
       (
-        point.population ===
-          'arm'
-          ? 0.034
+        spiral
+          ? point.population ===
+              'arm'
+            ? SPIRAL_BRIGHT_STAR_PROBABILITY_ARM
+            : point.population ===
+                'interarm'
+              ? SPIRAL_BRIGHT_STAR_PROBABILITY_INTERARM
+              : SPIRAL_BRIGHT_STAR_PROBABILITY_DIFFUSE
           : point.population ===
-              'interarm'
-            ? 0.022
-            : 0.014
+              'arm'
+            ? 0.034
+            : point.population ===
+                'interarm'
+              ? 0.022
+              : 0.014
       );
 
     const armBoost =
@@ -1575,6 +1636,7 @@ function writeDiskBody(
               index,
               53,
             ),
+            point.radius,
           )
         : null;
 
@@ -1590,6 +1652,35 @@ function writeDiskBody(
                 0.78
               ? 1.16
               : 1
+        : 1;
+
+
+    const spiralChromaticProminence =
+      spiral
+        ? temperature <
+            0.26
+          ? 1.34
+          : temperature >
+              0.94
+            ? 1.38
+            : temperature >
+                0.80
+              ? 1.20
+              : 0.90
+        : 1;
+
+    const spiralOpacityScale =
+      spiral
+        ? temperature <
+            0.26
+          ? 1.28
+          : temperature >
+              0.94
+            ? 1.30
+            : temperature >
+                0.80
+              ? 1.16
+              : 0.78
         : 1;
 
     writeParticle(
@@ -1636,17 +1727,27 @@ function writeDiskBody(
       (
         spiral
           ? (
-              0.50 +
-              1.58 *
+              0.44 +
+              1.68 *
               Math.pow(
                 sampler.sample01(
                   index,
                   51,
                 ),
-                1.40,
+                1.26,
               )
             ) *
-            spiralTemperatureSizeBoost
+            spiralTemperatureSizeBoost *
+            spiralChromaticProminence *
+            (
+              point.population ===
+                'diffuse'
+                ? 1.05
+                : point.population ===
+                    'interarm'
+                  ? 1.10
+                  : 1.18
+            )
           : 0.74 +
             1.04 *
             sampler.sample01(
@@ -1657,42 +1758,42 @@ function writeDiskBody(
         (
           rareBright
             ? spiral
-              ? 2.85
+              ? 2.40
               : 2.15
             : 1
         ),
-      (
-        spiral
-          ? 0.055
-          : 0.08
-      ) +
-        (
-          barred
-            ? 0.17
-            : spiral
-              ? 0.085
+      spiral
+        ? (
+            0.036 +
+            0.080 *
+              armBoost +
+            0.050 *
+              interArmBoost +
+            0.034 *
+              diffuseBoost +
+            (
+              rareBright
+                ? 0.090
+                : 0
+            )
+          ) *
+          spiralOpacityScale
+        : 0.08 +
+          (
+            barred
+              ? 0.17
               : 0.12
-        ) *
-        armBoost +
-        (
-          spiral
-            ? 0.035
-            : 0.05
-        ) *
-        interArmBoost +
-        (
-          spiral
-            ? 0.018
-            : 0.03
-        ) *
-        diffuseBoost +
-        (
-          rareBright
-            ? spiral
+          ) *
+          armBoost +
+          0.05 *
+          interArmBoost +
+          0.03 *
+          diffuseBoost +
+          (
+            rareBright
               ? 0.18
-              : 0.18
-            : 0
-        ),
+              : 0
+          ),
     );
   }
 
@@ -1939,11 +2040,19 @@ function writeSpiralArmReinforcement(
         sampleIndex,
         190,
       ) *
-      0.050 *
+      0.046 *
       (
-        0.32 +
-        0.68 *
+        0.34 +
+        0.66 *
         point.radius
+      ) *
+      (
+        0.86 +
+        0.28 *
+        sampler.sample01(
+          sampleIndex,
+          191,
+        )
       );
 
     const rareBright =
@@ -1980,6 +2089,31 @@ function writeSpiralArmReinforcement(
             ? 1.18
             : 1;
 
+
+    const chromaticProminence =
+      temperature <
+        0.28
+        ? 1.28
+        : temperature >
+            0.94
+          ? 1.34
+          : temperature >
+              0.80
+            ? 1.16
+            : 0.88;
+
+    const chromaticOpacityScale =
+      temperature <
+        0.28
+        ? 1.24
+        : temperature >
+            0.94
+          ? 1.28
+          : temperature >
+              0.80
+            ? 1.14
+            : 0.82;
+
     writeParticle(
       buffers,
       start +
@@ -1991,33 +2125,37 @@ function writeSpiralArmReinforcement(
       armColor.green,
       armColor.blue,
       (
-        0.50 +
-        1.34 *
+        0.46 +
+        1.42 *
         Math.pow(
           sampler.sample01(
             sampleIndex,
             196,
           ),
-          1.34,
+          1.22,
         )
       ) *
         temperatureSizeBoost *
+        chromaticProminence *
         (
           rareBright
-            ? 2.95
+            ? 2.60
             : 1
         ),
-      0.070 +
-        0.085 *
+      (
+        0.050 +
+        0.072 *
         sampler.sample01(
           sampleIndex,
           197,
         ) +
         (
           rareBright
-            ? 0.12
+            ? 0.090
             : 0
-        ),
+        )
+      ) *
+        chromaticOpacityScale,
     );
   }
 
@@ -2326,13 +2464,13 @@ function writeSpiralVolumetricGas(
         ) +
         0.8 *
         innerEmphasis,
-      0.012 +
-        0.020 *
+      0.018 +
+        0.026 *
         sampler.sample01(
           index,
           421,
         ) +
-        0.006 *
+        0.008 *
         innerEmphasis,
     );
   }
@@ -2365,75 +2503,75 @@ function spiralVolumetricGasColor(
 
   if (
     palette <
-    0.36
+    0.34
   ) {
     outerColor =
       Object.freeze({
         red:
+          0.06 +
+          0.06 *
+          variation,
+        green:
+          0.34 +
+          0.11 *
+          variation,
+        blue:
+          0.90 +
+          0.08 *
+          variation,
+      });
+  } else if (
+    palette <
+    0.67
+  ) {
+    outerColor =
+      Object.freeze({
+        red:
+          0.26 +
+          0.09 *
+          variation,
+        green:
           0.12 +
           0.07 *
           variation,
-        green:
-          0.46 +
-          0.11 *
-          variation,
         blue:
-          0.84 +
+          0.82 +
           0.12 *
           variation,
       });
   } else if (
     palette <
-    0.70
+    0.87
   ) {
     outerColor =
       Object.freeze({
         red:
-          0.30 +
-          0.10 *
-          variation,
-        green:
-          0.24 +
-          0.08 *
-          variation,
-        blue:
           0.78 +
-          0.12 *
-          variation,
-      });
-  } else if (
-    palette <
-    0.88
-  ) {
-    outerColor =
-      Object.freeze({
-        red:
-          0.72 +
           0.10 *
           variation,
         green:
-          0.20 +
-          0.07 *
+          0.10 +
+          0.06 *
           variation,
         blue:
-          0.52 +
-          0.11 *
+          0.46 +
+          0.12 *
           variation,
       });
   } else {
     outerColor =
       Object.freeze({
         red:
-          0.76 +
-          0.10 *
+          0.90 +
+          0.07 *
           variation,
         green:
-          0.47 +
+          0.38 +
           0.08 *
           variation,
         blue:
-          0.24 +
-          0.06 *
+          0.10 +
+          0.05 *
           variation,
       });
   }
@@ -2441,39 +2579,39 @@ function spiralVolumetricGasColor(
   const innerColor:
     RgbColor =
     palette <
-      0.56
+      0.52
       ? Object.freeze({
           red:
-            0.62 +
+            0.66 +
             0.08 *
             variation,
           green:
-            0.31 +
+            0.20 +
             0.07 *
             variation,
           blue:
-            0.63 +
-            0.09 *
+            0.62 +
+            0.10 *
             variation,
         })
       : Object.freeze({
           red:
-            0.82 +
-            0.08 *
+            0.92 +
+            0.06 *
             variation,
           green:
-            0.53 +
+            0.46 +
             0.07 *
             variation,
           blue:
-            0.29 +
+            0.14 +
             0.05 *
             variation,
         });
 
   const innerMix =
     inner *
-    0.40;
+    0.46;
 
   return Object.freeze({
     red:
@@ -6772,16 +6910,28 @@ function spiralDiskStarColor(
 
   variation:
     number,
+
+  radius:
+    number,
 ): RgbColor {
 
   const arm =
     population ===
       'arm';
 
+  const interarm =
+    population ===
+      'interarm';
+
   const hotThreshold =
     arm
-      ? 0.34
-      : 0.18;
+      ? 0.31
+      : interarm
+        ? 0.20
+        : 0.13;
+
+  let baseColor:
+    RgbColor;
 
   if (
     temperature <
@@ -6795,75 +6945,199 @@ function spiralDiskStarColor(
           hotThreshold,
         );
 
-    return Object.freeze({
-      red:
-        0.18 +
-        0.16 *
-        variation,
-      green:
-        0.48 +
-        0.18 *
-        variation,
-      blue:
-        0.96 +
-        0.04 *
-        heat,
-    });
+    baseColor =
+      Object.freeze({
+        red:
+          arm
+            ? 0.12 +
+              0.09 *
+              variation
+            : interarm
+              ? 0.20 +
+                0.10 *
+                variation
+              : 0.34 +
+                0.10 *
+                variation,
+        green:
+          arm
+            ? 0.40 +
+              0.12 *
+              variation
+            : interarm
+              ? 0.50 +
+                0.12 *
+                variation
+              : 0.62 +
+                0.10 *
+                variation,
+        blue:
+          0.94 +
+          0.06 *
+          heat,
+      });
+  } else if (
+    temperature >
+      0.95
+  ) {
+    baseColor =
+      Object.freeze({
+        red:
+          0.98,
+        green:
+          arm
+            ? 0.20 +
+              0.10 *
+              variation
+            : interarm
+              ? 0.28 +
+                0.12 *
+                variation
+              : 0.38 +
+                0.12 *
+                variation,
+        blue:
+          arm
+            ? 0.10 +
+              0.08 *
+              variation
+            : interarm
+              ? 0.14 +
+                0.08 *
+                variation
+              : 0.18 +
+                0.08 *
+                variation,
+      });
+  } else if (
+    temperature >
+      0.80
+  ) {
+    baseColor =
+      Object.freeze({
+        red:
+          0.96,
+        green:
+          arm
+            ? 0.54 +
+              0.12 *
+              variation
+            : interarm
+              ? 0.62 +
+                0.10 *
+                variation
+              : 0.70 +
+                0.10 *
+                variation,
+        blue:
+          arm
+            ? 0.28 +
+              0.10 *
+              variation
+            : interarm
+              ? 0.34 +
+                0.10 *
+                variation
+              : 0.40 +
+                0.10 *
+                variation,
+      });
+  } else {
+    baseColor =
+      Object.freeze({
+        red:
+          arm
+            ? 0.68 +
+              0.12 *
+              variation
+            : interarm
+              ? 0.78 +
+                0.10 *
+                variation
+              : 0.86 +
+                0.08 *
+                variation,
+        green:
+          arm
+            ? 0.76 +
+              0.10 *
+              variation
+            : interarm
+              ? 0.82 +
+                0.08 *
+                variation
+              : 0.80 +
+                0.08 *
+                variation,
+        blue:
+          arm
+            ? 0.94 +
+              0.06 *
+              variation
+            : interarm
+              ? 0.88 +
+                0.07 *
+                variation
+              : 0.72 +
+                0.06 *
+                variation,
+      });
   }
 
-  if (
-    temperature >
-      0.93
-  ) {
-    return Object.freeze({
+  const innerWarmth =
+    (
+      1 -
+      smoothstep01(
+        0.14,
+        0.58,
+        radius,
+      )
+    ) *
+    (
+      arm
+        ? 0.22
+        : interarm
+          ? 0.42
+          : 0.58
+    ) *
+    (
+      temperature <
+        hotThreshold
+        ? 0.28
+        : 1
+    );
+
+  const warmInner:
+    RgbColor =
+    Object.freeze({
       red:
-        0.98 +
-        0.02 *
-        variation,
+        0.98,
       green:
-        0.22 +
-        0.14 *
+        0.56 +
+        0.08 *
         variation,
       blue:
-        0.14 +
-        0.12 *
-        variation,
-    });
-  }
-
-  if (
-    temperature >
-      0.78
-  ) {
-    return Object.freeze({
-      red:
-        0.94 +
+        0.24 +
         0.06 *
         variation,
-      green:
-        0.52 +
-        0.16 *
-        variation,
-      blue:
-        0.30 +
-        0.14 *
-        variation,
     });
-  }
 
   return Object.freeze({
     red:
-      0.72 +
-      0.18 *
-      variation,
+      baseColor.red *
+        (1 - innerWarmth) +
+      warmInner.red *
+        innerWarmth,
     green:
-      0.78 +
-      0.14 *
-      variation,
+      baseColor.green *
+        (1 - innerWarmth) +
+      warmInner.green *
+        innerWarmth,
     blue:
-      0.88 +
-      0.12 *
-      variation,
+      baseColor.blue *
+        (1 - innerWarmth) +
+      warmInner.blue *
+        innerWarmth,
   });
 }
 
@@ -6881,69 +7155,85 @@ function spiralArmStarColor(
   ) {
     return Object.freeze({
       red:
-        0.16 +
-        0.18 *
+        0.10 +
+        0.08 *
         variation,
       green:
-        0.48 +
-        0.20 *
+        0.38 +
+        0.12 *
         variation,
       blue:
-        0.96 +
-        0.04 *
+        0.98,
+    });
+  }
+
+  if (
+    temperature >
+      0.95
+  ) {
+    return Object.freeze({
+      red:
+        1.0,
+      green:
+        0.18 +
+        0.10 *
+        variation,
+      blue:
+        0.10 +
+        0.08 *
         variation,
     });
   }
 
   if (
     temperature >
-      0.93
+      0.80
   ) {
     return Object.freeze({
       red:
-        1,
-      green:
-        0.20 +
-        0.16 *
-        variation,
-      blue:
-        0.14 +
-        0.14 *
-        variation,
-    });
-  }
-
-  if (
-    temperature >
-      0.79
-  ) {
-    return Object.freeze({
-      red:
-        0.96,
+        0.98,
       green:
         0.56 +
-        0.14 *
+        0.12 *
         variation,
       blue:
-        0.34 +
-        0.14 *
+        0.28 +
+        0.10 *
+        variation,
+    });
+  }
+
+  if (
+    temperature >
+      0.58
+  ) {
+    return Object.freeze({
+      red:
+        0.80 +
+        0.08 *
+        variation,
+      green:
+        0.82 +
+        0.08 *
+        variation,
+      blue:
+        0.94 +
+        0.06 *
         variation,
     });
   }
 
   return Object.freeze({
     red:
-      0.64 +
-      0.20 *
+      0.50 +
+      0.10 *
       variation,
     green:
-      0.76 +
-      0.16 *
+      0.66 +
+      0.10 *
       variation,
     blue:
-      0.92 +
-      0.08 *
-      variation,
+      0.98,
   });
 }
 

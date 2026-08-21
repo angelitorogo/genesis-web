@@ -4339,22 +4339,35 @@ function createGalaxyPointMaterial(
         }
 
         float glow = 1.0 - smoothstep(
-          0.10,
-          0.50,
+          0.08,
+          0.46,
           distanceFromCenter
         );
 
         float core = 1.0 - smoothstep(
           0.00,
-          0.13,
+          0.11,
           distanceFromCenter
+        );
+
+        float rim = smoothstep(
+          0.02,
+          0.22,
+          distanceFromCenter
+        ) * (
+          1.0 - smoothstep(
+            0.20,
+            0.42,
+            distanceFromCenter
+          )
         );
 
         float alpha = min(
           1.0,
           vOpacity * (
-            0.38 * glow +
-            0.62 * core
+            0.26 * glow +
+            0.66 * core +
+            0.20 * rim
           )
         );
 
@@ -4369,16 +4382,59 @@ function createGalaxyPointMaterial(
           vec3(0.2126, 0.7152, 0.0722)
         );
 
-        vec3 starColor = clamp(
+        float maxChannel = max(
+          baseColor.r,
+          max(
+            baseColor.g,
+            baseColor.b
+          )
+        );
+
+        float minChannel = min(
+          baseColor.r,
+          min(
+            baseColor.g,
+            baseColor.b
+          )
+        );
+
+        float chroma = maxChannel - minChannel;
+
+        vec3 saturatedColor = clamp(
           vec3(luminance) +
-          (baseColor - vec3(luminance)) * 1.38,
+          (baseColor - vec3(luminance)) * 1.92,
           vec3(0.0),
           vec3(1.0)
         );
 
+        vec3 huePreserved =
+          maxChannel > 0.001
+            ? baseColor / maxChannel
+            : baseColor;
+
+        float targetPeak = mix(
+          0.78,
+          1.0,
+          maxChannel
+        );
+
+        vec3 starColor = mix(
+          saturatedColor,
+          huePreserved * targetPeak,
+          smoothstep(
+            0.12,
+            0.46,
+            chroma
+          ) * 0.72
+        );
+
         starColor = pow(
-          starColor,
-          vec3(0.92)
+          clamp(
+            starColor,
+            vec3(0.0),
+            vec3(1.0)
+          ),
+          vec3(0.96)
         );
 
         gl_FragColor = vec4(starColor, alpha);
@@ -4471,7 +4527,7 @@ function createGalaxyGasMaterial(
         );
 
         vOpacity = min(
-          0.18,
+          0.22,
           aOpacity *
           uOpacityScale *
           radialVisibility
@@ -4568,14 +4624,14 @@ function createGalaxyGasMaterial(
 
         vec3 gasColor = clamp(
           vec3(gasLuminance) +
-          (gasBase - vec3(gasLuminance)) * 1.32,
+          (gasBase - vec3(gasLuminance)) * 1.72,
           vec3(0.0),
           vec3(1.0)
         );
 
         gasColor = pow(
           gasColor,
-          vec3(0.90)
+          vec3(0.94)
         );
 
         gl_FragColor = vec4(
