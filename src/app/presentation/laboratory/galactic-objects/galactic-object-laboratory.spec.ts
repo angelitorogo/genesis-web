@@ -96,6 +96,69 @@ describe(
     );
 
     it(
+      'should render QUIESCENT through its dedicated A-H procedural nucleus view and print state names',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const quiescentButton =
+          element.querySelector(
+            '[data-case="NUCLEUS_QUIESCENT"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          quiescentButton,
+        ).toBeTruthy();
+
+        quiescentButton
+          ?.click();
+        fixture.detectChanges();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="quiescent-nucleus-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-nucleus-laboratory-quiescent-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-nucleus-laboratory-scene"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'QUIESCENT',
+        );
+
+        expect(
+          element.textContent,
+        ).not.toContain(
+          '[object Object]',
+        );
+      },
+      30_000,
+    );
+
+    it(
       'should start with the non-HII emission nebula and its four knowledge projections',
       () => {
         const fixture =

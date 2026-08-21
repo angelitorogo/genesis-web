@@ -795,27 +795,69 @@
           </p>
         </div>
 
-        <dl>
-          <div>
-            <dt>
-              Galaxia
-            </dt>
+        <div class="object-lab__active-tools">
+          <dl>
+            <div>
+              <dt>
+                Galaxia
+              </dt>
 
-            <dd>
-              G{{ frame.galaxy.index.toString() }}
-            </dd>
-          </div>
+              <dd>
+                G{{ frame.galaxy.index.toString() }}
+              </dd>
+            </div>
 
-          <div>
-            <dt>
-              Estado nuclear
-            </dt>
+            <div>
+              <dt>
+                Estado nuclear
+              </dt>
 
-            <dd>
-              {{ frame.galaxy.nucleus?.state }}
-            </dd>
-          </div>
-        </dl>
+              <dd>
+                {{ frame.galaxy.nucleus?.state?.name ?? '—' }}
+              </dd>
+            </div>
+          </dl>
+
+          @if (isQuiescentNucleusSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="quiescent-nucleus-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>
+                  DIVERSIDAD PROCEDURAL
+                </span>
+
+                <strong>
+                  8 núcleos quiescentes reales
+                </strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras de núcleos galácticos quiescentes"
+              >
+                @for (
+                  sample of quiescentNucleusSamples;
+                  track sample.index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="quiescent-nucleus-diversity-button"
+                    [attr.data-sample]="sample.label"
+                    [attr.title]="'Muestra ' + sample.label + ' · G' + sample.galaxyIndex.toString()"
+                    [attr.aria-label]="'Mostrar núcleo quiescente ' + sample.label"
+                    [attr.aria-pressed]="selectedQuiescentNucleusSampleIndex() === sample.index"
+                    [class.object-lab__button--active]="selectedQuiescentNucleusSampleIndex() === sample.index"
+                    (click)="selectQuiescentNucleusSample(sample.index)"
+                  >
+                    {{ sample.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
       </section>
 
       <section
@@ -830,7 +872,7 @@
           <dl>
             <div>
               <dt>Estado</dt>
-              <dd>{{ frame.activity.nucleusState }}</dd>
+              <dd>{{ frame.activity.nucleusState?.name ?? '—' }}</dd>
             </div>
 
             <div>
@@ -861,16 +903,28 @@
           </dl>
         </div>
 
-        <app-galactic-map-scene
-          data-testid="galactic-nucleus-laboratory-scene"
-          [model]="frame.model"
-        ></app-galactic-map-scene>
+        @if (frame.quiescentRenderModel; as quiescentRenderModel) {
+          <app-quiescent-nucleus-render
+            data-testid="galactic-nucleus-laboratory-quiescent-render"
+            [model]="quiescentRenderModel"
+          ></app-quiescent-nucleus-render>
+        } @else {
+          <app-galactic-map-scene
+            data-testid="galactic-nucleus-laboratory-scene"
+            [model]="frame.model"
+          ></app-galactic-map-scene>
+        }
       </section>
 
       <aside class="object-lab__note">
-        AGN y QUASAR no se falsean como <strong>GalacticObject</strong>:
-        pertenecen al núcleo de su galaxia y por eso se inspeccionan aquí con
-        el modelo y renderer galácticos reales.
+        @if (isQuiescentNucleusSelected()) {
+          El núcleo quiescente usa un <strong>renderer nuclear dedicado</strong>:
+          muestra la concentración de población estelar vieja y la absorción
+          tenue por polvo sin fingir disco de acreción, jets ni actividad AGN.
+        } @else {
+          AGN y QUASAR siguen temporalmente con el renderer galáctico existente
+          hasta que se desarrollen sus representaciones nucleares específicas.
+        }
       </aside>
     }
   }

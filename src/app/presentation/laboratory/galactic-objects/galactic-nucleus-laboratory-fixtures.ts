@@ -43,6 +43,14 @@ import {
   GalacticMapModel,
 } from '../../galaxy-map/galactic-map-model';
 
+import {
+  createQuiescentNucleusRenderModel,
+  QUIESCENT_NUCLEUS_VISUAL_FAMILIES,
+  resolveQuiescentNucleusVisualFamily,
+  type QuiescentNucleusRenderModel,
+  type QuiescentNucleusVisualFamily,
+} from './quiescent-nucleus-render-model';
+
 export const GalacticNucleusLaboratoryCaseId =
   Object.freeze({
     QUIESCENT:
@@ -77,6 +85,20 @@ export interface GalacticNucleusLaboratoryCase {
     string;
 }
 
+export interface GalacticNucleusLaboratorySample {
+  readonly index:
+    number;
+
+  readonly label:
+    string;
+
+  readonly galaxyIndex:
+    bigint;
+
+  readonly family:
+    QuiescentNucleusVisualFamily;
+}
+
 export interface GalacticNucleusLaboratoryFrame {
   readonly caseDefinition:
     GalacticNucleusLaboratoryCase;
@@ -86,6 +108,9 @@ export interface GalacticNucleusLaboratoryFrame {
 
   readonly model:
     GalacticMapModel;
+
+  readonly quiescentRenderModel:
+    QuiescentNucleusRenderModel | null;
 
   readonly activity:
     ReturnType<
@@ -148,13 +173,133 @@ const GENERATION_KEY =
     GeneratorVersion.V1,
   );
 
+const QUIESCENT_SAMPLE_LABELS =
+  Object.freeze([
+    'A',
+    'B',
+    'C',
+    'D',
+    'E',
+    'F',
+    'G',
+    'H',
+  ] as const);
+
+const QUIESCENT_SAMPLE_SCAN_LIMIT =
+  4096n;
+
+let cachedQuiescentSamples:
+  readonly GalacticNucleusLaboratorySample[] | null =
+  null;
+
 export class GalacticNucleusLaboratoryFixtures {
 
   private constructor() {}
 
+  static quiescentSamples():
+    readonly GalacticNucleusLaboratorySample[] {
+
+    if (
+      cachedQuiescentSamples !==
+        null
+    ) {
+      return cachedQuiescentSamples;
+    }
+
+    const samples:
+      GalacticNucleusLaboratorySample[] =
+      [];
+
+    const seenFamilies =
+      new Set<
+        QuiescentNucleusVisualFamily
+      >();
+
+    for (
+      let galaxyIndex =
+        0n;
+      galaxyIndex <
+        QUIESCENT_SAMPLE_SCAN_LIMIT &&
+      samples.length <
+        QUIESCENT_NUCLEUS_VISUAL_FAMILIES
+          .length;
+      galaxyIndex +=
+        1n
+    ) {
+      const galaxy =
+        GalaxyGenerator
+          .generate(
+            GENERATION_KEY,
+            galaxyIndex,
+          );
+
+      if (
+        galaxy.nucleus
+          ?.state !==
+        GalacticNucleusState
+          .QUIESCENT
+      ) {
+        continue;
+      }
+
+      const family =
+        resolveQuiescentNucleusVisualFamily(
+          galaxy,
+        );
+
+      if (
+        seenFamilies
+          .has(
+            family,
+          )
+      ) {
+        continue;
+      }
+
+      const index =
+        samples.length;
+
+      samples.push(
+        Object.freeze({
+          index,
+          label:
+            QUIESCENT_SAMPLE_LABELS[
+              index
+            ],
+          galaxyIndex,
+          family,
+        }),
+      );
+
+      seenFamilies.add(
+        family,
+      );
+    }
+
+    if (
+      samples.length !==
+        QUIESCENT_NUCLEUS_VISUAL_FAMILIES
+          .length
+    ) {
+      throw new RangeError(
+        `Could not resolve ${QUIESCENT_NUCLEUS_VISUAL_FAMILIES.length} distinct quiescent nucleus visual families before G${QUIESCENT_SAMPLE_SCAN_LIMIT}.`,
+      );
+    }
+
+    cachedQuiescentSamples =
+      Object.freeze(
+        samples,
+      );
+
+    return cachedQuiescentSamples;
+  }
+
   static frame(
     caseId:
       GalacticNucleusLaboratoryCaseId,
+
+    quiescentSampleIndex =
+      0,
   ): GalacticNucleusLaboratoryFrame {
 
     const caseDefinition =
@@ -174,12 +319,25 @@ export class GalacticNucleusLaboratoryFixtures {
       );
     }
 
+    const galaxyIndex =
+      caseId ===
+        GalacticNucleusLaboratoryCaseId
+          .QUIESCENT
+        ? this
+            .quiescentSamples()[
+              validateSampleIndex(
+                quiescentSampleIndex,
+              )
+            ]
+            .galaxyIndex
+        : caseDefinition
+            .galaxyIndex;
+
     const galaxy =
       GalaxyGenerator
         .generate(
           GENERATION_KEY,
-          caseDefinition
-            .galaxyIndex,
+          galaxyIndex,
         );
 
     if (
@@ -189,7 +347,7 @@ export class GalacticNucleusLaboratoryFixtures {
         .expectedState
     ) {
       throw new RangeError(
-        `Frozen galaxy ${caseDefinition.galaxyIndex} no longer exposes ${caseDefinition.expectedState}.`,
+        `Frozen galaxy ${galaxyIndex} no longer exposes ${caseDefinition.expectedState}.`,
       );
     }
 
@@ -215,6 +373,15 @@ export class GalacticNucleusLaboratoryFixtures {
       caseDefinition,
       galaxy,
       model,
+      quiescentRenderModel:
+        galaxy.nucleus
+          ?.state ===
+        GalacticNucleusState
+          .QUIESCENT
+          ? createQuiescentNucleusRenderModel(
+              galaxy,
+            )
+          : null,
       activity:
         GalacticNuclearActivityProfileGenerator
           .generate(
@@ -222,4 +389,26 @@ export class GalacticNucleusLaboratoryFixtures {
           ),
     });
   }
+}
+
+function validateSampleIndex(
+  sampleIndex:
+    number,
+): number {
+  if (
+    !Number.isInteger(
+      sampleIndex,
+    ) ||
+    sampleIndex <
+      0 ||
+    sampleIndex >=
+      QUIESCENT_NUCLEUS_VISUAL_FAMILIES
+        .length
+  ) {
+    throw new RangeError(
+      `Unsupported quiescent nucleus sample index: ${sampleIndex}.`,
+    );
+  }
+
+  return sampleIndex;
 }

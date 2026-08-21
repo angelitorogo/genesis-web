@@ -124,6 +124,101 @@ describe(
       15_000,
     );
 
+
+    it(
+      'should expose eight deterministic real QUIESCENT samples covering eight visual families',
+      () => {
+        const samples =
+          GalacticNucleusLaboratoryFixtures
+            .quiescentSamples();
+
+        expect(
+          samples,
+        ).toHaveLength(
+          8,
+        );
+
+        expect(
+          new Set(
+            samples.map(
+              sample =>
+                sample.family,
+            ),
+          ).size,
+        ).toBe(
+          8,
+        );
+
+        expect(
+          samples[0]
+            .galaxyIndex,
+        ).toBe(
+          0n,
+        );
+
+        for (
+          const sample
+          of samples
+        ) {
+          const frame =
+            GalacticNucleusLaboratoryFixtures
+              .frame(
+                GalacticNucleusLaboratoryCaseId
+                  .QUIESCENT,
+                sample.index,
+              );
+
+          expect(
+            frame.galaxy
+              .index,
+          ).toBe(
+            sample.galaxyIndex,
+          );
+
+          expect(
+            frame.galaxy
+              .nucleus
+              ?.state,
+          ).toBe(
+            GalacticNucleusState
+              .QUIESCENT,
+          );
+
+          expect(
+            frame.quiescentRenderModel
+              ?.family,
+          ).toBe(
+            sample.family,
+          );
+        }
+      },
+      15_000,
+    );
+
+    it(
+      'should keep dedicated quiescent rendering absent from AGN and QUASAR frames',
+      () => {
+        expect(
+          GalacticNucleusLaboratoryFixtures
+            .frame(
+              GalacticNucleusLaboratoryCaseId
+                .AGN,
+            )
+            .quiescentRenderModel,
+        ).toBeNull();
+
+        expect(
+          GalacticNucleusLaboratoryFixtures
+            .frame(
+              GalacticNucleusLaboratoryCaseId
+                .QUASAR,
+            )
+            .quiescentRenderModel,
+        ).toBeNull();
+      },
+      15_000,
+    );
+
     it(
       'should keep nuclear laboratory map models free of gameplay coverage, markers and layers',
       () => {

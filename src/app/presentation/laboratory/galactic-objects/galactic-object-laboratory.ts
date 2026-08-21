@@ -14,6 +14,10 @@ import {
 } from '../../galaxy-map/galactic-map-scene';
 
 import {
+  QuiescentNucleusRender,
+} from './quiescent-nucleus-render';
+
+import {
   GalacticObjectProceduralRender,
 } from '../../genesis-archive/galactic-object-procedural-render';
 
@@ -53,6 +57,7 @@ type LaboratoryView =
 
   imports: [
     GalacticMapScene,
+    QuiescentNucleusRender,
     GalacticObjectProceduralRender,
     RouterLink,
   ],
@@ -119,6 +124,10 @@ export class GalacticObjectLaboratoryPage {
 
   readonly nuclearCases =
     GALACTIC_NUCLEUS_LABORATORY_CASES;
+
+  readonly quiescentNucleusSamples =
+    GalacticNucleusLaboratoryFixtures
+      .quiescentSamples();
 
   readonly emissionNebulaSamples =
     GalacticObjectLaboratoryFixtures
@@ -189,6 +198,11 @@ export class GalacticObjectLaboratoryPage {
     signal<GalacticNucleusLaboratoryCaseId>(
       GalacticNucleusLaboratoryCaseId
         .AGN,
+    );
+
+  readonly selectedQuiescentNucleusSampleIndex =
+    signal(
+      0,
     );
 
   readonly selectedEmissionNebulaSampleIndex =
@@ -611,6 +625,8 @@ export class GalacticObjectLaboratoryPage {
           .frame(
             this
               .selectedNuclearCaseId(),
+            this
+              .selectedQuiescentNucleusSampleIndex(),
           ),
     );
 
@@ -626,6 +642,15 @@ export class GalacticObjectLaboratoryPage {
       () =>
         this.view() ===
         LaboratoryView.NUCLEUS,
+    );
+
+  readonly isQuiescentNucleusSelected =
+    computed(
+      () =>
+        this.isNucleusView() &&
+        this.selectedNuclearCaseId() ===
+          GalacticNucleusLaboratoryCaseId
+            .QUIESCENT,
     );
 
   selectObjectCase(
@@ -1190,6 +1215,48 @@ export class GalacticObjectLaboratoryPage {
       .set(
         LaboratoryView
           .OBJECT,
+      );
+  }
+
+  selectQuiescentNucleusSample(
+    sampleIndex:
+      number,
+  ): void {
+
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex <
+        0 ||
+      sampleIndex >=
+        this
+          .quiescentNucleusSamples
+          .length
+    ) {
+      throw new RangeError(
+        `Unsupported quiescent nucleus sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this
+      .selectedQuiescentNucleusSampleIndex
+      .set(
+        sampleIndex,
+      );
+
+    this
+      .selectedNuclearCaseId
+      .set(
+        GalacticNucleusLaboratoryCaseId
+          .QUIESCENT,
+      );
+
+    this
+      .view
+      .set(
+        LaboratoryView
+          .NUCLEUS,
       );
   }
 

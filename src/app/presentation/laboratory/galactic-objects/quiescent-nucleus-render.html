@@ -1,0 +1,35 @@
+<div
+  #renderHost
+  class="quiescent-nucleus-render"
+  data-testid="quiescent-nucleus-render"
+>
+  <canvas
+    #renderCanvas
+    class="quiescent-nucleus-render__canvas"
+    aria-label="Representación procedural de un núcleo galáctico quiescente"
+  ></canvas>
+
+  <div class="quiescent-nucleus-render__badge">
+    THREE.JS / WEBGL / PROCEDURAL / QUIESCENT
+  </div>
+
+  <div class="quiescent-nucleus-render__legend">
+    <span>
+      POBLACIÓN ESTELAR VIEJA
+    </span>
+
+    <span>
+      SIN DISCO DE ACRECIÓN ACTIVO
+    </span>
+
+    <span>
+      SIN JETS
+    </span>
+  </div>
+
+  @if (renderUnavailable()) {
+    <div class="quiescent-nucleus-render__fallback">
+      WebGL no está disponible en este entorno.
+    </div>
+  }
+</div>
