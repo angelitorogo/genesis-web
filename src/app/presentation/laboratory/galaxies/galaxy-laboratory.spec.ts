@@ -88,7 +88,7 @@ describe(
     );
 
     it(
-      'should start with the real frozen spiral representative',
+      'should expose exactly eight A-H family selectors for the active morphology',
       () => {
         const fixture =
           TestBed
@@ -104,15 +104,133 @@ describe(
               HTMLElement;
 
         expect(
+          element.querySelectorAll(
+            '[data-testid="galaxy-laboratory-family-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should start with real SPIRAL family A and expose its arm count and nucleus',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalaxyLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture
+            .nativeElement as
+              HTMLElement;
+
+        const active =
           element
             .querySelector(
               '[data-testid="galaxy-laboratory-active-case"]',
-            )
+            );
+
+        expect(
+          active
             ?.getAttribute(
               'data-galaxy-type',
             ),
         ).toBe(
           'SPIRAL',
+        );
+
+        expect(
+          active
+            ?.getAttribute(
+              'data-family',
+            ),
+        ).toBe(
+          'A',
+        );
+
+        expect(
+          Number(
+            active
+              ?.getAttribute(
+                'data-arm-count',
+              ),
+          ),
+        ).toBeGreaterThanOrEqual(
+          3,
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galaxy-laboratory-nucleus"]',
+            )
+            ?.textContent
+            ?.trim(),
+        ).toMatch(
+          /^(QUIESCENT|AGN|QUASAR)$/,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should switch SPIRAL renderer input between A-H families',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalaxyLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture
+            .nativeElement as
+              HTMLElement;
+
+        const initialIndex =
+          element
+            .querySelector(
+              '[data-testid="galaxy-laboratory-index"]',
+            )
+            ?.textContent
+            ?.trim();
+
+        const familyH =
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="galaxy-laboratory-family-button"][data-family="H"]',
+            );
+
+        familyH?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          familyH
+            ?.getAttribute(
+              'aria-pressed',
+            ),
+        ).toBe(
+          'true',
+        );
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="galaxy-laboratory-family"]',
+            )
+            ?.textContent
+            ?.trim(),
+        ).toBe(
+          'H',
         );
 
         expect(
@@ -122,14 +240,15 @@ describe(
             )
             ?.textContent
             ?.trim(),
-        ).toBe(
-          '3',
+        ).not.toBe(
+          initialIndex,
         );
       },
+      30_000,
     );
 
     it(
-      'should switch the production-renderer input to the selected barred-spiral representative',
+      'should reset to family A when switching morphology',
       () => {
         const fixture =
           TestBed
@@ -144,23 +263,31 @@ describe(
             .nativeElement as
               HTMLElement;
 
-        const barred =
-          element
-            .querySelector<HTMLButtonElement>(
-              '[data-testid="galaxy-laboratory-case-button"][data-case="BARRED_SPIRAL"]',
-            );
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="galaxy-laboratory-family-button"][data-family="G"]',
+          )
+          ?.click();
 
-        barred?.click();
+        fixture.detectChanges();
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="galaxy-laboratory-case-button"][data-case="BARRED_SPIRAL"]',
+          )
+          ?.click();
 
         fixture.detectChanges();
 
         expect(
-          barred
-            ?.getAttribute(
-              'aria-pressed',
-            ),
+          element
+            .querySelector(
+              '[data-testid="galaxy-laboratory-family"]',
+            )
+            ?.textContent
+            ?.trim(),
         ).toBe(
-          'true',
+          'A',
         );
 
         expect(
@@ -175,6 +302,7 @@ describe(
           'BARRED_SPIRAL',
         );
       },
+      30_000,
     );
 
     it(
@@ -205,6 +333,7 @@ describe(
           ),
         ).toBeTruthy();
       },
+      30_000,
     );
   },
 );

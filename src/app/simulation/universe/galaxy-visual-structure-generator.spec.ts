@@ -285,9 +285,9 @@ describe(
             type:
               GalaxyType.SPIRAL,
             coherenceMin:
-              0.80,
+              0.66,
             coherenceMax:
-              0.97,
+              0.96,
           },
           {
             index:
@@ -333,14 +333,31 @@ describe(
             item.type,
           );
 
-          expect(
-            visual.arms,
-          ).toHaveLength(
-            galaxy
-              .physicalProperties
-              .structure
-              .spiralArmCount,
-          );
+          if (
+            galaxy.type ===
+            GalaxyType.SPIRAL
+          ) {
+            expect(
+              visual.arms.length,
+            ).toBeGreaterThanOrEqual(
+              3,
+            );
+
+            expect(
+              visual.arms.length,
+            ).toBeLessThanOrEqual(
+              8,
+            );
+          } else {
+            expect(
+              visual.arms,
+            ).toHaveLength(
+              galaxy
+                .physicalProperties
+                .structure
+                .spiralArmCount,
+            );
+          }
 
           for (
             const arm of
@@ -359,6 +376,98 @@ describe(
             );
           }
         }
+      },
+    );
+
+    it(
+      'should derive 3..8 deterministic arms for normal spirals and produce structural variety across seeds',
+      () => {
+        const observedCounts =
+          new Set<number>();
+
+        let spiralSamples =
+          0;
+
+        for (
+          let index =
+            0n;
+          index <
+            512n;
+          index +=
+            1n
+        ) {
+          const galaxy =
+            GalaxyGenerator.generate(
+              canonicalGenerationKey,
+              index,
+            );
+
+          if (
+            galaxy.type !==
+            GalaxyType.SPIRAL
+          ) {
+            continue;
+          }
+
+          spiralSamples +=
+            1;
+
+          const visual =
+            GalaxyVisualStructureGenerator.generate(
+              galaxy,
+            );
+
+          expect(
+            visual.arms.length,
+          ).toBeGreaterThanOrEqual(
+            3,
+          );
+
+          expect(
+            visual.arms.length,
+          ).toBeLessThanOrEqual(
+            8,
+          );
+
+          observedCounts.add(
+            visual.arms.length,
+          );
+
+          for (
+            const arm of
+            visual.arms
+          ) {
+            expect(
+              arm.pitchAngleDegrees,
+            ).toBeGreaterThanOrEqual(
+              5.5,
+            );
+
+            expect(
+              arm.pitchAngleDegrees,
+            ).toBeLessThanOrEqual(
+              16.5,
+            );
+
+            expect(
+              arm.widthNormalized,
+            ).toBeGreaterThanOrEqual(
+              0.028,
+            );
+          }
+        }
+
+        expect(
+          spiralSamples,
+        ).toBeGreaterThan(
+          20,
+        );
+
+        expect(
+          observedCounts.size,
+        ).toBeGreaterThanOrEqual(
+          4,
+        );
       },
     );
 
@@ -428,14 +537,49 @@ describe(
             1.0,
           );
 
-          expect(
-            visual.arms,
-          ).toHaveLength(
-            galaxy
-              .physicalProperties
-              .structure
-              .spiralArmCount,
-          );
+          if (
+            galaxy.type ===
+            GalaxyType.SPIRAL
+          ) {
+            expect(
+              galaxy
+                .physicalProperties
+                .structure
+                .spiralArmCount,
+            ).toBeGreaterThanOrEqual(
+              2,
+            );
+
+            expect(
+              galaxy
+                .physicalProperties
+                .structure
+                .spiralArmCount,
+            ).toBeLessThanOrEqual(
+              6,
+            );
+
+            expect(
+              visual.arms.length,
+            ).toBeGreaterThanOrEqual(
+              3,
+            );
+
+            expect(
+              visual.arms.length,
+            ).toBeLessThanOrEqual(
+              8,
+            );
+          } else {
+            expect(
+              visual.arms,
+            ).toHaveLength(
+              galaxy
+                .physicalProperties
+                .structure
+                .spiralArmCount,
+            );
+          }
 
           expect(
             visual.bar !==

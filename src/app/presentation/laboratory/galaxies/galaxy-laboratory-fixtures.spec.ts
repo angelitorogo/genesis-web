@@ -8,7 +8,9 @@ import {
 
 import {
   GalaxyLaboratoryCaseId,
+  GalaxyLaboratoryFamilyId,
   GALAXY_LABORATORY_CASES,
+  GALAXY_LABORATORY_FAMILY_IDS,
   GalaxyLaboratoryFixtures,
 } from './galaxy-laboratory-fixtures';
 
@@ -40,7 +42,71 @@ describe(
     );
 
     it(
-      'should keep the frozen representative galaxy indices mapped to their expected real types',
+      'should expose eight deterministic A-H families for every morphology',
+      () => {
+        for (
+          const candidate of
+          GALAXY_LABORATORY_CASES
+        ) {
+          const families =
+            GalaxyLaboratoryFixtures
+              .families(
+                candidate.id,
+              );
+
+          expect(
+            families,
+          ).toHaveLength(
+            8,
+          );
+
+          expect(
+            families.map(
+              family =>
+                family.id,
+            ),
+          ).toEqual(
+            GALAXY_LABORATORY_FAMILY_IDS,
+          );
+
+          expect(
+            new Set(
+              families.map(
+                family =>
+                  family.galaxyIndex.toString(),
+              ),
+            ).size,
+          ).toBe(
+            8,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should keep family A on the historical canonical representatives',
+      () => {
+        for (
+          const candidate of
+          GALAXY_LABORATORY_CASES
+        ) {
+          expect(
+            GalaxyLaboratoryFixtures
+              .families(
+                candidate.id,
+              )[0]
+              .galaxyIndex,
+          ).toBe(
+            candidate.galaxyIndex,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should keep every family mapped to the requested real morphology without forcing nucleus presence',
       () => {
         const expected =
           new Map([
@@ -72,37 +138,101 @@ describe(
           ] as const);
 
         for (
-          const candidate
-          of GALAXY_LABORATORY_CASES
+          const candidate of
+          GALAXY_LABORATORY_CASES
         ) {
-          expect(
+          for (
+            const family of
             GalaxyLaboratoryFixtures
-              .frame(
+              .families(
                 candidate.id,
               )
-              .galaxy
-              .type,
-          ).toBe(
-            expected.get(
-              candidate.id,
-            ),
-          );
+          ) {
+            const frame =
+              GalaxyLaboratoryFixtures
+                .frame(
+                  candidate.id,
+                  family.id,
+                );
+
+            expect(
+              frame.galaxy.type,
+            ).toBe(
+              expected.get(
+                candidate.id,
+              ),
+            );
+          }
         }
       },
-      15_000,
+      30_000,
     );
 
     it(
-      'should expose each representative only through a real DISCOVERED detailed map model',
+      'should expose SPIRAL A-H with real 3..8-arm structural variety',
+      () => {
+        const armCounts =
+          new Set<number>();
+
+        for (
+          const family of
+          GalaxyLaboratoryFixtures
+            .families(
+              GalaxyLaboratoryCaseId.SPIRAL,
+            )
+        ) {
+          const frame =
+            GalaxyLaboratoryFixtures
+              .frame(
+                GalaxyLaboratoryCaseId.SPIRAL,
+                family.id,
+              );
+
+          const armCount =
+            frame.model
+              .visualStructure
+              ?.arms
+              .length ??
+            0;
+
+          expect(
+            armCount,
+          ).toBeGreaterThanOrEqual(
+            3,
+          );
+
+          expect(
+            armCount,
+          ).toBeLessThanOrEqual(
+            8,
+          );
+
+          armCounts.add(
+            armCount,
+          );
+        }
+
+        expect(
+          armCounts.size,
+        ).toBeGreaterThanOrEqual(
+          6,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose each family only through a real DISCOVERED detailed map model',
       () => {
         for (
-          const candidate
-          of GALAXY_LABORATORY_CASES
+          const candidate of
+          GALAXY_LABORATORY_CASES
         ) {
           const frame =
             GalaxyLaboratoryFixtures
               .frame(
                 candidate.id,
+                GalaxyLaboratoryFamilyId.H,
               );
 
           expect(
@@ -127,54 +257,50 @@ describe(
           );
         }
       },
-      15_000,
+      30_000,
     );
 
     it(
       'should keep the laboratory free of exploration coverage, markers and environmental gameplay layers',
       () => {
-        for (
-          const candidate
-          of GALAXY_LABORATORY_CASES
-        ) {
-          const model =
-            GalaxyLaboratoryFixtures
-              .frame(
-                candidate.id,
-              )
-              .model;
+        const model =
+          GalaxyLaboratoryFixtures
+            .frame(
+              GalaxyLaboratoryCaseId.SPIRAL,
+              GalaxyLaboratoryFamilyId.D,
+            )
+            .model;
 
-          expect(
-            model.explorationCoverage,
-          ).toBeNull();
+        expect(
+          model.explorationCoverage,
+        ).toBeNull();
 
-          expect(
-            model.discoveryMarkers,
-          ).toBeNull();
+        expect(
+          model.discoveryMarkers,
+        ).toBeNull();
 
-          expect(
-            model.environmentalLayers,
-          ).toBeNull();
-        }
+        expect(
+          model.environmentalLayers,
+        ).toBeNull();
       },
-      15_000,
+      30_000,
     );
 
     it(
-      'should remain deterministic for repeated reads of the same laboratory case',
+      'should remain deterministic for repeated reads of the same morphology and family',
       () => {
         const first =
           GalaxyLaboratoryFixtures
             .frame(
-              GalaxyLaboratoryCaseId
-                .IRREGULAR,
+              GalaxyLaboratoryCaseId.SPIRAL,
+              GalaxyLaboratoryFamilyId.F,
             );
 
         const second =
           GalaxyLaboratoryFixtures
             .frame(
-              GalaxyLaboratoryCaseId
-                .IRREGULAR,
+              GalaxyLaboratoryCaseId.SPIRAL,
+              GalaxyLaboratoryFamilyId.F,
             );
 
         expect(

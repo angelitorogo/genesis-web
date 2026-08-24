@@ -13,6 +13,7 @@
 
   &__hero,
   &__selector,
+  &__families,
   &__active,
   &__scene,
   &__footer {
@@ -106,6 +107,65 @@
     }
   }
 
+  &__families {
+    display: grid;
+    gap: 0.7rem;
+    padding: 0.75rem;
+  }
+
+  &__families-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+
+    strong {
+      display: block;
+      margin-top: 0.2rem;
+      font: 700 0.78rem var(--genesis-font-mono);
+    }
+
+    > span {
+      color: var(--genesis-color-text-subtle);
+      font: 0.62rem var(--genesis-font-mono);
+    }
+  }
+
+  &__family-grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 0.45rem;
+
+    button {
+      display: grid;
+      justify-items: center;
+      gap: 0.15rem;
+      min-height: 3.2rem;
+      padding: 0.45rem;
+      border: 1px solid rgba(106, 215, 255, 0.14);
+      border-radius: var(--genesis-radius-md);
+      background: rgba(5, 7, 13, 0.68);
+      color: var(--genesis-color-text-subtle);
+      cursor: pointer;
+
+      strong {
+        color: inherit;
+        font: 800 0.9rem var(--genesis-font-mono);
+      }
+
+      small {
+        color: rgba(255, 255, 255, 0.42);
+        font: 0.56rem var(--genesis-font-mono);
+      }
+    }
+
+    .galaxy-lab__family-button--active {
+      border-color: rgba(106, 215, 255, 0.58);
+      background: rgba(106, 215, 255, 0.13);
+      color: var(--genesis-color-primary);
+    }
+  }
+
   &__active {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -181,6 +241,10 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    &__family-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
     &__active {
       grid-template-columns: 1fr;
 
@@ -210,6 +274,15 @@
 
     &__selector {
       grid-template-columns: 1fr;
+    }
+
+    &__families-heading {
+      display: grid;
+      align-items: start;
+    }
+
+    &__family-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     &__active dl {

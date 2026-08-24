@@ -61,6 +61,44 @@ export type GalaxyLaboratoryCaseId =
     keyof typeof GalaxyLaboratoryCaseId
   ];
 
+export const GalaxyLaboratoryFamilyId =
+  Object.freeze({
+    A:
+      'A',
+    B:
+      'B',
+    C:
+      'C',
+    D:
+      'D',
+    E:
+      'E',
+    F:
+      'F',
+    G:
+      'G',
+    H:
+      'H',
+  } as const);
+
+export type GalaxyLaboratoryFamilyId =
+  typeof GalaxyLaboratoryFamilyId[
+    keyof typeof GalaxyLaboratoryFamilyId
+  ];
+
+export const GALAXY_LABORATORY_FAMILY_IDS:
+  readonly GalaxyLaboratoryFamilyId[] =
+  Object.freeze([
+    GalaxyLaboratoryFamilyId.A,
+    GalaxyLaboratoryFamilyId.B,
+    GalaxyLaboratoryFamilyId.C,
+    GalaxyLaboratoryFamilyId.D,
+    GalaxyLaboratoryFamilyId.E,
+    GalaxyLaboratoryFamilyId.F,
+    GalaxyLaboratoryFamilyId.G,
+    GalaxyLaboratoryFamilyId.H,
+  ]);
+
 export interface GalaxyLaboratoryCase {
   readonly id:
     GalaxyLaboratoryCaseId;
@@ -68,6 +106,10 @@ export interface GalaxyLaboratoryCase {
   readonly label:
     string;
 
+  /**
+   * Historical V1 validation vector. It remains family A whenever it still
+   * belongs to the expected morphology.
+   */
   readonly galaxyIndex:
     bigint;
 
@@ -78,14 +120,17 @@ export interface GalaxyLaboratoryCase {
     string;
 }
 
-/**
- * Frozen V1 representatives already exercised by the galactic-map visual
- * regression suite for the canonical GENESIS validation seed.
- *
- * The laboratory never forces a morphology. It generates each real galaxy by
- * index and asserts that the frozen representative still belongs to the
- * expected canonical GalaxyType before exposing the production map renderer.
- */
+export interface GalaxyLaboratoryFamily {
+  readonly id:
+    GalaxyLaboratoryFamilyId;
+
+  readonly label:
+    string;
+
+  readonly galaxyIndex:
+    bigint;
+}
+
 export const GALAXY_LABORATORY_CASES:
   readonly GalaxyLaboratoryCase[] =
   Object.freeze([
@@ -100,7 +145,7 @@ export const GALAXY_LABORATORY_CASES:
       expectedType:
         GalaxyType.SPIRAL,
       description:
-        'Disco espiral V1 con estructura de brazos coherente.',
+        'Disco espiral procedural con 3–8 brazos, bulbo cálido, poblaciones estelares y gas 3D.',
     }),
     Object.freeze({
       id:
@@ -160,6 +205,9 @@ export interface GalaxyLaboratoryFrame {
   readonly caseDefinition:
     GalaxyLaboratoryCase;
 
+  readonly family:
+    GalaxyLaboratoryFamily;
+
   readonly galaxy:
     Galaxy;
 
@@ -175,29 +223,102 @@ const GENERATION_KEY =
     GeneratorVersion.V1,
   );
 
+const familyCache =
+  new Map<
+    GalaxyLaboratoryCaseId,
+    readonly GalaxyLaboratoryFamily[]
+  >();
+
 export class GalaxyLaboratoryFixtures {
 
   private constructor() {}
 
+  static families(
+    caseId:
+      GalaxyLaboratoryCaseId,
+  ): readonly GalaxyLaboratoryFamily[] {
+
+    const cached =
+      familyCache.get(
+        caseId,
+      );
+
+    if (
+      cached !==
+      undefined
+    ) {
+      return cached;
+    }
+
+    const caseDefinition =
+      caseById(
+        caseId,
+      );
+
+    const indices =
+      discoverFamilyIndices(
+        caseDefinition,
+      );
+
+    const families =
+      Object.freeze(
+        GALAXY_LABORATORY_FAMILY_IDS
+          .map(
+            (
+              familyId,
+              index,
+            ) =>
+              Object.freeze({
+                id:
+                  familyId,
+                label:
+                  `Familia ${familyId}`,
+                galaxyIndex:
+                  indices[
+                    index
+                  ],
+              }),
+          ),
+      );
+
+    familyCache.set(
+      caseId,
+      families,
+    );
+
+    return families;
+  }
+
   static frame(
     caseId:
       GalaxyLaboratoryCaseId,
+
+    familyId:
+      GalaxyLaboratoryFamilyId =
+        GalaxyLaboratoryFamilyId.A,
   ): GalaxyLaboratoryFrame {
 
     const caseDefinition =
-      GALAXY_LABORATORY_CASES
-        .find(
-          candidate =>
-            candidate.id ===
-            caseId,
-        );
+      caseById(
+        caseId,
+      );
+
+    const family =
+      this.families(
+        caseId,
+      )
+      .find(
+        candidate =>
+          candidate.id ===
+          familyId,
+      );
 
     if (
-      caseDefinition ===
-        undefined
+      family ===
+      undefined
     ) {
       throw new RangeError(
-        `Unsupported galaxy laboratory case: ${String(caseId)}.`,
+        `Unsupported galaxy laboratory family: ${String(familyId)}.`,
       );
     }
 
@@ -205,8 +326,7 @@ export class GalaxyLaboratoryFixtures {
       GalaxyGenerator
         .generate(
           GENERATION_KEY,
-          caseDefinition
-            .galaxyIndex,
+          family.galaxyIndex,
         );
 
     if (
@@ -215,7 +335,7 @@ export class GalaxyLaboratoryFixtures {
           .expectedType
     ) {
       throw new RangeError(
-        `Frozen galaxy laboratory vector ${caseDefinition.galaxyIndex} changed morphology from ${caseDefinition.expectedType.name} to ${galaxy.type.name}.`,
+        `Galaxy laboratory family ${family.id} vector ${family.galaxyIndex} changed morphology from ${caseDefinition.expectedType.name} to ${galaxy.type.name}.`,
       );
     }
 
@@ -239,8 +359,202 @@ export class GalaxyLaboratoryFixtures {
 
     return Object.freeze({
       caseDefinition,
+      family,
       galaxy,
       model,
     });
   }
+}
+
+function caseById(
+  caseId:
+    GalaxyLaboratoryCaseId,
+): GalaxyLaboratoryCase {
+
+  const caseDefinition =
+    GALAXY_LABORATORY_CASES
+      .find(
+        candidate =>
+          candidate.id ===
+          caseId,
+      );
+
+  if (
+    caseDefinition ===
+    undefined
+  ) {
+    throw new RangeError(
+      `Unsupported galaxy laboratory case: ${String(caseId)}.`,
+    );
+  }
+
+  return caseDefinition;
+}
+
+function discoverFamilyIndices(
+  caseDefinition:
+    GalaxyLaboratoryCase,
+): readonly bigint[] {
+
+  const selected:
+    bigint[] = [];
+
+  const selectedKeys =
+    new Set<string>();
+
+  const add =
+    (
+      index:
+        bigint,
+    ): void => {
+      const key =
+        index.toString();
+
+      if (
+        selectedKeys.has(
+          key,
+        )
+      ) {
+        return;
+      }
+
+      selected.push(
+        index,
+      );
+      selectedKeys.add(
+        key,
+      );
+    };
+
+  const preferredGalaxy =
+    GalaxyGenerator.generate(
+      GENERATION_KEY,
+      caseDefinition.galaxyIndex,
+    );
+
+  if (
+    preferredGalaxy.type ===
+    caseDefinition.expectedType
+  ) {
+    add(
+      caseDefinition.galaxyIndex,
+    );
+  }
+
+  if (
+    caseDefinition.id ===
+    GalaxyLaboratoryCaseId.SPIRAL
+  ) {
+    const representedArmCounts =
+      new Set<number>();
+
+    for (
+      const index of
+      selected
+    ) {
+      representedArmCounts.add(
+        GalaxyVisualStructureGenerator
+          .generate(
+            GalaxyGenerator.generate(
+              GENERATION_KEY,
+              index,
+            ),
+          )
+          .arms
+          .length,
+      );
+    }
+
+    for (
+      let index =
+        0n;
+      index <
+        4_096n &&
+      representedArmCounts.size <
+        6;
+      index +=
+        1n
+    ) {
+      const galaxy =
+        GalaxyGenerator.generate(
+          GENERATION_KEY,
+          index,
+        );
+
+      if (
+        galaxy.type !==
+        GalaxyType.SPIRAL
+      ) {
+        continue;
+      }
+
+      const armCount =
+        GalaxyVisualStructureGenerator
+          .generate(
+            galaxy,
+          )
+          .arms
+          .length;
+
+      if (
+        representedArmCounts.has(
+          armCount,
+        )
+      ) {
+        continue;
+      }
+
+      add(
+        index,
+      );
+
+      representedArmCounts.add(
+        armCount,
+      );
+    }
+  }
+
+  for (
+    let index =
+      0n;
+    index <
+      4_096n &&
+    selected.length <
+      GALAXY_LABORATORY_FAMILY_IDS.length;
+    index +=
+      1n
+  ) {
+    const galaxy =
+      GalaxyGenerator.generate(
+        GENERATION_KEY,
+        index,
+      );
+
+    if (
+      galaxy.type !==
+      caseDefinition.expectedType
+    ) {
+      continue;
+    }
+
+    add(
+      index,
+    );
+  }
+
+  if (
+    selected.length <
+    GALAXY_LABORATORY_FAMILY_IDS.length
+  ) {
+    throw new RangeError(
+      `Could not discover eight deterministic laboratory families for ${caseDefinition.expectedType.name}.`,
+    );
+  }
+
+  return Object.freeze(
+    selected.slice(
+      0,
+      GALAXY_LABORATORY_FAMILY_IDS.length,
+    ),
+  );
 }

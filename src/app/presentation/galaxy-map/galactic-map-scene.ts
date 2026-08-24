@@ -1804,6 +1804,13 @@ class ThreeGalacticMapSceneRuntime
     THREE.ShaderMaterial | null =
     null;
 
+  private backdropMesh:
+    THREE.Mesh<
+      THREE.PlaneGeometry,
+      THREE.ShaderMaterial
+    > | null =
+    null;
+
   private particleSessionId:
     string | null =
     null;
@@ -2079,12 +2086,12 @@ class ThreeGalacticMapSceneRuntime
 
     this.disposed =
       false;
-
     this.pointMaterial =
       createGalaxyPointMaterial(
         this.pixelRatio,
         this.lodStateValue
           .lodLevel,
+        false,
       );
 
     this.gasMaterial =
@@ -3419,6 +3426,17 @@ class ThreeGalacticMapSceneRuntime
     }
 
     if (
+      this.backdropMesh !==
+        null
+    ) {
+      this.backdropMesh.removeFromParent();
+      this.backdropMesh.geometry.dispose();
+      this.backdropMesh.material.dispose();
+      this.backdropMesh =
+        null;
+    }
+
+    if (
       materialized.count ===
         0
     ) {
@@ -3435,6 +3453,29 @@ class ThreeGalacticMapSceneRuntime
     this.activeSourceIndices =
       partition
         .stellarSourceIndices;
+
+    const backdropTint =
+      deriveBackdropTintFromGasField(
+        partition.gasColors,
+        partition.gasOpacities,
+      );
+
+    const backdropMesh =
+      createGalaxyBackdropMesh(
+        backdropTint,
+      );
+
+    // V11 correction: the backdrop remains coplanar with the galactic disk,
+    // but the separate spiral dust-lane overlay is intentionally removed.
+    // In practice it read as artificial black spiral lines instead of subtle,
+    // irregular absorption features integrated into the arms.
+
+    this.galaxyGroup.add(
+      backdropMesh,
+    );
+
+    this.backdropMesh =
+      backdropMesh;
 
     if (
       partition.stellarCount >
@@ -3490,11 +3531,11 @@ class ThreeGalacticMapSceneRuntime
         'galactic-map-active-gas-batch';
 
       // Volumetric ISM cloudlets occupy real XYZ positions around the stellar
-      // disk. Render them just before the stellar points with normal alpha
-      // blending: projection/parallax supplies depth while stars remain the
-      // crisp high-frequency structure on top.
+      // disk. Render the gas after the stellar pass with restrained normal
+      // alpha blending so the deterministic dominant arm hue remains visible
+      // instead of being washed out by thousands of bright stellar points.
       gasPoints.renderOrder =
-        0;
+        2;
 
       this.galaxyGroup.add(
         gasPoints,
@@ -3767,10 +3808,28 @@ class ThreeGalacticMapSceneRuntime
       .environmentalOverlay
       ?.dispose();
 
+    if (
+      this.backdropMesh !==
+      null
+    ) {
+      this
+        .backdropMesh
+        .geometry
+        .dispose();
+
+      this
+        .backdropMesh
+        .material
+        .dispose();
+    }
+
     this.points =
       null;
 
     this.gasPoints =
+      null;
+
+    this.backdropMesh =
       null;
 
     this.pointMaterial =
@@ -4183,6 +4242,303 @@ function partitionMaterializedGalaxyPoints(
   });
 }
 
+function deriveBackdropTintFromGasField(
+  colors:
+    Float32Array,
+
+  opacities:
+    Float32Array,
+): THREE.Color {
+
+  if (
+    colors.length ===
+      0 ||
+    opacities.length ===
+      0
+  ) {
+    return new THREE.Color(
+      0.20,
+      0.24,
+      0.34,
+    );
+  }
+
+  let red =
+    0;
+
+  let green =
+    0;
+
+  let blue =
+    0;
+
+  let totalWeight =
+    0;
+
+  for (
+    let index =
+      0;
+    index <
+      opacities.length;
+    index +=
+      1
+  ) {
+    const vectorOffset =
+      index * 3;
+
+    const source =
+      new THREE.Color(
+        colors[vectorOffset],
+        colors[vectorOffset + 1],
+        colors[vectorOffset + 2],
+      );
+
+    const maxChannel =
+      Math.max(
+        source.r,
+        source.g,
+        source.b,
+      );
+
+    const minChannel =
+      Math.min(
+        source.r,
+        source.g,
+        source.b,
+      );
+
+    const chroma =
+      maxChannel -
+      minChannel;
+
+    const weight =
+      Math.max(
+        0.02,
+        opacities[index],
+      ) *
+      (
+        0.85 +
+        0.75 *
+        chroma
+      );
+
+    red +=
+      source.r *
+      weight;
+
+    green +=
+      source.g *
+      weight;
+
+    blue +=
+      source.b *
+      weight;
+
+    totalWeight +=
+      weight;
+  }
+
+  if (
+    totalWeight <=
+      0
+  ) {
+    return new THREE.Color(
+      0.20,
+      0.24,
+      0.34,
+    );
+  }
+
+  const average =
+    new THREE.Color(
+      red / totalWeight,
+      green / totalWeight,
+      blue / totalWeight,
+    );
+
+  const softened =
+    new THREE.Color(
+      0.14,
+      0.16,
+      0.22,
+    );
+
+  softened.lerp(
+    average,
+    0.58,
+  );
+
+  return softened;
+}
+
+function createGalaxyBackdropMesh(
+  tint:
+    THREE.Color,
+): THREE.Mesh<
+  THREE.PlaneGeometry,
+  THREE.ShaderMaterial
+> {
+
+  const geometry =
+    new THREE.PlaneGeometry(
+      2.45,
+      2.45,
+      1,
+      1,
+    );
+
+  const material =
+    new THREE.ShaderMaterial({
+      uniforms: {
+        uTint: {
+          value:
+            tint.clone(),
+        },
+      },
+
+      vertexShader: `
+        varying vec2 vUv;
+
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+
+      fragmentShader: `
+        uniform vec3 uTint;
+        varying vec2 vUv;
+
+        float hash(vec2 value) {
+          return fract(
+            sin(
+              dot(value, vec2(127.1, 311.7))
+            ) * 43758.5453123
+          );
+        }
+
+        float valueNoise(vec2 value) {
+          vec2 base = floor(value);
+          vec2 fraction = fract(value);
+          vec2 smoothFraction = fraction * fraction * (3.0 - 2.0 * fraction);
+
+          float a = hash(base);
+          float b = hash(base + vec2(1.0, 0.0));
+          float c = hash(base + vec2(0.0, 1.0));
+          float d = hash(base + vec2(1.0, 1.0));
+
+          return mix(
+            mix(a, b, smoothFraction.x),
+            mix(c, d, smoothFraction.x),
+            smoothFraction.y
+          );
+        }
+
+        void main() {
+          vec2 centered = (vUv - vec2(0.5)) * 2.0;
+          vec2 ellipse = vec2(
+            centered.x * 0.86,
+            centered.y * 1.16
+          );
+
+          float diskRadius = length(ellipse);
+          float broadGlow = exp(-2.45 * diskRadius * diskRadius);
+          float midGlow = exp(-5.20 * diskRadius * diskRadius);
+          float coreGlow = exp(-10.50 * diskRadius * diskRadius);
+          float edgeFade = 1.0 - smoothstep(0.70, 0.98, diskRadius);
+
+          float coarseNoise = valueNoise(ellipse * 5.5 + vec2(11.3, 7.1));
+          float fineNoise = valueNoise(ellipse * 12.0 + vec2(-5.4, 13.7));
+          float mottling = mix(coarseNoise, fineNoise, 0.42);
+          float irregularity = mix(0.86, 1.08, mottling);
+
+          float alpha = (
+            0.020 * broadGlow +
+            0.019 * midGlow +
+            0.010 * coreGlow
+          ) * edgeFade * irregularity;
+
+          if (
+            alpha <
+              0.0018
+          ) {
+            discard;
+          }
+
+          vec3 diskTint = mix(
+            vec3(0.16, 0.19, 0.28),
+            uTint,
+            0.42
+          );
+
+          vec3 warmCore = vec3(0.92, 0.84, 0.70);
+          vec3 coolLift = mix(
+            vec3(0.10, 0.13, 0.20),
+            diskTint,
+            0.68 + 0.18 * broadGlow
+          );
+
+          vec3 color = coolLift;
+          color = mix(
+            color,
+            diskTint,
+            0.34 * midGlow
+          );
+          color = mix(
+            color,
+            warmCore,
+            0.18 * coreGlow
+          );
+
+          gl_FragColor = vec4(color, alpha);
+
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }
+      `,
+
+      transparent:
+        true,
+
+      depthTest:
+        false,
+
+      depthWrite:
+        false,
+
+      blending:
+        THREE.AdditiveBlending,
+
+      side:
+        THREE.DoubleSide,
+
+      toneMapped:
+        true,
+    });
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material,
+    );
+
+  mesh.name =
+    'galactic-map-galaxy-backdrop';
+
+  // The diffuse backdrop belongs to the same local galactic plane as the
+  // stellar disk. Keeping it at z = 0 avoids the detached luminous sheet
+  // visible when the user rotates the galaxy close to edge-on. Render order
+  // and disabled depth testing keep the backdrop behind the stellar/gas
+  // passes without introducing a physical offset along the disk normal.
+  mesh.position.z =
+    0;
+
+  mesh.renderOrder =
+    0;
+
+  return mesh;
+}
+
 function createGalaxyPointGeometry(
   positions:
     Float32Array,
@@ -4243,6 +4599,9 @@ function createGalaxyPointMaterial(
 
   lodLevel:
     GalacticMapLodLevel,
+
+  preserveChromaticSeparation:
+    boolean,
 ): THREE.ShaderMaterial {
 
   const visibility =
@@ -4338,36 +4697,27 @@ function createGalaxyPointMaterial(
           discard;
         }
 
+        // Stellar points must read as compact luminous stars, never as
+        // ring-shaped sprites. The previous explicit rim term could turn the
+        // brightest central sample into a tiny white annulus that looked like
+        // a physical ring around the galactic nucleus.
         float glow = 1.0 - smoothstep(
-          0.08,
-          0.46,
+          0.05,
+          0.48,
           distanceFromCenter
         );
 
         float core = 1.0 - smoothstep(
           0.00,
-          0.11,
+          0.16,
           distanceFromCenter
-        );
-
-        float rim = smoothstep(
-          0.02,
-          0.22,
-          distanceFromCenter
-        ) * (
-          1.0 - smoothstep(
-            0.20,
-            0.42,
-            distanceFromCenter
-          )
         );
 
         float alpha = min(
           1.0,
           vOpacity * (
-            0.26 * glow +
-            0.66 * core +
-            0.20 * rim
+            0.42 * glow +
+            0.58 * core
           )
         );
 
@@ -4454,7 +4804,9 @@ function createGalaxyPointMaterial(
       false,
 
     blending:
-      THREE.AdditiveBlending,
+      preserveChromaticSeparation
+        ? THREE.NormalBlending
+        : THREE.AdditiveBlending,
 
     toneMapped:
       true,

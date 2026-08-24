@@ -20,6 +20,14 @@ import {
 } from '../../domain/universe/galaxy-type';
 
 import {
+  UniverseSeed,
+} from '../../domain/universe/universe-seed';
+
+import {
+  Sfc64Random,
+} from '../random/sfc64-random';
+
+import {
   GalaxyVisualArm,
   GalaxyVisualBar,
   GalaxyVisualRegionLayout,
@@ -37,6 +45,15 @@ const V1_DOMAIN =
   utf8ToBytes(
     'GENESIS-GALAXY-VISUAL-STRUCTURE-V1',
   );
+
+const V1_SPIRAL_ARM_DRAW_INDEX =
+  11;
+
+const V1_SPIRAL_VISUAL_ARM_MIN =
+  3;
+
+const V1_SPIRAL_VISUAL_ARM_MAX =
+  8;
 
 interface V1ArmVisualProfile {
   readonly pitchMinDegrees:
@@ -132,37 +149,37 @@ const SPIRAL_PROFILE:
   V1VisualProfile =
   Object.freeze({
     bulgeRadiusMin:
-      0.08,
+      0.07,
     bulgeRadiusMax:
-      0.20,
+      0.18,
     bulgeAxisRatioMin:
-      0.80,
+      0.82,
     bulgeAxisRatioMax:
       0.99,
     haloRadiusMin:
-      1.20,
+      1.18,
     haloRadiusMax:
-      1.45,
+      1.50,
     haloFalloffMin:
-      2.00,
+      1.80,
     haloFalloffMax:
-      3.30,
+      3.20,
     arms:
       Object.freeze({
         pitchMinDegrees:
-          12.0,
+          5.5,
         pitchMaxDegrees:
-          30.0,
+          16.5,
         widthMin:
-          0.020,
+          0.028,
         widthMax:
-          0.055,
+          0.070,
         coherenceMin:
-          0.80,
+          0.66,
         coherenceMax:
-          0.97,
+          0.96,
         startFloor:
-          0.14,
+          0.05,
       }),
   });
 
@@ -268,10 +285,14 @@ const IRREGULAR_PROFILE:
 /**
  * Generates renderer-independent procedural visual geometry for a Galaxy.
  *
- * This generator deliberately uses no SFC64/Genesis random stream. Every
- * visual sub-branch is independently derived from Galaxy.seed through a
- * versioned SHA-256 domain separator and textual label, so visual generation
- * cannot perturb the frozen physical GalaxyGenerator stream.
+ * Visual sub-branches are independently derived from Galaxy.seed through a
+ * versioned SHA-256 domain separator and textual label. Normal SPIRAL arm count
+ * is the sole exception: it locally replays the frozen V1 spiral-arm draw so
+ * the renderer keeps its established 3..8 visual-arm contract while physical
+ * GalaxyStructure remains on the original V1 2..6 Ground Truth contract.
+ *
+ * The replay owns a fresh SFC64 instance and therefore cannot perturb the
+ * physical GalaxyGenerator stream.
  *
  * Three.js must consume the returned GalaxyVisualStructure later; Three.js
  * types do not belong here.
@@ -540,10 +561,9 @@ function createArms(
 ): readonly GalaxyVisualArm[] {
 
   const armCount =
-    galaxy
-      .physicalProperties
-      .structure
-      .spiralArmCount;
+    resolveVisualArmCount(
+      galaxy,
+    );
 
   if (
     armCount ===
@@ -581,20 +601,29 @@ function createArms(
     ) *
     TWO_PI;
 
+  const normalSpiral =
+    galaxy.type ===
+    GalaxyType.SPIRAL;
+
   const minimumRadialStart =
     Math.max(
       armProfile.startFloor,
-      bulgeRadiusNormalized +
-        0.02,
+      normalSpiral
+        ? bulgeRadiusNormalized *
+          0.48
+        : bulgeRadiusNormalized +
+          0.02,
       bar
         ?.halfLengthNormalized ??
         0.0,
     );
 
-  const radialStartNormalized =
+  const baseRadialStartNormalized =
     Math.min(
       minimumRadialStart,
-      0.80,
+      normalSpiral
+        ? 0.26
+        : 0.80,
     );
 
   const arms:
@@ -617,6 +646,23 @@ function createArms(
           `arm-${index}-coherence`,
         ),
       );
+
+    const radialStartNormalized =
+      normalSpiral
+        ? clamp(
+            baseRadialStartNormalized *
+              lerp(
+                0.86,
+                1.18,
+                unit(
+                  galaxy,
+                  `arm-${index}-start`,
+                ),
+              ),
+            armProfile.startFloor,
+            0.28,
+          )
+        : baseRadialStartNormalized;
 
     const phaseNoise =
       unit(
@@ -650,15 +696,31 @@ function createArms(
         `arm-${index}-pitch`,
       );
 
+    const armCountT =
+      clamp01(
+        (
+          armCount -
+          3
+        ) /
+        5,
+      );
+
     const pitchAngleDegrees =
       lerp(
         armProfile.pitchMinDegrees,
         armProfile.pitchMaxDegrees,
         clamp01(
-          0.70 *
-            pitchNoise +
-          0.30 *
-            asymmetry,
+          normalSpiral
+            ? 0.68 *
+              pitchNoise +
+              0.12 *
+              asymmetry +
+              0.20 *
+              armCountT
+            : 0.70 *
+              pitchNoise +
+              0.30 *
+              asymmetry,
         ),
       );
 
@@ -670,12 +732,16 @@ function createArms(
 
     const radialEndNormalized =
       Math.min(
-        0.99,
+        0.995,
         Math.max(
           radialStartNormalized +
-            0.05,
-          0.84 +
-            0.14 *
+            0.08,
+          normalSpiral
+            ? 0.86 +
+              0.13 *
+              endNoise
+            : 0.84 +
+              0.14 *
               endNoise,
         ),
       );
@@ -713,6 +779,150 @@ function createArms(
 
   return Object.freeze(
     arms,
+  );
+}
+
+function resolveVisualArmCount(
+  galaxy:
+    Galaxy,
+): number {
+
+  const physicalArmCount =
+    galaxy
+      .physicalProperties
+      .structure
+      .spiralArmCount;
+
+  if (
+    galaxy.type !==
+    GalaxyType.SPIRAL
+  ) {
+    return physicalArmCount;
+  }
+
+  /*
+   * The SPIRAL visual reset intentionally established a renderer-only 3..8
+   * arm vocabulary. Ground Truth V1, however, remains 2..6. Replaying the
+   * original twelfth V1 draw from a private RNG preserves the current visual
+   * result exactly without changing or consuming the physical generator.
+   */
+  const random =
+    new Sfc64Random(
+      universeSeedFromNormalized128(
+        galaxy.seed
+          .normalizedValue,
+      ),
+    );
+
+  let spiralArmDraw =
+    0.0;
+
+  for (
+    let drawIndex =
+      0;
+    drawIndex <=
+      V1_SPIRAL_ARM_DRAW_INDEX;
+    drawIndex +=
+      1
+  ) {
+    spiralArmDraw =
+      random.nextDouble();
+  }
+
+  return lerpIntInclusive(
+    V1_SPIRAL_VISUAL_ARM_MIN,
+    V1_SPIRAL_VISUAL_ARM_MAX,
+    spiralArmDraw,
+  );
+}
+
+function universeSeedFromNormalized128(
+  normalized:
+    string,
+): UniverseSeed {
+
+  if (
+    !/^[0-9A-F]{32}$/.test(
+      normalized,
+    )
+  ) {
+    throw new RangeError(
+      `Expected normalized 128-bit hexadecimal seed: ${normalized}.`,
+    );
+  }
+
+  const canonical =
+    normalized
+      .match(
+        /.{4}/g,
+      )
+      ?.join(
+        '-',
+      );
+
+  if (
+    canonical ===
+    undefined
+  ) {
+    throw new RangeError(
+      `Cannot format normalized 128-bit seed: ${normalized}.`,
+    );
+  }
+
+  return UniverseSeed.parse(
+    canonical,
+  );
+}
+
+function lerpIntInclusive(
+  min:
+    number,
+
+  max:
+    number,
+
+  t:
+    number,
+): number {
+
+  if (
+    min ===
+    max
+  ) {
+    return min;
+  }
+
+  const count =
+    max -
+    min +
+    1;
+
+  const scaled =
+    Math.trunc(
+      t *
+      count,
+    );
+
+  const clampedScaled =
+    Math.min(
+      max -
+        min,
+      Math.max(
+        0,
+        scaled,
+      ),
+    );
+
+  const result =
+    min +
+    clampedScaled;
+
+  return Math.min(
+    max,
+    Math.max(
+      min,
+      result,
+    ),
   );
 }
 
@@ -872,16 +1082,34 @@ function lerp(
     t;
 }
 
+function clamp(
+  value:
+    number,
+
+  min:
+    number,
+
+  max:
+    number,
+): number {
+
+  return Math.min(
+    max,
+    Math.max(
+      min,
+      value,
+    ),
+  );
+}
+
 function clamp01(
   value:
     number,
 ): number {
 
-  return Math.min(
+  return clamp(
+    value,
+    0.0,
     1.0,
-    Math.max(
-      0.0,
-      value,
-    ),
   );
 }

@@ -20,7 +20,7 @@
       </h1>
 
       <p>
-        Cada caso es una galaxia procedural real de la seed de validación.
+        Cada familia es una galaxia procedural real de la seed de validación.
         El laboratorio no fuerza tipos ni modifica la partida: selecciona
         vectores deterministas y los entrega al mismo renderer Three.js +
         Web Worker utilizado por el mapa galáctico.
@@ -53,10 +53,55 @@
         </strong>
 
         <small>
-          G{{ caseOption.galaxyIndex.toString() }}
+          Familias A–H
         </small>
       </button>
     }
+  </section>
+
+  <section
+    class="galaxy-lab__families"
+    aria-label="Selector de familia procedural A a H"
+  >
+    <div class="galaxy-lab__families-heading">
+      <div>
+        <p class="galaxy-lab__eyebrow">
+          FAMILIAS PROCEDURALES
+        </p>
+
+        <strong>
+          {{ selectedCase().label }} · A–H
+        </strong>
+      </div>
+
+      <span>
+        8 ejemplos deterministas reales
+      </span>
+    </div>
+
+    <div class="galaxy-lab__family-grid">
+      @for (
+        family of families();
+        track family.id
+      ) {
+        <button
+          type="button"
+          data-testid="galaxy-laboratory-family-button"
+          [attr.data-family]="family.id"
+          [attr.aria-pressed]="selectedFamilyId() === family.id"
+          [class.galaxy-lab__family-button--active]="selectedFamilyId() === family.id"
+          (click)="selectFamily(family.id)"
+        >
+          <strong>
+            {{ family.id }}
+          </strong>
+
+          <small>
+            G{{ family.galaxyIndex.toString() }}
+          </small>
+        </button>
+      }
+    </div>
   </section>
 
   @if (frame(); as activeFrame) {
@@ -65,6 +110,8 @@
       data-testid="galaxy-laboratory-active-case"
       [attr.data-galaxy-type]="activeFrame.galaxy.type.name"
       [attr.data-galaxy-index]="activeFrame.galaxy.index.toString()"
+      [attr.data-family]="activeFrame.family.id"
+      [attr.data-arm-count]="activeFrame.model.visualStructure?.arms?.length ?? 0"
     >
       <div>
         <p class="galaxy-lab__eyebrow">
@@ -72,7 +119,7 @@
         </p>
 
         <h2>
-          {{ activeFrame.caseDefinition.label }}
+          {{ activeFrame.caseDefinition.label }} · Familia {{ activeFrame.family.id }}
         </h2>
 
         <p>
@@ -93,6 +140,16 @@
 
         <div>
           <dt>
+            Familia
+          </dt>
+
+          <dd data-testid="galaxy-laboratory-family">
+            {{ activeFrame.family.id }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>
             Índice procedural
           </dt>
 
@@ -100,6 +157,28 @@
             {{ activeFrame.galaxy.index.toString() }}
           </dd>
         </div>
+
+        <div>
+          <dt>
+            Núcleo
+          </dt>
+
+          <dd data-testid="galaxy-laboratory-nucleus">
+            {{ activeFrame.galaxy.nucleus?.state?.name }}
+          </dd>
+        </div>
+
+        @if (activeFrame.galaxy.type.name === 'SPIRAL') {
+          <div>
+            <dt>
+              Brazos
+            </dt>
+
+            <dd data-testid="galaxy-laboratory-arm-count">
+              {{ activeFrame.model.visualStructure?.arms?.length ?? 0 }}
+            </dd>
+          </div>
+        }
 
         <div>
           <dt>
@@ -139,7 +218,7 @@
   }
 
   <footer class="galaxy-lab__footer">
-    Cambiar de pestaña sustituye únicamente el modelo visual activo.
-    No se escribe ningún estado persistente.
+    Cambiar de morfología o familia sustituye únicamente el modelo visual
+    activo. No se escribe ningún estado persistente.
   </footer>
 </main>

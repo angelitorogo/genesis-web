@@ -15,6 +15,7 @@ import {
 
 import {
   GalaxyLaboratoryCaseId,
+  GalaxyLaboratoryFamilyId,
   GALAXY_LABORATORY_CASES,
   GalaxyLaboratoryFixtures,
   type GalaxyLaboratoryCase,
@@ -52,6 +53,11 @@ export class GalaxyLaboratoryPage {
         .SPIRAL,
     );
 
+  readonly selectedFamilyId =
+    signal<GalaxyLaboratoryFamilyId>(
+      GalaxyLaboratoryFamilyId.A,
+    );
+
   readonly selectedCase =
     computed<
       GalaxyLaboratoryCase
@@ -68,12 +74,22 @@ export class GalaxyLaboratoryPage {
         ],
     );
 
+  readonly families =
+    computed(
+      () =>
+        GalaxyLaboratoryFixtures
+          .families(
+            this.selectedCaseId(),
+          ),
+    );
+
   readonly frame =
     computed(
       () =>
         GalaxyLaboratoryFixtures
           .frame(
             this.selectedCaseId(),
+            this.selectedFamilyId(),
           ),
     );
 
@@ -86,6 +102,24 @@ export class GalaxyLaboratoryPage {
       .selectedCaseId
       .set(
         caseId,
+      );
+
+    this
+      .selectedFamilyId
+      .set(
+        GalaxyLaboratoryFamilyId.A,
+      );
+  }
+
+  selectFamily(
+    familyId:
+      GalaxyLaboratoryFamilyId,
+  ): void {
+
+    this
+      .selectedFamilyId
+      .set(
+        familyId,
       );
   }
 }

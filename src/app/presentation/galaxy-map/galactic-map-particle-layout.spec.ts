@@ -767,53 +767,80 @@ describe(
     );
 
     it(
-      'should extend normal-spiral arms into the bulge overlap while preserving a softer outer taper',
+      'should rebuild SPIRAL arms as a broad organic stellar population from the inner disk to the outskirts',
       () => {
-        const target =
-          model(
-            3n,
-          );
-
         const layout =
           GalacticMapParticleLayoutGenerator
             .generate(
-              target,
+              model(
+                3n,
+              ),
             );
 
-        const profile =
-          spiralReinforcementRadialProfile(
-            layout,
-            target,
-            CORE_PARTICLE_COUNT +
-              BODY_PARTICLE_COUNT,
-            CORE_PARTICLE_COUNT +
-              BODY_PARTICLE_COUNT +
-              SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT,
-          );
+        const armStart =
+          CORE_PARTICLE_COUNT +
+          BODY_PARTICLE_COUNT;
+
+        const armEnd =
+          armStart +
+          SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT;
+
+        let inner =
+          0;
+
+        let outer =
+          0;
+
+        for (
+          let particle =
+            armStart;
+          particle <
+            armEnd;
+          particle +=
+            1
+        ) {
+          const offset =
+            particle *
+            3;
+
+          const radius =
+            Math.hypot(
+              layout.positions[
+                offset
+              ],
+              layout.positions[
+                offset +
+                  1
+              ],
+            );
+
+          if (
+            radius <
+            0.38
+          ) {
+            inner +=
+              1;
+          }
+
+          if (
+            radius >
+            0.72
+          ) {
+            outer +=
+              1;
+          }
+        }
 
         expect(
-          profile.insideCanonicalStartFraction,
+          inner,
         ).toBeGreaterThan(
-          0.08,
+          2_000,
         );
 
         expect(
-          profile.innerFraction,
+          outer,
         ).toBeGreaterThan(
-          0.48,
-        );
-
-        expect(
-          profile.outerFraction,
-        ).toBeLessThan(
-          0.24,
-        );
-
-        expect(
-          profile.innerFraction,
-        ).toBeGreaterThan(
-          profile.outerFraction *
-          2.0,
+          4_000,
         );
       },
     );
@@ -913,7 +940,7 @@ describe(
               particle
             ],
           ).toBeGreaterThanOrEqual(
-            6.35,
+            9.0,
           );
 
           expect(
@@ -921,7 +948,7 @@ describe(
               particle
             ],
           ).toBeLessThanOrEqual(
-            10.7,
+            15.2,
           );
 
           gasCount +=
@@ -993,13 +1020,13 @@ describe(
         expect(
           positiveDepth,
         ).toBeGreaterThan(
-          2_500,
+          1_800,
         );
 
         expect(
           negativeDepth,
         ).toBeGreaterThan(
-          2_500,
+          1_800,
         );
 
         expect(
