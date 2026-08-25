@@ -197,7 +197,7 @@ export const GALAXY_LABORATORY_CASES:
       expectedType:
         GalaxyType.IRREGULAR,
       description:
-        'Cuerpo estelar V1 asimétrico y sin simetría espiral regular.',
+        'Cuerpo estelar V1 asimétrico con centro cálido, nudos de formación estelar y gas cromático irregular.',
     }),
   ]);
 

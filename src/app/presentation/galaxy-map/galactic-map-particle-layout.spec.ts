@@ -47,14 +47,19 @@ import {
   DWARF_TOTAL_PARTICLE_COUNT,
 } from './dwarf-galaxy-particle-layout';
 
+import {
+  IRREGULAR_BODY_PARTICLE_COUNT,
+  IRREGULAR_CLUSTER_PARTICLE_COUNT,
+  IRREGULAR_CORE_PARTICLE_COUNT,
+  IRREGULAR_GAS_PARTICLE_COUNT,
+  IRREGULAR_TOTAL_PARTICLE_COUNT,
+} from './irregular-galaxy-particle-layout';
+
 const CORE_PARTICLE_COUNT =
   20_000;
 
 const BODY_PARTICLE_COUNT =
   92_000;
-
-const IRREGULAR_STELLAR_BODY_REINFORCEMENT_PARTICLE_COUNT =
-  350_000;
 
 const ELLIPTICAL_PARTICLE_COUNT =
   124_000;
@@ -92,7 +97,7 @@ const DWARF_PARTICLE_COUNT =
   DWARF_TOTAL_PARTICLE_COUNT;
 
 const IRREGULAR_PARTICLE_COUNT =
-  474_000;
+  IRREGULAR_TOTAL_PARTICLE_COUNT;
 
 describe(
   'GalacticMapParticleLayoutGenerator',
@@ -416,6 +421,72 @@ describe(
           workerEquivalent.count,
         ).toBe(
           DWARF_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.positions,
+        ).toEqual(
+          synchronous.positions,
+        );
+
+        expect(
+          workerEquivalent.colors,
+        ).toEqual(
+          synchronous.colors,
+        );
+
+        expect(
+          workerEquivalent.sizes,
+        ).toEqual(
+          synchronous.sizes,
+        );
+
+        expect(
+          workerEquivalent.opacities,
+        ).toEqual(
+          synchronous.opacities,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should preserve the dedicated IRREGULAR renderer across the structured-clone Web Worker boundary',
+      () => {
+        const target =
+          model(
+            10n,
+          );
+
+        const synchronous =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const workerInput =
+          structuredClone(
+            createGalacticMapParticleRenderInput(
+              target,
+            ),
+          );
+
+        const workerEquivalent =
+          GalacticMapParticleLayoutGenerator
+            .generateFromRenderInput(
+              workerInput,
+            );
+
+        expect(
+          synchronous.count,
+        ).toBe(
+          IRREGULAR_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.count,
+        ).toBe(
+          IRREGULAR_PARTICLE_COUNT,
         );
 
         expect(
@@ -2176,7 +2247,7 @@ describe(
     );
 
     it(
-      'should render the irregular family as one continuous lopsided stellar body with embedded regions',
+      'should render IRREGULAR through a dedicated lopsided body, warm centre, mixed stars and chromatic volumetric gas',
       () => {
         const irregular =
           GalacticMapParticleLayoutGenerator
@@ -2193,52 +2264,258 @@ describe(
         );
 
         const bodyStart =
-          CORE_PARTICLE_COUNT;
+          IRREGULAR_CORE_PARTICLE_COUNT;
 
-        const reinforcedBodyEnd =
-          CORE_PARTICLE_COUNT +
-          BODY_PARTICLE_COUNT +
-          IRREGULAR_STELLAR_BODY_REINFORCEMENT_PARTICLE_COUNT;
+        const stellarBodyEnd =
+          IRREGULAR_CORE_PARTICLE_COUNT +
+          IRREGULAR_BODY_PARTICLE_COUNT +
+          IRREGULAR_CLUSTER_PARTICLE_COUNT;
+
+        const gasStart =
+          stellarBodyEnd;
+
+        const gasEnd =
+          gasStart +
+          IRREGULAR_GAS_PARTICLE_COUNT;
 
         const occupiedCells =
           projectedOccupancy(
             irregular,
             bodyStart,
-            reinforcedBodyEnd,
+            stellarBodyEnd,
             32,
           );
 
         expect(
           occupiedCells,
         ).toBeGreaterThan(
-          0.28,
+          0.30,
         );
 
         const innerFraction =
           projectedFractionWithinRadius(
             irregular,
             bodyStart,
-            reinforcedBodyEnd,
+            stellarBodyEnd,
             0.92,
           );
 
         expect(
           innerFraction,
         ).toBeGreaterThan(
-          0.36,
+          0.34,
         );
 
-        const reach =
+        expect(
           projectedRadialReach(
             irregular,
             bodyStart,
-            reinforcedBodyEnd,
+            stellarBodyEnd,
+          ),
+        ).toBeGreaterThan(
+          1.05,
+        );
+
+        expect(
+          averageColorChannel(
+            irregular,
+            0,
+            IRREGULAR_CORE_PARTICLE_COUNT,
+            0,
+          ),
+        ).toBeGreaterThan(
+          averageColorChannel(
+            irregular,
+            0,
+            IRREGULAR_CORE_PARTICLE_COUNT,
+            2,
+          ),
+        );
+
+        const stellarSizeRange =
+          inspectFiniteRange(
+            irregular.sizes.subarray(
+              bodyStart,
+              stellarBodyEnd,
+            ),
           );
 
         expect(
-          reach,
+          stellarSizeRange.maximum -
+          stellarSizeRange.minimum,
         ).toBeGreaterThan(
-          1.05,
+          2.0,
+        );
+
+        const stellarTemperatureFractions =
+          colorTemperatureFractions(
+            irregular,
+            bodyStart,
+            stellarBodyEnd,
+          );
+
+        expect(
+          stellarTemperatureFractions.blueBiased,
+        ).toBeGreaterThan(
+          0.08,
+        );
+
+        expect(
+          stellarTemperatureFractions.warmBiased,
+        ).toBeGreaterThan(
+          0.08,
+        );
+
+        const gasRed =
+          averageColorChannel(
+            irregular,
+            gasStart,
+            gasEnd,
+            0,
+          );
+
+        const gasGreen =
+          averageColorChannel(
+            irregular,
+            gasStart,
+            gasEnd,
+            1,
+          );
+
+        const gasBlue =
+          averageColorChannel(
+            irregular,
+            gasStart,
+            gasEnd,
+            2,
+          );
+
+        expect(
+          Math.max(
+            gasRed,
+            gasGreen,
+            gasBlue,
+          ) - Math.min(
+            gasRed,
+            gasGreen,
+            gasBlue,
+          ),
+        ).toBeGreaterThan(
+          0.06,
+        );
+
+        expect(
+          averageValue(
+            irregular.sizes,
+            gasStart,
+            gasEnd,
+          ),
+        ).toBeGreaterThan(
+          averageValue(
+            irregular.sizes,
+            bodyStart,
+            stellarBodyEnd,
+          ) + 2.0,
+        );
+
+        expect(
+          projectedRadialReach(
+            irregular,
+            gasStart,
+            gasEnd,
+          ),
+        ).toBeGreaterThan(
+          1.10,
+        );
+      },
+    );
+
+    it(
+      'should vary the IRREGULAR gas palette across deterministic renderer identities without changing morphology routing',
+      () => {
+        const baseInput =
+          createGalacticMapParticleRenderInput(
+            model(
+              10n,
+            ),
+          );
+
+        const gasStart =
+          IRREGULAR_CORE_PARTICLE_COUNT +
+          IRREGULAR_BODY_PARTICLE_COUNT +
+          IRREGULAR_CLUSTER_PARTICLE_COUNT;
+
+        const gasEnd =
+          gasStart +
+          IRREGULAR_GAS_PARTICLE_COUNT;
+
+        const gasMeans =
+          ['10', '1010', '3010'].map(
+            galaxyIndex => {
+              const layout =
+                GalacticMapParticleLayoutGenerator
+                  .generateFromRenderInput(
+                    Object.freeze({
+                      ...baseInput,
+                      galaxyIndex,
+                    }),
+                  );
+
+              expect(
+                layout.count,
+              ).toBe(
+                IRREGULAR_PARTICLE_COUNT,
+              );
+
+              return {
+                red:
+                  averageColorChannel(
+                    layout,
+                    gasStart,
+                    gasEnd,
+                    0,
+                  ),
+
+                green:
+                  averageColorChannel(
+                    layout,
+                    gasStart,
+                    gasEnd,
+                    1,
+                  ),
+
+                blue:
+                  averageColorChannel(
+                    layout,
+                    gasStart,
+                    gasEnd,
+                    2,
+                  ),
+              };
+            },
+          );
+
+        const pairwiseDistances = [
+          distanceBetweenColorMeans(
+            gasMeans[0],
+            gasMeans[1],
+          ),
+          distanceBetweenColorMeans(
+            gasMeans[0],
+            gasMeans[2],
+          ),
+          distanceBetweenColorMeans(
+            gasMeans[1],
+            gasMeans[2],
+          ),
+        ];
+
+        expect(
+          Math.max(
+            ...pairwiseDistances,
+          ),
+        ).toBeGreaterThan(
+          0.12,
         );
       },
     );
@@ -2354,6 +2631,72 @@ function inspectFiniteRange(
     minimum,
     maximum,
   };
+}
+
+function colorTemperatureFractions(
+  layout:
+    GalacticMapParticleLayout,
+
+  start:
+    number,
+
+  end:
+    number,
+): Readonly<{
+  blueBiased: number;
+  warmBiased: number;
+}> {
+
+  let blueBiased =
+    0;
+
+  let warmBiased =
+    0;
+
+  for (
+    let particle = start;
+    particle < end;
+    particle += 1
+  ) {
+    const colorOffset =
+      particle * 3;
+
+    const red =
+      layout.colors[
+        colorOffset
+      ];
+
+    const blue =
+      layout.colors[
+        colorOffset + 2
+      ];
+
+    if (
+      blue > red + 0.07
+    ) {
+      blueBiased += 1;
+    }
+
+    if (
+      red > blue + 0.07
+    ) {
+      warmBiased += 1;
+    }
+  }
+
+  const count =
+    Math.max(
+      1,
+      end - start,
+    );
+
+  return Object.freeze({
+    blueBiased:
+      blueBiased / count,
+
+    warmBiased:
+      warmBiased / count,
+  });
 }
 
 function distanceBetweenColorMeans(

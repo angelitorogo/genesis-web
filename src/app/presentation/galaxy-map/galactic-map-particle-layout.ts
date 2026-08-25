@@ -36,6 +36,10 @@ import {
   generateDwarfGalaxyParticleLayout,
 } from './dwarf-galaxy-particle-layout';
 
+import {
+  generateIrregularGalaxyParticleLayout,
+} from './irregular-galaxy-particle-layout';
+
 const TWO_PI =
   Math.PI *
   2;
@@ -385,6 +389,14 @@ export class GalacticMapParticleLayoutGenerator {
       dwarf
     ) {
       return generateDwarfGalaxyParticleLayout(
+        model,
+      );
+    }
+
+    if (
+      irregular
+    ) {
+      return generateIrregularGalaxyParticleLayout(
         model,
       );
     }
