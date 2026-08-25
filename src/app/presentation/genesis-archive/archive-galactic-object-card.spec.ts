@@ -83,6 +83,142 @@ describe(
     );
 
     it(
+      'should represent the QUIESCENT nucleus at 0,0 through the globular-cluster renderer path',
+      () => {
+        const centre =
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          );
+
+        const detected =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              centre,
+              ExplorationResultKind.STAR_CLUSTER,
+              DiscoveryState.DETECTED,
+            );
+
+        const discovered =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              centre,
+              ExplorationResultKind.STAR_CLUSTER,
+              DiscoveryState.DISCOVERED,
+            );
+
+        expect(
+          detected.render.renderProfile,
+        ).toBe(
+          ArchiveGalacticObjectRenderProfile.GLOBULAR_CLUSTER_FIELD,
+        );
+
+        expect(
+          discovered.scientificSubject,
+        ).toBe(
+          GalacticObjectScientificSubject.GLOBULAR_CLUSTER,
+        );
+
+        expect(
+          discovered.render.kind,
+        ).toBe(
+          ArchiveGalacticObjectRenderKind.GLOBULAR_CLUSTER,
+        );
+      },
+    );
+
+    it(
+      'should route the canonical AGN centre to the dedicated black-hole renderer at every knowledge level',
+      () => {
+        const centre =
+          new GalacticObjectLocator(
+            20n,
+            0n,
+            0n,
+          );
+
+        for (
+          const state of [
+            DiscoveryState.DETECTED,
+            DiscoveryState.DISCOVERED,
+            DiscoveryState.CATALOGUED,
+            DiscoveryState.CONFIRMED,
+          ]
+        ) {
+          const card =
+            ArchiveGalacticObjectCardAssembler
+              .build(
+                generationKey,
+                centre,
+                ExplorationResultKind.EXTREME_OBJECT,
+                state,
+              );
+
+          expect(
+            card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind.AGN_NUCLEUS,
+          );
+
+          expect(
+            card.render.agnNucleusRenderModel,
+          ).not.toBeNull();
+
+          expect(
+            card.render.quasarNucleusRenderModel ?? null,
+          ).toBeNull();
+        }
+      },
+    );
+
+    it(
+      'should route the canonical QUASAR centre to the dedicated QUASAR renderer at every knowledge level',
+      () => {
+        const centre =
+          new GalacticObjectLocator(
+            331n,
+            0n,
+            0n,
+          );
+
+        for (
+          const state of [
+            DiscoveryState.DETECTED,
+            DiscoveryState.DISCOVERED,
+            DiscoveryState.CATALOGUED,
+            DiscoveryState.CONFIRMED,
+          ]
+        ) {
+          const card =
+            ArchiveGalacticObjectCardAssembler
+              .build(
+                generationKey,
+                centre,
+                ExplorationResultKind.EXTREME_OBJECT,
+                state,
+              );
+
+          expect(
+            card.render.kind,
+          ).toBe(
+            ArchiveGalacticObjectRenderKind.QUASAR_NUCLEUS,
+          );
+
+          expect(
+            card.render.quasarNucleusRenderModel,
+          ).not.toBeNull();
+
+          expect(
+            card.render.agnNucleusRenderModel ?? null,
+          ).toBeNull();
+        }
+      },
+    );
+
+    it(
       'should keep DETECTED on the coarse point-9.4 family without materializing hidden physical properties',
       () => {
         const resolverSpy =
@@ -1143,15 +1279,16 @@ describe(
     it(
       'should reveal only shock characterization for a catalogued persistent supernova remnant',
       () => {
+        const locator =
+          findPersistentSupernovaRemnantLocator(
+            generationKey,
+          );
+
         const card =
           ArchiveGalacticObjectCardAssembler
             .build(
               generationKey,
-              new GalacticObjectLocator(
-                0n,
-                0n,
-                0n,
-              ),
+              locator,
               ExplorationResultKind.EXTREME_OBJECT,
               DiscoveryState.CATALOGUED,
             );
@@ -1189,15 +1326,16 @@ describe(
     it(
       'should reveal supernova-remnant evolution facts only after confirmation',
       () => {
+        const locator =
+          findPersistentSupernovaRemnantLocator(
+            generationKey,
+          );
+
         const card =
           ArchiveGalacticObjectCardAssembler
             .build(
               generationKey,
-              new GalacticObjectLocator(
-                0n,
-                0n,
-                0n,
-              ),
+              locator,
               ExplorationResultKind.EXTREME_OBJECT,
               DiscoveryState.CONFIRMED,
             );
@@ -1772,3 +1910,39 @@ describe(
 
   },
 );
+
+function findPersistentSupernovaRemnantLocator(
+  generationKey:
+    UniverseGenerationKey,
+): GalacticObjectLocator {
+
+  for (
+    let index =
+      1n;
+    index <
+      2_048n;
+    index +=
+      1n
+  ) {
+    const candidate =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          generationKey,
+          candidate,
+        )
+    ) {
+      return candidate;
+    }
+  }
+
+  throw new RangeError(
+    'Missing deterministic persistent supernova-remnant test locator outside the reserved galactic nucleus object.',
+  );
+}

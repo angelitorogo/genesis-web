@@ -479,9 +479,9 @@ describe(
     );
 
     it(
-      'should expose inactive AGN and QUASAR nuclei only as preliminary candidate hints',
+      'should expose QUIESCENT, AGN and QUASAR nuclei only as preliminary candidate hints',
       () => {
-        const noNucleus =
+        const quiescent =
           GalaxyGenerator.generate(
             canonicalGenerationKey,
             42n,
@@ -500,7 +500,15 @@ describe(
           );
 
         expect(
-          noNucleus.nucleus,
+          quiescent.nucleus
+            ?.state,
+        ).toBe(
+          GalacticNucleusState.QUIESCENT,
+        );
+
+        expect(
+          quiescent.nucleus
+            ?.supermassiveBlackHole ?? null,
         ).toBeNull();
 
         expect(

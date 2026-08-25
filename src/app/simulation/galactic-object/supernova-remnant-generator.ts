@@ -37,6 +37,10 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  isGalacticNucleusLocator,
+} from '../../domain/universe/galactic-center';
+
+import {
   ExplorationSectorResultEngine,
 } from '../exploration/exploration-sector-result-engine';
 
@@ -151,6 +155,14 @@ export class SupernovaRemnantGenerator {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
       );
+    }
+
+    if (
+      isGalacticNucleusLocator(
+        locator,
+      )
+    ) {
+      return false;
     }
 
     if (

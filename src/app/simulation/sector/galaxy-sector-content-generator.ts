@@ -29,6 +29,11 @@ import {
 } from '../../domain/seed/hierarchical-seeds';
 
 import {
+  GALACTIC_NUCLEUS_OBJECT_INDEX,
+  isGalacticCenterCoordinates,
+} from '../../domain/universe/galactic-center';
+
+import {
   type Galaxy,
 } from '../../domain/universe/galaxy';
 
@@ -313,6 +318,33 @@ export class GalaxySectorContentGenerator {
               ),
             ),
         );
+    }
+
+    /*
+     * Galactic-centre contract: (0, 0) always exposes the persistent nucleus
+     * identity at GalacticObject index 0, regardless of ordinary occupancy.
+     * Existing non-central procedural identities are untouched.
+     */
+    if (
+      isGalacticCenterCoordinates(
+        coordinates,
+      ) &&
+      !galacticObjectLocators
+        .some(
+          (child) =>
+            child.galacticObjectIndex ===
+            GALACTIC_NUCLEUS_OBJECT_INDEX,
+        )
+    ) {
+      galacticObjectLocators =
+        Object.freeze([
+          new GalacticObjectLocator(
+            locator.galaxyIndex,
+            locator.sectorKey,
+            GALACTIC_NUCLEUS_OBJECT_INDEX,
+          ),
+          ...galacticObjectLocators,
+        ]);
     }
 
     return new GalaxySectorContent(

@@ -1462,6 +1462,30 @@ function paletteFor(
         highlight:
           '#effcff',
       });
+
+    case ArchiveGalacticObjectRenderKind.AGN_NUCLEUS:
+      return Object.freeze({
+        primary:
+          '#ffb05f',
+        secondary:
+          '#6ad7ff',
+        accent:
+          '#ff6d48',
+        highlight:
+          '#fff7e8',
+      });
+
+    case ArchiveGalacticObjectRenderKind.QUASAR_NUCLEUS:
+      return Object.freeze({
+        primary:
+          '#f5f4ff',
+        secondary:
+          '#6ad7ff',
+        accent:
+          '#a978ff',
+        highlight:
+          '#ffffff',
+      });
   }
 }
 

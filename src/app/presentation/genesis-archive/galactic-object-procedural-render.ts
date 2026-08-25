@@ -6,6 +6,14 @@ import {
 } from '@angular/core';
 
 import {
+  AgnNucleusRender,
+} from '../laboratory/galactic-objects/agn-nucleus-render';
+
+import {
+  QuasarNucleusRender,
+} from '../laboratory/galactic-objects/quasar-nucleus-render';
+
+import {
   EmissionNebulaRender,
 } from './emission-nebula-render';
 
@@ -68,6 +76,8 @@ import {
     true,
 
   imports: [
+    AgnNucleusRender,
+    QuasarNucleusRender,
     EmissionNebulaRender,
     ReflectionNebulaRender,
     DarkNebulaRender,
@@ -94,6 +104,22 @@ export class GalacticObjectProceduralRender {
 
   readonly descriptor =
     input.required<ArchiveGalacticObjectRenderDescriptor>();
+
+  readonly agnNucleusRenderModel =
+    computed(
+      () =>
+        this.descriptor()
+          .agnNucleusRenderModel ??
+        null,
+    );
+
+  readonly quasarNucleusRenderModel =
+    computed(
+      () =>
+        this.descriptor()
+          .quasarNucleusRenderModel ??
+        null,
+    );
 
   readonly renderModel =
     computed(

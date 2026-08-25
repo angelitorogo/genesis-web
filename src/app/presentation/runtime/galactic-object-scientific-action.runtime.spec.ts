@@ -72,6 +72,10 @@ import {
 } from '../../simulation/observation/observation-instrument-catalog';
 
 import {
+  SupernovaRemnantGenerator,
+} from '../../simulation/galactic-object/supernova-remnant-generator';
+
+import {
   ProceduralTargetResolver,
 } from '../../simulation/regeneration/procedural-target-resolver';
 
@@ -123,10 +127,8 @@ describe(
       );
 
     const remnantLocator =
-      new GalacticObjectLocator(
-        0n,
-        0n,
-        0n,
+      findPersistentSupernovaRemnantLocator(
+        generationKey,
       );
 
     let database:
@@ -433,3 +435,39 @@ describe(
     );
   },
 );
+
+function findPersistentSupernovaRemnantLocator(
+  generationKey:
+    UniverseGenerationKey,
+): GalacticObjectLocator {
+
+  for (
+    let index =
+      1n;
+    index <
+      2_048n;
+    index +=
+      1n
+  ) {
+    const candidate =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          generationKey,
+          candidate,
+        )
+    ) {
+      return candidate;
+    }
+  }
+
+  throw new RangeError(
+    'Missing deterministic persistent supernova-remnant test locator outside the reserved galactic nucleus object.',
+  );
+}

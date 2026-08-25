@@ -93,6 +93,36 @@ describe(
     }
 
     it(
+      'should exclude the reserved QUIESCENT galactic-centre locator from the open-cluster subset',
+      () => {
+        const centre =
+          locator(
+            0n,
+          );
+
+        expect(
+          ExplorationSectorResultEngine
+            .resolveGalacticObjectKind(
+              generationKey,
+              centre,
+            ),
+        ).toBe(
+          ExplorationResultKind.STAR_CLUSTER,
+        );
+
+        expect(
+          OpenClusterGenerator
+            .isOpenClusterLocator(
+              generationKey,
+              centre,
+            ),
+        ).toBe(
+          false,
+        );
+      },
+    );
+
+    it(
       'should materialize only the point-12.4 open subset of the frozen point-9.4 STAR_CLUSTER family',
       () => {
         const target =

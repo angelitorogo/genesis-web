@@ -37,6 +37,14 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  isGalacticNucleusLocator,
+} from '../../domain/universe/galactic-center';
+
+import {
+  GalacticNucleusState,
+} from '../../domain/universe/galactic-nucleus-state';
+
+import {
   GalacticObjectScientificSubjectResolver,
 } from '../../simulation/galactic-object/galactic-object-scientific-subject-resolver';
 
@@ -59,6 +67,24 @@ import {
 import {
   SupernovaRemnantGenerator,
 } from '../../simulation/galactic-object/supernova-remnant-generator';
+
+import {
+  GalacticCenterNucleusResolver,
+} from '../../simulation/nuclear/galactic-center-nucleus-resolver';
+
+import {
+  GalaxyGenerator,
+} from '../../simulation/universe/galaxy-generator';
+
+import {
+  createAgnNucleusRenderModel,
+  type AgnNucleusRenderModel,
+} from '../laboratory/galactic-objects/agn-nucleus-render-model';
+
+import {
+  createQuasarNucleusRenderModel,
+  type QuasarNucleusRenderModel,
+} from '../laboratory/galactic-objects/quasar-nucleus-render-model';
 
 export const ArchiveGalacticObjectKnowledgeLevel =
   Object.freeze({
@@ -102,6 +128,12 @@ export const ArchiveGalacticObjectRenderKind =
 
     SUPERNOVA_REMNANT:
       'SUPERNOVA_REMNANT',
+
+    AGN_NUCLEUS:
+      'AGN_NUCLEUS',
+
+    QUASAR_NUCLEUS:
+      'QUASAR_NUCLEUS',
   } as const);
 
 export type ArchiveGalacticObjectRenderKind =
@@ -181,6 +213,18 @@ export interface ArchiveGalacticObjectRenderDescriptor {
 
   readonly renderProfile?:
     ArchiveGalacticObjectRenderProfile | null;
+
+  /**
+   * Central active nuclei are the only point-12.8 descriptors that carry an
+   * already-built galaxy-level visual model. The fields stay absent for every
+   * ordinary GalacticObject so the existing scientific reveal contract is
+   * unchanged outside reserved galactic coordinates (0, 0).
+   */
+  readonly agnNucleusRenderModel?:
+    AgnNucleusRenderModel | null;
+
+  readonly quasarNucleusRenderModel?:
+    QuasarNucleusRenderModel | null;
 
   readonly scale:
     number;
@@ -271,6 +315,22 @@ export class ArchiveGalacticObjectCardAssembler {
         generationKey,
         locator,
       );
+
+    const centralActiveNucleusCard =
+      activeGalacticNucleusCardOrNull(
+        generationKey,
+        locator,
+        coarseFamily,
+        knowledgeLevel,
+        renderSeed,
+      );
+
+    if (
+      centralActiveNucleusCard !==
+        null
+    ) {
+      return centralActiveNucleusCard;
+    }
 
     const earlyRenderProfile =
       renderProfileForObservedMorphology(
@@ -408,6 +468,134 @@ export class ArchiveGalacticObjectCardAssembler {
       state,
     );
   }
+}
+
+function activeGalacticNucleusCardOrNull(
+  generationKey:
+    UniverseGenerationKey,
+
+  locator:
+    GalacticObjectLocator,
+
+  coarseFamily:
+    GalacticObjectScientificSurveyFamily,
+
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+
+  renderSeed:
+    string,
+): ArchiveGalacticObjectCardModel | null {
+
+  if (
+    !isGalacticNucleusLocator(
+      locator,
+    )
+  ) {
+    return null;
+  }
+
+  const galaxy =
+    GalaxyGenerator.generate(
+      generationKey,
+      locator.galaxyIndex,
+    );
+
+  const nucleusState =
+    GalacticCenterNucleusResolver
+      .resolveState(
+        galaxy,
+      );
+
+  if (
+    nucleusState ===
+      GalacticNucleusState.QUIESCENT
+  ) {
+    return null;
+  }
+
+  if (
+    coarseFamily !==
+      GalacticObjectScientificSurveyFamily.EXTREME_OBJECT
+  ) {
+    throw new RangeError(
+      'AGN and QUASAR galactic-centre targets must use the EXTREME_OBJECT survey family.',
+    );
+  }
+
+  const isQuasar =
+    nucleusState ===
+      GalacticNucleusState.QUASAR;
+
+  const title =
+    isQuasar
+      ? 'QUASAR galáctico'
+      : 'Núcleo galáctico activo (AGN)';
+
+  const summary =
+    isQuasar
+      ? 'La fuente persistente de las coordenadas galácticas 0,0 corresponde al QUASAR del núcleo de esta galaxia.'
+      : 'La fuente persistente de las coordenadas galácticas 0,0 corresponde al agujero negro supermasivo activo del núcleo de esta galaxia.';
+
+  const render:
+    ArchiveGalacticObjectRenderDescriptor =
+    Object.freeze({
+      kind:
+        isQuasar
+          ? ArchiveGalacticObjectRenderKind.QUASAR_NUCLEUS
+          : ArchiveGalacticObjectRenderKind.AGN_NUCLEUS,
+      knowledgeLevel,
+      seed:
+        renderSeed,
+      accessibleLabel:
+        isQuasar
+          ? 'Render procedural del QUASAR central de la galaxia'
+          : 'Render procedural del agujero negro y núcleo galáctico activo',
+      variant:
+        nucleusState.name,
+      renderProfile:
+        null,
+      agnNucleusRenderModel:
+        isQuasar
+          ? null
+          : createAgnNucleusRenderModel(
+              galaxy,
+            ),
+      quasarNucleusRenderModel:
+        isQuasar
+          ? createQuasarNucleusRenderModel(
+              galaxy,
+            )
+          : null,
+      scale:
+        1,
+      density:
+        1,
+      energy:
+        1,
+      concentration:
+        1,
+    });
+
+  return Object.freeze({
+    coarseFamily,
+    scientificSubject:
+      null,
+    knowledgeLevel,
+    knowledgeLevelLabel:
+      knowledgeLevelLabel(
+        knowledgeLevel,
+      ),
+    title,
+    summary,
+    nextScientificStep:
+      isQuasar
+        ? 'Caracterización del QUASAR central'
+        : 'Caracterización del núcleo galáctico activo',
+    facts:
+      Object.freeze([]),
+    render,
+  });
 }
 
 function buildPhysicalCard(

@@ -97,6 +97,46 @@ describe(
     }
 
     it(
+      'should represent the reserved QUIESCENT galactic centre as a globular cluster',
+      () => {
+        const centre =
+          locator(
+            0n,
+          );
+
+        expect(
+          ExplorationSectorResultEngine
+            .resolveGalacticObjectKind(
+              generationKey,
+              centre,
+            ),
+        ).toBe(
+          ExplorationResultKind.STAR_CLUSTER,
+        );
+
+        expect(
+          OpenClusterGenerator
+            .isOpenClusterLocator(
+              generationKey,
+              centre,
+            ),
+        ).toBe(
+          false,
+        );
+
+        expect(
+          GlobularClusterGenerator
+            .isGlobularClusterLocator(
+              generationKey,
+              centre,
+            ),
+        ).toBe(
+          true,
+        );
+      },
+    );
+
+    it(
       'should materialize the point-12.5 complement reserved by point 12.4 inside STAR_CLUSTER',
       () => {
         const target =

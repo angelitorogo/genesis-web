@@ -273,7 +273,7 @@ describe(
     );
 
     it(
-      'should allow a galaxy to have no differentiated nucleus',
+      'should map the historical no-nucleus branch to a mandatory QUIESCENT galactic centre',
       () => {
         const result =
           GalaxyMorphologyGenerator
@@ -289,6 +289,18 @@ describe(
 
         expect(
           result.nucleus,
+        ).not.toBeNull();
+
+        expect(
+          result.nucleus
+            ?.state,
+        ).toBe(
+          GalacticNucleusState.QUIESCENT,
+        );
+
+        expect(
+          result.nucleus
+            ?.supermassiveBlackHole,
         ).toBeNull();
       },
     );
@@ -392,6 +404,50 @@ describe(
           result.nucleus
             ?.supermassiveBlackHole,
         ).not.toBeNull();
+      },
+    );
+
+    it(
+      'should never generate a QUASAR in DWARF or IRREGULAR galaxies',
+      () => {
+        for (
+          const typeDraw of [
+            0.72,
+            0.88,
+          ]
+        ) {
+          const result =
+            GalaxyMorphologyGenerator
+              .generateV1(
+                makeDraws({
+                  type:
+                    typeDraw,
+
+                  nucleusPresence:
+                    0,
+
+                  blackHolePresence:
+                    0,
+
+                  nucleusState:
+                    0,
+                }),
+              );
+
+          expect(
+            result.nucleus
+              ?.state,
+          ).toBe(
+            GalacticNucleusState.AGN,
+          );
+
+          expect(
+            result.nucleus
+              ?.state,
+          ).not.toBe(
+            GalacticNucleusState.QUASAR,
+          );
+        }
       },
     );
 

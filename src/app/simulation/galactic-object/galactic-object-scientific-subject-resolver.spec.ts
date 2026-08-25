@@ -26,6 +26,10 @@ import {
   GalacticObjectScientificSubjectResolver,
 } from './galactic-object-scientific-subject-resolver';
 
+import {
+  SupernovaRemnantGenerator,
+} from './supernova-remnant-generator';
+
 describe(
   'GalacticObjectScientificSubjectResolver',
   () => {
@@ -140,10 +144,8 @@ describe(
           GalacticObjectScientificSubjectResolver
             .resolve(
               generationKey,
-              new GalacticObjectLocator(
-                0n,
-                0n,
-                0n,
+              findPersistentSupernovaRemnantLocator(
+                generationKey,
               ),
               DiscoveryState.DISCOVERED,
             ),
@@ -202,3 +204,39 @@ describe(
     );
   },
 );
+
+function findPersistentSupernovaRemnantLocator(
+  generationKey:
+    UniverseGenerationKey,
+): GalacticObjectLocator {
+
+  for (
+    let index =
+      1n;
+    index <
+      2_048n;
+    index +=
+      1n
+  ) {
+    const candidate =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          generationKey,
+          candidate,
+        )
+    ) {
+      return candidate;
+    }
+  }
+
+  throw new RangeError(
+    'Missing deterministic persistent supernova-remnant test locator outside the reserved galactic nucleus object.',
+  );
+}

@@ -31,11 +31,25 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  GALACTIC_NUCLEUS_OBJECT_INDEX,
+  isGalacticCenterCoordinates,
+  isGalacticNucleusLocator,
+} from '../../domain/universe/galactic-center';
+
+import {
+  GalacticNucleusState,
+} from '../../domain/universe/galactic-nucleus-state';
+
+import {
   LocatedObservationObject,
   ObservationClassification,
   ObservationTransientCandidate,
   ObservationTransientCandidateId,
 } from '../../domain/observation/observation-classification';
+
+import {
+  GalacticCenterNucleusResolver,
+} from '../nuclear/galactic-center-nucleus-resolver';
 
 import {
   GalaxySectorContentGenerator,
@@ -203,6 +217,50 @@ export class ExplorationSectorResultEngine {
             .coordinates,
         );
 
+    if (
+      isGalacticCenterCoordinates(
+        canonicalScan
+          .selection
+          .coordinates,
+      )
+    ) {
+      const nucleusLocator =
+        content
+          .galacticObjectLocators
+          .find(
+            (locator) =>
+              locator.galacticObjectIndex ===
+              GALACTIC_NUCLEUS_OBJECT_INDEX,
+          );
+
+      if (
+        nucleusLocator ===
+        undefined
+      ) {
+        throw new RangeError(
+          'Galactic centre sector must expose the reserved nucleus locator.',
+        );
+      }
+
+      const nucleusState =
+        GalacticCenterNucleusResolver
+          .resolveState(
+            galaxy,
+          );
+
+      return new ExplorationSectorResult(
+        canonicalScan,
+        nucleusState ===
+          GalacticNucleusState.QUIESCENT
+          ? ExplorationResultKind.STAR_CLUSTER
+          : ExplorationResultKind.EXTREME_OBJECT,
+        new LocatedObservationObject(
+          generationKey,
+          nucleusLocator,
+        ),
+      );
+    }
+
     const candidates:
       LocatedCandidate[] =
       [];
@@ -319,6 +377,29 @@ export class ExplorationSectorResultEngine {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
       );
+    }
+
+    if (
+      isGalacticNucleusLocator(
+        locator,
+      )
+    ) {
+      const galaxy =
+        GalaxyGenerator.generate(
+          generationKey,
+          locator.galaxyIndex,
+        );
+
+      const nucleusState =
+        GalacticCenterNucleusResolver
+          .resolveState(
+            galaxy,
+          );
+
+      return nucleusState ===
+        GalacticNucleusState.QUIESCENT
+        ? ExplorationResultKind.STAR_CLUSTER
+        : ExplorationResultKind.EXTREME_OBJECT;
     }
 
     return coarseGalacticObjectKindV1(

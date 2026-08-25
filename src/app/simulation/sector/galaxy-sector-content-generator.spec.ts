@@ -168,7 +168,8 @@ describe(
         );
 
         /*
-         * Preserve the already-frozen Web 5.3 procedural content.
+         * Point-5.x ordinary content remains unchanged, but the galactic-centre
+         * contract now reserves GalacticObject index 0 for the nucleus.
          */
         expect(
           content
@@ -178,7 +179,55 @@ describe(
         expect(
           content
             .galacticObjectLocators,
-        ).toEqual([]);
+        ).toEqual([
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          ),
+        ]);
+      },
+    );
+
+    it(
+      'should reserve GalacticObject index zero at 0,0 for every galaxy morphology',
+      () => {
+        for (
+          const type of GalaxyType.values
+        ) {
+          const galaxy =
+            galaxyWithType(
+              canonicalGalaxy,
+              type,
+            );
+
+          const content =
+            GalaxySectorContentGenerator
+              .generate(
+                galaxy,
+                {
+                  x:
+                    0,
+
+                  y:
+                    0,
+                },
+              );
+
+          expect(
+            content
+              .galacticObjectLocators
+              .some(
+                (locator) =>
+                  locator.galacticObjectIndex ===
+                    0n &&
+                  locator.sectorKey ===
+                    0n,
+              ),
+          ).toBe(
+            true,
+          );
+        }
       },
     );
 

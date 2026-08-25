@@ -87,7 +87,7 @@ export class V1GalaxyDraws {
 export interface GalaxyMorphologyResult {
   readonly type: GalaxyType;
   readonly physicalProperties: GalaxyPhysicalProperties;
-  readonly nucleus: GalacticNucleus | null;
+  readonly nucleus: GalacticNucleus;
 }
 
 interface V1GalaxyProfile {
@@ -521,11 +521,16 @@ const IRREGULAR_PROFILE:
     smbhMassMax:
       3.0e7,
 
+    /*
+     * IRREGULAR V1 never hosts a QUASAR. Preserve the previous total active
+     * incidence (AGN + QUASAR = 0.063) by folding the old QUASAR slice into
+     * AGN instead of silently turning those galaxies quiescent.
+     */
     agnProbabilityGivenSmbh:
-      0.06,
+      0.063,
 
     quasarProbabilityGivenSmbh:
-      0.003,
+      0.0,
   });
 
 const DWARF_PROFILE:
@@ -609,11 +614,16 @@ const DWARF_PROFILE:
     smbhMassMax:
       1.0e7,
 
+    /*
+     * DWARF V1 never hosts a QUASAR. Preserve the previous total active
+     * incidence (AGN + QUASAR = 0.041) by folding the old QUASAR slice into
+     * AGN.
+     */
     agnProbabilityGivenSmbh:
-      0.04,
+      0.041,
 
     quasarProbabilityGivenSmbh:
-      0.001,
+      0.0,
   });
 
 /**
@@ -792,9 +802,22 @@ export class GalaxyMorphologyGenerator {
       draws.nucleusPresence <
       profile.nucleusProbability;
 
+    /*
+     * Frozen galactic-centre contract:
+     * every galaxy owns a physical nucleus at coordinates (0, 0).
+     *
+     * The historical `nucleusProbability` draw is retained without consuming
+     * any extra entropy. A failed draw no longer means "no nucleus"; it means
+     * a baseline QUIESCENT centre without an SMBH-capable differentiated
+     * component. This preserves the previous active-episode incidence while
+     * removing the invalid empty-centre state.
+     */
     let nucleus:
-      GalacticNucleus | null =
-      null;
+      GalacticNucleus =
+      new GalacticNucleus(
+        GalacticNucleusState.QUIESCENT,
+        null,
+      );
 
     if (
       hasNucleus

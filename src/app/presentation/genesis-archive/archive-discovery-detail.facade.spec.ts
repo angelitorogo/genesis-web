@@ -75,6 +75,10 @@ import {
 } from '../../simulation/galactic-object/galactic-object-scientific-subject-resolver';
 
 import {
+  SupernovaRemnantGenerator,
+} from '../../simulation/galactic-object/supernova-remnant-generator';
+
+import {
   GALACTIC_OBJECT_SCIENTIFIC_ACTION_RUNTIME,
 } from '../runtime/galactic-object-scientific-action.runtime';
 
@@ -375,17 +379,13 @@ describe(
               DiscoveryState.CONFIRMED,
           });
 
-        const coordinates =
-          new GalaxySectorCoordinates(
-            0,
-            0,
+        const locator =
+          findPersistentSupernovaRemnantLocator(
+            generationKey,
           );
 
         const sectorKey =
-          GalaxySectorKeyCodec
-            .encode(
-              coordinates,
-            );
+          locator.sectorKey;
 
         await facade.load({
           locatorKind:
@@ -397,7 +397,11 @@ describe(
               10,
             ),
           galacticObjectIndex:
-            '0',
+            locator
+              .galacticObjectIndex
+              .toString(
+                10,
+              ),
           universeSeed:
             generationKey
               .universeSeed
@@ -409,11 +413,7 @@ describe(
         expect(
           stateReads,
         ).toEqual([
-          new GalacticObjectLocator(
-            0n,
-            sectorKey,
-            0n,
-          ),
+          locator,
         ]);
 
         const model =
@@ -1425,10 +1425,8 @@ describe(
       'should keep a DETECTED extreme-object survey visible but blocked until a compatible level-2 instrument is unlocked',
       async () => {
         const locator =
-          new GalacticObjectLocator(
-            0n,
-            0n,
-            0n,
+          findPersistentSupernovaRemnantLocator(
+            generationKey,
           );
 
         const repositories:
@@ -1539,9 +1537,17 @@ describe(
           galaxyIndex:
             '0',
           sectorKey:
-            '0',
+            locator
+              .sectorKey
+              .toString(
+                10,
+              ),
           galacticObjectIndex:
-            '0',
+            locator
+              .galacticObjectIndex
+              .toString(
+                10,
+              ),
           universeSeed:
             generationKey.universeSeed.serialize(),
           generatorVersionCode:
@@ -1602,3 +1608,39 @@ describe(
     );
   },
 );
+
+function findPersistentSupernovaRemnantLocator(
+  generationKey:
+    UniverseGenerationKey,
+): GalacticObjectLocator {
+
+  for (
+    let index =
+      1n;
+    index <
+      2_048n;
+    index +=
+      1n
+  ) {
+    const candidate =
+      new GalacticObjectLocator(
+        0n,
+        0n,
+        index,
+      );
+
+    if (
+      SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          generationKey,
+          candidate,
+        )
+    ) {
+      return candidate;
+    }
+  }
+
+  throw new RangeError(
+    'Missing deterministic persistent supernova-remnant test locator outside the reserved galactic nucleus object.',
+  );
+}

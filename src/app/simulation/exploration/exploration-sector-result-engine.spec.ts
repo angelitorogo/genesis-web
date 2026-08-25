@@ -22,8 +22,20 @@ import {
 } from '../../domain/observation/observation-classification';
 
 import {
+  GalacticNucleusState,
+} from '../../domain/universe/galactic-nucleus-state';
+
+import {
+  GalaxyType,
+} from '../../domain/universe/galaxy-type';
+
+import {
   UniverseSeed,
 } from '../../domain/universe/universe-seed';
+
+import {
+  GalacticCenterNucleusResolver,
+} from '../nuclear/galactic-center-nucleus-resolver';
 
 import {
   GalaxySectorContentGenerator,
@@ -115,6 +127,199 @@ describe(
             .Unclassified,
         );
       },
+    );
+
+    it(
+      'should reserve 0,0 for the host-galaxy nucleus and never select an ordinary sector result there',
+      () => {
+        const cases = [
+          {
+            galaxyIndex:
+              0n,
+            expectedState:
+              GalacticNucleusState.QUIESCENT,
+            expectedKind:
+              ExplorationResultKind.STAR_CLUSTER,
+          },
+          {
+            galaxyIndex:
+              20n,
+            expectedState:
+              GalacticNucleusState.AGN,
+            expectedKind:
+              ExplorationResultKind.EXTREME_OBJECT,
+          },
+          {
+            galaxyIndex:
+              331n,
+            expectedState:
+              GalacticNucleusState.QUASAR,
+            expectedKind:
+              ExplorationResultKind.EXTREME_OBJECT,
+          },
+        ] as const;
+
+        for (
+          const item of cases
+        ) {
+          const galaxy =
+            GalaxyGenerator.generate(
+              generationKey,
+              item.galaxyIndex,
+            );
+
+          expect(
+            GalacticCenterNucleusResolver
+              .resolveState(
+                galaxy,
+              ),
+          ).toBe(
+            item.expectedState,
+          );
+
+          const selection =
+            ExplorationSectorScanEngine
+              .prepareSector(
+                generationKey,
+                item.galaxyIndex,
+                0,
+                0,
+              );
+
+          const result =
+            ExplorationSectorResultEngine
+              .resolve(
+                ExplorationSectorScanEngine
+                  .scan(
+                    selection,
+                  ),
+              );
+
+          expect(
+            result.resultKind,
+          ).toBe(
+            item.expectedKind,
+          );
+
+          expect(
+            result.targetLocator,
+          ).toBeInstanceOf(
+            GalacticObjectLocator,
+          );
+
+          expect(
+            result.targetLocator
+              ?.sectorKey,
+          ).toBe(
+            0n,
+          );
+
+          expect(
+            result.targetLocator
+              ?.galacticObjectIndex,
+          ).toBe(
+            0n,
+          );
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should enforce the same 0,0 nucleus contract across all five generated galaxy morphologies',
+      () => {
+        const seen =
+          new Set<number>();
+
+        for (
+          let galaxyIndex = 0n;
+          galaxyIndex < 1_024n &&
+          seen.size < GalaxyType.values.length;
+          galaxyIndex += 1n
+        ) {
+          const galaxy =
+            GalaxyGenerator.generate(
+              generationKey,
+              galaxyIndex,
+            );
+
+          if (
+            seen.has(
+              galaxy.type.code,
+            )
+          ) {
+            continue;
+          }
+
+          seen.add(
+            galaxy.type.code,
+          );
+
+          const nucleusState =
+            GalacticCenterNucleusResolver
+              .resolveState(
+                galaxy,
+              );
+
+          if (
+            galaxy.type === GalaxyType.DWARF ||
+            galaxy.type === GalaxyType.IRREGULAR
+          ) {
+            expect(
+              nucleusState,
+            ).not.toBe(
+              GalacticNucleusState.QUASAR,
+            );
+          }
+
+          const selection =
+            ExplorationSectorScanEngine
+              .prepareSector(
+                generationKey,
+                galaxyIndex,
+                0,
+                0,
+              );
+
+          const result =
+            ExplorationSectorResultEngine
+              .resolve(
+                ExplorationSectorScanEngine
+                  .scan(
+                    selection,
+                  ),
+              );
+
+          expect(
+            result.resultKind,
+          ).toBe(
+            nucleusState === GalacticNucleusState.QUIESCENT
+              ? ExplorationResultKind.STAR_CLUSTER
+              : ExplorationResultKind.EXTREME_OBJECT,
+          );
+
+          expect(
+            result.targetLocator,
+          ).toEqual(
+            new GalacticObjectLocator(
+              galaxyIndex,
+              0n,
+              0n,
+            ),
+          );
+        }
+
+        expect(
+          seen,
+        ).toEqual(
+          new Set(
+            GalaxyType.values.map(
+              type => type.code,
+            ),
+          ),
+        );
+      },
+      30_000,
     );
 
     it(

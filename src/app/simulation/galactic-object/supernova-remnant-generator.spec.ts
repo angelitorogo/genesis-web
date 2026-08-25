@@ -91,13 +91,40 @@ describe(
       );
     }
 
+    function firstOrdinarySnrLocator():
+      GalacticObjectLocator {
+
+      for (
+        let index = 1n;
+        index < 4_096n;
+        index += 1n
+      ) {
+        const candidate =
+          locator(
+            index,
+          );
+
+        if (
+          SupernovaRemnantGenerator
+            .isSupernovaRemnantLocator(
+              generationKey,
+              candidate,
+            )
+        ) {
+          return candidate;
+        }
+      }
+
+      throw new RangeError(
+        'Missing deterministic ordinary SNR representative.',
+      );
+    }
+
     it(
       'should materialize a persistent supernova remnant only inside canonical EXTREME_OBJECT',
       () => {
         const target =
-          locator(
-            0n,
-          );
+          firstOrdinarySnrLocator();
 
         expect(
           ExplorationSectorResultEngine
@@ -126,6 +153,26 @@ describe(
             ),
         ).toBeInstanceOf(
           SupernovaRemnant,
+        );
+      },
+    );
+
+    it(
+      'should never reinterpret the reserved galactic-centre nucleus as a supernova remnant',
+      () => {
+        const target =
+          locator(
+            0n,
+          );
+
+        expect(
+          SupernovaRemnantGenerator
+            .isSupernovaRemnantLocator(
+              generationKey,
+              target,
+            ),
+        ).toBe(
+          false,
         );
       },
     );
@@ -203,9 +250,7 @@ describe(
       'should regenerate exactly the same Ground Truth for the same locator',
       () => {
         const target =
-          locator(
-            0n,
-          );
+          firstOrdinarySnrLocator();
 
         const first =
           SupernovaRemnantGenerator
@@ -245,9 +290,7 @@ describe(
       'should resolve morphology deterministically without requiring full physical materialization',
       () => {
         const target =
-          locator(
-            0n,
-          );
+          firstOrdinarySnrLocator();
 
         expect(
           SupernovaRemnantGenerator
@@ -392,9 +435,7 @@ describe(
           SupernovaRemnantGenerator
             .generate(
               generationKey,
-              locator(
-                0n,
-              ),
+              firstOrdinarySnrLocator(),
             )
             .physicalProperties;
 

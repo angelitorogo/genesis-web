@@ -3,6 +3,31 @@ import {
 } from '@angular/core/testing';
 
 import {
+  DiscoveryState,
+} from '../../domain/discovery/discovery-state';
+
+import {
+  ExplorationResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
+  GalacticObjectLocator,
+} from '../../domain/generation/procedural-locator';
+
+import {
+  GeneratorVersion,
+} from '../../domain/generation/generator-version';
+
+import {
+  UniverseGenerationKey,
+} from '../../domain/generation/universe-generation-key';
+
+import {
+  UniverseSeed,
+} from '../../domain/universe/universe-seed';
+
+import {
+  ArchiveGalacticObjectCardAssembler,
   ArchiveGalacticObjectKnowledgeLevel,
   ArchiveGalacticObjectRenderKind,
   ArchiveGalacticObjectRenderProfile,
@@ -198,6 +223,110 @@ describe(
         ).toBe(
           'PLERION',
         );
+      },
+    );
+
+    it(
+      'should route an explored AGN galactic centre through the dedicated black-hole renderer',
+      () => {
+        const generationKey =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+            ),
+            GeneratorVersion.V1,
+          );
+
+        const card =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                20n,
+                0n,
+                0n,
+              ),
+              ExplorationResultKind.EXTREME_OBJECT,
+              DiscoveryState.DETECTED,
+            );
+
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          card.render,
+        );
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="agn-nucleus-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="quasar-nucleus-render"]',
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should route an explored QUASAR galactic centre through the dedicated QUASAR renderer',
+      () => {
+        const generationKey =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+            ),
+            GeneratorVersion.V1,
+          );
+
+        const card =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                331n,
+                0n,
+                0n,
+              ),
+              ExplorationResultKind.EXTREME_OBJECT,
+              DiscoveryState.DETECTED,
+            );
+
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          card.render,
+        );
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="quasar-nucleus-render"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="agn-nucleus-render"]',
+          ),
+        ).toBeNull();
       },
     );
 

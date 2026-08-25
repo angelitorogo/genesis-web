@@ -15,6 +15,10 @@ import {
 } from '../../domain/universe/galactic-nucleus-state';
 
 import {
+  GalaxyType,
+} from '../../domain/universe/galaxy-type';
+
+import {
   SupermassiveBlackHole,
 } from '../../domain/universe/supermassive-black-hole';
 
@@ -464,6 +468,24 @@ describe(
               1;
           }
 
+          expect(
+            galaxy.nucleus,
+          ).not.toBeNull();
+
+          if (
+            galaxy.type ===
+              GalaxyType.DWARF ||
+            galaxy.type ===
+              GalaxyType.IRREGULAR
+          ) {
+            expect(
+              galaxy.nucleus
+                ?.state,
+            ).not.toBe(
+              GalacticNucleusState.QUASAR,
+            );
+          }
+
           if (
             profile.isActiveEpisode
           ) {
@@ -490,24 +512,29 @@ describe(
         expect(
           noNucleusCount,
         ).toBe(
-          836,
+          0,
         );
 
         expect(
           quiescentCount,
         ).toBe(
-          2986,
+          3822,
         );
 
+        /*
+         * DWARF/IRREGULAR QUASAR slices are folded into AGN, so only the
+         * active total remains the frozen incidence contract.
+         */
         expect(
-          agnCount,
+          agnCount +
+          quasarCount,
         ).toBe(
-          261,
+          274,
         );
 
         expect(
           quasarCount,
-        ).toBe(
+        ).toBeLessThanOrEqual(
           13,
         );
 

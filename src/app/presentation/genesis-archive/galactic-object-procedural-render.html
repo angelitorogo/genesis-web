@@ -4,7 +4,15 @@
   [attr.data-render-kind]="descriptor().kind"
   [attr.data-knowledge-level]="descriptor().knowledgeLevel"
 >
-  @if (usesHiiRegionLowRenderer()) {
+  @if (agnNucleusRenderModel(); as model) {
+    <app-agn-nucleus-render
+      [model]="model"
+    ></app-agn-nucleus-render>
+  } @else if (quasarNucleusRenderModel(); as model) {
+    <app-quasar-nucleus-render
+      [model]="model"
+    ></app-quasar-nucleus-render>
+  } @else if (usesHiiRegionLowRenderer()) {
     <app-hii-region-low-render
       [descriptor]="descriptor()"
     ></app-hii-region-low-render>

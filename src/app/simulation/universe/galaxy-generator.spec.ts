@@ -477,6 +477,42 @@ describe(
     );
 
     it(
+      'should give every generated galaxy a nucleus while forbidding QUASAR in DWARF and IRREGULAR',
+      () => {
+        for (
+          let index = 0n;
+          index < 4_096n;
+          index += 1n
+        ) {
+          const galaxy =
+            GalaxyGenerator.generate(
+              canonicalGenerationKey,
+              index,
+            );
+
+          expect(
+            galaxy.nucleus,
+          ).not.toBeNull();
+
+          if (
+            galaxy.type ===
+              GalaxyType.DWARF ||
+            galaxy.type ===
+              GalaxyType.IRREGULAR
+          ) {
+            expect(
+              galaxy.nucleus
+                ?.state,
+            ).not.toBe(
+              GalacticNucleusState.QUASAR,
+            );
+          }
+        }
+      },
+      30_000,
+    );
+
+    it(
       'should generate an arbitrary high index directly without requiring previous galaxies',
       () => {
         const galaxy =
@@ -571,6 +607,18 @@ describe(
 
         expect(
           galaxy.nucleus,
+        ).not.toBeNull();
+
+        expect(
+          galaxy.nucleus
+            ?.state,
+        ).toBe(
+          GalacticNucleusState.QUIESCENT,
+        );
+
+        expect(
+          galaxy.nucleus
+            ?.supermassiveBlackHole,
         ).toBeNull();
       },
     );
