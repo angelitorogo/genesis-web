@@ -184,7 +184,7 @@ export const GALAXY_LABORATORY_CASES:
       expectedType:
         GalaxyType.DWARF,
       description:
-        'Morfología V1 de menor escala con cuerpo estelar continuo.',
+        'Morfología V1 de menor escala con cuerpo estelar continuo, centro cálido, nudos de formación estelar y gas cromático difuso.',
     }),
     Object.freeze({
       id:

@@ -32,6 +32,10 @@ import {
   generateEllipticalGalaxyParticleLayout,
 } from './elliptical-galaxy-particle-layout';
 
+import {
+  generateDwarfGalaxyParticleLayout,
+} from './dwarf-galaxy-particle-layout';
+
 const TWO_PI =
   Math.PI *
   2;
@@ -373,6 +377,14 @@ export class GalacticMapParticleLayoutGenerator {
       elliptical
     ) {
       return generateEllipticalGalaxyParticleLayout(
+        model,
+      );
+    }
+
+    if (
+      dwarf
+    ) {
+      return generateDwarfGalaxyParticleLayout(
         model,
       );
     }
@@ -7946,8 +7958,8 @@ function isIrregular(
     GalacticMapParticleRenderInput,
 ): boolean {
 
-  return model.galaxyType ===
-    GalaxyType.IRREGULAR;
+  return model.galaxyType?.name ===
+    GalaxyType.IRREGULAR.name;
 }
 
 function isDwarf(
@@ -7955,8 +7967,8 @@ function isDwarf(
     GalacticMapParticleRenderInput,
 ): boolean {
 
-  return model.galaxyType ===
-    GalaxyType.DWARF;
+  return model.galaxyType?.name ===
+    GalaxyType.DWARF.name;
 }
 
 function isSpiral(

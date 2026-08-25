@@ -39,14 +39,19 @@ import {
   createGalacticMapParticleRenderInput,
 } from './galactic-map-particle-render-input';
 
+import {
+  DWARF_BODY_PARTICLE_COUNT,
+  DWARF_CLUSTER_PARTICLE_COUNT,
+  DWARF_CORE_PARTICLE_COUNT,
+  DWARF_GAS_PARTICLE_COUNT,
+  DWARF_TOTAL_PARTICLE_COUNT,
+} from './dwarf-galaxy-particle-layout';
+
 const CORE_PARTICLE_COUNT =
   20_000;
 
 const BODY_PARTICLE_COUNT =
   92_000;
-
-const DWARF_STELLAR_BODY_REINFORCEMENT_PARTICLE_COUNT =
-  320_000;
 
 const IRREGULAR_STELLAR_BODY_REINFORCEMENT_PARTICLE_COUNT =
   350_000;
@@ -84,7 +89,7 @@ const SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
 
 
 const DWARF_PARTICLE_COUNT =
-  444_000;
+  DWARF_TOTAL_PARTICLE_COUNT;
 
 const IRREGULAR_PARTICLE_COUNT =
   474_000;
@@ -344,6 +349,73 @@ describe(
           workerEquivalent.count,
         ).toBe(
           SPIRAL_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.positions,
+        ).toEqual(
+          synchronous.positions,
+        );
+
+        expect(
+          workerEquivalent.colors,
+        ).toEqual(
+          synchronous.colors,
+        );
+
+        expect(
+          workerEquivalent.sizes,
+        ).toEqual(
+          synchronous.sizes,
+        );
+
+        expect(
+          workerEquivalent.opacities,
+        ).toEqual(
+          synchronous.opacities,
+        );
+      },
+      30_000,
+    );
+
+
+    it(
+      'should preserve the dedicated DWARF renderer across the structured-clone Web Worker boundary',
+      () => {
+        const target =
+          model(
+            4n,
+          );
+
+        const synchronous =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const workerInput =
+          structuredClone(
+            createGalacticMapParticleRenderInput(
+              target,
+            ),
+          );
+
+        const workerEquivalent =
+          GalacticMapParticleLayoutGenerator
+            .generateFromRenderInput(
+              workerInput,
+            );
+
+        expect(
+          synchronous.count,
+        ).toBe(
+          DWARF_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.count,
+        ).toBe(
+          DWARF_PARTICLE_COUNT,
         );
 
         expect(
@@ -1824,7 +1896,7 @@ describe(
     );
 
     it(
-      'should render the dwarf family as one continuous asymmetric stellar body instead of isolated clusters',
+      'should render the dwarf family through a dedicated dense body, warm centre and chromatic gas envelope',
       () => {
         const dwarf =
           GalacticMapParticleLayoutGenerator
@@ -1841,66 +1913,264 @@ describe(
         );
 
         const bodyStart =
-          CORE_PARTICLE_COUNT;
+          DWARF_CORE_PARTICLE_COUNT;
 
-        const reinforcedBodyEnd =
-          CORE_PARTICLE_COUNT +
-          BODY_PARTICLE_COUNT +
-          DWARF_STELLAR_BODY_REINFORCEMENT_PARTICLE_COUNT;
+        const clumpyBodyEnd =
+          DWARF_CORE_PARTICLE_COUNT +
+          DWARF_BODY_PARTICLE_COUNT +
+          DWARF_CLUSTER_PARTICLE_COUNT;
+
+        const gasStart =
+          clumpyBodyEnd;
+
+        const gasEnd =
+          gasStart +
+          DWARF_GAS_PARTICLE_COUNT;
+
+        const haloStart =
+          gasEnd;
 
         const occupiedCells =
           projectedOccupancy(
             dwarf,
             bodyStart,
-            reinforcedBodyEnd,
+            clumpyBodyEnd,
             32,
           );
 
         expect(
           occupiedCells,
         ).toBeGreaterThan(
-          0.34,
+          0.36,
         );
 
         const innerFraction =
           projectedFractionWithinRadius(
             dwarf,
             bodyStart,
-            reinforcedBodyEnd,
-            0.78,
+            clumpyBodyEnd,
+            0.82,
           );
 
         expect(
           innerFraction,
         ).toBeGreaterThan(
-          0.48,
+          0.50,
         );
 
         const reach =
           projectedRadialReach(
             dwarf,
             bodyStart,
-            reinforcedBodyEnd,
+            clumpyBodyEnd,
           );
 
         expect(
           reach,
         ).toBeGreaterThan(
-          0.95,
+          0.98,
         );
 
         const brightCentralFraction =
           projectedFractionWithinRadius(
             dwarf,
             0,
-            CORE_PARTICLE_COUNT,
-            0.45,
+            DWARF_CORE_PARTICLE_COUNT,
+            0.46,
           );
 
         expect(
           brightCentralFraction,
         ).toBeGreaterThan(
-          0.70,
+          0.74,
+        );
+
+        expect(
+          averageColorChannel(
+            dwarf,
+            0,
+            DWARF_CORE_PARTICLE_COUNT,
+            0,
+          ),
+        ).toBeGreaterThan(
+          averageColorChannel(
+            dwarf,
+            0,
+            DWARF_CORE_PARTICLE_COUNT,
+            2,
+          ),
+        );
+
+        expect(
+          averageValue(
+            dwarf.sizes,
+            gasStart,
+            gasEnd,
+          ),
+        ).toBeGreaterThan(
+          averageValue(
+            dwarf.sizes,
+            bodyStart,
+            clumpyBodyEnd,
+          ) + 2.0,
+        );
+
+        const dwarfGasRed =
+          averageColorChannel(
+            dwarf,
+            gasStart,
+            gasEnd,
+            0,
+          );
+
+        const dwarfGasGreen =
+          averageColorChannel(
+            dwarf,
+            gasStart,
+            gasEnd,
+            1,
+          );
+
+        const dwarfGasBlue =
+          averageColorChannel(
+            dwarf,
+            gasStart,
+            gasEnd,
+            2,
+          );
+
+        expect(
+          Math.max(
+            dwarfGasRed,
+            dwarfGasGreen,
+            dwarfGasBlue,
+          ) - Math.min(
+            dwarfGasRed,
+            dwarfGasGreen,
+            dwarfGasBlue,
+          ),
+        ).toBeGreaterThan(
+          0.05,
+        );
+
+        expect(
+          projectedRadialReach(
+            dwarf,
+            gasStart,
+            gasEnd,
+          ),
+        ).toBeGreaterThan(
+          1.02,
+        );
+
+        expect(
+          averageValue(
+            dwarf.opacities,
+            haloStart,
+            DWARF_PARTICLE_COUNT,
+          ),
+        ).toBeLessThan(
+          averageValue(
+            dwarf.opacities,
+            bodyStart,
+            clumpyBodyEnd,
+          ),
+        );
+      },
+    );
+
+    it(
+      'should vary the dwarf gas palette across deterministic family samples',
+      () => {
+        const gasStart =
+          DWARF_CORE_PARTICLE_COUNT +
+          DWARF_BODY_PARTICLE_COUNT +
+          DWARF_CLUSTER_PARTICLE_COUNT;
+
+        const gasEnd =
+          gasStart +
+          DWARF_GAS_PARTICLE_COUNT;
+
+        const gasMeans =
+          [4n, 19n, 32n].map(
+            (
+              galaxyIndex,
+            ) => {
+              const dwarf =
+                GalacticMapParticleLayoutGenerator
+                  .generate(
+                    model(
+                      galaxyIndex,
+                    ),
+                  );
+
+              const red =
+                averageColorChannel(
+                  dwarf,
+                  gasStart,
+                  gasEnd,
+                  0,
+                );
+
+              const green =
+                averageColorChannel(
+                  dwarf,
+                  gasStart,
+                  gasEnd,
+                  1,
+                );
+
+              const blue =
+                averageColorChannel(
+                  dwarf,
+                  gasStart,
+                  gasEnd,
+                  2,
+                );
+
+              expect(
+                Math.max(
+                  red,
+                  green,
+                  blue,
+                ) - Math.min(
+                  red,
+                  green,
+                  blue,
+                ),
+              ).toBeGreaterThan(
+                0.05,
+              );
+
+              return {
+                red,
+                green,
+                blue,
+              };
+            },
+          );
+
+        const pairwiseDistances = [
+          distanceBetweenColorMeans(
+            gasMeans[0],
+            gasMeans[1],
+          ),
+          distanceBetweenColorMeans(
+            gasMeans[0],
+            gasMeans[2],
+          ),
+          distanceBetweenColorMeans(
+            gasMeans[1],
+            gasMeans[2],
+          ),
+        ];
+
+        expect(
+          Math.max(
+            ...pairwiseDistances,
+          ),
+        ).toBeGreaterThan(
+          0.09,
         );
       },
     );
@@ -2084,6 +2354,39 @@ function inspectFiniteRange(
     minimum,
     maximum,
   };
+}
+
+function distanceBetweenColorMeans(
+  first:
+    {
+      readonly red:
+        number;
+
+      readonly green:
+        number;
+
+      readonly blue:
+        number;
+    },
+
+  second:
+    {
+      readonly red:
+        number;
+
+      readonly green:
+        number;
+
+      readonly blue:
+        number;
+    },
+): number {
+
+  return Math.hypot(
+    first.red - second.red,
+    first.green - second.green,
+    first.blue - second.blue,
+  );
 }
 
 function averageValue(
