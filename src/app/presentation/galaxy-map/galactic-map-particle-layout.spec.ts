@@ -67,8 +67,14 @@ const SPIRAL_PARTICLE_COUNT =
 const BARRED_SPIRAL_PARTICLE_COUNT =
   282_000;
 
+const BARRED_SPIRAL_BODY_PARTICLE_COUNT =
+  154_000;
+
 const BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT =
-  150_000;
+  72_000;
+
+const BARRED_SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT =
+  16_000;
 
 const BAR_PARTICLE_COUNT =
   8_000;
@@ -234,6 +240,72 @@ describe(
       30_000,
     );
 
+
+    it(
+      'should preserve the dedicated BARRED_SPIRAL renderer across the structured-clone Web Worker boundary',
+      () => {
+        const target =
+          model(
+            1n,
+          );
+
+        const synchronous =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const workerInput =
+          structuredClone(
+            createGalacticMapParticleRenderInput(
+              target,
+            ),
+          );
+
+        const workerEquivalent =
+          GalacticMapParticleLayoutGenerator
+            .generateFromRenderInput(
+              workerInput,
+            );
+
+        expect(
+          synchronous.count,
+        ).toBe(
+          BARRED_SPIRAL_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.count,
+        ).toBe(
+          BARRED_SPIRAL_PARTICLE_COUNT,
+        );
+
+        expect(
+          workerEquivalent.positions,
+        ).toEqual(
+          synchronous.positions,
+        );
+
+        expect(
+          workerEquivalent.colors,
+        ).toEqual(
+          synchronous.colors,
+        );
+
+        expect(
+          workerEquivalent.sizes,
+        ).toEqual(
+          synchronous.sizes,
+        );
+
+        expect(
+          workerEquivalent.opacities,
+        ).toEqual(
+          synchronous.opacities,
+        );
+      },
+      30_000,
+    );
 
     it(
       'should preserve the SPIRAL stellar and volumetric-gas enrichment across the structured-clone Web Worker boundary',
@@ -427,7 +499,7 @@ describe(
     );
 
     it(
-      'should make barred-spiral arms begin inside the canonical gap while tapering the outer arm',
+      'should keep barred-spiral arms broad and organic while overlapping the bar-root region',
       () => {
         const target =
           model(
@@ -445,35 +517,41 @@ describe(
             layout,
             target,
             CORE_PARTICLE_COUNT +
-              BODY_PARTICLE_COUNT,
+              BARRED_SPIRAL_BODY_PARTICLE_COUNT,
             CORE_PARTICLE_COUNT +
-              BODY_PARTICLE_COUNT +
+              BARRED_SPIRAL_BODY_PARTICLE_COUNT +
               BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT,
           );
 
         expect(
           profile.insideCanonicalStartFraction,
         ).toBeGreaterThan(
-          0.05,
+          0.01,
         );
 
         expect(
           profile.innerFraction,
         ).toBeGreaterThan(
-          0.52,
+          0.40,
+        );
+
+        expect(
+          profile.outerFraction,
+        ).toBeGreaterThan(
+          0.10,
         );
 
         expect(
           profile.outerFraction,
         ).toBeLessThan(
-          0.22,
+          0.30,
         );
 
         expect(
           profile.innerFraction,
         ).toBeGreaterThan(
           profile.outerFraction *
-          2.4,
+          1.5,
         );
       },
     );
@@ -764,6 +842,268 @@ describe(
             0.08,
         );
       },
+    );
+
+    it(
+      'should render BARRED_SPIRAL through a dedicated warm bulge, chromatic disk and volumetric gas population',
+      () => {
+        const target =
+          model(
+            1n,
+          );
+
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              target,
+            );
+
+        const gasStart =
+          CORE_PARTICLE_COUNT +
+          BARRED_SPIRAL_BODY_PARTICLE_COUNT +
+          BARRED_SPIRAL_ARM_REINFORCEMENT_PARTICLE_COUNT;
+
+        let coreRed =
+          0;
+
+        let coreBlue =
+          0;
+
+        let blueStars =
+          0;
+
+        let warmStars =
+          0;
+
+        let positiveGasDepth =
+          0;
+
+        let negativeGasDepth =
+          0;
+
+        let blueGas =
+          0;
+
+        let warmGas =
+          0;
+
+        for (
+          let particle =
+            0;
+          particle <
+            CORE_PARTICLE_COUNT;
+          particle +=
+            1
+        ) {
+          const offset =
+            particle *
+            3;
+
+          const red =
+            layout.colors[
+              offset
+            ];
+
+          const blue =
+            layout.colors[
+              offset +
+                2
+            ];
+
+          coreRed +=
+            red;
+
+          coreBlue +=
+            blue;
+        }
+
+        for (
+          let particle =
+            CORE_PARTICLE_COUNT;
+          particle <
+            gasStart;
+          particle +=
+            1
+        ) {
+          const offset =
+            particle *
+            3;
+
+          const red =
+            layout.colors[
+              offset
+            ];
+
+          const green =
+            layout.colors[
+              offset +
+                1
+            ];
+
+          const blue =
+            layout.colors[
+              offset +
+                2
+            ];
+
+          if (
+            blue >
+              red +
+                0.16
+          ) {
+            blueStars +=
+              1;
+          }
+
+          if (
+            red >
+              blue -
+                0.02 &&
+            red >
+              green +
+                0.05
+          ) {
+            warmStars +=
+              1;
+          }
+        }
+
+        for (
+          let particle =
+            gasStart;
+          particle <
+            gasStart +
+              BARRED_SPIRAL_VOLUMETRIC_GAS_PARTICLE_COUNT;
+          particle +=
+            1
+        ) {
+          const offset =
+            particle *
+            3;
+
+          const z =
+            layout.positions[
+              offset +
+                2
+            ];
+
+          const red =
+            layout.colors[
+              offset
+            ];
+
+          const green =
+            layout.colors[
+              offset +
+                1
+            ];
+
+          const blue =
+            layout.colors[
+              offset +
+                2
+            ];
+
+          expect(
+            layout.sizes[
+              particle
+            ],
+          ).toBeGreaterThanOrEqual(
+            9.0,
+          );
+
+          expect(
+            layout.sizes[
+              particle
+            ],
+          ).toBeLessThanOrEqual(
+            15.2,
+          );
+
+          if (
+            z >
+            0.006
+          ) {
+            positiveGasDepth +=
+              1;
+          }
+
+          if (
+            z <
+            -0.006
+          ) {
+            negativeGasDepth +=
+              1;
+          }
+
+          if (
+            blue >
+              red +
+                0.12
+          ) {
+            blueGas +=
+              1;
+          }
+
+          if (
+            red >
+              green +
+                0.08 &&
+            red >
+              blue -
+                0.02
+          ) {
+            warmGas +=
+              1;
+          }
+        }
+
+        expect(
+          coreRed /
+          CORE_PARTICLE_COUNT,
+        ).toBeGreaterThan(
+          coreBlue /
+          CORE_PARTICLE_COUNT +
+          0.20,
+        );
+
+        expect(
+          blueStars,
+        ).toBeGreaterThan(
+          10_000,
+        );
+
+        expect(
+          warmStars,
+        ).toBeGreaterThan(
+          7_000,
+        );
+
+        expect(
+          positiveGasDepth,
+        ).toBeGreaterThan(
+          1_000,
+        );
+
+        expect(
+          negativeGasDepth,
+        ).toBeGreaterThan(
+          1_000,
+        );
+
+        expect(
+          blueGas,
+        ).toBeGreaterThan(
+          1_700,
+        );
+
+        expect(
+          warmGas,
+        ).toBeGreaterThan(
+          800,
+        );
+      },
+      30_000,
     );
 
     it(
@@ -1300,8 +1640,8 @@ describe(
 
         expect(
           sizeRange.maximum,
-        ).toBeLessThan(
-          10,
+        ).toBeLessThanOrEqual(
+          15.2,
         );
       },
     );

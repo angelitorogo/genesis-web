@@ -24,6 +24,10 @@ import {
   generateSpiralGalaxyParticleLayout,
 } from './spiral-galaxy-particle-layout';
 
+import {
+  generateBarredSpiralGalaxyParticleLayout,
+} from './barred-spiral-galaxy-particle-layout';
+
 const TWO_PI =
   Math.PI *
   2;
@@ -344,6 +348,14 @@ export class GalacticMapParticleLayoutGenerator {
       spiral
     ) {
       return generateSpiralGalaxyParticleLayout(
+        model,
+      );
+    }
+
+    if (
+      barredSpiral
+    ) {
+      return generateBarredSpiralGalaxyParticleLayout(
         model,
       );
     }
@@ -7935,12 +7947,22 @@ function isBarredSpiral(
     GalacticMapParticleRenderInput,
 ): boolean {
 
+  /*
+   * Point 10.9 sends GalacticMapParticleRenderInput through structuredClone
+   * before it reaches the procedural Web Worker. GalaxyType singleton identity
+   * does not survive that boundary, so BARRED_SPIRAL must use the same
+   * canonical-name comparison already used by SPIRAL.
+   *
+   * Without this comparison the main thread recognizes BARRED_SPIRAL but the
+   * Worker falls through to the legacy generic disk renderer, making every
+   * dedicated barred-spiral photometric change invisible in production.
+   */
   if (
     model.galaxyType !==
     null
   ) {
-    return model.galaxyType ===
-      GalaxyType.BARRED_SPIRAL;
+    return model.galaxyType?.name ===
+      GalaxyType.BARRED_SPIRAL.name;
   }
 
   return requiredVisual(
