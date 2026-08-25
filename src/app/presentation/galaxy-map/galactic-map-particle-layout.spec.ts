@@ -499,6 +499,84 @@ describe(
     );
 
     it(
+      'should surround the elliptical family with a warm diffuse gaseous halo while preserving the stellar spheroid',
+      () => {
+        const layout =
+          GalacticMapParticleLayoutGenerator
+            .generate(
+              model(
+                0n,
+              ),
+            );
+
+        const bodyStart =
+          CORE_PARTICLE_COUNT;
+
+        const bodyEnd =
+          CORE_PARTICLE_COUNT +
+          BODY_PARTICLE_COUNT;
+
+        const haloStart =
+          bodyEnd;
+
+        const haloEnd =
+          ELLIPTICAL_PARTICLE_COUNT;
+
+        expect(
+          projectedRadialReach(
+            layout,
+            haloStart,
+            haloEnd,
+          ),
+        ).toBeGreaterThan(
+          1.10,
+        );
+
+        expect(
+          averageColorChannel(
+            layout,
+            haloStart,
+            haloEnd,
+            0,
+          ),
+        ).toBeGreaterThan(
+          averageColorChannel(
+            layout,
+            haloStart,
+            haloEnd,
+            2,
+          ) +
+          0.08,
+        );
+
+        expect(
+          averageValue(
+            layout.sizes,
+            haloStart,
+            haloEnd,
+          ),
+        ).toBeGreaterThan(
+          averageValue(
+            layout.sizes,
+            bodyStart,
+            bodyEnd,
+          ) *
+          3.0,
+        );
+
+        expect(
+          averageValue(
+            layout.opacities,
+            haloStart,
+            haloEnd,
+          ),
+        ).toBeLessThan(
+          0.14,
+        );
+      },
+    );
+
+    it(
       'should keep barred-spiral arms broad and organic while overlapping the bar-root region',
       () => {
         const target =
@@ -2006,6 +2084,81 @@ function inspectFiniteRange(
     minimum,
     maximum,
   };
+}
+
+function averageValue(
+  values:
+    Float32Array,
+
+  start:
+    number,
+
+  end:
+    number,
+): number {
+
+  let total =
+    0;
+
+  for (
+    let index =
+      start;
+    index <
+      end;
+    index +=
+      1
+  ) {
+    total +=
+      values[index];
+  }
+
+  return total /
+    Math.max(
+      1,
+      end -
+        start,
+    );
+}
+
+function averageColorChannel(
+  layout:
+    GalacticMapParticleLayout,
+
+  start:
+    number,
+
+  end:
+    number,
+
+  channel:
+    number,
+): number {
+
+  let total =
+    0;
+
+  for (
+    let particle =
+      start;
+    particle <
+      end;
+    particle +=
+      1
+  ) {
+    total +=
+      layout.colors[
+        particle *
+          3 +
+        channel
+      ];
+  }
+
+  return total /
+    Math.max(
+      1,
+      end -
+        start,
+    );
 }
 
 function projectedOccupancy(

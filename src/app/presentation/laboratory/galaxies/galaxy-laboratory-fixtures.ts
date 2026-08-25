@@ -171,7 +171,7 @@ export const GALAXY_LABORATORY_CASES:
       expectedType:
         GalaxyType.ELLIPTICAL,
       description:
-        'Distribución esferoidal V1 sin estructura espiral.',
+        'Elipsoide estelar procedural con envolvente gaseosa cálida y sin estructura espiral.',
     }),
     Object.freeze({
       id:

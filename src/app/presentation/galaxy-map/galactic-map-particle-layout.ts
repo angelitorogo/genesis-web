@@ -28,6 +28,10 @@ import {
   generateBarredSpiralGalaxyParticleLayout,
 } from './barred-spiral-galaxy-particle-layout';
 
+import {
+  generateEllipticalGalaxyParticleLayout,
+} from './elliptical-galaxy-particle-layout';
+
 const TWO_PI =
   Math.PI *
   2;
@@ -334,6 +338,11 @@ export class GalacticMapParticleLayoutGenerator {
         model,
       );
 
+    const elliptical =
+      isElliptical(
+        model,
+      );
+
     const dwarf =
       isDwarf(
         model,
@@ -356,6 +365,14 @@ export class GalacticMapParticleLayoutGenerator {
       barredSpiral
     ) {
       return generateBarredSpiralGalaxyParticleLayout(
+        model,
+      );
+    }
+
+    if (
+      elliptical
+    ) {
+      return generateEllipticalGalaxyParticleLayout(
         model,
       );
     }
@@ -7904,6 +7921,24 @@ function spiralArmStarColor(
     blue:
       0.99,
   });
+}
+
+function isElliptical(
+  model:
+    GalacticMapParticleRenderInput,
+): boolean {
+
+  if (
+    model.galaxyType !==
+    null
+  ) {
+    return model.galaxyType?.name ===
+      GalaxyType.ELLIPTICAL.name;
+  }
+
+  return model.morphologyHint ===
+    ExternalGalaxyMorphologyHint
+      .SPHEROIDAL;
 }
 
 function isIrregular(
