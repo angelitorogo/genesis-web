@@ -31,6 +31,10 @@ import {
 } from './stellar-main-sequence-class';
 
 import {
+  StellarNeutronStarFormationChannel,
+} from './stellar-neutron-star-formation-channel';
+
+import {
   StellarPostMainSequenceStage,
 } from './stellar-post-main-sequence-stage';
 
@@ -104,6 +108,10 @@ describe(
         ).toBeNull();
 
         expect(
+          star.neutronStarFormationChannel,
+        ).toBeNull();
+
+        expect(
           Object.keys(
             star,
           ),
@@ -115,6 +123,7 @@ describe(
           'brownDwarfClass',
           'postMainSequenceStage',
           'whiteDwarfComposition',
+          'neutronStarFormationChannel',
         ]);
 
         for (
@@ -178,6 +187,10 @@ describe(
           expect(
             star.whiteDwarfComposition,
           ).toBeNull();
+
+          expect(
+            star.neutronStarFormationChannel,
+          ).toBeNull();
         }
       },
     );
@@ -225,6 +238,10 @@ describe(
           expect(
             star.whiteDwarfComposition,
           ).toBeNull();
+
+          expect(
+            star.neutronStarFormationChannel,
+          ).toBeNull();
         }
       },
     );
@@ -264,6 +281,10 @@ describe(
 
         expect(
           star.whiteDwarfComposition,
+        ).toBeNull();
+
+        expect(
+          star.neutronStarFormationChannel,
         ).toBeNull();
       },
     );
@@ -309,6 +330,10 @@ describe(
           expect(
             star.postMainSequenceStage,
           ).toBeNull();
+
+          expect(
+            star.neutronStarFormationChannel,
+          ).toBeNull();
         }
       },
     );
@@ -326,6 +351,10 @@ describe(
             null,
             StellarWhiteDwarfComposition.CARBON_OXYGEN_CORE,
           );
+
+        expect(
+          star.neutronStarFormationChannel,
+        ).toBeNull();
 
         expect(
           star.galaxyIndex,
@@ -379,27 +408,44 @@ describe(
           expect(
             star.whiteDwarfComposition,
           ).toBeNull();
+
+          expect(
+            star.neutronStarFormationChannel,
+          ).toBeNull();
         }
       },
     );
 
     it(
-      'should keep neutron-star and stellar-black-hole remnant families free of earlier-state classifications',
+      'should materialize point-14.6 neutron stars as compact remnants with an explicit formation channel',
       () => {
         for (
-          const evolutionState
-          of [
-            StellarEvolutionState.NEUTRON_STAR,
-            StellarEvolutionState.STELLAR_BLACK_HOLE,
-          ]
+          const formationChannel
+          of StellarNeutronStarFormationChannel.values
         ) {
           const star =
             new Star(
               generationKey,
               locator,
-              evolutionState,
+              StellarEvolutionState.NEUTRON_STAR,
               null,
+              null,
+              null,
+              null,
+              formationChannel,
             );
+
+          expect(
+            star.evolutionState,
+          ).toBe(
+            StellarEvolutionState.NEUTRON_STAR,
+          );
+
+          expect(
+            star.neutronStarFormationChannel,
+          ).toBe(
+            formationChannel,
+          );
 
           expect(
             star.mainSequenceClass,
@@ -417,13 +463,63 @@ describe(
             star.whiteDwarfComposition,
           ).toBeNull();
 
-          expect(
-            'starIndex' in
-              star,
-          ).toBe(
-            false,
-          );
+          for (
+            const laterPhysicalProperty
+            of [
+              'spinPeriodSeconds',
+              'magneticFieldTesla',
+              'isPulsar',
+              'isMagnetar',
+            ]
+          ) {
+            expect(
+              laterPhysicalProperty in
+                star,
+            ).toBe(
+              false,
+            );
+          }
         }
+      },
+    );
+
+    it(
+      'should keep the point-14.7 stellar-black-hole placeholder free of earlier-state and neutron-star classifications',
+      () => {
+        const star =
+          new Star(
+            generationKey,
+            locator,
+            StellarEvolutionState.STELLAR_BLACK_HOLE,
+            null,
+          );
+
+        expect(
+          star.mainSequenceClass,
+        ).toBeNull();
+
+        expect(
+          star.brownDwarfClass,
+        ).toBeNull();
+
+        expect(
+          star.postMainSequenceStage,
+        ).toBeNull();
+
+        expect(
+          star.whiteDwarfComposition,
+        ).toBeNull();
+
+        expect(
+          star.neutronStarFormationChannel,
+        ).toBeNull();
+
+        expect(
+          'starIndex' in
+            star,
+        ).toBe(
+          false,
+        );
       },
     );
 
@@ -557,6 +653,78 @@ describe(
                 brownDwarfClass,
                 postMainSequenceStage,
                 StellarWhiteDwarfComposition.CARBON_OXYGEN_CORE,
+              ),
+          ).toThrow(
+            RangeError,
+          );
+        }
+      },
+    );
+
+    it(
+      'should require a point-14.6 formation channel only for NEUTRON_STAR remnants',
+      () => {
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.NEUTRON_STAR,
+              null,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        for (
+          const evolutionState
+          of [
+            StellarEvolutionState.MAIN_SEQUENCE,
+            StellarEvolutionState.BROWN_DWARF,
+            StellarEvolutionState.GIANT,
+            StellarEvolutionState.SUPERGIANT,
+            StellarEvolutionState.WHITE_DWARF,
+            StellarEvolutionState.STELLAR_BLACK_HOLE,
+          ]
+        ) {
+          const mainSequenceClass =
+            evolutionState.name ===
+              StellarEvolutionState.MAIN_SEQUENCE.name
+              ? StellarMainSequenceClass.G
+              : null;
+
+          const brownDwarfClass =
+            evolutionState.name ===
+              StellarEvolutionState.BROWN_DWARF.name
+              ? StellarBrownDwarfClass.T
+              : null;
+
+          const postMainSequenceStage =
+            evolutionState.name ===
+              StellarEvolutionState.GIANT.name
+              ? StellarPostMainSequenceStage.RED_GIANT_BRANCH
+              : evolutionState.name ===
+                  StellarEvolutionState.SUPERGIANT.name
+                ? StellarPostMainSequenceStage.SUPERGIANT
+                : null;
+
+          const whiteDwarfComposition =
+            evolutionState.name ===
+              StellarEvolutionState.WHITE_DWARF.name
+              ? StellarWhiteDwarfComposition.CARBON_OXYGEN_CORE
+              : null;
+
+          expect(
+            () =>
+              new Star(
+                generationKey,
+                locator,
+                evolutionState,
+                mainSequenceClass,
+                brownDwarfClass,
+                postMainSequenceStage,
+                whiteDwarfComposition,
+                StellarNeutronStarFormationChannel.IRON_CORE_COLLAPSE,
               ),
           ).toThrow(
             RangeError,

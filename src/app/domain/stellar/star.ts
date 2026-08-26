@@ -20,6 +20,10 @@ import {
 } from './stellar-main-sequence-class';
 
 import {
+  type StellarNeutronStarFormationChannel,
+} from './stellar-neutron-star-formation-channel';
+
+import {
   type StellarPostMainSequenceStage,
   StellarPostMainSequenceStage as StellarPostMainSequenceStages,
 } from './stellar-post-main-sequence-stage';
@@ -42,8 +46,11 @@ import {
  * for BROWN_DWARF, and point 14.4 distinguishes the post-main-sequence RGB/AGB
  * giant stages from the massive SUPERGIANT branch. Point 14.5 adds the broad
  * internal composition family of WHITE_DWARF remnants without conflating it
- * with later DA/DB/etc. spectral-atmospheric classification. These are
- * domain-level evolutionary families only: mass, radius, luminosity, temperature, detailed
+ * with later DA/DB/etc. spectral-atmospheric classification. Point 14.6 marks
+ * NEUTRON_STAR objects as compact remnants with an explicit coarse formation
+ * channel, while deliberately leaving pulsar/magnetar behaviour to later
+ * rotation/activity contracts. These are domain-level evolutionary families
+ * only: mass, radius, luminosity, temperature, detailed
  * spectral subtype/color, age, metallicity, discovery state and rendering data
  * remain later-roadmap contracts.
  */
@@ -70,6 +77,9 @@ export class Star {
 
     readonly whiteDwarfComposition:
       StellarWhiteDwarfComposition | null = null,
+
+    readonly neutronStarFormationChannel:
+      StellarNeutronStarFormationChannel | null = null,
   ) {
     const isMainSequence =
       evolutionState.name ===
@@ -196,6 +206,30 @@ export class Star {
     ) {
       throw new RangeError(
         `${evolutionState.name} stars cannot carry a white-dwarf composition.`,
+      );
+    }
+
+    const isNeutronStar =
+      evolutionState.name ===
+      StellarEvolutionStates.NEUTRON_STAR.name;
+
+    if (
+      isNeutronStar &&
+      neutronStarFormationChannel ===
+        null
+    ) {
+      throw new RangeError(
+        'NEUTRON_STAR remnants require a StellarNeutronStarFormationChannel.',
+      );
+    }
+
+    if (
+      !isNeutronStar &&
+      neutronStarFormationChannel !==
+        null
+    ) {
+      throw new RangeError(
+        `${evolutionState.name} stars cannot carry a neutron-star formation channel.`,
       );
     }
   }
