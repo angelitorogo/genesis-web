@@ -472,17 +472,24 @@ test.describe(
           1,
         );
 
+        const currentFocusAction =
+          page.locator(
+            '[data-testid="discovered-galaxy-focus-action"][data-galaxy-index="0"]',
+          );
+
         await expect(
-          page.getByTestId(
-            'current-focus-badge',
-          ),
+          currentFocusAction,
+        ).toBeDisabled();
+
+        await expect(
+          currentFocusAction,
         ).toContainText(
           'EN FOCO',
         );
 
         await expect(
           page.getByTestId(
-            'discovered-galaxies-point-boundary',
+            'galaxy-state-legend',
           ),
         ).toBeVisible();
       },
@@ -890,7 +897,7 @@ test.describe(
 
 
     test(
-      'should expose the point-11.6 persistent return history without inventing previous galaxies in a fresh universe',
+      'should keep the discovered-galaxy catalogue compact without exposing the recent-history UI',
       async ({
         page,
       }) => {
@@ -920,14 +927,8 @@ test.describe(
           page.getByTestId(
             'galaxy-return-history',
           ),
-        ).toBeVisible();
-
-        await expect(
-          page.getByTestId(
-            'galaxy-return-history-empty',
-          ),
-        ).toContainText(
-          'SIN GALAXIAS ANTERIORES',
+        ).toHaveCount(
+          0,
         );
 
         await expect(
@@ -940,17 +941,17 @@ test.describe(
 
         await expect(
           page.getByTestId(
-            'discovered-galaxies-point-boundary',
+            'discovered-galaxy-focus-action',
           ),
-        ).toContainText(
-          '11.6',
+        ).toHaveCount(
+          1,
         );
       },
     );
 
 
     test(
-      'should accumulate external-galaxy attempts, preserve point-11.6 return and show point-11.7 focus transitions',
+      'should accumulate external-galaxy attempts and change focus directly from the compact catalogue',
       async ({
         page,
       }) => {
@@ -1315,16 +1316,20 @@ test.describe(
           '/galaxies',
         );
 
-        const originReturn =
+        const originFocusAction =
           page.locator(
-            '[data-testid="galaxy-return-action"][data-galaxy-index="0"]',
+            '[data-testid="discovered-galaxy-focus-action"][data-galaxy-index="0"]',
           );
 
         await expect(
-          originReturn,
+          originFocusAction,
         ).toBeVisible();
 
-        await originReturn
+        await expect(
+          originFocusAction,
+        ).toBeEnabled();
+
+        await originFocusAction
           .click();
 
         const returnFocusTransition =
@@ -1368,10 +1373,10 @@ test.describe(
 
         await expect(
           page.getByTestId(
-            'galaxy-return-success',
+            'galaxy-focus-success',
           ),
         ).toContainText(
-          'progreso persistido se conserva',
+          'nuevo foco de exploración',
         );
 
         await page.goto(

@@ -114,119 +114,27 @@
             </div>
 
             <p>
-              UNKNOWN no materializa una galaxia. Una entrada aparece aquí solo
-              desde DETECTED y conserva como fuente de verdad su DiscoveryState
-              persistido.
+              El catálogo contiene únicamente galaxias con detección persistida.
             </p>
           </section>
 
-          <section
-            class="dg__summary"
-            data-testid="galaxy-return-history"
-            aria-label="Historial reciente de galaxias"
-          >
-            <div>
-              <small>11.6 / HISTORIAL RECIENTE</small>
-
-              <strong>
-                {{ facade.recentEntries().length }}
-                {{ facade.recentEntries().length === 1 ? 'galaxia' : 'galaxias' }}
-              </strong>
-            </div>
-
-            @if (facade.recentEntries().length === 0) {
-              <div
-                data-testid="galaxy-return-history-empty"
-              >
-                <small>SIN GALAXIAS ANTERIORES</small>
-
-                <strong>
-                  El foco actual es el único contexto galáctico visitado.
-                </strong>
-              </div>
-
-              <p>
-                El historial se construye únicamente al cambiar de foco y no
-                inventa destinos que todavía no formen parte del conocimiento
-                persistido.
-              </p>
-            } @else {
-              <div>
-                <small>REGRESO DIRECTO</small>
-
-                <strong>
-                  Selecciona una galaxia anterior
-                </strong>
-              </div>
-
-              <div>
-                @for (
-                  entry of facade.recentEntries();
-                  track entry.galaxyIndex;
-                  let position = $index
-                ) {
-                  <div
-                    class="dg__badges"
-                    data-testid="galaxy-return-history-entry"
-                    [attr.data-galaxy-index]="entry.galaxyIndex"
-                  >
-                    <span class="dg__badge">
-                      ANTERIOR {{ position + 1 }}
-                    </span>
-
-                    <span class="dg__badge">
-                      @if (entry.knownName; as knownName) {
-                        {{ knownName }}
-                      } @else {
-                        Galaxia {{ entry.galaxyIndex }}
-                      }
-                    </span>
-
-                    <button
-                      type="button"
-                      class="dg__link"
-                      style="background: transparent; font: inherit; cursor: pointer;"
-                      data-testid="galaxy-return-action"
-                      [attr.data-galaxy-index]="entry.galaxyIndex"
-                      [disabled]="facade.returnPendingGalaxyIndex() !== null"
-                      (click)="returnToGalaxy(entry.galaxyIndex)"
-                    >
-                      @if (
-                        facade.returnPendingGalaxyIndex() ===
-                        entry.galaxyIndex
-                      ) {
-                        Restaurando…
-                      } @else {
-                        Regresar al foco
-                      }
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-          </section>
-
-          @if (facade.returnSuccessMessage()) {
+          @if (facade.focusSuccessMessage()) {
             <section
-              class="dg__boundary"
-              data-testid="galaxy-return-success"
+              class="dg__notice"
+              data-testid="galaxy-focus-success"
               role="status"
             >
-              <span>ACTUALIZADO</span>
-
-              <p>{{ facade.returnSuccessMessage() }}</p>
+              {{ facade.focusSuccessMessage() }}
             </section>
           }
 
-          @if (facade.returnErrorMessage()) {
+          @if (facade.focusErrorMessage()) {
             <section
-              class="dg__boundary"
-              data-testid="galaxy-return-error"
+              class="dg__notice dg__notice--error"
+              data-testid="galaxy-focus-error"
               role="alert"
             >
-              <span>NO APLICADO</span>
-
-              <p>{{ facade.returnErrorMessage() }}</p>
+              {{ facade.focusErrorMessage() }}
             </section>
           }
 
@@ -245,112 +153,38 @@
                 [attr.data-galaxy-index]="entry.galaxyIndex"
                 [attr.data-galaxy-state]="entry.galaxyKnowledgeState.name"
               >
-                <div class="dg__card-top">
-                  <div class="dg__badges">
-                    <span
-                      class="dg__badge"
-                      data-testid="galaxy-lifecycle-badge"
-                      [attr.data-galaxy-state]="entry.galaxyKnowledgeState.name"
-                    >
-                      {{ galaxyStateLabel(entry.galaxyKnowledgeState) }}
-                    </span>
-
-                    @if (entry.isCurrentFocus) {
-                      <span
-                        class="dg__badge dg__badge--focus"
-                        data-testid="current-focus-badge"
-                      >
-                        EN FOCO
-                      </span>
-                    } @else {
-                      <span
-                        class="dg__badge"
-                        data-testid="galaxy-visitable-badge"
-                      >
-                        VISITABLE
-                      </span>
-                    }
-
-                    @if (facade.isRecentGalaxy(entry.galaxyIndex)) {
-                      <span
-                        class="dg__badge"
-                        data-testid="previous-focus-badge"
-                      >
-                        FOCO ANTERIOR
-                      </span>
-                    }
-
-                    @if (isOriginGalaxy(entry.galaxyIndex)) {
-                      <span class="dg__badge">
-                        GALAXIA NATAL
-                      </span>
-                    }
-                  </div>
-
-                  <span
-                    class="dg__index"
-                    aria-hidden="true"
-                  >
-                    G{{ entry.galaxyIndex }}
-                  </span>
-                </div>
-
                 <div class="dg__identity">
-                  <small>OBJETIVO GALÁCTICO</small>
-
                   @if (entry.knownName; as knownName) {
                     <h2 data-testid="discovered-galaxy-name">
                       {{ knownName }}
                     </h2>
-
-                    <small
-                      class="dg__index"
-                      data-testid="discovered-galaxy-index"
-                    >
-                      Galaxia {{ entry.galaxyIndex }}
-                    </small>
                   } @else {
-                    <h2 data-testid="discovered-galaxy-index">
+                    <h2 data-testid="discovered-galaxy-name">
                       Galaxia {{ entry.galaxyIndex }}
                     </h2>
                   }
-
-                  <code
-                    data-testid="discovered-galaxy-designation"
-                    [title]="entry.designationCode"
-                  >
-                    {{ entry.designationCode }}
-                  </code>
                 </div>
 
-                <div
-                  class="dg__visual"
-                  aria-hidden="true"
-                >
-                  <span class="dg__orbit dg__orbit--a"></span>
-                  <span class="dg__orbit dg__orbit--b"></span>
-                  <span class="dg__core"></span>
-                </div>
-
-                <dl class="dg__facts">
+                <div class="dg__meta">
                   <div>
-                    <dt>ESTADO GALÁCTICO</dt>
-
-                    <dd data-testid="discovered-galaxy-state">
+                    <small>ESTADO</small>
+                    <strong data-testid="discovered-galaxy-state">
                       {{ galaxyStateLabel(entry.galaxyKnowledgeState) }}
-                    </dd>
+                    </strong>
                   </div>
 
                   <div>
-                    <dt>MORFOLOGÍA OBSERVADA</dt>
-
-                    <dd data-testid="discovered-galaxy-morphology">
-                      {{ morphologyLabel(entry.preliminaryInformation.morphologyHint) }}
-                    </dd>
+                    <small>ORIGEN</small>
+                    <strong
+                      data-testid="galaxy-origin-status"
+                      [attr.data-origin]="isOriginGalaxy(entry.galaxyIndex) ? 'natal' : 'external'"
+                    >
+                      {{ isOriginGalaxy(entry.galaxyIndex) ? 'Galaxia natal' : 'Galaxia externa' }}
+                    </strong>
                   </div>
-                </dl>
+                </div>
 
-                <div class="dg__card-top">
+                <div class="dg__actions">
                   <a
                     class="dg__link"
                     [routerLink]="[
@@ -362,6 +196,24 @@
                     Abrir ficha general
                     <span aria-hidden="true">→</span>
                   </a>
+
+                  <button
+                    type="button"
+                    class="dg__focus"
+                    data-testid="discovered-galaxy-focus-action"
+                    [attr.data-galaxy-index]="entry.galaxyIndex"
+                    [disabled]="entry.isCurrentFocus || facade.focusPendingGalaxyIndex() !== null"
+                    (click)="focusGalaxy(entry.galaxyIndex)"
+                  >
+                    @if (entry.isCurrentFocus) {
+                      EN FOCO
+                    } @else if (facade.focusPendingGalaxyIndex() === entry.galaxyIndex) {
+                      CAMBIANDO FOCO…
+                    } @else {
+                      IR A ESTA GALAXIA
+                      <span aria-hidden="true">→</span>
+                    }
+                  </button>
                 </div>
               </article>
             }
@@ -373,62 +225,11 @@
           >
             <span>11.2</span>
 
-            <div>
-              <div class="dg__badges">
-                @for (
-                  state of galaxyKnowledgeStates;
-                  track state.code
-                ) {
-                  <span
-                    class="dg__badge"
-                    data-testid="galaxy-state-definition"
-                    [attr.data-galaxy-state]="state.name"
-                    [title]="galaxyStateDescription(state)"
-                  >
-                    {{ galaxyStateLabel(state) }}
-                  </span>
-                }
-              </div>
-
-              <p data-testid="galaxy-state-semantics">
-                Desconocida: no existe detección persistida y no se crea una
-                entrada ficticia. Detectada: existencia localizada con información
-                preliminar, pero sin nombre propio. Descubierta: reconocimiento
-                consolidado e identidad procedural conocida. Visitada: el foco de
-                exploración ya ha alcanzado la galaxia; CATALOGUED y
-                CONFIRMED conservan su precisión global pero se proyectan aquí al
-                nivel Visitada.
-              </p>
-            </div>
-          </section>
-
-          <section
-            class="dg__boundary"
-            data-testid="discovered-galaxies-point-boundary"
-          >
-            <span>11.6</span>
-
-            <p>
-              El catálogo expone el historial MRU persistido de focos anteriores
-              y permite regresar directamente a cualquiera de esas galaxias.
-              El regreso conserva descubrimientos y progreso local, mantiene el
-              destino como mínimo en Visitada, no lee ni gasta PD, no materializa
-              Ground Truth y no representa viaje FTL. La reorientación visual
-              de 11.7 aparece solo después de confirmar el nuevo foco persistido.
-            </p>
-          </section>
-
-
-          <section
-            class="dg__boundary"
-            data-testid="discovered-galaxies-transition-boundary"
-          >
-            <span>11.7</span>
-
-            <p>
-              Al restaurar una galaxia anterior, GENESIS muestra una transición
-              breve de reorientación del contexto científico. No representa un
-              trayecto entre galaxias ni afirma desplazamiento físico o FTL.
+            <p data-testid="galaxy-state-semantics">
+              Detectada: existencia localizada con información preliminar.
+              Descubierta: identidad procedural conocida. Visitada: el foco de
+              exploración ya ha alcanzado la galaxia. CATALOGUED y CONFIRMED
+              conservan su precisión global y se proyectan aquí como Visitada.
             </p>
           </section>
         }

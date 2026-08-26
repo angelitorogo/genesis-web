@@ -79,13 +79,13 @@ const INITIAL_STATE:
  * Point-11.1..11.6 facade for the discovered-galaxy catalogue.
  *
  * Catalogue membership and observational projection remain delegated to the
- * frozen GalaxyArchiveEngine contract. Point 11.6 additionally projects the
- * persisted recentGalaxyIndices history onto already-known archive entries and
- * exposes an explicit return action through GALAXY_FOCUS_RUNTIME.
+ * frozen GalaxyArchiveEngine contract. The catalogue can also change focus to
+ * any already-known galaxy through GALAXY_FOCUS_RUNTIME. Persisted MRU history
+ * remains an internal navigation contract but is intentionally not rendered by
+ * the catalogue UI.
  *
- * Returning never reads or writes Discovery Points, never materializes hidden
- * Ground Truth and never invents an UNKNOWN galaxy. The runtime validates the
- * selected galaxy against the persisted recent history atomically.
+ * Changing focus never reads or writes Discovery Points, never materializes
+ * hidden Ground Truth and never invents an UNKNOWN galaxy.
  */
 @Injectable({
   providedIn:
@@ -118,6 +118,21 @@ export class DiscoveredGalaxiesFacade {
       INITIAL_STATE,
     );
 
+  private readonly focusPendingGalaxyIndexSignal =
+    signal<bigint | null>(
+      null,
+    );
+
+  private readonly focusSuccessSignal =
+    signal<string>(
+      '',
+    );
+
+  private readonly focusErrorSignal =
+    signal<string>(
+      '',
+    );
+
   private readonly returnPendingGalaxyIndexSignal =
     signal<bigint | null>(
       null,
@@ -134,6 +149,9 @@ export class DiscoveredGalaxiesFacade {
     );
 
   private refreshSequence =
+    0;
+
+  private focusSequence =
     0;
 
   private returnSequence =
@@ -172,6 +190,21 @@ export class DiscoveredGalaxiesFacade {
       },
     );
 
+  readonly focusPendingGalaxyIndex =
+    this
+      .focusPendingGalaxyIndexSignal
+      .asReadonly();
+
+  readonly focusSuccessMessage =
+    this
+      .focusSuccessSignal
+      .asReadonly();
+
+  readonly focusErrorMessage =
+    this
+      .focusErrorSignal
+      .asReadonly();
+
   readonly returnPendingGalaxyIndex =
     this
       .returnPendingGalaxyIndexSignal
@@ -205,6 +238,18 @@ export class DiscoveredGalaxiesFacade {
 
     const refreshId =
       ++this.refreshSequence;
+
+    this
+      .focusSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .focusErrorSignal
+      .set(
+        '',
+      );
 
     this
       .returnSuccessSignal
@@ -357,6 +402,178 @@ export class DiscoveredGalaxiesFacade {
               ? error.message
               : 'No se pudo cargar el catálogo de galaxias descubiertas.',
         });
+    }
+  }
+
+  async focusGalaxy(
+    galaxyIndex:
+      bigint,
+  ): Promise<void> {
+
+    const focusId =
+      ++this
+        .focusSequence;
+
+    this
+      .focusSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .focusErrorSignal
+      .set(
+        '',
+      );
+
+    const state =
+      this
+        .state();
+
+    if (
+      state.kind !==
+        'content'
+    ) {
+      this
+        .focusErrorSignal
+        .set(
+          'No existe un catálogo galáctico activo.',
+        );
+
+      return;
+    }
+
+    if (
+      state
+        .snapshot
+        .currentFocusGalaxyIndex ===
+      galaxyIndex
+    ) {
+      return;
+    }
+
+    if (
+      !state
+        .snapshot
+        .entries
+        .some(
+          (
+            entry,
+          ) =>
+            entry
+              .galaxyIndex ===
+            galaxyIndex,
+        )
+    ) {
+      this
+        .focusErrorSignal
+        .set(
+          'La galaxia seleccionada no pertenece al catálogo conocido.',
+        );
+
+      return;
+    }
+
+    this
+      .focusPendingGalaxyIndexSignal
+      .set(
+        galaxyIndex,
+      );
+
+    try {
+      const result =
+        await this
+          .focusRuntime
+          .changeFocus(
+            state
+              .generationKey,
+            galaxyIndex,
+          );
+
+      if (
+        focusId !==
+        this.focusSequence
+      ) {
+        return;
+      }
+
+      await this
+        .refresh();
+
+      if (
+        focusId !==
+        this.focusSequence
+      ) {
+        return;
+      }
+
+      const refreshed =
+        this
+          .snapshot();
+
+      if (
+        refreshed ===
+          null ||
+        refreshed
+          .currentFocusGalaxyIndex !==
+        result
+          .activeGalaxyIndex
+      ) {
+        throw new Error(
+          'El cambio se persistió, pero el catálogo no pudo confirmar el nuevo foco activo.',
+        );
+      }
+
+      this
+        .focusTransitionRuntime
+        .presentPersistedFocusChange({
+          previousFocusGalaxyIndex:
+            result
+              .previousFocusGalaxyIndex,
+
+          activeGalaxyIndex:
+            result
+              .activeGalaxyIndex,
+        });
+
+      this
+        .focusSuccessSignal
+        .set(
+          'Galaxia establecida como nuevo foco de exploración.',
+        );
+    } catch (
+      error
+    ) {
+      if (
+        focusId !==
+        this.focusSequence
+      ) {
+        return;
+      }
+
+      this
+        .focusErrorSignal
+        .set(
+          error instanceof
+            Error &&
+          error.message
+            .trim()
+            .length >
+            0
+            ? error.message
+            : 'No se pudo cambiar el foco a la galaxia seleccionada.',
+        );
+    } finally {
+      if (
+        focusId ===
+        this.focusSequence
+      ) {
+        this
+          .focusPendingGalaxyIndexSignal
+          .set(
+            null,
+          );
+      }
     }
   }
 

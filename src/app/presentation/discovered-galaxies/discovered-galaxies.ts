@@ -80,6 +80,18 @@ export class DiscoveredGalaxiesPage
       .refresh();
   }
 
+  focusGalaxy(
+    galaxyIndex:
+      bigint,
+  ): void {
+
+    void this
+      .facade
+      .focusGalaxy(
+        galaxyIndex,
+      );
+  }
+
   returnToGalaxy(
     galaxyIndex:
       bigint,

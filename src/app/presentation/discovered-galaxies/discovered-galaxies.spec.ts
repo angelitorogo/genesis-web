@@ -380,7 +380,7 @@ describe(
     );
 
     it(
-      'should render the known galaxies, focus marker and preliminary safe information',
+      'should render a compact one-column catalogue with only name, state, origin and the two requested actions',
       async () => {
         configure(
           repositories(),
@@ -413,10 +413,13 @@ describe(
           ),
         ).toBeTruthy();
 
-        expect(
+        const galaxyCards =
           element.querySelectorAll(
             '[data-testid="discovered-galaxy-card"]',
-          ).length,
+          );
+
+        expect(
+          galaxyCards.length,
         ).toBe(
           2,
         );
@@ -428,35 +431,6 @@ describe(
         ).toContain(
           '2',
         );
-
-        expect(
-          element.querySelector(
-            '[data-testid="current-focus-badge"]',
-          )?.textContent,
-        ).toContain(
-          'EN FOCO',
-        );
-
-        expect(
-          element.querySelectorAll(
-            '[data-testid="galaxy-visitable-badge"]',
-          ).length,
-        ).toBe(
-          1,
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-visitable-badge"]',
-          )?.textContent,
-        ).toContain(
-          'VISITABLE',
-        );
-
-        const galaxyCards =
-          element.querySelectorAll(
-            '[data-testid="discovered-galaxy-card"]',
-          );
 
         expect(
           galaxyCards[
@@ -472,31 +446,10 @@ describe(
 
         expect(
           galaxyCards[
-            0
-          ]
-            ?.querySelector(
-              '[data-testid="discovered-galaxy-index"]',
-            )
-            ?.textContent,
-        ).toContain(
-          'Galaxia 0',
-        );
-
-        expect(
-          galaxyCards[
             1
           ]
             ?.querySelector(
               '[data-testid="discovered-galaxy-name"]',
-            ),
-        ).toBeNull();
-
-        expect(
-          galaxyCards[
-            1
-          ]
-            ?.querySelector(
-              '[data-testid="discovered-galaxy-index"]',
             )
             ?.textContent,
         ).toContain(
@@ -525,20 +478,27 @@ describe(
           'Detectada',
         );
 
-        expect(
+        const originStatuses =
           element.querySelectorAll(
-            '[data-testid="galaxy-state-definition"]',
-          ).length,
-        ).toBe(
-          4,
+            '[data-testid="galaxy-origin-status"]',
+          );
+
+        expect(
+          originStatuses[
+            0
+          ]
+            ?.textContent,
+        ).toContain(
+          'Galaxia natal',
         );
 
         expect(
-          element.querySelector(
-            '[data-testid="galaxy-state-semantics"]',
-          )?.textContent,
+          originStatuses[
+            1
+          ]
+            ?.textContent,
         ).toContain(
-          'Desconocida',
+          'Galaxia externa',
         );
 
         const detailLinks =
@@ -572,19 +532,70 @@ describe(
           '/galaxies/1',
         );
 
+        const focusActions =
+          element.querySelectorAll(
+            '[data-testid="discovered-galaxy-focus-action"]',
+          );
+
+        expect(
+          focusActions.length,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          (
+            focusActions[
+              0
+            ] as HTMLButtonElement
+          ).disabled,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          focusActions[
+            0
+          ]?.textContent,
+        ).toContain(
+          'EN FOCO',
+        );
+
+        expect(
+          (
+            focusActions[
+              1
+            ] as HTMLButtonElement
+          ).disabled,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          focusActions[
+            1
+          ]?.textContent,
+        ).toContain(
+          'IR A ESTA GALAXIA',
+        );
+
         expect(
           element.querySelector(
-            '[data-testid="discovered-galaxies-point-boundary"]',
-          )?.textContent,
-        ).toContain(
-          '11.6',
-        );
+            '[data-testid="discovered-galaxy-morphology"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="discovered-galaxy-designation"]',
+          ),
+        ).toBeNull();
       },
       30_000,
     );
 
     it(
-      'should project the point-11.6 recent-galaxy history in persisted MRU order without active, duplicate or unknown entries',
+      'should keep the persisted point-11.6 MRU history out of the catalogue UI',
       async () => {
         configure(
           repositories(
@@ -623,9 +634,6 @@ describe(
             [
               1n,
               0n,
-              2n,
-              99n,
-              1n,
             ],
           ),
         );
@@ -668,52 +676,173 @@ describe(
           fixture.nativeElement as
             HTMLElement;
 
-        const historyEntries =
-          element.querySelectorAll(
-            '[data-testid="galaxy-return-history-entry"]',
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-return-history"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-return-action"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="previous-focus-badge"]',
+          ),
+        ).toBeNull();
+      },
+      30_000,
+    );
+
+    it(
+      'should change focus directly from any known catalogue row through the existing focus runtime',
+      async () => {
+        let activeGalaxyIndex =
+          0n;
+
+        let recentGalaxyIndices:
+          readonly bigint[] =
+          [];
+
+        const knownDiscoveries =
+          [
+            new KnownDiscovery(
+              generationKey,
+              new GalaxyLocator(
+                0n,
+              ),
+              DiscoveryState
+                .DISCOVERED,
+            ),
+
+            new KnownDiscovery(
+              generationKey,
+              new GalaxyLocator(
+                1n,
+              ),
+              DiscoveryState
+                .DETECTED,
+            ),
+          ];
+
+        const baseRepositories =
+          repositories(
+            [
+              generationKey,
+            ],
+            knownDiscoveries,
+            activeGalaxyIndex,
+            recentGalaxyIndices,
+          );
+
+        const repositoryBundle:
+          GenesisLocalRepositories =
+          {
+            ...baseRepositories,
+
+            navigationRepository: {
+              async getNavigation() {
+                return {
+                  activeGalaxyIndex,
+                  recentGalaxyIndices,
+                };
+              },
+
+              async setNavigation() {
+                throw new Error(
+                  'The catalogue must delegate focus writes to the runtime.',
+                );
+              },
+            },
+          };
+
+        const focusRuntime:
+          GalaxyFocusRuntime =
+          {
+            async changeFocus(
+              _generationKey,
+              targetGalaxyIndex,
+            ) {
+              expect(
+                targetGalaxyIndex,
+              ).toBe(
+                1n,
+              );
+
+              const previousFocusGalaxyIndex =
+                activeGalaxyIndex;
+
+              activeGalaxyIndex =
+                targetGalaxyIndex;
+
+              recentGalaxyIndices =
+                [
+                  previousFocusGalaxyIndex,
+                ];
+
+              return Object.freeze({
+                previousFocusGalaxyIndex,
+                activeGalaxyIndex:
+                  targetGalaxyIndex,
+                targetStateBefore:
+                  DiscoveryState
+                    .DETECTED,
+                targetStateAfter:
+                  DiscoveryState
+                    .VISITED,
+                didPromoteTargetToVisited:
+                  true,
+                recentGalaxyIndices,
+              });
+            },
+
+            async returnToRecentGalaxy() {
+              throw new Error(
+                'The compact catalogue must use changeFocus(), not the hidden MRU return action.',
+              );
+            },
+          };
+
+        configure(
+          repositoryBundle,
+          focusRuntime,
+        );
+
+        const facade =
+          TestBed.inject(
+            DiscoveredGalaxiesFacade,
+          );
+
+        await facade
+          .refresh();
+
+        await facade
+          .focusGalaxy(
+            1n,
           );
 
         expect(
-          historyEntries.length,
+          facade
+            .snapshot()
+            ?.currentFocusGalaxyIndex,
         ).toBe(
-          2,
+          1n,
         );
 
         expect(
-          historyEntries[
-            0
-          ]?.getAttribute(
-            'data-galaxy-index',
-          ),
-        ).toBe(
-          '1',
+          facade
+            .focusSuccessMessage(),
+        ).toContain(
+          'nuevo foco',
         );
 
         expect(
-          historyEntries[
-            1
-          ]?.getAttribute(
-            'data-galaxy-index',
-          ),
-        ).toBe(
-          '0',
-        );
-
-        expect(
-          element.querySelectorAll(
-            '[data-testid="galaxy-return-action"]',
-          ).length,
-        ).toBe(
-          2,
-        );
-
-        expect(
-          element.querySelectorAll(
-            '[data-testid="previous-focus-badge"]',
-          ).length,
-        ).toBe(
-          2,
-        );
+          facade
+            .focusPendingGalaxyIndex(),
+        ).toBeNull();
       },
       30_000,
     );
