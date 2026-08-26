@@ -48,6 +48,10 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  EXPLORATION_SECTOR_PROGRESS_RUNTIME,
+} from '../runtime/exploration-sector-progress.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
@@ -255,6 +259,19 @@ describe(
 
       TestBed.configureTestingModule({
         providers: [
+          {
+            provide:
+              EXPLORATION_SECTOR_PROGRESS_RUNTIME,
+
+            useValue: {
+              async commitResolvedResult() {
+                throw new Error(
+                  'Unexpected inline sector exploration in this facade test.',
+                );
+              },
+            },
+          },
+
           {
             provide:
               GENESIS_LOCAL_REPOSITORIES,

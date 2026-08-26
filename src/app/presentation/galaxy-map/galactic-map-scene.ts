@@ -9,9 +9,11 @@ import {
   ElementRef,
   inject,
   InjectionToken,
+  EventEmitter,
   Input,
   OnChanges,
   OnDestroy,
+  Output,
   PLATFORM_ID,
   signal,
   SimpleChanges,
@@ -497,6 +499,10 @@ export class GalacticMapScene
   })
   model!:
     GalacticMapModel;
+
+  @Output()
+  readonly sectorExplore =
+    new EventEmitter<GalacticMapSectorSelection>();
 
   @ViewChild(
     'sceneHost',
@@ -1254,36 +1260,20 @@ export class GalacticMapScene
     };
   }
 
-  sectorExplorationQueryParams(
+  requestSectorExploration(
     selection:
       GalacticMapSectorSelection,
-  ): {
-    readonly sectorX:
-      string;
+  ): void {
 
-    readonly sectorY:
-      string;
+    if (
+      selection.explored
+    ) {
+      return;
+    }
 
-    readonly scan:
-      string;
-  } {
-
-    return {
-      sectorX:
-        selection
-          .coordinates
-          .x
-          .toString(),
-
-      sectorY:
-        selection
-          .coordinates
-          .y
-          .toString(),
-
-      scan:
-        '1',
-    };
+    this.sectorExplore.emit(
+      selection,
+    );
   }
 
   sectorStatusLabel(

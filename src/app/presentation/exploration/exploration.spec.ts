@@ -75,7 +75,7 @@ import {
 } from './exploration';
 
 describe(
-  'Exploration point 9.5 plus external-galaxy gameplay integration',
+  'Exploration external-galaxy gameplay integration',
   () => {
     const POINT_9_5_FIXTURE_SEED =
       '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
@@ -451,7 +451,7 @@ describe(
     }
 
     it(
-      'should render the active exploration context without reward before scanning',
+      'should keep /exploration exclusively focused on the external-galaxy search flow',
       async () => {
         const {
           element,
@@ -466,201 +466,34 @@ describe(
 
         expect(
           element.querySelector(
-            '[data-testid="exploration-reward"]',
-          ),
-        ).toBeNull();
-      },
-    );
-
-    it(
-      'should render a map-selected sector read-only, remove manual X/Y inputs and expose the return-to-map loop',
-      async () => {
-        const {
-          fixture,
-          element,
-        } =
-          await fixtureAndElement();
-
-        await fixture
-          .componentInstance
-          .facade
-          .refresh({
-            sectorX:
-              '4',
-            sectorY:
-              '-3',
-          });
-
-        fixture.detectChanges();
-
-        expect(
-          element.querySelector(
-            '[data-testid="sector-x-input"]',
-          ),
-        ).toBeNull();
-
-        expect(
-          element.querySelector(
-            '[data-testid="sector-y-input"]',
-          ),
-        ).toBeNull();
-
-        expect(
-          element.querySelector(
-            '[data-testid="selected-sector-coordinates"]',
-          )?.textContent,
-        ).toContain(
-          'Sector (4, -3)',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="selected-sector-exploration-state"]',
-          )?.textContent,
-        ).toContain(
-          'No explorado',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="scan-sector-action"]',
+            '[data-testid="external-galaxy-search"]',
           ),
         ).toBeTruthy();
 
-        await fixture
-          .componentInstance
-          .facade
-          .scanSelectedSector();
-
-        fixture.detectChanges();
-
         expect(
           element.querySelector(
-            '[data-testid="selected-sector-exploration-state"]',
+            '[data-testid="exploration-operation-scope"]',
           )?.textContent,
         ).toContain(
-          'Explorado',
+          'Búsqueda extragaláctica',
         );
 
-        expect(
-          element
-            .querySelector<HTMLAnchorElement>(
-              '[data-testid="exploration-return-map-link"]',
-            )
-            ?.getAttribute(
-              'href',
+        for (
+          const testId
+          of [
+            'scan-sector-action',
+            'selected-sector-from-map',
+            'exploration-result',
+            'exploration-reward',
+            'exploration-open-galaxy-map-link',
+          ]
+        ) {
+          expect(
+            element.querySelector(
+              `[data-testid="${testId}"]`,
             ),
-        ).toBe(
-          '/galaxy-map',
-        );
-      },
-    );
-
-    it(
-      'should render the resolved result and point-9.5 reward/progress without changing scientific classification',
-      async () => {
-        const {
-          fixture,
-          element,
-        } =
-          await fixtureAndElement();
-
-        await fixture
-          .componentInstance
-          .facade
-          .scanSector(
-            '0',
-            '0',
-          );
-
-        fixture.detectChanges();
-
-        expect(
-          element.querySelector(
-            '[data-testid="exploration-result"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="exploration-reward"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="exploration-result-scientific-classification"]',
-          )?.textContent,
-        ).toContain(
-          'Sin clasificar',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="exploration-sector-state"]',
-          )?.textContent,
-        ).toContain(
-          'Detectada',
-        );
-      },
-    );
-
-    it(
-      'should render transient progression as non-persisted event identity',
-      async () => {
-        const {
-          fixture,
-          element,
-        } =
-          await fixtureAndElement();
-
-        await fixture
-          .componentInstance
-          .facade
-          .scanSector(
-            '86',
-            '86',
-          );
-
-        fixture.detectChanges();
-
-        expect(
-          element.querySelector(
-            '[data-testid="exploration-result-state"]',
-          )?.textContent,
-        ).toContain(
-          'Evento no persistido',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="exploration-reward-points"]',
-          )?.textContent,
-        ).toContain(
-          '+2 PD',
-        );
-      },
-    );
-
-    it(
-      'should keep the point-9.5 boundary explicit in the real screen',
-      async () => {
-        const {
-          element,
-        } =
-          await fixtureAndElement();
-
-        expect(
-          element.textContent,
-        ).toContain(
-          'Límite del punto 9.5',
-        );
-
-        expect(
-          element.textContent,
-        ).toContain(
-          'Ground Truth oculto',
-        );
+          ).toBeNull();
+        }
       },
     );
 

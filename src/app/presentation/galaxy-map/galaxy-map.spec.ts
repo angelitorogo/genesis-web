@@ -44,6 +44,10 @@ import {
 } from './galactic-map-camera-controller';
 
 import {
+  EXPLORATION_SECTOR_PROGRESS_RUNTIME,
+} from '../runtime/exploration-sector-progress.runtime';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
@@ -343,6 +347,19 @@ describe(
               provideRouter(
                 [],
               ),
+
+              {
+                provide:
+                  EXPLORATION_SECTOR_PROGRESS_RUNTIME,
+
+                useValue: {
+                  async commitResolvedResult() {
+                    throw new Error(
+                      'Unexpected inline sector exploration in this rendering test.',
+                    );
+                  },
+                },
+              },
 
               {
                 provide:

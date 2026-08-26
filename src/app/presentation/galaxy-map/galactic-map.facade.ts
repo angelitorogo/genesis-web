@@ -18,6 +18,14 @@ import {
 } from '../../domain/exploration/exploration-sector-result';
 
 import {
+  type ExplorationSectorProgressResult,
+} from '../../domain/exploration/exploration-sector-progress-result';
+
+import {
+  type ExplorationSectorResult,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
   GalacticObjectLocator,
   GalaxyLocator,
   SectorLocator,
@@ -39,6 +47,10 @@ import {
 import {
   ExplorationSectorResultEngine,
 } from '../../simulation/exploration/exploration-sector-result-engine';
+
+import {
+  ExplorationSectorScanEngine,
+} from '../../simulation/exploration/exploration-sector-scan-engine';
 
 import {
   ExternalGalaxyPreliminaryInformationGenerator,
@@ -63,6 +75,10 @@ import {
 import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
+
+import {
+  EXPLORATION_SECTOR_PROGRESS_RUNTIME,
+} from '../runtime/exploration-sector-progress.runtime';
 
 import {
   UniverseSeedFacade,
@@ -91,8 +107,14 @@ import {
   type GalacticMapUiState,
 } from './galactic-map-ui-state';
 
+import {
+  type GalacticMapSectorSelection,
+} from './galactic-map-sector-selection';
+
 /**
- * Point-10.5 read-only application facade for the galactic map.
+ * Galactic-map application facade. Read-side map assembly remains the frozen
+ * point-10.3..10.9 contract; explicit user exploration now executes the frozen
+ * point-9.5 sector workflow inline without navigating away from /galaxy-map.
  *
  * A discovered galaxy reads one persisted KnownDiscovery snapshot and reuses
  * it for both point-10.3 sector coverage and point-10.4/10.5 object markers.
@@ -120,17 +142,65 @@ export class GalacticMapFacade {
       UniverseSeedFacade,
     );
 
+  private readonly explorationProgressRuntime =
+    inject(
+      EXPLORATION_SECTOR_PROGRESS_RUNTIME,
+    );
+
   private readonly stateSignal =
     signal<GalacticMapUiState>(
       INITIAL_GALACTIC_MAP_UI_STATE,
     );
 
+  private readonly inlineExplorationResultSignal =
+    signal<ExplorationSectorResult | null>(
+      null,
+    );
+
+  private readonly inlineExplorationProgressSignal =
+    signal<ExplorationSectorProgressResult | null>(
+      null,
+    );
+
+  private readonly inlineExplorationPendingSignal =
+    signal<boolean>(
+      false,
+    );
+
+  private readonly inlineExplorationErrorSignal =
+    signal<string>(
+      '',
+    );
+
   private refreshSequence =
+    0;
+
+  private inlineExplorationSequence =
     0;
 
   readonly state =
     this
       .stateSignal
+      .asReadonly();
+
+  readonly inlineExplorationResult =
+    this
+      .inlineExplorationResultSignal
+      .asReadonly();
+
+  readonly inlineExplorationProgress =
+    this
+      .inlineExplorationProgressSignal
+      .asReadonly();
+
+  readonly inlineExplorationPending =
+    this
+      .inlineExplorationPendingSignal
+      .asReadonly();
+
+  readonly inlineExplorationErrorMessage =
+    this
+      .inlineExplorationErrorSignal
       .asReadonly();
 
   readonly model =
@@ -159,19 +229,28 @@ export class GalacticMapFacade {
       },
     );
 
-  async refresh():
+  async refresh(
+    preserveCurrentContent =
+      false,
+  ):
     Promise<void> {
 
     const refreshId =
       ++this
         .refreshSequence;
 
-    this
-      .stateSignal
-      .set({
-        kind:
-          'loading',
-      });
+    if (
+      !preserveCurrentContent ||
+      this.state().kind !==
+        'content'
+    ) {
+      this
+        .stateSignal
+        .set({
+          kind:
+            'loading',
+        });
+    }
 
     try {
       const universes =
@@ -409,6 +488,185 @@ export class GalacticMapFacade {
               : 'No se pudo preparar el mapa galáctico.',
         });
     }
+  }
+
+  async exploreSector(
+    selection:
+      GalacticMapSectorSelection,
+  ): Promise<void> {
+
+    const explorationId =
+      ++this
+        .inlineExplorationSequence;
+
+    this
+      .inlineExplorationResultSignal
+      .set(null);
+
+    this
+      .inlineExplorationProgressSignal
+      .set(null);
+
+    this
+      .inlineExplorationErrorSignal
+      .set('');
+
+    const model =
+      this.model();
+
+    if (
+      model ===
+        null
+    ) {
+      this
+        .inlineExplorationErrorSignal
+        .set(
+          'No hay un mapa galáctico activo desde el que explorar el sector.',
+        );
+
+      return;
+    }
+
+    if (
+      selection.explored
+    ) {
+      this
+        .inlineExplorationErrorSignal
+        .set(
+          'El sector seleccionado ya está explorado. Selecciona otro sector del mapa.',
+        );
+
+      return;
+    }
+
+    this
+      .inlineExplorationPendingSignal
+      .set(true);
+
+    try {
+      const preparedSelection =
+        ExplorationSectorScanEngine
+          .prepareSector(
+            model.generationKey,
+            model.galaxyIndex,
+            selection.coordinates.x,
+            selection.coordinates.y,
+          );
+
+      if (
+        preparedSelection
+          .sectorLocator
+          .sectorKey !==
+        selection.sectorKey
+      ) {
+        throw new RangeError(
+          'La selección cartográfica no coincide con la identidad determinista del sector.',
+        );
+      }
+
+      const scanResult =
+        ExplorationSectorScanEngine
+          .scan(
+            preparedSelection,
+          );
+
+      const explorationResult =
+        ExplorationSectorResultEngine
+          .resolve(
+            scanResult,
+          );
+
+      this
+        .inlineExplorationResultSignal
+        .set(
+          explorationResult,
+        );
+
+      const progress =
+        await this
+          .explorationProgressRuntime
+          .commitResolvedResult(
+            explorationResult,
+          );
+
+      if (
+        explorationId !==
+        this.inlineExplorationSequence
+      ) {
+        return;
+      }
+
+      this
+        .inlineExplorationProgressSignal
+        .set(
+          progress,
+        );
+
+      /*
+       * Refresh coverage/markers while the existing scene stays mounted.
+       * GalacticMapScene re-renders the new model through the same runtime, so
+       * camera, zoom, orientation and galaxy spin remain where the player left
+       * them instead of forcing a round-trip through /exploration.
+       */
+      await this.refresh(
+        true,
+      );
+    } catch (
+      error
+    ) {
+      if (
+        explorationId !==
+        this.inlineExplorationSequence
+      ) {
+        return;
+      }
+
+      this
+        .inlineExplorationErrorSignal
+        .set(
+          error instanceof Error &&
+          error.message
+            .trim()
+            .length >
+            0
+            ? error.message
+            : 'No se pudo completar la exploración del sector.',
+        );
+    } finally {
+      if (
+        explorationId ===
+        this.inlineExplorationSequence
+      ) {
+        this
+          .inlineExplorationPendingSignal
+          .set(false);
+      }
+    }
+  }
+
+  clearInlineExploration():
+    void {
+
+    if (
+      this.inlineExplorationPending()
+    ) {
+      return;
+    }
+
+    ++this
+      .inlineExplorationSequence;
+
+    this
+      .inlineExplorationResultSignal
+      .set(null);
+
+    this
+      .inlineExplorationProgressSignal
+      .set(null);
+
+    this
+      .inlineExplorationErrorSignal
+      .set('');
   }
 
   private prepareExplorationCoverage(

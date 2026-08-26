@@ -173,6 +173,7 @@
             >
               <app-galactic-map-scene
                 [model]="model"
+                (sectorExplore)="exploreSector($event)"
               ></app-galactic-map-scene>
 
               <div
@@ -212,6 +213,188 @@
                 conocida y no revela Ground Truth oculto.
               </p>
             </section>
+          }
+
+          @if (
+            facade.inlineExplorationPending() ||
+            facade.inlineExplorationResult() !== null ||
+            facade.inlineExplorationErrorMessage()
+          ) {
+            <div
+              class="galactic-map__inline-backdrop"
+              data-testid="galactic-map-inline-exploration"
+              aria-live="polite"
+            >
+              <aside
+                class="galactic-map__inline-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="galactic-map-inline-title"
+              >
+                @if (facade.inlineExplorationResult(); as explorationResult) {
+                  <section
+                    class="galactic-map__inline-result"
+                    data-testid="galactic-map-inline-exploration-result"
+                    [attr.data-result-kind]="explorationResult.resultKind"
+                  >
+                    <div class="galactic-map__inline-heading">
+                      <div>
+                        <p class="galactic-map__meta">
+                          05 / RESULTADO RESUELTO
+                        </p>
+
+                        <span class="galactic-map__inline-kind">
+                          {{ resultKindLabel(explorationResult.resultKind) }}
+                        </span>
+                      </div>
+
+                      <code data-testid="galactic-map-inline-result-identity">
+                        {{ resultIdentity(explorationResult) }}
+                      </code>
+                    </div>
+
+                    <h2 id="galactic-map-inline-title">
+                      {{ resultHeadline(explorationResult.resultKind) }}
+                    </h2>
+
+                    <p>
+                      {{ resultDescription(explorationResult.resultKind) }}
+                    </p>
+
+                    <dl class="galactic-map__inline-facts">
+                      <div>
+                        <dt>Naturaleza del sujeto</dt>
+                        <dd data-testid="galactic-map-inline-result-subject">
+                          {{ resultSubjectLabel(explorationResult) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Sector de origen</dt>
+                        <dd data-testid="galactic-map-inline-result-sector">
+                          ({{ explorationResult.scanResult.selection.sectorX }}, {{ explorationResult.scanResult.selection.sectorY }})
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Firma previa</dt>
+                        <dd>
+                          {{ detectionLabel(explorationResult.scanResult.detectionKind) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Clasificación científica</dt>
+                        <dd data-testid="galactic-map-inline-result-scientific-classification">
+                          Sin clasificar
+                        </dd>
+                      </div>
+                    </dl>
+                  </section>
+                }
+
+                @if (facade.inlineExplorationPending()) {
+                  <section
+                    class="galactic-map__inline-progress"
+                    data-testid="galactic-map-inline-progress-pending"
+                  >
+                    <p class="galactic-map__meta">
+                      06 / REGISTRANDO PROGRESO
+                    </p>
+
+                    <strong>
+                      Guardando conocimiento observado…
+                    </strong>
+                  </section>
+                }
+
+                @if (facade.inlineExplorationProgress(); as progress) {
+                  <section
+                    class="galactic-map__inline-progress"
+                    data-testid="galactic-map-inline-exploration-reward"
+                  >
+                    <div class="galactic-map__inline-heading">
+                      <div>
+                        <p class="galactic-map__meta">
+                          06 / RECOMPENSA Y PROGRESO
+                        </p>
+
+                        <span
+                          class="galactic-map__inline-kind"
+                          data-testid="galactic-map-inline-reward-points"
+                        >
+                          +{{ progress.awardedDiscoveryPoints }} PD
+                        </span>
+                      </div>
+
+                      <code>
+                        {{ progress.didAwardDiscoveryPoints ? 'NUEVO CONOCIMIENTO' : 'YA REGISTRADO' }}
+                      </code>
+                    </div>
+
+                    <h3>
+                      {{ progress.didAwardDiscoveryPoints ? 'Progreso registrado' : 'Sin recompensa duplicada' }}
+                    </h3>
+
+                    <p>
+                      Solo se registra el estado observado DETECTED. No se revelan propiedades físicas, clasificación científica definitiva ni contenido adicional del sector.
+                    </p>
+
+                    <dl class="galactic-map__inline-facts">
+                      <div>
+                        <dt>PD globales</dt>
+                        <dd data-testid="galactic-map-inline-global-points">
+                          {{ progress.globalDiscoveryPointsAfter }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Progreso de galaxia</dt>
+                        <dd data-testid="galactic-map-inline-galaxy-progress">
+                          {{ progress.galaxyProgressUnitsAfter }}
+                          <small>(+{{ progress.galaxyProgressDelta }})</small>
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Sector</dt>
+                        <dd data-testid="galactic-map-inline-sector-state">
+                          {{ discoveryStateLabel(progress.sectorState) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Resultado estático</dt>
+                        <dd data-testid="galactic-map-inline-result-state">
+                          {{ progress.resultState === null ? 'Evento no persistido' : discoveryStateLabel(progress.resultState) }}
+                        </dd>
+                      </div>
+                    </dl>
+                  </section>
+                }
+
+                @if (facade.inlineExplorationErrorMessage()) {
+                  <section
+                    class="galactic-map__inline-error"
+                    data-testid="galactic-map-inline-exploration-error"
+                    role="alert"
+                  >
+                    {{ facade.inlineExplorationErrorMessage() }}
+                  </section>
+                }
+
+                @if (!facade.inlineExplorationPending()) {
+                  <button
+                    type="button"
+                    class="galactic-map__inline-close"
+                    data-testid="galactic-map-inline-exploration-close"
+                    (click)="continueExploring()"
+                  >
+                    Continuar explorando
+                  </button>
+                }
+              </aside>
+            </div>
           }
 
           <section

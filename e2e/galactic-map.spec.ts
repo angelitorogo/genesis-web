@@ -34,64 +34,71 @@ async function ensureActiveUniverse(
 }
 
 
+type PersistedStaticDiscovery = Readonly<{
+  resultKind: string;
+  canvasXRatio: number;
+  canvasYRatio: number;
+}>;
+
 async function persistOneStaticDiscovery(
   page:
     import('@playwright/test').Page,
-): Promise<string> {
+): Promise<PersistedStaticDiscovery> {
 
-  const coordinates =
-    [
-      [0, 0],
-      [0, 2],
-      [1, 0],
-      [-1, 0],
-      [1, 1],
-      [-1, -1],
-      [2, -1],
-      [-2, 1],
-      [2, 2],
-    ] as const;
+  await page.goto(
+    '/galaxy-map',
+  );
+
+  const scene =
+    page.getByTestId(
+      'galactic-map-scene',
+    );
+
+  const canvas =
+    page.getByTestId(
+      'galactic-map-canvas',
+    );
+
+  await expect(
+    scene,
+  ).toHaveAttribute(
+    'data-render-state',
+    'ready',
+  );
 
   for (
-    const [
-      x,
-      y,
-    ]
-    of coordinates
+    let attempt =
+      0;
+    attempt <
+      8;
+    attempt +=
+      1
   ) {
-    await page.goto(
-      `/exploration?sectorX=${x}&sectorY=${y}`,
-    );
-
-    await expect(
-      page.getByTestId(
-        'selected-sector-coordinates',
-      ),
-    ).toContainText(
-      `Sector (${x}, ${y})`,
-    );
+    const selected =
+      await selectUnexploredSectorOnMap(
+        canvas,
+        scene,
+      );
 
     await page
       .getByTestId(
-        'scan-sector-action',
+        'galactic-map-explore-sector-link',
       )
       .click();
 
-    await expect(
-      page.getByTestId(
-        'scanned-sector-coordinates',
-      ),
-    ).toContainText(
-      `(${x}, ${y})`,
-    );
-
     const result =
       page.getByTestId(
-        'exploration-result',
+        'galactic-map-inline-exploration-result',
       );
 
     await expect(
       result,
+    ).toBeVisible();
+
+    await expect(
+      page.getByTestId(
+        'galactic-map-inline-exploration-reward',
+      ),
     ).toBeVisible();
 
     const kind =
@@ -99,38 +106,27 @@ async function persistOneStaticDiscovery(
         'data-result-kind',
       );
 
-    await expect(
-      page.getByTestId(
-        'exploration-sector-state',
-      ),
-    ).toContainText(
-      'Detectada',
-    );
-
     if (
       kind !==
-      'TRANSIENT_EVENT' &&
+        'TRANSIENT_EVENT' &&
       kind !==
-      null
+        null
     ) {
-      await expect(
-        page.getByTestId(
-          'exploration-result-state',
-        ),
-      ).toContainText(
-        'Detectada',
-      );
-
-      return kind;
+      return Object.freeze({
+        resultKind:
+          kind,
+        canvasXRatio:
+          selected.xRatio,
+        canvasYRatio:
+          selected.yRatio,
+      });
     }
 
-    await expect(
-      page.getByTestId(
-        'exploration-result-state',
-      ),
-    ).toContainText(
-      'Evento no persistido',
-    );
+    await page
+      .getByTestId(
+        'galactic-map-inline-exploration-close',
+      )
+      .click();
   }
 
   throw new Error(
@@ -180,6 +176,12 @@ async function selectUnexploredSectorOnMap(
 
   readonly y:
     string;
+
+  readonly xRatio:
+    number;
+
+  readonly yRatio:
+    number;
 }> {
 
   const bounds =
@@ -271,6 +273,8 @@ async function selectUnexploredSectorOnMap(
       return {
         x,
         y,
+        xRatio,
+        yRatio,
       };
     }
   }
@@ -299,7 +303,7 @@ function expectedMarkerFamilyLabel(
 }
 
 
-async function selectPersistentMarkerNearCanvasCenter(
+async function selectPersistentMarkerNearCanvasAnchor(
   page:
     import('@playwright/test').Page,
 
@@ -311,6 +315,12 @@ async function selectPersistentMarkerNearCanvasCenter(
 
   persistedResultKind:
     string,
+
+  anchorXRatio:
+    number,
+
+  anchorYRatio:
+    number,
 ): Promise<void> {
 
   const bounds =
@@ -339,11 +349,19 @@ async function selectPersistentMarkerNearCanvasCenter(
       'galactic-map-selected-marker-family',
     );
 
-  // Point 10.6 picks markers in screen space with a generous hit radius.
-  // Search outwards from the visual centre, but validate the actual selected
-  // marker kind and rendered family before accepting a hit. This avoids the
-  // old D8B1-specific 3x3 assumption and also rejects transient/stale DOM
-  // states while the renderer finishes a camera/LOD update.
+  // The inline scan persists the discovery in the real sector selected on the
+  // canvas, which is intentionally not forced to the visual centre. Search
+  // around that original sector anchor after reset, then validate the actual
+  // selected marker kind/family before accepting a hit. This avoids spending
+  // the global 30 s E2E budget scanning an unrelated centre-of-canvas area.
+  const anchorX =
+    bounds.width *
+    anchorXRatio;
+
+  const anchorY =
+    bounds.height *
+    anchorYRatio;
+
   const offsets =
     [
       0,
@@ -366,14 +384,19 @@ async function selectPersistentMarkerNearCanvasCenter(
       of offsets
     ) {
       await canvas.click({
+        // Once any persistent marker is selected, its centred detail panel can
+        // overlap the next probe coordinate. Force only this test-helper click
+        // so the event still reaches the real canvas/raycast handler instead
+        // of timing out on the intentionally interactive overlay. Production
+        // pointer-event behaviour remains untouched.
+        force:
+          true,
         position: {
           x:
-            bounds.width /
-              2 +
+            anchorX +
             offsetX,
           y:
-            bounds.height /
-              2 +
+            anchorY +
             offsetY,
         },
       });
@@ -421,7 +444,7 @@ async function selectPersistentMarkerNearCanvasCenter(
   }
 
   throw new Error(
-    `Could not stably select the persisted ${persistedResultKind} marker near the galactic centre.`,
+    `Could not stably select the persisted ${persistedResultKind} marker near the persisted sector anchor.`,
   );
 }
 
@@ -437,28 +460,14 @@ test.describe(
           page,
         );
 
-        await page.goto(
-          '/exploration',
-        );
-
-        await expect(
-          page.getByTestId(
-            'exploration-open-galaxy-map-link',
-          ),
-        ).toBeVisible();
-
-        await expect(
-          page.getByTestId(
-            'sector-x-input',
-          ),
-        ).toHaveCount(
-          0,
-        );
-
-        const persistedResultKind =
+        const persistedDiscovery =
           await persistOneStaticDiscovery(
             page,
           );
+
+        const persistedResultKind =
+          persistedDiscovery
+            .resultKind;
 
         expect(
           [
@@ -1630,11 +1639,15 @@ test.describe(
           'true',
         );
 
-        await selectPersistentMarkerNearCanvasCenter(
+        await selectPersistentMarkerNearCanvasAnchor(
           page,
           canvas,
           scene,
           persistedResultKind,
+          persistedDiscovery
+            .canvasXRatio,
+          persistedDiscovery
+            .canvasYRatio,
         );
 
         const markerSelection =
@@ -1891,7 +1904,7 @@ test.describe(
     );
 
     test(
-      'should select an unexplored real sector from the map, auto-scan it without a second click and return with refreshed coverage',
+      'should explore a selected sector inline on /galaxy-map, refresh coverage and preserve the active camera',
       async ({
         page,
       }) => {
@@ -1920,14 +1933,6 @@ test.describe(
           'ready',
         );
 
-        await expect(
-          page.getByTestId(
-            'galactic-map-selection',
-          ),
-        ).toHaveCount(
-          0,
-        );
-
         const exploredBefore =
           await numericAttribute(
             scene,
@@ -1938,6 +1943,18 @@ test.describe(
           await numericAttribute(
             scene,
             'data-discovery-marker-count',
+          );
+
+        const distanceBefore =
+          await numericAttribute(
+            scene,
+            'data-camera-distance',
+          );
+
+        const azimuthBefore =
+          await numericAttribute(
+            scene,
+            'data-camera-azimuth',
           );
 
         const selected =
@@ -1954,132 +1971,114 @@ test.describe(
           `Sector (${selected.x}, ${selected.y})`,
         );
 
-        await expect(
-          page.getByTestId(
-            'galactic-map-selected-sector-state',
-          ),
-        ).toContainText(
-          'No explorado',
-        );
-
-        const exploreLink =
+        const exploreAction =
           page.getByTestId(
             'galactic-map-explore-sector-link',
           );
 
         await expect(
-          exploreLink,
+          exploreAction,
         ).toBeVisible();
 
-        await expect(
-          exploreLink,
-        ).toHaveAttribute(
-          'href',
-          new RegExp(
-            `/exploration\\?sectorX=${selected.x}&sectorY=${selected.y}&scan=1$`,
-          ),
-        );
+        const selectionPanel =
+          page.getByTestId(
+            'galactic-map-sector-selection',
+          );
 
-        await exploreLink.click();
+        const selectionBounds =
+          await selectionPanel.boundingBox();
+        const viewport =
+          page.viewportSize();
+
+        expect(
+          selectionBounds,
+        ).not.toBeNull();
+        expect(
+          viewport,
+        ).not.toBeNull();
+
+        if (
+          selectionBounds !== null &&
+          viewport !== null
+        ) {
+          expect(
+            Math.abs(
+              selectionBounds.x +
+                selectionBounds.width / 2 -
+                viewport.width / 2,
+            ),
+          ).toBeLessThan(
+            4,
+          );
+
+          expect(
+            Math.abs(
+              selectionBounds.y +
+                selectionBounds.height / 2 -
+                viewport.height / 2,
+            ),
+          ).toBeLessThan(
+            4,
+          );
+        }
+
+        await exploreAction.click();
 
         await expect(
           page,
         ).toHaveURL(
-          new RegExp(
-            `/exploration\\?sectorX=${selected.x}&sectorY=${selected.y}$`,
-          ),
+          /\/galaxy-map$/,
         );
 
-        await expect(
+        const result =
           page.getByTestId(
-            'selected-sector-from-map',
-          ),
-        ).toBeVisible();
-
-        await expect(
-          page.getByTestId(
-            'selected-sector-coordinates',
-          ),
-        ).toContainText(
-          `Sector (${selected.x}, ${selected.y})`,
-        );
-
-        await expect(
-          page.getByTestId(
-            'selected-sector-exploration-state',
-          ),
-        ).toContainText(
-          'Explorado',
-        );
-
-        await expect(
-          page.getByTestId(
-            'sector-x-input',
-          ),
-        ).toHaveCount(
-          0,
-        );
-
-        await expect(
-          page.getByTestId(
-            'sector-y-input',
-          ),
-        ).toHaveCount(
-          0,
-        );
-
-        await expect(
-          page.getByTestId(
-            'scan-sector-action',
-          ),
-        ).toHaveCount(
-          0,
-        );
-
-        await expect(
-          page.getByTestId(
-            'exploration-reward',
-          ),
-        ).toBeVisible();
-
-        const resultKind =
-          await page
-            .getByTestId(
-              'exploration-result',
-            )
-            .getAttribute(
-              'data-result-kind',
-            );
-
-        await page
-          .getByTestId(
-            'exploration-return-map-link',
-          )
-          .click();
-
-        await expect(
-          page.getByTestId(
-            'galaxy-map-page',
-          ),
-        ).toBeVisible();
-
-        const refreshedScene =
-          page.getByTestId(
-            'galactic-map-scene',
+            'galactic-map-inline-exploration-result',
           );
 
         await expect(
-          refreshedScene,
-        ).toHaveAttribute(
-          'data-render-state',
-          'ready',
+          result,
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-inline-result-sector',
+          ),
+        ).toContainText(
+          `(${selected.x}, ${selected.y})`,
         );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-inline-result-scientific-classification',
+          ),
+        ).toContainText(
+          'Sin clasificar',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-inline-exploration-reward',
+          ),
+        ).toBeVisible();
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-inline-sector-state',
+          ),
+        ).toContainText(
+          'Detectada',
+        );
+
+        const resultKind =
+          await result.getAttribute(
+            'data-result-kind',
+          );
 
         await expect
           .poll(
             async () =>
               numericAttribute(
-                refreshedScene,
+                scene,
                 'data-explored-sector-count',
               ),
           )
@@ -2090,29 +2089,60 @@ test.describe(
 
         const markersAfter =
           await numericAttribute(
-            refreshedScene,
+            scene,
             'data-discovery-marker-count',
           );
 
-        if (
-          resultKind !==
+        expect(
+          markersAfter,
+        ).toBe(
+          resultKind ===
             'TRANSIENT_EVENT'
-        ) {
-          expect(
-            markersAfter,
-          ).toBe(
-            markersBefore +
+            ? markersBefore
+            : markersBefore +
               1,
-          );
-        } else {
-          expect(
-            markersAfter,
-          ).toBe(
-            markersBefore,
-          );
-        }
-      },
+        );
 
+        expect(
+          await numericAttribute(
+            scene,
+            'data-camera-distance',
+          ),
+        ).toBeCloseTo(
+          distanceBefore,
+          6,
+        );
+
+        expect(
+          await numericAttribute(
+            scene,
+            'data-camera-azimuth',
+          ),
+        ).toBeCloseTo(
+          azimuthBefore,
+          6,
+        );
+
+        await page
+          .getByTestId(
+            'galactic-map-inline-exploration-close',
+          )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'galactic-map-inline-exploration',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        await expect(
+          page,
+        ).toHaveURL(
+          /\/galaxy-map$/,
+        );
+      },
     );
   },
 );

@@ -429,15 +429,15 @@
           materializar Ground Truth oculto antes de resolverlo.
         </p>
 
-        <a
-          class="galactic-map-scene__marker-link"
+        <button
+          type="button"
+          class="galactic-map-scene__marker-link galactic-map-scene__marker-link--button"
           data-testid="galactic-map-explore-sector-link"
-          routerLink="/exploration"
-          [queryParams]="sectorExplorationQueryParams(selectedSector)"
+          (click)="requestSectorExploration(selectedSector)"
         >
           Explorar este sector
           <span aria-hidden="true">→</span>
-        </a>
+        </button>
       }
     </aside>
   }

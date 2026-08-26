@@ -1201,17 +1201,32 @@ describe(
           'Sector (4, -3)',
         );
 
+        const exploreRequests:
+          GalacticMapSectorSelection[] =
+          [];
+
+        fixture
+          .componentInstance
+          .sectorExplore
+          .subscribe(
+            (selection) => {
+              exploreRequests.push(
+                selection,
+              );
+            },
+          );
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="galactic-map-explore-sector-link"]',
+          )
+          ?.click();
+
         expect(
-          element
-            .querySelector<HTMLAnchorElement>(
-              '[data-testid="galactic-map-explore-sector-link"]',
-            )
-            ?.getAttribute(
-              'href',
-            ),
-        ).toContain(
-          '/exploration?sectorX=4&sectorY=-3&scan=1',
-        );
+          exploreRequests,
+        ).toEqual([
+          selectedSector,
+        ]);
       },
     );
 

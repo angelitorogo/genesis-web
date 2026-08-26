@@ -375,23 +375,32 @@ test.describe(
 
           await expect(
             page.getByTestId(
-              'exploration-open-galaxy-map-link',
+              'exploration-operation-scope',
+            ),
+          ).toContainText(
+            'Búsqueda extragaláctica',
+          );
+
+          await expect(
+            page.getByTestId(
+              'external-galaxy-search',
             ),
           ).toBeVisible();
 
-          if (
-            viewport.name
-            === 'mobile-pwa'
-          ) {
-            await expectTouchTarget(
-              page.getByTestId(
-                'exploration-open-galaxy-map-link',
-              ),
-            );
-          }
+          await expect(
+            page.getByTestId(
+              'exploration-open-galaxy-map-link',
+            ),
+          ).toHaveCount(
+            0,
+          );
 
-          await page.goto(
-            '/exploration?sectorX=0&sectorY=0',
+          await expect(
+            page.getByTestId(
+              'scan-sector-action',
+            ),
+          ).toHaveCount(
+            0,
           );
 
           if (
@@ -400,28 +409,32 @@ test.describe(
           ) {
             await expectTouchTarget(
               page.getByTestId(
-                'scan-sector-action',
+                'external-galaxy-search-action',
               ),
             );
           }
 
-          await page
-            .getByTestId(
+          await expectNoHorizontalOverflow(
+            page,
+          );
+
+          await page.goto(
+            '/exploration?sectorX=0&sectorY=0',
+          );
+
+          await expect(
+            page.getByTestId(
+              'external-galaxy-search',
+            ),
+          ).toBeVisible();
+
+          await expect(
+            page.getByTestId(
               'scan-sector-action',
-            )
-            .click();
-
-          await expect(
-            page.getByTestId(
-              'exploration-result',
             ),
-          ).toBeVisible();
-
-          await expect(
-            page.getByTestId(
-              'exploration-reward',
-            ),
-          ).toBeVisible();
+          ).toHaveCount(
+            0,
+          );
 
           await expectNoHorizontalOverflow(
             page,

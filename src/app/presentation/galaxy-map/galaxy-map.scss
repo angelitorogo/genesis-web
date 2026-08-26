@@ -246,3 +246,123 @@
     }
   }
 }
+
+.galactic-map__inline-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(2px);
+}
+
+.galactic-map__inline-panel {
+  width: min(58rem, calc(100vw - 2rem));
+  max-height: min(82vh, 48rem);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: clamp(1rem, 2.4vw, 1.7rem);
+  border: 1px solid rgba(106, 215, 255, 0.3);
+  border-radius: var(--genesis-radius-lg);
+  background: rgba(6, 11, 19, 0.98);
+  box-shadow: 0 1.8rem 5rem rgba(0, 0, 0, 0.6);
+}
+
+.galactic-map__inline-result + .galactic-map__inline-progress,
+.galactic-map__inline-progress + .galactic-map__inline-error {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.galactic-map__inline-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.galactic-map__inline-heading code {
+  overflow-wrap: anywhere;
+}
+
+.galactic-map__inline-kind {
+  color: var(--genesis-color-primary);
+  font: 800 0.72rem var(--genesis-font-mono);
+}
+
+.galactic-map__inline-panel h2,
+.galactic-map__inline-panel h3 {
+  margin: 0.55rem 0;
+}
+
+.galactic-map__inline-panel > section > p:not(.galactic-map__meta) {
+  color: var(--genesis-color-text-muted);
+  line-height: 1.55;
+}
+
+.galactic-map__inline-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 1rem 0 0;
+}
+
+.galactic-map__inline-facts div {
+  padding: 0.75rem 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.galactic-map__inline-facts dt {
+  color: var(--genesis-color-text-subtle);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.galactic-map__inline-facts dd {
+  margin: 0.25rem 0 0;
+  color: var(--genesis-color-primary);
+  font-weight: 700;
+}
+
+.galactic-map__inline-error {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 129, 129, 0.28);
+  border-radius: var(--genesis-radius-md);
+  background: rgba(255, 86, 86, 0.07);
+  color: #ffb1b1;
+}
+
+.galactic-map__inline-close {
+  width: 100%;
+  margin-top: 1.1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(106, 215, 255, 0.38);
+  border-radius: var(--genesis-radius-md);
+  background: rgba(106, 215, 255, 0.1);
+  color: var(--genesis-color-primary);
+  font: 800 0.76rem var(--genesis-font-mono);
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .galactic-map__inline-backdrop {
+    padding: 0.75rem;
+  }
+
+  .galactic-map__inline-panel {
+    width: calc(100vw - 1.5rem);
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .galactic-map__inline-heading {
+    display: grid;
+  }
+
+  .galactic-map__inline-facts {
+    grid-template-columns: 1fr;
+  }
+}
