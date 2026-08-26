@@ -13,7 +13,8 @@ export type StellarEvolutionStateName =
  *
  * Important roadmap boundaries:
  * - this is an evolutionary state, not a spectral class;
- * - M/K/G/F/A/B/O classification belongs to point 14.2;
+ * - point 14.2 models the broad O/B/A/F/G/K/M main-sequence family separately;
+ * - detailed spectral type/color remains point 15.2;
  * - stellar physical properties and temperature remain outside this model;
  * - the transition rules between states belong to points 14.8-14.9.
  *

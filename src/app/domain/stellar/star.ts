@@ -8,23 +8,28 @@ import {
 
 import {
   type StellarEvolutionState,
+  StellarEvolutionState as StellarEvolutionStates,
 } from './stellar-evolution-state';
 
+import {
+  type StellarMainSequenceClass,
+} from './stellar-main-sequence-class';
+
 /**
- * Point-14.1 domain identity for the canonical stellar primary of one
+ * Point-14.1/14.2 domain identity for the canonical stellar primary of one
  * planetary system.
  *
  * The existing GENESIS procedural hierarchy intentionally has no StarLocator:
  * SystemLocator is the stable identity of the V1 system/primary-star target
- * and BodyLocator descends directly from that system. Point 14.1 therefore
- * does not insert a new seed or locator level and cannot perturb any frozen
- * procedural vector.
+ * and BodyLocator descends directly from that system. Phase 14 therefore does
+ * not insert a new seed or locator level and cannot perturb frozen procedural
+ * vectors.
  *
- * This model deliberately contains no spectral class, mass, metallicity,
- * radius, luminosity, temperature, age, discovery state or rendering data.
- * Those properties and the rules that derive them belong to later roadmap
- * points. At 14.1 only identity plus the canonical evolutionary state are
- * materialized.
+ * Point 14.2 adds only the broad O/B/A/F/G/K/M family when the evolutionary
+ * state is MAIN_SEQUENCE. It deliberately does not add mass, radius,
+ * luminosity, temperature, detailed spectral subtype/color, age, metallicity,
+ * discovery state or rendering data. Those contracts belong to later roadmap
+ * points.
  */
 export class Star {
 
@@ -37,7 +42,34 @@ export class Star {
 
     readonly evolutionState:
       StellarEvolutionState,
-  ) {}
+
+    readonly mainSequenceClass:
+      StellarMainSequenceClass | null,
+  ) {
+    const isMainSequence =
+      evolutionState.name ===
+      StellarEvolutionStates.MAIN_SEQUENCE.name;
+
+    if (
+      isMainSequence &&
+      mainSequenceClass ===
+        null
+    ) {
+      throw new RangeError(
+        'MAIN_SEQUENCE stars require a StellarMainSequenceClass.',
+      );
+    }
+
+    if (
+      !isMainSequence &&
+      mainSequenceClass !==
+        null
+    ) {
+      throw new RangeError(
+        `${evolutionState.name} stars cannot carry a main-sequence class.`,
+      );
+    }
+  }
 
   get galaxyIndex():
     bigint {

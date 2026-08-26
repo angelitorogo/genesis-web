@@ -22,6 +22,10 @@ import {
   StellarEvolutionState,
 } from './stellar-evolution-state';
 
+import {
+  StellarMainSequenceClass,
+} from './stellar-main-sequence-class';
+
 describe(
   'Star',
   () => {
@@ -41,13 +45,14 @@ describe(
       );
 
     it(
-      'should materialize point-14.1 identity and evolutionary state without inventing later stellar properties',
+      'should materialize point-14.2 main-sequence identity without inventing point-15 physical or spectral output',
       () => {
         const star =
           new Star(
             generationKey,
             locator,
             StellarEvolutionState.MAIN_SEQUENCE,
+            StellarMainSequenceClass.G,
           );
 
         expect(
@@ -69,6 +74,12 @@ describe(
         );
 
         expect(
+          star.mainSequenceClass,
+        ).toBe(
+          StellarMainSequenceClass.G,
+        );
+
+        expect(
           Object.keys(
             star,
           ),
@@ -76,7 +87,28 @@ describe(
           'generationKey',
           'locator',
           'evolutionState',
+          'mainSequenceClass',
         ]);
+
+        for (
+          const point15Property
+          of [
+            'massSolar',
+            'radiusSolar',
+            'luminositySolar',
+            'effectiveTemperatureKelvin',
+            'spectralType',
+            'color',
+            'ageBillionYears',
+          ]
+        ) {
+          expect(
+            point15Property in
+              star,
+          ).toBe(
+            false,
+          );
+        }
       },
     );
 
@@ -88,6 +120,7 @@ describe(
             generationKey,
             locator,
             StellarEvolutionState.WHITE_DWARF,
+            null,
           );
 
         expect(
@@ -111,24 +144,54 @@ describe(
     );
 
     it(
-      'should support every canonical evolutionary state without adding a StarLocator or starIndex',
+      'should support all seven O/B/A/F/G/K/M classes only for MAIN_SEQUENCE stars',
       () => {
         for (
-          const evolutionState
-          of StellarEvolutionState.values
+          const mainSequenceClass
+          of StellarMainSequenceClass.values
         ) {
           const star =
             new Star(
               generationKey,
               locator,
-              evolutionState,
+              StellarEvolutionState.MAIN_SEQUENCE,
+              mainSequenceClass,
             );
 
           expect(
-            star.evolutionState,
+            star.mainSequenceClass,
           ).toBe(
-            evolutionState,
+            mainSequenceClass,
           );
+        }
+      },
+    );
+
+    it(
+      'should keep every non-main-sequence evolutionary family free of a main-sequence class',
+      () => {
+        for (
+          const evolutionState
+          of StellarEvolutionState.values
+        ) {
+          if (
+            evolutionState.name ===
+            StellarEvolutionState.MAIN_SEQUENCE.name
+          ) {
+            continue;
+          }
+
+          const star =
+            new Star(
+              generationKey,
+              locator,
+              evolutionState,
+              null,
+            );
+
+          expect(
+            star.mainSequenceClass,
+          ).toBeNull();
 
           expect(
             'starIndex' in
@@ -137,6 +200,35 @@ describe(
             false,
           );
         }
+      },
+    );
+
+    it(
+      'should reject missing or misplaced main-sequence classification',
+      () => {
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.MAIN_SEQUENCE,
+              null,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.GIANT,
+              StellarMainSequenceClass.K,
+            ),
+        ).toThrow(
+          RangeError,
+        );
       },
     );
   },
