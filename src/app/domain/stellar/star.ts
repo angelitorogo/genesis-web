@@ -12,6 +12,10 @@ import {
 } from './stellar-evolution-state';
 
 import {
+  type StellarBlackHoleFormationChannel,
+} from './stellar-black-hole-formation-channel';
+
+import {
   type StellarBrownDwarfClass,
 } from './stellar-brown-dwarf-class';
 
@@ -49,7 +53,10 @@ import {
  * with later DA/DB/etc. spectral-atmospheric classification. Point 14.6 marks
  * NEUTRON_STAR objects as compact remnants with an explicit coarse formation
  * channel, while deliberately leaving pulsar/magnetar behaviour to later
- * rotation/activity contracts. These are domain-level evolutionary families
+ * rotation/activity contracts. Point 14.7 likewise makes STELLAR_BLACK_HOLE a
+ * concrete compact-remnant model through a coarse isolated-star formation
+ * channel, without introducing accretion, spin or event-horizon physics. These
+ * are domain-level evolutionary families
  * only: mass, radius, luminosity, temperature, detailed
  * spectral subtype/color, age, metallicity, discovery state and rendering data
  * remain later-roadmap contracts.
@@ -80,6 +87,9 @@ export class Star {
 
     readonly neutronStarFormationChannel:
       StellarNeutronStarFormationChannel | null = null,
+
+    readonly blackHoleFormationChannel:
+      StellarBlackHoleFormationChannel | null = null,
   ) {
     const isMainSequence =
       evolutionState.name ===
@@ -230,6 +240,30 @@ export class Star {
     ) {
       throw new RangeError(
         `${evolutionState.name} stars cannot carry a neutron-star formation channel.`,
+      );
+    }
+
+    const isStellarBlackHole =
+      evolutionState.name ===
+      StellarEvolutionStates.STELLAR_BLACK_HOLE.name;
+
+    if (
+      isStellarBlackHole &&
+      blackHoleFormationChannel ===
+        null
+    ) {
+      throw new RangeError(
+        'STELLAR_BLACK_HOLE remnants require a StellarBlackHoleFormationChannel.',
+      );
+    }
+
+    if (
+      !isStellarBlackHole &&
+      blackHoleFormationChannel !==
+        null
+    ) {
+      throw new RangeError(
+        `${evolutionState.name} stars cannot carry a stellar-black-hole formation channel.`,
       );
     }
   }
