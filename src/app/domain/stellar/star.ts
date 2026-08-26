@@ -12,6 +12,10 @@ import {
 } from './stellar-evolution-state';
 
 import {
+  type StellarBrownDwarfClass,
+} from './stellar-brown-dwarf-class';
+
+import {
   type StellarMainSequenceClass,
 } from './stellar-main-sequence-class';
 
@@ -25,11 +29,11 @@ import {
  * not insert a new seed or locator level and cannot perturb frozen procedural
  * vectors.
  *
- * Point 14.2 adds only the broad O/B/A/F/G/K/M family when the evolutionary
- * state is MAIN_SEQUENCE. It deliberately does not add mass, radius,
- * luminosity, temperature, detailed spectral subtype/color, age, metallicity,
- * discovery state or rendering data. Those contracts belong to later roadmap
- * points.
+ * Point 14.2 adds the broad O/B/A/F/G/K/M family for MAIN_SEQUENCE stars and
+ * point 14.3 adds the broad L/T/Y family for the BROWN_DWARF branch. These are
+ * domain-level families only: mass, radius, luminosity, temperature, detailed
+ * spectral subtype/color, age, metallicity, discovery state and rendering data
+ * remain later-roadmap contracts.
  */
 export class Star {
 
@@ -45,6 +49,9 @@ export class Star {
 
     readonly mainSequenceClass:
       StellarMainSequenceClass | null,
+
+    readonly brownDwarfClass:
+      StellarBrownDwarfClass | null = null,
   ) {
     const isMainSequence =
       evolutionState.name ===
@@ -67,6 +74,30 @@ export class Star {
     ) {
       throw new RangeError(
         `${evolutionState.name} stars cannot carry a main-sequence class.`,
+      );
+    }
+
+    const isBrownDwarf =
+      evolutionState.name ===
+      StellarEvolutionStates.BROWN_DWARF.name;
+
+    if (
+      isBrownDwarf &&
+      brownDwarfClass ===
+        null
+    ) {
+      throw new RangeError(
+        'BROWN_DWARF stars require a StellarBrownDwarfClass.',
+      );
+    }
+
+    if (
+      !isBrownDwarf &&
+      brownDwarfClass !==
+        null
+    ) {
+      throw new RangeError(
+        `${evolutionState.name} stars cannot carry a brown-dwarf class.`,
       );
     }
   }

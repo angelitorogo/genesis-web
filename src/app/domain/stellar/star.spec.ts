@@ -19,6 +19,10 @@ import {
 } from './star';
 
 import {
+  StellarBrownDwarfClass,
+} from './stellar-brown-dwarf-class';
+
+import {
   StellarEvolutionState,
 } from './stellar-evolution-state';
 
@@ -80,6 +84,10 @@ describe(
         );
 
         expect(
+          star.brownDwarfClass,
+        ).toBeNull();
+
+        expect(
           Object.keys(
             star,
           ),
@@ -88,6 +96,7 @@ describe(
           'locator',
           'evolutionState',
           'mainSequenceClass',
+          'brownDwarfClass',
         ]);
 
         for (
@@ -107,6 +116,41 @@ describe(
               star,
           ).toBe(
             false,
+          );
+        }
+      },
+    );
+
+    it(
+      'should materialize point-14.3 brown-dwarf identity without pretending it is main sequence',
+      () => {
+        for (
+          const brownDwarfClass
+          of StellarBrownDwarfClass.values
+        ) {
+          const star =
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.BROWN_DWARF,
+              null,
+              brownDwarfClass,
+            );
+
+          expect(
+            star.evolutionState,
+          ).toBe(
+            StellarEvolutionState.BROWN_DWARF,
+          );
+
+          expect(
+            star.mainSequenceClass,
+          ).toBeNull();
+
+          expect(
+            star.brownDwarfClass,
+          ).toBe(
+            brownDwarfClass,
           );
         }
       },
@@ -163,24 +207,27 @@ describe(
           ).toBe(
             mainSequenceClass,
           );
+
+          expect(
+            star.brownDwarfClass,
+          ).toBeNull();
         }
       },
     );
 
     it(
-      'should keep every non-main-sequence evolutionary family free of a main-sequence class',
+      'should keep evolved stellar families free of both main-sequence and brown-dwarf classes',
       () => {
         for (
           const evolutionState
-          of StellarEvolutionState.values
+          of [
+            StellarEvolutionState.GIANT,
+            StellarEvolutionState.SUPERGIANT,
+            StellarEvolutionState.WHITE_DWARF,
+            StellarEvolutionState.NEUTRON_STAR,
+            StellarEvolutionState.STELLAR_BLACK_HOLE,
+          ]
         ) {
-          if (
-            evolutionState.name ===
-            StellarEvolutionState.MAIN_SEQUENCE.name
-          ) {
-            continue;
-          }
-
           const star =
             new Star(
               generationKey,
@@ -191,6 +238,10 @@ describe(
 
           expect(
             star.mainSequenceClass,
+          ).toBeNull();
+
+          expect(
+            star.brownDwarfClass,
           ).toBeNull();
 
           expect(
@@ -225,6 +276,49 @@ describe(
               locator,
               StellarEvolutionState.GIANT,
               StellarMainSequenceClass.K,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a brown dwarf without L/T/Y family or any misplaced brown-dwarf family',
+      () => {
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.BROWN_DWARF,
+              null,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.MAIN_SEQUENCE,
+              StellarMainSequenceClass.M,
+              StellarBrownDwarfClass.L,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.WHITE_DWARF,
+              null,
+              StellarBrownDwarfClass.Y,
             ),
         ).toThrow(
           RangeError,
