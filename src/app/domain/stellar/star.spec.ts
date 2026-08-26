@@ -34,6 +34,10 @@ import {
   StellarPostMainSequenceStage,
 } from './stellar-post-main-sequence-stage';
 
+import {
+  StellarWhiteDwarfComposition,
+} from './stellar-white-dwarf-composition';
+
 describe(
   'Star',
   () => {
@@ -96,6 +100,10 @@ describe(
         ).toBeNull();
 
         expect(
+          star.whiteDwarfComposition,
+        ).toBeNull();
+
+        expect(
           Object.keys(
             star,
           ),
@@ -106,6 +114,7 @@ describe(
           'mainSequenceClass',
           'brownDwarfClass',
           'postMainSequenceStage',
+          'whiteDwarfComposition',
         ]);
 
         for (
@@ -165,6 +174,10 @@ describe(
           expect(
             star.postMainSequenceStage,
           ).toBeNull();
+
+          expect(
+            star.whiteDwarfComposition,
+          ).toBeNull();
         }
       },
     );
@@ -208,6 +221,10 @@ describe(
           ).toBe(
             stage,
           );
+
+          expect(
+            star.whiteDwarfComposition,
+          ).toBeNull();
         }
       },
     );
@@ -244,6 +261,55 @@ describe(
         expect(
           star.brownDwarfClass,
         ).toBeNull();
+
+        expect(
+          star.whiteDwarfComposition,
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should materialize point-14.5 white dwarfs with an explicit coarse core composition',
+      () => {
+        for (
+          const composition
+          of StellarWhiteDwarfComposition.values
+        ) {
+          const star =
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.WHITE_DWARF,
+              null,
+              null,
+              null,
+              composition,
+            );
+
+          expect(
+            star.evolutionState,
+          ).toBe(
+            StellarEvolutionState.WHITE_DWARF,
+          );
+
+          expect(
+            star.whiteDwarfComposition,
+          ).toBe(
+            composition,
+          );
+
+          expect(
+            star.mainSequenceClass,
+          ).toBeNull();
+
+          expect(
+            star.brownDwarfClass,
+          ).toBeNull();
+
+          expect(
+            star.postMainSequenceStage,
+          ).toBeNull();
+        }
       },
     );
 
@@ -256,6 +322,9 @@ describe(
             locator,
             StellarEvolutionState.WHITE_DWARF,
             null,
+            null,
+            null,
+            StellarWhiteDwarfComposition.CARBON_OXYGEN_CORE,
           );
 
         expect(
@@ -306,17 +375,20 @@ describe(
           expect(
             star.postMainSequenceStage,
           ).toBeNull();
+
+          expect(
+            star.whiteDwarfComposition,
+          ).toBeNull();
         }
       },
     );
 
     it(
-      'should keep compact-remnant families free of main-sequence, brown-dwarf and post-main-sequence stage classifications',
+      'should keep neutron-star and stellar-black-hole remnant families free of earlier-state classifications',
       () => {
         for (
           const evolutionState
           of [
-            StellarEvolutionState.WHITE_DWARF,
             StellarEvolutionState.NEUTRON_STAR,
             StellarEvolutionState.STELLAR_BLACK_HOLE,
           ]
@@ -339,6 +411,10 @@ describe(
 
           expect(
             star.postMainSequenceStage,
+          ).toBeNull();
+
+          expect(
+            star.whiteDwarfComposition,
           ).toBeNull();
 
           expect(
@@ -420,6 +496,72 @@ describe(
         ).toThrow(
           RangeError,
         );
+      },
+    );
+
+
+    it(
+      'should require a point-14.5 composition only for WHITE_DWARF remnants',
+      () => {
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.WHITE_DWARF,
+              null,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        for (
+          const evolutionState
+          of [
+            StellarEvolutionState.MAIN_SEQUENCE,
+            StellarEvolutionState.BROWN_DWARF,
+            StellarEvolutionState.GIANT,
+            StellarEvolutionState.SUPERGIANT,
+            StellarEvolutionState.NEUTRON_STAR,
+            StellarEvolutionState.STELLAR_BLACK_HOLE,
+          ]
+        ) {
+          const mainSequenceClass =
+            evolutionState.name ===
+              StellarEvolutionState.MAIN_SEQUENCE.name
+              ? StellarMainSequenceClass.G
+              : null;
+
+          const brownDwarfClass =
+            evolutionState.name ===
+              StellarEvolutionState.BROWN_DWARF.name
+              ? StellarBrownDwarfClass.T
+              : null;
+
+          const postMainSequenceStage =
+            evolutionState.name ===
+              StellarEvolutionState.GIANT.name
+              ? StellarPostMainSequenceStage.RED_GIANT_BRANCH
+              : evolutionState.name ===
+                  StellarEvolutionState.SUPERGIANT.name
+                ? StellarPostMainSequenceStage.SUPERGIANT
+                : null;
+
+          expect(
+            () =>
+              new Star(
+                generationKey,
+                locator,
+                evolutionState,
+                mainSequenceClass,
+                brownDwarfClass,
+                postMainSequenceStage,
+                StellarWhiteDwarfComposition.CARBON_OXYGEN_CORE,
+              ),
+          ).toThrow(
+            RangeError,
+          );
+        }
       },
     );
 

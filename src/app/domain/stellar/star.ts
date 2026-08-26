@@ -24,6 +24,10 @@ import {
   StellarPostMainSequenceStage as StellarPostMainSequenceStages,
 } from './stellar-post-main-sequence-stage';
 
+import {
+  type StellarWhiteDwarfComposition,
+} from './stellar-white-dwarf-composition';
+
 /**
  * Phase-14 domain identity for the canonical stellar primary of one planetary
  * system.
@@ -36,8 +40,10 @@ import {
  *
  * Point 14.2 adds O/B/A/F/G/K/M for MAIN_SEQUENCE stars, point 14.3 adds L/T/Y
  * for BROWN_DWARF, and point 14.4 distinguishes the post-main-sequence RGB/AGB
- * giant stages from the massive SUPERGIANT branch. These are domain-level
- * evolutionary families only: mass, radius, luminosity, temperature, detailed
+ * giant stages from the massive SUPERGIANT branch. Point 14.5 adds the broad
+ * internal composition family of WHITE_DWARF remnants without conflating it
+ * with later DA/DB/etc. spectral-atmospheric classification. These are
+ * domain-level evolutionary families only: mass, radius, luminosity, temperature, detailed
  * spectral subtype/color, age, metallicity, discovery state and rendering data
  * remain later-roadmap contracts.
  */
@@ -61,6 +67,9 @@ export class Star {
 
     readonly postMainSequenceStage:
       StellarPostMainSequenceStage | null = null,
+
+    readonly whiteDwarfComposition:
+      StellarWhiteDwarfComposition | null = null,
   ) {
     const isMainSequence =
       evolutionState.name ===
@@ -163,6 +172,30 @@ export class Star {
     ) {
       throw new RangeError(
         'SUPERGIANT stars require the SUPERGIANT post-main-sequence stage.',
+      );
+    }
+
+    const isWhiteDwarf =
+      evolutionState.name ===
+      StellarEvolutionStates.WHITE_DWARF.name;
+
+    if (
+      isWhiteDwarf &&
+      whiteDwarfComposition ===
+        null
+    ) {
+      throw new RangeError(
+        'WHITE_DWARF stars require a StellarWhiteDwarfComposition.',
+      );
+    }
+
+    if (
+      !isWhiteDwarf &&
+      whiteDwarfComposition !==
+        null
+    ) {
+      throw new RangeError(
+        `${evolutionState.name} stars cannot carry a white-dwarf composition.`,
       );
     }
   }
