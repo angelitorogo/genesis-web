@@ -17,7 +17,12 @@ import {
 import {
   STELLAR_EVOLUTION_V1_MAX_INITIAL_MASS_SOLAR,
   STELLAR_EVOLUTION_V1_MIN_INITIAL_MASS_SOLAR,
+  StellarEvolutionInput,
 } from '../../domain/stellar/stellar-evolution-input';
+
+import {
+  StellarPhysicalProperties,
+} from '../../domain/stellar/stellar-physical-properties';
 
 import {
   StellarPopulationProfile,
@@ -33,11 +38,15 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  StellarEvolutionEngine,
+} from './stellar-evolution-engine';
+
+import {
   StellarGenerator,
 } from './stellar-generator';
 
 describe(
-  'StellarGenerator point 15.1',
+  'StellarGenerator points 15.1-15.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -448,6 +457,180 @@ describe(
     );
 
     it(
+      'should derive a solar reference baseline as detailed G2 without any extra random draw',
+      () => {
+        const physical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        const first =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physical,
+              sectorPopulation,
+            );
+
+        const second =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physical,
+              sectorPopulation,
+            );
+
+        expect(
+          first,
+        ).toEqual(
+          second,
+        );
+
+        expect(
+          first
+            .spectralType
+            .designation,
+        ).toBe(
+          'G2',
+        );
+      },
+    );
+
+    it(
+      'should preserve the frozen phase-14 broad family for generated reference stars while adding only the detailed subtype and color',
+      () => {
+        for (
+          let index =
+            0n;
+          index <
+            1_024n;
+          index +=
+            1n
+        ) {
+          const locator =
+            new SystemLocator(
+              3n,
+              27n,
+              index,
+            );
+
+          const physical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const appearance =
+            StellarGenerator
+              .generateSpectralAppearance(
+                generationKey,
+                physical,
+                sectorPopulation,
+              );
+
+          const referenceEvolution =
+            StellarEvolutionEngine
+              .evaluate(
+                generationKey,
+                new StellarEvolutionInput(
+                  physical
+                    .initialMassSolar,
+                  sectorPopulation
+                    .characteristicMetallicitySolarRatio,
+                  0,
+                ),
+              );
+
+          const expectedFamily =
+            referenceEvolution
+              .mainSequenceClass
+              ?.name ??
+            referenceEvolution
+              .brownDwarfClass
+              ?.name;
+
+          expect(
+            expectedFamily,
+          ).toBeDefined();
+
+          expect(
+            appearance
+              .spectralType
+              .family,
+          ).toBe(
+            expectedFamily,
+          );
+
+          expect(
+            appearance
+              .spectralType
+              .subtype,
+          ).toBeGreaterThanOrEqual(
+            0,
+          );
+
+          expect(
+            appearance
+              .spectralType
+              .subtype,
+          ).toBeLessThanOrEqual(
+            9,
+          );
+        }
+      },
+    );
+
+    it(
+      'should keep point-15.2 classification observationally pure with respect to the frozen 15.1 physical baseline',
+      () => {
+        const locator =
+          new SystemLocator(
+            0n,
+            -4n,
+            73n,
+          );
+
+        const before =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        StellarGenerator
+          .generateSpectralAppearance(
+            generationKey,
+            before,
+            sectorPopulation,
+          );
+
+        const after =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        expect(
+          after,
+        ).toEqual(
+          before,
+        );
+      },
+    );
+
+    it(
       'should reject unsupported generator versions without consuming procedural state',
       () => {
         const unsupported =
@@ -473,6 +656,24 @@ describe(
                 ),
                 sectorPopulation,
                 mixedProfile,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarGenerator
+              .generateSpectralAppearance(
+                unsupported,
+                new StellarPhysicalProperties(
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0,
+                  5_772,
+                ),
+                sectorPopulation,
               ),
         ).toThrow(
           RangeError,

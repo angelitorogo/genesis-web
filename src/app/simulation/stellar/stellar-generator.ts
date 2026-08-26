@@ -31,11 +31,16 @@ import {
 import {
   STELLAR_EVOLUTION_V1_MAX_INITIAL_MASS_SOLAR,
   STELLAR_EVOLUTION_V1_MIN_INITIAL_MASS_SOLAR,
+  StellarEvolutionInput,
 } from '../../domain/stellar/stellar-evolution-input';
 
 import {
   StellarPhysicalProperties,
 } from '../../domain/stellar/stellar-physical-properties';
+
+import {
+  type StellarSpectralAppearance,
+} from '../../domain/stellar/stellar-spectral-appearance';
 
 import {
   type StellarPopulationProfile,
@@ -52,6 +57,14 @@ import {
 import {
   ProceduralTargetResolver,
 } from '../regeneration/procedural-target-resolver';
+
+import {
+  StellarEvolutionEngine,
+} from './stellar-evolution-engine';
+
+import {
+  StellarSpectralClassifier,
+} from './stellar-spectral-classifier';
 
 const V1_PHYSICAL_BRANCH =
   utf8ToBytes(
@@ -90,11 +103,12 @@ interface V1PhysicalDraws {
 /**
  * Incremental point-15 StellarGenerator implementation.
  *
- * Point 15.1 owns only the deterministic zero-age/reference physical baseline:
- * initial/current mass, radius, luminosity and effective temperature.
+ * Point 15.1 owns the deterministic zero-age/reference physical baseline:
+ * initial/current mass, radius, luminosity and effective temperature. Point 15.2
+ * derives detailed spectral subtype and representative display color from that
+ * baseline without consuming any additional entropy.
  *
  * Important boundaries:
- * - point 15.2 owns spectral type and color;
  * - point 15.3 owns generated age, remaining life and age-dependent evolution;
  * - activity/flares, rotation/stability and designation remain 15.4..15.6;
  * - Star itself is not materialized yet because a final current evolutionary
@@ -133,6 +147,45 @@ export class StellarGenerator {
         locator,
         sectorStellarPopulation,
         stellarPopulationProfile,
+      );
+    }
+
+    throw new RangeError(
+      `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+    );
+  }
+
+  /**
+   * Derives the point-15.2 spectral type and representative color for the
+   * point-15.1 reference physical baseline.
+   *
+   * The already-frozen phase-14 evolution engine is evaluated at age zero only
+   * to recover the canonical broad O/B/A/F/G/K/M or L/T/Y family. Temperature
+   * then resolves the detailed 0..9 subtype and display color. No PRNG is used.
+   *
+   * Current-age giant/remnant spectral appearance remains deferred until point
+   * 15.3 generates age and evolves this reference baseline.
+   */
+  static generateSpectralAppearance(
+    generationKey:
+      UniverseGenerationKey,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+  ): StellarSpectralAppearance {
+
+    if (
+      generationKey
+        .generatorVersion ===
+      GeneratorVersion.V1
+    ) {
+      return this.generateSpectralAppearanceV1(
+        generationKey,
+        physicalProperties,
+        sectorStellarPopulation,
       );
     }
 
@@ -291,6 +344,41 @@ export class StellarGenerator {
       luminositySolar,
       effectiveTemperatureKelvin,
     );
+  }
+
+  private static generateSpectralAppearanceV1(
+    generationKey:
+      UniverseGenerationKey,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+  ): StellarSpectralAppearance {
+
+    const referenceEvolution =
+      StellarEvolutionEngine
+        .evaluate(
+          generationKey,
+          new StellarEvolutionInput(
+            physicalProperties
+              .initialMassSolar,
+            sectorStellarPopulation
+              .characteristicMetallicitySolarRatio,
+            0,
+          ),
+        );
+
+    return StellarSpectralClassifier
+      .classify(
+        physicalProperties
+          .effectiveTemperatureKelvin,
+        referenceEvolution
+          .mainSequenceClass,
+        referenceEvolution
+          .brownDwarfClass,
+      );
   }
 }
 
