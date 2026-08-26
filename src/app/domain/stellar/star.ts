@@ -19,9 +19,14 @@ import {
   type StellarMainSequenceClass,
 } from './stellar-main-sequence-class';
 
+import {
+  type StellarPostMainSequenceStage,
+  StellarPostMainSequenceStage as StellarPostMainSequenceStages,
+} from './stellar-post-main-sequence-stage';
+
 /**
- * Point-14.1/14.2 domain identity for the canonical stellar primary of one
- * planetary system.
+ * Phase-14 domain identity for the canonical stellar primary of one planetary
+ * system.
  *
  * The existing GENESIS procedural hierarchy intentionally has no StarLocator:
  * SystemLocator is the stable identity of the V1 system/primary-star target
@@ -29,9 +34,10 @@ import {
  * not insert a new seed or locator level and cannot perturb frozen procedural
  * vectors.
  *
- * Point 14.2 adds the broad O/B/A/F/G/K/M family for MAIN_SEQUENCE stars and
- * point 14.3 adds the broad L/T/Y family for the BROWN_DWARF branch. These are
- * domain-level families only: mass, radius, luminosity, temperature, detailed
+ * Point 14.2 adds O/B/A/F/G/K/M for MAIN_SEQUENCE stars, point 14.3 adds L/T/Y
+ * for BROWN_DWARF, and point 14.4 distinguishes the post-main-sequence RGB/AGB
+ * giant stages from the massive SUPERGIANT branch. These are domain-level
+ * evolutionary families only: mass, radius, luminosity, temperature, detailed
  * spectral subtype/color, age, metallicity, discovery state and rendering data
  * remain later-roadmap contracts.
  */
@@ -52,6 +58,9 @@ export class Star {
 
     readonly brownDwarfClass:
       StellarBrownDwarfClass | null = null,
+
+    readonly postMainSequenceStage:
+      StellarPostMainSequenceStage | null = null,
   ) {
     const isMainSequence =
       evolutionState.name ===
@@ -98,6 +107,62 @@ export class Star {
     ) {
       throw new RangeError(
         `${evolutionState.name} stars cannot carry a brown-dwarf class.`,
+      );
+    }
+
+    const isGiant =
+      evolutionState.name ===
+      StellarEvolutionStates.GIANT.name;
+
+    const isSupergiant =
+      evolutionState.name ===
+      StellarEvolutionStates.SUPERGIANT.name;
+
+    if (
+      (
+        isGiant ||
+        isSupergiant
+      ) &&
+      postMainSequenceStage ===
+        null
+    ) {
+      throw new RangeError(
+        `${evolutionState.name} stars require a StellarPostMainSequenceStage.`,
+      );
+    }
+
+    if (
+      !isGiant &&
+      !isSupergiant &&
+      postMainSequenceStage !==
+        null
+    ) {
+      throw new RangeError(
+        `${evolutionState.name} stars cannot carry a post-main-sequence stage.`,
+      );
+    }
+
+    if (
+      isGiant &&
+      postMainSequenceStage !==
+        null &&
+      postMainSequenceStage.name ===
+        StellarPostMainSequenceStages.SUPERGIANT.name
+    ) {
+      throw new RangeError(
+        'GIANT stars must use RED_GIANT_BRANCH or ASYMPTOTIC_GIANT_BRANCH.',
+      );
+    }
+
+    if (
+      isSupergiant &&
+      postMainSequenceStage !==
+        null &&
+      postMainSequenceStage.name !==
+        StellarPostMainSequenceStages.SUPERGIANT.name
+    ) {
+      throw new RangeError(
+        'SUPERGIANT stars require the SUPERGIANT post-main-sequence stage.',
       );
     }
   }

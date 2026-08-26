@@ -30,6 +30,10 @@ import {
   StellarMainSequenceClass,
 } from './stellar-main-sequence-class';
 
+import {
+  StellarPostMainSequenceStage,
+} from './stellar-post-main-sequence-stage';
+
 describe(
   'Star',
   () => {
@@ -88,6 +92,10 @@ describe(
         ).toBeNull();
 
         expect(
+          star.postMainSequenceStage,
+        ).toBeNull();
+
+        expect(
           Object.keys(
             star,
           ),
@@ -97,6 +105,7 @@ describe(
           'evolutionState',
           'mainSequenceClass',
           'brownDwarfClass',
+          'postMainSequenceStage',
         ]);
 
         for (
@@ -122,7 +131,7 @@ describe(
     );
 
     it(
-      'should materialize point-14.3 brown-dwarf identity without pretending it is main sequence',
+      'should materialize point-14.3 brown-dwarf identity without pretending it is main sequence or evolved giant',
       () => {
         for (
           const brownDwarfClass
@@ -152,7 +161,89 @@ describe(
           ).toBe(
             brownDwarfClass,
           );
+
+          expect(
+            star.postMainSequenceStage,
+          ).toBeNull();
         }
+      },
+    );
+
+    it(
+      'should model both point-14.4 giant branches explicitly under the GIANT evolutionary state',
+      () => {
+        for (
+          const stage
+          of [
+            StellarPostMainSequenceStage.RED_GIANT_BRANCH,
+            StellarPostMainSequenceStage.ASYMPTOTIC_GIANT_BRANCH,
+          ]
+        ) {
+          const star =
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.GIANT,
+              null,
+              null,
+              stage,
+            );
+
+          expect(
+            star.evolutionState,
+          ).toBe(
+            StellarEvolutionState.GIANT,
+          );
+
+          expect(
+            star.mainSequenceClass,
+          ).toBeNull();
+
+          expect(
+            star.brownDwarfClass,
+          ).toBeNull();
+
+          expect(
+            star.postMainSequenceStage,
+          ).toBe(
+            stage,
+          );
+        }
+      },
+    );
+
+    it(
+      'should model point-14.4 supergiants as the distinct massive post-main-sequence branch',
+      () => {
+        const star =
+          new Star(
+            generationKey,
+            locator,
+            StellarEvolutionState.SUPERGIANT,
+            null,
+            null,
+            StellarPostMainSequenceStage.SUPERGIANT,
+          );
+
+        expect(
+          star.evolutionState,
+        ).toBe(
+          StellarEvolutionState.SUPERGIANT,
+        );
+
+        expect(
+          star.postMainSequenceStage,
+        ).toBe(
+          StellarPostMainSequenceStage.SUPERGIANT,
+        );
+
+        expect(
+          star.mainSequenceClass,
+        ).toBeNull();
+
+        expect(
+          star.brownDwarfClass,
+        ).toBeNull();
       },
     );
 
@@ -211,18 +302,20 @@ describe(
           expect(
             star.brownDwarfClass,
           ).toBeNull();
+
+          expect(
+            star.postMainSequenceStage,
+          ).toBeNull();
         }
       },
     );
 
     it(
-      'should keep evolved stellar families free of both main-sequence and brown-dwarf classes',
+      'should keep compact-remnant families free of main-sequence, brown-dwarf and post-main-sequence stage classifications',
       () => {
         for (
           const evolutionState
           of [
-            StellarEvolutionState.GIANT,
-            StellarEvolutionState.SUPERGIANT,
             StellarEvolutionState.WHITE_DWARF,
             StellarEvolutionState.NEUTRON_STAR,
             StellarEvolutionState.STELLAR_BLACK_HOLE,
@@ -242,6 +335,10 @@ describe(
 
           expect(
             star.brownDwarfClass,
+          ).toBeNull();
+
+          expect(
+            star.postMainSequenceStage,
           ).toBeNull();
 
           expect(
@@ -274,7 +371,7 @@ describe(
             new Star(
               generationKey,
               locator,
-              StellarEvolutionState.GIANT,
+              StellarEvolutionState.WHITE_DWARF,
               StellarMainSequenceClass.K,
             ),
         ).toThrow(
@@ -323,6 +420,105 @@ describe(
         ).toThrow(
           RangeError,
         );
+      },
+    );
+
+    it(
+      'should require a compatible point-14.4 stage for every GIANT or SUPERGIANT star',
+      () => {
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.GIANT,
+              null,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.SUPERGIANT,
+              null,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.GIANT,
+              null,
+              null,
+              StellarPostMainSequenceStage.SUPERGIANT,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new Star(
+              generationKey,
+              locator,
+              StellarEvolutionState.SUPERGIANT,
+              null,
+              null,
+              StellarPostMainSequenceStage.RED_GIANT_BRANCH,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject post-main-sequence stages on unevolved or compact-remnant states',
+      () => {
+        for (
+          const evolutionState
+          of [
+            StellarEvolutionState.MAIN_SEQUENCE,
+            StellarEvolutionState.BROWN_DWARF,
+            StellarEvolutionState.WHITE_DWARF,
+            StellarEvolutionState.NEUTRON_STAR,
+            StellarEvolutionState.STELLAR_BLACK_HOLE,
+          ]
+        ) {
+          const mainSequenceClass =
+            evolutionState.name ===
+              StellarEvolutionState.MAIN_SEQUENCE.name
+              ? StellarMainSequenceClass.G
+              : null;
+
+          const brownDwarfClass =
+            evolutionState.name ===
+              StellarEvolutionState.BROWN_DWARF.name
+              ? StellarBrownDwarfClass.T
+              : null;
+
+          expect(
+            () =>
+              new Star(
+                generationKey,
+                locator,
+                evolutionState,
+                mainSequenceClass,
+                brownDwarfClass,
+                StellarPostMainSequenceStage.RED_GIANT_BRANCH,
+              ),
+          ).toThrow(
+            RangeError,
+          );
+        }
       },
     );
   },
