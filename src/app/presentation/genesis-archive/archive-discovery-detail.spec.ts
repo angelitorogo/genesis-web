@@ -49,9 +49,73 @@ import {
   type ArchiveGalacticObjectCardModel,
 } from './archive-galactic-object-card';
 
+import {
+  ArchiveStellarSystemKnowledgeLevel,
+  type ArchiveStellarSystemCardModel,
+} from './archive-stellar-system-card';
+
 describe(
   'ArchiveDiscoveryDetail',
   () => {
+    const stellarSystemCard:
+      ArchiveStellarSystemCardModel =
+      Object.freeze({
+        knowledgeLevel:
+          ArchiveStellarSystemKnowledgeLevel.DETECTED,
+        knowledgeLevelLabel:
+          'Señal estelar detectada',
+        title:
+          'Sistema estelar sin resolver',
+        summary:
+          'La multiplicidad todavía no está resuelta.',
+        nextScientificStep:
+          'Descubrir el sistema.',
+        multiplicityLabel:
+          null,
+        componentCount:
+          null,
+        systemFacts:
+          Object.freeze([]),
+        components:
+          Object.freeze([]),
+        orbits:
+          Object.freeze([]),
+        circumbinaryFacts:
+          Object.freeze([]),
+        habitabilityFacts:
+          Object.freeze([]),
+        render:
+          Object.freeze({
+            accessibleLabel:
+              'Sistema estelar todavía no resuelto',
+            knowledgeLevel:
+              ArchiveStellarSystemKnowledgeLevel.DETECTED,
+            multiplicity:
+              null,
+            components:
+              Object.freeze([
+                Object.freeze({
+                  label:
+                    'A' as const,
+                  colorHex:
+                    '#68808D',
+                  radiusScale:
+                    1,
+                  massSolar:
+                    null,
+                }),
+              ]),
+            innerOrbitEccentricity:
+              null,
+            outerOrbitEccentricity:
+              null,
+            stableHabitableZoneFraction:
+              null,
+            hasStableHabitableZone:
+              false,
+          }),
+      });
+
     const model:
       ArchiveDiscoveryDetailModel =
       Object.freeze({
@@ -99,6 +163,8 @@ describe(
 
         galacticObjectCard:
           null,
+
+        stellarSystemCard,
 
         scientificAction:
           null,
@@ -186,7 +252,7 @@ describe(
     );
 
     it(
-      'should preserve the point-10.6 System Archive record while point 12.8 enhances only GalacticObject cards',
+      'should preserve the point-10.6 System Archive route while point 16.7 adds a state-safe procedural system card',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -230,6 +296,30 @@ describe(
           ),
         ).toBe(
           'SYSTEM',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-stellar-system-card"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="stellar-system-procedural-render"]',
+          )?.getAttribute(
+            'data-multiplicity',
+          ),
+        ).toBe(
+          'UNRESOLVED',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-stellar-system-multiplicity"]',
+          )?.textContent,
+        ).toContain(
+          'No resuelta',
         );
 
         expect(
@@ -397,6 +487,9 @@ describe(
             proceduralIdentity:
               'G0 / S0 / O0',
             galacticObjectCard,
+
+            stellarSystemCard:
+              null,
 
             scientificAction:
               Object.freeze({
@@ -616,6 +709,8 @@ describe(
               DiscoveryState.DISCOVERED,
             discoveryStateLabel:
               'Descubierto',
+            stellarSystemCard:
+              null,
             galacticObjectCard:
               Object.freeze({
                 coarseFamily:

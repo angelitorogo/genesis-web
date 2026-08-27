@@ -1,0 +1,146 @@
+<section
+  class="stellar-system-render"
+  data-testid="stellar-system-procedural-render"
+  [attr.data-knowledge-level]="descriptor().knowledgeLevel"
+  [attr.data-multiplicity]="descriptor().multiplicity?.name ?? 'UNRESOLVED'"
+>
+  @if (renderModel(); as model) {
+    <svg
+      class="stellar-system-render__viewport"
+      viewBox="0 0 100 100"
+      role="img"
+      [attr.aria-label]="descriptor().accessibleLabel"
+    >
+      <defs>
+        <filter
+          id="stellar-system-glow"
+          x="-80%"
+          y="-80%"
+          width="260%"
+          height="260%"
+        >
+          <feGaussianBlur
+            stdDeviation="2.2"
+            result="blur"
+          ></feGaussianBlur>
+
+          <feMerge>
+            <feMergeNode in="blur"></feMergeNode>
+            <feMergeNode in="SourceGraphic"></feMergeNode>
+          </feMerge>
+        </filter>
+      </defs>
+
+      <circle
+        class="stellar-system-render__field"
+        cx="50"
+        cy="50"
+        r="47"
+      ></circle>
+
+      @if (model.habitableBand; as habitableBand) {
+        <circle
+          class="stellar-system-render__habitable-band"
+          data-testid="stellar-system-render-habitable-zone"
+          [attr.cx]="habitableBand.cx"
+          [attr.cy]="habitableBand.cy"
+          [attr.r]="habitableBand.radius"
+          [attr.stroke-width]="habitableBand.strokeWidth"
+        ></circle>
+      }
+
+      @for (orbit of model.orbits; track orbit.kind) {
+        <ellipse
+          class="stellar-system-render__orbit"
+          [class.stellar-system-render__orbit--outer]="orbit.kind === 'outer'"
+          [attr.data-orbit-kind]="orbit.kind"
+          [attr.cx]="orbit.cx"
+          [attr.cy]="orbit.cy"
+          [attr.rx]="orbit.rx"
+          [attr.ry]="orbit.ry"
+        ></ellipse>
+      }
+
+      @if (!model.unresolved && descriptor().multiplicity?.name !== 'SINGLE') {
+        <g
+          class="stellar-system-render__barycentre"
+          data-testid="stellar-system-render-barycentre"
+        >
+          <circle
+            [attr.cx]="model.barycentreX"
+            [attr.cy]="model.barycentreY"
+            r="1.3"
+          ></circle>
+
+          <path
+            [attr.d]="'M ' + (model.barycentreX - 3) + ' ' + model.barycentreY + ' h 6 M ' + model.barycentreX + ' ' + (model.barycentreY - 3) + ' v 6'"
+          ></path>
+        </g>
+      }
+
+      @for (component of model.components; track component.label) {
+        <g
+          class="stellar-system-render__component"
+          [attr.data-component]="component.label"
+        >
+          <circle
+            class="stellar-system-render__star-halo"
+            [attr.cx]="component.x"
+            [attr.cy]="component.y"
+            [attr.r]="component.radius * 1.9"
+            [attr.fill]="component.colorHex"
+          ></circle>
+
+          <circle
+            class="stellar-system-render__star"
+            filter="url(#stellar-system-glow)"
+            [attr.cx]="component.x"
+            [attr.cy]="component.y"
+            [attr.r]="component.radius"
+            [attr.fill]="component.colorHex"
+          ></circle>
+
+          @if (!model.unresolved) {
+            <text
+              class="stellar-system-render__component-label"
+              [attr.x]="component.x"
+              [attr.y]="component.y + component.radius + 7"
+              text-anchor="middle"
+            >
+              {{ component.label }}
+            </text>
+          }
+        </g>
+      }
+
+      @if (model.unresolved) {
+        <circle
+          class="stellar-system-render__unresolved-ring"
+          cx="50"
+          cy="50"
+          r="14"
+        ></circle>
+
+        <text
+          class="stellar-system-render__unresolved-label"
+          x="50"
+          y="76"
+          text-anchor="middle"
+        >
+          SEÑAL NO RESUELTA
+        </text>
+      }
+    </svg>
+
+    <footer class="stellar-system-render__legend">
+      <span>ESQUEMA ORBITAL PROCEDURAL</span>
+      <span>NO A ESCALA</span>
+
+      @if (model.habitableBand) {
+        <span class="stellar-system-render__legend-hz">
+          HZ ESTABLE
+        </span>
+      }
+    </footer>
+  }
+</section>

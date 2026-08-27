@@ -1,0 +1,109 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.stellar-system-render {
+  display: grid;
+  gap: .6rem;
+  min-height: 20rem;
+  padding: .75rem;
+  overflow: hidden;
+  border: 1px solid #6ad7ff24;
+  border-radius: var(--genesis-radius-lg);
+  background:
+    radial-gradient(circle at 50% 46%, #18253b 0, #090d17 43%, #05070d 100%);
+}
+
+.stellar-system-render__viewport {
+  display: block;
+  width: 100%;
+  min-height: 17rem;
+  aspect-ratio: 1 / 1;
+}
+
+.stellar-system-render__field {
+  fill: #07101b;
+  stroke: #6ad7ff12;
+  stroke-width: .45;
+}
+
+.stellar-system-render__orbit {
+  fill: none;
+  stroke: #8edfff75;
+  stroke-width: .55;
+  vector-effect: non-scaling-stroke;
+}
+
+.stellar-system-render__orbit--outer {
+  stroke: #8edfff4a;
+  stroke-dasharray: 2.2 2.2;
+}
+
+.stellar-system-render__habitable-band {
+  fill: none;
+  stroke: #8ef0b455;
+  vector-effect: non-scaling-stroke;
+}
+
+.stellar-system-render__barycentre circle {
+  fill: #6ad7ff;
+}
+
+.stellar-system-render__barycentre path {
+  fill: none;
+  stroke: #6ad7ff9c;
+  stroke-width: .38;
+}
+
+.stellar-system-render__star-halo {
+  opacity: .16;
+}
+
+.stellar-system-render__star {
+  stroke: #ffffff8c;
+  stroke-width: .24;
+}
+
+.stellar-system-render__component-label,
+.stellar-system-render__unresolved-label {
+  fill: #cfeefa;
+  font: 700 4.2px var(--genesis-font-mono);
+  letter-spacing: .08em;
+}
+
+.stellar-system-render__unresolved-ring {
+  fill: none;
+  stroke: #89a9b85c;
+  stroke-width: .6;
+  stroke-dasharray: 2 2;
+}
+
+.stellar-system-render__unresolved-label {
+  fill: #89a9b8;
+  font-size: 3.2px;
+}
+
+.stellar-system-render__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: .45rem .75rem;
+  color: var(--genesis-color-text-subtle);
+  font: 700 .58rem var(--genesis-font-mono);
+  letter-spacing: .08em;
+}
+
+.stellar-system-render__legend-hz {
+  color: #9ff5bf;
+}
+
+@media (max-width: 40rem) {
+  .stellar-system-render {
+    min-height: 16rem;
+  }
+
+  .stellar-system-render__viewport {
+    min-height: 13rem;
+  }
+}

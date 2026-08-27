@@ -106,6 +106,11 @@ import {
   type ArchiveGalacticObjectCardModel,
 } from './archive-galactic-object-card';
 
+import {
+  ArchiveStellarSystemCardAssembler,
+  type ArchiveStellarSystemCardModel,
+} from './archive-stellar-system-card';
+
 const SIGNED_LONG_MIN =
   -(1n << 63n);
 
@@ -258,6 +263,9 @@ export interface ArchiveDiscoveryDetailModel {
 
   readonly galacticObjectCard:
     ArchiveGalacticObjectCardModel | null;
+
+  readonly stellarSystemCard:
+    ArchiveStellarSystemCardModel | null;
 
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
@@ -640,6 +648,17 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+      const stellarSystemCard =
+        locator instanceof
+          SystemLocator
+          ? ArchiveStellarSystemCardAssembler
+              .build(
+                generationKey,
+                locator,
+                discoveryState,
+              )
+          : null;
+
       const scientificAction =
         locator instanceof
           GalacticObjectLocator
@@ -735,6 +754,8 @@ export class ArchiveDiscoveryDetailFacade {
                 ),
 
               galacticObjectCard,
+
+              stellarSystemCard,
 
               scientificAction,
             }),

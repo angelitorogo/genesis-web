@@ -248,7 +248,7 @@ describe(
     }
 
     it(
-      'should resolve one persisted SystemLocator into a minimal read-only Archive record',
+      'should resolve one persisted SystemLocator into the point-16.7 state-safe Archive system card',
       async () => {
         const {
           facade,
@@ -364,6 +364,16 @@ describe(
         expect(
           model?.galacticObjectCard,
         ).toBeNull();
+
+        expect(
+          model?.stellarSystemCard,
+        ).not.toBeNull();
+
+        expect(
+          model?.stellarSystemCard?.knowledgeLevel,
+        ).toBe(
+          'IDENTIFIED',
+        );
       },
     );
 
@@ -450,6 +460,10 @@ describe(
         expect(
           model?.galacticObjectCard,
         ).not.toBeNull();
+
+        expect(
+          model?.stellarSystemCard,
+        ).toBeNull();
 
         expect(
           model?.galacticObjectCard?.knowledgeLevel,

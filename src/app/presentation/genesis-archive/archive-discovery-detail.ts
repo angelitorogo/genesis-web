@@ -30,6 +30,10 @@ import {
   GalacticObjectProceduralRender,
 } from './galactic-object-procedural-render';
 
+import {
+  StellarSystemProceduralRender,
+} from './stellar-system-procedural-render';
+
 @Component({
   selector:
     'app-archive-discovery-detail',
@@ -43,6 +47,7 @@ import {
     GenesisPrimaryButton,
     RouterLink,
     GalacticObjectProceduralRender,
+    StellarSystemProceduralRender,
   ],
 
   templateUrl:

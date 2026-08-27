@@ -70,6 +70,258 @@
               </span>
             </header>
 
+            @if (model.stellarSystemCard; as systemCard) {
+              <section
+                class="archive-discovery-detail__science-card archive-discovery-detail__system-card"
+                data-testid="archive-stellar-system-card"
+                [attr.data-knowledge-level]="systemCard.knowledgeLevel"
+              >
+                <app-stellar-system-procedural-render
+                  [descriptor]="systemCard.render"
+                ></app-stellar-system-procedural-render>
+
+                <div class="archive-discovery-detail__science-copy">
+                  <div>
+                    <small class="archive-discovery-detail__eyebrow">
+                      ARQUITECTURA ESTELAR / 16.7
+                    </small>
+
+                    <h3 data-testid="archive-stellar-system-title">
+                      {{ systemCard.title }}
+                    </h3>
+
+                    <p data-testid="archive-stellar-system-summary">
+                      {{ systemCard.summary }}
+                    </p>
+                  </div>
+
+                  <dl class="archive-discovery-detail__science-status">
+                    <div>
+                      <dt>NIVEL DE CONOCIMIENTO</dt>
+
+                      <dd data-testid="archive-stellar-system-knowledge-level">
+                        {{ systemCard.knowledgeLevelLabel }}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>MULTIPLICIDAD</dt>
+
+                      <dd data-testid="archive-stellar-system-multiplicity">
+                        {{ systemCard.multiplicityLabel ?? 'No resuelta' }}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>COMPONENTES</dt>
+
+                      <dd data-testid="archive-stellar-system-component-count">
+                        {{ systemCard.componentCount ?? 'No resueltos' }}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>SIGUIENTE PASO CIENTÍFICO</dt>
+
+                      <dd data-testid="archive-stellar-system-next-step">
+                        {{ systemCard.nextScientificStep }}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+              </section>
+
+              @if (systemCard.systemFacts.length > 0) {
+                <section
+                  class="archive-discovery-detail__physical-section"
+                  data-testid="archive-stellar-system-system-facts"
+                >
+                  <header>
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        FICHA DEL SISTEMA
+                      </small>
+
+                      <h3>Identidad y arquitectura</h3>
+                    </div>
+
+                    <p>
+                      La identidad del sistema permanece ligada a SystemLocator/SystemSeed;
+                      A, B y C son componentes internos y no nuevos localizadores.
+                    </p>
+                  </header>
+
+                  <dl class="archive-discovery-detail__physical-facts">
+                    @for (fact of systemCard.systemFacts; track fact.label) {
+                      <div>
+                        <dt>{{ fact.label }}</dt>
+                        <dd>{{ fact.value }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </section>
+              }
+
+              @if (systemCard.components.length > 0) {
+                <section
+                  class="archive-discovery-detail__stellar-components"
+                  data-testid="archive-stellar-system-components"
+                >
+                  <header>
+                    <small class="archive-discovery-detail__eyebrow">
+                      COMPONENTES ESTELARES
+                    </small>
+
+                    <h3>Ficha por componente</h3>
+                  </header>
+
+                  <div class="archive-discovery-detail__stellar-component-grid">
+                    @for (component of systemCard.components; track component.componentLabel) {
+                      <article
+                        class="archive-discovery-detail__stellar-component"
+                        [attr.data-component]="component.componentLabel"
+                      >
+                        <header>
+                          <span
+                            class="archive-discovery-detail__stellar-swatch"
+                            [style.background]="component.colorHex"
+                            [style.color]="component.colorHex"
+                            aria-hidden="true"
+                          ></span>
+
+                          <div>
+                            <small>COMPONENTE {{ component.componentLabel }}</small>
+                            <h4>{{ component.designation }}</h4>
+                          </div>
+                        </header>
+
+                        @if (component.spectralType || component.evolutionStateLabel) {
+                          <p class="archive-discovery-detail__stellar-classification">
+                            @if (component.spectralType) {
+                              <strong>{{ component.spectralType }}</strong>
+                            }
+
+                            @if (component.evolutionStateLabel) {
+                              <span>{{ component.evolutionStateLabel }}</span>
+                            }
+                          </p>
+                        } @else {
+                          <p class="archive-discovery-detail__stellar-classification">
+                            Clasificación física restringida hasta Catalogado.
+                          </p>
+                        }
+
+                        @if (component.proceduralCode) {
+                          <code>{{ component.proceduralCode }}</code>
+                        }
+
+                        @if (component.facts.length > 0) {
+                          <dl>
+                            @for (fact of component.facts; track fact.label) {
+                              <div>
+                                <dt>{{ fact.label }}</dt>
+                                <dd>{{ fact.value }}</dd>
+                              </div>
+                            }
+                          </dl>
+                        }
+                      </article>
+                    }
+                  </div>
+                </section>
+              }
+
+              @if (systemCard.orbits.length > 0) {
+                <section
+                  class="archive-discovery-detail__orbital-section"
+                  data-testid="archive-stellar-system-orbits"
+                >
+                  <header>
+                    <small class="archive-discovery-detail__eyebrow">
+                      JERARQUÍA ORBITAL / 16.4
+                    </small>
+
+                    <h3>Órbitas estelares relativas</h3>
+                  </header>
+
+                  <div class="archive-discovery-detail__orbit-grid">
+                    @for (orbit of systemCard.orbits; track orbit.label) {
+                      <article class="archive-discovery-detail__orbit-card">
+                        <h4>{{ orbit.label }}</h4>
+                        <p>{{ orbit.roleLabel }}</p>
+
+                        <dl>
+                          @for (fact of orbit.facts; track fact.label) {
+                            <div>
+                              <dt>{{ fact.label }}</dt>
+                              <dd>{{ fact.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      </article>
+                    }
+                  </div>
+                </section>
+              }
+
+              @if (systemCard.circumbinaryFacts.length > 0) {
+                <section
+                  class="archive-discovery-detail__physical-section"
+                  data-testid="archive-stellar-system-circumbinary"
+                >
+                  <header>
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        ESTABILIDAD CIRCUMBINARIA / 16.5
+                      </small>
+
+                      <h3>Compatibilidad con órbitas planetarias P-type</h3>
+                    </div>
+                  </header>
+
+                  <dl class="archive-discovery-detail__physical-facts">
+                    @for (fact of systemCard.circumbinaryFacts; track fact.label) {
+                      <div>
+                        <dt>{{ fact.label }}</dt>
+                        <dd>{{ fact.value }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </section>
+              }
+
+              @if (systemCard.habitabilityFacts.length > 0) {
+                <section
+                  class="archive-discovery-detail__physical-section archive-discovery-detail__habitability-section"
+                  data-testid="archive-stellar-system-habitability"
+                >
+                  <header>
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        ZONA HABITABLE Y ESTABILIDAD / 16.6
+                      </small>
+
+                      <h3>Ventana circumbinaria confirmada</h3>
+                    </div>
+
+                    <p>
+                      Es una geometría radiativa/dinámica de referencia, no una
+                      afirmación de que exista un planeta o vida.
+                    </p>
+                  </header>
+
+                  <dl class="archive-discovery-detail__physical-facts">
+                    @for (fact of systemCard.habitabilityFacts; track fact.label) {
+                      <div>
+                        <dt>{{ fact.label }}</dt>
+                        <dd>{{ fact.value }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </section>
+              }
+            }
+
             @if (model.galacticObjectCard; as card) {
               <section
                 class="archive-discovery-detail__science-card"
@@ -363,11 +615,12 @@
               data-testid="archive-discovery-detail-boundary"
             >
               12.8 conserva la identidad persistida y regenera únicamente el
-              Ground Truth que el DiscoveryState permite mostrar. DETECTED no
-              resuelve especialización física; DISCOVERED puede mostrar la
-              identidad científica; CATALOGUED habilita una ficha física básica;
-              CONFIRMED completa sus magnitudes V1. El render es renderer-only y
-              no modifica la simulación ni persiste propiedades duplicadas.
+              Ground Truth que el DiscoveryState permite mostrar. Para sistemas,
+              16.7 mantiene DETECTED sin nombre ni multiplicidad; DISCOVERED/VISITED
+              pueden mostrar identidad y arquitectura; CATALOGUED habilita fichas
+              estelares, órbitas y compatibilidad circumbinaria; CONFIRMED añade
+              el cruce de zona habitable de 16.6. Todos los renders son
+              renderer-only, esquemáticos y no persisten propiedades duplicadas.
             </p>
           </article>
         }
