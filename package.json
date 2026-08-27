@@ -20,8 +20,7 @@
     "test:quality": "npm run test:architecture && npm run test:worker && npm run test:unit && npm run test:e2e:typecheck && npm run test:e2e",
     "test:e2e:typecheck": "tsc -p tsconfig.e2e.json --noEmit",
     "serve:pwa": "ng serve --configuration=production",
-    "test:stellar:massive:node": "vitest run scripts/stellar-coherence-batch.node.spec.ts --environment=node --testTimeout=120000",
-    "test:stellar:15.7": "ng test --watch=false --include=\"src/app/simulation/stellar/stellar-coherence-batch-runner.spec.ts\" --include=\"src/app/presentation/runtime/stellar-coherence-worker/stellar-coherence-worker.handler.spec.ts\" --include=\"src/app/presentation/runtime/procedural-worker/**/*.spec.ts\" --include=\"src/app/presentation/galaxy-map/galactic-map-particle-layout.spec.ts\" --include=\"src/app/presentation/galaxy-map/galactic-map-particle-sector-materializer.spec.ts\" --include=\"src/app/presentation/galaxy-map/galactic-map-visible-sector-lod.spec.ts\" --include=\"src/app/presentation/galaxy-map/galactic-map-scene.spec.ts\" && npm run test:worker && npm run test:stellar:massive:node"
+    "test:stellar:massive:node": "vitest run scripts/stellar-coherence-batch.node.spec.ts --environment=node --testTimeout=120000"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
