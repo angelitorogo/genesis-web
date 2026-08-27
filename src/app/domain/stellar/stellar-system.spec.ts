@@ -19,6 +19,11 @@ import {
 } from '../universe/universe-seed';
 
 import {
+  CircumbinaryPlanetCompatibility,
+  CircumbinaryPlanetCompatibilityRegime,
+} from '../planetary/circumbinary-planet-compatibility';
+
+import {
   Star,
 } from './star';
 
@@ -155,6 +160,39 @@ describe(
           'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
         );
 
+    function circumbinaryCompatibility(
+      multiplicity:
+        StellarSystemMultiplicity,
+    ): CircumbinaryPlanetCompatibility {
+
+      if (
+        multiplicity ===
+        StellarSystemMultiplicity.BINARY
+      ) {
+        return new CircumbinaryPlanetCompatibility(
+          multiplicity,
+          CircumbinaryPlanetCompatibilityRegime.OPEN_OUTER,
+          2.2,
+          null,
+          3,
+          null,
+          0.3,
+          null,
+        );
+      }
+
+      return new CircumbinaryPlanetCompatibility(
+        multiplicity,
+        CircumbinaryPlanetCompatibilityRegime.TERTIARY_BOUNDED,
+        2.2,
+        4,
+        3,
+        7,
+        0.3,
+        0.15,
+      );
+    }
+
     function hierarchy(
       multiplicity:
         StellarSystemMultiplicity,
@@ -247,6 +285,10 @@ describe(
               StellarSystemMultiplicity.BINARY,
             ),
             secondary,
+            null,
+            circumbinaryCompatibility(
+              StellarSystemMultiplicity.BINARY,
+            ),
           );
 
         expect(system.secondaryCompanion).toBe(secondary);
@@ -255,6 +297,8 @@ describe(
         expect(system.isMultiple).toBe(true);
         expect(system.orbitHierarchy.hasInnerOrbit).toBe(true);
         expect(system.orbitHierarchy.hasOuterOrbit).toBe(false);
+        expect(system.supportsCircumbinaryPlanets).toBe(true);
+        expect(system.circumbinaryPlanetCompatibility?.isOuterBounded).toBe(false);
       },
     );
 
@@ -280,6 +324,9 @@ describe(
             ),
             secondary,
             tertiary,
+            circumbinaryCompatibility(
+              StellarSystemMultiplicity.TRIPLE,
+            ),
           );
 
         expect(system.secondaryCompanion).toBe(secondary);
@@ -288,6 +335,8 @@ describe(
         expect(system.isMultiple).toBe(true);
         expect(system.tertiaryCompanion?.designation.name).toBe('Testara C');
         expect(system.orbitHierarchy.hasOuterOrbit).toBe(true);
+        expect(system.supportsCircumbinaryPlanets).toBe(true);
+        expect(system.circumbinaryPlanetCompatibility?.isOuterBounded).toBe(true);
       },
     );
 
@@ -449,6 +498,47 @@ describe(
                 0.4,
                 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
                 otherDesignation,
+              ),
+            ),
+        ).toThrow(RangeError);
+      },
+    );
+
+    it(
+      'should reject missing or mismatched point-16.5 circumbinary compatibility on otherwise valid multiple systems',
+      () => {
+        expect(
+          () =>
+            new StellarSystem(
+              generationKey,
+              locator,
+              seed,
+              designation,
+              StellarSystemMultiplicity.BINARY,
+              primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
+              secondaryCompanion(),
+            ),
+        ).toThrow(RangeError);
+
+        expect(
+          () =>
+            new StellarSystem(
+              generationKey,
+              locator,
+              seed,
+              designation,
+              StellarSystemMultiplicity.BINARY,
+              primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
+              secondaryCompanion(),
+              null,
+              circumbinaryCompatibility(
+                StellarSystemMultiplicity.TRIPLE,
               ),
             ),
         ).toThrow(RangeError);

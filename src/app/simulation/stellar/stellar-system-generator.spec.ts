@@ -19,6 +19,10 @@ import {
 } from '../../domain/seed/hierarchical-seeds';
 
 import {
+  CircumbinaryPlanetCompatibilityRegime,
+} from '../../domain/planetary/circumbinary-planet-compatibility';
+
+import {
   StellarPopulationProfile,
   StellarPopulationRegime,
 } from '../../domain/stellar/stellar-population-profile';
@@ -48,7 +52,7 @@ import {
 } from './stellar-system-generator';
 
 describe(
-  'StellarSystemGenerator points 16.1-16.4',
+  'StellarSystemGenerator points 16.1-16.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -153,6 +157,14 @@ describe(
         expect(
           system.secondaryCompanion,
         ).toBeNull();
+
+        expect(
+          system.circumbinaryPlanetCompatibility,
+        ).toBeNull();
+
+        expect(
+          system.supportsCircumbinaryPlanets,
+        ).toBe(false);
       },
     );
 
@@ -243,6 +255,23 @@ describe(
         ).toBe(
           true,
         );
+
+        expect(
+          binary.circumbinaryPlanetCompatibility?.regime,
+        ).toBe(
+          CircumbinaryPlanetCompatibilityRegime.OPEN_OUTER,
+        );
+
+        expect(
+          binary.circumbinaryPlanetCompatibility?.minimumStableSemiMajorAxisAu,
+        ).toBeCloseTo(
+          2.027289676885401,
+          10,
+        );
+
+        expect(
+          binary.supportsCircumbinaryPlanets,
+        ).toBe(true);
       },
     );
 
@@ -518,6 +547,30 @@ describe(
         expect(triple.tertiaryCompanion?.componentSeedHex).not.toBe(
           triple.secondaryCompanion?.componentSeedHex,
         );
+
+        expect(
+          triple.circumbinaryPlanetCompatibility?.regime,
+        ).toBe(
+          CircumbinaryPlanetCompatibilityRegime.DYNAMICALLY_EXCLUDED,
+        );
+
+        expect(
+          triple.circumbinaryPlanetCompatibility?.minimumStableSemiMajorAxisAu,
+        ).toBeCloseTo(
+          2.027289676885401,
+          10,
+        );
+
+        expect(
+          triple.circumbinaryPlanetCompatibility?.maximumStableSemiMajorAxisAu,
+        ).toBeCloseTo(
+          1.6940361339638363,
+          10,
+        );
+
+        expect(
+          triple.supportsCircumbinaryPlanets,
+        ).toBe(false);
       },
     );
 
@@ -714,7 +767,88 @@ describe(
     );
 
     it(
-      'should reject an unsupported future GeneratorVersion for all point-16.3 architecture entry points',
+      'should preserve the A-B circumbinary inner edge from BINARY to TRIPLE while producing both bounded and C-excluded real triple architectures',
+      () => {
+        let bounded =
+          0;
+
+        let excluded =
+          0;
+
+        for (
+          let index = 0;
+          index < 256;
+          index += 1
+        ) {
+          const locator =
+            new SystemLocator(
+              BigInt(index % 7),
+              BigInt(index - 2_048),
+              BigInt(index),
+            );
+
+          const binary =
+            StellarSystemGenerator
+              .generateBinary(
+                generationKey,
+                locator,
+                sector,
+                population,
+              );
+
+          const triple =
+            StellarSystemGenerator
+              .generateTriple(
+                generationKey,
+                locator,
+                sector,
+                population,
+              );
+
+          expect(
+            triple.circumbinaryPlanetCompatibility?.minimumStableSemiMajorAxisAu,
+          ).toBe(
+            binary.circumbinaryPlanetCompatibility?.minimumStableSemiMajorAxisAu,
+          );
+
+          expect(
+            binary.supportsCircumbinaryPlanets,
+          ).toBe(true);
+
+          if (
+            triple.circumbinaryPlanetCompatibility?.regime ===
+            CircumbinaryPlanetCompatibilityRegime.TERTIARY_BOUNDED
+          ) {
+            bounded +=
+              1;
+
+            expect(
+              triple.supportsCircumbinaryPlanets,
+            ).toBe(true);
+          } else {
+            excluded +=
+              1;
+
+            expect(
+              triple.circumbinaryPlanetCompatibility?.regime,
+            ).toBe(
+              CircumbinaryPlanetCompatibilityRegime.DYNAMICALLY_EXCLUDED,
+            );
+
+            expect(
+              triple.supportsCircumbinaryPlanets,
+            ).toBe(false);
+          }
+        }
+
+        expect(bounded).toBeGreaterThan(0);
+        expect(excluded).toBeGreaterThan(0);
+      },
+      20_000,
+    );
+
+    it(
+      'should reject an unsupported future GeneratorVersion for all point-16.5 architecture entry points',
       () => {
         const unsupportedVersion =
           Object.freeze({

@@ -11,6 +11,10 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  type CircumbinaryPlanetCompatibility,
+} from '../planetary/circumbinary-planet-compatibility';
+
+import {
   type Star,
 } from './star';
 
@@ -50,8 +54,9 @@ const MASS_ORDER_TOLERANCE =
  * the canonical A primary remains unchanged in every architecture.
  *
  * Point 16.4 attaches a simplified orbit hierarchy without changing any
- * component identity or stellar properties. Circumbinary planet contracts,
- * HZ/stability corrections and rendering remain points 16.5..16.7.
+ * component identity or stellar properties. Point 16.5 adds a purely
+ * dynamical circumbinary-planet compatibility envelope for multiple systems;
+ * HZ coupling and rendering remain points 16.6..16.7.
  */
 export class StellarSystem {
 
@@ -82,6 +87,9 @@ export class StellarSystem {
 
     readonly tertiaryCompanion:
       StellarCompanion | null = null,
+
+    readonly circumbinaryPlanetCompatibility:
+      CircumbinaryPlanetCompatibility | null = null,
   ) {
     if (
       !generationKey.equals(
@@ -111,6 +119,17 @@ export class StellarSystem {
     ) {
       throw new RangeError(
         'Stellar-system multiplicity must match its point-16.4 orbit hierarchy.',
+      );
+    }
+
+    if (
+      multiplicity ===
+      StellarSystemMultiplicity.SINGLE &&
+      circumbinaryPlanetCompatibility !==
+        null
+    ) {
+      throw new RangeError(
+        'SINGLE stellar systems cannot carry point-16.5 circumbinary planet compatibility.',
       );
     }
 
@@ -159,6 +178,12 @@ export class StellarSystem {
           'BINARY stellar systems cannot carry component C.',
         );
       }
+
+      assertCircumbinaryCompatibility(
+        circumbinaryPlanetCompatibility,
+        multiplicity,
+        orbitHierarchy,
+      );
 
       return;
     }
@@ -225,11 +250,17 @@ export class StellarSystem {
         );
       }
 
+      assertCircumbinaryCompatibility(
+        circumbinaryPlanetCompatibility,
+        multiplicity,
+        orbitHierarchy,
+      );
+
       return;
     }
 
     throw new RangeError(
-      `Unsupported StellarSystemMultiplicity for point 16.3: ${multiplicity.name}.`,
+      `Unsupported StellarSystemMultiplicity for point 16.5: ${multiplicity.name}.`,
     );
   }
 
@@ -249,12 +280,81 @@ export class StellarSystem {
       1;
   }
 
+  get supportsCircumbinaryPlanets():
+    boolean {
+
+    return this
+      .circumbinaryPlanetCompatibility
+      ?.isCompatible ??
+      false;
+  }
+
   get primaryComponentDesignation():
     StellarComponentDesignation {
 
     return new StellarComponentDesignation(
       this.designation,
       StellarSystemComponentLabel.A,
+    );
+  }
+}
+
+function assertCircumbinaryCompatibility(
+  compatibility:
+    CircumbinaryPlanetCompatibility | null,
+
+  multiplicity:
+    StellarSystemMultiplicity,
+
+  orbitHierarchy:
+    StellarOrbitHierarchy,
+): void {
+
+  if (
+    compatibility ===
+    null
+  ) {
+    throw new RangeError(
+      `${multiplicity.name} stellar systems require point-16.5 circumbinary planet compatibility.`,
+    );
+  }
+
+  if (
+    compatibility
+      .hostMultiplicity !==
+    multiplicity
+  ) {
+    throw new RangeError(
+      'Stellar-system multiplicity must match its circumbinary planet compatibility.',
+    );
+  }
+
+  const innerOrbit =
+    orbitHierarchy
+      .innerOrbit!;
+
+  if (
+    compatibility
+      .minimumStableSemiMajorAxisAu <=
+    innerOrbit
+      .apoastronAu
+  ) {
+    throw new RangeError(
+      'Circumbinary minimum stable radius must lie outside the A-B stellar apoastron.',
+    );
+  }
+
+  if (
+    multiplicity ===
+      StellarSystemMultiplicity.TRIPLE &&
+    compatibility
+      .maximumStableSemiMajorAxisAu! >=
+    orbitHierarchy
+      .outerOrbit!
+      .periastronAu
+  ) {
+    throw new RangeError(
+      'TRIPLE circumbinary maximum stable radius must lie inside the C-orbit periastron.',
     );
   }
 }

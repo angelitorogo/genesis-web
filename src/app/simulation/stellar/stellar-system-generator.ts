@@ -35,6 +35,10 @@ import {
 } from '../regeneration/procedural-target-resolver';
 
 import {
+  CircumbinaryPlanetCompatibilityGenerator,
+} from '../planetary/circumbinary-planet-compatibility-generator';
+
+import {
   StellarBinaryCompanionGenerator,
 } from './stellar-binary-companion-generator';
 
@@ -69,6 +73,8 @@ import {
  * The canonical phase-15 primary A is bit-for-bit unchanged; B and C come from
  * independent intra-system branches. Point 16.4 adds deterministic simplified
  * orbit hierarchies on independent branches without perturbing those identities.
+ * Point 16.5 derives a pure dynamical circumbinary-planet envelope from those
+ * already-frozen masses/orbits and consumes no additional entropy.
  */
 export class StellarSystemGenerator {
 
@@ -265,6 +271,15 @@ export class StellarSystemGenerator {
           secondaryCompanion,
         );
 
+    const circumbinaryPlanetCompatibility =
+      CircumbinaryPlanetCompatibilityGenerator
+        .generateBinary(
+          generationKey,
+          orbitHierarchy,
+          primaryPhysicalProperties,
+          secondaryCompanion,
+        );
+
     return new StellarSystem(
       generationKey,
       locator,
@@ -274,6 +289,8 @@ export class StellarSystemGenerator {
       single.primaryStar,
       orbitHierarchy,
       secondaryCompanion,
+      null,
+      circumbinaryPlanetCompatibility,
     );
   }
 
@@ -344,6 +361,16 @@ export class StellarSystemGenerator {
           tertiaryCompanion,
         );
 
+    const circumbinaryPlanetCompatibility =
+      CircumbinaryPlanetCompatibilityGenerator
+        .generateTriple(
+          generationKey,
+          orbitHierarchy,
+          primaryPhysicalProperties,
+          binary.secondaryCompanion!,
+          tertiaryCompanion,
+        );
+
     return new StellarSystem(
       generationKey,
       locator,
@@ -354,6 +381,7 @@ export class StellarSystemGenerator {
       orbitHierarchy,
       binary.secondaryCompanion,
       tertiaryCompanion,
+      circumbinaryPlanetCompatibility,
     );
   }
 }
