@@ -6,19 +6,14 @@ describe(
   'StellarSystemMultiplicity',
   () => {
     it(
-      'should expose only the point-16.1 SINGLE multiplicity with stable code 1',
+      'should preserve SINGLE code 1 and add point-16.2 BINARY code 2',
       () => {
         expect(
           StellarSystemMultiplicity.values,
         ).toEqual([
           StellarSystemMultiplicity.SINGLE,
+          StellarSystemMultiplicity.BINARY,
         ]);
-
-        expect(
-          StellarSystemMultiplicity.SINGLE.name,
-        ).toBe(
-          'SINGLE',
-        );
 
         expect(
           StellarSystemMultiplicity.SINGLE.code,
@@ -31,11 +26,29 @@ describe(
         ).toBe(
           1,
         );
+
+        expect(
+          StellarSystemMultiplicity.BINARY.name,
+        ).toBe(
+          'BINARY',
+        );
+
+        expect(
+          StellarSystemMultiplicity.BINARY.code,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          StellarSystemMultiplicity.BINARY.stellarComponentCount,
+        ).toBe(
+          2,
+        );
       },
     );
 
     it(
-      'should rehydrate the stable SINGLE code and reject unknown codes',
+      'should rehydrate SINGLE/BINARY stable codes while leaving TRIPLE undefined until 16.3',
       () => {
         expect(
           StellarSystemMultiplicity.fromCode(
@@ -46,15 +59,23 @@ describe(
         );
 
         expect(
-          StellarSystemMultiplicity.fromCodeOrNull(
+          StellarSystemMultiplicity.fromCode(
             2,
+          ),
+        ).toBe(
+          StellarSystemMultiplicity.BINARY,
+        );
+
+        expect(
+          StellarSystemMultiplicity.fromCodeOrNull(
+            3,
           ),
         ).toBeNull();
 
         expect(
           () =>
             StellarSystemMultiplicity.fromCode(
-              2,
+              3,
             ),
         ).toThrow(
           RangeError,

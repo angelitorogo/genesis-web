@@ -48,7 +48,7 @@ import {
 } from './stellar-system-generator';
 
 describe(
-  'StellarSystemGenerator point 16.1',
+  'StellarSystemGenerator points 16.1-16.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -79,7 +79,7 @@ describe(
       );
 
     it(
-      'should materialize the canonical V1 SystemSeed, designation and point-15 primary without a new seed level',
+      'should preserve the complete frozen point-16.1 SINGLE materialization',
       () => {
         const locator =
           new SystemLocator(
@@ -139,12 +139,6 @@ describe(
         );
 
         expect(
-          system.designation.name,
-        ).toBe(
-          'Jotheria',
-        );
-
-        expect(
           system.primaryStar,
         ).toEqual(
           directStar,
@@ -157,21 +151,103 @@ describe(
         );
 
         expect(
-          system.stellarComponentCount,
+          system.secondaryCompanion,
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should materialize Jotheria as BINARY while preserving exactly the same SystemSeed, base designation and canonical A primary',
+      () => {
+        const locator =
+          new SystemLocator(
+            0n,
+            0n,
+            0n,
+          );
+
+        const single =
+          StellarSystemGenerator
+            .generateSingle(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        const binary =
+          StellarSystemGenerator
+            .generateBinary(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        expect(
+          binary.seed.normalizedValue,
         ).toBe(
-          1,
+          single.seed.normalizedValue,
         );
 
         expect(
-          system.isMultiple,
+          binary.designation,
+        ).toEqual(
+          single.designation,
+        );
+
+        expect(
+          binary.designation.name,
         ).toBe(
-          false,
+          'Jotheria',
+        );
+
+        expect(
+          binary.primaryStar,
+        ).toEqual(
+          single.primaryStar,
+        );
+
+        expect(
+          binary.primaryComponentDesignation.name,
+        ).toBe(
+          'Jotheria A',
+        );
+
+        expect(
+          binary.secondaryCompanion?.designation.name,
+        ).toBe(
+          'Jotheria B',
+        );
+
+        expect(
+          binary.secondaryCompanion?.componentSeedHex,
+        ).toBe(
+          'A923624CF3ECDC5ED386CC9414F16BF2',
+        );
+
+        expect(
+          binary.multiplicity,
+        ).toBe(
+          StellarSystemMultiplicity.BINARY,
+        );
+
+        expect(
+          binary.stellarComponentCount,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          binary.isMultiple,
+        ).toBe(
+          true,
         );
       },
     );
 
     it(
-      'should be exactly deterministic and independent from unrelated simple-system query order',
+      'should not perturb the frozen SINGLE result when a BINARY view of the same system is queried',
       () => {
         const locator =
           new SystemLocator(
@@ -190,13 +266,9 @@ describe(
             );
 
         StellarSystemGenerator
-          .generateSingle(
+          .generateBinary(
             generationKey,
-            new SystemLocator(
-              42n,
-              123456789n,
-              99n,
-            ),
+            locator,
             sector,
             population,
           );
@@ -219,7 +291,55 @@ describe(
     );
 
     it(
-      'should preserve the complete signed-Long SystemLocator domain without materializing bodies',
+      'should generate binary systems exactly deterministically and independently from unrelated query order',
+      () => {
+        const locator =
+          new SystemLocator(
+            3n,
+            27n,
+            42n,
+          );
+
+        const before =
+          StellarSystemGenerator
+            .generateBinary(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        StellarSystemGenerator
+          .generateBinary(
+            generationKey,
+            new SystemLocator(
+              42n,
+              123456789n,
+              99n,
+            ),
+            sector,
+            population,
+          );
+
+        const after =
+          StellarSystemGenerator
+            .generateBinary(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        expect(
+          after,
+        ).toEqual(
+          before,
+        );
+      },
+    );
+
+    it(
+      'should preserve the full signed-Long SystemLocator domain for BINARY without materializing orbit or planets',
       () => {
         const LONG_MIN =
           -(1n << 63n);
@@ -230,7 +350,7 @@ describe(
 
         const system =
           StellarSystemGenerator
-            .generateSingle(
+            .generateBinary(
               generationKey,
               new SystemLocator(
                 LONG_MAX,
@@ -260,7 +380,7 @@ describe(
         );
 
         expect(
-          'bodyLocators' in
+          'orbit' in
             system,
         ).toBe(
           false,
@@ -272,68 +392,84 @@ describe(
         ).toBe(
           false,
         );
+
+        expect(
+          'semiMajorAxisAu' in
+            system.secondaryCompanion!,
+        ).toBe(
+          false,
+        );
       },
     );
 
     it(
-      'should keep 1024 addressed systems single while preserving unique canonical SystemSeeds',
+      'should keep 1024 binary component seeds unique while preserving the canonical primary as the more massive/equal component',
       () => {
-        const seedHexes =
+        const componentSeeds =
           new Set<string>();
 
         for (
           let index = 0;
-          index < 1024;
+          index < 1_024;
           index += 1
         ) {
-          const system =
+          const locator =
+            new SystemLocator(
+              BigInt(
+                index % 5,
+              ),
+              BigInt(
+                index -
+                512,
+              ),
+              BigInt(
+                index,
+              ),
+            );
+
+          const binary =
             StellarSystemGenerator
-              .generateSingle(
+              .generateBinary(
                 generationKey,
-                new SystemLocator(
-                  BigInt(
-                    index % 5,
-                  ),
-                  BigInt(
-                    index -
-                    512,
-                  ),
-                  BigInt(
-                    index,
-                  ),
-                ),
+                locator,
                 sector,
                 population,
               );
 
-          expect(
-            system.multiplicity,
-          ).toBe(
-            StellarSystemMultiplicity.SINGLE,
-          );
+          const primaryPhysical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sector,
+                population,
+              );
+
+          const companion =
+            binary.secondaryCompanion!;
 
           expect(
-            system.stellarComponentCount,
-          ).toBe(
-            1,
+            companion.physicalProperties.initialMassSolar,
+          ).toBeLessThanOrEqual(
+            primaryPhysical.initialMassSolar,
           );
 
-          seedHexes.add(
-            system.seed.normalizedValue,
+          componentSeeds.add(
+            companion.componentSeedHex,
           );
         }
 
         expect(
-          seedHexes.size,
+          componentSeeds.size,
         ).toBe(
-          1024,
+          1_024,
         );
       },
       15_000,
     );
 
     it(
-      'should reject an unsupported future GeneratorVersion instead of silently changing V1',
+      'should reject an unsupported future GeneratorVersion for both explicit architectures',
       () => {
         const unsupportedVersion =
           Object.freeze({
@@ -346,9 +482,15 @@ describe(
 
         const fakeV2 =
           new UniverseGenerationKey(
-            generationKey
-              .universeSeed,
+            generationKey.universeSeed,
             unsupportedVersion,
+          );
+
+        const locator =
+          new SystemLocator(
+            0n,
+            0n,
+            0n,
           );
 
         expect(
@@ -356,11 +498,20 @@ describe(
             StellarSystemGenerator
               .generateSingle(
                 fakeV2,
-                new SystemLocator(
-                  0n,
-                  0n,
-                  0n,
-                ),
+                locator,
+                sector,
+                population,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarSystemGenerator
+              .generateBinary(
+                fakeV2,
+                locator,
                 sector,
                 population,
               ),

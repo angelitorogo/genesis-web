@@ -35,6 +35,10 @@ import {
 } from '../regeneration/procedural-target-resolver';
 
 import {
+  StellarBinaryCompanionGenerator,
+} from './stellar-binary-companion-generator';
+
+import {
   StellarDesignationGenerator,
 } from './stellar-designation-generator';
 
@@ -43,15 +47,16 @@ import {
 } from './stellar-generator';
 
 /**
- * Point-16.1 materializer for an explicitly single-star stellar system.
+ * Phase-16 materializer for explicit stellar-system architectures.
  *
- * This generator intentionally performs no multiplicity draw. Point 16.1 is
- * the canonical SINGLE architecture itself; deciding whether an arbitrary
- * SystemLocator is single, binary or triple belongs to later roadmap points.
+ * Point 16.1 established generateSingle(). Point 16.2 adds generateBinary()
+ * without introducing a multiplicity-selection draw: deciding what fraction of
+ * arbitrary systems are SINGLE/BINARY/TRIPLE remains separate from defining
+ * each architecture and can be frozen only once the triple contract exists.
  *
- * The system reuses the already-frozen SystemSeed, point-15 designation and
- * canonical primary Star. Consequently this point consumes no new PRNG draws
- * and cannot perturb any phase-15 branch.
+ * Both methods preserve SystemLocator/SystemSeed as the system identity. The
+ * canonical point-15 primary remains bit-for-bit unchanged; binary component B
+ * is derived from its own intra-system SHA-256 branch.
  */
 export class StellarSystemGenerator {
 
@@ -71,15 +76,9 @@ export class StellarSystemGenerator {
       StellarPopulationProfile,
   ): StellarSystem {
 
-    if (
-      generationKey
-        .generatorVersion !==
-      GeneratorVersion.V1
-    ) {
-      throw new RangeError(
-        `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
-      );
-    }
+    assertSupportedVersion(
+      generationKey,
+    );
 
     const seed =
       ProceduralTargetResolver
@@ -111,6 +110,94 @@ export class StellarSystemGenerator {
       designation,
       StellarSystemMultiplicity.SINGLE,
       primaryStar,
+    );
+  }
+
+  static generateBinary(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    stellarPopulationProfile:
+      StellarPopulationProfile,
+  ): StellarSystem {
+
+    assertSupportedVersion(
+      generationKey,
+    );
+
+    const single =
+      this.generateSingle(
+        generationKey,
+        locator,
+        sectorStellarPopulation,
+        stellarPopulationProfile,
+      );
+
+    /*
+     * These calls only re-materialize frozen point-15 values. They consume no
+     * mutable/shared state and allow point 16.2 to make B coeval with A without
+     * changing the Star entity or any point-15 draw stream.
+     */
+    const primaryPhysicalProperties =
+      StellarGenerator
+        .generatePhysicalProperties(
+          generationKey,
+          locator,
+          sectorStellarPopulation,
+          stellarPopulationProfile,
+        );
+
+    const primaryLifetimeProfile =
+      StellarGenerator
+        .generateLifetimeProfile(
+          generationKey,
+          locator,
+          primaryPhysicalProperties,
+          sectorStellarPopulation,
+          stellarPopulationProfile,
+        );
+
+    const secondaryCompanion =
+      StellarBinaryCompanionGenerator
+        .generate(
+          generationKey,
+          single.seed,
+          single.designation,
+          primaryPhysicalProperties,
+          primaryLifetimeProfile,
+          sectorStellarPopulation,
+        );
+
+    return new StellarSystem(
+      generationKey,
+      locator,
+      single.seed,
+      single.designation,
+      StellarSystemMultiplicity.BINARY,
+      single.primaryStar,
+      secondaryCompanion,
+    );
+  }
+}
+
+function assertSupportedVersion(
+  generationKey:
+    UniverseGenerationKey,
+): void {
+
+  if (
+    generationKey
+      .generatorVersion !==
+    GeneratorVersion.V1
+  ) {
+    throw new RangeError(
+      `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
     );
   }
 }

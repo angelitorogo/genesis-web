@@ -23,6 +23,14 @@ import {
 } from './star';
 
 import {
+  type StellarCompanion,
+} from './stellar-companion';
+
+import {
+  StellarComponentDesignation,
+} from './stellar-component-designation';
+
+import {
   StellarDesignation,
 } from './stellar-designation';
 
@@ -39,11 +47,15 @@ import {
 } from './stellar-system';
 
 import {
+  StellarSystemComponentLabel,
+} from './stellar-system-component-label';
+
+import {
   StellarSystemMultiplicity,
 } from './stellar-system-multiplicity';
 
 describe(
-  'StellarSystem',
+  'StellarSystem points 16.1-16.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -87,8 +99,25 @@ describe(
       );
     }
 
+    function secondaryCompanion(
+      baseDesignation =
+        designation,
+    ): StellarCompanion {
+
+      return {
+        componentLabel:
+          StellarSystemComponentLabel.B,
+
+        designation:
+          new StellarComponentDesignation(
+            baseDesignation,
+            StellarSystemComponentLabel.B,
+          ),
+      } as unknown as StellarCompanion;
+    }
+
     it(
-      'should model a point-16.1 system as exactly one canonical primary star',
+      'should preserve point-16.1 SINGLE as exactly one canonical primary star',
       () => {
         const star =
           primaryStar();
@@ -104,40 +133,14 @@ describe(
           );
 
         expect(
-          system.generationKey,
-        ).toBe(
-          generationKey,
-        );
-
-        expect(
-          system.locator,
-        ).toBe(
-          locator,
-        );
-
-        expect(
-          system.seed,
-        ).toBe(
-          seed,
-        );
-
-        expect(
-          system.designation,
-        ).toBe(
-          designation,
-        );
-
-        expect(
           system.primaryStar,
         ).toBe(
           star,
         );
 
         expect(
-          system.multiplicity,
-        ).toBe(
-          StellarSystemMultiplicity.SINGLE,
-        );
+          system.secondaryCompanion,
+        ).toBeNull();
 
         expect(
           system.stellarComponentCount,
@@ -150,11 +153,122 @@ describe(
         ).toBe(
           false,
         );
+
+        expect(
+          system.primaryComponentDesignation.name,
+        ).toBe(
+          'Testara A',
+        );
       },
     );
 
     it(
-      'should reject a primary star from a different generation key',
+      'should model point-16.2 BINARY as the same primary plus exactly one B companion',
+      () => {
+        const companion =
+          secondaryCompanion();
+
+        const system =
+          new StellarSystem(
+            generationKey,
+            locator,
+            seed,
+            designation,
+            StellarSystemMultiplicity.BINARY,
+            primaryStar(),
+            companion,
+          );
+
+        expect(
+          system.secondaryCompanion,
+        ).toBe(
+          companion,
+        );
+
+        expect(
+          system.stellarComponentCount,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          system.isMultiple,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          system.primaryComponentDesignation.proceduralCode,
+        ).toBe(
+          `${designation.proceduralCode}-A`,
+        );
+      },
+    );
+
+    it(
+      'should reject multiplicity/component mismatches',
+      () => {
+        expect(
+          () =>
+            new StellarSystem(
+              generationKey,
+              locator,
+              seed,
+              designation,
+              StellarSystemMultiplicity.SINGLE,
+              primaryStar(),
+              secondaryCompanion(),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new StellarSystem(
+              generationKey,
+              locator,
+              seed,
+              designation,
+              StellarSystemMultiplicity.BINARY,
+              primaryStar(),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a binary companion layered over another system designation',
+      () => {
+        const otherDesignation =
+          new StellarDesignation(
+            'Othera',
+            'GEN-V1-G3-S-27-O43-SYS-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          );
+
+        expect(
+          () =>
+            new StellarSystem(
+              generationKey,
+              locator,
+              seed,
+              designation,
+              StellarSystemMultiplicity.BINARY,
+              primaryStar(),
+              secondaryCompanion(
+                otherDesignation,
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a primary star from a different generation key or SystemLocator',
       () => {
         const otherGenerationKey =
           new UniverseGenerationKey(
@@ -179,12 +293,7 @@ describe(
         ).toThrow(
           RangeError,
         );
-      },
-    );
 
-    it(
-      'should reject a primary star from a different SystemLocator',
-      () => {
         expect(
           () =>
             new StellarSystem(
