@@ -43,6 +43,10 @@ import {
 } from '../../domain/stellar/stellar-activity-regime';
 
 import {
+  StellarRotationStabilityProfile,
+} from '../../domain/stellar/stellar-rotation-stability-profile';
+
+import {
   Star,
 } from '../../domain/stellar/star';
 
@@ -80,6 +84,10 @@ import {
 } from './stellar-evolution-engine';
 
 import {
+  StellarRotationStabilityModel,
+} from './stellar-rotation-stability-model';
+
+import {
   StellarSpectralClassifier,
 } from './stellar-spectral-classifier';
 
@@ -96,6 +104,11 @@ const V1_AGE_BRANCH =
 const V1_ACTIVITY_BRANCH =
   utf8ToBytes(
     'GENESIS-STELLAR-ACTIVITY-V1',
+  );
+
+const V1_ROTATION_STABILITY_BRANCH =
+  utf8ToBytes(
+    'GENESIS-STELLAR-ROTATION-STABILITY-V1',
   );
 
 const V1_MAX_YOUNG_AGE_BILLION_YEARS =
@@ -150,6 +163,14 @@ interface V1ActivityDraws {
     number;
 }
 
+interface V1RotationStabilityDraws {
+  readonly rotationScatter:
+    number;
+
+  readonly stabilityScatter:
+    number;
+}
+
 /**
  * Incremental point-15 StellarGenerator implementation.
  *
@@ -161,12 +182,17 @@ interface V1ActivityDraws {
  * from the frozen phase-14 evolution model and can finally materialize the
  * canonical current Star evolutionary state. Point 15.4 adds a third isolated
  * entropy branch for baseline ordinary magnetic activity and flare statistics.
+ * Point 15.5 adds a fourth independent branch for ordinary-star rotation period
+ * and a coarse surface/rotational stability proxy.
  *
  * Important boundaries:
- * - points 15.3/15.4 do not rewrite the frozen point-15.1 physical draw stream;
- * - point 15.4 does not generate rotation/stability, magnetic-field strength,
- *   compact-remnant burst/accretion physics or individual flare event times;
- * - rotation/stability and designation remain 15.5..15.6;
+ * - points 15.3..15.5 do not rewrite the frozen point-15.1 physical draw stream;
+ * - point 15.5 deliberately excludes compact-remnant rotation/spin because the
+ *   point-15.1 radius is a progenitor/reference radius, not a white-dwarf,
+ *   neutron-star or Kerr black-hole current-radius/spin model;
+ * - magnetic-field strength, pulsar/magnetar state and specialized compact-
+ *   remnant rotation remain outside this ordinary-star contract;
+ * - designation remains point 15.6;
  * - point-15.2 spectral appearance remains the reference-baseline appearance;
  *   giant/remnant atmosphere-specific spectral vocabularies are not invented
  *   here.
@@ -330,6 +356,51 @@ export class StellarGenerator {
         locator,
         physicalProperties,
         lifetimeProfile,
+      );
+    }
+
+    throw new RangeError(
+      `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+    );
+  }
+
+  /**
+   * Generates point-15.5 ordinary-star rotation and a coarse stability proxy.
+   *
+   * Rotation entropy is isolated from the frozen 15.1/15.3/15.4 branches. The
+   * current phase-14 evolutionary state, generated age and ordinary magnetic
+   * activity shape the period and stability result. Compact remnants remain
+   * explicitly outside this ordinary surface-rotation model because their
+   * specialized current-radius/spin physics is not represented yet.
+   */
+  static generateRotationStabilityProfile(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    lifetimeProfile:
+      StellarLifetimeProfile,
+
+    activityProfile:
+      StellarActivityProfile,
+  ): StellarRotationStabilityProfile {
+
+    if (
+      generationKey
+        .generatorVersion ===
+      GeneratorVersion.V1
+    ) {
+      return this.generateRotationStabilityProfileV1(
+        generationKey,
+        locator,
+        physicalProperties,
+        lifetimeProfile,
+        activityProfile,
       );
     }
 
@@ -758,6 +829,107 @@ export class StellarGenerator {
       typicalFlareEnergyJoules,
       maximumFlareEnergyJoules,
     );
+  }
+
+  private static generateRotationStabilityProfileV1(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    lifetimeProfile:
+      StellarLifetimeProfile,
+
+    activityProfile:
+      StellarActivityProfile,
+  ): StellarRotationStabilityProfile {
+
+    const stateName =
+      lifetimeProfile
+        .evolutionAssessment
+        .evolutionState
+        .name;
+
+    const isCompactRemnant =
+      stateName ===
+        'WHITE_DWARF' ||
+      stateName ===
+        'NEUTRON_STAR' ||
+      stateName ===
+        'STELLAR_BLACK_HOLE';
+
+    if (
+      isCompactRemnant
+    ) {
+      if (
+        activityProfile
+          .ordinaryFlareModelApplicable
+      ) {
+        throw new RangeError(
+          'Compact-remnant point-15.5 rotation requires a non-applicable ordinary activity profile.',
+        );
+      }
+
+      return new StellarRotationStabilityProfile(
+        false,
+        null,
+        null,
+        null,
+        null,
+      );
+    }
+
+    if (
+      !activityProfile
+        .ordinaryFlareModelApplicable ||
+      activityProfile
+        .magneticActivityIndex ===
+        null
+    ) {
+      throw new RangeError(
+        'Ordinary point-15.5 rotation requires an applicable point-15.4 activity profile.',
+      );
+    }
+
+    const systemSeed =
+      ProceduralTargetResolver
+        .resolveTargetSeed(
+          generationKey,
+          locator,
+        ) as SystemSeed;
+
+    const random =
+      new Sfc64Random(
+        rotationStabilityBranchSeedV1(
+          systemSeed,
+        ),
+      );
+
+    /*
+     * Frozen point-15.5 draw order. Rotation and stability deliberately live in
+     * their own branch so neither can perturb physical, age or flare outputs.
+     */
+    const draws:
+      V1RotationStabilityDraws = {
+        rotationScatter:
+          random.nextDouble(),
+
+        stabilityScatter:
+          random.nextDouble(),
+      };
+
+    return StellarRotationStabilityModel
+      .evaluateV1(
+        physicalProperties,
+        lifetimeProfile,
+        activityProfile,
+        draws.rotationScatter,
+        draws.stabilityScatter,
+      );
   }
 
   private static generateSpectralAppearanceV1(
@@ -1556,6 +1728,36 @@ function samplePowerLaw(
       1.0 /
       exponent
     );
+}
+
+function rotationStabilityBranchSeedV1(
+  systemSeed:
+    SystemSeed,
+): UniverseSeed {
+
+  const digest =
+    sha256
+      .create()
+      .update(
+        V1_ROTATION_STABILITY_BRANCH,
+      )
+      .update(
+        hexToBytes(
+          systemSeed
+            .normalizedValue,
+        ),
+      )
+      .digest();
+
+  return universeSeedFromNormalized128(
+    bytesToHex(
+      digest.slice(
+        0,
+        16,
+      ),
+    )
+      .toUpperCase(),
+  );
 }
 
 function activityBranchSeedV1(

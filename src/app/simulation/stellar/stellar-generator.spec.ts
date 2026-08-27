@@ -21,8 +21,24 @@ import {
 } from '../../domain/stellar/stellar-evolution-input';
 
 import {
+  StellarActivityProfile,
+} from '../../domain/stellar/stellar-activity-profile';
+
+import {
   StellarActivityRegime,
 } from '../../domain/stellar/stellar-activity-regime';
+
+import {
+  StellarRotationRegime,
+} from '../../domain/stellar/stellar-rotation-regime';
+
+import {
+  StellarRotationStabilityProfile,
+} from '../../domain/stellar/stellar-rotation-stability-profile';
+
+import {
+  StellarStabilityRegime,
+} from '../../domain/stellar/stellar-stability-regime';
 
 import {
   StellarPhysicalProperties,
@@ -59,7 +75,7 @@ import {
 } from './stellar-generator';
 
 describe(
-  'StellarGenerator points 15.1-15.4',
+  'StellarGenerator points 15.1-15.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -1666,6 +1682,839 @@ describe(
     );
 
     it(
+      'should generate exactly deterministic point-15.5 rotation and stability from an isolated branch',
+      () => {
+        const locator =
+          new SystemLocator(
+            4n,
+            -77n,
+            9n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        const lifetime =
+          lifetimeFor(
+            1.0,
+            4.6,
+          );
+
+        const activity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetime,
+            );
+
+        const first =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetime,
+              activity,
+            );
+
+        const second =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetime,
+              activity,
+            );
+
+        expect(
+          second,
+        ).toEqual(
+          first,
+        );
+
+        expect(
+          first.ordinaryRotationModelApplicable,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          first.rotationRegime?.name,
+        ).toBe(
+          StellarRotationRegime
+            .fromRotationPeriodDays(
+              first.rotationPeriodDays!,
+            )
+            .name,
+        );
+
+        expect(
+          first.stabilityRegime?.name,
+        ).toBe(
+          StellarStabilityRegime
+            .fromStabilityIndex(
+              first.stabilityIndex!,
+            )
+            .name,
+        );
+      },
+    );
+
+    it(
+      'should spin down a solar-type main-sequence star with age and make the older baseline more stable',
+      () => {
+        const locator =
+          new SystemLocator(
+            2n,
+            17n,
+            6n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        const youngLifetime =
+          lifetimeFor(
+            1.0,
+            0.10,
+          );
+
+        const oldLifetime =
+          lifetimeFor(
+            1.0,
+            6.0,
+          );
+
+        const youngActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              youngLifetime,
+            );
+
+        const oldActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              oldLifetime,
+            );
+
+        const young =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              youngLifetime,
+              youngActivity,
+            );
+
+        const old =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              oldLifetime,
+              oldActivity,
+            );
+
+        expect(
+          old.rotationPeriodDays!,
+        ).toBeGreaterThan(
+          young.rotationPeriodDays!,
+        );
+
+        expect(
+          old.stabilityIndex!,
+        ).toBeGreaterThan(
+          young.stabilityIndex!,
+        );
+      },
+    );
+
+    it(
+      'should keep a young M dwarf faster-rotating than a solar-type star at the same age',
+      () => {
+        const locator =
+          new SystemLocator(
+            2n,
+            19n,
+            8n,
+          );
+
+        const coolPhysical =
+          new StellarPhysicalProperties(
+            0.30,
+            0.30,
+            0.30,
+            0.01,
+            3_500,
+          );
+
+        const solarPhysical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        const coolLifetime =
+          lifetimeFor(
+            0.30,
+            0.50,
+          );
+
+        const solarLifetime =
+          lifetimeFor(
+            1.0,
+            0.50,
+          );
+
+        const coolActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              coolPhysical,
+              coolLifetime,
+            );
+
+        const solarActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              solarPhysical,
+              solarLifetime,
+            );
+
+        const coolRotation =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              coolPhysical,
+              coolLifetime,
+              coolActivity,
+            );
+
+        const solarRotation =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              solarPhysical,
+              solarLifetime,
+              solarActivity,
+            );
+
+        expect(
+          coolRotation.rotationPeriodDays!,
+        ).toBeLessThan(
+          solarRotation.rotationPeriodDays!,
+        );
+      },
+    );
+
+    it(
+      'should slow the same solar-mass progenitor substantially after it enters the giant branch',
+      () => {
+        const locator =
+          new SystemLocator(
+            3n,
+            21n,
+            10n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        const mainSequenceLifetime =
+          lifetimeFor(
+            1.0,
+            9.9,
+          );
+
+        const giantLifetime =
+          lifetimeFor(
+            1.0,
+            10.5,
+          );
+
+        const mainSequenceActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              mainSequenceLifetime,
+            );
+
+        const giantActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              giantLifetime,
+            );
+
+        const mainSequenceRotation =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              mainSequenceLifetime,
+              mainSequenceActivity,
+            );
+
+        const giantRotation =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              giantLifetime,
+              giantActivity,
+            );
+
+        expect(
+          giantLifetime
+            .evolutionAssessment
+            .evolutionState
+            .name,
+        ).toBe(
+          StellarEvolutionState
+            .GIANT
+            .name,
+        );
+
+        expect(
+          giantRotation.rotationPeriodDays!,
+        ).toBeGreaterThan(
+          mainSequenceRotation.rotationPeriodDays!,
+        );
+      },
+    );
+
+    it(
+      'should keep brown dwarfs in the fast ordinary-rotation regime while allowing cooling to increase stability',
+      () => {
+        const locator =
+          new SystemLocator(
+            4n,
+            25n,
+            12n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            0.05,
+            0.05,
+            0.10,
+            0.0001,
+            1_500,
+          );
+
+        const youngLifetime =
+          lifetimeFor(
+            0.05,
+            0.05,
+          );
+
+        const oldLifetime =
+          lifetimeFor(
+            0.05,
+            12.0,
+          );
+
+        const youngActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              youngLifetime,
+            );
+
+        const oldActivity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              oldLifetime,
+            );
+
+        const young =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              youngLifetime,
+              youngActivity,
+            );
+
+        const old =
+          StellarGenerator
+            .generateRotationStabilityProfile(
+              generationKey,
+              locator,
+              physical,
+              oldLifetime,
+              oldActivity,
+            );
+
+        expect(
+          young.rotationPeriodDays!,
+        ).toBeLessThan(
+          1.5,
+        );
+
+        expect(
+          old.rotationPeriodDays!,
+        ).toBeLessThan(
+          1.5,
+        );
+
+        expect(
+          old.stabilityIndex!,
+        ).toBeGreaterThan(
+          young.stabilityIndex!,
+        );
+      },
+    );
+
+    it(
+      'should keep white dwarfs, neutron stars and stellar black holes outside the ordinary point-15.5 rotation model',
+      () => {
+        const cases =
+          [
+            [
+              1.0,
+              11.2,
+            ],
+            [
+              12.0,
+              1.0,
+            ],
+            [
+              60.0,
+              1.0,
+            ],
+          ] as const;
+
+        for (
+          const [
+            mass,
+            age,
+          ]
+          of cases
+        ) {
+          const locator =
+            new SystemLocator(
+              5n,
+              29n,
+              BigInt(
+                Math.round(
+                  mass,
+                ),
+              ),
+            );
+
+          const physical =
+            new StellarPhysicalProperties(
+              mass,
+              mass,
+              1.0,
+              1.0,
+              5_772,
+            );
+
+          const lifetime =
+            lifetimeFor(
+              mass,
+              age,
+            );
+
+          const activity =
+            StellarGenerator
+              .generateActivityProfile(
+                generationKey,
+                locator,
+                physical,
+                lifetime,
+              );
+
+          const rotation =
+            StellarGenerator
+              .generateRotationStabilityProfile(
+                generationKey,
+                locator,
+                physical,
+                lifetime,
+                activity,
+              );
+
+          expect(
+            activity.ordinaryFlareModelApplicable,
+          ).toBe(
+            false,
+          );
+
+          expect(
+            rotation,
+          ).toEqual(
+            new StellarRotationStabilityProfile(
+              false,
+              null,
+              null,
+              null,
+              null,
+            ),
+          );
+        }
+      },
+    );
+
+    it(
+      'should reject an ordinary-star rotation request when point-15.4 activity is marked non-applicable',
+      () => {
+        const locator =
+          new SystemLocator(
+            6n,
+            33n,
+            14n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        expect(
+          () =>
+            StellarGenerator
+              .generateRotationStabilityProfile(
+                generationKey,
+                locator,
+                physical,
+                lifetimeFor(
+                  1.0,
+                  4.0,
+                ),
+                new StellarActivityProfile(
+                  false,
+                  null,
+                  null,
+                  null,
+                  null,
+                  null,
+                ),
+              ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should keep hundreds of generated point-15.5 profiles finite, bounded and coherent with current evolutionary state',
+      () => {
+        for (
+          let index =
+            0n;
+          index <
+            384n;
+          index +=
+            1n
+        ) {
+          const locator =
+            new SystemLocator(
+              9n,
+              -67n,
+              index,
+            );
+
+          const physical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const lifetime =
+            StellarGenerator
+              .generateLifetimeProfile(
+                generationKey,
+                locator,
+                physical,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const activity =
+            StellarGenerator
+              .generateActivityProfile(
+                generationKey,
+                locator,
+                physical,
+                lifetime,
+              );
+
+          const rotation =
+            StellarGenerator
+              .generateRotationStabilityProfile(
+                generationKey,
+                locator,
+                physical,
+                lifetime,
+                activity,
+              );
+
+          const stateName =
+            lifetime
+              .evolutionAssessment
+              .evolutionState
+              .name;
+
+          const compact =
+            stateName ===
+              'WHITE_DWARF' ||
+            stateName ===
+              'NEUTRON_STAR' ||
+            stateName ===
+              'STELLAR_BLACK_HOLE';
+
+          if (
+            compact
+          ) {
+            expect(
+              rotation.ordinaryRotationModelApplicable,
+            ).toBe(
+              false,
+            );
+
+            expect(
+              rotation.rotationPeriodDays,
+            ).toBeNull();
+
+            expect(
+              rotation.stabilityIndex,
+            ).toBeNull();
+
+            continue;
+          }
+
+          expect(
+            rotation.ordinaryRotationModelApplicable,
+          ).toBe(
+            true,
+          );
+
+          expect(
+            rotation.rotationPeriodDays!,
+          ).toBeGreaterThan(
+            0,
+          );
+
+          expect(
+            Number.isFinite(
+              rotation.rotationPeriodDays!,
+            ),
+          ).toBe(
+            true,
+          );
+
+          expect(
+            rotation.stabilityIndex!,
+          ).toBeGreaterThanOrEqual(
+            0,
+          );
+
+          expect(
+            rotation.stabilityIndex!,
+          ).toBeLessThanOrEqual(
+            1,
+          );
+
+          expect(
+            rotation.rotationRegime?.name,
+          ).toBe(
+            StellarRotationRegime
+              .fromRotationPeriodDays(
+                rotation.rotationPeriodDays!,
+              )
+              .name,
+          );
+
+          expect(
+            rotation.stabilityRegime?.name,
+          ).toBe(
+            StellarStabilityRegime
+              .fromStabilityIndex(
+                rotation.stabilityIndex!,
+              )
+              .name,
+          );
+        }
+      },
+    );
+
+    it(
+      'should keep point-15.5 entropy isolated from physical, spectral, age and activity outputs',
+      () => {
+        const locator =
+          new SystemLocator(
+            10n,
+            -73n,
+            17n,
+          );
+
+        const physicalBefore =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const appearanceBefore =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physicalBefore,
+              sectorPopulation,
+            );
+
+        const lifetimeBefore =
+          StellarGenerator
+            .generateLifetimeProfile(
+              generationKey,
+              locator,
+              physicalBefore,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const activityBefore =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physicalBefore,
+              lifetimeBefore,
+            );
+
+        StellarGenerator
+          .generateRotationStabilityProfile(
+            generationKey,
+            locator,
+            physicalBefore,
+            lifetimeBefore,
+            activityBefore,
+          );
+
+        const physicalAfter =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const appearanceAfter =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physicalAfter,
+              sectorPopulation,
+            );
+
+        const lifetimeAfter =
+          StellarGenerator
+            .generateLifetimeProfile(
+              generationKey,
+              locator,
+              physicalAfter,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const activityAfter =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physicalAfter,
+              lifetimeAfter,
+            );
+
+        expect(
+          physicalAfter,
+        ).toEqual(
+          physicalBefore,
+        );
+
+        expect(
+          appearanceAfter,
+        ).toEqual(
+          appearanceBefore,
+        );
+
+        expect(
+          lifetimeAfter,
+        ).toEqual(
+          lifetimeBefore,
+        );
+
+        expect(
+          activityAfter,
+        ).toEqual(
+          activityBefore,
+        );
+      },
+    );
+
+    it(
       'should reject unsupported generator versions without consuming procedural state',
       () => {
         const unsupported =
@@ -1758,6 +2607,40 @@ describe(
                 lifetimeFor(
                   1.0,
                   1.0,
+                ),
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarGenerator
+              .generateRotationStabilityProfile(
+                unsupported,
+                new SystemLocator(
+                  0n,
+                  0n,
+                  0n,
+                ),
+                new StellarPhysicalProperties(
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0,
+                  5_772,
+                ),
+                lifetimeFor(
+                  1.0,
+                  1.0,
+                ),
+                new StellarActivityProfile(
+                  true,
+                  0.25,
+                  StellarActivityRegime.MODERATE,
+                  0.1,
+                  1.0e24,
+                  1.0e25,
                 ),
               ),
         ).toThrow(
