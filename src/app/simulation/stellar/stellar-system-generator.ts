@@ -51,6 +51,10 @@ import {
 } from './stellar-system-multiplicity-selector';
 
 import {
+  StellarOrbitHierarchyGenerator,
+} from './stellar-orbit-hierarchy-generator';
+
+import {
   StellarTripleCompanionGenerator,
 } from './stellar-triple-companion-generator';
 
@@ -63,7 +67,8 @@ import {
  *
  * Every architecture preserves SystemLocator/SystemSeed as system identity.
  * The canonical phase-15 primary A is bit-for-bit unchanged; B and C come from
- * independent intra-system branches. Orbit hierarchy remains point 16.4.
+ * independent intra-system branches. Point 16.4 adds deterministic simplified
+ * orbit hierarchies on independent branches without perturbing those identities.
  */
 export class StellarSystemGenerator {
 
@@ -174,6 +179,12 @@ export class StellarSystemGenerator {
           stellarPopulationProfile,
         );
 
+    const orbitHierarchy =
+      StellarOrbitHierarchyGenerator
+        .generateSingle(
+          generationKey,
+        );
+
     return new StellarSystem(
       generationKey,
       locator,
@@ -181,6 +192,7 @@ export class StellarSystemGenerator {
       designation,
       StellarSystemMultiplicity.SINGLE,
       primaryStar,
+      orbitHierarchy,
     );
   }
 
@@ -244,6 +256,15 @@ export class StellarSystemGenerator {
           sectorStellarPopulation,
         );
 
+    const orbitHierarchy =
+      StellarOrbitHierarchyGenerator
+        .generateBinary(
+          generationKey,
+          single.seed,
+          primaryPhysicalProperties,
+          secondaryCompanion,
+        );
+
     return new StellarSystem(
       generationKey,
       locator,
@@ -251,6 +272,7 @@ export class StellarSystemGenerator {
       single.designation,
       StellarSystemMultiplicity.BINARY,
       single.primaryStar,
+      orbitHierarchy,
       secondaryCompanion,
     );
   }
@@ -312,6 +334,16 @@ export class StellarSystemGenerator {
           sectorStellarPopulation,
         );
 
+    const orbitHierarchy =
+      StellarOrbitHierarchyGenerator
+        .generateTriple(
+          generationKey,
+          binary.seed,
+          primaryPhysicalProperties,
+          binary.secondaryCompanion!,
+          tertiaryCompanion,
+        );
+
     return new StellarSystem(
       generationKey,
       locator,
@@ -319,6 +351,7 @@ export class StellarSystemGenerator {
       binary.designation,
       StellarSystemMultiplicity.TRIPLE,
       binary.primaryStar,
+      orbitHierarchy,
       binary.secondaryCompanion,
       tertiaryCompanion,
     );

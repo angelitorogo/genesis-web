@@ -33,7 +33,8 @@ const MASS_RATIO_TOLERANCE =
  *
  * The component carries an independent intra-system seed, component
  * designation, reference physical/spectral baseline and coeval evolution.
- * Orbit geometry remains point 16.4 and no BodyLocator is introduced here.
+ * Point 16.4 keeps orbit geometry at StellarSystem hierarchy level rather than
+ * embedding it in the companion; no BodyLocator is introduced here.
  */
 export class StellarCompanion {
 

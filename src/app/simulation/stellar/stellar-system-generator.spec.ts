@@ -48,7 +48,7 @@ import {
 } from './stellar-system-generator';
 
 describe(
-  'StellarSystemGenerator points 16.1-16.3',
+  'StellarSystemGenerator points 16.1-16.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -339,7 +339,7 @@ describe(
     );
 
     it(
-      'should preserve the full signed-Long SystemLocator domain for BINARY without materializing orbit or planets',
+      'should preserve the full signed-Long SystemLocator domain for BINARY while keeping orbit state at system level and not materializing planets',
       () => {
         const LONG_MIN =
           -(1n << 63n);
@@ -380,11 +380,12 @@ describe(
         );
 
         expect(
-          'orbit' in
-            system,
-        ).toBe(
-          false,
-        );
+          system.orbitHierarchy.innerOrbit,
+        ).not.toBeNull();
+
+        expect(
+          system.orbitHierarchy.outerOrbit,
+        ).toBeNull();
 
         expect(
           'planets' in
@@ -615,7 +616,7 @@ describe(
     );
 
     it(
-      'should preserve the full signed-Long SystemLocator domain for TRIPLE without introducing orbital hierarchy',
+      'should preserve the full signed-Long SystemLocator domain for TRIPLE with the point-16.4 hierarchy isolated from companion identity',
       () => {
         const LONG_MIN =
           -(1n << 63n);
@@ -640,7 +641,8 @@ describe(
         expect(system.locator.galaxyIndex).toBe(LONG_MAX);
         expect(system.locator.sectorKey).toBe(LONG_MIN);
         expect(system.locator.galacticObjectIndex).toBe(LONG_MAX);
-        expect('orbitHierarchy' in system).toBe(false);
+        expect(system.orbitHierarchy.innerOrbit).not.toBeNull();
+        expect(system.orbitHierarchy.outerOrbit).not.toBeNull();
         expect('semiMajorAxisAu' in system.tertiaryCompanion!).toBe(false);
       },
     );

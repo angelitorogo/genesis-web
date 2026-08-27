@@ -43,6 +43,14 @@ import {
 } from './stellar-main-sequence-class';
 
 import {
+  StellarOrbitHierarchy,
+} from './stellar-orbit-hierarchy';
+
+import {
+  StellarRelativeOrbit,
+} from './stellar-relative-orbit';
+
+import {
   StellarSystem,
 } from './stellar-system';
 
@@ -55,7 +63,7 @@ import {
 } from './stellar-system-multiplicity';
 
 describe(
-  'StellarSystem points 16.1-16.3',
+  'StellarSystem points 16.1-16.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -147,8 +155,53 @@ describe(
           'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
         );
 
+    function hierarchy(
+      multiplicity:
+        StellarSystemMultiplicity,
+    ): StellarOrbitHierarchy {
+
+      if (
+        multiplicity ===
+        StellarSystemMultiplicity.SINGLE
+      ) {
+        return new StellarOrbitHierarchy(
+          multiplicity,
+          null,
+          null,
+        );
+      }
+
+      const inner =
+        new StellarRelativeOrbit(
+          1,
+          0.1,
+          1,
+        );
+
+      if (
+        multiplicity ===
+        StellarSystemMultiplicity.BINARY
+      ) {
+        return new StellarOrbitHierarchy(
+          multiplicity,
+          inner,
+          null,
+        );
+      }
+
+      return new StellarOrbitHierarchy(
+        multiplicity,
+        inner,
+        new StellarRelativeOrbit(
+          10,
+          0.2,
+          30,
+        ),
+      );
+    }
+
     it(
-      'should preserve SINGLE as exactly one canonical primary star',
+      'should preserve SINGLE as exactly one canonical primary star with no stellar relative orbit',
       () => {
         const star =
           primaryStar();
@@ -161,6 +214,9 @@ describe(
             designation,
             StellarSystemMultiplicity.SINGLE,
             star,
+            hierarchy(
+              StellarSystemMultiplicity.SINGLE,
+            ),
           );
 
         expect(system.primaryStar).toBe(star);
@@ -169,11 +225,12 @@ describe(
         expect(system.stellarComponentCount).toBe(1);
         expect(system.isMultiple).toBe(false);
         expect(system.primaryComponentDesignation.name).toBe('Testara A');
+        expect(system.orbitHierarchy.hasInnerOrbit).toBe(false);
       },
     );
 
     it(
-      'should preserve BINARY as the same primary plus exactly one B companion',
+      'should preserve BINARY as A+B with the point-16.4 A-B inner orbit',
       () => {
         const secondary =
           secondaryCompanion();
@@ -186,6 +243,9 @@ describe(
             designation,
             StellarSystemMultiplicity.BINARY,
             primaryStar(),
+            hierarchy(
+              StellarSystemMultiplicity.BINARY,
+            ),
             secondary,
           );
 
@@ -193,11 +253,13 @@ describe(
         expect(system.tertiaryCompanion).toBeNull();
         expect(system.stellarComponentCount).toBe(2);
         expect(system.isMultiple).toBe(true);
+        expect(system.orbitHierarchy.hasInnerOrbit).toBe(true);
+        expect(system.orbitHierarchy.hasOuterOrbit).toBe(false);
       },
     );
 
     it(
-      'should model TRIPLE as A plus distinct B/C companions ordered by initial mass',
+      'should model TRIPLE as A-B inner pair plus distinct outer C companion',
       () => {
         const secondary =
           secondaryCompanion();
@@ -213,6 +275,9 @@ describe(
             designation,
             StellarSystemMultiplicity.TRIPLE,
             primaryStar(),
+            hierarchy(
+              StellarSystemMultiplicity.TRIPLE,
+            ),
             secondary,
             tertiary,
           );
@@ -222,11 +287,12 @@ describe(
         expect(system.stellarComponentCount).toBe(3);
         expect(system.isMultiple).toBe(true);
         expect(system.tertiaryCompanion?.designation.name).toBe('Testara C');
+        expect(system.orbitHierarchy.hasOuterOrbit).toBe(true);
       },
     );
 
     it(
-      'should reject multiplicity/component mismatches and invalid triple ordering',
+      'should reject multiplicity/orbit/component mismatches and invalid triple ordering',
       () => {
         expect(
           () =>
@@ -237,7 +303,9 @@ describe(
               designation,
               StellarSystemMultiplicity.SINGLE,
               primaryStar(),
-              secondaryCompanion(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
             ),
         ).toThrow(RangeError);
 
@@ -250,6 +318,9 @@ describe(
               designation,
               StellarSystemMultiplicity.BINARY,
               primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
             ),
         ).toThrow(RangeError);
 
@@ -262,6 +333,9 @@ describe(
               designation,
               StellarSystemMultiplicity.BINARY,
               primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
               secondaryCompanion(),
               tertiaryCompanion(),
             ),
@@ -276,6 +350,9 @@ describe(
               designation,
               StellarSystemMultiplicity.TRIPLE,
               primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.TRIPLE,
+              ),
               secondaryCompanion(),
             ),
         ).toThrow(RangeError);
@@ -289,6 +366,9 @@ describe(
               designation,
               StellarSystemMultiplicity.TRIPLE,
               primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.TRIPLE,
+              ),
               secondaryCompanion(),
               companion(
                 StellarSystemComponentLabel.C,
@@ -307,6 +387,9 @@ describe(
               designation,
               StellarSystemMultiplicity.TRIPLE,
               primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.TRIPLE,
+              ),
               secondaryCompanion(),
               companion(
                 StellarSystemComponentLabel.C,
@@ -336,6 +419,9 @@ describe(
               designation,
               StellarSystemMultiplicity.BINARY,
               primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
               companion(
                 StellarSystemComponentLabel.B,
                 0.7,
@@ -354,6 +440,9 @@ describe(
               designation,
               StellarSystemMultiplicity.TRIPLE,
               primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.TRIPLE,
+              ),
               secondaryCompanion(),
               companion(
                 StellarSystemComponentLabel.C,
@@ -386,6 +475,9 @@ describe(
               designation,
               StellarSystemMultiplicity.SINGLE,
               primaryStar(otherGenerationKey),
+              hierarchy(
+                StellarSystemMultiplicity.SINGLE,
+              ),
             ),
         ).toThrow(RangeError);
 
@@ -402,8 +494,12 @@ describe(
                 new SystemLocator(
                   locator.galaxyIndex,
                   locator.sectorKey,
-                  locator.galacticObjectIndex + 1n,
+                  locator.galacticObjectIndex +
+                    1n,
                 ),
+              ),
+              hierarchy(
+                StellarSystemMultiplicity.SINGLE,
               ),
             ),
         ).toThrow(RangeError);

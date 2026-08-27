@@ -107,9 +107,9 @@ interface V1TripleCompanionDraws {
  * mass. C therefore samples a deterministic mass ratio against B and is then
  * represented by the existing companion model with q = C/A.
  *
- * All three components are coeval and share the sector metallicity. No orbital
- * hierarchy is assigned here: whether C belongs to an inner/outer hierarchy is
- * intentionally deferred to point 16.4.
+ * All three components are coeval and share the sector metallicity. Point 16.4
+ * assigns A-B as the simplified inner pair and C as the outer component in a
+ * separate orbit branch; this component generator remains orbit-independent.
  */
 export class StellarTripleCompanionGenerator {
 

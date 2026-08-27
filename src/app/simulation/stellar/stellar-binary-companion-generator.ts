@@ -112,7 +112,8 @@ interface V1BinaryCompanionDraws {
  *
  * The physical baseline intentionally mirrors the frozen point-15.1 reference
  * mass/radius/luminosity/temperature laws, but consumes only the new binary-B
- * branch. No orbital parameters are generated before point 16.4.
+ * branch. Point 16.4 derives orbit geometry separately from SystemSeed so this
+ * frozen component generator remains orbit-independent.
  */
 export class StellarBinaryCompanionGenerator {
 

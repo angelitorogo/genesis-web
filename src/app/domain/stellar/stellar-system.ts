@@ -27,6 +27,10 @@ import {
 } from './stellar-designation';
 
 import {
+  type StellarOrbitHierarchy,
+} from './stellar-orbit-hierarchy';
+
+import {
   StellarSystemComponentLabel,
 } from './stellar-system-component-label';
 
@@ -45,8 +49,9 @@ const MASS_ORDER_TOLERANCE =
  * TRIPLE. SystemLocator/SystemSeed continue to identify the whole system and
  * the canonical A primary remains unchanged in every architecture.
  *
- * No orbit hierarchy, circumbinary planet contract, HZ/stability correction or
- * rendering state is owned here; those remain points 16.4..16.7.
+ * Point 16.4 attaches a simplified orbit hierarchy without changing any
+ * component identity or stellar properties. Circumbinary planet contracts,
+ * HZ/stability corrections and rendering remain points 16.5..16.7.
  */
 export class StellarSystem {
 
@@ -68,6 +73,9 @@ export class StellarSystem {
 
     readonly primaryStar:
       Star,
+
+    readonly orbitHierarchy:
+      StellarOrbitHierarchy,
 
     readonly secondaryCompanion:
       StellarCompanion | null = null,
@@ -93,6 +101,16 @@ export class StellarSystem {
     ) {
       throw new RangeError(
         'The primary Star must share the stellar-system SystemLocator.',
+      );
+    }
+
+    if (
+      orbitHierarchy
+        .multiplicity !==
+      multiplicity
+    ) {
+      throw new RangeError(
+        'Stellar-system multiplicity must match its point-16.4 orbit hierarchy.',
       );
     }
 
