@@ -39,6 +39,10 @@ import {
 } from '../planetary/circumbinary-planet-compatibility-generator';
 
 import {
+  CircumbinaryHabitabilityAssessmentGenerator,
+} from '../habitability/circumbinary-habitability-assessment-generator';
+
+import {
   StellarBinaryCompanionGenerator,
 } from './stellar-binary-companion-generator';
 
@@ -74,7 +78,9 @@ import {
  * independent intra-system branches. Point 16.4 adds deterministic simplified
  * orbit hierarchies on independent branches without perturbing those identities.
  * Point 16.5 derives a pure dynamical circumbinary-planet envelope from those
- * already-frozen masses/orbits and consumes no additional entropy.
+ * already-frozen masses/orbits and consumes no additional entropy. Point 16.6
+ * intersects that envelope with the combined A+B reference radiative HZ, also
+ * without adding entropy or materializing planets.
  */
 export class StellarSystemGenerator {
 
@@ -280,6 +286,16 @@ export class StellarSystemGenerator {
           secondaryCompanion,
         );
 
+    const circumbinaryHabitabilityAssessment =
+      CircumbinaryHabitabilityAssessmentGenerator
+        .generate(
+          generationKey,
+          circumbinaryPlanetCompatibility,
+          primaryPhysicalProperties,
+          single.primaryStar,
+          secondaryCompanion,
+        );
+
     return new StellarSystem(
       generationKey,
       locator,
@@ -291,6 +307,7 @@ export class StellarSystemGenerator {
       secondaryCompanion,
       null,
       circumbinaryPlanetCompatibility,
+      circumbinaryHabitabilityAssessment,
     );
   }
 
@@ -371,6 +388,16 @@ export class StellarSystemGenerator {
           tertiaryCompanion,
         );
 
+    const circumbinaryHabitabilityAssessment =
+      CircumbinaryHabitabilityAssessmentGenerator
+        .generate(
+          generationKey,
+          circumbinaryPlanetCompatibility,
+          primaryPhysicalProperties,
+          binary.primaryStar,
+          binary.secondaryCompanion!,
+        );
+
     return new StellarSystem(
       generationKey,
       locator,
@@ -382,6 +409,7 @@ export class StellarSystemGenerator {
       binary.secondaryCompanion,
       tertiaryCompanion,
       circumbinaryPlanetCompatibility,
+      circumbinaryHabitabilityAssessment,
     );
   }
 }

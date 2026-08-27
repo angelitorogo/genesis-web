@@ -24,6 +24,12 @@ import {
 } from '../planetary/circumbinary-planet-compatibility';
 
 import {
+  CircumbinaryHabitabilityAssessment,
+  CircumbinaryPlanetaryStabilityRegime,
+  CircumbinaryStellarEvolutionRegime,
+} from '../habitability/circumbinary-habitability-assessment';
+
+import {
   Star,
 } from './star';
 
@@ -68,7 +74,7 @@ import {
 } from './stellar-system-multiplicity';
 
 describe(
-  'StellarSystem points 16.1-16.4',
+  'StellarSystem points 16.1-16.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -193,6 +199,41 @@ describe(
       );
     }
 
+    function habitabilityAssessment(
+      multiplicity:
+        StellarSystemMultiplicity,
+    ): CircumbinaryHabitabilityAssessment {
+
+      if (
+        multiplicity ===
+        StellarSystemMultiplicity.BINARY
+      ) {
+        return new CircumbinaryHabitabilityAssessment(
+          multiplicity,
+          1,
+          2,
+          5,
+          2.2,
+          5,
+          2.8 / 3,
+          CircumbinaryPlanetaryStabilityRegime.PARTIAL_STABLE_HABITABLE_ZONE,
+          CircumbinaryStellarEvolutionRegime.MAIN_SEQUENCE_PAIR,
+        );
+      }
+
+      return new CircumbinaryHabitabilityAssessment(
+        multiplicity,
+        1,
+        2,
+        5,
+        2.2,
+        4,
+        1.8 / 3,
+        CircumbinaryPlanetaryStabilityRegime.PARTIAL_STABLE_HABITABLE_ZONE,
+        CircumbinaryStellarEvolutionRegime.MAIN_SEQUENCE_PAIR,
+      );
+    }
+
     function hierarchy(
       multiplicity:
         StellarSystemMultiplicity,
@@ -264,6 +305,8 @@ describe(
         expect(system.isMultiple).toBe(false);
         expect(system.primaryComponentDesignation.name).toBe('Testara A');
         expect(system.orbitHierarchy.hasInnerOrbit).toBe(false);
+        expect(system.circumbinaryHabitabilityAssessment).toBeNull();
+        expect(system.hasStableCircumbinaryHabitableZone).toBe(false);
       },
     );
 
@@ -289,6 +332,9 @@ describe(
             circumbinaryCompatibility(
               StellarSystemMultiplicity.BINARY,
             ),
+            habitabilityAssessment(
+              StellarSystemMultiplicity.BINARY,
+            ),
           );
 
         expect(system.secondaryCompanion).toBe(secondary);
@@ -299,6 +345,8 @@ describe(
         expect(system.orbitHierarchy.hasOuterOrbit).toBe(false);
         expect(system.supportsCircumbinaryPlanets).toBe(true);
         expect(system.circumbinaryPlanetCompatibility?.isOuterBounded).toBe(false);
+        expect(system.hasStableCircumbinaryHabitableZone).toBe(true);
+        expect(system.supportsPersistentCircumbinaryHabitability).toBe(true);
       },
     );
 
@@ -327,6 +375,9 @@ describe(
             circumbinaryCompatibility(
               StellarSystemMultiplicity.TRIPLE,
             ),
+            habitabilityAssessment(
+              StellarSystemMultiplicity.TRIPLE,
+            ),
           );
 
         expect(system.secondaryCompanion).toBe(secondary);
@@ -337,6 +388,7 @@ describe(
         expect(system.orbitHierarchy.hasOuterOrbit).toBe(true);
         expect(system.supportsCircumbinaryPlanets).toBe(true);
         expect(system.circumbinaryPlanetCompatibility?.isOuterBounded).toBe(true);
+        expect(system.hasStableCircumbinaryHabitableZone).toBe(true);
       },
     );
 
@@ -538,6 +590,55 @@ describe(
               secondaryCompanion(),
               null,
               circumbinaryCompatibility(
+                StellarSystemMultiplicity.TRIPLE,
+              ),
+            ),
+        ).toThrow(RangeError);
+      },
+    );
+
+
+    it(
+      'should reject missing or mismatched point-16.6 circumbinary habitability on otherwise valid multiple systems',
+      () => {
+        expect(
+          () =>
+            new StellarSystem(
+              generationKey,
+              locator,
+              seed,
+              designation,
+              StellarSystemMultiplicity.BINARY,
+              primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
+              secondaryCompanion(),
+              null,
+              circumbinaryCompatibility(
+                StellarSystemMultiplicity.BINARY,
+              ),
+            ),
+        ).toThrow(RangeError);
+
+        expect(
+          () =>
+            new StellarSystem(
+              generationKey,
+              locator,
+              seed,
+              designation,
+              StellarSystemMultiplicity.BINARY,
+              primaryStar(),
+              hierarchy(
+                StellarSystemMultiplicity.BINARY,
+              ),
+              secondaryCompanion(),
+              null,
+              circumbinaryCompatibility(
+                StellarSystemMultiplicity.BINARY,
+              ),
+              habitabilityAssessment(
                 StellarSystemMultiplicity.TRIPLE,
               ),
             ),

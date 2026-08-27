@@ -11,6 +11,11 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  type CircumbinaryHabitabilityAssessment,
+  CircumbinaryPlanetaryStabilityRegime,
+} from '../habitability/circumbinary-habitability-assessment';
+
+import {
   type CircumbinaryPlanetCompatibility,
 } from '../planetary/circumbinary-planet-compatibility';
 
@@ -90,6 +95,9 @@ export class StellarSystem {
 
     readonly circumbinaryPlanetCompatibility:
       CircumbinaryPlanetCompatibility | null = null,
+
+    readonly circumbinaryHabitabilityAssessment:
+      CircumbinaryHabitabilityAssessment | null = null,
   ) {
     if (
       !generationKey.equals(
@@ -124,12 +132,16 @@ export class StellarSystem {
 
     if (
       multiplicity ===
-      StellarSystemMultiplicity.SINGLE &&
-      circumbinaryPlanetCompatibility !==
-        null
+        StellarSystemMultiplicity.SINGLE &&
+      (
+        circumbinaryPlanetCompatibility !==
+          null ||
+        circumbinaryHabitabilityAssessment !==
+          null
+      )
     ) {
       throw new RangeError(
-        'SINGLE stellar systems cannot carry point-16.5 circumbinary planet compatibility.',
+        'SINGLE stellar systems cannot carry point-16.5/16.6 circumbinary planetary assessments.',
       );
     }
 
@@ -183,6 +195,12 @@ export class StellarSystem {
         circumbinaryPlanetCompatibility,
         multiplicity,
         orbitHierarchy,
+      );
+
+      assertCircumbinaryHabitability(
+        circumbinaryHabitabilityAssessment,
+        multiplicity,
+        circumbinaryPlanetCompatibility,
       );
 
       return;
@@ -256,6 +274,12 @@ export class StellarSystem {
         orbitHierarchy,
       );
 
+      assertCircumbinaryHabitability(
+        circumbinaryHabitabilityAssessment,
+        multiplicity,
+        circumbinaryPlanetCompatibility,
+      );
+
       return;
     }
 
@@ -289,12 +313,94 @@ export class StellarSystem {
       false;
   }
 
+  get hasStableCircumbinaryHabitableZone():
+    boolean {
+
+    return this
+      .circumbinaryHabitabilityAssessment
+      ?.hasStableHabitableZone ??
+      false;
+  }
+
+  get supportsPersistentCircumbinaryHabitability():
+    boolean {
+
+    return this
+      .circumbinaryHabitabilityAssessment
+      ?.isPersistentHabitabilityCandidate ??
+      false;
+  }
+
   get primaryComponentDesignation():
     StellarComponentDesignation {
 
     return new StellarComponentDesignation(
       this.designation,
       StellarSystemComponentLabel.A,
+    );
+  }
+}
+
+function assertCircumbinaryHabitability(
+  assessment:
+    CircumbinaryHabitabilityAssessment | null,
+
+  multiplicity:
+    StellarSystemMultiplicity,
+
+  compatibility:
+    CircumbinaryPlanetCompatibility,
+): void {
+
+  if (
+    assessment ===
+    null
+  ) {
+    throw new RangeError(
+      `${multiplicity.name} stellar systems require point-16.6 circumbinary habitability assessment.`,
+    );
+  }
+
+  if (
+    assessment.hostMultiplicity !==
+    multiplicity
+  ) {
+    throw new RangeError(
+      'Stellar-system multiplicity must match its circumbinary habitability assessment.',
+    );
+  }
+
+  if (
+    !compatibility.isCompatible &&
+    assessment.planetaryStabilityRegime !==
+      CircumbinaryPlanetaryStabilityRegime.NO_STABLE_HABITABLE_ZONE
+  ) {
+    throw new RangeError(
+      'A dynamically excluded circumbinary architecture cannot expose a stable habitable zone.',
+    );
+  }
+
+  if (
+    assessment.stableHabitableInnerEdgeAu !==
+      null &&
+    assessment.stableHabitableInnerEdgeAu <
+      compatibility.minimumStableSemiMajorAxisAu
+  ) {
+    throw new RangeError(
+      'Stable habitable inner edge cannot lie inside the point-16.5 dynamical minimum.',
+    );
+  }
+
+  if (
+    assessment.stableHabitableOuterEdgeAu !==
+      null &&
+    compatibility.maximumStableSemiMajorAxisAu !==
+      null &&
+    assessment.stableHabitableOuterEdgeAu >
+      compatibility.maximumStableSemiMajorAxisAu
+  ) {
+    throw new RangeError(
+      'Stable habitable outer edge cannot exceed the point-16.5 dynamical maximum.',
     );
   }
 }
@@ -308,7 +414,8 @@ function assertCircumbinaryCompatibility(
 
   orbitHierarchy:
     StellarOrbitHierarchy,
-): void {
+): asserts compatibility is
+  CircumbinaryPlanetCompatibility {
 
   if (
     compatibility ===

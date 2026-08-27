@@ -23,6 +23,11 @@ import {
 } from '../../domain/planetary/circumbinary-planet-compatibility';
 
 import {
+  CircumbinaryPlanetaryStabilityRegime,
+  CircumbinaryStellarEvolutionRegime,
+} from '../../domain/habitability/circumbinary-habitability-assessment';
+
+import {
   StellarPopulationProfile,
   StellarPopulationRegime,
 } from '../../domain/stellar/stellar-population-profile';
@@ -52,7 +57,7 @@ import {
 } from './stellar-system-generator';
 
 describe(
-  'StellarSystemGenerator points 16.1-16.5',
+  'StellarSystemGenerator points 16.1-16.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -163,7 +168,15 @@ describe(
         ).toBeNull();
 
         expect(
+          system.circumbinaryHabitabilityAssessment,
+        ).toBeNull();
+
+        expect(
           system.supportsCircumbinaryPlanets,
+        ).toBe(false);
+
+        expect(
+          system.hasStableCircumbinaryHabitableZone,
         ).toBe(false);
       },
     );
@@ -272,6 +285,49 @@ describe(
         expect(
           binary.supportsCircumbinaryPlanets,
         ).toBe(true);
+
+        expect(
+          binary.circumbinaryHabitabilityAssessment,
+        ).not.toBeNull();
+
+        expect(
+          binary.circumbinaryHabitabilityAssessment?.hostMultiplicity,
+        ).toBe(
+          StellarSystemMultiplicity.BINARY,
+        );
+
+        expect(
+          binary.circumbinaryHabitabilityAssessment?.combinedReferenceLuminositySolar,
+        ).toBeCloseTo(
+          0.00027431417336456224,
+          15,
+        );
+
+        expect(
+          binary.circumbinaryHabitabilityAssessment?.radiativeHabitableInnerEdgeAu,
+        ).toBeCloseTo(
+          0.01574165221957765,
+          12,
+        );
+
+        expect(
+          binary.circumbinaryHabitabilityAssessment?.radiativeHabitableOuterEdgeAu,
+        ).toBeCloseTo(
+          0.027758700092031185,
+          12,
+        );
+
+        expect(
+          binary.circumbinaryHabitabilityAssessment?.planetaryStabilityRegime,
+        ).toBe(
+          CircumbinaryPlanetaryStabilityRegime.NO_STABLE_HABITABLE_ZONE,
+        );
+
+        expect(
+          binary.circumbinaryHabitabilityAssessment?.stellarEvolutionRegime,
+        ).toBe(
+          CircumbinaryStellarEvolutionRegime.REFERENCE_ONLY,
+        );
       },
     );
 
@@ -571,6 +627,32 @@ describe(
         expect(
           triple.supportsCircumbinaryPlanets,
         ).toBe(false);
+
+        expect(
+          triple.circumbinaryHabitabilityAssessment,
+        ).not.toBeNull();
+
+        expect(
+          triple.hasStableCircumbinaryHabitableZone,
+        ).toBe(false);
+
+        expect(
+          triple.supportsPersistentCircumbinaryHabitability,
+        ).toBe(false);
+
+        expect(
+          triple.circumbinaryHabitabilityAssessment?.radiativeHabitableInnerEdgeAu,
+        ).toBeCloseTo(
+          binary.circumbinaryHabitabilityAssessment!.radiativeHabitableInnerEdgeAu,
+          12,
+        );
+
+        expect(
+          triple.circumbinaryHabitabilityAssessment?.radiativeHabitableOuterEdgeAu,
+        ).toBeCloseTo(
+          binary.circumbinaryHabitabilityAssessment!.radiativeHabitableOuterEdgeAu,
+          12,
+        );
       },
     );
 
