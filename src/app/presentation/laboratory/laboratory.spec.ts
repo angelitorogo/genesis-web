@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the three laboratories already implemented',
+      'should expose exactly the four laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          3,
+          4,
         );
       },
     );
 
     it(
-      'should link only to the three canonical permanent laboratory routes',
+      'should link only to the four canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -143,6 +143,18 @@ describe(
             ),
         ).toBe(
           '/laboratory/spectroscopy',
+        );
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-stellar-systems-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toBe(
+          '/laboratory/stellar-systems',
         );
       },
     );

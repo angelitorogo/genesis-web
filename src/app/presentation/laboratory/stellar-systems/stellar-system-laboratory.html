@@ -1,0 +1,343 @@
+<main
+  class="stellar-lab"
+  data-testid="stellar-system-laboratory-page"
+>
+  <header class="stellar-lab__hero">
+    <div>
+      <a
+        class="stellar-lab__back"
+        routerLink="/laboratory"
+      >
+        ← Laboratorios
+      </a>
+
+      <p class="stellar-lab__eyebrow">
+        GENESIS VISUAL LABORATORY · FASE 16
+      </p>
+
+      <h1>
+        Sistemas estelares múltiples V1
+      </h1>
+
+      <p>
+        Inspección read-only de sistemas simples, binarios y triples reales.
+        Cada familia A–H usa un SystemLocator determinista y el mismo
+        ensamblador de fichas y renderer procedural de 16.7. Ninguna selección
+        modifica la partida ni el DiscoveryState persistido.
+      </p>
+    </div>
+
+    <span class="stellar-lab__badge">
+      PRODUCTION FICHE / SVG
+    </span>
+  </header>
+
+  <section
+    class="stellar-lab__selector"
+    aria-label="Selector de arquitectura estelar"
+  >
+    @for (
+      caseOption of cases;
+      track caseOption.id
+    ) {
+      <button
+        type="button"
+        data-testid="stellar-system-laboratory-case-button"
+        [attr.data-case]="caseOption.id"
+        [attr.aria-pressed]="selectedCaseId() === caseOption.id"
+        [class.stellar-lab__button--active]="selectedCaseId() === caseOption.id"
+        (click)="selectCase(caseOption.id)"
+      >
+        <strong>
+          {{ caseOption.label }}
+        </strong>
+
+        <small>
+          Familias A–H · {{ caseOption.multiplicity.stellarComponentCount }} componente{{ caseOption.multiplicity.stellarComponentCount === 1 ? '' : 's' }}
+        </small>
+      </button>
+    }
+  </section>
+
+  <section
+    class="stellar-lab__families"
+    aria-label="Selector de familia procedural A a H"
+  >
+    <div class="stellar-lab__families-heading">
+      <div>
+        <p class="stellar-lab__eyebrow">
+          FAMILIAS PROCEDURALES
+        </p>
+
+        <strong>
+          {{ selectedCase().label }} · A–H
+        </strong>
+      </div>
+
+      <span>
+        8 sistemas deterministas reales
+      </span>
+    </div>
+
+    <div class="stellar-lab__family-grid">
+      @for (
+        family of families();
+        track family.id
+      ) {
+        <button
+          type="button"
+          data-testid="stellar-system-laboratory-family-button"
+          [attr.data-family]="family.id"
+          [attr.aria-pressed]="selectedFamilyId() === family.id"
+          [class.stellar-lab__family-button--active]="selectedFamilyId() === family.id"
+          (click)="selectFamily(family.id)"
+        >
+          <strong>
+            {{ family.id }}
+          </strong>
+
+          <small>
+            O{{ family.locator.galacticObjectIndex.toString() }}
+          </small>
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (frame(); as activeFrame) {
+    <section
+      class="stellar-lab__active"
+      data-testid="stellar-system-laboratory-active-case"
+      [attr.data-case]="activeFrame.caseDefinition.id"
+      [attr.data-family]="activeFrame.family.id"
+      [attr.data-system-index]="activeFrame.family.locator.galacticObjectIndex.toString()"
+    >
+      <div>
+        <p class="stellar-lab__eyebrow">
+          CASO ACTIVO · SISTEMA REAL
+        </p>
+
+        <h2>
+          {{ activeFrame.caseDefinition.label }} · Familia {{ activeFrame.family.id }}
+        </h2>
+
+        <p>
+          {{ activeFrame.caseDefinition.description }}
+        </p>
+      </div>
+
+      <dl>
+        <div>
+          <dt>Arquitectura</dt>
+          <dd data-testid="stellar-system-laboratory-multiplicity">
+            {{ activeFrame.caseDefinition.multiplicity.name }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Familia</dt>
+          <dd data-testid="stellar-system-laboratory-family">
+            {{ activeFrame.family.id }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Locator</dt>
+          <dd>
+            G{{ activeFrame.family.locator.galaxyIndex.toString() }} /
+            S{{ activeFrame.family.locator.sectorKey.toString() }} /
+            O{{ activeFrame.family.locator.galacticObjectIndex.toString() }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>SystemSeed</dt>
+          <dd class="stellar-lab__mono">
+            {{ activeFrame.family.systemSeedHex }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section
+      class="stellar-lab__knowledge"
+      aria-label="Progresión visual del conocimiento científico"
+    >
+      @for (
+        stage of activeFrame.stages;
+        track stage.discoveryState.name
+      ) {
+        <article
+          class="stellar-lab__stage"
+          data-testid="stellar-system-laboratory-stage"
+          [attr.data-state]="stage.discoveryState.name"
+          [attr.data-knowledge-level]="stage.card.knowledgeLevel"
+        >
+          <header class="stellar-lab__stage-header">
+            <div>
+              <span>
+                {{ stage.discoveryState.name }}
+              </span>
+
+              <strong>
+                {{ stage.label }}
+              </strong>
+            </div>
+
+            <b>
+              {{ stage.badge }}
+            </b>
+          </header>
+
+          <app-stellar-system-procedural-render
+            [descriptor]="stage.card.render"
+          ></app-stellar-system-procedural-render>
+
+          <section class="stellar-lab__stage-copy">
+            <p class="stellar-lab__eyebrow">
+              {{ stage.card.knowledgeLevelLabel }}
+            </p>
+
+            <h3>
+              {{ stage.card.title }}
+            </h3>
+
+            <p>
+              {{ stage.card.summary }}
+            </p>
+          </section>
+
+          @if (stage.card.systemFacts.length > 0) {
+            <section class="stellar-lab__fact-section">
+              <h4>Sistema</h4>
+
+              <dl class="stellar-lab__facts">
+                @for (fact of stage.card.systemFacts; track fact.label) {
+                  <div>
+                    <dt>{{ fact.label }}</dt>
+                    <dd>{{ fact.value }}</dd>
+                  </div>
+                }
+              </dl>
+            </section>
+          }
+
+          @if (stage.card.components.length > 0) {
+            <section class="stellar-lab__fact-section">
+              <h4>Componentes</h4>
+
+              <div class="stellar-lab__components">
+                @for (
+                  component of stage.card.components;
+                  track component.componentLabel
+                ) {
+                  <article
+                    class="stellar-lab__component"
+                    [attr.data-component]="component.componentLabel"
+                  >
+                    <header>
+                      <span
+                        class="stellar-lab__star-dot"
+                        [style.background]="component.colorHex"
+                      ></span>
+
+                      <strong>
+                        {{ component.componentLabel }} · {{ component.designation }}
+                      </strong>
+                    </header>
+
+                    @if (component.spectralType) {
+                      <p>
+                        {{ component.spectralType }}
+                        @if (component.evolutionStateLabel) {
+                          · {{ component.evolutionStateLabel }}
+                        }
+                      </p>
+                    }
+
+                    @if (component.facts.length > 0) {
+                      <dl class="stellar-lab__facts stellar-lab__facts--compact">
+                        @for (fact of component.facts; track fact.label) {
+                          <div>
+                            <dt>{{ fact.label }}</dt>
+                            <dd>{{ fact.value }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    }
+                  </article>
+                }
+              </div>
+            </section>
+          }
+
+          @if (stage.card.orbits.length > 0) {
+            <section class="stellar-lab__fact-section">
+              <h4>Órbitas</h4>
+
+              @for (orbit of stage.card.orbits; track orbit.label) {
+                <article class="stellar-lab__orbit-card">
+                  <strong>{{ orbit.label }}</strong>
+                  <p>{{ orbit.roleLabel }}</p>
+
+                  <dl class="stellar-lab__facts stellar-lab__facts--compact">
+                    @for (fact of orbit.facts; track fact.label) {
+                      <div>
+                        <dt>{{ fact.label }}</dt>
+                        <dd>{{ fact.value }}</dd>
+                      </div>
+                    }
+                  </dl>
+                </article>
+              }
+            </section>
+          }
+
+          @if (stage.card.circumbinaryFacts.length > 0) {
+            <section class="stellar-lab__fact-section">
+              <h4>Estabilidad circumbinaria</h4>
+
+              <dl class="stellar-lab__facts">
+                @for (fact of stage.card.circumbinaryFacts; track fact.label) {
+                  <div>
+                    <dt>{{ fact.label }}</dt>
+                    <dd>{{ fact.value }}</dd>
+                  </div>
+                }
+              </dl>
+            </section>
+          }
+
+          @if (stage.card.habitabilityFacts.length > 0) {
+            <section
+              class="stellar-lab__fact-section stellar-lab__fact-section--hz"
+              data-testid="stellar-system-laboratory-habitability"
+            >
+              <h4>Zona habitable / estabilidad</h4>
+
+              <dl class="stellar-lab__facts">
+                @for (fact of stage.card.habitabilityFacts; track fact.label) {
+                  <div>
+                    <dt>{{ fact.label }}</dt>
+                    <dd>{{ fact.value }}</dd>
+                  </div>
+                }
+              </dl>
+            </section>
+          }
+
+          <footer class="stellar-lab__next-step">
+            <span>SIGUIENTE PASO CIENTÍFICO</span>
+            <p>{{ stage.card.nextScientificStep }}</p>
+          </footer>
+        </article>
+      }
+    </section>
+  }
+
+  <footer class="stellar-lab__footer">
+    Las familias A–H son muestras QA deterministas de sistemas reales. El
+    laboratorio simula únicamente el nivel de conocimiento de presentación:
+    no persiste DiscoveryState, no concede PD y no altera el Ground Truth.
+  </footer>
+</main>

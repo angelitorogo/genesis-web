@@ -131,6 +131,16 @@ export const genesisRoutes: Routes = [
     title: 'Espectroscopía | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/stellar-systems',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/stellar-systems/stellar-system-laboratory'
+      ).then(
+        (module) => module.StellarSystemLaboratoryPage,
+      ),
+    title: 'Sistemas estelares | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(

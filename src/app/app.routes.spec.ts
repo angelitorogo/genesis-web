@@ -278,6 +278,19 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
+  it('should navigate to the phase-16 stellar-system A-H knowledge-progression laboratory', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/laboratory/stellar-systems',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="stellar-system-laboratory-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

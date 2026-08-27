@@ -1,0 +1,449 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.stellar-lab {
+  display: grid;
+  gap: 1rem;
+  width: min(100% - 2rem, 112rem);
+  margin: 0 auto;
+  padding: 1rem 0 3rem;
+  color: var(--genesis-color-text);
+
+  &__hero,
+  &__selector,
+  &__families,
+  &__active,
+  &__stage,
+  &__footer {
+    border: 1px solid rgba(106, 215, 255, 0.14);
+    border-radius: var(--genesis-radius-lg);
+    background: rgba(15, 19, 31, 0.76);
+  }
+
+  &__hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.2rem;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(106, 215, 255, 0.11), transparent 38%),
+      rgba(15, 19, 31, 0.84);
+
+    h1 {
+      margin: 0.22rem 0 0.5rem;
+      font-size: clamp(2rem, 4vw, 3.15rem);
+      line-height: 0.98;
+    }
+
+    p:not(.stellar-lab__eyebrow) {
+      max-width: 70rem;
+      margin: 0;
+      color: var(--genesis-color-text-subtle);
+      line-height: 1.5;
+    }
+  }
+
+  &__back {
+    display: inline-block;
+    margin-bottom: 0.55rem;
+    color: var(--genesis-color-text-subtle);
+    font: 700 0.66rem var(--genesis-font-mono);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--genesis-color-primary);
+    }
+  }
+
+  &__eyebrow {
+    margin: 0;
+    color: var(--genesis-color-primary);
+    font: 700 0.6rem var(--genesis-font-mono);
+    letter-spacing: 0.12em;
+  }
+
+  &__badge {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    padding: 0.42rem 0.62rem;
+    border: 1px solid rgba(106, 215, 255, 0.26);
+    border-radius: 999px;
+    color: var(--genesis-color-primary);
+    font: 700 0.58rem var(--genesis-font-mono);
+  }
+
+  &__selector {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+    padding: 0.55rem;
+  }
+
+  &__selector button,
+  &__family-grid button {
+    min-width: 0;
+    border: 1px solid rgba(106, 215, 255, 0.14);
+    border-radius: 0.7rem;
+    background: rgba(5, 7, 13, 0.48);
+    color: var(--genesis-color-text-subtle);
+    font-family: var(--genesis-font-mono);
+    cursor: pointer;
+    text-align: left;
+    transition:
+      border-color 140ms ease,
+      background 140ms ease,
+      color 140ms ease;
+
+    &:hover {
+      border-color: rgba(106, 215, 255, 0.32);
+      color: var(--genesis-color-text);
+    }
+  }
+
+  &__selector button {
+    display: grid;
+    gap: 0.25rem;
+    padding: 0.7rem;
+
+    strong {
+      font-size: 0.76rem;
+    }
+
+    small {
+      font-size: 0.58rem;
+    }
+  }
+
+  &__button--active,
+  &__family-button--active {
+    border-color: rgba(106, 215, 255, 0.55) !important;
+    background: rgba(106, 215, 255, 0.11) !important;
+    color: var(--genesis-color-primary) !important;
+  }
+
+  &__families {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.75rem;
+  }
+
+  &__families-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+
+    strong {
+      display: block;
+      margin-top: 0.16rem;
+      font-size: 0.74rem;
+    }
+
+    > span {
+      color: var(--genesis-color-text-subtle);
+      font: 0.58rem var(--genesis-font-mono);
+    }
+  }
+
+  &__family-grid {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 0.32rem;
+
+    button {
+      display: grid;
+      place-items: center;
+      gap: 0.18rem;
+      padding: 0.55rem 0.35rem;
+      text-align: center;
+
+      strong {
+        font-size: 0.8rem;
+      }
+
+      small {
+        font-size: 0.54rem;
+      }
+    }
+  }
+
+  &__active {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(30rem, 1fr);
+    gap: 1rem;
+    padding: 0.85rem;
+
+    h2 {
+      margin: 0.18rem 0 0.32rem;
+      font-size: 1.12rem;
+    }
+
+    p:not(.stellar-lab__eyebrow) {
+      margin: 0;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.75rem;
+      line-height: 1.45;
+    }
+
+    > dl {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.35rem;
+      margin: 0;
+
+      div {
+        min-width: 0;
+        padding: 0.45rem;
+        border: 1px solid rgba(106, 215, 255, 0.12);
+        background: rgba(5, 7, 13, 0.35);
+      }
+
+      dt {
+        color: var(--genesis-color-text-subtle);
+        font: 0.5rem var(--genesis-font-mono);
+        text-transform: uppercase;
+      }
+
+      dd {
+        margin: 0.18rem 0 0;
+        overflow-wrap: anywhere;
+        color: var(--genesis-color-primary);
+        font: 700 0.58rem var(--genesis-font-mono);
+      }
+    }
+  }
+
+  &__mono {
+    font-size: 0.5rem !important;
+  }
+
+  &__knowledge {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+    align-items: start;
+  }
+
+  &__stage {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+    padding: 0.55rem;
+  }
+
+  &__stage-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 0.65rem;
+
+    div {
+      display: grid;
+      gap: 0.15rem;
+    }
+
+    span,
+    b {
+      color: var(--genesis-color-text-subtle);
+      font: 0.54rem var(--genesis-font-mono);
+    }
+
+    strong {
+      font-size: 0.8rem;
+    }
+
+    b {
+      color: var(--genesis-color-primary);
+    }
+  }
+
+  &__stage-copy {
+    h3 {
+      margin: 0.18rem 0 0.3rem;
+      font-size: 0.92rem;
+    }
+
+    > p:not(.stellar-lab__eyebrow) {
+      margin: 0;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.66rem;
+      line-height: 1.42;
+    }
+  }
+
+  &__fact-section {
+    display: grid;
+    gap: 0.35rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid rgba(106, 215, 255, 0.1);
+
+    h4 {
+      margin: 0;
+      color: var(--genesis-color-primary);
+      font: 700 0.58rem var(--genesis-font-mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    &--hz h4 {
+      color: #9ff5bf;
+    }
+  }
+
+  &__facts {
+    display: grid;
+    gap: 0.18rem;
+    margin: 0;
+
+    div {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.45rem;
+      align-items: start;
+    }
+
+    dt,
+    dd {
+      min-width: 0;
+      font-size: 0.59rem;
+      line-height: 1.35;
+    }
+
+    dt {
+      color: var(--genesis-color-text-subtle);
+    }
+
+    dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+      text-align: right;
+      font-family: var(--genesis-font-mono);
+    }
+
+    &--compact {
+      margin-top: 0.32rem;
+    }
+  }
+
+  &__components {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  &__component,
+  &__orbit-card {
+    padding: 0.42rem;
+    border: 1px solid rgba(106, 215, 255, 0.11);
+    border-radius: 0.55rem;
+    background: rgba(5, 7, 13, 0.3);
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    strong {
+      font-size: 0.62rem;
+    }
+
+    p {
+      margin: 0.22rem 0 0;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.57rem;
+      line-height: 1.35;
+    }
+  }
+
+  &__star-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    flex: 0 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.48);
+    border-radius: 50%;
+    box-shadow: 0 0 0.45rem currentColor;
+  }
+
+  &__orbit-card + &__orbit-card {
+    margin-top: 0.25rem;
+  }
+
+  &__next-step {
+    align-self: end;
+    margin-top: 0.1rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid rgba(106, 215, 255, 0.1);
+
+    span {
+      color: var(--genesis-color-primary);
+      font: 700 0.5rem var(--genesis-font-mono);
+      letter-spacing: 0.08em;
+    }
+
+    p {
+      margin: 0.2rem 0 0;
+      color: var(--genesis-color-text-subtle);
+      font-size: 0.58rem;
+      line-height: 1.4;
+    }
+  }
+
+  &__footer {
+    padding: 0.75rem 0.9rem;
+    color: var(--genesis-color-text-subtle);
+    font-size: 0.68rem;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 92rem) {
+  .stellar-lab {
+    &__knowledge {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    &__active {
+      grid-template-columns: 1fr;
+
+      > dl {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  }
+}
+
+@media (max-width: 58rem) {
+  .stellar-lab {
+    &__hero,
+    &__families-heading {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__selector {
+      grid-template-columns: 1fr;
+    }
+
+    &__family-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    &__knowledge {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+@media (max-width: 34rem) {
+  .stellar-lab {
+    width: min(100% - 1rem, 112rem);
+    padding-top: 0.65rem;
+
+    &__family-grid,
+    &__active > dl {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+}
