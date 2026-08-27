@@ -35,6 +35,15 @@ import {
 } from '../../domain/stellar/stellar-evolution-input';
 
 import {
+  Star,
+} from '../../domain/stellar/star';
+
+import {
+  STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS,
+  StellarLifetimeProfile,
+} from '../../domain/stellar/stellar-lifetime-profile';
+
+import {
   StellarPhysicalProperties,
 } from '../../domain/stellar/stellar-physical-properties';
 
@@ -71,6 +80,14 @@ const V1_PHYSICAL_BRANCH =
     'GENESIS-STELLAR-PHYSICAL-PROPERTIES-V1',
   );
 
+const V1_AGE_BRANCH =
+  utf8ToBytes(
+    'GENESIS-STELLAR-AGE-V1',
+  );
+
+const V1_MAX_YOUNG_AGE_BILLION_YEARS =
+  0.10;
+
 const V1_SOLAR_EFFECTIVE_TEMPERATURE_KELVIN =
   5_772;
 
@@ -100,19 +117,31 @@ interface V1PhysicalDraws {
     number;
 }
 
+interface V1AgeDraws {
+  readonly cohort:
+    number;
+
+  readonly withinCohort:
+    number;
+}
+
 /**
  * Incremental point-15 StellarGenerator implementation.
  *
  * Point 15.1 owns the deterministic zero-age/reference physical baseline:
  * initial/current mass, radius, luminosity and effective temperature. Point 15.2
  * derives detailed spectral subtype and representative display color from that
- * baseline without consuming any additional entropy.
+ * baseline without consuming any additional entropy. Point 15.3 adds an
+ * independent generated-age branch, derives finite remaining progenitor life
+ * from the frozen phase-14 evolution model and can finally materialize the
+ * canonical current Star evolutionary state.
  *
  * Important boundaries:
- * - point 15.3 owns generated age, remaining life and age-dependent evolution;
+ * - point 15.3 does not rewrite the frozen point-15.1 physical draw stream;
  * - activity/flares, rotation/stability and designation remain 15.4..15.6;
- * - Star itself is not materialized yet because a final current evolutionary
- *   state requires the generated age from point 15.3.
+ * - point-15.2 spectral appearance remains the reference-baseline appearance;
+ *   giant/remnant atmosphere-specific spectral vocabularies are not invented
+ *   here.
  *
  * Entropy is isolated behind a SHA-256 domain separator derived from the
  * existing SystemSeed. SeedDeriver and the frozen hierarchical vectors are not
@@ -163,8 +192,9 @@ export class StellarGenerator {
    * to recover the canonical broad O/B/A/F/G/K/M or L/T/Y family. Temperature
    * then resolves the detailed 0..9 subtype and display color. No PRNG is used.
    *
-   * Current-age giant/remnant spectral appearance remains deferred until point
-   * 15.3 generates age and evolves this reference baseline.
+   * This method intentionally remains the reference-baseline appearance even
+   * after point 15.3 adds age/current evolutionary state. Giant/remnant
+   * atmosphere-specific spectral vocabularies are not inferred by this API.
    */
   static generateSpectralAppearance(
     generationKey:
@@ -191,6 +221,105 @@ export class StellarGenerator {
 
     throw new RangeError(
       `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+    );
+  }
+
+  /**
+   * Generates point-15.3 age, terminal age and remaining stellar life.
+   *
+   * Age entropy is isolated from the frozen point-15.1 physical branch. The
+   * local population's young/mature/old fractions select the cohort, while
+   * formation activity and remnant propensity shape age within the selected
+   * cohort. Phase 14 then determines the exact current evolutionary state.
+   */
+  static generateLifetimeProfile(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    stellarPopulationProfile:
+      StellarPopulationProfile,
+  ): StellarLifetimeProfile {
+
+    if (
+      generationKey
+        .generatorVersion ===
+      GeneratorVersion.V1
+    ) {
+      return this.generateLifetimeProfileV1(
+        generationKey,
+        locator,
+        physicalProperties,
+        sectorStellarPopulation,
+        stellarPopulationProfile,
+      );
+    }
+
+    throw new RangeError(
+      `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+    );
+  }
+
+  /**
+   * Materializes the canonical phase-14 Star at its generated point-15.3 age.
+   *
+   * Physical/spectral values remain separate immutable generation outputs; the
+   * Star domain entity continues to own identity plus the current evolutionary
+   * classification established in phase 14.
+   */
+  static generateStar(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    stellarPopulationProfile:
+      StellarPopulationProfile,
+  ): Star {
+
+    const physicalProperties =
+      this.generatePhysicalProperties(
+        generationKey,
+        locator,
+        sectorStellarPopulation,
+        stellarPopulationProfile,
+      );
+
+    const lifetimeProfile =
+      this.generateLifetimeProfile(
+        generationKey,
+        locator,
+        physicalProperties,
+        sectorStellarPopulation,
+        stellarPopulationProfile,
+      );
+
+    const assessment =
+      lifetimeProfile
+        .evolutionAssessment;
+
+    return new Star(
+      generationKey,
+      locator,
+      assessment.evolutionState,
+      assessment.mainSequenceClass,
+      assessment.brownDwarfClass,
+      assessment.postMainSequenceStage,
+      assessment.whiteDwarfComposition,
+      assessment.neutronStarFormationChannel,
+      assessment.blackHoleFormationChannel,
     );
   }
 
@@ -346,6 +475,107 @@ export class StellarGenerator {
     );
   }
 
+  private static generateLifetimeProfileV1(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    stellarPopulationProfile:
+      StellarPopulationProfile,
+  ): StellarLifetimeProfile {
+
+    const systemSeed =
+      ProceduralTargetResolver
+        .resolveTargetSeed(
+          generationKey,
+          locator,
+        ) as SystemSeed;
+
+    const random =
+      new Sfc64Random(
+        ageBranchSeedV1(
+          systemSeed,
+        ),
+      );
+
+    /*
+     * Frozen point-15.3 draw order. No later 15.x property may append to this
+     * branch.
+     */
+    const draws:
+      V1AgeDraws = {
+        cohort:
+          random.nextDouble(),
+
+        withinCohort:
+          random.nextDouble(),
+      };
+
+    const ageBillionYears =
+      sampleAgeBillionYearsV1(
+        draws,
+        stellarPopulationProfile,
+      );
+
+    const evolutionAssessment =
+      StellarEvolutionEngine
+        .evaluate(
+          generationKey,
+          new StellarEvolutionInput(
+            physicalProperties
+              .initialMassSolar,
+            sectorStellarPopulation
+              .characteristicMetallicitySolarRatio,
+            ageBillionYears,
+          ),
+        );
+
+    const mainSequenceLifetime =
+      evolutionAssessment
+        .mainSequenceLifetimeBillionYears;
+
+    const postMainSequenceDuration =
+      evolutionAssessment
+        .postMainSequenceDurationBillionYears;
+
+    if (
+      mainSequenceLifetime ===
+        null ||
+      postMainSequenceDuration ===
+        null
+    ) {
+      return new StellarLifetimeProfile(
+        ageBillionYears,
+        null,
+        null,
+        evolutionAssessment,
+      );
+    }
+
+    const terminalAgeBillionYears =
+      mainSequenceLifetime +
+      postMainSequenceDuration;
+
+    return new StellarLifetimeProfile(
+      ageBillionYears,
+      terminalAgeBillionYears,
+      Math.max(
+        0,
+        terminalAgeBillionYears -
+          ageBillionYears,
+      ),
+      evolutionAssessment,
+    );
+  }
+
   private static generateSpectralAppearanceV1(
     generationKey:
       UniverseGenerationKey,
@@ -380,6 +610,102 @@ export class StellarGenerator {
           .brownDwarfClass,
       );
   }
+}
+
+function sampleAgeBillionYearsV1(
+  draws:
+    V1AgeDraws,
+
+  stellarPopulationProfile:
+    StellarPopulationProfile,
+): number {
+
+  const characteristicAge =
+    clamp(
+      stellarPopulationProfile
+        .characteristicStellarAgeBillionYears,
+      0,
+      STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS,
+    );
+
+  const maximumPopulationAge =
+    Math.min(
+      STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS,
+      characteristicAge *
+        1.35,
+    );
+
+  const youngUpperAge =
+    Math.min(
+      maximumPopulationAge,
+      V1_MAX_YOUNG_AGE_BILLION_YEARS,
+      Math.max(
+        0.001,
+        characteristicAge *
+          0.10,
+      ),
+    );
+
+  const oldLowerAge =
+    clamp(
+      characteristicAge,
+      youngUpperAge,
+      maximumPopulationAge,
+    );
+
+  const youngCutoff =
+    stellarPopulationProfile
+      .youngStarFraction;
+
+  const matureCutoff =
+    youngCutoff +
+    stellarPopulationProfile
+      .matureStarFraction;
+
+  if (
+    draws.cohort <
+    youngCutoff
+  ) {
+    const recentFormationBias =
+      1.0 +
+      2.0 *
+        stellarPopulationProfile
+          .formationActivityIndex;
+
+    return lerp(
+      0,
+      youngUpperAge,
+      draws.withinCohort **
+        recentFormationBias,
+    );
+  }
+
+  if (
+    draws.cohort <
+    matureCutoff
+  ) {
+    return lerp(
+      youngUpperAge,
+      oldLowerAge,
+      draws.withinCohort,
+    );
+  }
+
+  const oldAgeBiasExponent =
+    1.0 /
+    (
+      1.0 +
+      2.0 *
+        stellarPopulationProfile
+          .stellarRemnantPropensity
+    );
+
+  return lerp(
+    oldLowerAge,
+    maximumPopulationAge,
+    draws.withinCohort **
+      oldAgeBiasExponent,
+  );
 }
 
 function sampleInitialMassV1(
@@ -678,6 +1004,36 @@ function samplePowerLaw(
       1.0 /
       exponent
     );
+}
+
+function ageBranchSeedV1(
+  systemSeed:
+    SystemSeed,
+): UniverseSeed {
+
+  const digest =
+    sha256
+      .create()
+      .update(
+        V1_AGE_BRANCH,
+      )
+      .update(
+        hexToBytes(
+          systemSeed
+            .normalizedValue,
+        ),
+      )
+      .digest();
+
+  return universeSeedFromNormalized128(
+    bytesToHex(
+      digest.slice(
+        0,
+        16,
+      ),
+    )
+      .toUpperCase(),
+  );
 }
 
 function physicalBranchSeedV1(

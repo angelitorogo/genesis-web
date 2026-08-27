@@ -25,6 +25,14 @@ import {
 } from '../../domain/stellar/stellar-physical-properties';
 
 import {
+  STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS,
+} from '../../domain/stellar/stellar-lifetime-profile';
+
+import {
+  StellarEvolutionState,
+} from '../../domain/stellar/stellar-evolution-state';
+
+import {
   StellarPopulationProfile,
   StellarPopulationRegime,
 } from '../../domain/stellar/stellar-population-profile';
@@ -46,7 +54,7 @@ import {
 } from './stellar-generator';
 
 describe(
-  'StellarGenerator points 15.1-15.2',
+  'StellarGenerator points 15.1-15.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -631,6 +639,453 @@ describe(
     );
 
     it(
+      'should generate a deterministic point-15.3 age and remaining-life profile from an isolated age branch',
+      () => {
+        const locator =
+          new SystemLocator(
+            0n,
+            123456789n,
+            17n,
+          );
+
+        const physical =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const first =
+          StellarGenerator
+            .generateLifetimeProfile(
+              generationKey,
+              locator,
+              physical,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const second =
+          StellarGenerator
+            .generateLifetimeProfile(
+              generationKey,
+              locator,
+              physical,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        expect(
+          second,
+        ).toEqual(
+          first,
+        );
+
+        expect(
+          first.ageBillionYears,
+        ).toBeGreaterThanOrEqual(
+          0,
+        );
+
+        expect(
+          first.ageBillionYears,
+        ).toBeLessThanOrEqual(
+          STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS,
+        );
+      },
+    );
+
+    it(
+      'should derive remaining life exactly from the frozen phase-14 lifetime without inventing a finite brown-dwarf endpoint',
+      () => {
+        for (
+          let index =
+            0n;
+          index <
+            1_024n;
+          index +=
+            1n
+        ) {
+          const locator =
+            new SystemLocator(
+              5n,
+              -19n,
+              index,
+            );
+
+          const physical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const lifetime =
+            StellarGenerator
+              .generateLifetimeProfile(
+                generationKey,
+                locator,
+                physical,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const assessment =
+            lifetime
+              .evolutionAssessment;
+
+          if (
+            assessment
+              .evolutionState
+              .name ===
+            StellarEvolutionState
+              .BROWN_DWARF
+              .name
+          ) {
+            expect(
+              lifetime.terminalAgeBillionYears,
+            ).toBeNull();
+
+            expect(
+              lifetime.remainingLifeBillionYears,
+            ).toBeNull();
+
+            continue;
+          }
+
+          const mainSequenceLifetime =
+            assessment
+              .mainSequenceLifetimeBillionYears;
+
+          const postMainSequenceDuration =
+            assessment
+              .postMainSequenceDurationBillionYears;
+
+          expect(
+            mainSequenceLifetime,
+          ).not.toBeNull();
+
+          expect(
+            postMainSequenceDuration,
+          ).not.toBeNull();
+
+          const terminalAge =
+            mainSequenceLifetime! +
+            postMainSequenceDuration!;
+
+          expect(
+            lifetime.terminalAgeBillionYears,
+          ).toBeCloseTo(
+            terminalAge,
+            12,
+          );
+
+          expect(
+            lifetime.remainingLifeBillionYears,
+          ).toBeCloseTo(
+            Math.max(
+              0,
+              terminalAge -
+                lifetime.ageBillionYears,
+            ),
+            12,
+          );
+        }
+      },
+    );
+
+    it(
+      'should make old high-remnant populations systematically older without changing point-15.1 physical properties',
+      () => {
+        const lowRemnant =
+          new StellarPopulationProfile(
+            8.0,
+            0.05,
+            0,
+            0,
+            1,
+            0.88,
+            0.72,
+            0.18,
+            0,
+            StellarPopulationRegime.OLD_QUIESCENT,
+          );
+
+        const highRemnant =
+          new StellarPopulationProfile(
+            8.0,
+            0.05,
+            0,
+            0,
+            1,
+            0.88,
+            0.72,
+            0.18,
+            1,
+            StellarPopulationRegime.OLD_QUIESCENT,
+          );
+
+        let lowAgeSum =
+          0;
+
+        let highAgeSum =
+          0;
+
+        for (
+          let index =
+            0n;
+          index <
+            512n;
+          index +=
+            1n
+        ) {
+          const locator =
+            new SystemLocator(
+              6n,
+              23n,
+              index,
+            );
+
+          const lowPhysical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sectorPopulation,
+                lowRemnant,
+              );
+
+          const highPhysical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sectorPopulation,
+                highRemnant,
+              );
+
+          expect(
+            highPhysical,
+          ).toEqual(
+            lowPhysical,
+          );
+
+          lowAgeSum +=
+            StellarGenerator
+              .generateLifetimeProfile(
+                generationKey,
+                locator,
+                lowPhysical,
+                sectorPopulation,
+                lowRemnant,
+              )
+              .ageBillionYears;
+
+          highAgeSum +=
+            StellarGenerator
+              .generateLifetimeProfile(
+                generationKey,
+                locator,
+                highPhysical,
+                sectorPopulation,
+                highRemnant,
+              )
+              .ageBillionYears;
+        }
+
+        expect(
+          highAgeSum,
+        ).toBeGreaterThan(
+          lowAgeSum,
+        );
+      },
+    );
+
+    it(
+      'should materialize the canonical current Star from the exact point-15.3 evolution assessment',
+      () => {
+        for (
+          let index =
+            0n;
+          index <
+            512n;
+          index +=
+            1n
+        ) {
+          const locator =
+            new SystemLocator(
+              7n,
+              31n,
+              index,
+            );
+
+          const physical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const lifetime =
+            StellarGenerator
+              .generateLifetimeProfile(
+                generationKey,
+                locator,
+                physical,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const star =
+            StellarGenerator
+              .generateStar(
+                generationKey,
+                locator,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const assessment =
+            lifetime
+              .evolutionAssessment;
+
+          expect(
+            star.locator,
+          ).toEqual(
+            locator,
+          );
+
+          expect(
+            star.evolutionState.name,
+          ).toBe(
+            assessment.evolutionState.name,
+          );
+
+          expect(
+            star.mainSequenceClass?.name ??
+              null,
+          ).toBe(
+            assessment.mainSequenceClass?.name ??
+              null,
+          );
+
+          expect(
+            star.brownDwarfClass?.name ??
+              null,
+          ).toBe(
+            assessment.brownDwarfClass?.name ??
+              null,
+          );
+
+          expect(
+            star.postMainSequenceStage?.name ??
+              null,
+          ).toBe(
+            assessment.postMainSequenceStage?.name ??
+              null,
+          );
+
+          expect(
+            star.whiteDwarfComposition?.name ??
+              null,
+          ).toBe(
+            assessment.whiteDwarfComposition?.name ??
+              null,
+          );
+
+          expect(
+            star.neutronStarFormationChannel?.name ??
+              null,
+          ).toBe(
+            assessment.neutronStarFormationChannel?.name ??
+              null,
+          );
+
+          expect(
+            star.blackHoleFormationChannel?.name ??
+              null,
+          ).toBe(
+            assessment.blackHoleFormationChannel?.name ??
+              null,
+          );
+        }
+      },
+    );
+
+    it(
+      'should keep age generation isolated from both the frozen physical baseline and point-15.2 reference spectral appearance',
+      () => {
+        const locator =
+          new SystemLocator(
+            8n,
+            -41n,
+            3n,
+          );
+
+        const physicalBefore =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const appearanceBefore =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physicalBefore,
+              sectorPopulation,
+            );
+
+        StellarGenerator
+          .generateLifetimeProfile(
+            generationKey,
+            locator,
+            physicalBefore,
+            sectorPopulation,
+            mixedProfile,
+          );
+
+        const physicalAfter =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const appearanceAfter =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physicalAfter,
+              sectorPopulation,
+            );
+
+        expect(
+          physicalAfter,
+        ).toEqual(
+          physicalBefore,
+        );
+
+        expect(
+          appearanceAfter,
+        ).toEqual(
+          appearanceBefore,
+        );
+      },
+    );
+
+    it(
       'should reject unsupported generator versions without consuming procedural state',
       () => {
         const unsupported =
@@ -674,6 +1129,47 @@ describe(
                   5_772,
                 ),
                 sectorPopulation,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarGenerator
+              .generateLifetimeProfile(
+                unsupported,
+                new SystemLocator(
+                  0n,
+                  0n,
+                  0n,
+                ),
+                new StellarPhysicalProperties(
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0,
+                  5_772,
+                ),
+                sectorPopulation,
+                mixedProfile,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarGenerator
+              .generateStar(
+                unsupported,
+                new SystemLocator(
+                  0n,
+                  0n,
+                  0n,
+                ),
+                sectorPopulation,
+                mixedProfile,
               ),
         ).toThrow(
           RangeError,
