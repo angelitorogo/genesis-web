@@ -21,11 +21,16 @@ import {
 } from '../../domain/stellar/stellar-evolution-input';
 
 import {
+  StellarActivityRegime,
+} from '../../domain/stellar/stellar-activity-regime';
+
+import {
   StellarPhysicalProperties,
 } from '../../domain/stellar/stellar-physical-properties';
 
 import {
   STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS,
+  StellarLifetimeProfile,
 } from '../../domain/stellar/stellar-lifetime-profile';
 
 import {
@@ -54,7 +59,7 @@ import {
 } from './stellar-generator';
 
 describe(
-  'StellarGenerator points 15.1-15.3',
+  'StellarGenerator points 15.1-15.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -83,6 +88,66 @@ describe(
         0.55,
         StellarPopulationRegime.MIXED,
       );
+
+
+    const lifetimeFor =
+      (
+        initialMassSolar:
+          number,
+
+        ageBillionYears:
+          number,
+      ): StellarLifetimeProfile => {
+
+        const assessment =
+          StellarEvolutionEngine
+            .evaluate(
+              generationKey,
+              new StellarEvolutionInput(
+                initialMassSolar,
+                sectorPopulation
+                  .characteristicMetallicitySolarRatio,
+                ageBillionYears,
+              ),
+            );
+
+        const mainSequenceLifetime =
+          assessment
+            .mainSequenceLifetimeBillionYears;
+
+        const postMainSequenceDuration =
+          assessment
+            .postMainSequenceDurationBillionYears;
+
+        if (
+          mainSequenceLifetime ===
+            null ||
+          postMainSequenceDuration ===
+            null
+        ) {
+          return new StellarLifetimeProfile(
+            ageBillionYears,
+            null,
+            null,
+            assessment,
+          );
+        }
+
+        const terminalAge =
+          mainSequenceLifetime +
+          postMainSequenceDuration;
+
+        return new StellarLifetimeProfile(
+          ageBillionYears,
+          terminalAge,
+          Math.max(
+            0,
+            terminalAge -
+              ageBillionYears,
+          ),
+          assessment,
+        );
+      };
 
     it(
       'should generate exactly deterministic physical properties for the same versioned system and environment',
@@ -1086,6 +1151,521 @@ describe(
     );
 
     it(
+      'should generate exactly deterministic point-15.4 activity and flare statistics from an isolated branch',
+      () => {
+        const locator =
+          new SystemLocator(
+            3n,
+            -91n,
+            4n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        const lifetime =
+          lifetimeFor(
+            1.0,
+            2.0,
+          );
+
+        const first =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetime,
+            );
+
+        const second =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetime,
+            );
+
+        expect(
+          second,
+        ).toEqual(
+          first,
+        );
+
+        expect(
+          first.ordinaryFlareModelApplicable,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          first.regime?.name,
+        ).toBe(
+          StellarActivityRegime
+            .fromActivityIndex(
+              first.magneticActivityIndex!,
+            )
+            .name,
+        );
+      },
+    );
+
+    it(
+      'should make a younger solar-type main-sequence star more magnetically active than the same star at an older age',
+      () => {
+        const locator =
+          new SystemLocator(
+            1n,
+            9n,
+            5n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            5_772,
+          );
+
+        const young =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetimeFor(
+                1.0,
+                0.10,
+              ),
+            );
+
+        const old =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetimeFor(
+                1.0,
+                6.0,
+              ),
+            );
+
+        expect(
+          young.magneticActivityIndex!,
+        ).toBeGreaterThan(
+          old.magneticActivityIndex!,
+        );
+
+        expect(
+          young.flareRatePerDay!,
+        ).toBeGreaterThan(
+          old.flareRatePerDay!,
+        );
+      },
+    );
+
+    it(
+      'should keep cool low-mass main-sequence stars more flare-active than solar-type stars at the same young age',
+      () => {
+        const locator =
+          new SystemLocator(
+            4n,
+            31n,
+            2n,
+          );
+
+        const coolDwarf =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              new StellarPhysicalProperties(
+                0.30,
+                0.30,
+                0.31,
+                0.012,
+                3_420,
+              ),
+              lifetimeFor(
+                0.30,
+                0.5,
+              ),
+            );
+
+        const solarType =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              new StellarPhysicalProperties(
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                5_772,
+              ),
+              lifetimeFor(
+                1.0,
+                0.5,
+              ),
+            );
+
+        expect(
+          coolDwarf.magneticActivityIndex!,
+        ).toBeGreaterThan(
+          solarType.magneticActivityIndex!,
+        );
+
+        expect(
+          coolDwarf.flareRatePerDay!,
+        ).toBeGreaterThan(
+          solarType.flareRatePerDay!,
+        );
+      },
+    );
+
+    it(
+      'should cool brown-dwarf activity with age while keeping ordinary flare statistics finite',
+      () => {
+        const locator =
+          new SystemLocator(
+            5n,
+            -7n,
+            1n,
+          );
+
+        const physical =
+          new StellarPhysicalProperties(
+            0.05,
+            0.05,
+            0.10,
+            0.0001,
+            1_800,
+          );
+
+        const young =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetimeFor(
+                0.05,
+                0.05,
+              ),
+            );
+
+        const old =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              physical,
+              lifetimeFor(
+                0.05,
+                10.0,
+              ),
+            );
+
+        expect(
+          young.magneticActivityIndex!,
+        ).toBeGreaterThan(
+          old.magneticActivityIndex!,
+        );
+
+        expect(
+          young.flareRatePerDay!,
+        ).toBeGreaterThan(
+          old.flareRatePerDay!,
+        );
+
+        expect(
+          old.maximumFlareEnergyJoules!,
+        ).toBeGreaterThanOrEqual(
+          old.typicalFlareEnergyJoules!,
+        );
+      },
+    );
+
+    it(
+      'should keep compact remnants outside the ordinary photospheric flare model',
+      () => {
+        const locator =
+          new SystemLocator(
+            7n,
+            17n,
+            9n,
+          );
+
+        const whiteDwarfLifetime =
+          lifetimeFor(
+            1.0,
+            12.0,
+          );
+
+        expect(
+          whiteDwarfLifetime
+            .evolutionAssessment
+            .evolutionState
+            .name,
+        ).toBe(
+          StellarEvolutionState.WHITE_DWARF.name,
+        );
+
+        const activity =
+          StellarGenerator
+            .generateActivityProfile(
+              generationKey,
+              locator,
+              new StellarPhysicalProperties(
+                1.0,
+                1.0,
+                1.0,
+                1.0,
+                5_772,
+              ),
+              whiteDwarfLifetime,
+            );
+
+        expect(
+          activity,
+        ).toEqual(
+          expect.objectContaining({
+            ordinaryFlareModelApplicable:
+              false,
+            magneticActivityIndex:
+              null,
+            regime:
+              null,
+            flareRatePerDay:
+              null,
+            typicalFlareEnergyJoules:
+              null,
+            maximumFlareEnergyJoules:
+              null,
+          }),
+        );
+      },
+    );
+
+    it(
+      'should keep hundreds of generated point-15.4 profiles finite, bounded and coherent with their current phase-14 state',
+      () => {
+        for (
+          let index =
+            0n;
+          index <
+            512n;
+          index +=
+            1n
+        ) {
+          const locator =
+            new SystemLocator(
+              2n,
+              404n,
+              index,
+            );
+
+          const physical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const lifetime =
+            StellarGenerator
+              .generateLifetimeProfile(
+                generationKey,
+                locator,
+                physical,
+                sectorPopulation,
+                mixedProfile,
+              );
+
+          const activity =
+            StellarGenerator
+              .generateActivityProfile(
+                generationKey,
+                locator,
+                physical,
+                lifetime,
+              );
+
+          const compactRemnant =
+            [
+              StellarEvolutionState.WHITE_DWARF.name,
+              StellarEvolutionState.NEUTRON_STAR.name,
+              StellarEvolutionState.STELLAR_BLACK_HOLE.name,
+            ].includes(
+              lifetime
+                .evolutionAssessment
+                .evolutionState
+                .name,
+            );
+
+          if (
+            compactRemnant
+          ) {
+            expect(
+              activity.ordinaryFlareModelApplicable,
+            ).toBe(
+              false,
+            );
+
+            expect(
+              activity.magneticActivityIndex,
+            ).toBeNull();
+
+            continue;
+          }
+
+          expect(
+            activity.ordinaryFlareModelApplicable,
+          ).toBe(
+            true,
+          );
+
+          expect(
+            activity.magneticActivityIndex!,
+          ).toBeGreaterThanOrEqual(
+            0,
+          );
+
+          expect(
+            activity.magneticActivityIndex!,
+          ).toBeLessThanOrEqual(
+            1,
+          );
+
+          expect(
+            activity.flareRatePerDay!,
+          ).toBeGreaterThanOrEqual(
+            0,
+          );
+
+          expect(
+            Number.isFinite(
+              activity.typicalFlareEnergyJoules!,
+            ),
+          ).toBe(
+            true,
+          );
+
+          expect(
+            activity.maximumFlareEnergyJoules!,
+          ).toBeGreaterThanOrEqual(
+            activity.typicalFlareEnergyJoules!,
+          );
+        }
+      },
+    );
+
+    it(
+      'should keep point-15.4 activity entropy isolated from physical, spectral and age outputs',
+      () => {
+        const locator =
+          new SystemLocator(
+            8n,
+            -52n,
+            11n,
+          );
+
+        const physicalBefore =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const appearanceBefore =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physicalBefore,
+              sectorPopulation,
+            );
+
+        const lifetimeBefore =
+          StellarGenerator
+            .generateLifetimeProfile(
+              generationKey,
+              locator,
+              physicalBefore,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        StellarGenerator
+          .generateActivityProfile(
+            generationKey,
+            locator,
+            physicalBefore,
+            lifetimeBefore,
+          );
+
+        const physicalAfter =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        const appearanceAfter =
+          StellarGenerator
+            .generateSpectralAppearance(
+              generationKey,
+              physicalAfter,
+              sectorPopulation,
+            );
+
+        const lifetimeAfter =
+          StellarGenerator
+            .generateLifetimeProfile(
+              generationKey,
+              locator,
+              physicalAfter,
+              sectorPopulation,
+              mixedProfile,
+            );
+
+        expect(
+          physicalAfter,
+        ).toEqual(
+          physicalBefore,
+        );
+
+        expect(
+          appearanceAfter,
+        ).toEqual(
+          appearanceBefore,
+        );
+
+        expect(
+          lifetimeAfter,
+        ).toEqual(
+          lifetimeBefore,
+        );
+      },
+    );
+
+    it(
       'should reject unsupported generator versions without consuming procedural state',
       () => {
         const unsupported =
@@ -1153,6 +1733,32 @@ describe(
                 ),
                 sectorPopulation,
                 mixedProfile,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarGenerator
+              .generateActivityProfile(
+                unsupported,
+                new SystemLocator(
+                  0n,
+                  0n,
+                  0n,
+                ),
+                new StellarPhysicalProperties(
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0,
+                  5_772,
+                ),
+                lifetimeFor(
+                  1.0,
+                  1.0,
+                ),
               ),
         ).toThrow(
           RangeError,

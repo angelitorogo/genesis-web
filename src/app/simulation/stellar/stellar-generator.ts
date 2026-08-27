@@ -35,6 +35,14 @@ import {
 } from '../../domain/stellar/stellar-evolution-input';
 
 import {
+  StellarActivityProfile,
+} from '../../domain/stellar/stellar-activity-profile';
+
+import {
+  StellarActivityRegime,
+} from '../../domain/stellar/stellar-activity-regime';
+
+import {
   Star,
 } from '../../domain/stellar/star';
 
@@ -85,6 +93,11 @@ const V1_AGE_BRANCH =
     'GENESIS-STELLAR-AGE-V1',
   );
 
+const V1_ACTIVITY_BRANCH =
+  utf8ToBytes(
+    'GENESIS-STELLAR-ACTIVITY-V1',
+  );
+
 const V1_MAX_YOUNG_AGE_BILLION_YEARS =
   0.10;
 
@@ -125,6 +138,18 @@ interface V1AgeDraws {
     number;
 }
 
+
+interface V1ActivityDraws {
+  readonly activityScatter:
+    number;
+
+  readonly flareRateScatter:
+    number;
+
+  readonly flareEnergyScatter:
+    number;
+}
+
 /**
  * Incremental point-15 StellarGenerator implementation.
  *
@@ -134,11 +159,14 @@ interface V1AgeDraws {
  * baseline without consuming any additional entropy. Point 15.3 adds an
  * independent generated-age branch, derives finite remaining progenitor life
  * from the frozen phase-14 evolution model and can finally materialize the
- * canonical current Star evolutionary state.
+ * canonical current Star evolutionary state. Point 15.4 adds a third isolated
+ * entropy branch for baseline ordinary magnetic activity and flare statistics.
  *
  * Important boundaries:
- * - point 15.3 does not rewrite the frozen point-15.1 physical draw stream;
- * - activity/flares, rotation/stability and designation remain 15.4..15.6;
+ * - points 15.3/15.4 do not rewrite the frozen point-15.1 physical draw stream;
+ * - point 15.4 does not generate rotation/stability, magnetic-field strength,
+ *   compact-remnant burst/accretion physics or individual flare event times;
+ * - rotation/stability and designation remain 15.5..15.6;
  * - point-15.2 spectral appearance remains the reference-baseline appearance;
  *   giant/remnant atmosphere-specific spectral vocabularies are not invented
  *   here.
@@ -260,6 +288,48 @@ export class StellarGenerator {
         physicalProperties,
         sectorStellarPopulation,
         stellarPopulationProfile,
+      );
+    }
+
+    throw new RangeError(
+      `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+    );
+  }
+
+  /**
+   * Generates point-15.4 ordinary stellar magnetic activity and flare
+   * statistics for the current point-15.3 evolutionary state.
+   *
+   * The profile is a deterministic baseline, not an event timeline. MAIN_SEQUENCE,
+   * BROWN_DWARF, GIANT and SUPERGIANT states receive an ordinary flare model.
+   * Compact remnants explicitly return a non-applicable profile so V1 does not
+   * conflate white-dwarf variability, neutron-star magnetospheric bursts or
+   * black-hole accretion with ordinary photospheric stellar flares.
+   */
+  static generateActivityProfile(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    lifetimeProfile:
+      StellarLifetimeProfile,
+  ): StellarActivityProfile {
+
+    if (
+      generationKey
+        .generatorVersion ===
+      GeneratorVersion.V1
+    ) {
+      return this.generateActivityProfileV1(
+        generationKey,
+        locator,
+        physicalProperties,
+        lifetimeProfile,
       );
     }
 
@@ -576,6 +646,120 @@ export class StellarGenerator {
     );
   }
 
+  private static generateActivityProfileV1(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    lifetimeProfile:
+      StellarLifetimeProfile,
+  ): StellarActivityProfile {
+
+    const stateName =
+      lifetimeProfile
+        .evolutionAssessment
+        .evolutionState
+        .name;
+
+    if (
+      stateName ===
+        'WHITE_DWARF' ||
+      stateName ===
+        'NEUTRON_STAR' ||
+      stateName ===
+        'STELLAR_BLACK_HOLE'
+    ) {
+      return new StellarActivityProfile(
+        false,
+        null,
+        null,
+        null,
+        null,
+        null,
+      );
+    }
+
+    const systemSeed =
+      ProceduralTargetResolver
+        .resolveTargetSeed(
+          generationKey,
+          locator,
+        ) as SystemSeed;
+
+    const random =
+      new Sfc64Random(
+        activityBranchSeedV1(
+          systemSeed,
+        ),
+      );
+
+    /*
+     * Frozen point-15.4 draw order. These three values describe baseline
+     * activity scatter, average flare-rate scatter and flare-energy scatter.
+     * Individual flare events are deliberately not generated here.
+     */
+    const draws:
+      V1ActivityDraws = {
+        activityScatter:
+          random.nextDouble(),
+
+        flareRateScatter:
+          random.nextDouble(),
+
+        flareEnergyScatter:
+          random.nextDouble(),
+      };
+
+    const magneticActivityIndex =
+      activityIndexV1(
+        lifetimeProfile,
+        draws.activityScatter,
+      );
+
+    const regime =
+      StellarActivityRegime
+        .fromActivityIndex(
+          magneticActivityIndex,
+        );
+
+    const flareRatePerDay =
+      flareRatePerDayV1(
+        lifetimeProfile,
+        magneticActivityIndex,
+        draws.flareRateScatter,
+      );
+
+    const typicalFlareEnergyJoules =
+      typicalFlareEnergyJoulesV1(
+        physicalProperties,
+        lifetimeProfile,
+        magneticActivityIndex,
+        draws.flareEnergyScatter,
+      );
+
+    const maximumFlareEnergyJoules =
+      typicalFlareEnergyJoules *
+      (
+        20 +
+        180 *
+          magneticActivityIndex
+      );
+
+    return new StellarActivityProfile(
+      true,
+      magneticActivityIndex,
+      regime,
+      flareRatePerDay,
+      typicalFlareEnergyJoules,
+      maximumFlareEnergyJoules,
+    );
+  }
+
   private static generateSpectralAppearanceV1(
     generationKey:
       UniverseGenerationKey,
@@ -610,6 +794,374 @@ export class StellarGenerator {
           .brownDwarfClass,
       );
   }
+}
+
+function activityIndexV1(
+  lifetimeProfile:
+    StellarLifetimeProfile,
+
+  activityScatter:
+    number,
+): number {
+
+  const assessment =
+    lifetimeProfile
+      .evolutionAssessment;
+
+  const stateName =
+    assessment
+      .evolutionState
+      .name;
+
+  const age =
+    lifetimeProfile
+      .ageBillionYears;
+
+  const scatterFactor =
+    lerp(
+      0.85,
+      1.15,
+      activityScatter,
+    );
+
+  if (
+    stateName ===
+    'BROWN_DWARF'
+  ) {
+    const familyName =
+      assessment
+        .brownDwarfClass
+        ?.name;
+
+    const familyFactor =
+      familyName ===
+        'L'
+        ? 0.72
+        : familyName ===
+            'T'
+          ? 0.46
+          : 0.24;
+
+    const coolingDecay =
+      Math.exp(
+        -age /
+          8.0,
+      );
+
+    return clamp01(
+      (
+        0.04 +
+        familyFactor *
+          coolingDecay
+      ) *
+        scatterFactor,
+    );
+  }
+
+  if (
+    stateName ===
+    'GIANT'
+  ) {
+    const stageFactor =
+      assessment
+        .postMainSequenceStage
+        ?.name ===
+        'ASYMPTOTIC_GIANT_BRANCH'
+        ? 0.18
+        : 0.12;
+
+    return clamp01(
+      stageFactor *
+      scatterFactor,
+    );
+  }
+
+  if (
+    stateName ===
+    'SUPERGIANT'
+  ) {
+    return clamp01(
+      0.10 *
+      scatterFactor,
+    );
+  }
+
+  const familyName =
+    assessment
+      .mainSequenceClass
+      ?.name;
+
+  const profile =
+    mainSequenceActivityProfileV1(
+      familyName,
+    );
+
+  const ageDecay =
+    Math.exp(
+      -age /
+        profile
+          .decayBillionYears,
+    );
+
+  return clamp01(
+    (
+      profile.floor +
+      profile.amplitude *
+        ageDecay
+    ) *
+      scatterFactor,
+  );
+}
+
+function mainSequenceActivityProfileV1(
+  familyName:
+    string | undefined,
+): {
+  readonly floor:
+    number;
+  readonly amplitude:
+    number;
+  readonly decayBillionYears:
+    number;
+  readonly flareRateScalePerDay:
+    number;
+} {
+
+  switch (
+    familyName
+  ) {
+    case 'M':
+      return {
+        floor:
+          0.10,
+        amplitude:
+          0.84,
+        decayBillionYears:
+          12.0,
+        flareRateScalePerDay:
+          2.0,
+      };
+
+    case 'K':
+      return {
+        floor:
+          0.07,
+        amplitude:
+          0.70,
+        decayBillionYears:
+          7.0,
+        flareRateScalePerDay:
+          0.80,
+      };
+
+    case 'G':
+      return {
+        floor:
+          0.04,
+        amplitude:
+          0.55,
+        decayBillionYears:
+          4.0,
+        flareRateScalePerDay:
+          0.25,
+      };
+
+    case 'F':
+      return {
+        floor:
+          0.03,
+        amplitude:
+          0.34,
+        decayBillionYears:
+          2.0,
+        flareRateScalePerDay:
+          0.08,
+      };
+
+    case 'A':
+      return {
+        floor:
+          0.01,
+        amplitude:
+          0.12,
+        decayBillionYears:
+          0.6,
+        flareRateScalePerDay:
+          0.01,
+      };
+
+    case 'B':
+      return {
+        floor:
+          0.005,
+        amplitude:
+          0.06,
+        decayBillionYears:
+          0.08,
+        flareRateScalePerDay:
+          0.002,
+      };
+
+    case 'O':
+      return {
+        floor:
+          0.003,
+        amplitude:
+          0.04,
+        decayBillionYears:
+          0.02,
+        flareRateScalePerDay:
+          0.001,
+      };
+  }
+
+  throw new RangeError(
+    `Unsupported MAIN_SEQUENCE family for point-15.4 activity: ${familyName ?? 'null'}.`,
+  );
+}
+
+function flareRatePerDayV1(
+  lifetimeProfile:
+    StellarLifetimeProfile,
+
+  magneticActivityIndex:
+    number,
+
+  flareRateScatter:
+    number,
+): number {
+
+  const assessment =
+    lifetimeProfile
+      .evolutionAssessment;
+
+  const stateName =
+    assessment
+      .evolutionState
+      .name;
+
+  let rateScale:
+    number;
+
+  if (
+    stateName ===
+    'BROWN_DWARF'
+  ) {
+    switch (
+      assessment
+        .brownDwarfClass
+        ?.name
+    ) {
+      case 'L':
+        rateScale =
+          0.50;
+        break;
+
+      case 'T':
+        rateScale =
+          0.20;
+        break;
+
+      case 'Y':
+        rateScale =
+          0.05;
+        break;
+
+      default:
+        throw new RangeError(
+          'BROWN_DWARF activity requires an L/T/Y family.',
+        );
+    }
+  } else if (
+    stateName ===
+    'GIANT'
+  ) {
+    rateScale =
+      0.02;
+  } else if (
+    stateName ===
+    'SUPERGIANT'
+  ) {
+    rateScale =
+      0.005;
+  } else {
+    rateScale =
+      mainSequenceActivityProfileV1(
+        assessment
+          .mainSequenceClass
+          ?.name,
+      )
+        .flareRateScalePerDay;
+  }
+
+  return (
+    rateScale *
+    magneticActivityIndex **
+      1.5 *
+    lerp(
+      0.75,
+      1.25,
+      flareRateScatter,
+    )
+  );
+}
+
+function typicalFlareEnergyJoulesV1(
+  physicalProperties:
+    StellarPhysicalProperties,
+
+  lifetimeProfile:
+    StellarLifetimeProfile,
+
+  magneticActivityIndex:
+    number,
+
+  flareEnergyScatter:
+    number,
+): number {
+
+  const stateName =
+    lifetimeProfile
+      .evolutionAssessment
+      .evolutionState
+      .name;
+
+  const luminosityScale =
+    clamp(
+      physicalProperties
+        .luminositySolar **
+        0.35,
+      0.30,
+      30,
+    );
+
+  const evolvedScale =
+    stateName ===
+      'SUPERGIANT'
+      ? 4.0
+      : stateName ===
+          'GIANT'
+        ? 2.0
+        : stateName ===
+            'BROWN_DWARF'
+          ? 0.65
+          : 1.0;
+
+  return (
+    1.0e24 *
+    luminosityScale *
+    evolvedScale *
+    lerp(
+      0.40,
+      2.50,
+      magneticActivityIndex,
+    ) *
+    lerp(
+      0.70,
+      1.30,
+      flareEnergyScatter,
+    )
+  );
 }
 
 function sampleAgeBillionYearsV1(
@@ -1004,6 +1556,36 @@ function samplePowerLaw(
       1.0 /
       exponent
     );
+}
+
+function activityBranchSeedV1(
+  systemSeed:
+    SystemSeed,
+): UniverseSeed {
+
+  const digest =
+    sha256
+      .create()
+      .update(
+        V1_ACTIVITY_BRANCH,
+      )
+      .update(
+        hexToBytes(
+          systemSeed
+            .normalizedValue,
+        ),
+      )
+      .digest();
+
+  return universeSeedFromNormalized128(
+    bytesToHex(
+      digest.slice(
+        0,
+        16,
+      ),
+    )
+      .toUpperCase(),
+  );
 }
 
 function ageBranchSeedV1(

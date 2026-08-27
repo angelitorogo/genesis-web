@@ -135,70 +135,92 @@ export class GalacticObjectLaboratoryPage {
   readonly nuclearCases =
     GALACTIC_NUCLEUS_LABORATORY_CASES;
 
-  readonly quiescentNucleusSamples =
-    GalacticNucleusLaboratoryFixtures
+  /*
+   * Laboratory fixture discovery can scan thousands of procedural targets.
+   * Keep each A-H family lazy so opening the default emission-nebula view does
+   * not eagerly discover every hidden object and nucleus family. The fixture
+   * providers already memoize their results, so repeated getter access after a
+   * family is first shown is effectively free.
+   */
+  get quiescentNucleusSamples() {
+    return GalacticNucleusLaboratoryFixtures
       .quiescentSamples();
+  }
 
-  readonly agnNucleusSamples =
-    GalacticNucleusLaboratoryFixtures
+  get agnNucleusSamples() {
+    return GalacticNucleusLaboratoryFixtures
       .agnSamples();
+  }
 
-  readonly quasarNucleusSamples =
-    GalacticNucleusLaboratoryFixtures
+  get quasarNucleusSamples() {
+    return GalacticNucleusLaboratoryFixtures
       .quasarSamples();
+  }
 
-  readonly emissionNebulaSamples =
-    GalacticObjectLaboratoryFixtures
+  get emissionNebulaSamples() {
+    return GalacticObjectLaboratoryFixtures
       .emissionNebulaSamples();
+  }
 
-  readonly reflectionNebulaSamples =
-    GalacticObjectLaboratoryFixtures
+  get reflectionNebulaSamples() {
+    return GalacticObjectLaboratoryFixtures
       .reflectionNebulaSamples();
+  }
 
-  readonly darkNebulaSamples =
-    GalacticObjectLaboratoryFixtures
+  get darkNebulaSamples() {
+    return GalacticObjectLaboratoryFixtures
       .darkNebulaSamples();
+  }
 
-  readonly planetaryNebulaSamples =
-    GalacticObjectLaboratoryFixtures
+  get planetaryNebulaSamples() {
+    return GalacticObjectLaboratoryFixtures
       .planetaryNebulaSamples();
+  }
 
-  readonly hiiLowSamples =
-    GalacticObjectLaboratoryFixtures
+  get hiiLowSamples() {
+    return GalacticObjectLaboratoryFixtures
       .hiiLowSamples();
+  }
 
-  readonly hiiModerateSamples =
-    GalacticObjectLaboratoryFixtures
+  get hiiModerateSamples() {
+    return GalacticObjectLaboratoryFixtures
       .hiiModerateSamples();
+  }
 
-  readonly hiiHighSamples =
-    GalacticObjectLaboratoryFixtures
+  get hiiHighSamples() {
+    return GalacticObjectLaboratoryFixtures
       .hiiHighSamples();
+  }
 
-  readonly hiiIntenseSamples =
-    GalacticObjectLaboratoryFixtures
+  get hiiIntenseSamples() {
+    return GalacticObjectLaboratoryFixtures
       .hiiIntenseSamples();
+  }
 
-
-  readonly openClusterSamples =
-    GalacticObjectLaboratoryFixtures
+  get openClusterSamples() {
+    return GalacticObjectLaboratoryFixtures
       .openClusterSamples();
+  }
 
-  readonly globularClusterSamples =
-    GalacticObjectLaboratoryFixtures
+  get globularClusterSamples() {
+    return GalacticObjectLaboratoryFixtures
       .globularClusterSamples();
+  }
 
-  readonly supernovaRemnantShellSamples =
-    GalacticObjectLaboratoryFixtures
+  get supernovaRemnantShellSamples() {
+    return GalacticObjectLaboratoryFixtures
       .supernovaRemnantShellSamples();
+  }
 
-  readonly supernovaRemnantPlerionSamples =
-    GalacticObjectLaboratoryFixtures
+  get supernovaRemnantPlerionSamples() {
+    return GalacticObjectLaboratoryFixtures
       .supernovaRemnantPlerionSamples();
+  }
 
-  readonly supernovaRemnantCompositeSamples =
-    GalacticObjectLaboratoryFixtures
+  get supernovaRemnantCompositeSamples() {
+    return GalacticObjectLaboratoryFixtures
       .supernovaRemnantCompositeSamples();
+  }
 
   readonly view =
     signal<LaboratoryView>(
