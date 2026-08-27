@@ -51,18 +51,12 @@ import {
 } from './stellar-system-component-label';
 
 describe(
-  'StellarCompanion point 16.2',
+  'StellarCompanion points 16.2-16.3',
   () => {
     const systemDesignation =
       new StellarDesignation(
         'Testara',
         'GEN-V1-G0-S0-O0-SYS-0123456789ABCDEFFEDCBA9876543210',
-      );
-
-    const designation =
-      new StellarComponentDesignation(
-        systemDesignation,
-        StellarSystemComponentLabel.B,
       );
 
     const physicalProperties =
@@ -116,35 +110,76 @@ describe(
         assessment,
       );
 
+    function create(
+      label:
+        StellarSystemComponentLabel,
+
+      seed:
+        string,
+
+      massRatio =
+        0.5,
+
+      properties =
+        physicalProperties,
+    ): StellarCompanion {
+
+      return new StellarCompanion(
+        label,
+        seed,
+        new StellarComponentDesignation(
+          systemDesignation,
+          label,
+        ),
+        1.0,
+        massRatio,
+        properties,
+        spectralAppearance,
+        lifetimeProfile,
+      );
+    }
+
     it(
-      'should hold one valid B component with a normalized intra-system seed and coherent mass ratio',
+      'should preserve B and add C as valid non-primary stellar companions',
       () => {
-        const companion =
-          new StellarCompanion(
+        const secondary =
+          create(
             StellarSystemComponentLabel.B,
             'ABCDEF0123456789ABCDEF0123456789',
-            designation,
-            1.0,
-            0.5,
-            physicalProperties,
-            spectralAppearance,
-            lifetimeProfile,
+          );
+
+        const tertiary =
+          create(
+            StellarSystemComponentLabel.C,
+            '1234567890ABCDEF1234567890ABCDEF',
           );
 
         expect(
-          companion.componentLabel,
+          secondary.componentLabel,
         ).toBe(
           StellarSystemComponentLabel.B,
         );
 
         expect(
-          companion.designation.name,
+          tertiary.componentLabel,
+        ).toBe(
+          StellarSystemComponentLabel.C,
+        );
+
+        expect(
+          secondary.designation.name,
         ).toBe(
           'Testara B',
         );
 
         expect(
-          companion.currentEvolutionState,
+          tertiary.designation.name,
+        ).toBe(
+          'Testara C',
+        );
+
+        expect(
+          tertiary.currentEvolutionState,
         ).toBe(
           StellarEvolutionState.MAIN_SEQUENCE,
         );
@@ -152,35 +187,13 @@ describe(
     );
 
     it(
-      'should reject malformed component seeds, invalid mass ratios and a mass inconsistent with q',
+      'should reject A, malformed component seeds, invalid mass ratios and a mass inconsistent with q',
       () => {
-        const create =
-          (
-            componentSeedHex:
-              string,
-
-            massRatio:
-              number,
-
-            properties =
-              physicalProperties,
-          ) =>
-            new StellarCompanion(
-              StellarSystemComponentLabel.B,
-              componentSeedHex,
-              designation,
-              1.0,
-              massRatio,
-              properties,
-              spectralAppearance,
-              lifetimeProfile,
-            );
-
         expect(
           () =>
             create(
-              'BAD-SEED',
-              0.5,
+              StellarSystemComponentLabel.A,
+              'ABCDEF0123456789ABCDEF0123456789',
             ),
         ).toThrow(
           RangeError,
@@ -189,7 +202,18 @@ describe(
         expect(
           () =>
             create(
-              'ABCDEF0123456789ABCDEF0123456789',
+              StellarSystemComponentLabel.B,
+              'BAD-SEED',
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            create(
+              StellarSystemComponentLabel.C,
+              '1234567890ABCDEF1234567890ABCDEF',
               0,
             ),
         ).toThrow(
@@ -199,7 +223,8 @@ describe(
         expect(
           () =>
             create(
-              'ABCDEF0123456789ABCDEF0123456789',
+              StellarSystemComponentLabel.C,
+              '1234567890ABCDEF1234567890ABCDEF',
               0.6,
             ),
         ).toThrow(

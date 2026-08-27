@@ -1,14 +1,15 @@
 export type StellarSystemComponentLabelName =
   | 'A'
-  | 'B';
+  | 'B'
+  | 'C';
 
 /**
  * Stable component labels inside one stellar system.
  *
- * Point 16.2 introduces A/B only. A is the already-frozen phase-15 canonical
- * primary. B identifies the deterministic binary companion derived inside the
- * same SystemLocator/SystemSeed. A later point 16.3 may extend this vocabulary
- * with C without changing the existing A/B codes.
+ * A is the frozen phase-15 canonical primary, B is the point-16.2 binary
+ * companion and C is the point-16.3 tertiary companion. Codes 1/2 remain
+ * unchanged when C is introduced so persisted/component-level identities can
+ * grow without reinterpreting earlier systems.
  */
 export class StellarSystemComponentLabel {
 
@@ -24,11 +25,18 @@ export class StellarSystemComponentLabel {
       2,
     );
 
+  static readonly C =
+    new StellarSystemComponentLabel(
+      'C',
+      3,
+    );
+
   static readonly values:
     readonly StellarSystemComponentLabel[] =
       Object.freeze([
         StellarSystemComponentLabel.A,
         StellarSystemComponentLabel.B,
+        StellarSystemComponentLabel.C,
       ]);
 
   private constructor(

@@ -11,7 +11,7 @@ import {
 } from './stellar-system-component-label';
 
 describe(
-  'StellarComponentDesignation point 16.2',
+  'StellarComponentDesignation points 16.2-16.3',
   () => {
     const systemDesignation =
       new StellarDesignation(
@@ -20,7 +20,7 @@ describe(
       );
 
     it(
-      'should layer A/B labels over the frozen point-15.6 system designation without renaming it',
+      'should layer A/B/C labels over the frozen point-15.6 system designation without renaming it',
       () => {
         const primary =
           new StellarComponentDesignation(
@@ -34,35 +34,27 @@ describe(
             StellarSystemComponentLabel.B,
           );
 
-        expect(
-          primary.name,
-        ).toBe(
-          'Jotheria A',
-        );
+        const tertiary =
+          new StellarComponentDesignation(
+            systemDesignation,
+            StellarSystemComponentLabel.C,
+          );
 
-        expect(
-          secondary.name,
-        ).toBe(
-          'Jotheria B',
-        );
+        expect(primary.name).toBe('Jotheria A');
+        expect(secondary.name).toBe('Jotheria B');
+        expect(tertiary.name).toBe('Jotheria C');
 
-        expect(
-          primary.proceduralCode,
-        ).toBe(
+        expect(primary.proceduralCode).toBe(
           `${systemDesignation.proceduralCode}-A`,
         );
-
-        expect(
-          secondary.proceduralCode,
-        ).toBe(
+        expect(secondary.proceduralCode).toBe(
           `${systemDesignation.proceduralCode}-B`,
         );
-
-        expect(
-          systemDesignation.name,
-        ).toBe(
-          'Jotheria',
+        expect(tertiary.proceduralCode).toBe(
+          `${systemDesignation.proceduralCode}-C`,
         );
+
+        expect(systemDesignation.name).toBe('Jotheria');
       },
     );
   },

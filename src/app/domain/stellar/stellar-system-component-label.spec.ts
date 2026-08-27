@@ -3,65 +3,56 @@ import {
 } from './stellar-system-component-label';
 
 describe(
-  'StellarSystemComponentLabel point 16.2',
+  'StellarSystemComponentLabel points 16.2-16.3',
   () => {
     it(
-      'should expose stable A/B component codes',
+      'should preserve A/B component codes and add C code 3',
       () => {
         expect(
           StellarSystemComponentLabel.values,
         ).toEqual([
           StellarSystemComponentLabel.A,
           StellarSystemComponentLabel.B,
+          StellarSystemComponentLabel.C,
         ]);
 
         expect(
           StellarSystemComponentLabel.A.code,
-        ).toBe(
-          1,
-        );
+        ).toBe(1);
 
         expect(
           StellarSystemComponentLabel.B.code,
-        ).toBe(
-          2,
-        );
+        ).toBe(2);
+
+        expect(
+          StellarSystemComponentLabel.C.code,
+        ).toBe(3);
       },
     );
 
     it(
-      'should rehydrate A/B and reject an unknown future component code',
+      'should rehydrate A/B/C and reject an unknown future component code',
       () => {
         expect(
-          StellarSystemComponentLabel.fromCode(
-            1,
-          ),
-        ).toBe(
-          StellarSystemComponentLabel.A,
-        );
+          StellarSystemComponentLabel.fromCode(1),
+        ).toBe(StellarSystemComponentLabel.A);
 
         expect(
-          StellarSystemComponentLabel.fromCode(
-            2,
-          ),
-        ).toBe(
-          StellarSystemComponentLabel.B,
-        );
+          StellarSystemComponentLabel.fromCode(2),
+        ).toBe(StellarSystemComponentLabel.B);
 
         expect(
-          StellarSystemComponentLabel.fromCodeOrNull(
-            3,
-          ),
+          StellarSystemComponentLabel.fromCode(3),
+        ).toBe(StellarSystemComponentLabel.C);
+
+        expect(
+          StellarSystemComponentLabel.fromCodeOrNull(4),
         ).toBeNull();
 
         expect(
           () =>
-            StellarSystemComponentLabel.fromCode(
-              3,
-            ),
-        ).toThrow(
-          RangeError,
-        );
+            StellarSystemComponentLabel.fromCode(4),
+        ).toThrow(RangeError);
       },
     );
   },

@@ -1,15 +1,15 @@
 export type StellarSystemMultiplicityName =
   | 'SINGLE'
-  | 'BINARY';
+  | 'BINARY'
+  | 'TRIPLE';
 
 /**
  * Canonical stellar-component multiplicity of a stellar system.
  *
- * Point 16.1 established SINGLE. Point 16.2 adds BINARY while preserving the
- * stable SINGLE code. TRIPLE remains point 16.3 and is intentionally absent.
- *
- * Numeric codes form a stable V1 serialization boundary so later persistence,
- * Worker and UI layers do not depend on singleton object identity.
+ * Point 16.1 established SINGLE, point 16.2 added BINARY and point 16.3 adds
+ * the deliberately rare TRIPLE architecture. Stable numeric codes are a V1
+ * serialization boundary and therefore the existing SINGLE/BINARY codes do
+ * not change when TRIPLE is introduced.
  */
 export class StellarSystemMultiplicity {
 
@@ -27,11 +27,19 @@ export class StellarSystemMultiplicity {
       2,
     );
 
+  static readonly TRIPLE =
+    new StellarSystemMultiplicity(
+      'TRIPLE',
+      3,
+      3,
+    );
+
   static readonly values:
     readonly StellarSystemMultiplicity[] =
       Object.freeze([
         StellarSystemMultiplicity.SINGLE,
         StellarSystemMultiplicity.BINARY,
+        StellarSystemMultiplicity.TRIPLE,
       ]);
 
   private constructor(

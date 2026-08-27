@@ -25,15 +25,15 @@ const MASS_RATIO_TOLERANCE =
   1e-12;
 
 /**
- * Point-16.2 deterministic stellar companion inside one binary system.
+ * Deterministic non-primary stellar component inside one multiple system.
  *
- * The companion is not represented as the phase-14/15 Star entity because that
- * entity is explicitly the canonical primary tied directly to SystemLocator.
- * Instead this component carries its own intra-system seed, A/B designation,
- * reference physical/spectral baseline and a coeval evolution/lifetime result.
+ * Point 16.2 introduced B and point 16.3 extends the same intra-system model
+ * with C. Neither companion is represented as the phase-14/15 Star entity
+ * because that entity remains the canonical A primary tied to SystemLocator.
  *
- * Orbit geometry belongs to point 16.4; planet/circumbinary effects belong to
- * 16.5/16.6. No BodyLocator or orbital state is introduced here.
+ * The component carries an independent intra-system seed, component
+ * designation, reference physical/spectral baseline and coeval evolution.
+ * Orbit geometry remains point 16.4 and no BodyLocator is introduced here.
  */
 export class StellarCompanion {
 
@@ -64,10 +64,12 @@ export class StellarCompanion {
   ) {
     if (
       componentLabel !==
-      StellarSystemComponentLabel.B
+        StellarSystemComponentLabel.B &&
+      componentLabel !==
+        StellarSystemComponentLabel.C
     ) {
       throw new RangeError(
-        'Point 16.2 StellarCompanion supports component B only.',
+        'StellarCompanion supports non-primary component labels B or C only.',
       );
     }
 
@@ -117,7 +119,7 @@ export class StellarCompanion {
       );
     }
 
-    const expectedSecondaryMass =
+    const expectedCompanionMass =
       primaryInitialMassSolar *
       massRatioToPrimary;
 
@@ -125,7 +127,7 @@ export class StellarCompanion {
       Math.max(
         1,
         Math.abs(
-          expectedSecondaryMass,
+          expectedCompanionMass,
         ),
         Math.abs(
           physicalProperties
@@ -137,7 +139,7 @@ export class StellarCompanion {
       Math.abs(
         physicalProperties
           .initialMassSolar -
-        expectedSecondaryMass,
+        expectedCompanionMass,
       ) >
       MASS_RATIO_TOLERANCE *
         scale

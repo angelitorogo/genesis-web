@@ -46,21 +46,92 @@ import {
   StellarGenerator,
 } from './stellar-generator';
 
+import {
+  StellarSystemMultiplicitySelector,
+} from './stellar-system-multiplicity-selector';
+
+import {
+  StellarTripleCompanionGenerator,
+} from './stellar-triple-companion-generator';
+
 /**
- * Phase-16 materializer for explicit stellar-system architectures.
+ * Phase-16 materializer for stellar-system architectures.
  *
- * Point 16.1 established generateSingle(). Point 16.2 adds generateBinary()
- * without introducing a multiplicity-selection draw: deciding what fraction of
- * arbitrary systems are SINGLE/BINARY/TRIPLE remains separate from defining
- * each architecture and can be frozen only once the triple contract exists.
+ * Point 16.1 established generateSingle(), point 16.2 added generateBinary(),
+ * and point 16.3 adds generateTriple() plus generate(), which freezes the V1
+ * multiplicity selection after all supported component counts exist.
  *
- * Both methods preserve SystemLocator/SystemSeed as the system identity. The
- * canonical point-15 primary remains bit-for-bit unchanged; binary component B
- * is derived from its own intra-system SHA-256 branch.
+ * Every architecture preserves SystemLocator/SystemSeed as system identity.
+ * The canonical phase-15 primary A is bit-for-bit unchanged; B and C come from
+ * independent intra-system branches. Orbit hierarchy remains point 16.4.
  */
 export class StellarSystemGenerator {
 
   private constructor() {}
+
+  static generate(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    stellarPopulationProfile:
+      StellarPopulationProfile,
+  ): StellarSystem {
+
+    assertSupportedVersion(
+      generationKey,
+    );
+
+    const seed =
+      ProceduralTargetResolver
+        .resolveTargetSeed(
+          generationKey,
+          locator,
+        ) as SystemSeed;
+
+    const multiplicity =
+      StellarSystemMultiplicitySelector
+        .select(
+          generationKey,
+          seed,
+        );
+
+    if (
+      multiplicity ===
+      StellarSystemMultiplicity.SINGLE
+    ) {
+      return this.generateSingle(
+        generationKey,
+        locator,
+        sectorStellarPopulation,
+        stellarPopulationProfile,
+      );
+    }
+
+    if (
+      multiplicity ===
+      StellarSystemMultiplicity.BINARY
+    ) {
+      return this.generateBinary(
+        generationKey,
+        locator,
+        sectorStellarPopulation,
+        stellarPopulationProfile,
+      );
+    }
+
+    return this.generateTriple(
+      generationKey,
+      locator,
+      sectorStellarPopulation,
+      stellarPopulationProfile,
+    );
+  }
 
   static generateSingle(
     generationKey:
@@ -141,8 +212,7 @@ export class StellarSystemGenerator {
 
     /*
      * These calls only re-materialize frozen point-15 values. They consume no
-     * mutable/shared state and allow point 16.2 to make B coeval with A without
-     * changing the Star entity or any point-15 draw stream.
+     * mutable/shared state and keep B coeval with the canonical primary A.
      */
     const primaryPhysicalProperties =
       StellarGenerator
@@ -182,6 +252,75 @@ export class StellarSystemGenerator {
       StellarSystemMultiplicity.BINARY,
       single.primaryStar,
       secondaryCompanion,
+    );
+  }
+
+  static generateTriple(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    stellarPopulationProfile:
+      StellarPopulationProfile,
+  ): StellarSystem {
+
+    assertSupportedVersion(
+      generationKey,
+    );
+
+    const binary =
+      this.generateBinary(
+        generationKey,
+        locator,
+        sectorStellarPopulation,
+        stellarPopulationProfile,
+      );
+
+    const primaryPhysicalProperties =
+      StellarGenerator
+        .generatePhysicalProperties(
+          generationKey,
+          locator,
+          sectorStellarPopulation,
+          stellarPopulationProfile,
+        );
+
+    const primaryLifetimeProfile =
+      StellarGenerator
+        .generateLifetimeProfile(
+          generationKey,
+          locator,
+          primaryPhysicalProperties,
+          sectorStellarPopulation,
+          stellarPopulationProfile,
+        );
+
+    const tertiaryCompanion =
+      StellarTripleCompanionGenerator
+        .generate(
+          generationKey,
+          binary.seed,
+          binary.designation,
+          primaryPhysicalProperties,
+          binary.secondaryCompanion!,
+          primaryLifetimeProfile,
+          sectorStellarPopulation,
+        );
+
+    return new StellarSystem(
+      generationKey,
+      locator,
+      binary.seed,
+      binary.designation,
+      StellarSystemMultiplicity.TRIPLE,
+      binary.primaryStar,
+      binary.secondaryCompanion,
+      tertiaryCompanion,
     );
   }
 }

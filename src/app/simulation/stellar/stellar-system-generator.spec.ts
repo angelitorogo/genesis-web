@@ -48,7 +48,7 @@ import {
 } from './stellar-system-generator';
 
 describe(
-  'StellarSystemGenerator points 16.1-16.2',
+  'StellarSystemGenerator points 16.1-16.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -469,7 +469,250 @@ describe(
     );
 
     it(
-      'should reject an unsupported future GeneratorVersion for both explicit architectures',
+      'should materialize Jotheria as TRIPLE while preserving exactly the frozen A/B architecture',
+      () => {
+        const locator =
+          new SystemLocator(
+            0n,
+            0n,
+            0n,
+          );
+
+        const binary =
+          StellarSystemGenerator
+            .generateBinary(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        const triple =
+          StellarSystemGenerator
+            .generateTriple(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        expect(triple.seed).toEqual(binary.seed);
+        expect(triple.designation).toEqual(binary.designation);
+        expect(triple.primaryStar).toEqual(binary.primaryStar);
+        expect(triple.secondaryCompanion).toEqual(
+          binary.secondaryCompanion,
+        );
+        expect(triple.multiplicity).toBe(
+          StellarSystemMultiplicity.TRIPLE,
+        );
+        expect(triple.stellarComponentCount).toBe(3);
+        expect(triple.tertiaryCompanion).not.toBeNull();
+        expect(triple.tertiaryCompanion?.designation.name).toBe(
+          'Jotheria C',
+        );
+        expect(triple.tertiaryCompanion?.componentSeedHex).toBe(
+          '75A7DEA10ADE3DDA8751B531D3C6FF81',
+        );
+
+        expect(triple.tertiaryCompanion?.componentSeedHex).not.toBe(
+          triple.secondaryCompanion?.componentSeedHex,
+        );
+      },
+    );
+
+    it(
+      'should not perturb the frozen BINARY result when a TRIPLE view of the same system is queried',
+      () => {
+        const locator =
+          new SystemLocator(
+            4n,
+            -12n,
+            7n,
+          );
+
+        const before =
+          StellarSystemGenerator
+            .generateBinary(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        StellarSystemGenerator
+          .generateTriple(
+            generationKey,
+            locator,
+            sector,
+            population,
+          );
+
+        const after =
+          StellarSystemGenerator
+            .generateBinary(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
+        expect(after).toEqual(before);
+      },
+    );
+
+    it(
+      'should make generic generate() deterministic and exactly equal to the selected explicit architecture',
+      () => {
+        for (
+          let index = 0;
+          index < 256;
+          index += 1
+        ) {
+          const locator =
+            new SystemLocator(
+              BigInt(index % 7),
+              BigInt(30_000 - index),
+              BigInt(index),
+            );
+
+          const selected =
+            StellarSystemGenerator
+              .generate(
+                generationKey,
+                locator,
+                sector,
+                population,
+              );
+
+          const explicit =
+            selected.multiplicity ===
+              StellarSystemMultiplicity.SINGLE
+              ? StellarSystemGenerator.generateSingle(
+                  generationKey,
+                  locator,
+                  sector,
+                  population,
+                )
+              : selected.multiplicity ===
+                  StellarSystemMultiplicity.BINARY
+                ? StellarSystemGenerator.generateBinary(
+                    generationKey,
+                    locator,
+                    sector,
+                    population,
+                  )
+                : StellarSystemGenerator.generateTriple(
+                    generationKey,
+                    locator,
+                    sector,
+                    population,
+                  );
+
+          expect(selected).toEqual(explicit);
+        }
+      },
+      15_000,
+    );
+
+    it(
+      'should preserve the full signed-Long SystemLocator domain for TRIPLE without introducing orbital hierarchy',
+      () => {
+        const LONG_MIN =
+          -(1n << 63n);
+
+        const LONG_MAX =
+          (1n << 63n) -
+          1n;
+
+        const system =
+          StellarSystemGenerator
+            .generateTriple(
+              generationKey,
+              new SystemLocator(
+                LONG_MAX,
+                LONG_MIN,
+                LONG_MAX,
+              ),
+              sector,
+              population,
+            );
+
+        expect(system.locator.galaxyIndex).toBe(LONG_MAX);
+        expect(system.locator.sectorKey).toBe(LONG_MIN);
+        expect(system.locator.galacticObjectIndex).toBe(LONG_MAX);
+        expect('orbitHierarchy' in system).toBe(false);
+        expect('semiMajorAxisAu' in system.tertiaryCompanion!).toBe(false);
+      },
+    );
+
+    it(
+      'should keep 1024 C seeds unique and preserve A >= B >= C initial-mass ordering',
+      () => {
+        const cSeeds =
+          new Set<string>();
+
+        for (
+          let index = 0;
+          index < 1_024;
+          index += 1
+        ) {
+          const locator =
+            new SystemLocator(
+              BigInt(index % 5),
+              BigInt(index - 512),
+              BigInt(index),
+            );
+
+          const triple =
+            StellarSystemGenerator
+              .generateTriple(
+                generationKey,
+                locator,
+                sector,
+                population,
+              );
+
+          const primaryPhysical =
+            StellarGenerator
+              .generatePhysicalProperties(
+                generationKey,
+                locator,
+                sector,
+                population,
+              );
+
+          const secondary =
+            triple.secondaryCompanion!;
+
+          const tertiary =
+            triple.tertiaryCompanion!;
+
+          expect(
+            secondary.physicalProperties.initialMassSolar,
+          ).toBeLessThanOrEqual(
+            primaryPhysical.initialMassSolar,
+          );
+
+          expect(
+            tertiary.physicalProperties.initialMassSolar,
+          ).toBeLessThanOrEqual(
+            secondary.physicalProperties.initialMassSolar,
+          );
+
+          expect(tertiary.componentSeedHex).not.toBe(
+            secondary.componentSeedHex,
+          );
+
+          cSeeds.add(tertiary.componentSeedHex);
+        }
+
+        expect(cSeeds.size).toBe(1_024);
+      },
+      20_000,
+    );
+
+    it(
+      'should reject an unsupported future GeneratorVersion for all point-16.3 architecture entry points',
       () => {
         const unsupportedVersion =
           Object.freeze({
@@ -510,6 +753,32 @@ describe(
           () =>
             StellarSystemGenerator
               .generateBinary(
+                fakeV2,
+                locator,
+                sector,
+                population,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarSystemGenerator
+              .generateTriple(
+                fakeV2,
+                locator,
+                sector,
+                population,
+              ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            StellarSystemGenerator
+              .generate(
                 fakeV2,
                 locator,
                 sector,

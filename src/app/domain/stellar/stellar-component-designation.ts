@@ -10,7 +10,7 @@ import {
  * Component-level label layered over the frozen point-15.6 system designation.
  *
  * It deliberately does not rename the SystemLocator target. "Jotheria" remains
- * the system/base designation while "Jotheria A" and "Jotheria B" identify
+ * the system/base designation while "Jotheria A", "Jotheria B" and "Jotheria C" identify
  * stellar components inside that system.
  */
 export class StellarComponentDesignation {

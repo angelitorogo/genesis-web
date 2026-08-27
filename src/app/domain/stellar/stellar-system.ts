@@ -34,13 +34,16 @@ import {
   StellarSystemMultiplicity,
 } from './stellar-system-multiplicity';
 
+const MASS_ORDER_TOLERANCE =
+  1e-12;
+
 /**
  * Canonical stellar-system domain model.
  *
- * Point 16.1 established SINGLE around the already-frozen phase-15 primary.
- * Point 16.2 extends the same SystemLocator/SystemSeed identity with one
- * deterministic B companion for BINARY systems. The canonical primary remains
- * unchanged and keeps the original SystemLocator semantics.
+ * Point 16.1 established SINGLE around the frozen phase-15 primary, point 16.2
+ * added deterministic B for BINARY, and point 16.3 adds deterministic C for
+ * TRIPLE. SystemLocator/SystemSeed continue to identify the whole system and
+ * the canonical A primary remains unchanged in every architecture.
  *
  * No orbit hierarchy, circumbinary planet contract, HZ/stability correction or
  * rendering state is owned here; those remain points 16.4..16.7.
@@ -67,6 +70,9 @@ export class StellarSystem {
       Star,
 
     readonly secondaryCompanion:
+      StellarCompanion | null = null,
+
+    readonly tertiaryCompanion:
       StellarCompanion | null = null,
   ) {
     if (
@@ -96,10 +102,43 @@ export class StellarSystem {
     ) {
       if (
         secondaryCompanion !==
-        null
+          null ||
+        tertiaryCompanion !==
+          null
       ) {
         throw new RangeError(
-          'SINGLE stellar systems cannot carry a secondary companion.',
+          'SINGLE stellar systems cannot carry stellar companions.',
+        );
+      }
+
+      return;
+    }
+
+    if (
+      secondaryCompanion ===
+        null
+    ) {
+      throw new RangeError(
+        `${multiplicity.name} stellar systems require component B.`,
+      );
+    }
+
+    assertCompanion(
+      secondaryCompanion,
+      StellarSystemComponentLabel.B,
+      designation,
+    );
+
+    if (
+      multiplicity ===
+      StellarSystemMultiplicity.BINARY
+    ) {
+      if (
+        tertiaryCompanion !==
+          null
+      ) {
+        throw new RangeError(
+          'BINARY stellar systems cannot carry component C.',
         );
       }
 
@@ -108,41 +147,63 @@ export class StellarSystem {
 
     if (
       multiplicity ===
-      StellarSystemMultiplicity.BINARY
+      StellarSystemMultiplicity.TRIPLE
     ) {
       if (
-        secondaryCompanion ===
-        null
+        tertiaryCompanion ===
+          null
       ) {
         throw new RangeError(
-          'BINARY stellar systems require exactly one secondary companion.',
+          'TRIPLE stellar systems require component C.',
         );
       }
 
+      assertCompanion(
+        tertiaryCompanion,
+        StellarSystemComponentLabel.C,
+        designation,
+      );
+
       if (
+        tertiaryCompanion
+          .componentSeedHex ===
         secondaryCompanion
-          .componentLabel !==
-        StellarSystemComponentLabel.B
+          .componentSeedHex
       ) {
         throw new RangeError(
-          'The point-16.2 binary companion must use component label B.',
+          'TRIPLE component seeds B and C must be distinct.',
         );
       }
 
+      const secondaryMass =
+        secondaryCompanion
+          .physicalProperties
+          .initialMassSolar;
+
+      const tertiaryMass =
+        tertiaryCompanion
+          .physicalProperties
+          .initialMassSolar;
+
+      const scale =
+        Math.max(
+          1,
+          Math.abs(
+            secondaryMass,
+          ),
+          Math.abs(
+            tertiaryMass,
+          ),
+        );
+
       if (
-        secondaryCompanion
-          .designation
-          .systemDesignation
-          .name !==
-        designation.name ||
-        secondaryCompanion
-          .designation
-          .systemDesignation
-          .proceduralCode !==
-        designation.proceduralCode
+        tertiaryMass -
+          secondaryMass >
+        MASS_ORDER_TOLERANCE *
+          scale
       ) {
         throw new RangeError(
-          'Binary component designation must be layered over this stellar-system designation.',
+          'TRIPLE component C cannot be more massive than component B in the V1 ordering.',
         );
       }
 
@@ -150,7 +211,7 @@ export class StellarSystem {
     }
 
     throw new RangeError(
-      `Unsupported StellarSystemMultiplicity for point 16.2: ${multiplicity.name}.`,
+      `Unsupported StellarSystemMultiplicity for point 16.3: ${multiplicity.name}.`,
     );
   }
 
@@ -176,6 +237,45 @@ export class StellarSystem {
     return new StellarComponentDesignation(
       this.designation,
       StellarSystemComponentLabel.A,
+    );
+  }
+}
+
+function assertCompanion(
+  companion:
+    StellarCompanion,
+
+  expectedLabel:
+    StellarSystemComponentLabel,
+
+  systemDesignation:
+    StellarDesignation,
+): void {
+
+  if (
+    companion
+      .componentLabel !==
+    expectedLabel
+  ) {
+    throw new RangeError(
+      `Expected stellar-system component ${expectedLabel.name}.`,
+    );
+  }
+
+  if (
+    companion
+      .designation
+      .systemDesignation
+      .name !==
+      systemDesignation.name ||
+    companion
+      .designation
+      .systemDesignation
+      .proceduralCode !==
+      systemDesignation.proceduralCode
+  ) {
+    throw new RangeError(
+      'Companion designation must be layered over this stellar-system designation.',
     );
   }
 }
