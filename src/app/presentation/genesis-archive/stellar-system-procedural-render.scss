@@ -107,3 +107,135 @@
     min-height: 13rem;
   }
 }
+
+/*
+ * Point 16.7 visual-polish pass — SINGLE optical treatment V3.
+ *
+ * The photosphere remains the exact flat spectral disc frozen in V2. This pass
+ * touches external light only: wider spike shoulders next to the photosphere,
+ * brighter subordinate diagonals, optional micro-spikes for higher-energy
+ * profiles and a broader dynamic range for halo size/intensity.
+ */
+.stellar-system-render__single-corona,
+.stellar-system-render__single-bloom,
+.stellar-system-render__single-aureole {
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.stellar-system-render__single-corona {
+  filter: blur(6.2px);
+}
+
+.stellar-system-render__single-bloom {
+  filter: blur(3px);
+}
+
+.stellar-system-render__single-aureole {
+  filter: blur(1.15px);
+}
+
+.stellar-system-render__single-diffraction {
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.stellar-system-render__single-diffraction--soft {
+  stroke-width: .72;
+  filter: blur(1.02px);
+}
+
+/*
+ * Short, wider beam under the main four spikes. Because the solid photosphere
+ * is painted afterwards, its centre is hidden and only the widening next to
+ * the stellar limb remains visible.
+ */
+.stellar-system-render__single-diffraction--shoulder {
+  stroke-width: .92;
+  filter:
+    blur(.34px)
+    drop-shadow(0 0 .42px #ffffff44);
+}
+
+.stellar-system-render__single-diffraction--primary {
+  stroke-width: .145;
+  filter:
+    blur(.065px)
+    drop-shadow(0 0 .38px #ffffff66)
+    drop-shadow(0 0 .85px #ffffff24);
+}
+
+.stellar-system-render__single-diffraction--secondary {
+  stroke-width: .115;
+  filter:
+    blur(.11px)
+    drop-shadow(0 0 .28px #ffffff3d);
+}
+
+.stellar-system-render__single-diffraction--micro {
+  stroke-width: .075;
+  filter:
+    blur(.095px)
+    drop-shadow(0 0 .20px #ffffff2e);
+}
+
+.stellar-system-render__single-photosphere {
+  stroke-width: .34;
+  vector-effect: non-scaling-stroke;
+  filter:
+    drop-shadow(0 0 .45px #ffffff52)
+    drop-shadow(0 0 1.15px #ffffff1f);
+}
+
+.stellar-system-render__component--single-optical
+.stellar-system-render__component-label,
+.stellar-system-render__component--binary-optical
+.stellar-system-render__component-label,
+.stellar-system-render__component--triple-optical
+.stellar-system-render__component-label {
+  paint-order: stroke;
+  stroke: #07101b;
+  stroke-width: 1.15px;
+  stroke-linejoin: round;
+}
+
+
+/*
+ * Point 16.7 visual-polish pass — BINARY optical treatment V1.
+ *
+ * A and B reuse the exact frozen SINGLE V3 optical language. Their light
+ * profile is spatially compressed in the render model so two nearby stars can
+ * bloom naturally without erasing the A-B orbit or barycentric relationship.
+ * The barycentre is repainted above the optical layers for legibility.
+ */
+.stellar-system-render__component--binary-optical {
+  isolation: isolate;
+}
+
+.stellar-system-render__barycentre--foreground circle {
+  filter:
+    drop-shadow(0 0 .5px #6ad7ff)
+    drop-shadow(0 0 1.2px #6ad7ff66);
+}
+
+.stellar-system-render__barycentre--foreground path {
+  filter: drop-shadow(0 0 .45px #6ad7ff66);
+}
+
+
+/*
+ * Point 16.7 visual-polish pass — TRIPLE optical treatment V1.
+ *
+ * A/B/C reuse the frozen SINGLE V3 light language. The compact inner pair
+ * receives the tightest spatial/opacity envelope; the outer C component gets
+ * slightly more room because it is separated by the hierarchical outer orbit.
+ * The inner A+B barycentre is repainted after all optical layers so it remains
+ * legible even when the pair is luminous.
+ */
+.stellar-system-render__component--triple-optical {
+  isolation: isolate;
+}

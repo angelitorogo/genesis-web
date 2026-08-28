@@ -39,6 +39,10 @@ import {
   ArchiveStellarSystemKnowledgeLevel,
 } from './archive-stellar-system-card';
 
+import {
+  stellarVisualRadiusScale,
+} from './stellar-visual-radius-scale';
+
 const generationKey =
   new UniverseGenerationKey(
     UniverseSeed.parse(
@@ -117,6 +121,81 @@ describe(
         expect(card.orbits).toEqual([]);
         expect(card.circumbinaryFacts).toEqual([]);
         expect(card.habitabilityFacts).toEqual([]);
+      },
+    );
+
+    it(
+      'should present stellar ages in human-readable years instead of Ga',
+      () => {
+        const card =
+          ArchiveStellarSystemCardAssembler
+            .build(
+              generationKey,
+              new SystemLocator(
+                0n,
+                0n,
+                0n,
+              ),
+              DiscoveryState.CATALOGUED,
+            );
+
+        const ageFact =
+          card.components[0]?.facts.find(
+            current =>
+              current.label ===
+              'Edad',
+          );
+
+        expect(ageFact).toBeTruthy();
+        expect(ageFact?.value).not.toContain('Ga');
+        expect(ageFact?.value).toMatch(
+          /(?:millones de años|mil años|años)$/,
+        );
+      },
+    );
+
+    it(
+      'should expose a bounded visual radius derived from the catalogued physical radius',
+      () => {
+        const card =
+          ArchiveStellarSystemCardAssembler
+            .build(
+              generationKey,
+              new SystemLocator(
+                0n,
+                0n,
+                0n,
+              ),
+              DiscoveryState.CATALOGUED,
+            );
+
+        const radiusFact =
+          card.components[0]?.facts.find(
+            current =>
+              current.label ===
+              'Radio de referencia',
+          );
+
+        expect(radiusFact).toBeTruthy();
+
+        const radiusSolar =
+          Number.parseFloat(
+            radiusFact!.value,
+          );
+
+        const visualScale =
+          card.render.components[0]
+            ?.radiusScale;
+
+        expect(visualScale).toBeDefined();
+        expect(visualScale).toBeGreaterThanOrEqual(0.68);
+        expect(visualScale).toBeLessThanOrEqual(1.36);
+        expect(visualScale).toBeCloseTo(
+          stellarVisualRadiusScale(
+            radiusSolar,
+          ),
+          4,
+        );
       },
     );
 

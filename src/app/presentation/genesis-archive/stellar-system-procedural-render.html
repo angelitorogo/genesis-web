@@ -61,44 +61,131 @@
         ></ellipse>
       }
 
-      @if (!model.unresolved && descriptor().multiplicity?.name !== 'SINGLE') {
-        <g
-          class="stellar-system-render__barycentre"
-          data-testid="stellar-system-render-barycentre"
-        >
-          <circle
-            [attr.cx]="model.barycentreX"
-            [attr.cy]="model.barycentreY"
-            r="1.3"
-          ></circle>
-
-          <path
-            [attr.d]="'M ' + (model.barycentreX - 3) + ' ' + model.barycentreY + ' h 6 M ' + model.barycentreX + ' ' + (model.barycentreY - 3) + ' v 6'"
-          ></path>
-        </g>
-      }
-
       @for (component of model.components; track component.label) {
         <g
           class="stellar-system-render__component"
+          [class.stellar-system-render__component--single-optical]="!model.unresolved && descriptor().multiplicity?.name === 'SINGLE'"
+          [class.stellar-system-render__component--binary-optical]="!model.unresolved && descriptor().multiplicity?.name === 'BINARY'"
+          [class.stellar-system-render__component--triple-optical]="!model.unresolved && descriptor().multiplicity?.name === 'TRIPLE'"
           [attr.data-component]="component.label"
+          [attr.data-star-treatment]="model.unresolved ? 'UNRESOLVED_V1' : descriptor().multiplicity?.name === 'SINGLE' ? 'SINGLE_OPTICAL_V3' : descriptor().multiplicity?.name === 'BINARY' ? 'BINARY_OPTICAL_V1' : 'TRIPLE_OPTICAL_V1'"
         >
-          <circle
-            class="stellar-system-render__star-halo"
-            [attr.cx]="component.x"
-            [attr.cy]="component.y"
-            [attr.r]="component.radius * 1.9"
-            [attr.fill]="component.colorHex"
-          ></circle>
+          @if (!model.unresolved) {
+            <circle
+              class="stellar-system-render__single-corona"
+              data-testid="stellar-system-render-single-corona"
+              [attr.cx]="component.x"
+              [attr.cy]="component.y"
+              [attr.r]="component.lightProfile.coronaRadius"
+              [attr.fill]="component.colorHex"
+              [attr.opacity]="component.lightProfile.coronaOpacity"
+            ></circle>
 
-          <circle
-            class="stellar-system-render__star"
-            filter="url(#stellar-system-glow)"
-            [attr.cx]="component.x"
-            [attr.cy]="component.y"
-            [attr.r]="component.radius"
-            [attr.fill]="component.colorHex"
-          ></circle>
+            <circle
+              class="stellar-system-render__single-bloom"
+              data-testid="stellar-system-render-single-bloom"
+              [attr.cx]="component.x"
+              [attr.cy]="component.y"
+              [attr.r]="component.lightProfile.bloomRadius"
+              [attr.fill]="component.colorHex"
+              [attr.opacity]="component.lightProfile.bloomOpacity"
+            ></circle>
+
+            <circle
+              class="stellar-system-render__single-aureole"
+              data-testid="stellar-system-render-single-aureole"
+              [attr.cx]="component.x"
+              [attr.cy]="component.y"
+              [attr.r]="component.lightProfile.aureoleRadius"
+              [attr.fill]="component.colorHex"
+              [attr.opacity]="component.lightProfile.aureoleOpacity"
+            ></circle>
+
+            <g
+              class="stellar-system-render__single-diffraction stellar-system-render__single-diffraction--soft"
+              data-testid="stellar-system-render-single-diffraction-soft"
+              [attr.opacity]="component.lightProfile.diffractionSoftOpacity"
+              [attr.stroke]="component.colorHex"
+            >
+              <path
+                [attr.d]="'M ' + (component.x - component.lightProfile.diffractionSoftLength * 0.82) + ' ' + component.y + ' H ' + (component.x + component.lightProfile.diffractionSoftLength * 0.82) + ' M ' + component.x + ' ' + (component.y - component.lightProfile.diffractionSoftLength * 1.08) + ' V ' + (component.y + component.lightProfile.diffractionSoftLength * 1.08)"
+              ></path>
+            </g>
+
+            <g
+              class="stellar-system-render__single-diffraction stellar-system-render__single-diffraction--shoulder"
+              data-testid="stellar-system-render-single-diffraction-shoulder"
+              [attr.opacity]="component.lightProfile.diffractionShoulderOpacity"
+              [attr.stroke]="component.lightProfile.diffractionColorHex"
+            >
+              <path
+                [attr.d]="'M ' + (component.x - component.lightProfile.diffractionShoulderLength * 0.94) + ' ' + component.y + ' H ' + (component.x + component.lightProfile.diffractionShoulderLength * 0.94) + ' M ' + component.x + ' ' + (component.y - component.lightProfile.diffractionShoulderLength * 1.22) + ' V ' + (component.y + component.lightProfile.diffractionShoulderLength * 1.22)"
+              ></path>
+            </g>
+
+            <g
+              class="stellar-system-render__single-diffraction stellar-system-render__single-diffraction--primary"
+              data-testid="stellar-system-render-single-diffraction"
+              [attr.opacity]="component.lightProfile.diffractionPrimaryOpacity"
+              [attr.stroke]="component.lightProfile.diffractionColorHex"
+            >
+              <path
+                [attr.d]="'M ' + (component.x - component.lightProfile.diffractionPrimaryLength * 0.70) + ' ' + component.y + ' H ' + (component.x + component.lightProfile.diffractionPrimaryLength * 0.70) + ' M ' + component.x + ' ' + (component.y - component.lightProfile.diffractionPrimaryLength * 1.18) + ' V ' + (component.y + component.lightProfile.diffractionPrimaryLength * 1.18)"
+              ></path>
+            </g>
+
+            <g
+              class="stellar-system-render__single-diffraction stellar-system-render__single-diffraction--secondary"
+              data-testid="stellar-system-render-single-diffraction-secondary"
+              [attr.opacity]="component.lightProfile.diffractionSecondaryOpacity"
+              [attr.stroke]="component.lightProfile.diffractionColorHex"
+            >
+              <path
+                [attr.d]="'M ' + (component.x - component.lightProfile.diffractionSecondaryLength) + ' ' + (component.y - component.lightProfile.diffractionSecondaryLength) + ' L ' + (component.x + component.lightProfile.diffractionSecondaryLength) + ' ' + (component.y + component.lightProfile.diffractionSecondaryLength) + ' M ' + (component.x + component.lightProfile.diffractionSecondaryLength) + ' ' + (component.y - component.lightProfile.diffractionSecondaryLength) + ' L ' + (component.x - component.lightProfile.diffractionSecondaryLength) + ' ' + (component.y + component.lightProfile.diffractionSecondaryLength)"
+              ></path>
+            </g>
+
+            @if (component.lightProfile.hasMicroDiffraction) {
+              <g
+                class="stellar-system-render__single-diffraction stellar-system-render__single-diffraction--micro"
+                data-testid="stellar-system-render-single-diffraction-micro"
+                [attr.opacity]="component.lightProfile.diffractionMicroOpacity"
+                [attr.stroke]="component.lightProfile.diffractionColorHex"
+                [attr.transform]="'rotate(22.5 ' + component.x + ' ' + component.y + ')'"
+              >
+                <path
+                  [attr.d]="'M ' + (component.x - component.lightProfile.diffractionMicroLength) + ' ' + component.y + ' H ' + (component.x + component.lightProfile.diffractionMicroLength) + ' M ' + component.x + ' ' + (component.y - component.lightProfile.diffractionMicroLength) + ' V ' + (component.y + component.lightProfile.diffractionMicroLength)"
+                ></path>
+              </g>
+            }
+
+            <circle
+              class="stellar-system-render__single-photosphere"
+              data-testid="stellar-system-render-single-photosphere"
+              [attr.cx]="component.x"
+              [attr.cy]="component.y"
+              [attr.r]="component.radius"
+              [attr.fill]="component.colorHex"
+              [attr.stroke]="component.colorHex"
+            ></circle>
+          } @else {
+            <circle
+              class="stellar-system-render__star-halo"
+              [attr.cx]="component.x"
+              [attr.cy]="component.y"
+              [attr.r]="component.radius * 1.9"
+              [attr.fill]="component.colorHex"
+            ></circle>
+
+            <circle
+              class="stellar-system-render__star"
+              filter="url(#stellar-system-glow)"
+              [attr.cx]="component.x"
+              [attr.cy]="component.y"
+              [attr.r]="component.radius"
+              [attr.fill]="component.colorHex"
+            ></circle>
+          }
 
           @if (!model.unresolved) {
             <text
@@ -110,6 +197,23 @@
               {{ component.label }}
             </text>
           }
+        </g>
+      }
+
+      @if (!model.unresolved && (descriptor().multiplicity?.name === 'BINARY' || descriptor().multiplicity?.name === 'TRIPLE')) {
+        <g
+          class="stellar-system-render__barycentre stellar-system-render__barycentre--foreground"
+          data-testid="stellar-system-render-barycentre"
+        >
+          <circle
+            [attr.cx]="model.barycentreX"
+            [attr.cy]="model.barycentreY"
+            r="1.3"
+          ></circle>
+
+          <path
+            [attr.d]="'M ' + (model.barycentreX - 3) + ' ' + model.barycentreY + ' h 6 M ' + model.barycentreX + ' ' + (model.barycentreY - 3) + ' v 6'"
+          ></path>
         </g>
       }
 
@@ -133,7 +237,7 @@
     </svg>
 
     <footer class="stellar-system-render__legend">
-      <span>ESQUEMA ORBITAL PROCEDURAL</span>
+      <span>{{ !model.unresolved && descriptor().multiplicity?.name === 'SINGLE' ? 'RENDER ESTELAR PROCEDURAL' : 'ESQUEMA ORBITAL PROCEDURAL' }}</span>
       <span>NO A ESCALA</span>
 
       @if (model.habitableBand) {

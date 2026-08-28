@@ -116,3 +116,37 @@
     grid-template-columns: 1fr;
   }
 }
+
+.archive-discovery-detail__stellar-components-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: .9rem;
+}
+
+.archive-discovery-detail__stellar-unit-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .28rem .7rem;
+  max-width: 30rem;
+  color: var(--genesis-color-text-subtle);
+  font: .56rem var(--genesis-font-mono);
+  text-align: right;
+}
+
+.archive-discovery-detail__stellar-unit-legend strong {
+  color: var(--genesis-color-primary);
+  font-weight: 700;
+}
+
+@media (max-width: 40rem) {
+  .archive-discovery-detail__stellar-components-header {
+    display: grid;
+  }
+
+  .archive-discovery-detail__stellar-unit-legend {
+    justify-content: start;
+    text-align: left;
+  }
+}

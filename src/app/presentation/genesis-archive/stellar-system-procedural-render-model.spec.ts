@@ -56,6 +56,113 @@ describe(
     );
 
     it(
+      'should derive external glow and diffraction for a resolved SINGLE without changing its one-component architecture',
+      () => {
+        const coolModel =
+          StellarSystemProceduralRenderModelBuilder
+            .build(
+              singleDescriptor(
+                '#FF8A32',
+              ),
+            );
+
+        const hotModel =
+          StellarSystemProceduralRenderModelBuilder
+            .build(
+              singleDescriptor(
+                '#AFCBFF',
+              ),
+            );
+
+        const cool =
+          coolModel.components[0]!;
+
+        const hot =
+          hotModel.components[0]!;
+
+        expect(coolModel.unresolved).toBe(false);
+        expect(coolModel.components).toHaveLength(1);
+        expect(coolModel.orbits).toEqual([]);
+        expect(cool.x).toBe(50);
+        expect(cool.y).toBe(50);
+
+        expect(
+          cool.lightProfile.coronaRadius,
+        ).toBeGreaterThan(
+          cool.lightProfile.bloomRadius,
+        );
+
+        expect(
+          cool.lightProfile.bloomRadius,
+        ).toBeGreaterThan(
+          cool.lightProfile.aureoleRadius,
+        );
+
+        expect(
+          cool.lightProfile.aureoleRadius,
+        ).toBeGreaterThan(
+          cool.radius,
+        );
+
+        expect(
+          cool.lightProfile.diffractionSoftLength,
+        ).toBeGreaterThan(
+          cool.lightProfile.diffractionPrimaryLength,
+        );
+
+        expect(
+          cool.lightProfile.diffractionPrimaryLength,
+        ).toBeGreaterThan(
+          cool.lightProfile.diffractionSecondaryLength,
+        );
+
+        expect(
+          cool.lightProfile.diffractionSecondaryLength,
+        ).toBeGreaterThan(
+          cool.lightProfile.diffractionMicroLength,
+        );
+
+        expect(
+          cool.lightProfile.diffractionMicroLength,
+        ).toBeGreaterThan(
+          cool.lightProfile.diffractionShoulderLength,
+        );
+
+        expect(
+          cool.lightProfile.diffractionPrimaryOpacity,
+        ).toBeGreaterThan(
+          cool.lightProfile.diffractionSecondaryOpacity,
+        );
+
+        expect(
+          cool.lightProfile.diffractionSecondaryOpacity,
+        ).toBeGreaterThan(
+          cool.lightProfile.diffractionMicroOpacity,
+        );
+
+        expect(
+          hot.lightProfile.diffractionPrimaryOpacity,
+        ).toBeGreaterThan(
+          cool.lightProfile.diffractionPrimaryOpacity,
+        );
+
+        expect(
+          hot.lightProfile.coronaRadius,
+        ).toBeGreaterThan(
+          cool.lightProfile.coronaRadius,
+        );
+
+        expect(
+          cool.lightProfile.hasMicroDiffraction,
+        ).toBe(false);
+
+        expect(
+          hot.lightProfile.hasMicroDiffraction,
+        ).toBe(true);
+      },
+    );
+
+    it(
       'should place the more massive binary primary closer to the barycentre and draw the frozen inner eccentricity',
       () => {
         const model =
@@ -86,6 +193,109 @@ describe(
         );
 
         expect(model.habitableBand).not.toBeNull();
+
+        expect(
+          primary.radius,
+        ).toBeGreaterThan(
+          secondary.radius,
+        );
+
+        expect(
+          primary.radius /
+            secondary.radius,
+        ).toBeGreaterThan(
+          1.08,
+        );
+
+        expect(
+          primary.lightProfile.coronaRadius,
+        ).toBeGreaterThan(
+          primary.radius,
+        );
+
+        expect(
+          secondary.lightProfile.coronaRadius,
+        ).toBeGreaterThan(
+          secondary.radius,
+        );
+
+        expect(
+          primary.lightProfile.diffractionPrimaryOpacity,
+        ).toBeGreaterThan(
+          primary.lightProfile.diffractionSecondaryOpacity,
+        );
+
+        expect(
+          secondary.lightProfile.diffractionPrimaryOpacity,
+        ).toBeGreaterThan(
+          secondary.lightProfile.diffractionSecondaryOpacity,
+        );
+
+        const equivalentSingle =
+          StellarSystemProceduralRenderModelBuilder
+            .build({
+              ...singleDescriptor(
+                primary.colorHex,
+              ),
+              components: [
+                binaryDescriptor().components[0]!,
+              ],
+            });
+
+        expect(
+          primary.lightProfile.coronaRadius,
+        ).toBeLessThan(
+          equivalentSingle.components[0]!.lightProfile.coronaRadius,
+        );
+      },
+    );
+
+    it(
+      'should visibly preserve large A-B radius differences inside one binary without drawing them to literal scale',
+      () => {
+        const descriptor =
+          binaryDescriptor();
+
+        const model =
+          StellarSystemProceduralRenderModelBuilder
+            .build({
+              ...descriptor,
+              components: [
+                {
+                  ...descriptor.components[0]!,
+                  radiusScale:
+                    1.23,
+                },
+                {
+                  ...descriptor.components[1]!,
+                  radiusScale:
+                    0.72,
+                },
+              ],
+            });
+
+        const primary =
+          model.components[0]!;
+        const secondary =
+          model.components[1]!;
+
+        expect(primary.radius).toBeGreaterThan(
+          secondary.radius,
+        );
+
+        expect(
+          primary.radius /
+            secondary.radius,
+        ).toBeGreaterThan(
+          1.4,
+        );
+
+        expect(
+          primary.radius /
+            secondary.radius,
+        ).toBeLessThan(
+          1.7,
+        );
       },
     );
 
@@ -157,10 +367,111 @@ describe(
         expect(model.components[2]!.x).toBeGreaterThan(
           model.barycentreX,
         );
+
+        const [
+          primary,
+          secondary,
+          tertiary,
+        ] =
+          model.components;
+
+        expect(
+          primary!.radius,
+        ).toBeGreaterThan(
+          secondary!.radius,
+        );
+
+        expect(
+          secondary!.radius,
+        ).toBeGreaterThan(
+          tertiary!.radius,
+        );
+
+        expect(
+          primary!.lightProfile.coronaRadius,
+        ).toBeGreaterThan(
+          primary!.radius,
+        );
+
+        expect(
+          secondary!.lightProfile.coronaRadius,
+        ).toBeGreaterThan(
+          secondary!.radius,
+        );
+
+        expect(
+          tertiary!.lightProfile.coronaRadius,
+        ).toBeGreaterThan(
+          tertiary!.radius,
+        );
+
+        expect(
+          primary!.lightProfile.diffractionPrimaryOpacity,
+        ).toBeGreaterThan(
+          primary!.lightProfile.diffractionSecondaryOpacity,
+        );
+
+        expect(
+          tertiary!.lightProfile.diffractionPrimaryOpacity,
+        ).toBeGreaterThan(
+          tertiary!.lightProfile.diffractionSecondaryOpacity,
+        );
+
+        const binary =
+          StellarSystemProceduralRenderModelBuilder
+            .build(
+              binaryDescriptor(),
+            );
+
+        expect(
+          primary!.lightProfile.coronaRadius,
+        ).toBeLessThan(
+          binary.components[0]!.lightProfile.coronaRadius,
+        );
+
+        expect(
+          secondary!.lightProfile.coronaRadius,
+        ).toBeLessThan(
+          binary.components[1]!.lightProfile.coronaRadius,
+        );
       },
     );
   },
 );
+
+function singleDescriptor(
+  colorHex:
+    string,
+): ArchiveStellarSystemRenderDescriptor {
+
+  return {
+    accessibleLabel:
+      'Single',
+    knowledgeLevel:
+      ArchiveStellarSystemKnowledgeLevel.CONFIRMED,
+    multiplicity:
+      StellarSystemMultiplicity.SINGLE,
+    components: [
+      {
+        label:
+          'A',
+        colorHex,
+        radiusScale:
+          1.08,
+        massSolar:
+          1.05,
+      },
+    ],
+    innerOrbitEccentricity:
+      null,
+    outerOrbitEccentricity:
+      null,
+    stableHabitableZoneFraction:
+      null,
+    hasStableHabitableZone:
+      false,
+  };
+}
 
 function binaryDescriptor():
   ArchiveStellarSystemRenderDescriptor {

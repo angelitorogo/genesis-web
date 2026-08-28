@@ -64,6 +64,21 @@ describe(
             'app-stellar-system-procedural-render',
           ),
         ).toHaveLength(4);
+
+        const legend =
+          element.querySelector(
+            '[data-testid="stellar-system-laboratory-unit-legend"]',
+          );
+
+        expect(legend).toBeTruthy();
+        expect(legend?.textContent).toContain('M☉');
+        expect(legend?.textContent).toContain('masas solares');
+        expect(legend?.textContent).toContain('R☉');
+        expect(legend?.textContent).toContain('radios solares');
+        expect(legend?.textContent).toContain('L☉');
+        expect(legend?.textContent).toContain('luminosidades solares');
+        expect(legend?.textContent).toContain('K');
+        expect(legend?.textContent).toContain('kelvin');
       },
       30_000,
     );

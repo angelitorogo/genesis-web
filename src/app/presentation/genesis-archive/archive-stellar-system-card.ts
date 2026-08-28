@@ -113,6 +113,10 @@ import {
   GalaxyGenerator,
 } from '../../simulation/universe/galaxy-generator';
 
+import {
+  stellarVisualRadiusScale,
+} from './stellar-visual-radius-scale';
+
 export enum ArchiveStellarSystemKnowledgeLevel {
   DETECTED =
     'DETECTED',
@@ -847,7 +851,7 @@ function physicalCard(
                   colorHex:
                     component.colorHex,
                   radiusScale:
-                    renderRadiusScale(
+                    stellarVisualRadiusScale(
                       physical.radiusSolar,
                     ),
                   massSolar:
@@ -977,7 +981,9 @@ function stellarPhysicalFacts(
     ),
     fact(
       'Edad',
-      `${formatNumber(lifetime.ageBillionYears)} Ga`,
+      formatStellarAge(
+        lifetime.ageBillionYears,
+      ),
     ),
   ]);
 }
@@ -1292,28 +1298,94 @@ function stellarEvolutionRegimeLabel(
     : 'Geometría de referencia únicamente';
 }
 
-function renderRadiusScale(
-  radiusSolar:
+function formatStellarAge(
+  ageBillionYears:
     number,
-): number {
+): string {
 
-  const logarithmic =
-    1 +
-    0.18 *
-      Math.log10(
-        Math.max(
-          0.01,
-          radiusSolar,
-        ),
-      );
-
-  return Math.min(
-    1.55,
+  const ageYears =
     Math.max(
-      0.72,
-      logarithmic,
-    ),
-  );
+      0,
+      ageBillionYears,
+    ) *
+    1_000_000_000;
+
+  if (
+    ageYears >=
+    1_000_000
+  ) {
+    return `${formatHumanAgeNumber(ageYears / 1_000_000)} millones de años`;
+  }
+
+  if (
+    ageYears >=
+    1_000
+  ) {
+    return `${formatHumanAgeNumber(ageYears / 1_000)} mil años`;
+  }
+
+  return `${formatHumanAgeNumber(ageYears)} años`;
+}
+
+function formatHumanAgeNumber(
+  value:
+    number,
+): string {
+
+  const absolute =
+    Math.abs(
+      value,
+    );
+
+  const fractionDigits =
+    absolute >= 1_000
+      ? 0
+      : absolute >= 100
+        ? 1
+        : absolute >= 10
+          ? 2
+          : 3;
+
+  let fixed =
+    value.toFixed(
+      fractionDigits,
+    );
+
+  if (
+    fixed.includes(
+      '.',
+    )
+  ) {
+    fixed =
+      fixed
+        .replace(
+          /0+$/,
+          '',
+        )
+        .replace(
+          /\.$/,
+          '',
+        );
+  }
+
+  const [
+    integerPart =
+      '0',
+    decimalPart,
+  ] =
+    fixed.split(
+      '.',
+    );
+
+  const groupedInteger =
+    integerPart.replace(
+      /\B(?=(\d{3})+(?!\d))/g,
+      '.',
+    );
+
+  return decimalPart
+    ? `${groupedInteger},${decimalPart}`
+    : groupedInteger;
 }
 
 function fact(

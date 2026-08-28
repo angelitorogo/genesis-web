@@ -167,12 +167,30 @@
                   class="archive-discovery-detail__stellar-components"
                   data-testid="archive-stellar-system-components"
                 >
-                  <header>
-                    <small class="archive-discovery-detail__eyebrow">
-                      COMPONENTES ESTELARES
-                    </small>
+                  <header class="archive-discovery-detail__stellar-components-header">
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        COMPONENTES ESTELARES
+                      </small>
 
-                    <h3>Ficha por componente</h3>
+                      <h3>Ficha por componente</h3>
+                    </div>
+
+                    @if (
+                      systemCard.knowledgeLevel === 'CATALOGUED' ||
+                      systemCard.knowledgeLevel === 'CONFIRMED'
+                    ) {
+                      <aside
+                        class="archive-discovery-detail__stellar-unit-legend"
+                        data-testid="archive-stellar-unit-legend"
+                        aria-label="Leyenda de unidades estelares"
+                      >
+                        <span><strong>M☉</strong> masas solares</span>
+                        <span><strong>R☉</strong> radios solares</span>
+                        <span><strong>L☉</strong> luminosidades solares</span>
+                        <span><strong>K</strong> kelvin</span>
+                      </aside>
+                    }
                   </header>
 
                   <div class="archive-discovery-detail__stellar-component-grid">

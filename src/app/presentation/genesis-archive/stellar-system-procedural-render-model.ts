@@ -7,6 +7,62 @@ import {
   StellarSystemMultiplicity,
 } from '../../domain/stellar/stellar-system-multiplicity';
 
+export interface StellarSystemRenderStarLightProfileModel {
+  readonly coronaRadius:
+    number;
+
+  readonly bloomRadius:
+    number;
+
+  readonly aureoleRadius:
+    number;
+
+  readonly diffractionSoftLength:
+    number;
+
+  readonly diffractionPrimaryLength:
+    number;
+
+  readonly diffractionShoulderLength:
+    number;
+
+  readonly diffractionSecondaryLength:
+    number;
+
+  readonly diffractionMicroLength:
+    number;
+
+  readonly coronaOpacity:
+    number;
+
+  readonly bloomOpacity:
+    number;
+
+  readonly aureoleOpacity:
+    number;
+
+  readonly diffractionSoftOpacity:
+    number;
+
+  readonly diffractionPrimaryOpacity:
+    number;
+
+  readonly diffractionShoulderOpacity:
+    number;
+
+  readonly diffractionSecondaryOpacity:
+    number;
+
+  readonly diffractionMicroOpacity:
+    number;
+
+  readonly hasMicroDiffraction:
+    boolean;
+
+  readonly diffractionColorHex:
+    string;
+}
+
 export interface StellarSystemRenderPointModel {
   readonly label:
     'A' | 'B' | 'C';
@@ -22,6 +78,9 @@ export interface StellarSystemRenderPointModel {
 
   readonly colorHex:
     string;
+
+  readonly lightProfile:
+    StellarSystemRenderStarLightProfileModel;
 }
 
 export interface StellarSystemRenderOrbitModel {
@@ -78,6 +137,24 @@ export interface StellarSystemProceduralRenderModel {
 const VIEWBOX_CENTER =
   50;
 
+const BINARY_OPTICAL_SPATIAL_SCALE =
+  0.62;
+
+const BINARY_OPTICAL_OPACITY_SCALE =
+  0.86;
+
+const TRIPLE_INNER_OPTICAL_SPATIAL_SCALE =
+  0.48;
+
+const TRIPLE_INNER_OPTICAL_OPACITY_SCALE =
+  0.78;
+
+const TRIPLE_TERTIARY_OPTICAL_SPATIAL_SCALE =
+  0.56;
+
+const TRIPLE_TERTIARY_OPTICAL_OPACITY_SCALE =
+  0.82;
+
 /**
  * Presentation-only point-16.7 schematic layout.
  *
@@ -109,19 +186,10 @@ export class StellarSystemProceduralRenderModelBuilder {
           VIEWBOX_CENTER,
         components:
           Object.freeze([
-            Object.freeze({
-              label:
-                'A' as const,
-              x:
-                VIEWBOX_CENTER,
-              y:
-                VIEWBOX_CENTER,
-              radius:
-                5,
-              colorHex:
-                descriptor.components[0]?.colorHex ??
+            unresolvedRenderPoint(
+              descriptor.components[0]?.colorHex ??
                 '#68808D',
-            }),
+            ),
           ]),
         orbits:
           Object.freeze([]),
@@ -162,6 +230,12 @@ function singleModel(
   const component =
     descriptor.components[0]!;
 
+  const systemRadiusScales =
+    descriptor.components.map(
+      candidate =>
+        candidate.radiusScale,
+    );
+
   return Object.freeze({
     unresolved:
       false,
@@ -175,6 +249,9 @@ function singleModel(
           component,
           VIEWBOX_CENTER,
           VIEWBOX_CENTER,
+          1,
+          1,
+          systemRadiusScales,
         ),
       ]),
     orbits:
@@ -220,6 +297,12 @@ function binaryModel(
     innerSeparation *
       shares.primary;
 
+  const systemRadiusScales =
+    descriptor.components.map(
+      component =>
+        component.radiusScale,
+    );
+
   const orbits =
     descriptor.innerOrbitEccentricity ===
       null
@@ -247,11 +330,17 @@ function binaryModel(
           primary,
           primaryX,
           centerY,
+          BINARY_OPTICAL_SPATIAL_SCALE,
+          BINARY_OPTICAL_OPACITY_SCALE,
+          systemRadiusScales,
         ),
         renderPoint(
           secondary,
           secondaryX,
           centerY,
+          BINARY_OPTICAL_SPATIAL_SCALE,
+          BINARY_OPTICAL_OPACITY_SCALE,
+          systemRadiusScales,
         ),
       ]),
     orbits,
@@ -329,6 +418,12 @@ function tripleModel(
     innerSeparation *
       innerShares.primary;
 
+  const systemRadiusScales =
+    descriptor.components.map(
+      component =>
+        component.radiusScale,
+    );
+
   const orbits:
     StellarSystemRenderOrbitModel[] =
     [];
@@ -378,6 +473,9 @@ function tripleModel(
             primaryX,
           ),
           VIEWBOX_CENTER,
+          TRIPLE_INNER_OPTICAL_SPATIAL_SCALE,
+          TRIPLE_INNER_OPTICAL_OPACITY_SCALE,
+          systemRadiusScales,
         ),
         renderPoint(
           secondary,
@@ -385,6 +483,9 @@ function tripleModel(
             secondaryX,
           ),
           VIEWBOX_CENTER,
+          TRIPLE_INNER_OPTICAL_SPATIAL_SCALE,
+          TRIPLE_INNER_OPTICAL_OPACITY_SCALE,
+          systemRadiusScales,
         ),
         renderPoint(
           tertiary,
@@ -392,6 +493,9 @@ function tripleModel(
             tertiaryX,
           ),
           VIEWBOX_CENTER,
+          TRIPLE_TERTIARY_OPTICAL_SPATIAL_SCALE,
+          TRIPLE_TERTIARY_OPTICAL_OPACITY_SCALE,
+          systemRadiusScales,
         ),
       ]),
     orbits:
@@ -418,19 +522,601 @@ function renderPoint(
 
   y:
     number,
+
+  lightSpatialScale =
+    1,
+
+  lightOpacityScale =
+    1,
+
+  systemRadiusScales:
+    readonly number[] = [],
 ): StellarSystemRenderPointModel {
+
+  const radius =
+    visualPhotosphereRadius(
+      component.radiusScale,
+      systemRadiusScales,
+    );
 
   return Object.freeze({
     label:
       component.label,
     x,
     y,
-    radius:
-      4.25 *
-      component.radiusScale,
+    radius,
     colorHex:
       component.colorHex,
+    lightProfile:
+      starLightProfile(
+        component.colorHex,
+        radius,
+        component.radiusScale,
+        component.massSolar,
+        lightSpatialScale,
+        lightOpacityScale,
+      ),
   });
+}
+
+function unresolvedRenderPoint(
+  colorHex:
+    string,
+): StellarSystemRenderPointModel {
+
+  const radius =
+    5;
+
+  return Object.freeze({
+    label:
+      'A',
+    x:
+      VIEWBOX_CENTER,
+    y:
+      VIEWBOX_CENTER,
+    radius,
+    colorHex,
+    lightProfile:
+      starLightProfile(
+        colorHex,
+        radius,
+        1,
+        null,
+      ),
+  });
+}
+
+/**
+ * Optical presentation profile for the point-16.7 SVG renderer.
+ *
+ * This is deliberately presentation-only: it derives bloom/corona/diffraction
+ * from values already authorized by the archive card and never writes a
+ * simulation property back. DISCOVERED therefore receives a neutral profile,
+ * while CATALOGUED/CONFIRMED can express the frozen spectral colour and size.
+ */
+function starLightProfile(
+  colorHex:
+    string,
+
+  radius:
+    number,
+
+  radiusScale:
+    number,
+
+  massSolar:
+    number | null,
+
+  spatialScale =
+    1,
+
+  opacityScale =
+    1,
+): StellarSystemRenderStarLightProfileModel {
+
+  const rgb =
+    parseHexColor(
+      colorHex,
+    );
+
+  const luminance =
+    (
+      0.2126 *
+        rgb.red +
+      0.7152 *
+        rgb.green +
+      0.0722 *
+        rgb.blue
+    ) /
+    255;
+
+  const blueBias =
+    clamp01(
+      0.5 +
+      (
+        rgb.blue -
+        rgb.red
+      ) /
+        510,
+    );
+
+  const sizeEnergy =
+    clamp01(
+      (
+        radiusScale -
+        0.72
+      ) /
+        0.83,
+    );
+
+  const massEnergy =
+    massSolar ===
+        null
+      ? 0.38
+      : clamp01(
+          Math.log10(
+            1 +
+            Math.max(
+              0,
+              massSolar,
+            ),
+          ) /
+            1.35,
+        );
+
+  const energy =
+    clamp01(
+      0.14 +
+      0.24 *
+        luminance +
+      0.18 *
+        blueBias +
+      0.20 *
+        sizeEnergy +
+      0.24 *
+        massEnergy,
+    );
+
+  return Object.freeze({
+    coronaRadius:
+      radius *
+      (
+        4.9 +
+        3.9 *
+          energy
+      ) *
+      spatialScale,
+    bloomRadius:
+      radius *
+      (
+        3.05 +
+        2.05 *
+          energy
+      ) *
+      spatialScale,
+    aureoleRadius:
+      radius *
+      (
+        1.95 +
+        1.05 *
+          energy
+      ) *
+      spatialScale,
+    diffractionSoftLength:
+      radius *
+      (
+        9.2 +
+        8.6 *
+          energy
+      ) *
+      spatialScale,
+    diffractionPrimaryLength:
+      radius *
+      (
+        5.1 +
+        5.8 *
+          energy
+      ) *
+      spatialScale,
+    diffractionShoulderLength:
+      radius *
+      (
+        1.55 +
+        1.35 *
+          energy
+      ) *
+      spatialScale,
+    diffractionSecondaryLength:
+      radius *
+      (
+        2.75 +
+        2.85 *
+          energy
+      ) *
+      spatialScale,
+    diffractionMicroLength:
+      radius *
+      (
+        1.75 +
+        1.45 *
+          energy
+      ) *
+      spatialScale,
+    coronaOpacity:
+      (
+        0.05 +
+        0.095 *
+          energy
+      ) *
+      opacityScale,
+    bloomOpacity:
+      (
+        0.15 +
+        0.21 *
+          energy
+      ) *
+      opacityScale,
+    aureoleOpacity:
+      (
+        0.19 +
+        0.24 *
+          energy
+      ) *
+      opacityScale,
+    diffractionSoftOpacity:
+      (
+        0.045 +
+        0.095 *
+          energy
+      ) *
+      opacityScale,
+    diffractionPrimaryOpacity:
+      (
+        0.12 +
+        0.26 *
+          energy
+      ) *
+      opacityScale,
+    diffractionShoulderOpacity:
+      (
+        0.08 +
+        0.17 *
+          energy
+      ) *
+      opacityScale,
+    diffractionSecondaryOpacity:
+      (
+        0.075 +
+        0.15 *
+          energy
+      ) *
+      opacityScale,
+    diffractionMicroOpacity:
+      (
+        0.035 +
+        0.095 *
+          energy
+      ) *
+      opacityScale,
+    hasMicroDiffraction:
+      energy >=
+        0.52 ||
+      blueBias >=
+        0.62,
+    diffractionColorHex:
+      mixHexColor(
+        colorHex,
+        '#FFFFFF',
+        0.34 +
+          0.18 *
+            energy,
+      ),
+  });
+}
+
+/**
+ * Converts the already compressed physical radius scale into the SVG
+ * photosphere radius. For multiple systems, a second bounded relative term
+ * makes A/B/C differences visible inside the same system without ever using a
+ * literal solar-radius-to-pixel scale.
+ */
+function visualPhotosphereRadius(
+  radiusScale:
+    number,
+
+  systemRadiusScales:
+    readonly number[],
+): number {
+
+  const safeScale =
+    Math.min(
+      1.36,
+      Math.max(
+        0.68,
+        Number.isFinite(
+          radiusScale,
+        )
+          ? radiusScale
+          : 1,
+      ),
+    );
+
+  // Square-root compression keeps even very large physical differences
+  // modest in the diagram while remaining monotonic.
+  const absoluteRadius =
+    4.25 *
+    Math.sqrt(
+      safeScale,
+    );
+
+  const relativeOffset =
+    relativeSystemRadiusOffset(
+      safeScale,
+      systemRadiusScales,
+    );
+
+  return Math.min(
+    5.45,
+    Math.max(
+      3.15,
+      absoluteRadius +
+        relativeOffset,
+    ),
+  );
+}
+
+function relativeSystemRadiusOffset(
+  radiusScale:
+    number,
+
+  systemRadiusScales:
+    readonly number[],
+): number {
+
+  const finiteScales =
+    systemRadiusScales
+      .filter(
+        candidate =>
+          Number.isFinite(
+            candidate,
+          ) &&
+          candidate >
+            0,
+      )
+      .map(
+        candidate =>
+          Math.min(
+            1.36,
+            Math.max(
+              0.68,
+              candidate,
+            ),
+          ),
+      );
+
+  if (
+    finiteScales.length <=
+      1
+  ) {
+    return 0;
+  }
+
+  const minimum =
+    Math.min(
+      ...finiteScales,
+    );
+
+  const maximum =
+    Math.max(
+      ...finiteScales,
+    );
+
+  const spread =
+    maximum -
+    minimum;
+
+  if (
+    spread <
+      0.01
+  ) {
+    return 0;
+  }
+
+  const position =
+    clamp01(
+      (
+        radiusScale -
+        minimum
+      ) /
+        spread,
+    );
+
+  // Tiny physical differences receive almost no amplification. The relative
+  // accent reaches its full ±0.32 px only for clearly different components.
+  const contrastStrength =
+    clamp01(
+      spread /
+        0.35,
+    );
+
+  return (
+    position *
+      2 -
+    1
+  ) *
+    0.32 *
+    contrastStrength;
+}
+
+function parseHexColor(
+  colorHex:
+    string,
+): {
+  readonly red:
+    number;
+
+  readonly green:
+    number;
+
+  readonly blue:
+    number;
+} {
+
+  const normalized =
+    colorHex
+      .trim()
+      .replace(
+        '#',
+        '',
+      );
+
+  const expanded =
+    normalized.length ===
+      3
+      ? normalized
+          .split('')
+          .map(
+            value =>
+              value +
+              value,
+          )
+          .join('')
+      : normalized;
+
+  if (
+    !/^[0-9A-Fa-f]{6}$/.test(
+      expanded,
+    )
+  ) {
+    return {
+      red:
+        168,
+      green:
+        192,
+      blue:
+        204,
+    };
+  }
+
+  return {
+    red:
+      Number.parseInt(
+        expanded.slice(
+          0,
+          2,
+        ),
+        16,
+      ),
+    green:
+      Number.parseInt(
+        expanded.slice(
+          2,
+          4,
+        ),
+        16,
+      ),
+    blue:
+      Number.parseInt(
+        expanded.slice(
+          4,
+          6,
+        ),
+        16,
+      ),
+  };
+}
+
+function mixHexColor(
+  first:
+    string,
+
+  second:
+    string,
+
+  secondWeight:
+    number,
+): string {
+
+  const from =
+    parseHexColor(
+      first,
+    );
+
+  const to =
+    parseHexColor(
+      second,
+    );
+
+  const weight =
+    clamp01(
+      secondWeight,
+    );
+
+  return `#${[
+    mixChannel(
+      from.red,
+      to.red,
+      weight,
+    ),
+    mixChannel(
+      from.green,
+      to.green,
+      weight,
+    ),
+    mixChannel(
+      from.blue,
+      to.blue,
+      weight,
+    ),
+  ]
+    .map(
+      value =>
+        value
+          .toString(
+            16,
+          )
+          .padStart(
+            2,
+            '0',
+          )
+          .toUpperCase(),
+    )
+    .join('')}`;
+}
+
+function mixChannel(
+  from:
+    number,
+
+  to:
+    number,
+
+  weight:
+    number,
+): number {
+
+  return Math.round(
+    from +
+    (
+      to -
+      from
+    ) *
+      weight,
+  );
+}
+
+function clamp01(
+  value:
+    number,
+): number {
+
+  return Math.max(
+    0,
+    Math.min(
+      1,
+      value,
+    ),
+  );
 }
 
 function orbitModel(
