@@ -41,6 +41,10 @@ import {
 } from './planetary-orbital-elements';
 
 import {
+  PlanetaryOrbitalPeriod,
+} from './planetary-orbital-period';
+
+import {
   PlanetaryFormationMaturityRegime,
 } from './planetary-formation-maturity-regime';
 
@@ -61,6 +65,10 @@ import {
 } from './planetary-system-orbital-layout';
 
 import {
+  PlanetarySystemOrbitalPeriodLayout,
+} from './planetary-system-orbital-period-layout';
+
+import {
   PlanetarySystemOrbitTopology,
 } from './planetary-system-orbit-topology';
 
@@ -73,7 +81,7 @@ import {
 } from './protoplanet-composition-mixture';
 
 describe(
-  'PlanetarySystem points 18.1-18.3',
+  'PlanetarySystem points 18.1-18.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -118,6 +126,7 @@ describe(
             blueprint,
             architecture,
             emptyOrbitalLayout(),
+            emptyOrbitalPeriodLayout(),
           );
 
         expect(
@@ -178,6 +187,7 @@ describe(
             blueprintForOneAnchor(),
             architecture,
             singlePlanetOrbitalLayout(),
+            singlePlanetOrbitalPeriodLayout(),
           );
 
         expect(
@@ -205,7 +215,22 @@ describe(
         ).toBe(1.05);
 
         expect(
-          'orbitalPeriods' in system,
+          system.orbitalPeriods,
+        ).toBe(
+          system.orbitalPeriodLayout.periods,
+        );
+
+        expect(
+          system.orbitalPeriods[0].periodYears,
+        ).toBeCloseTo(
+          Math.sqrt(
+            1.05 ** 3,
+          ),
+          14,
+        );
+
+        expect(
+          'periodDays' in system.orbits[0],
         ).toBe(false);
 
         expect(
@@ -215,6 +240,45 @@ describe(
         expect(
           'planetDesignations' in system,
         ).toBe(false);
+      },
+    );
+
+    it(
+      'should reject point-18.4 periods that change the point-18.3 orbit identity, topology or semi-major axis',
+      () => {
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(
+                1.06,
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              new PlanetarySystemOrbitalPeriodLayout(
+                locator,
+                PlanetarySystemOrbitTopology.CIRCUMBINARY,
+                1,
+                singlePlanetOrbitalPeriodLayout()
+                  .periods,
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
       },
     );
 
@@ -244,6 +308,7 @@ describe(
               emptyBlueprint(),
               foreignArchitecture,
               emptyOrbitalLayout(),
+              emptyOrbitalPeriodLayout(),
             ),
         ).toThrow(
           RangeError,
@@ -256,6 +321,7 @@ describe(
               blueprintForOneAnchor(),
               emptyArchitecture(),
               emptyOrbitalLayout(),
+              emptyOrbitalPeriodLayout(),
             ),
         ).toThrow(
           RangeError,
@@ -268,12 +334,59 @@ describe(
               blueprintForOneAnchor(),
               singlePlanetArchitecture(),
               emptyOrbitalLayout(),
+              emptyOrbitalPeriodLayout(),
             ),
         ).toThrow(
           RangeError,
         );
       },
     );
+
+
+    function emptyOrbitalPeriodLayout():
+      PlanetarySystemOrbitalPeriodLayout {
+
+      return new PlanetarySystemOrbitalPeriodLayout(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        null,
+        [],
+      );
+    }
+
+    function singlePlanetOrbitalPeriodLayout(
+      semiMajorAxisAu =
+        1.05,
+    ): PlanetarySystemOrbitalPeriodLayout {
+
+      const slot =
+        singlePlanetArchitecture()
+          .planetSlots[0];
+
+      const periodYears =
+        Math.sqrt(
+          semiMajorAxisAu **
+            3,
+        );
+
+      return new PlanetarySystemOrbitalPeriodLayout(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        1,
+        [
+          new PlanetaryOrbitalPeriod(
+            1,
+            slot.bodyLocator,
+            slot.bodySeed,
+            semiMajorAxisAu,
+            1,
+            periodYears,
+            periodYears *
+              365.25,
+          ),
+        ],
+      );
+    }
 
     function emptyOrbitalLayout():
       PlanetarySystemOrbitalLayout {

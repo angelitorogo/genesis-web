@@ -27,6 +27,10 @@ import {
 } from './planetary-orbital-elements';
 
 import {
+  type PlanetaryOrbitalPeriod,
+} from './planetary-orbital-period';
+
+import {
   type PlanetarySystemArchitecture,
 } from './planetary-system-architecture';
 
@@ -37,6 +41,10 @@ import {
 import {
   type PlanetarySystemOrbitalLayout,
 } from './planetary-system-orbital-layout';
+
+import {
+  type PlanetarySystemOrbitalPeriodLayout,
+} from './planetary-system-orbital-period-layout';
 
 import {
   PlanetarySystemOrbitTopology,
@@ -50,12 +58,12 @@ const CONSISTENCY_TOLERANCE =
  *
  * Point 18.1 established stable SystemLocator/SystemSeed identity and the frozen
  * 17.7 formation handoff. Point 18.2 added mature planet identities/count and
- * coarse architecture. Point 18.3 now attaches one plausible geometric orbit
- * to every mature architecture slot without yet computing periods or issuing a
- * long-term orbital-stability verdict.
+ * coarse architecture. Point 18.3 attaches one plausible geometric orbit to
+ * every mature architecture slot. Point 18.4 now attaches one Keplerian period
+ * to every frozen orbit without modifying any point-18.3 geometric element.
  *
- * Periods, stability, HZ relations and planet designations remain 18.4..18.8.
- * Individual planet physics remains phase 19.
+ * Stability, HZ relations and planet designations remain 18.5..18.8. Individual
+ * planet physics remains phase 19.
  */
 export class PlanetarySystem {
 
@@ -71,6 +79,9 @@ export class PlanetarySystem {
 
     readonly orbitalLayout:
       PlanetarySystemOrbitalLayout,
+
+    readonly orbitalPeriodLayout:
+      PlanetarySystemOrbitalPeriodLayout,
   ) {
     if (
       !sameSystemLocator(
@@ -174,6 +185,67 @@ export class PlanetarySystem {
         );
       }
     }
+
+    if (
+      !sameSystemLocator(
+        hostStellarSystem.locator,
+        orbitalPeriodLayout.systemLocator,
+      )
+    ) {
+      throw new RangeError(
+        'PlanetarySystem orbital-period layout must belong to the host StellarSystem locator.',
+      );
+    }
+
+    if (
+      orbitalPeriodLayout.orbitTopology !==
+      orbitalLayout.orbitTopology
+    ) {
+      throw new RangeError(
+        'PlanetarySystem orbital-period topology must match the point-18.3 orbital layout.',
+      );
+    }
+
+    if (
+      orbitalPeriodLayout.planetCount !==
+      orbitalLayout.planetCount
+    ) {
+      throw new RangeError(
+        'PlanetarySystem requires exactly one point-18.4 period for every point-18.3 orbit.',
+      );
+    }
+
+    for (
+      let index = 0;
+      index <
+        orbitalLayout.orbits.length;
+      index += 1
+    ) {
+      const orbit =
+        orbitalLayout.orbits[index];
+
+      const period =
+        orbitalPeriodLayout.periods[index];
+
+      if (
+        period.planetOrdinal !==
+          orbit.planetOrdinal ||
+        !sameBodyLocator(
+          period.bodyLocator,
+          orbit.bodyLocator,
+        ) ||
+        period.bodySeed.normalizedValue !==
+          orbit.bodySeed.normalizedValue ||
+        !approximatelyEqual(
+          period.sourceSemiMajorAxisAu,
+          orbit.semiMajorAxisAu,
+        )
+      ) {
+        throw new RangeError(
+          'Every point-18.4 period must preserve the exact point-18.3 planet identity, BodySeed and semi-major axis.',
+        );
+      }
+    }
   }
 
   get generationKey():
@@ -247,6 +319,14 @@ export class PlanetarySystem {
       .orbitalLayout
       .orbits;
   }
+
+  get orbitalPeriods():
+    readonly PlanetaryOrbitalPeriod[] {
+
+    return this
+      .orbitalPeriodLayout
+      .periods;
+  }
 }
 
 function sameSystemLocator(
@@ -269,10 +349,12 @@ function sameSystemLocator(
 
 function sameBodyLocator(
   left:
-    PlanetaryOrbitalElements['bodyLocator'],
+    PlanetaryOrbitalElements['bodyLocator'] |
+    PlanetaryOrbitalPeriod['bodyLocator'],
 
   right:
-    PlanetaryArchitectureSlot['bodyLocator'],
+    PlanetaryArchitectureSlot['bodyLocator'] |
+    PlanetaryOrbitalElements['bodyLocator'],
 ): boolean {
 
   return (

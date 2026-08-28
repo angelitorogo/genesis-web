@@ -69,7 +69,7 @@ import {
 } from './planetary-system-generator';
 
 describe(
-  'PlanetarySystemGenerator points 18.2-18.3',
+  'PlanetarySystemGenerator points 18.2-18.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -100,7 +100,7 @@ describe(
       );
 
     it(
-      'should preserve the point-18.1 host, blueprint and canonical SystemSeed while adding architecture and orbital geometry',
+      'should preserve the point-18.1 host, blueprint and canonical SystemSeed while adding architecture, orbital geometry and periods',
       () => {
         const locator =
           new SystemLocator(
@@ -209,6 +209,14 @@ describe(
         expect(
           system.orbitalLayout.generationOuterLimitAu,
         ).toBe(100);
+
+        expect(
+          system.orbitalPeriods,
+        ).toEqual([]);
+
+        expect(
+          system.orbitalPeriodLayout.gravitatingMassSolar,
+        ).toBeNull();
       },
     );
 
@@ -359,6 +367,45 @@ describe(
           expect(
             orbit.argumentOfPeriapsisDegrees,
           ).toBeLessThan(360);
+
+          const period =
+            system.orbitalPeriods[index];
+
+          expect(
+            period.bodyLocator,
+          ).toBe(
+            orbit.bodyLocator,
+          );
+
+          expect(
+            period.bodySeed,
+          ).toBe(
+            orbit.bodySeed,
+          );
+
+          expect(
+            period.sourceSemiMajorAxisAu,
+          ).toBe(
+            orbit.semiMajorAxisAu,
+          );
+
+          expect(
+            period.periodYears,
+          ).toBeCloseTo(
+            Math.sqrt(
+              orbit.semiMajorAxisAu **
+                3,
+            ),
+            14,
+          );
+
+          expect(
+            period.periodDays,
+          ).toBeCloseTo(
+            period.periodYears *
+              365.25,
+            12,
+          );
         }
 
         for (
@@ -693,6 +740,12 @@ describe(
             true,
           supportsCircumbinaryPlanets:
             true,
+          secondaryCompanion: {
+            physicalProperties: {
+              initialMassSolar:
+                0.5,
+            },
+          },
           circumbinaryPlanetCompatibility: {
             isCompatible:
               true,
@@ -750,6 +803,21 @@ describe(
         expect(
           system.orbits.length,
         ).toBe(2);
+
+        expect(
+          system.orbitalPeriodLayout.gravitatingMassSolar,
+        ).toBe(1.5);
+
+        expect(
+          system.orbitalPeriods[0].periodYears,
+        ).toBeCloseTo(
+          Math.sqrt(
+            system.orbits[0].semiMajorAxisAu **
+              3 /
+            1.5,
+          ),
+          14,
+        );
 
         expect(
           system.orbits[0].semiMajorAxisAu,
@@ -874,6 +942,18 @@ describe(
             true,
           supportsCircumbinaryPlanets:
             true,
+          secondaryCompanion: {
+            physicalProperties: {
+              initialMassSolar:
+                0.5,
+            },
+          },
+          tertiaryCompanion: {
+            physicalProperties: {
+              initialMassSolar:
+                0.2,
+            },
+          },
           circumbinaryPlanetCompatibility: {
             isCompatible:
               true,
@@ -919,6 +999,10 @@ describe(
         expect(
           system.orbits.length,
         ).toBe(3);
+
+        expect(
+          system.orbitalPeriodLayout.gravitatingMassSolar,
+        ).toBe(1.5);
 
         for (
           const orbit
@@ -1085,6 +1169,36 @@ describe(
                 orbit.longitudeOfAscendingNodeDegrees,
               periapsis:
                 orbit.argumentOfPeriapsisDegrees,
+            })),
+        );
+
+        expect(
+          after.orbitalPeriods.map(
+            period => ({
+              seed:
+                period.bodySeed.normalizedValue,
+              semiMajorAxisAu:
+                period.sourceSemiMajorAxisAu,
+              massSolar:
+                period.gravitatingMassSolar,
+              periodYears:
+                period.periodYears,
+              periodDays:
+                period.periodDays,
+            })),
+        ).toEqual(
+          before.orbitalPeriods.map(
+            period => ({
+              seed:
+                period.bodySeed.normalizedValue,
+              semiMajorAxisAu:
+                period.sourceSemiMajorAxisAu,
+              massSolar:
+                period.gravitatingMassSolar,
+              periodYears:
+                period.periodYears,
+              periodDays:
+                period.periodDays,
             })),
         );
       },

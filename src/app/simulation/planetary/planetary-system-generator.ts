@@ -64,6 +64,10 @@ import {
   PlanetarySystemOrbitalLayoutGenerator,
 } from './planetary-system-orbital-layout-generator';
 
+import {
+  PlanetarySystemOrbitalPeriodGenerator,
+} from './planetary-system-orbital-period-generator';
+
 const V1_SOLAR_MASS_IN_EARTH_MASSES =
   332_946.0487;
 
@@ -95,14 +99,18 @@ interface ArchitectureCluster {
  * explicitly excluded when a multiple stellar system has no V1 stable P-type
  * planetary annulus.
  *
- * V1 consumes zero PRNG draws. It reuses the canonical SystemSeed and derives
- * one canonical BodySeed per final planet through the already-existing
- * SystemSeed -> BodySeed hierarchy; no new seed level is introduced.
+ * Point 18.2 consumes zero PRNG draws and derives one canonical BodySeed per
+ * final planet through the existing SystemSeed -> BodySeed hierarchy. Point
+ * 18.3 then uses independent BodySeed-derived branches for orbital geometry.
+ * Point 18.4 consumes no additional random draw and introduces no new seed
+ * level.
  *
- * Point 18.3 now delegates plausible geometric orbit materialization to the
- * dedicated PlanetarySystemOrbitalLayoutGenerator. Periods remain 18.4, final
- * orbital stability 18.5, habitable-zone products 18.6-18.7 and designations
- * 18.8. Phase 19 owns final individual planet physics.
+ * Point 18.3 delegates plausible geometric orbit materialization to the
+ * dedicated PlanetarySystemOrbitalLayoutGenerator. Point 18.4 derives one
+ * host-dominated Keplerian period from every frozen semi-major axis without
+ * consuming entropy or changing the orbit geometry. Final orbital stability
+ * remains 18.5, habitable-zone products 18.6-18.7 and designations 18.8. Phase
+ * 19 owns final individual planet physics.
  */
 export class PlanetarySystemGenerator {
 
@@ -173,11 +181,21 @@ export class PlanetarySystemGenerator {
           architecture,
         );
 
+    const orbitalPeriodLayout =
+      PlanetarySystemOrbitalPeriodGenerator
+        .generate(
+          generationKey,
+          stellarSystem,
+          formationBlueprint,
+          orbitalLayout,
+        );
+
     return new PlanetarySystem(
       stellarSystem,
       formationBlueprint,
       architecture,
       orbitalLayout,
+      orbitalPeriodLayout,
     );
   }
 }
