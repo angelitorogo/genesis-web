@@ -60,6 +60,10 @@ import {
   ProceduralTargetResolver,
 } from '../regeneration/procedural-target-resolver';
 
+import {
+  PlanetarySystemOrbitalLayoutGenerator,
+} from './planetary-system-orbital-layout-generator';
+
 const V1_SOLAR_MASS_IN_EARTH_MASSES =
   332_946.0487;
 
@@ -95,9 +99,10 @@ interface ArchitectureCluster {
  * one canonical BodySeed per final planet through the already-existing
  * SystemSeed -> BodySeed hierarchy; no new seed level is introduced.
  *
- * Point 18.3 still owns final semi-major axes/eccentricities/inclinations;
- * 18.4 periods, 18.5 final orbital stability, 18.6-18.7 habitable-zone products
- * and 18.8 designations. Phase 19 owns final individual planet physics.
+ * Point 18.3 now delegates plausible geometric orbit materialization to the
+ * dedicated PlanetarySystemOrbitalLayoutGenerator. Periods remain 18.4, final
+ * orbital stability 18.5, habitable-zone products 18.6-18.7 and designations
+ * 18.8. Phase 19 owns final individual planet physics.
  */
 export class PlanetarySystemGenerator {
 
@@ -159,10 +164,20 @@ export class PlanetarySystemGenerator {
         formationBlueprint,
       );
 
+    const orbitalLayout =
+      PlanetarySystemOrbitalLayoutGenerator
+        .generate(
+          generationKey,
+          stellarSystem,
+          formationBlueprint,
+          architecture,
+        );
+
     return new PlanetarySystem(
       stellarSystem,
       formationBlueprint,
       architecture,
+      orbitalLayout,
     );
   }
 }

@@ -23,12 +23,20 @@ import {
 } from './planetary-architecture-slot';
 
 import {
+  type PlanetaryOrbitalElements,
+} from './planetary-orbital-elements';
+
+import {
   type PlanetarySystemArchitecture,
 } from './planetary-system-architecture';
 
 import {
   type PlanetarySystemFormationBlueprint,
 } from './planetary-system-formation-blueprint';
+
+import {
+  type PlanetarySystemOrbitalLayout,
+} from './planetary-system-orbital-layout';
 
 import {
   PlanetarySystemOrbitTopology,
@@ -41,13 +49,13 @@ const CONSISTENCY_TOLERANCE =
  * Phase-18 root aggregate for one planetary system.
  *
  * Point 18.1 established stable SystemLocator/SystemSeed identity and the frozen
- * 17.7 formation handoff. Point 18.2 now adds the mature planet count and
- * architecture while still keeping every planet as an architecture slot rather
- * than a fully generated physical Planet.
+ * 17.7 formation handoff. Point 18.2 added mature planet identities/count and
+ * coarse architecture. Point 18.3 now attaches one plausible geometric orbit
+ * to every mature architecture slot without yet computing periods or issuing a
+ * long-term orbital-stability verdict.
  *
- * Final orbital elements, periods, orbital-stability verdicts, HZ relations and
- * planet designations remain points 18.3..18.8. Individual planet physics
- * remains phase 19.
+ * Periods, stability, HZ relations and planet designations remain 18.4..18.8.
+ * Individual planet physics remains phase 19.
  */
 export class PlanetarySystem {
 
@@ -60,6 +68,9 @@ export class PlanetarySystem {
 
     readonly architecture:
       PlanetarySystemArchitecture,
+
+    readonly orbitalLayout:
+      PlanetarySystemOrbitalLayout,
   ) {
     if (
       !sameSystemLocator(
@@ -105,6 +116,63 @@ export class PlanetarySystem {
       throw new RangeError(
         'PlanetarySystem architecture topology must match the host stellar multiplicity.',
       );
+    }
+
+    if (
+      !sameSystemLocator(
+        hostStellarSystem.locator,
+        orbitalLayout.systemLocator,
+      )
+    ) {
+      throw new RangeError(
+        'PlanetarySystem orbital layout must belong to the host StellarSystem locator.',
+      );
+    }
+
+    if (
+      orbitalLayout.orbitTopology !==
+      architecture.orbitTopology
+    ) {
+      throw new RangeError(
+        'PlanetarySystem orbital-layout topology must match the point-18.2 architecture.',
+      );
+    }
+
+    if (
+      orbitalLayout.planetCount !==
+      architecture.planetCount
+    ) {
+      throw new RangeError(
+        'PlanetarySystem requires exactly one point-18.3 orbit for every mature planet slot.',
+      );
+    }
+
+    for (
+      let index = 0;
+      index <
+        architecture.planetSlots.length;
+      index += 1
+    ) {
+      const slot =
+        architecture.planetSlots[index];
+
+      const orbit =
+        orbitalLayout.orbits[index];
+
+      if (
+        orbit.planetOrdinal !==
+          slot.planetOrdinal ||
+        !sameBodyLocator(
+          orbit.bodyLocator,
+          slot.bodyLocator,
+        ) ||
+        orbit.bodySeed.normalizedValue !==
+          slot.bodySeed.normalizedValue
+      ) {
+        throw new RangeError(
+          'Every point-18.3 orbit must preserve the exact point-18.2 planet identity and BodySeed.',
+        );
+      }
     }
   }
 
@@ -171,6 +239,14 @@ export class PlanetarySystem {
       .architecture
       .planetSlots;
   }
+
+  get orbits():
+    readonly PlanetaryOrbitalElements[] {
+
+    return this
+      .orbitalLayout
+      .orbits;
+  }
 }
 
 function sameSystemLocator(
@@ -188,6 +264,26 @@ function sameSystemLocator(
       right.sectorKey &&
     left.galacticObjectIndex ===
       right.galacticObjectIndex
+  );
+}
+
+function sameBodyLocator(
+  left:
+    PlanetaryOrbitalElements['bodyLocator'],
+
+  right:
+    PlanetaryArchitectureSlot['bodyLocator'],
+): boolean {
+
+  return (
+    left.galaxyIndex ===
+      right.galaxyIndex &&
+    left.sectorKey ===
+      right.sectorKey &&
+    left.galacticObjectIndex ===
+      right.galacticObjectIndex &&
+    left.bodyIndex ===
+      right.bodyIndex
   );
 }
 

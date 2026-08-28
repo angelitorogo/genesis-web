@@ -37,6 +37,10 @@ import {
 } from './planetary-formation-anchor';
 
 import {
+  PlanetaryOrbitalElements,
+} from './planetary-orbital-elements';
+
+import {
   PlanetaryFormationMaturityRegime,
 } from './planetary-formation-maturity-regime';
 
@@ -53,6 +57,10 @@ import {
 } from './planetary-system-formation-blueprint';
 
 import {
+  PlanetarySystemOrbitalLayout,
+} from './planetary-system-orbital-layout';
+
+import {
   PlanetarySystemOrbitTopology,
 } from './planetary-system-orbit-topology';
 
@@ -65,7 +73,7 @@ import {
 } from './protoplanet-composition-mixture';
 
 describe(
-  'PlanetarySystem points 18.1-18.2',
+  'PlanetarySystem points 18.1-18.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -109,6 +117,7 @@ describe(
             stellarSystem,
             blueprint,
             architecture,
+            emptyOrbitalLayout(),
           );
 
         expect(
@@ -168,6 +177,7 @@ describe(
             stellarSystem,
             blueprintForOneAnchor(),
             architecture,
+            singlePlanetOrbitalLayout(),
           );
 
         expect(
@@ -185,8 +195,14 @@ describe(
         ).toBe(false);
 
         expect(
-          'orbits' in system,
-        ).toBe(false);
+          system.orbits,
+        ).toBe(
+          system.orbitalLayout.orbits,
+        );
+
+        expect(
+          system.orbits[0].semiMajorAxisAu,
+        ).toBe(1.05);
 
         expect(
           'orbitalPeriods' in system,
@@ -227,6 +243,7 @@ describe(
               stellarSystem,
               emptyBlueprint(),
               foreignArchitecture,
+              emptyOrbitalLayout(),
             ),
         ).toThrow(
           RangeError,
@@ -238,12 +255,64 @@ describe(
               stellarSystem,
               blueprintForOneAnchor(),
               emptyArchitecture(),
+              emptyOrbitalLayout(),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              emptyOrbitalLayout(),
             ),
         ).toThrow(
           RangeError,
         );
       },
     );
+
+    function emptyOrbitalLayout():
+      PlanetarySystemOrbitalLayout {
+
+      return new PlanetarySystemOrbitalLayout(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        0.05,
+        100,
+        [],
+      );
+    }
+
+    function singlePlanetOrbitalLayout():
+      PlanetarySystemOrbitalLayout {
+
+      const slot =
+        singlePlanetArchitecture()
+          .planetSlots[0];
+
+      return new PlanetarySystemOrbitalLayout(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        0.05,
+        100,
+        [
+          new PlanetaryOrbitalElements(
+            1,
+            slot.bodyLocator,
+            slot.bodySeed,
+            1.05,
+            0.03,
+            1.5,
+            30,
+            60,
+          ),
+        ],
+      );
+    }
 
     function emptyArchitecture():
       PlanetarySystemArchitecture {

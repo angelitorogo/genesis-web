@@ -69,7 +69,7 @@ import {
 } from './planetary-system-generator';
 
 describe(
-  'PlanetarySystemGenerator point 18.2',
+  'PlanetarySystemGenerator points 18.2-18.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -100,7 +100,7 @@ describe(
       );
 
     it(
-      'should preserve the point-18.1 host, blueprint and canonical SystemSeed while adding architecture',
+      'should preserve the point-18.1 host, blueprint and canonical SystemSeed while adding architecture and orbital geometry',
       () => {
         const locator =
           new SystemLocator(
@@ -197,6 +197,18 @@ describe(
         expect(
           system.architecture.excludedSourceAnchorCount,
         ).toBe(0);
+
+        expect(
+          system.orbits,
+        ).toEqual([]);
+
+        expect(
+          system.orbitalLayout.generationInnerLimitAu,
+        ).toBe(0.05);
+
+        expect(
+          system.orbitalLayout.generationOuterLimitAu,
+        ).toBe(100);
       },
     );
 
@@ -280,6 +292,89 @@ describe(
           1n,
           2n,
         ]);
+
+        expect(
+          system.orbits.length,
+        ).toBe(3);
+
+        for (
+          let index = 0;
+          index <
+            system.orbits.length;
+          index += 1
+        ) {
+          const orbit =
+            system.orbits[index];
+
+          const slot =
+            system.planetSlots[index];
+
+          expect(
+            orbit.bodyLocator,
+          ).toBe(
+            slot.bodyLocator,
+          );
+
+          expect(
+            orbit.bodySeed,
+          ).toBe(
+            slot.bodySeed,
+          );
+
+          expect(
+            Math.abs(
+              Math.log(
+                orbit.semiMajorAxisAu /
+                slot.referenceAssemblyRadiusAu,
+              ),
+            ),
+          ).toBeLessThanOrEqual(
+            Math.log(1.031),
+          );
+
+          expect(
+            orbit.eccentricity,
+          ).toBeGreaterThanOrEqual(0);
+
+          expect(
+            orbit.eccentricity,
+          ).toBeLessThan(0.43);
+
+          expect(
+            orbit.inclinationDegrees,
+          ).toBeGreaterThanOrEqual(0);
+
+          expect(
+            orbit.longitudeOfAscendingNodeDegrees,
+          ).toBeGreaterThanOrEqual(0);
+
+          expect(
+            orbit.longitudeOfAscendingNodeDegrees,
+          ).toBeLessThan(360);
+
+          expect(
+            orbit.argumentOfPeriapsisDegrees,
+          ).toBeGreaterThanOrEqual(0);
+
+          expect(
+            orbit.argumentOfPeriapsisDegrees,
+          ).toBeLessThan(360);
+        }
+
+        for (
+          let index = 1;
+          index <
+            system.orbits.length;
+          index += 1
+        ) {
+          expect(
+            system.orbits[index - 1]
+              .apoastronAu,
+          ).toBeLessThan(
+            system.orbits[index]
+              .periastronAu,
+          );
+        }
       },
     );
 
@@ -576,7 +671,7 @@ describe(
     );
 
     it(
-      'should select circumbinary topology for a compatible multiple host without yet assigning final orbital elements',
+      'should assign P-type orbital geometry inside the frozen circumbinary compatibility envelope',
       () => {
         const locator =
           new SystemLocator(
@@ -598,6 +693,14 @@ describe(
             true,
           supportsCircumbinaryPlanets:
             true,
+          circumbinaryPlanetCompatibility: {
+            isCompatible:
+              true,
+            minimumStableSemiMajorAxisAu:
+              3,
+            maximumStableSemiMajorAxisAu:
+              null,
+          },
         } as unknown as StellarSystem;
 
         const system =
@@ -643,11 +746,36 @@ describe(
           'orbitalPeriodDays' in
             system.planetSlots[0],
         ).toBe(false);
+
+        expect(
+          system.orbits.length,
+        ).toBe(2);
+
+        expect(
+          system.orbits[0].semiMajorAxisAu,
+        ).toBeGreaterThanOrEqual(3);
+
+        expect(
+          system.orbits[1].semiMajorAxisAu,
+        ).toBeGreaterThan(
+          system.orbits[0].semiMajorAxisAu,
+        );
+
+        expect(
+          system.orbits[0].apoastronAu,
+        ).toBeLessThan(
+          system.orbits[1].periastronAu,
+        );
+
+        expect(
+          'orbitalPeriodDays' in
+            system.orbits[0],
+        ).toBe(false);
       },
     );
 
     it(
-      'should classify compact and distributed multi-planet inherited layouts without consuming point-18.3 orbital data',
+      'should preserve compact and distributed point-18.2 classifications after point-18.3 orbital materialization',
       () => {
         const compact =
           PlanetarySystemGenerator
@@ -720,6 +848,117 @@ describe(
         ).toBe(
           PlanetarySystemArchitectureRegime.DISTRIBUTED_MULTIPLANET,
         );
+      },
+    );
+
+    it(
+      'should compress inherited radial ordering into a finite triple circumbinary annulus without crossing orbits',
+      () => {
+        const locator =
+          new SystemLocator(
+            12n,
+            13n,
+            14n,
+          );
+
+        const stellarSystem = {
+          generationKey,
+          locator,
+          seed:
+            singleSystem(
+              locator,
+            ).seed,
+          multiplicity:
+            StellarSystemMultiplicity.TRIPLE,
+          isMultiple:
+            true,
+          supportsCircumbinaryPlanets:
+            true,
+          circumbinaryPlanetCompatibility: {
+            isCompatible:
+              true,
+            minimumStableSemiMajorAxisAu:
+              2.5,
+            maximumStableSemiMajorAxisAu:
+              8,
+          },
+        } as unknown as StellarSystem;
+
+        const system =
+          PlanetarySystemGenerator
+            .generate(
+              generationKey,
+              stellarSystem,
+              blueprint([
+                anchor(
+                  1,
+                  0.5,
+                  0.2,
+                ),
+                anchor(
+                  2,
+                  5,
+                  0.3,
+                ),
+                anchor(
+                  3,
+                  40,
+                  0.4,
+                ),
+              ]),
+            );
+
+        expect(
+          system.orbitalLayout.generationInnerLimitAu,
+        ).toBe(2.5);
+
+        expect(
+          system.orbitalLayout.generationOuterLimitAu,
+        ).toBe(8);
+
+        expect(
+          system.orbits.length,
+        ).toBe(3);
+
+        for (
+          const orbit
+          of system.orbits
+        ) {
+          expect(
+            orbit.semiMajorAxisAu,
+          ).toBeGreaterThanOrEqual(2.5);
+
+          expect(
+            orbit.semiMajorAxisAu,
+          ).toBeLessThanOrEqual(8);
+
+          expect(
+            orbit.eccentricity,
+          ).toBeGreaterThanOrEqual(0);
+
+          expect(
+            orbit.eccentricity,
+          ).toBeLessThan(1);
+
+          expect(
+            orbit.inclinationDegrees,
+          ).toBeGreaterThanOrEqual(0);
+        }
+
+        for (
+          let index = 1;
+          index <
+            system.orbits.length;
+          index += 1
+        ) {
+          expect(
+            system.orbits[index - 1]
+              .apoastronAu,
+          ).toBeLessThan(
+            system.orbits[index]
+              .periastronAu,
+          );
+        }
       },
     );
 
@@ -812,6 +1051,40 @@ describe(
                 slot.referenceAssemblyRadiusAu,
               anchors:
                 slot.sourceAnchorOrdinals,
+            })),
+        );
+
+        expect(
+          after.orbits.map(
+            orbit => ({
+              seed:
+                orbit.bodySeed.normalizedValue,
+              semiMajorAxisAu:
+                orbit.semiMajorAxisAu,
+              eccentricity:
+                orbit.eccentricity,
+              inclinationDegrees:
+                orbit.inclinationDegrees,
+              node:
+                orbit.longitudeOfAscendingNodeDegrees,
+              periapsis:
+                orbit.argumentOfPeriapsisDegrees,
+            })),
+        ).toEqual(
+          before.orbits.map(
+            orbit => ({
+              seed:
+                orbit.bodySeed.normalizedValue,
+              semiMajorAxisAu:
+                orbit.semiMajorAxisAu,
+              eccentricity:
+                orbit.eccentricity,
+              inclinationDegrees:
+                orbit.inclinationDegrees,
+              node:
+                orbit.longitudeOfAscendingNodeDegrees,
+              periapsis:
+                orbit.argumentOfPeriapsisDegrees,
             })),
         );
       },
