@@ -26,12 +26,21 @@ import {
 
 import {
   GalacticObjectLocator,
+  type ProceduralLocator,
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+
+import {
+  type ProtoplanetaryDiskAnalysis,
+} from '../../domain/planetary/protoplanetary-disk-analysis';
+
+import {
+  StellarSystemScientificActionType,
+} from '../../domain/planetary/stellar-system-scientific-action';
 
 import {
   GalaxySectorKeyCodec,
@@ -78,6 +87,18 @@ import {
 } from '../../simulation/galactic-object/galactic-object-scientific-subject-resolver';
 
 import {
+  ProtoplanetaryDiskAnalysisEngine,
+} from '../../simulation/planetary/protoplanetary-disk-analysis-engine';
+
+import {
+  StellarSystemScientificActionCatalogV1,
+} from '../../simulation/planetary/stellar-system-scientific-action-catalog';
+
+import {
+  StellarSystemScientificActionEngine,
+} from '../../simulation/planetary/stellar-system-scientific-action-engine';
+
+import {
   ObservationInstrumentCapabilityCatalogV1,
 } from '../../simulation/observation/observation-instrument-capability-catalog';
 
@@ -96,6 +117,10 @@ import {
 import {
   GALACTIC_OBJECT_SCIENTIFIC_ACTION_RUNTIME,
 } from '../runtime/galactic-object-scientific-action.runtime';
+
+import {
+  STELLAR_SYSTEM_SCIENTIFIC_ACTION_RUNTIME,
+} from '../runtime/stellar-system-scientific-action.runtime';
 
 import {
   UniverseSeedFacade,
@@ -218,6 +243,60 @@ export interface ArchiveGalacticObjectScientificActionModel {
     string;
 }
 
+export interface ArchiveStellarSystemScientificActionModel {
+  readonly actionType:
+    StellarSystemScientificActionType;
+
+  readonly label:
+    string;
+
+  readonly targetDiscoveryStateLabel:
+    string;
+
+  readonly awardedDiscoveryPoints:
+    number;
+
+  readonly minimumInstrumentLevelRank:
+    number;
+
+  readonly instrumentOptions:
+    readonly ArchiveScientificInstrumentOption[];
+
+  readonly selectedInstrumentType:
+    ObservationInstrumentType | null;
+
+  readonly selectedInstrumentLabel:
+    string | null;
+
+  readonly canExecute:
+    boolean;
+
+  readonly pendingRequirements:
+    ArchiveScientificPendingRequirementsModel | null;
+
+  readonly buttonLabel:
+    string;
+}
+
+export interface ArchiveProtoplanetaryDiskAnalysisFactModel {
+  readonly label:
+    string;
+
+  readonly value:
+    string;
+}
+
+export interface ArchiveProtoplanetaryDiskAnalysisModel {
+  readonly summary:
+    string;
+
+  readonly diskFacts:
+    readonly ArchiveProtoplanetaryDiskAnalysisFactModel[];
+
+  readonly formationFacts:
+    readonly ArchiveProtoplanetaryDiskAnalysisFactModel[];
+}
+
 export interface ArchiveDiscoveryDetailModel {
   readonly universeSeed:
     string;
@@ -269,6 +348,12 @@ export interface ArchiveDiscoveryDetailModel {
 
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
+
+  readonly stellarSystemScientificAction:
+    ArchiveStellarSystemScientificActionModel | null;
+
+  readonly protoplanetaryDiskAnalysis:
+    ArchiveProtoplanetaryDiskAnalysisModel | null;
 }
 
 export type ArchiveDiscoveryDetailUiState =
@@ -316,6 +401,11 @@ export class ArchiveDiscoveryDetailFacade {
       GALACTIC_OBJECT_SCIENTIFIC_ACTION_RUNTIME,
     );
 
+  private readonly stellarSystemScientificActionRuntime =
+    inject(
+      STELLAR_SYSTEM_SCIENTIFIC_ACTION_RUNTIME,
+    );
+
   private currentRequest:
     ArchiveDiscoveryDetailRequest | null =
     null;
@@ -325,7 +415,7 @@ export class ArchiveDiscoveryDetailFacade {
     null;
 
   private currentLocator:
-    GalacticObjectLocator | null =
+    ProceduralLocator | null =
     null;
 
   private readonly actionPendingSignal =
@@ -424,10 +514,19 @@ export class ArchiveDiscoveryDetailFacade {
     const model =
       this.model();
 
-    const action =
+    const galacticAction =
       model
         ?.scientificAction ??
       null;
+
+    const stellarSystemAction =
+      model
+        ?.stellarSystemScientificAction ??
+      null;
+
+    const action =
+      galacticAction ??
+      stellarSystemAction;
 
     const request =
       this.currentRequest;
@@ -500,12 +599,22 @@ export class ArchiveDiscoveryDetailFacade {
         );
 
       const committed =
-        await this
-          .scientificActionRuntime
-          .commitAction(
-            session,
-            action.actionType,
-          );
+        galacticAction !==
+          null
+          ? await this
+              .scientificActionRuntime
+              .commitAction(
+                session,
+                galacticAction
+                  .actionType,
+              )
+          : await this
+              .stellarSystemScientificActionRuntime
+              .commitAction(
+                session,
+                stellarSystemAction!
+                  .actionType,
+              );
 
       await this
         .resolveDetails(
@@ -672,16 +781,36 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
-      if (
+      const stellarSystemScientificAction =
         locator instanceof
-          GalacticObjectLocator
-      ) {
-        this.currentGenerationKey =
-          generationKey;
+          SystemLocator
+          ? await this
+              .buildStellarSystemScientificActionModel(
+                generationKey,
+                locator,
+                discoveryState,
+              )
+          : null;
 
-        this.currentLocator =
-          locator;
-      }
+      const protoplanetaryDiskAnalysis =
+        locator instanceof
+          SystemLocator &&
+        discoveryState.code >=
+          DiscoveryState.CONFIRMED.code
+          ? buildProtoplanetaryDiskAnalysisModel(
+              ProtoplanetaryDiskAnalysisEngine
+                .analyzeOrNull(
+                  generationKey,
+                  locator,
+                ),
+            )
+          : null;
+
+      this.currentGenerationKey =
+        generationKey;
+
+      this.currentLocator =
+        locator;
 
       this
         .stateSignal
@@ -758,6 +887,10 @@ export class ArchiveDiscoveryDetailFacade {
               stellarSystemCard,
 
               scientificAction,
+
+              stellarSystemScientificAction,
+
+              protoplanetaryDiskAnalysis,
             }),
         });
     } catch (
@@ -960,6 +1093,179 @@ export class ArchiveDiscoveryDetailFacade {
         ),
     });
   }
+
+  private async buildStellarSystemScientificActionModel(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    discoveryState:
+      DiscoveryStateValue,
+  ): Promise<ArchiveStellarSystemScientificActionModel | null> {
+
+    const rule =
+      StellarSystemScientificActionCatalogV1
+        .analyzeDiskRule;
+
+    const evaluationInstrumentType =
+      rule
+        .compatibleInstrumentTypes[
+          0
+        ];
+
+    if (
+      evaluationInstrumentType ===
+        undefined
+    ) {
+      throw new RangeError(
+        'ANALIZAR DISCO no define ningún instrumento compatible.',
+      );
+    }
+
+    const evaluationSession =
+      createObservationSession(
+        generationKey,
+        locator,
+        discoveryState,
+        evaluationInstrumentType,
+        rule
+          .minimumInstrumentLevel,
+      );
+
+    const availability =
+      StellarSystemScientificActionEngine
+        .availability(
+          generationKey,
+          evaluationSession,
+          rule.actionType,
+        );
+
+    if (
+      !availability.isSystemTarget ||
+      !availability.hasAnalyzableDisk ||
+      !availability.isStateEligible
+    ) {
+      return null;
+    }
+
+    const [
+      globalDiscoveryPoints,
+      knownDiscoveries,
+    ] =
+      await Promise.all([
+        this
+          .repositories
+          .pointsRepository
+          .getGlobalDiscoveryPoints(
+            generationKey,
+          ),
+
+        this
+          .repositories
+          .discoveryRepository
+          .getKnownDiscoveries(
+            generationKey,
+          ),
+      ]);
+
+    const progression =
+      ObservationInstrumentProgressionEngine
+        .evaluate(
+          generationKey,
+          globalDiscoveryPoints,
+          knownDiscoveries,
+        );
+
+    const instrumentOptions =
+      Object.freeze(
+        rule
+          .compatibleInstrumentTypes
+          .map(
+            instrumentType =>
+              buildInstrumentOption(
+                progression,
+                instrumentType,
+                rule
+                  .minimumInstrumentLevel,
+              ),
+          ),
+      );
+
+    const selected =
+      instrumentOptions
+        .find(
+          option =>
+            option.isAvailable,
+        ) ??
+      null;
+
+    const pendingRequirements =
+      selected ===
+        null
+        ? buildPendingRequirements(
+            progression,
+            rule
+              .compatibleInstrumentTypes,
+            rule
+              .minimumInstrumentLevel,
+          )
+        : null;
+
+    const reward =
+      StellarSystemScientificActionEngine
+        .evaluate(
+          generationKey,
+          evaluationSession,
+          rule.actionType,
+        )
+        .awardedDiscoveryPoints;
+
+    return Object.freeze({
+      actionType:
+        rule.actionType,
+
+      label:
+        'ANALIZAR DISCO',
+
+      targetDiscoveryStateLabel:
+        stateLabel(
+          rule
+            .targetDiscoveryState,
+        ),
+
+      awardedDiscoveryPoints:
+        reward,
+
+      minimumInstrumentLevelRank:
+        rule
+          .minimumInstrumentLevel
+          .rank,
+
+      instrumentOptions,
+
+      selectedInstrumentType:
+        selected
+          ?.instrumentType ??
+        null,
+
+      selectedInstrumentLabel:
+        selected
+          ?.label ??
+        null,
+
+      canExecute:
+        selected !==
+        null,
+
+      pendingRequirements,
+
+      buttonLabel:
+        'Analizar disco',
+    });
+  }
+
 }
 
 function resolveNextScientificRule(
@@ -1356,7 +1662,7 @@ function createObservationSession(
     UniverseGenerationKey,
 
   locator:
-    GalacticObjectLocator,
+    ProceduralLocator,
 
   discoveryState:
     DiscoveryStateValue,
@@ -1479,6 +1785,255 @@ function scientificActionButtonLabel(
   }
 
   return 'Realizar confirmación';
+}
+
+function buildProtoplanetaryDiskAnalysisModel(
+  analysis:
+    ProtoplanetaryDiskAnalysis | null,
+): ArchiveProtoplanetaryDiskAnalysisModel | null {
+
+  if (
+    analysis ===
+      null
+  ) {
+    return null;
+  }
+
+  const diskFacts =
+    Object.freeze([
+      diskFact(
+        'Etapa estelar joven',
+        stellarYouthStageLabel(
+          analysis
+            .stellarYouthStage
+            .name,
+        ),
+      ),
+      diskFact(
+        'Etapa del disco',
+        diskStageLabel(
+          analysis
+            .diskStage
+            .name,
+        ),
+      ),
+      diskFact(
+        'Edad del disco',
+        formatMillionYears(
+          analysis
+            .diskAgeMillionYears,
+        ),
+      ),
+      diskFact(
+        'Masa total',
+        `${formatNumber(analysis.diskMassSolar, 5)} M☉`,
+      ),
+      diskFact(
+        'Extensión radial',
+        `${formatNumber(analysis.innerRadiusAu, 3)}–${formatNumber(analysis.outerRadiusAu, 2)} AU`,
+      ),
+      diskFact(
+        'Radio característico',
+        `${formatNumber(analysis.characteristicRadiusAu, 2)} AU`,
+      ),
+      diskFact(
+        'Gas',
+        formatPercent(
+          analysis
+            .gasMassFraction01,
+        ),
+      ),
+      diskFact(
+        'Polvo',
+        formatPercent(
+          analysis
+            .dustMassFraction01,
+        ),
+      ),
+      diskFact(
+        'Huecos radiales',
+        String(
+          analysis.gapCount,
+        ),
+      ),
+      diskFact(
+        'Regiones de condensación',
+        String(
+          analysis
+            .condensationRegionCount,
+        ),
+      ),
+      diskFact(
+        'Línea de nieve del agua',
+        analysis
+          .waterSnowLineRadiusAu ===
+          null
+          ? 'No cruza el disco V1'
+          : `${formatNumber(analysis.waterSnowLineRadiusAu, 2)} AU`,
+      ),
+    ]);
+
+  const formationFacts =
+    Object.freeze([
+      diskFact(
+        'Candidatos iniciales',
+        String(
+          analysis
+            .initialCandidateCount,
+        ),
+      ),
+      diskFact(
+        'Sólidos en candidatos',
+        `${formatNumber(analysis.candidateSolidMassEarth, 3)} M⊕`,
+      ),
+      diskFact(
+        'Supervivientes tempranos',
+        String(
+          analysis
+            .survivingBodyCount,
+        ),
+      ),
+      diskFact(
+        'Cuerpos migrados',
+        String(
+          analysis
+            .migratedBodyCount,
+        ),
+      ),
+      diskFact(
+        'Colisiones tempranas',
+        String(
+          analysis
+            .collisionCount,
+        ),
+      ),
+    ]);
+
+  return Object.freeze({
+    summary:
+      analysis.hasCandidatePopulation
+        ? `El análisis resuelve un disco protoplanetario con ${analysis.initialCandidateCount} candidato${analysis.initialCandidateCount === 1 ? '' : 's'} inicial${analysis.initialCandidateCount === 1 ? '' : 'es'} y ${analysis.survivingBodyCount} superviviente${analysis.survivingBodyCount === 1 ? '' : 's'} tras la dinámica temprana simplificada.`
+        : 'El análisis confirma el disco protoplanetario, pero la reserva sólida V1 no materializa candidatos protoplanetarios en este sistema.',
+
+    diskFacts,
+
+    formationFacts,
+  });
+}
+
+function diskFact(
+  label:
+    string,
+
+  value:
+    string,
+): ArchiveProtoplanetaryDiskAnalysisFactModel {
+
+  return Object.freeze({
+    label,
+    value,
+  });
+}
+
+function stellarYouthStageLabel(
+  stage:
+    string,
+): string {
+
+  switch (
+    stage
+  ) {
+    case 'PROTOSTAR':
+      return 'Protoestrella';
+
+    case 'PRE_MAIN_SEQUENCE':
+      return 'Pre-secuencia principal';
+
+    case 'YOUNG_STAR':
+      return 'Estrella joven';
+
+    case 'YOUNG_BROWN_DWARF':
+      return 'Enana marrón joven';
+
+    default:
+      return stage;
+  }
+}
+
+function diskStageLabel(
+  stage:
+    string,
+): string {
+
+  switch (
+    stage
+  ) {
+    case 'EMBEDDED_ACCRETION_DISK':
+      return 'Disco de acreción embebido';
+
+    case 'MASSIVE_PRIMORDIAL_DISK':
+      return 'Disco primordial masivo';
+
+    case 'EVOLVING_PRIMORDIAL_DISK':
+      return 'Disco primordial en evolución';
+
+    case 'DISPERSING_DISK':
+      return 'Disco en dispersión';
+
+    default:
+      return stage;
+  }
+}
+
+function formatMillionYears(
+  ageMillionYears:
+    number,
+): string {
+
+  if (
+    ageMillionYears >=
+      1
+  ) {
+    return `${formatNumber(ageMillionYears, ageMillionYears >= 100 ? 0 : 2)} millones de años`;
+  }
+
+  const thousandYears =
+    ageMillionYears *
+    1_000;
+
+  if (
+    thousandYears >=
+      1
+  ) {
+    return `${formatNumber(thousandYears, thousandYears >= 100 ? 0 : 1)} mil años`;
+  }
+
+  return `${formatNumber(ageMillionYears * 1_000_000, 0)} años`;
+}
+
+function formatPercent(
+  fraction:
+    number,
+): string {
+
+  return `${formatNumber(fraction * 100, 2)} %`;
+}
+
+function formatNumber(
+  value:
+    number,
+
+  maximumFractionDigits:
+    number,
+): string {
+
+  return value
+    .toLocaleString(
+      'es-ES',
+      {
+        maximumFractionDigits,
+      },
+    );
 }
 
 interface ParsedArchiveDiscoveryDetailRequest {

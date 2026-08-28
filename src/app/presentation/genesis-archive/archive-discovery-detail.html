@@ -131,6 +131,181 @@
                 </div>
               </section>
 
+              @if (model.stellarSystemScientificAction; as action) {
+                <section
+                  class="archive-discovery-detail__scientific-action archive-discovery-detail__disk-action"
+                  data-testid="archive-stellar-system-scientific-action"
+                >
+                  <div class="archive-discovery-detail__scientific-action-header">
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        ACCIÓN CIENTÍFICA / 17.6
+                      </small>
+
+                      <strong data-testid="archive-stellar-system-action-label">
+                        {{ action.label }}
+                      </strong>
+                    </div>
+
+                    <span data-testid="archive-stellar-system-action-reward">
+                      +{{ action.awardedDiscoveryPoints }} PD
+                    </span>
+                  </div>
+
+                  <p class="archive-discovery-detail__boundary">
+                    El análisis observa el disco ya existente en el Ground Truth
+                    procedural 17.1–17.5. No crea planetas ni altera su formación.
+                  </p>
+
+                  <ul class="archive-discovery-detail__instrument-list">
+                    @for (instrument of action.instrumentOptions; track instrument.instrumentType) {
+                      <li
+                        [class.archive-discovery-detail__instrument--available]="instrument.isAvailable"
+                      >
+                        <span>
+                          {{ instrument.label }} · Nivel {{ instrument.minimumLevelRank }}
+                        </span>
+
+                        <small>
+                          {{ instrument.statusLabel }}
+                        </small>
+                      </li>
+                    }
+                  </ul>
+
+                  @if (action.canExecute) {
+                    <p class="archive-discovery-detail__selected-instrument">
+                      Se usará {{ action.selectedInstrumentLabel }} · Nivel {{ action.minimumInstrumentLevelRank }}.
+                      El resultado avanzará a {{ action.targetDiscoveryStateLabel }}.
+                    </p>
+
+                    <button
+                      genesis-primary-button
+                      type="button"
+                      data-testid="archive-stellar-system-action-button"
+                      [disabled]="facade.actionPending()"
+                      (click)="performScientificAction()"
+                    >
+                      @if (facade.actionPending()) {
+                        Procesando…
+                      } @else {
+                        {{ action.buttonLabel }}
+                      }
+                    </button>
+                  } @else {
+                    <p
+                      class="archive-discovery-detail__action-blocked"
+                      data-testid="archive-stellar-system-action-blocked"
+                    >
+                      El Observatorio todavía no dispone de infrarrojo o radio
+                      con el nivel científico requerido.
+                    </p>
+
+                    @if (action.pendingRequirements; as pending) {
+                      <section
+                        class="archive-discovery-detail__restricted archive-discovery-detail__pending-requirements"
+                        data-testid="archive-stellar-system-pending-requirements"
+                      >
+                        <small class="archive-discovery-detail__eyebrow">
+                          REQUISITOS PENDIENTES
+                        </small>
+
+                        <ul>
+                          @for (requirement of pending.items; track requirement) {
+                            <li>{{ requirement }}</li>
+                          }
+                        </ul>
+                      </section>
+                    }
+                  }
+                </section>
+              }
+
+              @if (facade.actionFeedback(); as feedback) {
+                <p
+                  class="archive-discovery-detail__action-feedback"
+                  data-testid="archive-stellar-system-action-feedback"
+                >
+                  {{ feedback }}
+                </p>
+              }
+
+              @if (facade.actionError(); as actionError) {
+                <p
+                  class="archive-discovery-detail__action-error"
+                  data-testid="archive-stellar-system-action-error"
+                >
+                  {{ actionError }}
+                </p>
+              }
+
+              @if (model.protoplanetaryDiskAnalysis; as diskAnalysis) {
+                <section
+                  class="archive-discovery-detail__physical-section archive-discovery-detail__disk-analysis"
+                  data-testid="archive-protoplanetary-disk-analysis"
+                >
+                  <header>
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        ANÁLISIS DE DISCO / 17.6
+                      </small>
+
+                      <h3>Disco protoplanetario confirmado</h3>
+                    </div>
+
+                    <p>
+                      Resultado observacional regenerable; no se persiste una
+                      segunda copia del Ground Truth procedural.
+                    </p>
+                  </header>
+
+                  <p
+                    class="archive-discovery-detail__disk-summary"
+                    data-testid="archive-protoplanetary-disk-summary"
+                  >
+                    {{ diskAnalysis.summary }}
+                  </p>
+
+                  <div class="archive-discovery-detail__disk-analysis-grid">
+                    <section>
+                      <small class="archive-discovery-detail__eyebrow">
+                        ESTRUCTURA DEL DISCO / 17.2–17.3
+                      </small>
+
+                      <dl class="archive-discovery-detail__physical-facts">
+                        @for (fact of diskAnalysis.diskFacts; track fact.label) {
+                          <div>
+                            <dt>{{ fact.label }}</dt>
+                            <dd>{{ fact.value }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    </section>
+
+                    <section>
+                      <small class="archive-discovery-detail__eyebrow">
+                        FORMACIÓN TEMPRANA / 17.4–17.5
+                      </small>
+
+                      <dl class="archive-discovery-detail__physical-facts">
+                        @for (fact of diskAnalysis.formationFacts; track fact.label) {
+                          <div>
+                            <dt>{{ fact.label }}</dt>
+                            <dd>{{ fact.value }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    </section>
+                  </div>
+
+                  <p class="archive-discovery-detail__boundary">
+                    Los candidatos y supervivientes de 17.4–17.5 siguen siendo
+                    cuerpos protoplanetarios tempranos. 17.7 resolverá su
+                    evolución hacia un sistema planetario maduro.
+                  </p>
+                </section>
+              }
+
               @if (systemCard.systemFacts.length > 0) {
                 <section
                   class="archive-discovery-detail__physical-section"

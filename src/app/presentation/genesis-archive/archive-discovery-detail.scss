@@ -150,3 +150,28 @@
     text-align: left;
   }
 }
+
+.archive-discovery-detail__disk-action {
+  border-color: #82d9ff38;
+  background: linear-gradient(135deg, #08141db8, #0f131fd1 68%);
+}
+
+.archive-discovery-detail__disk-analysis {
+  border-color: #82d9ff36;
+  background: linear-gradient(135deg, #08151db8, #0f131fd1 64%);
+}
+
+.archive-discovery-detail__disk-summary {
+  margin: 0;
+  color: var(--genesis-color-text-muted);
+}
+
+.archive-discovery-detail__disk-analysis-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.archive-discovery-detail__disk-analysis-grid > section {
+  display: grid;
+  gap: .65rem;
+}
