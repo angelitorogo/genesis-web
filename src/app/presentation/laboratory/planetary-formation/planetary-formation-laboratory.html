@@ -1,0 +1,783 @@
+<main
+  class="formation-lab"
+  data-testid="planetary-formation-laboratory-page"
+>
+  <header class="formation-lab__hero">
+    <div>
+      <a
+        class="formation-lab__back"
+        routerLink="/laboratory"
+      >
+        ← Laboratorios
+      </a>
+
+      <p class="formation-lab__eyebrow">
+        GENESIS VISUAL LABORATORY · FASE 17
+      </p>
+
+      <h1>
+        Sistemas protoplanetarios / Formación planetaria
+      </h1>
+
+      <p>
+        Inspección read-only de la cadena procedural real 17.1→17.7. Cada
+        muestra parte de un SystemLocator que realmente produce una estrella
+        joven con disco, y conserva el mismo snapshot para estructura,
+        candidatos, dinámica, ANALIZAR DISCO y maduración.
+      </p>
+    </div>
+
+    <span class="formation-lab__badge">
+      GROUND TRUTH / SVG QA
+    </span>
+  </header>
+
+  <section class="formation-lab__families">
+    <div class="formation-lab__section-heading">
+      <div>
+        <p class="formation-lab__eyebrow">
+          MUESTRAS DETERMINISTAS
+        </p>
+        <strong>Familias A–H</strong>
+      </div>
+
+      <span>
+        Primeros 8 sistemas válidos de formación · G0 / S0
+      </span>
+    </div>
+
+    <div class="formation-lab__family-grid">
+      @for (family of families; track family.id) {
+        <button
+          type="button"
+          data-testid="planetary-formation-family-button"
+          [attr.data-family]="family.id"
+          [attr.aria-pressed]="selectedFamilyId() === family.id"
+          [class.formation-lab__family-button--active]="selectedFamilyId() === family.id"
+          (click)="selectFamily(family.id)"
+        >
+          <strong>{{ family.id }}</strong>
+          <small>#{{ family.formationMatchOrdinal + 1 }}</small>
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (frame(); as activeFrame) {
+    <section
+      class="formation-lab__system"
+      data-testid="planetary-formation-active-system"
+      [attr.data-family]="activeFrame.family.id"
+      [attr.data-system-index]="activeFrame.locator.galacticObjectIndex.toString()"
+    >
+      <div>
+        <p class="formation-lab__eyebrow">
+          SISTEMA REAL · FAMILIA {{ activeFrame.family.id }}
+        </p>
+
+        <h2>
+          G{{ activeFrame.locator.galaxyIndex.toString() }} /
+          S{{ activeFrame.locator.sectorKey.toString() }} /
+          O{{ activeFrame.locator.galacticObjectIndex.toString() }}
+        </h2>
+      </div>
+
+      <dl>
+        <div>
+          <dt>SystemSeed</dt>
+          <dd class="formation-lab__mono">
+            {{ activeFrame.snapshot.systemSeed.normalizedValue }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Estrella</dt>
+          <dd>
+            {{ formatNumber(activeFrame.snapshot.stellarPhysicalProperties.initialMassSolar, 2) }} M☉
+          </dd>
+        </div>
+
+        <div>
+          <dt>Edad del disco</dt>
+          <dd>
+            {{ formatNumber(activeFrame.snapshot.diskProfile.ageMillionYears, 3) }} Ma
+          </dd>
+        </div>
+
+        <div>
+          <dt>Extensión</dt>
+          <dd>
+            {{ formatNumber(activeFrame.snapshot.diskProfile.innerRadiusAu, 3) }}–{{ formatNumber(activeFrame.snapshot.diskProfile.outerRadiusAu, 1) }} AU
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section
+      class="formation-lab__timeline"
+      aria-label="Etapas de la Fase 17"
+    >
+      @for (stageOption of stages; track stageOption.id) {
+        <button
+          type="button"
+          data-testid="planetary-formation-stage-button"
+          [attr.data-stage]="stageOption.id"
+          [attr.aria-pressed]="selectedStageId() === stageOption.id"
+          [class.formation-lab__stage-button--active]="selectedStageId() === stageOption.id"
+          (click)="selectStage(stageOption.id)"
+        >
+          <b>{{ stageOption.id }}</b>
+          <span>{{ stageOption.shortLabel }}</span>
+        </button>
+      }
+    </section>
+
+    <section
+      class="formation-lab__workspace"
+      [attr.data-stage]="selectedStageId()"
+    >
+      <article class="formation-lab__viewport-card">
+        <header class="formation-lab__viewport-header">
+          <div>
+            <p class="formation-lab__eyebrow">
+              {{ selectedStage().id }} · {{ selectedStage().shortLabel }}
+            </p>
+            <h2>{{ selectedStage().title }}</h2>
+          </div>
+
+          @if (stageIs('17.7')) {
+            <span class="formation-lab__not-planets">
+              ANCLAS · NO PLANETAS
+            </span>
+          }
+        </header>
+
+        <svg
+          class="formation-lab__diagram"
+          viewBox="0 0 720 440"
+          role="img"
+          aria-label="Diagrama esquemático de formación protoplanetaria"
+          data-testid="planetary-formation-diagram"
+        >
+          <defs>
+            <radialGradient id="phase17-star" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#fff6ca" />
+              <stop offset="45%" stop-color="#ffd777" />
+              <stop offset="100%" stop-color="#f28b4b" stop-opacity="0.1" />
+            </radialGradient>
+
+            <radialGradient id="phase17-disk" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ffbc63" stop-opacity="0.02" />
+              <stop offset="35%" stop-color="#d59b62" stop-opacity="0.34" />
+              <stop offset="70%" stop-color="#7a91a9" stop-opacity="0.18" />
+              <stop offset="100%" stop-color="#6ad7ff" stop-opacity="0.02" />
+            </radialGradient>
+
+            <marker
+              id="phase17-migration-arrow"
+              markerWidth="8"
+              markerHeight="8"
+              refX="7"
+              refY="4"
+              orient="auto"
+              markerUnits="strokeWidth"
+            >
+              <path d="M0,0 L8,4 L0,8 z" fill="#ffbe6a" />
+            </marker>
+
+            <marker
+              id="phase17-fusion-arrow"
+              markerWidth="7"
+              markerHeight="7"
+              refX="6"
+              refY="3.5"
+              orient="auto"
+              markerUnits="strokeWidth"
+            >
+              <path d="M0,0 L7,3.5 L0,7 z" fill="#ff8e6a" />
+            </marker>
+          </defs>
+
+          @if (stageAtLeast('17.2')) {
+            <ellipse
+              cx="360"
+              cy="220"
+              rx="270"
+              ry="140"
+              fill="url(#phase17-disk)"
+              stroke="rgba(106, 215, 255, 0.23)"
+            />
+
+            <ellipse
+              cx="360"
+              cy="220"
+              rx="42"
+              ry="22"
+              fill="rgba(5, 7, 13, 0.92)"
+            />
+          }
+
+          @if (stageAtLeast('17.3')) {
+            @for (ring of condensationRings(); track ring.code) {
+              <ellipse
+                class="formation-lab__condensation-ring"
+                cx="360"
+                cy="220"
+                [attr.rx]="ring.rx"
+                [attr.ry]="ring.ry"
+                fill="none"
+                [attr.stroke]="ring.color"
+                [attr.stroke-width]="Math.min(18, ring.width * 0.42)"
+              >
+                <title>{{ ring.code }} · {{ ring.label }}</title>
+              </ellipse>
+
+              <text
+                class="formation-lab__radial-code"
+                [attr.x]="ring.labelX"
+                [attr.y]="ring.labelY"
+                [attr.fill]="ring.color"
+              >
+                {{ ring.code }}
+              </text>
+            }
+
+            @for (gap of gapRings(); track gap.code) {
+              <ellipse
+                class="formation-lab__gap-ring"
+                cx="360"
+                cy="220"
+                [attr.rx]="gap.rx"
+                [attr.ry]="gap.ry"
+                fill="none"
+                [attr.stroke-width]="Math.min(15, gap.width)"
+              >
+                <title>{{ gap.code }} · {{ gap.label }}</title>
+              </ellipse>
+
+              <text
+                class="formation-lab__radial-code formation-lab__radial-code--gap"
+                [attr.x]="gap.labelX"
+                [attr.y]="gap.labelY"
+              >
+                {{ gap.code }}
+              </text>
+            }
+
+            @if (snowLineVisual(); as snowLine) {
+              <ellipse
+                class="formation-lab__snow-line"
+                cx="360"
+                cy="220"
+                [attr.rx]="snowLine.rx"
+                [attr.ry]="snowLine.ry"
+                fill="none"
+              >
+                <title>{{ snowLine.label }}</title>
+              </ellipse>
+
+              <text
+                class="formation-lab__snow-line-label"
+                [attr.x]="snowLine.labelX"
+                [attr.y]="snowLine.labelY"
+              >
+                H₂O · NIEVE
+              </text>
+            }
+          }
+
+          @if (stageIs('17.4')) {
+            @for (candidate of candidatePoints(); track candidate.shortLabel) {
+              <g
+                class="formation-lab__subject"
+                data-testid="planetary-formation-candidate-marker"
+                [class.formation-lab__subject--selected]="isLineageSelected(candidate.sourceOrdinals)"
+                [class.formation-lab__subject--dimmed]="isLineageDimmed(candidate.sourceOrdinals)"
+                [attr.aria-label]="candidate.label"
+                role="button"
+                tabindex="0"
+                (click)="selectLineage(candidate.sourceOrdinals)"
+                (keydown.enter)="selectLineage(candidate.sourceOrdinals)"
+                (keydown.space)="selectLineage(candidate.sourceOrdinals)"
+              >
+                <circle
+                  class="formation-lab__candidate"
+                  [attr.cx]="candidate.x"
+                  [attr.cy]="candidate.y"
+                  [attr.r]="candidate.radius"
+                  [attr.fill]="candidate.color"
+                >
+                  <title>{{ candidate.label }}</title>
+                </circle>
+
+                <text
+                  class="formation-lab__body-label"
+                  [attr.x]="candidate.x + candidate.radius + 5"
+                  [attr.y]="candidate.y - candidate.radius - 3"
+                >
+                  {{ candidate.shortLabel }}
+                </text>
+              </g>
+            }
+          }
+
+          @if (stageIs('17.5') || stageIs('17.6')) {
+            @for (migration of migrationVisuals(); track migration.shortLabel) {
+              @if (migration.hasMigrated) {
+                <g
+                  class="formation-lab__migration-group"
+                  [class.formation-lab__subject--dimmed]="isLineageDimmed(migration.sourceOrdinals)"
+                >
+                  <circle
+                    class="formation-lab__migration-origin"
+                    [attr.cx]="migration.x1"
+                    [attr.cy]="migration.y1"
+                    r="5"
+                  />
+
+                  <line
+                    class="formation-lab__migration"
+                    [attr.x1]="migration.x1"
+                    [attr.y1]="migration.y1"
+                    [attr.x2]="migration.x2"
+                    [attr.y2]="migration.y2"
+                    [attr.stroke]="migration.color"
+                    marker-end="url(#phase17-migration-arrow)"
+                  >
+                    <title>{{ migration.label }}</title>
+                  </line>
+
+                  <text
+                    class="formation-lab__migration-label"
+                    [attr.x]="(migration.x1 + migration.x2) / 2"
+                    [attr.y]="(migration.y1 + migration.y2) / 2 - 8"
+                  >
+                    {{ migration.shortLabel }} · MIGRACIÓN
+                  </text>
+                </g>
+              }
+            }
+
+            @for (fusion of fusionVisuals(); track fusion.eventOrdinal) {
+              <g
+                class="formation-lab__fusion-event"
+                data-testid="planetary-formation-fusion-visual"
+                [class.formation-lab__subject--dimmed]="isLineageDimmed(fusion.sourceOrdinals)"
+              >
+                @for (connector of fusion.connectors; track $index) {
+                  <line
+                    class="formation-lab__fusion-connector"
+                    [attr.x1]="connector.x1"
+                    [attr.y1]="connector.y1"
+                    [attr.x2]="connector.x2"
+                    [attr.y2]="connector.y2"
+                    marker-end="url(#phase17-fusion-arrow)"
+                  />
+                }
+
+                <circle
+                  class="formation-lab__collision"
+                  [attr.cx]="fusion.x"
+                  [attr.cy]="fusion.y"
+                  [attr.r]="fusion.radius"
+                >
+                  <title>{{ fusion.label }}</title>
+                </circle>
+
+                <text
+                  class="formation-lab__fusion-label"
+                  [attr.x]="fusion.x + fusion.radius + 6"
+                  [attr.y]="fusion.y - fusion.radius - 4"
+                >
+                  FUSIÓN {{ fusion.eventOrdinal }}
+                </text>
+              </g>
+            }
+
+            @for (survivor of survivorPoints(); track survivor.shortLabel) {
+              <g
+                class="formation-lab__subject"
+                data-testid="planetary-formation-survivor-marker"
+                [class.formation-lab__subject--selected]="isLineageSelected(survivor.sourceOrdinals)"
+                [class.formation-lab__subject--dimmed]="isLineageDimmed(survivor.sourceOrdinals)"
+                [attr.aria-label]="survivor.label"
+                role="button"
+                tabindex="0"
+                (click)="selectLineage(survivor.sourceOrdinals)"
+                (keydown.enter)="selectLineage(survivor.sourceOrdinals)"
+                (keydown.space)="selectLineage(survivor.sourceOrdinals)"
+              >
+                <circle
+                  class="formation-lab__survivor"
+                  [attr.cx]="survivor.x"
+                  [attr.cy]="survivor.y"
+                  [attr.r]="survivor.radius"
+                  [attr.fill]="survivor.color"
+                >
+                  <title>{{ survivor.label }}</title>
+                </circle>
+
+                <text
+                  class="formation-lab__body-label"
+                  [attr.x]="survivor.x + survivor.radius + 5"
+                  [attr.y]="survivor.y - survivor.radius - 3"
+                >
+                  {{ survivor.shortLabel }}
+                </text>
+              </g>
+            }
+          }
+
+          @if (stageIs('17.6')) {
+            <g
+              class="formation-lab__analysis-overlay"
+              data-testid="planetary-formation-analysis-overlay"
+            >
+              <rect x="18" y="18" width="246" height="84" rx="8" />
+              <text x="32" y="39" class="formation-lab__analysis-title">
+                LECTURA 17.6 · MISMO SNAPSHOT
+              </text>
+              <text x="32" y="60">
+                {{ activeFrame.analysis.gapCount }} huecos · {{ activeFrame.analysis.condensationRegionCount }} regiones
+              </text>
+              <text x="32" y="78">
+                {{ activeFrame.analysis.survivingBodyCount }}/{{ activeFrame.analysis.initialCandidateCount }} supervivientes · {{ activeFrame.analysis.migratedBodyCount }} migrados
+              </text>
+              <text x="32" y="94">
+                {{ activeFrame.analysis.collisionCount }} colisiones · sin segunda formación
+              </text>
+            </g>
+          }
+
+          @if (stageIs('17.7')) {
+            @for (anchor of anchorPoints(); track anchor.shortLabel) {
+              <g
+                class="formation-lab__subject"
+                data-testid="planetary-formation-anchor-marker"
+                [class.formation-lab__subject--selected]="isLineageSelected(anchor.sourceOrdinals)"
+                [class.formation-lab__subject--dimmed]="isLineageDimmed(anchor.sourceOrdinals)"
+                [attr.aria-label]="anchor.label"
+                role="button"
+                tabindex="0"
+                (click)="selectLineage(anchor.sourceOrdinals)"
+                (keydown.enter)="selectLineage(anchor.sourceOrdinals)"
+                (keydown.space)="selectLineage(anchor.sourceOrdinals)"
+              >
+                <rect
+                  class="formation-lab__anchor"
+                  [attr.x]="anchor.x - anchor.radius"
+                  [attr.y]="anchor.y - anchor.radius"
+                  [attr.width]="anchor.radius * 2"
+                  [attr.height]="anchor.radius * 2"
+                  [attr.fill]="anchor.color"
+                  [attr.transform]="'rotate(45 ' + anchor.x + ' ' + anchor.y + ')'"
+                >
+                  <title>{{ anchor.label }}</title>
+                </rect>
+
+                <text
+                  class="formation-lab__body-label formation-lab__body-label--anchor"
+                  [attr.x]="anchor.x + anchor.radius + 7"
+                  [attr.y]="anchor.y - anchor.radius - 5"
+                >
+                  {{ anchor.shortLabel }}
+                </text>
+              </g>
+            }
+          }
+
+          <circle
+            cx="360"
+            cy="220"
+            [attr.r]="starVisualRadius(activeFrame.snapshot.stellarYouthProfile.referenceRadiusMultiplier)"
+            fill="url(#phase17-star)"
+            class="formation-lab__star"
+          />
+
+          <circle
+            cx="360"
+            cy="220"
+            [attr.r]="starCoreVisualRadius()"
+            fill="#fff7d6"
+          />
+        </svg>
+
+        <p class="formation-lab__schematic-note">
+          Radio = distancia física del modelo. El ángulo alrededor del disco es
+          solo una separación gráfica determinista y no constituye un elemento
+          orbital de Fase 18. Al seleccionar una ficha o marcador se resalta su
+          mismo linaje en la vista actual.
+        </p>
+
+        <footer class="formation-lab__legend">
+          <span><i class="formation-lab__legend-star"></i> estrella joven</span>
+          @if (stageAtLeast('17.3')) {
+            @for (ring of condensationRings(); track ring.code) {
+              <span>
+                <i [style.background]="ring.color"></i>
+                {{ ring.code }} · {{ ring.label }}
+              </span>
+            }
+            @if (snowLineVisual(); as snowLine) {
+              <span><i class="formation-lab__legend-snow"></i>{{ snowLine.label }}</span>
+            }
+            <span><i class="formation-lab__legend-gap"></i> G# · hueco / depleción</span>
+          }
+          @if (stageIs('17.4')) {
+            <span><i class="formation-lab__legend-candidate"></i> candidato #n</span>
+          }
+          @if (stageIs('17.5') || stageIs('17.6')) {
+            <span><i class="formation-lab__legend-survivor"></i> superviviente [linaje]</span>
+            <span><i class="formation-lab__legend-migration"></i> migración</span>
+            <span><i class="formation-lab__legend-fusion"></i> fusión</span>
+          }
+          @if (stageIs('17.7')) {
+            <span><i class="formation-lab__legend-anchor"></i> ancla [linaje] · no planeta</span>
+          }
+        </footer>
+      </article>
+
+      <aside class="formation-lab__readout">
+        @switch (selectedStageId()) {
+          @case ('17.1') {
+            <p class="formation-lab__eyebrow">17.1 · PERFIL JOVEN</p>
+            <h3>{{ youthStageLabel(activeFrame.snapshot.stellarYouthProfile.stage.name) }}</h3>
+
+            <dl class="formation-lab__facts">
+              <div><dt>Edad</dt><dd>{{ formatNumber(activeFrame.snapshot.stellarYouthProfile.ageMillionYears, 4) }} Ma</dd></div>
+              <div><dt>Progreso de etapa</dt><dd>{{ percent(activeFrame.snapshot.stellarYouthProfile.stageProgress01) }}</dd></div>
+              <div><dt>Radio de referencia</dt><dd>×{{ formatNumber(activeFrame.snapshot.stellarYouthProfile.referenceRadiusMultiplier, 3) }}</dd></div>
+              <div><dt>Luminosidad de referencia</dt><dd>×{{ formatNumber(activeFrame.snapshot.stellarYouthProfile.referenceLuminosityMultiplier, 3) }}</dd></div>
+              <div><dt>Actividad de acreción</dt><dd>{{ percent(activeFrame.snapshot.stellarYouthProfile.accretionActivityIndex) }}</dd></div>
+            </dl>
+          }
+
+          @case ('17.2') {
+            <p class="formation-lab__eyebrow">17.2 · ENVOLVENTE DEL DISCO</p>
+            <h3>{{ diskStageLabel(activeFrame.snapshot.diskProfile.stage.name) }}</h3>
+
+            <dl class="formation-lab__facts">
+              <div><dt>Masa del disco</dt><dd>{{ formatNumber(activeFrame.snapshot.diskProfile.diskMassSolar, 5) }} M☉</dd></div>
+              <div><dt>Disco / estrella</dt><dd>{{ percent(activeFrame.snapshot.diskProfile.diskToCentralMassRatio) }}</dd></div>
+              <div><dt>Radio interior</dt><dd>{{ formatNumber(activeFrame.snapshot.diskProfile.innerRadiusAu, 4) }} AU</dd></div>
+              <div><dt>Radio característico</dt><dd>{{ formatNumber(activeFrame.snapshot.diskProfile.characteristicRadiusAu, 2) }} AU</dd></div>
+              <div><dt>Radio exterior</dt><dd>{{ formatNumber(activeFrame.snapshot.diskProfile.outerRadiusAu, 2) }} AU</dd></div>
+              <div><dt>Evolución</dt><dd>{{ percent(activeFrame.snapshot.diskProfile.evolutionProgress01) }}</dd></div>
+            </dl>
+          }
+
+          @case ('17.3') {
+            <p class="formation-lab__eyebrow">17.3 · ESTRUCTURA INTERNA</p>
+            <h3>Gas, polvo y frentes de condensación</h3>
+
+            <dl class="formation-lab__facts">
+              <div><dt>Gas</dt><dd>{{ percent(activeFrame.snapshot.diskStructure.gasMassFraction01) }}</dd></div>
+              <div><dt>Polvo</dt><dd>{{ percent(activeFrame.snapshot.diskStructure.dustMassFraction01) }}</dd></div>
+              <div><dt>Depleción gaseosa</dt><dd>{{ percent(activeFrame.snapshot.diskStructure.gasDepletionIndex01) }}</dd></div>
+              <div><dt>Asentamiento de polvo</dt><dd>{{ percent(activeFrame.snapshot.diskStructure.dustSettlingIndex01) }}</dd></div>
+              <div><dt>Huecos</dt><dd>{{ activeFrame.snapshot.diskStructure.gaps.length }}</dd></div>
+              <div><dt>Regiones de condensación</dt><dd>{{ activeFrame.snapshot.diskStructure.condensationRegions.length }}</dd></div>
+              <div><dt>Línea de nieve H₂O</dt><dd>{{ activeFrame.snapshot.diskStructure.waterSnowLineRadiusAuOrNull === null ? 'Fuera del disco' : formatNumber(activeFrame.snapshot.diskStructure.waterSnowLineRadiusAuOrNull, 2) + ' AU' }}</dd></div>
+            </dl>
+
+            <div class="formation-lab__chips formation-lab__chips--regions">
+              @for (ring of condensationRings(); track ring.code) {
+                <span [style.border-color]="ring.color">
+                  <i [style.background]="ring.color"></i>
+                  {{ ring.code }} · {{ ring.label }}
+                </span>
+              }
+
+              @if (snowLineVisual(); as snowLine) {
+                <span class="formation-lab__snow-chip">
+                  H₂O · {{ snowLine.label }}
+                </span>
+              }
+            </div>
+          }
+
+          @case ('17.4') {
+            <p class="formation-lab__eyebrow">17.4 · POBLACIÓN INICIAL</p>
+            <h3>{{ activeFrame.snapshot.candidatePopulation.candidates.length }} candidatos</h3>
+
+            <dl class="formation-lab__facts">
+              <div><dt>Sólidos en candidatos</dt><dd>{{ formatNumber(activeFrame.snapshot.candidatePopulation.candidateSolidMassEarth, 3) }} M⊕</dd></div>
+              <div><dt>Polvo residual</dt><dd>{{ formatNumber(activeFrame.snapshot.candidatePopulation.residualDustMassEarth, 3) }} M⊕</dd></div>
+              <div><dt>Eficiencia de formación</dt><dd>{{ percent(activeFrame.snapshot.candidatePopulation.dustConversionFraction01) }}</dd></div>
+            </dl>
+
+            <div class="formation-lab__list">
+              @for (candidate of activeFrame.snapshot.candidatePopulation.candidates; track candidate.formationOrdinal) {
+                <button
+                  type="button"
+                  class="formation-lab__list-item"
+                  data-testid="planetary-formation-candidate-card"
+                  [attr.data-lineage]="candidate.formationOrdinal"
+                  [class.formation-lab__list-item--selected]="isLineageSelected([candidate.formationOrdinal])"
+                  [class.formation-lab__list-item--dimmed]="isLineageDimmed([candidate.formationOrdinal])"
+                  (click)="selectLineage([candidate.formationOrdinal])"
+                >
+                  <strong>#{{ candidate.formationOrdinal }} · {{ compositionLabel(candidate.composition.name) }}</strong>
+                  <span>{{ formatNumber(candidate.orbitalRadiusAu, 2) }} AU · {{ formatNumber(candidate.solidMassEarth, 3) }} M⊕</span>
+                  <small>Crecimiento {{ percent(candidate.growthPotential01) }} · gas {{ percent(candidate.gasAccretionPotential01) }}</small>
+                </button>
+              }
+            </div>
+          }
+
+          @case ('17.5') {
+            <p class="formation-lab__eyebrow">17.5 · DINÁMICA TEMPRANA</p>
+            <h3>Migración y fusiones perfectas V1</h3>
+
+            <dl class="formation-lab__facts">
+              <div><dt>Candidatos iniciales</dt><dd>{{ activeFrame.snapshot.earlyDynamics.sourceCandidateCount }}</dd></div>
+              <div><dt>Supervivientes</dt><dd>{{ activeFrame.snapshot.earlyDynamics.survivorCount }}</dd></div>
+              <div><dt>Migrados</dt><dd>{{ activeFrame.snapshot.earlyDynamics.migratedBodyCount }}</dd></div>
+              <div><dt>Colisiones</dt><dd>{{ activeFrame.snapshot.earlyDynamics.collisionCount }}</dd></div>
+            </dl>
+
+            <div class="formation-lab__list">
+              @for (body of activeFrame.snapshot.earlyDynamics.bodies; track $index) {
+                <button
+                  type="button"
+                  class="formation-lab__list-item"
+                  data-testid="planetary-formation-survivor-card"
+                  [attr.data-lineage]="body.sourceFormationOrdinals.join(',')"
+                  [class.formation-lab__list-item--selected]="isLineageSelected(body.sourceFormationOrdinals)"
+                  [class.formation-lab__list-item--dimmed]="isLineageDimmed(body.sourceFormationOrdinals)"
+                  (click)="selectLineage(body.sourceFormationOrdinals)"
+                >
+                  <strong>Linaje [{{ body.sourceFormationOrdinals.join(', ') }}]</strong>
+                  <span>{{ formatNumber(body.formationMassWeightedRadiusAu, 2) }} → {{ formatNumber(body.orbitalRadiusAu, 2) }} AU</span>
+                  <small>{{ migrationDirectionLabel(body.migrationDirection) }} · migración {{ percent(body.migrationStrength01) }} · colisiones {{ body.collisionCount }}</small>
+                </button>
+              }
+            </div>
+
+            @if (activeFrame.snapshot.earlyDynamics.collisions.length > 0) {
+              <section class="formation-lab__fusion-readout">
+                <h4>Fusiones registradas</h4>
+                @for (collision of activeFrame.snapshot.earlyDynamics.collisions; track collision.eventOrdinal) {
+                  <article data-testid="planetary-formation-fusion-card">
+                    <strong>Fusión {{ collision.eventOrdinal }} · linaje [{{ collision.participantSourceFormationOrdinals.join(', ') }}]</strong>
+                    <span>{{ formatNumber(collision.orbitalRadiusAu, 2) }} AU · {{ formatNumber(collision.combinedSolidMassEarth, 3) }} M⊕</span>
+                    <small>Severidad {{ percent(collision.impactSeverity01) }} · fusión perfecta V1</small>
+                  </article>
+                }
+              </section>
+            }
+          }
+
+          @case ('17.6') {
+            <p class="formation-lab__eyebrow">17.6 · ANALIZAR DISCO</p>
+            <h3>Lectura científica congelada</h3>
+
+            <dl
+              class="formation-lab__facts"
+              data-testid="planetary-formation-analysis-readout"
+            >
+              <div><dt>Etapa estelar</dt><dd>{{ youthStageLabel(activeFrame.analysis.stellarYouthStage.name) }}</dd></div>
+              <div><dt>Etapa del disco</dt><dd>{{ diskStageLabel(activeFrame.analysis.diskStage.name) }}</dd></div>
+              <div><dt>Huecos</dt><dd>{{ activeFrame.analysis.gapCount }}</dd></div>
+              <div><dt>Regiones de condensación</dt><dd>{{ activeFrame.analysis.condensationRegionCount }}</dd></div>
+              <div><dt>Candidatos iniciales</dt><dd>{{ activeFrame.analysis.initialCandidateCount }}</dd></div>
+              <div><dt>Supervivientes</dt><dd>{{ activeFrame.analysis.survivingBodyCount }}</dd></div>
+              <div><dt>Migrados</dt><dd>{{ activeFrame.analysis.migratedBodyCount }}</dd></div>
+              <div><dt>Colisiones</dt><dd>{{ activeFrame.analysis.collisionCount }}</dd></div>
+            </dl>
+
+            <p class="formation-lab__note">
+              Esta vista no ejecuta una segunda formación: proyecta el mismo
+              snapshot 17.1–17.5 que consume la acción ANALIZAR DISCO. El
+              overlay del diagrama identifica sus huecos, regiones, migraciones
+              y linajes sin modificar el Ground Truth.
+            </p>
+
+            <div class="formation-lab__list formation-lab__list--analysis">
+              @for (body of activeFrame.snapshot.earlyDynamics.bodies; track $index) {
+                <button
+                  type="button"
+                  class="formation-lab__list-item"
+                  data-testid="planetary-formation-analysis-lineage-card"
+                  [attr.data-lineage]="body.sourceFormationOrdinals.join(',')"
+                  [class.formation-lab__list-item--selected]="isLineageSelected(body.sourceFormationOrdinals)"
+                  [class.formation-lab__list-item--dimmed]="isLineageDimmed(body.sourceFormationOrdinals)"
+                  (click)="selectLineage(body.sourceFormationOrdinals)"
+                >
+                  <strong>[{{ body.sourceFormationOrdinals.join(', ') }}]</strong>
+                  <span>{{ formatNumber(body.orbitalRadiusAu, 2) }} AU · {{ formatNumber(body.solidMassEarth, 3) }} M⊕</span>
+                  <small>{{ migrationDirectionLabel(body.migrationDirection) }} · {{ body.collisionCount }} colisiones</small>
+                </button>
+              }
+            </div>
+          }
+
+          @case ('17.7') {
+            <p class="formation-lab__eyebrow">17.7 · HANDOFF A FASE 18</p>
+            <h3>{{ maturityRegimeLabel(activeFrame.blueprint.regime) }}</h3>
+
+            <dl
+              class="formation-lab__facts"
+              data-testid="planetary-formation-blueprint-readout"
+            >
+              <div><dt>Anclas</dt><dd>{{ activeFrame.blueprint.formationAnchors.length }}</dd></div>
+              <div><dt>Fin de formación</dt><dd>{{ formatNumber(activeFrame.blueprint.formationCompletionAgeMillionYears, 2) }} Ma</dd></div>
+              <div><dt>Gas máximo capturable</dt><dd>{{ formatNumber(activeFrame.blueprint.maxGasCaptureBudgetEarth, 2) }} M⊕</dd></div>
+              <div><dt>Polvo residual</dt><dd>{{ formatNumber(activeFrame.blueprint.residualDustMassEarth, 2) }} M⊕</dd></div>
+            </dl>
+
+            <div class="formation-lab__list formation-lab__list--anchors">
+              @for (anchor of activeFrame.blueprint.formationAnchors; track anchor.anchorOrdinal) {
+                <button
+                  type="button"
+                  class="formation-lab__list-item"
+                  data-testid="planetary-formation-anchor"
+                  [attr.data-lineage]="anchor.sourceFormationOrdinals.join(',')"
+                  [class.formation-lab__list-item--selected]="isLineageSelected(anchor.sourceFormationOrdinals)"
+                  [class.formation-lab__list-item--dimmed]="isLineageDimmed(anchor.sourceFormationOrdinals)"
+                  (click)="selectLineage(anchor.sourceFormationOrdinals)"
+                >
+                  <strong>Ancla {{ anchor.anchorOrdinal }} · linaje [{{ anchor.sourceFormationOrdinals.join(', ') }}]</strong>
+                  <span>{{ formatNumber(anchor.assemblyRadiusAu, 2) }} AU · núcleo sólido {{ formatNumber(anchor.solidCoreMassEarth, 3) }} M⊕</span>
+                  <small>
+                    Consolidación {{ percent(anchor.consolidationIndex01) }} ·
+                    envoltura {{ percent(anchor.envelopeAcquisitionPotential01) }} ·
+                    volátiles {{ percent(anchor.volatileRetentionPotential01) }} ·
+                    excitación {{ percent(anchor.dynamicalExcitationIndex01) }}
+                  </small>
+                </button>
+              }
+            </div>
+          }
+        }
+      </aside>
+    </section>
+
+    <footer
+      class="formation-lab__boundary"
+      data-testid="planetary-formation-phase-boundary"
+    >
+      <strong>FRONTERA 17 → 18</strong>
+      <p>
+        17.7 termina en <code>PlanetarySystemFormationBlueprint</code> y
+        <code>PlanetaryFormationAnchor</code>. No se representan planetCount,
+        planetType, radiusEarth, eccentricity, inclination ni orbitalPeriodDays:
+        todavía no existen planetas maduros ni órbitas finales.
+      </p>
+    </footer>
+  } @else {
+    <section
+      class="formation-lab__empty"
+      data-testid="planetary-formation-laboratory-empty"
+    >
+      <p class="formation-lab__eyebrow">MATERIALIZACIÓN BAJO DEMANDA</p>
+      <h2>Selecciona una familia A–H</h2>
+      <p>
+        El laboratorio localizará de forma determinista un SystemLocator con
+        la cadena 17.1–17.7 disponible y regenerará su Ground Truth real. La
+        búsqueda se mantiene fuera del arranque de la ruta para no cargar el
+        laboratorio hasta que quieras inspeccionarlo.
+      </p>
+    </section>
+  }
+</main>

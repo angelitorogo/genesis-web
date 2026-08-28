@@ -291,6 +291,19 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
+  it('should navigate to the phase-17 protoplanetary-formation laboratory', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/laboratory/planetary-formation',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="planetary-formation-laboratory-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

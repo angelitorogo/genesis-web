@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the four laboratories already implemented',
+      'should expose exactly the five laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          4,
+          5,
         );
       },
     );
 
     it(
-      'should link only to the four canonical permanent laboratory routes',
+      'should link only to the five canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -155,6 +155,19 @@ describe(
             ),
         ).toBe(
           '/laboratory/stellar-systems',
+        );
+
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-planetary-formation-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toBe(
+          '/laboratory/planetary-formation',
         );
       },
     );

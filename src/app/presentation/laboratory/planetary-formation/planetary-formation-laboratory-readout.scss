@@ -1,0 +1,231 @@
+.formation-lab {
+  &__readout {
+    display: grid;
+    gap: 0.65rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+  }
+
+  &__facts {
+    display: grid;
+    gap: 0.32rem;
+    margin: 0;
+
+    div {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.6rem;
+      padding-bottom: 0.28rem;
+      border-bottom: 1px solid rgba(106, 215, 255, 0.07);
+    }
+
+    dt,
+    dd {
+      font-size: 0.68rem;
+    }
+
+    dt {
+      color: var(--genesis-color-text-subtle, #9aabc2);
+    }
+
+    dd {
+      margin: 0;
+      text-align: right;
+      font-family: var(--genesis-font-mono, monospace);
+    }
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.24rem 0.4rem;
+      border: 1px solid rgba(106, 215, 255, 0.18);
+      border-radius: 999px;
+      color: var(--genesis-color-text-subtle, #9aabc2);
+      font-size: 0.62rem;
+    }
+
+    i {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+    }
+
+    .formation-lab__snow-chip {
+      border-style: dashed;
+      color: #dff8ff;
+    }
+  }
+
+  &__list {
+    display: grid;
+    gap: 0.42rem;
+
+    &--analysis {
+      margin-top: 0.15rem;
+    }
+
+    &--anchors .formation-lab__list-item {
+      border-color: rgba(185, 167, 255, 0.25);
+    }
+  }
+
+  &__list-item {
+    display: grid;
+    gap: 0.2rem;
+    width: 100%;
+    padding: 0.52rem;
+    border: 1px solid rgba(106, 215, 255, 0.12);
+    border-radius: 7px;
+    background: rgba(5, 7, 13, 0.48);
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition:
+      border-color 140ms ease,
+      background 140ms ease,
+      opacity 140ms ease,
+      box-shadow 140ms ease;
+
+    strong,
+    span,
+    small {
+      font-size: 0.65rem;
+    }
+
+    span,
+    small {
+      color: var(--genesis-color-text-subtle, #9aabc2);
+    }
+
+    &:hover {
+      border-color: rgba(106, 215, 255, 0.34);
+      background: rgba(106, 215, 255, 0.05);
+    }
+
+    &:focus-visible {
+      outline: 1px solid rgba(106, 215, 255, 0.75);
+      outline-offset: 1px;
+    }
+
+    &--selected {
+      border-color: rgba(106, 215, 255, 0.72);
+      background: rgba(106, 215, 255, 0.1);
+      box-shadow: inset 3px 0 0 #6ad7ff;
+    }
+
+    &--dimmed {
+      opacity: 0.42;
+    }
+  }
+
+  &__fusion-readout {
+    display: grid;
+    gap: 0.4rem;
+    padding-top: 0.25rem;
+
+    h4 {
+      margin: 0;
+      color: #ffad91;
+      font-size: 0.7rem;
+    }
+
+    article {
+      display: grid;
+      gap: 0.18rem;
+      padding: 0.5rem;
+      border: 1px solid rgba(255, 142, 106, 0.28);
+      border-radius: 7px;
+      background: rgba(255, 142, 106, 0.05);
+
+      strong,
+      span,
+      small {
+        font-size: 0.65rem;
+      }
+
+      span,
+      small {
+        color: var(--genesis-color-text-subtle, #9aabc2);
+      }
+    }
+  }
+
+  &__note {
+    margin: 0;
+    color: var(--genesis-color-text-subtle, #9aabc2);
+    font-size: 0.68rem;
+    line-height: 1.45;
+  }
+
+  &__empty {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.2rem;
+    text-align: center;
+
+    h2,
+    p {
+      margin: 0;
+    }
+
+    > p:last-child {
+      max-width: 70ch;
+      margin-inline: auto;
+      color: var(--genesis-color-text-subtle, #9aabc2);
+      font-size: 0.68rem;
+      line-height: 1.5;
+    }
+  }
+
+  &__boundary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+    padding: 0.7rem;
+    border-color: rgba(255, 190, 106, 0.28);
+
+    strong {
+      color: #ffbe6a;
+      font: 700 0.68rem var(--genesis-font-mono, monospace);
+    }
+
+    p {
+      margin: 0;
+      color: var(--genesis-color-text-subtle, #9aabc2);
+      font-size: 0.68rem;
+      line-height: 1.45;
+    }
+
+    code {
+      color: var(--genesis-color-primary, #6ad7ff);
+    }
+  }
+}
+
+@media (max-width: 1050px) {
+  .formation-lab {
+    &__list {
+      max-height: 28rem;
+      overflow: auto;
+    }
+  }
+}
+
+@media (max-width: 650px) {
+  .formation-lab {
+    &__boundary {
+      grid-template-columns: 1fr;
+    }
+  }
+}

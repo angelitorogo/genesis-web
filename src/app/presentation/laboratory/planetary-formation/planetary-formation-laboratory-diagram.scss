@@ -1,0 +1,220 @@
+.formation-lab {
+  &__diagram {
+    display: block;
+    width: 100%;
+    min-height: 24rem;
+    margin-top: 0.55rem;
+    border: 1px solid rgba(106, 215, 255, 0.08);
+    border-radius: 10px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(106, 215, 255, 0.04), transparent 52%),
+      #05070d;
+  }
+
+  &__condensation-ring {
+    opacity: 0.34;
+  }
+
+  &__gap-ring {
+    stroke: rgba(5, 7, 13, 0.9);
+  }
+
+  &__snow-line {
+    stroke: rgba(224, 247, 255, 0.88);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+    filter: drop-shadow(0 0 3px rgba(142, 218, 247, 0.28));
+  }
+
+  &__radial-code,
+  &__snow-line-label,
+  &__body-label,
+  &__migration-label,
+  &__fusion-label {
+    paint-order: stroke;
+    stroke: rgba(5, 7, 13, 0.96);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    font-family: var(--genesis-font-mono, monospace);
+    font-weight: 800;
+    pointer-events: none;
+  }
+
+  &__radial-code {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+
+    &--gap {
+      fill: #ff8e6a;
+    }
+  }
+
+  &__snow-line-label {
+    fill: #dff8ff;
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  &__candidate {
+    stroke: rgba(255, 255, 255, 0.78);
+    stroke-width: 1.5;
+  }
+
+  &__subject,
+  &__migration-group,
+  &__fusion-event {
+    transition:
+      opacity 140ms ease,
+      filter 140ms ease;
+  }
+
+  &__subject {
+    cursor: pointer;
+    outline: none;
+
+    &:focus-visible {
+      filter: drop-shadow(0 0 7px rgba(106, 215, 255, 0.8));
+    }
+
+    &--selected {
+      filter: drop-shadow(0 0 8px rgba(106, 215, 255, 0.95));
+    }
+
+    &--dimmed {
+      opacity: 0.2;
+    }
+  }
+
+  &__body-label {
+    fill: #f5fbff;
+    font-size: 10px;
+
+    &--anchor {
+      fill: #e7ddff;
+    }
+  }
+
+  &__migration-origin {
+    fill: rgba(5, 7, 13, 0.96);
+    stroke: #ffbe6a;
+    stroke-width: 1.7;
+    stroke-dasharray: 2 2;
+  }
+
+  &__migration {
+    stroke-width: 2.3;
+    stroke-dasharray: 6 4;
+    opacity: 0.95;
+  }
+
+  &__migration-label {
+    fill: #ffcf8e;
+    font-size: 8px;
+    text-anchor: middle;
+  }
+
+  &__survivor {
+    stroke: #ffffff;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 5px rgba(106, 215, 255, 0.35));
+  }
+
+  &__fusion-connector {
+    stroke: #ff8e6a;
+    stroke-width: 1.7;
+    stroke-dasharray: 4 3;
+    opacity: 0.86;
+  }
+
+  &__collision {
+    fill: rgba(255, 142, 106, 0.14);
+    stroke: #ff8e6a;
+    stroke-width: 2.4;
+    stroke-dasharray: 3 2;
+    filter: drop-shadow(0 0 5px rgba(255, 142, 106, 0.45));
+  }
+
+  &__fusion-label {
+    fill: #ffad91;
+    font-size: 8px;
+  }
+
+  &__anchor {
+    stroke: #ffffff;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 6px rgba(185, 167, 255, 0.55));
+  }
+
+  &__analysis-overlay {
+    pointer-events: none;
+
+    rect {
+      fill: rgba(5, 9, 18, 0.9);
+      stroke: rgba(106, 215, 255, 0.36);
+      stroke-width: 1;
+    }
+
+    text {
+      fill: #b8c9dd;
+      font: 8px var(--genesis-font-mono, monospace);
+    }
+
+    .formation-lab__analysis-title {
+      fill: #6ad7ff;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+  }
+
+  &__star {
+    filter: drop-shadow(0 0 15px rgba(255, 196, 105, 0.65));
+  }
+
+  &__schematic-note {
+    margin: 0.55rem 0 0;
+    color: var(--genesis-color-text-subtle, #9aabc2);
+    font-size: 0.62rem;
+    line-height: 1.45;
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 0.85rem;
+    margin-top: 0.55rem;
+    color: var(--genesis-color-text-subtle, #9aabc2);
+    font-size: 0.62rem;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    i {
+      flex: 0 0 auto;
+      width: 0.58rem;
+      height: 0.58rem;
+      border-radius: 50%;
+      background: #6ad7ff;
+    }
+  }
+
+  &__legend-star { background: #ffd777 !important; }
+  &__legend-gap { border: 1px dashed #ff8e6a; background: transparent !important; }
+  &__legend-snow { border: 1px dashed #dff8ff; background: transparent !important; }
+  &__legend-candidate { background: #d7c2a0 !important; }
+  &__legend-survivor { border: 1px solid #fff; background: #8edaf7 !important; }
+  &__legend-migration { border-radius: 0 !important; width: 0.85rem !important; height: 0.12rem !important; background: #ffbe6a !important; }
+  &__legend-fusion { border: 1px dashed #ff8e6a; background: rgba(255, 142, 106, 0.14) !important; }
+  &__legend-anchor { border-radius: 0 !important; background: #b9a7ff !important; transform: rotate(45deg); }
+
+}
+
+@media (max-width: 650px) {
+  .formation-lab {
+    &__diagram {
+      min-height: 17rem;
+    }
+  }
+}

@@ -141,6 +141,16 @@ export const genesisRoutes: Routes = [
     title: 'Sistemas estelares | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/planetary-formation',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/planetary-formation/planetary-formation-laboratory'
+      ).then(
+        (module) => module.PlanetaryFormationLaboratoryPage,
+      ),
+    title: 'Formación planetaria | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(
