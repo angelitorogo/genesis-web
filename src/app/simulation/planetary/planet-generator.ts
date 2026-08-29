@@ -15,8 +15,16 @@ import {
 } from '../../domain/planetary/planet';
 
 import {
+  type PlanetPhysicalProperties,
+} from '../../domain/planetary/planet-physical-properties';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
+
+import {
+  PlanetPhysicalPropertiesGenerator,
+} from './planet-physical-properties-generator';
 
 /**
  * Point-19.1 deterministic Planet materializer.
@@ -25,10 +33,9 @@ import {
  * chosen by point 18.2 and binds the exact phase-18 slot/orbit/period/HZ/
  * designation projections into one Planet domain entity.
  *
- * V1 consumes zero PRNG draws and derives zero seeds. Point 19.1 therefore
- * cannot perturb any frozen procedural vector. Physical generation starts at
- * point 19.2 and must consume the existing BodySeed through independent
- * point-specific branches rather than inventing a PlanetSeed level.
+ * Point 19.2 enriches that boundary with deterministic bulk physical
+ * properties. It consumes only independent branches of the existing BodySeed;
+ * no PlanetSeed level is introduced and all point-18 products remain frozen.
  */
 export class PlanetGenerator {
 
@@ -108,19 +115,18 @@ export class PlanetGenerator {
       );
     }
 
-    return new Planet(
+    const physicalProperties =
+      PlanetPhysicalPropertiesGenerator
+        .generate(
+          generationKey,
+          planetarySystem,
+          slot.bodyLocator,
+        );
+
+    return materializePlanet(
       planetarySystem,
-      index +
-        1,
-      slot,
-      planetarySystem
-        .orbits[index],
-      planetarySystem
-        .orbitalPeriods[index],
-      planetarySystem
-        .orbitHabitableZoneClassifications[index],
-      planetarySystem
-        .planetDesignations[index],
+      index,
+      physicalProperties,
     );
   }
 
@@ -152,19 +158,57 @@ export class PlanetGenerator {
       );
     }
 
+    const physicalProperties =
+      PlanetPhysicalPropertiesGenerator
+        .generateAll(
+          generationKey,
+          planetarySystem,
+        );
+
     return Object.freeze(
-      planetarySystem
-        .planetSlots
+      physicalProperties
         .map(
-          slot =>
-            this.generate(
-              generationKey,
+          (
+            properties,
+            index,
+          ) =>
+            materializePlanet(
               planetarySystem,
-              slot.bodyLocator,
+              index,
+              properties,
             ),
         ),
     );
   }
+}
+
+function materializePlanet(
+  planetarySystem:
+    PlanetarySystem,
+
+  index:
+    number,
+
+  physicalProperties:
+    PlanetPhysicalProperties,
+): Planet {
+
+  return new Planet(
+    planetarySystem,
+    index +
+      1,
+    planetarySystem
+      .planetSlots[index],
+    planetarySystem
+      .orbits[index],
+    planetarySystem
+      .orbitalPeriods[index],
+    planetarySystem
+      .orbitHabitableZoneClassifications[index],
+    planetarySystem
+      .planetDesignations[index],
+    physicalProperties,
+  );
 }
 
 function sameSystemAddress(

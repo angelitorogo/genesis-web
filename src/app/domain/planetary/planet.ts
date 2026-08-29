@@ -24,6 +24,10 @@ import {
 } from './planetary-orbit-habitable-zone-classification';
 
 import {
+  type PlanetPhysicalProperties,
+} from './planet-physical-properties';
+
+import {
   type PlanetaryOrbitalElements,
 } from './planetary-orbital-elements';
 
@@ -49,9 +53,10 @@ import {
  * that later point-19 generators can enrich with physical properties.
  *
  * No new locator or seed level exists here. BodyLocator/BodySeed remain the
- * canonical identity of the planet. Mass, radius, density, surface gravity,
- * rotation, axial tilt, planet type, internal composition, albedo/surface and
- * rarity flags remain absent until points 19.2..19.8.
+ * canonical identity of the planet. Point 19.2 adds one coherent bulk-physical
+ * state (mass/radius/density/gravity). Rotation, axial tilt, planet type,
+ * internal composition, albedo/surface and rarity flags remain absent until
+ * points 19.3..19.8.
  */
 export class Planet {
 
@@ -76,6 +81,9 @@ export class Planet {
 
     readonly designation:
       PlanetaryDesignation,
+
+    readonly physicalProperties:
+      PlanetPhysicalProperties,
   ) {
     if (
       !Number.isInteger(
@@ -159,7 +167,21 @@ export class Planet {
       orbitalPeriod,
       habitableZoneClassification,
       designation,
+      physicalProperties,
     );
+
+    if (
+      !approximatelyEqual(
+        physicalProperties
+          .inheritedSolidCoreMassEarth,
+        architectureSlot
+          .inheritedSolidCoreMassEarth,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.2 physical properties must preserve the exact point-18.2 inherited solid-core mass.',
+      );
+    }
   }
 
   get generationKey():
@@ -218,6 +240,46 @@ export class Planet {
       .architecture
       .orbitTopology;
   }
+
+  get massEarth():
+    number {
+
+    return this
+      .physicalProperties
+      .massEarth;
+  }
+
+  get radiusEarth():
+    number {
+
+    return this
+      .physicalProperties
+      .radiusEarth;
+  }
+
+  get densityGramsPerCubicCentimeter():
+    number {
+
+    return this
+      .physicalProperties
+      .densityGramsPerCubicCentimeter;
+  }
+
+  get surfaceGravityEarth():
+    number {
+
+    return this
+      .physicalProperties
+      .surfaceGravityEarth;
+  }
+
+  get surfaceGravityMetersPerSecondSquared():
+    number {
+
+    return this
+      .physicalProperties
+      .surfaceGravityMetersPerSecondSquared;
+  }
 }
 
 function assertSharedBodyIdentity(
@@ -238,6 +300,9 @@ function assertSharedBodyIdentity(
 
   designation:
     PlanetaryDesignation,
+
+  physicalProperties:
+    PlanetPhysicalProperties,
 ): void {
 
   const bodyObjects = [
@@ -246,6 +311,7 @@ function assertSharedBodyIdentity(
     orbitalPeriod,
     habitableZoneClassification,
     designation,
+    physicalProperties,
   ] as const;
 
   for (
@@ -293,5 +359,34 @@ function sameBodyLocator(
       right.galacticObjectIndex &&
     left.bodyIndex ===
       right.bodyIndex
+  );
+}
+
+function approximatelyEqual(
+  left:
+    number,
+
+  right:
+    number,
+): boolean {
+
+  const scale =
+    Math.max(
+      1,
+      Math.abs(
+        left,
+      ),
+      Math.abs(
+        right,
+      ),
+    );
+
+  return (
+    Math.abs(
+      left -
+      right,
+    ) <=
+    1e-9 *
+      scale
   );
 }

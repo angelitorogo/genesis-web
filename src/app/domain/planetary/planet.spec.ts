@@ -32,6 +32,12 @@ import {
 } from './planetary-orbit-habitable-zone-classification';
 
 import {
+  PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
+  PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
+  PlanetPhysicalProperties,
+} from './planet-physical-properties';
+
+import {
   type PlanetaryOrbitalElements,
 } from './planetary-orbital-elements';
 
@@ -52,7 +58,7 @@ import {
 } from './planetary-system-orbit-topology';
 
 describe(
-  'Planet point 19.1',
+  'Planet points 19.1-19.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -83,7 +89,7 @@ describe(
       );
 
     it(
-      'should bind the exact frozen point-18 projections into one planet identity without inventing point-19.2+ physics',
+      'should bind the frozen point-18 projections and coherent point-19.2 bulk physics into one planet',
       () => {
         const fixture =
           planetFixture();
@@ -97,6 +103,7 @@ describe(
             fixture.period,
             fixture.hzClassification,
             fixture.designation,
+            fixture.physicalProperties,
           );
 
         expect(
@@ -133,6 +140,12 @@ describe(
           planet.designation,
         ).toBe(
           fixture.designation,
+        );
+
+        expect(
+          planet.physicalProperties,
+        ).toBe(
+          fixture.physicalProperties,
         );
 
         expect(
@@ -175,13 +188,33 @@ describe(
           PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
         );
 
+        expect(
+          planet.massEarth,
+        ).toBe(1);
+
+        expect(
+          planet.radiusEarth,
+        ).toBe(1);
+
+        expect(
+          planet.densityGramsPerCubicCentimeter,
+        ).toBe(
+          PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
+        );
+
+        expect(
+          planet.surfaceGravityEarth,
+        ).toBe(1);
+
+        expect(
+          planet.surfaceGravityMetersPerSecondSquared,
+        ).toBe(
+          PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
+        );
+
         for (
           const laterPhysicalProperty
           of [
-            'massEarth',
-            'radiusEarth',
-            'densityGramsPerCubicCentimeter',
-            'surfaceGravityEarth',
             'rotationPeriodHours',
             'dayLengthHours',
             'axialTiltDegrees',
@@ -225,6 +258,7 @@ describe(
                 fixture.period,
                 fixture.hzClassification,
                 fixture.designation,
+                fixture.physicalProperties,
               ),
           ).toThrow(
             RangeError,
@@ -253,6 +287,7 @@ describe(
               fixture.period,
               fixture.hzClassification,
               fixture.designation,
+              fixture.physicalProperties,
             ),
         ).toThrow(
           RangeError,
@@ -261,36 +296,71 @@ describe(
     );
 
     it(
-      'should reject a host stack whose point-18 projections disagree on BodySeed identity',
+      'should reject a point-19.2 physical state with another BodySeed or inherited solid-core mass',
       () => {
         const fixture =
           planetFixture();
 
-        const mismatchedOrbit = {
-          ...fixture.orbit,
-          bodySeed:
-            new BodySeed(
-              '22222222222222222222222222222222',
-            ),
-        } as PlanetaryOrbitalElements;
+        const otherSeed =
+          new BodySeed(
+            '22222222222222222222222222222222',
+          );
 
-        const system = {
-          ...fixture.system,
-          orbits: [
-            mismatchedOrbit,
-          ],
-        } as unknown as PlanetarySystem;
+        const foreignIdentity =
+          new PlanetPhysicalProperties(
+            1,
+            firstLocator,
+            otherSeed,
+            1,
+            0,
+            1,
+            1,
+            PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
+            1,
+            PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
+          );
 
         expect(
           () =>
             new Planet(
-              system,
+              fixture.system,
               1,
               fixture.slot,
-              mismatchedOrbit,
+              fixture.orbit,
               fixture.period,
               fixture.hzClassification,
               fixture.designation,
+              foreignIdentity,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const differentCoreMass =
+          new PlanetPhysicalProperties(
+            1,
+            firstLocator,
+            firstSeed,
+            0.5,
+            0.5,
+            1,
+            1,
+            PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
+            1,
+            PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              differentCoreMass,
             ),
         ).toThrow(
           RangeError,
@@ -311,6 +381,8 @@ describe(
         PlanetaryOrbitHabitableZoneClassification;
       readonly designation:
         PlanetaryDesignation;
+      readonly physicalProperties:
+        PlanetPhysicalProperties;
     } {
       const slot = {
         planetOrdinal:
@@ -319,6 +391,8 @@ describe(
           firstLocator,
         bodySeed:
           firstSeed,
+        inheritedSolidCoreMassEarth:
+          1,
       } as PlanetaryArchitectureSlot;
 
       const orbit = {
@@ -371,6 +445,20 @@ describe(
           'Testara b',
       } as PlanetaryDesignation;
 
+      const physicalProperties =
+        new PlanetPhysicalProperties(
+          1,
+          firstLocator,
+          firstSeed,
+          1,
+          0,
+          1,
+          1,
+          PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
+          1,
+          PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
+        );
+
       const system = {
         generationKey,
         locator:
@@ -405,6 +493,7 @@ describe(
         period,
         hzClassification,
         designation,
+        physicalProperties,
       };
     }
   },

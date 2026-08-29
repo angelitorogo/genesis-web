@@ -20,6 +20,10 @@ import {
 } from '../../domain/planetary/planetary-architecture-slot';
 
 import {
+  ProtoplanetCompositionMixture,
+} from '../../domain/planetary/protoplanet-composition-mixture';
+
+import {
   type PlanetaryDesignation,
 } from '../../domain/planetary/planetary-designation';
 
@@ -141,6 +145,24 @@ describe(
         ).toBe(
           'Testara c',
         );
+
+        expect(
+          planet.massEarth,
+        ).toBeGreaterThanOrEqual(
+          fixture.slots[1].inheritedSolidCoreMassEarth,
+        );
+
+        expect(
+          planet.radiusEarth,
+        ).toBeGreaterThan(0);
+
+        expect(
+          planet.densityGramsPerCubicCentimeter,
+        ).toBeGreaterThan(0);
+
+        expect(
+          planet.surfaceGravityEarth,
+        ).toBeGreaterThan(0);
       },
     );
 
@@ -293,6 +315,12 @@ describe(
           after.designation,
         ).toBe(
           before.designation,
+        );
+
+        expect(
+          after.physicalProperties,
+        ).toEqual(
+          before.physicalProperties,
         );
       },
     );
@@ -448,6 +476,35 @@ describe(
           planetOrdinal,
           bodyLocator,
           bodySeed,
+          inheritedSolidCoreMassEarth:
+            0.8 +
+            planetOrdinal *
+              0.6,
+          inheritedEnvelopeAcquisitionPotential01:
+            0.25 +
+            0.12 *
+              index,
+          inheritedVolatileRetentionPotential01:
+            0.45 +
+            0.10 *
+              index,
+          inheritedCompositionMixture:
+            new ProtoplanetCompositionMixture(
+              0,
+              Math.max(
+                0.25,
+                0.75 -
+                  0.15 *
+                    index,
+              ),
+              Math.min(
+                0.65,
+                0.25 +
+                  0.15 *
+                    index,
+              ),
+              0,
+            ),
         } as PlanetaryArchitectureSlot;
 
         const orbit = {
@@ -519,6 +576,11 @@ describe(
         generationKey,
         locator,
         planetCount,
+        formationBlueprint: {
+          maxGasCaptureBudgetEarth:
+            planetCount *
+            8,
+        },
         architecture: {
           orbitTopology:
             PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
