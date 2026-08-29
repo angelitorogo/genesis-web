@@ -68,7 +68,7 @@ import {
 } from './planet-generator';
 
 describe(
-  'PlanetGenerator points 19.1-19.4',
+  'PlanetGenerator points 19.1-19.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -214,10 +214,41 @@ describe(
           planet.massEarth,
         );
 
+        expect(
+          planet.internalComposition.totalMassEarth,
+        ).toBeCloseTo(
+          planet.massEarth,
+          12,
+        );
+
+        expect(
+          planet.internalComposition.sourceSolidMassEarth,
+        ).toBeCloseTo(
+          planet.physicalProperties.inheritedSolidCoreMassEarth,
+          12,
+        );
+
+        expect(
+          planet.gaseousEnvelopeMassEarth,
+        ).toBeCloseTo(
+          planet.physicalProperties.accretedEnvelopeMassEarth,
+          12,
+        );
+
+        expect(
+          planet.metallicCoreMassEarth +
+          planet.silicateInteriorMassEarth +
+          planet.condensedIceMassEarth +
+          planet.volatileRichInteriorMassEarth +
+          planet.gaseousEnvelopeMassEarth,
+        ).toBeCloseTo(
+          planet.massEarth,
+          12,
+        );
+
         for (
           const laterProperty
           of [
-            'internalComposition',
             'albedo',
             'surface',
             'rarities',
@@ -301,6 +332,28 @@ describe(
             ),
           ).toContain(
             planets[index].planetType,
+          );
+
+          expect(
+            planets[index]
+              .internalComposition
+              .totalMassEarth,
+          ).toBeCloseTo(
+            planets[index]
+              .massEarth,
+            12,
+          );
+
+          expect(
+            planets[index]
+              .internalComposition
+              .sourceRockyFraction01 +
+            planets[index]
+              .internalComposition
+              .sourceIceRichFraction01,
+          ).toBeCloseTo(
+            1,
+            12,
           );
         }
       },
@@ -406,6 +459,12 @@ describe(
           after.typeClassification,
         ).toEqual(
           before.typeClassification,
+        );
+
+        expect(
+          after.internalComposition,
+        ).toEqual(
+          before.internalComposition,
         );
       },
     );

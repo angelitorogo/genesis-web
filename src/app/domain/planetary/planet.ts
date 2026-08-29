@@ -24,6 +24,10 @@ import {
 } from './planetary-orbit-habitable-zone-classification';
 
 import {
+  type PlanetInternalComposition,
+} from './planet-internal-composition';
+
+import {
   type PlanetPhysicalProperties,
 } from './planet-physical-properties';
 
@@ -69,8 +73,8 @@ import {
  * state (mass/radius/density/gravity), and point 19.3 adds sidereal rotation,
  * apparent solar-day length and axial tilt without changing any frozen earlier
  * product. Point 19.4 then attaches one deterministic coarse planet-type
- * classification. Internal composition, albedo/surface and rarity flags remain
- * absent until points 19.5..19.8.
+ * classification and point 19.5 adds an approximate conserved internal mass
+ * budget. Albedo/surface and rarity flags remain absent until points 19.6..19.8.
  */
 export class Planet {
 
@@ -104,6 +108,9 @@ export class Planet {
 
     readonly typeClassification:
       PlanetTypeClassification,
+
+    readonly internalComposition:
+      PlanetInternalComposition,
   ) {
     if (
       !Number.isInteger(
@@ -190,6 +197,7 @@ export class Planet {
       physicalProperties,
       rotationProperties,
       typeClassification,
+      internalComposition,
     );
 
     if (
@@ -342,6 +350,72 @@ export class Planet {
         'Point-19.4 tidal-heating proxy must be derived from the frozen host mass/orbit and point-19.2 bulk physics.',
       );
     }
+
+    if (
+      !approximatelyEqual(
+        internalComposition
+          .sourceSolidMassEarth,
+        physicalProperties
+          .inheritedSolidCoreMassEarth,
+      ) ||
+      !approximatelyEqual(
+        internalComposition
+          .sourceEnvelopeMassEarth,
+        physicalProperties
+          .accretedEnvelopeMassEarth,
+      ) ||
+      !approximatelyEqual(
+        internalComposition
+          .gaseousEnvelopeMassEarth,
+        physicalProperties
+          .accretedEnvelopeMassEarth,
+      ) ||
+      !approximatelyEqual(
+        internalComposition
+          .totalMassEarth,
+        physicalProperties
+          .massEarth,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.5 internal composition must conserve the exact point-19.2 solid, envelope and total masses.',
+      );
+    }
+
+    const sourceMixture =
+      architectureSlot
+        .inheritedCompositionMixture;
+
+    if (
+      !approximatelyEqual(
+        internalComposition
+          .sourceRefractoryRichFraction01,
+        sourceMixture
+          .refractoryRichFraction01,
+      ) ||
+      !approximatelyEqual(
+        internalComposition
+          .sourceRockyFraction01,
+        sourceMixture
+          .rockyFraction01,
+      ) ||
+      !approximatelyEqual(
+        internalComposition
+          .sourceIceRichFraction01,
+        sourceMixture
+          .iceRichFraction01,
+      ) ||
+      !approximatelyEqual(
+        internalComposition
+          .sourceVolatileRichFraction01,
+        sourceMixture
+          .volatileRichFraction01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.5 internal composition must preserve the exact point-18.2 source-family mixture.',
+      );
+    }
   }
 
   get generationKey():
@@ -488,6 +562,46 @@ export class Planet {
       .typeClassification
       .planetType;
   }
+
+  get metallicCoreMassEarth():
+    number {
+
+    return this
+      .internalComposition
+      .metallicCoreMassEarth;
+  }
+
+  get silicateInteriorMassEarth():
+    number {
+
+    return this
+      .internalComposition
+      .silicateInteriorMassEarth;
+  }
+
+  get condensedIceMassEarth():
+    number {
+
+    return this
+      .internalComposition
+      .condensedIceMassEarth;
+  }
+
+  get volatileRichInteriorMassEarth():
+    number {
+
+    return this
+      .internalComposition
+      .volatileRichInteriorMassEarth;
+  }
+
+  get gaseousEnvelopeMassEarth():
+    number {
+
+    return this
+      .internalComposition
+      .gaseousEnvelopeMassEarth;
+  }
 }
 
 function assertSharedBodyIdentity(
@@ -517,6 +631,9 @@ function assertSharedBodyIdentity(
 
   typeClassification:
     PlanetTypeClassification,
+
+  internalComposition:
+    PlanetInternalComposition,
 ): void {
 
   const bodyObjects = [
@@ -528,6 +645,7 @@ function assertSharedBodyIdentity(
     physicalProperties,
     rotationProperties,
     typeClassification,
+    internalComposition,
   ] as const;
 
   for (

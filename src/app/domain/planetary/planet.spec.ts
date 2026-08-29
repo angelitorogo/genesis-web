@@ -36,6 +36,10 @@ import {
 } from './planetary-orbit-habitable-zone-classification';
 
 import {
+  PlanetInternalComposition,
+} from './planet-internal-composition';
+
+import {
   PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
   PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
   PlanetPhysicalProperties,
@@ -83,7 +87,7 @@ import {
 } from './planetary-system-orbit-topology';
 
 describe(
-  'Planet points 19.1-19.4',
+  'Planet points 19.1-19.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -114,7 +118,7 @@ describe(
       );
 
     it(
-      'should bind the frozen point-18 projections plus coherent point-19.2 bulk physics and point-19.3 rotation and point-19.4 type classification into one planet',
+      'should bind frozen point-18 projections plus coherent point-19.2 bulk physics, point-19.3 rotation, point-19.4 type and point-19.5 internal composition into one planet',
       () => {
         const fixture =
           planetFixture();
@@ -131,6 +135,7 @@ describe(
             fixture.physicalProperties,
             fixture.rotationProperties,
             fixture.typeClassification,
+            fixture.internalComposition,
           );
 
         expect(
@@ -252,6 +257,12 @@ describe(
         );
 
         expect(
+          planet.internalComposition,
+        ).toBe(
+        fixture.internalComposition,
+        );
+
+        expect(
           planet.planetType,
         ).toBe(
           PlanetType.ROCKY,
@@ -285,10 +296,41 @@ describe(
           planet.isTidallySynchronized,
         ).toBe(false);
 
+        expect(
+          planet.metallicCoreMassEarth,
+        ).toBeCloseTo(
+          0.28,
+          12,
+        );
+
+        expect(
+          planet.silicateInteriorMassEarth,
+        ).toBeCloseTo(
+          0.621,
+          12,
+        );
+
+        expect(
+          planet.condensedIceMassEarth,
+        ).toBeCloseTo(
+          0.072,
+          12,
+        );
+
+        expect(
+          planet.volatileRichInteriorMassEarth,
+        ).toBeCloseTo(
+          0.027,
+          12,
+        );
+
+        expect(
+          planet.gaseousEnvelopeMassEarth,
+        ).toBe(0);
+
         for (
           const laterPhysicalProperty
           of [
-            'internalComposition',
             'albedo',
             'surface',
             'rarities',
@@ -330,6 +372,7 @@ describe(
                 fixture.physicalProperties,
                 fixture.rotationProperties,
                 fixture.typeClassification,
+                fixture.internalComposition,
               ),
           ).toThrow(
             RangeError,
@@ -361,6 +404,7 @@ describe(
               fixture.physicalProperties,
               fixture.rotationProperties,
               fixture.typeClassification,
+              fixture.internalComposition,
             ),
         ).toThrow(
           RangeError,
@@ -406,6 +450,7 @@ describe(
               foreignIdentity,
               fixture.rotationProperties,
               fixture.typeClassification,
+              fixture.internalComposition,
             ),
         ).toThrow(
           RangeError,
@@ -438,6 +483,7 @@ describe(
               differentCoreMass,
               fixture.rotationProperties,
               fixture.typeClassification,
+              fixture.internalComposition,
             ),
         ).toThrow(
           RangeError,
@@ -487,6 +533,7 @@ describe(
               fixture.physicalProperties,
               foreignIdentity,
               fixture.typeClassification,
+              fixture.internalComposition,
             ),
         ).toThrow(
           RangeError,
@@ -522,6 +569,7 @@ describe(
               fixture.physicalProperties,
               wrongOrbitalSource,
               fixture.typeClassification,
+              fixture.internalComposition,
             ),
         ).toThrow(
           RangeError,
@@ -570,6 +618,7 @@ describe(
               fixture.physicalProperties,
               fixture.rotationProperties,
               foreignIdentity,
+              fixture.internalComposition,
             ),
         ).toThrow(
           RangeError,
@@ -605,6 +654,131 @@ describe(
               fixture.physicalProperties,
               fixture.rotationProperties,
               wrongMassSource,
+              fixture.internalComposition,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a point-19.5 internal composition with another identity, mass budget or source-family mixture',
+      () => {
+        const fixture =
+          planetFixture();
+
+        const otherSeed =
+          new BodySeed(
+            '55555555555555555555555555555555',
+          );
+
+        const foreignIdentity =
+          new PlanetInternalComposition(
+            1,
+            firstLocator,
+            otherSeed,
+            1,
+            0,
+            0,
+            0.9,
+            0.1,
+            0,
+            0.28,
+            0.621,
+            0.072,
+            0.027,
+            0,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              fixture.rotationProperties,
+              fixture.typeClassification,
+              foreignIdentity,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const wrongMassBudget =
+          new PlanetInternalComposition(
+            1,
+            firstLocator,
+            firstSeed,
+            0.8,
+            0.2,
+            0,
+            0.9,
+            0.1,
+            0,
+            0.224,
+            0.4968,
+            0.0576,
+            0.0216,
+            0.2,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              fixture.rotationProperties,
+              fixture.typeClassification,
+              wrongMassBudget,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const wrongSourceMixture =
+          new PlanetInternalComposition(
+            1,
+            firstLocator,
+            firstSeed,
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0.30,
+            0.64,
+            0.04,
+            0.02,
+            0,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              fixture.rotationProperties,
+              fixture.typeClassification,
+              wrongSourceMixture,
             ),
         ).toThrow(
           RangeError,
@@ -631,6 +805,8 @@ describe(
         PlanetRotationProperties;
       readonly typeClassification:
         PlanetTypeClassification;
+      readonly internalComposition:
+        PlanetInternalComposition;
     } {
       const slot = {
         planetOrdinal:
@@ -777,6 +953,24 @@ describe(
           tidalHeatingProxy,
         );
 
+      const internalComposition =
+        new PlanetInternalComposition(
+          1,
+          firstLocator,
+          firstSeed,
+          1,
+          0,
+          0,
+          0.9,
+          0.1,
+          0,
+          0.28,
+          0.621,
+          0.072,
+          0.027,
+          0,
+        );
+
       const system = {
         generationKey,
         locator:
@@ -820,6 +1014,7 @@ describe(
         physicalProperties,
         rotationProperties,
         typeClassification,
+        internalComposition,
       };
     }
   },

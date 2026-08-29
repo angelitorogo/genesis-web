@@ -15,6 +15,10 @@ import {
 } from '../../domain/planetary/planet';
 
 import {
+  type PlanetInternalComposition,
+} from '../../domain/planetary/planet-internal-composition';
+
+import {
   type PlanetPhysicalProperties,
 } from '../../domain/planetary/planet-physical-properties';
 
@@ -29,6 +33,10 @@ import {
 import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
+
+import {
+  PlanetInternalCompositionGenerator,
+} from './planet-internal-composition-generator';
 
 import {
   PlanetPhysicalPropertiesGenerator,
@@ -50,10 +58,11 @@ import {
  * designation projections into one Planet domain entity.
  *
  * Point 19.2 enriches that boundary with deterministic bulk physical
- * properties, point 19.3 adds deterministic rotation/day/axial tilt, and point
- * 19.4 derives one coarse physical planet type from those frozen/generated
- * inputs. No PlanetSeed level is introduced and all point-18 products remain
- * frozen. Point 19.4 consumes no additional PRNG draws.
+ * properties, point 19.3 adds deterministic rotation/day/axial tilt, point 19.4
+ * derives one coarse physical planet type and point 19.5 adds an approximate
+ * conserved internal-composition budget. No PlanetSeed level is introduced and
+ * all point-18 products remain frozen. Points 19.4-19.5 consume no additional
+ * PRNG draws.
  */
 export class PlanetGenerator {
 
@@ -157,12 +166,21 @@ export class PlanetGenerator {
           physicalProperties,
         );
 
+    const internalComposition =
+      PlanetInternalCompositionGenerator
+        .generate(
+          generationKey,
+          planetarySystem,
+          physicalProperties,
+        );
+
     return materializePlanet(
       planetarySystem,
       index,
       physicalProperties,
       rotationProperties,
       typeClassification,
+      internalComposition,
     );
   }
 
@@ -217,6 +235,14 @@ export class PlanetGenerator {
           physicalProperties,
         );
 
+    const internalCompositions =
+      PlanetInternalCompositionGenerator
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          physicalProperties,
+        );
+
     return Object.freeze(
       physicalProperties
         .map(
@@ -230,6 +256,7 @@ export class PlanetGenerator {
               properties,
               rotationProperties[index],
               typeClassifications[index],
+              internalCompositions[index],
             ),
         ),
     );
@@ -251,6 +278,9 @@ function materializePlanet(
 
   typeClassification:
     PlanetTypeClassification,
+
+  internalComposition:
+    PlanetInternalComposition,
 ): Planet {
 
   return new Planet(
@@ -270,6 +300,7 @@ function materializePlanet(
     physicalProperties,
     rotationProperties,
     typeClassification,
+    internalComposition,
   );
 }
 
