@@ -35,6 +35,10 @@ import {
 } from './planetary-system-architecture';
 
 import {
+  PlanetarySystemArchitectureRegime,
+} from './planetary-system-architecture-regime';
+
+import {
   type PlanetarySystemFormationBlueprint,
 } from './planetary-system-formation-blueprint';
 
@@ -50,6 +54,14 @@ import {
   PlanetarySystemOrbitTopology,
 } from './planetary-system-orbit-topology';
 
+import {
+  type PlanetarySystemStabilityAssessment,
+} from './planetary-system-stability-assessment';
+
+import {
+  PlanetarySystemStabilityRegime,
+} from './planetary-system-stability-regime';
+
 const CONSISTENCY_TOLERANCE =
   1e-9;
 
@@ -59,11 +71,12 @@ const CONSISTENCY_TOLERANCE =
  * Point 18.1 established stable SystemLocator/SystemSeed identity and the frozen
  * 17.7 formation handoff. Point 18.2 added mature planet identities/count and
  * coarse architecture. Point 18.3 attaches one plausible geometric orbit to
- * every mature architecture slot. Point 18.4 now attaches one Keplerian period
- * to every frozen orbit without modifying any point-18.3 geometric element.
+ * every mature architecture slot. Point 18.4 attaches one Keplerian period to
+ * every frozen orbit. Point 18.5 now attaches the basic orbital-stability
+ * assessment without modifying any point-18.2..18.4 value.
  *
- * Stability, HZ relations and planet designations remain 18.5..18.8. Individual
- * planet physics remains phase 19.
+ * HZ relations and planet designations remain 18.6..18.8. Individual planet
+ * physics remains phase 19.
  */
 export class PlanetarySystem {
 
@@ -82,6 +95,9 @@ export class PlanetarySystem {
 
     readonly orbitalPeriodLayout:
       PlanetarySystemOrbitalPeriodLayout,
+
+    readonly stabilityAssessment:
+      PlanetarySystemStabilityAssessment,
   ) {
     if (
       !sameSystemLocator(
@@ -246,6 +262,118 @@ export class PlanetarySystem {
         );
       }
     }
+
+    if (
+      !sameSystemLocator(
+        hostStellarSystem.locator,
+        stabilityAssessment.systemLocator,
+      )
+    ) {
+      throw new RangeError(
+        'PlanetarySystem stability assessment must belong to the host StellarSystem locator.',
+      );
+    }
+
+    if (
+      stabilityAssessment.orbitTopology !==
+      orbitalLayout.orbitTopology
+    ) {
+      throw new RangeError(
+        'PlanetarySystem stability topology must match the point-18.3 orbital layout.',
+      );
+    }
+
+    if (
+      stabilityAssessment.planetCount !==
+      orbitalLayout.planetCount
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.5 stability assessment must cover the complete mature planet population.',
+      );
+    }
+
+    const expectedPlanetFreeStabilityRegime =
+      architecture.regime ===
+        PlanetarySystemArchitectureRegime.DYNAMICALLY_EXCLUDED
+        ? PlanetarySystemStabilityRegime.DYNAMICALLY_EXCLUDED
+        : architecture.planetCount ===
+            0
+          ? PlanetarySystemStabilityRegime.EMPTY
+          : null;
+
+    if (
+      expectedPlanetFreeStabilityRegime !==
+        null &&
+      stabilityAssessment.regime !==
+        expectedPlanetFreeStabilityRegime
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.5 planet-free stability regime must preserve the point-18.2 architecture outcome.',
+      );
+    }
+
+    if (
+      !sameNullableNumber(
+        stabilityAssessment.gravitatingMassSolar,
+        orbitalPeriodLayout.gravitatingMassSolar,
+      )
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.5 stability assessment must reuse the point-18.4 gravitating host mass.',
+      );
+    }
+
+    for (
+      let index = 0;
+      index <
+        stabilityAssessment.pairAssessments.length;
+      index += 1
+    ) {
+      const pair =
+        stabilityAssessment
+          .pairAssessments[index];
+
+      const innerOrbit =
+        orbitalLayout.orbits[index];
+
+      const outerOrbit =
+        orbitalLayout.orbits[index +
+          1];
+
+      const innerSlot =
+        architecture.planetSlots[index];
+
+      const outerSlot =
+        architecture.planetSlots[index +
+          1];
+
+      if (
+        pair.innerPlanetOrdinal !==
+          innerOrbit.planetOrdinal ||
+        pair.outerPlanetOrdinal !==
+          outerOrbit.planetOrdinal ||
+        !approximatelyEqual(
+          pair.innerSemiMajorAxisAu,
+          innerOrbit.semiMajorAxisAu,
+        ) ||
+        !approximatelyEqual(
+          pair.outerSemiMajorAxisAu,
+          outerOrbit.semiMajorAxisAu,
+        ) ||
+        !approximatelyEqual(
+          pair.innerReferenceMassEarth,
+          innerSlot.inheritedSolidCoreMassEarth,
+        ) ||
+        !approximatelyEqual(
+          pair.outerReferenceMassEarth,
+          outerSlot.inheritedSolidCoreMassEarth,
+        )
+      ) {
+        throw new RangeError(
+          'Every point-18.5 pair assessment must preserve its adjacent point-18.2 identities/masses and point-18.3 semi-major axes.',
+        );
+      }
+    }
   }
 
   get generationKey():
@@ -327,6 +455,14 @@ export class PlanetarySystem {
       .orbitalPeriodLayout
       .periods;
   }
+
+  get hasBasicOrbitalStability():
+    boolean {
+
+    return this
+      .stabilityAssessment
+      .isStable;
+  }
 }
 
 function sameSystemLocator(
@@ -366,6 +502,30 @@ function sameBodyLocator(
       right.galacticObjectIndex &&
     left.bodyIndex ===
       right.bodyIndex
+  );
+}
+
+function sameNullableNumber(
+  first:
+    number | null,
+
+  second:
+    number | null,
+): boolean {
+
+  if (
+    first ===
+      null ||
+    second ===
+      null
+  ) {
+    return first ===
+      second;
+  }
+
+  return approximatelyEqual(
+    first,
+    second,
   );
 }
 

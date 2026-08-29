@@ -32,6 +32,10 @@ import {
 } from '../../domain/planetary/planetary-system-orbit-topology';
 
 import {
+  PlanetarySystemStabilityRegime,
+} from '../../domain/planetary/planetary-system-stability-regime';
+
+import {
   ProtoplanetCompositionMixture,
 } from '../../domain/planetary/protoplanet-composition-mixture';
 
@@ -69,7 +73,7 @@ import {
 } from './planetary-system-generator';
 
 describe(
-  'PlanetarySystemGenerator points 18.2-18.4',
+  'PlanetarySystemGenerator points 18.2-18.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -1201,6 +1205,60 @@ describe(
                 period.periodDays,
             })),
         );
+      },
+    );
+
+    it(
+      'should integrate the point-18.5 stability assessment without changing the frozen 18.2-18.4 products',
+      () => {
+        const system =
+          PlanetarySystemGenerator
+            .generate(
+              generationKey,
+              singleSystem(
+                new SystemLocator(
+                  12n,
+                  13n,
+                  14n,
+                ),
+              ),
+              blueprint([
+                anchor(
+                  1,
+                  1,
+                  0.1,
+                ),
+                anchor(
+                  2,
+                  3,
+                  0.1,
+                ),
+              ]),
+            );
+
+        expect(
+          system.stabilityAssessment.planetCount,
+        ).toBe(
+          system.planetCount,
+        );
+
+        expect(
+          system.stabilityAssessment.pairCount,
+        ).toBe(1);
+
+        expect(
+          system.stabilityAssessment.regime,
+        ).toBe(
+          PlanetarySystemStabilityRegime.STABLE,
+        );
+
+        expect(
+          system.hasBasicOrbitalStability,
+        ).toBe(true);
+
+        expect(
+          'habitableZone' in system,
+        ).toBe(false);
       },
     );
 

@@ -73,6 +73,14 @@ import {
 } from './planetary-system-orbit-topology';
 
 import {
+  PlanetarySystemStabilityAssessment,
+} from './planetary-system-stability-assessment';
+
+import {
+  PlanetarySystemStabilityRegime,
+} from './planetary-system-stability-regime';
+
+import {
   PlanetarySystem,
 } from './planetary-system';
 
@@ -81,7 +89,7 @@ import {
 } from './protoplanet-composition-mixture';
 
 describe(
-  'PlanetarySystem points 18.1-18.4',
+  'PlanetarySystem points 18.1-18.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -127,6 +135,7 @@ describe(
             architecture,
             emptyOrbitalLayout(),
             emptyOrbitalPeriodLayout(),
+            emptyStabilityAssessment(),
           );
 
         expect(
@@ -188,6 +197,7 @@ describe(
             architecture,
             singlePlanetOrbitalLayout(),
             singlePlanetOrbitalPeriodLayout(),
+            singlePlanetStabilityAssessment(),
           );
 
         expect(
@@ -234,6 +244,16 @@ describe(
         ).toBe(false);
 
         expect(
+          system.stabilityAssessment.regime,
+        ).toBe(
+          PlanetarySystemStabilityRegime.STABLE,
+        );
+
+        expect(
+          system.hasBasicOrbitalStability,
+        ).toBe(true);
+
+        expect(
           'habitableZone' in system,
         ).toBe(false);
 
@@ -256,6 +276,7 @@ describe(
               singlePlanetOrbitalPeriodLayout(
                 1.06,
               ),
+              singlePlanetStabilityAssessment(),
             ),
         ).toThrow(
           RangeError,
@@ -274,6 +295,106 @@ describe(
                 1,
                 singlePlanetOrbitalPeriodLayout()
                   .periods,
+              ),
+              singlePlanetStabilityAssessment(),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a point-18.5 assessment that changes topology, planet count or point-18.4 gravitating mass',
+      () => {
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(),
+              new PlanetarySystemStabilityAssessment(
+                locator,
+                PlanetarySystemOrbitTopology.CIRCUMBINARY,
+                PlanetarySystemStabilityRegime.STABLE,
+                1,
+                1,
+                3,
+                null,
+                0.1,
+                null,
+                [],
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(),
+              new PlanetarySystemStabilityAssessment(
+                locator,
+                PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+                PlanetarySystemStabilityRegime.STABLE,
+                1,
+                0.9,
+                null,
+                null,
+                null,
+                null,
+                [],
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(),
+              emptyStabilityAssessment(),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a planet-free stability regime that contradicts the point-18.2 architecture outcome',
+      () => {
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              emptyBlueprint(),
+              emptyArchitecture(),
+              emptyOrbitalLayout(),
+              emptyOrbitalPeriodLayout(),
+              new PlanetarySystemStabilityAssessment(
+                locator,
+                PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+                PlanetarySystemStabilityRegime.DYNAMICALLY_EXCLUDED,
+                0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                [],
               ),
             ),
         ).toThrow(
@@ -309,6 +430,7 @@ describe(
               foreignArchitecture,
               emptyOrbitalLayout(),
               emptyOrbitalPeriodLayout(),
+              emptyStabilityAssessment(),
             ),
         ).toThrow(
           RangeError,
@@ -322,6 +444,7 @@ describe(
               emptyArchitecture(),
               emptyOrbitalLayout(),
               emptyOrbitalPeriodLayout(),
+              emptyStabilityAssessment(),
             ),
         ).toThrow(
           RangeError,
@@ -335,6 +458,7 @@ describe(
               singlePlanetArchitecture(),
               emptyOrbitalLayout(),
               emptyOrbitalPeriodLayout(),
+              emptyStabilityAssessment(),
             ),
         ).toThrow(
           RangeError,
@@ -342,6 +466,40 @@ describe(
       },
     );
 
+
+    function emptyStabilityAssessment():
+      PlanetarySystemStabilityAssessment {
+
+      return new PlanetarySystemStabilityAssessment(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        PlanetarySystemStabilityRegime.EMPTY,
+        0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        [],
+      );
+    }
+
+    function singlePlanetStabilityAssessment():
+      PlanetarySystemStabilityAssessment {
+
+      return new PlanetarySystemStabilityAssessment(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        PlanetarySystemStabilityRegime.STABLE,
+        1,
+        1,
+        null,
+        null,
+        null,
+        null,
+        [],
+      );
+    }
 
     function emptyOrbitalPeriodLayout():
       PlanetarySystemOrbitalPeriodLayout {

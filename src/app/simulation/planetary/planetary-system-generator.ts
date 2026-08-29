@@ -68,6 +68,10 @@ import {
   PlanetarySystemOrbitalPeriodGenerator,
 } from './planetary-system-orbital-period-generator';
 
+import {
+  PlanetarySystemOrbitalStabilityGenerator,
+} from './planetary-system-orbital-stability-generator';
+
 const V1_SOLAR_MASS_IN_EARTH_MASSES =
   332_946.0487;
 
@@ -103,14 +107,15 @@ interface ArchitectureCluster {
  * final planet through the existing SystemSeed -> BodySeed hierarchy. Point
  * 18.3 then uses independent BodySeed-derived branches for orbital geometry.
  * Point 18.4 consumes no additional random draw and introduces no new seed
- * level.
+ * level. Point 18.5 likewise consumes no entropy: it assesses the frozen
+ * architecture/orbits/periods without mutating them.
  *
  * Point 18.3 delegates plausible geometric orbit materialization to the
  * dedicated PlanetarySystemOrbitalLayoutGenerator. Point 18.4 derives one
- * host-dominated Keplerian period from every frozen semi-major axis without
- * consuming entropy or changing the orbit geometry. Final orbital stability
- * remains 18.5, habitable-zone products 18.6-18.7 and designations 18.8. Phase
- * 19 owns final individual planet physics.
+ * host-dominated Keplerian period from every frozen semi-major axis. Point 18.5
+ * adds the basic orbital-stability assessment. Habitable-zone products remain
+ * 18.6-18.7 and designations 18.8. Phase 19 owns final individual planet
+ * physics.
  */
 export class PlanetarySystemGenerator {
 
@@ -190,12 +195,23 @@ export class PlanetarySystemGenerator {
           orbitalLayout,
         );
 
+    const stabilityAssessment =
+      PlanetarySystemOrbitalStabilityGenerator
+        .generate(
+          generationKey,
+          stellarSystem,
+          architecture,
+          orbitalLayout,
+          orbitalPeriodLayout,
+        );
+
     return new PlanetarySystem(
       stellarSystem,
       formationBlueprint,
       architecture,
       orbitalLayout,
       orbitalPeriodLayout,
+      stabilityAssessment,
     );
   }
 }

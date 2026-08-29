@@ -17,8 +17,8 @@ const CONSISTENCY_TOLERANCE =
  * Point-18.3 ordered geometric orbit set for the mature architecture.
  *
  * The generation envelope is the finite radial interval used to place the
- * current V1 planets. It is not a final dynamical-stability verdict: point 18.5
- * still owns mutual-Hill/resonance style stability assessment.
+ * current V1 planets. It is not itself a dynamical-stability verdict: point 18.5
+ * consumes this frozen geometry for the basic mutual-Hill/boundary assessment.
  */
 export class PlanetarySystemOrbitalLayout {
 
