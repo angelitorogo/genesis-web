@@ -40,6 +40,14 @@ import {
 } from './planet-rotation-properties';
 
 import {
+  type PlanetType,
+} from './planet-type';
+
+import {
+  type PlanetTypeClassification,
+} from './planet-type-classification';
+
+import {
   type PlanetarySystem,
 } from './planetary-system';
 
@@ -60,8 +68,9 @@ import {
  * canonical identity of the planet. Point 19.2 adds one coherent bulk-physical
  * state (mass/radius/density/gravity), and point 19.3 adds sidereal rotation,
  * apparent solar-day length and axial tilt without changing any frozen earlier
- * product. Planet type, internal composition, albedo/surface and rarity flags
- * remain absent until points 19.4..19.8.
+ * product. Point 19.4 then attaches one deterministic coarse planet-type
+ * classification. Internal composition, albedo/surface and rarity flags remain
+ * absent until points 19.5..19.8.
  */
 export class Planet {
 
@@ -92,6 +101,9 @@ export class Planet {
 
     readonly rotationProperties:
       PlanetRotationProperties,
+
+    readonly typeClassification:
+      PlanetTypeClassification,
   ) {
     if (
       !Number.isInteger(
@@ -177,6 +189,7 @@ export class Planet {
       designation,
       physicalProperties,
       rotationProperties,
+      typeClassification,
     );
 
     if (
@@ -203,6 +216,130 @@ export class Planet {
     ) {
       throw new RangeError(
         'Point-19.3 rotation properties must reuse the exact point-18.4 orbital period.',
+      );
+    }
+
+    if (
+      !approximatelyEqual(
+        typeClassification
+          .sourceMassEarth,
+        physicalProperties
+          .massEarth,
+      ) ||
+      !approximatelyEqual(
+        typeClassification
+          .sourceRadiusEarth,
+        physicalProperties
+          .radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        typeClassification
+          .sourceDensityGramsPerCubicCentimeter,
+        physicalProperties
+          .densityGramsPerCubicCentimeter,
+      ) ||
+      !approximatelyEqual(
+        typeClassification
+          .sourceEnvelopeMassFraction01,
+        physicalProperties
+          .envelopeMassFraction01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.4 type classification must preserve the exact point-19.2 bulk-physical source values.',
+      );
+    }
+
+    if (
+      typeClassification
+        .radiativeHabitableZoneRelation !==
+      habitableZoneClassification
+        .radiativeRelation
+    ) {
+      throw new RangeError(
+        'Point-19.4 type classification must preserve the exact point-18.7 radiative HZ relation.',
+      );
+    }
+
+    if (
+      typeClassification
+        .stellarEvolutionRegime !==
+      hostPlanetarySystem
+        .habitableZone
+        .stellarEvolutionRegime
+    ) {
+      throw new RangeError(
+        'Point-19.4 type classification must preserve the point-18.6 stellar-evolution strength of the thermal context.',
+      );
+    }
+
+    if (
+      !approximatelyEqual(
+        typeClassification
+          .sourceIceBearingSolidFraction01,
+        architectureSlot
+          .inheritedCompositionMixture
+          .iceBearingFraction01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.4 type classification must preserve the frozen point-18.2 ice-bearing solid fraction.',
+      );
+    }
+
+    const expectedReferenceMeanInsolationEarth =
+      hostPlanetarySystem
+        .habitableZone
+        .referenceLuminositySolar /
+      (
+        orbit.semiMajorAxisAu **
+          2 *
+        Math.sqrt(
+          1 -
+          orbit.eccentricity **
+            2,
+        )
+      );
+
+    if (
+      !approximatelyEqual(
+        typeClassification
+          .referenceMeanInsolationEarth,
+        expectedReferenceMeanInsolationEarth,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.4 reference mean insolation must be derived from the frozen point-18.3 orbit and point-18.6 reference luminosity.',
+      );
+    }
+
+    const expectedTidalHeatingProxy =
+      orbitalPeriod
+        .gravitatingMassSolar **
+        2 *
+      physicalProperties
+        .radiusEarth **
+        5 *
+      orbit
+        .eccentricity **
+        2 /
+      (
+        physicalProperties
+          .massEarth *
+        orbit
+          .semiMajorAxisAu **
+          6
+      );
+
+    if (
+      !approximatelyEqual(
+        typeClassification
+          .tidalHeatingProxy,
+        expectedTidalHeatingProxy,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.4 tidal-heating proxy must be derived from the frozen host mass/orbit and point-19.2 bulk physics.',
       );
     }
   }
@@ -343,6 +480,14 @@ export class Planet {
       .rotationProperties
       .isTidallySynchronized;
   }
+
+  get planetType():
+    PlanetType {
+
+    return this
+      .typeClassification
+      .planetType;
+  }
 }
 
 function assertSharedBodyIdentity(
@@ -369,6 +514,9 @@ function assertSharedBodyIdentity(
 
   rotationProperties:
     PlanetRotationProperties,
+
+  typeClassification:
+    PlanetTypeClassification,
 ): void {
 
   const bodyObjects = [
@@ -379,6 +527,7 @@ function assertSharedBodyIdentity(
     designation,
     physicalProperties,
     rotationProperties,
+    typeClassification,
   ] as const;
 
   for (

@@ -32,6 +32,10 @@ import {
 } from '../../domain/planetary/planetary-orbit-habitable-zone-classification';
 
 import {
+  PlanetaryOrbitHabitableZoneRelation,
+} from '../../domain/planetary/planetary-orbit-habitable-zone-relation';
+
+import {
   type PlanetaryOrbitalElements,
 } from '../../domain/planetary/planetary-orbital-elements';
 
@@ -42,6 +46,14 @@ import {
 import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
+
+import {
+  PlanetarySystemHabitableZoneEvolutionRegime,
+} from '../../domain/planetary/planetary-system-habitable-zone-evolution-regime';
+
+import {
+  PlanetType,
+} from '../../domain/planetary/planet-type';
 
 import {
   PlanetarySystemOrbitTopology,
@@ -56,7 +68,7 @@ import {
 } from './planet-generator';
 
 describe(
-  'PlanetGenerator points 19.1-19.3',
+  'PlanetGenerator points 19.1-19.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -188,10 +200,23 @@ describe(
           ).not.toBeNull();
         }
 
+        expect(
+          Object.values(
+            PlanetType,
+          ),
+        ).toContain(
+          planet.planetType,
+        );
+
+        expect(
+          planet.typeClassification.sourceMassEarth,
+        ).toBe(
+          planet.massEarth,
+        );
+
         for (
           const laterProperty
           of [
-            'planetType',
             'internalComposition',
             'albedo',
             'surface',
@@ -268,6 +293,14 @@ describe(
             planets[index].seed,
           ).toBe(
             fixture.slots[index].bodySeed,
+          );
+
+          expect(
+            Object.values(
+              PlanetType,
+            ),
+          ).toContain(
+            planets[index].planetType,
           );
         }
       },
@@ -367,6 +400,12 @@ describe(
           after.rotationProperties,
         ).toEqual(
           before.rotationProperties,
+        );
+
+        expect(
+          after.typeClassification,
+        ).toEqual(
+          before.typeClassification,
         );
       },
     );
@@ -601,6 +640,11 @@ describe(
           planetOrdinal,
           bodyLocator,
           bodySeed,
+          radiativeRelation:
+            index ===
+              0
+              ? PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE
+              : PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE,
         } as PlanetaryOrbitHabitableZoneClassification;
 
         const designation = {
@@ -647,6 +691,12 @@ describe(
         architecture: {
           orbitTopology:
             PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        },
+        habitableZone: {
+          referenceLuminositySolar:
+            1,
+          stellarEvolutionRegime:
+            PlanetarySystemHabitableZoneEvolutionRegime.MAIN_SEQUENCE_HOST,
         },
         planetSlots:
           slots,

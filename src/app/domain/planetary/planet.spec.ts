@@ -24,6 +24,10 @@ import {
 } from './planetary-architecture-slot';
 
 import {
+  ProtoplanetCompositionMixture,
+} from './protoplanet-composition-mixture';
+
+import {
   type PlanetaryDesignation,
 } from './planetary-designation';
 
@@ -41,6 +45,22 @@ import {
   apparentSolarDayHours,
   PlanetRotationProperties,
 } from './planet-rotation-properties';
+
+import {
+  PlanetaryOrbitHabitableZoneRelation,
+} from './planetary-orbit-habitable-zone-relation';
+
+import {
+  PlanetarySystemHabitableZoneEvolutionRegime,
+} from './planetary-system-habitable-zone-evolution-regime';
+
+import {
+  PlanetType,
+} from './planet-type';
+
+import {
+  PlanetTypeClassification,
+} from './planet-type-classification';
 
 import {
   type PlanetaryOrbitalElements,
@@ -63,7 +83,7 @@ import {
 } from './planetary-system-orbit-topology';
 
 describe(
-  'Planet points 19.1-19.3',
+  'Planet points 19.1-19.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -94,7 +114,7 @@ describe(
       );
 
     it(
-      'should bind the frozen point-18 projections plus coherent point-19.2 bulk physics and point-19.3 rotation into one planet',
+      'should bind the frozen point-18 projections plus coherent point-19.2 bulk physics and point-19.3 rotation and point-19.4 type classification into one planet',
       () => {
         const fixture =
           planetFixture();
@@ -110,6 +130,7 @@ describe(
             fixture.designation,
             fixture.physicalProperties,
             fixture.rotationProperties,
+            fixture.typeClassification,
           );
 
         expect(
@@ -225,6 +246,18 @@ describe(
         );
 
         expect(
+          planet.typeClassification,
+        ).toBe(
+          fixture.typeClassification,
+        );
+
+        expect(
+          planet.planetType,
+        ).toBe(
+          PlanetType.ROCKY,
+        );
+
+        expect(
           planet.rotationPeriodHours,
         ).toBe(24);
 
@@ -255,7 +288,6 @@ describe(
         for (
           const laterPhysicalProperty
           of [
-            'planetType',
             'internalComposition',
             'albedo',
             'surface',
@@ -297,6 +329,7 @@ describe(
                 fixture.designation,
                 fixture.physicalProperties,
                 fixture.rotationProperties,
+                fixture.typeClassification,
               ),
           ).toThrow(
             RangeError,
@@ -327,6 +360,7 @@ describe(
               fixture.designation,
               fixture.physicalProperties,
               fixture.rotationProperties,
+              fixture.typeClassification,
             ),
         ).toThrow(
           RangeError,
@@ -371,6 +405,7 @@ describe(
               fixture.designation,
               foreignIdentity,
               fixture.rotationProperties,
+              fixture.typeClassification,
             ),
         ).toThrow(
           RangeError,
@@ -402,6 +437,7 @@ describe(
               fixture.designation,
               differentCoreMass,
               fixture.rotationProperties,
+              fixture.typeClassification,
             ),
         ).toThrow(
           RangeError,
@@ -450,6 +486,7 @@ describe(
               fixture.designation,
               fixture.physicalProperties,
               foreignIdentity,
+              fixture.typeClassification,
             ),
         ).toThrow(
           RangeError,
@@ -484,6 +521,90 @@ describe(
               fixture.designation,
               fixture.physicalProperties,
               wrongOrbitalSource,
+              fixture.typeClassification,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a point-19.4 type classification with another BodySeed or mismatched point-19.2 source values',
+      () => {
+        const fixture =
+          planetFixture();
+
+        const otherSeed =
+          new BodySeed(
+            '44444444444444444444444444444444',
+          );
+
+        const foreignIdentity =
+          new PlanetTypeClassification(
+            1,
+            firstLocator,
+            otherSeed,
+            PlanetType.ROCKY,
+            1,
+            1,
+            PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
+            0,
+            0.1,
+            PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE,
+            PlanetarySystemHabitableZoneEvolutionRegime.MAIN_SEQUENCE_HOST,
+            1,
+            0,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              fixture.rotationProperties,
+              foreignIdentity,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const wrongMassSource =
+          new PlanetTypeClassification(
+            1,
+            firstLocator,
+            firstSeed,
+            PlanetType.ROCKY,
+            2,
+            1,
+            PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
+            0,
+            0.1,
+            PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE,
+            PlanetarySystemHabitableZoneEvolutionRegime.MAIN_SEQUENCE_HOST,
+            1,
+            0,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              fixture.rotationProperties,
+              wrongMassSource,
             ),
         ).toThrow(
           RangeError,
@@ -508,6 +629,8 @@ describe(
         PlanetPhysicalProperties;
       readonly rotationProperties:
         PlanetRotationProperties;
+      readonly typeClassification:
+        PlanetTypeClassification;
     } {
       const slot = {
         planetOrdinal:
@@ -518,6 +641,13 @@ describe(
           firstSeed,
         inheritedSolidCoreMassEarth:
           1,
+        inheritedCompositionMixture:
+          new ProtoplanetCompositionMixture(
+            0,
+            0.9,
+            0.1,
+            0,
+          ),
       } as PlanetaryArchitectureSlot;
 
       const orbit = {
@@ -529,6 +659,8 @@ describe(
           firstSeed,
         semiMajorAxisAu:
           1,
+        eccentricity:
+          0.02,
         periastronAu:
           0.98,
         apoastronAu:
@@ -544,6 +676,8 @@ describe(
           firstSeed,
         sourceSemiMajorAxisAu:
           1,
+        gravitatingMassSolar:
+          1,
         periodYears:
           1,
         periodDays:
@@ -557,6 +691,8 @@ describe(
           firstLocator,
         bodySeed:
           firstSeed,
+        radiativeRelation:
+          PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE,
       } as PlanetaryOrbitHabitableZoneClassification;
 
       const designation = {
@@ -603,6 +739,44 @@ describe(
           23.44,
         );
 
+      const referenceMeanInsolationEarth =
+        1 /
+        Math.sqrt(
+          1 -
+          orbit.eccentricity **
+            2,
+        );
+
+      const tidalHeatingProxy =
+        period.gravitatingMassSolar **
+          2 *
+        physicalProperties.radiusEarth **
+          5 *
+        orbit.eccentricity **
+          2 /
+        (
+          physicalProperties.massEarth *
+          orbit.semiMajorAxisAu **
+            6
+        );
+
+      const typeClassification =
+        new PlanetTypeClassification(
+          1,
+          firstLocator,
+          firstSeed,
+          PlanetType.ROCKY,
+          physicalProperties.massEarth,
+          physicalProperties.radiusEarth,
+          physicalProperties.densityGramsPerCubicCentimeter,
+          physicalProperties.envelopeMassFraction01,
+          0.1,
+          PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE,
+          PlanetarySystemHabitableZoneEvolutionRegime.MAIN_SEQUENCE_HOST,
+          referenceMeanInsolationEarth,
+          tidalHeatingProxy,
+        );
+
       const system = {
         generationKey,
         locator:
@@ -612,6 +786,12 @@ describe(
         architecture: {
           orbitTopology:
             PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        },
+        habitableZone: {
+          referenceLuminositySolar:
+            1,
+          stellarEvolutionRegime:
+            PlanetarySystemHabitableZoneEvolutionRegime.MAIN_SEQUENCE_HOST,
         },
         planetSlots: [
           slot,
@@ -639,6 +819,7 @@ describe(
         designation,
         physicalProperties,
         rotationProperties,
+        typeClassification,
       };
     }
   },
