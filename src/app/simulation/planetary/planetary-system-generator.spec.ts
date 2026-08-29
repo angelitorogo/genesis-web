@@ -87,7 +87,7 @@ import {
 } from './planetary-system-generator';
 
 describe(
-  'PlanetarySystemGenerator points 18.2-18.7',
+  'PlanetarySystemGenerator points 18.2-18.8',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -118,7 +118,7 @@ describe(
       );
 
     it(
-      'should preserve the point-18.1 host, blueprint and canonical SystemSeed while adding architecture, orbital geometry and periods',
+      'should preserve the point-18.1 host, blueprint and canonical SystemSeed while adding the complete point-18.2..18.8 system products',
       () => {
         const locator =
           new SystemLocator(
@@ -188,6 +188,11 @@ describe(
         expect(
           system.orbitHabitableZoneClassifications,
         ).toEqual([]);
+
+
+        expect(
+          system.planetDesignations,
+        ).toEqual([]);
       },
     );
 
@@ -250,6 +255,11 @@ describe(
         expect(
           system.orbitalPeriodLayout.gravitatingMassSolar,
         ).toBeNull();
+
+
+        expect(
+          system.planetDesignations,
+        ).toEqual([]);
       },
     );
 
@@ -333,6 +343,37 @@ describe(
           1n,
           2n,
         ]);
+
+
+        expect(
+          system.planetDesignations.map(
+            designation =>
+              designation.name,
+          ),
+        ).toEqual([
+          `${stellarSystem.designation.name} b`,
+          `${stellarSystem.designation.name} c`,
+          `${stellarSystem.designation.name} d`,
+        ]);
+
+        for (
+          let index = 0;
+          index <
+            system.planetSlots.length;
+          index += 1
+        ) {
+          expect(
+            system.planetDesignations[index].bodyLocator,
+          ).toBe(
+            system.planetSlots[index].bodyLocator,
+          );
+
+          expect(
+            system.planetDesignations[index].bodySeed,
+          ).toBe(
+            system.planetSlots[index].bodySeed,
+          );
+        }
 
         expect(
           system.orbits.length,
@@ -694,6 +735,10 @@ describe(
             singleSystem(
               locator,
             ).seed,
+          designation:
+            singleSystem(
+              locator,
+            ).designation,
           multiplicity:
             StellarSystemMultiplicity.TRIPLE,
           isMultiple:
@@ -778,6 +823,10 @@ describe(
             singleSystem(
               locator,
             ).seed,
+          designation:
+            singleSystem(
+              locator,
+            ).designation,
           multiplicity:
             StellarSystemMultiplicity.BINARY,
           isMultiple:
@@ -984,6 +1033,10 @@ describe(
             singleSystem(
               locator,
             ).seed,
+          designation:
+            singleSystem(
+              locator,
+            ).designation,
           multiplicity:
             StellarSystemMultiplicity.TRIPLE,
           isMultiple:
@@ -1283,6 +1336,29 @@ describe(
                 classification.dynamicallyAvailableRelation,
             })),
         );
+
+
+        expect(
+          after.planetDesignations.map(
+            designation => ({
+              name:
+                designation.name,
+              code:
+                designation.proceduralCode,
+              seed:
+                designation.bodySeed.normalizedValue,
+            })),
+        ).toEqual(
+          before.planetDesignations.map(
+            designation => ({
+              name:
+                designation.name,
+              code:
+                designation.proceduralCode,
+              seed:
+                designation.bodySeed.normalizedValue,
+            })),
+        );
       },
     );
 
@@ -1402,6 +1478,133 @@ describe(
             classification.dynamicallyAvailableRelation,
           ).not.toBeNull();
         }
+      },
+    );
+
+    it(
+      'should integrate point 18.8 designations without changing any frozen point-18.2..18.7 identity or physics',
+      () => {
+        const stellarSystem =
+          singleSystem(
+            new SystemLocator(
+              3n,
+              27n,
+              42n,
+            ),
+          );
+
+        const system =
+          PlanetarySystemGenerator
+            .generate(
+              generationKey,
+              stellarSystem,
+              blueprint([
+                anchor(
+                  1,
+                  0.8,
+                  0.2,
+                ),
+                anchor(
+                  2,
+                  2.4,
+                  0.3,
+                ),
+              ]),
+            );
+
+        expect(
+          system.planetDesignations.length,
+        ).toBe(
+          system.planetCount,
+        );
+
+        expect(
+          system.planetDesignations.map(
+            designation =>
+              designation.name,
+          ),
+        ).toEqual([
+          `${stellarSystem.designation.name} b`,
+          `${stellarSystem.designation.name} c`,
+        ]);
+
+        for (
+          let index = 0;
+          index <
+            system.planetCount;
+          index += 1
+        ) {
+          const slot =
+            system.planetSlots[index];
+
+          const orbit =
+            system.orbits[index];
+
+          const period =
+            system.orbitalPeriods[index];
+
+          const classification =
+            system.orbitHabitableZoneClassifications[index];
+
+          const designation =
+            system.planetDesignations[index];
+
+          expect(
+            designation.planetOrdinal,
+          ).toBe(
+            slot.planetOrdinal,
+          );
+
+          expect(
+            designation.bodyLocator,
+          ).toBe(
+            slot.bodyLocator,
+          );
+
+          expect(
+            designation.bodyLocator,
+          ).toBe(
+            orbit.bodyLocator,
+          );
+
+          expect(
+            designation.bodyLocator,
+          ).toBe(
+            period.bodyLocator,
+          );
+
+          expect(
+            designation.bodyLocator,
+          ).toBe(
+            classification.bodyLocator,
+          );
+
+          expect(
+            designation.bodySeed,
+          ).toBe(
+            slot.bodySeed,
+          );
+
+          expect(
+            designation.proceduralCode,
+          ).toContain(
+            stellarSystem.designation.proceduralCode,
+          );
+
+          expect(
+            designation.proceduralCode,
+          ).toContain(
+            slot.bodySeed.normalizedValue,
+          );
+        }
+
+        expect(
+          'massEarth' in system.planetDesignations[0],
+        ).toBe(false);
+
+        expect(
+          'planetType' in system.planetDesignations[0],
+        ).toBe(false);
       },
     );
 

@@ -17,6 +17,10 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  StellarDesignation,
+} from '../stellar/stellar-designation';
+
+import {
   type StellarSystem,
 } from '../stellar/stellar-system';
 
@@ -31,6 +35,10 @@ import {
 import {
   PlanetaryArchitectureSlot,
 } from './planetary-architecture-slot';
+
+import {
+  PlanetaryDesignation,
+} from './planetary-designation';
 
 import {
   PlanetaryFormationAnchor,
@@ -55,6 +63,10 @@ import {
 import {
   PlanetarySystemArchitectureRegime,
 } from './planetary-system-architecture-regime';
+
+import {
+  PlanetarySystemDesignationCatalog,
+} from './planetary-system-designation-catalog';
 
 import {
   PlanetarySystemFormationBlueprint,
@@ -113,7 +125,7 @@ import {
 } from './protoplanet-composition-mixture';
 
 describe(
-  'PlanetarySystem points 18.1-18.7',
+  'PlanetarySystem points 18.1-18.8',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -135,10 +147,18 @@ describe(
         '0123456789ABCDEFFEDCBA9876543210',
       );
 
+    const systemDesignation =
+      new StellarDesignation(
+        'Testara',
+        'GEN-V1-G0-S0-O0-SYS-0123456789ABCDEFFEDCBA9876543210',
+      );
+
     const stellarSystem = {
       generationKey,
       locator,
       seed,
+      designation:
+        systemDesignation,
       multiplicity:
         StellarSystemMultiplicity.SINGLE,
     } as unknown as StellarSystem;
@@ -162,6 +182,7 @@ describe(
             emptyStabilityAssessment(),
             singleHabitableZone(),
             emptyHabitableZoneClassification(),
+            emptyDesignationCatalog(),
           );
 
         expect(
@@ -211,7 +232,7 @@ describe(
     );
 
     it(
-      'should expose mature planet slots without prematurely creating final orbits or phase-19 planets',
+      'should expose the complete phase-18 planet identity/orbit/designation stack without creating phase-19 physical planets',
       () => {
         const architecture =
           singlePlanetArchitecture();
@@ -226,6 +247,7 @@ describe(
             singlePlanetStabilityAssessment(),
             singleHabitableZone(),
             singlePlanetHabitableZoneClassification(),
+            singlePlanetDesignationCatalog(),
           );
 
         expect(
@@ -307,7 +329,19 @@ describe(
         ).toBe(true);
 
         expect(
-          'planetDesignations' in system,
+          system.planetDesignations,
+        ).toBe(
+          system.designationCatalog.designations,
+        );
+
+        expect(
+          system.planetDesignations[0].name,
+        ).toBe(
+          'Testara b',
+        );
+
+        expect(
+          'planetType' in system.planetSlots[0],
         ).toBe(false);
       },
     );
@@ -328,6 +362,7 @@ describe(
               singlePlanetStabilityAssessment(),
               singleHabitableZone(),
               singlePlanetHabitableZoneClassification(),
+              singlePlanetDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -350,6 +385,7 @@ describe(
               singlePlanetStabilityAssessment(),
               singleHabitableZone(),
               singlePlanetHabitableZoneClassification(),
+              singlePlanetDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -382,6 +418,7 @@ describe(
               ),
               singleHabitableZone(),
               singlePlanetHabitableZoneClassification(),
+              singlePlanetDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -409,6 +446,7 @@ describe(
               ),
               singleHabitableZone(),
               singlePlanetHabitableZoneClassification(),
+              singlePlanetDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -425,6 +463,7 @@ describe(
               emptyStabilityAssessment(),
               singleHabitableZone(),
               singlePlanetHabitableZoneClassification(),
+              singlePlanetDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -457,6 +496,7 @@ describe(
               ),
               singleHabitableZone(),
               emptyHabitableZoneClassification(),
+              emptyDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -501,6 +541,7 @@ describe(
                   ),
                 ],
               ),
+              singlePlanetDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -530,6 +571,84 @@ describe(
                     classification.sourceApoastronAu,
                     classification.radiativeRelation,
                     null,
+                  ),
+                ],
+              ),
+              singlePlanetDesignationCatalog(),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject point-18.8 designations that change parent system or mature Body identity',
+      () => {
+        const slot =
+          singlePlanetArchitecture()
+            .planetSlots[0];
+
+        const foreignSystemDesignation =
+          new StellarDesignation(
+            'Penaoria',
+            'GEN-V1-G0-S0-O1-SYS-9A2DAD2C4D324D59C54C8DFDB9E2F84F',
+          );
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(),
+              singlePlanetStabilityAssessment(),
+              singleHabitableZone(),
+              singlePlanetHabitableZoneClassification(),
+              new PlanetarySystemDesignationCatalog(
+                locator,
+                foreignSystemDesignation,
+                1,
+                [
+                  new PlanetaryDesignation(
+                    foreignSystemDesignation,
+                    1,
+                    slot.bodyLocator,
+                    slot.bodySeed,
+                    'b',
+                  ),
+                ],
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(),
+              singlePlanetStabilityAssessment(),
+              singleHabitableZone(),
+              singlePlanetHabitableZoneClassification(),
+              new PlanetarySystemDesignationCatalog(
+                locator,
+                systemDesignation,
+                1,
+                [
+                  new PlanetaryDesignation(
+                    systemDesignation,
+                    1,
+                    slot.bodyLocator,
+                    new BodySeed(
+                      '22222222222222222222222222222222',
+                    ),
+                    'b',
                   ),
                 ],
               ),
@@ -570,6 +689,7 @@ describe(
               emptyStabilityAssessment(),
               singleHabitableZone(),
               emptyHabitableZoneClassification(),
+              emptyDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -586,6 +706,7 @@ describe(
               emptyStabilityAssessment(),
               singleHabitableZone(),
               emptyHabitableZoneClassification(),
+              emptyDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -602,6 +723,7 @@ describe(
               emptyStabilityAssessment(),
               singleHabitableZone(),
               emptyHabitableZoneClassification(),
+              emptyDesignationCatalog(),
             ),
         ).toThrow(
           RangeError,
@@ -610,6 +732,40 @@ describe(
     );
 
 
+
+    function emptyDesignationCatalog():
+      PlanetarySystemDesignationCatalog {
+
+      return new PlanetarySystemDesignationCatalog(
+        locator,
+        systemDesignation,
+        0,
+        [],
+      );
+    }
+
+    function singlePlanetDesignationCatalog():
+      PlanetarySystemDesignationCatalog {
+
+      const slot =
+        singlePlanetArchitecture()
+          .planetSlots[0];
+
+      return new PlanetarySystemDesignationCatalog(
+        locator,
+        systemDesignation,
+        1,
+        [
+          new PlanetaryDesignation(
+            systemDesignation,
+            1,
+            slot.bodyLocator,
+            slot.bodySeed,
+            'b',
+          ),
+        ],
+      );
+    }
 
     function emptyHabitableZoneClassification():
       PlanetarySystemHabitableZoneClassification {

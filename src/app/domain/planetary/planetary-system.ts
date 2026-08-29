@@ -23,6 +23,10 @@ import {
 } from './planetary-architecture-slot';
 
 import {
+  type PlanetaryDesignation,
+} from './planetary-designation';
+
+import {
   type PlanetaryOrbitHabitableZoneClassification,
 } from './planetary-orbit-habitable-zone-classification';
 
@@ -37,6 +41,10 @@ import {
 import {
   type PlanetarySystemArchitecture,
 } from './planetary-system-architecture';
+
+import {
+  type PlanetarySystemDesignationCatalog,
+} from './planetary-system-designation-catalog';
 
 import {
   PlanetarySystemArchitectureRegime,
@@ -88,9 +96,11 @@ const CONSISTENCY_TOLERANCE =
  * assessment without modifying any point-18.2..18.4 value. Point 18.6 adds
  * the reference habitable-zone geometry. Point 18.7 classifies every frozen
  * point-18.3 radial excursion against both the radiative interval and, when it
- * exists, the dynamically available HZ interval.
+ * exists, the dynamically available HZ interval. Point 18.8 completes phase 18
+ * by layering deterministic human/technical designations over every frozen
+ * mature planet identity without creating phase-19 physical planets.
  *
- * Planet designations remain 18.8. Individual planet physics remains phase 19.
+ * Individual planet physics remains phase 19.
  */
 export class PlanetarySystem {
 
@@ -118,6 +128,9 @@ export class PlanetarySystem {
 
     readonly habitableZoneClassification:
       PlanetarySystemHabitableZoneClassification,
+
+    readonly designationCatalog:
+      PlanetarySystemDesignationCatalog,
   ) {
     if (
       !sameSystemLocator(
@@ -540,6 +553,66 @@ export class PlanetarySystem {
         );
       }
     }
+
+    if (
+      !sameSystemLocator(
+        hostStellarSystem.locator,
+        designationCatalog.systemLocator,
+      )
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.8 designation catalog must belong to the host StellarSystem locator.',
+      );
+    }
+
+    if (
+      designationCatalog.planetCount !==
+      architecture.planetCount
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.8 requires exactly one designation for every mature point-18.2 planet identity.',
+      );
+    }
+
+    if (
+      designationCatalog.systemDesignation.name !==
+        hostStellarSystem.designation.name ||
+      designationCatalog.systemDesignation.proceduralCode !==
+        hostStellarSystem.designation.proceduralCode
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.8 planet designations must be layered over the frozen point-15.6 stellar-system designation.',
+      );
+    }
+
+    for (
+      let index = 0;
+      index <
+        architecture.planetSlots.length;
+      index += 1
+    ) {
+      const slot =
+        architecture.planetSlots[index];
+
+      const designation =
+        designationCatalog
+          .designations[index];
+
+      if (
+        designation.planetOrdinal !==
+          slot.planetOrdinal ||
+        !sameBodyLocator(
+          designation.bodyLocator,
+          slot.bodyLocator,
+        ) ||
+        designation.bodySeed.normalizedValue !==
+          slot.bodySeed.normalizedValue
+      ) {
+        throw new RangeError(
+          'Every point-18.8 designation must preserve the exact point-18.2 planet ordinal, BodyLocator and BodySeed.',
+        );
+      }
+    }
   }
 
   get generationKey():
@@ -653,6 +726,14 @@ export class PlanetarySystem {
       .habitableZoneClassification
       .hasOrbitIntersectingDynamicallyAvailableHabitableZone;
   }
+
+  get planetDesignations():
+    readonly PlanetaryDesignation[] {
+
+    return this
+      .designationCatalog
+      .designations;
+  }
 }
 
 function sameSystemLocator(
@@ -675,11 +756,13 @@ function sameSystemLocator(
 
 function sameBodyLocator(
   left:
+    PlanetaryDesignation['bodyLocator'] |
     PlanetaryOrbitalElements['bodyLocator'] |
     PlanetaryOrbitalPeriod['bodyLocator'],
 
   right:
     PlanetaryArchitectureSlot['bodyLocator'] |
+    PlanetaryDesignation['bodyLocator'] |
     PlanetaryOrbitalElements['bodyLocator'],
 ): boolean {
 

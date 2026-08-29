@@ -77,6 +77,10 @@ import {
 } from './planetary-system-habitable-zone-classification-generator';
 
 import {
+  PlanetarySystemDesignationGenerator,
+} from './planetary-system-designation-generator';
+
+import {
   PlanetarySystemOrbitalStabilityGenerator,
 } from './planetary-system-orbital-stability-generator';
 
@@ -120,14 +124,16 @@ interface ArchitectureCluster {
  * frozen point-15.1/16.6 reference luminosity contracts to expose the system
  * habitable-zone geometry. Point 18.7 consumes no entropy either: it classifies
  * each frozen periapsis..apoapsis excursion against the radiative and
- * dynamically available point-18.6 intervals without moving any orbit.
+ * dynamically available point-18.6 intervals without moving any orbit. Point
+ * 18.8 likewise consumes no entropy and only labels the existing Body identities.
  *
  * Point 18.3 delegates plausible geometric orbit materialization to the
  * dedicated PlanetarySystemOrbitalLayoutGenerator. Point 18.4 derives one
  * host-dominated Keplerian period from every frozen semi-major axis. Point 18.5
  * adds the basic orbital-stability assessment. Point 18.6 adds the reference
- * habitable-zone geometry and point 18.7 its orbit classification. Planet
- * designations remain 18.8. Phase 19 owns final individual planet physics.
+ * habitable-zone geometry, point 18.7 its orbit classification, and point 18.8
+ * layers deterministic planet designations over the frozen point-18.2 Body
+ * identities. Phase 19 owns final individual planet physics.
  */
 export class PlanetarySystemGenerator {
 
@@ -233,6 +239,14 @@ export class PlanetarySystemGenerator {
           habitableZone,
         );
 
+    const designationCatalog =
+      PlanetarySystemDesignationGenerator
+        .generate(
+          generationKey,
+          stellarSystem,
+          architecture,
+        );
+
     return new PlanetarySystem(
       stellarSystem,
       formationBlueprint,
@@ -242,6 +256,7 @@ export class PlanetarySystemGenerator {
       stabilityAssessment,
       habitableZone,
       habitableZoneClassification,
+      designationCatalog,
     );
   }
 }
