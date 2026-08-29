@@ -52,6 +52,10 @@ import {
 } from '../../domain/planetary/planetary-system-habitable-zone-evolution-regime';
 
 import {
+  PlanetSurfaceBaseRegime,
+} from '../../domain/planetary/planet-surface-base-regime';
+
+import {
   PlanetType,
 } from '../../domain/planetary/planet-type';
 
@@ -68,7 +72,7 @@ import {
 } from './planet-generator';
 
 describe(
-  'PlanetGenerator points 19.1-19.5',
+  'PlanetGenerator points 19.1-19.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -246,6 +250,28 @@ describe(
           12,
         );
 
+        expect(
+          planet.referenceBondAlbedo01,
+        ).toBeGreaterThanOrEqual(0);
+
+        expect(
+          planet.referenceBondAlbedo01,
+        ).toBeLessThanOrEqual(1);
+
+        expect(
+          Object.values(
+            PlanetSurfaceBaseRegime,
+          ),
+        ).toContain(
+          planet.surfaceBaseRegime,
+        );
+
+        expect(
+          planet.surfaceBaseProperties.sourcePlanetType,
+        ).toBe(
+          planet.planetType,
+        );
+
         for (
           const laterProperty
           of [
@@ -353,6 +379,26 @@ describe(
               .sourceIceRichFraction01,
           ).toBeCloseTo(
             1,
+            12,
+          );
+
+          expect(
+            planets[index]
+              .surfaceBaseProperties
+              .sourcePlanetType,
+          ).toBe(
+            planets[index]
+              .planetType,
+          );
+
+          expect(
+            planets[index]
+              .surfaceBaseProperties
+              .sourceReferenceMeanInsolationEarth,
+          ).toBeCloseTo(
+            planets[index]
+              .typeClassification
+              .referenceMeanInsolationEarth,
             12,
           );
         }
@@ -465,6 +511,12 @@ describe(
           after.internalComposition,
         ).toEqual(
           before.internalComposition,
+        );
+
+        expect(
+          after.surfaceBaseProperties,
+        ).toEqual(
+          before.surfaceBaseProperties,
         );
       },
     );

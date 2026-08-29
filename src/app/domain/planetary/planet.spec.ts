@@ -40,6 +40,14 @@ import {
 } from './planet-internal-composition';
 
 import {
+  PlanetSurfaceBaseProperties,
+} from './planet-surface-base-properties';
+
+import {
+  PlanetSurfaceBaseRegime,
+} from './planet-surface-base-regime';
+
+import {
   PLANET_V1_EARTH_MEAN_DENSITY_GRAMS_PER_CUBIC_CENTIMETER,
   PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
   PlanetPhysicalProperties,
@@ -87,7 +95,7 @@ import {
 } from './planetary-system-orbit-topology';
 
 describe(
-  'Planet points 19.1-19.5',
+  'Planet points 19.1-19.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -118,7 +126,7 @@ describe(
       );
 
     it(
-      'should bind frozen point-18 projections plus coherent point-19.2 bulk physics, point-19.3 rotation, point-19.4 type and point-19.5 internal composition into one planet',
+      'should bind frozen point-18 projections plus coherent point-19.2-19.6 physical products into one planet',
       () => {
         const fixture =
           planetFixture();
@@ -136,6 +144,7 @@ describe(
             fixture.rotationProperties,
             fixture.typeClassification,
             fixture.internalComposition,
+            fixture.surfaceBaseProperties,
           );
 
         expect(
@@ -259,7 +268,13 @@ describe(
         expect(
           planet.internalComposition,
         ).toBe(
-        fixture.internalComposition,
+          fixture.internalComposition,
+        );
+
+        expect(
+          planet.surfaceBaseProperties,
+        ).toBe(
+          fixture.surfaceBaseProperties,
         );
 
         expect(
@@ -328,6 +343,26 @@ describe(
           planet.gaseousEnvelopeMassEarth,
         ).toBe(0);
 
+        expect(
+          planet.referenceBondAlbedo01,
+        ).toBe(
+          fixture.surfaceBaseProperties.referenceBondAlbedo01,
+        );
+
+        expect(
+          planet.surfaceBaseRegime,
+        ).toBe(
+          PlanetSurfaceBaseRegime.MINERAL_REGOLITH,
+        );
+
+        expect(
+          planet.hasDefinedSolidSurfaceBase,
+        ).toBe(true);
+
+        expect(
+          planet.baseSolidSurfaceRoughness01,
+        ).toBe(0.7);
+
         for (
           const laterPhysicalProperty
           of [
@@ -373,6 +408,7 @@ describe(
                 fixture.rotationProperties,
                 fixture.typeClassification,
                 fixture.internalComposition,
+                fixture.surfaceBaseProperties,
               ),
           ).toThrow(
             RangeError,
@@ -405,6 +441,7 @@ describe(
               fixture.rotationProperties,
               fixture.typeClassification,
               fixture.internalComposition,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -451,6 +488,7 @@ describe(
               fixture.rotationProperties,
               fixture.typeClassification,
               fixture.internalComposition,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -484,6 +522,7 @@ describe(
               fixture.rotationProperties,
               fixture.typeClassification,
               fixture.internalComposition,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -534,6 +573,7 @@ describe(
               foreignIdentity,
               fixture.typeClassification,
               fixture.internalComposition,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -570,6 +610,7 @@ describe(
               wrongOrbitalSource,
               fixture.typeClassification,
               fixture.internalComposition,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -619,6 +660,7 @@ describe(
               fixture.rotationProperties,
               foreignIdentity,
               fixture.internalComposition,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -655,6 +697,7 @@ describe(
               fixture.rotationProperties,
               wrongMassSource,
               fixture.internalComposition,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -705,6 +748,7 @@ describe(
               fixture.rotationProperties,
               fixture.typeClassification,
               foreignIdentity,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -742,6 +786,7 @@ describe(
               fixture.rotationProperties,
               fixture.typeClassification,
               wrongMassBudget,
+              fixture.surfaceBaseProperties,
             ),
         ).toThrow(
           RangeError,
@@ -779,6 +824,93 @@ describe(
               fixture.rotationProperties,
               fixture.typeClassification,
               wrongSourceMixture,
+              fixture.surfaceBaseProperties,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject a point-19.6 surface base with another identity or mismatched point-19.4/19.5 sources',
+      () => {
+        const fixture =
+          planetFixture();
+
+        const foreignIdentity =
+          new PlanetSurfaceBaseProperties(
+            1,
+            firstLocator,
+            new BodySeed(
+              '66666666666666666666666666666666',
+            ),
+            PlanetType.ROCKY,
+            0,
+            fixture.internalComposition.iceBearingFractionOfSolids01,
+            fixture.typeClassification.referenceMeanInsolationEarth,
+            PlanetSurfaceBaseRegime.MINERAL_REGOLITH,
+            0.2,
+            1,
+            0,
+            0,
+            0,
+            0.7,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              fixture.rotationProperties,
+              fixture.typeClassification,
+              fixture.internalComposition,
+              foreignIdentity,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const wrongTypeSource =
+          new PlanetSurfaceBaseProperties(
+            1,
+            firstLocator,
+            firstSeed,
+            PlanetType.SUPER_EARTH,
+            0,
+            fixture.internalComposition.iceBearingFractionOfSolids01,
+            fixture.typeClassification.referenceMeanInsolationEarth,
+            PlanetSurfaceBaseRegime.MASSIVE_MINERAL_REGOLITH,
+            0.2,
+            1,
+            0,
+            0,
+            0,
+            0.7,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              fixture.rotationProperties,
+              fixture.typeClassification,
+              fixture.internalComposition,
+              wrongTypeSource,
             ),
         ).toThrow(
           RangeError,
@@ -807,6 +939,8 @@ describe(
         PlanetTypeClassification;
       readonly internalComposition:
         PlanetInternalComposition;
+      readonly surfaceBaseProperties:
+        PlanetSurfaceBaseProperties;
     } {
       const slot = {
         planetOrdinal:
@@ -971,6 +1105,24 @@ describe(
           0,
         );
 
+      const surfaceBaseProperties =
+        new PlanetSurfaceBaseProperties(
+          1,
+          firstLocator,
+          firstSeed,
+          PlanetType.ROCKY,
+          physicalProperties.envelopeMassFraction01,
+          internalComposition.iceBearingFractionOfSolids01,
+          typeClassification.referenceMeanInsolationEarth,
+          PlanetSurfaceBaseRegime.MINERAL_REGOLITH,
+          0.20,
+          0.95,
+          0.05,
+          0,
+          0,
+          0.70,
+        );
+
       const system = {
         generationKey,
         locator:
@@ -1015,6 +1167,7 @@ describe(
         rotationProperties,
         typeClassification,
         internalComposition,
+        surfaceBaseProperties,
       };
     }
   },

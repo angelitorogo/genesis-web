@@ -32,6 +32,14 @@ import {
 } from './planet-physical-properties';
 
 import {
+  type PlanetSurfaceBaseProperties,
+} from './planet-surface-base-properties';
+
+import {
+  type PlanetSurfaceBaseRegime,
+} from './planet-surface-base-regime';
+
+import {
   type PlanetaryOrbitalElements,
 } from './planetary-orbital-elements';
 
@@ -73,8 +81,9 @@ import {
  * state (mass/radius/density/gravity), and point 19.3 adds sidereal rotation,
  * apparent solar-day length and axial tilt without changing any frozen earlier
  * product. Point 19.4 then attaches one deterministic coarse planet-type
- * classification and point 19.5 adds an approximate conserved internal mass
- * budget. Albedo/surface and rarity flags remain absent until points 19.6..19.8.
+ * classification, point 19.5 adds an approximate conserved internal mass
+ * budget and point 19.6 adds a reference Bond albedo plus coarse surface base.
+ * Type/physics coherence assessment and rarity flags remain points 19.7-19.8.
  */
 export class Planet {
 
@@ -111,6 +120,9 @@ export class Planet {
 
     readonly internalComposition:
       PlanetInternalComposition,
+
+    readonly surfaceBaseProperties:
+      PlanetSurfaceBaseProperties,
   ) {
     if (
       !Number.isInteger(
@@ -198,6 +210,7 @@ export class Planet {
       rotationProperties,
       typeClassification,
       internalComposition,
+      surfaceBaseProperties,
     );
 
     if (
@@ -416,6 +429,35 @@ export class Planet {
         'Point-19.5 internal composition must preserve the exact point-18.2 source-family mixture.',
       );
     }
+
+    if (
+      surfaceBaseProperties
+        .sourcePlanetType !==
+      typeClassification
+        .planetType ||
+      !approximatelyEqual(
+        surfaceBaseProperties
+          .sourceEnvelopeMassFraction01,
+        physicalProperties
+          .envelopeMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        surfaceBaseProperties
+          .sourceIceBearingInteriorFraction01,
+        internalComposition
+          .iceBearingFractionOfSolids01,
+      ) ||
+      !approximatelyEqual(
+        surfaceBaseProperties
+          .sourceReferenceMeanInsolationEarth,
+        typeClassification
+          .referenceMeanInsolationEarth,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.6 surface base must preserve the exact point-19.2/19.4/19.5 physical sources.',
+      );
+    }
   }
 
   get generationKey():
@@ -602,6 +644,38 @@ export class Planet {
       .internalComposition
       .gaseousEnvelopeMassEarth;
   }
+
+  get referenceBondAlbedo01():
+    number {
+
+    return this
+      .surfaceBaseProperties
+      .referenceBondAlbedo01;
+  }
+
+  get surfaceBaseRegime():
+    PlanetSurfaceBaseRegime {
+
+    return this
+      .surfaceBaseProperties
+      .surfaceRegime;
+  }
+
+  get hasDefinedSolidSurfaceBase():
+    boolean {
+
+    return this
+      .surfaceBaseProperties
+      .hasDefinedSolidSurfaceBase;
+  }
+
+  get baseSolidSurfaceRoughness01():
+    number | null {
+
+    return this
+      .surfaceBaseProperties
+      .baseSolidSurfaceRoughness01;
+  }
 }
 
 function assertSharedBodyIdentity(
@@ -634,6 +708,9 @@ function assertSharedBodyIdentity(
 
   internalComposition:
     PlanetInternalComposition,
+
+  surfaceBaseProperties:
+    PlanetSurfaceBaseProperties,
 ): void {
 
   const bodyObjects = [
@@ -646,6 +723,7 @@ function assertSharedBodyIdentity(
     rotationProperties,
     typeClassification,
     internalComposition,
+    surfaceBaseProperties,
   ] as const;
 
   for (
