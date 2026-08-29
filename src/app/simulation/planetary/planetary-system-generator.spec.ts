@@ -12,6 +12,12 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  CircumbinaryHabitabilityAssessment,
+  CircumbinaryPlanetaryStabilityRegime,
+  CircumbinaryStellarEvolutionRegime,
+} from '../../domain/habitability/circumbinary-habitability-assessment';
+
+import {
   PlanetaryFormationAnchor,
 } from '../../domain/planetary/planetary-formation-anchor';
 
@@ -26,6 +32,10 @@ import {
 import {
   PlanetarySystemFormationBlueprint,
 } from '../../domain/planetary/planetary-system-formation-blueprint';
+
+import {
+  PlanetarySystemHabitableZoneDynamicalRegime,
+} from '../../domain/planetary/planetary-system-habitable-zone-dynamical-regime';
 
 import {
   PlanetarySystemOrbitTopology,
@@ -73,7 +83,7 @@ import {
 } from './planetary-system-generator';
 
 describe(
-  'PlanetarySystemGenerator points 18.2-18.5',
+  'PlanetarySystemGenerator points 18.2-18.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -159,6 +169,21 @@ describe(
         ).toBe(
           canonicalSystemSeed.normalizedValue,
         );
+
+
+        expect(
+          system.habitableZone.referenceLuminositySolar,
+        ).toBeGreaterThan(0);
+
+        expect(
+          system.habitableZone.orbitTopology,
+        ).toBe(
+          PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        );
+
+        expect(
+          'orbitHabitabilityClassifications' in system,
+        ).toBe(false);
       },
     );
 
@@ -671,6 +696,10 @@ describe(
             true,
           supportsCircumbinaryPlanets:
             false,
+          circumbinaryHabitabilityAssessment:
+            noStableCircumbinaryHabitability(
+              StellarSystemMultiplicity.TRIPLE,
+            ),
         } as unknown as StellarSystem;
 
         const formation =
@@ -718,6 +747,13 @@ describe(
         expect(
           system.architecture.excludedSolidCoreMassEarth,
         ).toBe(3);
+
+
+        expect(
+          system.habitableZone.dynamicalRegime,
+        ).toBe(
+          PlanetarySystemHabitableZoneDynamicalRegime.NO_DYNAMICAL_OVERLAP,
+        );
       },
     );
 
@@ -744,6 +780,10 @@ describe(
             true,
           supportsCircumbinaryPlanets:
             true,
+          circumbinaryHabitabilityAssessment:
+            noStableCircumbinaryHabitability(
+              StellarSystemMultiplicity.BINARY,
+            ),
           secondaryCompanion: {
             physicalProperties: {
               initialMassSolar:
@@ -946,6 +986,10 @@ describe(
             true,
           supportsCircumbinaryPlanets:
             true,
+          circumbinaryHabitabilityAssessment:
+            noStableCircumbinaryHabitability(
+              StellarSystemMultiplicity.TRIPLE,
+            ),
           secondaryCompanion: {
             physicalProperties: {
               initialMassSolar:
@@ -1209,7 +1253,7 @@ describe(
     );
 
     it(
-      'should integrate the point-18.5 stability assessment without changing the frozen 18.2-18.4 products',
+      'should integrate point 18.6 habitable-zone geometry without changing the frozen 18.2-18.5 products',
       () => {
         const system =
           PlanetarySystemGenerator
@@ -1257,7 +1301,21 @@ describe(
         ).toBe(true);
 
         expect(
-          'habitableZone' in system,
+          system.habitableZone,
+        ).toBeDefined();
+
+        expect(
+          system.habitableZone.radiativeInnerEdgeAu,
+        ).toBeGreaterThan(0);
+
+        expect(
+          system.habitableZone.radiativeOuterEdgeAu,
+        ).toBeGreaterThan(
+          system.habitableZone.radiativeInnerEdgeAu,
+        );
+
+        expect(
+          'orbitHabitabilityClassifications' in system,
         ).toBe(false);
       },
     );
@@ -1318,6 +1376,39 @@ describe(
     }
   },
 );
+
+function noStableCircumbinaryHabitability(
+  multiplicity:
+    StellarSystemMultiplicity,
+): CircumbinaryHabitabilityAssessment {
+
+  const luminositySolar =
+    1;
+
+  const innerEdge =
+    Math.sqrt(
+      luminositySolar /
+      1.107,
+    );
+
+  const outerEdge =
+    Math.sqrt(
+      luminositySolar /
+      0.356,
+    );
+
+  return new CircumbinaryHabitabilityAssessment(
+    multiplicity,
+    luminositySolar,
+    innerEdge,
+    outerEdge,
+    null,
+    null,
+    0,
+    CircumbinaryPlanetaryStabilityRegime.NO_STABLE_HABITABLE_ZONE,
+    CircumbinaryStellarEvolutionRegime.MAIN_SEQUENCE_PAIR,
+  );
+}
 
 function blueprint(
   anchors:

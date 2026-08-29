@@ -129,6 +129,15 @@ describe(
               population,
             );
 
+        const directPhysicalProperties =
+          StellarGenerator
+            .generatePhysicalProperties(
+              generationKey,
+              locator,
+              sector,
+              population,
+            );
+
         expect(
           system.seed.normalizedValue,
         ).toBe(
@@ -151,6 +160,13 @@ describe(
           system.primaryStar,
         ).toEqual(
           directStar,
+        );
+
+        expect(
+          system.primaryReferenceLuminositySolar,
+        ).toBe(
+          directPhysicalProperties
+            .luminositySolar,
         );
 
         expect(
@@ -231,6 +247,12 @@ describe(
           binary.primaryStar,
         ).toEqual(
           single.primaryStar,
+        );
+
+        expect(
+          binary.primaryReferenceLuminositySolar,
+        ).toBe(
+          single.primaryReferenceLuminositySolar,
         );
 
         expect(

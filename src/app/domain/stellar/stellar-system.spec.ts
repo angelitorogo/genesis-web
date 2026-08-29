@@ -647,6 +647,73 @@ describe(
     );
 
     it(
+      'should accept a frozen primary reference luminosity and reject invalid cached values',
+      () => {
+        const valid =
+          new StellarSystem(
+            generationKey,
+            locator,
+            seed,
+            designation,
+            StellarSystemMultiplicity.SINGLE,
+            primaryStar(),
+            hierarchy(
+              StellarSystemMultiplicity.SINGLE,
+            ),
+            null,
+            null,
+            null,
+            null,
+            1.25,
+          );
+
+        expect(
+          valid.primaryReferenceLuminositySolar,
+        ).toBe(1.25);
+
+        expect(
+          Object.keys(
+            valid,
+          ),
+        ).not.toContain(
+          'primaryReferenceLuminositySolar',
+        );
+
+        for (
+          const invalid
+          of [
+            0,
+            -1,
+            Number.NaN,
+            Number.POSITIVE_INFINITY,
+          ]
+        ) {
+          expect(
+            () =>
+              new StellarSystem(
+                generationKey,
+                locator,
+                seed,
+                designation,
+                StellarSystemMultiplicity.SINGLE,
+                primaryStar(),
+                hierarchy(
+                  StellarSystemMultiplicity.SINGLE,
+                ),
+                null,
+                null,
+                null,
+                null,
+                invalid,
+              ),
+          ).toThrow(
+            RangeError,
+          );
+        }
+      },
+    );
+
+    it(
       'should reject a primary star from a different generation key or SystemLocator',
       () => {
         const otherGenerationKey =

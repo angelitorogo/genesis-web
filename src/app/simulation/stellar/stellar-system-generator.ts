@@ -182,6 +182,15 @@ export class StellarSystemGenerator {
           locator,
         );
 
+    const primaryPhysicalProperties =
+      StellarGenerator
+        .generatePhysicalProperties(
+          generationKey,
+          locator,
+          sectorStellarPopulation,
+          stellarPopulationProfile,
+        );
+
     const primaryStar =
       StellarGenerator
         .generateStar(
@@ -205,6 +214,12 @@ export class StellarSystemGenerator {
       StellarSystemMultiplicity.SINGLE,
       primaryStar,
       orbitHierarchy,
+      null,
+      null,
+      null,
+      null,
+      primaryPhysicalProperties
+        .luminositySolar,
     );
   }
 
@@ -308,6 +323,8 @@ export class StellarSystemGenerator {
       null,
       circumbinaryPlanetCompatibility,
       circumbinaryHabitabilityAssessment,
+      single
+        .primaryReferenceLuminositySolar,
     );
   }
 
@@ -410,6 +427,8 @@ export class StellarSystemGenerator {
       tertiaryCompanion,
       circumbinaryPlanetCompatibility,
       circumbinaryHabitabilityAssessment,
+      binary
+        .primaryReferenceLuminositySolar,
     );
   }
 }

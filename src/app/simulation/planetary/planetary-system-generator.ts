@@ -69,6 +69,10 @@ import {
 } from './planetary-system-orbital-period-generator';
 
 import {
+  PlanetarySystemHabitableZoneGenerator,
+} from './planetary-system-habitable-zone-generator';
+
+import {
   PlanetarySystemOrbitalStabilityGenerator,
 } from './planetary-system-orbital-stability-generator';
 
@@ -108,14 +112,16 @@ interface ArchitectureCluster {
  * 18.3 then uses independent BodySeed-derived branches for orbital geometry.
  * Point 18.4 consumes no additional random draw and introduces no new seed
  * level. Point 18.5 likewise consumes no entropy: it assesses the frozen
- * architecture/orbits/periods without mutating them.
+ * architecture/orbits/periods without mutating them. Point 18.6 reuses the
+ * frozen point-15.1/16.6 reference luminosity contracts to expose the system
+ * habitable-zone geometry without classifying any individual orbit yet.
  *
  * Point 18.3 delegates plausible geometric orbit materialization to the
  * dedicated PlanetarySystemOrbitalLayoutGenerator. Point 18.4 derives one
  * host-dominated Keplerian period from every frozen semi-major axis. Point 18.5
- * adds the basic orbital-stability assessment. Habitable-zone products remain
- * 18.6-18.7 and designations 18.8. Phase 19 owns final individual planet
- * physics.
+ * adds the basic orbital-stability assessment. Point 18.6 adds the reference
+ * habitable-zone geometry; orbit-to-zone classification remains 18.7 and
+ * designations 18.8. Phase 19 owns final individual planet physics.
  */
 export class PlanetarySystemGenerator {
 
@@ -205,6 +211,13 @@ export class PlanetarySystemGenerator {
           orbitalPeriodLayout,
         );
 
+    const habitableZone =
+      PlanetarySystemHabitableZoneGenerator
+        .generate(
+          generationKey,
+          stellarSystem,
+        );
+
     return new PlanetarySystem(
       stellarSystem,
       formationBlueprint,
@@ -212,6 +225,7 @@ export class PlanetarySystemGenerator {
       orbitalLayout,
       orbitalPeriodLayout,
       stabilityAssessment,
+      habitableZone,
     );
   }
 }

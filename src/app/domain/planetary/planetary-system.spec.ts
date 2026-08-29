@@ -61,6 +61,18 @@ import {
 } from './planetary-system-formation-blueprint';
 
 import {
+  PlanetarySystemHabitableZoneDynamicalRegime,
+} from './planetary-system-habitable-zone-dynamical-regime';
+
+import {
+  PlanetarySystemHabitableZoneEvolutionRegime,
+} from './planetary-system-habitable-zone-evolution-regime';
+
+import {
+  PlanetarySystemHabitableZone,
+} from './planetary-system-habitable-zone';
+
+import {
   PlanetarySystemOrbitalLayout,
 } from './planetary-system-orbital-layout';
 
@@ -89,7 +101,7 @@ import {
 } from './protoplanet-composition-mixture';
 
 describe(
-  'PlanetarySystem points 18.1-18.5',
+  'PlanetarySystem points 18.1-18.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -136,6 +148,7 @@ describe(
             emptyOrbitalLayout(),
             emptyOrbitalPeriodLayout(),
             emptyStabilityAssessment(),
+            singleHabitableZone(),
           );
 
         expect(
@@ -198,6 +211,7 @@ describe(
             singlePlanetOrbitalLayout(),
             singlePlanetOrbitalPeriodLayout(),
             singlePlanetStabilityAssessment(),
+            singleHabitableZone(),
           );
 
         expect(
@@ -254,7 +268,15 @@ describe(
         ).toBe(true);
 
         expect(
-          'habitableZone' in system,
+          system.habitableZone,
+        ).toBeDefined();
+
+        expect(
+          system.hasDynamicallyAvailableHabitableZone,
+        ).toBe(true);
+
+        expect(
+          'orbitHabitabilityClassifications' in system,
         ).toBe(false);
 
         expect(
@@ -277,6 +299,7 @@ describe(
                 1.06,
               ),
               singlePlanetStabilityAssessment(),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -297,6 +320,7 @@ describe(
                   .periods,
               ),
               singlePlanetStabilityAssessment(),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -327,6 +351,7 @@ describe(
                 null,
                 [],
               ),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -352,6 +377,7 @@ describe(
                 null,
                 [],
               ),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -366,6 +392,7 @@ describe(
               singlePlanetOrbitalLayout(),
               singlePlanetOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -396,6 +423,7 @@ describe(
                 null,
                 [],
               ),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -431,6 +459,7 @@ describe(
               emptyOrbitalLayout(),
               emptyOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -445,6 +474,7 @@ describe(
               emptyOrbitalLayout(),
               emptyOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -459,6 +489,7 @@ describe(
               emptyOrbitalLayout(),
               emptyOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
+              singleHabitableZone(),
             ),
         ).toThrow(
           RangeError,
@@ -466,6 +497,44 @@ describe(
       },
     );
 
+
+
+    function singleHabitableZone():
+      PlanetarySystemHabitableZone {
+
+      const innerFlux =
+        1.107;
+
+      const outerFlux =
+        0.356;
+
+      const innerEdge =
+        Math.sqrt(
+          1 /
+          innerFlux,
+        );
+
+      const outerEdge =
+        Math.sqrt(
+          1 /
+          outerFlux,
+        );
+
+      return new PlanetarySystemHabitableZone(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        1,
+        innerFlux,
+        outerFlux,
+        innerEdge,
+        outerEdge,
+        innerEdge,
+        outerEdge,
+        1,
+        PlanetarySystemHabitableZoneDynamicalRegime.FULL_DYNAMICAL_OVERLAP,
+        PlanetarySystemHabitableZoneEvolutionRegime.MAIN_SEQUENCE_HOST,
+      );
+    }
 
     function emptyStabilityAssessment():
       PlanetarySystemStabilityAssessment {

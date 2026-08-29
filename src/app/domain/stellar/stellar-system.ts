@@ -65,6 +65,13 @@ const MASS_ORDER_TOLERANCE =
  */
 export class StellarSystem {
 
+  /**
+   * Non-enumerable cached copy of the frozen point-15.1 luminosity of primary A.
+   * It is deliberately excluded from the serialized point-16 object shape.
+   */
+  declare readonly primaryReferenceLuminositySolar:
+    number | null;
+
   constructor(
     readonly generationKey:
       UniverseGenerationKey,
@@ -98,6 +105,15 @@ export class StellarSystem {
 
     readonly circumbinaryHabitabilityAssessment:
       CircumbinaryHabitabilityAssessment | null = null,
+
+    /**
+     * Frozen point-15.1 luminosity of the canonical primary A, carried with the
+     * stellar host so later phases do not need to reconstruct sector context
+     * from SystemLocator alone. This is a cached physical baseline, not a new
+     * procedural identity or entropy source.
+     */
+    primaryReferenceLuminositySolar:
+      number | null = null,
   ) {
     if (
       !generationKey.equals(
@@ -129,6 +145,37 @@ export class StellarSystem {
         'Stellar-system multiplicity must match its point-16.4 orbit hierarchy.',
       );
     }
+
+    if (
+      primaryReferenceLuminositySolar !==
+        null &&
+      (
+        !Number.isFinite(
+          primaryReferenceLuminositySolar,
+        ) ||
+        primaryReferenceLuminositySolar <=
+          0
+      )
+    ) {
+      throw new RangeError(
+        'primaryReferenceLuminositySolar must be null or finite and greater than 0.',
+      );
+    }
+
+    Object.defineProperty(
+      this,
+      'primaryReferenceLuminositySolar',
+      {
+        value:
+          primaryReferenceLuminositySolar,
+        enumerable:
+          false,
+        configurable:
+          false,
+        writable:
+          false,
+      },
+    );
 
     if (
       multiplicity ===
@@ -414,8 +461,7 @@ function assertCircumbinaryCompatibility(
 
   orbitHierarchy:
     StellarOrbitHierarchy,
-): asserts compatibility is
-  CircumbinaryPlanetCompatibility {
+): asserts compatibility is CircumbinaryPlanetCompatibility {
 
   if (
     compatibility ===

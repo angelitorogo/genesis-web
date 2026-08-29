@@ -43,6 +43,10 @@ import {
 } from './planetary-system-formation-blueprint';
 
 import {
+  type PlanetarySystemHabitableZone,
+} from './planetary-system-habitable-zone';
+
+import {
   type PlanetarySystemOrbitalLayout,
 } from './planetary-system-orbital-layout';
 
@@ -72,11 +76,12 @@ const CONSISTENCY_TOLERANCE =
  * 17.7 formation handoff. Point 18.2 added mature planet identities/count and
  * coarse architecture. Point 18.3 attaches one plausible geometric orbit to
  * every mature architecture slot. Point 18.4 attaches one Keplerian period to
- * every frozen orbit. Point 18.5 now attaches the basic orbital-stability
- * assessment without modifying any point-18.2..18.4 value.
+ * every frozen orbit. Point 18.5 attaches the basic orbital-stability
+ * assessment without modifying any point-18.2..18.4 value. Point 18.6 now adds
+ * the reference habitable-zone geometry while leaving every orbit unclassified.
  *
- * HZ relations and planet designations remain 18.6..18.8. Individual planet
- * physics remains phase 19.
+ * Orbit-to-HZ classification and planet designations remain 18.7..18.8.
+ * Individual planet physics remains phase 19.
  */
 export class PlanetarySystem {
 
@@ -98,6 +103,9 @@ export class PlanetarySystem {
 
     readonly stabilityAssessment:
       PlanetarySystemStabilityAssessment,
+
+    readonly habitableZone:
+      PlanetarySystemHabitableZone,
   ) {
     if (
       !sameSystemLocator(
@@ -374,6 +382,77 @@ export class PlanetarySystem {
         );
       }
     }
+
+    if (
+      !sameSystemLocator(
+        hostStellarSystem.locator,
+        habitableZone.systemLocator,
+      )
+    ) {
+      throw new RangeError(
+        'PlanetarySystem habitable zone must belong to the host StellarSystem locator.',
+      );
+    }
+
+    if (
+      habitableZone.orbitTopology !==
+      orbitalLayout.orbitTopology
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.6 habitable-zone topology must match the frozen orbital topology.',
+      );
+    }
+
+    const circumbinaryAssessment =
+      hostStellarSystem
+        .circumbinaryHabitabilityAssessment;
+
+    if (
+      expectedTopology ===
+        PlanetarySystemOrbitTopology.CIRCUMBINARY
+    ) {
+      if (
+        circumbinaryAssessment ===
+          null ||
+        circumbinaryAssessment ===
+          undefined
+      ) {
+        throw new RangeError(
+          'A CIRCUMBINARY PlanetarySystem requires the frozen point-16.6 habitability assessment.',
+        );
+      }
+
+      if (
+        !approximatelyEqual(
+          habitableZone.referenceLuminositySolar,
+          circumbinaryAssessment.combinedReferenceLuminositySolar,
+        ) ||
+        !approximatelyEqual(
+          habitableZone.radiativeInnerEdgeAu,
+          circumbinaryAssessment.radiativeHabitableInnerEdgeAu,
+        ) ||
+        !approximatelyEqual(
+          habitableZone.radiativeOuterEdgeAu,
+          circumbinaryAssessment.radiativeHabitableOuterEdgeAu,
+        ) ||
+        !sameNullableNumber(
+          habitableZone.dynamicallyHabitableInnerEdgeAu,
+          circumbinaryAssessment.stableHabitableInnerEdgeAu,
+        ) ||
+        !sameNullableNumber(
+          habitableZone.dynamicallyHabitableOuterEdgeAu,
+          circumbinaryAssessment.stableHabitableOuterEdgeAu,
+        ) ||
+        !approximatelyEqual(
+          habitableZone.dynamicalOverlapFraction01,
+          circumbinaryAssessment.stableHabitableZoneFraction,
+        )
+      ) {
+        throw new RangeError(
+          'Point-18.6 CIRCUMBINARY habitable-zone geometry must preserve the frozen point-16.6 assessment exactly.',
+        );
+      }
+    }
   }
 
   get generationKey():
@@ -462,6 +541,14 @@ export class PlanetarySystem {
     return this
       .stabilityAssessment
       .isStable;
+  }
+
+  get hasDynamicallyAvailableHabitableZone():
+    boolean {
+
+    return this
+      .habitableZone
+      .hasDynamicallyAvailableHabitableZone;
   }
 }
 
