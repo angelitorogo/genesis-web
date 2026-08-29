@@ -36,6 +36,10 @@ import {
 } from './planetary-orbital-period';
 
 import {
+  type PlanetRotationProperties,
+} from './planet-rotation-properties';
+
+import {
   type PlanetarySystem,
 } from './planetary-system';
 
@@ -54,9 +58,10 @@ import {
  *
  * No new locator or seed level exists here. BodyLocator/BodySeed remain the
  * canonical identity of the planet. Point 19.2 adds one coherent bulk-physical
- * state (mass/radius/density/gravity). Rotation, axial tilt, planet type,
- * internal composition, albedo/surface and rarity flags remain absent until
- * points 19.3..19.8.
+ * state (mass/radius/density/gravity), and point 19.3 adds sidereal rotation,
+ * apparent solar-day length and axial tilt without changing any frozen earlier
+ * product. Planet type, internal composition, albedo/surface and rarity flags
+ * remain absent until points 19.4..19.8.
  */
 export class Planet {
 
@@ -84,6 +89,9 @@ export class Planet {
 
     readonly physicalProperties:
       PlanetPhysicalProperties,
+
+    readonly rotationProperties:
+      PlanetRotationProperties,
   ) {
     if (
       !Number.isInteger(
@@ -168,6 +176,7 @@ export class Planet {
       habitableZoneClassification,
       designation,
       physicalProperties,
+      rotationProperties,
     );
 
     if (
@@ -180,6 +189,20 @@ export class Planet {
     ) {
       throw new RangeError(
         'Point-19.2 physical properties must preserve the exact point-18.2 inherited solid-core mass.',
+      );
+    }
+
+    if (
+      !approximatelyEqual(
+        rotationProperties
+          .sourceOrbitalPeriodHours,
+        orbitalPeriod
+          .periodDays *
+          24,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.3 rotation properties must reuse the exact point-18.4 orbital period.',
       );
     }
   }
@@ -280,6 +303,46 @@ export class Planet {
       .physicalProperties
       .surfaceGravityMetersPerSecondSquared;
   }
+
+  get rotationPeriodHours():
+    number {
+
+    return this
+      .rotationProperties
+      .rotationPeriodHours;
+  }
+
+  get dayLengthHours():
+    number | null {
+
+    return this
+      .rotationProperties
+      .dayLengthHours;
+  }
+
+  get axialTiltDegrees():
+    number {
+
+    return this
+      .rotationProperties
+      .axialTiltDegrees;
+  }
+
+  get isRetrogradeRotation():
+    boolean {
+
+    return this
+      .rotationProperties
+      .isRetrograde;
+  }
+
+  get isTidallySynchronized():
+    boolean {
+
+    return this
+      .rotationProperties
+      .isTidallySynchronized;
+  }
 }
 
 function assertSharedBodyIdentity(
@@ -303,6 +366,9 @@ function assertSharedBodyIdentity(
 
   physicalProperties:
     PlanetPhysicalProperties,
+
+  rotationProperties:
+    PlanetRotationProperties,
 ): void {
 
   const bodyObjects = [
@@ -312,6 +378,7 @@ function assertSharedBodyIdentity(
     habitableZoneClassification,
     designation,
     physicalProperties,
+    rotationProperties,
   ] as const;
 
   for (
@@ -323,7 +390,7 @@ function assertSharedBodyIdentity(
       planetOrdinal
     ) {
       throw new RangeError(
-        'Every point-19.1 source projection must preserve the same planetOrdinal.',
+        'Every Planet source projection must preserve the same planetOrdinal.',
       );
     }
 
@@ -336,7 +403,7 @@ function assertSharedBodyIdentity(
         bodyObject.bodySeed.normalizedValue
     ) {
       throw new RangeError(
-        'Every point-19.1 source projection must preserve the exact point-18 BodyLocator/BodySeed identity.',
+        'Every Planet source projection must preserve the exact point-18 BodyLocator/BodySeed identity.',
       );
     }
   }

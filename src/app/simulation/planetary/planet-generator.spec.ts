@@ -56,7 +56,7 @@ import {
 } from './planet-generator';
 
 describe(
-  'PlanetGenerator point 19.1',
+  'PlanetGenerator points 19.1-19.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -163,6 +163,46 @@ describe(
         expect(
           planet.surfaceGravityEarth,
         ).toBeGreaterThan(0);
+
+        expect(
+          planet.rotationPeriodHours,
+        ).toBeGreaterThan(0);
+
+        expect(
+          planet.axialTiltDegrees,
+        ).toBeGreaterThanOrEqual(0);
+
+        expect(
+          planet.axialTiltDegrees,
+        ).toBeLessThanOrEqual(180);
+
+        if (
+          planet.isTidallySynchronized
+        ) {
+          expect(
+            planet.dayLengthHours,
+          ).toBeNull();
+        } else {
+          expect(
+            planet.dayLengthHours,
+          ).not.toBeNull();
+        }
+
+        for (
+          const laterProperty
+          of [
+            'planetType',
+            'internalComposition',
+            'albedo',
+            'surface',
+            'rarities',
+          ]
+        ) {
+          expect(
+            laterProperty in
+              planet,
+          ).toBe(false);
+        }
       },
     );
 
@@ -321,6 +361,12 @@ describe(
           after.physicalProperties,
         ).toEqual(
           before.physicalProperties,
+        );
+
+        expect(
+          after.rotationProperties,
+        ).toEqual(
+          before.rotationProperties,
         );
       },
     );
@@ -488,6 +534,17 @@ describe(
             0.45 +
             0.10 *
               index,
+          inheritedDynamicalExcitationIndex01:
+            0.18 +
+            0.16 *
+              index,
+          phase17CollisionCount:
+            index ===
+              2
+              ? 1
+              : 0,
+          phase18ConsolidationCount:
+            0,
           inheritedCompositionMixture:
             new ProtoplanetCompositionMixture(
               0,
@@ -513,6 +570,10 @@ describe(
           bodySeed,
           semiMajorAxisAu:
             planetOrdinal,
+          eccentricity:
+            0.02 +
+            0.01 *
+              index,
           periastronAu:
             planetOrdinal *
             0.98,
@@ -527,6 +588,8 @@ describe(
           bodySeed,
           sourceSemiMajorAxisAu:
             planetOrdinal,
+          gravitatingMassSolar:
+            1,
           periodYears:
             planetOrdinal,
           periodDays:

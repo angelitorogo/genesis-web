@@ -19,12 +19,20 @@ import {
 } from '../../domain/planetary/planet-physical-properties';
 
 import {
+  type PlanetRotationProperties,
+} from '../../domain/planetary/planet-rotation-properties';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
 import {
   PlanetPhysicalPropertiesGenerator,
 } from './planet-physical-properties-generator';
+
+import {
+  PlanetRotationPropertiesGenerator,
+} from './planet-rotation-properties-generator';
 
 /**
  * Point-19.1 deterministic Planet materializer.
@@ -34,8 +42,9 @@ import {
  * designation projections into one Planet domain entity.
  *
  * Point 19.2 enriches that boundary with deterministic bulk physical
- * properties. It consumes only independent branches of the existing BodySeed;
- * no PlanetSeed level is introduced and all point-18 products remain frozen.
+ * properties and point 19.3 adds deterministic rotation/day/axial tilt. Both
+ * consume only independent branches of the existing BodySeed; no PlanetSeed
+ * level is introduced and all point-18 products remain frozen.
  */
 export class PlanetGenerator {
 
@@ -123,10 +132,19 @@ export class PlanetGenerator {
           slot.bodyLocator,
         );
 
+    const rotationProperties =
+      PlanetRotationPropertiesGenerator
+        .generate(
+          generationKey,
+          planetarySystem,
+          physicalProperties,
+        );
+
     return materializePlanet(
       planetarySystem,
       index,
       physicalProperties,
+      rotationProperties,
     );
   }
 
@@ -165,6 +183,14 @@ export class PlanetGenerator {
           planetarySystem,
         );
 
+    const rotationProperties =
+      PlanetRotationPropertiesGenerator
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          physicalProperties,
+        );
+
     return Object.freeze(
       physicalProperties
         .map(
@@ -176,6 +202,7 @@ export class PlanetGenerator {
               planetarySystem,
               index,
               properties,
+              rotationProperties[index],
             ),
         ),
     );
@@ -191,6 +218,9 @@ function materializePlanet(
 
   physicalProperties:
     PlanetPhysicalProperties,
+
+  rotationProperties:
+    PlanetRotationProperties,
 ): Planet {
 
   return new Planet(
@@ -208,6 +238,7 @@ function materializePlanet(
     planetarySystem
       .planetDesignations[index],
     physicalProperties,
+    rotationProperties,
   );
 }
 

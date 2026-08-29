@@ -38,6 +38,11 @@ import {
 } from './planet-physical-properties';
 
 import {
+  apparentSolarDayHours,
+  PlanetRotationProperties,
+} from './planet-rotation-properties';
+
+import {
   type PlanetaryOrbitalElements,
 } from './planetary-orbital-elements';
 
@@ -58,7 +63,7 @@ import {
 } from './planetary-system-orbit-topology';
 
 describe(
-  'Planet points 19.1-19.2',
+  'Planet points 19.1-19.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -89,7 +94,7 @@ describe(
       );
 
     it(
-      'should bind the frozen point-18 projections and coherent point-19.2 bulk physics into one planet',
+      'should bind the frozen point-18 projections plus coherent point-19.2 bulk physics and point-19.3 rotation into one planet',
       () => {
         const fixture =
           planetFixture();
@@ -104,6 +109,7 @@ describe(
             fixture.hzClassification,
             fixture.designation,
             fixture.physicalProperties,
+            fixture.rotationProperties,
           );
 
         expect(
@@ -212,12 +218,43 @@ describe(
           PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
         );
 
+        expect(
+          planet.rotationProperties,
+        ).toBe(
+          fixture.rotationProperties,
+        );
+
+        expect(
+          planet.rotationPeriodHours,
+        ).toBe(24);
+
+        expect(
+          planet.dayLengthHours,
+        ).toBeCloseTo(
+          apparentSolarDayHours(
+            24,
+            365.25 *
+              24,
+            false,
+          )!,
+          12,
+        );
+
+        expect(
+          planet.axialTiltDegrees,
+        ).toBe(23.44);
+
+        expect(
+          planet.isRetrogradeRotation,
+        ).toBe(false);
+
+        expect(
+          planet.isTidallySynchronized,
+        ).toBe(false);
+
         for (
           const laterPhysicalProperty
           of [
-            'rotationPeriodHours',
-            'dayLengthHours',
-            'axialTiltDegrees',
             'planetType',
             'internalComposition',
             'albedo',
@@ -259,6 +296,7 @@ describe(
                 fixture.hzClassification,
                 fixture.designation,
                 fixture.physicalProperties,
+                fixture.rotationProperties,
               ),
           ).toThrow(
             RangeError,
@@ -288,6 +326,7 @@ describe(
               fixture.hzClassification,
               fixture.designation,
               fixture.physicalProperties,
+              fixture.rotationProperties,
             ),
         ).toThrow(
           RangeError,
@@ -331,6 +370,7 @@ describe(
               fixture.hzClassification,
               fixture.designation,
               foreignIdentity,
+              fixture.rotationProperties,
             ),
         ).toThrow(
           RangeError,
@@ -361,6 +401,89 @@ describe(
               fixture.hzClassification,
               fixture.designation,
               differentCoreMass,
+              fixture.rotationProperties,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+
+    it(
+      'should reject a point-19.3 rotational state with another BodySeed or orbital-period source',
+      () => {
+        const fixture =
+          planetFixture();
+
+        const otherSeed =
+          new BodySeed(
+            '33333333333333333333333333333333',
+          );
+
+        const foreignIdentity =
+          new PlanetRotationProperties(
+            1,
+            firstLocator,
+            otherSeed,
+            365.25 *
+              24,
+            24,
+            apparentSolarDayHours(
+              24,
+              365.25 *
+                24,
+              false,
+            ),
+            23.44,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              foreignIdentity,
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const wrongOrbitalSource =
+          new PlanetRotationProperties(
+            1,
+            firstLocator,
+            firstSeed,
+            300 *
+              24,
+            24,
+            apparentSolarDayHours(
+              24,
+              300 *
+                24,
+              false,
+            ),
+            23.44,
+          );
+
+        expect(
+          () =>
+            new Planet(
+              fixture.system,
+              1,
+              fixture.slot,
+              fixture.orbit,
+              fixture.period,
+              fixture.hzClassification,
+              fixture.designation,
+              fixture.physicalProperties,
+              wrongOrbitalSource,
             ),
         ).toThrow(
           RangeError,
@@ -383,6 +506,8 @@ describe(
         PlanetaryDesignation;
       readonly physicalProperties:
         PlanetPhysicalProperties;
+      readonly rotationProperties:
+        PlanetRotationProperties;
     } {
       const slot = {
         planetOrdinal:
@@ -459,6 +584,25 @@ describe(
           PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
         );
 
+      const orbitalPeriodHours =
+        period.periodDays *
+        24;
+
+      const rotationProperties =
+        new PlanetRotationProperties(
+          1,
+          firstLocator,
+          firstSeed,
+          orbitalPeriodHours,
+          24,
+          apparentSolarDayHours(
+            24,
+            orbitalPeriodHours,
+            false,
+          ),
+          23.44,
+        );
+
       const system = {
         generationKey,
         locator:
@@ -494,6 +638,7 @@ describe(
         hzClassification,
         designation,
         physicalProperties,
+        rotationProperties,
       };
     }
   },
