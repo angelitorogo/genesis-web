@@ -18,6 +18,10 @@ import {
 } from '../../domain/habitability/circumbinary-habitability-assessment';
 
 import {
+  PlanetaryOrbitHabitableZoneRelation,
+} from '../../domain/planetary/planetary-orbit-habitable-zone-relation';
+
+import {
   PlanetaryFormationAnchor,
 } from '../../domain/planetary/planetary-formation-anchor';
 
@@ -83,7 +87,7 @@ import {
 } from './planetary-system-generator';
 
 describe(
-  'PlanetarySystemGenerator points 18.2-18.6',
+  'PlanetarySystemGenerator points 18.2-18.7',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -182,8 +186,8 @@ describe(
         );
 
         expect(
-          'orbitHabitabilityClassifications' in system,
-        ).toBe(false);
+          system.orbitHabitableZoneClassifications,
+        ).toEqual([]);
       },
     );
 
@@ -1249,11 +1253,41 @@ describe(
                 period.periodDays,
             })),
         );
+
+        expect(
+          after.orbitHabitableZoneClassifications.map(
+            classification => ({
+              seed:
+                classification.bodySeed.normalizedValue,
+              periastronAu:
+                classification.sourcePeriastronAu,
+              apoastronAu:
+                classification.sourceApoastronAu,
+              radiativeRelation:
+                classification.radiativeRelation,
+              dynamicRelation:
+                classification.dynamicallyAvailableRelation,
+            })),
+        ).toEqual(
+          before.orbitHabitableZoneClassifications.map(
+            classification => ({
+              seed:
+                classification.bodySeed.normalizedValue,
+              periastronAu:
+                classification.sourcePeriastronAu,
+              apoastronAu:
+                classification.sourceApoastronAu,
+              radiativeRelation:
+                classification.radiativeRelation,
+              dynamicRelation:
+                classification.dynamicallyAvailableRelation,
+            })),
+        );
       },
     );
 
     it(
-      'should integrate point 18.6 habitable-zone geometry without changing the frozen 18.2-18.5 products',
+      'should integrate point 18.7 orbit-to-HZ classification without changing the frozen 18.2-18.6 products',
       () => {
         const system =
           PlanetarySystemGenerator
@@ -1315,8 +1349,59 @@ describe(
         );
 
         expect(
-          'orbitHabitabilityClassifications' in system,
-        ).toBe(false);
+          system.orbitHabitableZoneClassifications.length,
+        ).toBe(
+          system.planetCount,
+        );
+
+        for (
+          let index = 0;
+          index <
+            system.orbits.length;
+          index += 1
+        ) {
+          const orbit =
+            system.orbits[index];
+
+          const classification =
+            system.orbitHabitableZoneClassifications[index];
+
+          expect(
+            classification.bodyLocator,
+          ).toBe(
+            orbit.bodyLocator,
+          );
+
+          expect(
+            classification.bodySeed,
+          ).toBe(
+            orbit.bodySeed,
+          );
+
+          expect(
+            classification.sourcePeriastronAu,
+          ).toBe(
+            orbit.periastronAu,
+          );
+
+          expect(
+            classification.sourceApoastronAu,
+          ).toBe(
+            orbit.apoastronAu,
+          );
+
+          expect(
+            Object.values(
+              PlanetaryOrbitHabitableZoneRelation,
+            ),
+          ).toContain(
+            classification.radiativeRelation,
+          );
+
+          expect(
+            classification.dynamicallyAvailableRelation,
+          ).not.toBeNull();
+        }
       },
     );
 

@@ -69,8 +69,20 @@ import {
 } from './planetary-system-habitable-zone-evolution-regime';
 
 import {
+  PlanetaryOrbitHabitableZoneClassification,
+} from './planetary-orbit-habitable-zone-classification';
+
+import {
+  PlanetaryOrbitHabitableZoneRelation,
+} from './planetary-orbit-habitable-zone-relation';
+
+import {
   PlanetarySystemHabitableZone,
 } from './planetary-system-habitable-zone';
+
+import {
+  PlanetarySystemHabitableZoneClassification,
+} from './planetary-system-habitable-zone-classification';
 
 import {
   PlanetarySystemOrbitalLayout,
@@ -101,7 +113,7 @@ import {
 } from './protoplanet-composition-mixture';
 
 describe(
-  'PlanetarySystem points 18.1-18.6',
+  'PlanetarySystem points 18.1-18.7',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -149,6 +161,7 @@ describe(
             emptyOrbitalPeriodLayout(),
             emptyStabilityAssessment(),
             singleHabitableZone(),
+            emptyHabitableZoneClassification(),
           );
 
         expect(
@@ -212,6 +225,7 @@ describe(
             singlePlanetOrbitalPeriodLayout(),
             singlePlanetStabilityAssessment(),
             singleHabitableZone(),
+            singlePlanetHabitableZoneClassification(),
           );
 
         expect(
@@ -276,8 +290,21 @@ describe(
         ).toBe(true);
 
         expect(
-          'orbitHabitabilityClassifications' in system,
-        ).toBe(false);
+          system.orbitHabitableZoneClassifications,
+        ).toBe(
+          system.habitableZoneClassification.orbitClassifications,
+        );
+
+        expect(
+          system.orbitHabitableZoneClassifications[0]
+            .dynamicallyAvailableRelation,
+        ).toBe(
+          PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE,
+        );
+
+        expect(
+          system.hasOrbitIntersectingDynamicallyAvailableHabitableZone,
+        ).toBe(true);
 
         expect(
           'planetDesignations' in system,
@@ -300,6 +327,7 @@ describe(
               ),
               singlePlanetStabilityAssessment(),
               singleHabitableZone(),
+              singlePlanetHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -321,6 +349,7 @@ describe(
               ),
               singlePlanetStabilityAssessment(),
               singleHabitableZone(),
+              singlePlanetHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -352,6 +381,7 @@ describe(
                 [],
               ),
               singleHabitableZone(),
+              singlePlanetHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -378,6 +408,7 @@ describe(
                 [],
               ),
               singleHabitableZone(),
+              singlePlanetHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -393,6 +424,7 @@ describe(
               singlePlanetOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
               singleHabitableZone(),
+              singlePlanetHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -424,6 +456,83 @@ describe(
                 [],
               ),
               singleHabitableZone(),
+              emptyHabitableZoneClassification(),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
+      'should reject point-18.7 classifications that change orbit identity or dynamic-HZ availability',
+      () => {
+        const valid =
+          singlePlanetHabitableZoneClassification();
+
+        const classification =
+          valid.orbitClassifications[0];
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(),
+              singlePlanetStabilityAssessment(),
+              singleHabitableZone(),
+              new PlanetarySystemHabitableZoneClassification(
+                locator,
+                PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+                1,
+                true,
+                [
+                  new PlanetaryOrbitHabitableZoneClassification(
+                    1,
+                    classification.bodyLocator,
+                    classification.bodySeed,
+                    classification.sourcePeriastronAu +
+                      0.01,
+                    classification.sourceApoastronAu,
+                    classification.radiativeRelation,
+                    classification.dynamicallyAvailableRelation,
+                  ),
+                ],
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new PlanetarySystem(
+              stellarSystem,
+              blueprintForOneAnchor(),
+              singlePlanetArchitecture(),
+              singlePlanetOrbitalLayout(),
+              singlePlanetOrbitalPeriodLayout(),
+              singlePlanetStabilityAssessment(),
+              singleHabitableZone(),
+              new PlanetarySystemHabitableZoneClassification(
+                locator,
+                PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+                1,
+                false,
+                [
+                  new PlanetaryOrbitHabitableZoneClassification(
+                    1,
+                    classification.bodyLocator,
+                    classification.bodySeed,
+                    classification.sourcePeriastronAu,
+                    classification.sourceApoastronAu,
+                    classification.radiativeRelation,
+                    null,
+                  ),
+                ],
+              ),
             ),
         ).toThrow(
           RangeError,
@@ -460,6 +569,7 @@ describe(
               emptyOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
               singleHabitableZone(),
+              emptyHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -475,6 +585,7 @@ describe(
               emptyOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
               singleHabitableZone(),
+              emptyHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -490,6 +601,7 @@ describe(
               emptyOrbitalPeriodLayout(),
               emptyStabilityAssessment(),
               singleHabitableZone(),
+              emptyHabitableZoneClassification(),
             ),
         ).toThrow(
           RangeError,
@@ -498,6 +610,44 @@ describe(
     );
 
 
+
+    function emptyHabitableZoneClassification():
+      PlanetarySystemHabitableZoneClassification {
+
+      return new PlanetarySystemHabitableZoneClassification(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        0,
+        true,
+        [],
+      );
+    }
+
+    function singlePlanetHabitableZoneClassification():
+      PlanetarySystemHabitableZoneClassification {
+
+      const orbit =
+        singlePlanetOrbitalLayout()
+          .orbits[0];
+
+      return new PlanetarySystemHabitableZoneClassification(
+        locator,
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR,
+        1,
+        true,
+        [
+          new PlanetaryOrbitHabitableZoneClassification(
+            1,
+            orbit.bodyLocator,
+            orbit.bodySeed,
+            orbit.periastronAu,
+            orbit.apoastronAu,
+            PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE,
+            PlanetaryOrbitHabitableZoneRelation.WHOLLY_WITHIN_ZONE,
+          ),
+        ],
+      );
+    }
 
     function singleHabitableZone():
       PlanetarySystemHabitableZone {

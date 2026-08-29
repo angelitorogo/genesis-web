@@ -23,6 +23,10 @@ import {
 } from './planetary-architecture-slot';
 
 import {
+  type PlanetaryOrbitHabitableZoneClassification,
+} from './planetary-orbit-habitable-zone-classification';
+
+import {
   type PlanetaryOrbitalElements,
 } from './planetary-orbital-elements';
 
@@ -45,6 +49,10 @@ import {
 import {
   type PlanetarySystemHabitableZone,
 } from './planetary-system-habitable-zone';
+
+import {
+  type PlanetarySystemHabitableZoneClassification,
+} from './planetary-system-habitable-zone-classification';
 
 import {
   type PlanetarySystemOrbitalLayout,
@@ -77,11 +85,12 @@ const CONSISTENCY_TOLERANCE =
  * coarse architecture. Point 18.3 attaches one plausible geometric orbit to
  * every mature architecture slot. Point 18.4 attaches one Keplerian period to
  * every frozen orbit. Point 18.5 attaches the basic orbital-stability
- * assessment without modifying any point-18.2..18.4 value. Point 18.6 now adds
- * the reference habitable-zone geometry while leaving every orbit unclassified.
+ * assessment without modifying any point-18.2..18.4 value. Point 18.6 adds
+ * the reference habitable-zone geometry. Point 18.7 classifies every frozen
+ * point-18.3 radial excursion against both the radiative interval and, when it
+ * exists, the dynamically available HZ interval.
  *
- * Orbit-to-HZ classification and planet designations remain 18.7..18.8.
- * Individual planet physics remains phase 19.
+ * Planet designations remain 18.8. Individual planet physics remains phase 19.
  */
 export class PlanetarySystem {
 
@@ -106,6 +115,9 @@ export class PlanetarySystem {
 
     readonly habitableZone:
       PlanetarySystemHabitableZone,
+
+    readonly habitableZoneClassification:
+      PlanetarySystemHabitableZoneClassification,
   ) {
     if (
       !sameSystemLocator(
@@ -453,6 +465,81 @@ export class PlanetarySystem {
         );
       }
     }
+
+    if (
+      !sameSystemLocator(
+        hostStellarSystem.locator,
+        habitableZoneClassification.systemLocator,
+      )
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.7 HZ classification must belong to the host StellarSystem locator.',
+      );
+    }
+
+    if (
+      habitableZoneClassification.orbitTopology !==
+      orbitalLayout.orbitTopology
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.7 HZ-classification topology must match the frozen orbital topology.',
+      );
+    }
+
+    if (
+      habitableZoneClassification.planetCount !==
+      orbitalLayout.planetCount
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.7 requires exactly one HZ classification for every frozen planet orbit.',
+      );
+    }
+
+    if (
+      habitableZoneClassification.hasDynamicallyAvailableHabitableZone !==
+      habitableZone.hasDynamicallyAvailableHabitableZone
+    ) {
+      throw new RangeError(
+        'PlanetarySystem point-18.7 must preserve point-18.6 dynamically available HZ existence exactly.',
+      );
+    }
+
+    for (
+      let index = 0;
+      index <
+        orbitalLayout.orbits.length;
+      index += 1
+    ) {
+      const orbit =
+        orbitalLayout.orbits[index];
+
+      const classification =
+        habitableZoneClassification
+          .orbitClassifications[index];
+
+      if (
+        classification.planetOrdinal !==
+          orbit.planetOrdinal ||
+        !sameBodyLocator(
+          classification.bodyLocator,
+          orbit.bodyLocator,
+        ) ||
+        classification.bodySeed.normalizedValue !==
+          orbit.bodySeed.normalizedValue ||
+        !approximatelyEqual(
+          classification.sourcePeriastronAu,
+          orbit.periastronAu,
+        ) ||
+        !approximatelyEqual(
+          classification.sourceApoastronAu,
+          orbit.apoastronAu,
+        )
+      ) {
+        throw new RangeError(
+          'Every point-18.7 HZ classification must preserve the exact point-18.3 orbit identity, BodySeed, periapsis and apoapsis.',
+        );
+      }
+    }
   }
 
   get generationKey():
@@ -549,6 +636,22 @@ export class PlanetarySystem {
     return this
       .habitableZone
       .hasDynamicallyAvailableHabitableZone;
+  }
+
+  get orbitHabitableZoneClassifications():
+    readonly PlanetaryOrbitHabitableZoneClassification[] {
+
+    return this
+      .habitableZoneClassification
+      .orbitClassifications;
+  }
+
+  get hasOrbitIntersectingDynamicallyAvailableHabitableZone():
+    boolean {
+
+    return this
+      .habitableZoneClassification
+      .hasOrbitIntersectingDynamicallyAvailableHabitableZone;
   }
 }
 
