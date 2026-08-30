@@ -40,7 +40,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.4',
+  'AtmosphereGenerator through point 20.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -59,7 +59,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere through point 20.4 while preserving identity',
+      'should materialize one Atmosphere through point 20.5 while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -124,9 +124,16 @@ describe(
         ).toBeGreaterThanOrEqual(0);
 
         expect(
-          'climate' in
-            atmosphere,
-        ).toBe(false);
+          atmosphere.climateState,
+        ).toBeDefined();
+
+        expect(
+          atmosphere.equilibriumTemperatureKelvin,
+        ).toBeGreaterThan(0);
+
+        expect(
+          atmosphere.meanSurfaceTemperatureKelvin,
+        ).not.toBeNull();
       },
     );
 
@@ -177,6 +184,18 @@ describe(
         expect(
           atmosphere.greenhouseEffect.isDeepEnvelopeBlanketing,
         ).toBe(true);
+
+        expect(
+          atmosphere.equilibriumTemperatureKelvin,
+        ).toBeGreaterThan(0);
+
+        expect(
+          atmosphere.meanSurfaceTemperatureKelvin,
+        ).toBeNull();
+
+        expect(
+          atmosphere.hasDefinedSolidSurfaceTemperature,
+        ).toBe(false);
       },
     );
 

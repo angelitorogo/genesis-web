@@ -63,6 +63,11 @@ import {
 } from './atmosphere-retention-state';
 
 import {
+  PlanetClimateState,
+  planetaryEquilibriumTemperatureKelvin,
+} from './planet-climate-state';
+
+import {
   type Planet,
 } from './planet';
 
@@ -75,7 +80,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.4',
+  'Atmosphere through point 20.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -106,7 +111,7 @@ describe(
       );
 
     it(
-      'should preserve the exact Planet identity and expose point-20.2 source, point-20.3 retained and point-20.4 greenhouse states',
+      'should preserve exact identity and expose point-20.2 through point-20.5 atmosphere/climate states',
       () => {
         const planet =
           planetFixture();
@@ -124,12 +129,18 @@ describe(
             retention,
           );
 
+        const climate =
+          climateFixture(
+            greenhouse,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
             bulk,
             retention,
             greenhouse,
+            climate,
           );
 
         expect(
@@ -198,10 +209,27 @@ describe(
           atmosphere.greenhouseTemperatureAmplificationFactor,
         ).toBe(1);
 
+        expect(
+          atmosphere.climateState,
+        ).toBe(
+          climate,
+        );
+
+        expect(
+          atmosphere.meanSurfaceTemperatureKelvin,
+        ).toBeCloseTo(
+          atmosphere.equilibriumTemperatureKelvin,
+          12,
+        );
+
+        expect(
+          atmosphere.greenhouseSurfaceWarmingKelvin,
+        ).toBe(0);
+
         for (
           const laterProperty
           of [
-            'climate',
+            'seasonalClimate',
             'waterInventory',
             'geology',
             'magnetosphere',
@@ -244,12 +272,18 @@ describe(
                   bulk,
                 );
 
+              const greenhouse =
+                greenhouseFixture(
+                  retention,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
                 retention,
-                greenhouseFixture(
-                  retention,
+                greenhouse,
+                climateFixture(
+                  greenhouse,
                 ),
               );
             })(),
@@ -271,12 +305,18 @@ describe(
                   bulk,
                 );
 
+              const greenhouse =
+                greenhouseFixture(
+                  retention,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
                 retention,
-                greenhouseFixture(
-                  retention,
+                greenhouse,
+                climateFixture(
+                  greenhouse,
                 ),
               );
             })(),
@@ -492,6 +532,37 @@ describe(
         1,
         AtmosphereGreenhouseRegime.NONE,
         [],
+      );
+    }
+
+    function climateFixture(
+      greenhouse:
+        AtmosphereGreenhouseEffect,
+    ): PlanetClimateState {
+
+      const equilibriumTemperatureKelvin =
+        planetaryEquilibriumTemperatureKelvin(
+          greenhouse.sourceReferenceMeanInsolationEarth,
+          greenhouse.sourceReferenceBondAlbedo01,
+        );
+
+      return new PlanetClimateState(
+        greenhouse.planetOrdinal,
+        greenhouse.bodyLocator,
+        greenhouse.bodySeed,
+        greenhouse.sourceReferenceMeanInsolationEarth,
+        greenhouse.sourceReferenceBondAlbedo01,
+        greenhouse.regime,
+        greenhouse.infraredOpticalDepthProxy,
+        greenhouse.temperatureAmplificationFactor,
+        greenhouse.sourceReferenceMeanInsolationEarth *
+          (
+            1 -
+            greenhouse.sourceReferenceBondAlbedo01
+          ),
+        equilibriumTemperatureKelvin,
+        equilibriumTemperatureKelvin,
+        0,
       );
     }
 

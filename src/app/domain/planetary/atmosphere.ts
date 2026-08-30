@@ -32,6 +32,10 @@ import {
 } from './atmosphere-pressure-regime';
 
 import {
+  type PlanetClimateState,
+} from './planet-climate-state';
+
+import {
   type AtmosphereRetentionRegime,
 } from './atmosphere-retention-regime';
 
@@ -64,8 +68,9 @@ const CONSISTENCY_TOLERANCE =
  * Point 20.1 establishes the aggregate identity, point 20.2 supplies the frozen
  * source pressure/density/gas inventory, point 20.3 adds a non-mutating
  * atmospheric retention/loss state and point 20.4 adds an approximate retained-
- * atmosphere greenhouse/longwave blanketing state. BodyLocator/BodySeed remain
- * the canonical identity; no AtmosphereSeed exists.
+ * atmosphere greenhouse/longwave blanketing state and point 20.5 adds a global-
+ * mean thermal climate baseline (equilibrium/surface temperature). BodyLocator/
+ * BodySeed remain the canonical identity; no AtmosphereSeed exists.
  */
 export class Atmosphere {
 
@@ -81,6 +86,9 @@ export class Atmosphere {
 
     readonly greenhouseEffect:
       AtmosphereGreenhouseEffect,
+
+    readonly climateState:
+      PlanetClimateState,
   ) {
     if (
       !hostPlanet
@@ -146,6 +154,12 @@ export class Atmosphere {
       hostPlanet,
       retentionState,
       greenhouseEffect,
+    );
+
+    assertClimateIdentity(
+      hostPlanet,
+      greenhouseEffect,
+      climateState,
     );
 
     if (
@@ -230,6 +244,31 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.4 greenhouse effect must preserve the exact point-20.3 retained atmosphere source state.',
+      );
+    }
+
+    if (
+      climateState.sourceGreenhouseRegime !==
+        greenhouseEffect.regime ||
+      !approximatelyEqual(
+        climateState.sourceInfraredOpticalDepthProxy,
+        greenhouseEffect.infraredOpticalDepthProxy,
+      ) ||
+      !nullableApproximatelyEqual(
+        climateState.sourceGreenhouseTemperatureAmplificationFactor,
+        greenhouseEffect.temperatureAmplificationFactor,
+      ) ||
+      !approximatelyEqual(
+        climateState.sourceReferenceMeanInsolationEarth,
+        greenhouseEffect.sourceReferenceMeanInsolationEarth,
+      ) ||
+      !approximatelyEqual(
+        climateState.sourceReferenceBondAlbedo01,
+        greenhouseEffect.sourceReferenceBondAlbedo01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.5 climate state must preserve the exact point-20.4 greenhouse and phase-19 irradiation/albedo handoff.',
       );
     }
   }
@@ -500,6 +539,38 @@ export class Atmosphere {
       .temperatureAmplificationFactor;
   }
 
+  get equilibriumTemperatureKelvin():
+    number {
+
+    return this
+      .climateState
+      .equilibriumTemperatureKelvin;
+  }
+
+  get meanSurfaceTemperatureKelvin():
+    number | null {
+
+    return this
+      .climateState
+      .meanSurfaceTemperatureKelvin;
+  }
+
+  get greenhouseSurfaceWarmingKelvin():
+    number | null {
+
+    return this
+      .climateState
+      .greenhouseSurfaceWarmingKelvin;
+  }
+
+  get hasDefinedSolidSurfaceTemperature():
+    boolean {
+
+    return this
+      .climateState
+      .hasDefinedSolidSurfaceTemperature;
+  }
+
   get isVacuum():
     boolean {
 
@@ -609,6 +680,63 @@ function assertGreenhouseIdentity(
       'Point-20.4 greenhouse effect must preserve the exact host Planet and point-20.3 atmosphere identity.',
     );
   }
+}
+
+function assertClimateIdentity(
+  hostPlanet:
+    Planet,
+
+  greenhouseEffect:
+    AtmosphereGreenhouseEffect,
+
+  climateState:
+    PlanetClimateState,
+): void {
+
+  if (
+    climateState.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    climateState.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    climateState.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    climateState.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    climateState.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    climateState.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    climateState.sourceGreenhouseRegime !==
+      greenhouseEffect.regime
+  ) {
+    throw new RangeError(
+      'Point-20.5 climate state must preserve the exact host Planet and point-20.4 greenhouse identity.',
+    );
+  }
+}
+
+function nullableApproximatelyEqual(
+  left:
+    number | null,
+
+  right:
+    number | null,
+): boolean {
+
+  if (
+    left ===
+      null ||
+    right ===
+      null
+  ) {
+    return left ===
+      right;
+  }
+
+  return approximatelyEqual(
+    left,
+    right,
+  );
 }
 
 function approximatelyEqual(
