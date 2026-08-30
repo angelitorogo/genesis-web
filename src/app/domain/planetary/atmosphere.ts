@@ -24,6 +24,14 @@ import {
 } from './atmosphere-pressure-regime';
 
 import {
+  type AtmosphereRetentionRegime,
+} from './atmosphere-retention-regime';
+
+import {
+  type AtmosphereRetentionState,
+} from './atmosphere-retention-state';
+
+import {
   type Planet,
 } from './planet';
 
@@ -45,11 +53,10 @@ const CONSISTENCY_TOLERANCE =
 /**
  * Phase-20 atmosphere aggregate for one mature Planet.
  *
- * Point 20.1 establishes the aggregate identity and point 20.2 enriches it with
- * a baseline pressure/density/gas state. BodyLocator/BodySeed remain the
- * canonical identity; no AtmosphereSeed exists. Point 20.3 still owns
- * evolutionary retention/loss, so the point-20.2 solid-surface pressure is a
- * source state rather than a final retained atmosphere claim.
+ * Point 20.1 establishes the aggregate identity, point 20.2 supplies the frozen
+ * source pressure/density/gas inventory and point 20.3 adds a non-mutating
+ * atmospheric retention/loss state. BodyLocator/BodySeed remain the canonical
+ * identity; no AtmosphereSeed exists.
  */
 export class Atmosphere {
 
@@ -59,6 +66,9 @@ export class Atmosphere {
 
     readonly bulkProperties:
       AtmosphereBulkProperties,
+
+    readonly retentionState:
+      AtmosphereRetentionState,
   ) {
     if (
       !hostPlanet
@@ -114,6 +124,12 @@ export class Atmosphere {
       bulkProperties,
     );
 
+    assertRetentionIdentity(
+      hostPlanet,
+      bulkProperties,
+      retentionState,
+    );
+
     if (
       bulkProperties.sourcePlanetType !==
         hostPlanet.planetType ||
@@ -151,6 +167,25 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.2 atmosphere bulk properties must preserve the exact phase-19 host-Planet source state.',
+      );
+    }
+
+    if (
+      retentionState.sourcePressureRegime !==
+        bulkProperties.pressureRegime ||
+      retentionState.sourceSurfacePressurePascal !==
+        bulkProperties.surfacePressurePascal ||
+      !approximatelyEqual(
+        retentionState.sourceReferenceMeanInsolationEarth,
+        bulkProperties.sourceReferenceMeanInsolationEarth,
+      ) ||
+      !approximatelyEqual(
+        retentionState.sourceReferenceBondAlbedo01,
+        bulkProperties.sourceReferenceBondAlbedo01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.3 retention state must preserve the exact point-20.2 source pressure and irradiation state.',
       );
     }
   }
@@ -317,6 +352,78 @@ export class Atmosphere {
       .gasComponents;
   }
 
+  get retentionRegime():
+    AtmosphereRetentionRegime {
+
+    return this
+      .retentionState
+      .retentionRegime;
+  }
+
+  get atmosphericInventoryRetentionFraction01():
+    number {
+
+    return this
+      .retentionState
+      .retainedMoleInventoryFraction01;
+  }
+
+  get atmosphericInventoryLossFraction01():
+    number {
+
+    return this
+      .retentionState
+      .lostMoleInventoryFraction01;
+  }
+
+  get retainedPressureRegime():
+    AtmospherePressureRegime {
+
+    return this
+      .retentionState
+      .retainedPressureRegime;
+  }
+
+  get retainedSurfacePressurePascal():
+    number | null {
+
+    return this
+      .retentionState
+      .retainedSurfacePressurePascal;
+  }
+
+  get retainedReferenceDensityKilogramsPerCubicMeter():
+    number {
+
+    return this
+      .retentionState
+      .retainedReferenceDensityKilogramsPerCubicMeter;
+  }
+
+  get retainedMeanMolarMassGramsPerMole():
+    number | null {
+
+    return this
+      .retentionState
+      .retainedMeanMolarMassGramsPerMole;
+  }
+
+  get retainedGasComposition():
+    readonly AtmosphereGasComponent[] {
+
+    return this
+      .retentionState
+      .retainedGasComponents;
+  }
+
+  get escapeVelocityKilometersPerSecond():
+    number {
+
+    return this
+      .retentionState
+      .escapeVelocityKilometersPerSecond;
+  }
+
   get isVacuum():
     boolean {
 
@@ -358,6 +465,39 @@ function assertBulkIdentity(
   ) {
     throw new RangeError(
       'Point-20.2 atmosphere bulk properties must preserve the exact host Planet ordinal, BodyLocator and BodySeed.',
+    );
+  }
+}
+
+function assertRetentionIdentity(
+  hostPlanet:
+    Planet,
+
+  bulkProperties:
+    AtmosphereBulkProperties,
+
+  retentionState:
+    AtmosphereRetentionState,
+): void {
+
+  if (
+    retentionState.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    retentionState.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    retentionState.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    retentionState.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    retentionState.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    retentionState.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    retentionState.sourcePressureRegime !==
+      bulkProperties.pressureRegime
+  ) {
+    throw new RangeError(
+      'Point-20.3 retention state must preserve the exact host Planet and point-20.2 atmosphere identity.',
     );
   }
 }

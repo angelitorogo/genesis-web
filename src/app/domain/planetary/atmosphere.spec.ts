@@ -43,6 +43,18 @@ import {
 } from './atmosphere-pressure-regime';
 
 import {
+  AtmosphereGasRetention,
+} from './atmosphere-gas-retention';
+
+import {
+  AtmosphereRetentionRegime,
+} from './atmosphere-retention-regime';
+
+import {
+  AtmosphereRetentionState,
+} from './atmosphere-retention-state';
+
+import {
   type Planet,
 } from './planet';
 
@@ -55,7 +67,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.2',
+  'Atmosphere through point 20.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -86,7 +98,7 @@ describe(
       );
 
     it(
-      'should preserve the exact Planet identity and expose the point-20.2 bulk state',
+      'should preserve the exact Planet identity and expose point-20.2 source plus point-20.3 retained states',
       () => {
         const planet =
           planetFixture();
@@ -94,10 +106,16 @@ describe(
         const bulk =
           bulkFixture();
 
+        const retention =
+          retentionFixture(
+            bulk,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
             bulk,
+            retention,
           );
 
         expect(
@@ -136,10 +154,23 @@ describe(
           atmosphere.gasComposition,
         ).toHaveLength(1);
 
+        expect(
+          atmosphere.retentionState,
+        ).toBe(
+          retention,
+        );
+
+        expect(
+          atmosphere.retainedSurfacePressurePascal,
+        ).toBe(101_325);
+
+        expect(
+          atmosphere.retainedGasComposition,
+        ).toHaveLength(1);
+
         for (
           const laterProperty
           of [
-            'retentionAssessment',
             'greenhouseEffect',
             'climate',
             'waterInventory',
@@ -172,26 +203,42 @@ describe(
 
         expect(
           () =>
-            new Atmosphere(
-              planet,
-              bulkFixture({
-                bodyLocator:
-                  wrongLocator,
-              }),
-            ),
+            (() => {
+              const bulk =
+                bulkFixture({
+                  bodyLocator:
+                    wrongLocator,
+                });
+
+              return new Atmosphere(
+                planet,
+                bulk,
+                retentionFixture(
+                  bulk,
+                ),
+              );
+            })(),
         ).toThrow(
           RangeError,
         );
 
         expect(
           () =>
-            new Atmosphere(
-              planet,
-              bulkFixture({
-                sourceMassEarth:
-                  2,
-              }),
-            ),
+            (() => {
+              const bulk =
+                bulkFixture({
+                  sourceMassEarth:
+                    2,
+                });
+
+              return new Atmosphere(
+                planet,
+                bulk,
+                retentionFixture(
+                  bulk,
+                ),
+              );
+            })(),
         ).toThrow(
           RangeError,
         );
@@ -338,5 +385,47 @@ describe(
         values.gasComponents,
       );
     }
+
+    function retentionFixture(
+      bulk:
+        AtmosphereBulkProperties,
+    ): AtmosphereRetentionState {
+
+      const gasRetentions =
+        bulk.gasComponents.map(
+          component =>
+            new AtmosphereGasRetention(
+              component.gas,
+              component.moleFraction01,
+              1,
+              0,
+              component.moleFraction01,
+            ),
+        );
+
+      return new AtmosphereRetentionState(
+        bulk.planetOrdinal,
+        bulk.bodyLocator,
+        bulk.bodySeed,
+        bulk.pressureRegime,
+        bulk.surfacePressurePascal,
+        bulk.sourceReferenceMeanInsolationEarth,
+        bulk.sourceReferenceBondAlbedo01,
+        12,
+        1,
+        1,
+        0,
+        AtmosphereRetentionRegime.WELL_RETAINED,
+        bulk.pressureRegime,
+        bulk.surfacePressurePascal,
+        bulk.densityReferencePressurePascal,
+        bulk.densityReferenceTemperatureKelvin,
+        bulk.referenceDensityKilogramsPerCubicMeter,
+        bulk.meanMolarMassGramsPerMole,
+        gasRetentions,
+        bulk.gasComponents,
+      );
+    }
+
   },
 );

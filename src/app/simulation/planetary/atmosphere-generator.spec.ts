@@ -40,7 +40,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.2',
+  'AtmosphereGenerator through point 20.3',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -59,7 +59,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere with point-20.2 pressure/density/gases while preserving identity',
+      'should materialize one Atmosphere with source bulk properties and point-20.3 retained atmosphere while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -100,6 +100,19 @@ describe(
         expect(
           atmosphere.gasComposition.length,
         ).toBeGreaterThan(0);
+
+        expect(
+          atmosphere.retainedGasComposition.length,
+        ).toBeGreaterThan(0);
+
+        expect(
+          atmosphere.atmosphericInventoryRetentionFraction01,
+        ).toBeGreaterThan(0);
+
+        expect(
+          atmosphere.retainedSurfacePressurePascal! <=
+            atmosphere.surfacePressurePascal!,
+        ).toBe(true);
       },
     );
 
@@ -133,6 +146,14 @@ describe(
         expect(
           atmosphere.isDeepEnvelope,
         ).toBe(true);
+
+        expect(
+          atmosphere.retainedSurfacePressurePascal,
+        ).toBeNull();
+
+        expect(
+          atmosphere.atmosphericInventoryRetentionFraction01,
+        ).toBeGreaterThan(0.97);
       },
     );
 
