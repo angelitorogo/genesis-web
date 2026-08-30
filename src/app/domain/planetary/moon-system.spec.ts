@@ -20,6 +20,26 @@ import {
 } from '../universe/universe-seed';
 
 import {
+  GiantMoonArchitectureRegime,
+} from './giant-moon-architecture-regime';
+
+import {
+  GiantMoonCompositionRegime,
+} from './giant-moon-composition-regime';
+
+import {
+  GiantMoonOrbitalFamily,
+} from './giant-moon-orbital-family';
+
+import {
+  GiantMoonState,
+} from './giant-moon-state';
+
+import {
+  GiantMoonSystemProfile,
+} from './giant-moon-system-profile';
+
+import {
   MoonAtmosphereRegime,
 } from './moon-atmosphere-regime';
 
@@ -93,7 +113,7 @@ import {
 } from './moon-system';
 
 describe(
-  'MoonSystem through point 21.6',
+  'MoonSystem through point 21.7',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -147,7 +167,7 @@ describe(
         ];
 
         const moonSystem =
-          new MoonSystem(
+          moonSystemFixture(
             planet,
             population,
             relevantMoons,
@@ -187,6 +207,16 @@ describe(
         expect(
           moonSystem.hasPotentiallyHabitableMoons,
         ).toBe(false);
+
+        expect(
+          moonSystem.hasGiantMoonArchitecture,
+        ).toBe(false);
+
+        expect(
+          moonSystem.giantMoonArchitectureRegime,
+        ).toBe(
+          GiantMoonArchitectureRegime.NOT_APPLICABLE,
+        );
 
         expect(
           Object.isFrozen(
@@ -244,7 +274,7 @@ describe(
           );
 
         const moonless =
-          new MoonSystem(
+          moonSystemFixture(
             planet,
             populationFixture(
               planet,
@@ -262,7 +292,7 @@ describe(
         ).toBe(0);
 
         const minorOnly =
-          new MoonSystem(
+          moonSystemFixture(
             planet,
             populationFixture(
               planet,
@@ -298,7 +328,7 @@ describe(
 
         expect(
           () =>
-            new MoonSystem(
+            moonSystemFixture(
               planet,
               populationFixture(
                 planet,
@@ -323,7 +353,7 @@ describe(
 
         expect(
           () =>
-            new MoonSystem(
+            moonSystemFixture(
               planet,
               populationFixture(
                 planet,
@@ -343,7 +373,7 @@ describe(
 
         expect(
           () =>
-            new MoonSystem(
+            moonSystemFixture(
               planet,
               populationFixture(
                 planet,
@@ -363,7 +393,7 @@ describe(
 
         expect(
           () =>
-            new MoonSystem(
+            moonSystemFixture(
               planet,
               populationFixture(
                 planet,
@@ -399,7 +429,7 @@ describe(
 
         expect(
           () =>
-            new MoonSystem(
+            moonSystemFixture(
               planet,
               populationFixture(
                 planet,
@@ -436,7 +466,7 @@ describe(
 
         expect(
           () =>
-            new MoonSystem(
+            moonSystemFixture(
               planet,
               populationFixture(
                 otherPlanet,
@@ -450,7 +480,7 @@ describe(
 
         expect(
           () =>
-            new MoonSystem(
+            moonSystemFixture(
               planet,
               populationFixture(
                 planet,
@@ -470,6 +500,49 @@ describe(
     );
   },
 );
+
+function moonSystemFixture(
+  planet:
+    Planet,
+
+  populationProfile:
+    MoonPopulationProfile,
+
+  relevantMoons:
+    readonly RelevantMoon[],
+): MoonSystem {
+
+  const unmaterializedMinorMoonCount =
+    populationProfile.moonCount -
+    relevantMoons.length;
+
+  const giantMoonProfile =
+    new GiantMoonSystemProfile(
+      planet.planetOrdinal,
+      planet.planetType,
+      populationProfile.moonCount,
+      relevantMoons.length,
+      unmaterializedMinorMoonCount,
+      populationProfile.satelliteCapacityIndex01,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      GiantMoonArchitectureRegime.NOT_APPLICABLE,
+    );
+
+  return new MoonSystem(
+    planet,
+    populationProfile,
+    relevantMoons,
+    giantMoonProfile,
+  );
+}
 
 function planetFixture(
   planetarySystem:
@@ -754,6 +827,30 @@ function relevantMoonFixture(
       MoonHabitabilityRegime.NONE,
     );
 
+  const giantMoonState =
+    new GiantMoonState(
+      planet.planetOrdinal,
+      moonOrdinal,
+      planet.planetType,
+      physical.massEarth,
+      physical.radiusEarth,
+      orbit.semiMajorAxisPlanetRadii,
+      orbit.eccentricity,
+      orbit.inclinationDegrees,
+      environmentState.inferredIceRichnessIndex01,
+      tidalState.tidalHeatingIndex01,
+      environmentState.subsurfaceOceanPotentialIndex01,
+      environmentState.surfaceLiquidWaterPotentialIndex01,
+      habitabilityState.overallHabitabilityIndex01,
+      habitabilityState.isPotentiallyHabitable,
+      GiantMoonOrbitalFamily.NOT_APPLICABLE,
+      GiantMoonCompositionRegime.NOT_APPLICABLE,
+      false,
+      false,
+      false,
+      false,
+    );
+
   return new RelevantMoon(
     planet.planetOrdinal,
     planet.locator,
@@ -764,6 +861,7 @@ function relevantMoonFixture(
     tidalState,
     environmentState,
     habitabilityState,
+    giantMoonState,
   );
 }
 

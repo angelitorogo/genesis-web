@@ -16,6 +16,18 @@ import {
 } from '../../domain/seed/hierarchical-seeds';
 
 import {
+  GiantMoonArchitectureRegime,
+} from '../../domain/planetary/giant-moon-architecture-regime';
+
+import {
+  GiantMoonCompositionRegime,
+} from '../../domain/planetary/giant-moon-composition-regime';
+
+import {
+  GiantMoonOrbitalFamily,
+} from '../../domain/planetary/giant-moon-orbital-family';
+
+import {
   MoonAtmosphereRegime,
 } from '../../domain/planetary/moon-atmosphere-regime';
 
@@ -64,7 +76,7 @@ import {
 } from './moon-generator';
 
 describe(
-  'MoonGenerator point 21.6 V1',
+  'MoonGenerator point 21.7 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -341,6 +353,22 @@ describe(
         ).toBe(0);
 
         expect(
+          rocky.hasGiantMoonArchitecture,
+        ).toBe(false);
+
+        expect(
+          rocky.giantMoonArchitectureRegime,
+        ).toBe(
+          GiantMoonArchitectureRegime.NOT_APPLICABLE,
+        );
+
+        expect(
+          rocky.relevantMoons[0].giantMoonOrbitalFamily,
+        ).toBe(
+          GiantMoonOrbitalFamily.NOT_APPLICABLE,
+        );
+
+        expect(
           gasGiant.relevantMoonCount,
         ).toBe(8);
 
@@ -356,6 +384,37 @@ describe(
           iceGiant.unmaterializedMinorMoonCount,
         ).toBe(27);
 
+        expect(
+          gasGiant.hasGiantMoonArchitecture,
+        ).toBe(true);
+        expect(
+          iceGiant.hasGiantMoonArchitecture,
+        ).toBe(true);
+
+        expect(
+          gasGiant.estimatedIrregularMinorMoonCount,
+        ).toBe(72);
+        expect(
+          iceGiant.estimatedIrregularMinorMoonCount,
+        ).toBe(18);
+
+        expect(
+          gasGiant.relevantMoons.every(
+            moon =>
+              moon.hasGiantHostSpecialization &&
+              moon.giantMoonOrbitalFamily !==
+                GiantMoonOrbitalFamily.NOT_APPLICABLE &&
+              moon.giantMoonCompositionRegime !==
+                GiantMoonCompositionRegime.NOT_APPLICABLE,
+          ),
+        ).toBe(true);
+
+        expect(
+          iceGiant.relevantMoons.every(
+            moon =>
+              moon.hasGiantHostSpecialization,
+          ),
+        ).toBe(true);
 
         expect(
           gasGiant.relevantMoons[0].tidalState.tidalRegime,
@@ -775,6 +834,29 @@ describe(
                 moon.environmentState,
             ).toBe(false);
 
+            expect(
+              moon.giantMoonState
+                .hostPlanetOrdinal,
+            ).toBe(
+              planet.planetOrdinal,
+            );
+
+            expect(
+              moon.giantMoonState
+                .moonOrdinal,
+            ).toBe(
+              moon.moonOrdinal,
+            );
+
+            expect(
+              moon.hasGiantHostSpecialization,
+            ).toBe(
+              planet.planetType ===
+                PlanetType.GAS_GIANT ||
+              planet.planetType ===
+                PlanetType.ICE_GIANT,
+            );
+
             previousOrbit =
               moon.semiMajorAxisPlanetRadii;
 
@@ -852,6 +934,16 @@ describe(
           closeInGiant
             .hasMoons,
         ).toBe(false);
+
+        expect(
+          closeInGiant.hasGiantMoonArchitecture,
+        ).toBe(true);
+
+        expect(
+          closeInGiant.giantMoonArchitectureRegime,
+        ).toBe(
+          GiantMoonArchitectureRegime.DEPLETED,
+        );
       },
     );
 

@@ -7,6 +7,18 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  GiantMoonCompositionRegime,
+} from './giant-moon-composition-regime';
+
+import {
+  GiantMoonOrbitalFamily,
+} from './giant-moon-orbital-family';
+
+import {
+  GiantMoonState,
+} from './giant-moon-state';
+
+import {
   MoonAtmosphereRegime,
 } from './moon-atmosphere-regime';
 
@@ -56,11 +68,15 @@ import {
 } from './moon-water-regime';
 
 import {
+  PlanetType,
+} from './planet-type';
+
+import {
   RelevantMoon,
 } from './relevant-moon';
 
 describe(
-  'RelevantMoon through point 21.6',
+  'RelevantMoon through point 21.7',
   () => {
     const locator =
       new BodyLocator(
@@ -76,7 +92,7 @@ describe(
       );
 
     it(
-      'should preserve the exact physical/orbital/tidal/environment/habitability products while keeping later identity absent',
+      'should preserve all frozen products plus a non-applicable giant specialization while keeping point-21.8 identity absent',
       () => {
         const physical =
           physicalFixture();
@@ -103,6 +119,15 @@ describe(
             environmentState,
           );
 
+        const giantMoonState =
+          giantStateFixture(
+            physical,
+            orbit,
+            tidalState,
+            environmentState,
+            habitabilityState,
+          );
+
         const moon =
           new RelevantMoon(
             2,
@@ -114,6 +139,7 @@ describe(
             tidalState,
             environmentState,
             habitabilityState,
+            giantMoonState,
           );
 
         expect(
@@ -135,6 +161,14 @@ describe(
         expect(
           moon.habitabilityState,
         ).toBe(habitabilityState);
+
+        expect(
+          moon.giantMoonState,
+        ).toBe(giantMoonState);
+
+        expect(
+          moon.hasGiantHostSpecialization,
+        ).toBe(false);
 
         expect(
           moon.habitabilityRegime,
@@ -223,6 +257,15 @@ describe(
             environmentState,
           );
 
+        const giantMoonState =
+          giantStateFixture(
+            physical,
+            orbit,
+            tidalState,
+            environmentState,
+            habitabilityState,
+          );
+
         expect(
           () =>
             new RelevantMoon(
@@ -235,6 +278,7 @@ describe(
               tidalState,
               environmentState,
               habitabilityState,
+              giantMoonState,
             ),
         ).toThrow(
           RangeError,
@@ -262,6 +306,7 @@ describe(
               tidalState,
               environmentState,
               habitabilityState,
+              giantMoonState,
             ),
         ).toThrow(
           RangeError,
@@ -418,6 +463,47 @@ function habitabilityFixture(
     false,
     false,
     MoonHabitabilityRegime.NONE,
+  );
+}
+
+function giantStateFixture(
+  physical:
+    MoonPhysicalProperties,
+
+  orbit:
+    MoonOrbitalElements,
+
+  tidalState:
+    MoonTidalState,
+
+  environmentState:
+    MoonEnvironmentState,
+
+  habitabilityState:
+    MoonHabitabilityState,
+): GiantMoonState {
+
+  return new GiantMoonState(
+    physical.hostPlanetOrdinal,
+    physical.moonOrdinal,
+    PlanetType.ROCKY,
+    physical.massEarth,
+    physical.radiusEarth,
+    orbit.semiMajorAxisPlanetRadii,
+    orbit.eccentricity,
+    orbit.inclinationDegrees,
+    environmentState.inferredIceRichnessIndex01,
+    tidalState.tidalHeatingIndex01,
+    environmentState.subsurfaceOceanPotentialIndex01,
+    environmentState.surfaceLiquidWaterPotentialIndex01,
+    habitabilityState.overallHabitabilityIndex01,
+    habitabilityState.isPotentiallyHabitable,
+    GiantMoonOrbitalFamily.NOT_APPLICABLE,
+    GiantMoonCompositionRegime.NOT_APPLICABLE,
+    false,
+    false,
+    false,
+    false,
   );
 }
 

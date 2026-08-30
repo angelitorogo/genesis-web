@@ -7,6 +7,10 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  type GiantMoonState,
+} from './giant-moon-state';
+
+import {
   type MoonEnvironmentState,
 } from './moon-environment-state';
 
@@ -35,8 +39,9 @@ import {
  * state without changing the frozen point-21.3 physical/orbital values. Point
  * 21.5 adds a first-order atmosphere/water/geology environment state and point
  * 21.6 attaches a potential-habitability projection with independent surface and
- * subsurface routes. Frozen 21.3-21.5 sources remain unchanged. Point 21.8 remains
- * responsible for seeds and designations.
+ * subsurface routes. Point 21.7 adds a giant-host specialization without changing
+ * any frozen 21.3-21.6 source. Point 21.8 remains responsible for seeds and
+ * designations.
  */
 export class RelevantMoon {
 
@@ -67,6 +72,9 @@ export class RelevantMoon {
 
     readonly habitabilityState:
       MoonHabitabilityState,
+
+    readonly giantMoonState:
+      GiantMoonState,
   ) {
     if (
       !Number.isInteger(
@@ -144,10 +152,16 @@ export class RelevantMoon {
         hostPlanetOrdinal ||
       habitabilityState
         .moonOrdinal !==
+        moonOrdinal ||
+      giantMoonState
+        .hostPlanetOrdinal !==
+        hostPlanetOrdinal ||
+      giantMoonState
+        .moonOrdinal !==
         moonOrdinal
     ) {
       throw new RangeError(
-        'RelevantMoon physical/orbital/tidal/environment/habitability products must preserve the exact host/moon ordinals.',
+        'RelevantMoon physical/orbital/tidal/environment/habitability/giant-specialization products must preserve the exact host/moon ordinals.',
       );
     }
 
@@ -290,6 +304,77 @@ export class RelevantMoon {
     ) {
       throw new RangeError(
         'RelevantMoon habitability state must preserve the exact frozen point-21.5 environment sources.',
+      );
+    }
+
+    if (
+      !approximatelyEqual(
+        giantMoonState
+          .sourceMoonMassEarth,
+        physicalProperties
+          .massEarth,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceMoonRadiusEarth,
+        physicalProperties
+          .radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceSemiMajorAxisPlanetRadii,
+        orbit
+          .semiMajorAxisPlanetRadii,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceEccentricity,
+        orbit
+          .eccentricity,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceInclinationDegrees,
+        orbit
+          .inclinationDegrees,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceInferredIceRichnessIndex01,
+        environmentState
+          .inferredIceRichnessIndex01,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceTidalHeatingIndex01,
+        tidalState
+          .tidalHeatingIndex01,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceSubsurfaceOceanPotentialIndex01,
+        environmentState
+          .subsurfaceOceanPotentialIndex01,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceSurfaceLiquidWaterPotentialIndex01,
+        environmentState
+          .surfaceLiquidWaterPotentialIndex01,
+      ) ||
+      !approximatelyEqual(
+        giantMoonState
+          .sourceOverallHabitabilityIndex01,
+        habitabilityState
+          .overallHabitabilityIndex01,
+      ) ||
+      giantMoonState
+        .sourceIsPotentiallyHabitable !==
+        habitabilityState
+          .isPotentiallyHabitable
+    ) {
+      throw new RangeError(
+        'RelevantMoon giant specialization must preserve the exact frozen point-21.3-21.6 moon sources.',
       );
     }
   }
@@ -468,6 +553,34 @@ export class RelevantMoon {
     return this
       .habitabilityState
       .supportsPotentialSubsurfaceHabitability;
+  }
+
+  get hasGiantHostSpecialization():
+    boolean {
+
+    return this
+      .giantMoonState
+      .isApplicable;
+  }
+
+  get giantMoonOrbitalFamily() {
+    return this
+      .giantMoonState
+      .orbitalFamily;
+  }
+
+  get giantMoonCompositionRegime() {
+    return this
+      .giantMoonState
+      .compositionRegime;
+  }
+
+  get isLargeGiantMoon():
+    boolean {
+
+    return this
+      .giantMoonState
+      .isLargeMoon;
   }
 }
 

@@ -12,6 +12,14 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  GiantMoonCompositionRegime,
+} from './giant-moon-composition-regime';
+
+import {
+  type GiantMoonSystemProfile,
+} from './giant-moon-system-profile';
+
+import {
   type MoonPopulationProfile,
 } from './moon-population-profile';
 
@@ -37,8 +45,9 @@ const SOURCE_TOLERANCE =
  * deterministic total modeled moon count. Point 21.3 now materializes only the
  * physically/orbitally relevant moon subset. Point 21.4 now enriches each
  * relevant moon with a frozen tidal/spin state, point 21.5 adds a frozen
- * first-order atmosphere/water/geology environment state and point 21.6 adds a
- * potential-habitability projection. Large minor-satellite
+ * first-order atmosphere/water/geology environment state, point 21.6 adds a
+ * potential-habitability projection and point 21.7 specializes gas/ice-giant
+ * systems without regenerating any prior moon property. Large minor-satellite
  * populations remain summarized by moonCount rather than forcing every body
  * into memory.
  *
@@ -59,6 +68,9 @@ export class MoonSystem {
 
     relevantMoons:
       readonly RelevantMoon[],
+
+    readonly giantMoonProfile:
+      GiantMoonSystemProfile,
   ) {
     if (
       !hostPlanet
@@ -177,6 +189,41 @@ export class MoonSystem {
     }
 
     if (
+      giantMoonProfile
+        .hostPlanetOrdinal !==
+        hostPlanet
+          .planetOrdinal ||
+      giantMoonProfile
+        .sourcePlanetType !==
+        hostPlanet
+          .planetType ||
+      giantMoonProfile
+        .sourceMoonCount !==
+        populationProfile
+          .moonCount ||
+      giantMoonProfile
+        .sourceRelevantMoonCount !==
+        relevantMoons
+          .length ||
+      giantMoonProfile
+        .sourceUnmaterializedMinorMoonCount !==
+        populationProfile
+          .moonCount -
+        relevantMoons
+          .length ||
+      !approximatelyEqual(
+        giantMoonProfile
+          .sourceSatelliteCapacityIndex01,
+        populationProfile
+          .satelliteCapacityIndex01,
+      )
+    ) {
+      throw new RangeError(
+        'MoonSystem point-21.7 giant profile must preserve the exact host/population/relevant-moon sources.',
+      );
+    }
+
+    if (
       relevantMoons.length >
       populationProfile
         .moonCount
@@ -284,6 +331,18 @@ export class MoonSystem {
 
       if (
         moon
+          .giantMoonState
+          .sourceHostPlanetType !==
+        hostPlanet
+          .planetType
+      ) {
+        throw new RangeError(
+          'MoonSystem relevant-moon giant specialization must preserve the exact host Planet type.',
+        );
+      }
+
+      if (
+        moon
           .semiMajorAxisPlanetRadii <=
         previousSemiMajorAxis
       ) {
@@ -295,6 +354,65 @@ export class MoonSystem {
       previousSemiMajorAxis =
         moon
           .semiMajorAxisPlanetRadii;
+    }
+
+    const applicableRelevantMoons =
+      relevantMoons.filter(
+        moon =>
+          moon
+            .giantMoonState
+            .isApplicable,
+      );
+
+    if (
+      giantMoonProfile
+        .regularRelevantMoonCount !==
+        applicableRelevantMoons
+          .length ||
+      giantMoonProfile
+        .largeRelevantMoonCount !==
+        applicableRelevantMoons.filter(
+          moon =>
+            moon
+              .giantMoonState
+              .isLargeMoon,
+        ).length ||
+      giantMoonProfile
+        .iceRichRelevantMoonCount !==
+        applicableRelevantMoons.filter(
+          moon =>
+            moon
+              .giantMoonCompositionRegime ===
+              GiantMoonCompositionRegime.ICE_RICH,
+        ).length ||
+      giantMoonProfile
+        .oceanBearingRelevantMoonCount !==
+        applicableRelevantMoons.filter(
+          moon =>
+            moon
+              .giantMoonState
+              .isOceanBearingCandidate,
+        ).length ||
+      giantMoonProfile
+        .tidallyActiveRelevantMoonCount !==
+        applicableRelevantMoons.filter(
+          moon =>
+            moon
+              .giantMoonState
+              .isTidallyActive,
+        ).length ||
+      giantMoonProfile
+        .potentiallyHabitableRelevantMoonCount !==
+        applicableRelevantMoons.filter(
+          moon =>
+            moon
+              .giantMoonState
+              .isHabitabilityCandidate,
+        ).length
+    ) {
+      throw new RangeError(
+        'MoonSystem point-21.7 giant profile counts must match the attached relevant-moon specializations.',
+      );
     }
 
     this.relevantMoons =
@@ -453,6 +571,52 @@ export class MoonSystem {
     return this
       .potentiallyHabitableMoonCount >
       0;
+  }
+
+  get hasGiantMoonArchitecture():
+    boolean {
+
+    return this
+      .giantMoonProfile
+      .isApplicable;
+  }
+
+  get giantMoonArchitectureRegime() {
+    return this
+      .giantMoonProfile
+      .architectureRegime;
+  }
+
+  get estimatedIrregularMinorMoonCount():
+    number {
+
+    return this
+      .giantMoonProfile
+      .estimatedIrregularMinorMoonCount;
+  }
+
+  get largeGiantMoonCount():
+    number {
+
+    return this
+      .giantMoonProfile
+      .largeRelevantMoonCount;
+  }
+
+  get iceRichGiantMoonCount():
+    number {
+
+    return this
+      .giantMoonProfile
+      .iceRichRelevantMoonCount;
+  }
+
+  get oceanBearingGiantMoonCount():
+    number {
+
+    return this
+      .giantMoonProfile
+      .oceanBearingRelevantMoonCount;
   }
 }
 

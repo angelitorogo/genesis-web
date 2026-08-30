@@ -12,6 +12,10 @@ import {
 } from '../../domain/generation/generator-version';
 
 import {
+  GiantMoonArchitectureEngine,
+} from './giant-moon-architecture-engine';
+
+import {
   MoonEnvironmentEngine,
 } from './moon-environment-engine';
 
@@ -220,6 +224,8 @@ interface RelevantMoonSamplesV1 {
  * Point 21.5 adds first-order atmosphere/water/geology projections derived from
  * the same frozen moon state and host stellar-insolation reference. Point 21.6
  * adds independent surface/subsurface potential-habitability candidate scoring.
+ * Point 21.7 specializes gas/ice-giant systems without changing any frozen
+ * point-21.2-21.6 population, physical, orbital, tidal or environment result.
  *
  * Large minor-moon populations remain summarized by moonCount. Every relevant
  * moon is addressed only by a local moonOrdinal. All samples are read directly
@@ -253,13 +259,25 @@ export class MoonGenerator {
         planet,
       );
 
-    return new MoonSystem(
-      planet,
-      populationProfile,
+    const relevantMoons =
       relevantMoonsV1(
         planet,
         populationProfile,
-      ),
+      );
+
+    const giantMoonProfile =
+      GiantMoonArchitectureEngine
+        .generateSystemProfile(
+          planet,
+          populationProfile,
+          relevantMoons,
+        );
+
+    return new MoonSystem(
+      planet,
+      populationProfile,
+      relevantMoons,
+      giantMoonProfile,
     );
   }
 
@@ -336,13 +354,25 @@ export class MoonGenerator {
               planet,
             );
 
-          return new MoonSystem(
-            planet,
-            populationProfile,
+          const relevantMoons =
             relevantMoonsV1(
               planet,
               populationProfile,
-            ),
+            );
+
+          const giantMoonProfile =
+            GiantMoonArchitectureEngine
+              .generateSystemProfile(
+                planet,
+                populationProfile,
+                relevantMoons,
+              );
+
+          return new MoonSystem(
+            planet,
+            populationProfile,
+            relevantMoons,
+            giantMoonProfile,
           );
         },
       ),
@@ -717,6 +747,17 @@ function relevantMoonsV1(
               environmentState,
             );
 
+        const giantMoonState =
+          GiantMoonArchitectureEngine
+            .generateMoonState(
+              planet,
+              physical,
+              orbit,
+              tidalState,
+              environmentState,
+              habitabilityState,
+            );
+
         return new RelevantMoon(
           planet
             .planetOrdinal,
@@ -730,6 +771,7 @@ function relevantMoonsV1(
           tidalState,
           environmentState,
           habitabilityState,
+          giantMoonState,
         );
       },
     );
