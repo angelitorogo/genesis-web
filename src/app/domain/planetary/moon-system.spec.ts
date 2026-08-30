@@ -20,8 +20,16 @@ import {
 } from '../universe/universe-seed';
 
 import {
+  MoonPopulationProfile,
+} from './moon-population-profile';
+
+import {
   type Planet,
 } from './planet';
+
+import {
+  PlanetType,
+} from './planet-type';
 
 import {
   type PlanetarySystem,
@@ -32,7 +40,7 @@ import {
 } from './moon-system';
 
 describe(
-  'MoonSystem point 21.1',
+  'MoonSystem through point 21.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -58,7 +66,7 @@ describe(
     } as unknown as PlanetarySystem;
 
     it(
-      'should establish one exact host-planet boundary without materializing point-21.2+ moon products',
+      'should preserve the exact point-21.1 host boundary and expose the point-21.2 population count',
       () => {
         const planet =
           planetFixture(
@@ -66,15 +74,28 @@ describe(
             2,
           );
 
+        const population =
+          populationFixture(
+            planet,
+            2,
+          );
+
         const moonSystem =
           new MoonSystem(
             planet,
+            population,
           );
 
         expect(
           moonSystem.hostPlanet,
         ).toBe(
           planet,
+        );
+
+        expect(
+          moonSystem.populationProfile,
+        ).toBe(
+          population,
         );
 
         expect(
@@ -111,10 +132,17 @@ describe(
           planet.seed,
         );
 
+        expect(
+          moonSystem.moonCount,
+        ).toBe(2);
+
+        expect(
+          moonSystem.hasMoons,
+        ).toBe(true);
+
         for (
           const laterProperty
           of [
-            'moonCount',
             'moons',
             'moonLocators',
             'moonSeeds',
@@ -135,55 +163,103 @@ describe(
     );
 
     it(
+      'should reject a population profile from another body or with altered frozen host sources',
+      () => {
+        const planet =
+          planetFixture(
+            planetarySystem,
+            1,
+          );
+
+        const otherPlanet =
+          planetFixture(
+            planetarySystem,
+            2,
+          );
+
+        expect(
+          () =>
+            new MoonSystem(
+              planet,
+              populationFixture(
+                otherPlanet,
+                1,
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new MoonSystem(
+              planet,
+              populationFixture(
+                planet,
+                1,
+                {
+                  sourceMassEarth:
+                    planet.massEarth +
+                    0.1,
+                },
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+
+    it(
       'should reject incoherent host planets and malformed canonical body identity',
       () => {
-        expect(
-          () =>
-            new MoonSystem(
-              planetFixture(
-                planetarySystem,
-                1,
-                {
-                  isTypePhysicallyCoherent:
-                    false,
-                },
-              ),
-            ),
-        ).toThrow(
-          RangeError,
-        );
+        const incoherent =
+          planetFixture(
+            planetarySystem,
+            1,
+            {
+              isTypePhysicallyCoherent:
+                false,
+            },
+          );
 
         expect(
           () =>
             new MoonSystem(
-              planetFixture(
-                planetarySystem,
-                1,
-                {
-                  locator:
-                    new BodyLocator(
-                      4n,
-                      -9n,
-                      12n,
-                      1n,
-                    ),
-                },
-              ),
-            ),
-        ).toThrow(
-          RangeError,
-        );
-
-        expect(
-          () =>
-            new MoonSystem({
-              ...planetFixture(
-                planetarySystem,
-                1,
-              ),
-              planetOrdinal:
+              incoherent,
+              populationFixture(
+                incoherent,
                 0,
-            } as unknown as Planet),
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        const wrongLocatorPlanet =
+          planetFixture(
+            planetarySystem,
+            1,
+            {
+              locator:
+                new BodyLocator(
+                  4n,
+                  -9n,
+                  12n,
+                  1n,
+                ),
+            },
+          );
+
+        expect(
+          () =>
+            new MoonSystem(
+              wrongLocatorPlanet,
+              populationFixture(
+                wrongLocatorPlanet,
+                0,
+              ),
+            ),
         ).toThrow(
           RangeError,
         );
@@ -236,8 +312,78 @@ function planetFixture(
           ? '11111111111111111111111111111111'
           : '22222222222222222222222222222222',
       ),
+    planetType:
+      PlanetType.ROCKY,
+    massEarth:
+      1,
+    radiusEarth:
+      1,
+    orbit: {
+      semiMajorAxisAu:
+        1,
+      eccentricity:
+        0.01,
+    },
+    orbitalPeriod: {
+      gravitatingMassSolar:
+        1,
+    },
     isTypePhysicallyCoherent:
       true,
     ...overrides,
   } as unknown as Planet;
+}
+
+function populationFixture(
+  planet:
+    Planet,
+
+  moonCount:
+    number,
+
+  overrides:
+    Partial<MoonPopulationProfile> = {},
+): MoonPopulationProfile {
+
+  const values = {
+    hostPlanetOrdinal:
+      planet.planetOrdinal,
+    hostPlanetLocator:
+      planet.locator,
+    hostPlanetSeed:
+      planet.seed,
+    sourcePlanetType:
+      planet.planetType,
+    sourceMassEarth:
+      planet.massEarth,
+    sourceRadiusEarth:
+      planet.radiusEarth,
+    sourceSemiMajorAxisAu:
+      planet.orbit.semiMajorAxisAu,
+    sourceEccentricity:
+      planet.orbit.eccentricity,
+    sourceGravitatingMassSolar:
+      planet.orbitalPeriod.gravitatingMassSolar,
+    hillSphereRadiusPlanetRadii:
+      230,
+    satelliteCapacityIndex01:
+      0.67,
+    moonCount,
+    ...overrides,
+  };
+
+  return new MoonPopulationProfile(
+    values.hostPlanetOrdinal,
+    values.hostPlanetLocator,
+    values.hostPlanetSeed,
+    values.sourcePlanetType,
+    values.sourceMassEarth,
+    values.sourceRadiusEarth,
+    values.sourceSemiMajorAxisAu,
+    values.sourceEccentricity,
+    values.sourceGravitatingMassSolar,
+    values.hillSphereRadiusPlanetRadii,
+    values.satelliteCapacityIndex01,
+    values.moonCount,
+  );
 }

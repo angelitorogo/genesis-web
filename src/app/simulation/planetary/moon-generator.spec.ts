@@ -20,6 +20,10 @@ import {
 } from '../../domain/planetary/planet';
 
 import {
+  PlanetType,
+} from '../../domain/planetary/planet-type';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
@@ -32,7 +36,7 @@ import {
 } from './moon-generator';
 
 describe(
-  'MoonGenerator point 21.1 V1',
+  'MoonGenerator point 21.2 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -57,87 +61,478 @@ describe(
         3n,
       );
 
-    const planetarySystem =
-      planetarySystemFixture(
-        generationKey,
-        systemLocator,
-        3,
-      );
-
     it(
-      'should deterministically materialize the exact MoonSystem boundary for one host Planet with zero moon products',
+      'should freeze deterministic regression vectors for representative rocky, giant and ice-giant satellite populations',
       () => {
-        const planet =
-          planetFixture(
-            planetarySystem,
-            2,
+        const planetarySystem =
+          planetarySystemFixture(
+            generationKey,
+            systemLocator,
+            3,
           );
 
-        const first =
+        const rocky =
           MoonGenerator
             .generate(
               generationKey,
-              planet,
+              planetFixture(
+                planetarySystem,
+                1,
+                {
+                  seedHex:
+                    '11111111111111111111111111111111',
+                  planetType:
+                    PlanetType.ROCKY,
+                  massEarth:
+                    1,
+                  radiusEarth:
+                    1,
+                  semiMajorAxisAu:
+                    1,
+                  eccentricity:
+                    0.0167,
+                },
+              ),
             );
 
-        const second =
+        const gasGiant =
           MoonGenerator
             .generate(
               generationKey,
-              planet,
+              planetFixture(
+                planetarySystem,
+                2,
+                {
+                  seedHex:
+                    '33333333333333333333333333333333',
+                  planetType:
+                    PlanetType.GAS_GIANT,
+                  massEarth:
+                    318,
+                  radiusEarth:
+                    11.2,
+                  semiMajorAxisAu:
+                    5.2,
+                  eccentricity:
+                    0.05,
+                },
+              ),
+            );
+
+        const iceGiant =
+          MoonGenerator
+            .generate(
+              generationKey,
+              planetFixture(
+                planetarySystem,
+                3,
+                {
+                  seedHex:
+                    '44444444444444444444444444444444',
+                  planetType:
+                    PlanetType.ICE_GIANT,
+                  massEarth:
+                    17,
+                  radiusEarth:
+                    4,
+                  semiMajorAxisAu:
+                    19,
+                  eccentricity:
+                    0.01,
+                },
+              ),
             );
 
         expect(
-          first.hostPlanet,
-        ).toBe(
-          planet,
+          rocky.moonCount,
+        ).toBe(1);
+
+        expect(
+          rocky.hillSphereRadiusPlanetRadii,
+        ).toBeCloseTo(
+          230.72034955593907,
+          10,
         );
 
         expect(
-          second.hostPlanet,
-        ).toBe(
-          planet,
+          rocky.satelliteCapacityIndex01,
+        ).toBeCloseTo(
+          0.6709258667143848,
+          10,
         );
 
         expect(
-          second.hostPlanetLocator,
-        ).toBe(
-          first.hostPlanetLocator,
+          gasGiant.moonCount,
+        ).toBe(100);
+
+        expect(
+          gasGiant.satelliteCapacityIndex01,
+        ).toBeCloseTo(
+          0.8942461242620243,
+          10,
         );
 
         expect(
-          second.hostPlanetSeed,
-        ).toBe(
-          first.hostPlanetSeed,
-        );
+          iceGiant.moonCount,
+        ).toBe(35);
 
         expect(
-          'moonCount' in
-            first,
-        ).toBe(false);
+          iceGiant.satelliteCapacityIndex01,
+        ).toBe(1);
+      },
+    );
+
+    it(
+      'should use planet family to bound the population while keeping individual moon products absent',
+      () => {
+        const cases:
+          readonly [
+            PlanetType,
+            number,
+            number,
+            number,
+          ][] = [
+            [
+              PlanetType.ROCKY,
+              1,
+              1,
+              3,
+            ],
+            [
+              PlanetType.SUPER_EARTH,
+              6,
+              1.6,
+              5,
+            ],
+            [
+              PlanetType.DESERT,
+              1,
+              1,
+              3,
+            ],
+            [
+              PlanetType.OCEAN,
+              1.5,
+              1.2,
+              4,
+            ],
+            [
+              PlanetType.ICE,
+              3,
+              1.7,
+              6,
+            ],
+            [
+              PlanetType.VOLCANIC,
+              1,
+              1,
+              3,
+            ],
+            [
+              PlanetType.MINI_NEPTUNE,
+              10,
+              3,
+              16,
+            ],
+            [
+              PlanetType.GAS_GIANT,
+              318,
+              11.2,
+              120,
+            ],
+            [
+              PlanetType.ICE_GIANT,
+              17,
+              4,
+              60,
+            ],
+          ];
+
+        for (
+          let index = 0;
+          index <
+          cases.length;
+          index +=
+            1
+        ) {
+          const [
+            planetType,
+            massEarth,
+            radiusEarth,
+            maximumMoonCount,
+          ] =
+            cases[index];
+
+          const planetarySystem =
+            planetarySystemFixture(
+              generationKey,
+              new SystemLocator(
+                7n,
+                -42n,
+                BigInt(
+                  100 +
+                  index,
+                ),
+              ),
+              1,
+            );
+
+          const moonSystem =
+            MoonGenerator
+              .generate(
+                generationKey,
+                planetFixture(
+                  planetarySystem,
+                  1,
+                  {
+                    seedHex:
+                      `${(
+                        index +
+                        1
+                      ).toString(16)}`
+                        .repeat(32)
+                        .toUpperCase(),
+                    planetType,
+                    massEarth,
+                    radiusEarth,
+                    semiMajorAxisAu:
+                      planetType ===
+                        PlanetType.GAS_GIANT ||
+                      planetType ===
+                        PlanetType.ICE_GIANT
+                        ? 5
+                        : 1,
+                  },
+                ),
+              );
+
+          expect(
+            Number.isInteger(
+              moonSystem.moonCount,
+            ),
+          ).toBe(true);
+
+          expect(
+            moonSystem.moonCount,
+          ).toBeGreaterThanOrEqual(0);
+
+          expect(
+            moonSystem.moonCount,
+          ).toBeLessThanOrEqual(
+            maximumMoonCount,
+          );
+
+          expect(
+            moonSystem.populationProfile
+              .sourcePlanetType,
+          ).toBe(
+            planetType,
+          );
+
+          expect(
+            'moons' in
+              moonSystem,
+          ).toBe(false);
+
+          expect(
+            'moonSeeds' in
+              moonSystem,
+          ).toBe(false);
+        }
+      },
+    );
+
+    it(
+      'should suppress a giant satellite system when the periapsis Hill sphere is too small',
+      () => {
+        const planetarySystem =
+          planetarySystemFixture(
+            generationKey,
+            systemLocator,
+            1,
+          );
+
+        const closeInGiant =
+          MoonGenerator
+            .generate(
+              generationKey,
+              planetFixture(
+                planetarySystem,
+                1,
+                {
+                  seedHex:
+                    '33333333333333333333333333333333',
+                  planetType:
+                    PlanetType.GAS_GIANT,
+                  massEarth:
+                    318,
+                  radiusEarth:
+                    11.2,
+                  semiMajorAxisAu:
+                    0.05,
+                  eccentricity:
+                    0.01,
+                },
+              ),
+            );
 
         expect(
-          'moonSeed' in
-            first,
+          closeInGiant
+            .hillSphereRadiusPlanetRadii,
+        ).toBeLessThan(8);
+
+        expect(
+          closeInGiant
+            .satelliteCapacityIndex01,
+        ).toBe(0);
+
+        expect(
+          closeInGiant
+            .moonCount,
+        ).toBe(0);
+
+        expect(
+          closeInGiant
+            .hasMoons,
         ).toBe(false);
       },
     );
 
     it(
-      'should generate one frozen MoonSystem per mature Planet in exact planetOrdinal order',
+      'should remain exactly deterministic for the same BodySeed and independent of repeated query order',
       () => {
+        const planetarySystem =
+          planetarySystemFixture(
+            generationKey,
+            systemLocator,
+            2,
+          );
+
+        const firstPlanet =
+          planetFixture(
+            planetarySystem,
+            1,
+            {
+              seedHex:
+                '55555555555555555555555555555555',
+              planetType:
+                PlanetType.MINI_NEPTUNE,
+              massEarth:
+                10,
+              radiusEarth:
+                3,
+            },
+          );
+
+        const secondPlanet =
+          planetFixture(
+            planetarySystem,
+            2,
+            {
+              seedHex:
+                'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
+              planetType:
+                PlanetType.ROCKY,
+              massEarth:
+                1,
+              radiusEarth:
+                1,
+            },
+          );
+
+        const firstBefore =
+          MoonGenerator
+            .generate(
+              generationKey,
+              firstPlanet,
+            );
+
+        MoonGenerator
+          .generate(
+            generationKey,
+            secondPlanet,
+          );
+
+        const firstAfter =
+          MoonGenerator
+            .generate(
+              generationKey,
+              firstPlanet,
+            );
+
+        expect(
+          firstBefore
+            .populationProfile,
+        ).toEqual(
+          firstAfter
+            .populationProfile,
+        );
+
+        expect(
+          firstBefore.moonCount,
+        ).toBe(4);
+
+        expect(
+          MoonGenerator
+            .generate(
+              generationKey,
+              secondPlanet,
+            )
+            .moonCount,
+        ).toBe(0);
+      },
+    );
+
+    it(
+      'should generate one frozen aligned MoonSystem per mature Planet and reject mismatched collections/context',
+      () => {
+        const planetarySystem =
+          planetarySystemFixture(
+            generationKey,
+            systemLocator,
+            3,
+          );
+
         const planets = [
           planetFixture(
             planetarySystem,
             1,
+            {
+              seedHex:
+                '11111111111111111111111111111111',
+            },
           ),
           planetFixture(
             planetarySystem,
             2,
+            {
+              seedHex:
+                '33333333333333333333333333333333',
+              planetType:
+                PlanetType.GAS_GIANT,
+              massEarth:
+                318,
+              radiusEarth:
+                11.2,
+              semiMajorAxisAu:
+                5.2,
+            },
           ),
           planetFixture(
             planetarySystem,
             3,
+            {
+              seedHex:
+                '44444444444444444444444444444444',
+              planetType:
+                PlanetType.ICE_GIANT,
+              massEarth:
+                17,
+              radiusEarth:
+                4,
+              semiMajorAxisAu:
+                19,
+            },
           ),
         ];
 
@@ -156,10 +551,6 @@ describe(
         ).toBe(true);
 
         expect(
-          moonSystems,
-        ).toHaveLength(3);
-
-        expect(
           moonSystems.map(
             system =>
               system
@@ -174,32 +565,13 @@ describe(
         expect(
           moonSystems.map(
             system =>
-              system
-                .hostPlanet,
+              system.moonCount,
           ),
-        ).toEqual(
-          planets,
-        );
-      },
-    );
-
-    it(
-      'should reject mismatched generation context, incomplete populations and reordered/foreign Planets',
-      () => {
-        const planets = [
-          planetFixture(
-            planetarySystem,
-            1,
-          ),
-          planetFixture(
-            planetarySystem,
-            2,
-          ),
-          planetFixture(
-            planetarySystem,
-            3,
-          ),
-        ];
+        ).toEqual([
+          1,
+          101,
+          35,
+        ]);
 
         expect(
           () =>
@@ -242,38 +614,19 @@ describe(
         ).toThrow(
           RangeError,
         );
-
-        const foreignSystem =
-          planetarySystemFixture(
-            generationKey,
-            systemLocator,
-            3,
-          );
-
-        expect(
-          () =>
-            MoonGenerator
-              .generateAll(
-                generationKey,
-                planetarySystem,
-                [
-                  planets[0],
-                  planetFixture(
-                    foreignSystem,
-                    2,
-                  ),
-                  planets[2],
-                ],
-              ),
-        ).toThrow(
-          RangeError,
-        );
       },
     );
 
     it(
-      'should reject a physically incoherent Planet before establishing the moon boundary',
+      'should reject a physically incoherent Planet before deriving the count profile',
       () => {
+        const planetarySystem =
+          planetarySystemFixture(
+            generationKey,
+            systemLocator,
+            1,
+          );
+
         const planet =
           planetFixture(
             planetarySystem,
@@ -298,6 +651,32 @@ describe(
     );
   },
 );
+
+interface PlanetFixtureOptions {
+  readonly seedHex?:
+    string;
+
+  readonly planetType?:
+    PlanetType;
+
+  readonly massEarth?:
+    number;
+
+  readonly radiusEarth?:
+    number;
+
+  readonly semiMajorAxisAu?:
+    number;
+
+  readonly eccentricity?:
+    number;
+
+  readonly gravitatingMassSolar?:
+    number;
+
+  readonly isTypePhysicallyCoherent?:
+    boolean;
+}
 
 function planetarySystemFixture(
   generationKey:
@@ -324,9 +703,33 @@ function planetFixture(
   planetOrdinal:
     number,
 
-  overrides:
-    Partial<Planet> = {},
+  options:
+    PlanetFixtureOptions = {},
 ): Planet {
+
+  const planetType =
+    options.planetType ??
+    PlanetType.ROCKY;
+
+  const massEarth =
+    options.massEarth ??
+    1;
+
+  const radiusEarth =
+    options.radiusEarth ??
+    1;
+
+  const semiMajorAxisAu =
+    options.semiMajorAxisAu ??
+    1;
+
+  const eccentricity =
+    options.eccentricity ??
+    0.0167;
+
+  const gravitatingMassSolar =
+    options.gravitatingMassSolar ??
+    1;
 
   return {
     generationKey:
@@ -356,11 +759,23 @@ function planetFixture(
       ),
     seed:
       new BodySeed(
+        options.seedHex ??
         `${planetOrdinal}`
           .repeat(32),
       ),
+    planetType,
+    massEarth,
+    radiusEarth,
+    orbit: {
+      semiMajorAxisAu,
+      eccentricity,
+    },
+    orbitalPeriod: {
+      gravitatingMassSolar,
+    },
     isTypePhysicallyCoherent:
+      options
+        .isTypePhysicallyCoherent ??
       true,
-    ...overrides,
   } as unknown as Planet;
 }

@@ -12,6 +12,10 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  type MoonPopulationProfile,
+} from './moon-population-profile';
+
+import {
   type Planet,
 } from './planet';
 
@@ -19,25 +23,28 @@ import {
   type PlanetarySystem,
 } from './planetary-system';
 
+const SOURCE_TOLERANCE =
+  1e-9;
+
 /**
- * Point-21.1 root aggregate for the natural-satellite system of one mature
- * Planet.
+ * Phase-21 root aggregate for the natural-satellite system of one mature Planet.
  *
- * This first Moon boundary deliberately owns only the exact host Planet. It
- * does not materialize a moon count, individual Moon entities, moon locators,
- * moon seeds, orbital/physical properties, tides, atmospheres, habitability or
- * designations. Those contracts belong to points 21.2..21.8.
+ * Point 21.1 established the exact host-Planet boundary. Point 21.2 now adds the
+ * deterministic total modeled moon count and its capacity/source diagnostics,
+ * while still not materializing any individual Moon identity, MoonSeed, orbit,
+ * physical state, tide, atmosphere, habitability or designation.
  *
- * In particular, point 21.1 introduces no new procedural-identity level. The
- * host Planet BodyLocator/BodySeed identify the parent context only; they are
- * never reused as the identity of a future moon. Point 21.8 remains the owner
- * of deterministic moon seeds/designations.
+ * The host Planet BodyLocator/BodySeed remain parent context only. Point 21.8
+ * remains the owner of deterministic individual moon seeds/designations.
  */
 export class MoonSystem {
 
   constructor(
     readonly hostPlanet:
       Planet,
+
+    readonly populationProfile:
+      MoonPopulationProfile,
   ) {
     if (
       !hostPlanet
@@ -85,6 +92,73 @@ export class MoonSystem {
     ) {
       throw new RangeError(
         'MoonSystem requires the canonical BodySeed of its host Planet.',
+      );
+    }
+
+    if (
+      populationProfile
+        .hostPlanetOrdinal !==
+        hostPlanet
+          .planetOrdinal ||
+      !sameBodyLocator(
+        populationProfile
+          .hostPlanetLocator,
+        hostPlanet
+          .locator,
+      ) ||
+      populationProfile
+        .hostPlanetSeed
+        .normalizedValue !==
+        hostPlanet
+          .seed
+          .normalizedValue
+    ) {
+      throw new RangeError(
+        'MoonSystem point-21.2 population profile must preserve the exact host Planet identity.',
+      );
+    }
+
+    if (
+      populationProfile
+        .sourcePlanetType !==
+        hostPlanet
+          .planetType ||
+      !approximatelyEqual(
+        populationProfile
+          .sourceMassEarth,
+        hostPlanet
+          .massEarth,
+      ) ||
+      !approximatelyEqual(
+        populationProfile
+          .sourceRadiusEarth,
+        hostPlanet
+          .radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        populationProfile
+          .sourceSemiMajorAxisAu,
+        hostPlanet
+          .orbit
+          .semiMajorAxisAu,
+      ) ||
+      !approximatelyEqual(
+        populationProfile
+          .sourceEccentricity,
+        hostPlanet
+          .orbit
+          .eccentricity,
+      ) ||
+      !approximatelyEqual(
+        populationProfile
+          .sourceGravitatingMassSolar,
+        hostPlanet
+          .orbitalPeriod
+          .gravitatingMassSolar,
+      )
+    ) {
+      throw new RangeError(
+        'MoonSystem point-21.2 population sources must preserve the exact frozen host Planet type/bulk/orbital values.',
       );
     }
   }
@@ -136,4 +210,85 @@ export class MoonSystem {
       .hostPlanet
       .seed;
   }
+
+  get moonCount():
+    number {
+
+    return this
+      .populationProfile
+      .moonCount;
+  }
+
+  get hasMoons():
+    boolean {
+
+    return this
+      .populationProfile
+      .hasMoons;
+  }
+
+  get satelliteCapacityIndex01():
+    number {
+
+    return this
+      .populationProfile
+      .satelliteCapacityIndex01;
+  }
+
+  get hillSphereRadiusPlanetRadii():
+    number {
+
+    return this
+      .populationProfile
+      .hillSphereRadiusPlanetRadii;
+  }
+}
+
+function sameBodyLocator(
+  left:
+    BodyLocator,
+
+  right:
+    BodyLocator,
+): boolean {
+
+  return (
+    left.galaxyIndex ===
+      right.galaxyIndex &&
+    left.sectorKey ===
+      right.sectorKey &&
+    left.galacticObjectIndex ===
+      right.galacticObjectIndex &&
+    left.bodyIndex ===
+      right.bodyIndex
+  );
+}
+
+function approximatelyEqual(
+  left:
+    number,
+
+  right:
+    number,
+): boolean {
+
+  const scale =
+    Math.max(
+      1,
+      Math.abs(
+        left,
+      ),
+      Math.abs(
+        right,
+      ),
+    );
+
+  return (
+    Math.abs(
+      left -
+      right,
+    ) <=
+    SOURCE_TOLERANCE *
+      scale
+  );
 }
