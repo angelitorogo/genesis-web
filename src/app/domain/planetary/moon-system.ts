@@ -23,21 +23,29 @@ import {
   type PlanetarySystem,
 } from './planetary-system';
 
+import {
+  type RelevantMoon,
+} from './relevant-moon';
+
 const SOURCE_TOLERANCE =
   1e-9;
 
 /**
  * Phase-21 root aggregate for the natural-satellite system of one mature Planet.
  *
- * Point 21.1 established the exact host-Planet boundary. Point 21.2 now adds the
- * deterministic total modeled moon count and its capacity/source diagnostics,
- * while still not materializing any individual Moon identity, MoonSeed, orbit,
- * physical state, tide, atmosphere, habitability or designation.
+ * Point 21.1 established the exact host-Planet boundary and point 21.2 added the
+ * deterministic total modeled moon count. Point 21.3 now materializes only the
+ * physically/orbitally relevant moon subset. Large minor-satellite populations
+ * remain summarized by moonCount rather than forcing every body into memory.
  *
- * The host Planet BodyLocator/BodySeed remain parent context only. Point 21.8
- * remains the owner of deterministic individual moon seeds/designations.
+ * Relevant moons use a stable local moonOrdinal only. MoonSeed/designation stay
+ * reserved for point 21.8; tides, atmosphere/water/geology and habitability stay
+ * reserved for points 21.4..21.6.
  */
 export class MoonSystem {
+
+  readonly relevantMoons:
+    readonly RelevantMoon[];
 
   constructor(
     readonly hostPlanet:
@@ -45,6 +53,9 @@ export class MoonSystem {
 
     readonly populationProfile:
       MoonPopulationProfile,
+
+    relevantMoons:
+      readonly RelevantMoon[],
   ) {
     if (
       !hostPlanet
@@ -161,6 +172,76 @@ export class MoonSystem {
         'MoonSystem point-21.2 population sources must preserve the exact frozen host Planet type/bulk/orbital values.',
       );
     }
+
+    if (
+      relevantMoons.length >
+      populationProfile
+        .moonCount
+    ) {
+      throw new RangeError(
+        'MoonSystem cannot materialize more relevant moons than the frozen point-21.2 moonCount.',
+      );
+    }
+
+    let previousSemiMajorAxis =
+      0;
+
+    for (
+      let index = 0;
+      index <
+      relevantMoons.length;
+      index +=
+        1
+    ) {
+      const moon =
+        relevantMoons[index];
+
+      if (
+        moon
+          .hostPlanetOrdinal !==
+          hostPlanet
+            .planetOrdinal ||
+        !sameBodyLocator(
+          moon
+            .hostPlanetLocator,
+          hostPlanet
+            .locator,
+        ) ||
+        moon
+          .hostPlanetSeed
+          .normalizedValue !==
+          hostPlanet
+            .seed
+            .normalizedValue ||
+        moon
+          .moonOrdinal !==
+          index +
+            1
+      ) {
+        throw new RangeError(
+          'MoonSystem relevant moons must preserve exact host identity and contiguous moonOrdinal order.',
+        );
+      }
+
+      if (
+        moon
+          .semiMajorAxisPlanetRadii <=
+        previousSemiMajorAxis
+      ) {
+        throw new RangeError(
+          'MoonSystem relevant moons must be ordered from inner to outer orbit.',
+        );
+      }
+
+      previousSemiMajorAxis =
+        moon
+          .semiMajorAxisPlanetRadii;
+    }
+
+    this.relevantMoons =
+      Object.freeze([
+        ...relevantMoons,
+      ]);
   }
 
   get generationKey():
@@ -241,6 +322,31 @@ export class MoonSystem {
     return this
       .populationProfile
       .hillSphereRadiusPlanetRadii;
+  }
+
+  get relevantMoonCount():
+    number {
+
+    return this
+      .relevantMoons
+      .length;
+  }
+
+  get hasRelevantMoons():
+    boolean {
+
+    return this
+      .relevantMoonCount >
+      0;
+  }
+
+  get unmaterializedMinorMoonCount():
+    number {
+
+    return this
+      .moonCount -
+      this
+        .relevantMoonCount;
   }
 }
 

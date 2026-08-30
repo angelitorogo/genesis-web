@@ -36,7 +36,7 @@ import {
 } from './moon-generator';
 
 describe(
-  'MoonGenerator point 21.2 V1',
+  'MoonGenerator point 21.3 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -179,11 +179,59 @@ describe(
         expect(
           iceGiant.satelliteCapacityIndex01,
         ).toBe(1);
+
+        expect(
+          rocky.relevantMoonCount,
+        ).toBe(1);
+
+        expect(
+          rocky.relevantMoons[0].massEarth,
+        ).toBeCloseTo(
+          0.01093528370860394,
+          12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].radiusEarth,
+        ).toBeCloseTo(
+          0.2585761221550917,
+          12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].semiMajorAxisPlanetRadii,
+        ).toBeCloseTo(
+          53.805765907874715,
+          10,
+        );
+
+        expect(
+          rocky.relevantMoons[0].orbitalPeriodDays,
+        ).toBeCloseTo(
+          22.99265111732967,
+          10,
+        );
+
+        expect(
+          gasGiant.relevantMoonCount,
+        ).toBe(8);
+
+        expect(
+          gasGiant.unmaterializedMinorMoonCount,
+        ).toBe(92);
+
+        expect(
+          iceGiant.relevantMoonCount,
+        ).toBe(8);
+
+        expect(
+          iceGiant.unmaterializedMinorMoonCount,
+        ).toBe(27);
       },
     );
 
     it(
-      'should use planet family to bound the population while keeping individual moon products absent',
+      'should use planet family to bound the total population while keeping seeds/designations absent',
       () => {
         const cases:
           readonly [
@@ -343,6 +391,194 @@ describe(
     );
 
     it(
+      'should materialize a bounded frozen relevant subset with coherent bulk physics and ordered stable orbits',
+      () => {
+        const planetarySystem =
+          planetarySystemFixture(
+            generationKey,
+            systemLocator,
+            3,
+          );
+
+        const cases = [
+          planetFixture(
+            planetarySystem,
+            1,
+            {
+              seedHex:
+                '11111111111111111111111111111111',
+              planetType:
+                PlanetType.ROCKY,
+              massEarth:
+                1,
+              radiusEarth:
+                1,
+              semiMajorAxisAu:
+                1,
+            },
+          ),
+          planetFixture(
+            planetarySystem,
+            2,
+            {
+              seedHex:
+                '33333333333333333333333333333333',
+              planetType:
+                PlanetType.GAS_GIANT,
+              massEarth:
+                318,
+              radiusEarth:
+                11.2,
+              semiMajorAxisAu:
+                5.2,
+              eccentricity:
+                0.05,
+            },
+          ),
+          planetFixture(
+            planetarySystem,
+            3,
+            {
+              seedHex:
+                '44444444444444444444444444444444',
+              planetType:
+                PlanetType.ICE_GIANT,
+              massEarth:
+                17,
+              radiusEarth:
+                4,
+              semiMajorAxisAu:
+                19,
+            },
+          ),
+        ];
+
+        const systems =
+          cases.map(
+            planet =>
+              MoonGenerator
+                .generate(
+                  generationKey,
+                  planet,
+                ),
+          );
+
+        expect(
+          systems.map(
+            system =>
+              system.relevantMoonCount,
+          ),
+        ).toEqual([
+          1,
+          8,
+          8,
+        ]);
+
+        for (
+          let systemIndex = 0;
+          systemIndex <
+          systems.length;
+          systemIndex +=
+            1
+        ) {
+          const system =
+            systems[systemIndex];
+
+          const planet =
+            cases[systemIndex];
+
+          expect(
+            Object.isFrozen(
+              system.relevantMoons,
+            ),
+          ).toBe(true);
+
+          let previousOrbit =
+            0;
+
+          let totalRelevantMass =
+            0;
+
+          for (
+            const moon
+            of system.relevantMoons
+          ) {
+            expect(
+              moon.massEarth,
+            ).toBeGreaterThan(0);
+
+            expect(
+              moon.radiusEarth,
+            ).toBeGreaterThan(0);
+
+            expect(
+              moon.meanDensityGramsPerCubicCentimeter,
+            ).toBeGreaterThan(0);
+
+            expect(
+              moon.surfaceGravityEarth,
+            ).toBeGreaterThan(0);
+
+            expect(
+              moon.semiMajorAxisPlanetRadii,
+            ).toBeGreaterThan(
+              moon.orbit.rocheLimitPlanetRadii,
+            );
+
+            expect(
+              moon.semiMajorAxisPlanetRadii,
+            ).toBeLessThan(
+              system.hillSphereRadiusPlanetRadii *
+                0.5,
+            );
+
+            expect(
+              moon.semiMajorAxisPlanetRadii,
+            ).toBeGreaterThan(
+              previousOrbit,
+            );
+
+            expect(
+              moon.orbitalPeriodDays,
+            ).toBeGreaterThan(0);
+
+            expect(
+              'seed' in moon,
+            ).toBe(false);
+
+            expect(
+              'designation' in moon,
+            ).toBe(false);
+
+            expect(
+              'tidalState' in moon,
+            ).toBe(false);
+
+            previousOrbit =
+              moon.semiMajorAxisPlanetRadii;
+
+            totalRelevantMass +=
+              moon.massEarth;
+          }
+
+          expect(
+            totalRelevantMass,
+          ).toBeLessThan(
+            planet.massEarth *
+              0.03,
+          );
+
+          expect(
+            system.unmaterializedMinorMoonCount,
+          ).toBe(
+            system.moonCount -
+            system.relevantMoonCount,
+          );
+        }
+      },
+    );
+
+    it(
       'should suppress a giant satellite system when the periapsis Hill sphere is too small',
       () => {
         const planetarySystem =
@@ -469,6 +705,14 @@ describe(
         );
 
         expect(
+          firstBefore
+            .relevantMoons,
+        ).toEqual(
+          firstAfter
+            .relevantMoons,
+        );
+
+        expect(
           firstBefore.moonCount,
         ).toBe(4);
 
@@ -571,6 +815,17 @@ describe(
           1,
           101,
           35,
+        ]);
+
+        expect(
+          moonSystems.map(
+            system =>
+              system.relevantMoonCount,
+          ),
+        ).toEqual([
+          1,
+          8,
+          8,
         ]);
 
         expect(
