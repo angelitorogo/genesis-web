@@ -11,6 +11,10 @@ import {
 } from './moon-environment-state';
 
 import {
+  type MoonHabitabilityState,
+} from './moon-habitability-state';
+
+import {
   type MoonOrbitalElements,
 } from './moon-orbital-elements';
 
@@ -29,9 +33,10 @@ import {
  * for deterministic point-21.3 property derivation. It is deliberately not a
  * MoonLocator or MoonSeed. Point 21.4 now attaches a deterministic tidal/spin
  * state without changing the frozen point-21.3 physical/orbital values. Point
- * 21.5 now adds a first-order atmosphere/water/geology environment state without
- * changing frozen 21.3/21.4 sources. Point 21.8 remains responsible for seeds
- * and designations.
+ * 21.5 adds a first-order atmosphere/water/geology environment state and point
+ * 21.6 attaches a potential-habitability projection with independent surface and
+ * subsurface routes. Frozen 21.3-21.5 sources remain unchanged. Point 21.8 remains
+ * responsible for seeds and designations.
  */
 export class RelevantMoon {
 
@@ -59,6 +64,9 @@ export class RelevantMoon {
 
     readonly environmentState:
       MoonEnvironmentState,
+
+    readonly habitabilityState:
+      MoonHabitabilityState,
   ) {
     if (
       !Number.isInteger(
@@ -130,10 +138,16 @@ export class RelevantMoon {
         hostPlanetOrdinal ||
       environmentState
         .moonOrdinal !==
+        moonOrdinal ||
+      habitabilityState
+        .hostPlanetOrdinal !==
+        hostPlanetOrdinal ||
+      habitabilityState
+        .moonOrdinal !==
         moonOrdinal
     ) {
       throw new RangeError(
-        'RelevantMoon physical/orbital/tidal/environment products must preserve the exact host/moon ordinals.',
+        'RelevantMoon physical/orbital/tidal/environment/habitability products must preserve the exact host/moon ordinals.',
       );
     }
 
@@ -215,6 +229,67 @@ export class RelevantMoon {
     ) {
       throw new RangeError(
         'RelevantMoon environment state must preserve the exact point-21.3/21.4 moon sources.',
+      );
+    }
+
+    if (
+      !approximatelyEqual(
+        habitabilityState
+          .sourceMoonSurfaceGravityEarth,
+        environmentState
+          .sourceMoonSurfaceGravityEarth,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceEstimatedSurfaceTemperatureKelvin,
+        environmentState
+          .estimatedSurfaceTemperatureKelvin,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceAtmosphereRetentionIndex01,
+        environmentState
+          .atmosphereRetentionIndex01,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceWaterInventoryIndex01,
+        environmentState
+          .waterInventoryIndex01,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceSubsurfaceOceanPotentialIndex01,
+        environmentState
+          .subsurfaceOceanPotentialIndex01,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceSurfaceLiquidWaterPotentialIndex01,
+        environmentState
+          .surfaceLiquidWaterPotentialIndex01,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceInternalHeatRetentionIndex01,
+        environmentState
+          .internalHeatRetentionIndex01,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceGeologicalActivityIndex01,
+        environmentState
+          .geologicalActivityIndex01,
+      ) ||
+      !approximatelyEqual(
+        habitabilityState
+          .sourceTidalHeatingIndex01,
+        environmentState
+          .sourceTidalHeatingIndex01,
+      )
+    ) {
+      throw new RangeError(
+        'RelevantMoon habitability state must preserve the exact frozen point-21.5 environment sources.',
       );
     }
   }
@@ -355,6 +430,44 @@ export class RelevantMoon {
     return this
       .environmentState
       .isGeologicallyActive;
+  }
+
+  get habitabilityRegime() {
+    return this
+      .habitabilityState
+      .habitabilityRegime;
+  }
+
+  get overallHabitabilityIndex01():
+    number {
+
+    return this
+      .habitabilityState
+      .overallHabitabilityIndex01;
+  }
+
+  get isPotentiallyHabitable():
+    boolean {
+
+    return this
+      .habitabilityState
+      .isPotentiallyHabitable;
+  }
+
+  get supportsPotentialSurfaceHabitability():
+    boolean {
+
+    return this
+      .habitabilityState
+      .supportsPotentialSurfaceHabitability;
+  }
+
+  get supportsPotentialSubsurfaceHabitability():
+    boolean {
+
+    return this
+      .habitabilityState
+      .supportsPotentialSubsurfaceHabitability;
   }
 }
 

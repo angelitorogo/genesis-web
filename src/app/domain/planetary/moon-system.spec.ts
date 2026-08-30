@@ -32,6 +32,14 @@ import {
 } from './moon-geology-regime';
 
 import {
+  MoonHabitabilityRegime,
+} from './moon-habitability-regime';
+
+import {
+  MoonHabitabilityState,
+} from './moon-habitability-state';
+
+import {
   MoonOrbitalElements,
 } from './moon-orbital-elements';
 
@@ -85,7 +93,7 @@ import {
 } from './moon-system';
 
 describe(
-  'MoonSystem through point 21.5',
+  'MoonSystem through point 21.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -171,6 +179,14 @@ describe(
         expect(
           moonSystem.hasRelevantMoons,
         ).toBe(true);
+
+        expect(
+          moonSystem.potentiallyHabitableMoonCount,
+        ).toBe(0);
+
+        expect(
+          moonSystem.hasPotentiallyHabitableMoons,
+        ).toBe(false);
 
         expect(
           Object.isFrozen(
@@ -699,6 +715,45 @@ function relevantMoonFixture(
       MoonGeologyRegime.LOW_ACTIVITY,
     );
 
+  const subsurfaceHabitabilityIndex01 =
+    0.10 *
+    (
+      0.55 +
+      0.45 *
+        environmentState.waterInventoryIndex01
+    ) *
+    (
+      0.45 +
+      0.55 *
+        0.185
+    );
+
+  const habitabilityState =
+    new MoonHabitabilityState(
+      planet.planetOrdinal,
+      moonOrdinal,
+      environmentState.sourceMoonSurfaceGravityEarth,
+      environmentState.estimatedSurfaceTemperatureKelvin,
+      environmentState.atmosphereRetentionIndex01,
+      environmentState.waterInventoryIndex01,
+      environmentState.subsurfaceOceanPotentialIndex01,
+      environmentState.surfaceLiquidWaterPotentialIndex01,
+      environmentState.internalHeatRetentionIndex01,
+      environmentState.geologicalActivityIndex01,
+      environmentState.sourceTidalHeatingIndex01,
+      5 / 23,
+      0,
+      1,
+      1,
+      0.185,
+      0,
+      subsurfaceHabitabilityIndex01,
+      subsurfaceHabitabilityIndex01,
+      false,
+      false,
+      MoonHabitabilityRegime.NONE,
+    );
+
   return new RelevantMoon(
     planet.planetOrdinal,
     planet.locator,
@@ -708,6 +763,7 @@ function relevantMoonFixture(
     orbit,
     tidalState,
     environmentState,
+    habitabilityState,
   );
 }
 

@@ -24,6 +24,10 @@ import {
 } from '../../domain/planetary/moon-geology-regime';
 
 import {
+  MoonHabitabilityRegime,
+} from '../../domain/planetary/moon-habitability-regime';
+
+import {
   MoonTidalLockingRegime,
 } from '../../domain/planetary/moon-tidal-locking-regime';
 
@@ -60,7 +64,7 @@ import {
 } from './moon-generator';
 
 describe(
-  'MoonGenerator point 21.5 V1',
+  'MoonGenerator point 21.6 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -318,6 +322,23 @@ describe(
         ).toBe(
           MoonGeologyRegime.LOW_ACTIVITY,
         );
+
+        expect(
+          rocky.relevantMoons[0].habitabilityRegime,
+        ).toBe(
+          MoonHabitabilityRegime.NONE,
+        );
+
+        expect(
+          rocky.relevantMoons[0].overallHabitabilityIndex01,
+        ).toBeCloseTo(
+          0.022368593452663333,
+          12,
+        );
+
+        expect(
+          rocky.potentiallyHabitableMoonCount,
+        ).toBe(0);
 
         expect(
           gasGiant.relevantMoonCount,
@@ -721,6 +742,33 @@ describe(
             ).toBe(
               moon.tidalHeatingIndex01,
             );
+
+            expect(
+              moon.habitabilityState
+                .hostPlanetOrdinal,
+            ).toBe(
+              planet.planetOrdinal,
+            );
+
+            expect(
+              moon.habitabilityState
+                .moonOrdinal,
+            ).toBe(
+              moon.moonOrdinal,
+            );
+
+            expect(
+              moon.habitabilityState
+                .sourceTidalHeatingIndex01,
+            ).toBe(
+              moon.environmentState
+                .sourceTidalHeatingIndex01,
+            );
+
+            expect(
+              'lifeDetected' in
+                moon.habitabilityState,
+            ).toBe(false);
 
             expect(
               'habitability' in

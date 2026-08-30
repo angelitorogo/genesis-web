@@ -36,13 +36,14 @@ const SOURCE_TOLERANCE =
  * Point 21.1 established the exact host-Planet boundary and point 21.2 added the
  * deterministic total modeled moon count. Point 21.3 now materializes only the
  * physically/orbitally relevant moon subset. Point 21.4 now enriches each
- * relevant moon with a frozen tidal/spin state while point 21.5 adds a frozen
- * first-order atmosphere/water/geology environment state. Large minor-satellite
+ * relevant moon with a frozen tidal/spin state, point 21.5 adds a frozen
+ * first-order atmosphere/water/geology environment state and point 21.6 adds a
+ * potential-habitability projection. Large minor-satellite
  * populations remain summarized by moonCount rather than forcing every body
  * into memory.
  *
  * Relevant moons still use a stable local moonOrdinal only. MoonSeed/designation
- * stay reserved for point 21.8; habitability stays reserved for point 21.6.
+ * stay reserved for point 21.8; no life or biosignature verdict is introduced.
  */
 export class MoonSystem {
 
@@ -405,6 +406,53 @@ export class MoonSystem {
       .moonCount -
       this
         .relevantMoonCount;
+  }
+
+  get potentiallyHabitableMoonCount():
+    number {
+
+    return this
+      .relevantMoons
+      .filter(
+        moon =>
+          moon
+            .isPotentiallyHabitable,
+      )
+      .length;
+  }
+
+  get surfaceHabitabilityCandidateCount():
+    number {
+
+    return this
+      .relevantMoons
+      .filter(
+        moon =>
+          moon
+            .supportsPotentialSurfaceHabitability,
+      )
+      .length;
+  }
+
+  get subsurfaceHabitabilityCandidateCount():
+    number {
+
+    return this
+      .relevantMoons
+      .filter(
+        moon =>
+          moon
+            .supportsPotentialSubsurfaceHabitability,
+      )
+      .length;
+  }
+
+  get hasPotentiallyHabitableMoons():
+    boolean {
+
+    return this
+      .potentiallyHabitableMoonCount >
+      0;
   }
 }
 

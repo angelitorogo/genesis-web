@@ -19,6 +19,14 @@ import {
 } from './moon-geology-regime';
 
 import {
+  MoonHabitabilityRegime,
+} from './moon-habitability-regime';
+
+import {
+  MoonHabitabilityState,
+} from './moon-habitability-state';
+
+import {
   MoonOrbitalElements,
 } from './moon-orbital-elements';
 
@@ -52,7 +60,7 @@ import {
 } from './relevant-moon';
 
 describe(
-  'RelevantMoon through point 21.5',
+  'RelevantMoon through point 21.6',
   () => {
     const locator =
       new BodyLocator(
@@ -68,7 +76,7 @@ describe(
       );
 
     it(
-      'should preserve the exact physical/orbital/tidal/environment products while keeping later identity/habitability absent',
+      'should preserve the exact physical/orbital/tidal/environment/habitability products while keeping later identity absent',
       () => {
         const physical =
           physicalFixture();
@@ -90,6 +98,11 @@ describe(
             tidalState,
           );
 
+        const habitabilityState =
+          habitabilityFixture(
+            environmentState,
+          );
+
         const moon =
           new RelevantMoon(
             2,
@@ -100,6 +113,7 @@ describe(
             orbit,
             tidalState,
             environmentState,
+            habitabilityState,
           );
 
         expect(
@@ -117,6 +131,20 @@ describe(
         expect(
           moon.environmentState,
         ).toBe(environmentState);
+
+        expect(
+          moon.habitabilityState,
+        ).toBe(habitabilityState);
+
+        expect(
+          moon.habitabilityRegime,
+        ).toBe(
+          MoonHabitabilityRegime.NONE,
+        );
+
+        expect(
+          moon.isPotentiallyHabitable,
+        ).toBe(false);
 
         expect(
           moon.atmosphereRegime,
@@ -190,6 +218,11 @@ describe(
             tidalState,
           );
 
+        const habitabilityState =
+          habitabilityFixture(
+            environmentState,
+          );
+
         expect(
           () =>
             new RelevantMoon(
@@ -201,6 +234,7 @@ describe(
               orbit,
               tidalState,
               environmentState,
+              habitabilityState,
             ),
         ).toThrow(
           RangeError,
@@ -227,6 +261,7 @@ describe(
               orbit,
               tidalState,
               environmentState,
+              habitabilityState,
             ),
         ).toThrow(
           RangeError,
@@ -348,6 +383,41 @@ function environmentFixture(
     0.30,
     0.30,
     MoonGeologyRegime.ACTIVE,
+  );
+}
+
+function habitabilityFixture(
+  environment:
+    MoonEnvironmentState,
+): MoonHabitabilityState {
+  const surfaceHabitabilityIndex01 =
+    0;
+  const subsurfaceHabitabilityIndex01 =
+    0.01878515625;
+
+  return new MoonHabitabilityState(
+    environment.hostPlanetOrdinal,
+    environment.moonOrdinal,
+    environment.sourceMoonSurfaceGravityEarth,
+    environment.estimatedSurfaceTemperatureKelvin,
+    environment.atmosphereRetentionIndex01,
+    environment.waterInventoryIndex01,
+    environment.subsurfaceOceanPotentialIndex01,
+    environment.surfaceLiquidWaterPotentialIndex01,
+    environment.internalHeatRetentionIndex01,
+    environment.geologicalActivityIndex01,
+    environment.sourceTidalHeatingIndex01,
+    20 / 23,
+    0,
+    1,
+    1,
+    0.375,
+    surfaceHabitabilityIndex01,
+    subsurfaceHabitabilityIndex01,
+    subsurfaceHabitabilityIndex01,
+    false,
+    false,
+    MoonHabitabilityRegime.NONE,
   );
 }
 
