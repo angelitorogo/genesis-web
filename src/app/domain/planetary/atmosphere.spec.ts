@@ -84,6 +84,18 @@ import {
 } from './planet-geology-state';
 
 import {
+  PlanetMagneticFieldRegime,
+} from './planet-magnetic-field-regime';
+
+import {
+  PlanetMagnetosphereRegime,
+} from './planet-magnetosphere-regime';
+
+import {
+  PlanetMagnetosphereState,
+} from './planet-magnetosphere-state';
+
+import {
   PlanetTectonicRegime,
 } from './planet-tectonic-regime';
 
@@ -116,7 +128,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.8',
+  'Atmosphere through point 20.9',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -147,7 +159,7 @@ describe(
       );
 
     it(
-      'should preserve exact identity and expose point-20.2 through point-20.8 atmosphere/climate/water/geology states',
+      'should preserve exact identity and expose point-20.2 through point-20.9 atmosphere/climate/water/geology/magnetosphere states',
       () => {
         const planet =
           planetFixture();
@@ -192,6 +204,13 @@ describe(
             waterInventory,
           );
 
+        const magnetosphereState =
+          magnetosphereFixture(
+            planet,
+            retention,
+            geologyState,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
@@ -202,6 +221,7 @@ describe(
             variability,
             waterInventory,
             geologyState,
+            magnetosphereState,
           );
 
         expect(
@@ -351,10 +371,31 @@ describe(
           atmosphere.isGeologicallyActive,
         ).toBe(true);
 
+        expect(
+          atmosphere.magnetosphereState,
+        ).toBe(
+          magnetosphereState,
+        );
+
+        expect(
+          atmosphere.magneticFieldRegime,
+        ).toBe(
+          PlanetMagneticFieldRegime.STRONG,
+        );
+
+        expect(
+          atmosphere.magnetosphereRegime,
+        ).toBe(
+          PlanetMagnetosphereRegime.GLOBAL,
+        );
+
+        expect(
+          atmosphere.hasSustainedDynamo,
+        ).toBe(true);
+
         for (
           const laterProperty
           of [
-            'magnetosphere',
             'surfaceRadiation',
           ]
         ) {
@@ -426,6 +467,13 @@ describe(
                   waterInventory,
                 );
 
+              const magnetosphereState =
+                magnetosphereFixture(
+                  planet,
+                  retention,
+                  geologyState,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
@@ -435,6 +483,7 @@ describe(
                 variability,
                 waterInventory,
                 geologyState,
+                magnetosphereState,
               );
             })(),
         ).toThrow(
@@ -487,6 +536,13 @@ describe(
                   waterInventory,
                 );
 
+              const magnetosphereState =
+                magnetosphereFixture(
+                  planet,
+                  retention,
+                  geologyState,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
@@ -496,6 +552,7 @@ describe(
                 variability,
                 waterInventory,
                 geologyState,
+                magnetosphereState,
               );
             })(),
         ).toThrow(
@@ -549,6 +606,8 @@ describe(
             0.30,
           silicateInteriorMassFraction01:
             0.60,
+          gaseousEnvelopeMassFraction01:
+            0.015,
           volatileRichInteriorMassFraction01:
             0.03,
           condensedIceMassFraction01:
@@ -572,6 +631,8 @@ describe(
           24,
         rotationPeriodHours:
           24,
+        isTidallySynchronized:
+          false,
         dayLengthHours:
           24.1,
         isTypePhysicallyCoherent:
@@ -884,6 +945,53 @@ describe(
         PlanetGeologyRegime.ACTIVE,
         PlanetVolcanismRegime.MODERATE,
         PlanetTectonicRegime.PLATE_TECTONICS,
+      );
+    }
+
+    function magnetosphereFixture(
+      planet:
+        Planet,
+
+      retention:
+        AtmosphereRetentionState,
+
+      geologyState:
+        PlanetGeologyState,
+    ): PlanetMagnetosphereState {
+
+      return new PlanetMagnetosphereState(
+        planet.planetOrdinal,
+        planet.locator,
+        planet.seed,
+        planet.planetType,
+        planet.massEarth,
+        planet.radiusEarth,
+        planet.rotationPeriodHours,
+        planet.isTidallySynchronized,
+        planet.internalComposition
+          .metallicCoreMassFraction01,
+        planet.internalComposition
+          .gaseousEnvelopeMassFraction01,
+        planet.internalComposition
+          .iceBearingFractionOfSolids01,
+        planet.typeClassification
+          .referenceMeanInsolationEarth,
+        retention.retainedSurfacePressurePascal,
+        geologyState.geologyRegime,
+        geologyState.internalHeatRetentionIndex01,
+        geologyState.geologicalActivityIndex01,
+        geologyState.tidalHeatingIndex01,
+        0.80,
+        0.55,
+        0.78,
+        0.55,
+        0.53,
+        0.92,
+        0.95,
+        0.56,
+        PlanetMagneticFieldRegime.STRONG,
+        PlanetMagnetosphereRegime.GLOBAL,
+        true,
       );
     }
 

@@ -28,6 +28,14 @@ import {
 } from '../../domain/planetary/planet-geology-regime';
 
 import {
+  PlanetMagneticFieldRegime,
+} from '../../domain/planetary/planet-magnetic-field-regime';
+
+import {
+  PlanetMagnetosphereRegime,
+} from '../../domain/planetary/planet-magnetosphere-regime';
+
+import {
   PlanetTectonicRegime,
 } from '../../domain/planetary/planet-tectonic-regime';
 
@@ -64,7 +72,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.8',
+  'AtmosphereGenerator through point 20.9',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -83,7 +91,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere through point 20.8 while preserving identity',
+      'should materialize one Atmosphere through point 20.9 while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -222,6 +230,26 @@ describe(
         expect(
           atmosphere.geologicalActivityIndex01!,
         ).toBeLessThanOrEqual(1);
+
+        expect(
+          atmosphere.magnetosphereState,
+        ).toBeDefined();
+
+        expect(
+          atmosphere.intrinsicMagneticFieldIndex01,
+        ).toBeGreaterThanOrEqual(0);
+
+        expect(
+          atmosphere.intrinsicMagneticFieldIndex01,
+        ).toBeLessThanOrEqual(1);
+
+        expect(
+          atmosphere.magnetosphericProtectionIndex01,
+        ).toBeGreaterThanOrEqual(0);
+
+        expect(
+          atmosphere.magnetosphericProtectionIndex01,
+        ).toBeLessThanOrEqual(1);
       },
     );
 
@@ -336,6 +364,22 @@ describe(
         expect(
           atmosphere.geologicalActivityIndex01,
         ).toBeNull();
+
+        expect(
+          atmosphere.hasSustainedDynamo,
+        ).toBe(true);
+
+        expect(
+          atmosphere.magneticFieldRegime,
+        ).toBe(
+          PlanetMagneticFieldRegime.VERY_STRONG,
+        );
+
+        expect(
+          atmosphere.magnetosphereRegime,
+        ).toBe(
+          PlanetMagnetosphereRegime.GLOBAL,
+        );
       },
     );
 
@@ -383,6 +427,15 @@ describe(
           atmospheres.every(
             atmosphere =>
               atmosphere.geologyState
+                .planetOrdinal ===
+              atmosphere.planetOrdinal,
+          ),
+        ).toBe(true);
+
+        expect(
+          atmospheres.every(
+            atmosphere =>
+              atmosphere.magnetosphereState
                 .planetOrdinal ===
               atmosphere.planetOrdinal,
           ),
@@ -583,6 +636,10 @@ describe(
             deep
               ? 0.05
               : 0.60,
+          gaseousEnvelopeMassFraction01:
+            deep
+              ? 0.60
+              : 0.01,
           volatileRichInteriorMassFraction01:
             deep
               ? 0.30
@@ -621,6 +678,8 @@ describe(
             ? 10
             : 20 +
               planetOrdinal,
+        isTidallySynchronized:
+          false,
         dayLengthHours:
           deep
             ? 10.2

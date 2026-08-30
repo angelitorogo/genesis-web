@@ -56,6 +56,18 @@ import {
 } from './planet-geology-state';
 
 import {
+  type PlanetMagneticFieldRegime,
+} from './planet-magnetic-field-regime';
+
+import {
+  type PlanetMagnetosphereRegime,
+} from './planet-magnetosphere-regime';
+
+import {
+  type PlanetMagnetosphereState,
+} from './planet-magnetosphere-state';
+
+import {
   type PlanetTectonicRegime,
 } from './planet-tectonic-regime';
 
@@ -111,8 +123,9 @@ const CONSISTENCY_TOLERANCE =
  * atmosphere greenhouse/longwave blanketing state, point 20.5 adds a global-
  * mean thermal climate baseline, point 20.6 adds seasons, coarse thermal
  * extrema and a stability assessment, point 20.7 adds the deterministic
- * water/hydrosphere state and point 20.8 adds approximate geology, volcanism
- * and tectonic mobility. BodyLocator/BodySeed remain the canonical identity;
+ * water/hydrosphere state, point 20.8 adds approximate geology, volcanism and
+ * tectonic mobility and point 20.9 adds intrinsic/induced magnetic-field and
+ * magnetosphere state. BodyLocator/BodySeed remain the canonical identity;
  * no AtmosphereSeed exists.
  */
 export class Atmosphere {
@@ -141,6 +154,9 @@ export class Atmosphere {
 
     readonly geologyState:
       PlanetGeologyState,
+
+    readonly magnetosphereState:
+      PlanetMagnetosphereState,
   ) {
     if (
       !hostPlanet
@@ -230,6 +246,13 @@ export class Atmosphere {
       hostPlanet,
       waterInventory,
       geologyState,
+    );
+
+    assertMagnetosphereIdentity(
+      hostPlanet,
+      retentionState,
+      geologyState,
+      magnetosphereState,
     );
 
     if (
@@ -473,6 +496,65 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.8 geology state must preserve the exact phase-19 bulk/interior/tidal and point-20.7 water handoff.',
+      );
+    }
+
+    if (
+      magnetosphereState.sourcePlanetType !==
+        hostPlanet.planetType ||
+      !approximatelyEqual(
+        magnetosphereState.sourceMassEarth,
+        hostPlanet.massEarth,
+      ) ||
+      !approximatelyEqual(
+        magnetosphereState.sourceRadiusEarth,
+        hostPlanet.radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        magnetosphereState.sourceRotationPeriodHours,
+        hostPlanet.rotationPeriodHours,
+      ) ||
+      magnetosphereState.sourceIsTidallySynchronized !==
+        hostPlanet.isTidallySynchronized ||
+      !approximatelyEqual(
+        magnetosphereState.sourceMetallicCoreMassFraction01,
+        hostPlanet.internalComposition
+          .metallicCoreMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        magnetosphereState.sourceGaseousEnvelopeMassFraction01,
+        hostPlanet.internalComposition
+          .gaseousEnvelopeMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        magnetosphereState.sourceIceBearingInteriorFraction01,
+        hostPlanet.internalComposition
+          .iceBearingFractionOfSolids01,
+      ) ||
+      !approximatelyEqual(
+        magnetosphereState.sourceReferenceMeanInsolationEarth,
+        hostPlanet.typeClassification
+          .referenceMeanInsolationEarth,
+      ) ||
+      magnetosphereState.sourceRetainedSurfacePressurePascal !==
+        retentionState.retainedSurfacePressurePascal ||
+      magnetosphereState.sourceGeologyRegime !==
+        geologyState.geologyRegime ||
+      !nullableApproximatelyEqual(
+        magnetosphereState.sourceInternalHeatRetentionIndex01,
+        geologyState.internalHeatRetentionIndex01,
+      ) ||
+      !nullableApproximatelyEqual(
+        magnetosphereState.sourceGeologicalActivityIndex01,
+        geologyState.geologicalActivityIndex01,
+      ) ||
+      !nullableApproximatelyEqual(
+        magnetosphereState.sourceTidalHeatingIndex01,
+        geologyState.tidalHeatingIndex01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.9 magnetosphere state must preserve the exact phase-19 spin/interior, point-20.3 retained-atmosphere and point-20.8 geology handoff.',
       );
     }
   }
@@ -1015,6 +1097,70 @@ export class Atmosphere {
       .supportsMobileLithosphere;
   }
 
+  get magneticFieldRegime():
+    PlanetMagneticFieldRegime {
+
+    return this
+      .magnetosphereState
+      .magneticFieldRegime;
+  }
+
+  get magnetosphereRegime():
+    PlanetMagnetosphereRegime {
+
+    return this
+      .magnetosphereState
+      .magnetosphereRegime;
+  }
+
+  get dynamoPotentialIndex01():
+    number {
+
+    return this
+      .magnetosphereState
+      .dynamoPotentialIndex01;
+  }
+
+  get intrinsicMagneticFieldIndex01():
+    number {
+
+    return this
+      .magnetosphereState
+      .intrinsicMagneticFieldIndex01;
+  }
+
+  get magnetosphericProtectionIndex01():
+    number {
+
+    return this
+      .magnetosphereState
+      .magnetosphericProtectionIndex01;
+  }
+
+  get hasSustainedDynamo():
+    boolean {
+
+    return this
+      .magnetosphereState
+      .hasSustainedDynamo;
+  }
+
+  get hasIntrinsicMagnetosphere():
+    boolean {
+
+    return this
+      .magnetosphereState
+      .hasIntrinsicMagnetosphere;
+  }
+
+  get hasInducedMagnetosphere():
+    boolean {
+
+    return this
+      .magnetosphereState
+      .hasInducedMagnetosphere;
+  }
+
   get isVacuum():
     boolean {
 
@@ -1264,6 +1410,48 @@ function assertGeologyIdentity(
   ) {
     throw new RangeError(
       'Point-20.8 geology state must preserve the exact host Planet and point-20.7 water identity.',
+    );
+  }
+}
+
+function assertMagnetosphereIdentity(
+  hostPlanet:
+    Planet,
+
+  retentionState:
+    AtmosphereRetentionState,
+
+  geologyState:
+    PlanetGeologyState,
+
+  magnetosphereState:
+    PlanetMagnetosphereState,
+): void {
+
+  if (
+    magnetosphereState.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    magnetosphereState.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    magnetosphereState.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    magnetosphereState.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    magnetosphereState.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    magnetosphereState.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    magnetosphereState.sourceRetainedSurfacePressurePascal !==
+      retentionState.retainedSurfacePressurePascal ||
+    magnetosphereState.sourceGeologyRegime !==
+      geologyState.geologyRegime ||
+    !nullableApproximatelyEqual(
+      magnetosphereState.sourceGeologicalActivityIndex01,
+      geologyState.geologicalActivityIndex01,
+    )
+  ) {
+    throw new RangeError(
+      'Point-20.9 magnetosphere state must preserve the exact host Planet and point-20.3/20.8 source identity.',
     );
   }
 }

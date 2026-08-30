@@ -43,6 +43,10 @@ import {
 } from './planet-geology-engine';
 
 import {
+  PlanetMagnetosphereEngine,
+} from './planet-magnetosphere-engine';
+
+import {
   PlanetWaterEngine,
 } from './planet-water-engine';
 
@@ -55,8 +59,9 @@ import {
  * greenhouse/longwave blanketing state from the retained atmosphere and point
  * 20.5 derives global-mean equilibrium/surface temperatures, point 20.6
  * refines seasons, coarse extrema and climate stability, point 20.7 derives
- * the water/hydrosphere state and point 20.8 derives approximate geology,
- * volcanism and tectonic mobility. The Planet BodySeed remains the canonical
+ * the water/hydrosphere state, point 20.8 derives approximate geology,
+ * volcanism and tectonic mobility and point 20.9 derives the intrinsic/induced
+ * magnetic-field and magnetosphere state. The Planet BodySeed remains the canonical
  * identity; no AtmosphereSeed is introduced.
  */
 export class AtmosphereGenerator {
@@ -139,6 +144,15 @@ export class AtmosphereGenerator {
           waterInventory,
         );
 
+    const magnetosphereState =
+      PlanetMagnetosphereEngine
+        .generate(
+          generationKey,
+          planet,
+          retentionState,
+          geologyState,
+        );
+
     return new Atmosphere(
       planet,
       bulkProperties,
@@ -148,6 +162,7 @@ export class AtmosphereGenerator {
       climateVariabilityState,
       waterInventory,
       geologyState,
+      magnetosphereState,
     );
   }
 
@@ -253,6 +268,16 @@ export class AtmosphereGenerator {
           waterInventories,
         );
 
+    const magnetosphereStates =
+      PlanetMagnetosphereEngine
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          planets,
+          retentionStates,
+          geologyStates,
+        );
+
     return Object.freeze(
       planets.map(
         (
@@ -289,6 +314,7 @@ export class AtmosphereGenerator {
             climateVariabilityStates[index],
             waterInventories[index],
             geologyStates[index],
+            magnetosphereStates[index],
           );
         },
       ),
