@@ -28,6 +28,21 @@ import {
 } from '../../domain/planetary/moon-population-profile';
 
 import {
+  moonTidalLockingRegimeForIndex01,
+  MoonTidalLockingRegime,
+} from '../../domain/planetary/moon-tidal-locking-regime';
+
+import {
+  moonTidalMigrationRegimeV1,
+  MoonTidalState,
+  synchronousOrbitPlanetRadiiV1,
+} from '../../domain/planetary/moon-tidal-state';
+
+import {
+  moonTidalRegimeForHeatingIndex01,
+} from '../../domain/planetary/moon-tidal-regime';
+
+import {
   MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -55,6 +70,11 @@ const V1_MOON_COUNT_BRANCH =
 const V1_RELEVANT_MOON_BRANCH =
   utf8ToBytes(
     'GENESIS-RELEVANT-MOON-PROPERTIES-V1',
+  );
+
+const V1_MOON_TIDAL_BRANCH =
+  utf8ToBytes(
+    'GENESIS-MOON-TIDAL-STATE-V1',
   );
 
 const V1_EARTH_MASS_IN_SOLAR_MASSES =
@@ -86,6 +106,34 @@ const V1_FULL_CAPACITY_HILL_RADIUS_PLANET_RADII =
 
 const V1_PROGRADE_STABLE_HILL_FRACTION =
   0.45;
+
+
+const V1_REFERENCE_MOON_MASS_EARTH =
+  0.0123;
+
+const V1_REFERENCE_MOON_RADIUS_EARTH =
+  0.2727;
+
+const V1_REFERENCE_MOON_SEMI_MAJOR_AXIS_KILOMETERS =
+  384_400;
+
+const V1_IO_HOST_MASS_EARTH =
+  317.8;
+
+const V1_IO_MOON_RADIUS_EARTH =
+  0.286;
+
+const V1_IO_ECCENTRICITY =
+  0.0041;
+
+const V1_IO_SEMI_MAJOR_AXIS_KILOMETERS =
+  421_700;
+
+const V1_MIN_PRIMORDIAL_MOON_ROTATION_HOURS =
+  6;
+
+const V1_MAX_PRIMORDIAL_MOON_ROTATION_HOURS =
+  72;
 
 interface MoonCountTypeModelV1 {
   readonly maximumMoonCount:
@@ -158,7 +206,9 @@ interface RelevantMoonSamplesV1 {
  * Point 21.1 established one MoonSystem boundary per mature Planet and point
  * 21.2 added the total modeled natural-satellite count. Point 21.3 now
  * materializes only a bounded set of relevant moons with bulk mass/radius/
- * density/gravity and stable planetocentric Keplerian orbits.
+ * density/gravity and stable planetocentric Keplerian orbits. Point 21.4 adds
+ * mature-system tidal forcing/heating, 1:1 spin-locking and first-order orbital
+ * migration direction without modifying the frozen 21.3 mass/orbit products.
  *
  * Large minor-moon populations remain summarized by moonCount. Every relevant
  * moon is addressed only by a local moonOrdinal. All samples are read directly
@@ -635,6 +685,13 @@ function relevantMoonsV1(
               .hillSphereRadiusPlanetRadii,
           );
 
+        const tidalState =
+          moonTidalStateV1(
+            planet,
+            physical,
+            orbit,
+          );
+
         return new RelevantMoon(
           planet
             .planetOrdinal,
@@ -645,12 +702,385 @@ function relevantMoonsV1(
           moonOrdinal,
           physical,
           orbit,
+          tidalState,
         );
       },
     );
 
   return Object.freeze(
     relevantMoons,
+  );
+}
+
+function moonTidalStateV1(
+  planet:
+    Planet,
+
+  physical:
+    MoonPhysicalProperties,
+
+  orbit:
+    MoonOrbitalElements,
+): MoonTidalState {
+
+  const synchronousOrbitPlanetRadii =
+    synchronousOrbitPlanetRadiiV1(
+      planet
+        .massEarth,
+      planet
+        .radiusEarth,
+      planet
+        .rotationPeriodHours,
+    );
+
+  const tidalForcingIndex01 =
+    tidalForcingIndexV1(
+      planet,
+      physical,
+      orbit,
+    );
+
+  const tidalHeatingIndex01 =
+    tidalHeatingIndexV1(
+      planet,
+      physical,
+      orbit,
+    );
+
+  const tidalLockingIndex01 =
+    tidalLockingIndexV1(
+      planet,
+      physical,
+      orbit,
+    );
+
+  const tidalLockingRegime =
+    moonTidalLockingRegimeForIndex01(
+      tidalLockingIndex01,
+    );
+
+  const rotationPeriodHours =
+    moonRotationPeriodHoursV1(
+      planet,
+      orbit,
+      tidalLockingIndex01,
+      tidalLockingRegime,
+    );
+
+  return new MoonTidalState(
+    planet
+      .planetOrdinal,
+    physical
+      .moonOrdinal,
+    planet
+      .massEarth,
+    planet
+      .radiusEarth,
+    planet
+      .rotationPeriodHours,
+    planet
+      .isRetrogradeRotation,
+    physical
+      .massEarth,
+    physical
+      .radiusEarth,
+    orbit
+      .semiMajorAxisPlanetRadii,
+    orbit
+      .semiMajorAxisKilometers,
+    orbit
+      .eccentricity,
+    orbit
+      .orbitalPeriodDays,
+    synchronousOrbitPlanetRadii,
+    tidalForcingIndex01,
+    tidalHeatingIndex01,
+    moonTidalRegimeForHeatingIndex01(
+      tidalHeatingIndex01,
+    ),
+    tidalLockingIndex01,
+    tidalLockingRegime,
+    rotationPeriodHours,
+    moonTidalMigrationRegimeV1(
+      planet
+        .isRetrogradeRotation,
+      orbit
+        .semiMajorAxisPlanetRadii,
+      synchronousOrbitPlanetRadii,
+    ),
+  );
+}
+
+function tidalForcingIndexV1(
+  planet:
+    Planet,
+
+  physical:
+    MoonPhysicalProperties,
+
+  orbit:
+    MoonOrbitalElements,
+): number {
+
+  const relativeForcing =
+    planet
+      .massEarth *
+    (
+      physical
+        .radiusEarth /
+      V1_REFERENCE_MOON_RADIUS_EARTH
+    ) *
+    (
+      V1_REFERENCE_MOON_SEMI_MAJOR_AXIS_KILOMETERS /
+      orbit
+        .semiMajorAxisKilometers
+    ) **
+      3;
+
+  return logarithmicIndex01(
+    relativeForcing,
+    -2,
+    2,
+  );
+}
+
+function tidalHeatingIndexV1(
+  planet:
+    Planet,
+
+  physical:
+    MoonPhysicalProperties,
+
+  orbit:
+    MoonOrbitalElements,
+): number {
+
+  if (
+    orbit
+      .eccentricity <=
+    0
+  ) {
+    return 0;
+  }
+
+  const relativeIoHeating =
+    (
+      planet
+        .massEarth /
+      V1_IO_HOST_MASS_EARTH
+    ) **
+      2 *
+    (
+      physical
+        .radiusEarth /
+      V1_IO_MOON_RADIUS_EARTH
+    ) **
+      5 *
+    (
+      orbit
+        .eccentricity /
+      V1_IO_ECCENTRICITY
+    ) **
+      2 *
+    (
+      V1_IO_SEMI_MAJOR_AXIS_KILOMETERS /
+      orbit
+        .semiMajorAxisKilometers
+    ) **
+      6;
+
+  return logarithmicIndex01(
+    relativeIoHeating,
+    -3,
+    0,
+  );
+}
+
+function tidalLockingIndexV1(
+  planet:
+    Planet,
+
+  physical:
+    MoonPhysicalProperties,
+
+  orbit:
+    MoonOrbitalElements,
+): number {
+
+  const relativeEarthMoonLocking =
+    planet
+      .massEarth **
+      2 *
+    (
+      physical
+        .radiusEarth /
+      V1_REFERENCE_MOON_RADIUS_EARTH
+    ) **
+      3 *
+    (
+      V1_REFERENCE_MOON_MASS_EARTH /
+      physical
+        .massEarth
+    ) *
+    (
+      V1_REFERENCE_MOON_SEMI_MAJOR_AXIS_KILOMETERS /
+      orbit
+        .semiMajorAxisKilometers
+    ) **
+      6;
+
+  return logarithmicIndex01(
+    relativeEarthMoonLocking,
+    -3,
+    1,
+  );
+}
+
+function moonRotationPeriodHoursV1(
+  planet:
+    Planet,
+
+  orbit:
+    MoonOrbitalElements,
+
+  tidalLockingIndex01:
+    number,
+
+  tidalLockingRegime:
+    MoonTidalLockingRegime,
+): number {
+
+  const synchronousRotationPeriodHours =
+    orbit
+      .orbitalPeriodDays *
+    24;
+
+  if (
+    tidalLockingRegime ===
+    MoonTidalLockingRegime.SYNCHRONIZED
+  ) {
+    return synchronousRotationPeriodHours;
+  }
+
+  const digest =
+    tidalDigestV1(
+      planet,
+      orbit
+        .moonOrdinal,
+    );
+
+  const primordialSample =
+    uint32UnitV1(
+      digest,
+      0,
+    );
+
+  const primordialRotationPeriodHours =
+    V1_MIN_PRIMORDIAL_MOON_ROTATION_HOURS *
+    (
+      V1_MAX_PRIMORDIAL_MOON_ROTATION_HOURS /
+      V1_MIN_PRIMORDIAL_MOON_ROTATION_HOURS
+    ) **
+      primordialSample;
+
+  const relaxation01 =
+    tidalLockingRegime ===
+      MoonTidalLockingRegime.UNLOCKED
+      ? 0.15 *
+        tidalLockingIndex01 /
+        0.20
+      : 0.15 +
+        0.65 *
+        (
+          tidalLockingIndex01 -
+          0.20
+        ) /
+        0.30;
+
+  const primordialFrequency =
+    1 /
+    primordialRotationPeriodHours;
+
+  const synchronousFrequency =
+    1 /
+    synchronousRotationPeriodHours;
+
+  const relaxedFrequency =
+    lerp(
+      primordialFrequency,
+      synchronousFrequency,
+      clamp01(
+        relaxation01,
+      ),
+    );
+
+  return 1 /
+    relaxedFrequency;
+}
+
+function tidalDigestV1(
+  planet:
+    Planet,
+
+  moonOrdinal:
+    number,
+): Uint8Array {
+
+  return sha256
+    .create()
+    .update(
+      V1_MOON_TIDAL_BRANCH,
+    )
+    .update(
+      hexToBytes(
+        planet
+          .seed
+          .normalizedValue,
+      ),
+    )
+    .update(
+      utf8ToBytes(
+        `moon:${moonOrdinal}`,
+      ),
+    )
+    .digest();
+}
+
+function logarithmicIndex01(
+  positiveValue:
+    number,
+
+  minimumLog10:
+    number,
+
+  maximumLog10:
+    number,
+): number {
+
+  if (
+    !Number.isFinite(
+      positiveValue,
+    ) ||
+    positiveValue <=
+      0
+  ) {
+    return 0;
+  }
+
+  const logValue =
+    Math.log10(
+      positiveValue,
+    );
+
+  return clamp01(
+    (
+      logValue -
+      minimumLog10
+    ) /
+    (
+      maximumLog10 -
+      minimumLog10
+    ),
   );
 }
 

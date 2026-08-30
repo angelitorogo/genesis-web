@@ -35,12 +35,14 @@ const SOURCE_TOLERANCE =
  *
  * Point 21.1 established the exact host-Planet boundary and point 21.2 added the
  * deterministic total modeled moon count. Point 21.3 now materializes only the
- * physically/orbitally relevant moon subset. Large minor-satellite populations
- * remain summarized by moonCount rather than forcing every body into memory.
+ * physically/orbitally relevant moon subset. Point 21.4 now enriches each
+ * relevant moon with a frozen tidal/spin state while large minor-satellite
+ * populations remain summarized by moonCount rather than forcing every body
+ * into memory.
  *
- * Relevant moons use a stable local moonOrdinal only. MoonSeed/designation stay
- * reserved for point 21.8; tides, atmosphere/water/geology and habitability stay
- * reserved for points 21.4..21.6.
+ * Relevant moons still use a stable local moonOrdinal only. MoonSeed/designation
+ * stay reserved for point 21.8; atmosphere/water/geology and habitability stay
+ * reserved for points 21.5..21.6.
  */
 export class MoonSystem {
 
@@ -220,6 +222,39 @@ export class MoonSystem {
       ) {
         throw new RangeError(
           'MoonSystem relevant moons must preserve exact host identity and contiguous moonOrdinal order.',
+        );
+      }
+
+      if (
+        !approximatelyEqual(
+          moon
+            .tidalState
+            .sourceHostPlanetMassEarth,
+          hostPlanet
+            .massEarth,
+        ) ||
+        !approximatelyEqual(
+          moon
+            .tidalState
+            .sourceHostPlanetRadiusEarth,
+          hostPlanet
+            .radiusEarth,
+        ) ||
+        !approximatelyEqual(
+          moon
+            .tidalState
+            .sourceHostPlanetRotationPeriodHours,
+          hostPlanet
+            .rotationPeriodHours,
+        ) ||
+        moon
+          .tidalState
+          .sourceHostPlanetIsRetrogradeRotation !==
+        hostPlanet
+          .isRetrogradeRotation
+      ) {
+        throw new RangeError(
+          'MoonSystem relevant-moon tidal states must preserve the exact frozen host Planet bulk/rotation sources.',
         );
       }
 

@@ -16,6 +16,18 @@ import {
 } from '../../domain/seed/hierarchical-seeds';
 
 import {
+  MoonTidalLockingRegime,
+} from '../../domain/planetary/moon-tidal-locking-regime';
+
+import {
+  MoonTidalMigrationRegime,
+} from '../../domain/planetary/moon-tidal-migration-regime';
+
+import {
+  MoonTidalRegime,
+} from '../../domain/planetary/moon-tidal-regime';
+
+import {
   type Planet,
 } from '../../domain/planetary/planet';
 
@@ -36,7 +48,7 @@ import {
 } from './moon-generator';
 
 describe(
-  'MoonGenerator point 21.3 V1',
+  'MoonGenerator point 21.4 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -115,6 +127,8 @@ describe(
                     5.2,
                   eccentricity:
                     0.05,
+                  rotationPeriodHours:
+                    10,
                 },
               ),
             );
@@ -139,6 +153,8 @@ describe(
                     19,
                   eccentricity:
                     0.01,
+                  rotationPeriodHours:
+                    17,
                 },
               ),
             );
@@ -213,6 +229,46 @@ describe(
         );
 
         expect(
+          rocky.relevantMoons[0].tidalState.tidalHeatingIndex01,
+        ).toBeCloseTo(
+          0.25932775948683745,
+          12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].tidalState.tidalLockingIndex01,
+        ).toBeCloseTo(
+          0.8200666583638972,
+          12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].tidalState.tidalRegime,
+        ).toBe(
+          MoonTidalRegime.MODERATE,
+        );
+
+        expect(
+          rocky.relevantMoons[0].tidalState.tidalLockingRegime,
+        ).toBe(
+          MoonTidalLockingRegime.SYNCHRONIZED,
+        );
+
+        expect(
+          rocky.relevantMoons[0].tidalState.migrationRegime,
+        ).toBe(
+          MoonTidalMigrationRegime.OUTWARD,
+        );
+
+        expect(
+          rocky.relevantMoons[0].rotationPeriodHours,
+        ).toBeCloseTo(
+          rocky.relevantMoons[0].orbitalPeriodDays *
+            24,
+          12,
+        );
+
+        expect(
           gasGiant.relevantMoonCount,
         ).toBe(8);
 
@@ -227,6 +283,32 @@ describe(
         expect(
           iceGiant.unmaterializedMinorMoonCount,
         ).toBe(27);
+
+
+        expect(
+          gasGiant.relevantMoons[0].tidalState.tidalRegime,
+        ).toBe(
+          MoonTidalRegime.EXTREME,
+        );
+
+        expect(
+          gasGiant.relevantMoons[7].tidalState.tidalRegime,
+        ).toBe(
+          MoonTidalRegime.NEGLIGIBLE,
+        );
+
+        expect(
+          gasGiant.relevantMoons.every(
+            moon =>
+              moon.isTidallyLocked,
+          ),
+        ).toBe(true);
+
+        expect(
+          iceGiant.relevantMoons[0].tidalState.migrationRegime,
+        ).toBe(
+          MoonTidalMigrationRegime.NEAR_SYNCHRONOUS,
+        );
       },
     );
 
@@ -552,7 +634,21 @@ describe(
 
             expect(
               'tidalState' in moon,
-            ).toBe(false);
+            ).toBe(true);
+
+            expect(
+              moon.tidalState
+                .hostPlanetOrdinal,
+            ).toBe(
+              planet.planetOrdinal,
+            );
+
+            expect(
+              moon.tidalState
+                .moonOrdinal,
+            ).toBe(
+              moon.moonOrdinal,
+            );
 
             previousOrbit =
               moon.semiMajorAxisPlanetRadii;
@@ -873,6 +969,91 @@ describe(
     );
 
     it(
+      'should change tidal migration with host spin without mutating the frozen point-21.3 moon mass or orbit',
+      () => {
+        const planetarySystem =
+          planetarySystemFixture(
+            generationKey,
+            systemLocator,
+            1,
+          );
+
+        const commonOptions = {
+          seedHex:
+            '11111111111111111111111111111111',
+          planetType:
+            PlanetType.ROCKY,
+          massEarth:
+            1,
+          radiusEarth:
+            1,
+          semiMajorAxisAu:
+            1,
+          eccentricity:
+            0.0167,
+        } as const;
+
+        const fastHost =
+          MoonGenerator.generate(
+            generationKey,
+            planetFixture(
+              planetarySystem,
+              1,
+              {
+                ...commonOptions,
+                rotationPeriodHours:
+                  24,
+              },
+            ),
+          );
+
+        const slowHost =
+          MoonGenerator.generate(
+            generationKey,
+            planetFixture(
+              planetarySystem,
+              1,
+              {
+                ...commonOptions,
+                rotationPeriodHours:
+                  1_000,
+              },
+            ),
+          );
+
+        expect(
+          slowHost.relevantMoons[0].massEarth,
+        ).toBe(
+          fastHost.relevantMoons[0].massEarth,
+        );
+
+        expect(
+          slowHost.relevantMoons[0].semiMajorAxisPlanetRadii,
+        ).toBe(
+          fastHost.relevantMoons[0].semiMajorAxisPlanetRadii,
+        );
+
+        expect(
+          fastHost.relevantMoons[0].tidalState.migrationRegime,
+        ).toBe(
+          MoonTidalMigrationRegime.OUTWARD,
+        );
+
+        expect(
+          slowHost.relevantMoons[0].tidalState.migrationRegime,
+        ).toBe(
+          MoonTidalMigrationRegime.INWARD,
+        );
+
+        expect(
+          slowHost.relevantMoons[0].tidalHeatingIndex01,
+        ).toBe(
+          fastHost.relevantMoons[0].tidalHeatingIndex01,
+        );
+      },
+    );
+
+    it(
       'should reject a physically incoherent Planet before deriving the count profile',
       () => {
         const planetarySystem =
@@ -928,6 +1109,12 @@ interface PlanetFixtureOptions {
 
   readonly gravitatingMassSolar?:
     number;
+
+  readonly rotationPeriodHours?:
+    number;
+
+  readonly isRetrogradeRotation?:
+    boolean;
 
   readonly isTypePhysicallyCoherent?:
     boolean;
@@ -986,6 +1173,14 @@ function planetFixture(
     options.gravitatingMassSolar ??
     1;
 
+  const rotationPeriodHours =
+    options.rotationPeriodHours ??
+    24;
+
+  const isRetrogradeRotation =
+    options.isRetrogradeRotation ??
+    false;
+
   return {
     generationKey:
       planetarySystem
@@ -1028,6 +1223,8 @@ function planetFixture(
     orbitalPeriod: {
       gravitatingMassSolar,
     },
+    rotationPeriodHours,
+    isRetrogradeRotation,
     isTypePhysicallyCoherent:
       options
         .isTypePhysicallyCoherent ??

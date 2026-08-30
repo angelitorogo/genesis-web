@@ -14,13 +14,18 @@ import {
   type MoonPhysicalProperties,
 } from './moon-physical-properties';
 
+import {
+  type MoonTidalState,
+} from './moon-tidal-state';
+
 /**
  * Point-21.3 individually materialized relevant natural satellite.
  *
  * `moonOrdinal` is a stable local ordinal under the host Planet and is sufficient
  * for deterministic point-21.3 property derivation. It is deliberately not a
- * MoonLocator or MoonSeed. Point 21.8 remains responsible for seeds and
- * designations without changing these frozen physical/orbital values.
+ * MoonLocator or MoonSeed. Point 21.4 now attaches a deterministic tidal/spin
+ * state without changing the frozen point-21.3 physical/orbital values. Point
+ * 21.8 remains responsible for seeds and designations.
  */
 export class RelevantMoon {
 
@@ -42,6 +47,9 @@ export class RelevantMoon {
 
     readonly orbit:
       MoonOrbitalElements,
+
+    readonly tidalState:
+      MoonTidalState,
   ) {
     if (
       !Number.isInteger(
@@ -101,10 +109,60 @@ export class RelevantMoon {
         hostPlanetOrdinal ||
       orbit
         .moonOrdinal !==
+        moonOrdinal ||
+      tidalState
+        .hostPlanetOrdinal !==
+        hostPlanetOrdinal ||
+      tidalState
+        .moonOrdinal !==
         moonOrdinal
     ) {
       throw new RangeError(
-        'RelevantMoon physical/orbital products must preserve the exact host/moon ordinals.',
+        'RelevantMoon physical/orbital/tidal products must preserve the exact host/moon ordinals.',
+      );
+    }
+
+
+    if (
+      !approximatelyEqual(
+        tidalState
+          .sourceMoonMassEarth,
+        physicalProperties
+          .massEarth,
+      ) ||
+      !approximatelyEqual(
+        tidalState
+          .sourceMoonRadiusEarth,
+        physicalProperties
+          .radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        tidalState
+          .sourceSemiMajorAxisPlanetRadii,
+        orbit
+          .semiMajorAxisPlanetRadii,
+      ) ||
+      !approximatelyEqual(
+        tidalState
+          .sourceSemiMajorAxisKilometers,
+        orbit
+          .semiMajorAxisKilometers,
+      ) ||
+      !approximatelyEqual(
+        tidalState
+          .sourceEccentricity,
+        orbit
+          .eccentricity,
+      ) ||
+      !approximatelyEqual(
+        tidalState
+          .sourceOrbitalPeriodDays,
+        orbit
+          .orbitalPeriodDays,
+      )
+    ) {
+      throw new RangeError(
+        'RelevantMoon tidal state must preserve the exact point-21.3 moon physical/orbital sources.',
       );
     }
   }
@@ -156,4 +214,63 @@ export class RelevantMoon {
       .orbit
       .orbitalPeriodDays;
   }
+
+  get tidalHeatingIndex01():
+    number {
+
+    return this
+      .tidalState
+      .tidalHeatingIndex01;
+  }
+
+  get tidalLockingIndex01():
+    number {
+
+    return this
+      .tidalState
+      .tidalLockingIndex01;
+  }
+
+  get rotationPeriodHours():
+    number {
+
+    return this
+      .tidalState
+      .rotationPeriodHours;
+  }
+
+  get isTidallyLocked():
+    boolean {
+
+    return this
+      .tidalState
+      .isTidallyLocked;
+  }
+}
+
+function approximatelyEqual(
+  left:
+    number,
+
+  right:
+    number,
+): boolean {
+
+  const scale =
+    Math.max(
+      1,
+      Math.abs(
+        left,
+      ),
+      Math.abs(
+        right,
+      ),
+    );
+
+  return Math.abs(
+    left -
+    right,
+  ) <=
+    1e-9 *
+    scale;
 }

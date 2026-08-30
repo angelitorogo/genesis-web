@@ -32,6 +32,23 @@ import {
 } from './moon-population-profile';
 
 import {
+  MoonTidalLockingRegime,
+} from './moon-tidal-locking-regime';
+
+import {
+  MoonTidalMigrationRegime,
+} from './moon-tidal-migration-regime';
+
+import {
+  MoonTidalRegime,
+} from './moon-tidal-regime';
+
+import {
+  MoonTidalState,
+  synchronousOrbitPlanetRadiiV1,
+} from './moon-tidal-state';
+
+import {
   type Planet,
 } from './planet';
 
@@ -52,7 +69,7 @@ import {
 } from './moon-system';
 
 describe(
-  'MoonSystem through point 21.3',
+  'MoonSystem through point 21.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -336,6 +353,37 @@ describe(
         ).toThrow(
           RangeError,
         );
+
+
+        const alteredRotationSource =
+          planetFixture(
+            planetarySystem,
+            1,
+            {
+              rotationPeriodHours:
+                1_000,
+            },
+          );
+
+        expect(
+          () =>
+            new MoonSystem(
+              planet,
+              populationFixture(
+                planet,
+                1,
+              ),
+              [
+                relevantMoonFixture(
+                  alteredRotationSource,
+                  1,
+                  10,
+                ),
+              ],
+            ),
+        ).toThrow(
+          RangeError,
+        );
       },
     );
 
@@ -451,6 +499,10 @@ function planetFixture(
       gravitatingMassSolar:
         1,
     },
+    rotationPeriodHours:
+      24,
+    isRetrogradeRotation:
+      false,
     isTypePhysicallyCoherent:
       true,
     ...overrides,
@@ -532,20 +584,74 @@ function relevantMoonFixture(
       0.1,
     );
 
+  const semiMajorAxisKilometers =
+    semiMajorAxisPlanetRadii *
+    planet.radiusEarth *
+    6_371;
+
+  const orbitalPeriodDays =
+    keplerianPeriodDays(
+      planet.massEarth,
+      physical.massEarth,
+      semiMajorAxisKilometers,
+    );
+
   const orbit =
     new MoonOrbitalElements(
       planet.planetOrdinal,
       moonOrdinal,
       semiMajorAxisPlanetRadii,
-      semiMajorAxisPlanetRadii *
-        planet.radiusEarth *
-        6_371,
+      semiMajorAxisKilometers,
       0.01,
       1,
-      5 *
-        moonOrdinal,
+      orbitalPeriodDays,
       2.5,
       230,
+    );
+
+  const synchronousOrbitPlanetRadii =
+    synchronousOrbitPlanetRadiiV1(
+      planet.massEarth,
+      planet.radiusEarth,
+      planet.rotationPeriodHours,
+    );
+
+  const migrationRegime =
+    planet.isRetrogradeRotation
+      ? MoonTidalMigrationRegime.INWARD
+      : semiMajorAxisPlanetRadii <
+        synchronousOrbitPlanetRadii *
+          0.9
+        ? MoonTidalMigrationRegime.INWARD
+        : semiMajorAxisPlanetRadii <=
+          synchronousOrbitPlanetRadii *
+            1.1
+          ? MoonTidalMigrationRegime.NEAR_SYNCHRONOUS
+          : MoonTidalMigrationRegime.OUTWARD;
+
+  const tidalState =
+    new MoonTidalState(
+      planet.planetOrdinal,
+      moonOrdinal,
+      planet.massEarth,
+      planet.radiusEarth,
+      planet.rotationPeriodHours,
+      planet.isRetrogradeRotation,
+      physical.massEarth,
+      physical.radiusEarth,
+      orbit.semiMajorAxisPlanetRadii,
+      orbit.semiMajorAxisKilometers,
+      orbit.eccentricity,
+      orbit.orbitalPeriodDays,
+      synchronousOrbitPlanetRadii,
+      0.5,
+      0.1,
+      MoonTidalRegime.WEAK,
+      0.8,
+      MoonTidalLockingRegime.SYNCHRONIZED,
+      orbit.orbitalPeriodDays *
+        24,
+      migrationRegime,
     );
 
   return new RelevantMoon(
@@ -555,5 +661,38 @@ function relevantMoonFixture(
     moonOrdinal,
     physical,
     orbit,
+    tidalState,
   );
+}
+
+function keplerianPeriodDays(
+  hostMassEarth:
+    number,
+
+  moonMassEarth:
+    number,
+
+  semiMajorAxisKilometers:
+    number,
+): number {
+
+  const semiMajorAxisMeters =
+    semiMajorAxisKilometers *
+    1_000;
+
+  return 2 *
+    Math.PI *
+    Math.sqrt(
+      semiMajorAxisMeters **
+        3 /
+      (
+        6.67430e-11 *
+        (
+          hostMassEarth +
+          moonMassEarth
+        ) *
+        5.9722e24
+      ),
+    ) /
+    86_400;
 }
