@@ -32,6 +32,14 @@ import {
 } from './planet-physical-properties';
 
 import {
+  type PlanetRarityAssessment,
+} from './planet-rarity-assessment';
+
+import {
+  type PlanetRarityTrait,
+} from './planet-rarity-trait';
+
+import {
   type PlanetSurfaceBaseProperties,
 } from './planet-surface-base-properties';
 
@@ -91,8 +99,9 @@ import {
  * product. Point 19.4 then attaches one deterministic coarse planet-type
  * classification, point 19.5 adds an approximate conserved internal mass
  * budget and point 19.6 adds a reference Bond albedo plus coarse surface base.
- * Point 19.7 then attaches an explicit type/bulk/composition coherence audit.
- * Rarity flags remain point 19.8.
+ * Point 19.7 then attaches an explicit type/bulk/composition coherence audit,
+ * and point 19.8 closes phase 19 with deterministic basic rarity diagnostics
+ * derived from those already-frozen physical tails.
  */
 export class Planet {
 
@@ -135,6 +144,9 @@ export class Planet {
 
     readonly typePhysicalCoherenceAssessment:
       PlanetTypePhysicalCoherenceAssessment,
+
+    readonly rarityAssessment:
+      PlanetRarityAssessment,
   ) {
     if (
       !Number.isInteger(
@@ -224,6 +236,7 @@ export class Planet {
       internalComposition,
       surfaceBaseProperties,
       typePhysicalCoherenceAssessment,
+      rarityAssessment,
     );
 
     if (
@@ -530,6 +543,104 @@ export class Planet {
         'Point-19.7 type/physics coherence assessment must preserve the exact point-19.2/19.4/19.5 source values.',
       );
     }
+
+    const metallicCoreFractionOfSolids01 =
+      internalComposition
+        .metallicCoreMassEarth /
+      internalComposition
+        .solidInteriorMassEarth;
+
+    if (
+      rarityAssessment
+        .sourcePlanetType !==
+      typeClassification
+        .planetType ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceMassEarth,
+        physicalProperties
+          .massEarth,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceRadiusEarth,
+        physicalProperties
+          .radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceDensityGramsPerCubicCentimeter,
+        physicalProperties
+          .densityGramsPerCubicCentimeter,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceSurfaceGravityEarth,
+        physicalProperties
+          .surfaceGravityEarth,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceEnvelopeMassFraction01,
+        physicalProperties
+          .envelopeMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceRotationPeriodHours,
+        rotationProperties
+          .rotationPeriodHours,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceAxialTiltDegrees,
+        rotationProperties
+          .axialTiltDegrees,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceOrbitalEccentricity,
+        orbit
+          .eccentricity,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceReferenceMeanInsolationEarth,
+        typeClassification
+          .referenceMeanInsolationEarth,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceTidalHeatingProxy,
+        typeClassification
+          .tidalHeatingProxy,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceMetallicCoreFractionOfSolids01,
+        metallicCoreFractionOfSolids01,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceIceBearingFractionOfSolids01,
+        internalComposition
+          .iceBearingFractionOfSolids01,
+      ) ||
+      !approximatelyEqual(
+        rarityAssessment
+          .sourceReferenceBondAlbedo01,
+        surfaceBaseProperties
+          .referenceBondAlbedo01,
+      ) ||
+      rarityAssessment
+        .sourceTypePhysicallyCoherent !==
+      typePhysicalCoherenceAssessment
+        .isCoherent
+    ) {
+      throw new RangeError(
+        'Point-19.8 rarity assessment must preserve the exact point-18/19 physical source values.',
+      );
+    }
   }
 
   get generationKey():
@@ -764,6 +875,31 @@ export class Planet {
       .typePhysicalCoherenceAssessment
       .issues;
   }
+
+
+  get rarities():
+    readonly PlanetRarityTrait[] {
+
+    return this
+      .rarityAssessment
+      .traits;
+  }
+
+  get basicRarityCount():
+    number {
+
+    return this
+      .rarityAssessment
+      .rarityCount;
+  }
+
+  get hasBasicRarities():
+    boolean {
+
+    return this
+      .rarityAssessment
+      .hasRarities;
+  }
 }
 
 function assertSharedBodyIdentity(
@@ -802,6 +938,9 @@ function assertSharedBodyIdentity(
 
   typePhysicalCoherenceAssessment:
     PlanetTypePhysicalCoherenceAssessment,
+
+  rarityAssessment:
+    PlanetRarityAssessment,
 ): void {
 
   const bodyObjects = [
@@ -816,6 +955,7 @@ function assertSharedBodyIdentity(
     internalComposition,
     surfaceBaseProperties,
     typePhysicalCoherenceAssessment,
+    rarityAssessment,
   ] as const;
 
   for (

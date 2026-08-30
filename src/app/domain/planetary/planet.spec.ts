@@ -54,6 +54,10 @@ import {
 } from './planet-physical-properties';
 
 import {
+  PlanetRarityAssessment,
+} from './planet-rarity-assessment';
+
+import {
   apparentSolarDayHours,
   PlanetRotationProperties,
 } from './planet-rotation-properties';
@@ -99,7 +103,7 @@ import {
 } from './planetary-system-orbit-topology';
 
 describe(
-  'Planet points 19.1-19.7',
+  'Planet points 19.1-19.8',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -130,7 +134,7 @@ describe(
       );
 
     it(
-      'should bind frozen point-18 projections plus coherent point-19.2-19.7 physical products into one planet',
+      'should bind frozen point-18 projections plus coherent point-19.2-19.8 physical products into one planet',
       () => {
         const fixture =
           planetFixture();
@@ -150,6 +154,7 @@ describe(
             fixture.internalComposition,
             fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
           );
 
         expect(
@@ -368,12 +373,29 @@ describe(
           planet.baseSolidSurfaceRoughness01,
         ).toBe(0.7);
 
+        expect(
+          planet.rarityAssessment,
+        ).toBe(
+          fixture.rarityAssessment,
+        );
+
+        expect(
+          planet.rarities,
+        ).toEqual([]);
+
+        expect(
+          planet.basicRarityCount,
+        ).toBe(0);
+
+        expect(
+          planet.hasBasicRarities,
+        ).toBe(false);
+
         for (
           const laterPhysicalProperty
           of [
             'albedo',
             'surface',
-            'rarities',
           ]
         ) {
           expect(
@@ -415,6 +437,7 @@ describe(
                 fixture.internalComposition,
                 fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
               ),
           ).toThrow(
             RangeError,
@@ -449,6 +472,7 @@ describe(
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -497,6 +521,7 @@ describe(
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -532,6 +557,7 @@ describe(
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -584,6 +610,7 @@ describe(
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -622,6 +649,7 @@ describe(
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -673,6 +701,7 @@ describe(
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -711,6 +740,7 @@ describe(
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -763,6 +793,7 @@ describe(
               foreignIdentity,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -802,6 +833,7 @@ describe(
               wrongMassBudget,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -841,6 +873,7 @@ describe(
               wrongSourceMixture,
               fixture.surfaceBaseProperties,
             fixture.typePhysicalCoherenceAssessment,
+            fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -890,6 +923,7 @@ describe(
               fixture.internalComposition,
               foreignIdentity,
               fixture.typePhysicalCoherenceAssessment,
+              fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -929,6 +963,7 @@ describe(
               fixture.internalComposition,
               wrongTypeSource,
               fixture.typePhysicalCoherenceAssessment,
+              fixture.rarityAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -961,6 +996,8 @@ describe(
         PlanetSurfaceBaseProperties;
       readonly typePhysicalCoherenceAssessment:
         PlanetTypePhysicalCoherenceAssessment;
+      readonly rarityAssessment:
+        PlanetRarityAssessment;
     } {
       const slot = {
         planetOrdinal:
@@ -1163,6 +1200,30 @@ describe(
           [],
         );
 
+      const rarityAssessment =
+        new PlanetRarityAssessment(
+          1,
+          firstLocator,
+          firstSeed,
+          PlanetType.ROCKY,
+          physicalProperties.massEarth,
+          physicalProperties.radiusEarth,
+          physicalProperties.densityGramsPerCubicCentimeter,
+          physicalProperties.surfaceGravityEarth,
+          physicalProperties.envelopeMassFraction01,
+          rotationProperties.rotationPeriodHours,
+          rotationProperties.axialTiltDegrees,
+          orbit.eccentricity,
+          typeClassification.referenceMeanInsolationEarth,
+          typeClassification.tidalHeatingProxy,
+          internalComposition.metallicCoreMassEarth /
+            internalComposition.solidInteriorMassEarth,
+          internalComposition.iceBearingFractionOfSolids01,
+          surfaceBaseProperties.referenceBondAlbedo01,
+          typePhysicalCoherenceAssessment.isCoherent,
+          [],
+        );
+
       const system = {
         generationKey,
         locator:
@@ -1209,6 +1270,7 @@ describe(
         internalComposition,
         surfaceBaseProperties,
         typePhysicalCoherenceAssessment,
+        rarityAssessment,
       };
     }
   },

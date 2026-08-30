@@ -23,6 +23,10 @@ import {
 } from '../../domain/planetary/planet-physical-properties';
 
 import {
+  type PlanetRarityAssessment,
+} from '../../domain/planetary/planet-rarity-assessment';
+
+import {
   type PlanetRotationProperties,
 } from '../../domain/planetary/planet-rotation-properties';
 
@@ -49,6 +53,10 @@ import {
 import {
   PlanetPhysicalPropertiesGenerator,
 } from './planet-physical-properties-generator';
+
+import {
+  PlanetRarityGenerator,
+} from './planet-rarity-generator';
 
 import {
   PlanetRotationPropertiesGenerator,
@@ -78,8 +86,10 @@ import {
  * derives one coarse physical planet type, point 19.5 adds an approximate
  * conserved internal-composition budget and point 19.6 adds reference Bond
  * albedo plus a coarse surface base. Point 19.7 adds a zero-entropy physical
- * coherence audit across type, bulk state and internal composition. No
- * PlanetSeed level is introduced and all point-18 products remain frozen.
+ * coherence audit across type, bulk state and internal composition. Point 19.8
+ * closes phase 19 with zero-entropy basic rarity diagnostics over the already
+ * generated physical tails. No PlanetSeed level is introduced and all point-18
+ * products remain frozen.
  */
 export class PlanetGenerator {
 
@@ -209,6 +219,19 @@ export class PlanetGenerator {
           internalComposition,
         );
 
+    const rarityAssessment =
+      PlanetRarityGenerator
+        .generate(
+          generationKey,
+          planetarySystem,
+          physicalProperties,
+          rotationProperties,
+          typeClassification,
+          internalComposition,
+          surfaceBaseProperties,
+          typePhysicalCoherenceAssessment,
+        );
+
     return materializePlanet(
       planetarySystem,
       index,
@@ -218,6 +241,7 @@ export class PlanetGenerator {
       internalComposition,
       surfaceBaseProperties,
       typePhysicalCoherenceAssessment,
+      rarityAssessment,
     );
   }
 
@@ -298,6 +322,19 @@ export class PlanetGenerator {
           internalCompositions,
         );
 
+    const rarityAssessments =
+      PlanetRarityGenerator
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          physicalProperties,
+          rotationProperties,
+          typeClassifications,
+          internalCompositions,
+          surfaceBaseProperties,
+          typePhysicalCoherenceAssessments,
+        );
+
     return Object.freeze(
       physicalProperties
         .map(
@@ -314,6 +351,7 @@ export class PlanetGenerator {
               internalCompositions[index],
               surfaceBaseProperties[index],
               typePhysicalCoherenceAssessments[index],
+              rarityAssessments[index],
             ),
         ),
     );
@@ -344,6 +382,9 @@ function materializePlanet(
 
   typePhysicalCoherenceAssessment:
     PlanetTypePhysicalCoherenceAssessment,
+
+  rarityAssessment:
+    PlanetRarityAssessment,
 ): Planet {
 
   return new Planet(
@@ -366,6 +407,7 @@ function materializePlanet(
     internalComposition,
     surfaceBaseProperties,
     typePhysicalCoherenceAssessment,
+    rarityAssessment,
   );
 }
 

@@ -286,12 +286,29 @@ describe(
           planet.planetType,
         );
 
+        expect(
+          planet.rarityAssessment.planetOrdinal,
+        ).toBe(
+          planet.planetOrdinal,
+        );
+
+        expect(
+          planet.rarityAssessment.bodySeed.normalizedValue,
+        ).toBe(
+          planet.seed.normalizedValue,
+        );
+
+        expect(
+          planet.basicRarityCount,
+        ).toBe(
+          planet.rarities.length,
+        );
+
         for (
           const laterProperty
           of [
             'albedo',
             'surface',
-            'rarities',
           ]
         ) {
           expect(
@@ -543,6 +560,12 @@ describe(
           after.typePhysicalCoherenceAssessment,
         ).toEqual(
           before.typePhysicalCoherenceAssessment,
+        );
+
+        expect(
+          after.rarityAssessment,
+        ).toEqual(
+          before.rarityAssessment,
         );
       },
     );
