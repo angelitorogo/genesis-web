@@ -96,6 +96,18 @@ import {
 } from './planet-magnetosphere-state';
 
 import {
+  PlanetRadiationProtectionRegime,
+} from './planet-radiation-protection-regime';
+
+import {
+  PlanetSurfaceRadiationRegime,
+} from './planet-surface-radiation-regime';
+
+import {
+  PlanetSurfaceRadiationState,
+} from './planet-surface-radiation-state';
+
+import {
   PlanetTectonicRegime,
 } from './planet-tectonic-regime';
 
@@ -128,7 +140,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.9',
+  'Atmosphere through point 20.10',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -159,7 +171,7 @@ describe(
       );
 
     it(
-      'should preserve exact identity and expose point-20.2 through point-20.9 atmosphere/climate/water/geology/magnetosphere states',
+      'should preserve exact identity and expose the complete point-20.2 through point-20.10 atmosphere/climate/water/geology/magnetosphere/radiation state',
       () => {
         const planet =
           planetFixture();
@@ -211,6 +223,13 @@ describe(
             geologyState,
           );
 
+        const surfaceRadiationState =
+          surfaceRadiationFixture(
+            planet,
+            retention,
+            magnetosphereState,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
@@ -222,6 +241,7 @@ describe(
             waterInventory,
             geologyState,
             magnetosphereState,
+            surfaceRadiationState,
           );
 
         expect(
@@ -393,17 +413,27 @@ describe(
           atmosphere.hasSustainedDynamo,
         ).toBe(true);
 
-        for (
-          const laterProperty
-          of [
-            'surfaceRadiation',
-          ]
-        ) {
-          expect(
-            laterProperty in
-              atmosphere,
-          ).toBe(false);
-        }
+        expect(
+          atmosphere.surfaceRadiationState,
+        ).toBe(
+          surfaceRadiationState,
+        );
+
+        expect(
+          atmosphere.surfaceRadiationRegime,
+        ).toBe(
+          PlanetSurfaceRadiationRegime.LOW,
+        );
+
+        expect(
+          atmosphere.surfaceRadiationProtectionRegime,
+        ).toBe(
+          PlanetRadiationProtectionRegime.STRONG,
+        );
+
+        expect(
+          atmosphere.hasEffectiveSurfaceRadiationProtection,
+        ).toBe(true);
       },
     );
 
@@ -474,6 +504,13 @@ describe(
                   geologyState,
                 );
 
+              const surfaceRadiationState =
+                surfaceRadiationFixture(
+                  planet,
+                  retention,
+                  magnetosphereState,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
@@ -484,6 +521,7 @@ describe(
                 waterInventory,
                 geologyState,
                 magnetosphereState,
+                surfaceRadiationState,
               );
             })(),
         ).toThrow(
@@ -543,6 +581,13 @@ describe(
                   geologyState,
                 );
 
+              const surfaceRadiationState =
+                surfaceRadiationFixture(
+                  planet,
+                  retention,
+                  magnetosphereState,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
@@ -553,6 +598,7 @@ describe(
                 waterInventory,
                 geologyState,
                 magnetosphereState,
+                surfaceRadiationState,
               );
             })(),
         ).toThrow(
@@ -991,6 +1037,48 @@ describe(
         0.56,
         PlanetMagneticFieldRegime.STRONG,
         PlanetMagnetosphereRegime.GLOBAL,
+        true,
+      );
+    }
+
+    function surfaceRadiationFixture(
+      planet:
+        Planet,
+
+      retention:
+        AtmosphereRetentionState,
+
+      magnetosphereState:
+        PlanetMagnetosphereState,
+    ): PlanetSurfaceRadiationState {
+
+      return new PlanetSurfaceRadiationState(
+        planet.planetOrdinal,
+        planet.locator,
+        planet.seed,
+        planet.planetType,
+        planet.surfaceGravityEarth,
+        planet.typeClassification
+          .referenceMeanInsolationEarth,
+        retention.retainedSurfacePressurePascal,
+        magnetosphereState.stellarWindPressureProxyEarth,
+        magnetosphereState.magnetosphericProtectionIndex01,
+        magnetosphereState.magneticFieldRegime,
+        magnetosphereState.magnetosphereRegime,
+        0.4791666666666667,
+        0.6922186552431729,
+        0.5963452603837451,
+        0.9259259259259258,
+        0.7874015748031495,
+        0.56,
+        0.9064566929133858,
+        0.4330708661417323,
+        0.6934330708661418,
+        0.06475242223849524,
+        0.27165354330708663,
+        0.15785792671936139,
+        PlanetSurfaceRadiationRegime.LOW,
+        PlanetRadiationProtectionRegime.STRONG,
         true,
       );
     }

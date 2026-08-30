@@ -47,6 +47,10 @@ import {
 } from './planet-magnetosphere-engine';
 
 import {
+  PlanetSurfaceRadiationEngine,
+} from './planet-surface-radiation-engine';
+
+import {
   PlanetWaterEngine,
 } from './planet-water-engine';
 
@@ -60,9 +64,10 @@ import {
  * 20.5 derives global-mean equilibrium/surface temperatures, point 20.6
  * refines seasons, coarse extrema and climate stability, point 20.7 derives
  * the water/hydrosphere state, point 20.8 derives approximate geology,
- * volcanism and tectonic mobility and point 20.9 derives the intrinsic/induced
- * magnetic-field and magnetosphere state. The Planet BodySeed remains the canonical
- * identity; no AtmosphereSeed is introduced.
+ * volcanism and tectonic mobility, point 20.9 derives the intrinsic/induced
+ * magnetic-field and magnetosphere state and point 20.10 derives normalized
+ * surface-radiation exposure/protection. The Planet BodySeed remains the
+ * canonical identity; no AtmosphereSeed is introduced.
  */
 export class AtmosphereGenerator {
 
@@ -153,6 +158,15 @@ export class AtmosphereGenerator {
           geologyState,
         );
 
+    const surfaceRadiationState =
+      PlanetSurfaceRadiationEngine
+        .generate(
+          generationKey,
+          planet,
+          retentionState,
+          magnetosphereState,
+        );
+
     return new Atmosphere(
       planet,
       bulkProperties,
@@ -163,6 +177,7 @@ export class AtmosphereGenerator {
       waterInventory,
       geologyState,
       magnetosphereState,
+      surfaceRadiationState,
     );
   }
 
@@ -278,6 +293,16 @@ export class AtmosphereGenerator {
           geologyStates,
         );
 
+    const surfaceRadiationStates =
+      PlanetSurfaceRadiationEngine
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          planets,
+          retentionStates,
+          magnetosphereStates,
+        );
+
     return Object.freeze(
       planets.map(
         (
@@ -315,6 +340,7 @@ export class AtmosphereGenerator {
             waterInventories[index],
             geologyStates[index],
             magnetosphereStates[index],
+            surfaceRadiationStates[index],
           );
         },
       ),

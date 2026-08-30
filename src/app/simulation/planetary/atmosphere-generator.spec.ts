@@ -36,6 +36,14 @@ import {
 } from '../../domain/planetary/planet-magnetosphere-regime';
 
 import {
+  PlanetRadiationProtectionRegime,
+} from '../../domain/planetary/planet-radiation-protection-regime';
+
+import {
+  PlanetSurfaceRadiationRegime,
+} from '../../domain/planetary/planet-surface-radiation-regime';
+
+import {
   PlanetTectonicRegime,
 } from '../../domain/planetary/planet-tectonic-regime';
 
@@ -72,7 +80,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.9',
+  'AtmosphereGenerator through point 20.10',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -250,6 +258,30 @@ describe(
         expect(
           atmosphere.magnetosphericProtectionIndex01,
         ).toBeLessThanOrEqual(1);
+
+        expect(
+          atmosphere.surfaceRadiationState,
+        ).toBeDefined();
+
+        expect(
+          atmosphere.surfaceRadiationExposureIndex01,
+        ).not.toBeNull();
+
+        expect(
+          atmosphere.surfaceRadiationProtectionIndex01,
+        ).not.toBeNull();
+
+        expect(
+          atmosphere.surfaceRadiationRegime,
+        ).not.toBe(
+          PlanetSurfaceRadiationRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.surfaceRadiationProtectionRegime,
+        ).not.toBe(
+          PlanetRadiationProtectionRegime.DEEP_ENVELOPE,
+        );
       },
     );
 
@@ -380,6 +412,22 @@ describe(
         ).toBe(
           PlanetMagnetosphereRegime.GLOBAL,
         );
+
+        expect(
+          atmosphere.surfaceRadiationRegime,
+        ).toBe(
+          PlanetSurfaceRadiationRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.surfaceRadiationProtectionRegime,
+        ).toBe(
+          PlanetRadiationProtectionRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.surfaceRadiationExposureIndex01,
+        ).toBeNull();
       },
     );
 
@@ -436,6 +484,15 @@ describe(
           atmospheres.every(
             atmosphere =>
               atmosphere.magnetosphereState
+                .planetOrdinal ===
+              atmosphere.planetOrdinal,
+          ),
+        ).toBe(true);
+
+        expect(
+          atmospheres.every(
+            atmosphere =>
+              atmosphere.surfaceRadiationState
                 .planetOrdinal ===
               atmosphere.planetOrdinal,
           ),

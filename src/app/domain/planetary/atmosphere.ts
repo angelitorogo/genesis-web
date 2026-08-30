@@ -68,6 +68,18 @@ import {
 } from './planet-magnetosphere-state';
 
 import {
+  type PlanetRadiationProtectionRegime,
+} from './planet-radiation-protection-regime';
+
+import {
+  type PlanetSurfaceRadiationRegime,
+} from './planet-surface-radiation-regime';
+
+import {
+  type PlanetSurfaceRadiationState,
+} from './planet-surface-radiation-state';
+
+import {
   type PlanetTectonicRegime,
 } from './planet-tectonic-regime';
 
@@ -124,9 +136,10 @@ const CONSISTENCY_TOLERANCE =
  * mean thermal climate baseline, point 20.6 adds seasons, coarse thermal
  * extrema and a stability assessment, point 20.7 adds the deterministic
  * water/hydrosphere state, point 20.8 adds approximate geology, volcanism and
- * tectonic mobility and point 20.9 adds intrinsic/induced magnetic-field and
- * magnetosphere state. BodyLocator/BodySeed remain the canonical identity;
- * no AtmosphereSeed exists.
+ * tectonic mobility, point 20.9 adds intrinsic/induced magnetic-field and
+ * magnetosphere state and point 20.10 closes phase 20 with normalized surface-
+ * radiation exposure and protection. BodyLocator/BodySeed remain the canonical
+ * identity; no AtmosphereSeed exists.
  */
 export class Atmosphere {
 
@@ -157,6 +170,9 @@ export class Atmosphere {
 
     readonly magnetosphereState:
       PlanetMagnetosphereState,
+
+    readonly surfaceRadiationState:
+      PlanetSurfaceRadiationState,
   ) {
     if (
       !hostPlanet
@@ -253,6 +269,13 @@ export class Atmosphere {
       retentionState,
       geologyState,
       magnetosphereState,
+    );
+
+    assertSurfaceRadiationIdentity(
+      hostPlanet,
+      retentionState,
+      magnetosphereState,
+      surfaceRadiationState,
     );
 
     if (
@@ -555,6 +578,38 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.9 magnetosphere state must preserve the exact phase-19 spin/interior, point-20.3 retained-atmosphere and point-20.8 geology handoff.',
+      );
+    }
+
+    if (
+      surfaceRadiationState.sourcePlanetType !==
+        hostPlanet.planetType ||
+      !approximatelyEqual(
+        surfaceRadiationState.sourceSurfaceGravityEarth,
+        hostPlanet.surfaceGravityEarth,
+      ) ||
+      !approximatelyEqual(
+        surfaceRadiationState.sourceReferenceMeanInsolationEarth,
+        hostPlanet.typeClassification
+          .referenceMeanInsolationEarth,
+      ) ||
+      surfaceRadiationState.sourceRetainedSurfacePressurePascal !==
+        retentionState.retainedSurfacePressurePascal ||
+      !approximatelyEqual(
+        surfaceRadiationState.sourceStellarWindPressureProxyEarth,
+        magnetosphereState.stellarWindPressureProxyEarth,
+      ) ||
+      !approximatelyEqual(
+        surfaceRadiationState.sourceMagnetosphericProtectionIndex01,
+        magnetosphereState.magnetosphericProtectionIndex01,
+      ) ||
+      surfaceRadiationState.sourceMagneticFieldRegime !==
+        magnetosphereState.magneticFieldRegime ||
+      surfaceRadiationState.sourceMagnetosphereRegime !==
+        magnetosphereState.magnetosphereRegime
+    ) {
+      throw new RangeError(
+        'Point-20.10 surface-radiation state must preserve the exact phase-19 gravity/irradiation, point-20.3 atmosphere and point-20.9 magnetosphere handoff.',
       );
     }
   }
@@ -1161,6 +1216,70 @@ export class Atmosphere {
       .hasInducedMagnetosphere;
   }
 
+  get surfaceRadiationRegime():
+    PlanetSurfaceRadiationRegime {
+
+    return this
+      .surfaceRadiationState
+      .radiationRegime;
+  }
+
+  get surfaceRadiationProtectionRegime():
+    PlanetRadiationProtectionRegime {
+
+    return this
+      .surfaceRadiationState
+      .protectionRegime;
+  }
+
+  get atmosphericRadiationShieldingIndex01():
+    number | null {
+
+    return this
+      .surfaceRadiationState
+      .atmosphericRadiationShieldingIndex01;
+  }
+
+  get surfaceRadiationProtectionIndex01():
+    number | null {
+
+    return this
+      .surfaceRadiationState
+      .surfaceRadiationProtectionIndex01;
+  }
+
+  get surfaceRadiationExposureIndex01():
+    number | null {
+
+    return this
+      .surfaceRadiationState
+      .surfaceRadiationExposureIndex01;
+  }
+
+  get surfaceParticleRadiationExposureIndex01():
+    number | null {
+
+    return this
+      .surfaceRadiationState
+      .surfaceParticleRadiationExposureIndex01;
+  }
+
+  get surfaceElectromagneticRadiationExposureIndex01():
+    number | null {
+
+    return this
+      .surfaceRadiationState
+      .surfaceElectromagneticRadiationExposureIndex01;
+  }
+
+  get hasEffectiveSurfaceRadiationProtection():
+    boolean {
+
+    return this
+      .surfaceRadiationState
+      .hasEffectiveSurfaceRadiationProtection;
+  }
+
   get isVacuum():
     boolean {
 
@@ -1452,6 +1571,50 @@ function assertMagnetosphereIdentity(
   ) {
     throw new RangeError(
       'Point-20.9 magnetosphere state must preserve the exact host Planet and point-20.3/20.8 source identity.',
+    );
+  }
+}
+
+function assertSurfaceRadiationIdentity(
+  hostPlanet:
+    Planet,
+
+  retentionState:
+    AtmosphereRetentionState,
+
+  magnetosphereState:
+    PlanetMagnetosphereState,
+
+  surfaceRadiationState:
+    PlanetSurfaceRadiationState,
+): void {
+
+  if (
+    surfaceRadiationState.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    surfaceRadiationState.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    surfaceRadiationState.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    surfaceRadiationState.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    surfaceRadiationState.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    surfaceRadiationState.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    surfaceRadiationState.sourceRetainedSurfacePressurePascal !==
+      retentionState.retainedSurfacePressurePascal ||
+    !approximatelyEqual(
+      surfaceRadiationState.sourceStellarWindPressureProxyEarth,
+      magnetosphereState.stellarWindPressureProxyEarth,
+    ) ||
+    !approximatelyEqual(
+      surfaceRadiationState.sourceMagnetosphericProtectionIndex01,
+      magnetosphereState.magnetosphericProtectionIndex01,
+    )
+  ) {
+    throw new RangeError(
+      'Point-20.10 surface-radiation state must preserve the exact host Planet and point-20.3/20.9 source identity.',
     );
   }
 }
