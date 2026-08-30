@@ -39,6 +39,10 @@ import {
 } from './climate-variability-engine';
 
 import {
+  PlanetGeologyEngine,
+} from './planet-geology-engine';
+
+import {
   PlanetWaterEngine,
 } from './planet-water-engine';
 
@@ -50,9 +54,10 @@ import {
  * applies deterministic retention/loss, point 20.4 derives an approximate
  * greenhouse/longwave blanketing state from the retained atmosphere and point
  * 20.5 derives global-mean equilibrium/surface temperatures, point 20.6
- * refines seasons, coarse extrema and climate stability and point 20.7 derives
- * the water/hydrosphere state. The Planet BodySeed
- * remains the canonical identity; no AtmosphereSeed is introduced.
+ * refines seasons, coarse extrema and climate stability, point 20.7 derives
+ * the water/hydrosphere state and point 20.8 derives approximate geology,
+ * volcanism and tectonic mobility. The Planet BodySeed remains the canonical
+ * identity; no AtmosphereSeed is introduced.
  */
 export class AtmosphereGenerator {
 
@@ -126,6 +131,14 @@ export class AtmosphereGenerator {
           climateVariabilityState,
         );
 
+    const geologyState =
+      PlanetGeologyEngine
+        .generate(
+          generationKey,
+          planet,
+          waterInventory,
+        );
+
     return new Atmosphere(
       planet,
       bulkProperties,
@@ -134,6 +147,7 @@ export class AtmosphereGenerator {
       climateState,
       climateVariabilityState,
       waterInventory,
+      geologyState,
     );
   }
 
@@ -230,6 +244,15 @@ export class AtmosphereGenerator {
           climateVariabilityStates,
         );
 
+    const geologyStates =
+      PlanetGeologyEngine
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          planets,
+          waterInventories,
+        );
+
     return Object.freeze(
       planets.map(
         (
@@ -265,6 +288,7 @@ export class AtmosphereGenerator {
             climateStates[index],
             climateVariabilityStates[index],
             waterInventories[index],
+            geologyStates[index],
           );
         },
       ),

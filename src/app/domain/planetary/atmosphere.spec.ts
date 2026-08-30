@@ -76,6 +76,22 @@ import {
 } from './planet-climate-variability-state';
 
 import {
+  PlanetGeologyRegime,
+} from './planet-geology-regime';
+
+import {
+  PlanetGeologyState,
+} from './planet-geology-state';
+
+import {
+  PlanetTectonicRegime,
+} from './planet-tectonic-regime';
+
+import {
+  PlanetVolcanismRegime,
+} from './planet-volcanism-regime';
+
+import {
   PlanetSurfaceWaterRegime,
 } from './planet-surface-water-regime';
 
@@ -100,7 +116,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.7',
+  'Atmosphere through point 20.8',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -131,7 +147,7 @@ describe(
       );
 
     it(
-      'should preserve exact identity and expose point-20.2 through point-20.7 atmosphere/climate/water states',
+      'should preserve exact identity and expose point-20.2 through point-20.8 atmosphere/climate/water/geology states',
       () => {
         const planet =
           planetFixture();
@@ -170,6 +186,12 @@ describe(
             variability,
           );
 
+        const geologyState =
+          geologyFixture(
+            planet,
+            waterInventory,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
@@ -179,6 +201,7 @@ describe(
             climate,
             variability,
             waterInventory,
+            geologyState,
           );
 
         expect(
@@ -300,10 +323,37 @@ describe(
           PlanetSurfaceWaterRegime.SEAS,
         );
 
+        expect(
+          atmosphere.geologyState,
+        ).toBe(
+          geologyState,
+        );
+
+        expect(
+          atmosphere.geologyRegime,
+        ).toBe(
+          PlanetGeologyRegime.ACTIVE,
+        );
+
+        expect(
+          atmosphere.volcanismRegime,
+        ).toBe(
+          PlanetVolcanismRegime.MODERATE,
+        );
+
+        expect(
+          atmosphere.tectonicRegime,
+        ).toBe(
+          PlanetTectonicRegime.PLATE_TECTONICS,
+        );
+
+        expect(
+          atmosphere.isGeologicallyActive,
+        ).toBe(true);
+
         for (
           const laterProperty
           of [
-            'geology',
             'magnetosphere',
             'surfaceRadiation',
           ]
@@ -362,6 +412,20 @@ describe(
                   climate,
                 );
 
+              const waterInventory =
+                waterInventoryFixture(
+                  planet,
+                  retention,
+                  climate,
+                  variability,
+                );
+
+              const geologyState =
+                geologyFixture(
+                  planet,
+                  waterInventory,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
@@ -369,12 +433,8 @@ describe(
                 greenhouse,
                 climate,
                 variability,
-                waterInventoryFixture(
-                  planet,
-                  retention,
-                  climate,
-                  variability,
-                ),
+                waterInventory,
+                geologyState,
               );
             })(),
         ).toThrow(
@@ -413,6 +473,20 @@ describe(
                   climate,
                 );
 
+              const waterInventory =
+                waterInventoryFixture(
+                  planet,
+                  retention,
+                  climate,
+                  variability,
+                );
+
+              const geologyState =
+                geologyFixture(
+                  planet,
+                  waterInventory,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
@@ -420,12 +494,8 @@ describe(
                 greenhouse,
                 climate,
                 variability,
-                waterInventoryFixture(
-                  planet,
-                  retention,
-                  climate,
-                  variability,
-                ),
+                waterInventory,
+                geologyState,
               );
             })(),
         ).toThrow(
@@ -475,12 +545,22 @@ describe(
             0.015,
         },
         internalComposition: {
+          metallicCoreMassFraction01:
+            0.30,
+          silicateInteriorMassFraction01:
+            0.60,
+          volatileRichInteriorMassFraction01:
+            0.03,
+          condensedIceMassFraction01:
+            0.02,
           iceBearingFractionOfSolids01:
             0.2,
         },
         typeClassification: {
           referenceMeanInsolationEarth:
             0.92,
+          tidalHeatingProxy:
+            0.02,
         },
         referenceBondAlbedo01:
           0.21,
@@ -760,6 +840,50 @@ describe(
         PlanetWaterPhaseRegime.ICE_AND_LIQUID,
         PlanetSurfaceWaterRegime.SEAS,
         true,
+      );
+    }
+
+    function geologyFixture(
+      planet:
+        Planet,
+
+      waterInventory:
+        PlanetWaterInventory,
+    ): PlanetGeologyState {
+
+      return new PlanetGeologyState(
+        planet.planetOrdinal,
+        planet.locator,
+        planet.seed,
+        planet.planetType,
+        planet.massEarth,
+        planet.radiusEarth,
+        planet.surfaceGravityEarth,
+        planet.internalComposition
+          .metallicCoreMassFraction01,
+        planet.internalComposition
+          .silicateInteriorMassFraction01,
+        planet.internalComposition
+          .volatileRichInteriorMassFraction01,
+        planet.internalComposition
+          .condensedIceMassFraction01,
+        planet.internalComposition
+          .iceBearingFractionOfSolids01,
+        planet.typeClassification
+          .tidalHeatingProxy,
+        waterInventory.waterInventoryIndex01,
+        waterInventory.surfaceLiquidWaterCoverageFraction01,
+        0.65,
+        0.05,
+        0.55,
+        0.45,
+        0.35,
+        0.70,
+        0.20,
+        0.65,
+        PlanetGeologyRegime.ACTIVE,
+        PlanetVolcanismRegime.MODERATE,
+        PlanetTectonicRegime.PLATE_TECTONICS,
       );
     }
 

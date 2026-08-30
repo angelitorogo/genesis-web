@@ -48,6 +48,22 @@ import {
 } from './planet-climate-variability-state';
 
 import {
+  type PlanetGeologyRegime,
+} from './planet-geology-regime';
+
+import {
+  type PlanetGeologyState,
+} from './planet-geology-state';
+
+import {
+  type PlanetTectonicRegime,
+} from './planet-tectonic-regime';
+
+import {
+  type PlanetVolcanismRegime,
+} from './planet-volcanism-regime';
+
+import {
   type PlanetSurfaceWaterRegime,
 } from './planet-surface-water-regime';
 
@@ -94,9 +110,10 @@ const CONSISTENCY_TOLERANCE =
  * atmospheric retention/loss state and point 20.4 adds an approximate retained-
  * atmosphere greenhouse/longwave blanketing state, point 20.5 adds a global-
  * mean thermal climate baseline, point 20.6 adds seasons, coarse thermal
- * extrema and a stability assessment and point 20.7 adds the deterministic
- * water/hydrosphere state. BodyLocator/
- * BodySeed remain the canonical identity; no AtmosphereSeed exists.
+ * extrema and a stability assessment, point 20.7 adds the deterministic
+ * water/hydrosphere state and point 20.8 adds approximate geology, volcanism
+ * and tectonic mobility. BodyLocator/BodySeed remain the canonical identity;
+ * no AtmosphereSeed exists.
  */
 export class Atmosphere {
 
@@ -121,6 +138,9 @@ export class Atmosphere {
 
     readonly waterInventory:
       PlanetWaterInventory,
+
+    readonly geologyState:
+      PlanetGeologyState,
   ) {
     if (
       !hostPlanet
@@ -204,6 +224,12 @@ export class Atmosphere {
       hostPlanet,
       climateVariabilityState,
       waterInventory,
+    );
+
+    assertGeologyIdentity(
+      hostPlanet,
+      waterInventory,
+      geologyState,
     );
 
     if (
@@ -388,6 +414,65 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.7 water inventory must preserve the exact phase-19 water/type and point-20.3/20.5/20.6 atmosphere-climate handoff.',
+      );
+    }
+
+    if (
+      geologyState.sourcePlanetType !==
+        hostPlanet.planetType ||
+      !approximatelyEqual(
+        geologyState.sourceMassEarth,
+        hostPlanet.massEarth,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceRadiusEarth,
+        hostPlanet.radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceSurfaceGravityEarth,
+        hostPlanet.surfaceGravityEarth,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceMetallicCoreMassFraction01,
+        hostPlanet.internalComposition
+          .metallicCoreMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceSilicateInteriorMassFraction01,
+        hostPlanet.internalComposition
+          .silicateInteriorMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceVolatileRichInteriorMassFraction01,
+        hostPlanet.internalComposition
+          .volatileRichInteriorMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceCondensedIceMassFraction01,
+        hostPlanet.internalComposition
+          .condensedIceMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceIceBearingInteriorFraction01,
+        hostPlanet.internalComposition
+          .iceBearingFractionOfSolids01,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceTidalHeatingProxy,
+        hostPlanet.typeClassification
+          .tidalHeatingProxy,
+      ) ||
+      !approximatelyEqual(
+        geologyState.sourceWaterInventoryIndex01,
+        waterInventory.waterInventoryIndex01,
+      ) ||
+      !nullableApproximatelyEqual(
+        geologyState.sourceSurfaceLiquidWaterCoverageFraction01,
+        waterInventory.surfaceLiquidWaterCoverageFraction01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.8 geology state must preserve the exact phase-19 bulk/interior/tidal and point-20.7 water handoff.',
       );
     }
   }
@@ -818,6 +903,118 @@ export class Atmosphere {
       .hasPersistentSurfaceLiquidWater;
   }
 
+  get geologyRegime():
+    PlanetGeologyRegime {
+
+    return this
+      .geologyState
+      .geologyRegime;
+  }
+
+  get volcanismRegime():
+    PlanetVolcanismRegime {
+
+    return this
+      .geologyState
+      .volcanismRegime;
+  }
+
+  get tectonicRegime():
+    PlanetTectonicRegime {
+
+    return this
+      .geologyState
+      .tectonicRegime;
+  }
+
+  get internalHeatRetentionIndex01():
+    number | null {
+
+    return this
+      .geologyState
+      .internalHeatRetentionIndex01;
+  }
+
+  get tidalHeatingIndex01():
+    number | null {
+
+    return this
+      .geologyState
+      .tidalHeatingIndex01;
+  }
+
+  get mantleConvectionIndex01():
+    number | null {
+
+    return this
+      .geologyState
+      .mantleConvectionIndex01;
+  }
+
+  get geologicalActivityIndex01():
+    number | null {
+
+    return this
+      .geologyState
+      .geologicalActivityIndex01;
+  }
+
+  get volcanismIndex01():
+    number | null {
+
+    return this
+      .geologyState
+      .volcanismIndex01;
+  }
+
+  get tectonicMobilityIndex01():
+    number | null {
+
+    return this
+      .geologyState
+      .tectonicMobilityIndex01;
+  }
+
+  get volatileOutgassingPotential01():
+    number | null {
+
+    return this
+      .geologyState
+      .volatileOutgassingPotential01;
+  }
+
+  get surfaceRenewalPotential01():
+    number | null {
+
+    return this
+      .geologyState
+      .surfaceRenewalPotential01;
+  }
+
+  get isGeologicallyActive():
+    boolean {
+
+    return this
+      .geologyState
+      .isGeologicallyActive;
+  }
+
+  get hasActiveVolcanism():
+    boolean {
+
+    return this
+      .geologyState
+      .hasActiveVolcanism;
+  }
+
+  get supportsMobileLithosphere():
+    boolean {
+
+    return this
+      .geologyState
+      .supportsMobileLithosphere;
+  }
+
   get isVacuum():
     boolean {
 
@@ -1028,6 +1225,45 @@ function assertWaterIdentity(
   ) {
     throw new RangeError(
       'Point-20.7 water inventory must preserve the exact host Planet and point-20.6 climate-variability identity.',
+    );
+  }
+}
+
+function assertGeologyIdentity(
+  hostPlanet:
+    Planet,
+
+  waterInventory:
+    PlanetWaterInventory,
+
+  geologyState:
+    PlanetGeologyState,
+): void {
+
+  if (
+    geologyState.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    geologyState.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    geologyState.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    geologyState.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    geologyState.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    geologyState.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    !approximatelyEqual(
+      geologyState.sourceWaterInventoryIndex01,
+      waterInventory.waterInventoryIndex01,
+    ) ||
+    !nullableApproximatelyEqual(
+      geologyState.sourceSurfaceLiquidWaterCoverageFraction01,
+      waterInventory.surfaceLiquidWaterCoverageFraction01,
+    )
+  ) {
+    throw new RangeError(
+      'Point-20.8 geology state must preserve the exact host Planet and point-20.7 water identity.',
     );
   }
 }

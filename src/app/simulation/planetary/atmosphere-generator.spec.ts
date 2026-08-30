@@ -24,6 +24,18 @@ import {
 } from '../../domain/planetary/planet-climate-stability-regime';
 
 import {
+  PlanetGeologyRegime,
+} from '../../domain/planetary/planet-geology-regime';
+
+import {
+  PlanetTectonicRegime,
+} from '../../domain/planetary/planet-tectonic-regime';
+
+import {
+  PlanetVolcanismRegime,
+} from '../../domain/planetary/planet-volcanism-regime';
+
+import {
   PlanetSurfaceWaterRegime,
 } from '../../domain/planetary/planet-surface-water-regime';
 
@@ -52,7 +64,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.7',
+  'AtmosphereGenerator through point 20.8',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -71,7 +83,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere through point 20.7 while preserving identity',
+      'should materialize one Atmosphere through point 20.8 while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -188,6 +200,28 @@ describe(
         ).not.toBe(
           PlanetSurfaceWaterRegime.DEEP_ENVELOPE,
         );
+
+        expect(
+          atmosphere.geologyState,
+        ).toBeDefined();
+
+        expect(
+          atmosphere.geologyRegime,
+        ).not.toBe(
+          PlanetGeologyRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.geologicalActivityIndex01,
+        ).not.toBeNull();
+
+        expect(
+          atmosphere.geologicalActivityIndex01!,
+        ).toBeGreaterThanOrEqual(0);
+
+        expect(
+          atmosphere.geologicalActivityIndex01!,
+        ).toBeLessThanOrEqual(1);
       },
     );
 
@@ -280,6 +314,28 @@ describe(
         expect(
           atmosphere.surfaceLiquidWaterCoverageFraction01,
         ).toBeNull();
+
+        expect(
+          atmosphere.geologyRegime,
+        ).toBe(
+          PlanetGeologyRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.volcanismRegime,
+        ).toBe(
+          PlanetVolcanismRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.tectonicRegime,
+        ).toBe(
+          PlanetTectonicRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.geologicalActivityIndex01,
+        ).toBeNull();
       },
     );
 
@@ -318,6 +374,15 @@ describe(
           atmospheres.every(
             atmosphere =>
               atmosphere.waterInventory
+                .planetOrdinal ===
+              atmosphere.planetOrdinal,
+          ),
+        ).toBe(true);
+
+        expect(
+          atmospheres.every(
+            atmosphere =>
+              atmosphere.geologyState
                 .planetOrdinal ===
               atmosphere.planetOrdinal,
           ),
@@ -510,6 +575,22 @@ describe(
               : 0.01,
         },
         internalComposition: {
+          metallicCoreMassFraction01:
+            deep
+              ? 0.05
+              : 0.30,
+          silicateInteriorMassFraction01:
+            deep
+              ? 0.05
+              : 0.60,
+          volatileRichInteriorMassFraction01:
+            deep
+              ? 0.30
+              : 0.03,
+          condensedIceMassFraction01:
+            deep
+              ? 0.15
+              : 0.02,
           iceBearingFractionOfSolids01:
             deep
               ? 0.2
@@ -518,6 +599,8 @@ describe(
         typeClassification: {
           referenceMeanInsolationEarth:
             1,
+          tidalHeatingProxy:
+            0.02,
         },
         referenceBondAlbedo01:
           0.2,
