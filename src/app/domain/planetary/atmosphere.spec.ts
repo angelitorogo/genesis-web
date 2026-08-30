@@ -24,6 +24,25 @@ import {
 } from './atmosphere';
 
 import {
+  ATMOSPHERE_V1_DENSITY_REFERENCE_TEMPERATURE_KELVIN,
+  AtmosphereBulkProperties,
+  idealGasDensityKilogramsPerCubicMeter,
+} from './atmosphere-bulk-properties';
+
+import {
+  AtmosphereGas,
+  atmosphereGasMolarMassGramsPerMole,
+} from './atmosphere-gas';
+
+import {
+  AtmosphereGasComponent,
+} from './atmosphere-gas-component';
+
+import {
+  AtmospherePressureRegime,
+} from './atmosphere-pressure-regime';
+
+import {
   type Planet,
 } from './planet';
 
@@ -36,7 +55,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere point 20.1',
+  'Atmosphere through point 20.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -67,14 +86,18 @@ describe(
       );
 
     it(
-      'should bind the exact coherent Planet and reuse its canonical BodyLocator/BodySeed without point-20.2 bulk properties',
+      'should preserve the exact Planet identity and expose the point-20.2 bulk state',
       () => {
         const planet =
           planetFixture();
 
+        const bulk =
+          bulkFixture();
+
         const atmosphere =
           new Atmosphere(
             planet,
+            bulk,
           );
 
         expect(
@@ -84,26 +107,10 @@ describe(
         );
 
         expect(
-          atmosphere.generationKey,
+          atmosphere.bulkProperties,
         ).toBe(
-          generationKey,
+          bulk,
         );
-
-        expect(
-          atmosphere.hostPlanetarySystem,
-        ).toBe(
-          planet.hostPlanetarySystem,
-        );
-
-        expect(
-          atmosphere.systemLocator,
-        ).toBe(
-          systemLocator,
-        );
-
-        expect(
-          atmosphere.planetOrdinal,
-        ).toBe(2);
 
         expect(
           atmosphere.locator,
@@ -118,51 +125,31 @@ describe(
         );
 
         expect(
-          atmosphere.name,
-        ).toBe(
-          'Testara c',
-        );
+          atmosphere.surfacePressurePascal,
+        ).toBe(101_325);
 
         expect(
-          atmosphere.planetType,
-        ).toBe(
-          PlanetType.ROCKY,
-        );
+          atmosphere.referenceDensityKilogramsPerCubicMeter,
+        ).toBeGreaterThan(0);
 
         expect(
-          atmosphere.sourceMassEarth,
-        ).toBe(1.2);
-
-        expect(
-          atmosphere.sourceRadiusEarth,
-        ).toBe(1.05);
-
-        expect(
-          atmosphere.sourceSurfaceGravityEarth,
-        ).toBe(1.08);
-
-        expect(
-          atmosphere.sourceEnvelopeMassFraction01,
-        ).toBe(0.015);
-
-        expect(
-          atmosphere.sourceReferenceMeanInsolationEarth,
-        ).toBe(0.92);
-
-        expect(
-          atmosphere.sourceReferenceBondAlbedo01,
-        ).toBe(0.21);
+          atmosphere.gasComposition,
+        ).toHaveLength(1);
 
         for (
-          const point202Property
+          const laterProperty
           of [
-            'surfacePressurePascal',
-            'atmosphericDensityKilogramsPerCubicMeter',
-            'gasComposition',
+            'retentionAssessment',
+            'greenhouseEffect',
+            'climate',
+            'waterInventory',
+            'geology',
+            'magnetosphere',
+            'surfaceRadiation',
           ]
         ) {
           expect(
-            point202Property in
+            laterProperty in
               atmosphere,
           ).toBe(false);
         }
@@ -170,43 +157,40 @@ describe(
     );
 
     it(
-      'should reject a physically incoherent host Planet',
+      'should reject bulk properties from another body or with altered phase-19 source values',
       () => {
         const planet =
-          planetFixture({
-            isTypePhysicallyCoherent:
-              false,
-          });
+          planetFixture();
+
+        const wrongLocator =
+          new BodyLocator(
+            4n,
+            -9n,
+            12n,
+            0n,
+          );
 
         expect(
           () =>
             new Atmosphere(
               planet,
+              bulkFixture({
+                bodyLocator:
+                  wrongLocator,
+              }),
             ),
         ).toThrow(
           RangeError,
         );
-      },
-    );
-
-    it(
-      'should reject a host Planet whose BodyLocator does not belong to planetOrdinal',
-      () => {
-        const planet =
-          planetFixture({
-            locator:
-              new BodyLocator(
-                4n,
-                -9n,
-                12n,
-                0n,
-              ),
-          });
 
         expect(
           () =>
             new Atmosphere(
               planet,
+              bulkFixture({
+                sourceMassEarth:
+                  2,
+              }),
             ),
         ).toThrow(
           RangeError,
@@ -254,6 +238,10 @@ describe(
           envelopeMassFraction01:
             0.015,
         },
+        internalComposition: {
+          iceBearingFractionOfSolids01:
+            0.2,
+        },
         typeClassification: {
           referenceMeanInsolationEarth:
             0.92,
@@ -264,6 +252,91 @@ describe(
           true,
         ...overrides,
       } as unknown as Planet;
+    }
+
+    function bulkFixture(
+      overrides:
+        Partial<AtmosphereBulkProperties> = {},
+    ): AtmosphereBulkProperties {
+
+      const gasComponents = [
+        new AtmosphereGasComponent(
+          AtmosphereGas.NITROGEN,
+          1,
+        ),
+      ];
+
+      const meanMolarMass =
+        atmosphereGasMolarMassGramsPerMole(
+          AtmosphereGas.NITROGEN,
+        );
+
+      const pressure =
+        101_325;
+
+      const values = {
+        planetOrdinal:
+          2,
+        bodyLocator:
+          locator,
+        bodySeed:
+          seed,
+        sourcePlanetType:
+          PlanetType.ROCKY,
+        sourceMassEarth:
+          1.2,
+        sourceRadiusEarth:
+          1.05,
+        sourceSurfaceGravityEarth:
+          1.08,
+        sourceEnvelopeMassFraction01:
+          0.015,
+        sourceIceBearingInteriorFraction01:
+          0.2,
+        sourceReferenceMeanInsolationEarth:
+          0.92,
+        sourceReferenceBondAlbedo01:
+          0.21,
+        pressureRegime:
+          AtmospherePressureRegime.MODERATE,
+        surfacePressurePascal:
+          pressure,
+        densityReferencePressurePascal:
+          pressure,
+        densityReferenceTemperatureKelvin:
+          ATMOSPHERE_V1_DENSITY_REFERENCE_TEMPERATURE_KELVIN,
+        referenceDensityKilogramsPerCubicMeter:
+          idealGasDensityKilogramsPerCubicMeter(
+            pressure,
+            ATMOSPHERE_V1_DENSITY_REFERENCE_TEMPERATURE_KELVIN,
+            meanMolarMass,
+          ),
+        meanMolarMassGramsPerMole:
+          meanMolarMass,
+        gasComponents,
+        ...overrides,
+      };
+
+      return new AtmosphereBulkProperties(
+        values.planetOrdinal,
+        values.bodyLocator,
+        values.bodySeed,
+        values.sourcePlanetType,
+        values.sourceMassEarth,
+        values.sourceRadiusEarth,
+        values.sourceSurfaceGravityEarth,
+        values.sourceEnvelopeMassFraction01,
+        values.sourceIceBearingInteriorFraction01,
+        values.sourceReferenceMeanInsolationEarth,
+        values.sourceReferenceBondAlbedo01,
+        values.pressureRegime,
+        values.surfacePressurePascal,
+        values.densityReferencePressurePascal,
+        values.densityReferenceTemperatureKelvin,
+        values.referenceDensityKilogramsPerCubicMeter,
+        values.meanMolarMassGramsPerMole,
+        values.gasComponents,
+      );
     }
   },
 );

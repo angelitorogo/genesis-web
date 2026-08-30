@@ -18,13 +18,17 @@ import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
+import {
+  AtmosphereBulkPropertiesGenerator,
+} from './atmosphere-bulk-properties-generator';
+
 /**
- * Point-20.1 deterministic Atmosphere materializer.
+ * Phase-20 deterministic Atmosphere materializer.
  *
- * V1 binds one already-generated, physically coherent phase-19 Planet into an
- * Atmosphere aggregate. It consumes zero PRNG draws, derives zero new seeds and
- * deliberately does not materialize pressure, density or gases before point
- * 20.2. BodyLocator/BodySeed remain the canonical identity throughout phase 20.
+ * Point 20.1 binds the physical Planet into the atmosphere aggregate. Point
+ * 20.2 now delegates baseline pressure/density/gas materialization to the
+ * dedicated AtmosphereBulkPropertiesGenerator. The Planet BodySeed remains the
+ * canonical identity; no AtmosphereSeed is introduced.
  */
 export class AtmosphereGenerator {
 
@@ -47,8 +51,16 @@ export class AtmosphereGenerator {
       planet,
     );
 
+    const bulkProperties =
+      AtmosphereBulkPropertiesGenerator
+        .generate(
+          generationKey,
+          planet,
+        );
+
     return new Atmosphere(
       planet,
+      bulkProperties,
     );
   }
 
@@ -88,6 +100,14 @@ export class AtmosphereGenerator {
       );
     }
 
+    const bulkProperties =
+      AtmosphereBulkPropertiesGenerator
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          planets,
+        );
+
     return Object.freeze(
       planets.map(
         (
@@ -115,9 +135,9 @@ export class AtmosphereGenerator {
             );
           }
 
-          return this.generate(
-            generationKey,
+          return new Atmosphere(
             planet,
+            bulkProperties[index],
           );
         },
       ),

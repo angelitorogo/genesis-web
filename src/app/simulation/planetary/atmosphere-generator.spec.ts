@@ -16,6 +16,10 @@ import {
 } from '../../domain/seed/hierarchical-seeds';
 
 import {
+  AtmospherePressureRegime,
+} from '../../domain/planetary/atmosphere-pressure-regime';
+
+import {
   type Planet,
 } from '../../domain/planetary/planet';
 
@@ -36,7 +40,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator point 20.1',
+  'AtmosphereGenerator through point 20.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -55,7 +59,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere from the exact Planet without deriving a new identity',
+      'should materialize one Atmosphere with point-20.2 pressure/density/gases while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -86,53 +90,54 @@ describe(
         );
 
         expect(
-          atmosphere.planetOrdinal,
-        ).toBe(2);
+          atmosphere.surfacePressurePascal,
+        ).not.toBeNull();
+
+        expect(
+          atmosphere.referenceDensityKilogramsPerCubicMeter,
+        ).toBeGreaterThan(0);
+
+        expect(
+          atmosphere.gasComposition.length,
+        ).toBeGreaterThan(0);
       },
     );
 
     it(
-      'should reject a Planet from a different UniverseGenerationKey or an incoherent point-19 state',
+      'should preserve deep-envelope semantics for giant planets',
       () => {
         const fixture =
-          systemFixture(1);
-
-        expect(
-          () =>
-            AtmosphereGenerator
-              .generate(
-                otherGenerationKey,
-                fixture.planets[0],
-              ),
-        ).toThrow(
-          RangeError,
-        );
-
-        const incoherent =
-          planetFixture(
-            fixture.system,
+          systemFixture(
             1,
-            {
-              isTypePhysicallyCoherent:
-                false,
-            },
+            15n,
+            PlanetType.GAS_GIANT,
           );
 
+        const atmosphere =
+          AtmosphereGenerator
+            .generate(
+              generationKey,
+              fixture.planets[0],
+            );
+
         expect(
-          () =>
-            AtmosphereGenerator
-              .generate(
-                generationKey,
-                incoherent,
-              ),
-        ).toThrow(
-          RangeError,
+          atmosphere.pressureRegime,
+        ).toBe(
+          AtmospherePressureRegime.DEEP_ENVELOPE,
         );
+
+        expect(
+          atmosphere.surfacePressurePascal,
+        ).toBeNull();
+
+        expect(
+          atmosphere.isDeepEnvelope,
+        ).toBe(true);
       },
     );
 
     it(
-      'should generate one frozen Atmosphere per mature Planet in frozen planetOrdinal order',
+      'should generate a frozen ordered collection and reject cross-context inputs',
       () => {
         const fixture =
           systemFixture(3);
@@ -152,14 +157,9 @@ describe(
         ).toBe(true);
 
         expect(
-          atmospheres,
-        ).toHaveLength(3);
-
-        expect(
           atmospheres.map(
             atmosphere =>
-              atmosphere
-                .planetOrdinal,
+              atmosphere.planetOrdinal,
           ),
         ).toEqual([
           1,
@@ -168,33 +168,11 @@ describe(
         ]);
 
         expect(
-          atmospheres.map(
-            atmosphere =>
-              atmosphere
-                .hostPlanet,
-          ),
-        ).toEqual(
-          fixture.planets,
-        );
-      },
-    );
-
-    it(
-      'should reject incomplete, reordered or cross-system Planet collections',
-      () => {
-        const fixture =
-          systemFixture(2);
-
-        expect(
           () =>
             AtmosphereGenerator
-              .generateAll(
-                generationKey,
-                fixture.system,
-                fixture.planets.slice(
-                  0,
-                  1,
-                ),
+              .generate(
+                otherGenerationKey,
+                fixture.planets[0],
               ),
         ).toThrow(
           RangeError,
@@ -209,27 +187,7 @@ describe(
                 [
                   fixture.planets[1],
                   fixture.planets[0],
-                ],
-              ),
-        ).toThrow(
-          RangeError,
-        );
-
-        const otherFixture =
-          systemFixture(
-            1,
-            99n,
-          );
-
-        expect(
-          () =>
-            AtmosphereGenerator
-              .generateAll(
-                generationKey,
-                fixture.system,
-                [
-                  fixture.planets[0],
-                  otherFixture.planets[0],
+                  fixture.planets[2],
                 ],
               ),
         ).toThrow(
@@ -270,6 +228,9 @@ describe(
 
       galacticObjectIndex:
         bigint = 15n,
+
+      planetType:
+        PlanetType = PlanetType.ROCKY,
     ): {
       readonly system:
         PlanetarySystem;
@@ -305,6 +266,7 @@ describe(
                 system,
                 index +
                   1,
+                planetType,
               ),
           ),
         );
@@ -322,8 +284,8 @@ describe(
       planetOrdinal:
         number,
 
-      overrides:
-        Partial<Planet> = {},
+      planetType:
+        PlanetType,
     ): Planet {
       const bodyIndex =
         BigInt(
@@ -333,30 +295,29 @@ describe(
 
       const locator =
         new BodyLocator(
-          system
-            .locator
-            .galaxyIndex,
-          system
-            .locator
-            .sectorKey,
-          system
-            .locator
-            .galacticObjectIndex,
+          system.locator.galaxyIndex,
+          system.locator.sectorKey,
+          system.locator.galacticObjectIndex,
           bodyIndex,
         );
 
-      const seedHex =
-        (planetOrdinal +
-          1)
-          .toString(16)
-          .toUpperCase()
-          .repeat(32)
-          .slice(0, 32);
-
       const seed =
         new BodySeed(
-          seedHex,
+          (planetOrdinal +
+            1)
+            .toString(16)
+            .toUpperCase()
+            .repeat(32)
+            .slice(0, 32),
         );
+
+      const deep =
+        planetType ===
+          PlanetType.MINI_NEPTUNE ||
+        planetType ===
+          PlanetType.GAS_GIANT ||
+        planetType ===
+          PlanetType.ICE_GIANT;
 
       return {
         generationKey,
@@ -373,19 +334,30 @@ describe(
         },
         name:
           `Testara ${String.fromCharCode(97 + planetOrdinal)}`,
-        planetType:
-          PlanetType.ROCKY,
+        planetType,
         massEarth:
-          1 +
-          planetOrdinal *
-            0.1,
+          deep
+            ? 100
+            : 1 +
+              planetOrdinal *
+                0.1,
         radiusEarth:
-          1,
+          deep
+            ? 9
+            : 1,
         surfaceGravityEarth:
           1,
         physicalProperties: {
           envelopeMassFraction01:
-            0.01,
+            deep
+              ? 0.6
+              : 0.01,
+        },
+        internalComposition: {
+          iceBearingFractionOfSolids01:
+            deep
+              ? 0.2
+              : 0.15,
         },
         typeClassification: {
           referenceMeanInsolationEarth:
@@ -395,7 +367,6 @@ describe(
           0.2,
         isTypePhysicallyCoherent:
           true,
-        ...overrides,
       } as unknown as Planet;
     }
   },

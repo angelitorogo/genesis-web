@@ -12,6 +12,18 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  type AtmosphereBulkProperties,
+} from './atmosphere-bulk-properties';
+
+import {
+  type AtmosphereGasComponent,
+} from './atmosphere-gas-component';
+
+import {
+  type AtmospherePressureRegime,
+} from './atmosphere-pressure-regime';
+
+import {
   type Planet,
 } from './planet';
 
@@ -27,32 +39,33 @@ import {
   type PlanetarySystem,
 } from './planetary-system';
 
+const CONSISTENCY_TOLERANCE =
+  1e-9;
+
 /**
- * Point-20.1 atmosphere aggregate boundary for one mature Planet.
+ * Phase-20 atmosphere aggregate for one mature Planet.
  *
- * The atmosphere deliberately reuses the planet's canonical BodyLocator and
- * BodySeed. Point 20.1 introduces no AtmosphereSeed and generates no pressure,
- * density or gas inventory: those start at point 20.2. Retention/loss,
- * greenhouse forcing, climate, hydrology, geology, magnetosphere and radiation
- * remain points 20.3..20.10.
- *
- * V1 exists for every physically coherent phase-19 Planet, including worlds
- * whose later point-20.2 bulk atmosphere may resolve to a negligible/zero
- * surface pressure. Giant-planet deep envelopes also use this same boundary;
- * point 20.1 does not pretend that they possess a solid atmospheric surface.
+ * Point 20.1 establishes the aggregate identity and point 20.2 enriches it with
+ * a baseline pressure/density/gas state. BodyLocator/BodySeed remain the
+ * canonical identity; no AtmosphereSeed exists. Point 20.3 still owns
+ * evolutionary retention/loss, so the point-20.2 solid-surface pressure is a
+ * source state rather than a final retained atmosphere claim.
  */
 export class Atmosphere {
 
   constructor(
     readonly hostPlanet:
       Planet,
+
+    readonly bulkProperties:
+      AtmosphereBulkProperties,
   ) {
     if (
       !hostPlanet
         .isTypePhysicallyCoherent
     ) {
       throw new RangeError(
-        'Point-20.1 Atmosphere requires a point-19.7 physically coherent Planet.',
+        'Atmosphere requires a point-19.7 physically coherent Planet.',
       );
     }
 
@@ -66,7 +79,7 @@ export class Atmosphere {
         0
     ) {
       throw new RangeError(
-        'Point-20.1 Atmosphere requires a positive integer planetOrdinal.',
+        'Atmosphere requires a positive integer planetOrdinal.',
       );
     }
 
@@ -81,7 +94,7 @@ export class Atmosphere {
       )
     ) {
       throw new RangeError(
-        'Point-20.1 Atmosphere must preserve the canonical BodyLocator belonging to planetOrdinal.',
+        'Atmosphere must preserve the canonical BodyLocator belonging to planetOrdinal.',
       );
     }
 
@@ -92,7 +105,52 @@ export class Atmosphere {
       'body'
     ) {
       throw new RangeError(
-        'Point-20.1 Atmosphere requires the canonical BodySeed of its host Planet.',
+        'Atmosphere requires the canonical BodySeed of its host Planet.',
+      );
+    }
+
+    assertBulkIdentity(
+      hostPlanet,
+      bulkProperties,
+    );
+
+    if (
+      bulkProperties.sourcePlanetType !==
+        hostPlanet.planetType ||
+      !approximatelyEqual(
+        bulkProperties.sourceMassEarth,
+        hostPlanet.massEarth,
+      ) ||
+      !approximatelyEqual(
+        bulkProperties.sourceRadiusEarth,
+        hostPlanet.radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        bulkProperties.sourceSurfaceGravityEarth,
+        hostPlanet.surfaceGravityEarth,
+      ) ||
+      !approximatelyEqual(
+        bulkProperties.sourceEnvelopeMassFraction01,
+        hostPlanet.physicalProperties
+          .envelopeMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        bulkProperties.sourceIceBearingInteriorFraction01,
+        hostPlanet.internalComposition
+          .iceBearingFractionOfSolids01,
+      ) ||
+      !approximatelyEqual(
+        bulkProperties.sourceReferenceMeanInsolationEarth,
+        hostPlanet.typeClassification
+          .referenceMeanInsolationEarth,
+      ) ||
+      !approximatelyEqual(
+        bulkProperties.sourceReferenceBondAlbedo01,
+        hostPlanet.referenceBondAlbedo01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.2 atmosphere bulk properties must preserve the exact phase-19 host-Planet source state.',
       );
     }
   }
@@ -218,4 +276,117 @@ export class Atmosphere {
       .hostPlanet
       .referenceBondAlbedo01;
   }
+
+  get pressureRegime():
+    AtmospherePressureRegime {
+
+    return this
+      .bulkProperties
+      .pressureRegime;
+  }
+
+  get surfacePressurePascal():
+    number | null {
+
+    return this
+      .bulkProperties
+      .surfacePressurePascal;
+  }
+
+  get referenceDensityKilogramsPerCubicMeter():
+    number {
+
+    return this
+      .bulkProperties
+      .referenceDensityKilogramsPerCubicMeter;
+  }
+
+  get meanMolarMassGramsPerMole():
+    number | null {
+
+    return this
+      .bulkProperties
+      .meanMolarMassGramsPerMole;
+  }
+
+  get gasComposition():
+    readonly AtmosphereGasComponent[] {
+
+    return this
+      .bulkProperties
+      .gasComponents;
+  }
+
+  get isVacuum():
+    boolean {
+
+    return this
+      .bulkProperties
+      .isVacuum;
+  }
+
+  get isDeepEnvelope():
+    boolean {
+
+    return this
+      .bulkProperties
+      .isDeepEnvelope;
+  }
+}
+
+function assertBulkIdentity(
+  hostPlanet:
+    Planet,
+
+  bulkProperties:
+    AtmosphereBulkProperties,
+): void {
+
+  if (
+    bulkProperties.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    bulkProperties.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    bulkProperties.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    bulkProperties.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    bulkProperties.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    bulkProperties.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue
+  ) {
+    throw new RangeError(
+      'Point-20.2 atmosphere bulk properties must preserve the exact host Planet ordinal, BodyLocator and BodySeed.',
+    );
+  }
+}
+
+function approximatelyEqual(
+  left:
+    number,
+
+  right:
+    number,
+): boolean {
+
+  const scale =
+    Math.max(
+      1,
+      Math.abs(
+        left,
+      ),
+      Math.abs(
+        right,
+      ),
+    );
+
+  return (
+    Math.abs(
+      left -
+      right,
+    ) <=
+    CONSISTENCY_TOLERANCE *
+      scale
+  );
 }
