@@ -40,7 +40,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.3',
+  'AtmosphereGenerator through point 20.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -59,7 +59,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere with source bulk properties and point-20.3 retained atmosphere while preserving identity',
+      'should materialize one Atmosphere through point 20.4 while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -113,6 +113,20 @@ describe(
           atmosphere.retainedSurfacePressurePascal! <=
             atmosphere.surfacePressurePascal!,
         ).toBe(true);
+
+
+        expect(
+          atmosphere.greenhouseEffect,
+        ).toBeDefined();
+
+        expect(
+          atmosphere.infraredOpticalDepthProxy,
+        ).toBeGreaterThanOrEqual(0);
+
+        expect(
+          'climate' in
+            atmosphere,
+        ).toBe(false);
       },
     );
 
@@ -154,6 +168,15 @@ describe(
         expect(
           atmosphere.atmosphericInventoryRetentionFraction01,
         ).toBeGreaterThan(0.97);
+
+
+        expect(
+          atmosphere.greenhouseTemperatureAmplificationFactor,
+        ).toBeNull();
+
+        expect(
+          atmosphere.greenhouseEffect.isDeepEnvelopeBlanketing,
+        ).toBe(true);
       },
     );
 

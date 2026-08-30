@@ -26,14 +26,18 @@ import {
   AtmosphereRetentionGenerator,
 } from './atmosphere-retention-generator';
 
+import {
+  AtmosphereGreenhouseEffectGenerator,
+} from './atmosphere-greenhouse-effect-generator';
+
 /**
  * Phase-20 deterministic Atmosphere materializer.
  *
  * Point 20.1 binds the physical Planet into the atmosphere aggregate. Point
- * 20.2 delegates baseline pressure/density/gas materialization to the dedicated
- * AtmosphereBulkPropertiesGenerator and point 20.3 applies deterministic
- * retention/loss through AtmosphereRetentionGenerator. The Planet BodySeed
- * remains the canonical identity; no AtmosphereSeed is introduced.
+ * 20.2 delegates baseline pressure/density/gas materialization, point 20.3
+ * applies deterministic retention/loss and point 20.4 derives an approximate
+ * greenhouse/longwave blanketing state from the retained atmosphere. The Planet
+ * BodySeed remains the canonical identity; no AtmosphereSeed is introduced.
  */
 export class AtmosphereGenerator {
 
@@ -71,10 +75,19 @@ export class AtmosphereGenerator {
           bulkProperties,
         );
 
+    const greenhouseEffect =
+      AtmosphereGreenhouseEffectGenerator
+        .generate(
+          generationKey,
+          planet,
+          retentionState,
+        );
+
     return new Atmosphere(
       planet,
       bulkProperties,
       retentionState,
+      greenhouseEffect,
     );
   }
 
@@ -131,6 +144,15 @@ export class AtmosphereGenerator {
           bulkProperties,
         );
 
+    const greenhouseEffects =
+      AtmosphereGreenhouseEffectGenerator
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          planets,
+          retentionStates,
+        );
+
     return Object.freeze(
       planets.map(
         (
@@ -162,6 +184,7 @@ export class AtmosphereGenerator {
             planet,
             bulkProperties[index],
             retentionStates[index],
+            greenhouseEffects[index],
           );
         },
       ),

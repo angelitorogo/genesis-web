@@ -20,6 +20,14 @@ import {
 } from './atmosphere-gas-component';
 
 import {
+  type AtmosphereGreenhouseEffect,
+} from './atmosphere-greenhouse-effect';
+
+import {
+  type AtmosphereGreenhouseRegime,
+} from './atmosphere-greenhouse-regime';
+
+import {
   type AtmospherePressureRegime,
 } from './atmosphere-pressure-regime';
 
@@ -54,9 +62,10 @@ const CONSISTENCY_TOLERANCE =
  * Phase-20 atmosphere aggregate for one mature Planet.
  *
  * Point 20.1 establishes the aggregate identity, point 20.2 supplies the frozen
- * source pressure/density/gas inventory and point 20.3 adds a non-mutating
- * atmospheric retention/loss state. BodyLocator/BodySeed remain the canonical
- * identity; no AtmosphereSeed exists.
+ * source pressure/density/gas inventory, point 20.3 adds a non-mutating
+ * atmospheric retention/loss state and point 20.4 adds an approximate retained-
+ * atmosphere greenhouse/longwave blanketing state. BodyLocator/BodySeed remain
+ * the canonical identity; no AtmosphereSeed exists.
  */
 export class Atmosphere {
 
@@ -69,6 +78,9 @@ export class Atmosphere {
 
     readonly retentionState:
       AtmosphereRetentionState,
+
+    readonly greenhouseEffect:
+      AtmosphereGreenhouseEffect,
   ) {
     if (
       !hostPlanet
@@ -130,6 +142,12 @@ export class Atmosphere {
       retentionState,
     );
 
+    assertGreenhouseIdentity(
+      hostPlanet,
+      retentionState,
+      greenhouseEffect,
+    );
+
     if (
       bulkProperties.sourcePlanetType !==
         hostPlanet.planetType ||
@@ -186,6 +204,32 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.3 retention state must preserve the exact point-20.2 source pressure and irradiation state.',
+      );
+    }
+
+
+    if (
+      greenhouseEffect.sourceRetentionRegime !==
+        retentionState.retentionRegime ||
+      greenhouseEffect.sourceRetainedPressureRegime !==
+        retentionState.retainedPressureRegime ||
+      greenhouseEffect.sourceRetainedSurfacePressurePascal !==
+        retentionState.retainedSurfacePressurePascal ||
+      !approximatelyEqual(
+        greenhouseEffect.sourceRetainedMoleInventoryFraction01,
+        retentionState.retainedMoleInventoryFraction01,
+      ) ||
+      !approximatelyEqual(
+        greenhouseEffect.sourceReferenceMeanInsolationEarth,
+        retentionState.sourceReferenceMeanInsolationEarth,
+      ) ||
+      !approximatelyEqual(
+        greenhouseEffect.sourceReferenceBondAlbedo01,
+        retentionState.sourceReferenceBondAlbedo01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.4 greenhouse effect must preserve the exact point-20.3 retained atmosphere source state.',
       );
     }
   }
@@ -424,6 +468,38 @@ export class Atmosphere {
       .escapeVelocityKilometersPerSecond;
   }
 
+  get greenhouseRegime():
+    AtmosphereGreenhouseRegime {
+
+    return this
+      .greenhouseEffect
+      .regime;
+  }
+
+  get infraredOpticalDepthProxy():
+    number {
+
+    return this
+      .greenhouseEffect
+      .infraredOpticalDepthProxy;
+  }
+
+  get longwaveTrappingFraction01():
+    number {
+
+    return this
+      .greenhouseEffect
+      .longwaveTrappingFraction01;
+  }
+
+  get greenhouseTemperatureAmplificationFactor():
+    number | null {
+
+    return this
+      .greenhouseEffect
+      .temperatureAmplificationFactor;
+  }
+
   get isVacuum():
     boolean {
 
@@ -498,6 +574,39 @@ function assertRetentionIdentity(
   ) {
     throw new RangeError(
       'Point-20.3 retention state must preserve the exact host Planet and point-20.2 atmosphere identity.',
+    );
+  }
+}
+
+function assertGreenhouseIdentity(
+  hostPlanet:
+    Planet,
+
+  retentionState:
+    AtmosphereRetentionState,
+
+  greenhouseEffect:
+    AtmosphereGreenhouseEffect,
+): void {
+
+  if (
+    greenhouseEffect.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    greenhouseEffect.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    greenhouseEffect.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    greenhouseEffect.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    greenhouseEffect.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    greenhouseEffect.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    greenhouseEffect.sourceRetentionRegime !==
+      retentionState.retentionRegime
+  ) {
+    throw new RangeError(
+      'Point-20.4 greenhouse effect must preserve the exact host Planet and point-20.3 atmosphere identity.',
     );
   }
 }

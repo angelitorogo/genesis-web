@@ -39,6 +39,14 @@ import {
 } from './atmosphere-gas-component';
 
 import {
+  AtmosphereGreenhouseEffect,
+} from './atmosphere-greenhouse-effect';
+
+import {
+  AtmosphereGreenhouseRegime,
+} from './atmosphere-greenhouse-regime';
+
+import {
   AtmospherePressureRegime,
 } from './atmosphere-pressure-regime';
 
@@ -67,7 +75,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.3',
+  'Atmosphere through point 20.4',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -98,7 +106,7 @@ describe(
       );
 
     it(
-      'should preserve the exact Planet identity and expose point-20.2 source plus point-20.3 retained states',
+      'should preserve the exact Planet identity and expose point-20.2 source, point-20.3 retained and point-20.4 greenhouse states',
       () => {
         const planet =
           planetFixture();
@@ -111,11 +119,17 @@ describe(
             bulk,
           );
 
+        const greenhouse =
+          greenhouseFixture(
+            retention,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
             bulk,
             retention,
+            greenhouse,
           );
 
         expect(
@@ -168,10 +182,25 @@ describe(
           atmosphere.retainedGasComposition,
         ).toHaveLength(1);
 
+        expect(
+          atmosphere.greenhouseEffect,
+        ).toBe(
+          greenhouse,
+        );
+
+        expect(
+          atmosphere.greenhouseRegime,
+        ).toBe(
+          AtmosphereGreenhouseRegime.NONE,
+        );
+
+        expect(
+          atmosphere.greenhouseTemperatureAmplificationFactor,
+        ).toBe(1);
+
         for (
           const laterProperty
           of [
-            'greenhouseEffect',
             'climate',
             'waterInventory',
             'geology',
@@ -210,11 +239,17 @@ describe(
                     wrongLocator,
                 });
 
+              const retention =
+                retentionFixture(
+                  bulk,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
-                retentionFixture(
-                  bulk,
+                retention,
+                greenhouseFixture(
+                  retention,
                 ),
               );
             })(),
@@ -231,11 +266,17 @@ describe(
                     2,
                 });
 
+              const retention =
+                retentionFixture(
+                  bulk,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
-                retentionFixture(
-                  bulk,
+                retention,
+                greenhouseFixture(
+                  retention,
                 ),
               );
             })(),
@@ -424,6 +465,33 @@ describe(
         bulk.meanMolarMassGramsPerMole,
         gasRetentions,
         bulk.gasComponents,
+      );
+    }
+
+    function greenhouseFixture(
+      retention:
+        AtmosphereRetentionState,
+    ): AtmosphereGreenhouseEffect {
+
+      return new AtmosphereGreenhouseEffect(
+        retention.planetOrdinal,
+        retention.bodyLocator,
+        retention.bodySeed,
+        retention.retentionRegime,
+        retention.retainedPressureRegime,
+        retention.retainedSurfacePressurePascal,
+        retention.retainedMoleInventoryFraction01,
+        retention.sourceReferenceMeanInsolationEarth,
+        retention.sourceReferenceBondAlbedo01,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        AtmosphereGreenhouseRegime.NONE,
+        [],
       );
     }
 
