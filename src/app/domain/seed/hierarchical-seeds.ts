@@ -126,6 +126,19 @@ export class BodySeed
   }
 }
 
+export class MoonSeed
+  extends DerivedSeed {
+
+  readonly kind =
+    'moon' as const;
+
+  constructor(
+    value: string,
+  ) {
+    super(value);
+  }
+}
+
 export class HistorySeed
   extends DerivedSeed {
 

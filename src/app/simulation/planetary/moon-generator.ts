@@ -24,8 +24,16 @@ import {
 } from './moon-habitability-engine';
 
 import {
+  MoonIdentityGenerator,
+} from './moon-identity-generator';
+
+import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+
+import {
+  type MoonIdentity,
+} from '../../domain/planetary/moon-identity';
 
 import {
   MoonOrbitalElements,
@@ -226,12 +234,9 @@ interface RelevantMoonSamplesV1 {
  * adds independent surface/subsurface potential-habitability candidate scoring.
  * Point 21.7 specializes gas/ice-giant systems without changing any frozen
  * point-21.2-21.6 population, physical, orbital, tidal or environment result.
- *
- * Large minor-moon populations remain summarized by moonCount. Every relevant
- * moon is addressed only by a local moonOrdinal. All samples are read directly
- * from SHA-256 domain-separated hashes of the existing host BodySeed; V1 consumes
- * zero PRNG draws and creates no MoonSeed/MoonLocator. Point 21.8 remains the
- * owner of individual moon seeds/designations.
+ * Point 21.8 now assigns one canonical MoonLocator/MoonSeed/designation identity
+ * to every modeled moon while preserving the bounded relevant physical subset.
+ * All scientific sampling remains unchanged and V1 still consumes zero PRNG draws.
  */
 export class MoonGenerator {
 
@@ -259,10 +264,19 @@ export class MoonGenerator {
         planet,
       );
 
+    const moonIdentities =
+      MoonIdentityGenerator
+        .generateAll(
+          generationKey,
+          planet,
+          populationProfile,
+        );
+
     const relevantMoons =
       relevantMoonsV1(
         planet,
         populationProfile,
+        moonIdentities,
       );
 
     const giantMoonProfile =
@@ -276,6 +290,7 @@ export class MoonGenerator {
     return new MoonSystem(
       planet,
       populationProfile,
+      moonIdentities,
       relevantMoons,
       giantMoonProfile,
     );
@@ -354,10 +369,19 @@ export class MoonGenerator {
               planet,
             );
 
+          const moonIdentities =
+            MoonIdentityGenerator
+              .generateAll(
+                generationKey,
+                planet,
+                populationProfile,
+              );
+
           const relevantMoons =
             relevantMoonsV1(
               planet,
               populationProfile,
+              moonIdentities,
             );
 
           const giantMoonProfile =
@@ -371,6 +395,7 @@ export class MoonGenerator {
           return new MoonSystem(
             planet,
             populationProfile,
+            moonIdentities,
             relevantMoons,
             giantMoonProfile,
           );
@@ -441,6 +466,9 @@ function relevantMoonsV1(
 
   populationProfile:
     MoonPopulationProfile,
+
+  moonIdentities:
+    readonly MoonIdentity[],
 ): readonly RelevantMoon[] {
 
   if (
@@ -766,6 +794,7 @@ function relevantMoonsV1(
           planet
             .seed,
           moonOrdinal,
+          moonIdentities[index],
           physical,
           orbit,
           tidalState,

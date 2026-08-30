@@ -60,6 +60,10 @@ import {
 } from '../../domain/planetary/planet';
 
 import {
+  type PlanetaryDesignation,
+} from '../../domain/planetary/planetary-designation';
+
+import {
   PlanetType,
 } from '../../domain/planetary/planet-type';
 
@@ -76,7 +80,7 @@ import {
 } from './moon-generator';
 
 describe(
-  'MoonGenerator point 21.7 V1',
+  'MoonGenerator point 21.8 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -192,6 +196,28 @@ describe(
         ).toBe(1);
 
         expect(
+          rocky.moonIdentities.length,
+        ).toBe(1);
+
+        expect(
+          rocky.moonIdentities[0].seed.normalizedValue,
+        ).toBe(
+          '053E4E0C703A9D4E62E91AB5EE7EC55F',
+        );
+
+        expect(
+          rocky.moonIdentities[0].designation.name,
+        ).toBe(
+          'Jotheria b I',
+        );
+
+        expect(
+          rocky.relevantMoons[0].identity,
+        ).toBe(
+          rocky.moonIdentities[0],
+        );
+
+        expect(
           rocky.hillSphereRadiusPlanetRadii,
         ).toBeCloseTo(
           230.72034955593907,
@@ -210,6 +236,16 @@ describe(
         ).toBe(100);
 
         expect(
+          gasGiant.moonIdentities.length,
+        ).toBe(100);
+
+        expect(
+          gasGiant.moonIdentities[99].designation.name,
+        ).toBe(
+          'Jotheria c C',
+        );
+
+        expect(
           gasGiant.satelliteCapacityIndex01,
         ).toBeCloseTo(
           0.8942461242620243,
@@ -218,6 +254,10 @@ describe(
 
         expect(
           iceGiant.moonCount,
+        ).toBe(35);
+
+        expect(
+          iceGiant.moonIdentities.length,
         ).toBe(35);
 
         expect(
@@ -706,6 +746,18 @@ describe(
             ),
           ).toBe(true);
 
+          expect(
+            Object.isFrozen(
+              system.moonIdentities,
+            ),
+          ).toBe(true);
+
+          expect(
+            system.moonIdentities.length,
+          ).toBe(
+            system.moonCount,
+          );
+
           let previousOrbit =
             0;
 
@@ -756,12 +808,28 @@ describe(
             ).toBeGreaterThan(0);
 
             expect(
-              'seed' in moon,
-            ).toBe(false);
+              moon.identity,
+            ).toBe(
+              system.moonIdentities[
+                moon.moonOrdinal -
+                  1
+              ],
+            );
 
             expect(
-              'designation' in moon,
-            ).toBe(false);
+              moon.locator.moonIndex,
+            ).toBe(
+              BigInt(
+                moon.moonOrdinal -
+                  1,
+              ),
+            );
+
+            expect(
+              moon.designation.name,
+            ).toContain(
+              planet.designation.name,
+            );
 
             expect(
               'tidalState' in moon,
@@ -1407,6 +1475,42 @@ function planetFixture(
       semiMajorAxisAu **
         2;
 
+  const locator =
+    new BodyLocator(
+      planetarySystem.locator.galaxyIndex,
+      planetarySystem.locator.sectorKey,
+      planetarySystem.locator.galacticObjectIndex,
+      BigInt(
+        planetOrdinal -
+          1,
+      ),
+    );
+
+  const seed =
+    new BodySeed(
+      options.seedHex ??
+      `${planetOrdinal}`
+        .repeat(32),
+    );
+
+  const catalogSuffix =
+    String.fromCharCode(
+      'a'.charCodeAt(0) +
+        planetOrdinal,
+    );
+
+  const designation = {
+    planetOrdinal,
+    bodyLocator:
+      locator,
+    bodySeed:
+      seed,
+    name:
+      `Jotheria ${catalogSuffix}`,
+    proceduralCode:
+      `GEN-V1-TEST-P${planetOrdinal}-${catalogSuffix}-BODY-${seed.normalizedValue}`,
+  } as PlanetaryDesignation;
+
   return {
     generationKey:
       planetarySystem
@@ -1417,28 +1521,9 @@ function planetFixture(
       planetarySystem
         .locator,
     planetOrdinal,
-    locator:
-      new BodyLocator(
-        planetarySystem
-          .locator
-          .galaxyIndex,
-        planetarySystem
-          .locator
-          .sectorKey,
-        planetarySystem
-          .locator
-          .galacticObjectIndex,
-        BigInt(
-          planetOrdinal -
-            1,
-        ),
-      ),
-    seed:
-      new BodySeed(
-        options.seedHex ??
-        `${planetOrdinal}`
-          .repeat(32),
-      ),
+    locator,
+    seed,
+    designation,
     planetType,
     massEarth,
     radiusEarth,

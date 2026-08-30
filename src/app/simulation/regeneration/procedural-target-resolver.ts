@@ -3,6 +3,7 @@ import {
   CivilizationLocator,
   GalacticObjectLocator,
   GalaxyLocator,
+  MoonLocator,
   type ProceduralLocator,
   SectorLocator,
   SystemLocator,
@@ -31,7 +32,8 @@ export const ProceduralTargetResolver =
         UniverseGenerationKey,
 
       locator:
-        ProceduralLocator,
+        | ProceduralLocator
+        | MoonLocator,
     ): GenesisSeed {
 
       switch (
@@ -55,7 +57,8 @@ function resolveV1(
     UniverseSeed,
 
   locator:
-    ProceduralLocator,
+    | ProceduralLocator
+    | MoonLocator,
 ): GenesisSeed {
 
   if (
@@ -138,6 +141,24 @@ function resolveV1(
       .body(
         systemSeed,
         locator.bodyIndex,
+      );
+  }
+
+  if (
+    locator instanceof
+    MoonLocator
+  ) {
+    const bodySeed =
+      SeedDeriver
+        .body(
+          systemSeed,
+          locator.bodyIndex,
+        );
+
+    return SeedDeriver
+      .moon(
+        bodySeed,
+        locator.moonIndex,
       );
   }
 

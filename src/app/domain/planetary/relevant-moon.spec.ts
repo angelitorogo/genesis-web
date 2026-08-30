@@ -1,9 +1,11 @@
 import {
   BodyLocator,
+  MoonLocator,
 } from '../generation/procedural-locator';
 
 import {
   BodySeed,
+  MoonSeed,
 } from '../seed/hierarchical-seeds';
 
 import {
@@ -29,6 +31,14 @@ import {
 import {
   MoonGeologyRegime,
 } from './moon-geology-regime';
+
+import {
+  MoonDesignation,
+} from './moon-designation';
+
+import {
+  MoonIdentity,
+} from './moon-identity';
 
 import {
   MoonHabitabilityRegime,
@@ -68,6 +78,10 @@ import {
 } from './moon-water-regime';
 
 import {
+  type PlanetaryDesignation,
+} from './planetary-designation';
+
+import {
   PlanetType,
 } from './planet-type';
 
@@ -76,7 +90,7 @@ import {
 } from './relevant-moon';
 
 describe(
-  'RelevantMoon through point 21.7',
+  'RelevantMoon through point 21.8',
   () => {
     const locator =
       new BodyLocator(
@@ -92,7 +106,7 @@ describe(
       );
 
     it(
-      'should preserve all frozen products plus a non-applicable giant specialization while keeping point-21.8 identity absent',
+      'should preserve all frozen scientific products while exposing the exact point-21.8 identity projection',
       () => {
         const physical =
           physicalFixture();
@@ -128,12 +142,19 @@ describe(
             habitabilityState,
           );
 
+        const identity =
+          identityFixture(
+            locator,
+            seed,
+          );
+
         const moon =
           new RelevantMoon(
             2,
             locator,
             seed,
             1,
+            identity,
             physical,
             orbit,
             tidalState,
@@ -141,6 +162,34 @@ describe(
             habitabilityState,
             giantMoonState,
           );
+
+        expect(
+          moon.identity,
+        ).toBe(identity);
+
+        expect(
+          moon.locator,
+        ).toBe(
+          identity.locator,
+        );
+
+        expect(
+          moon.seed,
+        ).toBe(
+          identity.seed,
+        );
+
+        expect(
+          moon.designation,
+        ).toBe(
+          identity.designation,
+        );
+
+        expect(
+          moon.name,
+        ).toBe(
+          'Jotheria c I',
+        );
 
         expect(
           moon.physicalProperties,
@@ -211,10 +260,7 @@ describe(
         for (
           const reservedProperty
           of [
-            'locator',
-            'seed',
             'moonSeed',
-            'designation',
             'atmosphere',
             'waterInventory',
             'geology',
@@ -266,6 +312,12 @@ describe(
             habitabilityState,
           );
 
+        const identity =
+          identityFixture(
+            locator,
+            seed,
+          );
+
         expect(
           () =>
             new RelevantMoon(
@@ -273,6 +325,7 @@ describe(
               locator,
               seed,
               1,
+              identity,
               physical,
               orbit,
               tidalState,
@@ -301,6 +354,7 @@ describe(
               locator,
               seed,
               1,
+              identity,
               otherPhysical,
               orbit,
               tidalState,
@@ -315,6 +369,60 @@ describe(
     );
   },
 );
+
+function identityFixture(
+  hostLocator:
+    BodyLocator,
+
+  hostSeed:
+    BodySeed,
+): MoonIdentity {
+  const moonLocator =
+    new MoonLocator(
+      hostLocator.galaxyIndex,
+      hostLocator.sectorKey,
+      hostLocator.galacticObjectIndex,
+      hostLocator.bodyIndex,
+      0n,
+    );
+
+  const moonSeed =
+    new MoonSeed(
+      '7D93A05C9E4018E6C47006B2BF176B19',
+    );
+
+  const planetDesignation = {
+    planetOrdinal:
+      2,
+    bodyLocator:
+      hostLocator,
+    bodySeed:
+      hostSeed,
+    name:
+      'Jotheria c',
+    proceduralCode:
+      'GEN-TEST-P2-c-BODY-2222',
+  } as unknown as PlanetaryDesignation;
+
+  const designation =
+    new MoonDesignation(
+      planetDesignation,
+      1,
+      moonLocator,
+      moonSeed,
+      'I',
+    );
+
+  return new MoonIdentity(
+    2,
+    hostLocator,
+    hostSeed,
+    1,
+    moonLocator,
+    moonSeed,
+    designation,
+  );
+}
 
 function physicalFixture():
   MoonPhysicalProperties {

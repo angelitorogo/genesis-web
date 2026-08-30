@@ -19,6 +19,10 @@ import {
 } from './moon-habitability-state';
 
 import {
+  type MoonIdentity,
+} from './moon-identity';
+
+import {
   type MoonOrbitalElements,
 } from './moon-orbital-elements';
 
@@ -40,8 +44,8 @@ import {
  * 21.5 adds a first-order atmosphere/water/geology environment state and point
  * 21.6 attaches a potential-habitability projection with independent surface and
  * subsurface routes. Point 21.7 adds a giant-host specialization without changing
- * any frozen 21.3-21.6 source. Point 21.8 remains responsible for seeds and
- * designations.
+ * any frozen 21.3-21.6 source. Point 21.8 now attaches the canonical MoonLocator,
+ * MoonSeed and designation without changing any frozen scientific result.
  */
 export class RelevantMoon {
 
@@ -57,6 +61,9 @@ export class RelevantMoon {
 
     readonly moonOrdinal:
       number,
+
+    readonly identity:
+      MoonIdentity,
 
     readonly physicalProperties:
       MoonPhysicalProperties,
@@ -119,6 +126,21 @@ export class RelevantMoon {
     ) {
       throw new RangeError(
         'RelevantMoon moonOrdinal must be a positive integer.',
+      );
+    }
+
+    if (
+      identity.hostPlanetOrdinal !==
+        hostPlanetOrdinal ||
+      identity.hostPlanetLocator !==
+        hostPlanetLocator ||
+      identity.hostPlanetSeed !==
+        hostPlanetSeed ||
+      identity.moonOrdinal !==
+        moonOrdinal
+    ) {
+      throw new RangeError(
+        'RelevantMoon point-21.8 identity must preserve the exact host/moon identity.',
       );
     }
 
@@ -377,6 +399,40 @@ export class RelevantMoon {
         'RelevantMoon giant specialization must preserve the exact frozen point-21.3-21.6 moon sources.',
       );
     }
+  }
+
+  get locator() {
+    return this
+      .identity
+      .locator;
+  }
+
+  get seed() {
+    return this
+      .identity
+      .seed;
+  }
+
+  get designation() {
+    return this
+      .identity
+      .designation;
+  }
+
+  get name():
+    string {
+
+    return this
+      .designation
+      .name;
+  }
+
+  get proceduralCode():
+    string {
+
+    return this
+      .designation
+      .proceduralCode;
   }
 
   get massEarth():

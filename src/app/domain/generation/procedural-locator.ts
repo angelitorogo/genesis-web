@@ -136,6 +136,58 @@ export class BodyLocator {
   }
 }
 
+/**
+ * Point-21.8 canonical address below one BodyLocator.
+ *
+ * MoonLocator is deliberately not added to the historical ProceduralLocator
+ * discovery union yet: discovery persistence has no moon target/schema in phase 21.
+ * ProceduralTargetResolver accepts MoonLocator explicitly for deterministic
+ * regeneration without widening that existing persistence ABI.
+ */
+export class MoonLocator {
+  constructor(
+    readonly galaxyIndex:
+      bigint,
+
+    readonly sectorKey:
+      bigint,
+
+    readonly galacticObjectIndex:
+      bigint,
+
+    readonly bodyIndex:
+      bigint,
+
+    readonly moonIndex:
+      bigint,
+  ) {
+    requireNonNegativeLong(
+      galaxyIndex,
+      'galaxyIndex',
+    );
+
+    requireLong(
+      sectorKey,
+      'sectorKey',
+    );
+
+    requireNonNegativeLong(
+      galacticObjectIndex,
+      'galacticObjectIndex',
+    );
+
+    requireNonNegativeLong(
+      bodyIndex,
+      'bodyIndex',
+    );
+
+    requireNonNegativeLong(
+      moonIndex,
+      'moonIndex',
+    );
+  }
+}
+
 export class CivilizationLocator {
   constructor(
     readonly galaxyIndex:

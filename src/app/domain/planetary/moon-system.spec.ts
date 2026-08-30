@@ -4,6 +4,7 @@ import {
 
 import {
   BodyLocator,
+  MoonLocator,
   SystemLocator,
 } from '../generation/procedural-locator';
 
@@ -13,6 +14,7 @@ import {
 
 import {
   BodySeed,
+  MoonSeed,
 } from '../seed/hierarchical-seeds';
 
 import {
@@ -50,6 +52,14 @@ import {
 import {
   MoonGeologyRegime,
 } from './moon-geology-regime';
+
+import {
+  MoonDesignation,
+} from './moon-designation';
+
+import {
+  MoonIdentity,
+} from './moon-identity';
 
 import {
   MoonHabitabilityRegime,
@@ -97,6 +107,10 @@ import {
 } from './planet';
 
 import {
+  type PlanetaryDesignation,
+} from './planetary-designation';
+
+import {
   PlanetType,
 } from './planet-type';
 
@@ -113,7 +127,7 @@ import {
 } from './moon-system';
 
 describe(
-  'MoonSystem through point 21.7',
+  'MoonSystem through point 21.8',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -186,6 +200,35 @@ describe(
           moonSystem.populationProfile,
         ).toBe(
           population,
+        );
+
+        expect(
+          moonSystem.moonIdentities.length,
+        ).toBe(5);
+
+        expect(
+          Object.isFrozen(
+            moonSystem.moonIdentities,
+          ),
+        ).toBe(true);
+
+        expect(
+          moonSystem.moonDesignations.map(
+            designation =>
+              designation.name,
+          ),
+        ).toEqual([
+          'Jotheria c I',
+          'Jotheria c II',
+          'Jotheria c III',
+          'Jotheria c IV',
+          'Jotheria c V',
+        ]);
+
+        expect(
+          moonSystem.relevantMoonIdentities[0],
+        ).toBe(
+          moonSystem.relevantMoons[0].identity,
         );
 
         expect(
@@ -536,9 +579,29 @@ function moonSystemFixture(
       GiantMoonArchitectureRegime.NOT_APPLICABLE,
     );
 
+  const moonIdentities =
+    Array.from(
+      {
+        length:
+          populationProfile.moonCount,
+      },
+      (
+        _,
+        index,
+      ) =>
+        relevantMoons[index]
+          ?.identity ??
+        moonIdentityFixture(
+          planet,
+          index +
+            1,
+        ),
+    );
+
   return new MoonSystem(
     planet,
     populationProfile,
+    moonIdentities,
     relevantMoons,
     giantMoonProfile,
   );
@@ -554,6 +617,42 @@ function planetFixture(
   overrides:
     Partial<Planet> = {},
 ): Planet {
+  const locator =
+    new BodyLocator(
+      planetarySystem.locator.galaxyIndex,
+      planetarySystem.locator.sectorKey,
+      planetarySystem.locator.galacticObjectIndex,
+      BigInt(
+        planetOrdinal -
+          1,
+      ),
+    );
+
+  const seed =
+    new BodySeed(
+      planetOrdinal ===
+        1
+        ? '11111111111111111111111111111111'
+        : '22222222222222222222222222222222',
+    );
+
+  const catalogSuffix =
+    String.fromCharCode(
+      'a'.charCodeAt(0) +
+        planetOrdinal,
+    );
+
+  const designation = {
+    planetOrdinal,
+    bodyLocator:
+      locator,
+    bodySeed:
+      seed,
+    name:
+      `Jotheria ${catalogSuffix}`,
+    proceduralCode:
+      `GEN-TEST-P${planetOrdinal}-${catalogSuffix}-BODY-${seed.normalizedValue}`,
+  } as PlanetaryDesignation;
 
   return {
     generationKey:
@@ -565,29 +664,9 @@ function planetFixture(
       planetarySystem
         .locator,
     planetOrdinal,
-    locator:
-      new BodyLocator(
-        planetarySystem
-          .locator
-          .galaxyIndex,
-        planetarySystem
-          .locator
-          .sectorKey,
-        planetarySystem
-          .locator
-          .galacticObjectIndex,
-        BigInt(
-          planetOrdinal -
-            1,
-        ),
-      ),
-    seed:
-      new BodySeed(
-        planetOrdinal ===
-          1
-          ? '11111111111111111111111111111111'
-          : '22222222222222222222222222222222',
-      ),
+    locator,
+    seed,
+    designation,
     planetType:
       PlanetType.ROCKY,
     massEarth:
@@ -670,6 +749,99 @@ function populationFixture(
     values.satelliteCapacityIndex01,
     values.moonCount,
   );
+}
+
+function moonIdentityFixture(
+  planet:
+    Planet,
+
+  moonOrdinal:
+    number,
+): MoonIdentity {
+  const locator =
+    new MoonLocator(
+      planet.locator.galaxyIndex,
+      planet.locator.sectorKey,
+      planet.locator.galacticObjectIndex,
+      planet.locator.bodyIndex,
+      BigInt(
+        moonOrdinal -
+          1,
+      ),
+    );
+
+  const seedHex =
+    moonOrdinal
+      .toString(16)
+      .toUpperCase()
+      .padStart(
+        32,
+        '0',
+      );
+
+  const seed =
+    new MoonSeed(
+      seedHex,
+    );
+
+  const designation =
+    new MoonDesignation(
+      planet.designation,
+      moonOrdinal,
+      locator,
+      seed,
+      romanNumeralFixture(
+        moonOrdinal,
+      ),
+    );
+
+  return new MoonIdentity(
+    planet.planetOrdinal,
+    planet.locator,
+    planet.seed,
+    moonOrdinal,
+    locator,
+    seed,
+    designation,
+  );
+}
+
+function romanNumeralFixture(
+  value:
+    number,
+): string {
+  const values = [
+    [10, 'X'],
+    [9, 'IX'],
+    [5, 'V'],
+    [4, 'IV'],
+    [1, 'I'],
+  ] as const;
+
+  let remaining =
+    value;
+  let result =
+    '';
+
+  for (
+    const [
+      numberValue,
+      symbol,
+    ]
+    of values
+  ) {
+    while (
+      remaining >=
+      numberValue
+    ) {
+      result +=
+        symbol;
+      remaining -=
+        numberValue;
+    }
+  }
+
+  return result;
 }
 
 function relevantMoonFixture(
@@ -851,11 +1023,18 @@ function relevantMoonFixture(
       false,
     );
 
+  const identity =
+    moonIdentityFixture(
+      planet,
+      moonOrdinal,
+    );
+
   return new RelevantMoon(
     planet.planetOrdinal,
     planet.locator,
     planet.seed,
     moonOrdinal,
+    identity,
     physical,
     orbit,
     tidalState,

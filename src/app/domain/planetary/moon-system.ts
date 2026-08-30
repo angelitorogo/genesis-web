@@ -20,6 +20,10 @@ import {
 } from './giant-moon-system-profile';
 
 import {
+  type MoonIdentity,
+} from './moon-identity';
+
+import {
   type MoonPopulationProfile,
 } from './moon-population-profile';
 
@@ -47,14 +51,15 @@ const SOURCE_TOLERANCE =
  * relevant moon with a frozen tidal/spin state, point 21.5 adds a frozen
  * first-order atmosphere/water/geology environment state, point 21.6 adds a
  * potential-habitability projection and point 21.7 specializes gas/ice-giant
- * systems without regenerating any prior moon property. Large minor-satellite
- * populations remain summarized by moonCount rather than forcing every body
- * into memory.
- *
- * Relevant moons still use a stable local moonOrdinal only. MoonSeed/designation
- * stay reserved for point 21.8; no life or biosignature verdict is introduced.
+ * systems without regenerating any prior moon property. Point 21.8 now assigns
+ * one lightweight MoonIdentity to every modeled moon while only the relevant
+ * subset retains full physical/orbital materialization. No life or biosignature
+ * verdict is introduced.
  */
 export class MoonSystem {
+
+  readonly moonIdentities:
+    readonly MoonIdentity[];
 
   readonly relevantMoons:
     readonly RelevantMoon[];
@@ -65,6 +70,9 @@ export class MoonSystem {
 
     readonly populationProfile:
       MoonPopulationProfile,
+
+    moonIdentities:
+      readonly MoonIdentity[],
 
     relevantMoons:
       readonly RelevantMoon[],
@@ -189,6 +197,68 @@ export class MoonSystem {
     }
 
     if (
+      moonIdentities.length !==
+      populationProfile.moonCount
+    ) {
+      throw new RangeError(
+        'MoonSystem point-21.8 requires exactly one MoonIdentity per modeled point-21.2 moon.',
+      );
+    }
+
+    const identitySeeds =
+      new Set<string>();
+
+    const identityNames =
+      new Set<string>();
+
+    for (
+      let index = 0;
+      index <
+        moonIdentities.length;
+      index += 1
+    ) {
+      const identity =
+        moonIdentities[index];
+
+      if (
+        identity.hostPlanetOrdinal !==
+          hostPlanet.planetOrdinal ||
+        identity.hostPlanetLocator !==
+          hostPlanet.locator ||
+        identity.hostPlanetSeed !==
+          hostPlanet.seed ||
+        identity.moonOrdinal !==
+          index + 1 ||
+        identity.locator.moonIndex !==
+          BigInt(index)
+      ) {
+        throw new RangeError(
+          'MoonSystem point-21.8 identities must preserve exact host identity and contiguous moonOrdinal order.',
+        );
+      }
+
+      if (
+        identitySeeds.has(
+          identity.seed.normalizedValue,
+        ) ||
+        identityNames.has(
+          identity.designation.name,
+        )
+      ) {
+        throw new RangeError(
+          'MoonSystem point-21.8 moon seeds/designations must be unique within the host planet.',
+        );
+      }
+
+      identitySeeds.add(
+        identity.seed.normalizedValue,
+      );
+      identityNames.add(
+        identity.designation.name,
+      );
+    }
+
+    if (
       giantMoonProfile
         .hostPlanetOrdinal !==
         hostPlanet
@@ -266,7 +336,9 @@ export class MoonSystem {
         moon
           .moonOrdinal !==
           index +
-            1
+            1 ||
+        moon.identity !==
+          moonIdentities[index]
       ) {
         throw new RangeError(
           'MoonSystem relevant moons must preserve exact host identity and contiguous moonOrdinal order.',
@@ -415,6 +487,11 @@ export class MoonSystem {
       );
     }
 
+    this.moonIdentities =
+      Object.freeze([
+        ...moonIdentities,
+      ]);
+
     this.relevantMoons =
       Object.freeze([
         ...relevantMoons,
@@ -499,6 +576,28 @@ export class MoonSystem {
     return this
       .populationProfile
       .hillSphereRadiusPlanetRadii;
+  }
+
+  get moonDesignations() {
+    return Object.freeze(
+      this.moonIdentities.map(
+        identity =>
+          identity.designation,
+      ),
+    );
+  }
+
+  get relevantMoonIdentities():
+    readonly MoonIdentity[] {
+
+    return Object.freeze(
+      this
+        .moonIdentities
+        .slice(
+          0,
+          this.relevantMoonCount,
+        ),
+    );
   }
 
   get relevantMoonCount():

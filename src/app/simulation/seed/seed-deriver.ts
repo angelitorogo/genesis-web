@@ -19,6 +19,7 @@ import {
   GalacticObjectSeed,
   GalaxySeed,
   HistorySeed,
+  MoonSeed,
   SectorSeed,
   SystemSeed,
 } from '../../domain/seed/hierarchical-seeds';
@@ -55,6 +56,10 @@ const TAG_EVOLUTION =
 
 const TAG_CIVILIZATION =
   0x08;
+
+// Point 21.8 appends a new tag without renumbering any frozen V1 seed domain.
+const TAG_MOON =
+  0x09;
 
 const LONG_MIN =
   -(1n << 63n);
@@ -143,6 +148,24 @@ export const SeedDeriver = {
         parent,
         TAG_BODY,
         bodyIndex,
+      ),
+    );
+  },
+
+  moon(
+    parent: BodySeed,
+    moonIndex: bigint,
+  ): MoonSeed {
+    requireNonNegativeLong(
+      moonIndex,
+      'moonIndex',
+    );
+
+    return new MoonSeed(
+      deriveHex(
+        parent,
+        TAG_MOON,
+        moonIndex,
       ),
     );
   },

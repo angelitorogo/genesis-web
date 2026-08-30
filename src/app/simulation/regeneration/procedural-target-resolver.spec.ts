@@ -3,6 +3,7 @@ import {
   CivilizationLocator,
   GalacticObjectLocator,
   GalaxyLocator,
+  MoonLocator,
   SectorLocator,
   SystemLocator,
   type ProceduralLocator
@@ -15,6 +16,10 @@ import {
 import {
   UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+
+import {
+  MoonSeed,
+} from '../../domain/seed/hierarchical-seeds';
 
 import {
   UniverseSeed,
@@ -131,6 +136,57 @@ describe(
             vector.expected,
           );
         }
+      },
+    );
+
+    it(
+      'should append MoonLocator derivation without changing any frozen earlier V1 seed vector',
+      () => {
+        const locator =
+          new MoonLocator(
+            0n,
+            123456789n,
+            7n,
+            3n,
+            1n,
+          );
+
+        const resolvedSeed =
+          ProceduralTargetResolver
+            .resolveTargetSeed(
+              generationKey,
+              locator,
+            );
+
+        expect(
+          resolvedSeed
+            .normalizedValue,
+        ).toBe(
+          '63F161F291867DD1319F443367BABC5A',
+        );
+
+        expect(
+          resolvedSeed,
+        ).toBeInstanceOf(
+          MoonSeed,
+        );
+
+        if (
+          !(
+            resolvedSeed instanceof
+            MoonSeed
+          )
+        ) {
+          throw new TypeError(
+            'MoonLocator must resolve to MoonSeed.',
+          );
+        }
+
+        expect(
+          resolvedSeed.kind,
+        ).toBe(
+          'moon',
+        );
       },
     );
 
