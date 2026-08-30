@@ -38,6 +38,10 @@ import {
   ClimateVariabilityEngine,
 } from './climate-variability-engine';
 
+import {
+  PlanetWaterEngine,
+} from './planet-water-engine';
+
 /**
  * Phase-20 deterministic Atmosphere materializer.
  *
@@ -45,8 +49,9 @@ import {
  * 20.2 delegates baseline pressure/density/gas materialization, point 20.3
  * applies deterministic retention/loss, point 20.4 derives an approximate
  * greenhouse/longwave blanketing state from the retained atmosphere and point
- * 20.5 derives global-mean equilibrium/surface temperatures and point 20.6
- * refines seasons, coarse extrema and climate stability. The Planet BodySeed
+ * 20.5 derives global-mean equilibrium/surface temperatures, point 20.6
+ * refines seasons, coarse extrema and climate stability and point 20.7 derives
+ * the water/hydrosphere state. The Planet BodySeed
  * remains the canonical identity; no AtmosphereSeed is introduced.
  */
 export class AtmosphereGenerator {
@@ -111,6 +116,16 @@ export class AtmosphereGenerator {
           climateState,
         );
 
+    const waterInventory =
+      PlanetWaterEngine
+        .generate(
+          generationKey,
+          planet,
+          retentionState,
+          climateState,
+          climateVariabilityState,
+        );
+
     return new Atmosphere(
       planet,
       bulkProperties,
@@ -118,6 +133,7 @@ export class AtmosphereGenerator {
       greenhouseEffect,
       climateState,
       climateVariabilityState,
+      waterInventory,
     );
   }
 
@@ -203,6 +219,17 @@ export class AtmosphereGenerator {
           climateStates,
         );
 
+    const waterInventories =
+      PlanetWaterEngine
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          planets,
+          retentionStates,
+          climateStates,
+          climateVariabilityStates,
+        );
+
     return Object.freeze(
       planets.map(
         (
@@ -237,6 +264,7 @@ export class AtmosphereGenerator {
             greenhouseEffects[index],
             climateStates[index],
             climateVariabilityStates[index],
+            waterInventories[index],
           );
         },
       ),

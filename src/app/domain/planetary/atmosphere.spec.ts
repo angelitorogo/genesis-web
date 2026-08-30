@@ -76,6 +76,18 @@ import {
 } from './planet-climate-variability-state';
 
 import {
+  PlanetSurfaceWaterRegime,
+} from './planet-surface-water-regime';
+
+import {
+  PlanetWaterInventory,
+} from './planet-water-inventory';
+
+import {
+  PlanetWaterPhaseRegime,
+} from './planet-water-phase-regime';
+
+import {
   type Planet,
 } from './planet';
 
@@ -88,7 +100,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.6',
+  'Atmosphere through point 20.7',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -119,7 +131,7 @@ describe(
       );
 
     it(
-      'should preserve exact identity and expose point-20.2 through point-20.6 atmosphere/climate states',
+      'should preserve exact identity and expose point-20.2 through point-20.7 atmosphere/climate/water states',
       () => {
         const planet =
           planetFixture();
@@ -150,6 +162,14 @@ describe(
             climate,
           );
 
+        const waterInventory =
+          waterInventoryFixture(
+            planet,
+            retention,
+            climate,
+            variability,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
@@ -158,6 +178,7 @@ describe(
             greenhouse,
             climate,
             variability,
+            waterInventory,
           );
 
         expect(
@@ -257,10 +278,31 @@ describe(
           atmosphere.maximumSurfaceTemperatureKelvin,
         ).not.toBeNull();
 
+        expect(
+          atmosphere.waterInventory,
+        ).toBe(
+          waterInventory,
+        );
+
+        expect(
+          atmosphere.waterInventoryIndex01,
+        ).toBe(0.3);
+
+        expect(
+          atmosphere.waterPhaseRegime,
+        ).toBe(
+          PlanetWaterPhaseRegime.ICE_AND_LIQUID,
+        );
+
+        expect(
+          atmosphere.surfaceWaterRegime,
+        ).toBe(
+          PlanetSurfaceWaterRegime.SEAS,
+        );
+
         for (
           const laterProperty
           of [
-            'waterInventory',
             'geology',
             'magnetosphere',
             'surfaceRadiation',
@@ -312,17 +354,26 @@ describe(
                   greenhouse,
                 );
 
+              const variability =
+                climateVariabilityFixture(
+                  planet,
+                  retention,
+                  greenhouse,
+                  climate,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
                 retention,
                 greenhouse,
                 climate,
-                climateVariabilityFixture(
+                variability,
+                waterInventoryFixture(
                   planet,
                   retention,
-                  greenhouse,
                   climate,
+                  variability,
                 ),
               );
             })(),
@@ -354,17 +405,26 @@ describe(
                   greenhouse,
                 );
 
+              const variability =
+                climateVariabilityFixture(
+                  planet,
+                  retention,
+                  greenhouse,
+                  climate,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
                 retention,
                 greenhouse,
                 climate,
-                climateVariabilityFixture(
+                variability,
+                waterInventoryFixture(
                   planet,
                   retention,
-                  greenhouse,
                   climate,
+                  variability,
                 ),
               );
             })(),
@@ -661,6 +721,45 @@ describe(
           20,
         0.84,
         PlanetClimateStabilityRegime.STABLE,
+      );
+    }
+
+    function waterInventoryFixture(
+      planet:
+        Planet,
+
+      retention:
+        AtmosphereRetentionState,
+
+      climate:
+        PlanetClimateState,
+
+      variability:
+        PlanetClimateVariabilityState,
+    ): PlanetWaterInventory {
+
+      return new PlanetWaterInventory(
+        planet.planetOrdinal,
+        planet.locator,
+        planet.seed,
+        planet.planetType,
+        planet.internalComposition
+          .iceBearingFractionOfSolids01,
+        retention.retainedSurfacePressurePascal,
+        0,
+        climate.meanSurfaceTemperatureKelvin,
+        variability.minimumSurfaceTemperatureKelvin,
+        variability.maximumSurfaceTemperatureKelvin,
+        variability.stabilityIndex01,
+        0.3,
+        0.5,
+        0.5,
+        0,
+        0.2,
+        0.1,
+        PlanetWaterPhaseRegime.ICE_AND_LIQUID,
+        PlanetSurfaceWaterRegime.SEAS,
+        true,
       );
     }
 

@@ -16,6 +16,10 @@ import {
 } from './atmosphere-bulk-properties';
 
 import {
+  AtmosphereGas,
+} from './atmosphere-gas';
+
+import {
   type AtmosphereGasComponent,
 } from './atmosphere-gas-component';
 
@@ -42,6 +46,18 @@ import {
 import {
   type PlanetClimateVariabilityState,
 } from './planet-climate-variability-state';
+
+import {
+  type PlanetSurfaceWaterRegime,
+} from './planet-surface-water-regime';
+
+import {
+  type PlanetWaterInventory,
+} from './planet-water-inventory';
+
+import {
+  type PlanetWaterPhaseRegime,
+} from './planet-water-phase-regime';
 
 import {
   type AtmosphereRetentionRegime,
@@ -77,8 +93,9 @@ const CONSISTENCY_TOLERANCE =
  * source pressure/density/gas inventory, point 20.3 adds a non-mutating
  * atmospheric retention/loss state and point 20.4 adds an approximate retained-
  * atmosphere greenhouse/longwave blanketing state, point 20.5 adds a global-
- * mean thermal climate baseline and point 20.6 adds seasons, coarse thermal
- * extrema and a stability assessment. BodyLocator/
+ * mean thermal climate baseline, point 20.6 adds seasons, coarse thermal
+ * extrema and a stability assessment and point 20.7 adds the deterministic
+ * water/hydrosphere state. BodyLocator/
  * BodySeed remain the canonical identity; no AtmosphereSeed exists.
  */
 export class Atmosphere {
@@ -101,6 +118,9 @@ export class Atmosphere {
 
     readonly climateVariabilityState:
       PlanetClimateVariabilityState,
+
+    readonly waterInventory:
+      PlanetWaterInventory,
   ) {
     if (
       !hostPlanet
@@ -178,6 +198,12 @@ export class Atmosphere {
       hostPlanet,
       climateState,
       climateVariabilityState,
+    );
+
+    assertWaterIdentity(
+      hostPlanet,
+      climateVariabilityState,
+      waterInventory,
     );
 
     if (
@@ -324,6 +350,44 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.6 climate variability must preserve the exact point-18/19 orbital-spin and point-20.3/20.4/20.5 climate handoff.',
+      );
+    }
+
+    if (
+      waterInventory.sourcePlanetType !==
+        hostPlanet.planetType ||
+      !approximatelyEqual(
+        waterInventory.sourceIceBearingInteriorFraction01,
+        hostPlanet.internalComposition
+          .iceBearingFractionOfSolids01,
+      ) ||
+      waterInventory.sourceRetainedSurfacePressurePascal !==
+        retentionState.retainedSurfacePressurePascal ||
+      !approximatelyEqual(
+        waterInventory.sourceRetainedAtmosphericWaterVaporMoleFraction01,
+        retainedWaterVaporMoleFraction01(
+          retentionState,
+        ),
+      ) ||
+      !nullableApproximatelyEqual(
+        waterInventory.sourceMeanSurfaceTemperatureKelvin,
+        climateState.meanSurfaceTemperatureKelvin,
+      ) ||
+      !nullableApproximatelyEqual(
+        waterInventory.sourceMinimumSurfaceTemperatureKelvin,
+        climateVariabilityState.minimumSurfaceTemperatureKelvin,
+      ) ||
+      !nullableApproximatelyEqual(
+        waterInventory.sourceMaximumSurfaceTemperatureKelvin,
+        climateVariabilityState.maximumSurfaceTemperatureKelvin,
+      ) ||
+      !nullableApproximatelyEqual(
+        waterInventory.sourceClimateStabilityIndex01,
+        climateVariabilityState.stabilityIndex01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.7 water inventory must preserve the exact phase-19 water/type and point-20.3/20.5/20.6 atmosphere-climate handoff.',
       );
     }
   }
@@ -682,6 +746,78 @@ export class Atmosphere {
       .heatRedistributionEfficiency01;
   }
 
+  get waterInventoryIndex01():
+    number {
+
+    return this
+      .waterInventory
+      .waterInventoryIndex01;
+  }
+
+  get waterPhaseRegime():
+    PlanetWaterPhaseRegime {
+
+    return this
+      .waterInventory
+      .phaseRegime;
+  }
+
+  get surfaceWaterRegime():
+    PlanetSurfaceWaterRegime {
+
+    return this
+      .waterInventory
+      .surfaceWaterRegime;
+  }
+
+  get waterIceFraction01():
+    number | null {
+
+    return this
+      .waterInventory
+      .iceFraction01;
+  }
+
+  get waterLiquidFraction01():
+    number | null {
+
+    return this
+      .waterInventory
+      .liquidFraction01;
+  }
+
+  get waterVaporFraction01():
+    number | null {
+
+    return this
+      .waterInventory
+      .vaporFraction01;
+  }
+
+  get surfaceIceCoverageFraction01():
+    number | null {
+
+    return this
+      .waterInventory
+      .surfaceIceCoverageFraction01;
+  }
+
+  get surfaceLiquidWaterCoverageFraction01():
+    number | null {
+
+    return this
+      .waterInventory
+      .surfaceLiquidWaterCoverageFraction01;
+  }
+
+  get hasPersistentSurfaceLiquidWater():
+    boolean {
+
+    return this
+      .waterInventory
+      .hasPersistentSurfaceLiquidWater;
+  }
+
   get isVacuum():
     boolean {
 
@@ -859,6 +995,57 @@ function assertClimateVariabilityIdentity(
       'Point-20.6 climate variability must preserve the exact host Planet and point-20.5 climate identity.',
     );
   }
+}
+
+function assertWaterIdentity(
+  hostPlanet:
+    Planet,
+
+  climateVariabilityState:
+    PlanetClimateVariabilityState,
+
+  waterInventory:
+    PlanetWaterInventory,
+): void {
+
+  if (
+    waterInventory.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    waterInventory.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    waterInventory.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    waterInventory.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    waterInventory.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    waterInventory.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    !nullableApproximatelyEqual(
+      waterInventory.sourceMinimumSurfaceTemperatureKelvin,
+      climateVariabilityState.minimumSurfaceTemperatureKelvin,
+    )
+  ) {
+    throw new RangeError(
+      'Point-20.7 water inventory must preserve the exact host Planet and point-20.6 climate-variability identity.',
+    );
+  }
+}
+
+function retainedWaterVaporMoleFraction01(
+  retentionState:
+    AtmosphereRetentionState,
+): number {
+
+  return retentionState
+    .retainedGasComponents
+    .find(
+      (component: AtmosphereGasComponent) =>
+        component.gas ===
+        AtmosphereGas.WATER_VAPOR,
+    )
+    ?.moleFraction01 ??
+    0;
 }
 
 function nullableApproximatelyEqual(

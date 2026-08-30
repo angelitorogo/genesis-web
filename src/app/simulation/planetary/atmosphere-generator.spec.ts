@@ -24,6 +24,14 @@ import {
 } from '../../domain/planetary/planet-climate-stability-regime';
 
 import {
+  PlanetSurfaceWaterRegime,
+} from '../../domain/planetary/planet-surface-water-regime';
+
+import {
+  PlanetWaterPhaseRegime,
+} from '../../domain/planetary/planet-water-phase-regime';
+
+import {
   type Planet,
 } from '../../domain/planetary/planet';
 
@@ -44,7 +52,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.6',
+  'AtmosphereGenerator through point 20.7',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -63,7 +71,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere through point 20.6 while preserving identity',
+      'should materialize one Atmosphere through point 20.7 while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -156,6 +164,30 @@ describe(
         ).not.toBe(
           PlanetClimateStabilityRegime.DEEP_ENVELOPE,
         );
+
+        expect(
+          atmosphere.waterInventory,
+        ).toBeDefined();
+
+        expect(
+          atmosphere.waterInventoryIndex01,
+        ).toBeGreaterThanOrEqual(0);
+
+        expect(
+          atmosphere.waterInventoryIndex01,
+        ).toBeLessThanOrEqual(1);
+
+        expect(
+          atmosphere.waterPhaseRegime,
+        ).not.toBe(
+          PlanetWaterPhaseRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.surfaceWaterRegime,
+        ).not.toBe(
+          PlanetSurfaceWaterRegime.DEEP_ENVELOPE,
+        );
       },
     );
 
@@ -232,6 +264,22 @@ describe(
         ).toBe(
           PlanetClimateStabilityRegime.DEEP_ENVELOPE,
         );
+
+        expect(
+          atmosphere.waterPhaseRegime,
+        ).toBe(
+          PlanetWaterPhaseRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.surfaceWaterRegime,
+        ).toBe(
+          PlanetSurfaceWaterRegime.DEEP_ENVELOPE,
+        );
+
+        expect(
+          atmosphere.surfaceLiquidWaterCoverageFraction01,
+        ).toBeNull();
       },
     );
 
@@ -265,6 +313,15 @@ describe(
           2,
           3,
         ]);
+
+        expect(
+          atmospheres.every(
+            atmosphere =>
+              atmosphere.waterInventory
+                .planetOrdinal ===
+              atmosphere.planetOrdinal,
+          ),
+        ).toBe(true);
 
         expect(
           () =>
