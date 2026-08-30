@@ -36,6 +36,14 @@ import {
 } from './planet-climate-state';
 
 import {
+  type PlanetClimateStabilityRegime,
+} from './planet-climate-stability-regime';
+
+import {
+  type PlanetClimateVariabilityState,
+} from './planet-climate-variability-state';
+
+import {
   type AtmosphereRetentionRegime,
 } from './atmosphere-retention-regime';
 
@@ -68,8 +76,9 @@ const CONSISTENCY_TOLERANCE =
  * Point 20.1 establishes the aggregate identity, point 20.2 supplies the frozen
  * source pressure/density/gas inventory, point 20.3 adds a non-mutating
  * atmospheric retention/loss state and point 20.4 adds an approximate retained-
- * atmosphere greenhouse/longwave blanketing state and point 20.5 adds a global-
- * mean thermal climate baseline (equilibrium/surface temperature). BodyLocator/
+ * atmosphere greenhouse/longwave blanketing state, point 20.5 adds a global-
+ * mean thermal climate baseline and point 20.6 adds seasons, coarse thermal
+ * extrema and a stability assessment. BodyLocator/
  * BodySeed remain the canonical identity; no AtmosphereSeed exists.
  */
 export class Atmosphere {
@@ -89,6 +98,9 @@ export class Atmosphere {
 
     readonly climateState:
       PlanetClimateState,
+
+    readonly climateVariabilityState:
+      PlanetClimateVariabilityState,
   ) {
     if (
       !hostPlanet
@@ -160,6 +172,12 @@ export class Atmosphere {
       hostPlanet,
       greenhouseEffect,
       climateState,
+    );
+
+    assertClimateVariabilityIdentity(
+      hostPlanet,
+      climateState,
+      climateVariabilityState,
     );
 
     if (
@@ -269,6 +287,43 @@ export class Atmosphere {
     ) {
       throw new RangeError(
         'Point-20.5 climate state must preserve the exact point-20.4 greenhouse and phase-19 irradiation/albedo handoff.',
+      );
+    }
+
+    if (
+      !approximatelyEqual(
+        climateVariabilityState.sourceEquilibriumTemperatureKelvin,
+        climateState.equilibriumTemperatureKelvin,
+      ) ||
+      !nullableApproximatelyEqual(
+        climateVariabilityState.sourceMeanSurfaceTemperatureKelvin,
+        climateState.meanSurfaceTemperatureKelvin,
+      ) ||
+      !approximatelyEqual(
+        climateVariabilityState.sourceOrbitalEccentricity,
+        hostPlanet.orbit.eccentricity,
+      ) ||
+      !approximatelyEqual(
+        climateVariabilityState.sourceAxialTiltDegrees,
+        hostPlanet.axialTiltDegrees,
+      ) ||
+      !approximatelyEqual(
+        climateVariabilityState.sourceRotationPeriodHours,
+        hostPlanet.rotationPeriodHours,
+      ) ||
+      !nullableApproximatelyEqual(
+        climateVariabilityState.sourceDayLengthHours,
+        hostPlanet.dayLengthHours,
+      ) ||
+      climateVariabilityState.sourceRetainedSurfacePressurePascal !==
+        retentionState.retainedSurfacePressurePascal ||
+      !approximatelyEqual(
+        climateVariabilityState.sourceLongwaveTrappingFraction01,
+        greenhouseEffect.longwaveTrappingFraction01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-20.6 climate variability must preserve the exact point-18/19 orbital-spin and point-20.3/20.4/20.5 climate handoff.',
       );
     }
   }
@@ -571,6 +626,62 @@ export class Atmosphere {
       .hasDefinedSolidSurfaceTemperature;
   }
 
+  get climateStabilityRegime():
+    PlanetClimateStabilityRegime {
+
+    return this
+      .climateVariabilityState
+      .stabilityRegime;
+  }
+
+  get climateStabilityIndex01():
+    number | null {
+
+    return this
+      .climateVariabilityState
+      .stabilityIndex01;
+  }
+
+  get seasonalTemperatureAmplitudeKelvin():
+    number | null {
+
+    return this
+      .climateVariabilityState
+      .seasonalTemperatureAmplitudeKelvin;
+  }
+
+  get diurnalTemperatureRangeKelvin():
+    number | null {
+
+    return this
+      .climateVariabilityState
+      .diurnalTemperatureRangeKelvin;
+  }
+
+  get minimumSurfaceTemperatureKelvin():
+    number | null {
+
+    return this
+      .climateVariabilityState
+      .minimumSurfaceTemperatureKelvin;
+  }
+
+  get maximumSurfaceTemperatureKelvin():
+    number | null {
+
+    return this
+      .climateVariabilityState
+      .maximumSurfaceTemperatureKelvin;
+  }
+
+  get heatRedistributionEfficiency01():
+    number {
+
+    return this
+      .climateVariabilityState
+      .heatRedistributionEfficiency01;
+  }
+
   get isVacuum():
     boolean {
 
@@ -711,6 +822,41 @@ function assertClimateIdentity(
   ) {
     throw new RangeError(
       'Point-20.5 climate state must preserve the exact host Planet and point-20.4 greenhouse identity.',
+    );
+  }
+}
+
+function assertClimateVariabilityIdentity(
+  hostPlanet:
+    Planet,
+
+  climateState:
+    PlanetClimateState,
+
+  climateVariabilityState:
+    PlanetClimateVariabilityState,
+): void {
+
+  if (
+    climateVariabilityState.planetOrdinal !==
+      hostPlanet.planetOrdinal ||
+    climateVariabilityState.bodyLocator.galaxyIndex !==
+      hostPlanet.locator.galaxyIndex ||
+    climateVariabilityState.bodyLocator.sectorKey !==
+      hostPlanet.locator.sectorKey ||
+    climateVariabilityState.bodyLocator.galacticObjectIndex !==
+      hostPlanet.locator.galacticObjectIndex ||
+    climateVariabilityState.bodyLocator.bodyIndex !==
+      hostPlanet.locator.bodyIndex ||
+    climateVariabilityState.bodySeed.normalizedValue !==
+      hostPlanet.seed.normalizedValue ||
+    !approximatelyEqual(
+      climateVariabilityState.sourceEquilibriumTemperatureKelvin,
+      climateState.equilibriumTemperatureKelvin,
+    )
+  ) {
+    throw new RangeError(
+      'Point-20.6 climate variability must preserve the exact host Planet and point-20.5 climate identity.',
     );
   }
 }

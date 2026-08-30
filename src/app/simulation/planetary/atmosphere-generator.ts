@@ -34,6 +34,10 @@ import {
   ClimateEngine,
 } from './climate-engine';
 
+import {
+  ClimateVariabilityEngine,
+} from './climate-variability-engine';
+
 /**
  * Phase-20 deterministic Atmosphere materializer.
  *
@@ -41,7 +45,8 @@ import {
  * 20.2 delegates baseline pressure/density/gas materialization, point 20.3
  * applies deterministic retention/loss, point 20.4 derives an approximate
  * greenhouse/longwave blanketing state from the retained atmosphere and point
- * 20.5 derives global-mean equilibrium/surface temperatures. The Planet BodySeed
+ * 20.5 derives global-mean equilibrium/surface temperatures and point 20.6
+ * refines seasons, coarse extrema and climate stability. The Planet BodySeed
  * remains the canonical identity; no AtmosphereSeed is introduced.
  */
 export class AtmosphereGenerator {
@@ -96,12 +101,23 @@ export class AtmosphereGenerator {
           greenhouseEffect,
         );
 
+    const climateVariabilityState =
+      ClimateVariabilityEngine
+        .generate(
+          generationKey,
+          planet,
+          retentionState,
+          greenhouseEffect,
+          climateState,
+        );
+
     return new Atmosphere(
       planet,
       bulkProperties,
       retentionState,
       greenhouseEffect,
       climateState,
+      climateVariabilityState,
     );
   }
 
@@ -176,6 +192,17 @@ export class AtmosphereGenerator {
           greenhouseEffects,
         );
 
+    const climateVariabilityStates =
+      ClimateVariabilityEngine
+        .generateAll(
+          generationKey,
+          planetarySystem,
+          planets,
+          retentionStates,
+          greenhouseEffects,
+          climateStates,
+        );
+
     return Object.freeze(
       planets.map(
         (
@@ -209,6 +236,7 @@ export class AtmosphereGenerator {
             retentionStates[index],
             greenhouseEffects[index],
             climateStates[index],
+            climateVariabilityStates[index],
           );
         },
       ),

@@ -68,6 +68,14 @@ import {
 } from './planet-climate-state';
 
 import {
+  PlanetClimateStabilityRegime,
+} from './planet-climate-stability-regime';
+
+import {
+  PlanetClimateVariabilityState,
+} from './planet-climate-variability-state';
+
+import {
   type Planet,
 } from './planet';
 
@@ -80,7 +88,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'Atmosphere through point 20.5',
+  'Atmosphere through point 20.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -111,7 +119,7 @@ describe(
       );
 
     it(
-      'should preserve exact identity and expose point-20.2 through point-20.5 atmosphere/climate states',
+      'should preserve exact identity and expose point-20.2 through point-20.6 atmosphere/climate states',
       () => {
         const planet =
           planetFixture();
@@ -134,6 +142,14 @@ describe(
             greenhouse,
           );
 
+        const variability =
+          climateVariabilityFixture(
+            planet,
+            retention,
+            greenhouse,
+            climate,
+          );
+
         const atmosphere =
           new Atmosphere(
             planet,
@@ -141,6 +157,7 @@ describe(
             retention,
             greenhouse,
             climate,
+            variability,
           );
 
         expect(
@@ -226,10 +243,23 @@ describe(
           atmosphere.greenhouseSurfaceWarmingKelvin,
         ).toBe(0);
 
+        expect(
+          atmosphere.climateVariabilityState,
+        ).toBe(
+          variability,
+        );
+
+        expect(
+          atmosphere.minimumSurfaceTemperatureKelvin,
+        ).not.toBeNull();
+
+        expect(
+          atmosphere.maximumSurfaceTemperatureKelvin,
+        ).not.toBeNull();
+
         for (
           const laterProperty
           of [
-            'seasonalClimate',
             'waterInventory',
             'geology',
             'magnetosphere',
@@ -277,13 +307,22 @@ describe(
                   retention,
                 );
 
+              const climate =
+                climateFixture(
+                  greenhouse,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
                 retention,
                 greenhouse,
-                climateFixture(
+                climate,
+                climateVariabilityFixture(
+                  planet,
+                  retention,
                   greenhouse,
+                  climate,
                 ),
               );
             })(),
@@ -310,13 +349,22 @@ describe(
                   retention,
                 );
 
+              const climate =
+                climateFixture(
+                  greenhouse,
+                );
+
               return new Atmosphere(
                 planet,
                 bulk,
                 retention,
                 greenhouse,
-                climateFixture(
+                climate,
+                climateVariabilityFixture(
+                  planet,
+                  retention,
                   greenhouse,
+                  climate,
                 ),
               );
             })(),
@@ -376,6 +424,16 @@ describe(
         },
         referenceBondAlbedo01:
           0.21,
+        orbit: {
+          eccentricity:
+            0.03,
+        },
+        axialTiltDegrees:
+          24,
+        rotationPeriodHours:
+          24,
+        dayLengthHours:
+          24.1,
         isTypePhysicallyCoherent:
           true,
         ...overrides,
@@ -563,6 +621,46 @@ describe(
         equilibriumTemperatureKelvin,
         equilibriumTemperatureKelvin,
         0,
+      );
+    }
+
+    function climateVariabilityFixture(
+      planet:
+        Planet,
+
+      retention:
+        AtmosphereRetentionState,
+
+      greenhouse:
+        AtmosphereGreenhouseEffect,
+
+      climate:
+        PlanetClimateState,
+    ): PlanetClimateVariabilityState {
+
+      return new PlanetClimateVariabilityState(
+        planet.planetOrdinal,
+        planet.locator,
+        planet.seed,
+        climate.equilibriumTemperatureKelvin,
+        climate.meanSurfaceTemperatureKelvin,
+        planet.orbit.eccentricity,
+        planet.axialTiltDegrees,
+        planet.rotationPeriodHours,
+        planet.dayLengthHours,
+        retention.retainedSurfacePressurePascal,
+        greenhouse.longwaveTrappingFraction01,
+        0.4,
+        0.08,
+        0.6,
+        10,
+        20,
+        climate.meanSurfaceTemperatureKelvin! -
+          20,
+        climate.meanSurfaceTemperatureKelvin! +
+          20,
+        0.84,
+        PlanetClimateStabilityRegime.STABLE,
       );
     }
 

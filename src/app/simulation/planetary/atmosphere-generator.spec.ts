@@ -20,6 +20,10 @@ import {
 } from '../../domain/planetary/atmosphere-pressure-regime';
 
 import {
+  PlanetClimateStabilityRegime,
+} from '../../domain/planetary/planet-climate-stability-regime';
+
+import {
   type Planet,
 } from '../../domain/planetary/planet';
 
@@ -40,7 +44,7 @@ import {
 } from './atmosphere-generator';
 
 describe(
-  'AtmosphereGenerator through point 20.5',
+  'AtmosphereGenerator through point 20.6',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -59,7 +63,7 @@ describe(
       );
 
     it(
-      'should materialize one Atmosphere through point 20.5 while preserving identity',
+      'should materialize one Atmosphere through point 20.6 while preserving identity',
       () => {
         const fixture =
           systemFixture(2);
@@ -134,6 +138,24 @@ describe(
         expect(
           atmosphere.meanSurfaceTemperatureKelvin,
         ).not.toBeNull();
+
+        expect(
+          atmosphere.climateVariabilityState,
+        ).toBeDefined();
+
+        expect(
+          atmosphere.minimumSurfaceTemperatureKelvin,
+        ).not.toBeNull();
+
+        expect(
+          atmosphere.maximumSurfaceTemperatureKelvin,
+        ).not.toBeNull();
+
+        expect(
+          atmosphere.climateStabilityRegime,
+        ).not.toBe(
+          PlanetClimateStabilityRegime.DEEP_ENVELOPE,
+        );
       },
     );
 
@@ -196,6 +218,20 @@ describe(
         expect(
           atmosphere.hasDefinedSolidSurfaceTemperature,
         ).toBe(false);
+
+        expect(
+          atmosphere.minimumSurfaceTemperatureKelvin,
+        ).toBeNull();
+
+        expect(
+          atmosphere.maximumSurfaceTemperatureKelvin,
+        ).toBeNull();
+
+        expect(
+          atmosphere.climateStabilityRegime,
+        ).toBe(
+          PlanetClimateStabilityRegime.DEEP_ENVELOPE,
+        );
       },
     );
 
@@ -428,6 +464,29 @@ describe(
         },
         referenceBondAlbedo01:
           0.2,
+        orbit: {
+          eccentricity:
+            0.03 +
+            0.01 *
+              planetOrdinal,
+        },
+        axialTiltDegrees:
+          deep
+            ? 8
+            : 18 +
+              planetOrdinal *
+                4,
+        rotationPeriodHours:
+          deep
+            ? 10
+            : 20 +
+              planetOrdinal,
+        dayLengthHours:
+          deep
+            ? 10.2
+            : 24 +
+              planetOrdinal *
+                2,
         isTypePhysicallyCoherent:
           true,
       } as unknown as Planet;
