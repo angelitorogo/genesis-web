@@ -35,6 +35,10 @@ import {
 } from '../../domain/planetary/planet-type-classification';
 
 import {
+  type PlanetTypePhysicalCoherenceAssessment,
+} from '../../domain/planetary/planet-type-physical-coherence-assessment';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
@@ -58,6 +62,10 @@ import {
   PlanetTypeGenerator,
 } from './planet-type-generator';
 
+import {
+  PlanetTypePhysicalCoherenceGenerator,
+} from './planet-type-physical-coherence-generator';
+
 /**
  * Point-19.1 deterministic Planet materializer.
  *
@@ -69,8 +77,9 @@ import {
  * properties, point 19.3 adds deterministic rotation/day/axial tilt, point 19.4
  * derives one coarse physical planet type, point 19.5 adds an approximate
  * conserved internal-composition budget and point 19.6 adds reference Bond
- * albedo plus a coarse surface base. No PlanetSeed level is introduced and all
- * point-18 products remain frozen.
+ * albedo plus a coarse surface base. Point 19.7 adds a zero-entropy physical
+ * coherence audit across type, bulk state and internal composition. No
+ * PlanetSeed level is introduced and all point-18 products remain frozen.
  */
 export class PlanetGenerator {
 
@@ -191,6 +200,15 @@ export class PlanetGenerator {
           internalComposition,
         );
 
+    const typePhysicalCoherenceAssessment =
+      PlanetTypePhysicalCoherenceGenerator
+        .generate(
+          generationKey,
+          physicalProperties,
+          typeClassification,
+          internalComposition,
+        );
+
     return materializePlanet(
       planetarySystem,
       index,
@@ -199,6 +217,7 @@ export class PlanetGenerator {
       typeClassification,
       internalComposition,
       surfaceBaseProperties,
+      typePhysicalCoherenceAssessment,
     );
   }
 
@@ -270,6 +289,15 @@ export class PlanetGenerator {
           internalCompositions,
         );
 
+    const typePhysicalCoherenceAssessments =
+      PlanetTypePhysicalCoherenceGenerator
+        .generateAll(
+          generationKey,
+          physicalProperties,
+          typeClassifications,
+          internalCompositions,
+        );
+
     return Object.freeze(
       physicalProperties
         .map(
@@ -285,6 +313,7 @@ export class PlanetGenerator {
               typeClassifications[index],
               internalCompositions[index],
               surfaceBaseProperties[index],
+              typePhysicalCoherenceAssessments[index],
             ),
         ),
     );
@@ -312,6 +341,9 @@ function materializePlanet(
 
   surfaceBaseProperties:
     PlanetSurfaceBaseProperties,
+
+  typePhysicalCoherenceAssessment:
+    PlanetTypePhysicalCoherenceAssessment,
 ): Planet {
 
   return new Planet(
@@ -333,6 +365,7 @@ function materializePlanet(
     typeClassification,
     internalComposition,
     surfaceBaseProperties,
+    typePhysicalCoherenceAssessment,
   );
 }
 

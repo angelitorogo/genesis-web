@@ -295,6 +295,37 @@ describe(
     );
 
     it(
+      'should enforce the frozen 40-Earth-mass ice-giant upper boundary before gas-giant fallback',
+      () => {
+        const fixture =
+          singlePlanetFixture({
+            massEarth: 50,
+            envelopeFraction01: 0.50,
+            densityGramsPerCubicCentimeter: 1.5,
+            iceBearingSolidFraction01: 0.75,
+            semiMajorAxisAu: 10,
+            eccentricity: 0.03,
+            radiativeRelation:
+              PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE,
+            expectedType:
+              PlanetType.GAS_GIANT,
+          });
+
+        expect(
+          PlanetTypeGenerator
+            .generate(
+              generationKey,
+              fixture.system,
+              fixture.physicalProperties,
+            )
+            .planetType,
+        ).toBe(
+          PlanetType.GAS_GIANT,
+        );
+      },
+    );
+
+    it(
       'should not promote reference-only stellar HZ geometry into present-day ocean/desert/ice thermal phenotypes',
       () => {
         const fixture =

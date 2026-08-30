@@ -72,7 +72,7 @@ import {
 } from './planet-generator';
 
 describe(
-  'PlanetGenerator points 19.1-19.6',
+  'PlanetGenerator points 19.1-19.7',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -272,6 +272,20 @@ describe(
           planet.planetType,
         );
 
+        expect(
+          planet.isTypePhysicallyCoherent,
+        ).toBe(true);
+
+        expect(
+          planet.typePhysicalCoherenceIssues,
+        ).toEqual([]);
+
+        expect(
+          planet.typePhysicalCoherenceAssessment.expectedPlanetType,
+        ).toBe(
+          planet.planetType,
+        );
+
         for (
           const laterProperty
           of [
@@ -401,6 +415,12 @@ describe(
               .referenceMeanInsolationEarth,
             12,
           );
+
+
+          expect(
+            planets[index]
+              .isTypePhysicallyCoherent,
+          ).toBe(true);
         }
       },
     );
@@ -517,6 +537,12 @@ describe(
           after.surfaceBaseProperties,
         ).toEqual(
           before.surfaceBaseProperties,
+        );
+
+        expect(
+          after.typePhysicalCoherenceAssessment,
+        ).toEqual(
+          before.typePhysicalCoherenceAssessment,
         );
       },
     );

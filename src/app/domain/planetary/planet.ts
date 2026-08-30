@@ -60,6 +60,14 @@ import {
 } from './planet-type-classification';
 
 import {
+  type PlanetTypePhysicalCoherenceAssessment,
+} from './planet-type-physical-coherence-assessment';
+
+import {
+  type PlanetTypePhysicalCoherenceIssue,
+} from './planet-type-physical-coherence-issue';
+
+import {
   type PlanetarySystem,
 } from './planetary-system';
 
@@ -83,7 +91,8 @@ import {
  * product. Point 19.4 then attaches one deterministic coarse planet-type
  * classification, point 19.5 adds an approximate conserved internal mass
  * budget and point 19.6 adds a reference Bond albedo plus coarse surface base.
- * Type/physics coherence assessment and rarity flags remain points 19.7-19.8.
+ * Point 19.7 then attaches an explicit type/bulk/composition coherence audit.
+ * Rarity flags remain point 19.8.
  */
 export class Planet {
 
@@ -123,6 +132,9 @@ export class Planet {
 
     readonly surfaceBaseProperties:
       PlanetSurfaceBaseProperties,
+
+    readonly typePhysicalCoherenceAssessment:
+      PlanetTypePhysicalCoherenceAssessment,
   ) {
     if (
       !Number.isInteger(
@@ -211,6 +223,7 @@ export class Planet {
       typeClassification,
       internalComposition,
       surfaceBaseProperties,
+      typePhysicalCoherenceAssessment,
     );
 
     if (
@@ -458,6 +471,65 @@ export class Planet {
         'Point-19.6 surface base must preserve the exact point-19.2/19.4/19.5 physical sources.',
       );
     }
+
+    if (
+      typePhysicalCoherenceAssessment
+        .planetType !==
+      typeClassification
+        .planetType ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .sourceMassEarth,
+        physicalProperties
+          .massEarth,
+      ) ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .sourceRadiusEarth,
+        physicalProperties
+          .radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .sourceDensityGramsPerCubicCentimeter,
+        physicalProperties
+          .densityGramsPerCubicCentimeter,
+      ) ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .sourceEnvelopeMassFraction01,
+        physicalProperties
+          .envelopeMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .internalEnvelopeMassFraction01,
+        internalComposition
+          .gaseousEnvelopeMassFraction01,
+      ) ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .classificationIceBearingSolidFraction01,
+        typeClassification
+          .sourceIceBearingSolidFraction01,
+      ) ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .compositionSourceIceBearingFraction01,
+        internalComposition
+          .sourceIceBearingFraction01,
+      ) ||
+      !approximatelyEqual(
+        typePhysicalCoherenceAssessment
+          .internalIceBearingSolidFraction01,
+        internalComposition
+          .iceBearingFractionOfSolids01,
+      )
+    ) {
+      throw new RangeError(
+        'Point-19.7 type/physics coherence assessment must preserve the exact point-19.2/19.4/19.5 source values.',
+      );
+    }
   }
 
   get generationKey():
@@ -676,6 +748,22 @@ export class Planet {
       .surfaceBaseProperties
       .baseSolidSurfaceRoughness01;
   }
+
+  get isTypePhysicallyCoherent():
+    boolean {
+
+    return this
+      .typePhysicalCoherenceAssessment
+      .isCoherent;
+  }
+
+  get typePhysicalCoherenceIssues():
+    readonly PlanetTypePhysicalCoherenceIssue[] {
+
+    return this
+      .typePhysicalCoherenceAssessment
+      .issues;
+  }
 }
 
 function assertSharedBodyIdentity(
@@ -711,6 +799,9 @@ function assertSharedBodyIdentity(
 
   surfaceBaseProperties:
     PlanetSurfaceBaseProperties,
+
+  typePhysicalCoherenceAssessment:
+    PlanetTypePhysicalCoherenceAssessment,
 ): void {
 
   const bodyObjects = [
@@ -724,6 +815,7 @@ function assertSharedBodyIdentity(
     typeClassification,
     internalComposition,
     surfaceBaseProperties,
+    typePhysicalCoherenceAssessment,
   ] as const;
 
   for (

@@ -75,6 +75,10 @@ import {
 } from './planet-type-classification';
 
 import {
+  PlanetTypePhysicalCoherenceAssessment,
+} from './planet-type-physical-coherence-assessment';
+
+import {
   type PlanetaryOrbitalElements,
 } from './planetary-orbital-elements';
 
@@ -95,7 +99,7 @@ import {
 } from './planetary-system-orbit-topology';
 
 describe(
-  'Planet points 19.1-19.6',
+  'Planet points 19.1-19.7',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -126,7 +130,7 @@ describe(
       );
 
     it(
-      'should bind frozen point-18 projections plus coherent point-19.2-19.6 physical products into one planet',
+      'should bind frozen point-18 projections plus coherent point-19.2-19.7 physical products into one planet',
       () => {
         const fixture =
           planetFixture();
@@ -145,6 +149,7 @@ describe(
             fixture.typeClassification,
             fixture.internalComposition,
             fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
           );
 
         expect(
@@ -409,6 +414,7 @@ describe(
                 fixture.typeClassification,
                 fixture.internalComposition,
                 fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
               ),
           ).toThrow(
             RangeError,
@@ -442,6 +448,7 @@ describe(
               fixture.typeClassification,
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -489,6 +496,7 @@ describe(
               fixture.typeClassification,
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -523,6 +531,7 @@ describe(
               fixture.typeClassification,
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -574,6 +583,7 @@ describe(
               fixture.typeClassification,
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -611,6 +621,7 @@ describe(
               fixture.typeClassification,
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -661,6 +672,7 @@ describe(
               foreignIdentity,
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -698,6 +710,7 @@ describe(
               wrongMassSource,
               fixture.internalComposition,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -749,6 +762,7 @@ describe(
               fixture.typeClassification,
               foreignIdentity,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -787,6 +801,7 @@ describe(
               fixture.typeClassification,
               wrongMassBudget,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -825,6 +840,7 @@ describe(
               fixture.typeClassification,
               wrongSourceMixture,
               fixture.surfaceBaseProperties,
+            fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -873,6 +889,7 @@ describe(
               fixture.typeClassification,
               fixture.internalComposition,
               foreignIdentity,
+              fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -911,6 +928,7 @@ describe(
               fixture.typeClassification,
               fixture.internalComposition,
               wrongTypeSource,
+              fixture.typePhysicalCoherenceAssessment,
             ),
         ).toThrow(
           RangeError,
@@ -941,6 +959,8 @@ describe(
         PlanetInternalComposition;
       readonly surfaceBaseProperties:
         PlanetSurfaceBaseProperties;
+      readonly typePhysicalCoherenceAssessment:
+        PlanetTypePhysicalCoherenceAssessment;
     } {
       const slot = {
         planetOrdinal:
@@ -1123,6 +1143,26 @@ describe(
           0.70,
         );
 
+      const typePhysicalCoherenceAssessment =
+        new PlanetTypePhysicalCoherenceAssessment(
+          1,
+          firstLocator,
+          firstSeed,
+          PlanetType.ROCKY,
+          PlanetType.ROCKY,
+          physicalProperties.massEarth,
+          physicalProperties.radiusEarth,
+          physicalProperties.densityGramsPerCubicCentimeter,
+          physicalProperties.densityGramsPerCubicCentimeter,
+          physicalProperties.envelopeMassFraction01,
+          internalComposition.gaseousEnvelopeMassFraction01,
+          typeClassification.sourceIceBearingSolidFraction01,
+          internalComposition.sourceIceBearingFraction01,
+          internalComposition.iceBearingFractionOfSolids01,
+          internalComposition.iceBearingFractionOfSolids01,
+          [],
+        );
+
       const system = {
         generationKey,
         locator:
@@ -1168,6 +1208,7 @@ describe(
         typeClassification,
         internalComposition,
         surfaceBaseProperties,
+        typePhysicalCoherenceAssessment,
       };
     }
   },
