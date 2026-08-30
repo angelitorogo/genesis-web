@@ -16,6 +16,14 @@ import {
 } from '../../domain/seed/hierarchical-seeds';
 
 import {
+  MoonAtmosphereRegime,
+} from '../../domain/planetary/moon-atmosphere-regime';
+
+import {
+  MoonGeologyRegime,
+} from '../../domain/planetary/moon-geology-regime';
+
+import {
   MoonTidalLockingRegime,
 } from '../../domain/planetary/moon-tidal-locking-regime';
 
@@ -26,6 +34,10 @@ import {
 import {
   MoonTidalRegime,
 } from '../../domain/planetary/moon-tidal-regime';
+
+import {
+  MoonWaterRegime,
+} from '../../domain/planetary/moon-water-regime';
 
 import {
   type Planet,
@@ -48,7 +60,7 @@ import {
 } from './moon-generator';
 
 describe(
-  'MoonGenerator point 21.4 V1',
+  'MoonGenerator point 21.5 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -266,6 +278,45 @@ describe(
           rocky.relevantMoons[0].orbitalPeriodDays *
             24,
           12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].environmentState.inferredIceRichnessIndex01,
+        ).toBeCloseTo(
+          0.05618035122752274,
+          12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].environmentState.atmosphereRetentionIndex01,
+        ).toBeCloseTo(
+          0.13447990157817957,
+          12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].atmosphereRegime,
+        ).toBe(
+          MoonAtmosphereRegime.EXOSPHERE,
+        );
+
+        expect(
+          rocky.relevantMoons[0].waterRegime,
+        ).toBe(
+          MoonWaterRegime.NONE,
+        );
+
+        expect(
+          rocky.relevantMoons[0].environmentState.geologicalActivityIndex01,
+        ).toBeCloseTo(
+          0.2786556582215406,
+          12,
+        );
+
+        expect(
+          rocky.relevantMoons[0].geologyRegime,
+        ).toBe(
+          MoonGeologyRegime.LOW_ACTIVITY,
         );
 
         expect(
@@ -649,6 +700,32 @@ describe(
             ).toBe(
               moon.moonOrdinal,
             );
+
+            expect(
+              moon.environmentState
+                .hostPlanetOrdinal,
+            ).toBe(
+              planet.planetOrdinal,
+            );
+
+            expect(
+              moon.environmentState
+                .moonOrdinal,
+            ).toBe(
+              moon.moonOrdinal,
+            );
+
+            expect(
+              moon.environmentState
+                .sourceTidalHeatingIndex01,
+            ).toBe(
+              moon.tidalHeatingIndex01,
+            );
+
+            expect(
+              'habitability' in
+                moon.environmentState,
+            ).toBe(false);
 
             previousOrbit =
               moon.semiMajorAxisPlanetRadii;
@@ -1118,6 +1195,9 @@ interface PlanetFixtureOptions {
 
   readonly isTypePhysicallyCoherent?:
     boolean;
+
+  readonly referenceMeanInsolationEarth?:
+    number;
 }
 
 function planetarySystemFixture(
@@ -1181,6 +1261,12 @@ function planetFixture(
     options.isRetrogradeRotation ??
     false;
 
+  const referenceMeanInsolationEarth =
+    options.referenceMeanInsolationEarth ??
+    1 /
+      semiMajorAxisAu **
+        2;
+
   return {
     generationKey:
       planetarySystem
@@ -1225,6 +1311,9 @@ function planetFixture(
     },
     rotationPeriodHours,
     isRetrogradeRotation,
+    typeClassification: {
+      referenceMeanInsolationEarth,
+    },
     isTypePhysicallyCoherent:
       options
         .isTypePhysicallyCoherent ??

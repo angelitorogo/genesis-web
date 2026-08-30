@@ -36,13 +36,13 @@ const SOURCE_TOLERANCE =
  * Point 21.1 established the exact host-Planet boundary and point 21.2 added the
  * deterministic total modeled moon count. Point 21.3 now materializes only the
  * physically/orbitally relevant moon subset. Point 21.4 now enriches each
- * relevant moon with a frozen tidal/spin state while large minor-satellite
+ * relevant moon with a frozen tidal/spin state while point 21.5 adds a frozen
+ * first-order atmosphere/water/geology environment state. Large minor-satellite
  * populations remain summarized by moonCount rather than forcing every body
  * into memory.
  *
  * Relevant moons still use a stable local moonOrdinal only. MoonSeed/designation
- * stay reserved for point 21.8; atmosphere/water/geology and habitability stay
- * reserved for points 21.5..21.6.
+ * stay reserved for point 21.8; habitability stays reserved for point 21.6.
  */
 export class MoonSystem {
 
@@ -255,6 +255,29 @@ export class MoonSystem {
       ) {
         throw new RangeError(
           'MoonSystem relevant-moon tidal states must preserve the exact frozen host Planet bulk/rotation sources.',
+        );
+      }
+
+      if (
+        !approximatelyEqual(
+          moon
+            .environmentState
+            .sourceReferenceMeanInsolationEarth,
+          hostPlanet
+            .typeClassification
+            .referenceMeanInsolationEarth,
+        ) ||
+        !approximatelyEqual(
+          moon
+            .environmentState
+            .sourceTidalHeatingIndex01,
+          moon
+            .tidalState
+            .tidalHeatingIndex01,
+        )
+      ) {
+        throw new RangeError(
+          'MoonSystem relevant-moon environment states must preserve the exact frozen host insolation and point-21.4 tidal-heating sources.',
         );
       }
 

@@ -7,6 +7,10 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  type MoonEnvironmentState,
+} from './moon-environment-state';
+
+import {
   type MoonOrbitalElements,
 } from './moon-orbital-elements';
 
@@ -25,7 +29,9 @@ import {
  * for deterministic point-21.3 property derivation. It is deliberately not a
  * MoonLocator or MoonSeed. Point 21.4 now attaches a deterministic tidal/spin
  * state without changing the frozen point-21.3 physical/orbital values. Point
- * 21.8 remains responsible for seeds and designations.
+ * 21.5 now adds a first-order atmosphere/water/geology environment state without
+ * changing frozen 21.3/21.4 sources. Point 21.8 remains responsible for seeds
+ * and designations.
  */
 export class RelevantMoon {
 
@@ -50,6 +56,9 @@ export class RelevantMoon {
 
     readonly tidalState:
       MoonTidalState,
+
+    readonly environmentState:
+      MoonEnvironmentState,
   ) {
     if (
       !Number.isInteger(
@@ -115,10 +124,16 @@ export class RelevantMoon {
         hostPlanetOrdinal ||
       tidalState
         .moonOrdinal !==
+        moonOrdinal ||
+      environmentState
+        .hostPlanetOrdinal !==
+        hostPlanetOrdinal ||
+      environmentState
+        .moonOrdinal !==
         moonOrdinal
     ) {
       throw new RangeError(
-        'RelevantMoon physical/orbital/tidal products must preserve the exact host/moon ordinals.',
+        'RelevantMoon physical/orbital/tidal/environment products must preserve the exact host/moon ordinals.',
       );
     }
 
@@ -163,6 +178,43 @@ export class RelevantMoon {
     ) {
       throw new RangeError(
         'RelevantMoon tidal state must preserve the exact point-21.3 moon physical/orbital sources.',
+      );
+    }
+
+    if (
+      !approximatelyEqual(
+        environmentState
+          .sourceMoonMassEarth,
+        physicalProperties
+          .massEarth,
+      ) ||
+      !approximatelyEqual(
+        environmentState
+          .sourceMoonRadiusEarth,
+        physicalProperties
+          .radiusEarth,
+      ) ||
+      !approximatelyEqual(
+        environmentState
+          .sourceMoonMeanDensityGramsPerCubicCentimeter,
+        physicalProperties
+          .meanDensityGramsPerCubicCentimeter,
+      ) ||
+      !approximatelyEqual(
+        environmentState
+          .sourceMoonSurfaceGravityEarth,
+        physicalProperties
+          .surfaceGravityEarth,
+      ) ||
+      !approximatelyEqual(
+        environmentState
+          .sourceTidalHeatingIndex01,
+        tidalState
+          .tidalHeatingIndex01,
+      )
+    ) {
+      throw new RangeError(
+        'RelevantMoon environment state must preserve the exact point-21.3/21.4 moon sources.',
       );
     }
   }
@@ -245,6 +297,64 @@ export class RelevantMoon {
     return this
       .tidalState
       .isTidallyLocked;
+  }
+
+  get atmosphereRegime() {
+    return this
+      .environmentState
+      .atmosphereRegime;
+  }
+
+  get waterRegime() {
+    return this
+      .environmentState
+      .waterRegime;
+  }
+
+  get geologyRegime() {
+    return this
+      .environmentState
+      .geologyRegime;
+  }
+
+  get hasAtmosphere():
+    boolean {
+
+    return this
+      .environmentState
+      .hasAtmosphere;
+  }
+
+  get hasWater():
+    boolean {
+
+    return this
+      .environmentState
+      .hasWater;
+  }
+
+  get hasSubsurfaceOcean():
+    boolean {
+
+    return this
+      .environmentState
+      .hasSubsurfaceOcean;
+  }
+
+  get hasSurfaceLiquidWater():
+    boolean {
+
+    return this
+      .environmentState
+      .hasSurfaceLiquidWater;
+  }
+
+  get isGeologicallyActive():
+    boolean {
+
+    return this
+      .environmentState
+      .isGeologicallyActive;
   }
 }
 

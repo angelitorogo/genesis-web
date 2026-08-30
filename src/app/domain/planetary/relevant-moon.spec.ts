@@ -7,6 +7,18 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  MoonAtmosphereRegime,
+} from './moon-atmosphere-regime';
+
+import {
+  MoonEnvironmentState,
+} from './moon-environment-state';
+
+import {
+  MoonGeologyRegime,
+} from './moon-geology-regime';
+
+import {
   MoonOrbitalElements,
 } from './moon-orbital-elements';
 
@@ -32,11 +44,15 @@ import {
 } from './moon-tidal-state';
 
 import {
+  MoonWaterRegime,
+} from './moon-water-regime';
+
+import {
   RelevantMoon,
 } from './relevant-moon';
 
 describe(
-  'RelevantMoon through point 21.4',
+  'RelevantMoon through point 21.5',
   () => {
     const locator =
       new BodyLocator(
@@ -52,7 +68,7 @@ describe(
       );
 
     it(
-      'should preserve the exact physical/orbital/tidal products while keeping later identities/environment absent',
+      'should preserve the exact physical/orbital/tidal/environment products while keeping later identity/habitability absent',
       () => {
         const physical =
           physicalFixture();
@@ -68,6 +84,12 @@ describe(
             orbit,
           );
 
+        const environmentState =
+          environmentFixture(
+            physical,
+            tidalState,
+          );
+
         const moon =
           new RelevantMoon(
             2,
@@ -77,6 +99,7 @@ describe(
             physical,
             orbit,
             tidalState,
+            environmentState,
           );
 
         expect(
@@ -90,6 +113,22 @@ describe(
         expect(
           moon.tidalState,
         ).toBe(tidalState);
+
+        expect(
+          moon.environmentState,
+        ).toBe(environmentState);
+
+        expect(
+          moon.atmosphereRegime,
+        ).toBe(
+          MoonAtmosphereRegime.EXOSPHERE,
+        );
+
+        expect(
+          moon.waterRegime,
+        ).toBe(
+          MoonWaterRegime.NONE,
+        );
 
         expect(
           moon.massEarth,
@@ -145,6 +184,12 @@ describe(
             orbit,
           );
 
+        const environmentState =
+          environmentFixture(
+            physical,
+            tidalState,
+          );
+
         expect(
           () =>
             new RelevantMoon(
@@ -155,6 +200,7 @@ describe(
               physical,
               orbit,
               tidalState,
+              environmentState,
             ),
         ).toThrow(
           RangeError,
@@ -180,6 +226,7 @@ describe(
               otherPhysical,
               orbit,
               tidalState,
+              environmentState,
             ),
         ).toThrow(
           RangeError,
@@ -268,6 +315,39 @@ function tidalFixture(
     orbit.orbitalPeriodDays *
       24,
     MoonTidalMigrationRegime.OUTWARD,
+  );
+}
+
+function environmentFixture(
+  physical:
+    MoonPhysicalProperties,
+
+  tidalState:
+    MoonTidalState,
+): MoonEnvironmentState {
+
+  return new MoonEnvironmentState(
+    2,
+    1,
+    physical.massEarth,
+    physical.radiusEarth,
+    physical.meanDensityGramsPerCubicCentimeter,
+    physical.surfaceGravityEarth,
+    1,
+    tidalState.tidalHeatingIndex01,
+    0.05,
+    0.16,
+    260,
+    270,
+    0.15,
+    MoonAtmosphereRegime.EXOSPHERE,
+    0.05,
+    0.05,
+    0.01,
+    MoonWaterRegime.NONE,
+    0.30,
+    0.30,
+    MoonGeologyRegime.ACTIVE,
   );
 }
 

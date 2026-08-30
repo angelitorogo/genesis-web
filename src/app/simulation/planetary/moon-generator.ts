@@ -12,6 +12,10 @@ import {
 } from '../../domain/generation/generator-version';
 
 import {
+  MoonEnvironmentEngine,
+} from './moon-environment-engine';
+
+import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
 
@@ -209,6 +213,8 @@ interface RelevantMoonSamplesV1 {
  * density/gravity and stable planetocentric Keplerian orbits. Point 21.4 adds
  * mature-system tidal forcing/heating, 1:1 spin-locking and first-order orbital
  * migration direction without modifying the frozen 21.3 mass/orbit products.
+ * Point 21.5 adds first-order atmosphere/water/geology projections derived from
+ * the same frozen moon state and host stellar-insolation reference.
  *
  * Large minor-moon populations remain summarized by moonCount. Every relevant
  * moon is addressed only by a local moonOrdinal. All samples are read directly
@@ -692,6 +698,14 @@ function relevantMoonsV1(
             orbit,
           );
 
+        const environmentState =
+          MoonEnvironmentEngine
+            .generate(
+              planet,
+              physical,
+              tidalState,
+            );
+
         return new RelevantMoon(
           planet
             .planetOrdinal,
@@ -703,6 +717,7 @@ function relevantMoonsV1(
           physical,
           orbit,
           tidalState,
+          environmentState,
         );
       },
     );

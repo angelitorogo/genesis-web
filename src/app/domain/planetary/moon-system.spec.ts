@@ -20,6 +20,18 @@ import {
 } from '../universe/universe-seed';
 
 import {
+  MoonAtmosphereRegime,
+} from './moon-atmosphere-regime';
+
+import {
+  MoonEnvironmentState,
+} from './moon-environment-state';
+
+import {
+  MoonGeologyRegime,
+} from './moon-geology-regime';
+
+import {
   MoonOrbitalElements,
 } from './moon-orbital-elements';
 
@@ -49,6 +61,10 @@ import {
 } from './moon-tidal-state';
 
 import {
+  MoonWaterRegime,
+} from './moon-water-regime';
+
+import {
   type Planet,
 } from './planet';
 
@@ -69,7 +85,7 @@ import {
 } from './moon-system';
 
 describe(
-  'MoonSystem through point 21.4',
+  'MoonSystem through point 21.5',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -505,6 +521,10 @@ function planetFixture(
       false,
     isTypePhysicallyCoherent:
       true,
+    typeClassification: {
+      referenceMeanInsolationEarth:
+        1,
+    },
     ...overrides,
   } as unknown as Planet;
 }
@@ -654,6 +674,31 @@ function relevantMoonFixture(
       migrationRegime,
     );
 
+  const environmentState =
+    new MoonEnvironmentState(
+      planet.planetOrdinal,
+      moonOrdinal,
+      physical.massEarth,
+      physical.radiusEarth,
+      physical.meanDensityGramsPerCubicCentimeter,
+      physical.surfaceGravityEarth,
+      planet.typeClassification.referenceMeanInsolationEarth,
+      tidalState.tidalHeatingIndex01,
+      0.20,
+      0.22,
+      250,
+      255,
+      0.25,
+      MoonAtmosphereRegime.TRACE,
+      0.20,
+      0.10,
+      0.05,
+      MoonWaterRegime.SURFACE_ICE,
+      0.20,
+      0.15,
+      MoonGeologyRegime.LOW_ACTIVITY,
+    );
+
   return new RelevantMoon(
     planet.planetOrdinal,
     planet.locator,
@@ -662,6 +707,7 @@ function relevantMoonFixture(
     physical,
     orbit,
     tidalState,
+    environmentState,
   );
 }
 
