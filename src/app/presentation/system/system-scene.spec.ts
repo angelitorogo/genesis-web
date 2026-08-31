@@ -24,7 +24,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.1',
+  'SystemScene point 24.2',
   () => {
 
     let resize:
@@ -66,9 +66,9 @@ describe(
                 renderer:
                   'WEBGL2' as const,
                 physicalBodyCount:
-                  0,
+                  3,
                 sceneObjectCount:
-                  0,
+                  11,
               }),
           );
 
@@ -167,7 +167,7 @@ describe(
             .renderInfo()
             ?.physicalBodyCount,
         ).toBe(
-          0,
+          3,
         );
       },
     );
@@ -342,6 +342,172 @@ function sceneSnapshot():
       2,
 
     accessibleLabel:
-      'Escena tridimensional del sistema estelar Jotheria.',
+      'Escena tridimensional del sistema estelar Jotheria. 2 estrellas, 1 planeta y 3 órbitas visibles.',
+
+    stars:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'star-a',
+          kind:
+            'star' as const,
+          label:
+            'A',
+          title:
+            'Jotheria A',
+          colorHex:
+            '#FFDDB2',
+          radiusScene:
+            0.32,
+          position:
+            Object.freeze({
+              x: -0.6,
+              y: 0,
+              z: 0,
+            }),
+          orbitId:
+            'orbit-star-a',
+          surfaceStyle:
+            'emissive' as const,
+          lightIntensity:
+            2.1,
+        }),
+        Object.freeze({
+          id:
+            'star-b',
+          kind:
+            'star' as const,
+          label:
+            'B',
+          title:
+            'Jotheria B',
+          colorHex:
+            '#D9EDFF',
+          radiusScene:
+            0.24,
+          position:
+            Object.freeze({
+              x: 0.85,
+              y: 0,
+              z: 0.16,
+            }),
+          orbitId:
+            'orbit-star-b',
+          surfaceStyle:
+            'emissive' as const,
+          lightIntensity:
+            1.7,
+        }),
+      ]),
+
+    planets:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'planet-1',
+          kind:
+            'planet' as const,
+          label:
+            'Jotheria b',
+          title:
+            'Jotheria b',
+          colorHex:
+            '#4B7FCB',
+          radiusScene:
+            0.08,
+          position:
+            Object.freeze({
+              x: 2.3,
+              y: 0.07,
+              z: 0.65,
+            }),
+          orbitId:
+            'orbit-planet-1',
+          surfaceStyle:
+            'oceanic' as const,
+          lightIntensity:
+            0,
+        }),
+      ]),
+
+    orbits:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'orbit-star-a',
+          kind:
+            'stellar' as const,
+          label:
+            'A',
+          colorHex:
+            '#FFFFFF',
+          opacity:
+            0.22,
+          semiMajorScene:
+            0.7,
+          semiMinorScene:
+            0.7,
+          focusOffsetScene:
+            0,
+          rotationDegrees:
+            0,
+          inclinationDegrees:
+            0,
+        }),
+        Object.freeze({
+          id:
+            'orbit-star-b',
+          kind:
+            'stellar' as const,
+          label:
+            'B',
+          colorHex:
+            '#FFFFFF',
+          opacity:
+            0.22,
+          semiMajorScene:
+            0.95,
+          semiMinorScene:
+            0.95,
+          focusOffsetScene:
+            0,
+          rotationDegrees:
+            0,
+          inclinationDegrees:
+            0,
+        }),
+        Object.freeze({
+          id:
+            'orbit-planet-1',
+          kind:
+            'planetary' as const,
+          label:
+            'Jotheria b',
+          colorHex:
+            '#99BCCD',
+          opacity:
+            0.26,
+          semiMajorScene:
+            2.4,
+          semiMinorScene:
+            2.35,
+          focusOffsetScene:
+            0.05,
+          rotationDegrees:
+            18,
+          inclinationDegrees:
+            4,
+        }),
+      ]),
+
+    scale:
+      Object.freeze({
+        outerRadiusAu:
+          6.2,
+        orbitScaleScenePerAu:
+          0.77,
+        targetOuterRadiusScene:
+          4.8,
+      }),
   });
 }

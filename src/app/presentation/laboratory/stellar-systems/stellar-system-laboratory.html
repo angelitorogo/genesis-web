@@ -28,7 +28,7 @@
     </div>
 
     <span class="stellar-lab__badge">
-      PRODUCTION FICHE / SVG
+      PRODUCTION FICHE / SVG + LIVE THREE.JS QA
     </span>
   </header>
 
@@ -157,6 +157,64 @@
           </dd>
         </div>
       </dl>
+    </section>
+
+    <section
+      class="stellar-lab__renderer-qa"
+      data-testid="stellar-system-laboratory-system-scene-qa"
+      aria-label="Banco de QA del renderer real del sistema"
+    >
+      <header class="stellar-lab__renderer-qa-header">
+        <div>
+          <p class="stellar-lab__eyebrow">
+            QA VISUAL · SYSTEMSCENE 24.2 V3
+          </p>
+
+          <h3>
+            Renderer real Three.js del sistema seleccionado
+          </h3>
+
+          <p>
+            Esta vista usa el mismo <code>SystemScene</code> de <code>/system</code>,
+            pero alimentado en laboratorio con la etapa {{ rendererQaStage().discoveryState.name }}
+            para poder validar estrellas, planetas y órbitas con apariencia procedural sin alterar la partida.
+          </p>
+        </div>
+
+        <dl class="stellar-lab__renderer-qa-meta">
+          <div>
+            <dt>Etapa usada</dt>
+            <dd data-testid="stellar-system-laboratory-system-scene-stage">
+              {{ rendererQaStage().discoveryState.name }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Estrellas</dt>
+            <dd>
+              {{ rendererQaSnapshot().stars.length }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Planetas</dt>
+            <dd>
+              {{ rendererQaSnapshot().planets.length }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Órbitas</dt>
+            <dd>
+              {{ rendererQaSnapshot().orbits.length }}
+            </dd>
+          </div>
+        </dl>
+      </header>
+
+      <app-system-scene
+        [snapshot]="rendererQaSnapshot()"
+      ></app-system-scene>
     </section>
 
     <aside

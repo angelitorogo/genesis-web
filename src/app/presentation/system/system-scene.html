@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>24.1 CORE</span>
+    <span>24.2 V3 · STARS · PLANETS · ORBITS · PROCEDURAL PLANETS</span>
   </div>
 
   @if (renderState() === 'initializing') {
@@ -60,7 +60,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎
     </div>
   }
 </section>

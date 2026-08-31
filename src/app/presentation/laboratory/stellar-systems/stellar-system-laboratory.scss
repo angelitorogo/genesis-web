@@ -215,6 +215,7 @@
     }
   }
 
+
   &__mono {
     font-size: 0.5rem !important;
   }
@@ -411,6 +412,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
+
   }
 }
 
@@ -446,29 +448,4 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
-}
-
-.stellar-lab__unit-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .25rem .48rem;
-  padding: .45rem .65rem;
-  border: 1px solid rgba(106, 215, 255, 0.14);
-  border-radius: .6rem;
-  background: rgba(5, 7, 13, 0.28);
-  color: var(--genesis-color-text-subtle);
-  font: .55rem var(--genesis-font-mono);
-}
-
-.stellar-lab__unit-legend > span:first-child {
-  margin-right: .18rem;
-  color: var(--genesis-color-primary);
-  font-weight: 700;
-  letter-spacing: .08em;
-}
-
-.stellar-lab__unit-legend b {
-  color: var(--genesis-color-primary);
-  font-weight: 700;
 }

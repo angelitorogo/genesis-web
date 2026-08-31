@@ -381,6 +381,39 @@ describe(
     );
 
     it(
+      'should expose the frozen 17.2 evolving-to-dispersing boundary as the mature-formation replay epoch',
+      () => {
+        const physical =
+          physicalFor(
+            1,
+            1,
+            1,
+          );
+
+        const zeroAgeYouth =
+          stellarYouth(
+            StellarYouthStage.PROTOSTAR,
+            0,
+            1,
+            3,
+            4,
+          );
+
+        expect(
+          ProtoplanetaryDiskProfileGenerator
+            .maturationReferenceAgeMillionYears(
+              generationKey,
+              physical,
+              zeroAgeYouth,
+            ),
+        ).toBeCloseTo(
+          4.8,
+          12,
+        );
+      },
+    );
+
+    it(
       'should not create a primordial disk when point 17.1 reports no youth overlay',
       () => {
         expect(

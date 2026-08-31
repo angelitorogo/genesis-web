@@ -32,7 +32,7 @@ describe(
     );
 
     it(
-      'should render the read-only phase-16 stellar-system laboratory with the production fiche renderer',
+      'should render the read-only phase-16 stellar-system laboratory with the production fiche renderer and the live Three.js QA scene',
       () => {
         const fixture =
           TestBed
@@ -65,6 +65,18 @@ describe(
           ),
         ).toHaveLength(4);
 
+        expect(
+          element.querySelector(
+            '[data-testid="stellar-system-laboratory-system-scene-qa"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelectorAll(
+            'app-system-scene',
+          ),
+        ).toHaveLength(1);
+
         const legend =
           element.querySelector(
             '[data-testid="stellar-system-laboratory-unit-legend"]',
@@ -79,6 +91,17 @@ describe(
         expect(legend?.textContent).toContain('luminosidades solares');
         expect(legend?.textContent).toContain('K');
         expect(legend?.textContent).toContain('kelvin');
+
+        expect(
+          element
+            .querySelector(
+              '[data-testid="stellar-system-laboratory-system-scene-stage"]',
+            )
+            ?.textContent
+            ?.trim(),
+        ).toBe(
+          'CATALOGUED',
+        );
       },
       30_000,
     );

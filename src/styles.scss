@@ -2,3 +2,111 @@
 @use './styles/reset';
 @use './styles/base';
 @use './styles/theme';
+
+/*
+ * SystemScene QA chrome for Laboratory 04.
+ * Kept global so the laboratory component stays below Angular's 8 kB
+ * anyComponentStyle budget; selectors are fully namespaced.
+ */
+.stellar-lab .stellar-lab__renderer-qa {
+  display: grid;
+  gap: .85rem;
+  padding: .85rem;
+  overflow: hidden;
+  border: 1px solid rgba(106, 215, 255, .14);
+  border-radius: var(--genesis-radius-lg);
+  background: rgba(15, 19, 31, .76);
+}
+
+.stellar-lab .stellar-lab__renderer-qa app-system-scene {
+  overflow: hidden;
+  border: 1px solid rgba(106, 215, 255, .12);
+  border-radius: .9rem;
+}
+
+.stellar-lab .stellar-lab__renderer-qa code {
+  color: var(--genesis-color-primary);
+  font-family: var(--genesis-font-mono);
+}
+
+.stellar-lab .stellar-lab__renderer-qa-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(20rem, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.stellar-lab .stellar-lab__renderer-qa-header h3 {
+  margin: .18rem 0 .32rem;
+  font-size: 1.02rem;
+}
+
+.stellar-lab .stellar-lab__renderer-qa-header p:not(.stellar-lab__eyebrow) {
+  margin: 0;
+  color: var(--genesis-color-text-subtle);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+
+.stellar-lab .stellar-lab__renderer-qa-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .35rem;
+  margin: 0;
+}
+
+.stellar-lab .stellar-lab__renderer-qa-meta div {
+  min-width: 0;
+  padding: .45rem;
+  border: 1px solid rgba(106, 215, 255, .12);
+  background: rgba(5, 7, 13, .35);
+}
+
+.stellar-lab .stellar-lab__renderer-qa-meta dt {
+  color: var(--genesis-color-text-subtle);
+  font: .5rem var(--genesis-font-mono);
+  text-transform: uppercase;
+}
+
+.stellar-lab .stellar-lab__renderer-qa-meta dd {
+  margin: .18rem 0 0;
+  overflow-wrap: anywhere;
+  color: var(--genesis-color-primary);
+  font: 700 .58rem var(--genesis-font-mono);
+}
+
+@media (max-width: 92rem) {
+  .stellar-lab .stellar-lab__renderer-qa-header {
+    grid-template-columns: 1fr;
+  }
+
+  .stellar-lab .stellar-lab__renderer-qa-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+.stellar-lab .stellar-lab__unit-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .25rem .48rem;
+  padding: .45rem .65rem;
+  border: 1px solid rgba(106, 215, 255, .14);
+  border-radius: .6rem;
+  background: rgba(5, 7, 13, .28);
+  color: var(--genesis-color-text-subtle);
+  font: .55rem var(--genesis-font-mono);
+}
+
+.stellar-lab .stellar-lab__unit-legend > span:first-child {
+  margin-right: .18rem;
+  color: var(--genesis-color-primary);
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+.stellar-lab .stellar-lab__unit-legend b {
+  color: var(--genesis-color-primary);
+  font-weight: 700;
+}

@@ -20,11 +20,11 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemSceneSnapshotBuilder point 24.1',
+  'SystemSceneSnapshotBuilder point 24.2',
   () => {
 
     it(
-      'should project only stable identity/knowledge metadata into the Three.js scene boundary',
+      'should project resolved system metadata plus frozen stars, planets and orbital guides into the Three.js boundary',
       () => {
 
         const model =
@@ -86,19 +86,59 @@ describe(
         ).toBe(true);
 
         expect(
-          'planets' in
-            snapshot,
-        ).toBe(false);
+          Array.isArray(
+            snapshot.stars,
+          ),
+        ).toBe(true);
 
         expect(
-          'orbits' in
-            snapshot,
-        ).toBe(false);
+          Array.isArray(
+            snapshot.planets,
+          ),
+        ).toBe(true);
 
         expect(
-          'physics' in
-            snapshot,
-        ).toBe(false);
+          Array.isArray(
+            snapshot.orbits,
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.stars.length,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
+          Object.isFrozen(
+            snapshot.stars,
+          ),
+        ).toBe(true);
+
+        expect(
+          Object.isFrozen(
+            snapshot.planets,
+          ),
+        ).toBe(true);
+
+        expect(
+          Object.isFrozen(
+            snapshot.orbits,
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.scale
+            .targetOuterRadiusScene,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
+          snapshot.accessibleLabel,
+        ).toContain(
+          'estrella',
+        );
       },
     );
 

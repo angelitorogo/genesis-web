@@ -41,8 +41,11 @@ const V1_MAX_DISPERSAL_AGE_MILLION_YEARS =
 const V1_GAS_RICH_PROGRESS_UPPER =
   0.35;
 
-const V1_EVOLVING_PROGRESS_UPPER =
+export const PROTOPLANETARY_DISK_V1_MATURATION_REFERENCE_PROGRESS =
   0.80;
+
+const V1_EVOLVING_PROGRESS_UPPER =
+  PROTOPLANETARY_DISK_V1_MATURATION_REFERENCE_PROGRESS;
 
 const V1_DISK_MASS_RATIO_FLOOR =
   0.0015;
@@ -68,6 +71,55 @@ const V1_MAX_OUTER_RADIUS_AU =
 export class ProtoplanetaryDiskProfileGenerator {
 
   private constructor() {}
+
+  /**
+   * Historical point-17.2 reference used when later phases need to replay the
+   * formation history of a mature system after its primordial disk vanished.
+   *
+   * V1 deliberately reuses the already-frozen 17.2 transition from EVOLVING
+   * to DISPERSING disk (80% of the deterministic dispersal lifetime). It adds
+   * no seed, hash or PRNG draw and does not reinterpret the current-age disk.
+   */
+  static maturationReferenceAgeMillionYears(
+    generationKey:
+      UniverseGenerationKey,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    zeroAgeYouthProfile:
+      StellarYouthProfile | null,
+  ): number | null {
+
+    if (
+      generationKey
+        .generatorVersion !==
+      GeneratorVersion.V1
+    ) {
+      throw new RangeError(
+        `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+      );
+    }
+
+    if (
+      zeroAgeYouthProfile ===
+      null
+    ) {
+      return null;
+    }
+
+    const dispersalAgeMillionYears =
+      dispersalAgeMillionYearsV1(
+        physicalProperties
+          .initialMassSolar,
+        zeroAgeYouthProfile,
+      );
+
+    return (
+      dispersalAgeMillionYears *
+      PROTOPLANETARY_DISK_V1_MATURATION_REFERENCE_PROGRESS
+    );
+  }
 
   static generateOrNull(
     generationKey:

@@ -6,12 +6,25 @@ import {
 } from '@angular/core';
 
 import {
+  DiscoveryState,
+} from '../../../domain/discovery/discovery-state';
+
+import {
   RouterLink,
 } from '@angular/router';
 
 import {
   StellarSystemProceduralRender,
 } from '../../genesis-archive/stellar-system-procedural-render';
+
+import {
+  SystemScene,
+} from '../../system/system-scene';
+
+import {
+  SystemSceneSnapshotBuilder,
+  type SystemSceneSnapshot,
+} from '../../system/system-scene-snapshot';
 
 import {
   STELLAR_SYSTEM_LABORATORY_CASES,
@@ -31,6 +44,7 @@ import {
   imports: [
     RouterLink,
     StellarSystemProceduralRender,
+    SystemScene,
   ],
 
   templateUrl:
@@ -86,6 +100,59 @@ export class StellarSystemLaboratoryPage {
             this.selectedCaseId(),
             this.selectedFamilyId(),
           ),
+    );
+
+  readonly rendererQaStage =
+    computed(
+      () =>
+        this.frame()
+          .stages
+          .find(
+            stage =>
+              stage.discoveryState.code ===
+              DiscoveryState.CATALOGUED.code,
+          ) ??
+        this.frame()
+          .stages[
+            this.frame()
+              .stages.length - 1
+          ]!,
+    );
+
+  readonly rendererQaSnapshot =
+    computed<SystemSceneSnapshot>(
+      () => {
+        const frame =
+          this.frame();
+
+        const previewStage =
+          this.rendererQaStage();
+
+        const generationKey =
+          StellarSystemLaboratoryFixtures
+            .generationKey();
+
+        return SystemSceneSnapshotBuilder
+          .buildFromSource({
+            universeSeed:
+              generationKey
+                .universeSeed
+                .serialize(),
+            generatorVersionCode:
+              generationKey
+                .generatorVersionCode,
+            locator:
+              frame.family.locator,
+            proceduralIdentity:
+              `G${frame.family.locator.galaxyIndex.toString()} / S${frame.family.locator.sectorKey.toString()} / O${frame.family.locator.galacticObjectIndex.toString()}`,
+            discoveryState:
+              previewStage.discoveryState,
+            discoveryStateLabel:
+              previewStage.label,
+            stellarSystemCard:
+              previewStage.card,
+          });
+      },
     );
 
   selectCase(
