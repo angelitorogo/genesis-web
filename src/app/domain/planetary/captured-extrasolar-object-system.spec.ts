@@ -1,0 +1,2 @@
+import type { PlanetarySystem } from './planetary-system'; import { CapturedExtrasolarObjectSystem } from './captured-extrasolar-object-system';
+describe('CapturedExtrasolarObjectSystem point 22.9',()=>{it('should keep an empty extremely-rare capture aggregate valid',()=>{const s=new CapturedExtrasolarObjectSystem({} as PlanetarySystem,.4,.0004,[]);expect(s.relevantObjectCount).toBe(0);expect(s.relevantObject).toBeNull();});});

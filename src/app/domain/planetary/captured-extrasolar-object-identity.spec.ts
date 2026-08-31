@@ -1,0 +1,2 @@
+import { SystemLocator } from '../generation/procedural-locator'; import { SystemSeed } from '../seed/hierarchical-seeds'; import { CapturedExtrasolarObjectIdentity } from './captured-extrasolar-object-identity';
+describe('CapturedExtrasolarObjectIdentity point 22.9',()=>{it('should preserve capture context and derive a local technical designation',()=>{const id=new CapturedExtrasolarObjectIdentity(new SystemLocator(1n,2n,3n),new SystemSeed('11111111111111111111111111111111'),1,'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');expect(id.localDesignation).toBe('XCAP-001');});});
