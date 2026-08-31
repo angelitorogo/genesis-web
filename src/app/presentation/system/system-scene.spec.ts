@@ -24,7 +24,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.2',
+  'SystemScene point 24.3',
   () => {
 
     let resize:
@@ -367,6 +367,15 @@ function sceneSnapshot():
             }),
           orbitId:
             'orbit-star-a',
+          motionContributions:
+            Object.freeze([
+              Object.freeze({
+                motionId:
+                  'stellar-inner-relative',
+                scale:
+                  -0.45,
+              }),
+            ]),
           surfaceStyle:
             'emissive' as const,
           lightIntensity:
@@ -393,6 +402,15 @@ function sceneSnapshot():
             }),
           orbitId:
             'orbit-star-b',
+          motionContributions:
+            Object.freeze([
+              Object.freeze({
+                motionId:
+                  'stellar-inner-relative',
+                scale:
+                  0.55,
+              }),
+            ]),
           surfaceStyle:
             'emissive' as const,
           lightIntensity:
@@ -423,6 +441,15 @@ function sceneSnapshot():
             }),
           orbitId:
             'orbit-planet-1',
+          motionContributions:
+            Object.freeze([
+              Object.freeze({
+                motionId:
+                  'planet-1-motion',
+                scale:
+                  1,
+              }),
+            ]),
           surfaceStyle:
             'oceanic' as const,
           lightIntensity:
@@ -453,6 +480,12 @@ function sceneSnapshot():
             0,
           inclinationDegrees:
             0,
+          motionId:
+            'stellar-inner-relative',
+          motionScale:
+            -0.45,
+          anchorMotionContributions:
+            Object.freeze([]),
         }),
         Object.freeze({
           id:
@@ -475,6 +508,12 @@ function sceneSnapshot():
             0,
           inclinationDegrees:
             0,
+          motionId:
+            'stellar-inner-relative',
+          motionScale:
+            0.55,
+          anchorMotionContributions:
+            Object.freeze([]),
         }),
         Object.freeze({
           id:
@@ -497,8 +536,58 @@ function sceneSnapshot():
             18,
           inclinationDegrees:
             4,
+          motionId:
+            'planet-1-motion',
+          motionScale:
+            1,
+          anchorMotionContributions:
+            Object.freeze([]),
         }),
       ]),
+
+    motions:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'stellar-inner-relative',
+          semiMajorAxisAu:
+            1.2,
+          eccentricity:
+            0.08,
+          periodDays:
+            120,
+          rotationDegrees:
+            0,
+          inclinationDegrees:
+            0,
+          epochMeanAnomalyDegrees:
+            30,
+        }),
+        Object.freeze({
+          id:
+            'planet-1-motion',
+          semiMajorAxisAu:
+            3.1,
+          eccentricity:
+            0.02,
+          periodDays:
+            420,
+          rotationDegrees:
+            18,
+          inclinationDegrees:
+            4,
+          epochMeanAnomalyDegrees:
+            140,
+        }),
+      ]),
+
+    simulation:
+      Object.freeze({
+        epochSimulationDay:
+          0,
+        playbackDaysPerRealSecond:
+          6.666666666666667,
+      }),
 
     scale:
       Object.freeze({

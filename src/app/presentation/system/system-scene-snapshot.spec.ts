@@ -20,7 +20,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemSceneSnapshotBuilder point 24.2',
+  'SystemSceneSnapshotBuilder point 24.3',
   () => {
 
     it(
@@ -124,6 +124,50 @@ describe(
         expect(
           Object.isFrozen(
             snapshot.orbits,
+          ),
+        ).toBe(true);
+
+        expect(
+          Object.isFrozen(
+            snapshot.motions,
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.motions.length,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
+          snapshot.motions.every(
+            motion =>
+              motion.periodDays >
+              0,
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.simulation
+            .playbackDaysPerRealSecond,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
+          snapshot.stars.every(
+            body =>
+              Object.isFrozen(
+                body.motionContributions,
+              ),
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.planets.every(
+            body =>
+              body.motionContributions.length >
+              0,
           ),
         ).toBe(true);
 

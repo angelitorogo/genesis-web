@@ -239,6 +239,53 @@ describe(
               '[data-component]',
             ).length,
         ).toBeGreaterThanOrEqual(3);
+
+        const snapshot =
+          fixture
+            .componentInstance
+            .rendererQaSnapshot();
+
+        expect(
+          snapshot.stars,
+        ).toHaveLength(
+          3,
+        );
+
+        expect(
+          snapshot.motions.some(
+            motion =>
+              motion.id ===
+              'stellar-outer-relative',
+          ),
+        ).toBe(true);
+
+        const primary =
+          snapshot.stars.find(
+            star =>
+              star.label ===
+              'A',
+          );
+
+        const tertiary =
+          snapshot.stars.find(
+            star =>
+              star.label ===
+              'C',
+          );
+
+        expect(
+          primary
+            ?.motionContributions.length,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          tertiary
+            ?.motionContributions.length,
+        ).toBe(
+          1,
+        );
       },
       30_000,
     );

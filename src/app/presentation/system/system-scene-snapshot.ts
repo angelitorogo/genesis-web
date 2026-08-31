@@ -105,6 +105,16 @@ import {
   GalaxyGenerator,
 } from '../../simulation/universe/galaxy-generator';
 
+import {
+  SystemOrbitalMotionEngine,
+  type SystemOrbitalMotionDefinition,
+} from '../../simulation/orbital/system-orbital-motion-engine';
+
+import {
+  systemSimulationPlaybackDaysPerSecond,
+} from './system-simulation-clock';
+
+
 export interface SystemSceneAddress {
   readonly galaxyIndex:
     string;
@@ -126,6 +136,17 @@ export interface SystemSceneVector3 {
   readonly z:
     number;
 }
+
+export interface SystemSceneMotionContributionSnapshot {
+  readonly motionId:
+    string;
+
+  readonly scale:
+    number;
+}
+
+export interface SystemSceneOrbitalMotionSnapshot
+  extends SystemOrbitalMotionDefinition {}
 
 export interface SystemSceneOrbitSnapshot {
   readonly id:
@@ -158,6 +179,15 @@ export interface SystemSceneOrbitSnapshot {
 
   readonly inclinationDegrees:
     number;
+
+  readonly motionId:
+    string | null;
+
+  readonly motionScale:
+    number;
+
+  readonly anchorMotionContributions:
+    readonly SystemSceneMotionContributionSnapshot[];
 }
 
 export interface SystemSceneBodySnapshot {
@@ -186,6 +216,9 @@ export interface SystemSceneBodySnapshot {
   readonly orbitId:
     string | null;
 
+  readonly motionContributions:
+    readonly SystemSceneMotionContributionSnapshot[];
+
   readonly surfaceStyle:
     'emissive' |
     'rocky' |
@@ -195,6 +228,14 @@ export interface SystemSceneBodySnapshot {
     'volcanic';
 
   readonly lightIntensity:
+    number;
+}
+
+export interface SystemSceneSimulationSnapshot {
+  readonly epochSimulationDay:
+    number;
+
+  readonly playbackDaysPerRealSecond:
     number;
 }
 
@@ -210,7 +251,7 @@ export interface SystemSceneScaleSnapshot {
 }
 
 /**
- * Point-24.2 presentation snapshot accepted by SystemScene.
+ * Point-24.3 presentation snapshot accepted by SystemScene.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -260,6 +301,12 @@ export interface SystemSceneSnapshot {
   readonly orbits:
     readonly SystemSceneOrbitSnapshot[];
 
+  readonly motions:
+    readonly SystemSceneOrbitalMotionSnapshot[];
+
+  readonly simulation:
+    SystemSceneSimulationSnapshot;
+
   readonly scale:
     SystemSceneScaleSnapshot;
 }
@@ -288,6 +335,9 @@ export interface SystemSceneSnapshotSource {
 }
 
 interface MaterializedStellarSceneWorld {
+  readonly stellarSystem:
+    ReturnType<typeof StellarSystemGenerator.generate>;
+
   readonly generationKey:
     UniverseGenerationKey;
 
@@ -329,6 +379,9 @@ interface ResolvedStarSceneSource {
   readonly massSolar:
     number;
 
+  readonly referenceMassSolar:
+    number;
+
   readonly semiMajorAxisAu:
     number | null;
 
@@ -367,7 +420,7 @@ export class SystemSceneSnapshotBuilder {
         null
     ) {
       throw new RangeError(
-        'Point-24.2 SystemSceneSnapshot requires one resolved stellar-system Archive model.',
+        'Point-24.3 SystemSceneSnapshot requires one resolved stellar-system Archive model.',
       );
     }
 
@@ -419,6 +472,15 @@ export class SystemSceneSnapshotBuilder {
           Object.freeze([]),
         orbits:
           Object.freeze([]),
+        motions:
+          Object.freeze([]),
+        simulation:
+          Object.freeze({
+            epochSimulationDay:
+              0,
+            playbackDaysPerRealSecond:
+              1,
+          }),
         scale:
           Object.freeze({
             outerRadiusAu:
@@ -452,6 +514,10 @@ export class SystemSceneSnapshotBuilder {
         projected.planets,
       orbits:
         projected.orbits,
+      motions:
+        projected.motions,
+      simulation:
+        projected.simulation,
       scale:
         projected.scale,
     });
@@ -466,6 +532,8 @@ function snapshotBase(
   'stars' |
   'planets' |
   'orbits' |
+  'motions' |
+  'simulation' |
   'scale'
 > {
 
@@ -618,6 +686,8 @@ function materializeSceneWorld(
     );
 
   return Object.freeze({
+    stellarSystem:
+      system,
     generationKey,
     locator,
     title:
@@ -657,6 +727,8 @@ function resolveStarSources(
         primaryPhysicalProperties.radiusSolar,
       massSolar:
         primaryPhysicalProperties.currentMassSolar,
+      referenceMassSolar:
+        primaryPhysicalProperties.initialMassSolar,
       semiMajorAxisAu:
         system.orbitHierarchy.innerOrbit === null
           ? null
@@ -770,6 +842,8 @@ function companionSource(
       companion.physicalProperties.radiusSolar,
     massSolar:
       companion.physicalProperties.currentMassSolar,
+    referenceMassSolar:
+      companion.physicalProperties.initialMassSolar,
     semiMajorAxisAu:
       ownSemiMajorAxisAu,
     eccentricity:
@@ -891,38 +965,35 @@ function projectSceneGeometry(
   readonly orbits:
     readonly SystemSceneOrbitSnapshot[];
 
+  readonly motions:
+    readonly SystemSceneOrbitalMotionSnapshot[];
+
+  readonly simulation:
+    SystemSceneSimulationSnapshot;
+
   readonly scale:
     SystemSceneScaleSnapshot;
 } {
 
-  const starOuterRadiusAu =
-    world.stars
-      .map(
-        star => {
-          if (
-            star.semiMajorAxisAu ===
-            null
-          ) {
-            return 0;
-          }
+  const innerOrbit =
+    world.stellarSystem
+      .orbitHierarchy
+      .innerOrbit;
 
-          return star.semiMajorAxisAu * (
-            1 +
-            star.eccentricity
-          );
-        },
-      )
-      .reduce(
-        (
-          maxValue,
-          value,
-        ) =>
-          Math.max(
-            maxValue,
-            value,
-          ),
+  const outerOrbit =
+    world.stellarSystem
+      .orbitHierarchy
+      .outerOrbit;
+
+  const starOuterRadiusAu =
+    Math.max(
+      innerOrbit
+        ?.apoastronAu ??
         0,
-      );
+      outerOrbit
+        ?.apoastronAu ??
+        0,
+    );
 
   const planetOuterRadiusAu =
     world.planets
@@ -981,55 +1052,272 @@ function projectSceneGeometry(
       ),
     );
 
+  const motions: SystemSceneOrbitalMotionSnapshot[] = [];
   const orbits: SystemSceneOrbitSnapshot[] = [];
+
+  const innerMotion =
+    innerOrbit ===
+      null
+      ? null
+      : Object.freeze({
+          id:
+            'stellar-inner-relative',
+          semiMajorAxisAu:
+            innerOrbit.semiMajorAxisAu,
+          eccentricity:
+            innerOrbit.eccentricity,
+          periodDays:
+            innerOrbit.periodDays,
+          rotationDegrees:
+            0,
+          inclinationDegrees:
+            0,
+          epochMeanAnomalyDegrees:
+            seededPhaseDegrees(
+              `${world.stellarSystem.seed.normalizedValue}:INNER`,
+            ),
+        } satisfies SystemSceneOrbitalMotionSnapshot);
+
+  const outerMotion =
+    outerOrbit ===
+      null
+      ? null
+      : Object.freeze({
+          id:
+            'stellar-outer-relative',
+          semiMajorAxisAu:
+            outerOrbit.semiMajorAxisAu,
+          eccentricity:
+            outerOrbit.eccentricity,
+          periodDays:
+            outerOrbit.periodDays,
+          rotationDegrees:
+            92,
+          inclinationDegrees:
+            18,
+          epochMeanAnomalyDegrees:
+            seededPhaseDegrees(
+              `${world.stellarSystem.seed.normalizedValue}:OUTER`,
+            ),
+        } satisfies SystemSceneOrbitalMotionSnapshot);
+
+  if (
+    innerMotion !==
+    null
+  ) {
+    motions.push(
+      innerMotion,
+    );
+  }
+
+  if (
+    outerMotion !==
+    null
+  ) {
+    motions.push(
+      outerMotion,
+    );
+  }
+
+  const primary =
+    world.stars.find(
+      star =>
+        star.label ===
+        'A',
+    )!;
+
+  const secondary =
+    world.stars.find(
+      star =>
+        star.label ===
+        'B',
+    ) ??
+    null;
+
+  const tertiary =
+    world.stars.find(
+      star =>
+        star.label ===
+        'C',
+    ) ??
+    null;
+
+  const innerTotalMassSolar =
+    primary.referenceMassSolar +
+    (
+      secondary
+        ?.referenceMassSolar ??
+      0
+    );
+
+  const primaryInnerScale =
+    secondary ===
+      null
+      ? 0
+      : -secondary.referenceMassSolar /
+        innerTotalMassSolar;
+
+  const secondaryInnerScale =
+    secondary ===
+      null
+      ? 0
+      : primary.referenceMassSolar /
+        innerTotalMassSolar;
+
+  const outerTotalMassSolar =
+    innerTotalMassSolar +
+    (
+      tertiary
+        ?.referenceMassSolar ??
+      0
+    );
+
+  const innerPairOuterScale =
+    tertiary ===
+      null
+      ? 0
+      : -tertiary.referenceMassSolar /
+        outerTotalMassSolar;
+
+  const tertiaryOuterScale =
+    tertiary ===
+      null
+      ? 0
+      : innerTotalMassSolar /
+        outerTotalMassSolar;
+
+  const innerPairAnchorContributions =
+    outerMotion ===
+      null
+      ? Object.freeze([])
+      : Object.freeze([
+          Object.freeze({
+            motionId:
+              outerMotion.id,
+            scale:
+              innerPairOuterScale,
+          }),
+        ] satisfies SystemSceneMotionContributionSnapshot[]);
 
   const stars =
     world.stars.map(
       star => {
-        const orbitId =
-          star.semiMajorAxisAu ===
-            null
-            ? null
-            : `orbit-${star.id}`;
+        const contributions: SystemSceneMotionContributionSnapshot[] = [];
 
         if (
-          star.semiMajorAxisAu !==
-          null
+          outerMotion !==
+            null &&
+          star.label !==
+            'C'
         ) {
-          orbits.push(
+          contributions.push(
             Object.freeze({
-              id:
-                orbitId ??
-                `orbit-${star.id}`,
-              kind:
-                'stellar' as const,
-              label:
-                star.label,
-              colorHex:
-                '#FFFFFF',
-              opacity:
-                0.22,
-              semiMajorScene:
-                star.semiMajorAxisAu *
-                orbitScaleScenePerAu,
-              semiMinorScene:
-                star.semiMajorAxisAu *
-                Math.sqrt(
-                  1 -
-                    star.eccentricity ** 2,
-                ) *
-                orbitScaleScenePerAu,
-              focusOffsetScene:
-                star.semiMajorAxisAu *
-                star.eccentricity *
-                orbitScaleScenePerAu,
-              rotationDegrees:
-                star.rotationDegrees,
-              inclinationDegrees:
-                star.inclinationDegrees,
+              motionId:
+                outerMotion.id,
+              scale:
+                innerPairOuterScale,
             }),
           );
         }
+
+        let orbitId:
+          string | null =
+          null;
+
+        if (
+          innerMotion !==
+            null &&
+          star.label ===
+            'A'
+        ) {
+          contributions.push(
+            Object.freeze({
+              motionId:
+                innerMotion.id,
+              scale:
+                primaryInnerScale,
+            }),
+          );
+
+          orbitId =
+            'orbit-star-a';
+
+          orbits.push(
+            stellarOrbitSnapshot(
+              orbitId,
+              'A',
+              innerMotion,
+              primaryInnerScale,
+              innerPairAnchorContributions,
+              orbitScaleScenePerAu,
+            ),
+          );
+        }
+
+        if (
+          innerMotion !==
+            null &&
+          star.label ===
+            'B'
+        ) {
+          contributions.push(
+            Object.freeze({
+              motionId:
+                innerMotion.id,
+              scale:
+                secondaryInnerScale,
+            }),
+          );
+
+          orbitId =
+            'orbit-star-b';
+
+          orbits.push(
+            stellarOrbitSnapshot(
+              orbitId,
+              'B',
+              innerMotion,
+              secondaryInnerScale,
+              innerPairAnchorContributions,
+              orbitScaleScenePerAu,
+            ),
+          );
+        }
+
+        if (
+          outerMotion !==
+            null &&
+          star.label ===
+            'C'
+        ) {
+          contributions.push(
+            Object.freeze({
+              motionId:
+                outerMotion.id,
+              scale:
+                tertiaryOuterScale,
+            }),
+          );
+
+          orbitId =
+            'orbit-star-c';
+
+          orbits.push(
+            stellarOrbitSnapshot(
+              orbitId,
+              'C',
+              outerMotion,
+              tertiaryOuterScale,
+              Object.freeze([]),
+              orbitScaleScenePerAu,
+            ),
+          );
+        }
+
+        const frozenContributions =
+          Object.freeze(
+            contributions,
+          );
 
         return Object.freeze({
           id:
@@ -1051,17 +1339,15 @@ function projectSceneGeometry(
               starRadiusMax,
             ),
           position:
-            Object.freeze(
-              orbitalPosition(
-                star.semiMajorAxisAu,
-                star.eccentricity,
-                star.rotationDegrees,
-                star.inclinationDegrees,
-                star.orbitalPhaseDegrees,
-                orbitScaleScenePerAu,
-              ),
+            orbitalContributionPositionScene(
+              frozenContributions,
+              motions,
+              0,
+              orbitScaleScenePerAu,
             ),
           orbitId,
+          motionContributions:
+            frozenContributions,
           surfaceStyle:
             'emissive' as const,
           lightIntensity:
@@ -1083,6 +1369,56 @@ function projectSceneGeometry(
       planet => {
         const orbitId =
           `orbit-planet-${planet.planetOrdinal}`;
+
+        const motion =
+          Object.freeze({
+            id:
+              `planet-${planet.planetOrdinal}-motion`,
+            semiMajorAxisAu:
+              planet.orbit.semiMajorAxisAu,
+            eccentricity:
+              planet.orbit.eccentricity,
+            periodDays:
+              planet.orbitalPeriod.periodDays,
+            rotationDegrees:
+              normalizedAngle(
+                planet.orbit
+                  .longitudeOfAscendingNodeDegrees +
+                planet.orbit
+                  .argumentOfPeriapsisDegrees,
+              ),
+            inclinationDegrees:
+              planet.orbit
+                .inclinationDegrees,
+            epochMeanAnomalyDegrees:
+              seededPhaseDegrees(
+                planet.orbit.bodySeed
+                  .normalizedValue,
+              ),
+          } satisfies SystemSceneOrbitalMotionSnapshot);
+
+        motions.push(
+          motion,
+        );
+
+        const anchorContributions =
+          world.stellarSystem
+            .orbitHierarchy
+            .outerOrbit ===
+              null
+              ? Object.freeze([])
+              : innerPairAnchorContributions;
+
+        const motionContributions =
+          Object.freeze([
+            ...anchorContributions,
+            Object.freeze({
+              motionId:
+                motion.id,
+              scale:
+                1,
+            }),
+          ] satisfies SystemSceneMotionContributionSnapshot[]);
 
         const semiMajorScene =
           planet.orbit.semiMajorAxisAu *
@@ -1111,15 +1447,15 @@ function projectSceneGeometry(
               semiMajorScene *
               planet.orbit.eccentricity,
             rotationDegrees:
-              normalizedAngle(
-                planet.orbit
-                  .longitudeOfAscendingNodeDegrees +
-                planet.orbit
-                  .argumentOfPeriapsisDegrees,
-              ),
+              motion.rotationDegrees,
             inclinationDegrees:
-              planet.orbit
-                .inclinationDegrees,
+              motion.inclinationDegrees,
+            motionId:
+              motion.id,
+            motionScale:
+              1,
+            anchorMotionContributions:
+              anchorContributions,
           }),
         );
 
@@ -1146,26 +1482,14 @@ function projectSceneGeometry(
               planetRadiusMax,
             ),
           position:
-            Object.freeze(
-              orbitalPosition(
-                planet.orbit.semiMajorAxisAu,
-                planet.orbit.eccentricity,
-                normalizedAngle(
-                  planet.orbit
-                    .longitudeOfAscendingNodeDegrees +
-                  planet.orbit
-                    .argumentOfPeriapsisDegrees,
-                ),
-                planet.orbit
-                  .inclinationDegrees,
-                seededPhaseDegrees(
-                  planet.orbit.bodySeed
-                    .normalizedValue,
-                ),
-                orbitScaleScenePerAu,
-              ),
+            orbitalContributionPositionScene(
+              motionContributions,
+              motions,
+              0,
+              orbitScaleScenePerAu,
             ),
           orbitId,
+          motionContributions,
           surfaceStyle:
             planetSurfaceStyle(
               planet,
@@ -1176,6 +1500,11 @@ function projectSceneGeometry(
       },
     );
 
+  const frozenMotions =
+    Object.freeze(
+      motions,
+    );
+
   return Object.freeze({
     stars:
       Object.freeze(stars),
@@ -1183,6 +1512,20 @@ function projectSceneGeometry(
       Object.freeze(planets),
     orbits:
       Object.freeze(orbits),
+    motions:
+      frozenMotions,
+    simulation:
+      Object.freeze({
+        epochSimulationDay:
+          0,
+        playbackDaysPerRealSecond:
+          systemSimulationPlaybackDaysPerSecond(
+            frozenMotions.map(
+              motion =>
+                motion.periodDays,
+            ),
+          ),
+      }),
     scale:
       Object.freeze({
         outerRadiusAu,
@@ -1193,140 +1536,136 @@ function projectSceneGeometry(
   });
 }
 
-function orbitalPosition(
-  semiMajorAxisAu:
-    number | null,
+function stellarOrbitSnapshot(
+  orbitId:
+    string,
 
-  eccentricity:
+  label:
+    string,
+
+  motion:
+    SystemSceneOrbitalMotionSnapshot,
+
+  motionScale:
     number,
 
-  rotationDegrees:
-    number,
+  anchorMotionContributions:
+    readonly SystemSceneMotionContributionSnapshot[],
 
-  inclinationDegrees:
+  orbitScaleScenePerAu:
     number,
+): SystemSceneOrbitSnapshot {
 
-  phaseDegrees:
+  const absoluteScale =
+    Math.abs(
+      motionScale,
+    );
+
+  const semiMajorScene =
+    motion.semiMajorAxisAu *
+    absoluteScale *
+    orbitScaleScenePerAu;
+
+  return Object.freeze({
+    id:
+      orbitId,
+    kind:
+      'stellar' as const,
+    label,
+    colorHex:
+      '#FFFFFF',
+    opacity:
+      0.22,
+    semiMajorScene,
+    semiMinorScene:
+      semiMajorScene *
+      Math.sqrt(
+        1 -
+          motion.eccentricity ** 2,
+      ),
+    focusOffsetScene:
+      semiMajorScene *
+      motion.eccentricity,
+    rotationDegrees:
+      motion.rotationDegrees,
+    inclinationDegrees:
+      motion.inclinationDegrees,
+    motionId:
+      motion.id,
+    motionScale,
+    anchorMotionContributions,
+  });
+}
+
+function orbitalContributionPositionScene(
+  contributions:
+    readonly SystemSceneMotionContributionSnapshot[],
+
+  motions:
+    readonly SystemSceneOrbitalMotionSnapshot[],
+
+  simulationDay:
     number,
 
   orbitScaleScenePerAu:
     number,
 ): SystemSceneVector3 {
 
-  if (
-    semiMajorAxisAu ===
-    null
+  let xAu =
+    0;
+  let yAu =
+    0;
+  let zAu =
+    0;
+
+  for (
+    const contribution
+    of contributions
   ) {
-    return Object.freeze({
-      x: 0,
-      y: 0,
-      z: 0,
-    });
+    const motion =
+      motions.find(
+        candidate =>
+          candidate.id ===
+          contribution.motionId,
+      );
+
+    if (
+      motion ===
+      undefined
+    ) {
+      throw new RangeError(
+        `Unknown SystemScene orbital motion ${contribution.motionId}.`,
+      );
+    }
+
+    const position =
+      SystemOrbitalMotionEngine
+        .positionAtSimulationDay(
+          motion,
+          simulationDay,
+        );
+
+    xAu +=
+      position.xAu *
+      contribution.scale;
+    yAu +=
+      position.yAu *
+      contribution.scale;
+    zAu +=
+      position.zAu *
+      contribution.scale;
   }
-
-  const phaseRadians =
-    degreesToRadians(
-      phaseDegrees,
-    );
-
-  const semiMajorScene =
-    semiMajorAxisAu *
-    orbitScaleScenePerAu;
-
-  const semiMinorScene =
-    semiMajorScene *
-    Math.sqrt(
-      Math.max(
-        0,
-        1 -
-          eccentricity ** 2,
-      ),
-    );
-
-  const localX =
-    semiMajorScene *
-      Math.cos(
-        phaseRadians,
-      ) -
-    semiMajorScene *
-      eccentricity;
-
-  const localZ =
-    semiMinorScene *
-    Math.sin(
-      phaseRadians,
-    );
-
-  return rotateOrbitVector(
-    localX,
-    localZ,
-    rotationDegrees,
-    inclinationDegrees,
-  );
-}
-
-function rotateOrbitVector(
-  localX:
-    number,
-
-  localZ:
-    number,
-
-  rotationDegrees:
-    number,
-
-  inclinationDegrees:
-    number,
-): SystemSceneVector3 {
-
-  const rotationRadians =
-    degreesToRadians(
-      rotationDegrees,
-    );
-
-  const inclinationRadians =
-    degreesToRadians(
-      inclinationDegrees,
-    );
-
-  const x1 =
-    localX;
-
-  const y1 =
-    -localZ *
-    Math.sin(
-      inclinationRadians,
-    );
-
-  const z1 =
-    localZ *
-    Math.cos(
-      inclinationRadians,
-    );
-
-  const cosRotation =
-    Math.cos(
-      rotationRadians,
-    );
-
-  const sinRotation =
-    Math.sin(
-      rotationRadians,
-    );
 
   return Object.freeze({
     x:
-      x1 *
-        cosRotation -
-      z1 *
-        sinRotation,
+      xAu *
+      orbitScaleScenePerAu,
     y:
-      y1,
+      yAu *
+      orbitScaleScenePerAu,
     z:
-      x1 *
-        sinRotation +
-      z1 *
-        cosRotation,
+      zAu *
+      orbitScaleScenePerAu,
   });
 }
 
@@ -1528,16 +1867,6 @@ function seededPhaseDegrees(
   }
 
   return accumulator;
-}
-
-function degreesToRadians(
-  value:
-    number,
-): number {
-
-  return value *
-    Math.PI /
-    180;
 }
 
 function normalizedAngle(

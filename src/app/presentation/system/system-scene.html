@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>24.2 V3 · STARS · PLANETS · ORBITS · PROCEDURAL PLANETS</span>
+    <span>24.3 · SIMULATION TIME · ORBITAL ANIMATION</span>
   </div>
 
   @if (renderState() === 'initializing') {
@@ -60,7 +60,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
     </div>
   }
 </section>

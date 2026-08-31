@@ -24,9 +24,19 @@ import * as THREE from 'three';
 
 import {
   type SystemSceneBodySnapshot,
+  type SystemSceneMotionContributionSnapshot,
+  type SystemSceneOrbitalMotionSnapshot,
   type SystemSceneOrbitSnapshot,
   type SystemSceneSnapshot,
 } from './system-scene-snapshot';
+
+import {
+  SystemOrbitalMotionEngine,
+} from '../../simulation/orbital/system-orbital-motion-engine';
+
+import {
+  SystemSimulationClock,
+} from './system-simulation-clock';
 
 const MAX_DEVICE_PIXEL_RATIO =
   2;
@@ -111,7 +121,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.2 Angular host for the stellar-system Three.js scene.
+ * Point-24.3 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -554,6 +564,50 @@ class ThreeSystemSceneRuntime
   private readonly frameDisposables:
     Array<{ dispose(): void }> = [];
 
+  private readonly animatedBodies =
+    new Map<string, THREE.Group>();
+
+  private readonly animatedOrbits =
+    new Map<string, THREE.LineLoop>();
+
+  private currentSnapshot:
+    SystemSceneSnapshot | null =
+    null;
+
+  private simulationClock:
+    SystemSimulationClock | null =
+    null;
+
+  private motionById =
+    new Map<string, SystemSceneOrbitalMotionSnapshot>();
+
+  private readonly onAnimationFrame =
+    (
+      realTimestampMilliseconds:
+        number,
+    ): void => {
+
+      if (
+        this.currentSnapshot ===
+          null ||
+        this.simulationClock ===
+          null
+      ) {
+        return;
+      }
+
+      const simulationState =
+        this.simulationClock.read(
+          realTimestampMilliseconds,
+        );
+
+      this.applySimulationDay(
+        simulationState.simulationDay,
+      );
+
+      this.renderFrame();
+    };
+
   private disposed =
     false;
 
@@ -745,7 +799,33 @@ class ThreeSystemSceneRuntime
     this.scene.name =
       `GENESIS System ${snapshot.proceduralIdentity}`;
 
+    this
+      .renderer
+      .setAnimationLoop(
+        null,
+      );
+
     this.clearFrameObjects();
+    this.currentSnapshot =
+      snapshot;
+    this.simulationClock =
+      new SystemSimulationClock(
+        snapshot.simulation
+          .playbackDaysPerRealSecond,
+        snapshot.simulation
+          .epochSimulationDay,
+      );
+    this.motionById =
+      new Map(
+        snapshot.motions.map(
+          motion =>
+            [
+              motion.id,
+              motion,
+            ] as const,
+        ),
+      );
+
     this.configureCamera(
       snapshot.scale
         .targetOuterRadiusScene,
@@ -757,6 +837,8 @@ class ThreeSystemSceneRuntime
     ) {
       this.addOrbit(
         orbit,
+        snapshot.scale
+          .orbitScaleScenePerAu,
       );
     }
 
@@ -778,7 +860,22 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    this.applySimulationDay(
+      snapshot.simulation
+        .epochSimulationDay,
+    );
     this.renderFrame();
+
+    if (
+      snapshot.motions.length >
+      0
+    ) {
+      this
+        .renderer
+        .setAnimationLoop(
+          this.onAnimationFrame,
+        );
+    }
 
     return Object.freeze({
       renderer:
@@ -806,6 +903,12 @@ class ThreeSystemSceneRuntime
 
     this.disposed =
       true;
+
+    this.currentSnapshot =
+      null;
+    this.simulationClock =
+      null;
+    this.motionById.clear();
 
     this.clearFrameObjects();
     disposeResources(
@@ -861,10 +964,22 @@ class ThreeSystemSceneRuntime
   private addOrbit(
     orbit:
       SystemSceneOrbitSnapshot,
+
+    orbitScaleScenePerAu:
+      number,
   ):
     void {
 
     const points: THREE.Vector3[] = [];
+
+    const motion =
+      orbit.motionId ===
+        null
+        ? null
+        : this.motionById.get(
+            orbit.motionId,
+          ) ??
+          null;
 
     for (
       let index = 0;
@@ -872,6 +987,36 @@ class ThreeSystemSceneRuntime
         ORBIT_SEGMENT_COUNT;
       index += 1
     ) {
+      if (
+        motion !==
+        null
+      ) {
+        const sample =
+          SystemOrbitalMotionEngine
+            .positionAtSimulationDay(
+              motion,
+              motion.periodDays *
+                index /
+                ORBIT_SEGMENT_COUNT,
+            );
+
+        points.push(
+          new THREE.Vector3(
+            sample.xAu *
+              orbit.motionScale *
+              orbitScaleScenePerAu,
+            sample.yAu *
+              orbit.motionScale *
+              orbitScaleScenePerAu,
+            sample.zAu *
+              orbit.motionScale *
+              orbitScaleScenePerAu,
+          ),
+        );
+
+        continue;
+      }
+
       const phase =
         (index /
           ORBIT_SEGMENT_COUNT) *
@@ -937,6 +1082,11 @@ class ThreeSystemSceneRuntime
 
     line.name =
       `Orbit ${orbit.label}`;
+
+    this.animatedOrbits.set(
+      orbit.id,
+      line,
+    );
 
     this
       .presentationRoot
@@ -1118,6 +1268,11 @@ class ThreeSystemSceneRuntime
       glareMaterial,
     );
 
+    this.animatedBodies.set(
+      star.id,
+      group,
+    );
+
     this
       .presentationRoot
       .add(
@@ -1191,11 +1346,162 @@ class ThreeSystemSceneRuntime
       ...appearance.resources,
     );
 
+    this.animatedBodies.set(
+      planet.id,
+      group,
+    );
+
     this
       .presentationRoot
       .add(
         group,
       );
+  }
+
+  private applySimulationDay(
+    simulationDay:
+      number,
+  ):
+    void {
+
+    const snapshot =
+      this.currentSnapshot;
+
+    if (
+      snapshot ===
+      null
+    ) {
+      return;
+    }
+
+    const sceneScale =
+      snapshot.scale
+        .orbitScaleScenePerAu;
+
+    for (
+      const body
+      of [
+        ...snapshot.stars,
+        ...snapshot.planets,
+      ]
+    ) {
+      const object =
+        this.animatedBodies.get(
+          body.id,
+        );
+
+      if (
+        object ===
+        undefined
+      ) {
+        continue;
+      }
+
+      const position =
+        this.positionFromContributions(
+          body.motionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      object.position.set(
+        position.x,
+        position.y,
+        position.z,
+      );
+    }
+
+    for (
+      const orbit
+      of snapshot.orbits
+    ) {
+      const line =
+        this.animatedOrbits.get(
+          orbit.id,
+        );
+
+      if (
+        line ===
+        undefined
+      ) {
+        continue;
+      }
+
+      const anchorPosition =
+        this.positionFromContributions(
+          orbit.anchorMotionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      line.position.set(
+        anchorPosition.x,
+        anchorPosition.y,
+        anchorPosition.z,
+      );
+    }
+  }
+
+  private positionFromContributions(
+    contributions:
+      readonly SystemSceneMotionContributionSnapshot[],
+
+    simulationDay:
+      number,
+
+    sceneScale:
+      number,
+  ): THREE.Vector3 {
+
+    let xAu =
+      0;
+    let yAu =
+      0;
+    let zAu =
+      0;
+
+    for (
+      const contribution
+      of contributions
+    ) {
+      const motion =
+        this.motionById.get(
+          contribution.motionId,
+        );
+
+      if (
+        motion ===
+        undefined
+      ) {
+        continue;
+      }
+
+      const position =
+        SystemOrbitalMotionEngine
+          .positionAtSimulationDay(
+            motion,
+            simulationDay,
+          );
+
+      xAu +=
+        position.xAu *
+        contribution.scale;
+      yAu +=
+        position.yAu *
+        contribution.scale;
+      zAu +=
+        position.zAu *
+        contribution.scale;
+    }
+
+    return new THREE.Vector3(
+      xAu *
+        sceneScale,
+      yAu *
+        sceneScale,
+      zAu *
+        sceneScale,
+    );
   }
 
   private clearFrameObjects():
@@ -1204,6 +1510,9 @@ class ThreeSystemSceneRuntime
     disposeResources(
       this.frameDisposables,
     );
+
+    this.animatedBodies.clear();
+    this.animatedOrbits.clear();
 
     while (
       this.presentationRoot.children.length >
