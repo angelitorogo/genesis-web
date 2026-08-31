@@ -47,6 +47,10 @@ import {
 } from '../../domain/planetary/minor-body-close-encounter-catalog';
 
 import {
+  type MinorBodyImpactRiskCatalog,
+} from '../../domain/planetary/minor-body-impact-risk-catalog';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -82,6 +86,10 @@ import {
   MinorBodyCloseEncounterEngine,
 } from './minor-body-close-encounter-engine';
 
+import {
+  ImpactRiskEngine,
+} from './impact-risk-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -92,17 +100,30 @@ import {
  * geometry matrix against materialized planets/relevant moons. Point 23.4 now
  * adds low-order resonance candidates and simplified local chaotic zones. Point
  * 23.5 classifies giant-planet perturbation/capture/ejection potentials. Point
- * 23.6 now resolves close-encounter temporal opportunities and materializes one
- * unambiguous post-encounter orbital transition per minor body; impacts remain
- * reserved for point 23.7+.
+ * 23.6 resolves close-encounter temporal opportunities and materializes one
+ * unambiguous post-encounter orbital transition per minor body. Point 23.7 now
+ * projects geometry-only planet/moon impact risk from those outgoing orbits;
+ * temporal impact probability remains reserved for point 23.8.
  *
  * Point 23.1 introduces zero procedural seeds/hashes/PRNG draws. Point 23.6
  * adds one domain-separated SHA-256 temporal sample per approach candidate, but
- * still derives zero hierarchical seeds and consumes zero PRNG draws.
+ * still derives zero hierarchical seeds and consumes zero PRNG draws. Point
+ * 23.7 is pure post-transition geometry and adds no seeds/hashes/PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.7 post-encounter geometry-only impact-risk projection. */
+  static impactRisks(
+    closeEncounterCatalog:
+      MinorBodyCloseEncounterCatalog,
+  ): MinorBodyImpactRiskCatalog {
+    return ImpactRiskEngine
+      .generate(
+        closeEncounterCatalog,
+      );
+  }
 
   /** Point-23.6 close-encounter resolution and post-encounter orbit transitions. */
   static closeEncounters(
