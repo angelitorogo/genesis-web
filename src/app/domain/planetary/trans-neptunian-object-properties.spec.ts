@@ -1,0 +1,2 @@
+import { TransNeptunianObjectDynamicalRegime as R } from './trans-neptunian-object-dynamical-regime'; import { TransNeptunianObjectProperties } from './trans-neptunian-object-properties';
+describe('TransNeptunianObjectProperties point 22.7',()=>{it('should derive apsides from a bound orbit',()=>{const x=new TransNeptunianObjectProperties(1,R.COLD_CLASSICAL,1000,.7,.3,.2,1.5,1,45,.1,5,10,20,30,Math.sqrt(45**3));expect(x.periapsisAu).toBeCloseTo(40.5,12);expect(x.apoapsisAu).toBeCloseTo(49.5,12);expect(x.isDwarfPlanetScaleCandidate).toBe(true);});});

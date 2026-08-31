@@ -1,0 +1,2 @@
+import { SystemLocator } from '../generation/procedural-locator'; import { SystemSeed } from '../seed/hierarchical-seeds'; import { TransNeptunianObjectIdentity } from './trans-neptunian-object-identity';
+describe('TransNeptunianObjectIdentity point 22.7',()=>{it('should expose stable local designation',()=>{const x=new TransNeptunianObjectIdentity(new SystemLocator(1n,2n,3n),new SystemSeed('22222222222222222222222222222222'),4,'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');expect(x.localDesignation).toBe('TNO-004');});});
