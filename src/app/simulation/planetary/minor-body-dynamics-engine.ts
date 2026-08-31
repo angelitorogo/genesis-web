@@ -39,6 +39,10 @@ import {
 } from '../../domain/planetary/minor-body-resonance-catalog';
 
 import {
+  type MinorBodyGiantInfluenceCatalog,
+} from '../../domain/planetary/minor-body-giant-influence-catalog';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -66,6 +70,10 @@ import {
   MinorBodyResonanceEngine,
 } from './minor-body-resonance-engine';
 
+import {
+  MinorBodyGiantInfluenceEngine,
+} from './minor-body-giant-influence-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -74,14 +82,26 @@ import {
  * Point 23.2 exposes a normalized orbital-elements catalog without changing
  * the point-23.1 boundary or any phase-22 orbit. Point 23.3 adds a pure
  * geometry matrix against materialized planets/relevant moons. Point 23.4 now
- * adds low-order resonance candidates and simplified local chaotic zones;
- * perturbations, time-resolved encounters and impact products remain 23.5+.
+ * adds low-order resonance candidates and simplified local chaotic zones. Point
+ * 23.5 now classifies giant-planet perturbation/capture/ejection potentials;
+ * concrete encounter-driven orbit changes and impacts remain 23.6+.
  *
  * Point 23.1 introduces zero procedural seeds, zero hashes and zero PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.5 giant-planet perturbation/capture/ejection potential projection. */
+  static giantInfluences(
+    resonanceCatalog:
+      MinorBodyResonanceCatalog,
+  ): MinorBodyGiantInfluenceCatalog {
+    return MinorBodyGiantInfluenceEngine
+      .generate(
+        resonanceCatalog,
+      );
+  }
 
   /** Point-23.4 low-order resonance / simplified local-instability projection. */
   static resonances(
