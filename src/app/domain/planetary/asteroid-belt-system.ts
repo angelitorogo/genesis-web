@@ -22,6 +22,10 @@ import {
   type PlanetarySystem,
 } from './planetary-system';
 
+import {
+  type RelevantAsteroid,
+} from './relevant-asteroid';
+
 const CONSISTENCY_TOLERANCE =
   1e-9;
 
@@ -30,15 +34,18 @@ const CONSISTENCY_TOLERANCE =
  * PlanetarySystem.
  *
  * Point 22.1 established the exact host boundary. Point 22.2 now adds one
- * deterministic INNER and one OUTER statistical population profile. These
- * profiles describe existence, radial geometry and retained population mass,
- * but still do not materialize individual asteroids, taxonomy, cometary/TNO
- * populations, interstellar/captured objects or discovery/catalogue state.
+ * deterministic INNER and one OUTER statistical population profile. Point 22.3
+ * additionally attaches a bounded set of individually relevant asteroids while
+ * leaving taxonomy to 22.4 and discovery/catalogue state to 22.10. Cometary/TNO,
+ * interstellar and captured populations remain later point-22 products.
  */
 export class AsteroidBeltSystem {
 
   readonly populationProfiles:
     readonly AsteroidBeltPopulationProfile[];
+
+  readonly relevantAsteroids:
+    readonly RelevantAsteroid[];
 
   constructor(
     readonly hostPlanetarySystem:
@@ -49,6 +56,10 @@ export class AsteroidBeltSystem {
 
     readonly outerBelt:
       AsteroidBeltPopulationProfile,
+
+    relevantAsteroids:
+      readonly RelevantAsteroid[] =
+      [],
   ) {
     if (
       hostPlanetarySystem
@@ -118,6 +129,17 @@ export class AsteroidBeltSystem {
       Object.freeze([
         innerBelt,
         outerBelt,
+      ]);
+
+    validateRelevantAsteroids(
+      relevantAsteroids,
+      innerBelt,
+      outerBelt,
+    );
+
+    this.relevantAsteroids =
+      Object.freeze([
+        ...relevantAsteroids,
       ]);
   }
 
@@ -212,6 +234,141 @@ export class AsteroidBeltSystem {
       this
         .outerBelt
         .retainedMassEarth;
+  }
+
+  get relevantAsteroidCount():
+    number {
+
+    return this
+      .relevantAsteroids
+      .length;
+  }
+
+  get hasRelevantAsteroids():
+    boolean {
+
+    return (
+      this.relevantAsteroidCount >
+      0
+    );
+  }
+
+  get innerRelevantAsteroidCount():
+    number {
+
+    return this
+      .relevantAsteroids
+      .filter(
+        asteroid =>
+          asteroid.beltRegion ===
+          AsteroidBeltRegion.INNER,
+      )
+      .length;
+  }
+
+  get outerRelevantAsteroidCount():
+    number {
+
+    return this
+      .relevantAsteroids
+      .filter(
+        asteroid =>
+          asteroid.beltRegion ===
+          AsteroidBeltRegion.OUTER,
+      )
+      .length;
+  }
+}
+
+function validateRelevantAsteroids(
+  asteroids:
+    readonly RelevantAsteroid[],
+
+  innerBelt:
+    AsteroidBeltPopulationProfile,
+
+  outerBelt:
+    AsteroidBeltPopulationProfile,
+): void {
+
+  const proceduralIds =
+    new Set<string>();
+
+  let expectedInnerOrdinal =
+    1;
+
+  let expectedOuterOrdinal =
+    1;
+
+  let seenOuter =
+    false;
+
+  for (
+    const asteroid
+    of asteroids
+  ) {
+    const expectedProfile =
+      asteroid.beltRegion ===
+        AsteroidBeltRegion.INNER
+        ? innerBelt
+        : outerBelt;
+
+    if (
+      asteroid.sourceBeltProfile !==
+      expectedProfile ||
+      !expectedProfile.exists
+    ) {
+      throw new RangeError(
+        'Point-22.3 relevant asteroids must preserve the exact existing point-22.2 belt profile.',
+      );
+    }
+
+    if (
+      asteroid.beltRegion ===
+      AsteroidBeltRegion.OUTER
+    ) {
+      seenOuter =
+        true;
+
+      if (
+        asteroid.asteroidOrdinal !==
+        expectedOuterOrdinal
+      ) {
+        throw new RangeError(
+          'OUTER relevant asteroid ordinals must be contiguous and start at 1.',
+        );
+      }
+
+      expectedOuterOrdinal +=
+        1;
+    } else {
+      if (
+        seenOuter ||
+        asteroid.asteroidOrdinal !==
+          expectedInnerOrdinal
+      ) {
+        throw new RangeError(
+          'INNER relevant asteroid ordinals must be contiguous, start at 1 and precede OUTER asteroids.',
+        );
+      }
+
+      expectedInnerOrdinal +=
+        1;
+    }
+
+    if (
+      proceduralIds.has(
+        asteroid.proceduralId,
+      )
+    ) {
+      throw new RangeError(
+        'Point-22.3 relevant asteroid procedural ids must be unique within the system.',
+      );
+    }
+
+    proceduralIds.add(
+      asteroid.proceduralId,
+    );
   }
 }
 

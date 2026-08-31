@@ -58,7 +58,7 @@ describe(
       );
 
     it(
-      'should freeze deterministic inner/outer statistical population vectors without materializing asteroids',
+      'should freeze deterministic inner/outer populations and materialize only the bounded point-22.3 relevant asteroid sample',
       () => {
         const planetarySystem =
           systemFixture({
@@ -190,6 +190,30 @@ describe(
         ).toBeCloseTo(
           0.14183165839033318,
           12,
+        );
+
+        expect(
+          generated.relevantAsteroidCount,
+        ).toBe(14);
+
+        expect(
+          generated.innerRelevantAsteroidCount,
+        ).toBe(7);
+
+        expect(
+          generated.outerRelevantAsteroidCount,
+        ).toBe(7);
+
+        expect(
+          generated.relevantAsteroids[0].proceduralId,
+        ).toBe(
+          '01D8D9F53AECCDC4F46A562B58365B91',
+        );
+
+        expect(
+          generated.relevantAsteroids[7].proceduralId,
+        ).toBe(
+          'D60EB9501E11A1DC0C3DE5F565D89F32',
         );
 
         expect(
@@ -387,6 +411,10 @@ describe(
                   0,
             ),
         ).toBe(true);
+
+        expect(
+          generated.relevantAsteroidCount,
+        ).toBe(0);
       },
     );
 

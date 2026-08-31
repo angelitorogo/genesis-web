@@ -31,6 +31,10 @@ import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
+import {
+  AsteroidGenerator,
+} from './asteroid-generator';
+
 const V1_DOMAIN =
   utf8ToBytes(
     'GENESIS-ASTEROID-BELT-POPULATION-V1',
@@ -77,11 +81,12 @@ interface BeltDrawsV1 {
 }
 
 /**
- * Point-22.2 deterministic inner/outer asteroid-belt population materializer.
+ * Point-22.2/22.3 deterministic asteroid-belt and relevant-object materializer.
  *
  * V1 consumes the frozen point-17.7 residual-dust reservoir and the mature
  * point-18.3 radial architecture. It creates at most one INNER and one OUTER
- * statistical belt profile. No individual asteroid identity is created here.
+ * statistical belt profile. Point 22.3 then materializes only a bounded set of
+ * individually relevant/discoverable asteroids from those frozen profiles.
  *
  * Random-looking diversity is derived directly from the canonical SystemSeed
  * through SHA-256 domain separation. This consumes zero PRNG draws and derives
@@ -213,8 +218,7 @@ export class AsteroidBeltGenerator {
         draws.massSplit,
       );
 
-    return new AsteroidBeltSystem(
-      planetarySystem,
+    const innerBelt =
       materializeProfileV1(
         AsteroidBeltRegion.INNER,
         residualDustMassEarth,
@@ -222,7 +226,9 @@ export class AsteroidBeltGenerator {
         innerInterval,
         innerMassEarth,
         draws.innerPeak,
-      ),
+      );
+
+    const outerBelt =
       materializeProfileV1(
         AsteroidBeltRegion.OUTER,
         residualDustMassEarth,
@@ -230,7 +236,27 @@ export class AsteroidBeltGenerator {
         outerInterval,
         outerMassEarth,
         draws.outerPeak,
-      ),
+      );
+
+    const populationProfiles =
+      Object.freeze([
+        innerBelt,
+        outerBelt,
+      ]);
+
+    const relevantAsteroids =
+      AsteroidGenerator
+        .generate(
+          generationKey,
+          planetarySystem,
+          populationProfiles,
+        );
+
+    return new AsteroidBeltSystem(
+      planetarySystem,
+      innerBelt,
+      outerBelt,
+      relevantAsteroids,
     );
   }
 }
