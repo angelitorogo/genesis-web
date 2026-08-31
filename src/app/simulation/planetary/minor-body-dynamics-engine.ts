@@ -11,6 +11,10 @@ import {
 } from '../../domain/planetary/asteroid-belt-system';
 
 import {
+  type Atmosphere,
+} from '../../domain/planetary/atmosphere';
+
+import {
   type CapturedExtrasolarObjectSystem,
 } from '../../domain/planetary/captured-extrasolar-object-system';
 
@@ -57,6 +61,10 @@ import {
 import {
   type MinorBodyImpactEnergyCatalog,
 } from '../../domain/planetary/minor-body-impact-energy-catalog';
+
+import {
+  type MinorBodyImpactEffectsCatalog,
+} from '../../domain/planetary/minor-body-impact-effects-catalog';
 
 import {
   type MoonSystem,
@@ -106,6 +114,10 @@ import {
   ImpactEnergyClassificationEngine,
 } from './impact-energy-classification-engine';
 
+import {
+  ImpactEffectsEngine,
+} from './impact-effects-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -120,18 +132,35 @@ import {
  * unambiguous post-encounter orbital transition per minor body. Point 23.7 now
  * projects geometry-only planet/moon impact risk from those outgoing orbits;
  * point 23.8 converts that orbital risk into an explicit finite-horizon temporal
- * probability. Point 23.9 now classifies the conditional impact energy and broad
- * consequence potential without mutating the target or materializing an event.
+ * probability. Point 23.9 classifies the conditional impact energy and broad
+ * consequence potential. Point 23.10 now projects target-specific atmosphere,
+ * hydrosphere, geology, ejecta and solid-surface response without mutating the
+ * target or materializing a historical event.
  *
  * Point 23.1 introduces zero procedural seeds/hashes/PRNG draws. Point 23.6
  * adds one domain-separated SHA-256 temporal sample per approach candidate, but
  * still derives zero hierarchical seeds and consumes zero PRNG draws. Point
  * 23.7 is pure post-transition geometry and adds no seeds/hashes/PRNG draws.
- * Points 23.8-23.9 are pure analytical projections: zero seeds, hashes and PRNG draws.
+ * Points 23.8-23.10 are pure analytical projections: zero seeds, hashes and PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.10 conditional planet/moon target-effects projection. */
+  static impactEffects(
+    impactEnergyCatalog:
+      MinorBodyImpactEnergyCatalog,
+
+    atmospheres:
+      readonly Atmosphere[],
+  ): MinorBodyImpactEffectsCatalog {
+    return ImpactEffectsEngine
+      .generate(
+        impactEnergyCatalog,
+        atmospheres,
+      );
+  }
 
   /** Point-23.9 conditional impact-energy/consequence classification. */
   static impactEnergies(
