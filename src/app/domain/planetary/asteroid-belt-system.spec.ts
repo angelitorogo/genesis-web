@@ -19,6 +19,14 @@ import {
 } from '../universe/universe-seed';
 
 import {
+  AsteroidBeltPopulationProfile,
+} from './asteroid-belt-population-profile';
+
+import {
+  AsteroidBeltRegion,
+} from './asteroid-belt-region';
+
+import {
   AsteroidBeltSystem,
 } from './asteroid-belt-system';
 
@@ -27,7 +35,7 @@ import {
 } from './planetary-system';
 
 describe(
-  'AsteroidBeltSystem point 22.1',
+  'AsteroidBeltSystem point 22.2',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -50,7 +58,7 @@ describe(
       );
 
     it(
-      'should retain only the exact mature PlanetarySystem context before point 22.2 materializes belts',
+      'should retain the exact mature system while exposing one frozen INNER and OUTER statistical profile',
       () => {
         const planetarySystem =
           systemFixture(
@@ -58,59 +66,101 @@ describe(
             locator,
             seed,
             5,
+            4,
+          );
+
+        const inner =
+          profile(
+            AsteroidBeltRegion.INNER,
+            4,
+            true,
+            1.5,
+            2.8,
+            0.05,
+            0.6,
+          );
+
+        const outer =
+          profile(
+            AsteroidBeltRegion.OUTER,
+            4,
+            false,
+            null,
+            null,
+            0,
+            0,
           );
 
         const beltSystem =
           new AsteroidBeltSystem(
             planetarySystem,
+            inner,
+            outer,
           );
 
         expect(
-          beltSystem
-            .hostPlanetarySystem,
+          beltSystem.hostPlanetarySystem,
         ).toBe(
           planetarySystem,
         );
 
         expect(
-          beltSystem
-            .generationKey,
+          beltSystem.generationKey,
         ).toBe(
           generationKey,
         );
 
         expect(
-          beltSystem
-            .systemLocator,
+          beltSystem.systemLocator,
         ).toBe(
           locator,
         );
 
         expect(
-          beltSystem
-            .systemSeed,
+          beltSystem.systemSeed,
         ).toBe(
           seed,
         );
 
         expect(
-          beltSystem
-            .maturePlanetCount,
+          beltSystem.maturePlanetCount,
         ).toBe(5);
+
+        expect(
+          beltSystem.populationProfiles,
+        ).toEqual([
+          inner,
+          outer,
+        ]);
+
+        expect(
+          beltSystem.belts,
+        ).toEqual([
+          inner,
+        ]);
+
+        expect(
+          beltSystem.beltCount,
+        ).toBe(1);
+
+        expect(
+          beltSystem.hasBelts,
+        ).toBe(true);
+
+        expect(
+          beltSystem.totalRetainedBeltMassEarth,
+        ).toBe(0.05);
 
         for (
           const reservedProperty
           of [
-            'beltCount',
-            'belts',
-            'innerBelts',
-            'outerBelts',
-            'populationProfiles',
             'asteroids',
+            'asteroidSeeds',
             'comets',
             'transNeptunianObjects',
             'interstellarObjects',
             'capturedExtrasolarObjects',
+            'discoveryState',
           ]
         ) {
           expect(
@@ -122,7 +172,7 @@ describe(
     );
 
     it(
-      'should allow the phase-22 boundary to exist even when the mature planetary architecture contains zero planets',
+      'should allow two absent profiles when no residual population survives',
       () => {
         const planetarySystem =
           systemFixture(
@@ -130,33 +180,51 @@ describe(
             locator,
             seed,
             0,
+            0,
           );
 
         const beltSystem =
           new AsteroidBeltSystem(
             planetarySystem,
+            profile(
+              AsteroidBeltRegion.INNER,
+              0,
+              false,
+              null,
+              null,
+              0,
+              0,
+            ),
+            profile(
+              AsteroidBeltRegion.OUTER,
+              0,
+              false,
+              null,
+              null,
+              0,
+              0,
+            ),
           );
 
         expect(
-          beltSystem
-            .maturePlanetCount,
+          beltSystem.beltCount,
         ).toBe(0);
+
+        expect(
+          beltSystem.hasBelts,
+        ).toBe(false);
       },
     );
 
     it(
-      'should reject a forged host that does not expose the canonical SystemSeed kind',
+      'should reject swapped regions, forged residual reservoirs or over-allocation of residual mass',
       () => {
         const planetarySystem =
           systemFixture(
             generationKey,
             locator,
-            {
-              kind:
-                'body',
-              normalizedValue:
-                seed.normalizedValue,
-            } as unknown as SystemSeed,
+            seed,
+            2,
             1,
           );
 
@@ -164,6 +232,78 @@ describe(
           () =>
             new AsteroidBeltSystem(
               planetarySystem,
+              profile(
+                AsteroidBeltRegion.OUTER,
+                1,
+                false,
+                null,
+                null,
+                0,
+                0,
+              ),
+              profile(
+                AsteroidBeltRegion.OUTER,
+                1,
+                false,
+                null,
+                null,
+                0,
+                0,
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new AsteroidBeltSystem(
+              planetarySystem,
+              profile(
+                AsteroidBeltRegion.INNER,
+                2,
+                false,
+                null,
+                null,
+                0,
+                0,
+              ),
+              profile(
+                AsteroidBeltRegion.OUTER,
+                1,
+                false,
+                null,
+                null,
+                0,
+                0,
+              ),
+            ),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            new AsteroidBeltSystem(
+              planetarySystem,
+              profile(
+                AsteroidBeltRegion.INNER,
+                1,
+                true,
+                1,
+                2,
+                0.6,
+                0.5,
+              ),
+              profile(
+                AsteroidBeltRegion.OUTER,
+                1,
+                true,
+                4,
+                6,
+                0.6,
+                0.5,
+              ),
             ),
         ).toThrow(
           RangeError,
@@ -172,6 +312,58 @@ describe(
     );
   },
 );
+
+function profile(
+  region:
+    AsteroidBeltRegion,
+
+  sourceResidualDustMassEarth:
+    number,
+
+  exists:
+    boolean,
+
+  innerEdgeAu:
+    number | null,
+
+  outerEdgeAu:
+    number | null,
+
+  retainedMassEarth:
+    number,
+
+  populationIndex01:
+    number,
+): AsteroidBeltPopulationProfile {
+
+  return new AsteroidBeltPopulationProfile(
+    region,
+    sourceResidualDustMassEarth,
+    exists,
+    innerEdgeAu,
+    outerEdgeAu,
+    exists &&
+      innerEdgeAu !==
+        null &&
+      outerEdgeAu !==
+        null
+      ? Math.sqrt(
+          innerEdgeAu *
+            outerEdgeAu,
+        )
+      : null,
+    exists &&
+      innerEdgeAu !==
+        null &&
+      outerEdgeAu !==
+        null
+      ? outerEdgeAu -
+          innerEdgeAu
+      : null,
+    retainedMassEarth,
+    populationIndex01,
+  );
+}
 
 function systemFixture(
   generationKey:
@@ -185,6 +377,9 @@ function systemFixture(
 
   planetCount:
     number,
+
+  residualDustMassEarth:
+    number,
 ): PlanetarySystem {
 
   return {
@@ -192,5 +387,8 @@ function systemFixture(
     locator,
     seed,
     planetCount,
+    formationBlueprint: {
+      residualDustMassEarth,
+    },
   } as unknown as PlanetarySystem;
 }

@@ -15,8 +15,16 @@ import {
 } from '../../domain/seed/hierarchical-seeds';
 
 import {
+  AsteroidBeltRegion,
+} from '../../domain/planetary/asteroid-belt-region';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
+
+import {
+  type PlanetaryOrbitalElements,
+} from '../../domain/planetary/planetary-orbital-elements';
 
 import {
   UniverseSeed,
@@ -27,7 +35,7 @@ import {
 } from './asteroid-belt-generator';
 
 describe(
-  'AsteroidBeltGenerator point 22.1 V1',
+  'AsteroidBeltGenerator point 22.2 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -46,84 +54,35 @@ describe(
 
     const seed =
       new SystemSeed(
-        '89ABCDEF0123456776543210FEDCBA98',
+        '22222222222222222222222222222222',
       );
 
     it(
-      'should deterministically materialize one exact asteroid-belt boundary without generating point-22.2+ products',
+      'should freeze deterministic inner/outer statistical population vectors without materializing asteroids',
       () => {
         const planetarySystem =
-          systemFixture(
+          systemFixture({
             generationKey,
             locator,
             seed,
-            7,
-          );
-
-        const first =
-          AsteroidBeltGenerator
-            .generate(
-              generationKey,
-              planetarySystem,
-            );
-
-        const second =
-          AsteroidBeltGenerator
-            .generate(
-              generationKey,
-              planetarySystem,
-            );
-
-        expect(
-          first
-            .hostPlanetarySystem,
-        ).toBe(
-          planetarySystem,
-        );
-
-        expect(
-          second
-            .hostPlanetarySystem,
-        ).toBe(
-          planetarySystem,
-        );
-
-        expect(
-          second
-            .systemLocator,
-        ).toBe(
-          first
-            .systemLocator,
-        );
-
-        expect(
-          second
-            .systemSeed,
-        ).toBe(
-          first
-            .systemSeed,
-        );
-
-        expect(
-          'beltCount' in first,
-        ).toBe(false);
-
-        expect(
-          'asteroidSeed' in first,
-        ).toBe(false);
-      },
-    );
-
-    it(
-      'should preserve a zero-planet mature system instead of inventing or suppressing a belt population before 22.2',
-      () => {
-        const planetarySystem =
-          systemFixture(
-            generationKey,
-            locator,
-            seed,
-            0,
-          );
+            residualDustMassEarth:
+              5,
+            sourceCandidateCount:
+              6,
+            sourceMigratedBodyCount:
+              1,
+            sourceCollisionCount:
+              2,
+            envelopeInnerAu:
+              0.1,
+            envelopeOuterAu:
+              50,
+            semiMajorAxesAu: [
+              0.15,
+              1.2,
+              5.5,
+            ],
+          });
 
         const generated =
           AsteroidBeltGenerator
@@ -133,18 +92,306 @@ describe(
             );
 
         expect(
-          generated
-            .maturePlanetCount,
-        ).toBe(0);
+          generated.beltCount,
+        ).toBe(2);
 
         expect(
-          'hasBelts' in generated,
+          generated.innerBelt.region,
+        ).toBe(
+          AsteroidBeltRegion.INNER,
+        );
+
+        expect(
+          generated.outerBelt.region,
+        ).toBe(
+          AsteroidBeltRegion.OUTER,
+        );
+
+        expect(
+          generated.innerBeltExists,
+        ).toBe(true);
+
+        expect(
+          generated.outerBeltExists,
+        ).toBe(true);
+
+        expect(
+          generated.innerBelt.innerEdgeAu,
+        ).toBeCloseTo(
+          0.177,
+          12,
+        );
+
+        expect(
+          generated.innerBelt.outerEdgeAu,
+        ).toBeCloseTo(
+          0.984,
+          12,
+        );
+
+        expect(
+          generated.innerBelt.peakAu,
+        ).toBeCloseTo(
+          0.3585318762245575,
+          12,
+        );
+
+        expect(
+          generated.innerBelt.retainedMassEarth,
+        ).toBeCloseTo(
+          0.06510776359974753,
+          12,
+        );
+
+        expect(
+          generated.innerBelt.populationIndex01,
+        ).toBeCloseTo(
+          0.886689985155506,
+          12,
+        );
+
+        expect(
+          generated.outerBelt.innerEdgeAu,
+        ).toBeCloseTo(
+          6.71,
+          12,
+        );
+
+        expect(
+          generated.outerBelt.outerEdgeAu,
+        ).toBeCloseTo(
+          46,
+          12,
+        );
+
+        expect(
+          generated.outerBelt.peakAu,
+        ).toBeCloseTo(
+          20.55572634155551,
+          12,
+        );
+
+        expect(
+          generated.outerBelt.retainedMassEarth,
+        ).toBeCloseTo(
+          0.07672389479058565,
+          12,
+        );
+
+        expect(
+          generated.outerBelt.populationIndex01,
+        ).toBeCloseTo(
+          0.9032644814288714,
+          12,
+        );
+
+        expect(
+          generated.totalRetainedBeltMassEarth,
+        ).toBeCloseTo(
+          0.14183165839033318,
+          12,
+        );
+
+        expect(
+          'asteroids' in generated,
+        ).toBe(false);
+
+        expect(
+          'asteroidSeeds' in generated,
         ).toBe(false);
       },
     );
 
     it(
-      'should reject a PlanetarySystem from a different UniverseGenerationKey',
+      'should remain exactly deterministic and query-order independent for the same SystemSeed and frozen mature architecture',
+      () => {
+        const planetarySystem =
+          systemFixture({
+            generationKey,
+            locator,
+            seed,
+            residualDustMassEarth:
+              3,
+            sourceCandidateCount:
+              4,
+            sourceMigratedBodyCount:
+              0,
+            sourceCollisionCount:
+              1,
+            envelopeInnerAu:
+              0.08,
+            envelopeOuterAu:
+              30,
+            semiMajorAxesAu: [
+              0.4,
+              2,
+            ],
+          });
+
+        const first =
+          AsteroidBeltGenerator
+            .generate(
+              generationKey,
+              planetarySystem,
+            );
+
+        AsteroidBeltGenerator
+          .generate(
+            generationKey,
+            systemFixture({
+              generationKey,
+              locator,
+              seed:
+                new SystemSeed(
+                  '33333333333333333333333333333333',
+                ),
+              residualDustMassEarth:
+                2,
+              sourceCandidateCount:
+                2,
+              sourceMigratedBodyCount:
+                1,
+              sourceCollisionCount:
+                0,
+              envelopeInnerAu:
+                0.1,
+              envelopeOuterAu:
+                20,
+              semiMajorAxesAu: [
+                1,
+              ],
+            }),
+          );
+
+        const second =
+          AsteroidBeltGenerator
+            .generate(
+              generationKey,
+              planetarySystem,
+            );
+
+        expect(
+          second.innerBelt,
+        ).toEqual(
+          first.innerBelt,
+        );
+
+        expect(
+          second.outerBelt,
+        ).toEqual(
+          first.outerBelt,
+        );
+      },
+    );
+
+    it(
+      'should project statistical belt opportunities into a zero-planet residual disk instead of suppressing minor bodies',
+      () => {
+        const planetarySystem =
+          systemFixture({
+            generationKey,
+            locator,
+            seed,
+            residualDustMassEarth:
+              5,
+            sourceCandidateCount:
+              0,
+            sourceMigratedBodyCount:
+              0,
+            sourceCollisionCount:
+              0,
+            envelopeInnerAu:
+              0.1,
+            envelopeOuterAu:
+              100,
+            semiMajorAxesAu:
+              [],
+          });
+
+        const generated =
+          AsteroidBeltGenerator
+            .generate(
+              generationKey,
+              planetarySystem,
+            );
+
+        expect(
+          generated.maturePlanetCount,
+        ).toBe(0);
+
+        expect(
+          generated.innerBelt.innerEdgeAu,
+        ).not.toBeNull();
+
+        expect(
+          generated.outerBelt.outerEdgeAu,
+        ).not.toBeNull();
+
+        expect(
+          generated.beltCount,
+        ).toBeGreaterThan(0);
+      },
+    );
+
+    it(
+      'should emit two explicit absent population profiles when the frozen residual-dust reservoir is zero',
+      () => {
+        const planetarySystem =
+          systemFixture({
+            generationKey,
+            locator,
+            seed,
+            residualDustMassEarth:
+              0,
+            sourceCandidateCount:
+              3,
+            sourceMigratedBodyCount:
+              1,
+            sourceCollisionCount:
+              1,
+            envelopeInnerAu:
+              0.1,
+            envelopeOuterAu:
+              30,
+            semiMajorAxesAu: [
+              0.5,
+              5,
+            ],
+          });
+
+        const generated =
+          AsteroidBeltGenerator
+            .generate(
+              generationKey,
+              planetarySystem,
+            );
+
+        expect(
+          generated.beltCount,
+        ).toBe(0);
+
+        expect(
+          generated.hasBelts,
+        ).toBe(false);
+
+        expect(
+          generated.populationProfiles,
+        ).toHaveLength(2);
+
+        expect(
+          generated.populationProfiles
+            .every(
+              profile =>
+                !profile.exists &&
+                profile.retainedMassEarth ===
+                  0,
+            ),
+        ).toBe(true);
+      },
+    );
+
+    it(
+      'should reject a PlanetarySystem from a different UniverseGenerationKey or an unsupported generator version',
       () => {
         const otherKey =
           new UniverseGenerationKey(
@@ -155,12 +402,27 @@ describe(
           );
 
         const foreignSystem =
-          systemFixture(
-            otherKey,
+          systemFixture({
+            generationKey:
+              otherKey,
             locator,
             seed,
-            2,
-          );
+            residualDustMassEarth:
+              1,
+            sourceCandidateCount:
+              1,
+            sourceMigratedBodyCount:
+              0,
+            sourceCollisionCount:
+              0,
+            envelopeInnerAu:
+              0.1,
+            envelopeOuterAu:
+              10,
+            semiMajorAxesAu: [
+              1,
+            ],
+          });
 
         expect(
           () =>
@@ -172,12 +434,7 @@ describe(
         ).toThrow(
           RangeError,
         );
-      },
-    );
 
-    it(
-      'should reject an unsupported generator version before materialization',
-      () => {
         const unsupportedKey = {
           ...generationKey,
           generatorVersion: {
@@ -186,20 +443,32 @@ describe(
           },
         } as unknown as UniverseGenerationKey;
 
-        const planetarySystem =
-          systemFixture(
-            unsupportedKey,
-            locator,
-            seed,
-            2,
-          );
-
         expect(
           () =>
             AsteroidBeltGenerator
               .generate(
                 unsupportedKey,
-                planetarySystem,
+                systemFixture({
+                  generationKey:
+                    unsupportedKey,
+                  locator,
+                  seed,
+                  residualDustMassEarth:
+                    1,
+                  sourceCandidateCount:
+                    1,
+                  sourceMigratedBodyCount:
+                    0,
+                  sourceCollisionCount:
+                    0,
+                  envelopeInnerAu:
+                    0.1,
+                  envelopeOuterAu:
+                    10,
+                  semiMajorAxesAu: [
+                    1,
+                  ],
+                }),
               ),
         ).toThrow(
           RangeError,
@@ -210,23 +479,68 @@ describe(
 );
 
 function systemFixture(
-  generationKey:
-    UniverseGenerationKey,
-
-  locator:
-    SystemLocator,
-
-  seed:
-    SystemSeed,
-
-  planetCount:
-    number,
+  input: {
+    readonly generationKey:
+      UniverseGenerationKey;
+    readonly locator:
+      SystemLocator;
+    readonly seed:
+      SystemSeed;
+    readonly residualDustMassEarth:
+      number;
+    readonly sourceCandidateCount:
+      number;
+    readonly sourceMigratedBodyCount:
+      number;
+    readonly sourceCollisionCount:
+      number;
+    readonly envelopeInnerAu:
+      number;
+    readonly envelopeOuterAu:
+      number;
+    readonly semiMajorAxesAu:
+      readonly number[];
+  },
 ): PlanetarySystem {
 
+  const orbits =
+    input
+      .semiMajorAxesAu
+      .map(
+        semiMajorAxisAu => ({
+          semiMajorAxisAu,
+        } as PlanetaryOrbitalElements),
+      );
+
   return {
-    generationKey,
-    locator,
-    seed,
-    planetCount,
+    generationKey:
+      input.generationKey,
+    locator:
+      input.locator,
+    seed:
+      input.seed,
+    planetCount:
+      orbits.length,
+    orbits,
+    orbitalLayout: {
+      generationInnerLimitAu:
+        input.envelopeInnerAu,
+      generationOuterLimitAu:
+        input.envelopeOuterAu,
+    },
+    formationBlueprint: {
+      sourceInnerRadiusAu:
+        input.envelopeInnerAu,
+      sourceOuterRadiusAu:
+        input.envelopeOuterAu,
+      residualDustMassEarth:
+        input.residualDustMassEarth,
+      sourceCandidateCount:
+        input.sourceCandidateCount,
+      sourceMigratedBodyCount:
+        input.sourceMigratedBodyCount,
+      sourceCollisionCount:
+        input.sourceCollisionCount,
+    },
   } as unknown as PlanetarySystem;
 }
