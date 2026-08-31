@@ -67,6 +67,10 @@ import {
 } from '../../domain/planetary/minor-body-impact-effects-catalog';
 
 import {
+  type MinorBodyEarlyDeliveryCatalog,
+} from '../../domain/planetary/minor-body-early-delivery-catalog';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -118,6 +122,10 @@ import {
   ImpactEffectsEngine,
 } from './impact-effects-engine';
 
+import {
+  EarlyWaterOrganicDeliveryEngine,
+} from './early-water-organic-delivery-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -135,17 +143,30 @@ import {
  * probability. Point 23.9 classifies the conditional impact energy and broad
  * consequence potential. Point 23.10 now projects target-specific atmosphere,
  * hydrosphere, geology, ejecta and solid-surface response without mutating the
- * target or materializing a historical event.
+ * target or materializing a historical event. Point 23.11 projects retained
+ * water-equivalent and organic-carrier payloads from the frozen impact chain;
+ * it remains statistical/conditional and does not rewrite target inventories.
  *
  * Point 23.1 introduces zero procedural seeds/hashes/PRNG draws. Point 23.6
  * adds one domain-separated SHA-256 temporal sample per approach candidate, but
  * still derives zero hierarchical seeds and consumes zero PRNG draws. Point
  * 23.7 is pure post-transition geometry and adds no seeds/hashes/PRNG draws.
- * Points 23.8-23.10 are pure analytical projections: zero seeds, hashes and PRNG draws.
+ * Points 23.8-23.11 are pure analytical projections: zero seeds, hashes and PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.11 conditional/statistical early water and organic-carrier delivery projection. */
+  static earlyWaterOrganicDelivery(
+    impactEffectsCatalog:
+      MinorBodyImpactEffectsCatalog,
+  ): MinorBodyEarlyDeliveryCatalog {
+    return EarlyWaterOrganicDeliveryEngine
+      .generate(
+        impactEffectsCatalog,
+      );
+  }
 
   /** Point-23.10 conditional planet/moon target-effects projection. */
   static impactEffects(
