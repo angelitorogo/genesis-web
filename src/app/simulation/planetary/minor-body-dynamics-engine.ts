@@ -43,6 +43,10 @@ import {
 } from '../../domain/planetary/minor-body-giant-influence-catalog';
 
 import {
+  type MinorBodyCloseEncounterCatalog,
+} from '../../domain/planetary/minor-body-close-encounter-catalog';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -74,6 +78,10 @@ import {
   MinorBodyGiantInfluenceEngine,
 } from './minor-body-giant-influence-engine';
 
+import {
+  MinorBodyCloseEncounterEngine,
+} from './minor-body-close-encounter-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -83,14 +91,29 @@ import {
  * the point-23.1 boundary or any phase-22 orbit. Point 23.3 adds a pure
  * geometry matrix against materialized planets/relevant moons. Point 23.4 now
  * adds low-order resonance candidates and simplified local chaotic zones. Point
- * 23.5 now classifies giant-planet perturbation/capture/ejection potentials;
- * concrete encounter-driven orbit changes and impacts remain 23.6+.
+ * 23.5 classifies giant-planet perturbation/capture/ejection potentials. Point
+ * 23.6 now resolves close-encounter temporal opportunities and materializes one
+ * unambiguous post-encounter orbital transition per minor body; impacts remain
+ * reserved for point 23.7+.
  *
- * Point 23.1 introduces zero procedural seeds, zero hashes and zero PRNG draws.
+ * Point 23.1 introduces zero procedural seeds/hashes/PRNG draws. Point 23.6
+ * adds one domain-separated SHA-256 temporal sample per approach candidate, but
+ * still derives zero hierarchical seeds and consumes zero PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.6 close-encounter resolution and post-encounter orbit transitions. */
+  static closeEncounters(
+    giantInfluenceCatalog:
+      MinorBodyGiantInfluenceCatalog,
+  ): MinorBodyCloseEncounterCatalog {
+    return MinorBodyCloseEncounterEngine
+      .generate(
+        giantInfluenceCatalog,
+      );
+  }
 
   /** Point-23.5 giant-planet perturbation/capture/ejection potential projection. */
   static giantInfluences(
