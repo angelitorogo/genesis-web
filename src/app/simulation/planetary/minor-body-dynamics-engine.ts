@@ -23,6 +23,14 @@ import {
 } from '../../domain/planetary/comet-system';
 
 import {
+  type EarlyPlanetaryDynamicsOutcome,
+} from '../../domain/planetary/early-planetary-dynamics-outcome';
+
+import {
+  type FormationCollisionMoonOriginCatalog,
+} from '../../domain/planetary/formation-collision-moon-origin-catalog';
+
+import {
   type InterstellarObjectSystem,
 } from '../../domain/planetary/interstellar-object-system';
 
@@ -126,6 +134,10 @@ import {
   EarlyWaterOrganicDeliveryEngine,
 } from './early-water-organic-delivery-engine';
 
+import {
+  FormationCollisionMoonOriginEngine,
+} from './formation-collision-moon-origin-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -146,16 +158,42 @@ import {
  * target or materializing a historical event. Point 23.11 projects retained
  * water-equivalent and organic-carrier payloads from the frozen impact chain;
  * it remains statistical/conditional and does not rewrite target inventories.
+ * Point 23.12 independently reconnects frozen point-17.5 formation collisions to
+ * mature point-19 planets and point-21 moons, classifying only possible
+ * moon-forming origins and preserving the exact collision lineage.
  *
  * Point 23.1 introduces zero procedural seeds/hashes/PRNG draws. Point 23.6
  * adds one domain-separated SHA-256 temporal sample per approach candidate, but
  * still derives zero hierarchical seeds and consumes zero PRNG draws. Point
  * 23.7 is pure post-transition geometry and adds no seeds/hashes/PRNG draws.
- * Points 23.8-23.11 are pure analytical projections: zero seeds, hashes and PRNG draws.
+ * Points 23.8-23.12 are pure analytical projections: zero seeds, hashes and PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.12 giant formation-collision / possible moon-origin projection. */
+  static formationCollisionMoonOrigins(
+    planetarySystem:
+      PlanetarySystem,
+
+    earlyDynamicsOutcome:
+      EarlyPlanetaryDynamicsOutcome,
+
+    planets:
+      readonly Planet[],
+
+    moonSystems:
+      readonly MoonSystem[],
+  ): FormationCollisionMoonOriginCatalog {
+    return FormationCollisionMoonOriginEngine
+      .generate(
+        planetarySystem,
+        earlyDynamicsOutcome,
+        planets,
+        moonSystems,
+      );
+  }
 
   /** Point-23.11 conditional/statistical early water and organic-carrier delivery projection. */
   static earlyWaterOrganicDelivery(
