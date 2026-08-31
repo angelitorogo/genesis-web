@@ -23,6 +23,18 @@ import {
 } from './planetary-system';
 
 import {
+  AsteroidCompositionRegime,
+} from './asteroid-composition-regime';
+
+import {
+  AsteroidMultiplicityRegime,
+} from './asteroid-multiplicity-regime';
+
+import {
+  AsteroidStructureRegime,
+} from './asteroid-structure-regime';
+
+import {
   type RelevantAsteroid,
 } from './relevant-asteroid';
 
@@ -35,8 +47,9 @@ const CONSISTENCY_TOLERANCE =
  *
  * Point 22.1 established the exact host boundary. Point 22.2 now adds one
  * deterministic INNER and one OUTER statistical population profile. Point 22.3
- * additionally attaches a bounded set of individually relevant asteroids while
- * leaving taxonomy to 22.4 and discovery/catalogue state to 22.10. Cometary/TNO,
+ * additionally attaches a bounded set of individually relevant asteroids. Point
+ * 22.4 classifies composition, structure and multiplicity while discovery/catalogue
+ * state remains 22.10. Cometary/TNO,
  * interstellar and captured populations remain later point-22 products.
  */
 export class AsteroidBeltSystem {
@@ -275,6 +288,60 @@ export class AsteroidBeltSystem {
         asteroid =>
           asteroid.beltRegion ===
           AsteroidBeltRegion.OUTER,
+      )
+      .length;
+  }
+
+  get carbonaceousRelevantAsteroidCount():
+    number {
+
+    return this
+      .relevantAsteroids
+      .filter(
+        asteroid =>
+          asteroid.compositionRegime ===
+          AsteroidCompositionRegime.CARBONACEOUS,
+      )
+      .length;
+  }
+
+  get iceRichRelevantAsteroidCount():
+    number {
+
+    return this
+      .relevantAsteroids
+      .filter(
+        asteroid =>
+          asteroid.compositionRegime ===
+            AsteroidCompositionRegime.ICE_RICH ||
+          asteroid.compositionRegime ===
+            AsteroidCompositionRegime.MIXED_ROCK_ICE,
+      )
+      .length;
+  }
+
+  get rubblePileRelevantAsteroidCount():
+    number {
+
+    return this
+      .relevantAsteroids
+      .filter(
+        asteroid =>
+          asteroid.structureRegime ===
+          AsteroidStructureRegime.RUBBLE_PILE,
+      )
+      .length;
+  }
+
+  get binaryLikeRelevantAsteroidCount():
+    number {
+
+    return this
+      .relevantAsteroids
+      .filter(
+        asteroid =>
+          asteroid.multiplicityRegime !==
+          AsteroidMultiplicityRegime.SINGLE,
       )
       .length;
   }

@@ -10,6 +10,10 @@ import {
   type AsteroidOrbitalElements,
 } from './asteroid-orbital-elements';
 
+import {
+  type AsteroidTaxonomy,
+} from './asteroid-taxonomy';
+
 /**
  * Point-22.3 individually materialized minor body selected from a statistical
  * point-22.2 belt because it is large/relevant enough to become a gameplay
@@ -17,7 +21,8 @@ import {
  *
  * `isDiscoverable` means the object is eligible for observation/discovery. It
  * does NOT mean the player has discovered it; point 22.10 owns that state.
- * Taxonomy/composition/structure are intentionally absent until point 22.4.
+ * Point 22.4 adds compositional, structural and multiplicity taxonomy without
+ * changing the frozen point-22.3 identity, size or orbit.
  */
 export class RelevantAsteroid {
 
@@ -33,6 +38,9 @@ export class RelevantAsteroid {
 
     readonly orbit:
       AsteroidOrbitalElements,
+
+    readonly taxonomy:
+      AsteroidTaxonomy,
   ) {
     if (
       !sourceBeltProfile.exists
@@ -115,6 +123,24 @@ export class RelevantAsteroid {
     return this
       .identity
       .localDesignation;
+  }
+
+  get compositionRegime() {
+    return this
+      .taxonomy
+      .compositionRegime;
+  }
+
+  get structureRegime() {
+    return this
+      .taxonomy
+      .structureRegime;
+  }
+
+  get multiplicityRegime() {
+    return this
+      .taxonomy
+      .multiplicityRegime;
   }
 
   get isDiscoverable():

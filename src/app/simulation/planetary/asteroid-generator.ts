@@ -40,6 +40,10 @@ import {
   RelevantAsteroid,
 } from '../../domain/planetary/relevant-asteroid';
 
+import {
+  AsteroidTaxonomyEngine,
+} from './asteroid-taxonomy-engine';
+
 const V1_ID_DOMAIN =
   utf8ToBytes(
     'GENESIS-RELEVANT-ASTEROID-ID-V1',
@@ -68,7 +72,8 @@ const V1_MIN_RELEVANT_DIAMETER_KILOMETERS =
  * Only a bounded relevant sample is created from each point-22.2 statistical
  * belt. V1 derives identity and property samples directly from SystemSeed via
  * SHA-256 domain separation: zero PRNG draws and zero new hierarchical seeds.
- * Taxonomy belongs to 22.4 and discovery/catalogue state to 22.10.
+ * Point 22.4 classifies each frozen object through AsteroidTaxonomyEngine;
+ * discovery/catalogue state remains point 22.10.
  */
 export class AsteroidGenerator {
 
@@ -239,11 +244,20 @@ function materializeAsteroidV1(
       identity,
     );
 
+  const taxonomy =
+    AsteroidTaxonomyEngine
+      .classify(
+        identity,
+        diameterKilometers,
+        orbit,
+      );
+
   return new RelevantAsteroid(
     identity,
     profile,
     diameterKilometers,
     orbit,
+    taxonomy,
   );
 }
 

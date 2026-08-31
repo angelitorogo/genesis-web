@@ -19,6 +19,18 @@ import {
 } from '../../domain/planetary/asteroid-belt-region';
 
 import {
+  AsteroidCompositionRegime,
+} from '../../domain/planetary/asteroid-composition-regime';
+
+import {
+  AsteroidMultiplicityRegime,
+} from '../../domain/planetary/asteroid-multiplicity-regime';
+
+import {
+  AsteroidStructureRegime,
+} from '../../domain/planetary/asteroid-structure-regime';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
@@ -35,7 +47,7 @@ import {
 } from './asteroid-belt-generator';
 
 describe(
-  'AsteroidBeltGenerator point 22.2 V1',
+  'AsteroidBeltGenerator points 22.2-22.4 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -58,7 +70,7 @@ describe(
       );
 
     it(
-      'should freeze deterministic inner/outer populations and materialize only the bounded point-22.3 relevant asteroid sample',
+      'should preserve frozen point-22.2 populations and point-22.3 asteroids while attaching point-22.4 taxonomy',
       () => {
         const planetarySystem =
           systemFixture({
@@ -203,6 +215,40 @@ describe(
         expect(
           generated.outerRelevantAsteroidCount,
         ).toBe(7);
+
+        expect(
+          generated.carbonaceousRelevantAsteroidCount,
+        ).toBe(7);
+
+        expect(
+          generated.iceRichRelevantAsteroidCount,
+        ).toBe(5);
+
+        expect(
+          generated.rubblePileRelevantAsteroidCount,
+        ).toBe(1);
+
+        expect(
+          generated.binaryLikeRelevantAsteroidCount,
+        ).toBe(2);
+
+        expect(
+          generated.relevantAsteroids[0].compositionRegime,
+        ).toBe(
+          AsteroidCompositionRegime.METALLIC,
+        );
+
+        expect(
+          generated.relevantAsteroids[0].structureRegime,
+        ).toBe(
+          AsteroidStructureRegime.FRACTURED,
+        );
+
+        expect(
+          generated.relevantAsteroids[2].multiplicityRegime,
+        ).toBe(
+          AsteroidMultiplicityRegime.BINARY,
+        );
 
         expect(
           generated.relevantAsteroids[0].proceduralId,

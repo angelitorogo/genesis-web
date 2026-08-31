@@ -19,6 +19,18 @@ import {
 } from '../../domain/planetary/asteroid-belt-region';
 
 import {
+  AsteroidCompositionRegime,
+} from '../../domain/planetary/asteroid-composition-regime';
+
+import {
+  AsteroidMultiplicityRegime,
+} from '../../domain/planetary/asteroid-multiplicity-regime';
+
+import {
+  AsteroidStructureRegime,
+} from '../../domain/planetary/asteroid-structure-regime';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
@@ -35,7 +47,7 @@ import {
 } from './asteroid-generator';
 
 describe(
-  'AsteroidGenerator point 22.3 V1',
+  'AsteroidGenerator points 22.3-22.4 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -94,7 +106,7 @@ describe(
       );
 
     it(
-      'should freeze deterministic relevant-object counts, identities, sizes and belt-confined orbits',
+      'should preserve frozen point-22.3 identity/size/orbits while adding deterministic point-22.4 taxonomy',
       () => {
         const asteroids =
           AsteroidGenerator
@@ -157,6 +169,31 @@ describe(
           12,
         );
 
+        expect(
+          firstInner.compositionRegime,
+        ).toBe(
+          AsteroidCompositionRegime.METALLIC,
+        );
+
+        expect(
+          firstInner.structureRegime,
+        ).toBe(
+          AsteroidStructureRegime.FRACTURED,
+        );
+
+        expect(
+          firstInner.multiplicityRegime,
+        ).toBe(
+          AsteroidMultiplicityRegime.SINGLE,
+        );
+
+        expect(
+          firstInner.taxonomy.bulkDensityGramsPerCubicCentimeter,
+        ).toBeCloseTo(
+          4.745126654028347,
+          10,
+        );
+
         const firstOuter =
           asteroids[7];
 
@@ -180,6 +217,43 @@ describe(
           10,
         );
 
+        expect(
+          firstOuter.compositionRegime,
+        ).toBe(
+          AsteroidCompositionRegime.CARBONACEOUS,
+        );
+
+        expect(
+          firstOuter.taxonomy.iceFraction01,
+        ).toBeCloseTo(
+          0.10123388483127829,
+          12,
+        );
+
+        expect(
+          asteroids.filter(
+            asteroid =>
+              asteroid.compositionRegime ===
+              AsteroidCompositionRegime.ICE_RICH,
+          ),
+        ).toHaveLength(3);
+
+        expect(
+          asteroids.filter(
+            asteroid =>
+              asteroid.structureRegime ===
+              AsteroidStructureRegime.RUBBLE_PILE,
+          ),
+        ).toHaveLength(1);
+
+        expect(
+          asteroids.filter(
+            asteroid =>
+              asteroid.multiplicityRegime ===
+              AsteroidMultiplicityRegime.BINARY,
+          ),
+        ).toHaveLength(2);
+
         for (
           const asteroid
           of asteroids
@@ -201,8 +275,8 @@ describe(
           );
 
           expect(
-            'asteroidType' in asteroid,
-          ).toBe(false);
+            asteroid.taxonomy,
+          ).toBeDefined();
 
           expect(
             'discoveryState' in asteroid,

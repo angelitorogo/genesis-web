@@ -15,12 +15,28 @@ import {
 } from './asteroid-belt-region';
 
 import {
+  AsteroidCompositionRegime,
+} from './asteroid-composition-regime';
+
+import {
   AsteroidIdentity,
 } from './asteroid-identity';
 
 import {
+  AsteroidMultiplicityRegime,
+} from './asteroid-multiplicity-regime';
+
+import {
   AsteroidOrbitalElements,
 } from './asteroid-orbital-elements';
+
+import {
+  AsteroidStructureRegime,
+} from './asteroid-structure-regime';
+
+import {
+  AsteroidTaxonomy,
+} from './asteroid-taxonomy';
 
 import {
   RelevantAsteroid,
@@ -72,8 +88,24 @@ describe(
         30,
       );
 
+    const taxonomy =
+      new AsteroidTaxonomy(
+        AsteroidCompositionRegime.CARBONACEOUS,
+        AsteroidStructureRegime.RUBBLE_PILE,
+        AsteroidMultiplicityRegime.CONTACT_BINARY,
+        0.55,
+        0.25,
+        0.05,
+        0.15,
+        0.45,
+        1.25,
+        0.06,
+        null,
+        null,
+      );
+
     it(
-      'should mark an existing relevant object as discovery-eligible without assigning discovery state or taxonomy',
+      'should mark an existing relevant object as discovery-eligible while exposing point-22.4 taxonomy without discovery state',
       () => {
         const asteroid =
           new RelevantAsteroid(
@@ -81,6 +113,7 @@ describe(
             profile,
             320,
             orbit,
+            taxonomy,
           );
 
         expect(
@@ -98,12 +131,22 @@ describe(
         ).toBe(false);
 
         expect(
-          'asteroidType' in asteroid,
-        ).toBe(false);
+          asteroid.compositionRegime,
+        ).toBe(
+          AsteroidCompositionRegime.CARBONACEOUS,
+        );
 
         expect(
-          'composition' in asteroid,
-        ).toBe(false);
+          asteroid.structureRegime,
+        ).toBe(
+          AsteroidStructureRegime.RUBBLE_PILE,
+        );
+
+        expect(
+          asteroid.multiplicityRegime,
+        ).toBe(
+          AsteroidMultiplicityRegime.CONTACT_BINARY,
+        );
       },
     );
 
@@ -126,6 +169,7 @@ describe(
               profile,
               100,
               orbit,
+              taxonomy,
             ),
         ).toThrow(
           RangeError,
@@ -138,6 +182,7 @@ describe(
               profile,
               0,
               orbit,
+              taxonomy,
             ),
         ).toThrow(
           RangeError,
