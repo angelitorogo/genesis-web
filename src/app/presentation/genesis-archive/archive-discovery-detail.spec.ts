@@ -394,6 +394,26 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="archive-stellar-system-open-system-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          '/system/0/0/7',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-stellar-system-open-system-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          'version=1',
+        );
+
+        expect(
+          element.querySelector(
             '[data-testid="archive-discovery-detail-map-link"]',
           )?.getAttribute(
             'href',

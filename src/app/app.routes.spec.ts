@@ -68,6 +68,25 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   });
 
+  it('should expose the point-24.1 stellar-system scene route', () => {
+    const route =
+      genesisRoutes.find(
+        (candidate) =>
+          candidate.path ===
+          'system/:galaxyIndex/:sectorKey/:galacticObjectIndex',
+      );
+
+    expect(
+      route,
+    ).toBeDefined();
+
+    expect(
+      route?.title,
+    ).toBe(
+      'Sistema estelar | GENESIS',
+    );
+  });
+
   it('should navigate to Discovered Galaxies', async () => {
     const harness =
       await RouterTestingHarness.create(

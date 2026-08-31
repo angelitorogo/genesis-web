@@ -1,0 +1,107 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.system-scene {
+  position: relative;
+  min-height: clamp(30rem, 68vh, 52rem);
+  overflow: hidden;
+  background: #010205;
+  isolation: isolate;
+
+  &__canvas {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    outline: none;
+  }
+
+  &__optical-vignette {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 50% 47%, transparent 0 34%, rgba(0, 0, 0, .08) 62%, rgba(0, 0, 0, .56) 100%),
+      linear-gradient(180deg, rgba(38, 64, 88, .035), transparent 22%, transparent 76%, rgba(0, 0, 0, .18));
+  }
+
+  &__hud {
+    position: absolute;
+    z-index: 2;
+    top: 1rem;
+    right: 1rem;
+    left: 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    pointer-events: none;
+    color: rgba(184, 221, 238, .58);
+    font: 700 .58rem var(--genesis-font-mono);
+    letter-spacing: .12em;
+  }
+
+  &__state {
+    position: absolute;
+    z-index: 3;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .8rem 1rem;
+    border: 1px solid rgba(106, 215, 255, .16);
+    border-radius: var(--genesis-radius-md);
+    background: rgba(5, 8, 14, .82);
+    color: var(--genesis-color-text-muted);
+    font: 700 .68rem var(--genesis-font-mono);
+    letter-spacing: .06em;
+    transform: translate(-50%, -50%);
+    backdrop-filter: blur(8px);
+
+    &--error {
+      border-color: rgba(255, 118, 118, .28);
+      color: #ffb0b0;
+    }
+  }
+
+  &__pulse {
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background: var(--genesis-color-primary);
+    box-shadow: 0 0 1rem rgba(106, 215, 255, .8);
+  }
+
+  &__ready-marker {
+    position: absolute;
+    z-index: 2;
+    right: 1rem;
+    bottom: 1rem;
+    color: rgba(121, 215, 255, .38);
+    font: 700 .55rem var(--genesis-font-mono);
+    letter-spacing: .12em;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 48rem) {
+  .system-scene {
+    min-height: clamp(24rem, 62vh, 38rem);
+
+    &__hud {
+      top: .75rem;
+      right: .75rem;
+      left: .75rem;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .system-scene__pulse {
+    box-shadow: 0 0 .45rem rgba(106, 215, 255, .62);
+  }
+}

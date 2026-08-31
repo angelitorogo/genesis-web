@@ -128,6 +128,25 @@
                       </dd>
                     </div>
                   </dl>
+
+                  <div class="archive-discovery-detail__actions">
+                    <a
+                      [routerLink]="[
+                        '/system',
+                        model.galaxyIndex.toString(),
+                        model.sectorKey.toString(),
+                        model.galacticObjectIndex.toString()
+                      ]"
+                      [queryParams]="{
+                        seed: model.universeSeed,
+                        version: model.generatorVersionCode
+                      }"
+                      data-testid="archive-stellar-system-open-system-link"
+                    >
+                      Entrar en el sistema 3D
+                      <span aria-hidden="true">→</span>
+                    </a>
+                  </div>
                 </div>
               </section>
 

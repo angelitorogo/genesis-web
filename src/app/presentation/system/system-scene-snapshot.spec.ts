@@ -1,0 +1,197 @@
+import {
+  DiscoveryState,
+} from '../../domain/discovery/discovery-state';
+
+import {
+  ExplorationResultKind,
+} from '../../domain/exploration/exploration-sector-result';
+
+import {
+  ArchiveDiscoveryLocatorKind,
+  type ArchiveDiscoveryDetailModel,
+} from '../genesis-archive/archive-discovery-detail.facade';
+
+import {
+  ArchiveStellarSystemKnowledgeLevel,
+} from '../genesis-archive/archive-stellar-system-card';
+
+import {
+  SystemSceneSnapshotBuilder,
+} from './system-scene-snapshot';
+
+describe(
+  'SystemSceneSnapshotBuilder point 24.1',
+  () => {
+
+    it(
+      'should project only stable identity/knowledge metadata into the Three.js scene boundary',
+      () => {
+
+        const model =
+          systemModel();
+
+        const snapshot =
+          SystemSceneSnapshotBuilder
+            .build(
+              model,
+            );
+
+        expect(
+          snapshot.address,
+        ).toEqual({
+          galaxyIndex:
+            '3',
+          sectorKey:
+            '-17',
+          galacticObjectIndex:
+            '8',
+        });
+
+        expect(
+          snapshot.title,
+        ).toBe(
+          'Jotheria',
+        );
+
+        expect(
+          snapshot.multiplicityName,
+        ).toBe(
+          'BINARY',
+        );
+
+        expect(
+          snapshot.componentCount,
+        ).toBe(
+          2,
+        );
+
+        expect(
+          snapshot.discoveryStateCode,
+        ).toBe(
+          DiscoveryState
+            .CATALOGUED
+            .code,
+        );
+
+        expect(
+          Object.isFrozen(
+            snapshot,
+          ),
+        ).toBe(true);
+
+        expect(
+          Object.isFrozen(
+            snapshot.address,
+          ),
+        ).toBe(true);
+
+        expect(
+          'planets' in
+            snapshot,
+        ).toBe(false);
+
+        expect(
+          'orbits' in
+            snapshot,
+        ).toBe(false);
+
+        expect(
+          'physics' in
+            snapshot,
+        ).toBe(false);
+      },
+    );
+
+    it(
+      'should reject non-system or unresolved Archive models',
+      () => {
+
+        const model =
+          systemModel();
+
+        expect(
+          () =>
+            SystemSceneSnapshotBuilder
+              .build({
+                ...model,
+                locatorKind:
+                  ArchiveDiscoveryLocatorKind
+                    .GALACTIC_OBJECT,
+              } as unknown as ArchiveDiscoveryDetailModel),
+        ).toThrow(
+          RangeError,
+        );
+
+        expect(
+          () =>
+            SystemSceneSnapshotBuilder
+              .build({
+                ...model,
+                stellarSystemCard:
+                  null,
+              } as unknown as ArchiveDiscoveryDetailModel),
+        ).toThrow(
+          RangeError,
+        );
+      },
+    );
+  },
+);
+
+function systemModel():
+  ArchiveDiscoveryDetailModel {
+
+  return {
+    universeSeed:
+      '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+
+    generatorVersionCode:
+      1,
+
+    locatorKind:
+      ArchiveDiscoveryLocatorKind.SYSTEM,
+
+    resultKind:
+      ExplorationResultKind.SYSTEM,
+
+    discoveryState:
+      DiscoveryState.CATALOGUED,
+
+    discoveryStateLabel:
+      'Catalogado',
+
+    galaxyIndex:
+      3n,
+
+    sectorKey:
+      -17n,
+
+    galacticObjectIndex:
+      8n,
+
+    proceduralIdentity:
+      'G3 / S-17 / O8',
+
+    stellarSystemCard: {
+      knowledgeLevel:
+        ArchiveStellarSystemKnowledgeLevel
+          .CATALOGUED,
+
+      title:
+        'Jotheria',
+
+      multiplicityLabel:
+        'Binario',
+
+      componentCount:
+        2,
+
+      render: {
+        multiplicity: {
+          name:
+            'BINARY',
+        },
+      },
+    },
+  } as unknown as ArchiveDiscoveryDetailModel;
+}

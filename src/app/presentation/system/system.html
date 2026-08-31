@@ -1,0 +1,194 @@
+<genesis-screen>
+  <main
+    class="system-page"
+    data-testid="system-page"
+    aria-labelledby="system-page-title"
+  >
+    <header class="system-page__header">
+      <div>
+        <p class="system-page__eyebrow">
+          NAVEGACIÓN
+          <span aria-hidden="true">/</span>
+          SISTEMA ESTELAR
+        </p>
+
+        <h1 id="system-page-title">
+          @if (facade.model()?.stellarSystemCard; as systemCard) {
+            {{ systemCard.title }}
+          } @else {
+            Sistema estelar
+          }
+        </h1>
+
+        <p class="system-page__subtitle">
+          Espacio tridimensional del sistema en foco. La escena es una proyección
+          visual del estado de dominio y nunca una fuente autoritativa de física.
+        </p>
+      </div>
+
+      <a
+        class="system-page__nav-link"
+        routerLink="/galaxy-map"
+        data-testid="system-page-map-link"
+      >
+        <span aria-hidden="true">←</span>
+        Mapa galáctico
+      </a>
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section
+          class="system-page__panel system-page__state"
+          data-testid="system-page-loading"
+        >
+          <span class="system-page__pulse" aria-hidden="true"></span>
+
+          <div>
+            <small>GROUND TRUTH / REGENERACIÓN</small>
+            <strong>Resolviendo el sistema estelar…</strong>
+          </div>
+        </section>
+      }
+
+      @case ('not-found') {
+        <section
+          class="system-page__panel system-page__state"
+          data-testid="system-page-not-found"
+        >
+          <div>
+            <small>SISTEMA NO DISPONIBLE</small>
+            <strong>No existe una identidad conocida para esta ruta.</strong>
+            <p>
+              La página no materializa Ground Truth de un sistema que no figure
+              en el conocimiento persistido del universo seleccionado.
+            </p>
+          </div>
+        </section>
+      }
+
+      @case ('error') {
+        <section
+          class="system-page__panel system-page__state system-page__state--error"
+          data-testid="system-page-error"
+        >
+          <div>
+            <small>ERROR DE SISTEMA</small>
+            <strong>{{ facade.errorMessage() }}</strong>
+          </div>
+        </section>
+      }
+
+      @case ('content') {
+        @if (facade.model(); as model) {
+          @if (model.stellarSystemCard; as systemCard) {
+            @if (sceneSnapshot(); as snapshot) {
+              <section
+                class="system-page__context"
+                data-testid="system-page-context"
+              >
+                <div class="system-page__identity">
+                  <small>OBJETIVO EN FOCO</small>
+                  <strong data-testid="system-page-system-title">
+                    {{ systemCard.title }}
+                  </strong>
+                  <code data-testid="system-page-procedural-identity">
+                    {{ model.proceduralIdentity }}
+                  </code>
+                </div>
+
+                <dl class="system-page__facts">
+                  <div>
+                    <dt>CONOCIMIENTO</dt>
+                    <dd data-testid="system-page-discovery-state">
+                      {{ model.discoveryStateLabel }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>MULTIPLICIDAD</dt>
+                    <dd data-testid="system-page-multiplicity">
+                      {{ systemCard.multiplicityLabel ?? 'No resuelta' }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>COMPONENTES</dt>
+                    <dd>
+                      {{ systemCard.componentCount ?? 'No resueltos' }}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section
+                class="system-page__viewport"
+                data-testid="system-page-viewport"
+                aria-label="Escena Three.js del sistema estelar"
+              >
+                <app-system-scene
+                  [snapshot]="snapshot"
+                ></app-system-scene>
+
+                <footer class="system-page__viewport-footer">
+                  <span>
+                    THREE.JS / WEBGL2 / SYSTEM SCENE 24.1
+                  </span>
+
+                  <p>
+                    24.1 establece cámara, contexto WebGL2, color pipeline,
+                    resize, lifecycle y frontera de snapshot. No dibuja todavía
+                    estrellas, planetas u órbitas: su representación física
+                    comienza en 24.2.
+                  </p>
+                </footer>
+              </section>
+
+              <section
+                class="system-page__contract"
+                data-testid="system-page-render-contract"
+              >
+                <strong>CONTRATO DE RENDER</strong>
+
+                <p>
+                  Three.js recibe únicamente estado de presentación derivado de
+                  domain/simulation. La posición, órbita, masa, radio, clima o
+                  cualquier otra propiedad física nunca se calcula desde la
+                  escena ni se persiste desde WebGL.
+                </p>
+              </section>
+
+              <nav
+                class="system-page__actions"
+                aria-label="Navegación del sistema"
+              >
+                <a
+                  [routerLink]="[
+                    '/archive/system',
+                    snapshot.address.galaxyIndex,
+                    snapshot.address.sectorKey,
+                    snapshot.address.galacticObjectIndex
+                  ]"
+                  [queryParams]="{
+                    seed: snapshot.universeSeed,
+                    version: snapshot.generatorVersionCode
+                  }"
+                  data-testid="system-page-archive-link"
+                >
+                  Abrir ficha en Archivo
+                </a>
+
+                <a
+                  routerLink="/galaxy-map"
+                  data-testid="system-page-bottom-map-link"
+                >
+                  Volver al mapa galáctico
+                </a>
+              </nav>
+            }
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>
