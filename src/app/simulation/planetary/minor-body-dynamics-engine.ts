@@ -27,6 +27,10 @@ import {
 } from '../../domain/planetary/minor-body-dynamics-state';
 
 import {
+  type MinorBodyOrbitalElementsCatalog,
+} from '../../domain/planetary/minor-body-orbital-elements-catalog';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
@@ -34,20 +38,38 @@ import {
   type TransNeptunianObjectSystem,
 } from '../../domain/planetary/trans-neptunian-object-system';
 
+import {
+  MinorBodyOrbitalElementsEngine,
+} from './minor-body-orbital-elements-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
  * V1 initializes the dynamics boundary from the complete phase-22 Ground Truth
  * population. It intentionally consumes no discovery/catalogue state and does
- * not yet calculate any orbital evolution. Points 23.2+ enrich the returned
- * boundary with orbital normalization, crossings, resonances, perturbations,
- * encounters and impact products.
+ * Point 23.2 now exposes a normalized orbital-elements catalog without
+ * changing the point-23.1 boundary or any phase-22 orbit. Points 23.3+ add
+ * crossings, resonances, perturbations, encounters and impact products.
  *
  * Point 23.1 introduces zero procedural seeds, zero hashes and zero PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /**
+   * Point-23.2 common orbital projection. Kept on the phase coordinator so
+   * later dynamics stages can evolve from one stable public entry point.
+   */
+  static orbitalElements(
+    dynamicsState:
+      MinorBodyDynamicsState,
+  ): MinorBodyOrbitalElementsCatalog {
+    return MinorBodyOrbitalElementsEngine
+      .generate(
+        dynamicsState,
+      );
+  }
 
   static initialize(
     generationKey:
