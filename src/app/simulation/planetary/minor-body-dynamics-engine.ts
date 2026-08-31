@@ -51,6 +51,10 @@ import {
 } from '../../domain/planetary/minor-body-impact-risk-catalog';
 
 import {
+  type MinorBodyTemporalImpactProbabilityCatalog,
+} from '../../domain/planetary/minor-body-temporal-impact-probability-catalog';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -90,6 +94,10 @@ import {
   ImpactRiskEngine,
 } from './impact-risk-engine';
 
+import {
+  TemporalImpactProbabilityEngine,
+} from './temporal-impact-probability-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -103,16 +111,33 @@ import {
  * 23.6 resolves close-encounter temporal opportunities and materializes one
  * unambiguous post-encounter orbital transition per minor body. Point 23.7 now
  * projects geometry-only planet/moon impact risk from those outgoing orbits;
- * temporal impact probability remains reserved for point 23.8.
+ * point 23.8 now converts that orbital risk into an explicit finite-horizon
+ * temporal probability without materializing an impact event.
  *
  * Point 23.1 introduces zero procedural seeds/hashes/PRNG draws. Point 23.6
  * adds one domain-separated SHA-256 temporal sample per approach candidate, but
  * still derives zero hierarchical seeds and consumes zero PRNG draws. Point
  * 23.7 is pure post-transition geometry and adds no seeds/hashes/PRNG draws.
+ * Point 23.8 is also pure analytical projection: zero seeds, hashes and PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.8 finite-horizon temporal impact-probability projection. */
+  static temporalImpactProbabilities(
+    impactRiskCatalog:
+      MinorBodyImpactRiskCatalog,
+
+    timeWindowYears:
+      number,
+  ): MinorBodyTemporalImpactProbabilityCatalog {
+    return TemporalImpactProbabilityEngine
+      .generate(
+        impactRiskCatalog,
+        timeWindowYears,
+      );
+  }
 
   /** Point-23.7 post-encounter geometry-only impact-risk projection. */
   static impactRisks(
