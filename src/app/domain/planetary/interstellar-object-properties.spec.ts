@@ -1,0 +1,2 @@
+import { InterstellarObjectCompositionRegime as R } from './interstellar-object-composition-regime'; import { InterstellarObjectProperties } from './interstellar-object-properties';
+describe('InterstellarObjectProperties point 22.8',()=>{it('should model both refractory and volatile-rich visitors',()=>{const x=new InterstellarObjectProperties(1,R.MIXED,1,.55,.45,.3,1.5,.08,2.4);expect(x.isPotentiallyVolatileActive).toBe(true);expect(x.refractoryFraction01+x.volatileFraction01).toBe(1);});});

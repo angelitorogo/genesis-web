@@ -1,0 +1,2 @@
+import type { PlanetarySystem } from './planetary-system'; import { InterstellarObjectSystem } from './interstellar-object-system';
+describe('InterstellarObjectSystem point 22.8',()=>{it('should keep an empty very-rare encounter boundary',()=>{const ps={} as PlanetarySystem;const x=new InterstellarObjectSystem(ps,.5,.01,[]);expect(x.relevantObjectCount).toBe(0);expect(x.relevantObject).toBeNull();expect(Object.isFrozen(x.relevantObjects)).toBe(true);});});
