@@ -79,6 +79,10 @@ import {
 } from '../../domain/planetary/minor-body-early-delivery-catalog';
 
 import {
+  type PlanetaryImpactHistoryCatalog,
+} from '../../domain/planetary/planetary-impact-history-catalog';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -138,6 +142,10 @@ import {
   FormationCollisionMoonOriginEngine,
 } from './formation-collision-moon-origin-engine';
 
+import {
+  HistoricalImpactRealizationEngine,
+} from './historical-impact-realization-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
@@ -160,17 +168,43 @@ import {
  * it remains statistical/conditional and does not rewrite target inventories.
  * Point 23.12 independently reconnects frozen point-17.5 formation collisions to
  * mature point-19 planets and point-21 moons, classifying only possible
- * moon-forming origins and preserving the exact collision lineage.
+ * moon-forming origins and preserving the exact collision lineage. Point 23.13
+ * finally realizes a retrospective minor-body impact history using competing
+ * risks, and joins those events with the already-realized formation collisions
+ * in one physically traceable impact-history catalog.
  *
  * Point 23.1 introduces zero procedural seeds/hashes/PRNG draws. Point 23.6
  * adds one domain-separated SHA-256 temporal sample per approach candidate, but
  * still derives zero hierarchical seeds and consumes zero PRNG draws. Point
  * 23.7 is pure post-transition geometry and adds no seeds/hashes/PRNG draws.
  * Points 23.8-23.12 are pure analytical projections: zero seeds, hashes and PRNG draws.
+ * Point 23.13 introduces no seed level and consumes zero PRNG draws; it uses one
+ * domain-separated SHA-256 realization digest per temporally possible minor body,
+ * one event-id digest per realized impact, and the existing BodySeed -> HistorySeed
+ * hierarchy for the impacted planet's history.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.13 physically traceable realized impact-history projection. */
+  static impactHistory(
+    planetarySystem:
+      PlanetarySystem,
+
+    earlyDeliveryCatalog:
+      MinorBodyEarlyDeliveryCatalog,
+
+    formationCollisionMoonOriginCatalog:
+      FormationCollisionMoonOriginCatalog,
+  ): PlanetaryImpactHistoryCatalog {
+    return HistoricalImpactRealizationEngine
+      .generate(
+        planetarySystem,
+        earlyDeliveryCatalog,
+        formationCollisionMoonOriginCatalog,
+      );
+  }
 
   /** Point-23.12 giant formation-collision / possible moon-origin projection. */
   static formationCollisionMoonOrigins(
