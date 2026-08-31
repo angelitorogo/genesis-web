@@ -35,6 +35,10 @@ import {
 } from '../../domain/planetary/minor-body-orbit-proximity-catalog';
 
 import {
+  type MinorBodyResonanceCatalog,
+} from '../../domain/planetary/minor-body-resonance-catalog';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -58,21 +62,41 @@ import {
   MinorBodyOrbitProximityEngine,
 } from './minor-body-orbit-proximity-engine';
 
+import {
+  MinorBodyResonanceEngine,
+} from './minor-body-resonance-engine';
+
 /**
  * Point-23.1 coordinator for phase-23 minor-body dynamics.
  *
  * V1 initializes the dynamics boundary from the complete phase-22 Ground Truth
  * population. It intentionally consumes no discovery/catalogue state.
  * Point 23.2 exposes a normalized orbital-elements catalog without changing
- * the point-23.1 boundary or any phase-22 orbit. Point 23.3 now adds a pure
- * geometry matrix against materialized planets/relevant moons; resonances,
- * perturbations, time-resolved encounters and impact products remain 23.4+.
+ * the point-23.1 boundary or any phase-22 orbit. Point 23.3 adds a pure
+ * geometry matrix against materialized planets/relevant moons. Point 23.4 now
+ * adds low-order resonance candidates and simplified local chaotic zones;
+ * perturbations, time-resolved encounters and impact products remain 23.5+.
  *
  * Point 23.1 introduces zero procedural seeds, zero hashes and zero PRNG draws.
  */
 export class MinorBodyDynamicsEngine {
 
   private constructor() {}
+
+  /** Point-23.4 low-order resonance / simplified local-instability projection. */
+  static resonances(
+    orbitalCatalog:
+      MinorBodyOrbitalElementsCatalog,
+
+    proximityCatalog:
+      MinorBodyOrbitProximityCatalog,
+  ): MinorBodyResonanceCatalog {
+    return MinorBodyResonanceEngine
+      .generate(
+        orbitalCatalog,
+        proximityCatalog,
+      );
+  }
 
   /**
    * Point-23.3 geometry-only crossing/approach projection. Callers pass the
