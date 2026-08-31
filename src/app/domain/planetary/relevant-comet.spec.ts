@@ -15,70 +15,99 @@ import {
 } from './comet-nucleus-properties';
 
 import {
+  CometOrbitalElements,
+} from './comet-orbital-elements';
+
+import {
+  CometPeriodRegime,
+} from './comet-period-regime';
+
+import {
   RelevantComet,
 } from './relevant-comet';
 
 describe(
-  'RelevantComet point 22.5 V1',
+  'RelevantComet point 22.6 V1',
   () => {
     const locator =
       new SystemLocator(
-        6n,
-        113n,
-        9n,
+        1n,
+        2n,
+        3n,
       );
 
     const seed =
       new SystemSeed(
-        '22222222222222222222222222222222',
+        '11111111111111111111111111111111',
+      );
+
+    const identity =
+      new CometIdentity(
+        locator,
+        seed,
+        1,
+        '0123456789ABCDEFFEDCBA9876543210',
+      );
+
+    const nucleus =
+      new CometNucleusProperties(
+        1,
+        10,
+        0.7,
+        0.3,
+        0.6,
+        0.6,
+        0.04,
+        0.8,
+      );
+
+    const orbit =
+      new CometOrbitalElements(
+        1,
+        1,
+        4,
+        0.75,
+        15,
+        20,
+        30,
+        40,
+        8,
+        CometPeriodRegime
+          .SHORT_PERIOD,
       );
 
     it(
-      'should expose stable identity/nucleus getters while keeping point-22.6 and point-22.10 fields absent',
+      'should preserve point-22.5 identity/nucleus while exposing the point-22.6 orbit family',
       () => {
         const comet =
           new RelevantComet(
-            new CometIdentity(
-              locator,
-              seed,
-              1,
-              '0123456789ABCDEFFEDCBA9876543210',
-            ),
-            new CometNucleusProperties(
-              1,
-              18,
-              0.62,
-              0.38,
-              0.6,
-              0.5,
-              0.04,
-              0.8,
-            ),
+            identity,
+            nucleus,
+            orbit,
           );
 
         expect(
-          comet.localDesignation,
+          comet.proceduralId,
         ).toBe(
-          'COM-001',
+          identity.proceduralId,
         );
 
         expect(
-          comet.diameterKilometers,
+          comet.nucleusProperties,
         ).toBe(
-          18,
+          nucleus,
         );
 
         expect(
-          comet.isDiscoverable,
-        ).toBe(true);
+          comet.periodRegime,
+        ).toBe(
+          CometPeriodRegime
+            .SHORT_PERIOD,
+        );
 
         expect(
-          'orbit' in comet,
-        ).toBe(false);
-
-        expect(
-          'periodRegime' in comet,
-        ).toBe(false);
+          comet.periapsisAu,
+        ).toBe(1);
 
         expect(
           'activityState' in comet,
@@ -91,26 +120,25 @@ describe(
     );
 
     it(
-      'should reject identity/nucleus ordinal mismatches',
+      'should reject a mismatched orbit ordinal',
       () => {
         expect(
           () =>
             new RelevantComet(
-              new CometIdentity(
-                locator,
-                seed,
-                1,
-                '0123456789ABCDEFFEDCBA9876543210',
-              ),
-              new CometNucleusProperties(
+              identity,
+              nucleus,
+              new CometOrbitalElements(
                 2,
-                18,
-                0.62,
-                0.38,
-                0.6,
-                0.5,
-                0.04,
-                0.8,
+                1,
+                4,
+                0.75,
+                15,
+                20,
+                30,
+                40,
+                8,
+                CometPeriodRegime
+                  .SHORT_PERIOD,
               ),
             ),
         ).toThrow(

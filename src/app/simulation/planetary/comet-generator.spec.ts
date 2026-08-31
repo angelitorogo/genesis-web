@@ -11,8 +11,16 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  CometPeriodRegime,
+} from '../../domain/planetary/comet-period-regime';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
+
+import {
+  PlanetarySystemOrbitTopology,
+} from '../../domain/planetary/planetary-system-orbit-topology';
 
 import {
   SystemSeed,
@@ -27,7 +35,7 @@ import {
 } from './comet-generator';
 
 describe(
-  'CometGenerator point 22.5 V1',
+  'CometGenerator point 22.6 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -50,7 +58,7 @@ describe(
       );
 
     it(
-      'should deterministically materialize only bounded relevant cometary nuclei without point-22.6 orbit/activity',
+      'should preserve the exact point-22.5 comet identities/nuclei while adding deterministic bound short/long-period orbits',
       () => {
         const planetarySystem =
           systemFixture({
@@ -99,9 +107,18 @@ describe(
           first.relevantCometCount,
         ).toBe(5);
 
+        expect(
+          first.shortPeriodCometCount,
+        ).toBe(3);
+
+        expect(
+          first.longPeriodCometCount,
+        ).toBe(2);
+
         const firstComet =
           first.relevantComets[0];
 
+        /* Frozen 22.5 regression values. */
         expect(
           firstComet.proceduralId,
         ).toBe(
@@ -142,6 +159,49 @@ describe(
           12,
         );
 
+        /* New 22.6 orbit vector. */
+        expect(
+          firstComet.periodRegime,
+        ).toBe(
+          CometPeriodRegime
+            .SHORT_PERIOD,
+        );
+
+        expect(
+          firstComet.orbitalPeriodYears,
+        ).toBeCloseTo(
+          24.240795907438745,
+          12,
+        );
+
+        expect(
+          firstComet.orbit.semiMajorAxisAu,
+        ).toBeCloseTo(
+          8.375895494835634,
+          12,
+        );
+
+        expect(
+          firstComet.periapsisAu,
+        ).toBeCloseTo(
+          0.4342504570644931,
+          12,
+        );
+
+        expect(
+          firstComet.orbit.eccentricity,
+        ).toBeCloseTo(
+          0.9481547426979908,
+          12,
+        );
+
+        expect(
+          firstComet.apoapsisAu,
+        ).toBeCloseTo(
+          16.317540532606774,
+          12,
+        );
+
         for (
           const comet
           of first.relevantComets
@@ -151,20 +211,28 @@ describe(
           ).toBe(true);
 
           expect(
-            comet.nucleusProperties.iceFraction01 +
-              comet.nucleusProperties.dustFraction01,
-          ).toBeCloseTo(
-            1,
-            12,
+            comet.orbit.eccentricity,
+          ).toBeGreaterThanOrEqual(
+            0,
           );
 
           expect(
-            'orbit' in comet,
-          ).toBe(false);
+            comet.orbit.eccentricity,
+          ).toBeLessThan(
+            1,
+          );
 
           expect(
-            'periodRegime' in comet,
-          ).toBe(false);
+            comet.orbit.periapsisAu,
+          ).toBeGreaterThan(
+            0,
+          );
+
+          expect(
+            comet.orbit.apoapsisAu,
+          ).toBeGreaterThan(
+            comet.orbit.periapsisAu,
+          );
 
           expect(
             'activityState' in comet,
@@ -174,6 +242,72 @@ describe(
             'discoveryState' in comet,
           ).toBe(false);
         }
+      },
+    );
+
+    it(
+      'should derive circumbinary comet periods from the frozen A+B gravitating mass when the mature system has no planets',
+      () => {
+        const planetarySystem =
+          systemFixture({
+            residualDustMassEarth:
+              5,
+            sourceInnerRadiusAu:
+              0.1,
+            sourceOuterRadiusAu:
+              50,
+            sourceCandidateCount:
+              10,
+            sourceMigratedBodyCount:
+              2,
+            sourceCollisionCount:
+              1,
+            orbitTopology:
+              PlanetarySystemOrbitTopology
+                .CIRCUMBINARY,
+            primaryMassSolar:
+              1,
+            secondaryMassSolar:
+              0.5,
+          });
+
+        const generated =
+          CometGenerator
+            .generate(
+              generationKey,
+              planetarySystem,
+            );
+
+        expect(
+          generated
+            .relevantComets[0]
+            .orbit
+            .gravitatingMassSolar,
+        ).toBe(1.5);
+
+        expect(
+          generated
+            .relevantComets[0]
+            .orbitalPeriodYears,
+        ).toBeCloseTo(
+          24.240795907438745,
+          12,
+        );
+
+        expect(
+          generated
+            .relevantComets[0]
+            .orbit
+            .semiMajorAxisAu,
+        ).toBeCloseTo(
+          (
+            1.5 *
+            24.240795907438745 **
+              2
+          ) **
+            (1 / 3),
+          12,
+        );
       },
     );
 
@@ -287,8 +421,27 @@ describe(
           number;
         readonly sourceCollisionCount:
           number;
+        readonly orbitTopology?:
+          PlanetarySystemOrbitTopology;
+        readonly primaryMassSolar?:
+          number;
+        readonly secondaryMassSolar?:
+          number | null;
       },
     ): PlanetarySystem {
+
+      const orbitTopology =
+        input.orbitTopology ??
+        PlanetarySystemOrbitTopology
+          .CIRCUMSTELLAR;
+
+      const primaryMassSolar =
+        input.primaryMassSolar ??
+        1;
+
+      const secondaryMassSolar =
+        input.secondaryMassSolar ??
+        null;
 
       return {
         generationKey,
@@ -296,16 +449,39 @@ describe(
         seed,
         planetCount:
           0,
+        hostStellarSystem: {
+          secondaryCompanion:
+            secondaryMassSolar ===
+              null
+              ? null
+              : {
+                  physicalProperties: {
+                    initialMassSolar:
+                      secondaryMassSolar,
+                  },
+                },
+        },
         orbits:
           [],
         orbitalLayout: {
+          orbitTopology,
           generationInnerLimitAu:
             input.sourceInnerRadiusAu,
           generationOuterLimitAu:
             input.sourceOuterRadiusAu,
         },
+        orbitalPeriodLayout: {
+          gravitatingMassSolar:
+            null,
+        },
+        habitableZone: {
+          referenceLuminositySolar:
+            1,
+        },
         formationBlueprint: {
           ...input,
+          centralMassSolar:
+            primaryMassSolar,
         },
       } as unknown as PlanetarySystem;
     }

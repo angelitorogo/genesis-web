@@ -25,12 +25,25 @@ import {
 } from '../../domain/planetary/comet-nucleus-properties';
 
 import {
+  CometOrbitalElements,
+} from '../../domain/planetary/comet-orbital-elements';
+
+import {
+  CometPeriodRegime,
+  cometPeriodRegimeV1,
+} from '../../domain/planetary/comet-period-regime';
+
+import {
   CometSystem,
 } from '../../domain/planetary/comet-system';
 
 import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
+
+import {
+  PlanetarySystemOrbitTopology,
+} from '../../domain/planetary/planetary-system-orbit-topology';
 
 import {
   RelevantComet,
@@ -51,6 +64,11 @@ const V1_RESERVOIR_DOMAIN =
     'GENESIS-COMET-RESERVOIR-V1',
   );
 
+const V1_ORBIT_DOMAIN =
+  utf8ToBytes(
+    'GENESIS-COMET-ORBIT-V1',
+  );
+
 const V1_MAX_RELEVANT_COMETS =
   8;
 
@@ -63,15 +81,27 @@ const V1_REFERENCE_RADIAL_SPAN_RATIO =
 const V1_MIN_RELEVANT_DIAMETER_KILOMETERS =
   1.5;
 
+const V1_SHORT_PERIOD_MIN_YEARS =
+  3;
+
+const V1_SHORT_PERIOD_MAX_YEARS =
+  199.5;
+
+const V1_LONG_PERIOD_MIN_YEARS =
+  200;
+
+const V1_LONG_PERIOD_MAX_YEARS =
+  5_000_000;
+
 /**
- * Point-22.5 deterministic cometary-nucleus materializer.
+ * Point-22.6 deterministic relevant-comet materializer.
  *
- * V1 derives a bounded relevant nucleus sample from the frozen mature-system
- * context. Identity and nucleus properties use SHA-256 domain separation from
- * the canonical SystemSeed: zero PRNG draws and zero new hierarchical seeds.
- *
- * Orbital elements, short/long-period classification and distance-dependent
- * activity are deliberately absent until point 22.6.
+ * Point 22.5 identity/nucleus derivation remains bit-for-bit unchanged. Point
+ * 22.6 adds one bound Keplerian-style orbit per relevant comet and classifies
+ * it through the conventional 200-year short/long-period boundary. Orbital
+ * entropy is SHA-256 domain-separated from the same frozen proceduralId: zero
+ * PRNG draws and zero new hierarchical seeds. Distance-dependent activity is
+ * deliberately evaluated separately by CometActivityEngine.
  */
 export class CometGenerator {
 
@@ -371,9 +401,309 @@ function materializeCometV1(
       volatileRichnessIndex01,
     );
 
+  const orbit =
+    cometOrbitV1(
+      planetarySystem,
+      identity.proceduralId,
+      cometOrdinal,
+    );
+
   return new RelevantComet(
     identity,
     properties,
+    orbit,
+  );
+}
+
+function cometOrbitV1(
+  planetarySystem:
+    PlanetarySystem,
+
+  proceduralId:
+    string,
+
+  cometOrdinal:
+    number,
+): CometOrbitalElements {
+
+  const gravitatingMassSolar =
+    gravitatingMassSolarV1(
+      planetarySystem,
+    );
+
+  const familySample =
+    cometOrbitSample01V1(
+      proceduralId,
+      'PERIOD_FAMILY',
+    );
+
+  const requestedRegime =
+    familySample <
+      0.65
+      ? CometPeriodRegime
+          .SHORT_PERIOD
+      : CometPeriodRegime
+          .LONG_PERIOD;
+
+  const orbitalPeriodYears =
+    requestedRegime ===
+      CometPeriodRegime
+        .SHORT_PERIOD
+      ? logRangeV1(
+          V1_SHORT_PERIOD_MIN_YEARS,
+          V1_SHORT_PERIOD_MAX_YEARS,
+          cometOrbitSample01V1(
+            proceduralId,
+            'PERIOD',
+          ),
+        )
+      : logRangeV1(
+          V1_LONG_PERIOD_MIN_YEARS,
+          V1_LONG_PERIOD_MAX_YEARS,
+          cometOrbitSample01V1(
+            proceduralId,
+            'PERIOD',
+          ),
+        );
+
+  const semiMajorAxisAu =
+    (
+      gravitatingMassSolar *
+      orbitalPeriodYears **
+        2
+    ) **
+      (1 / 3);
+
+  const maximumPeriapsisAu =
+    requestedRegime ===
+      CometPeriodRegime
+        .SHORT_PERIOD
+      ? Math.min(
+          5,
+          0.72 *
+            semiMajorAxisAu,
+        )
+      : Math.min(
+          8,
+          0.08 *
+            semiMajorAxisAu,
+        );
+
+  const minimumPeriapsisAu =
+    0.20;
+
+  const periapsisAu =
+    logRangeV1(
+      minimumPeriapsisAu,
+      Math.max(
+        minimumPeriapsisAu,
+        maximumPeriapsisAu,
+      ),
+      cometOrbitSample01V1(
+        proceduralId,
+        'PERIAPSIS',
+      ),
+    );
+
+  const eccentricity =
+    clamp(
+      1 -
+        periapsisAu /
+          semiMajorAxisAu,
+      0,
+      0.999999999999,
+    );
+
+  const inclinationSample =
+    cometOrbitSample01V1(
+      proceduralId,
+      'INCLINATION',
+    );
+
+  const inclinationDegrees =
+    requestedRegime ===
+      CometPeriodRegime
+        .SHORT_PERIOD
+      ? 85 *
+        inclinationSample **
+          1.6
+      : Math.acos(
+          1 -
+            2 *
+              inclinationSample,
+        ) *
+        180 /
+        Math.PI;
+
+  const periodRegime =
+    cometPeriodRegimeV1(
+      orbitalPeriodYears,
+    );
+
+  return new CometOrbitalElements(
+    cometOrdinal,
+    gravitatingMassSolar,
+    semiMajorAxisAu,
+    eccentricity,
+    inclinationDegrees,
+    360 *
+      cometOrbitSample01V1(
+        proceduralId,
+        'NODE',
+      ),
+    360 *
+      cometOrbitSample01V1(
+        proceduralId,
+        'ARG_PERIAPSIS',
+      ),
+    360 *
+      cometOrbitSample01V1(
+        proceduralId,
+        'MEAN_ANOMALY',
+      ),
+    orbitalPeriodYears,
+    periodRegime,
+  );
+}
+
+function gravitatingMassSolarV1(
+  planetarySystem:
+    PlanetarySystem,
+): number {
+
+  const cachedMass =
+    planetarySystem
+      .orbitalPeriodLayout
+      .gravitatingMassSolar;
+
+  if (
+    cachedMass !==
+      null &&
+    Number.isFinite(
+      cachedMass,
+    ) &&
+    cachedMass >
+      0
+  ) {
+    return cachedMass;
+  }
+
+  const primaryMassSolar =
+    planetarySystem
+      .formationBlueprint
+      .centralMassSolar;
+
+  if (
+    !Number.isFinite(
+      primaryMassSolar,
+    ) ||
+    primaryMassSolar <=
+      0
+  ) {
+    throw new RangeError(
+      'Point-22.6 comet orbits require the frozen positive central host mass.',
+    );
+  }
+
+  if (
+    planetarySystem
+      .orbitalLayout
+      .orbitTopology ===
+    PlanetarySystemOrbitTopology
+      .CIRCUMSTELLAR
+  ) {
+    return primaryMassSolar;
+  }
+
+  const secondaryMassSolar =
+    planetarySystem
+      .hostStellarSystem
+      .secondaryCompanion
+      ?.physicalProperties
+      .initialMassSolar;
+
+  if (
+    secondaryMassSolar ===
+      undefined ||
+    !Number.isFinite(
+      secondaryMassSolar,
+    ) ||
+    secondaryMassSolar <=
+      0
+  ) {
+    throw new RangeError(
+      'Point-22.6 circumbinary comet periods require the frozen secondary-component mass.',
+    );
+  }
+
+  return (
+    primaryMassSolar +
+    secondaryMassSolar
+  );
+}
+
+function cometOrbitSample01V1(
+  proceduralId:
+    string,
+
+  label:
+    string,
+): number {
+
+  const digest =
+    sha256
+      .create()
+      .update(
+        V1_ORBIT_DOMAIN,
+      )
+      .update(
+        hexToBytes(
+          proceduralId,
+        ),
+      )
+      .update(
+        utf8ToBytes(
+          label,
+        ),
+      )
+      .digest();
+
+  return firstUint32Fraction01(
+    digest,
+  );
+}
+
+function logRangeV1(
+  minimum:
+    number,
+
+  maximum:
+    number,
+
+  unit:
+    number,
+): number {
+
+  if (
+    maximum <=
+    minimum
+  ) {
+    return minimum;
+  }
+
+  return Math.exp(
+    Math.log(
+      minimum,
+    ) +
+    (
+      Math.log(
+        maximum,
+      ) -
+      Math.log(
+        minimum,
+      )
+    ) *
+      unit,
   );
 }
 

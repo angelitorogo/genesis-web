@@ -15,6 +15,10 @@ import {
 } from './planetary-system';
 
 import {
+  CometPeriodRegime,
+} from './comet-period-regime';
+
+import {
   type RelevantComet,
 } from './relevant-comet';
 
@@ -22,11 +26,12 @@ const CONSISTENCY_TOLERANCE =
   1e-12;
 
 /**
- * Point-22.5 cometary aggregate for one mature planetary system.
+ * Point-22.6 cometary aggregate for one mature planetary system.
  *
- * V1 materializes only a bounded set of relevant cometary nuclei plus one
- * normalized support index for the unresolved reservoir. It deliberately does
- * not assign short/long-period families or activity; those remain point 22.6.
+ * Point 22.5 froze the unresolved-reservoir support and bounded relevant nuclei.
+ * Point 22.6 preserves those values while every relevant comet gains one bound
+ * orbit and exact short/long-period classification. Distance-dependent activity
+ * remains an on-demand projection rather than mutable aggregate state.
  */
 export class CometSystem {
 
@@ -163,6 +168,43 @@ export class CometSystem {
       0
     );
   }
+
+  get shortPeriodCometCount():
+    number {
+
+    return this
+      .relevantComets
+      .filter(
+        comet =>
+          comet.periodRegime ===
+          CometPeriodRegime
+            .SHORT_PERIOD,
+      )
+      .length;
+  }
+
+  get longPeriodCometCount():
+    number {
+
+    return this
+      .relevantComets
+      .filter(
+        comet =>
+          comet.periodRegime ===
+          CometPeriodRegime
+            .LONG_PERIOD,
+      )
+      .length;
+  }
+
+  get referenceLuminositySolar():
+    number {
+
+    return this
+      .hostPlanetarySystem
+      .habitableZone
+      .referenceLuminositySolar;
+  }
 }
 
 function validateRelevantComets(
@@ -192,7 +234,7 @@ function validateRelevantComets(
         hostPlanetarySystem.seed
     ) {
       throw new RangeError(
-        'Point-22.5 relevant comets must preserve the exact host SystemLocator/SystemSeed and contiguous ordinals.',
+        'Point-22.6 relevant comets must preserve the exact host SystemLocator/SystemSeed and contiguous ordinals.',
       );
     }
   }

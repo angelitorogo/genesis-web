@@ -6,13 +6,22 @@ import {
   type CometNucleusProperties,
 } from './comet-nucleus-properties';
 
+import {
+  type CometOrbitalElements,
+} from './comet-orbital-elements';
+
+import {
+  type CometPeriodRegime,
+} from './comet-period-regime';
+
 /**
- * Point-22.5 individually materialized cometary nucleus.
+ * Point-22.6 individually materialized relevant comet.
  *
- * `isDiscoverable` only means that the object is relevant enough to become a
- * future observation target. It does not encode player knowledge; point 22.10
- * still owns existing/discovered/catalogued state. Point 22.6 owns orbit family,
- * short/long-period classification and distance-dependent activity.
+ * Point 22.5 froze identity and nucleus properties. Point 22.6 now adds one
+ * bound deterministic orbit and its short/long-period family while preserving
+ * every point-22.5 value exactly. Activity remains distance-dependent and is
+ * therefore evaluated on demand by CometActivityEngine rather than stored here.
+ * Player discovery/catalogue state remains point 22.10.
  */
 export class RelevantComet {
 
@@ -22,13 +31,18 @@ export class RelevantComet {
 
     readonly nucleusProperties:
       CometNucleusProperties,
+
+    readonly orbit:
+      CometOrbitalElements,
   ) {
     if (
       identity.cometOrdinal !==
-      nucleusProperties.cometOrdinal
+        nucleusProperties.cometOrdinal ||
+      identity.cometOrdinal !==
+        orbit.cometOrdinal
     ) {
       throw new RangeError(
-        'RelevantComet identity and nucleus properties must address the same comet ordinal.',
+        'RelevantComet identity, nucleus properties and orbit must address the same comet ordinal.',
       );
     }
   }
@@ -63,6 +77,38 @@ export class RelevantComet {
     return this
       .nucleusProperties
       .diameterKilometers;
+  }
+
+  get periodRegime():
+    CometPeriodRegime {
+
+    return this
+      .orbit
+      .periodRegime;
+  }
+
+  get orbitalPeriodYears():
+    number {
+
+    return this
+      .orbit
+      .orbitalPeriodYears;
+  }
+
+  get periapsisAu():
+    number {
+
+    return this
+      .orbit
+      .periapsisAu;
+  }
+
+  get apoapsisAu():
+    number {
+
+    return this
+      .orbit
+      .apoapsisAu;
   }
 
   get isDiscoverable():

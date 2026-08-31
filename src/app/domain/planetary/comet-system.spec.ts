@@ -27,6 +27,14 @@ import {
 } from './comet-nucleus-properties';
 
 import {
+  CometOrbitalElements,
+} from './comet-orbital-elements';
+
+import {
+  CometPeriodRegime,
+} from './comet-period-regime';
+
+import {
   CometSystem,
 } from './comet-system';
 
@@ -39,7 +47,7 @@ import {
 } from './relevant-comet';
 
 describe(
-  'CometSystem point 22.5 V1',
+  'CometSystem point 22.6 V1',
   () => {
     const generationKey =
       new UniverseGenerationKey(
@@ -62,16 +70,25 @@ describe(
       );
 
     it(
-      'should preserve the exact host system and freeze a contiguous relevant-comet sample',
+      'should preserve the exact host system and summarize short/long relevant comets without storing one fixed activity state',
       () => {
         const host =
           systemFixture(
             5,
           );
 
-        const comet =
+        const shortComet =
           cometFixture(
             1,
+            CometPeriodRegime
+              .SHORT_PERIOD,
+          );
+
+        const longComet =
+          cometFixture(
+            2,
+            CometPeriodRegime
+              .LONG_PERIOD,
           );
 
         const system =
@@ -80,7 +97,8 @@ describe(
             5,
             0.7,
             [
-              comet,
+              shortComet,
+              longComet,
             ],
           );
 
@@ -104,17 +122,29 @@ describe(
 
         expect(
           system.relevantCometCount,
+        ).toBe(2);
+
+        expect(
+          system.shortPeriodCometCount,
         ).toBe(1);
 
         expect(
-          system.hasRelevantComets,
-        ).toBe(true);
+          system.longPeriodCometCount,
+        ).toBe(1);
+
+        expect(
+          system.referenceLuminositySolar,
+        ).toBe(1.5);
 
         expect(
           Object.isFrozen(
             system.relevantComets,
           ),
         ).toBe(true);
+
+        expect(
+          'activityState' in system,
+        ).toBe(false);
       },
     );
 
@@ -164,13 +194,31 @@ describe(
         formationBlueprint: {
           residualDustMassEarth,
         },
+        habitableZone: {
+          referenceLuminositySolar:
+            1.5,
+        },
       } as unknown as PlanetarySystem;
     }
 
     function cometFixture(
       ordinal:
         number,
+
+      periodRegime:
+        CometPeriodRegime,
     ): RelevantComet {
+
+      const periodYears =
+        periodRegime ===
+          CometPeriodRegime
+            .SHORT_PERIOD
+          ? 8
+          : 1_000;
+
+      const semiMajorAxisAu =
+        periodYears **
+          (2 / 3);
 
       return new RelevantComet(
         new CometIdentity(
@@ -191,6 +239,18 @@ describe(
           0.5,
           0.04,
           0.8,
+        ),
+        new CometOrbitalElements(
+          ordinal,
+          1,
+          semiMajorAxisAu,
+          0.8,
+          20,
+          30,
+          40,
+          50,
+          periodYears,
+          periodRegime,
         ),
       );
     }
