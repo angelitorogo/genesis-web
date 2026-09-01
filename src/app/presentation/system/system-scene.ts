@@ -42,6 +42,14 @@ import {
   SystemSceneCameraController,
 } from './system-scene-camera-controller';
 
+import {
+  SystemSceneProjectionSpace,
+  systemSceneProjectAuVector,
+  systemSceneProjectAuVectorInSpace,
+  type SystemSceneScaleSnapshot,
+} from './system-scene-scale-projection';
+
+
 const MAX_DEVICE_PIXEL_RATIO =
   2;
 
@@ -555,6 +563,28 @@ export function systemSceneDevicePixelRatio(
   );
 }
 
+export function systemScenePickingRadiusScene(
+  kind:
+    SystemSceneBodySnapshot['kind'],
+
+  visibleRadiusScene:
+    number,
+): number {
+
+  return kind ===
+    'star'
+    ? Math.max(
+        visibleRadiusScene *
+          1.45,
+        0.13,
+      )
+    : Math.max(
+        visibleRadiusScene *
+          2.4,
+        0.085,
+      );
+}
+
 export function systemSceneCameraFovDegrees(
   aspect:
     number,
@@ -645,6 +675,19 @@ class ThreeSystemSceneRuntime
 
   private readonly animatedOrbits =
     new Map<string, THREE.LineLoop>();
+
+  private readonly orbitLocalSamplesAu =
+    new Map<
+      string,
+      readonly {
+        readonly x:
+          number;
+        readonly y:
+          number;
+        readonly z:
+          number;
+      }[]
+    >();
 
   private readonly selectableObjects:
     THREE.Object3D[] =
@@ -962,8 +1005,7 @@ class ThreeSystemSceneRuntime
     ) {
       this.addOrbit(
         orbit,
-        snapshot.scale
-          .orbitScaleScenePerAu,
+        snapshot.scale,
       );
     }
 
@@ -1067,12 +1109,10 @@ class ThreeSystemSceneRuntime
     orbit:
       SystemSceneOrbitSnapshot,
 
-    orbitScaleScenePerAu:
-      number,
+    sceneScale:
+      SystemSceneScaleSnapshot,
   ):
     void {
-
-    const points: THREE.Vector3[] = [];
 
     const motion =
       orbit.motionId ===
@@ -1083,83 +1123,58 @@ class ThreeSystemSceneRuntime
           ) ??
           null;
 
-    for (
-      let index = 0;
-      index <
-        ORBIT_SEGMENT_COUNT;
-      index += 1
+    if (
+      motion !==
+      null
     ) {
-      if (
-        motion !==
-        null
-      ) {
-        const sample =
-          SystemOrbitalMotionEngine
-            .positionAtSimulationDay(
-              motion,
-              motion.periodDays *
-                index /
+      this.orbitLocalSamplesAu.set(
+        orbit.id,
+        Object.freeze(
+          Array.from(
+            {
+              length:
                 ORBIT_SEGMENT_COUNT,
-            );
+            },
+            (
+              _,
+              index,
+            ) => {
+              const sample =
+                SystemOrbitalMotionEngine
+                  .positionAtSimulationDay(
+                    motion,
+                    motion.periodDays *
+                      index /
+                      ORBIT_SEGMENT_COUNT,
+                  );
 
-        points.push(
-          new THREE.Vector3(
-            sample.xAu *
-              orbit.motionScale *
-              orbitScaleScenePerAu,
-            sample.yAu *
-              orbit.motionScale *
-              orbitScaleScenePerAu,
-            sample.zAu *
-              orbit.motionScale *
-              orbitScaleScenePerAu,
+              return Object.freeze({
+                x:
+                  sample.xAu,
+                y:
+                  sample.yAu,
+                z:
+                  sample.zAu,
+              });
+            },
           ),
-        );
-
-        continue;
-      }
-
-      const phase =
-        (index /
-          ORBIT_SEGMENT_COUNT) *
-        Math.PI *
-        2;
-
-      const localX =
-        orbit.semiMajorScene *
-          Math.cos(
-            phase,
-          ) -
-        orbit.focusOffsetScene;
-
-      const localZ =
-        orbit.semiMinorScene *
-        Math.sin(
-          phase,
-        );
-
-      const position =
-        rotateOrbitPoint(
-          localX,
-          localZ,
-          orbit.rotationDegrees,
-          orbit.inclinationDegrees,
-        );
-
-      points.push(
-        new THREE.Vector3(
-          position.x,
-          position.y,
-          position.z,
         ),
       );
     }
 
     const geometry =
-      new THREE.BufferGeometry()
-        .setFromPoints(
-          points,
-        );
+      new THREE.BufferGeometry();
+
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(
+        new Float32Array(
+          ORBIT_SEGMENT_COUNT *
+          3,
+        ),
+        3,
+      ),
+    );
 
     const material =
       new THREE.LineBasicMaterial({
@@ -1185,6 +1200,13 @@ class ThreeSystemSceneRuntime
     line.name =
       `Orbit ${orbit.label}`;
 
+    this.updateOrbitGeometry(
+      line,
+      orbit,
+      sceneScale,
+      0,
+    );
+
     this.animatedOrbits.set(
       orbit.id,
       line,
@@ -1195,6 +1217,192 @@ class ThreeSystemSceneRuntime
       .add(
         line,
       );
+  }
+
+  private updateOrbitGeometry(
+    line:
+      THREE.LineLoop,
+
+    orbit:
+      SystemSceneOrbitSnapshot,
+
+    sceneScale:
+      SystemSceneScaleSnapshot,
+
+    simulationDay:
+      number,
+  ):
+    void {
+
+    const positionAttribute =
+      line.geometry.getAttribute(
+        'position',
+      ) as THREE.BufferAttribute;
+
+    const localSamplesAu =
+      this.orbitLocalSamplesAu.get(
+        orbit.id,
+      ) ??
+      null;
+
+    const projectionSpace =
+      orbit.projectionSpace ??
+      SystemSceneProjectionSpace.GLOBAL;
+
+    for (
+      let index = 0;
+      index <
+        ORBIT_SEGMENT_COUNT;
+      index += 1
+    ) {
+      let xScene:
+        number;
+      let yScene:
+        number;
+      let zScene:
+        number;
+
+      if (
+        localSamplesAu !==
+        null
+      ) {
+        const sample =
+          localSamplesAu[
+            index
+          ]!;
+
+        const linearScenePerAu =
+          orbit.linearScenePerAu ??
+          null;
+
+        if (
+          linearScenePerAu !==
+            null &&
+          Number.isFinite(
+            linearScenePerAu,
+          ) &&
+          linearScenePerAu >
+            0
+        ) {
+          xScene =
+            sample.x *
+            orbit.motionScale *
+            linearScenePerAu;
+          yScene =
+            sample.y *
+            orbit.motionScale *
+            linearScenePerAu;
+          zScene =
+            sample.z *
+            orbit.motionScale *
+            linearScenePerAu;
+        } else {
+          const rawSample =
+            projectionSpace ===
+              SystemSceneProjectionSpace.GLOBAL
+              ? {
+                  x:
+                    sample.x *
+                    orbit.motionScale,
+                  y:
+                    sample.y *
+                    orbit.motionScale,
+                  z:
+                    sample.z *
+                    orbit.motionScale,
+                }
+              : {
+                  x:
+                    sample.x,
+                  y:
+                    sample.y,
+                  z:
+                    sample.z,
+                };
+
+          const projected =
+            systemSceneProjectAuVectorInSpace(
+              rawSample,
+              sceneScale,
+              projectionSpace,
+            );
+
+          const postProjectionScale =
+            projectionSpace ===
+              SystemSceneProjectionSpace.GLOBAL
+              ? 1
+              : orbit.motionScale;
+
+          xScene =
+            projected.x *
+            postProjectionScale;
+          yScene =
+            projected.y *
+            postProjectionScale;
+          zScene =
+            projected.z *
+            postProjectionScale;
+        }
+      } else {
+        const phase =
+          (index /
+            ORBIT_SEGMENT_COUNT) *
+          Math.PI *
+          2;
+
+        const localX =
+          orbit.semiMajorScene *
+            Math.cos(
+              phase,
+            ) -
+          orbit.focusOffsetScene;
+
+        const localZ =
+          orbit.semiMinorScene *
+          Math.sin(
+            phase,
+          );
+
+        const position =
+          rotateOrbitPoint(
+            localX,
+            localZ,
+            orbit.rotationDegrees,
+            orbit.inclinationDegrees,
+          );
+
+        xScene =
+          position.x;
+        yScene =
+          position.y;
+        zScene =
+          position.z;
+      }
+
+      positionAttribute.setXYZ(
+        index,
+        xScene,
+        yScene,
+        zScene,
+      );
+    }
+
+    positionAttribute.needsUpdate =
+      true;
+    line.geometry.computeBoundingSphere();
+
+    const anchorPosition =
+      this.positionFromContributions(
+        orbit.anchorMotionContributions,
+        simulationDay,
+        sceneScale,
+      );
+
+    line.position.set(
+      anchorPosition.x,
+      anchorPosition.y,
+      anchorPosition.z,
+    );
   }
 
   private addStar(
@@ -1480,18 +1688,10 @@ class ThreeSystemSceneRuntime
     void {
 
     const pickRadius =
-      body.kind ===
-        'star'
-        ? Math.max(
-            body.radiusScene *
-              1.45,
-            0.13,
-          )
-        : Math.max(
-            body.radiusScene *
-              2.4,
-            0.085,
-          );
+      systemScenePickingRadiusScene(
+        body.kind,
+        body.radiusScene,
+      );
 
     const geometry =
       new THREE.SphereGeometry(
@@ -1756,8 +1956,7 @@ class ThreeSystemSceneRuntime
     }
 
     const sceneScale =
-      snapshot.scale
-        .orbitScaleScenePerAu;
+      snapshot.scale;
 
     for (
       const body
@@ -1831,15 +2030,15 @@ class ThreeSystemSceneRuntime
       number,
 
     sceneScale:
-      number,
+      SystemSceneScaleSnapshot,
   ): THREE.Vector3 {
 
-    let xAu =
-      0;
-    let yAu =
-      0;
-    let zAu =
-      0;
+    let globalXAu = 0;
+    let globalYAu = 0;
+    let globalZAu = 0;
+    let sceneX = 0;
+    let sceneY = 0;
+    let sceneZ = 0;
 
     for (
       const contribution
@@ -1864,24 +2063,99 @@ class ThreeSystemSceneRuntime
             simulationDay,
           );
 
-      xAu +=
-        position.xAu *
+      const linearScenePerAu =
+        contribution.linearScenePerAu ??
+        null;
+
+      if (
+        linearScenePerAu !==
+          null &&
+        Number.isFinite(
+          linearScenePerAu,
+        ) &&
+        linearScenePerAu >
+          0
+      ) {
+        sceneX +=
+          position.xAu *
+          contribution.scale *
+          linearScenePerAu;
+        sceneY +=
+          position.yAu *
+          contribution.scale *
+          linearScenePerAu;
+        sceneZ +=
+          position.zAu *
+          contribution.scale *
+          linearScenePerAu;
+        continue;
+      }
+
+      const projectionSpace =
+        contribution.projectionSpace ??
+        SystemSceneProjectionSpace.GLOBAL;
+
+      if (
+        projectionSpace ===
+        SystemSceneProjectionSpace.GLOBAL
+      ) {
+        globalXAu +=
+          position.xAu *
+          contribution.scale;
+        globalYAu +=
+          position.yAu *
+          contribution.scale;
+        globalZAu +=
+          position.zAu *
+          contribution.scale;
+        continue;
+      }
+
+      const projected =
+        systemSceneProjectAuVectorInSpace(
+          {
+            x:
+              position.xAu,
+            y:
+              position.yAu,
+            z:
+              position.zAu,
+          },
+          sceneScale,
+          projectionSpace,
+        );
+
+      sceneX +=
+        projected.x *
         contribution.scale;
-      yAu +=
-        position.yAu *
+      sceneY +=
+        projected.y *
         contribution.scale;
-      zAu +=
-        position.zAu *
+      sceneZ +=
+        projected.z *
         contribution.scale;
     }
 
+    const globalProjected =
+      systemSceneProjectAuVector(
+        {
+          x:
+            globalXAu,
+          y:
+            globalYAu,
+          z:
+            globalZAu,
+        },
+        sceneScale,
+      );
+
     return new THREE.Vector3(
-      xAu *
-        sceneScale,
-      yAu *
-        sceneScale,
-      zAu *
-        sceneScale,
+      sceneX +
+        globalProjected.x,
+      sceneY +
+        globalProjected.y,
+      sceneZ +
+        globalProjected.z,
     );
   }
 
@@ -1918,6 +2192,7 @@ class ThreeSystemSceneRuntime
     this.bodySnapshotById.clear();
     this.animatedBodies.clear();
     this.animatedOrbits.clear();
+    this.orbitLocalSamplesAu.clear();
 
     while (
       this.presentationRoot.children.length >

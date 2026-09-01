@@ -61,6 +61,31 @@ import {
   type ArchiveStellarSystemKnowledgeLevel,
 } from '../genesis-archive/archive-stellar-system-card';
 
+
+import {
+  adaptiveSystemPlanetRadiusScene,
+  adaptiveSystemStarRadiusScene,
+  buildLinearFitSystemScale,
+  buildMultipleAdaptiveSystemScaleV1,
+  buildSingleAdaptiveSystemScaleV1,
+  buildTripleHierarchicalSystemScaleV1,
+  SystemSceneProjectionSpace,
+  systemSceneProjectAuVector,
+  systemSceneProjectAuVectorInSpace,
+  systemSceneProjectedRadiusAu,
+  systemSceneProjectedRadiusAuInSpace,
+  type SystemSceneProjectionSpace as SystemSceneProjectionSpaceValue,
+  type SystemSceneScaleSnapshot,
+} from './system-scene-scale-projection';
+
+export type {
+  SystemSceneScaleSnapshot,
+} from './system-scene-scale-projection';
+
+import {
+  buildTripleDensePlanetaryLayoutV1,
+} from './system-scene-triple-planetary-layout';
+
 import {
   PlanetGenerator,
 } from '../../simulation/planetary/planet-generator';
@@ -143,6 +168,12 @@ export interface SystemSceneMotionContributionSnapshot {
 
   readonly scale:
     number;
+
+  readonly projectionSpace?:
+    SystemSceneProjectionSpaceValue;
+
+  readonly linearScenePerAu?:
+    number;
 }
 
 export interface SystemSceneOrbitalMotionSnapshot
@@ -188,6 +219,12 @@ export interface SystemSceneOrbitSnapshot {
 
   readonly anchorMotionContributions:
     readonly SystemSceneMotionContributionSnapshot[];
+
+  readonly projectionSpace?:
+    SystemSceneProjectionSpaceValue;
+
+  readonly linearScenePerAu?:
+    number;
 }
 
 export interface SystemSceneBodySnapshot {
@@ -239,19 +276,8 @@ export interface SystemSceneSimulationSnapshot {
     number;
 }
 
-export interface SystemSceneScaleSnapshot {
-  readonly outerRadiusAu:
-    number;
-
-  readonly orbitScaleScenePerAu:
-    number;
-
-  readonly targetOuterRadiusScene:
-    number;
-}
-
 /**
- * Point-24.3 presentation snapshot accepted by SystemScene.
+ * Point-24.5 presentation snapshot accepted by SystemScene.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -482,15 +508,10 @@ export class SystemSceneSnapshotBuilder {
               1,
           }),
         scale:
-          Object.freeze({
-            outerRadiusAu:
-              DEFAULT_OUTER_RADIUS_AU,
-            orbitScaleScenePerAu:
-              TARGET_OUTER_RADIUS_SCENE /
-              DEFAULT_OUTER_RADIUS_AU,
-            targetOuterRadiusScene:
-              TARGET_OUTER_RADIUS_SCENE,
-          }),
+          buildLinearFitSystemScale(
+            DEFAULT_OUTER_RADIUS_AU,
+            TARGET_OUTER_RADIUS_SCENE,
+          ),
       });
     }
 
@@ -985,15 +1006,72 @@ function projectSceneGeometry(
       .orbitHierarchy
       .outerOrbit;
 
-  const starOuterRadiusAu =
-    Math.max(
-      innerOrbit
-        ?.apoastronAu ??
-        0,
-      outerOrbit
-        ?.apoastronAu ??
-        0,
+  const primary =
+    world.stars.find(
+      star =>
+        star.label ===
+        'A',
+    )!;
+
+  const secondary =
+    world.stars.find(
+      star =>
+        star.label ===
+        'B',
+    ) ??
+    null;
+
+  const tertiary =
+    world.stars.find(
+      star =>
+        star.label ===
+        'C',
+    ) ??
+    null;
+
+  const innerTotalMassSolar =
+    primary.referenceMassSolar +
+    (
+      secondary
+        ?.referenceMassSolar ??
+      0
     );
+
+  const primaryInnerScale =
+    secondary ===
+      null
+      ? 0
+      : -secondary.referenceMassSolar /
+        innerTotalMassSolar;
+
+  const secondaryInnerScale =
+    secondary ===
+      null
+      ? 0
+      : primary.referenceMassSolar /
+        innerTotalMassSolar;
+
+  const outerTotalMassSolar =
+    innerTotalMassSolar +
+    (
+      tertiary
+        ?.referenceMassSolar ??
+      0
+    );
+
+  const innerPairOuterScale =
+    tertiary ===
+      null
+      ? 0
+      : -tertiary.referenceMassSolar /
+        outerTotalMassSolar;
+
+  const tertiaryOuterScale =
+    tertiary ===
+      null
+      ? 0
+      : innerTotalMassSolar /
+        outerTotalMassSolar;
 
   const planetOuterRadiusAu =
     world.planets
@@ -1013,44 +1091,247 @@ function projectSceneGeometry(
         0,
       );
 
-  const outerRadiusAu =
+  const innerStellarOuterBoundAu =
+    innerOrbit ===
+      null
+      ? 0
+      : innerOrbit.apoastronAu *
+        Math.max(
+          Math.abs(
+            primaryInnerScale,
+          ),
+          Math.abs(
+            secondaryInnerScale,
+          ),
+        );
+
+  const innerPairOuterAnchorBoundAu =
+    outerOrbit ===
+      null
+      ? 0
+      : outerOrbit.apoastronAu *
+        Math.abs(
+          innerPairOuterScale,
+        );
+
+  const tertiaryOuterBoundAu =
+    outerOrbit ===
+      null
+      ? 0
+      : outerOrbit.apoastronAu *
+        Math.abs(
+          tertiaryOuterScale,
+        );
+
+  const resolvedOuterRadiusAu =
     Math.max(
-      DEFAULT_OUTER_RADIUS_AU,
-      starOuterRadiusAu,
+      innerPairOuterAnchorBoundAu +
+        innerStellarOuterBoundAu,
+      innerPairOuterAnchorBoundAu +
+        planetOuterRadiusAu,
+      tertiaryOuterBoundAu,
       planetOuterRadiusAu,
     );
 
-  const orbitScaleScenePerAu =
-    TARGET_OUTER_RADIUS_SCENE /
-    outerRadiusAu;
+  const outerRadiusAu =
+    resolvedOuterRadiusAu >
+      0
+      ? resolvedOuterRadiusAu
+      : DEFAULT_OUTER_RADIUS_AU;
 
-  const starRadiusMin =
-    0.16;
-
-  const starRadiusMax =
-    0.46;
-
-  const starRadiusRange =
-    radiusRange(
+  const starRadiusSceneById =
+    new Map(
       world.stars.map(
         star =>
-          star.radiusSolar,
+          [
+            star.id,
+            adaptiveSystemStarRadiusScene(
+              star.radiusSolar,
+            ),
+          ] as const,
       ),
     );
 
-  const planetRadiusMin =
-    0.048;
-
-  const planetRadiusMax =
-    0.17;
-
-  const planetRadiusRange =
-    radiusRange(
+  const planetRadiusSceneByOrdinal =
+    new Map(
       world.planets.map(
         planet =>
-          planet.physicalProperties.radiusEarth,
+          [
+            planet.planetOrdinal,
+            adaptiveSystemPlanetRadiusScene(
+              planet.physicalProperties
+                .radiusEarth,
+            ),
+          ] as const,
       ),
     );
+
+  const innerPlanetPeriapsisAu =
+    world.planets
+      .map(
+        planet =>
+          planet.orbit.periastronAu,
+      )
+      .filter(
+        value =>
+          Number.isFinite(
+            value,
+          ) &&
+          value >
+            0,
+      )
+      .reduce<number | null>(
+        (
+          minimum,
+          value,
+        ) =>
+          minimum ===
+            null
+            ? value
+            : Math.min(
+                minimum,
+                value,
+              ),
+        null,
+      );
+
+  const primaryStarRadiusScene =
+    starRadiusSceneById.get(
+      primary.id,
+    ) ??
+    0.28;
+
+  const secondaryStarRadiusScene =
+    secondary ===
+      null
+      ? 0
+      : starRadiusSceneById.get(
+          secondary.id,
+        ) ??
+        0.26;
+
+  const maxPlanetRadiusScene =
+    Math.max(
+      0,
+      ...planetRadiusSceneByOrdinal.values(),
+    );
+
+  const tertiaryStarRadiusScene =
+    tertiary ===
+      null
+      ? 0
+      : starRadiusSceneById.get(
+          tertiary.id,
+        ) ??
+        0.24;
+
+  const sceneScale =
+    world.multiplicityName ===
+      'SINGLE'
+      ? buildSingleAdaptiveSystemScaleV1({
+          outerRadiusAu,
+          targetOuterRadiusScene:
+            TARGET_OUTER_RADIUS_SCENE,
+          innerPeriapsisAu:
+            innerPlanetPeriapsisAu,
+          starRadiusScene:
+            primaryStarRadiusScene,
+          maxPlanetRadiusScene,
+        })
+      : world.multiplicityName ===
+          'TRIPLE' &&
+        innerOrbit !==
+          null &&
+        outerOrbit !==
+          null &&
+        tertiary !==
+          null
+        ? buildTripleHierarchicalSystemScaleV1({
+            outerRadiusAu,
+            targetOuterRadiusScene:
+              TARGET_OUTER_RADIUS_SCENE,
+            innerBinaryPeriapsisAu:
+              innerOrbit.periastronAu,
+            innerBinaryApoapsisAu:
+              innerOrbit.apoastronAu,
+            localPlanetOuterRadiusAu:
+              planetOuterRadiusAu,
+            outerRelativePeriapsisAu:
+              outerOrbit.periastronAu,
+            outerRelativeApoapsisAu:
+              outerOrbit.apoastronAu,
+            primaryStarRadiusScene,
+            secondaryStarRadiusScene,
+            tertiaryStarRadiusScene,
+            maxPlanetRadiusScene,
+            innerPairOuterScale,
+            tertiaryOuterScale,
+          })
+        : buildMultipleAdaptiveSystemScaleV1({
+            architecture:
+              'BINARY',
+            outerRadiusAu,
+            targetOuterRadiusScene:
+              TARGET_OUTER_RADIUS_SCENE,
+            innerBinaryPeriapsisAu:
+              innerOrbit
+                ?.periastronAu ??
+              null,
+            primaryStarRadiusScene,
+            secondaryStarRadiusScene,
+          });
+
+  const triplePlanetaryLayout =
+    world.multiplicityName ===
+      'TRIPLE'
+      ? buildTripleDensePlanetaryLayoutV1(
+          world.planets.map(
+            planet =>
+              Object.freeze({
+                ordinal:
+                  planet.planetOrdinal,
+                semiMajorAxisAu:
+                  planet.orbit.semiMajorAxisAu,
+                eccentricity:
+                  planet.orbit.eccentricity,
+                radiusScene:
+                  planetRadiusSceneByOrdinal.get(
+                    planet.planetOrdinal,
+                  )!,
+              }),
+          ),
+          sceneScale,
+        )
+      : null;
+
+  const triplePlanetaryLayoutByOrdinal =
+    new Map(
+      triplePlanetaryLayout
+        ?.entries
+        .map(
+          entry =>
+            [
+              entry.ordinal,
+              entry,
+            ] as const,
+        ) ??
+      [],
+    );
+
+  if (
+    triplePlanetaryLayout !==
+      null
+  ) {
+    for (
+      const entry
+      of triplePlanetaryLayout.entries
+    ) {
+      planetRadiusSceneByOrdinal.set(
+        entry.ordinal,
+        entry.radiusScene,
+      );
+    }
+  }
 
   const motions: SystemSceneOrbitalMotionSnapshot[] = [];
   const orbits: SystemSceneOrbitSnapshot[] = [];
@@ -1119,73 +1400,6 @@ function projectSceneGeometry(
     );
   }
 
-  const primary =
-    world.stars.find(
-      star =>
-        star.label ===
-        'A',
-    )!;
-
-  const secondary =
-    world.stars.find(
-      star =>
-        star.label ===
-        'B',
-    ) ??
-    null;
-
-  const tertiary =
-    world.stars.find(
-      star =>
-        star.label ===
-        'C',
-    ) ??
-    null;
-
-  const innerTotalMassSolar =
-    primary.referenceMassSolar +
-    (
-      secondary
-        ?.referenceMassSolar ??
-      0
-    );
-
-  const primaryInnerScale =
-    secondary ===
-      null
-      ? 0
-      : -secondary.referenceMassSolar /
-        innerTotalMassSolar;
-
-  const secondaryInnerScale =
-    secondary ===
-      null
-      ? 0
-      : primary.referenceMassSolar /
-        innerTotalMassSolar;
-
-  const outerTotalMassSolar =
-    innerTotalMassSolar +
-    (
-      tertiary
-        ?.referenceMassSolar ??
-      0
-    );
-
-  const innerPairOuterScale =
-    tertiary ===
-      null
-      ? 0
-      : -tertiary.referenceMassSolar /
-        outerTotalMassSolar;
-
-  const tertiaryOuterScale =
-    tertiary ===
-      null
-      ? 0
-      : innerTotalMassSolar /
-        outerTotalMassSolar;
-
   const innerPairAnchorContributions =
     outerMotion ===
       null
@@ -1196,6 +1410,11 @@ function projectSceneGeometry(
               outerMotion.id,
             scale:
               innerPairOuterScale,
+            projectionSpace:
+              world.multiplicityName ===
+                'TRIPLE'
+                ? SystemSceneProjectionSpace.TRIPLE_OUTER
+                : SystemSceneProjectionSpace.GLOBAL,
           }),
         ] satisfies SystemSceneMotionContributionSnapshot[]);
 
@@ -1216,6 +1435,11 @@ function projectSceneGeometry(
                 outerMotion.id,
               scale:
                 innerPairOuterScale,
+              projectionSpace:
+                world.multiplicityName ===
+                  'TRIPLE'
+                  ? SystemSceneProjectionSpace.TRIPLE_OUTER
+                  : SystemSceneProjectionSpace.GLOBAL,
             }),
           );
         }
@@ -1236,6 +1460,15 @@ function projectSceneGeometry(
                 innerMotion.id,
               scale:
                 primaryInnerScale,
+              ...(
+                world.multiplicityName ===
+                  'TRIPLE'
+                  ? {
+                      projectionSpace:
+                        SystemSceneProjectionSpace.TRIPLE_LOCAL,
+                    }
+                  : {}
+              ),
             }),
           );
 
@@ -1249,7 +1482,11 @@ function projectSceneGeometry(
               innerMotion,
               primaryInnerScale,
               innerPairAnchorContributions,
-              orbitScaleScenePerAu,
+              sceneScale,
+              world.multiplicityName ===
+                'TRIPLE'
+                ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+                : SystemSceneProjectionSpace.GLOBAL,
             ),
           );
         }
@@ -1266,6 +1503,15 @@ function projectSceneGeometry(
                 innerMotion.id,
               scale:
                 secondaryInnerScale,
+              ...(
+                world.multiplicityName ===
+                  'TRIPLE'
+                  ? {
+                      projectionSpace:
+                        SystemSceneProjectionSpace.TRIPLE_LOCAL,
+                    }
+                  : {}
+              ),
             }),
           );
 
@@ -1279,7 +1525,11 @@ function projectSceneGeometry(
               innerMotion,
               secondaryInnerScale,
               innerPairAnchorContributions,
-              orbitScaleScenePerAu,
+              sceneScale,
+              world.multiplicityName ===
+                'TRIPLE'
+                ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+                : SystemSceneProjectionSpace.GLOBAL,
             ),
           );
         }
@@ -1296,6 +1546,8 @@ function projectSceneGeometry(
                 outerMotion.id,
               scale:
                 tertiaryOuterScale,
+              projectionSpace:
+                SystemSceneProjectionSpace.TRIPLE_OUTER,
             }),
           );
 
@@ -1309,7 +1561,8 @@ function projectSceneGeometry(
               outerMotion,
               tertiaryOuterScale,
               Object.freeze([]),
-              orbitScaleScenePerAu,
+              sceneScale,
+              SystemSceneProjectionSpace.TRIPLE_OUTER,
             ),
           );
         }
@@ -1331,19 +1584,15 @@ function projectSceneGeometry(
           colorHex:
             star.colorHex,
           radiusScene:
-            scaledRadius(
-              star.radiusSolar,
-              starRadiusRange.min,
-              starRadiusRange.max,
-              starRadiusMin,
-              starRadiusMax,
-            ),
+            starRadiusSceneById.get(
+              star.id,
+            )!,
           position:
             orbitalContributionPositionScene(
               frozenContributions,
               motions,
               0,
-              orbitScaleScenePerAu,
+              sceneScale,
             ),
           orbitId,
           motionContributions:
@@ -1369,6 +1618,12 @@ function projectSceneGeometry(
       planet => {
         const orbitId =
           `orbit-planet-${planet.planetOrdinal}`;
+
+        const tripleLayoutEntry =
+          triplePlanetaryLayoutByOrdinal.get(
+            planet.planetOrdinal,
+          ) ??
+          null;
 
         const motion =
           Object.freeze({
@@ -1417,12 +1672,41 @@ function projectSceneGeometry(
                 motion.id,
               scale:
                 1,
+              ...(
+                world.multiplicityName ===
+                  'TRIPLE'
+                  ? {
+                      projectionSpace:
+                        SystemSceneProjectionSpace.TRIPLE_LOCAL,
+                      ...(
+                        tripleLayoutEntry ===
+                          null
+                          ? {}
+                          : {
+                              linearScenePerAu:
+                                tripleLayoutEntry.scenePerAu,
+                            }
+                      ),
+                    }
+                  : {}
+              ),
             }),
           ] satisfies SystemSceneMotionContributionSnapshot[]);
 
+        const planetProjectionSpace =
+          world.multiplicityName ===
+            'TRIPLE'
+            ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+            : SystemSceneProjectionSpace.GLOBAL;
+
         const semiMajorScene =
-          planet.orbit.semiMajorAxisAu *
-          orbitScaleScenePerAu;
+          tripleLayoutEntry
+            ?.semiMajorScene ??
+          systemSceneProjectedRadiusAuInSpace(
+            planet.orbit.semiMajorAxisAu,
+            sceneScale,
+            planetProjectionSpace,
+          );
 
         orbits.push(
           Object.freeze({
@@ -1438,14 +1722,33 @@ function projectSceneGeometry(
               0.26,
             semiMajorScene,
             semiMinorScene:
-              semiMajorScene *
-              Math.sqrt(
-                1 -
-                  planet.orbit.eccentricity ** 2,
-              ),
+              tripleLayoutEntry ===
+                null
+                ? systemSceneProjectedRadiusAuInSpace(
+                    planet.orbit.semiMajorAxisAu *
+                      Math.sqrt(
+                        1 -
+                          planet.orbit.eccentricity ** 2,
+                      ),
+                    sceneScale,
+                    planetProjectionSpace,
+                  )
+                : semiMajorScene *
+                  Math.sqrt(
+                    1 -
+                      planet.orbit.eccentricity ** 2,
+                  ),
             focusOffsetScene:
-              semiMajorScene *
-              planet.orbit.eccentricity,
+              tripleLayoutEntry ===
+                null
+                ? systemSceneProjectedRadiusAuInSpace(
+                    planet.orbit.semiMajorAxisAu *
+                      planet.orbit.eccentricity,
+                    sceneScale,
+                    planetProjectionSpace,
+                  )
+                : semiMajorScene *
+                  planet.orbit.eccentricity,
             rotationDegrees:
               motion.rotationDegrees,
             inclinationDegrees:
@@ -1456,6 +1759,24 @@ function projectSceneGeometry(
               1,
             anchorMotionContributions:
               anchorContributions,
+            ...(
+              planetProjectionSpace ===
+                SystemSceneProjectionSpace.GLOBAL
+                ? {}
+                : {
+                    projectionSpace:
+                      planetProjectionSpace,
+                  }
+            ),
+            ...(
+              tripleLayoutEntry ===
+                null
+                ? {}
+                : {
+                    linearScenePerAu:
+                      tripleLayoutEntry.scenePerAu,
+                  }
+            ),
           }),
         );
 
@@ -1473,20 +1794,15 @@ function projectSceneGeometry(
               planet,
             ),
           radiusScene:
-            scaledRadius(
-              planet.physicalProperties
-                .radiusEarth,
-              planetRadiusRange.min,
-              planetRadiusRange.max,
-              planetRadiusMin,
-              planetRadiusMax,
-            ),
+            planetRadiusSceneByOrdinal.get(
+              planet.planetOrdinal,
+            )!,
           position:
             orbitalContributionPositionScene(
               motionContributions,
               motions,
               0,
-              orbitScaleScenePerAu,
+              sceneScale,
             ),
           orbitId,
           motionContributions,
@@ -1527,12 +1843,7 @@ function projectSceneGeometry(
           ),
       }),
     scale:
-      Object.freeze({
-        outerRadiusAu,
-        orbitScaleScenePerAu,
-        targetOuterRadiusScene:
-          TARGET_OUTER_RADIUS_SCENE,
-      }),
+      sceneScale,
   });
 }
 
@@ -1552,8 +1863,12 @@ function stellarOrbitSnapshot(
   anchorMotionContributions:
     readonly SystemSceneMotionContributionSnapshot[],
 
-  orbitScaleScenePerAu:
-    number,
+  sceneScale:
+    SystemSceneScaleSnapshot,
+
+  projectionSpace:
+    SystemSceneProjectionSpaceValue =
+      SystemSceneProjectionSpace.GLOBAL,
 ): SystemSceneOrbitSnapshot {
 
   const absoluteScale =
@@ -1562,9 +1877,19 @@ function stellarOrbitSnapshot(
     );
 
   const semiMajorScene =
-    motion.semiMajorAxisAu *
-    absoluteScale *
-    orbitScaleScenePerAu;
+    projectionSpace ===
+      SystemSceneProjectionSpace.GLOBAL
+      ? systemSceneProjectedRadiusAu(
+          motion.semiMajorAxisAu *
+            absoluteScale,
+          sceneScale,
+        )
+      : systemSceneProjectedRadiusAuInSpace(
+          motion.semiMajorAxisAu,
+          sceneScale,
+          projectionSpace,
+        ) *
+        absoluteScale;
 
   return Object.freeze({
     id:
@@ -1594,6 +1919,14 @@ function stellarOrbitSnapshot(
       motion.id,
     motionScale,
     anchorMotionContributions,
+    ...(
+      projectionSpace ===
+        SystemSceneProjectionSpace.GLOBAL
+        ? {}
+        : {
+            projectionSpace,
+          }
+    ),
   });
 }
 
@@ -1607,16 +1940,16 @@ function orbitalContributionPositionScene(
   simulationDay:
     number,
 
-  orbitScaleScenePerAu:
-    number,
+  sceneScale:
+    SystemSceneScaleSnapshot,
 ): SystemSceneVector3 {
 
-  let xAu =
-    0;
-  let yAu =
-    0;
-  let zAu =
-    0;
+  let globalXAu = 0;
+  let globalYAu = 0;
+  let globalZAu = 0;
+  let sceneX = 0;
+  let sceneY = 0;
+  let sceneZ = 0;
 
   for (
     const contribution
@@ -1645,27 +1978,102 @@ function orbitalContributionPositionScene(
           simulationDay,
         );
 
-    xAu +=
-      position.xAu *
+    const linearScenePerAu =
+      contribution.linearScenePerAu ??
+      null;
+
+    if (
+      linearScenePerAu !==
+        null &&
+      Number.isFinite(
+        linearScenePerAu,
+      ) &&
+      linearScenePerAu >
+        0
+    ) {
+      sceneX +=
+        position.xAu *
+        contribution.scale *
+        linearScenePerAu;
+      sceneY +=
+        position.yAu *
+        contribution.scale *
+        linearScenePerAu;
+      sceneZ +=
+        position.zAu *
+        contribution.scale *
+        linearScenePerAu;
+      continue;
+    }
+
+    const projectionSpace =
+      contribution.projectionSpace ??
+      SystemSceneProjectionSpace.GLOBAL;
+
+    if (
+      projectionSpace ===
+      SystemSceneProjectionSpace.GLOBAL
+    ) {
+      globalXAu +=
+        position.xAu *
+        contribution.scale;
+      globalYAu +=
+        position.yAu *
+        contribution.scale;
+      globalZAu +=
+        position.zAu *
+        contribution.scale;
+      continue;
+    }
+
+    const projected =
+      systemSceneProjectAuVectorInSpace(
+        {
+          x:
+            position.xAu,
+          y:
+            position.yAu,
+          z:
+            position.zAu,
+        },
+        sceneScale,
+        projectionSpace,
+      );
+
+    sceneX +=
+      projected.x *
       contribution.scale;
-    yAu +=
-      position.yAu *
+    sceneY +=
+      projected.y *
       contribution.scale;
-    zAu +=
-      position.zAu *
+    sceneZ +=
+      projected.z *
       contribution.scale;
   }
 
+  const globalProjected =
+    systemSceneProjectAuVector(
+      {
+        x:
+          globalXAu,
+        y:
+          globalYAu,
+        z:
+          globalZAu,
+      },
+      sceneScale,
+    );
+
   return Object.freeze({
     x:
-      xAu *
-      orbitScaleScenePerAu,
+      sceneX +
+      globalProjected.x,
     y:
-      yAu *
-      orbitScaleScenePerAu,
+      sceneY +
+      globalProjected.y,
     z:
-      zAu *
-      orbitScaleScenePerAu,
+      sceneZ +
+      globalProjected.z,
   });
 }
 

@@ -16,6 +16,7 @@ import {
   SystemSceneWebGl2UnavailableError,
   systemSceneCameraFovDegrees,
   systemSceneDevicePixelRatio,
+  systemScenePickingRadiusScene,
   type SystemSceneRuntime,
   type SystemSceneSelectionChangeHandler,
 } from './system-scene';
@@ -430,6 +431,30 @@ describe(
         );
       },
     );
+    it(
+      'should keep a comfortable invisible picking radius when V4 compresses a visible planet',
+      () => {
+        expect(
+          systemScenePickingRadiusScene(
+            'planet',
+            0.015,
+          ),
+        ).toBeGreaterThanOrEqual(
+          0.085,
+        );
+
+        expect(
+          systemScenePickingRadiusScene(
+            'planet',
+            0.015,
+          ),
+        ).toBeGreaterThan(
+          0.015 *
+          5,
+        );
+      },
+    );
+
   },
 );
 
