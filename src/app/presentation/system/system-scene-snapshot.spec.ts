@@ -19,8 +19,12 @@ import {
   SystemSceneSnapshotBuilder,
 } from './system-scene-snapshot';
 
+import {
+  assertSystemSceneProjectionSnapshot,
+} from './system-scene-projection-contract';
+
 describe(
-  'SystemSceneSnapshotBuilder point 24.7',
+  'SystemSceneSnapshotBuilder point 24.10',
   () => {
 
     it(
@@ -78,6 +82,13 @@ describe(
             snapshot,
           ),
         ).toBe(true);
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).not.toThrow();
 
         expect(
           Object.isFrozen(

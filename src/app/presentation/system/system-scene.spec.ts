@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.9',
+  'SystemScene point 24.10',
   () => {
 
     let resize:
@@ -262,6 +262,42 @@ describe(
             ?.textContent,
         ).toContain(
           'ORBITAR',
+        );
+      },
+    );
+
+    it(
+      'should reject mutable scene input before it reaches even an injected renderer runtime',
+      () => {
+
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        const mutableSnapshot = {
+          ...sceneSnapshot(),
+        } as SystemSceneSnapshot;
+
+        fixture
+          .componentRef
+          .setInput(
+            'snapshot',
+            mutableSnapshot,
+          );
+
+        fixture.detectChanges();
+
+        expect(
+          render,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          fixture
+            .componentInstance
+            .renderState(),
+        ).toBe(
+          'error',
         );
       },
     );

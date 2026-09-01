@@ -39,10 +39,6 @@ import {
 } from './system-scene-snapshot';
 
 import {
-  SystemOrbitalMotionEngine,
-} from '../../simulation/orbital/system-orbital-motion-engine';
-
-import {
   SystemSimulationClock,
 } from './system-simulation-clock';
 
@@ -61,8 +57,16 @@ import {
 } from './system-scene-active-time';
 
 import {
+  projectSystemSceneMotionContributions,
+  sampleSystemSceneOrbitLocalAu,
+} from './system-scene-motion-projection';
+
+import {
+  assertSystemSceneProjectionSnapshot,
+} from './system-scene-projection-contract';
+
+import {
   SystemSceneProjectionSpace,
-  systemSceneProjectAuVector,
   systemSceneProjectAuVectorInSpace,
   type SystemSceneScaleSnapshot,
 } from './system-scene-scale-projection';
@@ -239,7 +243,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.9 Angular host for the stellar-system Three.js scene.
+ * Point-24.10 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -1200,6 +1204,10 @@ export class SystemScene
     );
 
     try {
+      assertSystemSceneProjectionSnapshot(
+        this.snapshot,
+      );
+
       if (
         this.snapshot.planets.length ===
           0
@@ -1863,6 +1871,9 @@ class ThreeSystemSceneRuntime
   ): SystemSceneRenderInfo {
 
     this.assertAlive();
+    assertSystemSceneProjectionSnapshot(
+      snapshot,
+    );
 
     this.scene.name =
       `GENESIS System ${snapshot.proceduralIdentity}`;
@@ -2839,46 +2850,12 @@ class ThreeSystemSceneRuntime
       motion !==
       null
     ) {
-      const orbitSamples =
-        orbit.kind ===
-          'minor-body'
-          ? SystemOrbitalMotionEngine
-              .sampleClosedOrbitPath(
-                motion,
-                ORBIT_SEGMENT_COUNT,
-              )
-          : Array.from(
-              {
-                length:
-                  ORBIT_SEGMENT_COUNT,
-              },
-              (
-                _,
-                index,
-              ) =>
-                SystemOrbitalMotionEngine
-                  .positionAtSimulationDay(
-                    motion,
-                    motion.periodDays *
-                      index /
-                      ORBIT_SEGMENT_COUNT,
-                  ),
-            );
-
       this.orbitLocalSamplesAu.set(
         orbit.id,
-        Object.freeze(
-          orbitSamples.map(
-            sample =>
-              Object.freeze({
-                x:
-                  sample.xAu,
-                y:
-                  sample.yAu,
-                z:
-                  sample.zAu,
-              }),
-          ),
+        sampleSystemSceneOrbitLocalAu(
+          motion,
+          orbit.kind,
+          ORBIT_SEGMENT_COUNT,
         ),
       );
     }
@@ -4031,134 +4008,21 @@ class ThreeSystemSceneRuntime
       SystemSceneScaleSnapshot,
   ): THREE.Vector3 {
 
-    let globalXAu = 0;
-    let globalYAu = 0;
-    let globalZAu = 0;
-    let sceneX = 0;
-    let sceneY = 0;
-    let sceneZ = 0;
-
-    for (
-      const contribution
-      of contributions
-    ) {
-      const motion =
-        this.motionById.get(
-          contribution.motionId,
-        );
-
-      if (
-        motion ===
-        undefined
-      ) {
-        continue;
-      }
-
-      const presentationTimeScale =
-        contribution.presentationTimeScale ??
-        1;
-
-      const position =
-        SystemOrbitalMotionEngine
-          .positionAtSimulationDay(
-            motion,
-            simulationDay *
-              presentationTimeScale,
-          );
-
-      const linearScenePerAu =
-        contribution.linearScenePerAu ??
-        null;
-
-      if (
-        linearScenePerAu !==
-          null &&
-        Number.isFinite(
-          linearScenePerAu,
-        ) &&
-        linearScenePerAu >
-          0
-      ) {
-        sceneX +=
-          position.xAu *
-          contribution.scale *
-          linearScenePerAu;
-        sceneY +=
-          position.yAu *
-          contribution.scale *
-          linearScenePerAu;
-        sceneZ +=
-          position.zAu *
-          contribution.scale *
-          linearScenePerAu;
-        continue;
-      }
-
-      const projectionSpace =
-        contribution.projectionSpace ??
-        SystemSceneProjectionSpace.GLOBAL;
-
-      if (
-        projectionSpace ===
-        SystemSceneProjectionSpace.GLOBAL
-      ) {
-        globalXAu +=
-          position.xAu *
-          contribution.scale;
-        globalYAu +=
-          position.yAu *
-          contribution.scale;
-        globalZAu +=
-          position.zAu *
-          contribution.scale;
-        continue;
-      }
-
-      const projected =
-        systemSceneProjectAuVectorInSpace(
-          {
-            x:
-              position.xAu,
-            y:
-              position.yAu,
-            z:
-              position.zAu,
-          },
-          sceneScale,
-          projectionSpace,
-        );
-
-      sceneX +=
-        projected.x *
-        contribution.scale;
-      sceneY +=
-        projected.y *
-        contribution.scale;
-      sceneZ +=
-        projected.z *
-        contribution.scale;
-    }
-
-    const globalProjected =
-      systemSceneProjectAuVector(
-        {
-          x:
-            globalXAu,
-          y:
-            globalYAu,
-          z:
-            globalZAu,
-        },
+    const projected =
+      projectSystemSceneMotionContributions(
+        contributions,
+        motionId =>
+          this.motionById.get(
+            motionId,
+          ),
+        simulationDay,
         sceneScale,
       );
 
     return new THREE.Vector3(
-      sceneX +
-        globalProjected.x,
-      sceneY +
-        globalProjected.y,
-      sceneZ +
-        globalProjected.z,
+      projected.x,
+      projected.y,
+      projected.z,
     );
   }
 

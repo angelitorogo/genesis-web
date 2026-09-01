@@ -99,8 +99,6 @@ import {
   buildSingleAdaptiveSystemScaleV1,
   buildTripleHierarchicalSystemScaleV1,
   SystemSceneProjectionSpace,
-  systemSceneProjectAuVector,
-  systemSceneProjectAuVectorInSpace,
   systemSceneProjectedOverlayRadiusAuInSpace,
   systemSceneProjectedRadiusAu,
   systemSceneProjectedRadiusAuInSpace,
@@ -197,7 +195,6 @@ import {
 } from '../../simulation/universe/galaxy-generator';
 
 import {
-  SystemOrbitalMotionEngine,
   type SystemOrbitalMotionDefinition,
 } from '../../simulation/orbital/system-orbital-motion-engine';
 
@@ -209,6 +206,11 @@ import {
   systemSceneMinorBodyPresentationTimeScale,
   systemSceneMoonPresentationTimeScale,
 } from './system-scene-secondary-motion';
+
+import {
+  projectSystemSceneMotionContributions,
+  type SystemSceneMotionProjectionContribution,
+} from './system-scene-motion-projection';
 
 
 export interface SystemSceneAddress {
@@ -233,22 +235,8 @@ export interface SystemSceneVector3 {
     number;
 }
 
-export interface SystemSceneMotionContributionSnapshot {
-  readonly motionId:
-    string;
-
-  readonly scale:
-    number;
-
-  readonly projectionSpace?:
-    SystemSceneProjectionSpaceValue;
-
-  readonly linearScenePerAu?:
-    number;
-
-  readonly presentationTimeScale?:
-    number;
-}
+export interface SystemSceneMotionContributionSnapshot
+  extends SystemSceneMotionProjectionContribution {}
 
 export interface SystemSceneOrbitalMotionSnapshot
   extends SystemOrbitalMotionDefinition {}
@@ -532,7 +520,7 @@ export interface SystemSceneSimulationSnapshot {
 }
 
 /**
- * Point-24.7 presentation snapshot accepted by SystemScene.
+ * Point-24.10 presentation snapshot accepted by SystemScene.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -3613,142 +3601,17 @@ function orbitalContributionPositionScene(
     SystemSceneScaleSnapshot,
 ): SystemSceneVector3 {
 
-  let globalXAu = 0;
-  let globalYAu = 0;
-  let globalZAu = 0;
-  let sceneX = 0;
-  let sceneY = 0;
-  let sceneZ = 0;
-
-  for (
-    const contribution
-    of contributions
-  ) {
-    const motion =
+  return projectSystemSceneMotionContributions(
+    contributions,
+    motionId =>
       motions.find(
         candidate =>
           candidate.id ===
-          contribution.motionId,
-      );
-
-    if (
-      motion ===
-      undefined
-    ) {
-      throw new RangeError(
-        `Unknown SystemScene orbital motion ${contribution.motionId}.`,
-      );
-    }
-
-    const presentationTimeScale =
-      contribution.presentationTimeScale ??
-      1;
-
-    const position =
-      SystemOrbitalMotionEngine
-        .positionAtSimulationDay(
-          motion,
-          simulationDay *
-            presentationTimeScale,
-        );
-
-    const linearScenePerAu =
-      contribution.linearScenePerAu ??
-      null;
-
-    if (
-      linearScenePerAu !==
-        null &&
-      Number.isFinite(
-        linearScenePerAu,
-      ) &&
-      linearScenePerAu >
-        0
-    ) {
-      sceneX +=
-        position.xAu *
-        contribution.scale *
-        linearScenePerAu;
-      sceneY +=
-        position.yAu *
-        contribution.scale *
-        linearScenePerAu;
-      sceneZ +=
-        position.zAu *
-        contribution.scale *
-        linearScenePerAu;
-      continue;
-    }
-
-    const projectionSpace =
-      contribution.projectionSpace ??
-      SystemSceneProjectionSpace.GLOBAL;
-
-    if (
-      projectionSpace ===
-      SystemSceneProjectionSpace.GLOBAL
-    ) {
-      globalXAu +=
-        position.xAu *
-        contribution.scale;
-      globalYAu +=
-        position.yAu *
-        contribution.scale;
-      globalZAu +=
-        position.zAu *
-        contribution.scale;
-      continue;
-    }
-
-    const projected =
-      systemSceneProjectAuVectorInSpace(
-        {
-          x:
-            position.xAu,
-          y:
-            position.yAu,
-          z:
-            position.zAu,
-        },
-        sceneScale,
-        projectionSpace,
-      );
-
-    sceneX +=
-      projected.x *
-      contribution.scale;
-    sceneY +=
-      projected.y *
-      contribution.scale;
-    sceneZ +=
-      projected.z *
-      contribution.scale;
-  }
-
-  const globalProjected =
-    systemSceneProjectAuVector(
-      {
-        x:
-          globalXAu,
-        y:
-          globalYAu,
-        z:
-          globalZAu,
-      },
-      sceneScale,
-    );
-
-  return Object.freeze({
-    x:
-      sceneX +
-      globalProjected.x,
-    y:
-      sceneY +
-      globalProjected.y,
-    z:
-      sceneZ +
-      globalProjected.z,
-  });
+            motionId,
+      ),
+    simulationDay,
+    sceneScale,
+  );
 }
 
 function planetColor(

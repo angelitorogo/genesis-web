@@ -132,13 +132,11 @@
 
                 <footer class="system-page__viewport-footer">
                   <span>
-                    THREE.JS / WEBGL2 / SYSTEM SCENE 24.8
+                    THREE.JS / WEBGL2 / SYSTEM SCENE 24.10
                   </span>
 
                   <p>
-                    24.8 permite seleccionar cualquier cuerpo visible y abrir su ficha de navegación directamente sobre el mismo SystemScene; la ficha científica completa queda reservada para Fase 26.
-                    Los controles modifican únicamente la cámara/presentación; la
-                    física orbital sigue procediendo de domain/simulation.
+                    24.10 congela la frontera final de la Fase 24: SystemScene consume un snapshot inmutable y solo produce una proyección visual e interacción de cámara/selección. Las fichas de 24.8 y el seguimiento siguen disponibles; la física orbital autoritativa continúa procediendo de domain/simulation.
                   </p>
                 </footer>
               </section>
@@ -150,10 +148,10 @@
                 <strong>CONTRATO DE RENDER</strong>
 
                 <p>
-                  Three.js recibe únicamente estado de presentación derivado de
-                  domain/simulation. La posición, órbita, masa, radio, clima o
-                  cualquier otra propiedad física nunca se calcula desde la
-                  escena ni se persiste desde WebGL.
+                  Flujo autoritativo: domain/simulation → snapshot inmutable →
+                  proyección Three.js. WebGL puede calcular coordenadas visuales
+                  efímeras para animar el snapshot, pero nunca persiste ni devuelve
+                  posiciones, órbitas, masas, radios, clima u otra física al dominio.
                 </p>
               </section>
 

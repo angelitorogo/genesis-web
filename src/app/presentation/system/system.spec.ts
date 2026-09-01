@@ -36,7 +36,7 @@ import {
 } from './system';
 
 describe(
-  'SystemPage point 24.8',
+  'SystemPage point 24.10',
   () => {
 
     let load:
@@ -232,7 +232,15 @@ describe(
             '[data-testid="system-page-render-contract"]',
           )?.textContent,
         ).toContain(
-          'Three.js recibe únicamente estado de presentación',
+          'domain/simulation → snapshot inmutable → proyección Three.js',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-page-render-contract"]',
+          )?.textContent,
+        ).toContain(
+          'nunca persiste ni devuelve',
         );
       },
     );
