@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>24.6 V4 · LAYERS · PLANETS · MOONS · MINOR CLASSES · PAN · ZOOM</span>
+    <span>24.7 V2 · HZ SCIENCE · ORBITAL RISK CLARITY · PAN · ZOOM</span>
   </div>
 
 
@@ -64,6 +64,28 @@
       (click)="toggleMoons()"
     >
       LUNAS · {{ snapshot.layers.moonCount }}
+    </button>
+
+    <button
+      type="button"
+      data-testid="system-scene-layer-habitable-zone"
+      [attr.aria-pressed]="habitableZoneVisible()"
+      [disabled]="habitableZoneCount() === 0"
+      [class.system-scene__layer-button--active]="habitableZoneVisible()"
+      (click)="toggleHabitableZone()"
+    >
+      HZ · {{ habitableZoneCount() }}
+    </button>
+
+    <button
+      type="button"
+      data-testid="system-scene-layer-orbital-risk"
+      [attr.aria-pressed]="orbitalRiskVisible()"
+      [disabled]="orbitalRiskRelevantTargetCount() === 0"
+      [class.system-scene__layer-button--active]="orbitalRiskVisible()"
+      (click)="toggleOrbitalRisk()"
+    >
+      RIESGO · {{ orbitalRiskTargetCount() }}
     </button>
 
     <button
@@ -118,6 +140,74 @@
       RECENTRAR
     </button>
   </div>
+
+  @if (habitableZoneVisible() || orbitalRiskVisible()) {
+    <aside
+      class="system-scene__science-panel"
+      data-testid="system-scene-science-panel"
+      aria-live="polite"
+    >
+      @if (habitableZoneVisible()) {
+        @if (snapshot.habitableZone; as habitableZone) {
+          <section
+            class="system-scene__science-card"
+            data-testid="system-scene-habitable-zone-legend"
+          >
+            <strong>ZONA HABITABLE</strong>
+            <span>
+              <i class="system-scene__swatch system-scene__swatch--radiative"></i>
+              Radiativa
+              <b>{{ formatAu(habitableZone.radiativeInnerEdgeAu) }}–{{ formatAu(habitableZone.radiativeOuterEdgeAu) }} AU</b>
+            </span>
+            <span>
+              <i class="system-scene__swatch system-scene__swatch--stable"></i>
+              Dinámicamente estable
+              <b>{{ formatAu(habitableZone.dynamicallyHabitableInnerEdgeAu) }}–{{ formatAu(habitableZone.dynamicallyHabitableOuterEdgeAu) }} AU</b>
+            </span>
+            <small>
+              {{ habitableZone.topology === 'CIRCUMSTELLAR' ? 'Circunestelar' : 'Circumbinaria' }} · los AU son Ground Truth; el ancho visual se adapta para legibilidad.
+            </small>
+          </section>
+        }
+      }
+
+      @if (orbitalRiskVisible()) {
+        <section
+          class="system-scene__science-card"
+          data-testid="system-scene-orbital-risk-legend"
+        >
+          <strong>RIESGO ORBITAL · FASE 23.7</strong>
+          <span>
+            <i class="system-scene__swatch system-scene__swatch--crossing"></i>
+            Cruce radial
+            <b>{{ orbitalCrossingTargetCount() }}</b>
+          </span>
+          <span>
+            <i class="system-scene__swatch system-scene__swatch--approach"></i>
+            Aproximación
+            <b>{{ orbitalApproachTargetCount() }}</b>
+          </span>
+          <span>
+            <i class="system-scene__swatch system-scene__swatch--collision"></i>
+            Colisión geométrica
+            <b>{{ orbitalCollisionGeometryTargetCount() }}</b>
+          </span>
+          <small>
+            RIESGO · {{ orbitalRiskTargetCount() }} cuenta objetivos con corredor de aproximación o colisión; un cruce amarillo no implica peligro inmediato y rojo tampoco afirma impacto temporal.
+          </small>
+
+          @if (selectedOrbitalRiskTarget(); as selectedRisk) {
+            <div class="system-scene__risk-detail" data-testid="system-scene-risk-detail">
+              <b>{{ selectedRisk.targetLabel }}</b>
+              <span>{{ selectedRisk.sourceMinorBodyCount }} menores asociados</span>
+              <span>{{ selectedRisk.radialCrossingOnlyCount }} cruces · {{ selectedRisk.approachCorridorCount }} aproximaciones · {{ selectedRisk.directCollisionGeometryCount }} colisiones geom.</span>
+              <span>Índice orbital máx. {{ selectedRisk.highestOrbitalRiskIndex01.toFixed(2) }}</span>
+            </div>
+          }
+        </section>
+      }
+    </aside>
+  }
 
   @if (selection(); as selectedBody) {
     <div
@@ -174,7 +264,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.layers.habitableZoneAvailable ? 1 : 0 }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
     </div>
   }
 </section>

@@ -24,6 +24,10 @@ import {
 } from '../../domain/planetary/planetary-system';
 
 import {
+  type PlanetarySystemHabitableZone,
+} from '../../domain/planetary/planetary-system-habitable-zone';
+
+import {
   type MoonSystem,
 } from '../../domain/planetary/moon-system';
 
@@ -35,6 +39,10 @@ import {
 import {
   type MinorBodyOrbitalElementsCatalog,
 } from '../../domain/planetary/minor-body-orbital-elements-catalog';
+
+import {
+  type MinorBodyImpactRiskCatalog,
+} from '../../domain/planetary/minor-body-impact-risk-catalog';
 
 import {
   type MinorBodyGroundTruthObject,
@@ -93,6 +101,7 @@ import {
   SystemSceneProjectionSpace,
   systemSceneProjectAuVector,
   systemSceneProjectAuVectorInSpace,
+  systemSceneProjectedOverlayRadiusAuInSpace,
   systemSceneProjectedRadiusAu,
   systemSceneProjectedRadiusAuInSpace,
   type SystemSceneProjectionSpace as SystemSceneProjectionSpaceValue,
@@ -102,6 +111,10 @@ import {
 export type {
   SystemSceneScaleSnapshot,
 } from './system-scene-scale-projection';
+
+import {
+  buildSystemSceneHabitableZonePresentationV2,
+} from './system-scene-habitable-zone-presentation';
 
 import {
   buildTripleDensePlanetaryLayoutV1,
@@ -118,6 +131,10 @@ import {
 import {
   PlanetarySystemGenerator,
 } from '../../simulation/planetary/planetary-system-generator';
+
+import {
+  PlanetarySystemHabitableZoneGenerator,
+} from '../../simulation/planetary/planetary-system-habitable-zone-generator';
 
 import {
   ProtoplanetaryFormationSnapshotGenerator,
@@ -394,11 +411,115 @@ export interface SystemSceneMinorBodySnapshot {
     readonly SystemSceneMotionContributionSnapshot[];
 }
 
+export interface SystemSceneHabitableZoneSnapshot {
+  readonly topology:
+    'CIRCUMSTELLAR' |
+    'CIRCUMBINARY';
+
+  readonly radiativeInnerEdgeAu:
+    number;
+
+  readonly radiativeOuterEdgeAu:
+    number;
+
+  readonly dynamicallyHabitableInnerEdgeAu:
+    number | null;
+
+  readonly dynamicallyHabitableOuterEdgeAu:
+    number | null;
+
+  readonly radiativeInnerRadiusScene:
+    number;
+
+  readonly radiativeOuterRadiusScene:
+    number;
+
+  readonly dynamicallyHabitableInnerRadiusScene:
+    number | null;
+
+  readonly dynamicallyHabitableOuterRadiusScene:
+    number | null;
+
+  readonly presentationAdjusted:
+    boolean;
+
+  readonly dynamicalOverlapFraction01:
+    number;
+
+  readonly anchorMotionContributions:
+    readonly SystemSceneMotionContributionSnapshot[];
+
+  readonly projectionSpace?:
+    SystemSceneProjectionSpaceValue;
+}
+
+export interface SystemSceneOrbitalRiskTargetSnapshot {
+  readonly id:
+    string;
+
+  readonly targetBodyId:
+    string;
+
+  readonly targetOrbitId:
+    string;
+
+  readonly targetKind:
+    'planet' |
+    'moon';
+
+  readonly targetLabel:
+    string;
+
+  readonly sourceMinorBodyCount:
+    number;
+
+  readonly riskCandidateCount:
+    number;
+
+  readonly approachCorridorCount:
+    number;
+
+  readonly radialCrossingOnlyCount:
+    number;
+
+  readonly directCollisionGeometryCount:
+    number;
+
+  readonly severity:
+    'CROSSING' |
+    'APPROACH' |
+    'COLLISION_GEOMETRY';
+
+  readonly highestOrbitalRiskIndex01:
+    number;
+
+  readonly highestRegimeName:
+    string;
+
+  readonly colorHex:
+    string;
+}
+
 export interface SystemSceneLayerAvailabilitySnapshot {
   readonly moonCount:
     number;
 
   readonly minorBodyCount:
+    number;
+
+  readonly habitableZoneAvailable:
+    boolean;
+
+  readonly orbitalRiskTargetCount:
+    number;
+
+  readonly orbitalCrossingTargetCount:
+    number;
+
+  readonly orbitalApproachTargetCount:
+    number;
+
+  readonly orbitalCollisionGeometryTargetCount:
     number;
 }
 
@@ -411,7 +532,7 @@ export interface SystemSceneSimulationSnapshot {
 }
 
 /**
- * Point-24.6 presentation snapshot accepted by SystemScene.
+ * Point-24.7 presentation snapshot accepted by SystemScene.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -463,6 +584,12 @@ export interface SystemSceneSnapshot {
 
   readonly minorBodies:
     readonly SystemSceneMinorBodySnapshot[];
+
+  readonly habitableZone:
+    SystemSceneHabitableZoneSnapshot | null;
+
+  readonly orbitalRiskTargets:
+    readonly SystemSceneOrbitalRiskTargetSnapshot[];
 
   readonly layers:
     SystemSceneLayerAvailabilitySnapshot;
@@ -544,6 +671,12 @@ interface MaterializedStellarSceneWorld {
 
   readonly minorBodyOrbitalCatalog:
     MinorBodyOrbitalElementsCatalog | null;
+
+  readonly habitableZone:
+    PlanetarySystemHabitableZone;
+
+  readonly impactRiskCatalog:
+    MinorBodyImpactRiskCatalog | null;
 }
 
 interface ResolvedStarSceneSource {
@@ -666,10 +799,19 @@ export class SystemSceneSnapshotBuilder {
           Object.freeze([]),
         minorBodies:
           Object.freeze([]),
+        habitableZone:
+          null,
+        orbitalRiskTargets:
+          Object.freeze([]),
         layers:
           Object.freeze({
             moonCount: 0,
             minorBodyCount: 0,
+            habitableZoneAvailable: false,
+            orbitalRiskTargetCount: 0,
+            orbitalCrossingTargetCount: 0,
+            orbitalApproachTargetCount: 0,
+            orbitalCollisionGeometryTargetCount: 0,
           }),
         orbits:
           Object.freeze([]),
@@ -703,7 +845,7 @@ export class SystemSceneSnapshotBuilder {
     return Object.freeze({
       ...baseSnapshot,
       accessibleLabel:
-        `${baseSnapshot.accessibleLabel} ${projected.stars.length} estrella${projected.stars.length === 1 ? '' : 's'}, ${projected.planets.length} planeta${projected.planets.length === 1 ? '' : 's'}, ${projected.moons.length} luna${projected.moons.length === 1 ? '' : 's'} relevante${projected.moons.length === 1 ? '' : 's'} y ${projected.minorBodies.length} cuerpo${projected.minorBodies.length === 1 ? '' : 's'} menor${projected.minorBodies.length === 1 ? '' : 'es'} disponible${projected.minorBodies.length === 1 ? '' : 's'} por capas.`,
+        `${baseSnapshot.accessibleLabel} ${projected.stars.length} estrella${projected.stars.length === 1 ? '' : 's'}, ${projected.planets.length} planeta${projected.planets.length === 1 ? '' : 's'}, ${projected.moons.length} luna${projected.moons.length === 1 ? '' : 's'} relevante${projected.moons.length === 1 ? '' : 's'} y ${projected.minorBodies.length} cuerpo${projected.minorBodies.length === 1 ? '' : 's'} menor${projected.minorBodies.length === 1 ? '' : 'es'} disponible${projected.minorBodies.length === 1 ? '' : 's'} por capas. Zona habitable de referencia disponible. ${projected.layers.orbitalRiskTargetCount} objetivo${projected.layers.orbitalRiskTargetCount === 1 ? '' : 's'} con corredor de riesgo y ${projected.layers.orbitalCrossingTargetCount} objetivo${projected.layers.orbitalCrossingTargetCount === 1 ? '' : 's'} con cruce radial solamente.`,
       stars:
         projected.stars,
       planets:
@@ -712,6 +854,10 @@ export class SystemSceneSnapshotBuilder {
         projected.moons,
       minorBodies:
         projected.minorBodies,
+      habitableZone:
+        projected.habitableZone,
+      orbitalRiskTargets:
+        projected.orbitalRiskTargets,
       layers:
         projected.layers,
       orbits:
@@ -735,6 +881,8 @@ function snapshotBase(
   'planets' |
   'moons' |
   'minorBodies' |
+  'habitableZone' |
+  'orbitalRiskTargets' |
   'layers' |
   'orbits' |
   'motions' |
@@ -913,6 +1061,10 @@ function materializeSceneWorld(
       planetaryWorld.moonSystems,
     minorBodyOrbitalCatalog:
       planetaryWorld.minorBodyOrbitalCatalog,
+    habitableZone:
+      planetaryWorld.habitableZone,
+    impactRiskCatalog:
+      planetaryWorld.impactRiskCatalog,
   });
 }
 
@@ -1115,6 +1267,12 @@ interface ResolvedPlanetarySceneWorld {
 
   readonly minorBodyOrbitalCatalog:
     MinorBodyOrbitalElementsCatalog | null;
+
+  readonly habitableZone:
+    PlanetarySystemHabitableZone;
+
+  readonly impactRiskCatalog:
+    MinorBodyImpactRiskCatalog | null;
 }
 
 function resolvePlanetaryWorld(
@@ -1130,6 +1288,13 @@ function resolvePlanetaryWorld(
   revealMinorBodyGroundTruth:
     boolean,
 ): ResolvedPlanetarySceneWorld {
+
+  const habitableZone =
+    PlanetarySystemHabitableZoneGenerator
+      .generate(
+        generationKey,
+        system,
+      );
 
   const formationSnapshot =
     ProtoplanetaryFormationSnapshotGenerator
@@ -1147,6 +1312,8 @@ function resolvePlanetaryWorld(
       planets: Object.freeze([]),
       moonSystems: Object.freeze([]),
       minorBodyOrbitalCatalog: null,
+      habitableZone,
+      impactRiskCatalog: null,
     });
   }
 
@@ -1201,6 +1368,8 @@ function resolvePlanetaryWorld(
         ]),
       moonSystems,
       minorBodyOrbitalCatalog: null,
+      habitableZone,
+      impactRiskCatalog: null,
     });
   }
 
@@ -1241,6 +1410,45 @@ function resolvePlanetaryWorld(
       capturedExtrasolarObjects,
     );
 
+  const minorBodyOrbitalCatalog =
+    MinorBodyDynamicsEngine
+      .orbitalElements(
+        dynamicsState,
+      );
+
+  const proximityCatalog =
+    MinorBodyDynamicsEngine
+      .proximities(
+        minorBodyOrbitalCatalog,
+        planets,
+        moonSystems,
+      );
+
+  const resonanceCatalog =
+    MinorBodyDynamicsEngine
+      .resonances(
+        minorBodyOrbitalCatalog,
+        proximityCatalog,
+      );
+
+  const giantInfluenceCatalog =
+    MinorBodyDynamicsEngine
+      .giantInfluences(
+        resonanceCatalog,
+      );
+
+  const closeEncounterCatalog =
+    MinorBodyDynamicsEngine
+      .closeEncounters(
+        giantInfluenceCatalog,
+      );
+
+  const impactRiskCatalog =
+    MinorBodyDynamicsEngine
+      .impactRisks(
+        closeEncounterCatalog,
+      );
+
   return Object.freeze({
     planetarySystem,
     planets:
@@ -1248,11 +1456,9 @@ function resolvePlanetaryWorld(
         ...planets,
       ]),
     moonSystems,
-    minorBodyOrbitalCatalog:
-      MinorBodyDynamicsEngine
-        .orbitalElements(
-          dynamicsState,
-        ),
+    minorBodyOrbitalCatalog,
+    habitableZone,
+    impactRiskCatalog,
   });
 }
 
@@ -1271,6 +1477,12 @@ function projectSceneGeometry(
 
   readonly minorBodies:
     readonly SystemSceneMinorBodySnapshot[];
+
+  readonly habitableZone:
+    SystemSceneHabitableZoneSnapshot | null;
+
+  readonly orbitalRiskTargets:
+    readonly SystemSceneOrbitalRiskTargetSnapshot[];
 
   readonly layers:
     SystemSceneLayerAvailabilitySnapshot;
@@ -2163,6 +2375,50 @@ function projectSceneGeometry(
       playbackDaysPerRealSecond,
     );
 
+  const habitableHostVisualExtentScene =
+    world.multiplicityName ===
+      'SINGLE' ||
+    innerOrbit ===
+      null ||
+    secondary ===
+      null
+      ? primaryStarRadiusScene
+      : Math.max(
+          primaryStarRadiusScene +
+            systemSceneProjectedRadiusAuInSpace(
+              innerOrbit.semiMajorAxisAu,
+              sceneScale,
+              world.multiplicityName === 'TRIPLE'
+                ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+                : SystemSceneProjectionSpace.GLOBAL,
+            ) *
+            Math.abs(primaryInnerScale),
+          secondaryStarRadiusScene +
+            systemSceneProjectedRadiusAuInSpace(
+              innerOrbit.semiMajorAxisAu,
+              sceneScale,
+              world.multiplicityName === 'TRIPLE'
+                ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+                : SystemSceneProjectionSpace.GLOBAL,
+            ) *
+            Math.abs(secondaryInnerScale),
+        );
+
+  const habitableZone =
+    projectHabitableZoneLayer(
+      world,
+      innerPairAnchorContributions,
+      sceneScale,
+      habitableHostVisualExtentScene,
+    );
+
+  const orbitalRiskTargets =
+    projectOrbitalRiskLayer(
+      world,
+      planets,
+      moons,
+    );
+
   const frozenMotions =
     Object.freeze(
       motions,
@@ -2175,12 +2431,36 @@ function projectSceneGeometry(
       Object.freeze(planets),
     moons,
     minorBodies,
+    habitableZone,
+    orbitalRiskTargets,
     layers:
       Object.freeze({
         moonCount:
           moons.length,
         minorBodyCount:
           minorBodies.length,
+        habitableZoneAvailable:
+          habitableZone !== null,
+        orbitalRiskTargetCount:
+          orbitalRiskTargets.filter(
+            target =>
+              target.severity !== 'CROSSING',
+          ).length,
+        orbitalCrossingTargetCount:
+          orbitalRiskTargets.filter(
+            target =>
+              target.severity === 'CROSSING',
+          ).length,
+        orbitalApproachTargetCount:
+          orbitalRiskTargets.filter(
+            target =>
+              target.severity === 'APPROACH',
+          ).length,
+        orbitalCollisionGeometryTargetCount:
+          orbitalRiskTargets.filter(
+            target =>
+              target.severity === 'COLLISION_GEOMETRY',
+          ).length,
       }),
     orbits:
       Object.freeze(orbits),
@@ -2195,6 +2475,417 @@ function projectSceneGeometry(
     scale:
       sceneScale,
   });
+}
+
+
+function projectHabitableZoneLayer(
+  world:
+    MaterializedStellarSceneWorld,
+
+  innerPairAnchorContributions:
+    readonly SystemSceneMotionContributionSnapshot[],
+
+  sceneScale:
+    SystemSceneScaleSnapshot,
+
+  habitableHostVisualExtentScene:
+    number,
+): SystemSceneHabitableZoneSnapshot | null {
+
+  const zone =
+    world.habitableZone;
+
+  const projectionSpace =
+    world.multiplicityName ===
+      'TRIPLE'
+      ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+      : SystemSceneProjectionSpace.GLOBAL;
+
+  const anchorMotionContributions =
+    world.multiplicityName ===
+      'TRIPLE'
+      ? innerPairAnchorContributions
+      : Object.freeze([]);
+
+  const dynamicInner =
+    zone.dynamicallyHabitableInnerEdgeAu;
+
+  const dynamicOuter =
+    zone.dynamicallyHabitableOuterEdgeAu;
+
+  const rawRadiativeInnerScene =
+    systemSceneProjectedOverlayRadiusAuInSpace(
+      zone.radiativeInnerEdgeAu,
+      sceneScale,
+      projectionSpace,
+    );
+
+  const rawRadiativeOuterScene =
+    systemSceneProjectedOverlayRadiusAuInSpace(
+      zone.radiativeOuterEdgeAu,
+      sceneScale,
+      projectionSpace,
+    );
+
+  const presentation =
+    buildSystemSceneHabitableZonePresentationV2({
+      radiativeInnerAu:
+        zone.radiativeInnerEdgeAu,
+      radiativeOuterAu:
+        zone.radiativeOuterEdgeAu,
+      dynamicallyHabitableInnerAu:
+        dynamicInner,
+      dynamicallyHabitableOuterAu:
+        dynamicOuter,
+      rawRadiativeInnerScene,
+      rawRadiativeOuterScene,
+      hostVisualExtentScene:
+        habitableHostVisualExtentScene,
+    });
+
+  return Object.freeze({
+    topology:
+      zone.orbitTopology ===
+        'CIRCUMSTELLAR'
+        ? 'CIRCUMSTELLAR' as const
+        : 'CIRCUMBINARY' as const,
+    radiativeInnerEdgeAu:
+      zone.radiativeInnerEdgeAu,
+    radiativeOuterEdgeAu:
+      zone.radiativeOuterEdgeAu,
+    dynamicallyHabitableInnerEdgeAu:
+      dynamicInner,
+    dynamicallyHabitableOuterEdgeAu:
+      dynamicOuter,
+    radiativeInnerRadiusScene:
+      presentation.radiativeInnerScene,
+    radiativeOuterRadiusScene:
+      presentation.radiativeOuterScene,
+    dynamicallyHabitableInnerRadiusScene:
+      presentation.dynamicallyHabitableInnerScene,
+    dynamicallyHabitableOuterRadiusScene:
+      presentation.dynamicallyHabitableOuterScene,
+    presentationAdjusted:
+      Math.abs(
+        presentation.radiativeInnerScene -
+        rawRadiativeInnerScene,
+      ) > 1e-9 ||
+      Math.abs(
+        presentation.radiativeOuterScene -
+        rawRadiativeOuterScene,
+      ) > 1e-9,
+    dynamicalOverlapFraction01:
+      zone.dynamicalOverlapFraction01,
+    anchorMotionContributions:
+      Object.freeze([
+        ...anchorMotionContributions,
+      ]),
+    ...(
+      projectionSpace ===
+        SystemSceneProjectionSpace.GLOBAL
+        ? {}
+        : {
+            projectionSpace,
+          }
+    ),
+  });
+}
+
+function projectOrbitalRiskLayer(
+  world:
+    MaterializedStellarSceneWorld,
+
+  planets:
+    readonly SystemSceneBodySnapshot[],
+
+  moons:
+    readonly SystemSceneMoonSnapshot[],
+): readonly SystemSceneOrbitalRiskTargetSnapshot[] {
+
+  const catalog =
+    world.impactRiskCatalog;
+
+  if (
+    catalog ===
+      null
+  ) {
+    return Object.freeze([]);
+  }
+
+  const bodyById =
+    new Map<
+      string,
+      SystemSceneBodySnapshot |
+      SystemSceneMoonSnapshot
+    >([
+      ...planets.map(
+        body =>
+          [
+            body.id,
+            body,
+          ] as const,
+      ),
+      ...moons.map(
+        body =>
+          [
+            body.id,
+            body,
+          ] as const,
+      ),
+    ]);
+
+  interface MutableRiskAggregate {
+    readonly targetBodyId:
+      string;
+
+    readonly targetOrbitId:
+      string;
+
+    readonly targetKind:
+      'planet' |
+      'moon';
+
+    readonly targetLabel:
+      string;
+
+    readonly sourceMinorBodyIds:
+      Set<string>;
+
+    riskCandidateCount:
+      number;
+
+    radialCrossingOnlyCount:
+      number;
+
+    directCollisionGeometryCount:
+      number;
+
+    highestOrbitalRiskIndex01:
+      number;
+
+    highestRegimeName:
+      string;
+
+    highestRegimePriority:
+      number;
+  }
+
+  const aggregates =
+    new Map<
+      string,
+      MutableRiskAggregate
+    >();
+
+  for (
+    const assessment
+    of catalog.relevantAssessments
+  ) {
+    const targetBodyId =
+      assessment.isPlanetTarget
+        ? `planet-${assessment.targetPlanetOrdinal}`
+        : `moon-${assessment.targetPlanetOrdinal}-${assessment.targetMoonOrdinal}`;
+
+    const targetBody =
+      bodyById.get(
+        targetBodyId,
+      ) ??
+      null;
+
+    if (
+      targetBody ===
+        null ||
+      targetBody.orbitId ===
+        null
+    ) {
+      continue;
+    }
+
+    const regimePriority =
+      orbitalRiskRegimePriority(
+        assessment.regime.name,
+      );
+
+    let aggregate =
+      aggregates.get(
+        targetBodyId,
+      ) ??
+      null;
+
+    if (
+      aggregate ===
+        null
+    ) {
+      aggregate = {
+        targetBodyId,
+        targetOrbitId:
+          targetBody.orbitId,
+        targetKind:
+          assessment.isPlanetTarget
+            ? 'planet'
+            : 'moon',
+        targetLabel:
+          targetBody.title,
+        sourceMinorBodyIds:
+          new Set<string>(),
+        riskCandidateCount: 0,
+        radialCrossingOnlyCount: 0,
+        directCollisionGeometryCount: 0,
+        highestOrbitalRiskIndex01: 0,
+        highestRegimeName:
+          assessment.regime.name,
+        highestRegimePriority:
+          regimePriority,
+      };
+
+      aggregates.set(
+        targetBodyId,
+        aggregate,
+      );
+    }
+
+    aggregate.sourceMinorBodyIds.add(
+      assessment.minorBodyProceduralId,
+    );
+
+    if (
+      assessment.riskCandidate
+    ) {
+      aggregate.riskCandidateCount +=
+        1;
+    }
+
+    if (
+      assessment.regime.name ===
+        'RADIAL_CROSSING_ONLY'
+    ) {
+      aggregate.radialCrossingOnlyCount +=
+        1;
+    }
+
+    if (
+      assessment.directCollisionGeometryCandidate
+    ) {
+      aggregate.directCollisionGeometryCount +=
+        1;
+    }
+
+    aggregate.highestOrbitalRiskIndex01 =
+      Math.max(
+        aggregate.highestOrbitalRiskIndex01,
+        assessment.orbitalRiskIndex01,
+      );
+
+    if (
+      regimePriority >
+        aggregate.highestRegimePriority
+    ) {
+      aggregate.highestRegimePriority =
+        regimePriority;
+      aggregate.highestRegimeName =
+        assessment.regime.name;
+    }
+  }
+
+  return Object.freeze(
+    [...aggregates.values()]
+      .map(
+        aggregate =>
+          Object.freeze({
+            id:
+              `orbital-risk-${aggregate.targetBodyId}`,
+            targetBodyId:
+              aggregate.targetBodyId,
+            targetOrbitId:
+              aggregate.targetOrbitId,
+            targetKind:
+              aggregate.targetKind,
+            targetLabel:
+              aggregate.targetLabel,
+            sourceMinorBodyCount:
+              aggregate.sourceMinorBodyIds.size,
+            riskCandidateCount:
+              aggregate.riskCandidateCount,
+            approachCorridorCount:
+              Math.max(
+                0,
+                aggregate.riskCandidateCount -
+                aggregate.directCollisionGeometryCount,
+              ),
+            radialCrossingOnlyCount:
+              aggregate.radialCrossingOnlyCount,
+            directCollisionGeometryCount:
+              aggregate.directCollisionGeometryCount,
+            severity:
+              aggregate.directCollisionGeometryCount > 0
+                ? 'COLLISION_GEOMETRY' as const
+                : aggregate.riskCandidateCount > 0
+                  ? 'APPROACH' as const
+                  : 'CROSSING' as const,
+            highestOrbitalRiskIndex01:
+              aggregate.highestOrbitalRiskIndex01,
+            highestRegimeName:
+              aggregate.highestRegimeName,
+            colorHex:
+              orbitalRiskColorHex(
+                aggregate.directCollisionGeometryCount,
+                aggregate.riskCandidateCount,
+              ),
+          }),
+      )
+      .sort(
+        (left, right) =>
+          right.highestOrbitalRiskIndex01 -
+          left.highestOrbitalRiskIndex01 ||
+          left.targetBodyId.localeCompare(
+            right.targetBodyId,
+          ),
+      ),
+  );
+}
+
+function orbitalRiskRegimePriority(
+  regimeName:
+    string,
+): number {
+
+  switch (
+    regimeName
+  ) {
+    case 'PLANET_COLLISION_CORRIDOR':
+      return 4;
+    case 'PLANET_APPROACH_CORRIDOR':
+    case 'MOON_ORBITAL_REGION':
+      return 3;
+    case 'RADIAL_CROSSING_ONLY':
+      return 2;
+    default:
+      return 0;
+  }
+}
+
+function orbitalRiskColorHex(
+  directCollisionGeometryCount:
+    number,
+
+  riskCandidateCount:
+    number,
+): string {
+
+  if (
+    directCollisionGeometryCount >
+      0
+  ) {
+    return '#FF624A';
+  }
+
+  if (
+    riskCandidateCount >
+      0
+  ) {
+    return '#FFAA52';
+  }
+
+  return '#F2D56B';
 }
 
 

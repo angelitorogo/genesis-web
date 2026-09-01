@@ -20,7 +20,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemSceneSnapshotBuilder point 24.6',
+  'SystemSceneSnapshotBuilder point 24.7',
   () => {
 
     it(
@@ -122,6 +122,57 @@ describe(
         );
 
         expect(
+          snapshot.habitableZone,
+        ).not.toBeNull();
+
+        expect(
+          snapshot.layers.habitableZoneAvailable,
+        ).toBe(true);
+
+        expect(
+          snapshot.habitableZone!.radiativeOuterEdgeAu,
+        ).toBeGreaterThan(
+          snapshot.habitableZone!.radiativeInnerEdgeAu,
+        );
+
+        expect(
+          snapshot.habitableZone!.radiativeOuterRadiusScene -
+            snapshot.habitableZone!.radiativeInnerRadiusScene,
+        ).toBeGreaterThanOrEqual(
+          0.42,
+        );
+
+        expect(
+          snapshot.orbitalRiskTargets,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          snapshot.layers.orbitalRiskTargetCount,
+        ).toBe(
+          0,
+        );
+
+        expect(
+          snapshot.layers.orbitalCrossingTargetCount,
+        ).toBe(
+          0,
+        );
+
+        expect(
+          snapshot.layers.orbitalApproachTargetCount,
+        ).toBe(
+          0,
+        );
+
+        expect(
+          snapshot.layers.orbitalCollisionGeometryTargetCount,
+        ).toBe(
+          0,
+        );
+
+        expect(
           Array.isArray(
             snapshot.orbits,
           ),
@@ -218,6 +269,12 @@ describe(
           snapshot.accessibleLabel,
         ).toContain(
           'estrella',
+        );
+
+        expect(
+          snapshot.accessibleLabel,
+        ).toContain(
+          'Zona habitable',
         );
       },
     );

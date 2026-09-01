@@ -28,9 +28,11 @@ import {
 
 import {
   type SystemSceneBodySnapshot,
+  type SystemSceneHabitableZoneSnapshot,
   type SystemSceneMoonSnapshot,
   type SystemSceneMinorBodySnapshot,
   type SystemSceneMotionContributionSnapshot,
+  type SystemSceneOrbitalRiskTargetSnapshot,
   type SystemSceneOrbitalMotionSnapshot,
   type SystemSceneOrbitSnapshot,
   type SystemSceneSnapshot,
@@ -113,6 +115,12 @@ export interface SystemSceneLayerVisibility {
     boolean;
 
   readonly moons:
+    boolean;
+
+  readonly habitableZone:
+    boolean;
+
+  readonly orbitalRisk:
     boolean;
 
   readonly asteroids:
@@ -208,7 +216,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.6 Angular host for the stellar-system Three.js scene.
+ * Point-24.7 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -322,6 +330,16 @@ export class SystemScene
       false,
     );
 
+  private readonly habitableZoneVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly orbitalRiskVisibleSignal =
+    signal(
+      false,
+    );
+
   private readonly asteroidsVisibleSignal =
     signal(
       false,
@@ -347,6 +365,12 @@ export class SystemScene
 
   readonly moonsVisible =
     this.moonsVisibleSignal.asReadonly();
+
+  readonly habitableZoneVisible =
+    this.habitableZoneVisibleSignal.asReadonly();
+
+  readonly orbitalRiskVisible =
+    this.orbitalRiskVisibleSignal.asReadonly();
 
   readonly asteroidsVisible =
     this.asteroidsVisibleSignal.asReadonly();
@@ -378,6 +402,72 @@ export class SystemScene
   planetCount():
     number {
     return this.snapshot.planets.length;
+  }
+
+  habitableZoneCount():
+    number {
+    return this.snapshot.layers.habitableZoneAvailable
+      ? 1
+      : 0;
+  }
+
+  orbitalRiskTargetCount():
+    number {
+    return this.snapshot.layers.orbitalRiskTargetCount;
+  }
+
+  orbitalRiskRelevantTargetCount():
+    number {
+    return this.snapshot.orbitalRiskTargets.length;
+  }
+
+  orbitalCrossingTargetCount():
+    number {
+    return this.snapshot.layers.orbitalCrossingTargetCount;
+  }
+
+  orbitalApproachTargetCount():
+    number {
+    return this.snapshot.layers.orbitalApproachTargetCount;
+  }
+
+  orbitalCollisionGeometryTargetCount():
+    number {
+    return this.snapshot.layers.orbitalCollisionGeometryTargetCount;
+  }
+
+  selectedOrbitalRiskTarget():
+    SystemSceneOrbitalRiskTargetSnapshot | null {
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection === null
+    ) {
+      return null;
+    }
+
+    return this.snapshot.orbitalRiskTargets.find(
+      target =>
+        target.targetBodyId === selection.bodyId,
+    ) ?? null;
+  }
+
+  formatAu(
+    value:
+      number | null,
+  ): string {
+    if (
+      value === null
+    ) {
+      return '—';
+    }
+
+    return value < 0.1
+      ? value.toFixed(3)
+      : value < 10
+        ? value.toFixed(2)
+        : value.toFixed(1);
   }
 
   asteroidCount():
@@ -437,6 +527,41 @@ export class SystemScene
     }
 
     this.moonsVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleHabitableZone():
+    void {
+
+    if (
+      !this.snapshot.layers.habitableZoneAvailable
+    ) {
+      return;
+    }
+
+    this.habitableZoneVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleOrbitalRisk():
+    void {
+
+    if (
+      this.snapshot.orbitalRiskTargets.length ===
+        0
+    ) {
+      return;
+    }
+
+    this.orbitalRiskVisibleSignal.update(
       value =>
         !value,
     );
@@ -625,6 +750,13 @@ export class SystemScene
         moons:
           this.moonsVisibleSignal() &&
           this.snapshot.layers.moonCount >
+            0,
+        habitableZone:
+          this.habitableZoneVisibleSignal() &&
+          this.snapshot.layers.habitableZoneAvailable,
+        orbitalRisk:
+          this.orbitalRiskVisibleSignal() &&
+          this.snapshot.orbitalRiskTargets.length >
             0,
         asteroids:
           this.asteroidsVisibleSignal() &&
@@ -817,6 +949,23 @@ export class SystemScene
           0
       ) {
         this.moonsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        !this.snapshot.layers.habitableZoneAvailable
+      ) {
+        this.habitableZoneVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.snapshot.orbitalRiskTargets.length ===
+          0
+      ) {
+        this.orbitalRiskVisibleSignal.set(
           false,
         );
       }
@@ -1075,6 +1224,34 @@ class ThreeSystemSceneRuntime
     THREE.Object3D[] =
     [];
 
+  private readonly habitableZoneLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly orbitalRiskLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private habitableZoneGroup:
+    THREE.Group | null =
+    null;
+
+  private habitableZoneSnapshot:
+    SystemSceneHabitableZoneSnapshot | null =
+    null;
+
+  private readonly orbitalRiskOrbitOverlays:
+    Array<{
+      readonly line: THREE.LineLoop;
+      readonly orbit: SystemSceneOrbitSnapshot;
+    }> = [];
+
+  private readonly orbitalRiskMarkers:
+    Array<{
+      readonly sprite: THREE.Sprite;
+      readonly targetBodyId: string;
+    }> = [];
+
   private readonly asteroidLayerObjects:
     THREE.Object3D[] =
     [];
@@ -1099,6 +1276,8 @@ class ThreeSystemSceneRuntime
     Object.freeze({
       planets: true,
       moons: false,
+      habitableZone: false,
+      orbitalRisk: false,
       asteroids: false,
       comets: false,
       transNeptunianObjects: false,
@@ -1420,6 +1599,15 @@ class ThreeSystemSceneRuntime
         .targetOuterRadiusScene,
     );
 
+    if (
+      snapshot.habitableZone !==
+        null
+    ) {
+      this.addHabitableZone(
+        snapshot.habitableZone,
+      );
+    }
+
     for (
       const orbit
       of snapshot.orbits
@@ -1463,6 +1651,16 @@ class ThreeSystemSceneRuntime
     ) {
       this.addMinorBody(
         minorBody,
+      );
+    }
+
+    for (
+      const riskTarget
+      of snapshot.orbitalRiskTargets
+    ) {
+      this.addOrbitalRiskTarget(
+        riskTarget,
+        snapshot,
       );
     }
 
@@ -1532,6 +1730,22 @@ class ThreeSystemSceneRuntime
     ) {
       object.visible =
         this.layerVisibility.moons;
+    }
+
+    for (
+      const object
+      of this.habitableZoneLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.habitableZone;
+    }
+
+    for (
+      const object
+      of this.orbitalRiskLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.orbitalRisk;
     }
 
     for (
@@ -1718,6 +1932,436 @@ class ThreeSystemSceneRuntime
 
     this.assertAlive();
     this.cameraController.resetView();
+  }
+
+  private addHabitableZone(
+    habitableZone:
+      SystemSceneHabitableZoneSnapshot,
+  ): void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      'Habitable zone';
+
+    const radiativeGeometry =
+      new THREE.RingGeometry(
+        habitableZone.radiativeInnerRadiusScene,
+        habitableZone.radiativeOuterRadiusScene,
+        192,
+      );
+
+    const radiativeMaterial =
+      new THREE.MeshBasicMaterial({
+        color:
+          0x4c9fb2,
+        transparent:
+          true,
+        opacity:
+          0.14,
+        side:
+          THREE.DoubleSide,
+        depthWrite:
+          false,
+        depthTest:
+          false,
+        blending:
+          THREE.AdditiveBlending,
+      });
+
+    const radiativeBand =
+      new THREE.Mesh(
+        radiativeGeometry,
+        radiativeMaterial,
+      );
+
+    radiativeBand.rotation.x =
+      -Math.PI / 2;
+    radiativeBand.renderOrder =
+      70;
+
+    group.add(
+      radiativeBand,
+    );
+
+    this.frameDisposables.push(
+      radiativeGeometry,
+      radiativeMaterial,
+    );
+
+    this.addHabitableZoneBoundary(
+      group,
+      habitableZone.radiativeInnerRadiusScene,
+      0x5eb6c8,
+      0.58,
+    );
+
+    this.addHabitableZoneBoundary(
+      group,
+      habitableZone.radiativeOuterRadiusScene,
+      0x5eb6c8,
+      0.58,
+    );
+
+    const dynamicInner =
+      habitableZone.dynamicallyHabitableInnerRadiusScene;
+
+    const dynamicOuter =
+      habitableZone.dynamicallyHabitableOuterRadiusScene;
+
+    if (
+      dynamicInner !==
+        null &&
+      dynamicOuter !==
+        null
+    ) {
+      const dynamicGeometry =
+        new THREE.RingGeometry(
+          dynamicInner,
+          dynamicOuter,
+          192,
+        );
+
+      const dynamicMaterial =
+        new THREE.MeshBasicMaterial({
+          color:
+            0x63d79d,
+          transparent:
+            true,
+          opacity:
+            0.24,
+          side:
+            THREE.DoubleSide,
+          depthWrite:
+            false,
+          depthTest:
+            false,
+          blending:
+            THREE.AdditiveBlending,
+        });
+
+      const dynamicBand =
+        new THREE.Mesh(
+          dynamicGeometry,
+          dynamicMaterial,
+        );
+
+      dynamicBand.rotation.x =
+        -Math.PI / 2;
+      dynamicBand.position.y =
+        0.003;
+      dynamicBand.renderOrder =
+        72;
+
+      group.add(
+        dynamicBand,
+      );
+
+      this.frameDisposables.push(
+        dynamicGeometry,
+        dynamicMaterial,
+      );
+
+      this.addHabitableZoneBoundary(
+        group,
+        dynamicInner,
+        0x74e5aa,
+        0.88,
+      );
+
+      this.addHabitableZoneBoundary(
+        group,
+        dynamicOuter,
+        0x74e5aa,
+        0.88,
+      );
+    }
+
+    this.habitableZoneGroup =
+      group;
+    this.habitableZoneSnapshot =
+      habitableZone;
+
+    this.habitableZoneLayerObjects.push(
+      group,
+    );
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
+  private addHabitableZoneBoundary(
+    group:
+      THREE.Group,
+
+    radiusScene:
+      number,
+
+    color:
+      number,
+
+    opacity:
+      number,
+  ): void {
+
+    const points =
+      Array.from(
+        {
+          length:
+            160,
+        },
+        (
+          _,
+          index,
+        ) => {
+          const angle =
+            Math.PI *
+            2 *
+            index /
+            160;
+
+          return new THREE.Vector3(
+            Math.cos(angle) *
+              radiusScene,
+            0.006,
+            Math.sin(angle) *
+              radiusScene,
+          );
+        },
+      );
+
+    const geometry =
+      new THREE.BufferGeometry()
+        .setFromPoints(
+          points,
+        );
+
+    const material =
+      new THREE.LineBasicMaterial({
+        color,
+        transparent:
+          true,
+        opacity,
+        depthWrite:
+          false,
+        depthTest:
+          false,
+        blending:
+          THREE.AdditiveBlending,
+      });
+
+    const line =
+      new THREE.LineLoop(
+        geometry,
+        material,
+      );
+
+    line.renderOrder =
+      74;
+
+    group.add(
+      line,
+    );
+
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+  }
+
+  private addOrbitalRiskTarget(
+    riskTarget:
+      SystemSceneOrbitalRiskTargetSnapshot,
+
+    snapshot:
+      SystemSceneSnapshot,
+  ): void {
+
+    const sourceOrbit =
+      snapshot.orbits.find(
+        orbit =>
+          orbit.id ===
+          riskTarget.targetOrbitId,
+      ) ??
+      null;
+
+    if (
+      sourceOrbit !==
+        null
+    ) {
+      const geometry =
+        new THREE.BufferGeometry();
+
+      geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(
+          new Float32Array(
+            ORBIT_SEGMENT_COUNT *
+            3,
+          ),
+          3,
+        ),
+      );
+
+      const material =
+        new THREE.LineBasicMaterial({
+          color:
+            riskTarget.colorHex,
+          transparent:
+            true,
+          opacity:
+            riskTarget.severity === 'COLLISION_GEOMETRY'
+              ? 0.78
+              : riskTarget.severity === 'APPROACH'
+                ? 0.52
+                : 0.20,
+          depthWrite:
+            false,
+          depthTest:
+            false,
+          blending:
+            THREE.AdditiveBlending,
+        });
+
+      const line =
+        new THREE.LineLoop(
+          geometry,
+          material,
+        );
+
+      line.name =
+        `Orbital risk ${riskTarget.targetLabel}`;
+      line.renderOrder =
+        20;
+
+      this.updateOrbitGeometry(
+        line,
+        sourceOrbit,
+        snapshot.scale,
+        snapshot.simulation.epochSimulationDay,
+      );
+
+      this.orbitalRiskOrbitOverlays.push({
+        line,
+        orbit:
+          sourceOrbit,
+      });
+
+      this.orbitalRiskLayerObjects.push(
+        line,
+      );
+
+      this.frameDisposables.push(
+        geometry,
+        material,
+      );
+
+      this.presentationRoot.add(
+        line,
+      );
+    }
+
+    const targetBody =
+      [
+        ...snapshot.planets,
+        ...snapshot.moons,
+      ].find(
+        body =>
+          body.id ===
+          riskTarget.targetBodyId,
+      ) ??
+      null;
+
+    if (
+      targetBody ===
+        null
+    ) {
+      return;
+    }
+
+    const markerMaterial =
+      new THREE.SpriteMaterial({
+        map:
+          this.selectionRingTexture,
+        color:
+          riskTarget.colorHex,
+        transparent:
+          true,
+        opacity:
+          riskTarget.severity === 'COLLISION_GEOMETRY'
+            ? 0.86
+            : riskTarget.severity === 'APPROACH'
+              ? 0.64
+              : 0.32,
+        depthWrite:
+          false,
+        depthTest:
+          false,
+        blending:
+          THREE.AdditiveBlending,
+      });
+
+    const marker =
+      new THREE.Sprite(
+        markerMaterial,
+      );
+
+    const markerScale =
+      riskTarget.severity === 'COLLISION_GEOMETRY'
+        ? 6.2
+        : riskTarget.severity === 'APPROACH'
+          ? 5.2
+          : 3.8;
+
+    const diameter =
+      Math.max(
+        targetBody.radiusScene *
+          markerScale,
+        riskTarget.targetKind ===
+          'planet'
+          ? riskTarget.severity === 'CROSSING'
+            ? 0.22
+            : 0.30
+          : riskTarget.severity === 'CROSSING'
+            ? 0.14
+            : 0.18,
+      );
+
+    marker.scale.set(
+      diameter,
+      diameter,
+      1,
+    );
+    marker.position.set(
+      targetBody.position.x,
+      targetBody.position.y,
+      targetBody.position.z,
+    );
+    marker.renderOrder =
+      120;
+    marker.name =
+      `Risk marker ${riskTarget.targetLabel}`;
+
+    this.orbitalRiskMarkers.push({
+      sprite:
+        marker,
+      targetBodyId:
+        riskTarget.targetBodyId,
+    });
+
+    this.orbitalRiskLayerObjects.push(
+      marker,
+    );
+
+    this.frameDisposables.push(
+      markerMaterial,
+    );
+
+    this.presentationRoot.add(
+      marker,
+    );
   }
 
   private addOrbit(
@@ -2825,6 +3469,61 @@ class ThreeSystemSceneRuntime
         anchorPosition.z,
       );
     }
+
+    if (
+      this.habitableZoneGroup !==
+        null &&
+      this.habitableZoneSnapshot !==
+        null
+    ) {
+      const habitableZoneAnchor =
+        this.positionFromContributions(
+          this.habitableZoneSnapshot
+            .anchorMotionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      this.habitableZoneGroup.position.copy(
+        habitableZoneAnchor,
+      );
+    }
+
+    for (
+      const overlay
+      of this.orbitalRiskOrbitOverlays
+    ) {
+      const anchorPosition =
+        this.positionFromContributions(
+          overlay.orbit.anchorMotionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      overlay.line.position.copy(
+        anchorPosition,
+      );
+    }
+
+    for (
+      const marker
+      of this.orbitalRiskMarkers
+    ) {
+      const targetBody =
+        this.animatedBodies.get(
+          marker.targetBodyId,
+        ) ??
+        null;
+
+      if (
+        targetBody !==
+          null
+      ) {
+        marker.sprite.position.copy(
+          targetBody.position,
+        );
+      }
+    }
   }
 
   private positionFromContributions(
@@ -3002,6 +3701,18 @@ class ThreeSystemSceneRuntime
     this.planetLayerObjects.length =
       0;
     this.moonLayerObjects.length =
+      0;
+    this.habitableZoneLayerObjects.length =
+      0;
+    this.orbitalRiskLayerObjects.length =
+      0;
+    this.habitableZoneGroup =
+      null;
+    this.habitableZoneSnapshot =
+      null;
+    this.orbitalRiskOrbitOverlays.length =
+      0;
+    this.orbitalRiskMarkers.length =
       0;
     this.asteroidLayerObjects.length =
       0;
@@ -5201,6 +5912,26 @@ function parseDisplayHexColor(
       value &
       0xff,
   });
+}
+
+function clampValue(
+  value:
+    number,
+
+  minimum:
+    number,
+
+  maximum:
+    number,
+): number {
+
+  return Math.min(
+    maximum,
+    Math.max(
+      minimum,
+      value,
+    ),
+  );
 }
 
 function clamp01(

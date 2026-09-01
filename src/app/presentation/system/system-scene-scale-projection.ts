@@ -811,6 +811,104 @@ export function systemSceneProjectedRadiusAuInSpace(
   );
 }
 
+/**
+ * Presentation-only projection for scientific overlays that may extend beyond
+ * the currently materialized system radius (for example a radiative HZ in a
+ * compact/planetless system). Inside the validated 24.5 range this is exactly
+ * the normal projection. Beyond it, the overlay continues monotonically with
+ * a compressed logarithmic tail instead of clamping both boundaries onto the
+ * same scene radius. Existing body/orbit projection is deliberately untouched.
+ */
+export function systemSceneProjectedOverlayRadiusAuInSpace(
+  radiusAu:
+    number,
+
+  scale:
+    SystemSceneScaleSnapshot,
+
+  space:
+    SystemSceneProjectionSpace,
+): number {
+
+  if (
+    !Number.isFinite(
+      radiusAu,
+    ) ||
+    radiusAu <=
+      0
+  ) {
+    return 0;
+  }
+
+  if (
+    !isAdaptiveSystemSceneScale(
+      scale,
+    )
+  ) {
+    return systemSceneProjectedRadiusAuInSpace(
+      radiusAu,
+      scale,
+      space,
+    );
+  }
+
+  const radialScale =
+    scale.projectionMode ===
+        SystemSceneScaleProjectionMode.TRIPLE_HIERARCHICAL_V1 &&
+      scale.tripleHierarchy !==
+        null &&
+      scale.tripleHierarchy !==
+        undefined
+      ? space ===
+          SystemSceneProjectionSpace.TRIPLE_OUTER
+        ? scale.tripleHierarchy.outer
+        : scale.tripleHierarchy.local
+      : {
+          outerRadiusAu:
+            scale.outerRadiusAu,
+          targetOuterRadiusScene:
+            scale.targetOuterRadiusScene,
+        };
+
+  const outerRadiusAu =
+    positiveFiniteOr(
+      radialScale.outerRadiusAu,
+      1,
+    );
+
+  if (
+    radiusAu <=
+      outerRadiusAu
+  ) {
+    return systemSceneProjectedRadiusAuInSpace(
+      radiusAu,
+      scale,
+      space,
+    );
+  }
+
+  const targetOuterRadiusScene =
+    positiveFiniteOr(
+      radialScale.targetOuterRadiusScene,
+      4.8,
+    );
+
+  const excessRatio =
+    radiusAu /
+      outerRadiusAu -
+    1;
+
+  return targetOuterRadiusScene *
+    (
+      1 +
+      0.32 *
+        Math.log1p(
+          2 *
+          excessRatio,
+        )
+    );
+}
+
 export function systemSceneProjectAuVectorInSpace(
   vectorAu:
     SystemSceneScaleVector,

@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.6',
+  'SystemScene point 24.7',
   () => {
 
     let resize:
@@ -325,7 +325,7 @@ describe(
     );
 
     it(
-      'should toggle planet, moon and minor-body subtype layers through the shared SystemScene host',
+      'should toggle planet, moon, habitable-zone, orbital-risk and minor-body subtype layers through the shared SystemScene host',
       () => {
 
         const fixture =
@@ -354,6 +354,16 @@ describe(
         const moonButton =
           element.querySelector<HTMLButtonElement>(
             '[data-testid="system-scene-layer-moons"]',
+          );
+
+        const habitableZoneButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-habitable-zone"]',
+          );
+
+        const orbitalRiskButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-orbital-risk"]',
           );
 
         const asteroidButton =
@@ -385,6 +395,14 @@ describe(
         ).toBe(false);
 
         expect(
+          habitableZoneButton?.disabled,
+        ).toBe(false);
+
+        expect(
+          orbitalRiskButton?.disabled,
+        ).toBe(false);
+
+        expect(
           asteroidButton?.disabled,
         ).toBe(false);
 
@@ -412,6 +430,8 @@ describe(
         ).toHaveBeenLastCalledWith({
           planets: false,
           moons: false,
+          habitableZone: false,
+          orbitalRisk: false,
           asteroids: false,
           comets: false,
           transNeptunianObjects: false,
@@ -419,6 +439,8 @@ describe(
         });
 
         moonButton?.click();
+        habitableZoneButton?.click();
+        orbitalRiskButton?.click();
         asteroidButton?.click();
         cometButton?.click();
         tnoButton?.click();
@@ -428,6 +450,30 @@ describe(
         expect(
           fixture.componentInstance.moonsVisible(),
         ).toBe(true);
+
+        expect(
+          fixture.componentInstance.habitableZoneVisible(),
+        ).toBe(true);
+
+        expect(
+          fixture.componentInstance.orbitalRiskVisible(),
+        ).toBe(true);
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-habitable-zone-legend"]',
+          )?.textContent,
+        ).toContain(
+          '0.82–1.46 AU',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-orbital-risk-legend"]',
+          )?.textContent,
+        ).toContain(
+          'Aproximación',
+        );
 
         expect(
           fixture.componentInstance.asteroidsVisible(),
@@ -450,6 +496,8 @@ describe(
         ).toHaveBeenLastCalledWith({
           planets: false,
           moons: true,
+          habitableZone: true,
+          orbitalRisk: true,
           asteroids: true,
           comets: true,
           transNeptunianObjects: true,
@@ -907,10 +955,77 @@ function sceneSnapshot():
         }),
       ]),
 
+    habitableZone:
+      Object.freeze({
+        topology:
+          'CIRCUMBINARY' as const,
+        radiativeInnerEdgeAu:
+          0.82,
+        radiativeOuterEdgeAu:
+          1.46,
+        dynamicallyHabitableInnerEdgeAu:
+          0.94,
+        dynamicallyHabitableOuterEdgeAu:
+          1.35,
+        radiativeInnerRadiusScene:
+          1.45,
+        radiativeOuterRadiusScene:
+          2.18,
+        dynamicallyHabitableInnerRadiusScene:
+          1.62,
+        dynamicallyHabitableOuterRadiusScene:
+          2.06,
+        presentationAdjusted:
+          true,
+        dynamicalOverlapFraction01:
+          0.72,
+        anchorMotionContributions:
+          Object.freeze([]),
+      }),
+
+    orbitalRiskTargets:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'orbital-risk-planet-1',
+          targetBodyId:
+            'planet-1',
+          targetOrbitId:
+            'orbit-planet-1',
+          targetKind:
+            'planet' as const,
+          targetLabel:
+            'Jotheria b',
+          sourceMinorBodyCount:
+            2,
+          riskCandidateCount:
+            1,
+          approachCorridorCount:
+            1,
+          radialCrossingOnlyCount:
+            1,
+          directCollisionGeometryCount:
+            0,
+          severity:
+            'APPROACH' as const,
+          highestOrbitalRiskIndex01:
+            0.64,
+          highestRegimeName:
+            'PLANET_APPROACH_CORRIDOR',
+          colorHex:
+            '#FFAA52',
+        }),
+      ]),
+
     layers:
       Object.freeze({
         moonCount: 1,
         minorBodyCount: 4,
+        habitableZoneAvailable: true,
+        orbitalRiskTargetCount: 1,
+        orbitalCrossingTargetCount: 0,
+        orbitalApproachTargetCount: 1,
+        orbitalCollisionGeometryTargetCount: 0,
       }),
 
     orbits:

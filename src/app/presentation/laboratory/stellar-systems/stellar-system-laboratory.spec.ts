@@ -353,6 +353,43 @@ describe(
           0,
         );
 
+        expect(
+          snapshot.habitableZone,
+        ).not.toBeNull();
+
+        expect(
+          snapshot.layers.habitableZoneAvailable,
+        ).toBe(true);
+
+        expect(
+          snapshot.layers.orbitalRiskTargetCount,
+        ).toBe(
+          snapshot.layers.orbitalApproachTargetCount +
+          snapshot.layers.orbitalCollisionGeometryTargetCount,
+        );
+
+        expect(
+          snapshot.orbitalRiskTargets.length,
+        ).toBe(
+          snapshot.layers.orbitalRiskTargetCount +
+          snapshot.layers.orbitalCrossingTargetCount,
+        );
+
+        expect(
+          snapshot.orbitalRiskTargets.every(
+            risk =>
+              risk.highestOrbitalRiskIndex01 >=
+                0 &&
+              risk.highestOrbitalRiskIndex01 <=
+                1 &&
+              snapshot.orbits.some(
+                orbit =>
+                  orbit.id ===
+                  risk.targetOrbitId,
+              ),
+          ),
+        ).toBe(true);
+
         const minorMotionIds =
           new Set(
             snapshot.minorBodies.flatMap(

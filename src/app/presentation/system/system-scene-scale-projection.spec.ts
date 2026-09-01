@@ -9,11 +9,12 @@ import {
   SystemSceneScaleProjectionMode,
   systemSceneProjectAuVector,
   systemSceneProjectAuVectorInSpace,
+  systemSceneProjectedOverlayRadiusAuInSpace,
   systemSceneProjectedRadiusAu,
 } from './system-scene-scale-projection';
 
 describe(
-  'SystemSceneScaleProjection point 24.5 V3',
+  'SystemSceneScaleProjection points 24.5 + 24.7',
   () => {
     it(
       'should reserve readable space for the innermost SINGLE periapsis while fitting the outer system',
@@ -181,6 +182,61 @@ describe(
         ).toBeCloseTo(
           -3,
           12,
+        );
+      },
+    );
+
+    it(
+      'should let scientific overlays extend beyond the fitted 24.5 radius without changing normal body projection',
+      () => {
+        const scale =
+          buildSingleAdaptiveSystemScaleV1({
+            outerRadiusAu:
+              2,
+            targetOuterRadiusScene:
+              4.8,
+            innerPeriapsisAu:
+              0.1,
+            starRadiusScene:
+              0.28,
+            maxPlanetRadiusScene:
+              0.06,
+          });
+
+        expect(
+          systemSceneProjectedRadiusAu(
+            6,
+            scale,
+          ),
+        ).toBeCloseTo(
+          4.8,
+          12,
+        );
+
+        const overlayInner =
+          systemSceneProjectedOverlayRadiusAuInSpace(
+            3,
+            scale,
+            SystemSceneProjectionSpace.GLOBAL,
+          );
+
+        const overlayOuter =
+          systemSceneProjectedOverlayRadiusAuInSpace(
+            6,
+            scale,
+            SystemSceneProjectionSpace.GLOBAL,
+          );
+
+        expect(
+          overlayInner,
+        ).toBeGreaterThan(
+          4.8,
+        );
+
+        expect(
+          overlayOuter,
+        ).toBeGreaterThan(
+          overlayInner,
         );
       },
     );
