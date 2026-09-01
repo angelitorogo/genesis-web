@@ -36,7 +36,7 @@ import {
 } from './system';
 
 describe(
-  'SystemPage point 24.3',
+  'SystemPage point 24.4',
   () => {
 
     let load:
@@ -192,6 +192,12 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="system-scene"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-controls"]',
           ),
         ).toBeTruthy();
 

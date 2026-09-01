@@ -23,8 +23,56 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>24.3 · SIMULATION TIME · ORBITAL ANIMATION</span>
+    <span>24.4 · ORBIT · PAN · ZOOM · SELECTION</span>
   </div>
+
+
+  <div
+    class="system-scene__controls"
+    data-testid="system-scene-controls"
+  >
+    <span>
+      IZQ: ORBITAR
+    </span>
+    <span>
+      DCHO: PAN
+    </span>
+    <span>
+      RUEDA: ZOOM
+    </span>
+    <span>
+      CLIC: SELECCIONAR
+    </span>
+
+    <button
+      type="button"
+      data-testid="system-scene-reset-view"
+      (click)="resetView()"
+    >
+      RECENTRAR
+    </button>
+  </div>
+
+  @if (selection(); as selectedBody) {
+    <div
+      class="system-scene__selection"
+      data-testid="system-scene-selection"
+      [attr.data-body-id]="selectedBody.bodyId"
+      [attr.data-body-kind]="selectedBody.kind"
+    >
+      <span>
+        {{ selectedBody.kind === 'star' ? 'ESTRELLA' : 'PLANETA' }}
+      </span>
+
+      <strong>
+        {{ selectedBody.title }}
+      </strong>
+
+      <small>
+        {{ selectedBody.label }}
+      </small>
+    </div>
+  }
 
   @if (renderState() === 'initializing') {
     <div

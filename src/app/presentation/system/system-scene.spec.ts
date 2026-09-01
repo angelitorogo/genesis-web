@@ -17,6 +17,7 @@ import {
   systemSceneCameraFovDegrees,
   systemSceneDevicePixelRatio,
   type SystemSceneRuntime,
+  type SystemSceneSelectionChangeHandler,
 } from './system-scene';
 
 import {
@@ -24,7 +25,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.3',
+  'SystemScene point 24.4',
   () => {
 
     let resize:
@@ -36,11 +37,20 @@ describe(
     let dispose:
       SystemSceneRuntime['dispose'];
 
+    let resetView:
+      NonNullable<SystemSceneRuntime['resetView']>;
+
     let runtimeFactory:
       ReturnType<typeof vi.fn>;
 
+    let capturedSelectionHandler:
+      SystemSceneSelectionChangeHandler | null;
+
     beforeEach(
       async () => {
+
+        capturedSelectionHandler =
+          null;
 
         resize =
           vi.fn(
@@ -77,20 +87,36 @@ describe(
             (): void => {},
           );
 
+        resetView =
+          vi.fn(
+            (): void => {},
+          );
+
         const runtime:
           SystemSceneRuntime =
           {
             resize,
             render,
+            resetView,
             dispose,
           };
 
         runtimeFactory =
-          vi
-            .fn()
-            .mockReturnValue(
-              runtime,
-            );
+          vi.fn(
+            (
+              _canvas:
+                HTMLCanvasElement,
+
+              onSelectionChange?:
+                SystemSceneSelectionChangeHandler,
+            ): SystemSceneRuntime => {
+              capturedSelectionHandler =
+                onSelectionChange ??
+                null;
+
+              return runtime;
+            },
+          );
 
         await TestBed
           .configureTestingModule({
@@ -168,6 +194,114 @@ describe(
             ?.physicalBodyCount,
         ).toBe(
           3,
+        );
+
+        expect(
+          fixture
+            .nativeElement
+            .querySelector(
+              '[data-testid="system-scene-controls"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'ORBITAR',
+        );
+      },
+    );
+
+    it(
+      'should expose shared body selection state and reset-view controls to every SystemScene host',
+      () => {
+
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        fixture
+          .componentRef
+          .setInput(
+            'snapshot',
+            sceneSnapshot(),
+          );
+
+        const emittedSelections: unknown[] = [];
+
+        fixture
+          .componentInstance
+          .bodySelectionChange
+          .subscribe(
+            selection => {
+              emittedSelections.push(
+                selection,
+              );
+            },
+          );
+
+        fixture.detectChanges();
+
+        expect(
+          capturedSelectionHandler,
+        ).not.toBeNull();
+
+        (
+          capturedSelectionHandler as
+            SystemSceneSelectionChangeHandler
+        )(
+          Object.freeze({
+            bodyId:
+              'planet-1',
+            kind:
+              'planet',
+            label:
+              'b',
+            title:
+              'Jotheria b',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          fixture
+            .componentInstance
+            .selection()
+            ?.bodyId,
+        ).toBe(
+          'planet-1',
+        );
+
+        expect(
+          fixture
+            .nativeElement
+            .querySelector(
+              '[data-testid="system-scene-selection"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Jotheria b',
+        );
+
+        expect(
+          emittedSelections,
+        ).toHaveLength(
+          1,
+        );
+
+        (
+          fixture
+            .nativeElement as
+              HTMLElement
+        )
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-reset-view"]',
+          )
+          ?.click();
+
+        expect(
+          resetView,
+        ).toHaveBeenCalledTimes(
+          1,
         );
       },
     );

@@ -77,6 +77,12 @@ describe(
           ),
         ).toHaveLength(1);
 
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-controls"]',
+          ),
+        ).toBeTruthy();
+
         const legend =
           element.querySelector(
             '[data-testid="stellar-system-laboratory-unit-legend"]',

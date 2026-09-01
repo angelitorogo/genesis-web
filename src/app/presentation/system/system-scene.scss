@@ -17,6 +17,12 @@
     width: 100%;
     height: 100%;
     outline: none;
+    cursor: grab;
+    touch-action: none;
+
+    &:active {
+      cursor: grabbing;
+    }
   }
 
   &__optical-vignette {
@@ -42,6 +48,77 @@
     color: rgba(184, 221, 238, .58);
     font: 700 .58rem var(--genesis-font-mono);
     letter-spacing: .12em;
+  }
+
+  &__controls {
+    position: absolute;
+    z-index: 3;
+    top: 2.55rem;
+    left: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem .6rem;
+    max-width: min(46rem, calc(100% - 2rem));
+    padding: .42rem .5rem;
+    border: 1px solid rgba(106, 215, 255, .12);
+    border-radius: .55rem;
+    background: rgba(3, 7, 13, .48);
+    color: rgba(184, 221, 238, .56);
+    font: 700 .52rem var(--genesis-font-mono);
+    letter-spacing: .06em;
+    backdrop-filter: blur(8px);
+
+    span {
+      pointer-events: none;
+    }
+
+    button {
+      padding: .28rem .42rem;
+      border: 1px solid rgba(106, 215, 255, .28);
+      border-radius: .4rem;
+      background: rgba(106, 215, 255, .08);
+      color: var(--genesis-color-primary);
+      font: 700 .5rem var(--genesis-font-mono);
+      letter-spacing: .06em;
+      cursor: pointer;
+
+      &:hover {
+        border-color: rgba(106, 215, 255, .52);
+        background: rgba(106, 215, 255, .14);
+      }
+    }
+  }
+
+  &__selection {
+    position: absolute;
+    z-index: 3;
+    bottom: 2.5rem;
+    left: 1rem;
+    display: grid;
+    gap: .12rem;
+    min-width: 10rem;
+    max-width: min(22rem, calc(100% - 2rem));
+    padding: .55rem .65rem;
+    border: 1px solid rgba(140, 229, 255, .32);
+    border-radius: .6rem;
+    background: rgba(3, 8, 15, .72);
+    box-shadow: 0 0 1.8rem rgba(61, 182, 224, .08);
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+
+    span,
+    small {
+      color: rgba(184, 221, 238, .58);
+      font: 700 .5rem var(--genesis-font-mono);
+      letter-spacing: .08em;
+    }
+
+    strong {
+      overflow-wrap: anywhere;
+      color: var(--genesis-color-primary);
+      font-size: .78rem;
+    }
   }
 
   &__state {
@@ -96,6 +173,18 @@
       top: .75rem;
       right: .75rem;
       left: .75rem;
+    }
+
+    &__controls {
+      top: 2.2rem;
+      left: .75rem;
+      max-width: calc(100% - 1.5rem);
+    }
+
+    &__selection {
+      bottom: 2.25rem;
+      left: .75rem;
+      max-width: calc(100% - 1.5rem);
     }
   }
 }

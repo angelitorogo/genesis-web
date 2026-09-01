@@ -38,6 +38,10 @@ import {
   SystemSimulationClock,
 } from './system-simulation-clock';
 
+import {
+  SystemSceneCameraController,
+} from './system-scene-camera-controller';
+
 const MAX_DEVICE_PIXEL_RATIO =
   2;
 
@@ -61,6 +65,27 @@ export interface SystemSceneRenderInfo {
     number;
 }
 
+export interface SystemSceneSelection {
+  readonly bodyId:
+    string;
+
+  readonly kind:
+    'star' |
+    'planet';
+
+  readonly label:
+    string;
+
+  readonly title:
+    string;
+}
+
+export type SystemSceneSelectionChangeHandler =
+  (
+    selection:
+      SystemSceneSelection | null,
+  ) => void;
+
 export interface SystemSceneRuntime {
   resize(
     width:
@@ -78,6 +103,9 @@ export interface SystemSceneRuntime {
       SystemSceneSnapshot,
   ): SystemSceneRenderInfo;
 
+  resetView?():
+    void;
+
   dispose():
     void;
 }
@@ -86,6 +114,9 @@ export type SystemSceneRuntimeFactory =
   (
     canvas:
       HTMLCanvasElement,
+
+    onSelectionChange?:
+      SystemSceneSelectionChangeHandler,
   ) => SystemSceneRuntime;
 
 export class SystemSceneWebGl2UnavailableError
@@ -113,15 +144,19 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
           (
             canvas:
               HTMLCanvasElement,
+
+            onSelectionChange?:
+              SystemSceneSelectionChangeHandler,
           ) =>
             createThreeSystemSceneRuntime(
               canvas,
+              onSelectionChange,
             ),
     },
   );
 
 /**
- * Point-24.3 Angular host for the stellar-system Three.js scene.
+ * Point-24.4 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -159,6 +194,10 @@ export class SystemScene
   @Output()
   readonly renderInfoChange =
     new EventEmitter<SystemSceneRenderInfo>();
+
+  @Output()
+  readonly bodySelectionChange =
+    new EventEmitter<SystemSceneSelection | null>();
 
   @ViewChild(
     'sceneHost',
@@ -216,6 +255,16 @@ export class SystemScene
       null,
     );
 
+  private readonly selectionSignal =
+    signal<SystemSceneSelection | null>(
+      null,
+    );
+
+  readonly selection =
+    this
+      .selectionSignal
+      .asReadonly();
+
   readonly renderState =
     this
       .renderStateSignal
@@ -250,6 +299,19 @@ export class SystemScene
             this
               .sceneCanvasRef
               .nativeElement,
+            selection => {
+              this
+                .selectionSignal
+                .set(
+                  selection,
+                );
+
+              this
+                .bodySelectionChange
+                .emit(
+                  selection,
+                );
+            },
           );
 
       this.installResizeHandling();
@@ -325,6 +387,15 @@ export class SystemScene
 
     this.runtime =
       null;
+  }
+
+  resetView():
+    void {
+
+    this
+      .runtime
+      ?.resetView
+      ?.();
   }
 
   private installResizeHandling():
@@ -519,10 +590,15 @@ export function systemSceneCameraFovDegrees(
 function createThreeSystemSceneRuntime(
   canvas:
     HTMLCanvasElement,
+
+  onSelectionChange:
+    SystemSceneSelectionChangeHandler =
+    () => {},
 ): SystemSceneRuntime {
 
   return new ThreeSystemSceneRuntime(
     canvas,
+    onSelectionChange,
   );
 }
 
@@ -570,6 +646,33 @@ class ThreeSystemSceneRuntime
   private readonly animatedOrbits =
     new Map<string, THREE.LineLoop>();
 
+  private readonly selectableObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly bodySnapshotById =
+    new Map<string, SystemSceneBodySnapshot>();
+
+  private readonly raycaster =
+    new THREE.Raycaster();
+
+  private readonly pointerNdc =
+    new THREE.Vector2();
+
+  private readonly selectionRingTexture:
+    THREE.CanvasTexture;
+
+  private selectionMarker:
+    THREE.Sprite | null =
+    null;
+
+  private selectedBodyId:
+    string | null =
+    null;
+
+  private readonly cameraController:
+    SystemSceneCameraController;
+
   private currentSnapshot:
     SystemSceneSnapshot | null =
     null;
@@ -612,8 +715,11 @@ class ThreeSystemSceneRuntime
     false;
 
   constructor(
-    canvas:
+    private readonly canvas:
       HTMLCanvasElement,
+
+    private readonly onSelectionChange:
+      SystemSceneSelectionChangeHandler,
   ) {
 
     const context =
@@ -688,10 +794,14 @@ class ThreeSystemSceneRuntime
     this.starGlareTexture =
       createStellarGlareTexture();
 
+    this.selectionRingTexture =
+      createSelectionRingTexture();
+
     this.persistentDisposables.push(
       this.starHaloTexture,
       this.starBloomTexture,
       this.starGlareTexture,
+      this.selectionRingTexture,
     );
 
     this.backdropRoot.name =
@@ -723,7 +833,22 @@ class ThreeSystemSceneRuntime
       this.persistentDisposables,
     );
 
-    this.configureCamera(
+    this.cameraController =
+      new SystemSceneCameraController(
+        this.camera,
+        canvas,
+        () => {
+          this.renderFrame();
+        },
+        (clientX, clientY) => {
+          this.selectAtClientPoint(
+            clientX,
+            clientY,
+          );
+        },
+      );
+
+    this.cameraController.frameSystem(
       4.8,
     );
   }
@@ -826,7 +951,7 @@ class ThreeSystemSceneRuntime
         ),
       );
 
-    this.configureCamera(
+    this.cameraController.frameSystem(
       snapshot.scale
         .targetOuterRadiusScene,
     );
@@ -911,6 +1036,7 @@ class ThreeSystemSceneRuntime
     this.motionById.clear();
 
     this.clearFrameObjects();
+    this.cameraController.dispose();
     disposeResources(
       this.persistentDisposables,
     );
@@ -930,35 +1056,11 @@ class ThreeSystemSceneRuntime
       .forceContextLoss();
   }
 
-  private configureCamera(
-    outerRadiusScene:
-      number,
-  ):
+  resetView():
     void {
 
-    const distance =
-      Math.max(
-        7.4,
-        outerRadiusScene *
-          2.25,
-      );
-
-    this
-      .camera
-      .position
-      .set(
-        distance * 0.18,
-        distance * 0.34,
-        distance,
-      );
-
-    this
-      .camera
-      .lookAt(
-        0,
-        0,
-        0,
-      );
+    this.assertAlive();
+    this.cameraController.resetView();
   }
 
   private addOrbit(
@@ -1273,6 +1375,11 @@ class ThreeSystemSceneRuntime
       group,
     );
 
+    this.registerSelectableBody(
+      star,
+      group,
+    );
+
     this
       .presentationRoot
       .add(
@@ -1351,11 +1458,285 @@ class ThreeSystemSceneRuntime
       group,
     );
 
+    this.registerSelectableBody(
+      planet,
+      group,
+    );
+
     this
       .presentationRoot
       .add(
         group,
       );
+  }
+
+  private registerSelectableBody(
+    body:
+      SystemSceneBodySnapshot,
+
+    group:
+      THREE.Group,
+  ):
+    void {
+
+    const pickRadius =
+      body.kind ===
+        'star'
+        ? Math.max(
+            body.radiusScene *
+              1.45,
+            0.13,
+          )
+        : Math.max(
+            body.radiusScene *
+              2.4,
+            0.085,
+          );
+
+    const geometry =
+      new THREE.SphereGeometry(
+        pickRadius,
+        14,
+        10,
+      );
+
+    const material =
+      new THREE.MeshBasicMaterial({
+        transparent:
+          true,
+        opacity:
+          0,
+        depthWrite:
+          false,
+        colorWrite:
+          false,
+      });
+
+    const proxy =
+      new THREE.Mesh(
+        geometry,
+        material,
+      );
+
+    proxy.name =
+      `${body.title} selection proxy`;
+    proxy.userData[
+      'systemSceneBodyId'
+    ] =
+      body.id;
+
+    group.add(
+      proxy,
+    );
+
+    this.selectableObjects.push(
+      proxy,
+    );
+    this.bodySnapshotById.set(
+      body.id,
+      body,
+    );
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+  }
+
+  private selectAtClientPoint(
+    clientX:
+      number,
+
+    clientY:
+      number,
+  ):
+    void {
+
+    const bounds =
+      this.canvas
+        .getBoundingClientRect();
+
+    if (
+      bounds.width <=
+        0 ||
+      bounds.height <=
+        0
+    ) {
+      return;
+    }
+
+    this.pointerNdc.set(
+      (
+        (clientX -
+          bounds.left) /
+        bounds.width
+      ) *
+        2 -
+        1,
+      -(
+        (
+          clientY -
+          bounds.top
+        ) /
+        bounds.height
+      ) *
+        2 +
+        1,
+    );
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.updateMatrixWorld(
+      true,
+    );
+
+    this.raycaster.setFromCamera(
+      this.pointerNdc,
+      this.camera,
+    );
+
+    const intersection =
+      this.raycaster.intersectObjects(
+        this.selectableObjects,
+        false,
+      )[0];
+
+    const bodyId =
+      intersection
+        ?.object
+        .userData[
+          'systemSceneBodyId'
+        ];
+
+    this.selectBody(
+      typeof bodyId ===
+        'string'
+        ? bodyId
+        : null,
+    );
+  }
+
+  private selectBody(
+    bodyId:
+      string | null,
+  ):
+    void {
+
+    if (
+      this.selectionMarker !==
+      null
+    ) {
+      this.selectionMarker.removeFromParent();
+      this.selectionMarker.material.dispose();
+      this.selectionMarker =
+        null;
+    }
+
+    this.selectedBodyId =
+      bodyId;
+
+    if (
+      bodyId ===
+        null
+    ) {
+      this.onSelectionChange(
+        null,
+      );
+      this.renderFrame();
+      return;
+    }
+
+    const body =
+      this.bodySnapshotById.get(
+        bodyId,
+      );
+
+    const group =
+      this.animatedBodies.get(
+        bodyId,
+      );
+
+    if (
+      body ===
+        undefined ||
+      group ===
+        undefined
+    ) {
+      this.onSelectionChange(
+        null,
+      );
+      this.renderFrame();
+      return;
+    }
+
+    const markerMaterial =
+      new THREE.SpriteMaterial({
+        map:
+          this.selectionRingTexture,
+        color:
+          0x8ce5ff,
+        transparent:
+          true,
+        opacity:
+          0.94,
+        depthTest:
+          false,
+        depthWrite:
+          false,
+        toneMapped:
+          false,
+      });
+
+    const marker =
+      new THREE.Sprite(
+        markerMaterial,
+      );
+
+    const diameter =
+      body.kind ===
+        'star'
+        ? Math.max(
+            body.radiusScene *
+              4.5,
+            0.46,
+          )
+        : Math.max(
+            body.radiusScene *
+              4.8,
+            0.34,
+          );
+
+    marker.scale.set(
+      diameter,
+      diameter,
+      1,
+    );
+    marker.renderOrder =
+      100;
+    marker.name =
+      `${body.title} selection marker`;
+
+    group.add(
+      marker,
+    );
+
+    this.selectionMarker =
+      marker;
+
+    this.onSelectionChange(
+      Object.freeze({
+        bodyId:
+          body.id,
+        kind:
+          body.kind,
+        label:
+          body.label,
+        title:
+          body.title,
+      }),
+    );
+
+    this.renderFrame();
   }
 
   private applySimulationDay(
@@ -1507,10 +1888,34 @@ class ThreeSystemSceneRuntime
   private clearFrameObjects():
     void {
 
+    if (
+      this.selectionMarker !==
+        null
+    ) {
+      this.selectionMarker.removeFromParent();
+      this.selectionMarker.material.dispose();
+    }
+
     disposeResources(
       this.frameDisposables,
     );
 
+    if (
+      this.selectedBodyId !==
+        null
+    ) {
+      this.onSelectionChange(
+        null,
+      );
+    }
+
+    this.selectionMarker =
+      null;
+    this.selectedBodyId =
+      null;
+    this.selectableObjects.length =
+      0;
+    this.bodySnapshotById.clear();
     this.animatedBodies.clear();
     this.animatedOrbits.clear();
 
@@ -3810,6 +4215,106 @@ function createRadialGlowTexture(
 
   context.fillStyle =
     gradient;
+  context.fillRect(
+    0,
+    0,
+    size,
+    size,
+  );
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas,
+    );
+
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
+  texture.needsUpdate =
+    true;
+
+  return texture;
+}
+
+function createSelectionRingTexture():
+  THREE.CanvasTexture {
+
+  const size =
+    256;
+
+  const canvas =
+    document.createElement(
+      'canvas',
+    );
+
+  canvas.width =
+    size;
+  canvas.height =
+    size;
+
+  const context =
+    canvas.getContext(
+      '2d',
+    );
+
+  if (
+    context ===
+      null
+  ) {
+    throw new Error(
+      'Unable to create system-scene selection texture.',
+    );
+  }
+
+  const center =
+    size /
+    2;
+
+  context.clearRect(
+    0,
+    0,
+    size,
+    size,
+  );
+
+  const glow =
+    context.createRadialGradient(
+      center,
+      center,
+      size *
+        0.31,
+      center,
+      center,
+      size *
+        0.48,
+    );
+
+  glow.addColorStop(
+    0,
+    'rgba(255,255,255,0)',
+  );
+  glow.addColorStop(
+    0.52,
+    'rgba(255,255,255,0.04)',
+  );
+  glow.addColorStop(
+    0.72,
+    'rgba(255,255,255,0.72)',
+  );
+  glow.addColorStop(
+    0.80,
+    'rgba(255,255,255,0.98)',
+  );
+  glow.addColorStop(
+    0.88,
+    'rgba(255,255,255,0.28)',
+  );
+  glow.addColorStop(
+    1,
+    'rgba(255,255,255,0)',
+  );
+
+  context.fillStyle =
+    glow;
   context.fillRect(
     0,
     0,
