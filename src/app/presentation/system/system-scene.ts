@@ -67,7 +67,7 @@ import {
 
 import {
   systemSceneBodyAxialTiltRadians,
-  systemSceneBodySpinRadians,
+  systemSceneBodyDisplaySpinRadians,
   systemSceneSphereSegments,
 } from './system-scene-body-render-state';
 
@@ -3959,9 +3959,10 @@ class ThreeSystemSceneRuntime
             undefined
         ) {
           spinObject.rotation.y =
-            systemSceneBodySpinRadians(
+            systemSceneBodyDisplaySpinRadians(
               body.spin,
               simulationDay,
+              snapshot.simulation,
             );
         }
       }

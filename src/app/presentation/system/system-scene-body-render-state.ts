@@ -36,6 +36,14 @@ export interface SystemSceneBodySpinSnapshot {
     number;
 }
 
+export interface SystemSceneBodySpinPresentationTiming {
+  readonly epochSimulationDay:
+    number;
+
+  readonly playbackDaysPerRealSecond:
+    number;
+}
+
 export interface SystemSceneSphereSegments {
   readonly widthSegments:
     number;
@@ -46,6 +54,15 @@ export interface SystemSceneSphereSegments {
 
 const TWO_PI =
   Math.PI * 2;
+
+/**
+ * Readability ceiling for accelerated system playback. The authoritative
+ * rotation period remains untouched in the snapshot; only the non-synchronized
+ * planet mesh is visually time-compressed so procedural texture detail remains
+ * inspectable while orbital motion is accelerated by point 24.3.
+ */
+const MAX_UNSYNCHRONIZED_PLANET_DISPLAY_CYCLES_PER_REAL_SECOND =
+  1 / 30;
 
 /**
  * Point-25.1 fixed sphere tessellation baseline.
@@ -139,6 +156,94 @@ export function systemSceneBodySpinRadians(
   return normalizeRadians(
     epochRadians +
     elapsedCycles *
+      TWO_PI,
+  );
+}
+
+/**
+ * Presentation-only readable spin for the real Three.js renderer.
+ *
+ * Point 24.3 intentionally accelerates orbital simulation so a system can be
+ * inspected in seconds rather than years. Feeding that accelerated
+ * simulationDay directly into a 10-30 h planetary spin can make textures blur
+ * through several turns per real second. For non-synchronized planets only,
+ * compress that visual cadence monotonically and asymptotically cap it at one
+ * turn per 30 real seconds.
+ *
+ * Synchronized planets and all moons keep the authoritative simulation-time
+ * projection so tidal locking is never broken visually. No domain period is
+ * mutated or written back.
+ */
+export function systemSceneBodyDisplaySpinRadians(
+  spin:
+    SystemSceneBodySpinSnapshot,
+
+  simulationDay:
+    number,
+
+  timing:
+    SystemSceneBodySpinPresentationTiming,
+): number {
+
+  assertSpin(
+    spin,
+  );
+  assertPresentationTiming(
+    timing,
+  );
+
+  if (
+    spin.source !==
+      'PLANET_19_3' ||
+    spin.isSynchronized ||
+    spin.rotationPeriodHours ===
+      null
+  ) {
+    return systemSceneBodySpinRadians(
+      spin,
+      simulationDay,
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      simulationDay,
+    )
+  ) {
+    throw new RangeError(
+      `simulationDay must be finite: ${simulationDay}.`,
+    );
+  }
+
+  const epochSpinRadians =
+    systemSceneBodySpinRadians(
+      spin,
+      timing.epochSimulationDay,
+    );
+
+  const elapsedRealSeconds =
+    (
+      simulationDay -
+      timing.epochSimulationDay
+    ) /
+    timing.playbackDaysPerRealSecond;
+
+  const physicalCyclesPerRealSecond =
+    timing.playbackDaysPerRealSecond *
+    24 /
+    spin.rotationPeriodHours;
+
+  const displayCyclesPerRealSecond =
+    MAX_UNSYNCHRONIZED_PLANET_DISPLAY_CYCLES_PER_REAL_SECOND *
+    Math.tanh(
+      physicalCyclesPerRealSecond /
+      MAX_UNSYNCHRONIZED_PLANET_DISPLAY_CYCLES_PER_REAL_SECOND,
+    );
+
+  return normalizeRadians(
+    epochSpinRadians +
+    elapsedRealSeconds *
+      displayCyclesPerRealSecond *
       TWO_PI,
   );
 }
@@ -263,6 +368,34 @@ function assertSpin(
   ) {
     throw new RangeError(
       'Authoritative planet/moon spin requires a rotation period.',
+    );
+  }
+}
+
+function assertPresentationTiming(
+  timing:
+    SystemSceneBodySpinPresentationTiming,
+): void {
+
+  if (
+    !Number.isFinite(
+      timing.epochSimulationDay,
+    )
+  ) {
+    throw new RangeError(
+      'epochSimulationDay must be finite.',
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      timing.playbackDaysPerRealSecond,
+    ) ||
+    timing.playbackDaysPerRealSecond <=
+      0
+  ) {
+    throw new RangeError(
+      'playbackDaysPerRealSecond must be finite and greater than 0.',
     );
   }
 }

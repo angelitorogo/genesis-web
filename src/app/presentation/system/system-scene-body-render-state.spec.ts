@@ -1,5 +1,6 @@
 import {
   systemSceneBodyAxialTiltRadians,
+  systemSceneBodyDisplaySpinRadians,
   systemSceneBodySpinRadians,
   systemSceneSphereSegments,
   systemSceneStellarLightIntensity,
@@ -155,6 +156,91 @@ describe(
         ).toBeCloseTo(
           1.5 *
           Math.PI,
+          12,
+        );
+      },
+    );
+
+
+    it(
+      'should compress accelerated unsynchronized planet spin for texture readability without altering synchronized bodies',
+      () => {
+
+        const planetSpin =
+          Object.freeze({
+            source:
+              'PLANET_19_3' as const,
+            rotationPeriodHours:
+              24,
+            axialTiltDegrees:
+              23.44,
+            isRetrograde:
+              false,
+            isSynchronized:
+              false,
+            epochPhaseDegrees:
+              15,
+          } satisfies SystemSceneBodySpinSnapshot);
+
+        const synchronizedSpin =
+          Object.freeze({
+            ...planetSpin,
+            isSynchronized:
+              true,
+          } satisfies SystemSceneBodySpinSnapshot);
+
+        const timing =
+          Object.freeze({
+            epochSimulationDay:
+              0,
+            playbackDaysPerRealSecond:
+              10,
+          });
+
+        const afterOneRealSecond =
+          systemSceneBodyDisplaySpinRadians(
+            planetSpin,
+            10,
+            timing,
+          );
+
+        const visibleAdvance =
+          (
+            afterOneRealSecond -
+            15 *
+              Math.PI /
+              180 +
+            Math.PI *
+              2
+          ) %
+          (
+            Math.PI *
+            2
+          );
+
+        expect(
+          visibleAdvance,
+        ).toBeGreaterThan(0);
+        expect(
+          visibleAdvance,
+        ).toBeLessThanOrEqual(
+          Math.PI *
+          2 /
+          30 +
+          1e-12,
+        );
+
+        expect(
+          systemSceneBodyDisplaySpinRadians(
+            synchronizedSpin,
+            10.025,
+            timing,
+          ),
+        ).toBeCloseTo(
+          systemSceneBodySpinRadians(
+            synchronizedSpin,
+            10.025,
+          ),
           12,
         );
       },
