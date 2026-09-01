@@ -7,6 +7,10 @@ import {
 } from 'vitest';
 
 import {
+  MinorBodyKind,
+} from '../../domain/planetary/minor-body-kind';
+
+import {
   ArchiveStellarSystemKnowledgeLevel,
 } from '../genesis-archive/archive-stellar-system-card';
 
@@ -17,6 +21,7 @@ import {
   systemSceneCameraFovDegrees,
   systemSceneDevicePixelRatio,
   systemScenePickingRadiusScene,
+  type SystemSceneLayerVisibility,
   type SystemSceneRuntime,
   type SystemSceneSelectionChangeHandler,
 } from './system-scene';
@@ -26,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.4',
+  'SystemScene point 24.6',
   () => {
 
     let resize:
@@ -40,6 +45,9 @@ describe(
 
     let resetView:
       NonNullable<SystemSceneRuntime['resetView']>;
+
+    let setLayerVisibility:
+      NonNullable<SystemSceneRuntime['setLayerVisibility']>;
 
     let runtimeFactory:
       ReturnType<typeof vi.fn>;
@@ -93,12 +101,21 @@ describe(
             (): void => {},
           );
 
+        setLayerVisibility =
+          vi.fn(
+            (
+              _visibility:
+                SystemSceneLayerVisibility,
+            ): void => {},
+          );
+
         const runtime:
           SystemSceneRuntime =
           {
             resize,
             render,
             resetView,
+            setLayerVisibility,
             dispose,
           };
 
@@ -304,6 +321,140 @@ describe(
         ).toHaveBeenCalledTimes(
           1,
         );
+      },
+    );
+
+    it(
+      'should toggle planet, moon and minor-body subtype layers through the shared SystemScene host',
+      () => {
+
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        fixture
+          .componentRef
+          .setInput(
+            'snapshot',
+            sceneSnapshot(),
+          );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const planetButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-planets"]',
+          );
+
+        const moonButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-moons"]',
+          );
+
+        const asteroidButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-asteroids"]',
+          );
+
+        const cometButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-comets"]',
+          );
+
+        const tnoButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-tno"]',
+          );
+
+        const capturedButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-layer-captured"]',
+          );
+
+        expect(
+          planetButton?.disabled,
+        ).toBe(false);
+
+        expect(
+          moonButton?.disabled,
+        ).toBe(false);
+
+        expect(
+          asteroidButton?.disabled,
+        ).toBe(false);
+
+        expect(
+          cometButton?.disabled,
+        ).toBe(false);
+
+        expect(
+          tnoButton?.disabled,
+        ).toBe(false);
+
+        expect(
+          capturedButton?.disabled,
+        ).toBe(false);
+
+        planetButton?.click();
+        fixture.detectChanges();
+
+        expect(
+          fixture.componentInstance.planetsVisible(),
+        ).toBe(false);
+
+        expect(
+          setLayerVisibility,
+        ).toHaveBeenLastCalledWith({
+          planets: false,
+          moons: false,
+          asteroids: false,
+          comets: false,
+          transNeptunianObjects: false,
+          capturedObjects: false,
+        });
+
+        moonButton?.click();
+        asteroidButton?.click();
+        cometButton?.click();
+        tnoButton?.click();
+        capturedButton?.click();
+        fixture.detectChanges();
+
+        expect(
+          fixture.componentInstance.moonsVisible(),
+        ).toBe(true);
+
+        expect(
+          fixture.componentInstance.asteroidsVisible(),
+        ).toBe(true);
+
+        expect(
+          fixture.componentInstance.cometsVisible(),
+        ).toBe(true);
+
+        expect(
+          fixture.componentInstance.transNeptunianObjectsVisible(),
+        ).toBe(true);
+
+        expect(
+          fixture.componentInstance.capturedObjectsVisible(),
+        ).toBe(true);
+
+        expect(
+          setLayerVisibility,
+        ).toHaveBeenLastCalledWith({
+          planets: false,
+          moons: true,
+          asteroids: true,
+          comets: true,
+          transNeptunianObjects: true,
+          capturedObjects: true,
+        });
       },
     );
 
@@ -615,6 +766,152 @@ function sceneSnapshot():
             0,
         }),
       ]),
+
+    moons:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'moon-1-1',
+          kind:
+            'moon' as const,
+          label:
+            'I',
+          title:
+            'Jotheria b I',
+          hostPlanetId:
+            'planet-1',
+          hostPlanetOrdinal:
+            1,
+          colorHex:
+            '#B9D8E8',
+          radiusScene:
+            0.02,
+          position:
+            Object.freeze({
+              x: 2.42,
+              y: 0.07,
+              z: 0.65,
+            }),
+          orbitId:
+            'orbit-moon-1-1',
+          motionContributions:
+            Object.freeze([]),
+        }),
+      ]),
+
+    minorBodies:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'minor-1-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          kind:
+            'minor-body' as const,
+          minorBodyKind:
+            MinorBodyKind.ASTEROID,
+          label:
+            'AST-001',
+          title:
+            'Asteroide AST-001',
+          colorHex:
+            '#B59A78',
+          radiusScene:
+            0.014,
+          position:
+            Object.freeze({
+              x: 3.2,
+              y: 0,
+              z: 0.4,
+            }),
+          orbitId:
+            'orbit-minor-1',
+          motionContributions:
+            Object.freeze([]),
+        }),
+        Object.freeze({
+          id:
+            'minor-2-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+          kind:
+            'minor-body' as const,
+          minorBodyKind:
+            MinorBodyKind.COMET,
+          label:
+            'COM-005',
+          title:
+            'Cometa COM-005',
+          colorHex:
+            '#DCC7A0',
+          radiusScene:
+            0.014,
+          position:
+            Object.freeze({
+              x: -3.8,
+              y: 0.2,
+              z: -0.7,
+            }),
+          orbitId:
+            'orbit-minor-2',
+          motionContributions:
+            Object.freeze([]),
+        }),
+        Object.freeze({
+          id:
+            'minor-3-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+          kind:
+            'minor-body' as const,
+          minorBodyKind:
+            MinorBodyKind.TRANS_NEPTUNIAN_OBJECT,
+          label:
+            'TNO-003',
+          title:
+            'TNO TNO-003',
+          colorHex:
+            '#8AA9C8',
+          radiusScene:
+            0.014,
+          position:
+            Object.freeze({
+              x: 5.1,
+              y: -0.1,
+              z: 1.2,
+            }),
+          orbitId:
+            'orbit-minor-3',
+          motionContributions:
+            Object.freeze([]),
+        }),
+        Object.freeze({
+          id:
+            'minor-4-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
+          kind:
+            'minor-body' as const,
+          minorBodyKind:
+            MinorBodyKind.CAPTURED_EXTRASOLAR_OBJECT,
+          label:
+            'CAP-002',
+          title:
+            'Capturado CAP-002',
+          colorHex:
+            '#9FBCB0',
+          radiusScene:
+            0.014,
+          position:
+            Object.freeze({
+              x: -4.4,
+              y: 0.3,
+              z: 1.4,
+            }),
+          orbitId:
+            'orbit-minor-4',
+          motionContributions:
+            Object.freeze([]),
+        }),
+      ]),
+
+    layers:
+      Object.freeze({
+        moonCount: 1,
+        minorBodyCount: 4,
+      }),
 
     orbits:
       Object.freeze([

@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>24.5 V4 · TRIPLE DECONFLICTION · ORBIT · PAN · ZOOM</span>
+    <span>24.6 V4 · LAYERS · PLANETS · MOONS · MINOR CLASSES · PAN · ZOOM</span>
   </div>
 
 
@@ -46,6 +46,72 @@
 
     <button
       type="button"
+      data-testid="system-scene-layer-planets"
+      [attr.aria-pressed]="planetsVisible()"
+      [disabled]="planetCount() === 0"
+      [class.system-scene__layer-button--active]="planetsVisible()"
+      (click)="togglePlanets()"
+    >
+      PLANETAS · {{ planetCount() }}
+    </button>
+
+    <button
+      type="button"
+      data-testid="system-scene-layer-moons"
+      [attr.aria-pressed]="moonsVisible()"
+      [disabled]="snapshot.layers.moonCount === 0"
+      [class.system-scene__layer-button--active]="moonsVisible()"
+      (click)="toggleMoons()"
+    >
+      LUNAS · {{ snapshot.layers.moonCount }}
+    </button>
+
+    <button
+      type="button"
+      data-testid="system-scene-layer-asteroids"
+      [attr.aria-pressed]="asteroidsVisible()"
+      [disabled]="asteroidCount() === 0"
+      [class.system-scene__layer-button--active]="asteroidsVisible()"
+      (click)="toggleAsteroids()"
+    >
+      ASTEROIDES · {{ asteroidCount() }}
+    </button>
+
+    <button
+      type="button"
+      data-testid="system-scene-layer-comets"
+      [attr.aria-pressed]="cometsVisible()"
+      [disabled]="cometCount() === 0"
+      [class.system-scene__layer-button--active]="cometsVisible()"
+      (click)="toggleComets()"
+    >
+      COMETAS · {{ cometCount() }}
+    </button>
+
+    <button
+      type="button"
+      data-testid="system-scene-layer-tno"
+      [attr.aria-pressed]="transNeptunianObjectsVisible()"
+      [disabled]="transNeptunianObjectCount() === 0"
+      [class.system-scene__layer-button--active]="transNeptunianObjectsVisible()"
+      (click)="toggleTransNeptunianObjects()"
+    >
+      TNO · {{ transNeptunianObjectCount() }}
+    </button>
+
+    <button
+      type="button"
+      data-testid="system-scene-layer-captured"
+      [attr.aria-pressed]="capturedObjectsVisible()"
+      [disabled]="capturedObjectCount() === 0"
+      [class.system-scene__layer-button--active]="capturedObjectsVisible()"
+      (click)="toggleCapturedObjects()"
+    >
+      CAPTURADOS · {{ capturedObjectCount() }}
+    </button>
+
+    <button
+      type="button"
       data-testid="system-scene-reset-view"
       (click)="resetView()"
     >
@@ -61,7 +127,7 @@
       [attr.data-body-kind]="selectedBody.kind"
     >
       <span>
-        {{ selectedBody.kind === 'star' ? 'ESTRELLA' : 'PLANETA' }}
+        {{ selectionKindLabel(selectedBody.kind) }}
       </span>
 
       <strong>
@@ -108,7 +174,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
     </div>
   }
 </section>

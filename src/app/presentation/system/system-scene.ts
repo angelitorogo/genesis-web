@@ -23,7 +23,13 @@ import {
 import * as THREE from 'three';
 
 import {
+  type MinorBodyKindValue,
+} from '../../domain/planetary/minor-body-kind';
+
+import {
   type SystemSceneBodySnapshot,
+  type SystemSceneMoonSnapshot,
+  type SystemSceneMinorBodySnapshot,
   type SystemSceneMotionContributionSnapshot,
   type SystemSceneOrbitalMotionSnapshot,
   type SystemSceneOrbitSnapshot,
@@ -79,7 +85,9 @@ export interface SystemSceneSelection {
 
   readonly kind:
     'star' |
-    'planet';
+    'planet' |
+    'moon' |
+    'minor-body';
 
   readonly label:
     string;
@@ -93,6 +101,37 @@ export type SystemSceneSelectionChangeHandler =
     selection:
       SystemSceneSelection | null,
   ) => void;
+
+export type SystemSceneMinorBodyLayerKey =
+  | 'asteroids'
+  | 'comets'
+  | 'transNeptunianObjects'
+  | 'capturedObjects';
+
+export interface SystemSceneLayerVisibility {
+  readonly planets:
+    boolean;
+
+  readonly moons:
+    boolean;
+
+  readonly asteroids:
+    boolean;
+
+  readonly comets:
+    boolean;
+
+  readonly transNeptunianObjects:
+    boolean;
+
+  readonly capturedObjects:
+    boolean;
+}
+
+type SystemSceneSelectableBodySnapshot =
+  | SystemSceneBodySnapshot
+  | SystemSceneMoonSnapshot
+  | SystemSceneMinorBodySnapshot;
 
 export interface SystemSceneRuntime {
   resize(
@@ -113,6 +152,11 @@ export interface SystemSceneRuntime {
 
   resetView?():
     void;
+
+  setLayerVisibility?(
+    visibility:
+      SystemSceneLayerVisibility,
+  ): void;
 
   dispose():
     void;
@@ -164,7 +208,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.4 Angular host for the stellar-system Three.js scene.
+ * Point-24.6 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -268,6 +312,54 @@ export class SystemScene
       null,
     );
 
+  private readonly planetsVisibleSignal =
+    signal(
+      true,
+    );
+
+  private readonly moonsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly asteroidsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly cometsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly transNeptunianObjectsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly capturedObjectsVisibleSignal =
+    signal(
+      false,
+    );
+
+  readonly planetsVisible =
+    this.planetsVisibleSignal.asReadonly();
+
+  readonly moonsVisible =
+    this.moonsVisibleSignal.asReadonly();
+
+  readonly asteroidsVisible =
+    this.asteroidsVisibleSignal.asReadonly();
+
+  readonly cometsVisible =
+    this.cometsVisibleSignal.asReadonly();
+
+  readonly transNeptunianObjectsVisible =
+    this.transNeptunianObjectsVisibleSignal.asReadonly();
+
+  readonly capturedObjectsVisible =
+    this.capturedObjectsVisibleSignal.asReadonly();
+
   readonly selection =
     this
       .selectionSignal
@@ -282,6 +374,121 @@ export class SystemScene
     this
       .renderInfoSignal
       .asReadonly();
+
+  planetCount():
+    number {
+    return this.snapshot.planets.length;
+  }
+
+  asteroidCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'asteroids',
+    );
+  }
+
+  cometCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'comets',
+    );
+  }
+
+  transNeptunianObjectCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'transNeptunianObjects',
+    );
+  }
+
+  capturedObjectCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'capturedObjects',
+    );
+  }
+
+  togglePlanets():
+    void {
+
+    if (
+      this.snapshot.planets.length ===
+        0
+    ) {
+      return;
+    }
+
+    this.planetsVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleMoons():
+    void {
+
+    if (
+      this.snapshot.layers.moonCount ===
+        0
+    ) {
+      return;
+    }
+
+    this.moonsVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleAsteroids():
+    void {
+    this.toggleMinorBodyLayer(
+      'asteroids',
+    );
+  }
+
+  toggleComets():
+    void {
+    this.toggleMinorBodyLayer(
+      'comets',
+    );
+  }
+
+  toggleTransNeptunianObjects():
+    void {
+    this.toggleMinorBodyLayer(
+      'transNeptunianObjects',
+    );
+  }
+
+  toggleCapturedObjects():
+    void {
+    this.toggleMinorBodyLayer(
+      'capturedObjects',
+    );
+  }
+
+  selectionKindLabel(
+    kind:
+      SystemSceneSelection['kind'],
+  ): string {
+    switch (
+      kind
+    ) {
+      case 'star':
+        return 'ESTRELLA';
+      case 'planet':
+        return 'PLANETA';
+      case 'moon':
+        return 'LUNA';
+      default:
+        return 'CUERPO MENOR';
+    }
+  }
 
   ngAfterViewInit():
     void {
@@ -406,6 +613,95 @@ export class SystemScene
       ?.();
   }
 
+  private applyLayerVisibility():
+    void {
+
+    this.runtime
+      ?.setLayerVisibility?.({
+        planets:
+          this.planetsVisibleSignal() &&
+          this.snapshot.planets.length >
+            0,
+        moons:
+          this.moonsVisibleSignal() &&
+          this.snapshot.layers.moonCount >
+            0,
+        asteroids:
+          this.asteroidsVisibleSignal() &&
+          this.asteroidCount() >
+            0,
+        comets:
+          this.cometsVisibleSignal() &&
+          this.cometCount() >
+            0,
+        transNeptunianObjects:
+          this.transNeptunianObjectsVisibleSignal() &&
+          this.transNeptunianObjectCount() >
+            0,
+        capturedObjects:
+          this.capturedObjectsVisibleSignal() &&
+          this.capturedObjectCount() >
+            0,
+      });
+  }
+
+  private toggleMinorBodyLayer(
+    layer:
+      SystemSceneMinorBodyLayerKey,
+  ): void {
+
+    if (
+      this.minorBodyCountForLayer(
+        layer,
+      ) === 0
+    ) {
+      return;
+    }
+
+    switch (
+      layer
+    ) {
+      case 'asteroids':
+        this.asteroidsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+      case 'comets':
+        this.cometsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+      case 'transNeptunianObjects':
+        this.transNeptunianObjectsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+      case 'capturedObjects':
+        this.capturedObjectsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+    }
+
+    this.applyLayerVisibility();
+  }
+
+  private minorBodyCountForLayer(
+    layer:
+      SystemSceneMinorBodyLayerKey,
+  ): number {
+    return this.snapshot.minorBodies.filter(
+      body =>
+        minorBodyLayerKeyForKind(
+          body.minorBodyKind,
+        ) === layer,
+    ).length;
+  }
+
   private installResizeHandling():
     void {
 
@@ -507,12 +803,68 @@ export class SystemScene
     }
 
     try {
+      if (
+        this.snapshot.planets.length ===
+          0
+      ) {
+        this.planetsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.snapshot.layers.moonCount ===
+          0
+      ) {
+        this.moonsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.asteroidCount() ===
+          0
+      ) {
+        this.asteroidsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.cometCount() ===
+          0
+      ) {
+        this.cometsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.transNeptunianObjectCount() ===
+          0
+      ) {
+        this.transNeptunianObjectsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.capturedObjectCount() ===
+          0
+      ) {
+        this.capturedObjectsVisibleSignal.set(
+          false,
+        );
+      }
+
       const info =
         this
           .runtime
           .render(
             this.snapshot,
           );
+
+      this.applyLayerVisibility();
 
       this
         .renderInfoSignal
@@ -565,7 +917,7 @@ export function systemSceneDevicePixelRatio(
 
 export function systemScenePickingRadiusScene(
   kind:
-    SystemSceneBodySnapshot['kind'],
+    SystemSceneSelectableBodySnapshot['kind'],
 
   visibleRadiusScene:
     number,
@@ -615,6 +967,25 @@ export function systemSceneCameraFovDegrees(
   }
 
   return 44;
+}
+
+function minorBodyLayerKeyForKind(
+  kind:
+    MinorBodyKindValue,
+): SystemSceneMinorBodyLayerKey {
+
+  switch (
+    kind.name
+  ) {
+    case 'ASTEROID':
+      return 'asteroids';
+    case 'COMET':
+      return 'comets';
+    case 'TRANS_NEPTUNIAN_OBJECT':
+      return 'transNeptunianObjects';
+    default:
+      return 'capturedObjects';
+  }
 }
 
 function createThreeSystemSceneRuntime(
@@ -694,7 +1065,45 @@ class ThreeSystemSceneRuntime
     [];
 
   private readonly bodySnapshotById =
-    new Map<string, SystemSceneBodySnapshot>();
+    new Map<string, SystemSceneSelectableBodySnapshot>();
+
+  private readonly planetLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly moonLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly asteroidLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly cometLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly transNeptunianObjectLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly capturedObjectLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private minorBodyOrbitLayerKeys =
+    new Map<string, SystemSceneMinorBodyLayerKey>();
+
+  private layerVisibility:
+    SystemSceneLayerVisibility =
+    Object.freeze({
+      planets: true,
+      moons: false,
+      asteroids: false,
+      comets: false,
+      transNeptunianObjects: false,
+      capturedObjects: false,
+    });
 
   private readonly raycaster =
     new THREE.Raycaster();
@@ -994,6 +1403,18 @@ class ThreeSystemSceneRuntime
         ),
       );
 
+    this.minorBodyOrbitLayerKeys =
+      new Map(
+        snapshot.minorBodies.map(
+          body => [
+            body.orbitId,
+            minorBodyLayerKeyForKind(
+              body.minorBodyKind,
+            ),
+          ] as const,
+        ),
+      );
+
     this.cameraController.frameSystem(
       snapshot.scale
         .targetOuterRadiusScene,
@@ -1027,6 +1448,26 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    for (
+      const moon
+      of snapshot.moons
+    ) {
+      this.addMoon(
+        moon,
+      );
+    }
+
+    for (
+      const minorBody
+      of snapshot.minorBodies
+    ) {
+      this.addMinorBody(
+        minorBody,
+      );
+    }
+
+    this.applyLayerVisibilityToObjects();
+
     this.applySimulationDay(
       snapshot.simulation
         .epochSimulationDay,
@@ -1050,13 +1491,187 @@ class ThreeSystemSceneRuntime
 
       physicalBodyCount:
         snapshot.stars.length +
-        snapshot.planets.length,
+        snapshot.planets.length +
+        snapshot.moons.length +
+        snapshot.minorBodies.length,
 
       sceneObjectCount:
         countDescendants(
           this.scene,
         ),
     });
+  }
+
+  setLayerVisibility(
+    visibility:
+      SystemSceneLayerVisibility,
+  ): void {
+
+    this.assertAlive();
+    this.layerVisibility =
+      Object.freeze({
+        ...visibility,
+      });
+    this.applyLayerVisibilityToObjects();
+    this.renderFrame();
+  }
+
+  private applyLayerVisibilityToObjects():
+    void {
+    for (
+      const object
+      of this.planetLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.planets;
+    }
+
+    for (
+      const object
+      of this.moonLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.moons;
+    }
+
+    for (
+      const object
+      of this.asteroidLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.asteroids;
+    }
+
+    for (
+      const object
+      of this.cometLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.comets;
+    }
+
+    for (
+      const object
+      of this.transNeptunianObjectLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.transNeptunianObjects;
+    }
+
+    for (
+      const object
+      of this.capturedObjectLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.capturedObjects;
+    }
+
+    if (
+      this.selectedBodyId !==
+        null
+    ) {
+      const selected =
+        this.bodySnapshotById.get(
+          this.selectedBodyId,
+        );
+
+      if (
+        selected?.kind ===
+          'planet' &&
+        !this.layerVisibility.planets
+      ) {
+        this.selectBody(
+          null,
+        );
+        return;
+      }
+
+      if (
+        selected?.kind ===
+          'moon' &&
+        !this.layerVisibility.moons
+      ) {
+        this.selectBody(
+          null,
+        );
+        return;
+      }
+
+      if (
+        selected?.kind ===
+          'minor-body' &&
+        !this.isMinorBodySnapshotVisible(
+          selected,
+        )
+      ) {
+        this.selectBody(
+          null,
+        );
+      }
+    }
+  }
+
+  private minorBodyLayerObjectArray(
+    minorBodyKind:
+      MinorBodyKindValue,
+  ): THREE.Object3D[] {
+    switch (
+      minorBodyLayerKeyForKind(
+        minorBodyKind,
+      )
+    ) {
+      case 'asteroids':
+        return this.asteroidLayerObjects;
+      case 'comets':
+        return this.cometLayerObjects;
+      case 'transNeptunianObjects':
+        return this.transNeptunianObjectLayerObjects;
+      case 'capturedObjects':
+        return this.capturedObjectLayerObjects;
+    }
+  }
+
+  private minorBodyOrbitLayerObjectArray(
+    orbitId:
+      string,
+  ): THREE.Object3D[] {
+    const layerKey =
+      this.minorBodyOrbitLayerKeys.get(
+        orbitId,
+      ) ?? 'capturedObjects';
+
+    switch (
+      layerKey
+    ) {
+      case 'asteroids':
+        return this.asteroidLayerObjects;
+      case 'comets':
+        return this.cometLayerObjects;
+      case 'transNeptunianObjects':
+        return this.transNeptunianObjectLayerObjects;
+      case 'capturedObjects':
+        return this.capturedObjectLayerObjects;
+    }
+  }
+
+  private isMinorBodySnapshotVisible(
+    body:
+      SystemSceneMinorBodySnapshot,
+  ): boolean {
+    switch (
+      minorBodyLayerKeyForKind(
+        body.minorBodyKind,
+      )
+    ) {
+      case 'asteroids':
+        return this.layerVisibility.asteroids;
+      case 'comets':
+        return this.layerVisibility.comets;
+      case 'transNeptunianObjects':
+        return this.layerVisibility.transNeptunianObjects;
+      case 'capturedObjects':
+        return this.layerVisibility.capturedObjects;
+    }
   }
 
   dispose():
@@ -1127,36 +1742,45 @@ class ThreeSystemSceneRuntime
       motion !==
       null
     ) {
-      this.orbitLocalSamplesAu.set(
-        orbit.id,
-        Object.freeze(
-          Array.from(
-            {
-              length:
+      const orbitSamples =
+        orbit.kind ===
+          'minor-body'
+          ? SystemOrbitalMotionEngine
+              .sampleClosedOrbitPath(
+                motion,
                 ORBIT_SEGMENT_COUNT,
-            },
-            (
-              _,
-              index,
-            ) => {
-              const sample =
+              )
+          : Array.from(
+              {
+                length:
+                  ORBIT_SEGMENT_COUNT,
+              },
+              (
+                _,
+                index,
+              ) =>
                 SystemOrbitalMotionEngine
                   .positionAtSimulationDay(
                     motion,
                     motion.periodDays *
                       index /
                       ORBIT_SEGMENT_COUNT,
-                  );
+                  ),
+            );
 
-              return Object.freeze({
+      this.orbitLocalSamplesAu.set(
+        orbit.id,
+        Object.freeze(
+          orbitSamples.map(
+            sample =>
+              Object.freeze({
                 x:
                   sample.xAu,
                 y:
                   sample.yAu,
                 z:
                   sample.zAu,
-              });
-            },
+              }),
           ),
         ),
       );
@@ -1211,6 +1835,31 @@ class ThreeSystemSceneRuntime
       orbit.id,
       line,
     );
+
+    if (
+      orbit.kind ===
+      'planetary'
+    ) {
+      this.planetLayerObjects.push(
+        line,
+      );
+    } else if (
+      orbit.kind ===
+      'moon'
+    ) {
+      this.moonLayerObjects.push(
+        line,
+      );
+    } else if (
+      orbit.kind ===
+      'minor-body'
+    ) {
+      this.minorBodyOrbitLayerObjectArray(
+        orbit.id,
+      ).push(
+        line,
+      );
+    }
 
     this
       .presentationRoot
@@ -1671,6 +2320,10 @@ class ThreeSystemSceneRuntime
       group,
     );
 
+    this.planetLayerObjects.push(
+      group,
+    );
+
     this
       .presentationRoot
       .add(
@@ -1678,9 +2331,154 @@ class ThreeSystemSceneRuntime
       );
   }
 
+  private addMoon(
+    moon:
+      SystemSceneMoonSnapshot,
+  ):
+    void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Moon ${moon.title}`;
+    group.position.set(
+      moon.position.x,
+      moon.position.y,
+      moon.position.z,
+    );
+
+    const geometry =
+      new THREE.SphereGeometry(
+        moon.radiusScene,
+        20,
+        14,
+      );
+
+    const material =
+      new THREE.MeshStandardMaterial({
+        color:
+          moon.colorHex,
+        roughness:
+          0.82,
+        metalness:
+          0.01,
+      });
+
+    group.add(
+      new THREE.Mesh(
+        geometry,
+        material,
+      ),
+    );
+
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+
+    this.animatedBodies.set(
+      moon.id,
+      group,
+    );
+
+    this.registerSelectableBody(
+      moon,
+      group,
+    );
+
+    this.moonLayerObjects.push(
+      group,
+    );
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
+  private addMinorBody(
+    body:
+      SystemSceneMinorBodySnapshot,
+  ):
+    void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Minor body ${body.title}`;
+    group.position.set(
+      body.position.x,
+      body.position.y,
+      body.position.z,
+    );
+
+    const geometry =
+      new THREE.IcosahedronGeometry(
+        body.radiusScene,
+        1,
+      );
+
+    const material =
+      new THREE.MeshStandardMaterial({
+        color:
+          body.colorHex,
+        roughness:
+          0.92,
+        metalness:
+          0.02,
+        emissive:
+          body.minorBodyKind.name ===
+            'COMET'
+            ? new THREE.Color(
+                body.colorHex,
+              )
+            : new THREE.Color(
+                0x000000,
+              ),
+        emissiveIntensity:
+          body.minorBodyKind.name ===
+            'COMET'
+            ? 0.22
+            : 0,
+      });
+
+    group.add(
+      new THREE.Mesh(
+        geometry,
+        material,
+      ),
+    );
+
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+
+    this.animatedBodies.set(
+      body.id,
+      group,
+    );
+
+    this.registerSelectableBody(
+      body,
+      group,
+    );
+
+    this.minorBodyLayerObjectArray(
+      body.minorBodyKind,
+    ).push(
+      group,
+    );
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
   private registerSelectableBody(
     body:
-      SystemSceneBodySnapshot,
+      SystemSceneSelectableBodySnapshot,
 
     group:
       THREE.Group,
@@ -1797,7 +2595,12 @@ class ThreeSystemSceneRuntime
 
     const intersection =
       this.raycaster.intersectObjects(
-        this.selectableObjects,
+        this.selectableObjects.filter(
+          object =>
+            objectHierarchyVisible(
+              object,
+            ),
+        ),
         false,
       )[0];
 
@@ -1963,6 +2766,8 @@ class ThreeSystemSceneRuntime
       of [
         ...snapshot.stars,
         ...snapshot.planets,
+        ...snapshot.moons,
+        ...snapshot.minorBodies,
       ]
     ) {
       const object =
@@ -2056,11 +2861,16 @@ class ThreeSystemSceneRuntime
         continue;
       }
 
+      const presentationTimeScale =
+        contribution.presentationTimeScale ??
+        1;
+
       const position =
         SystemOrbitalMotionEngine
           .positionAtSimulationDay(
             motion,
-            simulationDay,
+            simulationDay *
+              presentationTimeScale,
           );
 
       const linearScenePerAu =
@@ -2189,6 +2999,19 @@ class ThreeSystemSceneRuntime
       null;
     this.selectableObjects.length =
       0;
+    this.planetLayerObjects.length =
+      0;
+    this.moonLayerObjects.length =
+      0;
+    this.asteroidLayerObjects.length =
+      0;
+    this.cometLayerObjects.length =
+      0;
+    this.transNeptunianObjectLayerObjects.length =
+      0;
+    this.capturedObjectLayerObjects.length =
+      0;
+    this.minorBodyOrbitLayerKeys.clear();
     this.bodySnapshotById.clear();
     this.animatedBodies.clear();
     this.animatedOrbits.clear();
@@ -5088,6 +5911,32 @@ function pseudoRandom(
     Math.floor(
       x,
     );
+}
+
+function objectHierarchyVisible(
+  object:
+    THREE.Object3D,
+): boolean {
+
+  let current:
+    THREE.Object3D | null =
+    object;
+
+  while (
+    current !==
+    null
+  ) {
+    if (
+      !current.visible
+    ) {
+      return false;
+    }
+
+    current =
+      current.parent;
+  }
+
+  return true;
 }
 
 function countDescendants(

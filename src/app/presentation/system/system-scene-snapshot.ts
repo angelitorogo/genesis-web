@@ -20,6 +20,27 @@ import {
 } from '../../domain/planetary/planet';
 
 import {
+  type PlanetarySystem,
+} from '../../domain/planetary/planetary-system';
+
+import {
+  type MoonSystem,
+} from '../../domain/planetary/moon-system';
+
+import {
+  MinorBodyKind,
+  type MinorBodyKindValue,
+} from '../../domain/planetary/minor-body-kind';
+
+import {
+  type MinorBodyOrbitalElementsCatalog,
+} from '../../domain/planetary/minor-body-orbital-elements-catalog';
+
+import {
+  type MinorBodyGroundTruthObject,
+} from '../../domain/planetary/minor-body-ground-truth-inventory';
+
+import {
   PlanetSurfaceBaseRegime,
 } from '../../domain/planetary/planet-surface-base-regime';
 
@@ -103,6 +124,34 @@ import {
 } from '../../simulation/planetary/protoplanetary-formation-snapshot-generator';
 
 import {
+  MoonGenerator,
+} from '../../simulation/planetary/moon-generator';
+
+import {
+  AsteroidBeltGenerator,
+} from '../../simulation/planetary/asteroid-belt-generator';
+
+import {
+  CometGenerator,
+} from '../../simulation/planetary/comet-generator';
+
+import {
+  TransNeptunianObjectGenerator,
+} from '../../simulation/planetary/trans-neptunian-object-generator';
+
+import {
+  InterstellarObjectGenerator,
+} from '../../simulation/planetary/interstellar-object-generator';
+
+import {
+  CapturedExtrasolarObjectGenerator,
+} from '../../simulation/planetary/captured-extrasolar-object-generator';
+
+import {
+  MinorBodyDynamicsEngine,
+} from '../../simulation/planetary/minor-body-dynamics-engine';
+
+import {
   GalaxySectorGridGenerator,
 } from '../../simulation/sector/galaxy-sector-grid-generator';
 
@@ -139,6 +188,11 @@ import {
   systemSimulationPlaybackDaysPerSecond,
 } from './system-simulation-clock';
 
+import {
+  systemSceneMinorBodyPresentationTimeScale,
+  systemSceneMoonPresentationTimeScale,
+} from './system-scene-secondary-motion';
+
 
 export interface SystemSceneAddress {
   readonly galaxyIndex:
@@ -174,6 +228,9 @@ export interface SystemSceneMotionContributionSnapshot {
 
   readonly linearScenePerAu?:
     number;
+
+  readonly presentationTimeScale?:
+    number;
 }
 
 export interface SystemSceneOrbitalMotionSnapshot
@@ -185,7 +242,9 @@ export interface SystemSceneOrbitSnapshot {
 
   readonly kind:
     'stellar' |
-    'planetary';
+    'planetary' |
+    'moon' |
+    'minor-body';
 
   readonly label:
     string;
@@ -268,6 +327,81 @@ export interface SystemSceneBodySnapshot {
     number;
 }
 
+export interface SystemSceneMoonSnapshot {
+  readonly id:
+    string;
+
+  readonly kind:
+    'moon';
+
+  readonly label:
+    string;
+
+  readonly title:
+    string;
+
+  readonly hostPlanetId:
+    string;
+
+  readonly hostPlanetOrdinal:
+    number;
+
+  readonly colorHex:
+    string;
+
+  readonly radiusScene:
+    number;
+
+  readonly position:
+    SystemSceneVector3;
+
+  readonly orbitId:
+    string;
+
+  readonly motionContributions:
+    readonly SystemSceneMotionContributionSnapshot[];
+}
+
+export interface SystemSceneMinorBodySnapshot {
+  readonly id:
+    string;
+
+  readonly kind:
+    'minor-body';
+
+  readonly minorBodyKind:
+    MinorBodyKindValue;
+
+  readonly label:
+    string;
+
+  readonly title:
+    string;
+
+  readonly colorHex:
+    string;
+
+  readonly radiusScene:
+    number;
+
+  readonly position:
+    SystemSceneVector3;
+
+  readonly orbitId:
+    string;
+
+  readonly motionContributions:
+    readonly SystemSceneMotionContributionSnapshot[];
+}
+
+export interface SystemSceneLayerAvailabilitySnapshot {
+  readonly moonCount:
+    number;
+
+  readonly minorBodyCount:
+    number;
+}
+
 export interface SystemSceneSimulationSnapshot {
   readonly epochSimulationDay:
     number;
@@ -277,7 +411,7 @@ export interface SystemSceneSimulationSnapshot {
 }
 
 /**
- * Point-24.5 presentation snapshot accepted by SystemScene.
+ * Point-24.6 presentation snapshot accepted by SystemScene.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -324,6 +458,15 @@ export interface SystemSceneSnapshot {
   readonly planets:
     readonly SystemSceneBodySnapshot[];
 
+  readonly moons:
+    readonly SystemSceneMoonSnapshot[];
+
+  readonly minorBodies:
+    readonly SystemSceneMinorBodySnapshot[];
+
+  readonly layers:
+    SystemSceneLayerAvailabilitySnapshot;
+
   readonly orbits:
     readonly SystemSceneOrbitSnapshot[];
 
@@ -358,6 +501,14 @@ export interface SystemSceneSnapshotSource {
 
   readonly stellarSystemCard:
     ArchiveStellarSystemCardModel;
+
+  /**
+   * Laboratory/debug-only Ground Truth reveal for phase-22 minor bodies.
+   * Gameplay callers leave this false so undiscovered individual bodies are
+   * never leaked by the system renderer.
+   */
+  readonly revealMinorBodyGroundTruth?:
+    boolean;
 }
 
 interface MaterializedStellarSceneWorld {
@@ -382,8 +533,17 @@ interface MaterializedStellarSceneWorld {
   readonly stars:
     readonly ResolvedStarSceneSource[];
 
+  readonly planetarySystem:
+    PlanetarySystem | null;
+
   readonly planets:
     readonly Planet[];
+
+  readonly moonSystems:
+    readonly MoonSystem[];
+
+  readonly minorBodyOrbitalCatalog:
+    MinorBodyOrbitalElementsCatalog | null;
 }
 
 interface ResolvedStarSceneSource {
@@ -429,6 +589,12 @@ const DEFAULT_OUTER_RADIUS_AU =
 
 const TARGET_OUTER_RADIUS_SCENE =
   4.8;
+
+const MINOR_BODY_MIN_STAR_CLEARANCE_SCENE =
+  0.22;
+
+const MINOR_BODY_MIN_PERIAPSIS_FLOOR_SCENE =
+  0.48;
 
 export class SystemSceneSnapshotBuilder {
 
@@ -496,6 +662,15 @@ export class SystemSceneSnapshotBuilder {
           Object.freeze([]),
         planets:
           Object.freeze([]),
+        moons:
+          Object.freeze([]),
+        minorBodies:
+          Object.freeze([]),
+        layers:
+          Object.freeze({
+            moonCount: 0,
+            minorBodyCount: 0,
+          }),
         orbits:
           Object.freeze([]),
         motions:
@@ -528,11 +703,17 @@ export class SystemSceneSnapshotBuilder {
     return Object.freeze({
       ...baseSnapshot,
       accessibleLabel:
-        `${baseSnapshot.accessibleLabel} ${projected.stars.length} estrella${projected.stars.length === 1 ? '' : 's'}, ${projected.planets.length} planeta${projected.planets.length === 1 ? '' : 's'} y ${projected.orbits.length} órbita${projected.orbits.length === 1 ? '' : 's'} visibles.`,
+        `${baseSnapshot.accessibleLabel} ${projected.stars.length} estrella${projected.stars.length === 1 ? '' : 's'}, ${projected.planets.length} planeta${projected.planets.length === 1 ? '' : 's'}, ${projected.moons.length} luna${projected.moons.length === 1 ? '' : 's'} relevante${projected.moons.length === 1 ? '' : 's'} y ${projected.minorBodies.length} cuerpo${projected.minorBodies.length === 1 ? '' : 's'} menor${projected.minorBodies.length === 1 ? '' : 'es'} disponible${projected.minorBodies.length === 1 ? '' : 's'} por capas.`,
       stars:
         projected.stars,
       planets:
         projected.planets,
+      moons:
+        projected.moons,
+      minorBodies:
+        projected.minorBodies,
+      layers:
+        projected.layers,
       orbits:
         projected.orbits,
       motions:
@@ -552,6 +733,9 @@ function snapshotBase(
   SystemSceneSnapshot,
   'stars' |
   'planets' |
+  'moons' |
+  'minorBodies' |
+  'layers' |
   'orbits' |
   'motions' |
   'simulation' |
@@ -699,11 +883,13 @@ function materializeSceneWorld(
       primarySpectralAppearance,
     );
 
-  const planets =
-    resolvePlanets(
+  const planetaryWorld =
+    resolvePlanetaryWorld(
       generationKey,
       locator,
       system,
+      source.revealMinorBodyGroundTruth ===
+        true,
     );
 
   return Object.freeze({
@@ -719,7 +905,14 @@ function materializeSceneWorld(
       system.multiplicity
         .stellarComponentCount,
     stars,
-    planets,
+    planetarySystem:
+      planetaryWorld.planetarySystem,
+    planets:
+      planetaryWorld.planets,
+    moonSystems:
+      planetaryWorld.moonSystems,
+    minorBodyOrbitalCatalog:
+      planetaryWorld.minorBodyOrbitalCatalog,
   });
 }
 
@@ -910,7 +1103,21 @@ function companionSemiMajorAxisAu(
   );
 }
 
-function resolvePlanets(
+interface ResolvedPlanetarySceneWorld {
+  readonly planetarySystem:
+    PlanetarySystem | null;
+
+  readonly planets:
+    readonly Planet[];
+
+  readonly moonSystems:
+    readonly MoonSystem[];
+
+  readonly minorBodyOrbitalCatalog:
+    MinorBodyOrbitalElementsCatalog | null;
+}
+
+function resolvePlanetaryWorld(
   generationKey:
     UniverseGenerationKey,
 
@@ -919,7 +1126,10 @@ function resolvePlanets(
 
   system:
     ReturnType<typeof StellarSystemGenerator.generate>,
-): readonly Planet[] {
+
+  revealMinorBodyGroundTruth:
+    boolean,
+): ResolvedPlanetarySceneWorld {
 
   const formationSnapshot =
     ProtoplanetaryFormationSnapshotGenerator
@@ -932,7 +1142,12 @@ function resolvePlanets(
     formationSnapshot ===
     null
   ) {
-    return Object.freeze([]);
+    return Object.freeze({
+      planetarySystem: null,
+      planets: Object.freeze([]),
+      moonSystems: Object.freeze([]),
+      minorBodyOrbitalCatalog: null,
+    });
   }
 
   const formationBlueprint =
@@ -955,22 +1170,90 @@ function resolvePlanets(
         formationBlueprint,
       );
 
+  const planets =
+    planetarySystem.hasPlanets
+      ? PlanetGenerator
+          .generateAll(
+            generationKey,
+            planetarySystem,
+          )
+      : Object.freeze([]);
+
+  const moonSystems =
+    planets.length ===
+      0
+      ? Object.freeze([])
+      : MoonGenerator
+          .generateAll(
+            generationKey,
+            planetarySystem,
+            planets,
+          );
+
   if (
-    !planetarySystem.hasPlanets
+    !revealMinorBodyGroundTruth
   ) {
-    return Object.freeze([]);
+    return Object.freeze({
+      planetarySystem,
+      planets:
+        Object.freeze([
+          ...planets,
+        ]),
+      moonSystems,
+      minorBodyOrbitalCatalog: null,
+    });
   }
 
-  const planets =
-    PlanetGenerator
-      .generateAll(
-        generationKey,
-        planetarySystem,
-      );
+  const asteroidBelts =
+    AsteroidBeltGenerator.generate(
+      generationKey,
+      planetarySystem,
+    );
+  const comets =
+    CometGenerator.generate(
+      generationKey,
+      planetarySystem,
+    );
+  const transNeptunianObjects =
+    TransNeptunianObjectGenerator.generate(
+      generationKey,
+      planetarySystem,
+    );
+  const interstellarObjects =
+    InterstellarObjectGenerator.generate(
+      generationKey,
+      planetarySystem,
+    );
+  const capturedExtrasolarObjects =
+    CapturedExtrasolarObjectGenerator.generate(
+      generationKey,
+      planetarySystem,
+    );
 
-  return Object.freeze(
-    planets,
-  );
+  const dynamicsState =
+    MinorBodyDynamicsEngine.initialize(
+      generationKey,
+      planetarySystem,
+      asteroidBelts,
+      comets,
+      transNeptunianObjects,
+      interstellarObjects,
+      capturedExtrasolarObjects,
+    );
+
+  return Object.freeze({
+    planetarySystem,
+    planets:
+      Object.freeze([
+        ...planets,
+      ]),
+    moonSystems,
+    minorBodyOrbitalCatalog:
+      MinorBodyDynamicsEngine
+        .orbitalElements(
+          dynamicsState,
+        ),
+  });
 }
 
 function projectSceneGeometry(
@@ -982,6 +1265,15 @@ function projectSceneGeometry(
 
   readonly planets:
     readonly SystemSceneBodySnapshot[];
+
+  readonly moons:
+    readonly SystemSceneMoonSnapshot[];
+
+  readonly minorBodies:
+    readonly SystemSceneMinorBodySnapshot[];
+
+  readonly layers:
+    SystemSceneLayerAvailabilitySnapshot;
 
   readonly orbits:
     readonly SystemSceneOrbitSnapshot[];
@@ -1816,6 +2108,61 @@ function projectSceneGeometry(
       },
     );
 
+  // Point 24.6 layers must not alter the already-validated point-24.3
+  // playback cadence. Freeze the stellar/planetary periods before adding
+  // faster moon or minor-body motions.
+  const primaryPlaybackPeriodsDays =
+    Object.freeze(
+      motions.map(
+        motion =>
+          motion.periodDays,
+      ),
+    );
+
+  const playbackDaysPerRealSecond =
+    systemSimulationPlaybackDaysPerSecond(
+      primaryPlaybackPeriodsDays,
+    );
+
+  const planetSnapshotByOrdinal =
+    new Map(
+      planets.map(
+        (planetSnapshot, index) =>
+          [
+            world.planets[index]!.planetOrdinal,
+            planetSnapshot,
+          ] as const,
+      ),
+    );
+
+  const moons =
+    projectMoonLayer(
+      world,
+      planetSnapshotByOrdinal,
+      motions,
+      orbits,
+      sceneScale,
+      playbackDaysPerRealSecond,
+    );
+
+  const maximumVisibleStarRadiusScene =
+    Math.max(
+      primaryStarRadiusScene,
+      secondaryStarRadiusScene,
+      tertiaryStarRadiusScene,
+    );
+
+  const minorBodies =
+    projectMinorBodyLayer(
+      world,
+      innerPairAnchorContributions,
+      motions,
+      orbits,
+      sceneScale,
+      maximumVisibleStarRadiusScene,
+      playbackDaysPerRealSecond,
+    );
+
   const frozenMotions =
     Object.freeze(
       motions,
@@ -1826,6 +2173,15 @@ function projectSceneGeometry(
       Object.freeze(stars),
     planets:
       Object.freeze(planets),
+    moons,
+    minorBodies,
+    layers:
+      Object.freeze({
+        moonCount:
+          moons.length,
+        minorBodyCount:
+          minorBodies.length,
+      }),
     orbits:
       Object.freeze(orbits),
     motions:
@@ -1834,17 +2190,639 @@ function projectSceneGeometry(
       Object.freeze({
         epochSimulationDay:
           0,
-        playbackDaysPerRealSecond:
-          systemSimulationPlaybackDaysPerSecond(
-            frozenMotions.map(
-              motion =>
-                motion.periodDays,
-            ),
-          ),
+        playbackDaysPerRealSecond,
       }),
     scale:
       sceneScale,
   });
+}
+
+
+const AU_KILOMETERS =
+  149_597_870.7;
+
+function projectMoonLayer(
+  world:
+    MaterializedStellarSceneWorld,
+
+  planetSnapshotByOrdinal:
+    ReadonlyMap<number, SystemSceneBodySnapshot>,
+
+  motions:
+    SystemSceneOrbitalMotionSnapshot[],
+
+  orbits:
+    SystemSceneOrbitSnapshot[],
+
+  sceneScale:
+    SystemSceneScaleSnapshot,
+
+  playbackDaysPerRealSecond:
+    number,
+): readonly SystemSceneMoonSnapshot[] {
+
+  const moons:
+    SystemSceneMoonSnapshot[] = [];
+
+  for (
+    const moonSystem
+    of world.moonSystems
+  ) {
+    const hostPlanet =
+      planetSnapshotByOrdinal.get(
+        moonSystem.hostPlanet.planetOrdinal,
+      ) ??
+      null;
+
+    if (
+      hostPlanet ===
+        null
+    ) {
+      continue;
+    }
+
+    const relevantMoons =
+      [...moonSystem.relevantMoons]
+        .sort(
+          (left, right) =>
+            left.orbit.semiMajorAxisKilometers -
+            right.orbit.semiMajorAxisKilometers,
+        );
+
+    for (
+      let index = 0;
+      index <
+        relevantMoons.length;
+      index += 1
+    ) {
+      const moon =
+        relevantMoons[index]!;
+
+      const moonRadiusScene =
+        clamp(
+          0.009 +
+            0.012 *
+              Math.sqrt(
+                moon.physicalProperties.radiusEarth,
+              ),
+          0.012,
+          0.032,
+        );
+
+      const targetSemiMajorScene =
+        hostPlanet.radiusScene +
+        0.070 +
+        moonRadiusScene +
+        index *
+          0.075;
+
+      const semiMajorAxisAu =
+        moon.orbit.semiMajorAxisKilometers /
+        AU_KILOMETERS;
+
+      const linearScenePerAu =
+        targetSemiMajorScene /
+        semiMajorAxisAu;
+
+      const motion =
+        Object.freeze({
+          id:
+            `moon-${moon.hostPlanetOrdinal}-${moon.moonOrdinal}-motion`,
+          semiMajorAxisAu,
+          eccentricity:
+            moon.orbit.eccentricity,
+          periodDays:
+            moon.orbit.orbitalPeriodDays,
+          rotationDegrees:
+            seededPhaseDegrees(
+              `${moon.identity.seed.normalizedValue}:NODE`,
+            ),
+          inclinationDegrees:
+            moon.orbit.inclinationDegrees,
+          epochMeanAnomalyDegrees:
+            seededPhaseDegrees(
+              moon.identity.seed.normalizedValue,
+            ),
+        } satisfies SystemSceneOrbitalMotionSnapshot);
+
+      motions.push(
+        motion,
+      );
+
+      const localContribution =
+        Object.freeze({
+          motionId:
+            motion.id,
+          scale:
+            1,
+          linearScenePerAu,
+          presentationTimeScale:
+            systemSceneMoonPresentationTimeScale(
+              moon.orbit.orbitalPeriodDays,
+              playbackDaysPerRealSecond,
+            ),
+        } satisfies SystemSceneMotionContributionSnapshot);
+
+      const motionContributions =
+        Object.freeze([
+          ...hostPlanet.motionContributions,
+          localContribution,
+        ]);
+
+      const orbitId =
+        `orbit-moon-${moon.hostPlanetOrdinal}-${moon.moonOrdinal}`;
+
+      orbits.push(
+        Object.freeze({
+          id:
+            orbitId,
+          kind:
+            'moon' as const,
+          label:
+            moon.identity.designation.name,
+          colorHex:
+            '#7EAFC6',
+          opacity:
+            0.32,
+          semiMajorScene:
+            targetSemiMajorScene,
+          semiMinorScene:
+            targetSemiMajorScene *
+            Math.sqrt(
+              1 -
+              moon.orbit.eccentricity **
+                2,
+            ),
+          focusOffsetScene:
+            targetSemiMajorScene *
+            moon.orbit.eccentricity,
+          rotationDegrees:
+            motion.rotationDegrees,
+          inclinationDegrees:
+            motion.inclinationDegrees,
+          motionId:
+            motion.id,
+          motionScale:
+            1,
+          anchorMotionContributions:
+            hostPlanet.motionContributions,
+          linearScenePerAu,
+        }),
+      );
+
+      moons.push(
+        Object.freeze({
+          id:
+            `moon-${moon.hostPlanetOrdinal}-${moon.moonOrdinal}`,
+          kind:
+            'moon' as const,
+          label:
+            moon.identity.designation.romanNumeral,
+          title:
+            moon.identity.designation.name,
+          hostPlanetId:
+            hostPlanet.id,
+          hostPlanetOrdinal:
+            moon.hostPlanetOrdinal,
+          colorHex:
+            moonColorHex(
+              moon.physicalProperties.meanDensityGramsPerCubicCentimeter,
+            ),
+          radiusScene:
+            moonRadiusScene,
+          position:
+            orbitalContributionPositionScene(
+              motionContributions,
+              motions,
+              0,
+              sceneScale,
+            ),
+          orbitId,
+          motionContributions,
+        }),
+      );
+    }
+  }
+
+  return Object.freeze(
+    moons,
+  );
+}
+
+function projectMinorBodyLayer(
+  world:
+    MaterializedStellarSceneWorld,
+
+  innerPairAnchorContributions:
+    readonly SystemSceneMotionContributionSnapshot[],
+
+  motions:
+    SystemSceneOrbitalMotionSnapshot[],
+
+  orbits:
+    SystemSceneOrbitSnapshot[],
+
+  sceneScale:
+    SystemSceneScaleSnapshot,
+
+  maximumVisibleStarRadiusScene:
+    number,
+
+  playbackDaysPerRealSecond:
+    number,
+): readonly SystemSceneMinorBodySnapshot[] {
+
+  const catalog =
+    world.minorBodyOrbitalCatalog;
+
+  if (
+    catalog ===
+    null
+  ) {
+    return Object.freeze([]);
+  }
+
+  const minorBodies:
+    SystemSceneMinorBodySnapshot[] = [];
+
+  for (
+    const entry
+    of catalog.entries
+  ) {
+    const orbital =
+      entry.orbitalElements;
+
+    // Phase 22.8 interstellar visitors deliberately have no frozen orbital
+    // epoch/period, so 24.6 does not invent a current position for them.
+    if (
+      !orbital.isBound ||
+      orbital.orbitalPeriodYears ===
+        null ||
+      orbital.meanAnomalyDegrees ===
+        null
+    ) {
+      continue;
+    }
+
+    const motion =
+      Object.freeze({
+        id:
+          `minor-${orbital.kind.code}-${orbital.proceduralId}-motion`,
+        semiMajorAxisAu:
+          orbital.semiMajorAxisAu,
+        eccentricity:
+          orbital.eccentricity,
+        periodDays:
+          orbital.orbitalPeriodYears *
+          365.25,
+        rotationDegrees:
+          normalizedAngle(
+            orbital.longitudeAscendingNodeDegrees +
+            orbital.argumentOfPeriapsisDegrees,
+          ),
+        inclinationDegrees:
+          orbital.inclinationDegrees,
+        longitudeAscendingNodeDegrees:
+          orbital.longitudeAscendingNodeDegrees,
+        argumentOfPeriapsisDegrees:
+          orbital.argumentOfPeriapsisDegrees,
+        epochMeanAnomalyDegrees:
+          orbital.meanAnomalyDegrees,
+      } satisfies SystemSceneOrbitalMotionSnapshot);
+
+    motions.push(
+      motion,
+    );
+
+    const projectionSpace =
+      world.multiplicityName ===
+        'TRIPLE'
+        ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+        : SystemSceneProjectionSpace.GLOBAL;
+
+    const anchorContributions =
+      world.multiplicityName ===
+        'TRIPLE'
+        ? innerPairAnchorContributions
+        : Object.freeze([]);
+
+    const semiMajorScene =
+      systemSceneProjectedRadiusAuInSpace(
+        orbital.semiMajorAxisAu,
+        sceneScale,
+        projectionSpace,
+      );
+
+    const projectedPeriapsisScene =
+      semiMajorScene *
+      (
+        1 -
+        orbital.eccentricity
+      );
+
+    const minimumPeriapsisScene =
+      Math.max(
+        MINOR_BODY_MIN_PERIAPSIS_FLOOR_SCENE,
+        maximumVisibleStarRadiusScene +
+          MINOR_BODY_MIN_STAR_CLEARANCE_SCENE,
+      );
+
+    const presentationExpansionFactor =
+      projectedPeriapsisScene >
+        Number.EPSILON &&
+      projectedPeriapsisScene <
+        minimumPeriapsisScene
+        ? minimumPeriapsisScene /
+          projectedPeriapsisScene
+        : 1;
+
+    const presentedSemiMajorScene =
+      semiMajorScene *
+      presentationExpansionFactor;
+
+    const presentedLinearScenePerAu =
+      presentationExpansionFactor > 1 &&
+      orbital.semiMajorAxisAu >
+        Number.EPSILON
+        ? presentedSemiMajorScene /
+          orbital.semiMajorAxisAu
+        : null;
+
+    const localContribution =
+      Object.freeze({
+        motionId:
+          motion.id,
+        scale:
+          1,
+        presentationTimeScale:
+          systemSceneMinorBodyPresentationTimeScale(
+            motion.periodDays,
+            playbackDaysPerRealSecond,
+          ),
+        ...(
+          presentedLinearScenePerAu ===
+            null
+            ? {}
+            : {
+                linearScenePerAu:
+                  presentedLinearScenePerAu,
+              }
+        ),
+        ...(
+          projectionSpace ===
+            SystemSceneProjectionSpace.GLOBAL
+            ? {}
+            : {
+                projectionSpace,
+              }
+        ),
+      } satisfies SystemSceneMotionContributionSnapshot);
+
+    const motionContributions =
+      Object.freeze([
+        ...anchorContributions,
+        localContribution,
+      ]);
+
+    const orbitOpacity =
+      clamp(
+        (
+          orbital.kind ===
+            MinorBodyKind.COMET
+            ? 0.28
+            : 0.18
+        ) +
+        (
+          presentationExpansionFactor >
+            1
+            ? 0.10
+            : 0
+        ),
+        0.18,
+        0.38,
+      );
+
+    const orbitId =
+      `orbit-minor-${orbital.kind.code}-${orbital.proceduralId}`;
+
+    orbits.push(
+      Object.freeze({
+        id:
+          orbitId,
+        kind:
+          'minor-body' as const,
+        label:
+          orbital.localDesignation,
+        colorHex:
+          minorBodyColorHex(
+            orbital.kind,
+          ),
+        opacity:
+          orbitOpacity,
+        semiMajorScene:
+          presentedSemiMajorScene,
+        semiMinorScene:
+          presentedSemiMajorScene *
+          Math.sqrt(
+            1 -
+            orbital.eccentricity **
+              2,
+          ),
+        focusOffsetScene:
+          presentedSemiMajorScene *
+          orbital.eccentricity,
+        rotationDegrees:
+          motion.rotationDegrees,
+        inclinationDegrees:
+          motion.inclinationDegrees,
+        motionId:
+          motion.id,
+        motionScale:
+          1,
+        anchorMotionContributions:
+          anchorContributions,
+        ...(
+          presentedLinearScenePerAu ===
+            null
+            ? {}
+            : {
+                linearScenePerAu:
+                  presentedLinearScenePerAu,
+              }
+        ),
+        ...(
+          projectionSpace ===
+            SystemSceneProjectionSpace.GLOBAL
+            ? {}
+            : {
+                projectionSpace,
+              }
+        ),
+      }),
+    );
+
+    minorBodies.push(
+      Object.freeze({
+        id:
+          `minor-${orbital.kind.code}-${orbital.proceduralId}`,
+        kind:
+          'minor-body' as const,
+        minorBodyKind:
+          orbital.kind,
+        label:
+          orbital.localDesignation,
+        title:
+          minorBodyTitle(
+            orbital.kind,
+            orbital.localDesignation,
+          ),
+        colorHex:
+          minorBodyColorHex(
+            orbital.kind,
+          ),
+        radiusScene:
+          minorBodyRadiusScene(
+            entry.body,
+            orbital.kind,
+          ),
+        position:
+          orbitalContributionPositionScene(
+            motionContributions,
+            motions,
+            0,
+            sceneScale,
+          ),
+        orbitId,
+        motionContributions,
+      }),
+    );
+  }
+
+  return Object.freeze(
+    minorBodies,
+  );
+}
+
+function moonColorHex(
+  density:
+    number,
+): string {
+  if (
+    density <
+      1.8
+  ) {
+    return '#B9D8E8';
+  }
+
+  if (
+    density <
+      3.2
+  ) {
+    return '#A8A79F';
+  }
+
+  return '#8C8179';
+}
+
+function minorBodyColorHex(
+  kind:
+    MinorBodyKindValue,
+): string {
+  if (
+    kind ===
+    MinorBodyKind.COMET
+  ) {
+    return '#A8E9F3';
+  }
+
+  if (
+    kind ===
+    MinorBodyKind.TRANS_NEPTUNIAN_OBJECT
+  ) {
+    return '#75A9D2';
+  }
+
+  if (
+    kind ===
+    MinorBodyKind.CAPTURED_EXTRASOLAR_OBJECT
+  ) {
+    return '#C5A1E8';
+  }
+
+  return '#B59A78';
+}
+
+function minorBodyTitle(
+  kind:
+    MinorBodyKindValue,
+
+  designation:
+    string,
+): string {
+  switch (
+    kind
+  ) {
+    case MinorBodyKind.ASTEROID:
+      return `Asteroide ${designation}`;
+    case MinorBodyKind.COMET:
+      return `Cometa ${designation}`;
+    case MinorBodyKind.TRANS_NEPTUNIAN_OBJECT:
+      return `Objeto transneptuniano ${designation}`;
+    case MinorBodyKind.CAPTURED_EXTRASOLAR_OBJECT:
+      return `Objeto extrasolar capturado ${designation}`;
+    default:
+      return designation;
+  }
+}
+
+function minorBodyRadiusScene(
+  body:
+    MinorBodyGroundTruthObject,
+
+  _kind:
+    MinorBodyKindValue,
+): number {
+
+  const directDiameter =
+    'diameterKilometers' in
+      body &&
+    typeof body.diameterKilometers ===
+      'number'
+      ? body.diameterKilometers
+      : null;
+
+  const propertiesDiameter =
+    'properties' in
+      body &&
+    body.properties !==
+      null &&
+    typeof body.properties ===
+      'object' &&
+    'diameterKilometers' in
+      body.properties &&
+    typeof body.properties.diameterKilometers ===
+      'number'
+      ? body.properties.diameterKilometers
+      : null;
+
+  const diameterKilometers =
+    directDiameter ??
+    propertiesDiameter ??
+    1;
+
+  return clamp(
+    0.010 +
+      0.004 *
+        Math.log10(
+          1 +
+          Math.max(
+            0,
+            diameterKilometers,
+          ),
+        ),
+    0.011,
+    0.028,
+  );
 }
 
 function stellarOrbitSnapshot(
@@ -1971,11 +2949,16 @@ function orbitalContributionPositionScene(
       );
     }
 
+    const presentationTimeScale =
+      contribution.presentationTimeScale ??
+      1;
+
     const position =
       SystemOrbitalMotionEngine
         .positionAtSimulationDay(
           motion,
-          simulationDay,
+          simulationDay *
+            presentationTimeScale,
         );
 
     const linearScenePerAu =

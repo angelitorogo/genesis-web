@@ -167,7 +167,7 @@
       <header class="stellar-lab__renderer-qa-header">
         <div>
           <p class="stellar-lab__eyebrow">
-            QA VISUAL · SYSTEMSCENE 24.5 V4 · A–H
+            QA VISUAL · SYSTEMSCENE 24.6 V2 · A–H
           </p>
 
           <h3>
@@ -175,7 +175,7 @@
           </h3>
 
           <p>
-            Esta vista usa el mismo <code>SystemScene</code> de <code>/system</code>. En 24.5 V4, SINGLE y BINARY conservan su escala validada y TRIPLE añade separación visual local entre órbitas planetarias densas, sin alterar la física ni la partida.
+            Esta vista usa el mismo <code>SystemScene</code> de <code>/system</code>. En 24.6 V2 las lunas usan una cadencia visual secundaria legible y los cuerpos menores ligados conservan su orientación orbital 3D completa Ω/i/ω, sin alterar la física ni la partida.
           </p>
         </div>
 
@@ -198,6 +198,20 @@
             <dt>Planetas</dt>
             <dd>
               {{ rendererQaSnapshot().planets.length }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Lunas</dt>
+            <dd>
+              {{ rendererQaSnapshot().moons.length }}
+            </dd>
+          </div>
+
+          <div>
+            <dt>Menores</dt>
+            <dd>
+              {{ rendererQaSnapshot().minorBodies.length }}
             </dd>
           </div>
 

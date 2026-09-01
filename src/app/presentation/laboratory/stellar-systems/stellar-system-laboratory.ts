@@ -151,6 +151,8 @@ export class StellarSystemLaboratoryPage {
               previewStage.label,
             stellarSystemCard:
               previewStage.card,
+            revealMinorBodyGroundTruth:
+              true,
           });
       },
     );

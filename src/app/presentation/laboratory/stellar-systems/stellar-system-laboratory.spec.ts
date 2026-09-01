@@ -295,5 +295,138 @@ describe(
       },
       30_000,
     );
+
+
+    it(
+      'should slow moon presentation cadence and preserve full 3D orientation for bound minor-body QA orbits',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              StellarSystemLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const snapshot =
+          fixture
+            .componentInstance
+            .rendererQaSnapshot();
+
+        expect(
+          snapshot.moons.length,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        const moonLocalContributions =
+          snapshot.moons.map(
+            moon =>
+              moon.motionContributions[
+                moon.motionContributions.length - 1
+              ]!,
+          );
+
+        expect(
+          moonLocalContributions.every(
+            contribution =>
+              contribution.presentationTimeScale !==
+                undefined &&
+              contribution.presentationTimeScale >
+                0 &&
+              contribution.presentationTimeScale <=
+                1,
+          ),
+        ).toBe(true);
+
+        expect(
+          moonLocalContributions.some(
+            contribution =>
+              contribution.presentationTimeScale! <
+              1,
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.minorBodies.length,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        const minorMotionIds =
+          new Set(
+            snapshot.minorBodies.flatMap(
+              body =>
+                body.motionContributions.map(
+                  contribution =>
+                    contribution.motionId,
+                ),
+            ),
+          );
+
+        const minorMotions =
+          snapshot.motions.filter(
+            motion =>
+              minorMotionIds.has(
+                motion.id,
+              ),
+          );
+
+        expect(
+          minorMotions.length,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
+          minorMotions.every(
+            motion =>
+              motion.longitudeAscendingNodeDegrees !==
+                undefined &&
+              motion.argumentOfPeriapsisDegrees !==
+                undefined,
+          ),
+        ).toBe(true);
+
+
+        const expandedMinorBodies =
+          snapshot.minorBodies.filter(
+            body =>
+              body.motionContributions.some(
+                contribution =>
+                  contribution.linearScenePerAu !==
+                    undefined,
+              ),
+          );
+
+        expect(
+          expandedMinorBodies.length,
+        ).toBeGreaterThan(
+          0,
+        );
+
+        expect(
+          expandedMinorBodies.every(
+            body => {
+              const localContribution =
+                body.motionContributions[
+                  body.motionContributions.length - 1
+                ]!;
+
+              const orbit =
+                snapshot.orbits.find(
+                  candidate =>
+                    candidate.id ===
+                    body.orbitId,
+                );
+
+              return orbit?.linearScenePerAu ===
+                localContribution.linearScenePerAu;
+            },
+          ),
+        ).toBe(true);
+      },
+      30_000,
+    );
   },
 );

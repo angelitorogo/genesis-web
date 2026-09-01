@@ -118,6 +118,143 @@ describe(
       },
     );
 
+
+    it(
+      'should preserve full node-inclination-periapsis orientation for highly inclined bound minor-body orbits',
+      () => {
+        const motion:
+          SystemOrbitalMotionDefinition =
+          {
+            ...circularMotion(),
+            longitudeAscendingNodeDegrees:
+              90,
+            inclinationDegrees:
+              90,
+            argumentOfPeriapsisDegrees:
+              90,
+          };
+
+        const start =
+          SystemOrbitalMotionEngine
+            .positionAtSimulationDay(
+              motion,
+              0,
+            );
+
+        expect(
+          start.xAu,
+        ).toBeCloseTo(
+          0,
+          12,
+        );
+
+        expect(
+          start.yAu,
+        ).toBeCloseTo(
+          -2,
+          12,
+        );
+
+        expect(
+          start.zAu,
+        ).toBeCloseTo(
+          0,
+          12,
+        );
+      },
+    );
+
+
+    it(
+      'should sample closed orbit guides by orbital geometry rather than equal-time cadence for highly eccentric minor bodies',
+      () => {
+        const motion:
+          SystemOrbitalMotionDefinition =
+          {
+            ...circularMotion(),
+            semiMajorAxisAu:
+              6,
+            eccentricity:
+              0.85,
+            longitudeAscendingNodeDegrees:
+              40,
+            inclinationDegrees:
+              70,
+            argumentOfPeriapsisDegrees:
+              130,
+          };
+
+        const samples =
+          SystemOrbitalMotionEngine
+            .sampleClosedOrbitPath(
+              motion,
+              32,
+            );
+
+        expect(
+          samples,
+        ).toHaveLength(
+          32,
+        );
+
+        const start =
+          samples[0]!;
+
+        const end =
+          samples[
+            samples.length - 1
+          ]!;
+
+        const closureDistance =
+          Math.hypot(
+            start.xAu -
+              end.xAu,
+            start.yAu -
+              end.yAu,
+            start.zAu -
+              end.zAu,
+          );
+
+        expect(
+          closureDistance,
+        ).toBeLessThan(
+          1.5,
+        );
+
+        const periapsisDistance =
+          Math.hypot(
+            start.xAu,
+            start.yAu,
+            start.zAu,
+          );
+
+        expect(
+          periapsisDistance,
+        ).toBeCloseTo(
+          motion.semiMajorAxisAu *
+            (1 -
+              motion.eccentricity),
+          12,
+        );
+      },
+    );
+
+    it(
+      'should reject invalid orbit-guide sample counts',
+      () => {
+        expect(
+          () =>
+            SystemOrbitalMotionEngine
+              .sampleClosedOrbitPath(
+                circularMotion(),
+                3,
+              ),
+        ).toThrowError(
+          /sampleCount/,
+        );
+      },
+    );
+
     it(
       'should return the same position for the same simulation instant regardless of frame history',
       () => {

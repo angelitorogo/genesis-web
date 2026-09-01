@@ -20,7 +20,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemSceneSnapshotBuilder point 24.3',
+  'SystemSceneSnapshotBuilder point 24.6',
   () => {
 
     it(
@@ -99,6 +99,30 @@ describe(
 
         expect(
           Array.isArray(
+            snapshot.moons,
+          ),
+        ).toBe(true);
+
+        expect(
+          Array.isArray(
+            snapshot.minorBodies,
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.layers.moonCount,
+        ).toBe(
+          snapshot.moons.length,
+        );
+
+        expect(
+          snapshot.minorBodies,
+        ).toHaveLength(
+          0,
+        );
+
+        expect(
+          Array.isArray(
             snapshot.orbits,
           ),
         ).toBe(true);
@@ -118,6 +142,18 @@ describe(
         expect(
           Object.isFrozen(
             snapshot.planets,
+          ),
+        ).toBe(true);
+
+        expect(
+          Object.isFrozen(
+            snapshot.moons,
+          ),
+        ).toBe(true);
+
+        expect(
+          Object.isFrozen(
+            snapshot.minorBodies,
           ),
         ).toBe(true);
 

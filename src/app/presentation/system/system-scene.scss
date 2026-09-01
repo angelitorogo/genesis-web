@@ -83,11 +83,22 @@
       letter-spacing: .06em;
       cursor: pointer;
 
-      &:hover {
+      &:hover:not(:disabled) {
         border-color: rgba(106, 215, 255, .52);
         background: rgba(106, 215, 255, .14);
       }
+
+      &:disabled {
+        opacity: .34;
+        cursor: default;
+      }
     }
+  }
+
+  &__layer-button--active {
+    border-color: rgba(106, 215, 255, .7) !important;
+    background: rgba(106, 215, 255, .2) !important;
+    box-shadow: 0 0 .8rem rgba(106, 215, 255, .12);
   }
 
   &__selection {

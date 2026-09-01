@@ -17,6 +17,12 @@ export interface SystemOrbitalMotionDefinition {
   readonly inclinationDegrees:
     number;
 
+  readonly longitudeAscendingNodeDegrees?:
+    number;
+
+  readonly argumentOfPeriapsisDegrees?:
+    number;
+
   readonly epochMeanAnomalyDegrees:
     number;
 }
@@ -41,7 +47,9 @@ const KEPLER_SOLVER_ITERATIONS =
 /**
  * Point-24.3 absolute-time Keplerian orbital projector.
  *
- * The engine consumes periods/eccentricities already frozen by phases 16/18.
+ * The engine consumes periods/eccentricities already frozen by phases 16/18
+ * and, when supplied, the full Ω/i/ω orientation already frozen by phases
+ * 22/23 for bound minor bodies.
  * It never integrates frame deltas. A body position is a pure function of the
  * requested simulation time, so the same instant produces the same position
  * regardless of whether the browser rendered 30, 60 or 144 frames beforehand.
@@ -123,11 +131,111 @@ export class SystemOrbitalMotionEngine {
         eccentricAnomalyRadians,
       );
 
+    if (
+      motion.longitudeAscendingNodeDegrees !==
+        undefined &&
+      motion.argumentOfPeriapsisDegrees !==
+        undefined
+    ) {
+      return rotateOrbitVectorWithNodeAndPeriapsis(
+        localXAu,
+        localZAu,
+        motion.longitudeAscendingNodeDegrees,
+        motion.inclinationDegrees,
+        motion.argumentOfPeriapsisDegrees,
+      );
+    }
+
     return rotateOrbitVector(
       localXAu,
       localZAu,
       motion.rotationDegrees,
       motion.inclinationDegrees,
+    );
+  }
+
+  static sampleClosedOrbitPath(
+    motion:
+      SystemOrbitalMotionDefinition,
+
+    sampleCount:
+      number,
+  ):
+    readonly SystemOrbitalPositionAu[] {
+
+    assertMotion(
+      motion,
+    );
+
+    if (
+      !Number.isInteger(
+        sampleCount,
+      ) ||
+      sampleCount <
+        4
+    ) {
+      throw new RangeError(
+        `sampleCount must be an integer >= 4: ${sampleCount}.`,
+      );
+    }
+
+    const semiMinorAxisAu =
+      motion.semiMajorAxisAu *
+      Math.sqrt(
+        1 -
+        motion.eccentricity **
+          2,
+      );
+
+    return Object.freeze(
+      Array.from(
+        {
+          length:
+            sampleCount,
+        },
+        (
+          _,
+          index,
+        ) => {
+          const eccentricAnomalyRadians =
+            TWO_PI *
+            index /
+            sampleCount;
+
+          const localXAu =
+            motion.semiMajorAxisAu *
+            (
+              Math.cos(
+                eccentricAnomalyRadians,
+              ) -
+              motion.eccentricity
+            );
+
+          const localZAu =
+            semiMinorAxisAu *
+            Math.sin(
+              eccentricAnomalyRadians,
+            );
+
+          return motion.longitudeAscendingNodeDegrees !==
+              undefined &&
+            motion.argumentOfPeriapsisDegrees !==
+              undefined
+            ? rotateOrbitVectorWithNodeAndPeriapsis(
+                localXAu,
+                localZAu,
+                motion.longitudeAscendingNodeDegrees,
+                motion.inclinationDegrees,
+                motion.argumentOfPeriapsisDegrees,
+              )
+            : rotateOrbitVector(
+                localXAu,
+                localZAu,
+                motion.rotationDegrees,
+                motion.inclinationDegrees,
+              );
+        },
+      ),
     );
   }
 }
@@ -173,6 +281,101 @@ function solveEccentricAnomaly(
   }
 
   return eccentricAnomaly;
+}
+
+function rotateOrbitVectorWithNodeAndPeriapsis(
+  localXAu:
+    number,
+
+  localZAu:
+    number,
+
+  longitudeAscendingNodeDegrees:
+    number,
+
+  inclinationDegrees:
+    number,
+
+  argumentOfPeriapsisDegrees:
+    number,
+): SystemOrbitalPositionAu {
+
+  const nodeRadians =
+    degreesToRadians(
+      longitudeAscendingNodeDegrees,
+    );
+
+  const inclinationRadians =
+    degreesToRadians(
+      inclinationDegrees,
+    );
+
+  const periapsisRadians =
+    degreesToRadians(
+      argumentOfPeriapsisDegrees,
+    );
+
+  const cosPeriapsis =
+    Math.cos(
+      periapsisRadians,
+    );
+
+  const sinPeriapsis =
+    Math.sin(
+      periapsisRadians,
+    );
+
+  const xPeriapsis =
+    localXAu *
+      cosPeriapsis -
+    localZAu *
+      sinPeriapsis;
+
+  const zPeriapsis =
+    localXAu *
+      sinPeriapsis +
+    localZAu *
+      cosPeriapsis;
+
+  const xInclined =
+    xPeriapsis;
+
+  const yInclined =
+    -zPeriapsis *
+    Math.sin(
+      inclinationRadians,
+    );
+
+  const zInclined =
+    zPeriapsis *
+    Math.cos(
+      inclinationRadians,
+    );
+
+  const cosNode =
+    Math.cos(
+      nodeRadians,
+    );
+
+  const sinNode =
+    Math.sin(
+      nodeRadians,
+    );
+
+  return Object.freeze({
+    xAu:
+      xInclined *
+        cosNode -
+      zInclined *
+        sinNode,
+    yAu:
+      yInclined,
+    zAu:
+      xInclined *
+        sinNode +
+      zInclined *
+        cosNode,
+  });
 }
 
 function rotateOrbitVector(
@@ -251,6 +454,41 @@ function assertMotion(
   ) {
     throw new RangeError(
       'System orbital motion id cannot be empty.',
+    );
+  }
+
+  const hasNode =
+    motion.longitudeAscendingNodeDegrees !==
+    undefined;
+
+  const hasPeriapsisArgument =
+    motion.argumentOfPeriapsisDegrees !==
+    undefined;
+
+  if (
+    hasNode !==
+    hasPeriapsisArgument
+  ) {
+    throw new RangeError(
+      'Full orbital orientation requires both longitudeAscendingNodeDegrees and argumentOfPeriapsisDegrees.',
+    );
+  }
+
+  if (
+    hasNode &&
+    (
+      !Number.isFinite(
+        motion.longitudeAscendingNodeDegrees ??
+          Number.NaN,
+      ) ||
+      !Number.isFinite(
+        motion.argumentOfPeriapsisDegrees ??
+          Number.NaN,
+      )
+    )
+  ) {
+    throw new RangeError(
+      'Full orbital orientation angles must be finite.',
     );
   }
 
