@@ -56,6 +56,11 @@ import {
 } from './system-scene-body-card';
 
 import {
+  SystemSceneActiveTime,
+  systemSceneAnimationLoopRequired,
+} from './system-scene-active-time';
+
+import {
   SystemSceneProjectionSpace,
   systemSceneProjectAuVector,
   systemSceneProjectAuVectorInSpace,
@@ -179,6 +184,11 @@ export interface SystemSceneRuntime {
       SystemSceneLayerVisibility,
   ): void;
 
+  setPageVisible?(
+    visible:
+      boolean,
+  ): void;
+
   dispose():
     void;
 }
@@ -229,7 +239,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.8 Angular host for the stellar-system Three.js scene.
+ * Point-24.9 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -313,9 +323,17 @@ export class SystemScene
   private listeningToWindowResize =
     false;
 
+  private listeningToDocumentVisibility =
+    false;
+
   private readonly onWindowResize =
     () => {
       this.resizeRuntime();
+    };
+
+  private readonly onDocumentVisibilityChange =
+    () => {
+      this.applyDocumentVisibility();
     };
 
   private readonly renderStateSignal =
@@ -776,6 +794,7 @@ export class SystemScene
           );
 
       this.installResizeHandling();
+      this.installVisibilityHandling();
       this.resizeRuntime();
       this.renderSnapshot();
     } catch (
@@ -820,27 +839,8 @@ export class SystemScene
   ngOnDestroy():
     void {
 
-    this
-      .resizeObserver
-      ?.disconnect();
-
-    this.resizeObserver =
-      null;
-
-    if (
-      this.listeningToWindowResize &&
-      isPlatformBrowser(
-        this.platformId,
-      )
-    ) {
-      window.removeEventListener(
-        'resize',
-        this.onWindowResize,
-      );
-    }
-
-    this.listeningToWindowResize =
-      false;
+    this.removeResizeHandling();
+    this.removeVisibilityHandling();
 
     this
       .runtime
@@ -1059,6 +1059,81 @@ export class SystemScene
 
     this.listeningToWindowResize =
       true;
+  }
+
+  private installVisibilityHandling():
+    void {
+
+    document.addEventListener(
+      'visibilitychange',
+      this.onDocumentVisibilityChange,
+      {
+        passive:
+          true,
+      },
+    );
+
+    this.listeningToDocumentVisibility =
+      true;
+
+    this.applyDocumentVisibility();
+  }
+
+  private removeVisibilityHandling():
+    void {
+
+    if (
+      !this.listeningToDocumentVisibility ||
+      !isPlatformBrowser(
+        this.platformId,
+      )
+    ) {
+      return;
+    }
+
+    document.removeEventListener(
+      'visibilitychange',
+      this.onDocumentVisibilityChange,
+    );
+
+    this.listeningToDocumentVisibility =
+      false;
+  }
+
+  private applyDocumentVisibility():
+    void {
+
+    this.runtime
+      ?.setPageVisible?.(
+        document.visibilityState !==
+          'hidden',
+      );
+  }
+
+  private removeResizeHandling():
+    void {
+
+    this
+      .resizeObserver
+      ?.disconnect();
+
+    this.resizeObserver =
+      null;
+
+    if (
+      this.listeningToWindowResize &&
+      isPlatformBrowser(
+        this.platformId,
+      )
+    ) {
+      window.removeEventListener(
+        'resize',
+        this.onWindowResize,
+      );
+    }
+
+    this.listeningToWindowResize =
+      false;
   }
 
   private resizeRuntime():
@@ -1308,6 +1383,30 @@ export function systemSceneCameraFovDegrees(
   return 44;
 }
 
+function currentHighResolutionTimestampMilliseconds():
+  number {
+
+  if (
+    typeof performance !==
+      'undefined' &&
+    typeof performance.now ===
+      'function'
+  ) {
+    const value =
+      performance.now();
+
+    if (
+      Number.isFinite(
+        value,
+      )
+    ) {
+      return value;
+    }
+  }
+
+  return 0;
+}
+
 function minorBodyLayerKeyForKind(
   kind:
     MinorBodyKindValue,
@@ -1509,6 +1608,12 @@ class ThreeSystemSceneRuntime
     SystemSimulationClock | null =
     null;
 
+  private readonly activeTime =
+    new SystemSceneActiveTime();
+
+  private pageVisible =
+    true;
+
   private motionById =
     new Map<string, SystemSceneOrbitalMotionSnapshot>();
 
@@ -1519,6 +1624,7 @@ class ThreeSystemSceneRuntime
     ): void => {
 
       if (
+        !this.pageVisible ||
         this.currentSnapshot ===
           null ||
         this.simulationClock ===
@@ -1527,9 +1633,14 @@ class ThreeSystemSceneRuntime
         return;
       }
 
+      const activeTimestampMilliseconds =
+        this.activeTime.project(
+          realTimestampMilliseconds,
+        );
+
       const simulationState =
         this.simulationClock.read(
-          realTimestampMilliseconds,
+          activeTimestampMilliseconds,
         );
 
       this.applySimulationDay(
@@ -1537,7 +1648,7 @@ class ThreeSystemSceneRuntime
       );
 
       this.updateTrackedBodyCamera(
-        realTimestampMilliseconds,
+        activeTimestampMilliseconds,
       );
 
       this.renderFrame();
@@ -1873,16 +1984,7 @@ class ThreeSystemSceneRuntime
     );
     this.renderFrame();
 
-    if (
-      snapshot.motions.length >
-      0
-    ) {
-      this
-        .renderer
-        .setAnimationLoop(
-          this.onAnimationFrame,
-        );
-    }
+    this.updateAnimationLoop();
 
     return Object.freeze({
       renderer:
@@ -1899,6 +2001,40 @@ class ThreeSystemSceneRuntime
           this.scene,
         ),
     });
+  }
+
+  setPageVisible(
+    visible:
+      boolean,
+  ): void {
+
+    this.assertAlive();
+
+    if (
+      this.pageVisible ===
+        visible
+    ) {
+      return;
+    }
+
+    const realTimestampMilliseconds =
+      currentHighResolutionTimestampMilliseconds();
+
+    this.pageVisible =
+      visible;
+
+    this.activeTime.setVisible(
+      visible,
+      realTimestampMilliseconds,
+    );
+
+    this.updateAnimationLoop();
+
+    if (
+      visible
+    ) {
+      this.renderFrame();
+    }
   }
 
   setLayerVisibility(
@@ -2138,8 +2274,16 @@ class ThreeSystemSceneRuntime
       return;
     }
 
+    this
+      .renderer
+      .setAnimationLoop(
+        null,
+      );
+
     this.disposed =
       true;
+    this.pageVisible =
+      false;
 
     this.currentSnapshot =
       null;
@@ -2153,11 +2297,14 @@ class ThreeSystemSceneRuntime
       this.persistentDisposables,
     );
 
+    this.backdropRoot.clear();
+    this.presentationRoot.clear();
+    this.scene.clear();
+
     this
       .renderer
-      .setAnimationLoop(
-        null,
-      );
+      .renderLists
+      .dispose();
 
     this
       .renderer
@@ -2213,17 +2360,7 @@ class ThreeSystemSceneRuntime
       body.radiusScene,
     );
 
-    if (
-      this.currentSnapshot !==
-        null &&
-      this.simulationClock !==
-        null
-    ) {
-      this.renderer.setAnimationLoop(
-        this.onAnimationFrame,
-      );
-    }
-
+    this.updateAnimationLoop();
     this.renderFrame();
     return true;
   }
@@ -2238,17 +2375,7 @@ class ThreeSystemSceneRuntime
 
     this.cameraController.stopBodyTracking();
 
-    if (
-      this.currentSnapshot !==
-        null &&
-      this.currentSnapshot.motions.length ===
-        0
-    ) {
-      this.renderer.setAnimationLoop(
-        null,
-      );
-    }
-
+    this.updateAnimationLoop();
     this.renderFrame();
   }
 
@@ -4113,8 +4240,43 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  private updateAnimationLoop():
+    void {
+
+    if (
+      this.disposed
+    ) {
+      return;
+    }
+
+    const motionCount =
+      this.currentSnapshot
+        ?.motions.length ??
+      0;
+
+    this
+      .renderer
+      .setAnimationLoop(
+        systemSceneAnimationLoopRequired(
+          this.pageVisible,
+          motionCount,
+          this.trackedBodyId !==
+            null,
+        )
+          ? this.onAnimationFrame
+          : null,
+      );
+  }
+
   private renderFrame():
     void {
+
+    if (
+      this.disposed ||
+      !this.pageVisible
+    ) {
+      return;
+    }
 
     this
       .renderer

@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.8',
+  'SystemScene point 24.9',
   () => {
 
     let resize:
@@ -54,6 +54,9 @@ describe(
 
     let setLayerVisibility:
       NonNullable<SystemSceneRuntime['setLayerVisibility']>;
+
+    let setPageVisible:
+      NonNullable<SystemSceneRuntime['setPageVisible']>;
 
     let runtimeFactory:
       ReturnType<typeof vi.fn>;
@@ -128,6 +131,14 @@ describe(
             ): void => {},
           );
 
+        setPageVisible =
+          vi.fn(
+            (
+              _visible:
+                boolean,
+            ): void => {},
+          );
+
         const runtime:
           SystemSceneRuntime =
           {
@@ -137,6 +148,7 @@ describe(
             followBody,
             stopFollowing,
             setLayerVisibility,
+            setPageVisible,
             dispose,
           };
 
@@ -202,6 +214,12 @@ describe(
           runtimeFactory,
         ).toHaveBeenCalledTimes(
           1,
+        );
+
+        expect(
+          setPageVisible,
+        ).toHaveBeenCalledWith(
+          true,
         );
 
         expect(
@@ -929,6 +947,123 @@ describe(
           transNeptunianObjects: true,
           capturedObjects: true,
         });
+      },
+    );
+
+    it(
+      'should pause the runtime while the document is hidden, resume it when visible and remove the listener on destroy',
+      () => {
+        const ownVisibilityDescriptor =
+          Object.getOwnPropertyDescriptor(
+            document,
+            'visibilityState',
+          );
+
+        let visibilityState:
+          DocumentVisibilityState =
+          'visible';
+
+        Object.defineProperty(
+          document,
+          'visibilityState',
+          {
+            configurable:
+              true,
+            get:
+              () =>
+                visibilityState,
+          },
+        );
+
+        try {
+          const fixture =
+            TestBed.createComponent(
+              SystemScene,
+            );
+
+          fixture
+            .componentRef
+            .setInput(
+              'snapshot',
+              sceneSnapshot(),
+            );
+
+          fixture.detectChanges();
+
+          expect(
+            setPageVisible,
+          ).toHaveBeenLastCalledWith(
+            true,
+          );
+
+          visibilityState =
+            'hidden';
+
+          document.dispatchEvent(
+            new Event(
+              'visibilitychange',
+            ),
+          );
+
+          expect(
+            setPageVisible,
+          ).toHaveBeenLastCalledWith(
+            false,
+          );
+
+          visibilityState =
+            'visible';
+
+          document.dispatchEvent(
+            new Event(
+              'visibilitychange',
+            ),
+          );
+
+          expect(
+            setPageVisible,
+          ).toHaveBeenLastCalledWith(
+            true,
+          );
+
+          const callCountBeforeDestroy =
+            vi.mocked(
+              setPageVisible,
+            ).mock.calls.length;
+
+          fixture.destroy();
+
+          visibilityState =
+            'hidden';
+
+          document.dispatchEvent(
+            new Event(
+              'visibilitychange',
+            ),
+          );
+
+          expect(
+            setPageVisible,
+          ).toHaveBeenCalledTimes(
+            callCountBeforeDestroy,
+          );
+        } finally {
+          if (
+            ownVisibilityDescriptor ===
+              undefined
+          ) {
+            Reflect.deleteProperty(
+              document,
+              'visibilityState',
+            );
+          } else {
+            Object.defineProperty(
+              document,
+              'visibilityState',
+              ownVisibilityDescriptor,
+            );
+          }
+        }
       },
     );
 
