@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>24.7 V2 · HZ SCIENCE · ORBITAL RISK CLARITY · PAN · ZOOM</span>
+    <span>24.7 V3 · HZ SCIENCE · ORBITAL RISK CLARITY · BODY TRACKING · PAN · ZOOM</span>
   </div>
 
 
@@ -137,7 +137,7 @@
       data-testid="system-scene-reset-view"
       (click)="resetView()"
     >
-      RECENTRAR
+      {{ trackingSelection() ? 'VOLVER AL SISTEMA' : 'RECENTRAR' }}
     </button>
   </div>
 
@@ -227,6 +227,26 @@
       <small>
         {{ selectedBody.label }}
       </small>
+
+      @if (trackingSelection(); as trackedBody) {
+        <small
+          class="system-scene__tracking-status"
+          data-testid="system-scene-tracking-status"
+        >
+          SIGUIENDO · {{ trackedBody.title }}
+        </small>
+      }
+
+      <button
+        type="button"
+        class="system-scene__follow-button"
+        data-testid="system-scene-follow-selection"
+        [attr.aria-pressed]="isSelectedBodyTracked()"
+        [disabled]="isSelectedBodyTracked()"
+        (click)="followSelectedBody()"
+      >
+        {{ isSelectedBodyTracked() ? 'SIGUIENDO OBJETO' : 'SEGUIR OBJETO' }}
+      </button>
     </div>
   }
 

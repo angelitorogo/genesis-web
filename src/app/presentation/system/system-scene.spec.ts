@@ -46,6 +46,12 @@ describe(
     let resetView:
       NonNullable<SystemSceneRuntime['resetView']>;
 
+    let followBody:
+      NonNullable<SystemSceneRuntime['followBody']>;
+
+    let stopFollowing:
+      NonNullable<SystemSceneRuntime['stopFollowing']>;
+
     let setLayerVisibility:
       NonNullable<SystemSceneRuntime['setLayerVisibility']>;
 
@@ -101,6 +107,19 @@ describe(
             (): void => {},
           );
 
+        followBody =
+          vi.fn(
+            (
+              _bodyId:
+                string,
+            ): boolean => true,
+          );
+
+        stopFollowing =
+          vi.fn(
+            (): void => {},
+          );
+
         setLayerVisibility =
           vi.fn(
             (
@@ -115,6 +134,8 @@ describe(
             resize,
             render,
             resetView,
+            followBody,
+            stopFollowing,
             setLayerVisibility,
             dispose,
           };
@@ -300,6 +321,58 @@ describe(
           'Jotheria b',
         );
 
+        (
+          fixture
+            .nativeElement as
+              HTMLElement
+        )
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-follow-selection"]',
+          )
+          ?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          followBody,
+        ).toHaveBeenCalledWith(
+          'planet-1',
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .trackingSelection()
+            ?.bodyId,
+        ).toBe(
+          'planet-1',
+        );
+
+        expect(
+          fixture
+            .nativeElement
+            .querySelector(
+              '[data-testid="system-scene-tracking-status"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'Jotheria b',
+        );
+
+        expect(
+          (
+            fixture
+              .nativeElement as
+                HTMLElement
+          )
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="system-scene-follow-selection"]',
+            )
+            ?.disabled,
+        ).toBe(
+          true,
+        );
+
         expect(
           emittedSelections,
         ).toHaveLength(
@@ -320,6 +393,131 @@ describe(
           resetView,
         ).toHaveBeenCalledTimes(
           1,
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .trackingSelection(),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should keep the current tracked body while another body is inspected and only retarget after an explicit follow action',
+      () => {
+
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        fixture
+          .componentRef
+          .setInput(
+            'snapshot',
+            sceneSnapshot(),
+          );
+
+        fixture.detectChanges();
+
+        const selectionHandler =
+          capturedSelectionHandler as
+            SystemSceneSelectionChangeHandler;
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'planet-1',
+            kind:
+              'planet',
+            label:
+              'b',
+            title:
+              'Jotheria b',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-follow-selection"]',
+          )
+          ?.click();
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'star-a',
+            kind:
+              'star',
+            label:
+              'A',
+            title:
+              'Jotheria A',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          fixture
+            .componentInstance
+            .selection()
+            ?.bodyId,
+        ).toBe(
+          'star-a',
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .trackingSelection()
+            ?.bodyId,
+        ).toBe(
+          'planet-1',
+        );
+
+        expect(
+          followBody,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          element
+            .querySelector<HTMLButtonElement>(
+              '[data-testid="system-scene-follow-selection"]',
+            )
+            ?.disabled,
+        ).toBe(
+          false,
+        );
+
+        element
+          .querySelector<HTMLButtonElement>(
+            '[data-testid="system-scene-follow-selection"]',
+          )
+          ?.click();
+
+        expect(
+          followBody,
+        ).toHaveBeenLastCalledWith(
+          'star-a',
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .trackingSelection()
+            ?.bodyId,
+        ).toBe(
+          'star-a',
         );
       },
     );

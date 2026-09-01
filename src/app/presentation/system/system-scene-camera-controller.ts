@@ -14,6 +14,9 @@ const MAX_POLAR_ANGLE =
 const CLICK_SELECTION_THRESHOLD_PIXELS =
   7;
 
+const BODY_TRACKING_TRANSITION_MILLISECONDS =
+  460;
+
 export interface SystemSceneCameraLimits {
   readonly homeDistance:
     number;
@@ -38,17 +41,63 @@ export type SystemScenePickHandler =
   ) => void;
 
 /**
- * Point-24.4 camera interaction controller shared by every SystemScene host.
+ * Point-24.4 camera interaction controller shared by every SystemScene host,
+ * extended at point 24.7 with presentation-only body tracking.
  *
  * The controller changes only the presentation camera. It never changes
  * orbital state or body physics. Left drag orbits, right drag pans, wheel
  * zooms to the cursor and touch uses one-finger orbit / two-finger dolly-pan.
  * A short primary click is forwarded to the scene picker; a drag is not.
+ * Body tracking translates the camera/OrbitControls target with the selected
+ * object's world position, preserving normal orbital simulation underneath.
  */
 export class SystemSceneCameraController {
 
   private readonly controls:
     OrbitControls;
+
+  private systemMaxTargetRadius =
+    2;
+
+  private bodyTrackingActive =
+    false;
+
+  private bodyTrackingTransitionComplete =
+    false;
+
+  private trackingStartTimestampMilliseconds:
+    number | null =
+    null;
+
+  private readonly trackingStartBodyPosition =
+    new THREE.Vector3();
+
+  private readonly trackingLastBodyPosition =
+    new THREE.Vector3();
+
+  private readonly trackingStartCameraPosition =
+    new THREE.Vector3();
+
+  private readonly trackingStartControlsTarget =
+    new THREE.Vector3();
+
+  private readonly trackingViewDirection =
+    new THREE.Vector3();
+
+  private readonly trackingScratchBodyDelta =
+    new THREE.Vector3();
+
+  private readonly trackingScratchStartCamera =
+    new THREE.Vector3();
+
+  private readonly trackingScratchStartTarget =
+    new THREE.Vector3();
+
+  private readonly trackingScratchDesiredCamera =
+    new THREE.Vector3();
+
+  private trackingDesiredDistance =
+    1;
 
   private pointerDown:
     {
@@ -276,6 +325,8 @@ export class SystemSceneCameraController {
       number,
   ): void {
 
+    this.stopBodyTracking();
+
     const limits =
       systemSceneCameraLimits(
         outerRadiusScene,
@@ -287,6 +338,8 @@ export class SystemSceneCameraController {
       limits.maxDistance;
     this.controls.minTargetRadius =
       0;
+    this.systemMaxTargetRadius =
+      limits.maxTargetRadius;
     this.controls.maxTargetRadius =
       limits.maxTargetRadius;
 
@@ -319,10 +372,266 @@ export class SystemSceneCameraController {
     this.onChange();
   }
 
+  beginBodyTracking(
+    worldPosition:
+      THREE.Vector3,
+
+    bodyRadiusScene:
+      number,
+  ): void {
+
+    this.bodyTrackingActive =
+      true;
+    this.bodyTrackingTransitionComplete =
+      false;
+    this.trackingStartTimestampMilliseconds =
+      null;
+
+    this.trackingStartBodyPosition.copy(
+      worldPosition,
+    );
+    this.trackingLastBodyPosition.copy(
+      worldPosition,
+    );
+    this.trackingStartCameraPosition.copy(
+      this.camera.position,
+    );
+    this.trackingStartControlsTarget.copy(
+      this.controls.target,
+    );
+
+    this.trackingViewDirection
+      .copy(
+        this.camera.position,
+      )
+      .sub(
+        this.controls.target,
+      );
+
+    if (
+      this.trackingViewDirection.lengthSq() <
+        1e-10
+    ) {
+      this.trackingViewDirection.set(
+        0.18,
+        0.34,
+        1,
+      );
+    }
+
+    this.trackingViewDirection.normalize();
+
+    this.trackingDesiredDistance =
+      systemSceneBodyFocusDistance(
+        bodyRadiusScene,
+        this.controls.minDistance,
+        this.controls.maxDistance,
+      );
+
+    this.controls.minTargetRadius =
+      0;
+    this.controls.maxTargetRadius =
+      Number.POSITIVE_INFINITY;
+    this.controls.cursor.copy(
+      worldPosition,
+    );
+
+    this.onChange();
+  }
+
+  updateBodyTracking(
+    worldPosition:
+      THREE.Vector3,
+
+    timestampMilliseconds:
+      number,
+  ): void {
+
+    if (
+      !this.bodyTrackingActive
+    ) {
+      return;
+    }
+
+    if (
+      this.trackingStartTimestampMilliseconds ===
+        null
+    ) {
+      this.trackingStartTimestampMilliseconds =
+        Number.isFinite(
+          timestampMilliseconds,
+        )
+          ? timestampMilliseconds
+          : 0;
+    }
+
+    const safeTimestamp =
+      Number.isFinite(
+        timestampMilliseconds,
+      )
+        ? timestampMilliseconds
+        : this.trackingStartTimestampMilliseconds;
+
+    const transitionFraction =
+      Math.min(
+        1,
+        Math.max(
+          0,
+          (
+            safeTimestamp -
+            this.trackingStartTimestampMilliseconds
+          ) /
+            BODY_TRACKING_TRANSITION_MILLISECONDS,
+        ),
+      );
+
+    if (
+      transitionFraction <
+        1
+    ) {
+      const eased =
+        smoothStep01(
+          transitionFraction,
+        );
+
+      this.trackingScratchBodyDelta
+        .copy(
+          worldPosition,
+        )
+        .sub(
+          this.trackingStartBodyPosition,
+        );
+
+      this.trackingScratchStartCamera
+        .copy(
+          this.trackingStartCameraPosition,
+        )
+        .add(
+          this.trackingScratchBodyDelta,
+        );
+
+      this.trackingScratchStartTarget
+        .copy(
+          this.trackingStartControlsTarget,
+        )
+        .add(
+          this.trackingScratchBodyDelta,
+        );
+
+      this.trackingScratchDesiredCamera
+        .copy(
+          this.trackingViewDirection,
+        )
+        .multiplyScalar(
+          this.trackingDesiredDistance,
+        )
+        .add(
+          worldPosition,
+        );
+
+      this.camera.position.lerpVectors(
+        this.trackingScratchStartCamera,
+        this.trackingScratchDesiredCamera,
+        eased,
+      );
+
+      this.controls.target.lerpVectors(
+        this.trackingScratchStartTarget,
+        worldPosition,
+        eased,
+      );
+
+      this.controls.cursor.copy(
+        this.controls.target,
+      );
+      this.controls.update();
+      this.trackingLastBodyPosition.copy(
+        worldPosition,
+      );
+      return;
+    }
+
+    if (
+      !this.bodyTrackingTransitionComplete
+    ) {
+      this.trackingScratchDesiredCamera
+        .copy(
+          this.trackingViewDirection,
+        )
+        .multiplyScalar(
+          this.trackingDesiredDistance,
+        )
+        .add(
+          worldPosition,
+        );
+
+      this.camera.position.copy(
+        this.trackingScratchDesiredCamera,
+      );
+      this.controls.target.copy(
+        worldPosition,
+      );
+      this.controls.cursor.copy(
+        worldPosition,
+      );
+      this.trackingLastBodyPosition.copy(
+        worldPosition,
+      );
+      this.bodyTrackingTransitionComplete =
+        true;
+      this.controls.update();
+      return;
+    }
+
+    this.trackingScratchBodyDelta
+      .copy(
+        worldPosition,
+      )
+      .sub(
+        this.trackingLastBodyPosition,
+      );
+
+    this.camera.position.add(
+      this.trackingScratchBodyDelta,
+    );
+    this.controls.target.add(
+      this.trackingScratchBodyDelta,
+    );
+    this.controls.cursor.copy(
+      this.controls.target,
+    );
+    this.trackingLastBodyPosition.copy(
+      worldPosition,
+    );
+    this.controls.update();
+  }
+
+  stopBodyTracking():
+    void {
+
+    this.bodyTrackingActive =
+      false;
+    this.bodyTrackingTransitionComplete =
+      false;
+    this.trackingStartTimestampMilliseconds =
+      null;
+    this.controls.maxTargetRadius =
+      this.systemMaxTargetRadius;
+    this.controls.cursor.copy(
+      this.controls.target,
+    );
+  }
+
   resetView():
     void {
 
+    this.stopBodyTracking();
     this.controls.reset();
+    this.controls.cursor.set(
+      0,
+      0,
+      0,
+    );
     this.controls.update();
     this.onChange();
   }
@@ -402,6 +711,89 @@ export function systemSceneCameraLimits(
           1.45,
       ),
   });
+}
+
+export function systemSceneBodyFocusDistance(
+  bodyRadiusScene:
+    number,
+
+  minDistance:
+    number,
+
+  maxDistance:
+    number,
+): number {
+
+  const safeRadius =
+    Number.isFinite(
+      bodyRadiusScene,
+    ) &&
+    bodyRadiusScene >
+      0
+      ? bodyRadiusScene
+      : 0.04;
+
+  const safeMinDistance =
+    Number.isFinite(
+      minDistance,
+    ) &&
+    minDistance >
+      0
+      ? minDistance
+      : 0.28;
+
+  const safeMaxDistance =
+    Number.isFinite(
+      maxDistance,
+    ) &&
+    maxDistance >
+      safeMinDistance
+      ? maxDistance
+      : Math.max(
+          safeMinDistance *
+            4,
+          2,
+        );
+
+  const preferredDistance =
+    Math.max(
+      0.78,
+      safeRadius *
+        8.5,
+      safeMinDistance *
+        1.6,
+    );
+
+  return Math.max(
+    safeMinDistance,
+    Math.min(
+      safeMaxDistance *
+        0.72,
+      preferredDistance,
+    ),
+  );
+}
+
+function smoothStep01(
+  value:
+    number,
+): number {
+  const clamped =
+    Math.min(
+      1,
+      Math.max(
+        0,
+        value,
+      ),
+    );
+
+  return clamped *
+    clamped *
+    (
+      3 -
+      2 *
+        clamped
+    );
 }
 
 export function systemScenePointerTravelPixels(

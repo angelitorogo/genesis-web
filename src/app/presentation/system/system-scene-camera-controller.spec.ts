@@ -1,10 +1,11 @@
 import {
+  systemSceneBodyFocusDistance,
   systemSceneCameraLimits,
   systemScenePointerTravelPixels,
 } from './system-scene-camera-controller';
 
 describe(
-  'SystemSceneCameraController point 24.4',
+  'SystemSceneCameraController point 24.7 body tracking',
   () => {
     it(
       'should derive finite zoom/pan bounds from the visible system extent without touching domain physics',
@@ -50,6 +51,43 @@ describe(
           systemSceneCameraLimits(
             4.8,
           ),
+        );
+      },
+    );
+
+    it(
+      'should derive a readable body-follow distance from presentation radius without changing body coordinates',
+      () => {
+        expect(
+          systemSceneBodyFocusDistance(
+            0.30,
+            0.28,
+            59.4,
+          ),
+        ).toBeCloseTo(
+          2.55,
+          12,
+        );
+
+        expect(
+          systemSceneBodyFocusDistance(
+            0.04,
+            0.28,
+            59.4,
+          ),
+        ).toBeCloseTo(
+          0.78,
+          12,
+        );
+
+        expect(
+          systemSceneBodyFocusDistance(
+            Number.NaN,
+            Number.NaN,
+            Number.NaN,
+          ),
+        ).toBeGreaterThan(
+          0,
         );
       },
     );

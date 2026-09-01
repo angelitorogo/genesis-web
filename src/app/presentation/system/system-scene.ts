@@ -161,6 +161,14 @@ export interface SystemSceneRuntime {
   resetView?():
     void;
 
+  followBody?(
+    bodyId:
+      string,
+  ): boolean;
+
+  stopFollowing?():
+    void;
+
   setLayerVisibility?(
     visibility:
       SystemSceneLayerVisibility,
@@ -216,7 +224,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.7 Angular host for the stellar-system Three.js scene.
+ * Point-24.7 V3 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -320,6 +328,11 @@ export class SystemScene
       null,
     );
 
+  private readonly trackingSelectionSignal =
+    signal<SystemSceneSelection | null>(
+      null,
+    );
+
   private readonly planetsVisibleSignal =
     signal(
       true,
@@ -387,6 +400,11 @@ export class SystemScene
   readonly selection =
     this
       .selectionSignal
+      .asReadonly();
+
+  readonly trackingSelection =
+    this
+      .trackingSelectionSignal
       .asReadonly();
 
   readonly renderState =
@@ -615,6 +633,50 @@ export class SystemScene
     }
   }
 
+  isSelectedBodyTracked():
+    boolean {
+    const selection =
+      this.selectionSignal();
+
+    const trackingSelection =
+      this.trackingSelectionSignal();
+
+    return (
+      selection !== null &&
+      trackingSelection !== null &&
+      selection.bodyId ===
+        trackingSelection.bodyId
+    );
+  }
+
+  followSelectedBody():
+    void {
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection === null
+    ) {
+      return;
+    }
+
+    const followed =
+      this.runtime
+        ?.followBody
+        ?.(
+          selection.bodyId,
+        ) ??
+      false;
+
+    if (
+      followed
+    ) {
+      this.trackingSelectionSignal.set(
+        selection,
+      );
+    }
+  }
+
   ngAfterViewInit():
     void {
 
@@ -736,6 +798,10 @@ export class SystemScene
       .runtime
       ?.resetView
       ?.();
+
+    this.trackingSelectionSignal.set(
+      null,
+    );
   }
 
   private applyLayerVisibility():
@@ -775,6 +841,67 @@ export class SystemScene
           this.capturedObjectCount() >
             0,
       });
+
+    const trackingSelection =
+      this.trackingSelectionSignal();
+
+    if (
+      trackingSelection !==
+        null &&
+      !this.isSelectionVisible(
+        trackingSelection,
+      )
+    ) {
+      this.trackingSelectionSignal.set(
+        null,
+      );
+    }
+  }
+
+  private isSelectionVisible(
+    selection:
+      SystemSceneSelection,
+  ): boolean {
+    switch (
+      selection.kind
+    ) {
+      case 'star':
+        return true;
+      case 'planet':
+        return this.planetsVisibleSignal();
+      case 'moon':
+        return this.moonsVisibleSignal();
+      case 'minor-body': {
+        const body =
+          this.snapshot.minorBodies.find(
+            candidate =>
+              candidate.id ===
+              selection.bodyId,
+          );
+
+        if (
+          body ===
+            undefined
+        ) {
+          return false;
+        }
+
+        switch (
+          minorBodyLayerKeyForKind(
+            body.minorBodyKind,
+          )
+        ) {
+          case 'asteroids':
+            return this.asteroidsVisibleSignal();
+          case 'comets':
+            return this.cometsVisibleSignal();
+          case 'transNeptunianObjects':
+            return this.transNeptunianObjectsVisibleSignal();
+          case 'capturedObjects':
+            return this.capturedObjectsVisibleSignal();
+        }
+      }
+    }
   }
 
   private toggleMinorBodyLayer(
@@ -933,6 +1060,10 @@ export class SystemScene
     ) {
       return;
     }
+
+    this.trackingSelectionSignal.set(
+      null,
+    );
 
     try {
       if (
@@ -1301,6 +1432,13 @@ class ThreeSystemSceneRuntime
     string | null =
     null;
 
+  private trackedBodyId:
+    string | null =
+    null;
+
+  private readonly trackedWorldPosition =
+    new THREE.Vector3();
+
   private readonly cameraController:
     SystemSceneCameraController;
 
@@ -1337,6 +1475,10 @@ class ThreeSystemSceneRuntime
 
       this.applySimulationDay(
         simulationState.simulationDay,
+      );
+
+      this.updateTrackedBodyCamera(
+        realTimestampMilliseconds,
       );
 
       this.renderFrame();
@@ -1781,6 +1923,26 @@ class ThreeSystemSceneRuntime
     }
 
     if (
+      this.trackedBodyId !==
+        null
+    ) {
+      const tracked =
+        this.bodySnapshotById.get(
+          this.trackedBodyId,
+        );
+
+      if (
+        tracked ===
+          undefined ||
+        !this.isBodySnapshotVisible(
+          tracked,
+        )
+      ) {
+        this.stopFollowing();
+      }
+    }
+
+    if (
       this.selectedBodyId !==
         null
     ) {
@@ -1868,6 +2030,26 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  private isBodySnapshotVisible(
+    body:
+      SystemSceneSelectableBodySnapshot,
+  ): boolean {
+    switch (
+      body.kind
+    ) {
+      case 'star':
+        return true;
+      case 'planet':
+        return this.layerVisibility.planets;
+      case 'moon':
+        return this.layerVisibility.moons;
+      case 'minor-body':
+        return this.isMinorBodySnapshotVisible(
+          body,
+        );
+    }
+  }
+
   private isMinorBodySnapshotVisible(
     body:
       SystemSceneMinorBodySnapshot,
@@ -1927,10 +2109,95 @@ class ThreeSystemSceneRuntime
       .forceContextLoss();
   }
 
+  followBody(
+    bodyId:
+      string,
+  ): boolean {
+
+    this.assertAlive();
+
+    const body =
+      this.bodySnapshotById.get(
+        bodyId,
+      );
+
+    const object =
+      this.animatedBodies.get(
+        bodyId,
+      );
+
+    if (
+      body ===
+        undefined ||
+      object ===
+        undefined ||
+      !this.isBodySnapshotVisible(
+        body,
+      )
+    ) {
+      return false;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+
+    object.getWorldPosition(
+      this.trackedWorldPosition,
+    );
+
+    this.trackedBodyId =
+      bodyId;
+
+    this.cameraController.beginBodyTracking(
+      this.trackedWorldPosition,
+      body.radiusScene,
+    );
+
+    if (
+      this.currentSnapshot !==
+        null &&
+      this.simulationClock !==
+        null
+    ) {
+      this.renderer.setAnimationLoop(
+        this.onAnimationFrame,
+      );
+    }
+
+    this.renderFrame();
+    return true;
+  }
+
+  stopFollowing():
+    void {
+
+    this.assertAlive();
+
+    this.trackedBodyId =
+      null;
+
+    this.cameraController.stopBodyTracking();
+
+    if (
+      this.currentSnapshot !==
+        null &&
+      this.currentSnapshot.motions.length ===
+        0
+    ) {
+      this.renderer.setAnimationLoop(
+        null,
+      );
+    }
+
+    this.renderFrame();
+  }
+
   resetView():
     void {
 
     this.assertAlive();
+    this.stopFollowing();
     this.cameraController.resetView();
   }
 
@@ -3526,6 +3793,47 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  private updateTrackedBodyCamera(
+    realTimestampMilliseconds:
+      number,
+  ): void {
+
+    if (
+      this.trackedBodyId ===
+        null
+    ) {
+      return;
+    }
+
+    const object =
+      this.animatedBodies.get(
+        this.trackedBodyId,
+      );
+
+    if (
+      object ===
+        undefined
+    ) {
+      this.trackedBodyId =
+        null;
+      this.cameraController.stopBodyTracking();
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+
+    object.getWorldPosition(
+      this.trackedWorldPosition,
+    );
+
+    this.cameraController.updateBodyTracking(
+      this.trackedWorldPosition,
+      realTimestampMilliseconds,
+    );
+  }
+
   private positionFromContributions(
     contributions:
       readonly SystemSceneMotionContributionSnapshot[],
@@ -3678,6 +3986,10 @@ class ThreeSystemSceneRuntime
       this.selectionMarker.removeFromParent();
       this.selectionMarker.material.dispose();
     }
+
+    this.trackedBodyId =
+      null;
+    this.cameraController.stopBodyTracking();
 
     disposeResources(
       this.frameDisposables,
