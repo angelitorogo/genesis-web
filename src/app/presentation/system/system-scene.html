@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>24.7 V3 · HZ SCIENCE · ORBITAL RISK CLARITY · BODY TRACKING · PAN · ZOOM</span>
+    <span>24.8 · BODY SHEETS · BODY TRACKING · HZ · ORBITAL RISK · PAN · ZOOM</span>
   </div>
 
 
@@ -210,44 +210,179 @@
   }
 
   @if (selection(); as selectedBody) {
-    <div
-      class="system-scene__selection"
-      data-testid="system-scene-selection"
-      [attr.data-body-id]="selectedBody.bodyId"
-      [attr.data-body-kind]="selectedBody.kind"
-    >
-      <span>
-        {{ selectionKindLabel(selectedBody.kind) }}
-      </span>
-
-      <strong>
-        {{ selectedBody.title }}
-      </strong>
-
-      <small>
-        {{ selectedBody.label }}
-      </small>
-
-      @if (trackingSelection(); as trackedBody) {
-        <small
-          class="system-scene__tracking-status"
-          data-testid="system-scene-tracking-status"
+    @if (bodyCardOpen()) {
+      @if (selectedBodyCard(); as bodyCard) {
+        <aside
+          class="system-scene__selection system-scene__body-card"
+          data-testid="system-scene-selection"
+          data-body-card-state="open"
+          [attr.data-body-id]="bodyCard.bodyId"
+          [attr.data-body-kind]="bodyCard.kind"
+          aria-live="polite"
         >
-          SIGUIENDO · {{ trackedBody.title }}
-        </small>
-      }
+          <header
+            class="system-scene__body-card-header"
+            data-testid="system-scene-body-card"
+          >
+            <div>
+              <span>FICHA DE CUERPO · 24.8</span>
 
-      <button
-        type="button"
-        class="system-scene__follow-button"
-        data-testid="system-scene-follow-selection"
-        [attr.aria-pressed]="isSelectedBodyTracked()"
-        [disabled]="isSelectedBodyTracked()"
-        (click)="followSelectedBody()"
+              <strong>
+                {{ bodyCard.title }}
+              </strong>
+
+              <small>
+                <i
+                  class="system-scene__swatch"
+                  [style.background]="bodyCard.colorHex"
+                  [style.color]="bodyCard.colorHex"
+                ></i>
+                {{ bodyCard.kindLabel }} · {{ bodyCard.designation }}
+              </small>
+            </div>
+
+            <button
+              type="button"
+              class="system-scene__body-card-close"
+              data-testid="system-scene-body-card-close"
+              aria-label="Cerrar ficha del cuerpo seleccionado"
+              (click)="closeSelectedBodyCard()"
+            >
+              ×
+            </button>
+          </header>
+
+          <dl class="system-scene__body-card-data">
+            <div>
+              <dt>Clase</dt>
+              <dd>{{ bodyCard.kindLabel }}</dd>
+            </div>
+
+            @if (bodyCard.subtypeLabel; as subtypeLabel) {
+              <div>
+                <dt>Familia</dt>
+                <dd>{{ subtypeLabel }}</dd>
+              </div>
+            }
+
+            @if (bodyCard.hostTitle; as hostTitle) {
+              <div>
+                <dt>Host</dt>
+                <dd>{{ hostTitle }}</dd>
+              </div>
+            }
+
+            <div>
+              <dt>Órbita</dt>
+              <dd>
+                @if (bodyCard.orbitKindLabel; as orbitKindLabel) {
+                  {{ orbitKindLabel }}
+                  @if (bodyCard.orbitLabel; as orbitLabel) {
+                    · {{ orbitLabel }}
+                  }
+                } @else {
+                  SIN GUÍA ORBITAL LOCAL
+                }
+              </dd>
+            </div>
+          </dl>
+
+          @if (bodyCard.orbitalRisk; as risk) {
+            <section
+              class="system-scene__body-card-risk"
+              data-testid="system-scene-body-card-risk"
+            >
+              <span>RIESGO ORBITAL</span>
+              <strong>{{ risk.severityLabel }}</strong>
+              <small>
+                {{ risk.sourceMinorBodyCount }} menores asociados ·
+                {{ risk.radialCrossingOnlyCount }} cruces ·
+                {{ risk.approachCorridorCount }} aproximaciones ·
+                {{ risk.directCollisionGeometryCount }} colisiones geom. ·
+                índice {{ risk.highestOrbitalRiskIndex01.toFixed(2) }}
+              </small>
+            </section>
+          }
+
+          @if (trackingSelection(); as trackedBody) {
+            <small
+              class="system-scene__tracking-status"
+              data-testid="system-scene-tracking-status"
+            >
+              SIGUIENDO · {{ trackedBody.title }}
+            </small>
+          }
+
+          <div class="system-scene__body-card-actions">
+            <button
+              type="button"
+              class="system-scene__follow-button"
+              data-testid="system-scene-follow-selection"
+              [attr.aria-pressed]="isSelectedBodyTracked()"
+              [disabled]="isSelectedBodyTracked()"
+              (click)="followSelectedBody()"
+            >
+              {{ isSelectedBodyTracked() ? 'SIGUIENDO OBJETO' : 'SEGUIR OBJETO' }}
+            </button>
+          </div>
+
+          <small class="system-scene__body-card-contract">
+            Ficha de navegación 24.8 derivada del snapshot de presentación.
+            La ficha científica completa se ampliará en Fase 26 sin usar Three.js como fuente física.
+          </small>
+        </aside>
+      }
+    } @else {
+      <div
+        class="system-scene__selection"
+        data-testid="system-scene-selection"
+        [attr.data-body-id]="selectedBody.bodyId"
+        [attr.data-body-kind]="selectedBody.kind"
       >
-        {{ isSelectedBodyTracked() ? 'SIGUIENDO OBJETO' : 'SEGUIR OBJETO' }}
-      </button>
-    </div>
+        <span>
+          {{ selectionKindLabel(selectedBody.kind) }}
+        </span>
+
+        <strong>
+          {{ selectedBody.title }}
+        </strong>
+
+        <small>
+          {{ selectedBody.label }}
+        </small>
+
+        @if (trackingSelection(); as trackedBody) {
+          <small
+            class="system-scene__tracking-status"
+            data-testid="system-scene-tracking-status"
+          >
+            SIGUIENDO · {{ trackedBody.title }}
+          </small>
+        }
+
+        <div class="system-scene__selection-actions">
+          <button
+            type="button"
+            class="system-scene__follow-button system-scene__body-card-open"
+            data-testid="system-scene-body-card-open"
+            (click)="openSelectedBodyCard()"
+          >
+            ABRIR FICHA
+          </button>
+
+          <button
+            type="button"
+            class="system-scene__follow-button"
+            data-testid="system-scene-follow-selection"
+            [attr.aria-pressed]="isSelectedBodyTracked()"
+            [disabled]="isSelectedBodyTracked()"
+            (click)="followSelectedBody()"
+          >
+            {{ isSelectedBodyTracked() ? 'SIGUIENDO OBJETO' : 'SEGUIR OBJETO' }}
+          </button>
+        </div>
+      </div>
+    }
   }
 
   @if (renderState() === 'initializing') {

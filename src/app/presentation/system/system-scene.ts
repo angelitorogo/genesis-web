@@ -51,6 +51,11 @@ import {
 } from './system-scene-camera-controller';
 
 import {
+  buildSystemSceneBodyCard,
+  type SystemSceneBodyCard,
+} from './system-scene-body-card';
+
+import {
   SystemSceneProjectionSpace,
   systemSceneProjectAuVector,
   systemSceneProjectAuVectorInSpace,
@@ -224,7 +229,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.7 V3 Angular host for the stellar-system Three.js scene.
+ * Point-24.8 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -333,6 +338,11 @@ export class SystemScene
       null,
     );
 
+  private readonly bodyCardOpenSignal =
+    signal(
+      false,
+    );
+
   private readonly planetsVisibleSignal =
     signal(
       true,
@@ -405,6 +415,11 @@ export class SystemScene
   readonly trackingSelection =
     this
       .trackingSelectionSignal
+      .asReadonly();
+
+  readonly bodyCardOpen =
+    this
+      .bodyCardOpenSignal
       .asReadonly();
 
   readonly renderState =
@@ -633,6 +648,43 @@ export class SystemScene
     }
   }
 
+  selectedBodyCard():
+    SystemSceneBodyCard | null {
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection ===
+        null
+    ) {
+      return null;
+    }
+
+    return buildSystemSceneBodyCard(
+      this.snapshot,
+      selection.bodyId,
+    );
+  }
+
+  openSelectedBodyCard():
+    void {
+    if (
+      this.selectionSignal() !==
+        null
+    ) {
+      this.bodyCardOpenSignal.set(
+        true,
+      );
+    }
+  }
+
+  closeSelectedBodyCard():
+    void {
+    this.bodyCardOpenSignal.set(
+      false,
+    );
+  }
+
   isSelectedBodyTracked():
     boolean {
     const selection =
@@ -706,6 +758,13 @@ export class SystemScene
                 .selectionSignal
                 .set(
                   selection,
+                );
+
+              this
+                .bodyCardOpenSignal
+                .set(
+                  selection !==
+                    null,
                 );
 
               this

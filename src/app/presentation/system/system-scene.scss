@@ -198,6 +198,12 @@
     }
   }
 
+  &__body-card { z-index: 5; width: min(24rem, calc(100% - 2rem)); gap: .4rem; }
+  &__body-card-header { display: flex; justify-content: space-between; gap: .5rem; > div { display: grid; } }
+  &__body-card-close { border: 0; background: transparent; color: var(--genesis-color-primary); cursor: pointer; }
+  &__body-card-data { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .25rem; margin: 0; dd { margin: 0; overflow-wrap: anywhere; } }
+  &__body-card-actions, &__selection-actions { display: flex; flex-wrap: wrap; gap: .3rem; }
+
   &__tracking-status {
     margin-top: .28rem;
     padding-top: .32rem;
@@ -300,6 +306,9 @@
       left: .75rem;
       max-width: calc(100% - 1.5rem);
     }
+
+    &__body-card { right: .75rem; width: auto; }
+    &__body-card-data { grid-template-columns: 1fr; }
   }
 }
 

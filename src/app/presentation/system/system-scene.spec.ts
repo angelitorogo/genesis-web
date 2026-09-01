@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.7',
+  'SystemScene point 24.8',
   () => {
 
     let resize:
@@ -321,6 +321,36 @@ describe(
           'Jotheria b',
         );
 
+        expect(
+          fixture
+            .componentInstance
+            .bodyCardOpen(),
+        ).toBe(
+          true,
+        );
+
+        expect(
+          fixture
+            .nativeElement
+            .querySelector(
+              '[data-testid="system-scene-body-card"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'FICHA DE CUERPO · 24.8',
+        );
+
+        expect(
+          fixture
+            .nativeElement
+            .querySelector(
+              '[data-testid="system-scene-body-card-risk"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'APROXIMACIÓN',
+        );
+
         (
           fixture
             .nativeElement as
@@ -400,6 +430,204 @@ describe(
             .componentInstance
             .trackingSelection(),
         ).toBeNull();
+      },
+    );
+
+    it(
+      'should open a navigation sheet for stars, planets, moons and every current minor-body family',
+      () => {
+
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        fixture
+          .componentRef
+          .setInput(
+            'snapshot',
+            sceneSnapshot(),
+          );
+
+        fixture.detectChanges();
+
+        const selectionHandler =
+          capturedSelectionHandler as
+            SystemSceneSelectionChangeHandler;
+
+        const cases = [
+          ['star-a', 'star', 'Jotheria A', 'ESTRELLA'],
+          ['planet-1', 'planet', 'Jotheria b', 'PLANETA'],
+          ['moon-1-1', 'moon', 'Jotheria b I', 'LUNA'],
+          ['minor-1-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'minor-body', 'Asteroide AST-001', 'ASTEROIDE'],
+          ['minor-2-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB', 'minor-body', 'Cometa COM-005', 'COMETA'],
+          ['minor-3-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', 'minor-body', 'TNO TNO-003', 'OBJETO TRANSNEPTUNIANO'],
+          ['minor-4-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD', 'minor-body', 'Capturado CAP-002', 'OBJETO EXTRASOLAR CAPTURADO'],
+        ] as const;
+
+        for (
+          const [
+            bodyId,
+            kind,
+            title,
+            expectedText,
+          ]
+          of cases
+        ) {
+          selectionHandler(
+            Object.freeze({
+              bodyId,
+              kind,
+              label:
+                title,
+              title,
+            }),
+          );
+
+          fixture.detectChanges();
+
+          const card =
+            (
+              fixture.nativeElement as
+                HTMLElement
+            ).querySelector<HTMLElement>(
+              '[data-testid="system-scene-selection"]',
+            );
+
+          expect(
+            card,
+          ).toBeTruthy();
+
+          expect(
+            card?.dataset['bodyId'],
+          ).toBe(
+            bodyId,
+          );
+
+          expect(
+            card?.dataset['bodyKind'],
+          ).toBe(
+            kind,
+          );
+
+          expect(
+            card?.textContent,
+          ).toContain(
+            expectedText,
+          );
+        }
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'moon-1-1',
+            kind:
+              'moon',
+            label:
+              'I',
+            title:
+              'Jotheria b I',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          fixture.nativeElement.querySelector(
+            '[data-testid="system-scene-selection"]',
+          )?.textContent,
+        ).toContain(
+          'Host',
+        );
+
+        expect(
+          fixture.nativeElement.querySelector(
+            '[data-testid="system-scene-selection"]',
+          )?.textContent,
+        ).toContain(
+          'Jotheria b',
+        );
+      },
+    );
+
+    it(
+      'should let the user close and reopen the selected body sheet without clearing selection or camera tracking',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        fixture.componentRef.setInput(
+          'snapshot',
+          sceneSnapshot(),
+        );
+
+        fixture.detectChanges();
+
+        (
+          capturedSelectionHandler as
+            SystemSceneSelectionChangeHandler
+        )(
+          Object.freeze({
+            bodyId:
+              'planet-1',
+            kind:
+              'planet',
+            label:
+              'b',
+            title:
+              'Jotheria b',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        element.querySelector<HTMLButtonElement>(
+          '[data-testid="system-scene-body-card-close"]',
+        )?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          fixture.componentInstance.selection()?.bodyId,
+        ).toBe(
+          'planet-1',
+        );
+
+        expect(
+          fixture.componentInstance.bodyCardOpen(),
+        ).toBe(
+          false,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-body-card-open"]',
+          ),
+        ).toBeTruthy();
+
+        element.querySelector<HTMLButtonElement>(
+          '[data-testid="system-scene-body-card-open"]',
+        )?.click();
+
+        fixture.detectChanges();
+
+        expect(
+          fixture.componentInstance.bodyCardOpen(),
+        ).toBe(
+          true,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-body-card"]',
+          ),
+        ).toBeTruthy();
       },
     );
 

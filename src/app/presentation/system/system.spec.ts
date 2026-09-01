@@ -36,7 +36,7 @@ import {
 } from './system';
 
 describe(
-  'SystemPage point 24.6',
+  'SystemPage point 24.8',
   () => {
 
     let load:
