@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene through point 25.1',
+  'SystemScene through point 25.2',
   () => {
 
     let resize:

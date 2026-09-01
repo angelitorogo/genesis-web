@@ -72,6 +72,12 @@ import {
 } from './system-scene-body-render-state';
 
 import {
+  buildSystemScenePlanetTextureV1,
+  type SystemScenePlanetTextureData,
+  type SystemScenePlanetTextureSurfaceStyle,
+} from './system-scene-planet-texture';
+
+import {
   SystemSceneProjectionSpace,
   systemSceneProjectAuVectorInSpace,
   type SystemSceneScaleSnapshot,
@@ -249,7 +255,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Through point-25.1 Angular host for the stellar-system Three.js scene.
+ * Through point-25.2 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -1960,12 +1966,16 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    const planetTextureSystemIdentity =
+      `${snapshot.universeSeed}|v${snapshot.generatorVersionCode}|${snapshot.proceduralIdentity}`;
+
     for (
       const planet
       of snapshot.planets
     ) {
       this.addPlanet(
         planet,
+        planetTextureSystemIdentity,
       );
     }
 
@@ -3335,6 +3345,9 @@ class ThreeSystemSceneRuntime
   private addPlanet(
     planet:
       SystemSceneBodySnapshot,
+
+    systemIdentity:
+      string,
   ):
     void {
 
@@ -3364,6 +3377,7 @@ class ThreeSystemSceneRuntime
     const appearance =
       createPlanetAppearance(
         planet,
+        systemIdentity,
       );
 
     const axialPivot =
@@ -4261,12 +4275,26 @@ interface PlanetAppearance {
 function createPlanetAppearance(
   planet:
     SystemSceneBodySnapshot,
+
+  systemIdentity:
+    string,
 ): PlanetAppearance {
 
+  const textureData =
+    buildSystemScenePlanetTextureV1({
+      systemIdentity,
+      planetId:
+        planet.id,
+      surfaceStyle:
+        planetTextureSurfaceStyle(
+          planet,
+        ),
+      baseColorHex:
+        planet.colorHex,
+    });
+
   const visualSeed =
-    hashStringToUint32(
-      `${planet.id}|${planet.title}|${planet.colorHex}|${planet.radiusScene.toFixed(4)}|${planet.position.x.toFixed(4)}|${planet.position.y.toFixed(4)}|${planet.position.z.toFixed(4)}`,
-    );
+    textureData.seedUint32;
 
   const baseColor =
     new THREE.Color(
@@ -4275,9 +4303,7 @@ function createPlanetAppearance(
 
   const surfaceTexture =
     createPlanetSurfaceTexture(
-      planet,
-      baseColor,
-      visualSeed,
+      textureData,
     );
 
   const resources: Array<{ dispose(): void }> = [
@@ -4404,207 +4430,61 @@ function createPlanetAppearance(
   });
 }
 
-function createPlanetSurfaceTexture(
+
+function planetTextureSurfaceStyle(
   planet:
     SystemSceneBodySnapshot,
-
-  baseColor:
-    THREE.Color,
-
-  seed:
-    number,
-): THREE.CanvasTexture {
-
-  const canvas =
-    document.createElement(
-      'canvas',
-    );
-
-  canvas.width =
-    512;
-  canvas.height =
-    256;
-
-  const context =
-    canvas.getContext(
-      '2d',
-    );
-
-  if (
-    context ===
-      null
-  ) {
-    throw new Error(
-      'Unable to create procedural planet texture.',
-    );
-  }
-
-  const random =
-    createDeterministicPrng(
-      seed,
-    );
-
-  const palette =
-    proceduralPlanetPalette(
-      planet.surfaceStyle,
-      baseColor,
-    );
-
-  fillPlanetBackground(
-    context,
-    canvas.width,
-    canvas.height,
-    palette.top,
-    palette.bottom,
-  );
+): SystemScenePlanetTextureSurfaceStyle {
 
   switch (
     planet.surfaceStyle
   ) {
-    case 'gaseous':
-      drawGaseousBands(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette,
-      );
-      drawAtmosphericStorms(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette,
-      );
-      break;
-
-    case 'oceanic':
-      drawSurfacePatches(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette,
-        26,
-        0.24,
-      );
-      drawOceanCurrents(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette,
-      );
-      drawPolarCaps(
-        context,
-        canvas.width,
-        canvas.height,
-        palette.highlight,
-        0.26,
-      );
-      break;
-
-    case 'icy':
-      drawSurfacePatches(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette,
-        30,
-        0.22,
-      );
-      drawFractureNetwork(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette.shadow,
-        18,
-        0.14,
-      );
-      drawPolarCaps(
-        context,
-        canvas.width,
-        canvas.height,
-        palette.highlight,
-        0.38,
-      );
-      break;
-
-    case 'volcanic':
-      drawSurfacePatches(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette,
-        24,
-        0.16,
-      );
-      drawVolcanicMagmaHints(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-      );
-      break;
-
     case 'rocky':
-    default:
-      drawSurfacePatches(
-        context,
-        canvas.width,
-        canvas.height,
-        random,
-        palette,
-        28,
-        0.20,
+    case 'oceanic':
+    case 'icy':
+    case 'gaseous':
+    case 'volcanic':
+      return planet.surfaceStyle;
+
+    case 'emissive':
+      throw new RangeError(
+        `Planet ${planet.id} cannot use the stellar emissive surface style.`,
       );
-
-      if (
-        baseColor.r >
-        baseColor.b +
-          0.08
-      ) {
-        drawDuneBands(
-          context,
-          canvas.width,
-          canvas.height,
-          random,
-          palette,
-        );
-      } else {
-        drawCraterHints(
-          context,
-          canvas.width,
-          canvas.height,
-          random,
-          palette,
-        );
-      }
-      break;
   }
+}
 
-  overlayPlanetVignette(
-    context,
-    canvas.width,
-    canvas.height,
-  );
+function createPlanetSurfaceTexture(
+  textureData:
+    SystemScenePlanetTextureData,
+): THREE.DataTexture {
 
   const texture =
-    new THREE.CanvasTexture(
-      canvas,
+    new THREE.DataTexture(
+      textureData.rgba,
+      textureData.width,
+      textureData.height,
+      THREE.RGBAFormat,
+      THREE.UnsignedByteType,
     );
 
+  texture.name =
+    `GENESIS procedural planet albedo v${textureData.version}`;
   texture.colorSpace =
     THREE.SRGBColorSpace;
-  texture.needsUpdate =
-    true;
   texture.wrapS =
     THREE.RepeatWrapping;
   texture.wrapT =
     THREE.ClampToEdgeWrapping;
+  texture.magFilter =
+    THREE.LinearFilter;
+  texture.minFilter =
+    THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps =
+    true;
+  texture.flipY =
+    true;
+  texture.needsUpdate =
+    true;
 
   return texture;
 }
@@ -4926,821 +4806,6 @@ function atmosphereMeshOrNull(
   });
 }
 
-interface ProceduralPlanetPalette {
-  readonly top:
-    THREE.Color;
-
-  readonly bottom:
-    THREE.Color;
-
-  readonly mid:
-    THREE.Color;
-
-  readonly highlight:
-    THREE.Color;
-
-  readonly shadow:
-    THREE.Color;
-}
-
-function proceduralPlanetPalette(
-  surfaceStyle:
-    SystemSceneBodySnapshot['surfaceStyle'],
-
-  baseColor:
-    THREE.Color,
-): ProceduralPlanetPalette {
-
-  switch (
-    surfaceStyle
-  ) {
-    case 'oceanic':
-      return Object.freeze({
-        top:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#0E2244',
-              ),
-              0.42,
-            ),
-        bottom:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#184D8A',
-              ),
-              0.36,
-            ),
-        mid:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#3DA6C3',
-              ),
-              0.22,
-            ),
-        highlight:
-          new THREE.Color(
-            '#E7F7FF',
-          ),
-        shadow:
-          new THREE.Color(
-            '#10243E',
-          ),
-      });
-
-    case 'icy':
-      return Object.freeze({
-        top:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#F4FBFF',
-              ),
-              0.45,
-            ),
-        bottom:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#A9D5F0',
-              ),
-              0.34,
-            ),
-        mid:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#D7ECF7',
-              ),
-              0.28,
-            ),
-        highlight:
-          new THREE.Color(
-            '#FFFFFF',
-          ),
-        shadow:
-          new THREE.Color(
-            '#78A2BE',
-          ),
-      });
-
-    case 'gaseous':
-      return Object.freeze({
-        top:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#F1DCC4',
-              ),
-              0.2,
-            ),
-        bottom:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#425E7D',
-              ),
-              baseColor.b >
-                baseColor.r
-                ? 0.2
-                : 0.06,
-            ),
-        mid:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#FFF6DC',
-              ),
-              0.14,
-            ),
-        highlight:
-          new THREE.Color(
-            '#FFF7E4',
-          ),
-        shadow:
-          baseColor.clone()
-            .multiplyScalar(
-              0.58,
-            ),
-      });
-
-    case 'volcanic':
-      return Object.freeze({
-        top:
-          new THREE.Color(
-            '#38241B',
-          ),
-        bottom:
-          new THREE.Color(
-            '#160F0E',
-          ),
-        mid:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#6A3424',
-              ),
-              0.28,
-            ),
-        highlight:
-          new THREE.Color(
-            '#FF9D52',
-          ),
-        shadow:
-          new THREE.Color(
-            '#0A0808',
-          ),
-      });
-
-    case 'rocky':
-    default:
-      return Object.freeze({
-        top:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#C2B59A',
-              ),
-              0.16,
-            ),
-        bottom:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#584E45',
-              ),
-              0.26,
-            ),
-        mid:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#8F847A',
-              ),
-              0.18,
-            ),
-        highlight:
-          baseColor.clone()
-            .lerp(
-              new THREE.Color(
-                '#E2D2BD',
-              ),
-              0.22,
-            ),
-        shadow:
-          new THREE.Color(
-            '#524941',
-          ),
-      });
-  }
-}
-
-function fillPlanetBackground(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  top:
-    THREE.Color,
-
-  bottom:
-    THREE.Color,
-): void {
-
-  const gradient =
-    context.createLinearGradient(
-      0,
-      0,
-      0,
-      height,
-    );
-
-  gradient.addColorStop(
-    0,
-    rgbaString(
-      top,
-      1,
-    ),
-  );
-  gradient.addColorStop(
-    0.5,
-    rgbaString(
-      top.clone().lerp(
-        bottom,
-        0.48,
-      ),
-      1,
-    ),
-  );
-  gradient.addColorStop(
-    1,
-    rgbaString(
-      bottom,
-      1,
-    ),
-  );
-
-  context.fillStyle =
-    gradient;
-  context.fillRect(
-    0,
-    0,
-    width,
-    height,
-  );
-}
-
-function drawSurfacePatches(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  palette:
-    ProceduralPlanetPalette,
-
-  patchCount:
-    number,
-
-  opacity:
-    number,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      patchCount;
-    index += 1
-  ) {
-    const x =
-      random() *
-      width;
-    const y =
-      random() *
-      height;
-    const patchWidth =
-      width *
-      (0.06 +
-        random() *
-          0.16);
-    const patchHeight =
-      height *
-      (0.04 +
-        random() *
-          0.14);
-
-    const color =
-      (index % 3 === 0
-        ? palette.highlight
-        : index % 3 === 1
-          ? palette.mid
-          : palette.shadow)
-          .clone()
-          .lerp(
-            palette.top,
-            0.16,
-          );
-
-    context.fillStyle =
-      rgbaString(
-        color,
-        opacity *
-          (0.7 +
-            random() *
-              0.6),
-      );
-
-    context.beginPath();
-    context.ellipse(
-      x,
-      y,
-      patchWidth,
-      patchHeight,
-      random() *
-        Math.PI,
-      0,
-      Math.PI *
-        2,
-    );
-    context.fill();
-  }
-}
-
-function drawGaseousBands(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  palette:
-    ProceduralPlanetPalette,
-): void {
-
-  let offsetY =
-    0;
-
-  while (
-    offsetY <
-    height
-  ) {
-    const bandHeight =
-      height *
-      (0.03 +
-        random() *
-          0.10);
-
-    const bandColor =
-      (random() >
-      0.55
-        ? palette.mid
-        : random() >
-            0.5
-          ? palette.highlight
-          : palette.shadow)
-        .clone();
-
-    context.fillStyle =
-      rgbaString(
-        bandColor,
-        0.20 +
-          random() *
-            0.28,
-      );
-    context.fillRect(
-      0,
-      offsetY,
-      width,
-      bandHeight,
-    );
-
-    offsetY +=
-      bandHeight *
-      (0.9 +
-        random() *
-          0.35);
-  }
-}
-
-function drawAtmosphericStorms(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  palette:
-    ProceduralPlanetPalette,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      6;
-    index += 1
-  ) {
-    const x =
-      width *
-      (0.12 +
-        random() *
-          0.76);
-    const y =
-      height *
-      (0.18 +
-        random() *
-          0.64);
-    const ellipseWidth =
-      width *
-      (0.03 +
-        random() *
-          0.08);
-    const ellipseHeight =
-      height *
-      (0.015 +
-        random() *
-          0.05);
-
-    context.fillStyle =
-      rgbaString(
-        palette.highlight.clone().lerp(
-          palette.mid,
-          0.46,
-        ),
-        0.16 +
-          random() *
-            0.18,
-      );
-    context.beginPath();
-    context.ellipse(
-      x,
-      y,
-      ellipseWidth,
-      ellipseHeight,
-      random() *
-        Math.PI,
-      0,
-      Math.PI *
-        2,
-    );
-    context.fill();
-  }
-}
-
-function drawOceanCurrents(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  palette:
-    ProceduralPlanetPalette,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      11;
-    index += 1
-  ) {
-    const y =
-      height *
-      (0.08 +
-        random() *
-          0.84);
-    const amplitude =
-      height *
-      (0.012 +
-        random() *
-          0.03);
-    const wavelength =
-      width *
-      (0.12 +
-        random() *
-          0.18);
-
-    context.strokeStyle =
-      rgbaString(
-        palette.mid,
-        0.16 +
-          random() *
-            0.1,
-      );
-    context.lineWidth =
-      2 +
-      random() *
-        3;
-    context.beginPath();
-
-    for (
-      let x = 0;
-      x <= width;
-      x += 12
-    ) {
-      const waveY =
-        y +
-        Math.sin(
-          x /
-          wavelength *
-          Math.PI *
-          2 +
-          random() *
-            Math.PI,
-        ) *
-        amplitude;
-
-      if (
-        x === 0
-      ) {
-        context.moveTo(
-          x,
-          waveY,
-        );
-      } else {
-        context.lineTo(
-          x,
-          waveY,
-        );
-      }
-    }
-
-    context.stroke();
-  }
-}
-
-function drawPolarCaps(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  color:
-    THREE.Color,
-
-  opacity:
-    number,
-): void {
-
-  context.fillStyle =
-    rgbaString(
-      color,
-      opacity,
-    );
-  context.fillRect(
-    0,
-    0,
-    width,
-    height *
-      0.08,
-  );
-  context.fillRect(
-    0,
-    height *
-      0.92,
-    width,
-    height *
-      0.08,
-  );
-}
-
-function drawVolcanicMagmaHints(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      12;
-    index += 1
-  ) {
-    context.fillStyle =
-      `rgba(255,128,64,${0.08 + random() * 0.12})`;
-    context.beginPath();
-    context.ellipse(
-      random() *
-        width,
-      random() *
-        height,
-      width *
-        (0.01 +
-          random() *
-            0.02),
-      height *
-        (0.01 +
-          random() *
-            0.03),
-      random() *
-        Math.PI,
-      0,
-      Math.PI *
-        2,
-    );
-    context.fill();
-  }
-}
-
-function drawDuneBands(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  palette:
-    ProceduralPlanetPalette,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      9;
-    index += 1
-  ) {
-    const y =
-      height *
-      (0.08 +
-        random() *
-          0.84);
-
-    context.strokeStyle =
-      rgbaString(
-        palette.highlight,
-        0.12 +
-          random() *
-            0.14,
-      );
-    context.lineWidth =
-      3 +
-      random() *
-        5;
-    context.beginPath();
-
-    for (
-      let x = 0;
-      x <= width;
-      x += 14
-    ) {
-      const waveY =
-        y +
-        Math.sin(
-          x /
-            width *
-            Math.PI *
-            4 +
-          random() *
-            Math.PI,
-        ) *
-        (4 +
-          random() *
-            6);
-
-      if (
-        x === 0
-      ) {
-        context.moveTo(
-          x,
-          waveY,
-        );
-      } else {
-        context.lineTo(
-          x,
-          waveY,
-        );
-      }
-    }
-
-    context.stroke();
-  }
-}
-
-function drawCraterHints(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  palette:
-    ProceduralPlanetPalette,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      18;
-    index += 1
-  ) {
-    const radius =
-      width *
-      (0.008 +
-        random() *
-          0.03);
-    const x =
-      random() *
-      width;
-    const y =
-      random() *
-      height;
-
-    context.strokeStyle =
-      rgbaString(
-        palette.shadow,
-        0.18,
-      );
-    context.lineWidth =
-      1.2;
-    context.beginPath();
-    context.arc(
-      x,
-      y,
-      radius,
-      0,
-      Math.PI *
-        2,
-    );
-    context.stroke();
-
-    context.fillStyle =
-      rgbaString(
-        palette.highlight,
-        0.04,
-      );
-    context.beginPath();
-    context.arc(
-      x -
-        radius *
-          0.16,
-      y -
-        radius *
-          0.16,
-      radius *
-        0.84,
-      0,
-      Math.PI *
-        2,
-    );
-    context.fill();
-  }
-}
-
 function drawFractureNetwork(
   context:
     CanvasRenderingContext2D,
@@ -5992,48 +5057,6 @@ function drawCloudBandVeils(
   }
 }
 
-function overlayPlanetVignette(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-): void {
-
-  const gradient =
-    context.createLinearGradient(
-      0,
-      0,
-      width,
-      height,
-    );
-
-  gradient.addColorStop(
-    0,
-    'rgba(255,255,255,0.06)',
-  );
-  gradient.addColorStop(
-    0.45,
-    'rgba(255,255,255,0)',
-  );
-  gradient.addColorStop(
-    1,
-    'rgba(0,0,0,0.12)',
-  );
-
-  context.fillStyle =
-    gradient;
-  context.fillRect(
-    0,
-    0,
-    width,
-    height,
-  );
-}
-
 function rgbaString(
   color:
     THREE.Color,
@@ -6043,33 +5066,6 @@ function rgbaString(
 ): string {
 
   return `rgba(${Math.round(color.r * 255)},${Math.round(color.g * 255)},${Math.round(color.b * 255)},${opacity})`;
-}
-
-function hashStringToUint32(
-  value:
-    string,
-): number {
-
-  let hash =
-    0x811c9dc5;
-
-  for (
-    let index = 0;
-    index <
-      value.length;
-    index += 1
-  ) {
-    hash ^= value.charCodeAt(
-      index,
-    );
-    hash = Math.imul(
-      hash,
-      0x01000193,
-    );
-  }
-
-  return hash >>>
-    0;
 }
 
 function createDeterministicPrng(
