@@ -66,6 +66,12 @@ import {
 } from './system-scene-projection-contract';
 
 import {
+  systemSceneBodyAxialTiltRadians,
+  systemSceneBodySpinRadians,
+  systemSceneSphereSegments,
+} from './system-scene-body-render-state';
+
+import {
   SystemSceneProjectionSpace,
   systemSceneProjectAuVectorInSpace,
   type SystemSceneScaleSnapshot,
@@ -243,7 +249,7 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   );
 
 /**
- * Point-24.10 Angular host for the stellar-system Three.js scene.
+ * Through point-25.1 Angular host for the stellar-system Three.js scene.
  *
  * The component owns browser lifecycle, canvas sizing and renderer disposal.
  * It receives a frozen presentation snapshot and never computes authoritative
@@ -1489,6 +1495,10 @@ class ThreeSystemSceneRuntime
 
   private readonly animatedBodies =
     new Map<string, THREE.Group>();
+
+  /** Spin pivot only; orbital translation remains on animatedBodies. */
+  private readonly spinningBodies =
+    new Map<string, THREE.Object3D>();
 
   private readonly animatedOrbits =
     new Map<string, THREE.LineLoop>();
@@ -3145,11 +3155,16 @@ class ThreeSystemSceneRuntime
       star.position.z,
     );
 
+    const sphereSegments =
+      systemSceneSphereSegments(
+        'star',
+      );
+
     const sphereGeometry =
       new THREE.SphereGeometry(
         star.radiusScene,
-        48,
-        32,
+        sphereSegments.widthSegments,
+        sphereSegments.heightSegments,
       );
 
     const sphereMaterial =
@@ -3274,8 +3289,7 @@ class ThreeSystemSceneRuntime
     const light =
       new THREE.PointLight(
         star.colorHex,
-        star.lightIntensity *
-          7.5,
+        star.lightIntensity,
         0,
         1.45,
       );
@@ -3335,11 +3349,16 @@ class ThreeSystemSceneRuntime
       planet.position.z,
     );
 
+    const sphereSegments =
+      systemSceneSphereSegments(
+        'planet',
+      );
+
     const sphereGeometry =
       new THREE.SphereGeometry(
         planet.radiusScene,
-        40,
-        28,
+        sphereSegments.widthSegments,
+        sphereSegments.heightSegments,
       );
 
     const appearance =
@@ -3347,19 +3366,27 @@ class ThreeSystemSceneRuntime
         planet,
       );
 
+    const axialPivot =
+      new THREE.Group();
+    axialPivot.name =
+      `${planet.label} axial tilt`;
+    axialPivot.rotation.z =
+      systemSceneBodyAxialTiltRadians(
+        planet.spin,
+      );
+
+    const spinPivot =
+      new THREE.Group();
+    spinPivot.name =
+      `${planet.label} domain spin`;
+
     const sphere =
       new THREE.Mesh(
         sphereGeometry,
         appearance.material,
       );
 
-    sphere.rotation.y =
-      appearance.rotationYRadians;
-
-    sphere.rotation.z =
-      appearance.rotationZRadians;
-
-    group.add(
+    spinPivot.add(
       sphere,
     );
 
@@ -3367,16 +3394,22 @@ class ThreeSystemSceneRuntime
       const overlay
       of appearance.overlays
     ) {
-      overlay.rotation.y =
-        appearance.rotationYRadians;
-
-      overlay.rotation.z =
-        appearance.rotationZRadians;
-
-      group.add(
+      spinPivot.add(
         overlay,
       );
     }
+
+    axialPivot.add(
+      spinPivot,
+    );
+    group.add(
+      axialPivot,
+    );
+
+    this.spinningBodies.set(
+      planet.id,
+      spinPivot,
+    );
 
     this.frameDisposables.push(
       sphereGeometry,
@@ -3422,11 +3455,16 @@ class ThreeSystemSceneRuntime
       moon.position.z,
     );
 
+    const sphereSegments =
+      systemSceneSphereSegments(
+        'moon',
+      );
+
     const geometry =
       new THREE.SphereGeometry(
         moon.radiusScene,
-        20,
-        14,
+        sphereSegments.widthSegments,
+        sphereSegments.heightSegments,
       );
 
     const material =
@@ -3439,11 +3477,35 @@ class ThreeSystemSceneRuntime
           0.01,
       });
 
-    group.add(
+    const axialPivot =
+      new THREE.Group();
+    axialPivot.name =
+      `${moon.title} axial frame`;
+    axialPivot.rotation.z =
+      systemSceneBodyAxialTiltRadians(
+        moon.spin,
+      );
+
+    const spinPivot =
+      new THREE.Group();
+    spinPivot.name =
+      `${moon.title} domain spin`;
+    spinPivot.add(
       new THREE.Mesh(
         geometry,
         material,
       ),
+    );
+    axialPivot.add(
+      spinPivot,
+    );
+    group.add(
+      axialPivot,
+    );
+
+    this.spinningBodies.set(
+      moon.id,
+      spinPivot,
     );
 
     this.frameDisposables.push(
@@ -3868,6 +3930,27 @@ class ThreeSystemSceneRuntime
         position.y,
         position.z,
       );
+
+      if (
+        body.kind !==
+          'minor-body'
+      ) {
+        const spinObject =
+          this.spinningBodies.get(
+            body.id,
+          );
+
+        if (
+          spinObject !==
+            undefined
+        ) {
+          spinObject.rotation.y =
+            systemSceneBodySpinRadians(
+              body.spin,
+              simulationDay,
+            );
+        }
+      }
     }
 
     for (
@@ -4087,6 +4170,7 @@ class ThreeSystemSceneRuntime
     this.minorBodyOrbitLayerKeys.clear();
     this.bodySnapshotById.clear();
     this.animatedBodies.clear();
+    this.spinningBodies.clear();
     this.animatedOrbits.clear();
     this.orbitLocalSamplesAu.clear();
 
@@ -4172,12 +4256,6 @@ interface PlanetAppearance {
 
   readonly resources:
     readonly { dispose(): void }[];
-
-  readonly rotationYRadians:
-    number;
-
-  readonly rotationZRadians:
-    number;
 }
 
 function createPlanetAppearance(
@@ -4188,11 +4266,6 @@ function createPlanetAppearance(
   const visualSeed =
     hashStringToUint32(
       `${planet.id}|${planet.title}|${planet.colorHex}|${planet.radiusScene.toFixed(4)}|${planet.position.x.toFixed(4)}|${planet.position.y.toFixed(4)}|${planet.position.z.toFixed(4)}`,
-    );
-
-  const random =
-    createDeterministicPrng(
-      visualSeed,
     );
 
   const baseColor =
@@ -4328,13 +4401,6 @@ function createPlanetAppearance(
       Object.freeze(overlays),
     resources:
       Object.freeze(resources),
-    rotationYRadians:
-      random() *
-      Math.PI *
-      2,
-    rotationZRadians:
-      (random() - 0.5) *
-      0.2,
   });
 }
 

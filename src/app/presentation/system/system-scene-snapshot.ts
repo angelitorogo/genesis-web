@@ -212,6 +212,15 @@ import {
   type SystemSceneMotionProjectionContribution,
 } from './system-scene-motion-projection';
 
+import {
+  systemSceneStellarLightIntensity,
+  type SystemSceneBodySpinSnapshot,
+} from './system-scene-body-render-state';
+
+export type {
+  SystemSceneBodySpinSnapshot,
+} from './system-scene-body-render-state';
+
 
 export interface SystemSceneAddress {
   readonly galaxyIndex:
@@ -330,6 +339,13 @@ export interface SystemSceneBodySnapshot {
 
   readonly lightIntensity:
     number;
+
+  /** Direct domain luminosity for stars; null for non-stellar spherical bodies. */
+  readonly sourceLuminositySolar:
+    number | null;
+
+  readonly spin:
+    SystemSceneBodySpinSnapshot;
 }
 
 export interface SystemSceneMoonSnapshot {
@@ -365,6 +381,9 @@ export interface SystemSceneMoonSnapshot {
 
   readonly motionContributions:
     readonly SystemSceneMotionContributionSnapshot[];
+
+  readonly spin:
+    SystemSceneBodySpinSnapshot;
 }
 
 export interface SystemSceneMinorBodySnapshot {
@@ -520,7 +539,7 @@ export interface SystemSceneSimulationSnapshot {
 }
 
 /**
- * Point-24.10 presentation snapshot accepted by SystemScene.
+ * Point-24.10 immutable presentation snapshot, extended in 25.1 with body spin/light inputs.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -684,6 +703,9 @@ interface ResolvedStarSceneSource {
     number;
 
   readonly massSolar:
+    number;
+
+  readonly luminositySolar:
     number;
 
   readonly referenceMassSolar:
@@ -1081,6 +1103,8 @@ function resolveStarSources(
         primaryPhysicalProperties.radiusSolar,
       massSolar:
         primaryPhysicalProperties.currentMassSolar,
+      luminositySolar:
+        primaryPhysicalProperties.luminositySolar,
       referenceMassSolar:
         primaryPhysicalProperties.initialMassSolar,
       semiMajorAxisAu:
@@ -1196,6 +1220,8 @@ function companionSource(
       companion.physicalProperties.radiusSolar,
     massSolar:
       companion.physicalProperties.currentMassSolar,
+    luminositySolar:
+      companion.physicalProperties.luminositySolar,
     referenceMassSolar:
       companion.physicalProperties.initialMassSolar,
     semiMajorAxisAu:
@@ -2092,15 +2118,28 @@ function projectSceneGeometry(
           surfaceStyle:
             'emissive' as const,
           lightIntensity:
-            clamp(
-              1.4 +
-                Math.log10(
-                  star.massSolar + 1,
-                ) *
-                  1.25,
-              1.2,
-              3.4,
+            systemSceneStellarLightIntensity(
+              star.luminositySolar,
             ),
+          sourceLuminositySolar:
+            star.luminositySolar,
+          spin:
+            Object.freeze({
+              source:
+                'UNAVAILABLE' as const,
+              rotationPeriodHours:
+                null,
+              axialTiltDegrees:
+                null,
+              isRetrograde:
+                null,
+              isSynchronized:
+                false,
+              epochPhaseDegrees:
+                seededPhaseDegrees(
+                  `${world.stellarSystem.seed.normalizedValue}:${star.label}:SPIN`,
+                ),
+            } satisfies SystemSceneBodySpinSnapshot),
         });
       },
     );
@@ -2304,6 +2343,25 @@ function projectSceneGeometry(
             ),
           lightIntensity:
             0,
+          sourceLuminositySolar:
+            null,
+          spin:
+            Object.freeze({
+              source:
+                'PLANET_19_3' as const,
+              rotationPeriodHours:
+                planet.rotationPeriodHours,
+              axialTiltDegrees:
+                planet.axialTiltDegrees,
+              isRetrograde:
+                planet.isRetrogradeRotation,
+              isSynchronized:
+                planet.isTidallySynchronized,
+              epochPhaseDegrees:
+                seededPhaseDegrees(
+                  `${planet.orbit.bodySeed.normalizedValue}:SPIN`,
+                ),
+            } satisfies SystemSceneBodySpinSnapshot),
         });
       },
     );
@@ -3078,6 +3136,23 @@ function projectMoonLayer(
             ),
           orbitId,
           motionContributions,
+          spin:
+            Object.freeze({
+              source:
+                'MOON_21_4' as const,
+              rotationPeriodHours:
+                moon.rotationPeriodHours,
+              axialTiltDegrees:
+                null,
+              isRetrograde:
+                null,
+              isSynchronized:
+                moon.isTidallyLocked,
+              epochPhaseDegrees:
+                seededPhaseDegrees(
+                  `${moon.identity.seed.normalizedValue}:SPIN`,
+                ),
+            } satisfies SystemSceneBodySpinSnapshot),
         }),
       );
     }

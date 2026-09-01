@@ -177,6 +177,22 @@ function bodyCardSnapshot():
           'emissive',
         lightIntensity:
           2,
+        sourceLuminositySolar:
+          1,
+        spin: {
+          source:
+            'UNAVAILABLE',
+          rotationPeriodHours:
+            null,
+          axialTiltDegrees:
+            null,
+          isRetrograde:
+            null,
+          isSynchronized:
+            false,
+          epochPhaseDegrees:
+            0,
+        },
       },
     ],
     planets: [
@@ -205,6 +221,22 @@ function bodyCardSnapshot():
           'oceanic',
         lightIntensity:
           0,
+        sourceLuminositySolar:
+          null,
+        spin: {
+          source:
+            'PLANET_19_3',
+          rotationPeriodHours:
+            24,
+          axialTiltDegrees:
+            23.5,
+          isRetrograde:
+            false,
+          isSynchronized:
+            false,
+          epochPhaseDegrees:
+            0,
+        },
       },
     ],
     moons: [
@@ -233,6 +265,20 @@ function bodyCardSnapshot():
         orbitId:
           'orbit-moon-1',
         motionContributions: [],
+        spin: {
+          source:
+            'MOON_21_4',
+          rotationPeriodHours:
+            240,
+          axialTiltDegrees:
+            null,
+          isRetrograde:
+            null,
+          isSynchronized:
+            true,
+          epochPhaseDegrees:
+            0,
+        },
       },
     ],
     minorBodies: [

@@ -158,6 +158,17 @@ function assertBodyProjection(
     body.position,
     `${label}.position`,
   );
+
+  if (
+    body.kind !==
+      'minor-body'
+  ) {
+    assertFrozen(
+      body.spin,
+      `${label}.spin`,
+    );
+  }
+
   assertMotionContributions(
     body.motionContributions,
     `${label}.motionContributions`,

@@ -8,7 +8,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene projection authority point 24.10',
+  'SystemScene projection authority through point 25.1',
   () => {
 
     it(
@@ -74,6 +74,83 @@ describe(
       },
     );
 
+
+
+    it(
+      'should reject mutable point-25.1 spin projection before it enters Three.js',
+      () => {
+
+        const mutableSpin = {
+          source:
+            'PLANET_19_3' as const,
+          rotationPeriodHours:
+            24,
+          axialTiltDegrees:
+            23.44,
+          isRetrograde:
+            false,
+          isSynchronized:
+            false,
+          epochPhaseDegrees:
+            0,
+        };
+
+        const planet =
+          Object.freeze({
+            id:
+              'planet-1',
+            kind:
+              'planet' as const,
+            label:
+              'Fixture b',
+            title:
+              'Fixture b',
+            colorHex:
+              '#5577AA',
+            radiusScene:
+              0.08,
+            position:
+              Object.freeze({
+                x: 1,
+                y: 0,
+                z: 0,
+              }),
+            orbitId:
+              'orbit-planet-1',
+            motionContributions:
+              Object.freeze([]),
+            surfaceStyle:
+              'rocky' as const,
+            lightIntensity:
+              0,
+            sourceLuminositySolar:
+              null,
+            spin:
+              mutableSpin,
+          });
+
+        const base =
+          projectionSnapshot();
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            planets:
+              Object.freeze([
+                planet,
+              ]),
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /snapshot\.planets\[0\]\.spin is mutable/,
+        );
+      },
+    );
     it(
       'should reject mutable nested scene coordinates even when the containing snapshot is frozen',
       () => {
@@ -107,7 +184,24 @@ describe(
             surfaceStyle:
               'emissive' as const,
             lightIntensity:
-              2,
+              5,
+            sourceLuminositySolar:
+              1,
+            spin:
+              Object.freeze({
+                source:
+                  'UNAVAILABLE' as const,
+                rotationPeriodHours:
+                  null,
+                axialTiltDegrees:
+                  null,
+                isRetrograde:
+                  null,
+                isSynchronized:
+                  false,
+                epochPhaseDegrees:
+                  0,
+              }),
           });
 
         const base =

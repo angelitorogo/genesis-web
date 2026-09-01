@@ -132,11 +132,11 @@
 
                 <footer class="system-page__viewport-footer">
                   <span>
-                    THREE.JS / WEBGL2 / SYSTEM SCENE 24.10
+                    THREE.JS / WEBGL2 / BODY RENDER 25.1
                   </span>
 
                   <p>
-                    24.10 congela la frontera final de la Fase 24: SystemScene consume un snapshot inmutable y solo produce una proyección visual e interacción de cámara/selección. Las fichas de 24.8 y el seguimiento siguen disponibles; la física orbital autoritativa continúa procediendo de domain/simulation.
+                    25.1 inicia el render procedural de cuerpos sobre la frontera cerrada en 24.10: domain/simulation → snapshot inmutable → proyección Three.js. Estrellas, planetas y lunas usan una geometría esférica explícita; la iluminación estelar deriva de luminosidad de dominio y el giro planetario/lunar se proyecta desde estados rotacionales ya congelados. WebGL nunca persiste ni devuelve física al dominio.
                   </p>
                 </footer>
               </section>

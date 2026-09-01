@@ -24,7 +24,7 @@ import {
 } from './system-scene-projection-contract';
 
 describe(
-  'SystemSceneSnapshotBuilder point 24.10',
+  'SystemSceneSnapshotBuilder through point 25.1',
   () => {
 
     it(
@@ -258,6 +258,39 @@ describe(
               Object.isFrozen(
                 body.motionContributions,
               ),
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.stars.every(
+            star =>
+              star.sourceLuminositySolar !== null &&
+              star.sourceLuminositySolar > 0 &&
+              star.lightIntensity > 0 &&
+              star.spin.source === 'UNAVAILABLE' &&
+              Object.isFrozen(star.spin),
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.planets.every(
+            planet =>
+              planet.sourceLuminositySolar === null &&
+              planet.spin.source === 'PLANET_19_3' &&
+              planet.spin.rotationPeriodHours !== null &&
+              planet.spin.rotationPeriodHours > 0 &&
+              planet.spin.axialTiltDegrees !== null &&
+              Object.isFrozen(planet.spin),
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.moons.every(
+            moon =>
+              moon.spin.source === 'MOON_21_4' &&
+              moon.spin.rotationPeriodHours !== null &&
+              moon.spin.rotationPeriodHours > 0 &&
+              Object.isFrozen(moon.spin),
           ),
         ).toBe(true);
 

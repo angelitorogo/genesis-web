@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene point 24.10',
+  'SystemScene through point 25.1',
   () => {
 
     let resize:
@@ -1334,7 +1334,24 @@ function sceneSnapshot():
           surfaceStyle:
             'emissive' as const,
           lightIntensity:
-            2.1,
+            5.6,
+          sourceLuminositySolar:
+            1.2,
+          spin:
+            Object.freeze({
+              source:
+                'UNAVAILABLE' as const,
+              rotationPeriodHours:
+                null,
+              axialTiltDegrees:
+                null,
+              isRetrograde:
+                null,
+              isSynchronized:
+                false,
+              epochPhaseDegrees:
+                15,
+            }),
         }),
         Object.freeze({
           id:
@@ -1369,7 +1386,24 @@ function sceneSnapshot():
           surfaceStyle:
             'emissive' as const,
           lightIntensity:
-            1.7,
+            4.8,
+          sourceLuminositySolar:
+            0.6,
+          spin:
+            Object.freeze({
+              source:
+                'UNAVAILABLE' as const,
+              rotationPeriodHours:
+                null,
+              axialTiltDegrees:
+                null,
+              isRetrograde:
+                null,
+              isSynchronized:
+                false,
+              epochPhaseDegrees:
+                225,
+            }),
         }),
       ]),
 
@@ -1409,6 +1443,23 @@ function sceneSnapshot():
             'oceanic' as const,
           lightIntensity:
             0,
+          sourceLuminositySolar:
+            null,
+          spin:
+            Object.freeze({
+              source:
+                'PLANET_19_3' as const,
+              rotationPeriodHours:
+                24,
+              axialTiltDegrees:
+                23.44,
+              isRetrograde:
+                false,
+              isSynchronized:
+                false,
+              epochPhaseDegrees:
+                30,
+            }),
         }),
       ]),
 
@@ -1441,6 +1492,21 @@ function sceneSnapshot():
             'orbit-moon-1-1',
           motionContributions:
             Object.freeze([]),
+          spin:
+            Object.freeze({
+              source:
+                'MOON_21_4' as const,
+              rotationPeriodHours:
+                72,
+              axialTiltDegrees:
+                null,
+              isRetrograde:
+                null,
+              isSynchronized:
+                true,
+              epochPhaseDegrees:
+                45,
+            }),
         }),
       ]),
 
