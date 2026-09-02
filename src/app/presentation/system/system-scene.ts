@@ -27,6 +27,7 @@ import {
 } from '../../domain/planetary/minor-body-kind';
 
 import {
+  type SystemSceneAsteroidBeltSnapshot,
   type SystemSceneBodySnapshot,
   type SystemSceneHabitableZoneSnapshot,
   type SystemSceneMoonSnapshot,
@@ -68,7 +69,6 @@ import {
 import {
   systemSceneBodyAxialTiltRadians,
   systemSceneBodyDisplaySpinRadians,
-  systemSceneBodySpinRadians,
   systemSceneSphereSegments,
 } from './system-scene-body-render-state';
 
@@ -117,7 +117,27 @@ import {
 
 import {
   createSystemSceneMoonRenderableV1,
+  type SystemSceneMoonTextureResourceV1,
 } from './system-scene-moon-renderable';
+
+import {
+  systemSceneMoonDisplaySpinRadiansV2,
+} from './system-scene-moon-spin-presentation';
+
+import {
+  SystemSceneBoundedResourceCacheV1,
+} from './system-scene-resource-cache';
+
+import {
+  SystemSceneSphereGeometryPoolV1,
+} from './system-scene-geometry-pool';
+
+import {
+  systemSceneBodyLodLevelV1,
+  systemSceneProjectedDiameterPixelsV1,
+  type SystemSceneBodyLodKindV1,
+  type SystemSceneBodyLodLevelV1,
+} from './system-scene-lod';
 
 import {
   buildSystemSceneDayNightMaterialProfileV1,
@@ -229,6 +249,17 @@ type SystemSceneSelectableBodySnapshot =
   | SystemSceneBodySnapshot
   | SystemSceneMoonSnapshot
   | SystemSceneMinorBodySnapshot;
+
+interface SystemSceneMinorBodyInstanceBatchV1 {
+  readonly mesh: THREE.InstancedMesh;
+  readonly groups: THREE.Group[];
+  readonly radiiScene: number[];
+}
+
+interface SystemScenePendingMoonVisualV1 {
+  readonly moon: SystemSceneMoonSnapshot;
+  readonly spinPivot: THREE.Group;
+}
 
 export interface SystemSceneRuntime {
   resize(
@@ -539,6 +570,33 @@ export class SystemScene
     return this.snapshot.layers.habitableZoneAvailable
       ? 1
       : 0;
+  }
+
+  asteroidBeltCount():
+    number {
+    return this.snapshot.asteroidBelts
+      ?.length ??
+      0;
+  }
+
+  asteroidLayerAvailable():
+    boolean {
+    return this.asteroidCount() >
+      0 ||
+      this.asteroidBeltCount() >
+      0;
+  }
+
+  asteroidBeltLegend():
+    string {
+    return (
+      this.snapshot.asteroidBelts ?? []
+    )
+      .map(
+        belt =>
+          `${belt.region} ${this.formatAu(belt.innerEdgeAu)}–${this.formatAu(belt.outerEdgeAu)} AU · pico ${this.formatAu(belt.peakAu)} AU`,
+      )
+      .join(' · ');
   }
 
   orbitalRiskTargetCount():
@@ -964,8 +1022,7 @@ export class SystemScene
             0,
         asteroids:
           this.asteroidsVisibleSignal() &&
-          this.asteroidCount() >
-            0,
+          this.asteroidLayerAvailable(),
         comets:
           this.cometsVisibleSignal() &&
           this.cometCount() >
@@ -1048,9 +1105,12 @@ export class SystemScene
   ): void {
 
     if (
-      this.minorBodyCountForLayer(
-        layer,
-      ) === 0
+      layer ===
+        'asteroids'
+        ? !this.asteroidLayerAvailable()
+        : this.minorBodyCountForLayer(
+            layer,
+          ) === 0
     ) {
       return;
     }
@@ -1586,6 +1646,64 @@ class ThreeSystemSceneRuntime
   private readonly frameDisposables:
     Array<{ dispose(): void }> = [];
 
+  /** Point-25.11 shared bounded geometry/texture resources. */
+  private readonly sphereGeometryPool =
+    new SystemSceneSphereGeometryPoolV1();
+
+  private readonly planetTextureCache =
+    new SystemSceneBoundedResourceCacheV1<SystemScenePlanetTextureResourceV1>(
+      18,
+      12 * 1024 * 1024,
+    );
+
+  private readonly moonTextureCache =
+    new SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1>(
+      32,
+      6 * 1024 * 1024,
+    );
+
+  private readonly bodyLodBindings =
+    new Map<string, SystemSceneBodyLodBindingV1>();
+
+  /** Hidden moon layers defer 25.10 texture/material creation until first reveal. */
+  private readonly pendingMoonVisuals =
+    new Map<string, SystemScenePendingMoonVisualV1>();
+
+  private viewportHeightPixels =
+    720;
+
+  /** One invisible instanced picking batch replaces one proxy mesh per body. */
+  private selectionProxyBatch:
+    THREE.InstancedMesh | null =
+    null;
+
+  private readonly selectionProxyBodyIds:
+    string[] = [];
+
+  private readonly selectionProxyGroups:
+    THREE.Group[] = [];
+
+  private readonly selectionProxyRadii:
+    number[] = [];
+
+  private readonly selectionProxyMatrix =
+    new THREE.Matrix4();
+
+  private readonly selectionProxyScale =
+    new THREE.Vector3();
+
+  private readonly selectionProxyPosition =
+    new THREE.Vector3();
+
+  private readonly selectionProxyQuaternion =
+    new THREE.Quaternion();
+
+  private readonly lodWorldPosition =
+    new THREE.Vector3();
+
+  private readonly cameraWorldPosition =
+    new THREE.Vector3();
+
   private readonly animatedBodies =
     new Map<string, THREE.Group>();
 
@@ -1663,6 +1781,13 @@ class ThreeSystemSceneRuntime
     SystemSceneHabitableZoneSnapshot | null =
     null;
 
+  private readonly asteroidBeltLayerBindings:
+    Array<{
+      readonly group: THREE.Group;
+      readonly snapshot: SystemSceneAsteroidBeltSnapshot;
+    }> =
+    [];
+
   private readonly orbitalRiskOrbitOverlays:
     Array<{
       readonly line: THREE.LineLoop;
@@ -1706,6 +1831,19 @@ class ThreeSystemSceneRuntime
   private readonly capturedObjectLayerObjects:
     THREE.Object3D[] =
     [];
+
+  /** Point-25.11 visible instancing for generic TNO/captured minor bodies. */
+  private readonly minorBodyInstanceBatches =
+    new Map<SystemSceneMinorBodyLayerKey, SystemSceneMinorBodyInstanceBatchV1>();
+
+  private readonly minorBodyInstanceMatrix =
+    new THREE.Matrix4();
+
+  private readonly minorBodyInstanceScale =
+    new THREE.Vector3();
+
+  private readonly minorBodyInstanceQuaternion =
+    new THREE.Quaternion();
 
   private minorBodyOrbitLayerKeys =
     new Map<string, SystemSceneMinorBodyLayerKey>();
@@ -1989,6 +2127,9 @@ class ThreeSystemSceneRuntime
       safeWidth /
       safeHeight;
 
+    this.viewportHeightPixels =
+      safeHeight;
+
     this
       .renderer
       .setPixelRatio(
@@ -2077,12 +2218,32 @@ class ThreeSystemSceneRuntime
         .targetOuterRadiusScene,
     );
 
+    this.initializeSelectionProxyBatch(
+      snapshot.stars.length +
+      snapshot.planets.length +
+      snapshot.moons.length +
+      snapshot.minorBodies.length,
+    );
+    this.initializeMinorBodyInstanceBatches(
+      snapshot.minorBodies,
+    );
+
     if (
       snapshot.habitableZone !==
         null
     ) {
       this.addHabitableZone(
         snapshot.habitableZone,
+      );
+    }
+
+    for (
+      const belt
+      of snapshot.asteroidBelts ??
+        []
+    ) {
+      this.addAsteroidBeltBand(
+        belt,
       );
     }
 
@@ -2226,6 +2387,13 @@ class ThreeSystemSceneRuntime
       Object.freeze({
         ...visibility,
       });
+
+    if (
+      visibility.moons
+    ) {
+      this.materializePendingMoonVisuals();
+    }
+
     this.applyLayerVisibilityToObjects();
     this.renderFrame();
   }
@@ -2381,6 +2549,24 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  private minorBodyLayerObjectArrayForKey(
+    layerKey:
+      SystemSceneMinorBodyLayerKey,
+  ): THREE.Object3D[] {
+    switch (
+      layerKey
+    ) {
+      case 'asteroids':
+        return this.asteroidLayerObjects;
+      case 'comets':
+        return this.cometLayerObjects;
+      case 'transNeptunianObjects':
+        return this.transNeptunianObjectLayerObjects;
+      case 'capturedObjects':
+        return this.capturedObjectLayerObjects;
+    }
+  }
+
   private minorBodyOrbitLayerObjectArray(
     orbitId:
       string,
@@ -2472,6 +2658,9 @@ class ThreeSystemSceneRuntime
 
     this.clearFrameObjects();
     this.cameraController.dispose();
+    this.planetTextureCache.dispose();
+    this.moonTextureCache.dispose();
+    this.sphereGeometryPool.dispose();
     disposeResources(
       this.persistentDisposables,
     );
@@ -2794,6 +2983,189 @@ class ThreeSystemSceneRuntime
 
     line.renderOrder =
       74;
+
+    group.add(
+      line,
+    );
+
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+  }
+
+
+  private addAsteroidBeltBand(
+    belt:
+      SystemSceneAsteroidBeltSnapshot,
+  ): void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Asteroid belt ${belt.region}`;
+
+    const bandGeometry =
+      new THREE.RingGeometry(
+        belt.innerRadiusScene,
+        belt.outerRadiusScene,
+        256,
+      );
+
+    const bandMaterial =
+      new THREE.MeshBasicMaterial({
+        color:
+          belt.colorHex,
+        transparent:
+          true,
+        opacity:
+          belt.opacity,
+        side:
+          THREE.DoubleSide,
+        depthWrite:
+          false,
+        depthTest:
+          true,
+      });
+
+    const bandMesh =
+      new THREE.Mesh(
+        bandGeometry,
+        bandMaterial,
+      );
+
+    bandMesh.rotation.x =
+      -Math.PI / 2;
+    bandMesh.renderOrder =
+      34;
+
+    group.add(
+      bandMesh,
+    );
+
+    this.frameDisposables.push(
+      bandGeometry,
+      bandMaterial,
+    );
+
+    if (
+      belt.peakRadiusScene !==
+        null
+    ) {
+      this.addAsteroidBeltBoundary(
+        group,
+        belt.peakRadiusScene,
+        belt.colorHex,
+        belt.peakOpacity,
+        0.002,
+      );
+    }
+
+    this.addAsteroidBeltBoundary(
+      group,
+      belt.innerRadiusScene,
+      belt.colorHex,
+      belt.boundaryOpacity,
+      0.001,
+    );
+
+    this.addAsteroidBeltBoundary(
+      group,
+      belt.outerRadiusScene,
+      belt.colorHex,
+      belt.boundaryOpacity,
+      0.001,
+    );
+
+    this.asteroidLayerObjects.push(
+      group,
+    );
+
+    this.asteroidBeltLayerBindings.push({
+      group,
+      snapshot:
+        belt,
+    });
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
+  private addAsteroidBeltBoundary(
+    group:
+      THREE.Group,
+
+    radiusScene:
+      number,
+
+    colorHex:
+      string,
+
+    opacity:
+      number,
+
+    offsetY:
+      number,
+  ): void {
+
+    const points: THREE.Vector3[] = [];
+
+    const segmentCount =
+      256;
+
+    for (
+      let index =
+        0;
+      index <
+        segmentCount;
+      index +=
+        1
+    ) {
+      const angle =
+        index /
+        segmentCount *
+        Math.PI *
+        2;
+
+      points.push(
+        new THREE.Vector3(
+          Math.cos(angle) *
+            radiusScene,
+          offsetY,
+          Math.sin(angle) *
+            radiusScene,
+        ),
+      );
+    }
+
+    const geometry =
+      new THREE.BufferGeometry().setFromPoints(
+        points,
+      );
+
+    const material =
+      new THREE.LineBasicMaterial({
+        color:
+          colorHex,
+        transparent:
+          true,
+        opacity,
+        depthWrite:
+          false,
+        depthTest:
+          true,
+      });
+
+    const line =
+      new THREE.LineLoop(
+        geometry,
+        material,
+      );
+
+    line.renderOrder =
+      36;
 
     group.add(
       line,
@@ -3315,16 +3687,14 @@ class ThreeSystemSceneRuntime
       star.position.z,
     );
 
-    const sphereSegments =
-      systemSceneSphereSegments(
-        'star',
-      );
+    const initialLod:
+      SystemSceneBodyLodLevelV1 =
+      'MEDIUM';
 
     const sphereGeometry =
-      new THREE.SphereGeometry(
-        star.radiusScene,
-        sphereSegments.widthSegments,
-        sphereSegments.heightSegments,
+      this.sphereGeometryPool.get(
+        'star',
+        initialLod,
       );
 
     const sphereMaterial =
@@ -3341,8 +3711,21 @@ class ThreeSystemSceneRuntime
         sphereMaterial,
       );
 
+    photosphere.scale.setScalar(
+      star.radiusScene,
+    );
     photosphere.name =
       `${star.label} photosphere`;
+
+    this.bodyLodBindings.set(
+      star.id,
+      {
+        mesh: photosphere,
+        kind: 'star',
+        radiusScene: star.radiusScene,
+        level: initialLod,
+      },
+    );
 
     const optics =
       stellarOpticalProfile(
@@ -3467,7 +3850,6 @@ class ThreeSystemSceneRuntime
     );
 
     this.frameDisposables.push(
-      sphereGeometry,
       sphereMaterial,
       coronaMaterial,
       bloomMaterial,
@@ -3512,22 +3894,21 @@ class ThreeSystemSceneRuntime
       planet.position.z,
     );
 
-    const sphereSegments =
-      systemSceneSphereSegments(
-        'planet',
-      );
+    const initialLod:
+      SystemSceneBodyLodLevelV1 =
+      'MEDIUM';
 
     const sphereGeometry =
-      new THREE.SphereGeometry(
-        planet.radiusScene,
-        sphereSegments.widthSegments,
-        sphereSegments.heightSegments,
+      this.sphereGeometryPool.get(
+        'planet',
+        initialLod,
       );
 
     const appearance =
       createPlanetAppearance(
         planet,
         systemIdentity,
+        this.planetTextureCache,
       );
 
     this.planetLightBindings.set(
@@ -3554,6 +3935,19 @@ class ThreeSystemSceneRuntime
         sphereGeometry,
         appearance.material,
       );
+    sphere.scale.setScalar(
+      planet.radiusScene,
+    );
+
+    this.bodyLodBindings.set(
+      planet.id,
+      {
+        mesh: sphere,
+        kind: 'planet',
+        radiusScene: planet.radiusScene,
+        level: initialLod,
+      },
+    );
 
     spinPivot.add(
       sphere,
@@ -3621,7 +4015,6 @@ class ThreeSystemSceneRuntime
     );
 
     this.frameDisposables.push(
-      sphereGeometry,
       appearance.material,
       ...appearance.resources,
       ...(
@@ -3668,11 +4061,6 @@ class ThreeSystemSceneRuntime
       moon.position.z,
     );
 
-    const renderable =
-      createSystemSceneMoonRenderableV1(
-        moon.visualPresentation,
-      );
-
     const axialPivot =
       new THREE.Group();
     axialPivot.name =
@@ -3686,9 +4074,24 @@ class ThreeSystemSceneRuntime
       new THREE.Group();
     spinPivot.name =
       `${moon.title} domain spin`;
-    spinPivot.add(
-      renderable.root,
-    );
+
+    if (
+      this.layerVisibility.moons
+    ) {
+      this.materializeMoonVisual(
+        moon,
+        spinPivot,
+      );
+    } else {
+      this.pendingMoonVisuals.set(
+        moon.id,
+        {
+          moon,
+          spinPivot,
+        },
+      );
+    }
+
     axialPivot.add(
       spinPivot,
     );
@@ -3699,10 +4102,6 @@ class ThreeSystemSceneRuntime
     this.spinningBodies.set(
       moon.id,
       spinPivot,
-    );
-
-    this.frameDisposables.push(
-      ...renderable.resources,
     );
 
     this.animatedBodies.set(
@@ -3722,6 +4121,210 @@ class ThreeSystemSceneRuntime
     this.presentationRoot.add(
       group,
     );
+  }
+
+  private materializePendingMoonVisuals(): void {
+    for (
+      const pending
+      of [...this.pendingMoonVisuals.values()]
+    ) {
+      this.materializeMoonVisual(
+        pending.moon,
+        pending.spinPivot,
+      );
+    }
+  }
+
+  private materializeMoonVisual(
+    moon:
+      SystemSceneMoonSnapshot,
+
+    spinPivot:
+      THREE.Group,
+  ): void {
+
+    if (
+      !this.pendingMoonVisuals.has(
+        moon.id,
+      ) &&
+      spinPivot.children.length >
+        0
+    ) {
+      return;
+    }
+
+    const moonInitialLod:
+      SystemSceneBodyLodLevelV1 =
+      'MEDIUM';
+    const sharedMoonGeometry =
+      moon.visualPresentation.shapeClass ===
+        'MINOR_IRREGULAR'
+        ? null
+        : this.sphereGeometryPool.get(
+            'moon',
+            moonInitialLod,
+          );
+
+    const renderable =
+      createSystemSceneMoonRenderableV1(
+        moon.visualPresentation,
+        this.moonTextureCache,
+        sharedMoonGeometry,
+      );
+
+    spinPivot.add(
+      renderable.root,
+    );
+    this.frameDisposables.push(
+      ...renderable.resources,
+    );
+
+    if (
+      renderable.surfaceUsesSharedUnitGeometry
+    ) {
+      this.bodyLodBindings.set(
+        moon.id,
+        {
+          mesh: renderable.surfaceMesh,
+          kind: 'moon',
+          radiusScene:
+            moon.visualPresentation
+              .presentationRadiusScene,
+          level: moonInitialLod,
+        },
+      );
+    }
+
+    this.pendingMoonVisuals.delete(
+      moon.id,
+    );
+  }
+
+  private initializeMinorBodyInstanceBatches(
+    bodies:
+      readonly SystemSceneMinorBodySnapshot[],
+  ): void {
+
+    for (
+      const layerKey
+      of [
+        'transNeptunianObjects',
+        'capturedObjects',
+      ] as const
+    ) {
+      const candidates =
+        bodies.filter(
+          body =>
+            minorBodyLayerKeyForKind(
+              body.minorBodyKind,
+            ) ===
+              layerKey,
+        );
+
+      if (
+        candidates.length ===
+          0
+      ) {
+        continue;
+      }
+
+      const geometry =
+        new THREE.IcosahedronGeometry(
+          1,
+          1,
+        );
+      const material =
+        new THREE.MeshStandardMaterial({
+          color:
+            candidates[0]!.colorHex,
+          roughness:
+            0.92,
+          metalness:
+            0.02,
+        });
+      const mesh =
+        new THREE.InstancedMesh(
+          geometry,
+          material,
+          candidates.length,
+        );
+
+      mesh.name =
+        `GENESIS ${layerKey} instanced batch 25.11`;
+      mesh.count =
+        0;
+      mesh.frustumCulled =
+        false;
+      mesh.instanceMatrix.setUsage(
+        THREE.DynamicDrawUsage,
+      );
+
+      const batch:
+        SystemSceneMinorBodyInstanceBatchV1 =
+        {
+          mesh,
+          groups: [],
+          radiiScene: [],
+        };
+
+      this.minorBodyInstanceBatches.set(
+        layerKey,
+        batch,
+      );
+      this.minorBodyLayerObjectArrayForKey(
+        layerKey,
+      ).push(
+        mesh,
+      );
+      this.presentationRoot.add(
+        mesh,
+      );
+      this.frameDisposables.push(
+        geometry,
+        material,
+      );
+    }
+  }
+
+  private updateMinorBodyInstanceBatches(): void {
+    for (
+      const batch
+      of this.minorBodyInstanceBatches.values()
+    ) {
+      for (
+        let index =
+          0;
+        index <
+          batch.groups.length;
+        index +=
+          1
+      ) {
+        const group =
+          batch.groups[index]!;
+        const radius =
+          batch.radiiScene[index]!;
+
+        this.minorBodyInstanceScale.set(
+          radius,
+          radius,
+          radius,
+        );
+        this.minorBodyInstanceMatrix.compose(
+          group.position,
+          this.minorBodyInstanceQuaternion,
+          this.minorBodyInstanceScale,
+        );
+        batch.mesh.setMatrixAt(
+          index,
+          this.minorBodyInstanceMatrix,
+        );
+      }
+
+      batch.mesh.count =
+        batch.groups.length;
+      batch.mesh.instanceMatrix.needsUpdate =
+        true;
+    }
   }
 
   private addMinorBody(
@@ -3782,33 +4385,56 @@ class ThreeSystemSceneRuntime
         ...cometRenderable.resources,
       );
     } else {
-      const geometry =
-        new THREE.IcosahedronGeometry(
-          body.radiusScene,
-          1,
+      const layerKey =
+        minorBodyLayerKeyForKind(
+          body.minorBodyKind,
+        );
+      const batch =
+        this.minorBodyInstanceBatches.get(
+          layerKey,
         );
 
-      const material =
-        new THREE.MeshStandardMaterial({
-          color:
-            body.colorHex,
-          roughness:
-            0.92,
-          metalness:
-            0.02,
-        });
+      if (
+        batch !==
+          undefined
+      ) {
+        batch.groups.push(
+          group,
+        );
+        batch.radiiScene.push(
+          body.radiusScene,
+        );
+        batch.mesh.count =
+          batch.groups.length;
+      } else {
+        const geometry =
+          new THREE.IcosahedronGeometry(
+            body.radiusScene,
+            1,
+          );
 
-      group.add(
-        new THREE.Mesh(
+        const material =
+          new THREE.MeshStandardMaterial({
+            color:
+              body.colorHex,
+            roughness:
+              0.92,
+            metalness:
+              0.02,
+          });
+
+        group.add(
+          new THREE.Mesh(
+            geometry,
+            material,
+          ),
+        );
+
+        this.frameDisposables.push(
           geometry,
           material,
-        ),
-      );
-
-      this.frameDisposables.push(
-        geometry,
-        material,
-      );
+        );
+      }
     }
 
     this.animatedBodies.set(
@@ -3849,12 +4475,45 @@ class ThreeSystemSceneRuntime
         ),
       );
 
-    const geometry =
-      new THREE.SphereGeometry(
-        pickRadius,
-        14,
-        10,
-      );
+    this.bodySnapshotById.set(
+      body.id,
+      body,
+    );
+
+    const proxyBatch =
+      this.selectionProxyBatch;
+
+    if (
+      proxyBatch ===
+        null
+    ) {
+      return;
+    }
+
+    this.selectionProxyBodyIds.push(
+      body.id,
+    );
+    this.selectionProxyGroups.push(
+      group,
+    );
+    this.selectionProxyRadii.push(
+      pickRadius,
+    );
+    proxyBatch.count =
+      this.selectionProxyBodyIds.length;
+  }
+
+  private initializeSelectionProxyBatch(
+    capacity:
+      number,
+  ): void {
+
+    if (
+      capacity <=
+        0
+    ) {
+      return;
+    }
 
     const material =
       new THREE.MeshBasicMaterial({
@@ -3868,34 +4527,101 @@ class ThreeSystemSceneRuntime
           false,
       });
 
-    const proxy =
-      new THREE.Mesh(
-        geometry,
+    const mesh =
+      new THREE.InstancedMesh(
+        this.sphereGeometryPool.get(
+          'moon',
+          'LOW',
+        ),
         material,
+        capacity,
       );
 
-    proxy.name =
-      `${body.title} selection proxy`;
-    proxy.userData[
-      'systemSceneBodyId'
-    ] =
-      body.id;
-
-    group.add(
-      proxy,
+    mesh.name =
+      'GENESIS selection proxy batch 25.11';
+    mesh.count =
+      0;
+    mesh.frustumCulled =
+      false;
+    mesh.instanceMatrix.setUsage(
+      THREE.DynamicDrawUsage,
     );
 
+    this.selectionProxyBatch =
+      mesh;
     this.selectableObjects.push(
-      proxy,
+      mesh,
     );
-    this.bodySnapshotById.set(
-      body.id,
-      body,
+    this.presentationRoot.add(
+      mesh,
     );
     this.frameDisposables.push(
-      geometry,
       material,
     );
+  }
+
+  private updateSelectionProxyBatch(): void {
+    const mesh =
+      this.selectionProxyBatch;
+
+    if (
+      mesh ===
+        null
+    ) {
+      return;
+    }
+
+    for (
+      let index =
+        0;
+      index <
+        this.selectionProxyBodyIds.length;
+      index +=
+        1
+    ) {
+      const group =
+        this.selectionProxyGroups[index]!;
+      const visible =
+        objectHierarchyVisible(
+          group,
+        );
+      const radius =
+        visible
+          ? this.selectionProxyRadii[index]!
+          : 1e-6;
+
+      if (visible) {
+        this.selectionProxyPosition.copy(
+          group.position,
+        );
+      } else {
+        this.selectionProxyPosition.set(
+          1_000_000,
+          1_000_000,
+          1_000_000,
+        );
+      }
+
+      this.selectionProxyScale.set(
+        radius,
+        radius,
+        radius,
+      );
+      this.selectionProxyMatrix.compose(
+        this.selectionProxyPosition,
+        this.selectionProxyQuaternion,
+        this.selectionProxyScale,
+      );
+      mesh.setMatrixAt(
+        index,
+        this.selectionProxyMatrix,
+      );
+    }
+
+    mesh.count =
+      this.selectionProxyBodyIds.length;
+    mesh.instanceMatrix.needsUpdate =
+      true;
   }
 
   private selectAtClientPoint(
@@ -3951,6 +4677,8 @@ class ThreeSystemSceneRuntime
       this.camera,
     );
 
+    this.updateSelectionProxyBatch();
+
     const intersection =
       this.raycaster.intersectObjects(
         this.selectableObjects.filter(
@@ -3962,7 +4690,20 @@ class ThreeSystemSceneRuntime
         false,
       )[0];
 
-    const bodyId =
+    const instancedBodyId =
+      intersection !==
+        undefined &&
+      intersection.object ===
+        this.selectionProxyBatch &&
+      intersection.instanceId !==
+        undefined
+        ? this.selectionProxyBodyIds[
+            intersection.instanceId
+          ] ??
+          null
+        : null;
+
+    const legacyBodyId =
       intersection
         ?.object
         .userData[
@@ -3970,10 +4711,13 @@ class ThreeSystemSceneRuntime
         ];
 
     this.selectBody(
-      typeof bodyId ===
-        'string'
-        ? bodyId
-        : null,
+      instancedBodyId ??
+      (
+        typeof legacyBodyId ===
+          'string'
+          ? legacyBodyId
+          : null
+      ),
     );
   }
 
@@ -4174,7 +4918,7 @@ class ThreeSystemSceneRuntime
           spinObject.rotation.y =
             body.kind ===
               'moon'
-              ? systemSceneMoonDisplaySpinRadiansV1(
+              ? systemSceneMoonDisplaySpinRadiansV2(
                   body.spin,
                   simulationDay,
                   snapshot.simulation,
@@ -4238,6 +4982,23 @@ class ThreeSystemSceneRuntime
     }
 
     for (
+      const binding
+      of this.asteroidBeltLayerBindings
+    ) {
+      const anchorPosition =
+        this.positionFromContributions(
+          binding.snapshot
+            .anchorMotionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      binding.group.position.copy(
+        anchorPosition,
+      );
+    }
+
+    for (
       const overlay
       of this.orbitalRiskOrbitOverlays
     ) {
@@ -4276,6 +5037,8 @@ class ThreeSystemSceneRuntime
     this.updateCometActivityPresentation(
       simulationDay,
     );
+    this.updateMinorBodyInstanceBatches();
+    this.updateSelectionProxyBatch();
   }
 
   private updateCometActivityPresentation(
@@ -4521,6 +5284,14 @@ class ThreeSystemSceneRuntime
       null;
     this.selectedBodyId =
       null;
+    this.selectionProxyBatch =
+      null;
+    this.selectionProxyBodyIds.length =
+      0;
+    this.selectionProxyGroups.length =
+      0;
+    this.selectionProxyRadii.length =
+      0;
     this.selectableObjects.length =
       0;
     this.planetLayerObjects.length =
@@ -4535,6 +5306,8 @@ class ThreeSystemSceneRuntime
       null;
     this.habitableZoneSnapshot =
       null;
+    this.asteroidBeltLayerBindings.length =
+      0;
     this.orbitalRiskOrbitOverlays.length =
       0;
     this.orbitalRiskMarkers.length =
@@ -4544,12 +5317,15 @@ class ThreeSystemSceneRuntime
     this.cometLayerObjects.length =
       0;
     this.cometActivityBindings.clear();
+    this.minorBodyInstanceBatches.clear();
     this.transNeptunianObjectLayerObjects.length =
       0;
     this.capturedObjectLayerObjects.length =
       0;
     this.minorBodyOrbitLayerKeys.clear();
     this.bodySnapshotById.clear();
+    this.bodyLodBindings.clear();
+    this.pendingMoonVisuals.clear();
     this.animatedBodies.clear();
     this.spinningBodies.clear();
     this.planetLightBindings.clear();
@@ -4750,6 +5526,76 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  private updateBodyLod(): void {
+    if (
+      this.bodyLodBindings.size ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.getWorldPosition(
+      this.cameraWorldPosition,
+    );
+
+    for (
+      const binding
+      of this.bodyLodBindings.values()
+    ) {
+      if (
+        !objectHierarchyVisible(
+          binding.mesh,
+        )
+      ) {
+        continue;
+      }
+
+      binding.mesh.getWorldPosition(
+        this.lodWorldPosition,
+      );
+
+      const distance =
+        Math.max(
+          this.lodWorldPosition.distanceTo(
+            this.cameraWorldPosition,
+          ),
+          binding.radiusScene * 1.05,
+        );
+
+      const projectedDiameter =
+        systemSceneProjectedDiameterPixelsV1(
+          binding.radiusScene,
+          distance,
+          this.camera.fov,
+          this.viewportHeightPixels,
+        );
+
+      const nextLevel =
+        systemSceneBodyLodLevelV1(
+          projectedDiameter,
+          binding.level,
+        );
+
+      if (
+        nextLevel ===
+          binding.level
+      ) {
+        continue;
+      }
+
+      binding.mesh.geometry =
+        this.sphereGeometryPool.get(
+          binding.kind,
+          nextLevel,
+        );
+      binding.level =
+        nextLevel;
+    }
+  }
+
   private renderFrame():
     void {
 
@@ -4760,6 +5606,9 @@ class ThreeSystemSceneRuntime
       return;
     }
 
+    this.updateBodyLod();
+    this.updateMinorBodyInstanceBatches();
+    this.updateSelectionProxyBatch();
     this.updatePlanetLightDirections();
 
     this
@@ -4783,6 +5632,31 @@ class ThreeSystemSceneRuntime
   }
 }
 
+interface SystemSceneBodyLodBindingV1 {
+  readonly mesh: THREE.Mesh;
+  readonly kind: SystemSceneBodyLodKindV1;
+  readonly radiusScene: number;
+  level: SystemSceneBodyLodLevelV1;
+}
+
+interface SystemScenePlanetTextureResourceV1 {
+  readonly giantAtmosphereTexture:
+    SystemSceneGiantAtmosphereTextureData | null;
+  readonly textureData:
+    ReturnType<typeof buildSystemScenePlanetTextureV1> | null;
+  readonly semanticSurface:
+    SystemScenePlanetSurfaceTextureData | null;
+  readonly surfaceTexture:
+    THREE.DataTexture;
+  readonly emissiveTexture:
+    THREE.DataTexture | null;
+  readonly cloudTexture:
+    THREE.DataTexture | null;
+  readonly visualSeed:
+    number;
+  dispose(): void;
+}
+
 interface PlanetAppearance {
   readonly material:
     THREE.MeshStandardMaterial;
@@ -4803,59 +5677,33 @@ function createPlanetAppearance(
 
   systemIdentity:
     string,
+
+  textureCache:
+    SystemSceneBoundedResourceCacheV1<SystemScenePlanetTextureResourceV1>,
 ): PlanetAppearance {
 
+  const textureLease =
+    textureCache.acquire(
+      `${systemIdentity}|${planet.id}|25.11`,
+      planet.giantAtmosphere === null
+        ? 768 * 1024
+        : 512 * 1024,
+      () => createSystemScenePlanetTextureResourceV1(
+        planet,
+        systemIdentity,
+      ),
+    );
+
+  const textureResource =
+    textureLease.resource;
   const giantAtmosphereTexture =
-    planet.giantAtmosphere ===
-      null
-      ? null
-      : buildSystemSceneGiantAtmosphereTextureV1({
-          systemIdentity,
-          planetId:
-            planet.id,
-          atmosphere:
-            planet.giantAtmosphere,
-        });
-
+    textureResource.giantAtmosphereTexture;
   const textureData =
-    giantAtmosphereTexture ===
-      null
-      ? buildSystemScenePlanetTextureV1({
-          systemIdentity,
-          planetId:
-            planet.id,
-          surfaceStyle:
-            planetTextureSurfaceStyle(
-              planet,
-            ),
-          baseColorHex:
-            planet.colorHex,
-        })
-      : null;
-
+    textureResource.textureData;
   const semanticSurface =
-    giantAtmosphereTexture !==
-      null ||
-    planet.surfaceEnvironment ===
-      null ||
-    textureData ===
-      null
-      ? null
-      : buildSystemScenePlanetSurfaceTextureV1({
-          systemIdentity,
-          planetId:
-            planet.id,
-          baseTexture:
-            textureData,
-          surface:
-            planet.surfaceEnvironment,
-        });
-
+    textureResource.semanticSurface;
   const visualSeed =
-    giantAtmosphereTexture
-      ?.seedUint32 ??
-    textureData!
-      .seedUint32;
+    textureResource.visualSeed;
 
   const atmosphereOptics =
     buildSystemSceneAtmosphereOpticsV1({
@@ -4926,25 +5774,10 @@ function createPlanetAppearance(
     });
 
   const surfaceTexture =
-    giantAtmosphereTexture !==
-      null
-      ? createRgbaDataTexture(
-          giantAtmosphereTexture.width,
-          giantAtmosphereTexture.height,
-          giantAtmosphereTexture.albedoRgba,
-          `GENESIS deep-envelope cloud tops 25.4 v${giantAtmosphereTexture.version}`,
-        )
-      : createPlanetSurfaceTexture(
-          semanticSurface ??
-          textureData!,
-          semanticSurface ===
-            null
-            ? `GENESIS procedural planet albedo v${textureData!.version}`
-            : `GENESIS physical surface projection 25.3 v${semanticSurface.version}`,
-        );
+    textureResource.surfaceTexture;
 
   const resources: Array<{ dispose(): void }> = [
-    surfaceTexture,
+    textureLease,
   ];
 
   const materialOptions: THREE.MeshStandardMaterialParameters = {
@@ -5032,28 +5865,22 @@ function createPlanetAppearance(
       undefined
   ) {
     const emissiveTexture =
-      createRgbaDataTexture(
-        semanticSurface.width,
-        semanticSurface.height,
-        semanticSurface.emissiveRgba,
-        'GENESIS volcanism 25.3 emissive projection',
-      );
+      textureResource.emissiveTexture;
 
-    materialOptions.emissive =
-      0xffffff;
-    materialOptions.emissiveIntensity =
-      0.45 +
-      (
-        planet.surfaceEnvironment
-          ?.volcanismIndex01 ??
-        0
-      ) *
-        0.9;
-    materialOptions.emissiveMap =
-      emissiveTexture;
-    resources.push(
-      emissiveTexture,
-    );
+    if (emissiveTexture !== null) {
+      materialOptions.emissive =
+        0xffffff;
+      materialOptions.emissiveIntensity =
+        0.45 +
+        (
+          planet.surfaceEnvironment
+            ?.volcanismIndex01 ??
+          0
+        ) *
+          0.9;
+      materialOptions.emissiveMap =
+        emissiveTexture;
+    }
   }
 
   const material =
@@ -5135,6 +5962,7 @@ function createPlanetAppearance(
       planet,
       semanticSurface,
       giantAtmosphereTexture,
+      textureResource.cloudTexture,
       visualSeed,
       atmosphereOptics,
       lightBinding,
@@ -5149,7 +5977,6 @@ function createPlanetAppearance(
     );
 
     resources.push(
-      cloudLayer.texture,
       cloudLayer.geometry,
       cloudLayer.material,
     );
@@ -5183,6 +6010,118 @@ function createPlanetAppearance(
     resources:
       Object.freeze(resources),
     lightBinding,
+  });
+}
+
+
+function createSystemScenePlanetTextureResourceV1(
+  planet:
+    SystemSceneBodySnapshot,
+
+  systemIdentity:
+    string,
+): SystemScenePlanetTextureResourceV1 {
+
+  const giantAtmosphereTexture =
+    planet.giantAtmosphere ===
+      null
+      ? null
+      : buildSystemSceneGiantAtmosphereTextureV1({
+          systemIdentity,
+          planetId: planet.id,
+          atmosphere: planet.giantAtmosphere,
+        });
+
+  const textureData =
+    giantAtmosphereTexture ===
+      null
+      ? buildSystemScenePlanetTextureV1({
+          systemIdentity,
+          planetId: planet.id,
+          surfaceStyle: planetTextureSurfaceStyle(planet),
+          baseColorHex: planet.colorHex,
+        })
+      : null;
+
+  const semanticSurface =
+    giantAtmosphereTexture !== null ||
+    planet.surfaceEnvironment === null ||
+    textureData === null
+      ? null
+      : buildSystemScenePlanetSurfaceTextureV1({
+          systemIdentity,
+          planetId: planet.id,
+          baseTexture: textureData,
+          surface: planet.surfaceEnvironment,
+        });
+
+  const visualSeed =
+    giantAtmosphereTexture?.seedUint32 ??
+    textureData!.seedUint32;
+
+  const surfaceTexture =
+    giantAtmosphereTexture !== null
+      ? createRgbaDataTexture(
+          giantAtmosphereTexture.width,
+          giantAtmosphereTexture.height,
+          giantAtmosphereTexture.albedoRgba,
+          `GENESIS cached deep-envelope cloud tops 25.11 v${giantAtmosphereTexture.version}`,
+        )
+      : createPlanetSurfaceTexture(
+          semanticSurface ?? textureData!,
+          semanticSurface === null
+            ? `GENESIS cached procedural planet albedo 25.11 v${textureData!.version}`
+            : `GENESIS cached physical surface 25.11 v${semanticSurface.version}`,
+        );
+
+  const emissiveTexture =
+    semanticSurface?.emissiveRgba === null ||
+    semanticSurface?.emissiveRgba === undefined
+      ? null
+      : createRgbaDataTexture(
+          semanticSurface.width,
+          semanticSurface.height,
+          semanticSurface.emissiveRgba,
+          'GENESIS cached volcanism 25.11',
+        );
+
+  const cloudTexture =
+    semanticSurface?.cloudRgba !== null &&
+    semanticSurface?.cloudRgba !== undefined
+      ? createRgbaDataTexture(
+          semanticSurface.width,
+          semanticSurface.height,
+          semanticSurface.cloudRgba,
+          'GENESIS cached physical cloud projection 25.11',
+        )
+      : giantAtmosphereTexture?.upperHazeRgba !== null &&
+        giantAtmosphereTexture?.upperHazeRgba !== undefined
+        ? createRgbaDataTexture(
+            giantAtmosphereTexture.width,
+            giantAtmosphereTexture.height,
+            giantAtmosphereTexture.upperHazeRgba,
+            `GENESIS cached upper haze 25.11 v${giantAtmosphereTexture.version}`,
+          )
+        : null;
+
+  let disposed = false;
+  return Object.freeze({
+    giantAtmosphereTexture,
+    textureData,
+    semanticSurface,
+    surfaceTexture,
+    emissiveTexture,
+    cloudTexture,
+    visualSeed,
+    dispose: () => {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      surfaceTexture.dispose();
+      emissiveTexture?.dispose();
+      cloudTexture?.dispose();
+    },
   });
 }
 
@@ -5290,6 +6229,9 @@ function cloudLayerMeshOrNull(
   giantAtmosphereTexture:
     SystemSceneGiantAtmosphereTextureData | null,
 
+  cachedCloudTexture:
+    THREE.DataTexture | null,
+
   seed:
     number,
 
@@ -5307,9 +6249,6 @@ function cloudLayerMeshOrNull(
 
   readonly material:
     THREE.MeshStandardMaterial;
-
-  readonly texture:
-    THREE.Texture;
 } | null {
 
   if (
@@ -5327,12 +6266,11 @@ function cloudLayerMeshOrNull(
     }
 
     const texture =
-      createRgbaDataTexture(
-        semanticSurface.width,
-        semanticSurface.height,
-        semanticSurface.cloudRgba,
-        'GENESIS physical cloud projection 25.3',
-      );
+      cachedCloudTexture;
+
+    if (texture === null) {
+      return null;
+    }
 
     const segments =
       systemSceneSphereSegments(
@@ -5391,7 +6329,6 @@ function cloudLayerMeshOrNull(
       mesh,
       geometry,
       material,
-      texture,
     });
   }
 
@@ -5405,12 +6342,11 @@ function cloudLayerMeshOrNull(
   }
 
   const texture =
-    createRgbaDataTexture(
-      giantAtmosphereTexture.width,
-      giantAtmosphereTexture.height,
-      giantAtmosphereTexture.upperHazeRgba,
-      `GENESIS deep-envelope upper haze 25.4 v${giantAtmosphereTexture.version}`,
-    );
+    cachedCloudTexture;
+
+  if (texture === null) {
+    return null;
+  }
 
   const segments =
     systemSceneSphereSegments(
@@ -5469,7 +6405,6 @@ function cloudLayerMeshOrNull(
     mesh,
     geometry,
     material,
-    texture,
   });
 }
 
@@ -6661,79 +7596,6 @@ function createBackdropStarField(
 }
 
 
-const TWO_PI =
-  Math.PI * 2;
-
-/**
- * Point-25.10 readability hotfix.
- *
- * Small and medium moons can expose very different authoritative spin rates
- * from the frozen phase-21 state. When the scene is also accelerated by point
- * 24.3, some moons still crawl while others blur through their new textures.
- * Keep synchronized moons physically locked, but normalize every other moon to
- * a single slow display cadence so the renderer stays readable and visually
- * consistent.
- */
-const FIXED_UNSYNCHRONIZED_MOON_DISPLAY_CYCLES_PER_REAL_SECOND =
-  1 / 240;
-
-function systemSceneMoonDisplaySpinRadiansV1(
-  spin:
-    SystemSceneMoonSnapshot['spin'],
-
-  simulationDay:
-    number,
-
-  timing:
-    SystemSceneSnapshot['simulation'],
-): number {
-
-  if (
-    spin.source !==
-      'MOON_21_4' ||
-    spin.isSynchronized ||
-    spin.rotationPeriodHours ===
-      null
-  ) {
-    return systemSceneBodySpinRadians(
-      spin,
-      simulationDay,
-    );
-  }
-
-  const epochSpinRadians =
-    systemSceneBodySpinRadians(
-      spin,
-      timing.epochSimulationDay,
-    );
-
-  const elapsedRealSeconds =
-    (
-      simulationDay -
-      timing.epochSimulationDay
-    ) /
-    timing.playbackDaysPerRealSecond;
-
-  return normalizeRadians(
-    epochSpinRadians +
-    elapsedRealSeconds *
-      FIXED_UNSYNCHRONIZED_MOON_DISPLAY_CYCLES_PER_REAL_SECOND *
-      TWO_PI,
-  );
-}
-
-function normalizeRadians(
-  radians:
-    number,
-): number {
-  const normalized =
-    radians %
-    TWO_PI;
-
-  return normalized < 0
-    ? normalized + TWO_PI
-    : normalized;
-}
 
 function pseudoRandom(
   index:

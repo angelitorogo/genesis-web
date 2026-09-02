@@ -147,6 +147,10 @@ import {
 } from './system-scene-asteroid-presentation';
 
 import {
+  buildSystemSceneAsteroidBeltBandPresentationV1,
+} from './system-scene-asteroid-belt-presentation';
+
+import {
   buildSystemSceneCometPresentationV1,
   type SystemSceneCometPresentationInputV1,
   type SystemSceneCometPresentationV1,
@@ -161,6 +165,10 @@ import {
   buildSystemSceneMoonPresentationV1,
   type SystemSceneMoonPresentationV1,
 } from './system-scene-moon-presentation';
+
+import {
+  limitSystemSceneMoonPresentationToHostV1,
+} from './system-scene-moon-host-size-limit';
 
 import {
   AtmosphereGenerator,
@@ -488,6 +496,57 @@ export interface SystemSceneMinorBodySnapshot {
     SystemSceneCometPresentationV1 | null;
 }
 
+export interface SystemSceneAsteroidBeltSnapshot {
+  readonly id:
+    string;
+
+  readonly label:
+    string;
+
+  readonly region:
+    'INNER' |
+    'OUTER';
+
+  readonly innerEdgeAu:
+    number;
+
+  readonly outerEdgeAu:
+    number;
+
+  readonly peakAu:
+    number | null;
+
+  readonly populationIndex01:
+    number;
+
+  readonly innerRadiusScene:
+    number;
+
+  readonly outerRadiusScene:
+    number;
+
+  readonly peakRadiusScene:
+    number | null;
+
+  readonly colorHex:
+    string;
+
+  readonly opacity:
+    number;
+
+  readonly peakOpacity:
+    number;
+
+  readonly boundaryOpacity:
+    number;
+
+  readonly anchorMotionContributions:
+    readonly SystemSceneMotionContributionSnapshot[];
+
+  readonly projectionSpace?:
+    SystemSceneProjectionSpaceValue;
+}
+
 export interface SystemSceneHabitableZoneSnapshot {
   readonly topology:
     'CIRCUMSTELLAR' |
@@ -662,6 +721,9 @@ export interface SystemSceneSnapshot {
   readonly minorBodies:
     readonly SystemSceneMinorBodySnapshot[];
 
+  readonly asteroidBelts?:
+    readonly SystemSceneAsteroidBeltSnapshot[];
+
   readonly habitableZone:
     SystemSceneHabitableZoneSnapshot | null;
 
@@ -751,6 +813,9 @@ interface MaterializedStellarSceneWorld {
 
   readonly minorBodyOrbitalCatalog:
     MinorBodyOrbitalElementsCatalog | null;
+
+  readonly asteroidBelts:
+    ReturnType<typeof AsteroidBeltGenerator.generate> | null;
 
   readonly habitableZone:
     PlanetarySystemHabitableZone;
@@ -882,6 +947,8 @@ export class SystemSceneSnapshotBuilder {
           Object.freeze([]),
         minorBodies:
           Object.freeze([]),
+        asteroidBelts:
+          Object.freeze([]),
         habitableZone:
           null,
         orbitalRiskTargets:
@@ -937,6 +1004,8 @@ export class SystemSceneSnapshotBuilder {
         projected.moons,
       minorBodies:
         projected.minorBodies,
+      asteroidBelts:
+        projected.asteroidBelts,
       habitableZone:
         projected.habitableZone,
       orbitalRiskTargets:
@@ -1146,6 +1215,8 @@ function materializeSceneWorld(
       planetaryWorld.moonSystems,
     minorBodyOrbitalCatalog:
       planetaryWorld.minorBodyOrbitalCatalog,
+    asteroidBelts:
+      planetaryWorld.asteroidBelts,
     habitableZone:
       planetaryWorld.habitableZone,
     impactRiskCatalog:
@@ -1360,6 +1431,9 @@ interface ResolvedPlanetarySceneWorld {
   readonly minorBodyOrbitalCatalog:
     MinorBodyOrbitalElementsCatalog | null;
 
+  readonly asteroidBelts:
+    ReturnType<typeof AsteroidBeltGenerator.generate> | null;
+
   readonly habitableZone:
     PlanetarySystemHabitableZone;
 
@@ -1405,6 +1479,7 @@ function resolvePlanetaryWorld(
       atmospheres: Object.freeze([]),
       moonSystems: Object.freeze([]),
       minorBodyOrbitalCatalog: null,
+      asteroidBelts: null,
       habitableZone,
       impactRiskCatalog: null,
     });
@@ -1473,6 +1548,7 @@ function resolvePlanetaryWorld(
       atmospheres,
       moonSystems,
       minorBodyOrbitalCatalog: null,
+      asteroidBelts: null,
       habitableZone,
       impactRiskCatalog: null,
     });
@@ -1563,6 +1639,7 @@ function resolvePlanetaryWorld(
     atmospheres,
     moonSystems,
     minorBodyOrbitalCatalog,
+    asteroidBelts,
     habitableZone,
     impactRiskCatalog,
   });
@@ -1583,6 +1660,9 @@ function projectSceneGeometry(
 
   readonly minorBodies:
     readonly SystemSceneMinorBodySnapshot[];
+
+  readonly asteroidBelts?:
+    readonly SystemSceneAsteroidBeltSnapshot[];
 
   readonly habitableZone:
     SystemSceneHabitableZoneSnapshot | null;
@@ -2592,6 +2672,13 @@ function projectSceneGeometry(
             Math.abs(secondaryInnerScale),
         );
 
+  const asteroidBelts =
+    projectAsteroidBeltLayers(
+      world,
+      innerPairAnchorContributions,
+      sceneScale,
+    );
+
   const habitableZone =
     projectHabitableZoneLayer(
       world,
@@ -2619,6 +2706,7 @@ function projectSceneGeometry(
       Object.freeze(planets),
     moons,
     minorBodies,
+    asteroidBelts,
     habitableZone,
     orbitalRiskTargets,
     layers:
@@ -2663,6 +2751,150 @@ function projectSceneGeometry(
     scale:
       sceneScale,
   });
+}
+
+
+
+
+function projectAsteroidBeltLayers(
+  world:
+    MaterializedStellarSceneWorld,
+
+  innerPairAnchorContributions:
+    readonly SystemSceneMotionContributionSnapshot[],
+
+  sceneScale:
+    SystemSceneScaleSnapshot,
+): readonly SystemSceneAsteroidBeltSnapshot[] {
+
+  if (
+    world.asteroidBelts ===
+      null
+  ) {
+    return Object.freeze([]);
+  }
+
+  const projectionSpace =
+    world.multiplicityName ===
+      'TRIPLE'
+      ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+      : SystemSceneProjectionSpace.GLOBAL;
+
+  const anchorMotionContributions =
+    world.multiplicityName ===
+      'TRIPLE'
+      ? innerPairAnchorContributions
+      : Object.freeze([]);
+
+  const profiles =
+    [
+      world.asteroidBelts.innerBelt,
+      world.asteroidBelts.outerBelt,
+    ];
+
+  return Object.freeze(
+    profiles
+      .filter(
+        profile =>
+          profile.exists &&
+          profile.innerEdgeAu !==
+            null &&
+          profile.outerEdgeAu !==
+            null &&
+          profile.peakAu !==
+            null,
+      )
+      .map(
+        profile => {
+          const isInner =
+            profile.region ===
+            'INNER';
+
+          const innerEdgeAu =
+            profile.innerEdgeAu!;
+          const outerEdgeAu =
+            profile.outerEdgeAu!;
+          const peakAu =
+            profile.peakAu!;
+
+          const presentation =
+            buildSystemSceneAsteroidBeltBandPresentationV1({
+              region:
+                isInner
+                  ? 'INNER'
+                  : 'OUTER',
+              innerEdgeAu,
+              outerEdgeAu,
+              peakAu,
+              populationIndex01:
+                profile.populationIndex01,
+              innerRadiusScene:
+                systemSceneProjectedOverlayRadiusAuInSpace(
+                  innerEdgeAu,
+                  sceneScale,
+                  projectionSpace,
+                ),
+              outerRadiusScene:
+                systemSceneProjectedOverlayRadiusAuInSpace(
+                  outerEdgeAu,
+                  sceneScale,
+                  projectionSpace,
+                ),
+              peakRadiusScene:
+                systemSceneProjectedOverlayRadiusAuInSpace(
+                  peakAu,
+                  sceneScale,
+                  projectionSpace,
+                ),
+            });
+
+          return Object.freeze({
+            id:
+              `asteroid-belt-${profile.region.toLowerCase()}`,
+            label:
+              isInner
+                ? 'Cinturón interior'
+                : 'Cinturón exterior',
+            region:
+              presentation.region,
+            innerEdgeAu:
+              presentation.innerEdgeAu,
+            outerEdgeAu:
+              presentation.outerEdgeAu,
+            peakAu:
+              presentation.peakAu,
+            populationIndex01:
+              presentation.populationIndex01,
+            innerRadiusScene:
+              presentation.innerRadiusScene,
+            outerRadiusScene:
+              presentation.outerRadiusScene,
+            peakRadiusScene:
+              presentation.peakRadiusScene,
+            colorHex:
+              presentation.colorHex,
+            opacity:
+              presentation.opacity,
+            peakOpacity:
+              presentation.peakOpacity,
+            boundaryOpacity:
+              presentation.boundaryOpacity,
+            anchorMotionContributions:
+              Object.freeze([
+                ...anchorMotionContributions,
+              ]),
+            ...(
+              projectionSpace ===
+                SystemSceneProjectionSpace.GLOBAL
+                ? {}
+                : {
+                    projectionSpace,
+                  }
+            ),
+          });
+        },
+      ),
+  );
 }
 
 
@@ -3137,7 +3369,7 @@ function projectMoonLayer(
       const moon =
         relevantMoons[index]!;
 
-      const visualPresentation =
+      const sourceVisualPresentation =
         buildSystemSceneMoonPresentationV1({
           moonIdentity:
             moon.identity.seed.normalizedValue,
@@ -3188,6 +3420,12 @@ function projectMoonLayer(
           isOceanBearingGiantMoonCandidate:
             moon.giantMoonState.isOceanBearingCandidate,
         });
+
+      const visualPresentation =
+        limitSystemSceneMoonPresentationToHostV1(
+          sourceVisualPresentation,
+          hostPlanet.radiusScene,
+        );
 
       const moonRadiusScene =
         visualPresentation.presentationRadiusScene;

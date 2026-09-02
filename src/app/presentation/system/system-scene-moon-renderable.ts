@@ -8,31 +8,54 @@ import {
   buildSystemSceneMoonTextureV1,
 } from './system-scene-moon-texture';
 
+import {
+  SystemSceneBoundedResourceCacheV1,
+  type SystemSceneResourceLeaseV1,
+} from './system-scene-resource-cache';
+
 export interface SystemSceneMoonRenderableV1 {
   readonly root: THREE.Group;
   readonly resources: readonly { dispose(): void }[];
   readonly surfaceMaterial: THREE.MeshStandardMaterial;
+  readonly surfaceMesh: THREE.Mesh;
+  readonly surfaceUsesSharedUnitGeometry: boolean;
+}
+
+export interface SystemSceneMoonTextureResourceV1 {
+  readonly textureData: ReturnType<typeof buildSystemSceneMoonTextureV1>;
+  readonly albedo: THREE.DataTexture;
+  readonly emissive: THREE.DataTexture | null;
+  readonly clouds: THREE.DataTexture | null;
+  dispose(): void;
 }
 
 /** Materializes the immutable point-25.10 moon presentation into Three.js. */
 export function createSystemSceneMoonRenderableV1(
   moon: SystemSceneMoonPresentationV1,
+  textureCache: SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1> | null = null,
+  sharedUnitSphereGeometry: THREE.SphereGeometry | null = null,
 ): SystemSceneMoonRenderableV1 {
   if (moon.version !== 1) {
     throw new RangeError(`Unsupported moon presentation version: ${moon.version}.`);
   }
 
-  const textureData = buildSystemSceneMoonTextureV1(moon);
-  const albedo = dataTexture(
-    textureData.width,
-    textureData.height,
-    textureData.albedoRgba,
-    'GENESIS moon albedo 25.10',
-  );
-  const resources: { dispose(): void }[] = [albedo];
+  const textureLease = moonTextureLease(moon, textureCache);
+  const textureResource = textureLease.resource;
+  const textureData = textureResource.textureData;
+  const albedo = textureResource.albedo;
+  const resources: { dispose(): void }[] = [textureLease];
 
-  const geometry = moonGeometry(moon);
-  resources.push(geometry);
+  const surfaceUsesSharedUnitGeometry =
+    sharedUnitSphereGeometry !== null &&
+    moon.shapeClass !== 'MINOR_IRREGULAR';
+  const geometry =
+    surfaceUsesSharedUnitGeometry
+      ? sharedUnitSphereGeometry
+      : moonGeometry(moon);
+
+  if (!surfaceUsesSharedUnitGeometry) {
+    resources.push(geometry);
+  }
 
   const materialOptions: THREE.MeshStandardMaterialParameters = {
     color: 0xffffff,
@@ -42,17 +65,13 @@ export function createSystemSceneMoonRenderableV1(
   };
 
   if (textureData.emissiveRgba !== null) {
-    const emissive = dataTexture(
-      textureData.width,
-      textureData.height,
-      textureData.emissiveRgba,
-      'GENESIS moon volcanism 25.10',
-    );
-    materialOptions.emissive = 0xffffff;
-    materialOptions.emissiveIntensity =
-      0.34 + 0.92 * moon.presentationVolcanicCoverage01;
-    materialOptions.emissiveMap = emissive;
-    resources.push(emissive);
+    const emissive = textureResource.emissive;
+    if (emissive !== null) {
+      materialOptions.emissive = 0xffffff;
+      materialOptions.emissiveIntensity =
+        0.34 + 0.92 * moon.presentationVolcanicCoverage01;
+      materialOptions.emissiveMap = emissive;
+    }
   }
 
   const surfaceMaterial = new THREE.MeshStandardMaterial(materialOptions);
@@ -61,16 +80,14 @@ export function createSystemSceneMoonRenderableV1(
   const root = new THREE.Group();
   root.name = 'GENESIS moon visual 25.10';
   const surface = new THREE.Mesh(geometry, surfaceMaterial);
+  if (surfaceUsesSharedUnitGeometry) {
+    surface.scale.setScalar(moon.presentationRadiusScene);
+  }
   surface.name = 'GENESIS moon surface 25.10';
   root.add(surface);
 
   if (textureData.cloudRgba !== null) {
-    const cloudTexture = dataTexture(
-      textureData.width,
-      textureData.height,
-      textureData.cloudRgba,
-      'GENESIS moon clouds 25.10',
-    );
+    const cloudTexture = textureResource.clouds!;
     const cloudGeometry = new THREE.SphereGeometry(
       moon.presentationRadiusScene * 1.018,
       32,
@@ -90,7 +107,7 @@ export function createSystemSceneMoonRenderableV1(
     cloudMesh.name = 'GENESIS moon clouds 25.10';
     cloudMesh.rotation.y = uint32Unit(mixUint32(moon.presentationSeedUint32 ^ 0x44b1f3a5)) * Math.PI * 2;
     root.add(cloudMesh);
-    resources.push(cloudTexture, cloudGeometry, cloudMaterial);
+    resources.push(cloudGeometry, cloudMaterial);
   }
 
   if (moon.presentationAtmospherePresent) {
@@ -129,6 +146,8 @@ export function createSystemSceneMoonRenderableV1(
     root,
     resources: Object.freeze(resources),
     surfaceMaterial,
+    surfaceMesh: surface,
+    surfaceUsesSharedUnitGeometry,
   });
 }
 
@@ -159,6 +178,80 @@ void main() {
   gl_FragColor = vec4(uGenesisMoonAtmosphereColor, genesisAlpha);
 }
 `;
+
+
+function moonTextureLease(
+  moon: SystemSceneMoonPresentationV1,
+  cache: SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1> | null,
+): SystemSceneResourceLeaseV1<SystemSceneMoonTextureResourceV1> {
+  const key = `${moon.sourceMoonIdentity}|${moon.presentationSeedUint32}|25.11`;
+  if (cache !== null) {
+    return cache.acquire(
+      key,
+      128 * 64 * 4 * 3,
+      () => createMoonTextureResource(moon),
+    );
+  }
+
+  const resource = createMoonTextureResource(moon);
+  let released = false;
+  return Object.freeze({
+    resource,
+    cached: false,
+    dispose: () => {
+      if (released) {
+        return;
+      }
+      released = true;
+      resource.dispose();
+    },
+  });
+}
+
+function createMoonTextureResource(
+  moon: SystemSceneMoonPresentationV1,
+): SystemSceneMoonTextureResourceV1 {
+  const textureData = buildSystemSceneMoonTextureV1(moon);
+  const albedo = dataTexture(
+    textureData.width,
+    textureData.height,
+    textureData.albedoRgba,
+    'GENESIS cached moon albedo 25.11',
+  );
+  const emissive = textureData.emissiveRgba === null
+    ? null
+    : dataTexture(
+        textureData.width,
+        textureData.height,
+        textureData.emissiveRgba,
+        'GENESIS cached moon volcanism 25.11',
+      );
+  const clouds = textureData.cloudRgba === null
+    ? null
+    : dataTexture(
+        textureData.width,
+        textureData.height,
+        textureData.cloudRgba,
+        'GENESIS cached moon clouds 25.11',
+      );
+
+  let disposed = false;
+  return Object.freeze({
+    textureData,
+    albedo,
+    emissive,
+    clouds,
+    dispose: () => {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      albedo.dispose();
+      emissive?.dispose();
+      clouds?.dispose();
+    },
+  });
+}
 
 function moonGeometry(moon: SystemSceneMoonPresentationV1): THREE.BufferGeometry {
   const widthSegments =

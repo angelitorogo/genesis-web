@@ -67,6 +67,29 @@ export function assertSystemSceneProjectionSnapshot(
     assertBodyProjection,
   );
 
+  if (
+    snapshot.asteroidBelts !==
+      undefined
+  ) {
+    assertFrozenArray(
+      snapshot.asteroidBelts,
+      'snapshot.asteroidBelts',
+      (
+        belt,
+        label,
+      ) => {
+        assertFrozen(
+          belt,
+          label,
+        );
+        assertMotionContributions(
+          belt.anchorMotionContributions,
+          `${label}.anchorMotionContributions`,
+        );
+      },
+    );
+  }
+
   assertFrozenArray(
     snapshot.orbits,
     'snapshot.orbits',

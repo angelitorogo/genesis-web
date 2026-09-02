@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene through point 25.10',
+  'SystemScene through point 25.11',
   () => {
 
     let resize:
@@ -296,6 +296,17 @@ describe(
             ?.textContent,
         ).toContain(
           'ATM · TERM · NIGHT',
+        );
+
+        expect(
+          fixture
+            .nativeElement
+            .querySelector(
+              '[data-testid="system-scene-ready"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'LOD · INST · CACHE',
         );
       },
     );
@@ -992,6 +1003,22 @@ describe(
         expect(
           fixture.componentInstance.asteroidsVisible(),
         ).toBe(true);
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-asteroid-belt-legend"]',
+          )?.textContent,
+        ).toContain(
+          'INNER 2.20–3.10 AU',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-asteroid-belt-legend"]',
+          )?.textContent,
+        ).toContain(
+          'OUTER 9.50–14.8 AU',
+        );
 
         expect(
           fixture.componentInstance.cometsVisible(),
@@ -1755,6 +1782,74 @@ function sceneSnapshot():
             null,
           cometPresentation:
             null,
+        }),
+      ]),
+
+    asteroidBelts:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'asteroid-belt-inner',
+          label:
+            'Cinturón interior',
+          region:
+            'INNER' as const,
+          innerEdgeAu:
+            2.2,
+          outerEdgeAu:
+            3.1,
+          peakAu:
+            2.65,
+          populationIndex01:
+            0.58,
+          innerRadiusScene:
+            3.0,
+          outerRadiusScene:
+            4.1,
+          peakRadiusScene:
+            3.55,
+          colorHex:
+            '#7f8c99',
+          opacity:
+            0.075,
+          peakOpacity:
+            0.12,
+          boundaryOpacity:
+            0.18,
+          anchorMotionContributions:
+            Object.freeze([]),
+        }),
+        Object.freeze({
+          id:
+            'asteroid-belt-outer',
+          label:
+            'Cinturón exterior',
+          region:
+            'OUTER' as const,
+          innerEdgeAu:
+            9.5,
+          outerEdgeAu:
+            14.8,
+          peakAu:
+            12.1,
+          populationIndex01:
+            0.72,
+          innerRadiusScene:
+            5.3,
+          outerRadiusScene:
+            6.7,
+          peakRadiusScene:
+            6.0,
+          colorHex:
+            '#8ea5c8',
+          opacity:
+            0.09,
+          peakOpacity:
+            0.14,
+          boundaryOpacity:
+            0.22,
+          anchorMotionContributions:
+            Object.freeze([]),
         }),
       ]),
 

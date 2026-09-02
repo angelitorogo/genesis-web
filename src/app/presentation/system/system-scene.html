@@ -23,7 +23,7 @@
     aria-hidden="true"
   >
     <span>WEBGL2 / GLSL / SYSTEM SCENE</span>
-    <span>25.10 · MOONS · SURFACES · ATMOSPHERES · DIVERSITY · GLSL · WEBGL2</span>
+    <span>25.11 · LOD · INSTANCING · LAZY TEXTURES · BOUNDED CACHE · EXPLICIT DISPOSAL · WEBGL2</span>
   </div>
 
 
@@ -92,7 +92,7 @@
       type="button"
       data-testid="system-scene-layer-asteroids"
       [attr.aria-pressed]="asteroidsVisible()"
-      [disabled]="asteroidCount() === 0"
+      [disabled]="!asteroidLayerAvailable()"
       [class.system-scene__layer-button--active]="asteroidsVisible()"
       (click)="toggleAsteroids()"
     >
@@ -141,7 +141,7 @@
     </button>
   </div>
 
-  @if (habitableZoneVisible() || orbitalRiskVisible()) {
+  @if (habitableZoneVisible() || orbitalRiskVisible() || (asteroidsVisible() && asteroidBeltCount() > 0)) {
     <aside
       class="system-scene__science-panel"
       data-testid="system-scene-science-panel"
@@ -169,6 +169,23 @@
             </small>
           </section>
         }
+      }
+
+      @if (asteroidsVisible() && asteroidBeltCount() > 0) {
+        <section
+          class="system-scene__science-card"
+          data-testid="system-scene-asteroid-belt-legend"
+        >
+          <strong>CINTURONES DE ASTEROIDES</strong>
+          <span>
+            <i class="system-scene__swatch system-scene__swatch--crossing"></i>
+            Bandas poblacionales sutiles
+            <b>{{ asteroidBeltCount() }}</b>
+          </span>
+          <small>
+            {{ asteroidBeltLegend() }} · visualización derivada solo de los límites físicos congelados de 22.2; no inventa asteroides extra.
+          </small>
+        </section>
       }
 
       @if (orbitalRiskVisible()) {
@@ -419,7 +436,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.layers.habitableZoneAvailable ? 1 : 0 }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · MOON SURF · ATM · TERM · NIGHT · GLSL · WGPU {{ renderInfo()?.webGpuEvaluation === 'API_AVAILABLE_NOT_SELECTED' ? 'OPT' : 'N/A' }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.layers.habitableZoneAvailable ? 1 : 0 }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · LOD · INST · CACHE · MOON SURF · ATM · TERM · NIGHT · GLSL · WGPU {{ renderInfo()?.webGpuEvaluation === 'API_AVAILABLE_NOT_SELECTED' ? 'OPT' : 'N/A' }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
     </div>
   }
 </section>

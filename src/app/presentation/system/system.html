@@ -132,11 +132,11 @@
 
                 <footer class="system-page__viewport-footer">
                   <span>
-                    THREE.JS / WEBGL2 + GLSL / BODY RENDER 25.10
+                    THREE.JS / WEBGL2 + GLSL / BODY RENDER 25.11
                   </span>
 
                   <p>
-                    25.10 mantiene todo lo validado hasta 25.9 y especializa visualmente las lunas relevantes usando exclusivamente su estado físico congelado de Fase 21: radio, densidad, mareas, atmósfera, agua, geología, habitabilidad potencial y especialización de lunas de gigantes. Las lunas pequeñas pueden adoptar siluetas irregulares; las mayores de gigantes pasan a tener escala y lectura casi planetarias, con texturas rocosas, heladas, oceánicas o volcánicas, nubes y halo atmosférico cuando proceda. No se inventa vida ni se modifica Ground Truth; Three.js continúa siendo una proyección de solo lectura.
+                    25.11 conserva toda la calidad visual validada hasta 25.10 y optimiza el renderer sin tocar Ground Truth: LOD dinámico por tamaño proyectado para esferas estelares/planetarias, picking mediante un único lote InstancedMesh, TNO/capturados genéricos agrupados en lotes InstancedMesh visibles, texturas lunares diferidas hasta mostrar la capa y texturas planetarias/lunares reutilizadas mediante cachés LRU con límites duros, geometrías esféricas compartidas y liberación explícita de materiales, geometrías, texturas, caches, render lists y contexto WebGL. Las lunas pequeñas permanecen esferoidales con relieve moderado y las lunas/planetas conservan sus tamaños, superficies, atmósferas, anillos y rasgos físicos de los puntos anteriores.
                   </p>
                 </footer>
               </section>

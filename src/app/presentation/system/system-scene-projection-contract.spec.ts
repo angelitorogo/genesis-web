@@ -12,7 +12,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene projection authority through point 25.10',
+  'SystemScene projection authority through point 25.11',
   () => {
 
     it(
@@ -53,6 +53,65 @@ describe(
               snapshot,
             ),
         ).not.toThrow();
+      },
+    );
+
+    it(
+      'should reject a mutable point-25.11 asteroid-belt projection before it enters Three.js',
+      () => {
+        const base =
+          projectionSnapshot();
+
+        const mutableBelt = {
+          id:
+            'asteroid-belt-outer',
+          label:
+            'Cinturón exterior',
+          region:
+            'OUTER' as const,
+          innerEdgeAu:
+            8.4,
+          outerEdgeAu:
+            46,
+          peakAu:
+            20.55572634155551,
+          populationIndex01:
+            0.72,
+          innerRadiusScene:
+            3.2,
+          outerRadiusScene:
+            5.8,
+          peakRadiusScene:
+            4.65,
+          colorHex:
+            '#8EA5C8',
+          opacity:
+            0.081,
+          peakOpacity:
+            0.128,
+          boundaryOpacity:
+            0.178,
+          anchorMotionContributions:
+            Object.freeze([]),
+        };
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            asteroidBelts:
+              Object.freeze([
+                mutableBelt,
+              ]),
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /snapshot\.asteroidBelts\[0\] is mutable/,
+        );
       },
     );
 

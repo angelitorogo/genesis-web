@@ -40,6 +40,7 @@ describe(
         const position = geometry.getAttribute('position');
         const color = geometry.getAttribute('color');
         expect(position.count).toBeGreaterThan(100);
+        expect(geometry.type).toBe('SphereGeometry');
         expect(color.count).toBe(position.count);
         expect(geometry.boundingSphere).not.toBeNull();
         geometry.dispose();

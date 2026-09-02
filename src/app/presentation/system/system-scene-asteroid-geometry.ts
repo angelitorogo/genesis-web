@@ -50,7 +50,9 @@ export function createSystemSceneAsteroidRenderableV1(
     roughness: presentation.presentationRoughness01,
     metalness: presentation.presentationMetalness01,
     vertexColors: true,
-    flatShading: presentation.structureRegime !== 'COHERENT',
+    // Even fractured/rubble-pile bodies keep a rounded spheroidal silhouette.
+    // Surface relief provides irregularity without exposing polygon facets.
+    flatShading: false,
   });
   material.name = `GENESIS asteroid material 25.7 ${presentation.compositionRegime}`;
 
@@ -157,11 +159,14 @@ export function createIrregularAsteroidGeometryV1(
   presentation: SystemSceneAsteroidPresentationV1,
   seedSalt = 0,
 ): THREE.BufferGeometry {
-  const source = new THREE.IcosahedronGeometry(radiusScene, 2);
-  const geometry = source.index === null ? source : source.toNonIndexed();
-  if (geometry !== source) {
-    source.dispose();
-  }
+  // Start from a smooth sphere rather than a low-detail icosahedron. Asteroids
+  // remain non-perfect spheroids through deterministic axis scaling and radial
+  // relief, but their silhouette must never read as an obvious polyhedron.
+  const geometry = new THREE.SphereGeometry(
+    radiusScene,
+    32,
+    20,
+  );
 
   const positions = geometry.getAttribute('position') as THREE.BufferAttribute;
   const colors = new Float32Array(positions.count * 3);
@@ -215,7 +220,7 @@ export function createIrregularAsteroidGeometryV1(
   geometry.computeVertexNormals();
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
-  geometry.name = `GENESIS asteroid irregular geometry 25.7 ${presentation.structureRegime}`;
+  geometry.name = `GENESIS asteroid spheroidal irregular geometry 25.11 ${presentation.structureRegime}`;
   return geometry;
 }
 
@@ -232,9 +237,9 @@ export function asteroidDirectionalRadiusFactorV1(
   const high = directionalHarmonicNoise(nx * 3.7, ny * 3.7, nz * 3.7, seed, salt + 13);
   const combined = low * 0.56 + medium * 0.30 + high * 0.14;
   return clamp(
-    1 + combined * irregularity01 * 0.48,
-    0.72,
-    1.30,
+    1 + combined * irregularity01 * 0.22,
+    0.84,
+    1.16,
   );
 }
 
