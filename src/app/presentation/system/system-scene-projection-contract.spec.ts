@@ -1,4 +1,8 @@
 import {
+  MinorBodyKind,
+} from '../../domain/planetary/minor-body-kind';
+
+import {
   SYSTEM_SCENE_PROJECTION_AUTHORITY,
   assertSystemSceneProjectionSnapshot,
 } from './system-scene-projection-contract';
@@ -8,7 +12,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene projection authority through point 25.4',
+  'SystemScene projection authority through point 25.7',
   () => {
 
     it(
@@ -269,6 +273,74 @@ describe(
             ),
         ).toThrowError(
           /snapshot\.planets\[0\]\.surfaceEnvironment is mutable/,
+        );
+      },
+    );
+
+    it(
+      'should reject mutable point-25.7 asteroid presentation before it enters Three.js',
+      () => {
+
+        const mutableAsteroidPresentation = {
+          version: 1 as const,
+          source: 'PHASE_22_4_ASTEROID_TAXONOMY' as const,
+          proceduralId: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+          sourceDiameterKilometers: 220,
+          compositionRegime: 'CARBONACEOUS' as const,
+          structureRegime: 'RUBBLE_PILE' as const,
+          multiplicityRegime: 'SINGLE' as const,
+          carbonaceousFraction01: 0.6,
+          silicateFraction01: 0.25,
+          metalFraction01: 0.05,
+          iceFraction01: 0.1,
+          porosityIndex01: 0.45,
+          bulkDensityGramsPerCubicCentimeter: 1.5,
+          geometricAlbedo01: 0.06,
+          binaryMassRatio01: null,
+          binarySeparationPrimaryRadii: null,
+          shapeSeedUint32: 123,
+          presentationColorHex: '#51483F',
+          presentationRoughness01: 0.95,
+          presentationMetalness01: 0.03,
+          presentationIrregularity01: 0.44,
+          presentationFacetContrast01: 0.48,
+          presentationAxisScaleX: 1.1,
+          presentationAxisScaleY: 0.95,
+          presentationAxisScaleZ: 0.95,
+          presentationOrientationXRadians: 0.2,
+          presentationOrientationYRadians: 1.1,
+          presentationOrientationZRadians: -0.3,
+          presentationContactSecondaryRadiusScale01: null,
+          presentationDetachedSecondaryRadiusScale01: null,
+          presentationDetachedSeparation01: null,
+          presentationSeparationAdjusted: false,
+        };
+
+        const minorBody =
+          Object.freeze({
+            id: 'minor-1-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+            kind: 'minor-body' as const,
+            minorBodyKind: MinorBodyKind.ASTEROID,
+            label: 'AST-IN-001',
+            title: 'Asteroide AST-IN-001',
+            colorHex: '#B59A78',
+            radiusScene: 0.014,
+            position: Object.freeze({ x: 1, y: 0, z: 0 }),
+            orbitId: 'orbit-minor-1',
+            motionContributions: Object.freeze([]),
+            asteroidPresentation: mutableAsteroidPresentation,
+          });
+
+        const base = projectionSnapshot();
+        const snapshot = Object.freeze({
+          ...base,
+          minorBodies: Object.freeze([minorBody]),
+        }) as SystemSceneSnapshot;
+
+        expect(
+          () => assertSystemSceneProjectionSnapshot(snapshot),
+        ).toThrowError(
+          /snapshot\.minorBodies\[0\]\.asteroidPresentation is mutable/,
         );
       },
     );

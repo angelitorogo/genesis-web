@@ -53,6 +53,10 @@ import {
 } from '../../domain/planetary/minor-body-ground-truth-inventory';
 
 import {
+  type RelevantAsteroid,
+} from '../../domain/planetary/relevant-asteroid';
+
+import {
   PlanetSurfaceBaseRegime,
 } from '../../domain/planetary/planet-surface-base-regime';
 
@@ -131,6 +135,12 @@ import {
   buildSystemSceneGiantAtmospherePresentationV1,
   type SystemSceneGiantAtmospherePresentationSnapshot,
 } from './system-scene-giant-atmosphere-presentation';
+
+import {
+  buildSystemSceneAsteroidPresentationV1,
+  type SystemSceneAsteroidPresentationInputV1,
+  type SystemSceneAsteroidPresentationV1,
+} from './system-scene-asteroid-presentation';
 
 import {
   AtmosphereGenerator,
@@ -442,6 +452,9 @@ export interface SystemSceneMinorBodySnapshot {
 
   readonly motionContributions:
     readonly SystemSceneMotionContributionSnapshot[];
+
+  readonly asteroidPresentation:
+    SystemSceneAsteroidPresentationV1 | null;
 }
 
 export interface SystemSceneHabitableZoneSnapshot {
@@ -3437,6 +3450,21 @@ function projectMinorBodyLayer(
     const orbitId =
       `orbit-minor-${orbital.kind.code}-${orbital.proceduralId}`;
 
+    const asteroidPresentation =
+      orbital.kind ===
+        MinorBodyKind.ASTEROID
+        ? asteroidPresentationForBody(
+            entry.body as RelevantAsteroid,
+          )
+        : null;
+
+    const presentationColorHex =
+      asteroidPresentation
+        ?.presentationColorHex ??
+      minorBodyColorHex(
+        orbital.kind,
+      );
+
     orbits.push(
       Object.freeze({
         id:
@@ -3446,9 +3474,7 @@ function projectMinorBodyLayer(
         label:
           orbital.localDesignation,
         colorHex:
-          minorBodyColorHex(
-            orbital.kind,
-          ),
+          presentationColorHex,
         opacity:
           orbitOpacity,
         semiMajorScene:
@@ -3509,9 +3535,7 @@ function projectMinorBodyLayer(
             orbital.localDesignation,
           ),
         colorHex:
-          minorBodyColorHex(
-            orbital.kind,
-          ),
+          presentationColorHex,
         radiusScene:
           minorBodyRadiusScene(
             entry.body,
@@ -3526,6 +3550,7 @@ function projectMinorBodyLayer(
           ),
         orbitId,
         motionContributions,
+        asteroidPresentation,
       }),
     );
   }
@@ -3554,6 +3579,52 @@ function moonColorHex(
   }
 
   return '#8C8179';
+}
+
+function asteroidPresentationForBody(
+  asteroid:
+    RelevantAsteroid,
+): SystemSceneAsteroidPresentationV1 {
+
+  const taxonomy =
+    asteroid.taxonomy;
+
+  return buildSystemSceneAsteroidPresentationV1({
+    proceduralId:
+      asteroid.proceduralId,
+    diameterKilometers:
+      asteroid.diameterKilometers,
+    compositionRegime:
+      String(
+        taxonomy.compositionRegime,
+      ) as SystemSceneAsteroidPresentationInputV1['compositionRegime'],
+    structureRegime:
+      String(
+        taxonomy.structureRegime,
+      ) as SystemSceneAsteroidPresentationInputV1['structureRegime'],
+    multiplicityRegime:
+      String(
+        taxonomy.multiplicityRegime,
+      ) as SystemSceneAsteroidPresentationInputV1['multiplicityRegime'],
+    carbonaceousFraction01:
+      taxonomy.carbonaceousFraction01,
+    silicateFraction01:
+      taxonomy.silicateFraction01,
+    metalFraction01:
+      taxonomy.metalFraction01,
+    iceFraction01:
+      taxonomy.iceFraction01,
+    porosityIndex01:
+      taxonomy.porosityIndex01,
+    bulkDensityGramsPerCubicCentimeter:
+      taxonomy.bulkDensityGramsPerCubicCentimeter,
+    geometricAlbedo01:
+      taxonomy.geometricAlbedo01,
+    binaryMassRatio01:
+      taxonomy.binaryMassRatio01,
+    binarySeparationPrimaryRadii:
+      taxonomy.binarySeparationPrimaryRadii,
+  });
 }
 
 function minorBodyColorHex(

@@ -313,6 +313,8 @@ function bodyCardSnapshot():
         orbitId:
           'orbit-comet-1',
         motionContributions: [],
+        asteroidPresentation:
+          null,
       },
     ],
     habitableZone:

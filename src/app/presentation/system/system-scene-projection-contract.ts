@@ -160,6 +160,18 @@ function assertBodyProjection(
   );
 
   if (
+    body.kind ===
+      'minor-body' &&
+    body.asteroidPresentation !==
+      null
+  ) {
+    assertFrozen(
+      body.asteroidPresentation,
+      `${label}.asteroidPresentation`,
+    );
+  }
+
+  if (
     body.kind !==
       'minor-body'
   ) {

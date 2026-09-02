@@ -97,6 +97,10 @@ import {
 } from './system-scene-atmosphere-optics';
 
 import {
+  createSystemSceneAsteroidRenderableV1,
+} from './system-scene-asteroid-geometry';
+
+import {
   buildSystemSceneDayNightMaterialProfileV1,
   createSystemSceneAtmosphereShellMaterialV1,
   installSystemSceneDayNightMaterialV1,
@@ -3656,47 +3660,67 @@ class ThreeSystemSceneRuntime
       body.position.z,
     );
 
-    const geometry =
-      new THREE.IcosahedronGeometry(
-        body.radiusScene,
-        1,
+    if (
+      body.minorBodyKind.name ===
+        'ASTEROID' &&
+      body.asteroidPresentation !==
+        null
+    ) {
+      const asteroidRenderable =
+        createSystemSceneAsteroidRenderableV1(
+          body.radiusScene,
+          body.asteroidPresentation,
+        );
+
+      group.add(
+        asteroidRenderable.object,
+      );
+      this.frameDisposables.push(
+        ...asteroidRenderable.resources,
+      );
+    } else {
+      const geometry =
+        new THREE.IcosahedronGeometry(
+          body.radiusScene,
+          1,
+        );
+
+      const material =
+        new THREE.MeshStandardMaterial({
+          color:
+            body.colorHex,
+          roughness:
+            0.92,
+          metalness:
+            0.02,
+          emissive:
+            body.minorBodyKind.name ===
+              'COMET'
+              ? new THREE.Color(
+                  body.colorHex,
+                )
+              : new THREE.Color(
+                  0x000000,
+                ),
+          emissiveIntensity:
+            body.minorBodyKind.name ===
+              'COMET'
+              ? 0.22
+              : 0,
+        });
+
+      group.add(
+        new THREE.Mesh(
+          geometry,
+          material,
+        ),
       );
 
-    const material =
-      new THREE.MeshStandardMaterial({
-        color:
-          body.colorHex,
-        roughness:
-          0.92,
-        metalness:
-          0.02,
-        emissive:
-          body.minorBodyKind.name ===
-            'COMET'
-            ? new THREE.Color(
-                body.colorHex,
-              )
-            : new THREE.Color(
-                0x000000,
-              ),
-        emissiveIntensity:
-          body.minorBodyKind.name ===
-            'COMET'
-            ? 0.22
-            : 0,
-      });
-
-    group.add(
-      new THREE.Mesh(
+      this.frameDisposables.push(
         geometry,
         material,
-      ),
-    );
-
-    this.frameDisposables.push(
-      geometry,
-      material,
-    );
+      );
+    }
 
     this.animatedBodies.set(
       body.id,

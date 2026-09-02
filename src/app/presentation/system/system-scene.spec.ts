@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene through point 25.6',
+  'SystemScene through point 25.7',
   () => {
 
     let resize:
@@ -1583,6 +1583,8 @@ function sceneSnapshot():
             'orbit-minor-1',
           motionContributions:
             Object.freeze([]),
+          asteroidPresentation:
+            null,
         }),
         Object.freeze({
           id:
@@ -1609,6 +1611,8 @@ function sceneSnapshot():
             'orbit-minor-2',
           motionContributions:
             Object.freeze([]),
+          asteroidPresentation:
+            null,
         }),
         Object.freeze({
           id:
@@ -1635,6 +1639,8 @@ function sceneSnapshot():
             'orbit-minor-3',
           motionContributions:
             Object.freeze([]),
+          asteroidPresentation:
+            null,
         }),
         Object.freeze({
           id:
@@ -1661,6 +1667,8 @@ function sceneSnapshot():
             'orbit-minor-4',
           motionContributions:
             Object.freeze([]),
+          asteroidPresentation:
+            null,
         }),
       ]),
 
