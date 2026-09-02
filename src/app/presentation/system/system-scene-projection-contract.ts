@@ -184,6 +184,16 @@ function assertBodyProjection(
   }
 
   if (
+    body.kind ===
+      'moon'
+  ) {
+    assertFrozen(
+      body.visualPresentation,
+      `${label}.visualPresentation`,
+    );
+  }
+
+  if (
     body.kind !==
       'minor-body'
   ) {

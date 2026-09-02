@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene through point 25.7',
+  'SystemScene through point 25.10',
   () => {
 
     let resize:
@@ -1559,6 +1559,48 @@ function sceneSnapshot():
               epochPhaseDegrees:
                 45,
             }),
+          visualPresentation: Object.freeze({
+          version: 1 as const,
+          sourceMoonIdentity: 'MOON-FIXTURE-1',
+          sourceHostPlanetType: 'GAS_GIANT',
+          sourceRadiusEarth: 0.27,
+          sourceMassEarth: 0.012,
+          sourceMeanDensityGramsPerCubicCentimeter: 3.1,
+          sourceSurfaceGravityEarth: 0.16,
+          sourceAtmosphereRetentionIndex01: 0.46,
+          sourceAtmosphereRegime: 'SUBSTANTIAL',
+          sourceWaterInventoryIndex01: 0.62,
+          sourceInferredIceRichnessIndex01: 0.48,
+          sourceSubsurfaceOceanPotentialIndex01: 0.68,
+          sourceSurfaceLiquidWaterPotentialIndex01: 0.42,
+          sourceWaterRegime: 'MIXED',
+          sourceEstimatedSurfaceTemperatureKelvin: 276,
+          sourceGeologicalActivityIndex01: 0.44,
+          sourceTidalHeatingIndex01: 0.32,
+          sourceGeologyRegime: 'ACTIVE',
+          sourceOverallHabitabilityIndex01: 0.52,
+          sourceIsPotentiallyHabitable: true,
+          sourceGiantHostSpecialization: true,
+          sourceGiantCompositionRegime: 'MIXED_ROCK_ICE',
+          sourceIsLargeGiantMoon: true,
+          sourceIsTidallyActiveGiantMoon: false,
+          sourceIsOceanBearingGiantMoonCandidate: true,
+          shapeClass: 'MAJOR_PLANETARY' as const,
+          surfaceStyle: 'OCEANIC' as const,
+          presentationRadiusScene: 0.031,
+          presentationIrregularity01: 0.02,
+          presentationLiquidCoverage01: 0.42,
+          presentationIceCoverage01: 0.34,
+          presentationVolcanicCoverage01: 0.12,
+          presentationCloudCoverage01: 0.38,
+          presentationAtmospherePresent: true,
+          presentationAtmosphereStrength01: 0.48,
+          presentationAtmosphereShellScale: 1.035,
+          presentationBaseColorHex: '#386F91',
+          presentationAccentColorHex: '#A8BBA8',
+          presentationAtmosphereColorHex: '#9FC9DF',
+          presentationSeedUint32: 123456789,
+        }),
         }),
       ]),
 

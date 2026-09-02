@@ -68,6 +68,7 @@ import {
 import {
   systemSceneBodyAxialTiltRadians,
   systemSceneBodyDisplaySpinRadians,
+  systemSceneBodySpinRadians,
   systemSceneSphereSegments,
 } from './system-scene-body-render-state';
 
@@ -113,6 +114,10 @@ import {
 import {
   createSystemSceneRingRenderableV1,
 } from './system-scene-ring-renderable';
+
+import {
+  createSystemSceneMoonRenderableV1,
+} from './system-scene-moon-renderable';
 
 import {
   buildSystemSceneDayNightMaterialProfileV1,
@@ -3663,27 +3668,10 @@ class ThreeSystemSceneRuntime
       moon.position.z,
     );
 
-    const sphereSegments =
-      systemSceneSphereSegments(
-        'moon',
+    const renderable =
+      createSystemSceneMoonRenderableV1(
+        moon.visualPresentation,
       );
-
-    const geometry =
-      new THREE.SphereGeometry(
-        moon.radiusScene,
-        sphereSegments.widthSegments,
-        sphereSegments.heightSegments,
-      );
-
-    const material =
-      new THREE.MeshStandardMaterial({
-        color:
-          moon.colorHex,
-        roughness:
-          0.82,
-        metalness:
-          0.01,
-      });
 
     const axialPivot =
       new THREE.Group();
@@ -3699,10 +3687,7 @@ class ThreeSystemSceneRuntime
     spinPivot.name =
       `${moon.title} domain spin`;
     spinPivot.add(
-      new THREE.Mesh(
-        geometry,
-        material,
-      ),
+      renderable.root,
     );
     axialPivot.add(
       spinPivot,
@@ -3717,8 +3702,7 @@ class ThreeSystemSceneRuntime
     );
 
     this.frameDisposables.push(
-      geometry,
-      material,
+      ...renderable.resources,
     );
 
     this.animatedBodies.set(
@@ -4188,11 +4172,18 @@ class ThreeSystemSceneRuntime
             undefined
         ) {
           spinObject.rotation.y =
-            systemSceneBodyDisplaySpinRadians(
-              body.spin,
-              simulationDay,
-              snapshot.simulation,
-            );
+            body.kind ===
+              'moon'
+              ? systemSceneMoonDisplaySpinRadiansV1(
+                  body.spin,
+                  simulationDay,
+                  snapshot.simulation,
+                )
+              : systemSceneBodyDisplaySpinRadians(
+                  body.spin,
+                  simulationDay,
+                  snapshot.simulation,
+                );
         }
       }
     }
@@ -6667,6 +6658,81 @@ function createBackdropStarField(
     geometry,
     material,
   );
+}
+
+
+const TWO_PI =
+  Math.PI * 2;
+
+/**
+ * Point-25.10 readability hotfix.
+ *
+ * Small and medium moons can expose very different authoritative spin rates
+ * from the frozen phase-21 state. When the scene is also accelerated by point
+ * 24.3, some moons still crawl while others blur through their new textures.
+ * Keep synchronized moons physically locked, but normalize every other moon to
+ * a single slow display cadence so the renderer stays readable and visually
+ * consistent.
+ */
+const FIXED_UNSYNCHRONIZED_MOON_DISPLAY_CYCLES_PER_REAL_SECOND =
+  1 / 240;
+
+function systemSceneMoonDisplaySpinRadiansV1(
+  spin:
+    SystemSceneMoonSnapshot['spin'],
+
+  simulationDay:
+    number,
+
+  timing:
+    SystemSceneSnapshot['simulation'],
+): number {
+
+  if (
+    spin.source !==
+      'MOON_21_4' ||
+    spin.isSynchronized ||
+    spin.rotationPeriodHours ===
+      null
+  ) {
+    return systemSceneBodySpinRadians(
+      spin,
+      simulationDay,
+    );
+  }
+
+  const epochSpinRadians =
+    systemSceneBodySpinRadians(
+      spin,
+      timing.epochSimulationDay,
+    );
+
+  const elapsedRealSeconds =
+    (
+      simulationDay -
+      timing.epochSimulationDay
+    ) /
+    timing.playbackDaysPerRealSecond;
+
+  return normalizeRadians(
+    epochSpinRadians +
+    elapsedRealSeconds *
+      FIXED_UNSYNCHRONIZED_MOON_DISPLAY_CYCLES_PER_REAL_SECOND *
+      TWO_PI,
+  );
+}
+
+function normalizeRadians(
+  radians:
+    number,
+): number {
+  const normalized =
+    radians %
+    TWO_PI;
+
+  return normalized < 0
+    ? normalized + TWO_PI
+    : normalized;
 }
 
 function pseudoRandom(

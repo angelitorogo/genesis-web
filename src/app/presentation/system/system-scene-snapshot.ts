@@ -158,6 +158,11 @@ import {
 } from './system-scene-planet-special-presentation';
 
 import {
+  buildSystemSceneMoonPresentationV1,
+  type SystemSceneMoonPresentationV1,
+} from './system-scene-moon-presentation';
+
+import {
   AtmosphereGenerator,
 } from '../../simulation/planetary/atmosphere-generator';
 
@@ -439,6 +444,10 @@ export interface SystemSceneMoonSnapshot {
 
   readonly spin:
     SystemSceneBodySpinSnapshot;
+
+  /** Point-25.10 read-only surface/atmosphere/size projection from frozen phase-21 moon state. */
+  readonly visualPresentation:
+    SystemSceneMoonPresentationV1;
 }
 
 export interface SystemSceneMinorBodySnapshot {
@@ -1759,9 +1768,8 @@ function projectSceneGeometry(
         planet =>
           [
             planet.planetOrdinal,
-            adaptiveSystemPlanetRadiusScene(
-              planet.physicalProperties
-                .radiusEarth,
+            presentationPlanetRadiusScene(
+              planet,
             ),
           ] as const,
       ),
@@ -3129,16 +3137,60 @@ function projectMoonLayer(
       const moon =
         relevantMoons[index]!;
 
+      const visualPresentation =
+        buildSystemSceneMoonPresentationV1({
+          moonIdentity:
+            moon.identity.seed.normalizedValue,
+          hostPlanetType:
+            String(moonSystem.hostPlanet.planetType),
+          radiusEarth:
+            moon.physicalProperties.radiusEarth,
+          massEarth:
+            moon.physicalProperties.massEarth,
+          meanDensityGramsPerCubicCentimeter:
+            moon.physicalProperties.meanDensityGramsPerCubicCentimeter,
+          surfaceGravityEarth:
+            moon.physicalProperties.surfaceGravityEarth,
+          atmosphereRetentionIndex01:
+            moon.environmentState.atmosphereRetentionIndex01,
+          atmosphereRegime:
+            String(moon.environmentState.atmosphereRegime),
+          waterInventoryIndex01:
+            moon.environmentState.waterInventoryIndex01,
+          inferredIceRichnessIndex01:
+            moon.environmentState.inferredIceRichnessIndex01,
+          subsurfaceOceanPotentialIndex01:
+            moon.environmentState.subsurfaceOceanPotentialIndex01,
+          surfaceLiquidWaterPotentialIndex01:
+            moon.environmentState.surfaceLiquidWaterPotentialIndex01,
+          waterRegime:
+            String(moon.environmentState.waterRegime),
+          estimatedSurfaceTemperatureKelvin:
+            moon.environmentState.estimatedSurfaceTemperatureKelvin,
+          geologicalActivityIndex01:
+            moon.environmentState.geologicalActivityIndex01,
+          tidalHeatingIndex01:
+            moon.tidalState.tidalHeatingIndex01,
+          geologyRegime:
+            String(moon.environmentState.geologyRegime),
+          overallHabitabilityIndex01:
+            moon.habitabilityState.overallHabitabilityIndex01,
+          isPotentiallyHabitable:
+            moon.habitabilityState.isPotentiallyHabitable,
+          giantHostSpecialization:
+            moon.giantMoonState.isApplicable,
+          giantCompositionRegime:
+            String(moon.giantMoonState.compositionRegime),
+          isLargeGiantMoon:
+            moon.giantMoonState.isLargeMoon,
+          isTidallyActiveGiantMoon:
+            moon.giantMoonState.isTidallyActive,
+          isOceanBearingGiantMoonCandidate:
+            moon.giantMoonState.isOceanBearingCandidate,
+        });
+
       const moonRadiusScene =
-        clamp(
-          0.009 +
-            0.012 *
-              Math.sqrt(
-                moon.physicalProperties.radiusEarth,
-              ),
-          0.012,
-          0.032,
-        );
+        visualPresentation.presentationRadiusScene;
 
       const targetSemiMajorScene =
         hostPlanet.radiusScene +
@@ -3256,9 +3308,7 @@ function projectMoonLayer(
           hostPlanetOrdinal:
             moon.hostPlanetOrdinal,
           colorHex:
-            moonColorHex(
-              moon.physicalProperties.meanDensityGramsPerCubicCentimeter,
-            ),
+            visualPresentation.presentationBaseColorHex,
           radiusScene:
             moonRadiusScene,
           position:
@@ -3287,6 +3337,7 @@ function projectMoonLayer(
                   `${moon.identity.seed.normalizedValue}:SPIN`,
                 ),
             } satisfies SystemSceneBodySpinSnapshot),
+          visualPresentation,
         }),
       );
     }
@@ -3626,27 +3677,6 @@ function projectMinorBodyLayer(
   return Object.freeze(
     minorBodies,
   );
-}
-
-function moonColorHex(
-  density:
-    number,
-): string {
-  if (
-    density <
-      1.8
-  ) {
-    return '#B9D8E8';
-  }
-
-  if (
-    density <
-      3.2
-  ) {
-    return '#A8A79F';
-  }
-
-  return '#8C8179';
 }
 
 function asteroidPresentationForBody(
@@ -4157,6 +4187,149 @@ function projectPlanetGiantAtmosphere(
           }),
       ),
   });
+}
+
+
+/**
+ * Readability hotfix on top of point 25.10.
+ *
+ * Planet radii remain a presentation-only proxy derived from frozen phase-19
+ * physical size and composition. Gas/ice giants are intentionally presented as
+ * much larger than solid worlds, while rocky families keep a smaller but still
+ * clearly differentiated spread so bodies no longer collapse to one size.
+ */
+function presentationPlanetRadiusScene(
+  planet:
+    Planet,
+): number {
+
+  const radiusEarth =
+    Math.max(
+      planet.radiusEarth,
+      0.12,
+    );
+
+  const type =
+    planet.typeClassification
+      .planetType;
+
+  const baseline =
+    adaptiveSystemPlanetRadiusScene(
+      radiusEarth,
+    );
+
+  const deepEnvelope =
+    planet.surfaceBaseProperties
+      .isDeepEnvelopeSurface ||
+    type ===
+      PlanetType.MINI_NEPTUNE ||
+    type ===
+      PlanetType.GAS_GIANT ||
+    type ===
+      PlanetType.ICE_GIANT;
+
+  const familyRadius =
+    deepEnvelope
+      ? scaledRadius(
+          radiusEarth,
+          1.8,
+          16,
+          0.050,
+          0.122,
+        )
+      : scaledRadius(
+          radiusEarth,
+          0.30,
+          2.8,
+          0.013,
+          0.036,
+        );
+
+  const subtypeScale =
+    type ===
+      PlanetType.GAS_GIANT
+      ? 1.20
+      : type ===
+          PlanetType.ICE_GIANT
+        ? 1.06
+        : type ===
+            PlanetType.MINI_NEPTUNE
+          ? 0.88
+          : type ===
+              PlanetType.SUPER_EARTH
+            ? 1.10
+            : type ===
+                PlanetType.OCEAN
+              ? 1.02
+              : type ===
+                  PlanetType.DESERT
+                ? 0.97
+                : type ===
+                    PlanetType.ICE
+                  ? 0.98
+                  : type ===
+                      PlanetType.VOLCANIC
+                    ? 0.92
+                    : 0.88;
+
+  const density =
+    planet.physicalProperties
+      .densityGramsPerCubicCentimeter;
+
+  const densityScale =
+    deepEnvelope
+      ? clamp(
+          1.07 -
+            0.040 *
+              (density - 1.4),
+          0.94,
+          1.12,
+        )
+      : clamp(
+          1.00 -
+            0.022 *
+              (density - 4.1),
+          0.92,
+          1.05,
+        );
+
+  const envelopeScale =
+    deepEnvelope
+      ? clamp(
+          0.94 +
+            0.18 *
+              planet.physicalProperties
+                .envelopeMassFraction01,
+          0.94,
+          1.12,
+        )
+      : 1;
+
+  const blendedRadius =
+    (
+      deepEnvelope
+        ? 0.16 *
+            baseline +
+          0.84 *
+            familyRadius
+        : 0.22 *
+            baseline +
+          0.78 *
+            familyRadius
+    ) *
+    subtypeScale *
+    densityScale *
+    envelopeScale;
+
+  return clamp(
+    blendedRadius,
+    deepEnvelope
+      ? 0.048
+      : 0.012,
+    deepEnvelope
+      ? 0.138
+      : 0.040,
+  );
 }
 
 function planetSurfaceStyle(

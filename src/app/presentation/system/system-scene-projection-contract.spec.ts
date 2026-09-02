@@ -12,7 +12,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene projection authority through point 25.7',
+  'SystemScene projection authority through point 25.10',
   () => {
 
     it(
@@ -159,6 +159,85 @@ describe(
         ).toThrowError(
           /snapshot\.planets\[0\]\.spin is mutable/,
         );
+      },
+    );
+
+    it(
+      'should reject mutable point-25.10 moon visual presentation before it enters Three.js',
+      () => {
+        const visualPresentation = {
+          version: 1 as const,
+          sourceMoonIdentity: 'MOON-MUTABLE',
+          sourceHostPlanetType: 'GAS_GIANT',
+          sourceRadiusEarth: 0.3,
+          sourceMassEarth: 0.02,
+          sourceMeanDensityGramsPerCubicCentimeter: 3.1,
+          sourceSurfaceGravityEarth: 0.2,
+          sourceAtmosphereRetentionIndex01: 0.5,
+          sourceAtmosphereRegime: 'SUBSTANTIAL',
+          sourceWaterInventoryIndex01: 0.6,
+          sourceInferredIceRichnessIndex01: 0.4,
+          sourceSubsurfaceOceanPotentialIndex01: 0.7,
+          sourceSurfaceLiquidWaterPotentialIndex01: 0.4,
+          sourceWaterRegime: 'MIXED',
+          sourceEstimatedSurfaceTemperatureKelvin: 280,
+          sourceGeologicalActivityIndex01: 0.4,
+          sourceTidalHeatingIndex01: 0.3,
+          sourceGeologyRegime: 'ACTIVE',
+          sourceOverallHabitabilityIndex01: 0.5,
+          sourceIsPotentiallyHabitable: true,
+          sourceGiantHostSpecialization: true,
+          sourceGiantCompositionRegime: 'MIXED_ROCK_ICE',
+          sourceIsLargeGiantMoon: true,
+          sourceIsTidallyActiveGiantMoon: false,
+          sourceIsOceanBearingGiantMoonCandidate: true,
+          shapeClass: 'MAJOR_PLANETARY' as const,
+          surfaceStyle: 'OCEANIC' as const,
+          presentationRadiusScene: 0.03,
+          presentationIrregularity01: 0.02,
+          presentationLiquidCoverage01: 0.4,
+          presentationIceCoverage01: 0.3,
+          presentationVolcanicCoverage01: 0.1,
+          presentationCloudCoverage01: 0.3,
+          presentationAtmospherePresent: true,
+          presentationAtmosphereStrength01: 0.5,
+          presentationAtmosphereShellScale: 1.035,
+          presentationBaseColorHex: '#386F91',
+          presentationAccentColorHex: '#A8BBA8',
+          presentationAtmosphereColorHex: '#9FC9DF',
+          presentationSeedUint32: 1,
+        };
+        const moon = Object.freeze({
+          id: 'moon-1-1',
+          kind: 'moon' as const,
+          label: 'I',
+          title: 'Fixture b I',
+          hostPlanetId: 'planet-1',
+          hostPlanetOrdinal: 1,
+          colorHex: '#386F91',
+          radiusScene: 0.03,
+          position: Object.freeze({ x: 1, y: 0, z: 0 }),
+          orbitId: 'orbit-moon-1-1',
+          motionContributions: Object.freeze([]),
+          spin: Object.freeze({
+            source: 'MOON_21_4' as const,
+            rotationPeriodHours: 72,
+            axialTiltDegrees: null,
+            isRetrograde: null,
+            isSynchronized: true,
+            epochPhaseDegrees: 0,
+          }),
+          visualPresentation,
+        });
+        const base = projectionSnapshot();
+        const snapshot = Object.freeze({
+          ...base,
+          moons: Object.freeze([moon]),
+        }) as SystemSceneSnapshot;
+
+        expect(() =>
+          assertSystemSceneProjectionSnapshot(snapshot),
+        ).toThrowError(/snapshot\.moons\[0\]\.visualPresentation is mutable/);
       },
     );
 
