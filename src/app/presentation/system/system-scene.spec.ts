@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene through point 25.4',
+  'SystemScene through point 25.5',
   () => {
 
     let resize:
@@ -93,6 +93,10 @@ describe(
               Object.freeze({
                 renderer:
                   'WEBGL2' as const,
+                shaderPipeline:
+                  'GLSL_WEBGL2_V1' as const,
+                webGpuEvaluation:
+                  'API_UNAVAILABLE' as const,
                 physicalBodyCount:
                   3,
                 sceneObjectCount:
@@ -251,6 +255,24 @@ describe(
             ?.physicalBodyCount,
         ).toBe(
           3,
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .renderInfo()
+            ?.shaderPipeline,
+        ).toBe(
+          'GLSL_WEBGL2_V1',
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .renderInfo()
+            ?.webGpuEvaluation,
+        ).toBe(
+          'API_UNAVAILABLE',
         );
 
         expect(

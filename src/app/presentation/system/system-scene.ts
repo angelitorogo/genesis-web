@@ -87,6 +87,19 @@ import {
 } from './system-scene-giant-atmosphere-texture';
 
 import {
+  buildSystemSceneGlslMaterialProfileV1,
+  installSystemSceneGlslMaterialV1,
+} from './system-scene-glsl-material';
+
+import {
+  buildSystemSceneRenderBackendAssessmentV1,
+  systemSceneWebGpuApiAvailable,
+  type SystemSceneRenderBackendAssessmentV1,
+  type SystemSceneShaderPipeline,
+  type SystemSceneWebGpuEvaluation,
+} from './system-scene-render-backend';
+
+import {
   SystemSceneProjectionSpace,
   systemSceneProjectAuVectorInSpace,
   type SystemSceneScaleSnapshot,
@@ -108,6 +121,12 @@ export type SystemSceneRenderState =
 export interface SystemSceneRenderInfo {
   readonly renderer:
     'WEBGL2';
+
+  readonly shaderPipeline:
+    SystemSceneShaderPipeline;
+
+  readonly webGpuEvaluation:
+    SystemSceneWebGpuEvaluation;
 
   readonly physicalBodyCount:
     number;
@@ -1476,6 +1495,9 @@ class ThreeSystemSceneRuntime
   private readonly renderer:
     THREE.WebGLRenderer;
 
+  private readonly backendAssessment:
+    SystemSceneRenderBackendAssessmentV1;
+
   private readonly scene =
     new THREE.Scene();
 
@@ -1723,6 +1745,19 @@ class ThreeSystemSceneRuntime
     ) {
       throw new SystemSceneWebGl2UnavailableError();
     }
+
+    this.backendAssessment =
+      buildSystemSceneRenderBackendAssessmentV1({
+        webGl2Available:
+          true,
+        webGpuApiAvailable:
+          systemSceneWebGpuApiAvailable(
+            typeof navigator ===
+              'undefined'
+              ? null
+              : navigator,
+          ),
+      });
 
     this.renderer =
       new THREE.WebGLRenderer({
@@ -2028,7 +2063,16 @@ class ThreeSystemSceneRuntime
 
     return Object.freeze({
       renderer:
-        'WEBGL2' as const,
+        this.backendAssessment
+          .selectedBackend,
+
+      shaderPipeline:
+        this.backendAssessment
+          .shaderPipeline,
+
+      webGpuEvaluation:
+        this.backendAssessment
+          .webGpuEvaluation,
 
       physicalBodyCount:
         snapshot.stars.length +
@@ -4482,6 +4526,65 @@ function createPlanetAppearance(
     new THREE.MeshStandardMaterial(
       materialOptions,
     );
+
+  if (
+    planet.giantAtmosphere !==
+      null
+  ) {
+    installSystemSceneGlslMaterialV1(
+      material,
+      buildSystemSceneGlslMaterialProfileV1({
+        kind:
+          'DEEP_ENVELOPE',
+        giantJetSharpness01:
+          planet.giantAtmosphere
+            .presentationJetSharpness01,
+        giantTurbulence01:
+          planet.giantAtmosphere
+            .presentationTurbulence01,
+        giantMethaneBlueing01:
+          planet.giantAtmosphere
+            .presentationMethaneBlueing01,
+        giantWarmChromophore01:
+          planet.giantAtmosphere
+            .presentationWarmChromophore01,
+        giantPolarHaze01:
+          planet.giantAtmosphere
+            .presentationPolarHaze01,
+        giantUpperHaze01:
+          planet.giantAtmosphere
+            .presentationUpperHaze01,
+      }),
+    );
+  } else if (
+    planet.surfaceEnvironment
+      ?.solidSurfaceAvailable ===
+      true
+  ) {
+    installSystemSceneGlslMaterialV1(
+      material,
+      buildSystemSceneGlslMaterialProfileV1({
+        kind:
+          'SOLID_SURFACE',
+        liquidCoverageFraction01:
+          planet.surfaceEnvironment
+            .surfaceLiquidWaterCoverageFraction01 ??
+          0,
+        iceCoverageFraction01:
+          planet.surfaceEnvironment
+            .surfaceIceCoverageFraction01 ??
+          0,
+        desertCoverageFraction01:
+          planet.surfaceEnvironment
+            .presentationDesertCoverageFraction01 ??
+          0,
+        volcanismIndex01:
+          planet.surfaceEnvironment
+            .volcanismIndex01 ??
+          0,
+      }),
+    );
+  }
 
   const overlays: THREE.Object3D[] = [];
 

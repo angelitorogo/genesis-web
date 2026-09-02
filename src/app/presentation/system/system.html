@@ -132,11 +132,11 @@
 
                 <footer class="system-page__viewport-footer">
                   <span>
-                    THREE.JS / WEBGL2 / BODY RENDER 25.4
+                    THREE.JS / WEBGL2 + GLSL / BODY RENDER 25.5
                   </span>
 
                   <p>
-                    25.3 mantiene la geografía física de los mundos sólidos. 25.4 especializa mini-Neptunos y gigantes gaseosos/helados como atmósferas profundas: usa tipo planetario, masa/radio/densidad, fracción de envoltura, rotación, temperatura de equilibrio, albedo y composición gaseosa retenida de Fases 19–20 para modular bandas, chorros, turbulencia, tormentas y bruma polar. Los patrones siguen siendo proxies visuales deterministas, no circulación atmosférica Ground Truth. La proyección continúa siendo WebGL de solo lectura y nunca devuelve física al dominio.
+                    25.5 mantiene WebGL2 como compatibilidad obligatoria y añade una capa GLSL sobre los materiales físicos ya estables de 25.3/25.4 para preservar contraste y cromaticidad de las texturas bajo iluminación/tone mapping sin inventar nueva geografía ni circulación. WebGPU solo se evalúa como capacidad opcional: aunque navigator.gpu exista, V1 no cambia de backend ni compromete compatibilidad. La proyección continúa siendo de solo lectura y nunca devuelve física al dominio.
                   </p>
                 </footer>
               </section>

@@ -22,8 +22,8 @@
     class="system-scene__hud"
     aria-hidden="true"
   >
-    <span>WEBGL2 / SYSTEM SCENE</span>
-    <span>25.4 · GAS / ICE GIANTS · JETS · BANDS · STORMS · POLAR HAZE · WEBGL2</span>
+    <span>WEBGL2 / GLSL / SYSTEM SCENE</span>
+    <span>25.5 · GLSL MATERIAL PIPELINE · WEBGL2 BASELINE · WEBGPU OPTIONAL</span>
   </div>
 
 
@@ -419,7 +419,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.layers.habitableZoneAvailable ? 1 : 0 }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.layers.habitableZoneAvailable ? 1 : 0 }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · GLSL · WGPU {{ renderInfo()?.webGpuEvaluation === 'API_AVAILABLE_NOT_SELECTED' ? 'OPT' : 'N/A' }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
     </div>
   }
 </section>
