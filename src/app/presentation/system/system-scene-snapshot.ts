@@ -128,6 +128,11 @@ import {
 } from './system-scene-planet-surface-presentation';
 
 import {
+  buildSystemSceneGiantAtmospherePresentationV1,
+  type SystemSceneGiantAtmospherePresentationSnapshot,
+} from './system-scene-giant-atmosphere-presentation';
+
+import {
   AtmosphereGenerator,
 } from '../../simulation/planetary/atmosphere-generator';
 
@@ -363,6 +368,10 @@ export interface SystemSceneBodySnapshot {
   /** Point-25.3 solid-surface environment; null for stars. */
   readonly surfaceEnvironment:
     SystemScenePlanetSurfacePresentationSnapshot | null;
+
+  /** Point-25.4 deep-envelope cloud-top atmosphere; null for stars/solid worlds. */
+  readonly giantAtmosphere:
+    SystemSceneGiantAtmospherePresentationSnapshot | null;
 }
 
 export interface SystemSceneMoonSnapshot {
@@ -2181,6 +2190,8 @@ function projectSceneGeometry(
             } satisfies SystemSceneBodySpinSnapshot),
           surfaceEnvironment:
             null,
+          giantAtmosphere:
+            null,
         });
       },
     );
@@ -2416,6 +2427,14 @@ function projectSceneGeometry(
             } satisfies SystemSceneBodySpinSnapshot),
           surfaceEnvironment:
             projectPlanetSurfaceEnvironment(
+              atmosphereByPlanetOrdinal.get(
+                planet.planetOrdinal,
+              ) ??
+              null,
+            ),
+          giantAtmosphere:
+            projectPlanetGiantAtmosphere(
+              planet,
               atmosphereByPlanetOrdinal.get(
                 planet.planetOrdinal,
               ) ??
@@ -3834,6 +3853,59 @@ function projectPlanetSurfaceEnvironment(
       atmosphere.surfaceWaterRegime,
     volcanismRegime:
       atmosphere.volcanismRegime,
+  });
+}
+
+function projectPlanetGiantAtmosphere(
+  planet:
+    Planet,
+
+  atmosphere:
+    Atmosphere | null,
+): SystemSceneGiantAtmospherePresentationSnapshot | null {
+
+  if (
+    atmosphere ===
+      null
+  ) {
+    return null;
+  }
+
+  return buildSystemSceneGiantAtmospherePresentationV1({
+    planetType:
+      planet.planetType,
+    massEarth:
+      planet.massEarth,
+    radiusEarth:
+      planet.radiusEarth,
+    densityGramsPerCubicCentimeter:
+      planet.physicalProperties
+        .densityGramsPerCubicCentimeter,
+    envelopeMassFraction01:
+      planet.physicalProperties
+        .envelopeMassFraction01,
+    iceBearingFractionOfSolids01:
+      planet.internalComposition
+        .iceBearingFractionOfSolids01,
+    rotationPeriodHours:
+      planet.rotationPeriodHours,
+    equilibriumTemperatureKelvin:
+      atmosphere.climateState
+        .equilibriumTemperatureKelvin,
+    referenceBondAlbedo01:
+      planet.referenceBondAlbedo01,
+    retainedMeanMolarMassGramsPerMole:
+      atmosphere.retainedMeanMolarMassGramsPerMole,
+    retainedGasComposition:
+      atmosphere.retainedGasComposition.map(
+        component =>
+          Object.freeze({
+            gas:
+              component.gas,
+            moleFraction01:
+              component.moleFraction01,
+          }),
+      ),
   });
 }
 

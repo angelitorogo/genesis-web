@@ -24,7 +24,7 @@ import {
 } from './system-scene-projection-contract';
 
 describe(
-  'SystemSceneSnapshotBuilder through point 25.3',
+  'SystemSceneSnapshotBuilder through point 25.4',
   () => {
 
     it(
@@ -291,6 +291,27 @@ describe(
           snapshot.planets.some(
             planet =>
               planet.surfaceEnvironment?.solidSurfaceAvailable === true,
+          ),
+        ).toBe(true);
+
+
+        expect(
+          snapshot.planets.every(
+            planet =>
+              planet.giantAtmosphere === null ||
+              (
+                planet.surfaceEnvironment?.solidSurfaceAvailable === false &&
+                planet.giantAtmosphere.source === 'PHASE_19_20_DEEP_ENVELOPE' &&
+                Object.isFrozen(planet.giantAtmosphere)
+              ),
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.planets.every(
+            planet =>
+              planet.surfaceEnvironment?.solidSurfaceAvailable !== true ||
+              planet.giantAtmosphere === null,
           ),
         ).toBe(true);
 

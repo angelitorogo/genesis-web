@@ -181,6 +181,8 @@ function bodyCardSnapshot():
           1,
         surfaceEnvironment:
           null,
+        giantAtmosphere:
+          null,
         spin: {
           source:
             'UNAVAILABLE',
@@ -226,6 +228,8 @@ function bodyCardSnapshot():
         sourceLuminositySolar:
           null,
         surfaceEnvironment:
+          null,
+        giantAtmosphere:
           null,
         spin: {
           source:

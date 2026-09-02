@@ -179,6 +179,19 @@ function assertBodyProjection(
         `${label}.surfaceEnvironment`,
       );
     }
+
+
+    if (
+      body.kind ===
+        'planet' &&
+      body.giantAtmosphere !==
+        null
+    ) {
+      assertFrozen(
+        body.giantAtmosphere,
+        `${label}.giantAtmosphere`,
+      );
+    }
   }
 
   assertMotionContributions(

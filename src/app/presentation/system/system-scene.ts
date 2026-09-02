@@ -82,6 +82,11 @@ import {
 } from './system-scene-planet-surface-texture';
 
 import {
+  buildSystemSceneGiantAtmosphereTextureV1,
+  type SystemSceneGiantAtmosphereTextureData,
+} from './system-scene-giant-atmosphere-texture';
+
+import {
   SystemSceneProjectionSpace,
   systemSceneProjectAuVectorInSpace,
   type SystemSceneScaleSnapshot,
@@ -4285,21 +4290,40 @@ function createPlanetAppearance(
     string,
 ): PlanetAppearance {
 
+  const giantAtmosphereTexture =
+    planet.giantAtmosphere ===
+      null
+      ? null
+      : buildSystemSceneGiantAtmosphereTextureV1({
+          systemIdentity,
+          planetId:
+            planet.id,
+          atmosphere:
+            planet.giantAtmosphere,
+        });
+
   const textureData =
-    buildSystemScenePlanetTextureV1({
-      systemIdentity,
-      planetId:
-        planet.id,
-      surfaceStyle:
-        planetTextureSurfaceStyle(
-          planet,
-        ),
-      baseColorHex:
-        planet.colorHex,
-    });
+    giantAtmosphereTexture ===
+      null
+      ? buildSystemScenePlanetTextureV1({
+          systemIdentity,
+          planetId:
+            planet.id,
+          surfaceStyle:
+            planetTextureSurfaceStyle(
+              planet,
+            ),
+          baseColorHex:
+            planet.colorHex,
+        })
+      : null;
 
   const semanticSurface =
+    giantAtmosphereTexture !==
+      null ||
     planet.surfaceEnvironment ===
+      null ||
+    textureData ===
       null
       ? null
       : buildSystemScenePlanetSurfaceTextureV1({
@@ -4313,7 +4337,10 @@ function createPlanetAppearance(
         });
 
   const visualSeed =
-    textureData.seedUint32;
+    giantAtmosphereTexture
+      ?.seedUint32 ??
+    textureData!
+      .seedUint32;
 
   const baseColor =
     new THREE.Color(
@@ -4321,14 +4348,22 @@ function createPlanetAppearance(
     );
 
   const surfaceTexture =
-    createPlanetSurfaceTexture(
-      semanticSurface ??
-      textureData,
-      semanticSurface ===
-        null
-        ? `GENESIS procedural planet albedo v${textureData.version}`
-        : `GENESIS physical surface projection 25.3 v${semanticSurface.version}`,
-    );
+    giantAtmosphereTexture !==
+      null
+      ? createRgbaDataTexture(
+          giantAtmosphereTexture.width,
+          giantAtmosphereTexture.height,
+          giantAtmosphereTexture.albedoRgba,
+          `GENESIS deep-envelope cloud tops 25.4 v${giantAtmosphereTexture.version}`,
+        )
+      : createPlanetSurfaceTexture(
+          semanticSurface ??
+          textureData!,
+          semanticSurface ===
+            null
+            ? `GENESIS procedural planet albedo v${textureData!.version}`
+            : `GENESIS physical surface projection 25.3 v${semanticSurface.version}`,
+        );
 
   const resources: Array<{ dispose(): void }> = [
     surfaceTexture,
@@ -4347,6 +4382,21 @@ function createPlanetAppearance(
     0;
 
   if (
+    planet.giantAtmosphere !==
+      null
+  ) {
+    materialOptions.roughness =
+      clampValue(
+        0.68 +
+          0.18 *
+            planet.giantAtmosphere
+              .presentationUpperHaze01,
+        0.64,
+        0.90,
+      );
+    materialOptions.metalness =
+      0;
+  } else if (
     planet.surfaceEnvironment
       ?.solidSurfaceAvailable ===
       true
@@ -4439,7 +4489,7 @@ function createPlanetAppearance(
     cloudLayerMeshOrNull(
       planet,
       semanticSurface,
-      baseColor,
+      giantAtmosphereTexture,
       visualSeed,
     );
 
@@ -4486,7 +4536,6 @@ function createPlanetAppearance(
       Object.freeze(resources),
   });
 }
-
 
 function planetTextureSurfaceStyle(
   planet:
@@ -4589,8 +4638,8 @@ function cloudLayerMeshOrNull(
   semanticSurface:
     SystemScenePlanetSurfaceTextureData | null,
 
-  baseColor:
-    THREE.Color,
+  giantAtmosphereTexture:
+    SystemSceneGiantAtmosphereTextureData | null,
 
   seed:
     number,
@@ -4683,115 +4732,70 @@ function cloudLayerMeshOrNull(
     });
   }
 
-  // Deep-envelope planets are intentionally left on the generic 25.2 cloud
-  // placeholder until 25.4 specializes gas/ice giant atmospheric structure.
   if (
-    planet.surfaceStyle !==
-    'gaseous'
+    giantAtmosphereTexture ===
+      null ||
+    giantAtmosphereTexture.upperHazeRgba ===
+      null
   ) {
     return null;
   }
 
-  const canvas =
-    document.createElement(
-      'canvas',
-    );
-
-  canvas.width =
-    512;
-  canvas.height =
-    256;
-
-  const context =
-    canvas.getContext(
-      '2d',
-    );
-
-  if (
-    context ===
-      null
-  ) {
-    throw new Error(
-      'Unable to create procedural cloud layer texture.',
-    );
-  }
-
-  const random =
-    createDeterministicPrng(
-      seed ^
-      0x85ebca6b,
-    );
-
-  context.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height,
-  );
-
-  drawCloudWisps(
-    context,
-    canvas.width,
-    canvas.height,
-    random,
-    34,
-    0.15,
-  );
-  drawCloudBandVeils(
-    context,
-    canvas.width,
-    canvas.height,
-    random,
-  );
-
   const texture =
-    new THREE.CanvasTexture(
-      canvas,
+    createRgbaDataTexture(
+      giantAtmosphereTexture.width,
+      giantAtmosphereTexture.height,
+      giantAtmosphereTexture.upperHazeRgba,
+      `GENESIS deep-envelope upper haze 25.4 v${giantAtmosphereTexture.version}`,
     );
 
-  texture.colorSpace =
-    THREE.SRGBColorSpace;
-  texture.needsUpdate =
-    true;
+  const segments =
+    systemSceneSphereSegments(
+      'planet',
+    );
 
   const geometry =
     new THREE.SphereGeometry(
       planet.radiusScene *
-        1.024,
-      32,
-      22,
+        1.018,
+      segments.widthSegments,
+      segments.heightSegments,
     );
 
   const material =
     new THREE.MeshStandardMaterial({
       color:
-        baseColor.clone()
-          .lerp(
-            new THREE.Color(
-              0xffffff,
-            ),
-            0.86,
-          ),
+        0xffffff,
       map:
         texture,
       transparent:
         true,
       opacity:
-        0.42,
+        0.78,
+      alphaTest:
+        0.012,
       depthWrite:
         false,
       roughness:
-        0.92,
+        0.98,
       metalness:
         0,
     });
 
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material,
+    );
+
+  mesh.rotation.y =
+    ((seed >>> 9) & 0xff) /
+    255 *
+    Math.PI *
+    2;
+
   return Object.freeze({
-    mesh:
-      new THREE.Mesh(
-        geometry,
-        material,
-      ),
+    mesh,
     geometry,
     material,
     texture,
@@ -4816,6 +4820,8 @@ function atmosphereMeshOrNull(
 } | null {
 
   if (
+    planet.giantAtmosphere !==
+      null ||
     planet.surfaceEnvironment
       ?.solidSurfaceAvailable ===
       true ||
@@ -4825,7 +4831,8 @@ function atmosphereMeshOrNull(
       'volcanic'
   ) {
     // Point 25.6 owns physical atmosphere/terminator/night-side rendering.
-    // Do not let the old style-based halo wash out the new 25.3 surface.
+    // 25.4 deep-envelope upper haze is already rendered as a texture shell;
+    // do not let the old style-based halo wash out solid or giant detail.
     return null;
   }
 
@@ -4877,150 +4884,6 @@ function atmosphereMeshOrNull(
     geometry,
     material,
   });
-}
-
-function drawCloudWisps(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  count:
-    number,
-
-  opacity:
-    number,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      count;
-    index += 1
-  ) {
-    context.fillStyle =
-      `rgba(255,255,255,${opacity * (0.6 + random() * 0.8)})`;
-    context.beginPath();
-    context.ellipse(
-      random() *
-        width,
-      random() *
-        height,
-      width *
-        (0.03 +
-          random() *
-            0.09),
-      height *
-        (0.012 +
-          random() *
-            0.04),
-      random() *
-        Math.PI,
-      0,
-      Math.PI *
-        2,
-    );
-    context.fill();
-  }
-}
-
-function drawCloudBandVeils(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      8;
-    index += 1
-  ) {
-    const y =
-      height *
-      (0.06 +
-        random() *
-          0.88);
-
-    context.fillStyle =
-      `rgba(255,255,255,${0.04 + random() * 0.06})`;
-    context.fillRect(
-      0,
-      y,
-      width,
-      4 +
-        random() *
-          8,
-    );
-  }
-}
-
-function rgbaString(
-  color:
-    THREE.Color,
-
-  opacity:
-    number,
-): string {
-
-  return `rgba(${Math.round(color.r * 255)},${Math.round(color.g * 255)},${Math.round(color.b * 255)},${opacity})`;
-}
-
-function createDeterministicPrng(
-  seed:
-    number,
-): () => number {
-
-  let state =
-    seed >>>
-    0;
-
-  return () => {
-    state +=
-      0x6d2b79f5;
-
-    let value =
-      Math.imul(
-        state ^
-          state >>>
-            15,
-        1 |
-          state,
-      );
-
-    value ^=
-      value +
-      Math.imul(
-        value ^
-          value >>>
-            7,
-        61 |
-          value,
-      );
-
-    return ((
-      value ^
-      value >>>
-        14
-    ) >>>
-      0) /
-      4294967296;
-  };
 }
 
 function stellarSpriteMaterial(

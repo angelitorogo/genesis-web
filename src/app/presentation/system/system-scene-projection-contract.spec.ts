@@ -8,7 +8,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene projection authority through point 25.3',
+  'SystemScene projection authority through point 25.4',
   () => {
 
     it(
@@ -127,6 +127,8 @@ describe(
               null,
             surfaceEnvironment:
               null,
+            giantAtmosphere:
+              null,
             spin:
               mutableSpin,
           });
@@ -229,6 +231,8 @@ describe(
               null,
             surfaceEnvironment:
               mutableSurfaceEnvironment,
+            giantAtmosphere:
+              null,
             spin:
               Object.freeze({
                 source:
@@ -270,6 +274,139 @@ describe(
     );
 
     it(
+      'should reject mutable point-25.4 deep-envelope atmosphere before it enters Three.js',
+      () => {
+
+        const mutableGiantAtmosphere = {
+          source:
+            'PHASE_19_20_DEEP_ENVELOPE' as const,
+          regime:
+            'GAS_GIANT' as const,
+          massEarth:
+            220,
+          radiusEarth:
+            10.4,
+          densityGramsPerCubicCentimeter:
+            1.08,
+          envelopeMassFraction01:
+            0.72,
+          iceBearingFractionOfSolids01:
+            0.12,
+          rotationPeriodHours:
+            10,
+          equilibriumTemperatureKelvin:
+            160,
+          referenceBondAlbedo01:
+            0.45,
+          retainedMeanMolarMassGramsPerMole:
+            2.4,
+          hydrogenMoleFraction01:
+            0.84,
+          heliumMoleFraction01:
+            0.14,
+          methaneMoleFraction01:
+            0.02,
+          ammoniaMoleFraction01:
+            0,
+          waterVaporMoleFraction01:
+            0,
+          lightGasMoleFraction01:
+            0.98,
+          condensableMoleFraction01:
+            0.02,
+          presentationBandCount:
+            16,
+          presentationJetSharpness01:
+            0.7,
+          presentationTurbulence01:
+            0.6,
+          presentationStormCoverage01:
+            0.2,
+          presentationPolarHaze01:
+            0.3,
+          presentationMethaneBlueing01:
+            0.08,
+          presentationWarmChromophore01:
+            0.45,
+          presentationUpperHaze01:
+            0.25,
+        };
+
+        const planet =
+          Object.freeze({
+            id:
+              'planet-1',
+            kind:
+              'planet' as const,
+            label:
+              'Fixture b',
+            title:
+              'Fixture b',
+            colorHex:
+              '#D1A16C',
+            radiusScene:
+              0.12,
+            position:
+              Object.freeze({
+                x: 1,
+                y: 0,
+                z: 0,
+              }),
+            orbitId:
+              'orbit-planet-1',
+            motionContributions:
+              Object.freeze([]),
+            surfaceStyle:
+              'gaseous' as const,
+            lightIntensity:
+              0,
+            sourceLuminositySolar:
+              null,
+            surfaceEnvironment:
+              null,
+            giantAtmosphere:
+              mutableGiantAtmosphere,
+            spin:
+              Object.freeze({
+                source:
+                  'PLANET_19_3' as const,
+                rotationPeriodHours:
+                  10,
+                axialTiltDegrees:
+                  3,
+                isRetrograde:
+                  false,
+                isSynchronized:
+                  false,
+                epochPhaseDegrees:
+                  0,
+              }),
+          });
+
+        const base =
+          projectionSnapshot();
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            planets:
+              Object.freeze([
+                planet,
+              ]),
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /snapshot\.planets\[0\]\.giantAtmosphere is mutable/,
+        );
+      },
+    );
+
+    it(
       'should reject mutable nested scene coordinates even when the containing snapshot is frozen',
       () => {
 
@@ -306,6 +443,8 @@ describe(
             sourceLuminositySolar:
               1,
             surfaceEnvironment:
+              null,
+            giantAtmosphere:
               null,
             spin:
               Object.freeze({
