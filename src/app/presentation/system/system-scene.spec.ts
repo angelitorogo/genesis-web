@@ -1375,6 +1375,8 @@ function sceneSnapshot():
             null,
           giantAtmosphere:
             null,
+          specialPresentation:
+            null,
           spin:
             Object.freeze({
               source:
@@ -1430,6 +1432,8 @@ function sceneSnapshot():
           surfaceEnvironment:
             null,
           giantAtmosphere:
+            null,
+          specialPresentation:
             null,
           spin:
             Object.freeze({
@@ -1490,6 +1494,8 @@ function sceneSnapshot():
           surfaceEnvironment:
             null,
           giantAtmosphere:
+            null,
+          specialPresentation:
             null,
           spin:
             Object.freeze({

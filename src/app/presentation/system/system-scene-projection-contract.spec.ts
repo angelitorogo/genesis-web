@@ -133,6 +133,8 @@ describe(
               null,
             giantAtmosphere:
               null,
+          specialPresentation:
+            null,
             spin:
               mutableSpin,
           });
@@ -237,6 +239,8 @@ describe(
               mutableSurfaceEnvironment,
             giantAtmosphere:
               null,
+          specialPresentation:
+            null,
             spin:
               Object.freeze({
                 source:
@@ -503,6 +507,8 @@ describe(
               null,
             giantAtmosphere:
               mutableGiantAtmosphere,
+            specialPresentation:
+              null,
             spin:
               Object.freeze({
                 source:
@@ -583,6 +589,8 @@ describe(
               null,
             giantAtmosphere:
               null,
+          specialPresentation:
+            null,
             spin:
               Object.freeze({
                 source:

@@ -216,6 +216,36 @@ function assertBodyProjection(
         `${label}.giantAtmosphere`,
       );
     }
+
+    if (
+      body.kind ===
+        'planet' &&
+      body.specialPresentation !==
+        null
+    ) {
+      assertFrozen(
+        body.specialPresentation,
+        `${label}.specialPresentation`,
+      );
+      assertFrozen(
+        body.specialPresentation.oblateness,
+        `${label}.specialPresentation.oblateness`,
+      );
+      assertFrozen(
+        body.specialPresentation.sourceRarityTraits,
+        `${label}.specialPresentation.sourceRarityTraits`,
+      );
+
+      if (
+        body.specialPresentation.rings !==
+          null
+      ) {
+        assertFrozen(
+          body.specialPresentation.rings,
+          `${label}.specialPresentation.rings`,
+        );
+      }
+    }
   }
 
   assertMotionContributions(

@@ -153,6 +153,11 @@ import {
 } from './system-scene-comet-presentation';
 
 import {
+  buildSystemScenePlanetSpecialPresentationV1,
+  type SystemScenePlanetSpecialPresentationV1,
+} from './system-scene-planet-special-presentation';
+
+import {
   AtmosphereGenerator,
 } from '../../simulation/planetary/atmosphere-generator';
 
@@ -392,6 +397,10 @@ export interface SystemSceneBodySnapshot {
   /** Point-25.4 deep-envelope cloud-top atmosphere; null for stars/solid worlds. */
   readonly giantAtmosphere:
     SystemSceneGiantAtmospherePresentationSnapshot | null;
+
+  /** Point-25.9 ring/special-shape read-only projection; null for stars. */
+  readonly specialPresentation:
+    SystemScenePlanetSpecialPresentationV1 | null;
 }
 
 export interface SystemSceneMoonSnapshot {
@@ -591,7 +600,7 @@ export interface SystemSceneSimulationSnapshot {
 }
 
 /**
- * Point-24.10 immutable presentation snapshot, extended through 25.3 with body spin/light and phase-20 surface-environment inputs.
+ * Point-24.10 immutable presentation snapshot, extended through 25.9 with read-only body, surface, atmosphere and special-element projections.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -2218,6 +2227,8 @@ function projectSceneGeometry(
             null,
           giantAtmosphere:
             null,
+          specialPresentation:
+            null,
         });
       },
     );
@@ -2229,6 +2240,17 @@ function projectSceneGeometry(
           [
             atmosphere.hostPlanet.planetOrdinal,
             atmosphere,
+          ] as const,
+      ),
+    );
+
+  const moonSystemByPlanetOrdinal =
+    new Map(
+      world.moonSystems.map(
+        moonSystem =>
+          [
+            moonSystem.hostPlanet.planetOrdinal,
+            moonSystem,
           ] as const,
       ),
     );
@@ -2462,6 +2484,14 @@ function projectSceneGeometry(
             projectPlanetGiantAtmosphere(
               planet,
               atmosphereByPlanetOrdinal.get(
+                planet.planetOrdinal,
+              ) ??
+              null,
+            ),
+          specialPresentation:
+            projectPlanetSpecialPresentation(
+              planet,
+              moonSystemByPlanetOrdinal.get(
                 planet.planetOrdinal,
               ) ??
               null,
@@ -4016,6 +4046,63 @@ function projectPlanetSurfaceEnvironment(
       atmosphere.surfaceWaterRegime,
     volcanismRegime:
       atmosphere.volcanismRegime,
+  });
+}
+
+function projectPlanetSpecialPresentation(
+  planet:
+    Planet,
+
+  moonSystem:
+    MoonSystem | null,
+): SystemScenePlanetSpecialPresentationV1 {
+
+  const giantMoonProfile =
+    moonSystem?.giantMoonProfile ??
+    null;
+
+  return buildSystemScenePlanetSpecialPresentationV1({
+    planetId:
+      `${planet.seed.normalizedValue}|planet-${planet.planetOrdinal}`,
+    planetType:
+      planet.planetType,
+    radiusEarth:
+      planet.radiusEarth,
+    densityGramsPerCubicCentimeter:
+      planet.physicalProperties
+        .densityGramsPerCubicCentimeter,
+    envelopeMassFraction01:
+      planet.physicalProperties
+        .envelopeMassFraction01,
+    iceBearingFractionOfSolids01:
+      planet.internalComposition
+        .iceBearingFractionOfSolids01,
+    rotationPeriodHours:
+      planet.rotationPeriodHours,
+    axialTiltDegrees:
+      planet.axialTiltDegrees,
+    referenceBondAlbedo01:
+      planet.referenceBondAlbedo01,
+    rarityTraits:
+      planet.rarities,
+    giantMoonProfile:
+      giantMoonProfile ===
+        null
+        ? null
+        : {
+            sourceMoonCount:
+              giantMoonProfile
+                .sourceMoonCount,
+            sourceSatelliteCapacityIndex01:
+              giantMoonProfile
+                .sourceSatelliteCapacityIndex01,
+            richnessIndex01:
+              giantMoonProfile
+                .richnessIndex01,
+            architectureRegime:
+              giantMoonProfile
+                .architectureRegime,
+          },
   });
 }
 

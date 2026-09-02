@@ -111,6 +111,10 @@ import {
 } from './system-scene-comet-renderable';
 
 import {
+  createSystemSceneRingRenderableV1,
+} from './system-scene-ring-renderable';
+
+import {
   buildSystemSceneDayNightMaterialProfileV1,
   createSystemSceneAtmosphereShellMaterialV1,
   installSystemSceneDayNightMaterialV1,
@@ -1403,6 +1407,27 @@ export function systemSceneDevicePixelRatio(
   );
 }
 
+function systemSceneVisualExtentRadiusScene(
+  body:
+    SystemSceneSelectableBodySnapshot,
+): number {
+
+  if (
+    body.kind ===
+      'planet' &&
+    body.specialPresentation !==
+      null &&
+    body.specialPresentation.rings !==
+      null
+  ) {
+    return body.radiusScene *
+      body.specialPresentation.rings
+        .outerRadiusPlanetRadii;
+  }
+
+  return body.radiusScene;
+}
+
 export function systemScenePickingRadiusScene(
   kind:
     SystemSceneSelectableBodySnapshot['kind'],
@@ -2506,7 +2531,9 @@ class ThreeSystemSceneRuntime
 
     this.cameraController.beginBodyTracking(
       this.trackedWorldPosition,
-      body.radiusScene,
+      systemSceneVisualExtentRadiusScene(
+        body,
+      ),
     );
 
     this.updateAnimationLoop();
@@ -3536,9 +3563,49 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    const specialPresentation =
+      planet.specialPresentation;
+
+    if (
+      specialPresentation !==
+        null &&
+      specialPresentation.oblateness
+        .presentationAdjusted
+    ) {
+      spinPivot.scale.set(
+        specialPresentation.oblateness
+          .presentationEquatorialScale,
+        specialPresentation.oblateness
+          .presentationPolarScale,
+        specialPresentation.oblateness
+          .presentationEquatorialScale,
+      );
+    }
+
     axialPivot.add(
       spinPivot,
     );
+
+    const ringRenderable =
+      specialPresentation ===
+        null ||
+      specialPresentation.rings ===
+        null
+        ? null
+        : createSystemSceneRingRenderableV1(
+            planet.radiusScene,
+            specialPresentation.rings,
+          );
+
+    if (
+      ringRenderable !==
+        null
+    ) {
+      axialPivot.add(
+        ringRenderable.group,
+      );
+    }
+
     group.add(
       axialPivot,
     );
@@ -3552,6 +3619,10 @@ class ThreeSystemSceneRuntime
       sphereGeometry,
       appearance.material,
       ...appearance.resources,
+      ...(
+        ringRenderable?.resources ??
+        []
+      ),
     );
 
     this.animatedBodies.set(
@@ -3789,7 +3860,9 @@ class ThreeSystemSceneRuntime
     const pickRadius =
       systemScenePickingRadiusScene(
         body.kind,
-        body.radiusScene,
+        systemSceneVisualExtentRadiusScene(
+          body,
+        ),
       );
 
     const geometry =
@@ -3996,16 +4069,21 @@ class ThreeSystemSceneRuntime
         markerMaterial,
       );
 
+    const visualExtentRadius =
+      systemSceneVisualExtentRadiusScene(
+        body,
+      );
+
     const diameter =
       body.kind ===
         'star'
         ? Math.max(
-            body.radiusScene *
+            visualExtentRadius *
               4.5,
             0.46,
           )
         : Math.max(
-            body.radiusScene *
+            visualExtentRadius *
               4.8,
             0.34,
           );

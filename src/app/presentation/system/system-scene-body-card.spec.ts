@@ -183,6 +183,8 @@ function bodyCardSnapshot():
           null,
         giantAtmosphere:
           null,
+          specialPresentation:
+            null,
         spin: {
           source:
             'UNAVAILABLE',
@@ -231,6 +233,8 @@ function bodyCardSnapshot():
           null,
         giantAtmosphere:
           null,
+          specialPresentation:
+            null,
         spin: {
           source:
             'PLANET_19_3',
