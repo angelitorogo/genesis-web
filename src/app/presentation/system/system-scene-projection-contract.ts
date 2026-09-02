@@ -167,6 +167,18 @@ function assertBodyProjection(
       body.spin,
       `${label}.spin`,
     );
+
+    if (
+      body.kind ===
+        'planet' &&
+      body.surfaceEnvironment !==
+        null
+    ) {
+      assertFrozen(
+        body.surfaceEnvironment,
+        `${label}.surfaceEnvironment`,
+      );
+    }
   }
 
   assertMotionContributions(

@@ -250,6 +250,51 @@ describe(
     );
 
     it(
+      'should keep ultra-cold solid-surface extrema bracketing a sub-kelvin point-20.5 mean',
+      () => {
+        const fixture =
+          climateFixture({
+            eccentricity:
+              0.02,
+            axialTiltDegrees:
+              0,
+            rotationPeriodHours:
+              24,
+            dayLengthHours:
+              24,
+            retainedSurfacePressurePascal:
+              0,
+            longwaveTrappingFraction01:
+              0,
+            meanSurfaceTemperatureKelvin:
+              0.5,
+          });
+
+        const variability =
+          ClimateVariabilityEngine
+            .generate(
+              generationKey,
+              fixture.planet,
+              fixture.retention,
+              fixture.greenhouse,
+              fixture.climate,
+            );
+
+        expect(
+          variability.minimumSurfaceTemperatureKelvin!,
+        ).toBeGreaterThan(0);
+
+        expect(
+          variability.minimumSurfaceTemperatureKelvin!,
+        ).toBeLessThanOrEqual(0.5);
+
+        expect(
+          variability.maximumSurfaceTemperatureKelvin!,
+        ).toBeGreaterThanOrEqual(0.5);
+      },
+    );
+
+    it(
       'should preserve deep-envelope semantics without inventing solid-surface extrema',
       () => {
         const fixture =

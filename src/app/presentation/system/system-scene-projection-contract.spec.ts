@@ -8,7 +8,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene projection authority through point 25.1',
+  'SystemScene projection authority through point 25.3',
   () => {
 
     it(
@@ -125,6 +125,8 @@ describe(
               0,
             sourceLuminositySolar:
               null,
+            surfaceEnvironment:
+              null,
             spin:
               mutableSpin,
           });
@@ -151,6 +153,122 @@ describe(
         );
       },
     );
+
+    it(
+      'should reject mutable point-25.3 surface environment before it enters Three.js',
+      () => {
+
+        const mutableSurfaceEnvironment = {
+          source:
+            'PHASE_20_SURFACE_ENVIRONMENT' as const,
+          solidSurfaceAvailable:
+            true,
+          waterInventoryIndex01:
+            0.7,
+          surfaceLiquidWaterCoverageFraction01:
+            0.55,
+          surfaceIceCoverageFraction01:
+            0.08,
+          waterVaporFraction01:
+            0.12,
+          retainedAtmosphericWaterVaporMoleFraction01:
+            0.018,
+          meanSurfaceTemperatureKelvin:
+            288,
+          climateStabilityIndex01:
+            0.8,
+          retainedSurfacePressurePascal:
+            101_325,
+          geologicalActivityIndex01:
+            0.45,
+          volcanismIndex01:
+            0.22,
+          surfaceWaterRegime:
+            'OCEANS',
+          volcanismRegime:
+            'LOW',
+          exposedLandCoverageFraction01:
+            0.37,
+          presentationDesertCoverageFraction01:
+            0.08,
+          presentationVolcanicCoverageFraction01:
+            0.015,
+          presentationCloudCoverageFraction01:
+            0.32,
+        };
+
+        const planet =
+          Object.freeze({
+            id:
+              'planet-1',
+            kind:
+              'planet' as const,
+            label:
+              'Fixture b',
+            title:
+              'Fixture b',
+            colorHex:
+              '#5577AA',
+            radiusScene:
+              0.08,
+            position:
+              Object.freeze({
+                x: 1,
+                y: 0,
+                z: 0,
+              }),
+            orbitId:
+              'orbit-planet-1',
+            motionContributions:
+              Object.freeze([]),
+            surfaceStyle:
+              'rocky' as const,
+            lightIntensity:
+              0,
+            sourceLuminositySolar:
+              null,
+            surfaceEnvironment:
+              mutableSurfaceEnvironment,
+            spin:
+              Object.freeze({
+                source:
+                  'PLANET_19_3' as const,
+                rotationPeriodHours:
+                  24,
+                axialTiltDegrees:
+                  23.44,
+                isRetrograde:
+                  false,
+                isSynchronized:
+                  false,
+                epochPhaseDegrees:
+                  0,
+              }),
+          });
+
+        const base =
+          projectionSnapshot();
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            planets:
+              Object.freeze([
+                planet,
+              ]),
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /snapshot\.planets\[0\]\.surfaceEnvironment is mutable/,
+        );
+      },
+    );
+
     it(
       'should reject mutable nested scene coordinates even when the containing snapshot is frozen',
       () => {
@@ -187,6 +305,8 @@ describe(
               5,
             sourceLuminositySolar:
               1,
+            surfaceEnvironment:
+              null,
             spin:
               Object.freeze({
                 source:

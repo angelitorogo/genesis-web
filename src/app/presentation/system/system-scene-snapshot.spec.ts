@@ -24,7 +24,7 @@ import {
 } from './system-scene-projection-contract';
 
 describe(
-  'SystemSceneSnapshotBuilder through point 25.1',
+  'SystemSceneSnapshotBuilder through point 25.3',
   () => {
 
     it(
@@ -280,7 +280,17 @@ describe(
               planet.spin.rotationPeriodHours !== null &&
               planet.spin.rotationPeriodHours > 0 &&
               planet.spin.axialTiltDegrees !== null &&
-              Object.isFrozen(planet.spin),
+              Object.isFrozen(planet.spin) &&
+              planet.surfaceEnvironment !== null &&
+              planet.surfaceEnvironment.source === 'PHASE_20_SURFACE_ENVIRONMENT' &&
+              Object.isFrozen(planet.surfaceEnvironment),
+          ),
+        ).toBe(true);
+
+        expect(
+          snapshot.planets.some(
+            planet =>
+              planet.surfaceEnvironment?.solidSurfaceAvailable === true,
           ),
         ).toBe(true);
 

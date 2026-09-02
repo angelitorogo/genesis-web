@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene through point 25.2',
+  'SystemScene through point 25.3',
   () => {
 
     let resize:
@@ -1337,6 +1337,8 @@ function sceneSnapshot():
             5.6,
           sourceLuminositySolar:
             1.2,
+          surfaceEnvironment:
+            null,
           spin:
             Object.freeze({
               source:
@@ -1389,6 +1391,8 @@ function sceneSnapshot():
             4.8,
           sourceLuminositySolar:
             0.6,
+          surfaceEnvironment:
+            null,
           spin:
             Object.freeze({
               source:
@@ -1444,6 +1448,8 @@ function sceneSnapshot():
           lightIntensity:
             0,
           sourceLuminositySolar:
+            null,
+          surfaceEnvironment:
             null,
           spin:
             Object.freeze({

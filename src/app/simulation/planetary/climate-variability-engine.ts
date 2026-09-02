@@ -328,18 +328,41 @@ function generateVariabilityV1(
     diurnalTemperatureRangeKelvin /
     2;
 
-  const minimumSurfaceTemperatureKelvin =
-    Math.max(
-      1,
-      orbitalColdBaselineKelvin -
-        obliquityAmplitudeKelvin -
-        diurnalHalfRangeKelvin,
-    );
+  const rawMinimumSurfaceTemperatureKelvin =
+    orbitalColdBaselineKelvin -
+    obliquityAmplitudeKelvin -
+    diurnalHalfRangeKelvin;
 
-  const maximumSurfaceTemperatureKelvin =
+  const rawMaximumSurfaceTemperatureKelvin =
     orbitalHotBaselineKelvin +
     obliquityAmplitudeKelvin +
     diurnalHalfRangeKelvin;
+
+  /*
+   * Point-20.6 regression guard: the old absolute 1 K floor could push the
+   * minimum above a valid but sub-kelvin point-20.5 mean in extremely cold
+   * generated systems. Clamp the lower estimate to a positive floor that can
+   * never exceed the authoritative mean, and explicitly bracket the upper
+   * estimate as well. Ordinary climates are byte-for-byte numerically
+   * unchanged because their raw extrema already bracket the mean.
+   */
+  const minimumSurfaceTemperatureKelvin =
+    Math.min(
+      meanSurfaceTemperatureKelvin,
+      Math.max(
+        Math.min(
+          1,
+          meanSurfaceTemperatureKelvin,
+        ),
+        rawMinimumSurfaceTemperatureKelvin,
+      ),
+    );
+
+  const maximumSurfaceTemperatureKelvin =
+    Math.max(
+      meanSurfaceTemperatureKelvin,
+      rawMaximumSurfaceTemperatureKelvin,
+    );
 
   const approximateRangeKelvin =
     maximumSurfaceTemperatureKelvin -

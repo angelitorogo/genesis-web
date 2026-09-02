@@ -16,6 +16,10 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  type Atmosphere,
+} from '../../domain/planetary/atmosphere';
+
+import {
   type Planet,
 } from '../../domain/planetary/planet';
 
@@ -117,6 +121,15 @@ import {
 import {
   buildTripleDensePlanetaryLayoutV1,
 } from './system-scene-triple-planetary-layout';
+
+import {
+  buildSystemScenePlanetSurfacePresentationV1,
+  type SystemScenePlanetSurfacePresentationSnapshot,
+} from './system-scene-planet-surface-presentation';
+
+import {
+  AtmosphereGenerator,
+} from '../../simulation/planetary/atmosphere-generator';
 
 import {
   PlanetGenerator,
@@ -346,6 +359,10 @@ export interface SystemSceneBodySnapshot {
 
   readonly spin:
     SystemSceneBodySpinSnapshot;
+
+  /** Point-25.3 solid-surface environment; null for stars. */
+  readonly surfaceEnvironment:
+    SystemScenePlanetSurfacePresentationSnapshot | null;
 }
 
 export interface SystemSceneMoonSnapshot {
@@ -539,7 +556,7 @@ export interface SystemSceneSimulationSnapshot {
 }
 
 /**
- * Point-24.10 immutable presentation snapshot, extended in 25.1 with body spin/light inputs.
+ * Point-24.10 immutable presentation snapshot, extended through 25.3 with body spin/light and phase-20 surface-environment inputs.
  *
  * The snapshot now carries precomputed presentation geometry for resolved
  * stellar components, mature planets and orbital guides. Three.js still does
@@ -672,6 +689,9 @@ interface MaterializedStellarSceneWorld {
 
   readonly planets:
     readonly Planet[];
+
+  readonly atmospheres:
+    readonly Atmosphere[];
 
   readonly moonSystems:
     readonly MoonSystem[];
@@ -1067,6 +1087,8 @@ function materializeSceneWorld(
       planetaryWorld.planetarySystem,
     planets:
       planetaryWorld.planets,
+    atmospheres:
+      planetaryWorld.atmospheres,
     moonSystems:
       planetaryWorld.moonSystems,
     minorBodyOrbitalCatalog:
@@ -1276,6 +1298,9 @@ interface ResolvedPlanetarySceneWorld {
   readonly planets:
     readonly Planet[];
 
+  readonly atmospheres:
+    readonly Atmosphere[];
+
   readonly moonSystems:
     readonly MoonSystem[];
 
@@ -1324,6 +1349,7 @@ function resolvePlanetaryWorld(
     return Object.freeze({
       planetarySystem: null,
       planets: Object.freeze([]),
+      atmospheres: Object.freeze([]),
       moonSystems: Object.freeze([]),
       minorBodyOrbitalCatalog: null,
       habitableZone,
@@ -1360,6 +1386,17 @@ function resolvePlanetaryWorld(
           )
       : Object.freeze([]);
 
+  const atmospheres =
+    planets.length ===
+      0
+      ? Object.freeze([])
+      : AtmosphereGenerator
+          .generateAll(
+            generationKey,
+            planetarySystem,
+            planets,
+          );
+
   const moonSystems =
     planets.length ===
       0
@@ -1380,6 +1417,7 @@ function resolvePlanetaryWorld(
         Object.freeze([
           ...planets,
         ]),
+      atmospheres,
       moonSystems,
       minorBodyOrbitalCatalog: null,
       habitableZone,
@@ -1469,6 +1507,7 @@ function resolvePlanetaryWorld(
       Object.freeze([
         ...planets,
       ]),
+    atmospheres,
     moonSystems,
     minorBodyOrbitalCatalog,
     habitableZone,
@@ -2140,8 +2179,21 @@ function projectSceneGeometry(
                   `${world.stellarSystem.seed.normalizedValue}:${star.label}:SPIN`,
                 ),
             } satisfies SystemSceneBodySpinSnapshot),
+          surfaceEnvironment:
+            null,
         });
       },
+    );
+
+  const atmosphereByPlanetOrdinal =
+    new Map(
+      world.atmospheres.map(
+        atmosphere =>
+          [
+            atmosphere.hostPlanet.planetOrdinal,
+            atmosphere,
+          ] as const,
+      ),
     );
 
   const planets =
@@ -2362,6 +2414,13 @@ function projectSceneGeometry(
                   `${planet.orbit.bodySeed.normalizedValue}:SPIN`,
                 ),
             } satisfies SystemSceneBodySpinSnapshot),
+          surfaceEnvironment:
+            projectPlanetSurfaceEnvironment(
+              atmosphereByPlanetOrdinal.get(
+                planet.planetOrdinal,
+              ) ??
+              null,
+            ),
         });
       },
     );
@@ -3736,6 +3795,46 @@ function planetColor(
     default:
       return '#9AAFC1';
   }
+}
+
+function projectPlanetSurfaceEnvironment(
+  atmosphere:
+    Atmosphere | null,
+): SystemScenePlanetSurfacePresentationSnapshot | null {
+
+  if (
+    atmosphere ===
+      null
+  ) {
+    return null;
+  }
+
+  return buildSystemScenePlanetSurfacePresentationV1({
+    waterInventoryIndex01:
+      atmosphere.waterInventoryIndex01,
+    surfaceLiquidWaterCoverageFraction01:
+      atmosphere.surfaceLiquidWaterCoverageFraction01,
+    surfaceIceCoverageFraction01:
+      atmosphere.surfaceIceCoverageFraction01,
+    waterVaporFraction01:
+      atmosphere.waterVaporFraction01,
+    retainedAtmosphericWaterVaporMoleFraction01:
+      atmosphere.waterInventory.sourceRetainedAtmosphericWaterVaporMoleFraction01,
+    meanSurfaceTemperatureKelvin:
+      atmosphere.climateState.meanSurfaceTemperatureKelvin,
+    climateStabilityIndex01:
+      atmosphere.climateVariabilityState.stabilityIndex01,
+    retainedSurfacePressurePascal:
+      atmosphere.retentionState.retainedSurfacePressurePascal,
+    geologicalActivityIndex01:
+      atmosphere.geologicalActivityIndex01,
+    volcanismIndex01:
+      atmosphere.volcanismIndex01,
+    surfaceWaterRegime:
+      atmosphere.surfaceWaterRegime,
+    volcanismRegime:
+      atmosphere.volcanismRegime,
+  });
 }
 
 function planetSurfaceStyle(

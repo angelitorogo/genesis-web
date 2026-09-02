@@ -73,9 +73,13 @@ import {
 
 import {
   buildSystemScenePlanetTextureV1,
-  type SystemScenePlanetTextureData,
   type SystemScenePlanetTextureSurfaceStyle,
 } from './system-scene-planet-texture';
+
+import {
+  buildSystemScenePlanetSurfaceTextureV1,
+  type SystemScenePlanetSurfaceTextureData,
+} from './system-scene-planet-surface-texture';
 
 import {
   SystemSceneProjectionSpace,
@@ -4294,6 +4298,20 @@ function createPlanetAppearance(
         planet.colorHex,
     });
 
+  const semanticSurface =
+    planet.surfaceEnvironment ===
+      null
+      ? null
+      : buildSystemScenePlanetSurfaceTextureV1({
+          systemIdentity,
+          planetId:
+            planet.id,
+          baseTexture:
+            textureData,
+          surface:
+            planet.surfaceEnvironment,
+        });
+
   const visualSeed =
     textureData.seedUint32;
 
@@ -4304,7 +4322,12 @@ function createPlanetAppearance(
 
   const surfaceTexture =
     createPlanetSurfaceTexture(
+      semanticSurface ??
       textureData,
+      semanticSurface ===
+        null
+        ? `GENESIS procedural planet albedo v${textureData.version}`
+        : `GENESIS physical surface projection 25.3 v${semanticSurface.version}`,
     );
 
   const resources: Array<{ dispose(): void }> = [
@@ -4318,59 +4341,91 @@ function createPlanetAppearance(
       surfaceTexture,
   };
 
-  switch (
-    planet.surfaceStyle
+  const liquidCoverage =
+    planet.surfaceEnvironment
+      ?.surfaceLiquidWaterCoverageFraction01 ??
+    0;
+
+  if (
+    planet.surfaceEnvironment
+      ?.solidSurfaceAvailable ===
+      true
   ) {
-    case 'icy':
-      materialOptions.roughness =
-        0.34;
-      materialOptions.metalness =
-        0.01;
-      break;
-
-    case 'oceanic':
-      materialOptions.roughness =
-        0.56;
-      materialOptions.metalness =
-        0.02;
-      break;
-
-    case 'gaseous':
-      materialOptions.roughness =
-        0.78;
-      materialOptions.metalness =
-        0.01;
-      break;
-
-    case 'volcanic': {
-      const emissiveTexture =
-        createVolcanicEmissiveTexture(
-          baseColor,
-          visualSeed,
-        );
-
-      materialOptions.roughness =
-        0.92;
-      materialOptions.metalness =
-        0.01;
-      materialOptions.emissive =
-        0xff6d2d;
-      materialOptions.emissiveIntensity =
-        0.9;
-      materialOptions.emissiveMap =
-        emissiveTexture;
-      resources.push(
-        emissiveTexture,
+    materialOptions.roughness =
+      clampValue(
+        0.88 -
+          liquidCoverage *
+            0.48,
+        0.34,
+        0.92,
       );
-      break;
-    }
+    materialOptions.metalness =
+      0.015;
+  } else {
+    switch (
+      planet.surfaceStyle
+    ) {
+      case 'icy':
+        materialOptions.roughness =
+          0.34;
+        materialOptions.metalness =
+          0.01;
+        break;
 
-    default:
-      materialOptions.roughness =
-        0.86;
-      materialOptions.metalness =
-        0.03;
-      break;
+      case 'oceanic':
+        materialOptions.roughness =
+          0.56;
+        materialOptions.metalness =
+          0.02;
+        break;
+
+      case 'gaseous':
+        materialOptions.roughness =
+          0.78;
+        materialOptions.metalness =
+          0.01;
+        break;
+
+      default:
+        materialOptions.roughness =
+          0.86;
+        materialOptions.metalness =
+          0.03;
+        break;
+    }
+  }
+
+  if (
+    semanticSurface
+      ?.emissiveRgba !==
+      null &&
+    semanticSurface
+      ?.emissiveRgba !==
+      undefined
+  ) {
+    const emissiveTexture =
+      createRgbaDataTexture(
+        semanticSurface.width,
+        semanticSurface.height,
+        semanticSurface.emissiveRgba,
+        'GENESIS volcanism 25.3 emissive projection',
+      );
+
+    materialOptions.emissive =
+      0xffffff;
+    materialOptions.emissiveIntensity =
+      0.45 +
+      (
+        planet.surfaceEnvironment
+          ?.volcanismIndex01 ??
+        0
+      ) *
+        0.9;
+    materialOptions.emissiveMap =
+      emissiveTexture;
+    resources.push(
+      emissiveTexture,
+    );
   }
 
   const material =
@@ -4383,6 +4438,7 @@ function createPlanetAppearance(
   const cloudLayer =
     cloudLayerMeshOrNull(
       planet,
+      semanticSurface,
       baseColor,
       visualSeed,
     );
@@ -4454,22 +4510,58 @@ function planetTextureSurfaceStyle(
   }
 }
 
+interface RgbaTextureData {
+  readonly width:
+    number;
+
+  readonly height:
+    number;
+
+  readonly rgba:
+    Uint8Array;
+}
+
 function createPlanetSurfaceTexture(
   textureData:
-    SystemScenePlanetTextureData,
+    RgbaTextureData,
+
+  name:
+    string,
+): THREE.DataTexture {
+
+  return createRgbaDataTexture(
+    textureData.width,
+    textureData.height,
+    textureData.rgba,
+    name,
+  );
+}
+
+function createRgbaDataTexture(
+  width:
+    number,
+
+  height:
+    number,
+
+  rgba:
+    Uint8Array,
+
+  name:
+    string,
 ): THREE.DataTexture {
 
   const texture =
     new THREE.DataTexture(
-      textureData.rgba,
-      textureData.width,
-      textureData.height,
+      rgba,
+      width,
+      height,
       THREE.RGBAFormat,
       THREE.UnsignedByteType,
     );
 
   texture.name =
-    `GENESIS procedural planet albedo v${textureData.version}`;
+    name;
   texture.colorSpace =
     THREE.SRGBColorSpace;
   texture.wrapS =
@@ -4490,95 +4582,12 @@ function createPlanetSurfaceTexture(
   return texture;
 }
 
-function createVolcanicEmissiveTexture(
-  baseColor:
-    THREE.Color,
-
-  seed:
-    number,
-): THREE.CanvasTexture {
-
-  const canvas =
-    document.createElement(
-      'canvas',
-    );
-
-  canvas.width =
-    512;
-  canvas.height =
-    256;
-
-  const context =
-    canvas.getContext(
-      '2d',
-    );
-
-  if (
-    context ===
-      null
-  ) {
-    throw new Error(
-      'Unable to create volcanic emissive texture.',
-    );
-  }
-
-  context.fillStyle =
-    'black';
-  context.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height,
-  );
-
-  const random =
-    createDeterministicPrng(
-      seed ^
-      0x9e3779b9,
-    );
-
-  const lava =
-    baseColor.clone()
-      .lerp(
-        new THREE.Color(
-          '#FFB066',
-        ),
-        0.48,
-      );
-
-  drawFractureNetwork(
-    context,
-    canvas.width,
-    canvas.height,
-    random,
-    lava,
-    24,
-    0.64,
-  );
-  drawEmissiveHotspots(
-    context,
-    canvas.width,
-    canvas.height,
-    random,
-    lava,
-  );
-
-  const texture =
-    new THREE.CanvasTexture(
-      canvas,
-    );
-
-  texture.colorSpace =
-    THREE.SRGBColorSpace;
-  texture.needsUpdate =
-    true;
-
-  return texture;
-}
-
 function cloudLayerMeshOrNull(
   planet:
     SystemSceneBodySnapshot,
+
+  semanticSurface:
+    SystemScenePlanetSurfaceTextureData | null,
 
   baseColor:
     THREE.Color,
@@ -4596,16 +4605,89 @@ function cloudLayerMeshOrNull(
     THREE.MeshStandardMaterial;
 
   readonly texture:
-    THREE.CanvasTexture;
+    THREE.Texture;
 } | null {
 
   if (
+    semanticSurface !==
+      null &&
+    planet.surfaceEnvironment
+      ?.solidSurfaceAvailable ===
+      true
+  ) {
+    if (
+      semanticSurface.cloudRgba ===
+      null
+    ) {
+      return null;
+    }
+
+    const texture =
+      createRgbaDataTexture(
+        semanticSurface.width,
+        semanticSurface.height,
+        semanticSurface.cloudRgba,
+        'GENESIS physical cloud projection 25.3',
+      );
+
+    const segments =
+      systemSceneSphereSegments(
+        'planet',
+      );
+
+    const geometry =
+      new THREE.SphereGeometry(
+        planet.radiusScene *
+          1.024,
+        segments.widthSegments,
+        segments.heightSegments,
+      );
+
+    const material =
+      new THREE.MeshStandardMaterial({
+        color:
+          0xffffff,
+        map:
+          texture,
+        transparent:
+          true,
+        opacity:
+          0.92,
+        alphaTest:
+          0.025,
+        depthWrite:
+          false,
+        roughness:
+          0.96,
+        metalness:
+          0,
+      });
+
+    const mesh =
+      new THREE.Mesh(
+        geometry,
+        material,
+      );
+
+    mesh.rotation.y =
+      ((seed >>> 9) & 0xff) /
+      255 *
+      Math.PI *
+      2;
+
+    return Object.freeze({
+      mesh,
+      geometry,
+      material,
+      texture,
+    });
+  }
+
+  // Deep-envelope planets are intentionally left on the generic 25.2 cloud
+  // placeholder until 25.4 specializes gas/ice giant atmospheric structure.
+  if (
     planet.surfaceStyle !==
-      'oceanic' &&
-    planet.surfaceStyle !==
-      'gaseous' &&
-    planet.surfaceStyle !==
-      'icy'
+    'gaseous'
   ) {
     return null;
   }
@@ -4652,27 +4734,15 @@ function cloudLayerMeshOrNull(
     canvas.width,
     canvas.height,
     random,
-    planet.surfaceStyle ===
-      'gaseous'
-      ? 34
-      : 22,
-    planet.surfaceStyle ===
-      'gaseous'
-      ? 0.15
-      : 0.24,
+    34,
+    0.15,
   );
-
-  if (
-    planet.surfaceStyle ===
-    'gaseous'
-  ) {
-    drawCloudBandVeils(
-      context,
-      canvas.width,
-      canvas.height,
-      random,
-    );
-  }
+  drawCloudBandVeils(
+    context,
+    canvas.width,
+    canvas.height,
+    random,
+  );
 
   const texture =
     new THREE.CanvasTexture(
@@ -4707,10 +4777,7 @@ function cloudLayerMeshOrNull(
       transparent:
         true,
       opacity:
-        planet.surfaceStyle ===
-          'gaseous'
-          ? 0.42
-          : 0.6,
+        0.42,
       depthWrite:
         false,
       roughness:
@@ -4749,11 +4816,16 @@ function atmosphereMeshOrNull(
 } | null {
 
   if (
+    planet.surfaceEnvironment
+      ?.solidSurfaceAvailable ===
+      true ||
     planet.surfaceStyle ===
       'rocky' ||
     planet.surfaceStyle ===
       'volcanic'
   ) {
+    // Point 25.6 owns physical atmosphere/terminator/night-side rendering.
+    // Do not let the old style-based halo wash out the new 25.3 surface.
     return null;
   }
 
@@ -4805,166 +4877,6 @@ function atmosphereMeshOrNull(
     geometry,
     material,
   });
-}
-
-function drawFractureNetwork(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  color:
-    THREE.Color,
-
-  lineCount:
-    number,
-
-  opacity:
-    number,
-): void {
-
-  context.strokeStyle =
-    rgbaString(
-      color,
-      opacity,
-    );
-  context.lineCap =
-    'round';
-
-  for (
-    let index = 0;
-    index <
-      lineCount;
-    index += 1
-  ) {
-    let x =
-      random() *
-      width;
-    let y =
-      random() *
-      height;
-
-    context.lineWidth =
-      0.8 +
-      random() *
-        2.2;
-    context.beginPath();
-    context.moveTo(
-      x,
-      y,
-    );
-
-    const segmentCount =
-      4 +
-      Math.floor(
-        random() *
-        6,
-      );
-
-    for (
-      let segment = 0;
-      segment <
-        segmentCount;
-      segment += 1
-    ) {
-      x +=
-        (random() - 0.5) *
-        width *
-        0.14;
-      y +=
-        (random() - 0.5) *
-        height *
-        0.18;
-      context.lineTo(
-        x,
-        y,
-      );
-    }
-
-    context.stroke();
-  }
-}
-
-function drawEmissiveHotspots(
-  context:
-    CanvasRenderingContext2D,
-
-  width:
-    number,
-
-  height:
-    number,
-
-  random:
-    () => number,
-
-  color:
-    THREE.Color,
-): void {
-
-  for (
-    let index = 0;
-    index <
-      18;
-    index += 1
-  ) {
-    const x =
-      random() *
-      width;
-    const y =
-      random() *
-      height;
-    const radius =
-      width *
-      (0.006 +
-        random() *
-          0.024);
-
-    const gradient =
-      context.createRadialGradient(
-        x,
-        y,
-        0,
-        x,
-        y,
-        radius,
-      );
-
-    gradient.addColorStop(
-      0,
-      rgbaString(
-        color,
-        0.9,
-      ),
-    );
-    gradient.addColorStop(
-      1,
-      rgbaString(
-        color,
-        0,
-      ),
-    );
-
-    context.fillStyle =
-      gradient;
-    context.beginPath();
-    context.arc(
-      x,
-      y,
-      radius,
-      0,
-      Math.PI *
-        2,
-    );
-    context.fill();
-  }
 }
 
 function drawCloudWisps(

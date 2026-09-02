@@ -179,6 +179,8 @@ function bodyCardSnapshot():
           2,
         sourceLuminositySolar:
           1,
+        surfaceEnvironment:
+          null,
         spin: {
           source:
             'UNAVAILABLE',
@@ -222,6 +224,8 @@ function bodyCardSnapshot():
         lightIntensity:
           0,
         sourceLuminositySolar:
+          null,
+        surfaceEnvironment:
           null,
         spin: {
           source:
