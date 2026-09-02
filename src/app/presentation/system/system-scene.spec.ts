@@ -1585,6 +1585,8 @@ function sceneSnapshot():
             Object.freeze([]),
           asteroidPresentation:
             null,
+          cometPresentation:
+            null,
         }),
         Object.freeze({
           id:
@@ -1613,6 +1615,38 @@ function sceneSnapshot():
             Object.freeze([]),
           asteroidPresentation:
             null,
+          cometPresentation:
+            Object.freeze({
+              version: 1 as const,
+              source: 'PHASE_22_6_COMET_ACTIVITY' as const,
+              proceduralId: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+              sourceDiameterKilometers: 18,
+              iceFraction01: 0.68,
+              dustFraction01: 0.32,
+              porosityIndex01: 0.62,
+              bulkDensityGramsPerCubicCentimeter: 0.62,
+              geometricAlbedo01: 0.04,
+              volatileRichnessIndex01: 0.82,
+              periodRegime: 'SHORT_PERIOD' as const,
+              referenceLuminositySolar: 1,
+              semiMajorAxisAu: 4,
+              eccentricity: 0.75,
+              periapsisAu: 1,
+              apoapsisAu: 7,
+              orbitalPeriodYears: 8,
+              epochMeanAnomalyDegrees: 0,
+              presentationTimeScale: 1,
+              shapeSeedUint32: 123456,
+              presentationNucleusColorHex: '#3F4141',
+              presentationComaColorHex: '#B9EBF1',
+              presentationDustTailColorHex: '#D6BD92',
+              presentationIonTailColorHex: '#91DDFF',
+              presentationNucleusRoughness01: 0.91,
+              presentationNucleusAxisScaleX: 1.08,
+              presentationNucleusAxisScaleY: 0.93,
+              presentationNucleusAxisScaleZ: 0.99,
+              presentationNucleusIrregularity01: 0.52,
+            }),
         }),
         Object.freeze({
           id:
@@ -1641,6 +1675,8 @@ function sceneSnapshot():
             Object.freeze([]),
           asteroidPresentation:
             null,
+          cometPresentation:
+            null,
         }),
         Object.freeze({
           id:
@@ -1668,6 +1704,8 @@ function sceneSnapshot():
           motionContributions:
             Object.freeze([]),
           asteroidPresentation:
+            null,
+          cometPresentation:
             null,
         }),
       ]),

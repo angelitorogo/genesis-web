@@ -315,6 +315,8 @@ function bodyCardSnapshot():
         motionContributions: [],
         asteroidPresentation:
           null,
+        cometPresentation:
+          null,
       },
     ],
     habitableZone:

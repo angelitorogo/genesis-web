@@ -101,6 +101,16 @@ import {
 } from './system-scene-asteroid-geometry';
 
 import {
+  systemSceneCometActivityAtSimulationDayV1,
+} from './system-scene-comet-presentation';
+
+import {
+  applySystemSceneCometActivityVisualV1,
+  createSystemSceneCometRenderableV1,
+  type SystemSceneCometActivityBindingV1,
+} from './system-scene-comet-renderable';
+
+import {
   buildSystemSceneDayNightMaterialProfileV1,
   createSystemSceneAtmosphereShellMaterialV1,
   installSystemSceneDayNightMaterialV1,
@@ -1642,6 +1652,22 @@ class ThreeSystemSceneRuntime
   private readonly cometLayerObjects:
     THREE.Object3D[] =
     [];
+
+  /** Point-25.8 dynamic coma/tail bindings for relevant comets. */
+  private readonly cometActivityBindings =
+    new Map<string, SystemSceneCometActivityBindingV1>();
+
+  private readonly cometLightDirectionAccumulator =
+    new THREE.Vector3();
+
+  private readonly cometLightDirectionScratch =
+    new THREE.Vector3();
+
+  private readonly cometWorldPosition =
+    new THREE.Vector3();
+
+  private readonly cometStarWorldPosition =
+    new THREE.Vector3();
 
   private readonly transNeptunianObjectLayerObjects:
     THREE.Object3D[] =
@@ -3678,6 +3704,28 @@ class ThreeSystemSceneRuntime
       this.frameDisposables.push(
         ...asteroidRenderable.resources,
       );
+    } else if (
+      body.minorBodyKind.name ===
+        'COMET' &&
+      body.cometPresentation !==
+        null
+    ) {
+      const cometRenderable =
+        createSystemSceneCometRenderableV1(
+          body.radiusScene,
+          body.cometPresentation,
+        );
+
+      group.add(
+        cometRenderable.object,
+      );
+      this.cometActivityBindings.set(
+        body.id,
+        cometRenderable.binding,
+      );
+      this.frameDisposables.push(
+        ...cometRenderable.resources,
+      );
     } else {
       const geometry =
         new THREE.IcosahedronGeometry(
@@ -3693,20 +3741,6 @@ class ThreeSystemSceneRuntime
             0.92,
           metalness:
             0.02,
-          emissive:
-            body.minorBodyKind.name ===
-              'COMET'
-              ? new THREE.Color(
-                  body.colorHex,
-                )
-              : new THREE.Color(
-                  0x000000,
-                ),
-          emissiveIntensity:
-            body.minorBodyKind.name ===
-              'COMET'
-              ? 0.22
-              : 0,
         });
 
       group.add(
@@ -4169,6 +4203,151 @@ class ThreeSystemSceneRuntime
         );
       }
     }
+
+    this.updateCometActivityPresentation(
+      simulationDay,
+    );
+  }
+
+  private updateCometActivityPresentation(
+    simulationDay:
+      number,
+  ): void {
+
+    const snapshot =
+      this.currentSnapshot;
+
+    if (
+      snapshot ===
+        null ||
+      this.cometActivityBindings.size ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+
+    for (
+      const body
+      of snapshot.minorBodies
+    ) {
+      const presentation =
+        body.cometPresentation;
+      const binding =
+        this.cometActivityBindings.get(
+          body.id,
+        );
+      const cometObject =
+        this.animatedBodies.get(
+          body.id,
+        );
+
+      if (
+        presentation ===
+          null ||
+        binding ===
+          undefined ||
+        cometObject ===
+          undefined
+      ) {
+        continue;
+      }
+
+      const activity =
+        systemSceneCometActivityAtSimulationDayV1(
+          presentation,
+          simulationDay,
+          body.radiusScene,
+        );
+
+      cometObject.getWorldPosition(
+        this.cometWorldPosition,
+      );
+      this.cometLightDirectionAccumulator.set(
+        0,
+        0,
+        0,
+      );
+
+      for (
+        const star
+        of snapshot.stars
+      ) {
+        const starObject =
+          this.animatedBodies.get(
+            star.id,
+          );
+
+        if (
+          starObject ===
+            undefined
+        ) {
+          continue;
+        }
+
+        starObject.getWorldPosition(
+          this.cometStarWorldPosition,
+        );
+        this.cometLightDirectionScratch
+          .subVectors(
+            this.cometStarWorldPosition,
+            this.cometWorldPosition,
+          );
+
+        const distanceSquared =
+          Math.max(
+            this.cometLightDirectionScratch
+              .lengthSq(),
+            0.0025,
+          );
+        const fluxWeight =
+          Math.max(
+            star.sourceLuminositySolar ??
+              0.01,
+            0.01,
+          ) /
+          distanceSquared;
+
+        if (
+          this.cometLightDirectionScratch
+            .lengthSq() >
+          1e-12
+        ) {
+          this.cometLightDirectionScratch
+            .normalize();
+          this.cometLightDirectionAccumulator
+            .addScaledVector(
+              this.cometLightDirectionScratch,
+              fluxWeight,
+            );
+        }
+      }
+
+      if (
+        this.cometLightDirectionAccumulator
+          .lengthSq() <=
+        1e-12
+      ) {
+        this.cometLightDirectionAccumulator.set(
+          -1,
+          0,
+          0,
+        );
+      } else {
+        this.cometLightDirectionAccumulator
+          .normalize()
+          .negate();
+      }
+
+      applySystemSceneCometActivityVisualV1(
+        binding,
+        activity,
+        this.cometLightDirectionAccumulator,
+      );
+    }
   }
 
   private updateTrackedBodyCamera(
@@ -4295,6 +4474,7 @@ class ThreeSystemSceneRuntime
       0;
     this.cometLayerObjects.length =
       0;
+    this.cometActivityBindings.clear();
     this.transNeptunianObjectLayerObjects.length =
       0;
     this.capturedObjectLayerObjects.length =

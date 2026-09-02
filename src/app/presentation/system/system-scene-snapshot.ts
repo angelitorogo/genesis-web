@@ -57,6 +57,10 @@ import {
 } from '../../domain/planetary/relevant-asteroid';
 
 import {
+  type RelevantComet,
+} from '../../domain/planetary/relevant-comet';
+
+import {
   PlanetSurfaceBaseRegime,
 } from '../../domain/planetary/planet-surface-base-regime';
 
@@ -141,6 +145,12 @@ import {
   type SystemSceneAsteroidPresentationInputV1,
   type SystemSceneAsteroidPresentationV1,
 } from './system-scene-asteroid-presentation';
+
+import {
+  buildSystemSceneCometPresentationV1,
+  type SystemSceneCometPresentationInputV1,
+  type SystemSceneCometPresentationV1,
+} from './system-scene-comet-presentation';
 
 import {
   AtmosphereGenerator,
@@ -455,6 +465,9 @@ export interface SystemSceneMinorBodySnapshot {
 
   readonly asteroidPresentation:
     SystemSceneAsteroidPresentationV1 | null;
+
+  readonly cometPresentation:
+    SystemSceneCometPresentationV1 | null;
 }
 
 export interface SystemSceneHabitableZoneSnapshot {
@@ -3458,9 +3471,33 @@ function projectMinorBodyLayer(
           )
         : null;
 
-    const presentationColorHex =
+    const cometPresentation =
+      orbital.kind ===
+        MinorBodyKind.COMET
+        ? cometPresentationForBody(
+            entry.body as RelevantComet,
+            world.habitableZone
+              .referenceLuminositySolar,
+            localContribution
+              .presentationTimeScale ??
+              1,
+          )
+        : null;
+
+    const bodyColorHex =
       asteroidPresentation
         ?.presentationColorHex ??
+      cometPresentation
+        ?.presentationNucleusColorHex ??
+      minorBodyColorHex(
+        orbital.kind,
+      );
+
+    const orbitColorHex =
+      asteroidPresentation
+        ?.presentationColorHex ??
+      cometPresentation
+        ?.presentationComaColorHex ??
       minorBodyColorHex(
         orbital.kind,
       );
@@ -3474,7 +3511,7 @@ function projectMinorBodyLayer(
         label:
           orbital.localDesignation,
         colorHex:
-          presentationColorHex,
+          orbitColorHex,
         opacity:
           orbitOpacity,
         semiMajorScene:
@@ -3535,7 +3572,7 @@ function projectMinorBodyLayer(
             orbital.localDesignation,
           ),
         colorHex:
-          presentationColorHex,
+          bodyColorHex,
         radiusScene:
           minorBodyRadiusScene(
             entry.body,
@@ -3551,6 +3588,7 @@ function projectMinorBodyLayer(
         orbitId,
         motionContributions,
         asteroidPresentation,
+        cometPresentation,
       }),
     );
   }
@@ -3624,6 +3662,60 @@ function asteroidPresentationForBody(
       taxonomy.binaryMassRatio01,
     binarySeparationPrimaryRadii:
       taxonomy.binarySeparationPrimaryRadii,
+  });
+}
+
+function cometPresentationForBody(
+  comet:
+    RelevantComet,
+
+  referenceLuminositySolar:
+    number,
+
+  presentationTimeScale:
+    number,
+): SystemSceneCometPresentationV1 {
+
+  const orbit =
+    comet.orbit;
+  const nucleus =
+    comet.nucleusProperties;
+
+  return buildSystemSceneCometPresentationV1({
+    proceduralId:
+      comet.proceduralId,
+    diameterKilometers:
+      comet.diameterKilometers,
+    iceFraction01:
+      nucleus.iceFraction01,
+    dustFraction01:
+      nucleus.dustFraction01,
+    porosityIndex01:
+      nucleus.porosityIndex01,
+    bulkDensityGramsPerCubicCentimeter:
+      nucleus.bulkDensityGramsPerCubicCentimeter,
+    geometricAlbedo01:
+      nucleus.geometricAlbedo,
+    volatileRichnessIndex01:
+      nucleus.volatileRichnessIndex01,
+    periodRegime:
+      String(
+        comet.periodRegime,
+      ) as SystemSceneCometPresentationInputV1['periodRegime'],
+    semiMajorAxisAu:
+      orbit.semiMajorAxisAu,
+    eccentricity:
+      orbit.eccentricity,
+    orbitalPeriodYears:
+      orbit.orbitalPeriodYears,
+    epochMeanAnomalyDegrees:
+      orbit.meanAnomalyDegrees,
+    periapsisAu:
+      orbit.periapsisAu,
+    apoapsisAu:
+      orbit.apoapsisAu,
+    referenceLuminositySolar,
+    presentationTimeScale,
   });
 }
 

@@ -329,6 +329,7 @@ describe(
             orbitId: 'orbit-minor-1',
             motionContributions: Object.freeze([]),
             asteroidPresentation: mutableAsteroidPresentation,
+            cometPresentation: null,
           });
 
         const base = projectionSnapshot();
@@ -341,6 +342,70 @@ describe(
           () => assertSystemSceneProjectionSnapshot(snapshot),
         ).toThrowError(
           /snapshot\.minorBodies\[0\]\.asteroidPresentation is mutable/,
+        );
+      },
+    );
+
+    it(
+      'should reject mutable point-25.8 comet presentation before it enters Three.js',
+      () => {
+        const mutableCometPresentation = {
+          version: 1 as const,
+          source: 'PHASE_22_6_COMET_ACTIVITY' as const,
+          proceduralId: 'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+          sourceDiameterKilometers: 12,
+          iceFraction01: 0.65,
+          dustFraction01: 0.35,
+          porosityIndex01: 0.55,
+          bulkDensityGramsPerCubicCentimeter: 0.62,
+          geometricAlbedo01: 0.04,
+          volatileRichnessIndex01: 0.8,
+          periodRegime: 'SHORT_PERIOD' as const,
+          referenceLuminositySolar: 1,
+          semiMajorAxisAu: 4,
+          eccentricity: 0.75,
+          periapsisAu: 1,
+          apoapsisAu: 7,
+          orbitalPeriodYears: 8,
+          epochMeanAnomalyDegrees: 0,
+          presentationTimeScale: 1,
+          shapeSeedUint32: 321,
+          presentationNucleusColorHex: '#34373A',
+          presentationComaColorHex: '#D6F4F7',
+          presentationDustTailColorHex: '#D9C3A1',
+          presentationIonTailColorHex: '#73CFFF',
+          presentationNucleusRoughness01: 0.9,
+          presentationNucleusAxisScaleX: 1.1,
+          presentationNucleusAxisScaleY: 0.9,
+          presentationNucleusAxisScaleZ: 1.0,
+          presentationNucleusIrregularity01: 0.42,
+        };
+
+        const minorBody = Object.freeze({
+          id: 'minor-2-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+          kind: 'minor-body' as const,
+          minorBodyKind: MinorBodyKind.COMET,
+          label: 'COM-001',
+          title: 'Cometa COM-001',
+          colorHex: '#34373A',
+          radiusScene: 0.014,
+          position: Object.freeze({ x: 1, y: 0, z: 0 }),
+          orbitId: 'orbit-minor-2',
+          motionContributions: Object.freeze([]),
+          asteroidPresentation: null,
+          cometPresentation: mutableCometPresentation,
+        });
+
+        const base = projectionSnapshot();
+        const snapshot = Object.freeze({
+          ...base,
+          minorBodies: Object.freeze([minorBody]),
+        }) as SystemSceneSnapshot;
+
+        expect(
+          () => assertSystemSceneProjectionSnapshot(snapshot),
+        ).toThrowError(
+          /snapshot\.minorBodies\[0\]\.cometPresentation is mutable/,
         );
       },
     );

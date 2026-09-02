@@ -172,6 +172,18 @@ function assertBodyProjection(
   }
 
   if (
+    body.kind ===
+      'minor-body' &&
+    body.cometPresentation !==
+      null
+  ) {
+    assertFrozen(
+      body.cometPresentation,
+      `${label}.cometPresentation`,
+    );
+  }
+
+  if (
     body.kind !==
       'minor-body'
   ) {
