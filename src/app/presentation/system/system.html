@@ -132,11 +132,11 @@
 
                 <footer class="system-page__viewport-footer">
                   <span>
-                    THREE.JS / WEBGL2 + GLSL / BODY RENDER 25.5
+                    THREE.JS / WEBGL2 + GLSL / BODY RENDER 25.6
                   </span>
 
                   <p>
-                    25.5 mantiene WebGL2 como compatibilidad obligatoria y añade una capa GLSL sobre los materiales físicos ya estables de 25.3/25.4 para preservar contraste y cromaticidad de las texturas bajo iluminación/tone mapping sin inventar nueva geografía ni circulación. WebGPU solo se evalúa como capacidad opcional: aunque navigator.gpu exista, V1 no cambia de backend ni compromete compatibilidad. La proyección continúa siendo de solo lectura y nunca devuelve física al dominio.
+                    25.6 conserva WebGL2 + GLSL y añade una proyección óptica de atmósfera, terminador y hemisferio nocturno. La presencia y fuerza atmosféricas se derivan únicamente de los handoffs físicos ya congelados de 25.3/25.4: los vacíos no reciben halo, las atmósferas retenidas suavizan el terminador y los gigantes proyectan su bruma profunda. El lado nocturno suprime la luz ambiental residual sin inventar luces urbanas, auroras ni biología. Todo continúa siendo una proyección de solo lectura.
                   </p>
                 </footer>
               </section>

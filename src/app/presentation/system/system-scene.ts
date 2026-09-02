@@ -92,6 +92,18 @@ import {
 } from './system-scene-glsl-material';
 
 import {
+  buildSystemSceneAtmosphereOpticsV1,
+  type SystemSceneAtmosphereOpticsV1,
+} from './system-scene-atmosphere-optics';
+
+import {
+  buildSystemSceneDayNightMaterialProfileV1,
+  createSystemSceneAtmosphereShellMaterialV1,
+  installSystemSceneDayNightMaterialV1,
+  type SystemScenePlanetLightBindingV1,
+} from './system-scene-atmosphere-material';
+
+import {
   buildSystemSceneRenderBackendAssessmentV1,
   systemSceneWebGpuApiAvailable,
   type SystemSceneRenderBackendAssessmentV1,
@@ -1536,6 +1548,29 @@ class ThreeSystemSceneRuntime
   /** Spin pivot only; orbital translation remains on animatedBodies. */
   private readonly spinningBodies =
     new Map<string, THREE.Object3D>();
+
+  /** Point-25.6 shared uniforms for planet terminator/night-side/atmosphere shells. */
+  private readonly planetLightBindings =
+    new Map<string, SystemScenePlanetLightBindingV1>();
+
+  private readonly planetLightPlanetWorldPosition =
+    new THREE.Vector3();
+
+  private readonly planetLightStarWorldPosition =
+    new THREE.Vector3();
+
+  private readonly planetLightDirectionScratch =
+    new THREE.Vector3();
+
+  private readonly planetLightTopDirections =
+    [
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+    ] as const;
+
+  private readonly planetLightTopFluxes =
+    [0, 0, 0];
 
   private readonly animatedOrbits =
     new Map<string, THREE.LineLoop>();
@@ -3433,6 +3468,11 @@ class ThreeSystemSceneRuntime
         systemIdentity,
       );
 
+    this.planetLightBindings.set(
+      planet.id,
+      appearance.lightBinding,
+    );
+
     const axialPivot =
       new THREE.Group();
     axialPivot.name =
@@ -4239,6 +4279,7 @@ class ThreeSystemSceneRuntime
     this.bodySnapshotById.clear();
     this.animatedBodies.clear();
     this.spinningBodies.clear();
+    this.planetLightBindings.clear();
     this.animatedOrbits.clear();
     this.orbitLocalSamplesAu.clear();
 
@@ -4284,6 +4325,158 @@ class ThreeSystemSceneRuntime
       );
   }
 
+  private updatePlanetLightDirections():
+    void {
+
+    const snapshot =
+      this.currentSnapshot;
+
+    if (
+      snapshot ===
+        null ||
+      this.planetLightBindings.size ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.updateMatrixWorld(
+      true,
+    );
+    this.camera.matrixWorldInverse
+      .copy(
+        this.camera.matrixWorld,
+      )
+      .invert();
+
+    for (
+      const planet
+      of snapshot.planets
+    ) {
+      const binding =
+        this.planetLightBindings.get(
+          planet.id,
+        );
+      const planetObject =
+        this.animatedBodies.get(
+          planet.id,
+        );
+
+      if (
+        binding ===
+          undefined ||
+        planetObject ===
+          undefined
+      ) {
+        continue;
+      }
+
+      planetObject.getWorldPosition(
+        this.planetLightPlanetWorldPosition,
+      );
+      this.planetLightTopFluxes[0] =
+        0;
+      this.planetLightTopFluxes[1] =
+        0;
+      this.planetLightTopFluxes[2] =
+        0;
+
+      for (
+        const star
+        of snapshot.stars
+      ) {
+        const starObject =
+          this.animatedBodies.get(
+            star.id,
+          );
+
+        if (
+          starObject ===
+            undefined
+        ) {
+          continue;
+        }
+
+        starObject.getWorldPosition(
+          this.planetLightStarWorldPosition,
+        );
+        this.planetLightDirectionScratch
+          .subVectors(
+            this.planetLightStarWorldPosition,
+            this.planetLightPlanetWorldPosition,
+          );
+
+        const distanceSquared =
+          Math.max(
+            this.planetLightDirectionScratch
+              .lengthSq(),
+            0.0025,
+          );
+
+        if (
+          distanceSquared <=
+            0
+        ) {
+          continue;
+        }
+
+        const flux =
+          Math.max(
+            star.sourceLuminositySolar ??
+              0.01,
+            0.01,
+          ) /
+          distanceSquared;
+
+        this.planetLightDirectionScratch
+          .normalize();
+        insertTopPlanetLightContribution(
+          this.planetLightTopFluxes,
+          this.planetLightTopDirections,
+          flux,
+          this.planetLightDirectionScratch,
+        );
+      }
+
+      const compressedWeightSum =
+        assignPlanetLightBindingView(
+          binding,
+          this.planetLightTopFluxes,
+          this.planetLightTopDirections,
+          this.camera.matrixWorldInverse,
+        );
+
+      if (
+        compressedWeightSum <=
+        1e-9
+      ) {
+        binding.lightDirectionsView[0].set(
+          1,
+          0,
+          0,
+        );
+        binding.lightDirectionsView[1].set(
+          1,
+          0,
+          0,
+        );
+        binding.lightDirectionsView[2].set(
+          1,
+          0,
+          0,
+        );
+        binding.lightWeightsView.set(
+          1,
+          0,
+          0,
+        );
+      }
+    }
+  }
+
   private renderFrame():
     void {
 
@@ -4293,6 +4486,8 @@ class ThreeSystemSceneRuntime
     ) {
       return;
     }
+
+    this.updatePlanetLightDirections();
 
     this
       .renderer
@@ -4324,6 +4519,9 @@ interface PlanetAppearance {
 
   readonly resources:
     readonly { dispose(): void }[];
+
+  readonly lightBinding:
+    SystemScenePlanetLightBindingV1;
 }
 
 function createPlanetAppearance(
@@ -4386,10 +4584,73 @@ function createPlanetAppearance(
     textureData!
       .seedUint32;
 
-  const baseColor =
-    new THREE.Color(
-      planet.colorHex,
-    );
+  const atmosphereOptics =
+    buildSystemSceneAtmosphereOpticsV1({
+      baseColorHex:
+        planet.colorHex,
+      surfaceStyle:
+        planetTextureSurfaceStyle(
+          planet,
+        ),
+      surfaceEnvironment:
+        planet.surfaceEnvironment ===
+          null
+          ? null
+          : {
+              solidSurfaceAvailable:
+                planet.surfaceEnvironment
+                  .solidSurfaceAvailable,
+              retainedSurfacePressurePascal:
+                planet.surfaceEnvironment
+                  .retainedSurfacePressurePascal,
+              retainedAtmosphericWaterVaporMoleFraction01:
+                planet.surfaceEnvironment
+                  .retainedAtmosphericWaterVaporMoleFraction01,
+              presentationCloudCoverageFraction01:
+                planet.surfaceEnvironment
+                  .presentationCloudCoverageFraction01,
+              surfaceIceCoverageFraction01:
+                planet.surfaceEnvironment
+                  .surfaceIceCoverageFraction01,
+            },
+      giantAtmosphere:
+        planet.giantAtmosphere ===
+          null
+          ? null
+          : {
+              methaneMoleFraction01:
+                planet.giantAtmosphere
+                  .methaneMoleFraction01,
+              waterVaporMoleFraction01:
+                planet.giantAtmosphere
+                  .waterVaporMoleFraction01,
+              presentationMethaneBlueing01:
+                planet.giantAtmosphere
+                  .presentationMethaneBlueing01,
+              presentationWarmChromophore01:
+                planet.giantAtmosphere
+                  .presentationWarmChromophore01,
+              presentationPolarHaze01:
+                planet.giantAtmosphere
+                  .presentationPolarHaze01,
+              presentationUpperHaze01:
+                planet.giantAtmosphere
+                  .presentationUpperHaze01,
+            },
+    });
+
+  const lightBinding:
+    SystemScenePlanetLightBindingV1 =
+    Object.freeze({
+      lightDirectionsView:
+        [
+          new THREE.Vector3(1, 0, 0),
+          new THREE.Vector3(1, 0, 0),
+          new THREE.Vector3(1, 0, 0),
+        ] as const,
+      lightWeightsView:
+        new THREE.Vector3(1, 0, 0),
+    });
 
   const surfaceTexture =
     giantAtmosphereTexture !==
@@ -4586,6 +4847,14 @@ function createPlanetAppearance(
     );
   }
 
+  installSystemSceneDayNightMaterialV1(
+    material,
+    buildSystemSceneDayNightMaterialProfileV1(
+      atmosphereOptics,
+    ),
+    lightBinding,
+  );
+
   const overlays: THREE.Object3D[] = [];
 
   const cloudLayer =
@@ -4594,6 +4863,8 @@ function createPlanetAppearance(
       semanticSurface,
       giantAtmosphereTexture,
       visualSeed,
+      atmosphereOptics,
+      lightBinding,
     );
 
   if (
@@ -4612,9 +4883,10 @@ function createPlanetAppearance(
   }
 
   const atmosphere =
-    atmosphereMeshOrNull(
+    atmosphereLayerMeshOrNull(
       planet,
-      baseColor,
+      atmosphereOptics,
+      lightBinding,
     );
 
   if (
@@ -4637,6 +4909,7 @@ function createPlanetAppearance(
       Object.freeze(overlays),
     resources:
       Object.freeze(resources),
+    lightBinding,
   });
 }
 
@@ -4746,6 +5019,12 @@ function cloudLayerMeshOrNull(
 
   seed:
     number,
+
+  atmosphereOptics:
+    SystemSceneAtmosphereOpticsV1,
+
+  lightBinding:
+    SystemScenePlanetLightBindingV1,
 ): {
   readonly mesh:
     THREE.Mesh;
@@ -4814,6 +5093,14 @@ function cloudLayerMeshOrNull(
         metalness:
           0,
       });
+
+    installSystemSceneDayNightMaterialV1(
+      material,
+      buildSystemSceneDayNightMaterialProfileV1(
+        atmosphereOptics,
+      ),
+      lightBinding,
+    );
 
     const mesh =
       new THREE.Mesh(
@@ -4885,6 +5172,14 @@ function cloudLayerMeshOrNull(
         0,
     });
 
+  installSystemSceneDayNightMaterialV1(
+    material,
+    buildSystemSceneDayNightMaterialProfileV1(
+      atmosphereOptics,
+    ),
+    lightBinding,
+  );
+
   const mesh =
     new THREE.Mesh(
       geometry,
@@ -4905,12 +5200,15 @@ function cloudLayerMeshOrNull(
   });
 }
 
-function atmosphereMeshOrNull(
+function atmosphereLayerMeshOrNull(
   planet:
     SystemSceneBodySnapshot,
 
-  baseColor:
-    THREE.Color,
+  optics:
+    SystemSceneAtmosphereOpticsV1,
+
+  lightBinding:
+    SystemScenePlanetLightBindingV1,
 ): {
   readonly mesh:
     THREE.Mesh;
@@ -4919,74 +5217,202 @@ function atmosphereMeshOrNull(
     THREE.SphereGeometry;
 
   readonly material:
-    THREE.MeshBasicMaterial;
+    THREE.ShaderMaterial;
 } | null {
 
+  const material =
+    createSystemSceneAtmosphereShellMaterialV1(
+      optics,
+      lightBinding,
+    );
+
   if (
-    planet.giantAtmosphere !==
-      null ||
-    planet.surfaceEnvironment
-      ?.solidSurfaceAvailable ===
-      true ||
-    planet.surfaceStyle ===
-      'rocky' ||
-    planet.surfaceStyle ===
-      'volcanic'
+    material ===
+      null
   ) {
-    // Point 25.6 owns physical atmosphere/terminator/night-side rendering.
-    // 25.4 deep-envelope upper haze is already rendered as a texture shell;
-    // do not let the old style-based halo wash out solid or giant detail.
     return null;
   }
+
+  const segments =
+    systemSceneSphereSegments(
+      'planet',
+    );
 
   const geometry =
     new THREE.SphereGeometry(
       planet.radiusScene *
-        (planet.surfaceStyle ===
-          'gaseous'
-          ? 1.11
-          : 1.07),
-      24,
-      16,
+        optics.presentationShellScale,
+      segments.widthSegments,
+      segments.heightSegments,
     );
 
-  const material =
-    new THREE.MeshBasicMaterial({
-      color:
-        baseColor.clone()
-          .lerp(
-            new THREE.Color(
-              0xffffff,
-            ),
-            0.52,
-          ),
-      transparent:
-        true,
-      opacity:
-        planet.surfaceStyle ===
-          'gaseous'
-          ? 0.16
-          : planet.surfaceStyle ===
-              'oceanic'
-            ? 0.11
-            : 0.085,
-      blending:
-        THREE.AdditiveBlending,
-      depthWrite:
-        false,
-      toneMapped:
-        false,
-    });
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material,
+    );
+
+  mesh.name =
+    `${planet.label} atmosphere 25.6`;
+  mesh.renderOrder =
+    4;
 
   return Object.freeze({
-    mesh:
-      new THREE.Mesh(
-        geometry,
-        material,
-      ),
+    mesh,
     geometry,
     material,
   });
+}
+
+
+function insertTopPlanetLightContribution(
+  topFluxes:
+    [number, number, number] | number[],
+
+  topDirections:
+    readonly [
+      THREE.Vector3,
+      THREE.Vector3,
+      THREE.Vector3,
+    ],
+
+  flux:
+    number,
+
+  direction:
+    THREE.Vector3,
+): void {
+
+  if (
+    !Number.isFinite(flux) ||
+    flux <= 0
+  ) {
+    return;
+  }
+
+  for (
+    let index =
+      0;
+    index < 3;
+    index += 1
+  ) {
+    if (
+      flux <=
+      topFluxes[index]!
+    ) {
+      continue;
+    }
+
+    for (
+      let shift =
+        2;
+      shift > index;
+      shift -= 1
+    ) {
+      topFluxes[shift] =
+        topFluxes[
+          shift - 1
+        ]!;
+      topDirections[shift].copy(
+        topDirections[
+          shift - 1
+        ],
+      );
+    }
+
+    topFluxes[index] =
+      flux;
+    topDirections[index].copy(
+      direction,
+    );
+    return;
+  }
+}
+
+function assignPlanetLightBindingView(
+  binding:
+    SystemScenePlanetLightBindingV1,
+
+  topFluxes:
+    readonly [number, number, number] | readonly number[],
+
+  topDirections:
+    readonly [
+      THREE.Vector3,
+      THREE.Vector3,
+      THREE.Vector3,
+    ],
+
+  cameraMatrixWorldInverse:
+    THREE.Matrix4,
+): number {
+
+  const compressed0 =
+    Math.sqrt(
+      Math.max(
+        topFluxes[0] ?? 0,
+        0,
+      ),
+    );
+  const compressed1 =
+    Math.sqrt(
+      Math.max(
+        topFluxes[1] ?? 0,
+        0,
+      ),
+    );
+  const compressed2 =
+    Math.sqrt(
+      Math.max(
+        topFluxes[2] ?? 0,
+        0,
+      ),
+    );
+
+  const compressedSum =
+    compressed0 +
+    compressed1 +
+    compressed2;
+
+  if (
+    compressedSum <=
+    1e-9
+  ) {
+    return 0;
+  }
+
+  const weight0 =
+    compressed0 /
+    compressedSum;
+  const weight1 =
+    compressed1 /
+    compressedSum;
+  const weight2 =
+    compressed2 /
+    compressedSum;
+
+  for (
+    let index =
+      0;
+    index < 3;
+    index += 1
+  ) {
+    binding.lightDirectionsView[index]
+      .copy(
+        topDirections[index],
+      )
+      .transformDirection(
+        cameraMatrixWorldInverse,
+      );
+  }
+
+  binding.lightWeightsView.set(
+    weight0,
+    weight1,
+    weight2,
+  );
+
+  return compressedSum;
 }
 
 function stellarSpriteMaterial(

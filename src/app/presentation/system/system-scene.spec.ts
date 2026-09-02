@@ -31,7 +31,7 @@ import {
 } from './system-scene-snapshot';
 
 describe(
-  'SystemScene through point 25.5',
+  'SystemScene through point 25.6',
   () => {
 
     let resize:
@@ -284,6 +284,18 @@ describe(
             ?.textContent,
         ).toContain(
           'ORBITAR',
+        );
+
+
+        expect(
+          fixture
+            .nativeElement
+            .querySelector(
+              '[data-testid="system-scene-ready"]',
+            )
+            ?.textContent,
+        ).toContain(
+          'ATM · TERM · NIGHT',
         );
       },
     );

@@ -167,7 +167,7 @@
       <header class="stellar-lab__renderer-qa-header">
         <div>
           <p class="stellar-lab__eyebrow">
-            QA VISUAL · BODY RENDER 25.5 · A–H
+            QA VISUAL · BODY RENDER 25.6 · A–H
           </p>
 
           <h3>
@@ -175,7 +175,7 @@
           </h3>
 
           <p>
-            Esta vista usa el mismo <code>SystemScene</code> de <code>/system</code>. 25.5 conserva íntegramente las superficies físicas 25.3 y gigantes 25.4, pero sus materiales planetarios pasan por un refinamiento GLSL/WebGL2 acotado para preservar contraste y cromaticidad bajo iluminación. WebGL2 sigue siendo el backend obligatorio; WebGPU se detecta solo como capacidad opcional y nunca sustituye automáticamente el renderer.
+            Esta vista usa el mismo <code>SystemScene</code> de <code>/system</code>. 25.6 mantiene las superficies 25.3, gigantes 25.4 y shaders 25.5, y añade atmósfera óptica, terminador y lado nocturno: los vacíos permanecen sin halo, las atmósferas retenidas muestran limb/twilight y el hemisferio nocturno reduce la luz ambiental residual. WebGL2 + GLSL sigue siendo la ruta obligatoria; WebGPU continúa solo como capacidad opcional no seleccionada.
           </p>
         </div>
 
