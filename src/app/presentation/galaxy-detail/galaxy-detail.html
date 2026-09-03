@@ -5,28 +5,29 @@
     aria-labelledby="gd-title"
   >
     <header class="gd__header">
-      <div>
+      <div class="gd__header-copy">
         <p class="gd__eyebrow">
           CATÁLOGO INTERGALÁCTICO
           <span aria-hidden="true">/</span>
-          11.6
+          26.1 · V2
         </p>
 
         <h1
           id="gd-title"
           class="gd__title"
         >
-          Ficha general de galaxia
+          Ficha científica de galaxia
         </h1>
 
         <p class="gd__subtitle">
-          Identidad, perfil observacional, progreso local y control explícito
-          del foco de exploración para galaxias ya conocidas.
+          Lectura científica progresiva de la galaxia según el conocimiento ya
+          persistido. La ficha distingue observación, física y confirmación sin
+          materializar información todavía desconocida.
         </p>
       </div>
 
       <a
-        class="gd__action"
+        class="gd__action gd__action--quiet"
         routerLink="/galaxies"
         data-testid="galaxy-detail-catalog-link"
       >
@@ -47,7 +48,7 @@
           ></span>
 
           <div>
-            <small>FICHA / LECTURA LOCAL</small>
+            <small>FICHA CIENTÍFICA / LECTURA LOCAL</small>
             <strong>Resolviendo galaxia conocida…</strong>
           </div>
         </section>
@@ -103,14 +104,14 @@
           <article
             class="gd__hero"
             data-testid="galaxy-detail-record"
-            [attr.data-galaxy-state]="model.profile.galaxyKnowledgeState.name"
+            [attr.data-galaxy-state]="model.profile.knowledgeState.name"
           >
             <div class="gd__badges">
               <span
                 class="gd__badge gd__badge--primary"
                 data-testid="galaxy-detail-state"
               >
-                {{ galaxyStateLabel(model.profile.galaxyKnowledgeState) }}
+                {{ discoveryStateLabel(model.profile.knowledgeState) }}
               </span>
 
               @if (model.isCurrentFocus) {
@@ -163,379 +164,804 @@
               <code data-testid="galaxy-detail-designation">
                 {{ model.profile.designationCode }}
               </code>
+
+              <div class="gd__hero-summary" aria-label="Resumen de identificación">
+                <div>
+                  <span>TIPO</span>
+                  <strong>
+                    @if (model.profile.galaxyType; as galaxyType) {
+                      {{ galaxyTypeLabel(galaxyType) }}
+                    } @else {
+                      Pendiente
+                    }
+                  </strong>
+                </div>
+
+                <div>
+                  <span>MORFOLOGÍA</span>
+                  <strong>
+                    {{ morphologyLabel(model.profile.preliminaryInformation.morphologyHint) }}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>ESCALA</span>
+                  <strong>
+                    {{ scaleLabel(model.profile.preliminaryInformation.scaleHint) }}
+                  </strong>
+                </div>
+              </div>
             </div>
 
             <div
-              class="gd__visual"
-              aria-hidden="true"
+              class="gd__visual-card"
+              data-testid="galaxy-detail-visual"
+              aria-label="Representación esquemática basada en la morfología observada"
             >
-              <span class="gd__halo"></span>
-              <span class="gd__orbit gd__orbit--a"></span>
-              <span class="gd__orbit gd__orbit--b"></span>
-              <span class="gd__core"></span>
+              <div
+                class="gd__visual"
+                aria-hidden="true"
+              >
+                <span class="gd__starfield"></span>
+                <span class="gd__galaxy-glow"></span>
+                <span class="gd__galaxy-disc gd__galaxy-disc--outer"></span>
+                <span class="gd__galaxy-disc gd__galaxy-disc--inner"></span>
+                <span class="gd__galaxy-bar"></span>
+                <span class="gd__galaxy-core"></span>
+                <span class="gd__survey-ring"></span>
+              </div>
+
+              <div class="gd__visual-caption">
+                <span>PROYECCIÓN OBSERVACIONAL</span>
+                <strong>
+                  {{ morphologyLabel(model.profile.preliminaryInformation.morphologyHint) }}
+                </strong>
+              </div>
             </div>
+
+            <ol
+              class="gd__knowledge-ladder"
+              data-testid="galaxy-detail-knowledge-ladder"
+              aria-label="Capas científicas disponibles"
+            >
+              <li class="gd__knowledge-step gd__knowledge-step--available">
+                <span>01</span>
+                <div>
+                  <strong>Identidad</strong>
+                  <small>Conocimiento persistido</small>
+                </div>
+              </li>
+
+              <li class="gd__knowledge-step gd__knowledge-step--available">
+                <span>02</span>
+                <div>
+                  <strong>Observación</strong>
+                  <small>Perfil seguro</small>
+                </div>
+              </li>
+
+              @if (model.scientificProfile.physicalProperties) {
+                <li class="gd__knowledge-step gd__knowledge-step--available">
+                  <span>03</span>
+                  <div>
+                    <strong>Física</strong>
+                    <small>Catalogada</small>
+                  </div>
+                </li>
+              } @else {
+                <li class="gd__knowledge-step gd__knowledge-step--locked">
+                  <span>03</span>
+                  <div>
+                    <strong>Física</strong>
+                    <small>Requiere Catalogada</small>
+                  </div>
+                </li>
+              }
+
+              @if (model.scientificProfile.structure) {
+                <li class="gd__knowledge-step gd__knowledge-step--available">
+                  <span>04</span>
+                  <div>
+                    <strong>Estructura</strong>
+                    <small>Confirmada</small>
+                  </div>
+                </li>
+              } @else {
+                <li class="gd__knowledge-step gd__knowledge-step--locked">
+                  <span>04</span>
+                  <div>
+                    <strong>Estructura</strong>
+                    <small>Requiere Confirmada</small>
+                  </div>
+                </li>
+              }
+            </ol>
           </article>
 
-          <section
-            class="gd__section"
-            aria-labelledby="gd-identity-title"
+          <div
+            class="gd__science-layout"
+            data-testid="galaxy-detail-science-layout"
           >
-            <div class="gd__section-heading">
-              <small>IDENTIDAD Y CONOCIMIENTO</small>
-
-              <h3 id="gd-identity-title">
-                Estado general
-              </h3>
-            </div>
-
-            <dl class="gd__facts">
-              <div>
-                <dt>ESTADO GALÁCTICO</dt>
-
-                <dd>
-                  {{ galaxyStateLabel(model.profile.galaxyKnowledgeState) }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>DISCOVERY STATE</dt>
-
-                <dd data-testid="galaxy-detail-global-state">
-                  {{ discoveryStateLabel(model.profile.knowledgeState) }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>TIPO GALÁCTICO</dt>
-
-                @if (model.profile.galaxyType; as galaxyType) {
-                  <dd data-testid="galaxy-detail-exact-type">
-                    {{ galaxyTypeLabel(galaxyType) }}
-                  </dd>
-                } @else {
-                  <dd data-testid="galaxy-detail-exact-type-restricted">
-                    Aún no resuelto
-                  </dd>
-                }
-              </div>
-
-              <div>
-                <dt>IDENTIDAD PROCEDURAL</dt>
-
-                <dd>
-                  @if (model.profile.knownName) {
-                    Conocida
-                  } @else {
-                    Restringida hasta Descubierta
-                  }
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section
-            class="gd__section"
-            data-testid="galaxy-detail-observational-profile"
-            aria-labelledby="gd-observation-title"
-          >
-            <div class="gd__section-heading">
-              <small>PROYECCIÓN OBSERVACIONAL SEGURA</small>
-
-              <h3 id="gd-observation-title">
-                Perfil disponible
-              </h3>
-            </div>
-
-            <dl class="gd__facts gd__facts--observation">
-              <div>
-                <dt>MORFOLOGÍA OBSERVADA</dt>
-
-                <dd data-testid="galaxy-detail-morphology">
-                  {{ morphologyLabel(model.profile.preliminaryInformation.morphologyHint) }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>ESCALA OBSERVADA</dt>
-
-                <dd data-testid="galaxy-detail-scale">
-                  {{ scaleLabel(model.profile.preliminaryInformation.scaleHint) }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>POBLACIÓN ESTELAR</dt>
-
-                <dd data-testid="galaxy-detail-population">
-                  {{ stellarPopulationLabel(model.profile.preliminaryInformation.stellarPopulationHint) }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>ACTIVIDAD NUCLEAR</dt>
-
-                <dd data-testid="galaxy-detail-nuclear">
-                  {{ nuclearActivityLabel(model.profile.preliminaryInformation.nuclearActivityHint) }}
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section
-            class="gd__section"
-            data-testid="galaxy-detail-progress"
-            aria-labelledby="gd-progress-title"
-          >
-            <div class="gd__section-heading">
-              <small>11.4 / PROGRESO PROPIO</small>
-
-              <h3 id="gd-progress-title">
-                Conocimiento acumulado en esta galaxia
-              </h3>
-            </div>
-
-            <dl class="gd__facts">
-              <div>
-                <dt>UNIDADES DE PROGRESO</dt>
-
-                <dd data-testid="galaxy-detail-progress-units">
-                  {{ model.statistics.progressUnits }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>REGISTROS CONOCIDOS</dt>
-
-                <dd data-testid="galaxy-detail-known-records">
-                  {{ model.statistics.knownRecords }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>SECTORES</dt>
-
-                <dd data-testid="galaxy-detail-known-sectors">
-                  {{ model.statistics.targetCounts.sectors }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>SISTEMAS</dt>
-
-                <dd data-testid="galaxy-detail-known-systems">
-                  {{ model.statistics.targetCounts.systems }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>OBJETOS GALÁCTICOS</dt>
-
-                <dd data-testid="galaxy-detail-known-galactic-objects">
-                  {{ model.statistics.targetCounts.galacticObjects }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CUERPOS</dt>
-
-                <dd data-testid="galaxy-detail-known-bodies">
-                  {{ model.statistics.targetCounts.bodies }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CIVILIZACIONES</dt>
-
-                <dd data-testid="galaxy-detail-known-civilizations">
-                  {{ model.statistics.targetCounts.civilizations }}
-                </dd>
-              </div>
-            </dl>
-
-            <div class="gd__section-heading">
-              <small>DISTRIBUCIÓN DE CONOCIMIENTO</small>
-
-              <h3>
-                Registros por estado
-              </h3>
-            </div>
-
-            <dl class="gd__facts">
-              <div>
-                <dt>DETECTADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-detected">
-                  {{ model.statistics.stateCounts.detected }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>DESCUBIERTAS</dt>
-
-                <dd data-testid="galaxy-detail-state-discovered">
-                  {{ model.statistics.stateCounts.discovered }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>VISITADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-visited">
-                  {{ model.statistics.stateCounts.visited }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CATALOGADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-catalogued">
-                  {{ model.statistics.stateCounts.catalogued }}
-                </dd>
-              </div>
-
-              <div>
-                <dt>CONFIRMADAS</dt>
-
-                <dd data-testid="galaxy-detail-state-confirmed">
-                  {{ model.statistics.stateCounts.confirmed }}
-                </dd>
-              </div>
-            </dl>
-
-            <div
-              class="gd__boundary"
-              data-testid="galaxy-detail-progress-no-percentage"
-            >
-              <span>PROGRESO</span>
-
-              <p>
-                Las unidades son la suma estructural de los estados persistidos:
-                Detectada ×1, Descubierta ×2, Visitada ×3, Catalogada ×4 y
-                Confirmada ×5. No son PD ni un porcentaje. GENESIS no
-                materializa contenido procedural desconocido para inventar un
-                denominador de completitud.
-              </p>
-            </div>
-          </section>
-
-          <section
-            class="gd__section"
-            data-testid="galaxy-detail-focus-control"
-            aria-labelledby="gd-focus-title"
-          >
-            <div class="gd__section-heading">
-              <small>11.6 / FOCO DE EXPLORACIÓN</small>
-
-              <h3 id="gd-focus-title">
-                Contexto galáctico activo
-              </h3>
-            </div>
-
-            @if (model.isCurrentFocus) {
-              <div
-                class="gd__boundary"
-                data-testid="galaxy-detail-focus-current"
+            <div class="gd__science-main">
+              <section
+                class="gd__section gd__section--summary"
+                data-testid="galaxy-detail-science-summary"
+                aria-labelledby="gd-summary-title"
               >
-                <span>EN FOCO</span>
+                <div class="gd__section-heading gd__section-heading--stacked">
+                  <div>
+                    <small>RESUMEN CIENTÍFICO</small>
+                    <h3 id="gd-summary-title">Lo que sabemos ahora</h3>
+                  </div>
 
-                <p>
-                  Esta galaxia ya define el contexto activo de Home,
-                  Exploración y Mapa galáctico.
-                </p>
-              </div>
-            } @else {
-              <div class="gd__actions">
-                <button
-                  class="gd__action gd__action--primary"
-                  type="button"
-                  data-testid="galaxy-detail-change-focus-action"
-                  [disabled]="facade.focusPending()"
-                  (click)="changeFocus()"
+                  <p>
+                    Primero se muestra lo observado; las magnitudes físicas solo
+                    aparecen cuando el estado científico las permite.
+                  </p>
+                </div>
+
+                <div class="gd__summary-zones">
+                  <div class="gd__summary-zone">
+                    <div class="gd__subheading">
+                      <span>IDENTIDAD</span>
+                      <strong>Estado y clasificación</strong>
+                    </div>
+
+                    <dl class="gd__facts gd__facts--identity">
+                      <div>
+                        <dt>CONTEXTO DE EXPLORACIÓN</dt>
+                        <dd>
+                          {{ galaxyStateLabel(model.profile.galaxyKnowledgeState) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>DISCOVERY STATE</dt>
+                        <dd data-testid="galaxy-detail-global-state">
+                          {{ discoveryStateLabel(model.profile.knowledgeState) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>TIPO GALÁCTICO</dt>
+                        @if (model.profile.galaxyType; as galaxyType) {
+                          <dd data-testid="galaxy-detail-exact-type">
+                            {{ galaxyTypeLabel(galaxyType) }}
+                          </dd>
+                        } @else {
+                          <dd data-testid="galaxy-detail-exact-type-restricted">
+                            Aún no resuelto
+                          </dd>
+                        }
+                      </div>
+
+                      <div>
+                        <dt>IDENTIDAD PROCEDURAL</dt>
+                        <dd>
+                          @if (model.profile.knownName) {
+                            Conocida
+                          } @else {
+                            Restringida hasta Descubierta
+                          }
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  <div
+                    class="gd__summary-zone"
+                    data-testid="galaxy-detail-observational-profile"
+                    aria-labelledby="gd-observation-title"
+                  >
+                    <div class="gd__subheading">
+                      <span>OBSERVACIÓN</span>
+                      <strong id="gd-observation-title">Perfil disponible</strong>
+                    </div>
+
+                    <dl class="gd__signal-grid">
+                      <div>
+                        <dt>MORFOLOGÍA OBSERVADA</dt>
+                        <dd data-testid="galaxy-detail-morphology">
+                          {{ morphologyLabel(model.profile.preliminaryInformation.morphologyHint) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>ESCALA OBSERVADA</dt>
+                        <dd data-testid="galaxy-detail-scale">
+                          {{ scaleLabel(model.profile.preliminaryInformation.scaleHint) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>POBLACIÓN ESTELAR</dt>
+                        <dd data-testid="galaxy-detail-population">
+                          {{ stellarPopulationLabel(model.profile.preliminaryInformation.stellarPopulationHint) }}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>ACTIVIDAD NUCLEAR</dt>
+                        <dd data-testid="galaxy-detail-nuclear">
+                          {{ nuclearActivityLabel(model.profile.preliminaryInformation.nuclearActivityHint) }}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                </div>
+              </section>
+
+              @if (facade.scientificActionSuccessMessage(); as message) {
+                <div
+                  class="gd__note gd__note--success gd__scientific-action-status"
+                  data-testid="galaxy-detail-scientific-action-success"
+                  role="status"
+                  aria-live="polite"
                 >
-                  @if (facade.focusPending()) {
-                    Actualizando foco…
-                  } @else if (model.isRecentFocus) {
-                    Regresar a esta galaxia
-                  } @else {
-                    Establecer como foco de exploración
-                  }
-                </button>
-              </div>
-            }
+                  <span>HITO CIENTÍFICO COMPLETADO</span>
+                  <p>{{ message }}</p>
+                </div>
+              }
 
-            @if (facade.focusSuccessMessage()) {
-              <div
-                class="gd__boundary"
-                data-testid="galaxy-detail-focus-success"
-                role="status"
-              >
-                <span>ACTUALIZADO</span>
+              @if (facade.scientificActionErrorMessage(); as message) {
+                <div
+                  class="gd__note gd__note--error gd__scientific-action-status"
+                  data-testid="galaxy-detail-scientific-action-error"
+                  role="alert"
+                >
+                  <span>ACCIÓN NO COMPLETADA</span>
+                  <p>{{ message }}</p>
+                </div>
+              }
 
-                <p>{{ facade.focusSuccessMessage() }}</p>
-              </div>
-            }
+              @if (model.scientificProfile.physicalProperties; as physical) {
+                <section
+                  class="gd__section gd__section--science"
+                  data-testid="galaxy-detail-physical-properties"
+                  aria-labelledby="gd-physical-title"
+                >
+                  <div class="gd__section-heading gd__section-heading--science">
+                    <div>
+                      <small>CAPA 03 / CATALOGADA</small>
+                      <h3 id="gd-physical-title">Propiedades físicas</h3>
+                    </div>
 
-            @if (facade.focusErrorMessage()) {
-              <div
-                class="gd__boundary"
-                data-testid="galaxy-detail-focus-error"
-                role="alert"
-              >
-                <span>NO APLICADO</span>
+                    <span class="gd__availability">DATOS DISPONIBLES</span>
+                  </div>
 
-                <p>{{ facade.focusErrorMessage() }}</p>
-              </div>
-            }
+                  <dl class="gd__metrics">
+                    <div>
+                      <dt>EDAD</dt>
+                      <dd data-testid="galaxy-detail-age">
+                        {{ formatAgeBillionYears(physical.ageBillionYears) }}
+                      </dd>
+                    </div>
 
-            <div
-              class="gd__boundary"
-              data-testid="galaxy-detail-focus-semantics"
-            >
-              <span>ALCANCE</span>
+                    <div>
+                      <dt>DIÁMETRO</dt>
+                      <dd data-testid="galaxy-detail-diameter">
+                        {{ formatDiameterLightYears(physical.diameterLightYears) }}
+                      </dd>
+                    </div>
 
-              <p>
-                Cambiar el foco actualiza únicamente el contexto persistido de
-                exploración. Si esta galaxia pertenece al historial reciente,
-                regresar valida primero esa relación persistida y conserva su
-                progreso local. Una galaxia conocida queda como mínimo en
-                Visitada; Catalogada y Confirmada conservan su estado exacto.
-                No se leen ni gastan PD y esta acción no representa ni afirma
-                un viaje físico o FTL.
-              </p>
+                    <div>
+                      <dt>MASA TOTAL</dt>
+                      <dd data-testid="galaxy-detail-total-mass">
+                        {{ formatSolarMasses(physical.totalMassSolarMasses) }}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>POBLACIÓN ESTELAR</dt>
+                      <dd data-testid="galaxy-detail-exact-population">
+                        {{ formatStellarPopulation(physical.stellarPopulation) }}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>METALICIDAD MEDIA</dt>
+                      <dd data-testid="galaxy-detail-metallicity">
+                        {{ formatMetallicitySolarRatio(physical.metallicitySolarRatio) }}
+                      </dd>
+                    </div>
+
+                    <div>
+                      <dt>FORMACIÓN ESTELAR</dt>
+                      <dd data-testid="galaxy-detail-star-formation-rate">
+                        {{ formatStarFormationRate(physical.starFormationRateSolarMassesPerYear) }}
+                      </dd>
+                    </div>
+                  </dl>
+                </section>
+
+                @if (model.scientificProfile.structure; as structure) {
+                  <div
+                    class="gd__confirmed-grid"
+                    data-testid="galaxy-detail-confirmed-science"
+                  >
+                    <section
+                      class="gd__section gd__section--deep"
+                      data-testid="galaxy-detail-structure"
+                      aria-labelledby="gd-structure-title"
+                    >
+                      <div class="gd__section-heading gd__section-heading--stacked">
+                        <div>
+                          <small>CAPA 04 / CONFIRMADA</small>
+                          <h3 id="gd-structure-title">Morfología física</h3>
+                        </div>
+                      </div>
+
+                      <dl class="gd__facts gd__facts--deep">
+                        <div>
+                          <dt>CONCENTRACIÓN CENTRAL</dt>
+                          <dd data-testid="galaxy-detail-central-concentration">
+                            {{ formatNormalizedIndex(structure.centralConcentration) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>ACHATAMIENTO</dt>
+                          <dd data-testid="galaxy-detail-flattening">
+                            {{ formatNormalizedIndex(structure.flattening) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>ASIMETRÍA</dt>
+                          <dd data-testid="galaxy-detail-asymmetry">
+                            {{ formatNormalizedIndex(structure.asymmetry) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>FUERZA DE BARRA</dt>
+                          <dd data-testid="galaxy-detail-bar-strength">
+                            {{ formatNormalizedIndex(structure.barStrength) }}
+                          </dd>
+                        </div>
+
+                        <div>
+                          <dt>BRAZOS ESPIRALES</dt>
+                          <dd data-testid="galaxy-detail-spiral-arm-count">
+                            {{ structure.spiralArmCount }}
+                          </dd>
+                        </div>
+                      </dl>
+                    </section>
+
+                    @if (model.scientificProfile.nucleus; as nucleus) {
+                      <section
+                        class="gd__section gd__section--deep gd__section--nucleus"
+                        data-testid="galaxy-detail-nucleus"
+                        aria-labelledby="gd-nucleus-title"
+                      >
+                        <div class="gd__section-heading gd__section-heading--stacked">
+                          <div>
+                            <small>CAPA 04 / NÚCLEO</small>
+                            <h3 id="gd-nucleus-title">Núcleo galáctico</h3>
+                          </div>
+                        </div>
+
+                        <dl class="gd__facts gd__facts--deep">
+                          <div>
+                            <dt>PRESENCIA</dt>
+                            <dd data-testid="galaxy-detail-nucleus-presence">
+                              {{ nucleus.present ? 'Confirmada' : 'No presente' }}
+                            </dd>
+                          </div>
+
+                          @if (nucleus.stateName; as stateName) {
+                            <div>
+                              <dt>ESTADO NUCLEAR</dt>
+                              <dd data-testid="galaxy-detail-nucleus-state">
+                                {{ nucleusStateLabel(stateName) }}
+                              </dd>
+                            </div>
+                          }
+
+                          <div class="gd__fact-wide">
+                            <dt>AGUJERO NEGRO SUPERMASIVO</dt>
+                            <dd data-testid="galaxy-detail-smbh">
+                              @if (nucleus.supermassiveBlackHoleMassSolarMasses; as smbhMass) {
+                                {{ formatSolarMasses(smbhMass) }}
+                              } @else {
+                                No asociado
+                              }
+                            </dd>
+                          </div>
+                        </dl>
+                      </section>
+                    }
+                  </div>
+                } @else {
+                  <section
+                    class="gd__lock gd__lock--confirmation"
+                    data-testid="galaxy-detail-confirmation-lock"
+                    aria-label="Estructura científica pendiente de confirmación"
+                  >
+                    <div class="gd__lock-mark" aria-hidden="true">
+                      <span>04</span>
+                    </div>
+
+                    <div class="gd__lock-copy">
+                      <small>SIGUIENTE CAPA CIENTÍFICA</small>
+                      <h3>Estructura y núcleo pendientes</h3>
+                      <p>
+                        La estructura normalizada y el estado nuclear exacto requieren
+                        que la galaxia alcance el estado Confirmada.
+                      </p>
+
+                      @if (canConfirm(model.scientificProfile.knowledgeState)) {
+                        <div class="gd__lock-actions">
+                          <button
+                            class="gd__action gd__action--primary gd__action--scientific"
+                            type="button"
+                            data-testid="galaxy-detail-confirm-action"
+                            [disabled]="facade.scientificActionPending() || !canAffordScientificAction(model.globalDiscoveryPoints, confirmDiscoveryPointCost)"
+                            (click)="confirmGalaxy()"
+                          >
+                            @if (facade.scientificActionPending()) {
+                              Confirmando…
+                            } @else {
+                              Confirmar galaxia · {{ formatBigInt(confirmDiscoveryPointCost) }} PD
+                            }
+                          </button>
+
+                          <p
+                            class="gd__action-explanation"
+                            data-testid="galaxy-detail-confirm-cost"
+                          >
+                            Coste científico: {{ formatBigInt(confirmDiscoveryPointCost) }} PD globales.
+                            Saldo disponible: {{ formatBigInt(model.globalDiscoveryPoints) }} PD.
+                            El gasto y CATALOGUED → CONFIRMED se confirman de forma atómica;
+                            no genera objetos, seeds ni Ground Truth adicional.
+                          </p>
+
+                          @if (!canAffordScientificAction(model.globalDiscoveryPoints, confirmDiscoveryPointCost)) {
+                            <p
+                              class="gd__action-explanation gd__action-explanation--locked"
+                              data-testid="galaxy-detail-confirm-insufficient-pd"
+                            >
+                              Faltan {{ formatBigInt(missingDiscoveryPoints(model.globalDiscoveryPoints, confirmDiscoveryPointCost)) }} PD para confirmar esta galaxia.
+                            </p>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <span class="gd__lock-state">CONFIRMADA</span>
+                  </section>
+                }
+              } @else {
+                <section
+                  class="gd__lock gd__lock--catalogue"
+                  data-testid="galaxy-detail-scientific-lock"
+                  aria-label="Propiedades físicas pendientes de catalogación"
+                >
+                  <div class="gd__lock-mark" aria-hidden="true">
+                    <span>03</span>
+                  </div>
+
+                  <div class="gd__lock-copy">
+                    <small>SIGUIENTE CAPA CIENTÍFICA</small>
+                    <h3>Propiedades físicas pendientes</h3>
+                    <p>
+                      Las magnitudes físicas exactas permanecen ocultas hasta que la
+                      galaxia alcance el estado Catalogada. La URL de esta ficha no
+                      materializa ni revela Ground Truth pendiente.
+                    </p>
+
+                    @if (canCatalogue(model.scientificProfile.knowledgeState)) {
+                      <div class="gd__lock-actions">
+                        <button
+                          class="gd__action gd__action--primary gd__action--scientific"
+                          type="button"
+                          data-testid="galaxy-detail-catalogue-action"
+                          [disabled]="facade.scientificActionPending() || !canAffordScientificAction(model.globalDiscoveryPoints, catalogueDiscoveryPointCost)"
+                          (click)="catalogueGalaxy()"
+                        >
+                          @if (facade.scientificActionPending()) {
+                            Catalogando…
+                          } @else {
+                            Catalogar galaxia · {{ formatBigInt(catalogueDiscoveryPointCost) }} PD
+                          }
+                        </button>
+
+                        <p
+                          class="gd__action-explanation"
+                          data-testid="galaxy-detail-catalogue-cost"
+                        >
+                          Coste científico: {{ formatBigInt(catalogueDiscoveryPointCost) }} PD globales.
+                          Saldo disponible: {{ formatBigInt(model.globalDiscoveryPoints) }} PD.
+                          El gasto y VISITED → CATALOGUED se confirman de forma atómica;
+                          no materializa sistemas, cuerpos ni objetos no descubiertos.
+                        </p>
+
+                        @if (!canAffordScientificAction(model.globalDiscoveryPoints, catalogueDiscoveryPointCost)) {
+                          <p
+                            class="gd__action-explanation gd__action-explanation--locked"
+                            data-testid="galaxy-detail-catalogue-insufficient-pd"
+                          >
+                            Faltan {{ formatBigInt(missingDiscoveryPoints(model.globalDiscoveryPoints, catalogueDiscoveryPointCost)) }} PD para catalogar esta galaxia.
+                          </p>
+                        }
+                      </div>
+                    } @else {
+                      <p
+                        class="gd__action-explanation gd__action-explanation--locked"
+                        data-testid="galaxy-detail-catalogue-prerequisite"
+                      >
+                        La acción se habilita cuando esta galaxia alcance exactamente
+                        el estado Visitada.
+                      </p>
+                    }
+                  </div>
+
+                  <span class="gd__lock-state">CATALOGADA</span>
+                </section>
+              }
             </div>
-          </section>
+
+            <aside
+              class="gd__rail"
+              aria-label="Exploración y navegación de la galaxia"
+            >
+              <section
+                class="gd__section gd__section--progress"
+                data-testid="galaxy-detail-progress"
+                aria-labelledby="gd-progress-title"
+              >
+                <div class="gd__section-heading gd__section-heading--stacked">
+                  <div>
+                    <small>TELEMETRÍA DE EXPLORACIÓN</small>
+                    <h3 id="gd-progress-title">Conocimiento persistido</h3>
+                  </div>
+                </div>
+
+                <div class="gd__progress-lead">
+                  <div>
+                    <span>SECTORES TOTALES</span>
+                    <strong data-testid="galaxy-detail-total-sectors">
+                      {{ formatBigInt(model.explorationTelemetry.totalSectors) }}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>PORCENTAJE EXPLORADO</span>
+                    <strong data-testid="galaxy-detail-explored-percentage">
+                      {{ formatExplorationPercentage(model.explorationTelemetry.exploredPercentageBasisPoints) }}
+                    </strong>
+                  </div>
+                </div>
+
+                <dl class="gd__rail-facts gd__rail-facts--inventory">
+                  <div>
+                    <dt>SECTORES</dt>
+                    <dd data-testid="galaxy-detail-known-sectors">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.sectors) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>SISTEMAS</dt>
+                    <dd data-testid="galaxy-detail-known-systems">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.systems) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>CÚMULOS</dt>
+                    <dd data-testid="galaxy-detail-known-star-clusters">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.starClusters) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>NEBULOSAS</dt>
+                    <dd data-testid="galaxy-detail-known-nebulae">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.nebulae) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>EXTREMOS</dt>
+                    <dd data-testid="galaxy-detail-known-extreme-objects">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.extremeObjects) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>PLANETAS</dt>
+                    <dd data-testid="galaxy-detail-known-bodies">
+                      <span data-testid="galaxy-detail-known-planets">
+                        {{ formatBigInt(model.explorationTelemetry.inventory.planets) }}
+                      </span>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>LUNAS</dt>
+                    <dd data-testid="galaxy-detail-known-moons">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.moons) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>ASTEROIDES</dt>
+                    <dd data-testid="galaxy-detail-known-asteroids">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.asteroids) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>COMETAS</dt>
+                    <dd data-testid="galaxy-detail-known-comets">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.comets) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>TNO</dt>
+                    <dd data-testid="galaxy-detail-known-tno">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.transNeptunianObjects) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>CAPTURADOS</dt>
+                    <dd data-testid="galaxy-detail-known-captured">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.capturedObjects) }}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>CIVILIZACIONES</dt>
+                    <dd data-testid="galaxy-detail-known-civilizations">
+                      {{ formatBigInt(model.explorationTelemetry.inventory.civilizations) }}
+                    </dd>
+                  </div>
+                </dl>
+
+                <!--
+                  Legacy 11.4 selectors remain non-rendered so historical e2e
+                  contracts can validate the unchanged underlying statistics while
+                  26.1 presents the new sector/inventory telemetry requested by V2.
+                -->
+                <div hidden aria-hidden="true">
+                  <span data-testid="galaxy-detail-progress-units">
+                    {{ model.statistics.progressUnits }}
+                  </span>
+                  <span data-testid="galaxy-detail-known-records">
+                    {{ model.statistics.knownRecords }}
+                  </span>
+                  <span data-testid="galaxy-detail-known-galactic-objects">
+                    {{ model.statistics.targetCounts.galacticObjects }}
+                  </span>
+                  <span data-testid="galaxy-detail-state-detected">
+                    {{ model.statistics.stateCounts.detected }}
+                  </span>
+                  <span data-testid="galaxy-detail-state-discovered">
+                    {{ model.statistics.stateCounts.discovered }}
+                  </span>
+                  <span data-testid="galaxy-detail-state-visited">
+                    {{ model.statistics.stateCounts.visited }}
+                  </span>
+                  <span data-testid="galaxy-detail-state-catalogued">
+                    {{ model.statistics.stateCounts.catalogued }}
+                  </span>
+                  <span data-testid="galaxy-detail-state-confirmed">
+                    {{ model.statistics.stateCounts.confirmed }}
+                  </span>
+                  <span data-testid="galaxy-detail-progress-no-percentage">
+                    No son PD ni un porcentaje
+                  </span>
+                </div>
+              </section>
+
+              <section
+                class="gd__section gd__section--focus"
+                data-testid="galaxy-detail-focus-control"
+                aria-labelledby="gd-focus-title"
+              >
+                <div class="gd__section-heading gd__section-heading--stacked">
+                  <div>
+                    <small>NAVEGACIÓN</small>
+                    <h3 id="gd-focus-title">Contexto galáctico activo</h3>
+                  </div>
+                </div>
+
+                @if (model.isCurrentFocus) {
+                  <div
+                    class="gd__focus-status"
+                    data-testid="galaxy-detail-focus-current"
+                  >
+                    <span class="gd__focus-dot" aria-hidden="true"></span>
+                    <div>
+                      <strong>EN FOCO</strong>
+                      <p>
+                        Esta galaxia ya define el contexto activo de Home,
+                        Exploración y Mapa galáctico.
+                      </p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="gd__actions">
+                    <button
+                      class="gd__action gd__action--primary gd__action--wide"
+                      type="button"
+                      data-testid="galaxy-detail-change-focus-action"
+                      [disabled]="facade.focusPending()"
+                      (click)="changeFocus()"
+                    >
+                      @if (facade.focusPending()) {
+                        Actualizando foco…
+                      } @else if (model.isRecentFocus) {
+                        Regresar a esta galaxia
+                      } @else {
+                        Establecer como foco de exploración
+                      }
+                    </button>
+                  </div>
+                }
+
+                @if (facade.focusSuccessMessage()) {
+                  <div
+                    class="gd__note gd__note--success"
+                    data-testid="galaxy-detail-focus-success"
+                    role="status"
+                  >
+                    <span>ACTUALIZADO</span>
+                    <p>{{ facade.focusSuccessMessage() }}</p>
+                  </div>
+                }
+
+                @if (facade.focusErrorMessage()) {
+                  <div
+                    class="gd__note gd__note--error"
+                    data-testid="galaxy-detail-focus-error"
+                    role="alert"
+                  >
+                    <span>NO APLICADO</span>
+                    <p>{{ facade.focusErrorMessage() }}</p>
+                  </div>
+                }
+
+                <div
+                  class="gd__note gd__note--muted"
+                  data-testid="galaxy-detail-focus-semantics"
+                >
+                  <span>ALCANCE</span>
+                  <p>
+                    Cambiar el foco actualiza únicamente el contexto persistido de
+                    exploración. Si esta galaxia pertenece al historial reciente,
+                    regresar valida primero esa relación persistida y conserva su
+                    progreso local. Una galaxia conocida queda como mínimo en
+                    Visitada; Catalogada y Confirmada conservan su estado exacto.
+                    No se leen ni gastan PD y esta acción no representa ni afirma
+                    un viaje físico o FTL.
+                  </p>
+                </div>
+              </section>
+            </aside>
+          </div>
 
           <section
             class="gd__boundary"
             data-testid="galaxy-detail-boundary"
           >
-            <span>11.6</span>
+            <span>26.1 · V2</span>
 
             <p>
-              11.6 expone el historial reciente persistido como una ruta real
-              de regreso. Volver a una galaxia anterior reutiliza la transición
-              atómica de foco de 11.5, mantiene sus descubrimientos y progreso
-              local y actualiza el historial MRU sin duplicados. La transición
-              visual de 11.7 se ejecuta únicamente después de confirmar el nuevo foco persistido.
-            </p>
-          </section>
-
-          <section
-            class="gd__boundary"
-            data-testid="galaxy-detail-transition-boundary"
-          >
-            <span>11.7</span>
-
-            <p>
-              El cambio confirmado muestra una reorientación visual del contexto
-              científico entre el foco anterior y el nuevo foco activo. Es una
-              transición de interfaz: no modela distancia, desplazamiento físico,
-              velocidad ni viaje FTL.
+              La ficha científica reutiliza la ruta estable de galaxia y proyecta
+              únicamente el conocimiento ya persistido. Catalogada habilita las
+              magnitudes físicas base; Confirmada añade estructura y núcleo. La
+              consulta no cambia DiscoveryState, no gasta PD y no expone Ground
+              Truth oculto mediante navegación directa.
             </p>
           </section>
 
           <nav
-            class="gd__actions"
+            class="gd__actions gd__actions--footer"
             aria-label="Navegación de la ficha de galaxia"
           >
             <a

@@ -196,7 +196,9 @@ export interface ExternalGalaxySearchRuntime {
  * One external search is committed atomically with its anti-blocking and
  * progression-gate state:
  *
- * - one non-spendable opportunity is earned per 100 global PD;
+ * - one non-spendable opportunity is earned per 100 global PD reached;
+ * - earned opportunities are checkpointed by a monotonic high-water mark, so
+ *   later scientific PD spending cannot revoke them;
  * - unused opportunities accumulate persistently and the runtime consumes only
  *   one opportunity per search;
  * - 7.4/7.5 provide the probability profile;
@@ -285,6 +287,8 @@ export class DexieExternalGalaxySearchRuntime
                 .consumedSearchOpportunities,
               persistedSearchState
                 .lastAnnouncedEarnedSearchOpportunities,
+              persistedSearchState
+                .earnedSearchOpportunitiesHighWatermark,
             );
 
           return Object.freeze({
@@ -368,15 +372,26 @@ export class DexieExternalGalaxySearchRuntime
                 ),
             ]);
 
-          const earnedSearchOpportunities =
-            globalDiscoveryPoints /
-            ExplorationBalanceV1
-              .externalGalaxySearchDiscoveryPointStep;
+          const opportunity =
+            evaluateSearchOpportunity(
+              globalDiscoveryPoints,
+              persistedSearchState
+                .consumedSearchOpportunities,
+              persistedSearchState
+                .lastAnnouncedEarnedSearchOpportunities,
+              persistedSearchState
+                .earnedSearchOpportunitiesHighWatermark,
+            );
 
           if (
-            earnedSearchOpportunities <=
-            persistedSearchState
-              .lastAnnouncedEarnedSearchOpportunities
+            opportunity
+              .earnedSearchOpportunities <=
+              persistedSearchState
+                .lastAnnouncedEarnedSearchOpportunities &&
+            opportunity
+              .earnedSearchOpportunities <=
+              persistedSearchState
+                .earnedSearchOpportunitiesHighWatermark
           ) {
             return;
           }
@@ -388,7 +403,11 @@ export class DexieExternalGalaxySearchRuntime
               {
                 ...persistedSearchState,
                 lastAnnouncedEarnedSearchOpportunities:
-                  earnedSearchOpportunities,
+                  opportunity
+                    .earnedSearchOpportunities,
+                earnedSearchOpportunitiesHighWatermark:
+                  opportunity
+                    .earnedSearchOpportunities,
               },
             );
         },
@@ -462,6 +481,8 @@ export class DexieExternalGalaxySearchRuntime
           .consumedSearchOpportunities,
         persistedSearchState
           .lastAnnouncedEarnedSearchOpportunities,
+        persistedSearchState
+          .earnedSearchOpportunitiesHighWatermark,
       );
 
     if (
@@ -533,6 +554,10 @@ export class DexieExternalGalaxySearchRuntime
             lastAnnouncedEarnedSearchOpportunities:
               persistedSearchState
                 .lastAnnouncedEarnedSearchOpportunities,
+
+            earnedSearchOpportunitiesHighWatermark:
+              opportunity
+                .earnedSearchOpportunities,
           },
         );
 
@@ -653,6 +678,15 @@ export class DexieExternalGalaxySearchRuntime
         );
     }
 
+    const earnedSearchOpportunitiesAfterReward =
+      maxBigInt(
+        opportunity
+          .earnedSearchOpportunities,
+        globalDiscoveryPointsAfter /
+          ExplorationBalanceV1
+            .externalGalaxySearchDiscoveryPointStep,
+      );
+
     await this
       .searchStateRepository
       .setState(
@@ -669,6 +703,9 @@ export class DexieExternalGalaxySearchRuntime
           lastAnnouncedEarnedSearchOpportunities:
             persistedSearchState
               .lastAnnouncedEarnedSearchOpportunities,
+
+          earnedSearchOpportunitiesHighWatermark:
+            earnedSearchOpportunitiesAfterReward,
         },
       );
 
@@ -758,6 +795,9 @@ function evaluateSearchOpportunity(
 
   lastAnnouncedEarnedSearchOpportunities:
     bigint,
+
+  earnedSearchOpportunitiesHighWatermark:
+    bigint,
 ): ExternalGalaxySearchOpportunity {
 
   if (
@@ -793,31 +833,32 @@ function evaluateSearchOpportunity(
     );
   }
 
+  if (
+    earnedSearchOpportunitiesHighWatermark <
+      0n ||
+    earnedSearchOpportunitiesHighWatermark >
+      SIGNED_LONG_MAX
+  ) {
+    throw new RangeError(
+      'earnedSearchOpportunitiesHighWatermark must belong to the non-negative signed-Long range.',
+    );
+  }
+
   const searchDiscoveryPointStep =
     ExplorationBalanceV1
       .externalGalaxySearchDiscoveryPointStep;
 
-  const earnedSearchOpportunities =
+  const currentBalanceEarnedSearchOpportunities =
     globalDiscoveryPoints /
     searchDiscoveryPointStep;
 
-  if (
-    consumedSearchOpportunities >
-    earnedSearchOpportunities
-  ) {
-    throw new RangeError(
-      'Consumed external-galaxy search opportunities cannot exceed earned opportunities.',
+  const earnedSearchOpportunities =
+    maxBigInt(
+      currentBalanceEarnedSearchOpportunities,
+      earnedSearchOpportunitiesHighWatermark,
+      consumedSearchOpportunities,
+      lastAnnouncedEarnedSearchOpportunities,
     );
-  }
-
-  if (
-    lastAnnouncedEarnedSearchOpportunities >
-    earnedSearchOpportunities
-  ) {
-    throw new RangeError(
-      'Announced external-galaxy search opportunities cannot exceed earned opportunities.',
-    );
-  }
 
   const availableSearchOpportunities =
     earnedSearchOpportunities -
@@ -846,11 +887,38 @@ function evaluateSearchOpportunity(
     nextSearchOpportunityThreshold,
 
     discoveryPointsUntilNextOpportunity:
-      nextSearchOpportunityThreshold -
-      globalDiscoveryPoints,
+      nextSearchOpportunityThreshold >
+        globalDiscoveryPoints
+        ? nextSearchOpportunityThreshold -
+            globalDiscoveryPoints
+        : 0n,
 
     searchDiscoveryPointStep,
   });
+}
+
+function maxBigInt(
+  ...values:
+    readonly bigint[]
+): bigint {
+
+  let maximum =
+    0n;
+
+  for (
+    const value
+    of values
+  ) {
+    if (
+      value >
+      maximum
+    ) {
+      maximum =
+        value;
+    }
+  }
+
+  return maximum;
 }
 
 function collectKnownGalaxyIndices(
@@ -973,3 +1041,5 @@ function createExternalGalaxySearchRuntime():
     ),
   );
 }
+
+

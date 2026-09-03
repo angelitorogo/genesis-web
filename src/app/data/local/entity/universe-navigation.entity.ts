@@ -44,8 +44,9 @@ export interface UniverseNavigationEntity {
    * Number of extragalactic-search opportunities already consumed.
    *
    * V1 earns one non-spendable opportunity per 100 global Discovery Points.
-   * Earned opportunities accumulate; therefore the current stock is derived as
-   * floor(globalPD / 100) - consumedOpportunities.
+   * Earned opportunities accumulate even after point-26.1 scientific spending;
+   * therefore current stock is derived from the monotonic earned-opportunity
+   * high-water mark minus consumedOpportunities.
    *
    * Existing rows created before this refinement omit the property and are
    * interpreted as zero consumed opportunities, so no IndexedDB schema
@@ -66,6 +67,21 @@ export interface UniverseNavigationEntity {
   readonly externalGalaxySearchLastAnnouncedEarnedOpportunities?:
     string;
 
+  /**
+   * Highest number of extragalactic-search opportunities ever earned.
+   *
+   * Unlike the current spendable PD balance, this is a monotonic progression
+   * high-water mark. Galaxy scientific spending introduced in point 26.1 must
+   * never revoke search opportunities that were already earned.
+   *
+   * Existing rows omit the field. They are repaired conservatively from the
+   * already-consumed and already-announced opportunity counters.
+   */
+  readonly externalGalaxySearchEarnedOpportunitiesHighWatermark?:
+    string;
+
   readonly updatedAtEpochMs:
     number;
 }
+
+

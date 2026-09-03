@@ -736,6 +736,9 @@ describe(
 
               lastAnnouncedEarnedSearchOpportunities:
                 7n,
+
+              earnedSearchOpportunitiesHighWatermark:
+                7n,
             },
           );
 
@@ -851,6 +854,9 @@ describe(
 
               lastAnnouncedEarnedSearchOpportunities:
                 4n,
+
+              earnedSearchOpportunitiesHighWatermark:
+                4n,
             },
           );
 
@@ -895,6 +901,161 @@ describe(
             .lastAnnouncedEarnedSearchOpportunities,
         ).toBe(
           4n,
+        );
+
+        expect(
+          preserved
+            .earnedSearchOpportunitiesHighWatermark,
+        ).toBe(
+          4n,
+        );
+      },
+    );
+
+    it(
+      'should repair a legacy post-spend state instead of revoking already-consumed opportunities',
+      async () => {
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            425n,
+          );
+
+        const navigationEntity =
+          await database
+            .navigation
+            .get([
+              generationKey
+                .universeSeed
+                .serialize(),
+              generationKey
+                .generatorVersion
+                .code,
+            ]);
+
+        expect(
+          navigationEntity,
+        ).toBeDefined();
+
+        if (
+          navigationEntity ===
+          undefined
+        ) {
+          throw new Error(
+            'Navigation fixture must exist.',
+          );
+        }
+
+        const legacyNavigationEntity =
+          {
+            ...navigationEntity,
+          };
+
+        delete legacyNavigationEntity
+          .externalGalaxySearchEarnedOpportunitiesHighWatermark;
+
+        await database
+          .navigation
+          .put({
+            ...legacyNavigationEntity,
+            externalGalaxySearchConsumedOpportunities:
+              '6',
+            externalGalaxySearchLastAnnouncedEarnedOpportunities:
+              '5',
+          });
+
+        const status =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          status
+            .earnedSearchOpportunities,
+        ).toBe(
+          6n,
+        );
+
+        expect(
+          status
+            .consumedSearchOpportunities,
+        ).toBe(
+          6n,
+        );
+
+        expect(
+          status
+            .availableSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          status
+            .nextSearchOpportunityThreshold,
+        ).toBe(
+          700n,
+        );
+
+        expect(
+          status
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          275n,
+        );
+      },
+    );
+
+    it(
+      'should keep unused earned opportunities after the spendable PD balance drops',
+      async () => {
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            425n,
+          );
+
+        await searchStateRepository
+          .setState(
+            generationKey,
+            {
+              consecutiveFailedSearches:
+                0n,
+              consumedSearchOpportunities:
+                4n,
+              lastAnnouncedEarnedSearchOpportunities:
+                6n,
+              earnedSearchOpportunitiesHighWatermark:
+                6n,
+            },
+          );
+
+        const status =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          status
+            .earnedSearchOpportunities,
+        ).toBe(
+          6n,
+        );
+
+        expect(
+          status
+            .availableSearchOpportunities,
+        ).toBe(
+          2n,
+        );
+
+        expect(
+          status
+            .searchOpportunityAvailable,
+        ).toBe(
+          true,
         );
       },
     );
@@ -1016,3 +1177,5 @@ describe(
     );
   },
 );
+
+

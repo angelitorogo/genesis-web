@@ -22,6 +22,9 @@ export interface PersistedExternalGalaxySearchState {
 
   readonly lastAnnouncedEarnedSearchOpportunities:
     bigint;
+
+  readonly earnedSearchOpportunitiesHighWatermark:
+    bigint;
 }
 
 export class DexieExternalGalaxySearchStateRepository {
@@ -61,6 +64,39 @@ export class DexieExternalGalaxySearchStateRepository {
           generatorVersionCode,
         ]);
 
+    const consumedSearchOpportunities =
+      entity
+        ?.externalGalaxySearchConsumedOpportunities ===
+      undefined
+        ? 0n
+        : parseNonNegativeLongDecimal(
+            entity
+              .externalGalaxySearchConsumedOpportunities,
+            'externalGalaxySearchConsumedOpportunities',
+          );
+
+    const lastAnnouncedEarnedSearchOpportunities =
+      entity
+        ?.externalGalaxySearchLastAnnouncedEarnedOpportunities ===
+      undefined
+        ? 0n
+        : parseNonNegativeLongDecimal(
+            entity
+              .externalGalaxySearchLastAnnouncedEarnedOpportunities,
+            'externalGalaxySearchLastAnnouncedEarnedOpportunities',
+          );
+
+    const persistedHighWatermark =
+      entity
+        ?.externalGalaxySearchEarnedOpportunitiesHighWatermark ===
+      undefined
+        ? null
+        : parseNonNegativeLongDecimal(
+            entity
+              .externalGalaxySearchEarnedOpportunitiesHighWatermark,
+            'externalGalaxySearchEarnedOpportunitiesHighWatermark',
+          );
+
     return Object.freeze({
       consecutiveFailedSearches:
         entity
@@ -73,27 +109,16 @@ export class DexieExternalGalaxySearchStateRepository {
               'externalGalaxySearchConsecutiveFailures',
             ),
 
-      consumedSearchOpportunities:
-        entity
-          ?.externalGalaxySearchConsumedOpportunities ===
-        undefined
-          ? 0n
-          : parseNonNegativeLongDecimal(
-              entity
-                .externalGalaxySearchConsumedOpportunities,
-              'externalGalaxySearchConsumedOpportunities',
-            ),
+      consumedSearchOpportunities,
 
-      lastAnnouncedEarnedSearchOpportunities:
-        entity
-          ?.externalGalaxySearchLastAnnouncedEarnedOpportunities ===
-        undefined
-          ? 0n
-          : parseNonNegativeLongDecimal(
-              entity
-                .externalGalaxySearchLastAnnouncedEarnedOpportunities,
-              'externalGalaxySearchLastAnnouncedEarnedOpportunities',
-            ),
+      lastAnnouncedEarnedSearchOpportunities,
+
+      earnedSearchOpportunitiesHighWatermark:
+        persistedHighWatermark ??
+        maxBigInt(
+          consumedSearchOpportunities,
+          lastAnnouncedEarnedSearchOpportunities,
+        ),
     });
   }
 
@@ -119,6 +144,22 @@ export class DexieExternalGalaxySearchStateRepository {
       state.lastAnnouncedEarnedSearchOpportunities,
       'lastAnnouncedEarnedSearchOpportunities',
     );
+
+    assertNonNegativeLong(
+      state.earnedSearchOpportunitiesHighWatermark,
+      'earnedSearchOpportunitiesHighWatermark',
+    );
+
+    if (
+      state.earnedSearchOpportunitiesHighWatermark <
+        state.consumedSearchOpportunities ||
+      state.earnedSearchOpportunitiesHighWatermark <
+        state.lastAnnouncedEarnedSearchOpportunities
+    ) {
+      throw new RangeError(
+        'External-galaxy earned-opportunity high-water mark must cover consumed and announced opportunities.',
+      );
+    }
 
     await ensureUniverseExists(
       this.database,
@@ -182,6 +223,13 @@ export class DexieExternalGalaxySearchStateRepository {
               10,
             ),
 
+        externalGalaxySearchEarnedOpportunitiesHighWatermark:
+          state
+            .earnedSearchOpportunitiesHighWatermark
+            .toString(
+              10,
+            ),
+
         updatedAtEpochMs:
           this.clock(),
       });
@@ -221,4 +269,18 @@ export class DexieExternalGalaxySearchStateRepository {
       },
     );
   }
+}
+
+function maxBigInt(
+  left:
+    bigint,
+
+  right:
+    bigint,
+): bigint {
+
+  return left >
+    right
+    ? left
+    : right;
 }

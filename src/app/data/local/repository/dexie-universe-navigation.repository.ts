@@ -153,6 +153,10 @@ export class DexieUniverseNavigationRepository
       existing
         ?.externalGalaxySearchLastAnnouncedEarnedOpportunities;
 
+    const externalGalaxySearchEarnedOpportunitiesHighWatermark =
+      existing
+        ?.externalGalaxySearchEarnedOpportunitiesHighWatermark;
+
     await this.database
       .navigation
       .put({
@@ -200,8 +204,17 @@ export class DexieUniverseNavigationRepository
               externalGalaxySearchLastAnnouncedEarnedOpportunities,
             }),
 
+        ...(externalGalaxySearchEarnedOpportunitiesHighWatermark ===
+        undefined
+          ? {}
+          : {
+              externalGalaxySearchEarnedOpportunitiesHighWatermark,
+            }),
+
         updatedAtEpochMs:
           this.clock(),
       });
   }
 }
+
+

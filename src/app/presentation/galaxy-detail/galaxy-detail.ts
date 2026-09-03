@@ -21,6 +21,10 @@ import {
 } from '../../domain/exploration/galaxy-knowledge-state';
 
 import {
+  type GalaxyScientificNucleusStateName,
+} from '../../domain/exploration/galaxy-scientific-profile';
+
+import {
   ExternalGalaxyMorphologyHint,
   type ExternalGalaxyMorphologyHint as ExternalGalaxyMorphologyHintValue,
   ExternalGalaxyNuclearActivityHint,
@@ -34,6 +38,12 @@ import {
 import {
   GalaxyType,
 } from '../../domain/universe/galaxy-type';
+
+import {
+  GALAXY_CATALOGUE_DISCOVERY_POINT_COST,
+  GALAXY_CONFIRM_DISCOVERY_POINT_COST,
+} from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
+
 
 import {
   GenesisScreen,
@@ -72,6 +82,12 @@ export class GalaxyDetailPage
       GalaxyDetailFacade,
     );
 
+  readonly catalogueDiscoveryPointCost =
+    GALAXY_CATALOGUE_DISCOVERY_POINT_COST;
+
+  readonly confirmDiscoveryPointCost =
+    GALAXY_CONFIRM_DISCOVERY_POINT_COST;
+
   private readonly route =
     inject(
       ActivatedRoute,
@@ -99,6 +115,73 @@ export class GalaxyDetailPage
     void this
       .facade
       .changeFocusToDisplayedGalaxy();
+  }
+
+  catalogueGalaxy():
+    void {
+
+    void this
+      .facade
+      .catalogueDisplayedGalaxy();
+  }
+
+  confirmGalaxy():
+    void {
+
+    void this
+      .facade
+      .confirmDisplayedGalaxy();
+  }
+
+  canCatalogue(
+    state:
+      DiscoveryStateValue,
+  ): boolean {
+
+    return DiscoveryState
+      .fromCode(
+        state.code,
+      ) ===
+      DiscoveryState.VISITED;
+  }
+
+  canConfirm(
+    state:
+      DiscoveryStateValue,
+  ): boolean {
+
+    return DiscoveryState
+      .fromCode(
+        state.code,
+      ) ===
+      DiscoveryState.CATALOGUED;
+  }
+
+  canAffordScientificAction(
+    globalDiscoveryPoints:
+      bigint,
+
+    cost:
+      bigint,
+  ): boolean {
+
+    return globalDiscoveryPoints >=
+      cost;
+  }
+
+  missingDiscoveryPoints(
+    globalDiscoveryPoints:
+      bigint,
+
+    cost:
+      bigint,
+  ): bigint {
+
+    return globalDiscoveryPoints >=
+      cost
+      ? 0n
+      : cost -
+          globalDiscoveryPoints;
   }
 
   galaxyStateLabel(
@@ -341,4 +424,181 @@ export class GalaxyDetailPage
 
     return 'Candidata a actividad nuclear extrema';
   }
+  formatAgeBillionYears(
+    value:
+      number,
+  ): string {
+    return `${formatDecimal(value, 2)} Ga`;
+  }
+
+  formatDiameterLightYears(
+    value:
+      number,
+  ): string {
+    return `${formatInteger(value)} años luz`;
+  }
+
+  formatSolarMasses(
+    value:
+      number,
+  ): string {
+    return `${formatScientific(value)} M☉`;
+  }
+
+  formatStellarPopulation(
+    value:
+      bigint,
+  ): string {
+    return `${new Intl.NumberFormat('es-ES').format(value)} estrellas`;
+  }
+
+  formatMetallicitySolarRatio(
+    value:
+      number,
+  ): string {
+    return `${formatDecimal(value, 3)} Z☉`;
+  }
+
+  formatStarFormationRate(
+    value:
+      number,
+  ): string {
+    return `${formatDecimal(value, 3)} M☉/año`;
+  }
+
+  formatNormalizedIndex(
+    value:
+      number,
+  ): string {
+    return formatDecimal(
+      value,
+      3,
+    );
+  }
+
+  formatBigInt(
+    value:
+      bigint | null,
+  ): string {
+
+    if (
+      value ===
+      null
+    ) {
+      return '—';
+    }
+
+    return new Intl.NumberFormat(
+      'es-ES',
+    ).format(
+      value,
+    );
+  }
+
+  formatExplorationPercentage(
+    basisPoints:
+      bigint | null,
+  ): string {
+
+    if (
+      basisPoints ===
+      null
+    ) {
+      return '—';
+    }
+
+    const integerPart =
+      basisPoints /
+      100n;
+
+    const decimalPart =
+      (
+        basisPoints %
+        100n
+      )
+        .toString()
+        .padStart(
+          2,
+          '0',
+        );
+
+    return `${integerPart.toString()},${decimalPart} %`;
+  }
+
+  nucleusStateLabel(
+    stateName:
+      GalaxyScientificNucleusStateName,
+  ): string {
+    if (
+      stateName ===
+        'QUIESCENT'
+    ) {
+      return 'Quiescente';
+    }
+
+    if (
+      stateName ===
+        'AGN'
+    ) {
+      return 'Núcleo galáctico activo (AGN)';
+    }
+
+    return 'Cuásar';
+  }
+
+}
+
+function formatDecimal(
+  value: number,
+  maximumFractionDigits: number,
+): string {
+  return new Intl.NumberFormat(
+    'es-ES',
+    {
+      minimumFractionDigits: 0,
+      maximumFractionDigits,
+    },
+  ).format(
+    value,
+  );
+}
+
+function formatInteger(
+  value: number,
+): string {
+  return new Intl.NumberFormat(
+    'es-ES',
+    {
+      maximumFractionDigits: 0,
+    },
+  ).format(
+    value,
+  );
+}
+
+function formatScientific(
+  value: number,
+): string {
+  const [
+    mantissaRaw,
+    exponentRaw,
+  ] = value
+    .toExponential(
+      3,
+    )
+    .split(
+      'e',
+    );
+
+  const mantissa =
+    Number(
+      mantissaRaw,
+    );
+
+  const exponent =
+    Number(
+      exponentRaw,
+    );
+
+  return `${formatDecimal(mantissa, 3)} × 10^${exponent}`;
 }

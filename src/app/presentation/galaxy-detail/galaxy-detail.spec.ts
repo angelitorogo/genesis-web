@@ -42,9 +42,18 @@ import {
 } from '../../domain/universe/universe-seed';
 
 import {
+  GalaxyScientificStateTransitionEngine,
+} from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
+
+import {
   GALAXY_FOCUS_RUNTIME,
   type GalaxyFocusRuntime,
 } from '../runtime/galaxy-focus.runtime';
+
+import {
+  GALAXY_SCIENTIFIC_KNOWLEDGE_RUNTIME,
+  type GalaxyScientificKnowledgeRuntime,
+} from '../runtime/galaxy-scientific-knowledge.runtime';
 
 import {
   GENESIS_LOCAL_REPOSITORIES,
@@ -153,10 +162,6 @@ describe(
           galaxyDiscoveriesFromStates(
             states,
           ),
-
-      recentGalaxyIndices:
-        readonly bigint[] =
-          [],
     ): GenesisLocalRepositories {
 
       return {
@@ -183,7 +188,8 @@ describe(
             return {
               activeGalaxyIndex,
 
-              recentGalaxyIndices,
+              recentGalaxyIndices:
+                [],
             };
           },
 
@@ -196,9 +202,7 @@ describe(
 
         pointsRepository: {
           async getGlobalDiscoveryPoints() {
-            throw new Error(
-              '11.5 must not read global PD.',
-            );
+            return 1000n;
           },
 
           async setGlobalDiscoveryPoints() {
@@ -284,7 +288,17 @@ describe(
 
             async returnToRecentGalaxy() {
               throw new Error(
-                '11.6 return mutation was not expected in this test.',
+                '11.6 return path was not expected in this test.',
+              );
+            },
+          },
+
+      scientificRuntime:
+        GalaxyScientificKnowledgeRuntime =
+          {
+            async commit() {
+              throw new Error(
+                '26.1 scientific milestone mutation was not expected in this test.',
               );
             },
           },
@@ -336,12 +350,20 @@ describe(
             useValue:
               focusRuntime,
           },
+
+          {
+            provide:
+              GALAXY_SCIENTIFIC_KNOWLEDGE_RUNTIME,
+
+            useValue:
+              scientificRuntime,
+          },
         ],
       });
     }
 
     it(
-      'should load the default B5 origin galaxy with its own bootstrap statistics without reading PD or changing focus',
+      'should load the default B5 origin galaxy with its bootstrap statistics and global PD affordability without changing focus',
       async () => {
         configure(
           '0',
@@ -383,6 +405,19 @@ describe(
 
         expect(
           model
+            ?.scientificProfile
+            .physicalProperties,
+        ).toBeNull();
+
+        expect(
+          model
+            ?.globalDiscoveryPoints,
+        ).toBe(
+          1000n,
+        );
+
+        expect(
+          model
             ?.statistics
             .progressUnits,
         ).toBe(
@@ -407,6 +442,31 @@ describe(
 
         expect(
           model
+            ?.explorationTelemetry
+            .totalSectors,
+        ).toBe(
+          20_449n,
+        );
+
+        expect(
+          model
+            ?.explorationTelemetry
+            .exploredPercentageBasisPoints,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          model
+            ?.explorationTelemetry
+            .inventory
+            .sectors,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          model
             ?.isCurrentFocus,
         ).toBe(true);
 
@@ -417,19 +477,14 @@ describe(
 
         expect(
           model
-            ?.isRecentFocus,
-        ).toBe(false);
-
-        expect(
-          model
             ?.isOriginGalaxy,
         ).toBe(true);
       },
-      30_000,
+      15_000,
     );
 
     it(
-      'should render the point-11.6 profile, local progress and current-focus control',
+      'should render the 26.1 V2 scientific hierarchy while keeping DISCOVERED physical values locked',
       async () => {
         configure(
           '0',
@@ -463,6 +518,32 @@ describe(
             '[data-testid="galaxy-detail-page"]',
           ),
         ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-visual"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-science-layout"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-science-summary"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-knowledge-ladder"]',
+          )?.textContent,
+        ).toContain(
+          'Requiere Catalogada',
+        );
 
         expect(
           element.querySelector(
@@ -530,24 +611,52 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="galaxy-detail-scientific-lock"]',
+          )?.textContent,
+        ).toContain(
+          'Catalogada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-action"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-prerequisite"]',
+          )?.textContent,
+        ).toContain(
+          'Visitada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-physical-properties"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
             '[data-testid="galaxy-detail-progress"]',
           ),
         ).toBeTruthy();
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-progress-units"]',
+            '[data-testid="galaxy-detail-total-sectors"]',
           )?.textContent,
         ).toContain(
-          '2',
+          '20.449',
         );
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-known-records"]',
+            '[data-testid="galaxy-detail-explored-percentage"]',
           )?.textContent,
         ).toContain(
-          '1',
+          '0,00 %',
         );
 
         expect(
@@ -558,20 +667,40 @@ describe(
           '0',
         );
 
-        expect(
-          element.querySelector(
-            '[data-testid="galaxy-detail-state-discovered"]',
-          )?.textContent,
-        ).toContain(
-          '1',
-        );
+        for (
+          const testId
+          of [
+            'galaxy-detail-known-star-clusters',
+            'galaxy-detail-known-nebulae',
+            'galaxy-detail-known-extreme-objects',
+            'galaxy-detail-known-planets',
+            'galaxy-detail-known-moons',
+            'galaxy-detail-known-asteroids',
+            'galaxy-detail-known-comets',
+            'galaxy-detail-known-tno',
+            'galaxy-detail-known-captured',
+            'galaxy-detail-known-civilizations',
+          ]
+        ) {
+          expect(
+            element.querySelector(
+              `[data-testid="${testId}"]`,
+            ),
+          ).toBeTruthy();
+        }
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-progress-no-percentage"]',
+            '.gd__distribution',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-progress"]',
           )?.textContent,
-        ).toContain(
-          'No son PD ni un porcentaje',
+        ).not.toContain(
+          'Las unidades son la suma estructural',
         );
 
         expect(
@@ -617,10 +746,10 @@ describe(
             '[data-testid="galaxy-detail-boundary"]',
           )?.textContent,
         ).toContain(
-          '11.6',
+          '26.1',
         );
       },
-      30_000,
+      15_000,
     );
 
     it(
@@ -795,8 +924,72 @@ describe(
           confirmed:
             1n,
         });
+
+        const telemetry =
+          facade
+            .model()
+            ?.explorationTelemetry;
+
+        expect(
+          telemetry
+            ?.totalSectors,
+        ).toBe(
+          20_449n,
+        );
+
+        expect(
+          telemetry
+            ?.inventory
+            .sectors,
+        ).toBe(
+          1n,
+        );
+        expect(
+          telemetry
+            ?.inventory
+            .systems,
+        ).toBe(
+          1n,
+        );
+        expect(
+          telemetry
+            ?.inventory
+            .planets,
+        ).toBe(
+          1n,
+        );
+        expect(
+          telemetry
+            ?.inventory
+            .civilizations,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          (
+            telemetry
+              ?.inventory
+              .starClusters ??
+            0n
+          ) +
+          (
+            telemetry
+              ?.inventory
+              .nebulae ??
+            0n
+          ) +
+          (
+            telemetry
+              ?.inventory
+              .extremeObjects ??
+            0n
+          ),
+        ).toBe(
+          1n,
+        );
       },
-      30_000,
+      15_000,
     );
 
     it(
@@ -883,18 +1076,18 @@ describe(
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-progress-units"]',
+            '[data-testid="galaxy-detail-total-sectors"]',
           )?.textContent,
         ).toContain(
-          '1',
+          '—',
         );
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-known-records"]',
+            '[data-testid="galaxy-detail-explored-percentage"]',
           )?.textContent,
         ).toContain(
-          '1',
+          '—',
         );
 
         expect(
@@ -913,13 +1106,741 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="galaxy-detail-scientific-lock"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-physical-properties"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
             '[data-testid="galaxy-detail-focus-semantics"]',
           )?.textContent,
         ).toContain(
           'no representa ni afirma un',
         );
       },
-      30_000,
+      15_000,
+    );
+
+    it(
+      'should expose baseline scientific magnitudes at CATALOGUED while keeping confirmed detail locked',
+      async () => {
+        const states =
+          new Map<
+            bigint,
+            DiscoveryStateValue
+          >([
+            [
+              0n,
+              DiscoveryState
+                .CATALOGUED,
+            ],
+          ]);
+
+        configure(
+          '0',
+          repositories(
+            states,
+          ),
+        );
+
+        await TestBed
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            GalaxyDetailPage,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .facade
+          .load(
+            '0',
+          );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-state"]',
+          )?.textContent,
+        ).toContain(
+          'Catalogada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-physical-properties"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-knowledge-ladder"]',
+          )?.textContent,
+        ).toContain(
+          'Catalogada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-knowledge-ladder"]',
+          )?.textContent,
+        ).toContain(
+          'Requiere Confirmada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-age"]',
+          )?.textContent,
+        ).toContain(
+          'Ga',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-diameter"]',
+          )?.textContent,
+        ).toContain(
+          'años luz',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-total-mass"]',
+          )?.textContent,
+        ).toContain(
+          'M☉',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-exact-population"]',
+          )?.textContent,
+        ).toContain(
+          'estrellas',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-metallicity"]',
+          )?.textContent,
+        ).toContain(
+          'Z☉',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-star-formation-rate"]',
+          )?.textContent,
+        ).toContain(
+          'M☉/año',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-structure"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-nucleus"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-confirmation-lock"]',
+          )?.textContent,
+        ).toContain(
+          'Confirmada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-confirm-action"]',
+          )?.textContent,
+        ).toContain(
+          'Confirmar galaxia',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-action"]',
+          ),
+        ).toBeNull();
+      },
+      15_000,
+    );
+
+    it(
+      'should add structural and nuclear scientific detail at CONFIRMED',
+      async () => {
+        const states =
+          new Map<
+            bigint,
+            DiscoveryStateValue
+          >([
+            [
+              0n,
+              DiscoveryState
+                .CONFIRMED,
+            ],
+          ]);
+
+        configure(
+          '0',
+          repositories(
+            states,
+          ),
+        );
+
+        await TestBed
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            GalaxyDetailPage,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .facade
+          .load(
+            '0',
+          );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-state"]',
+          )?.textContent,
+        ).toContain(
+          'Confirmada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-physical-properties"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-structure"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-confirmed-science"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-knowledge-ladder"]',
+          )?.textContent,
+        ).not.toContain(
+          'Requiere Confirmada',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-central-concentration"]',
+          )?.textContent?.trim(),
+        ).not.toBe(
+          '',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-nucleus"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-nucleus-state"]',
+          )?.textContent,
+        ).toContain(
+          'Quiescente',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-smbh"]',
+          )?.textContent,
+        ).toContain(
+          'M☉',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-confirmation-lock"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-action"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-confirm-action"]',
+          ),
+        ).toBeNull();
+      },
+      15_000,
+    );
+
+    it(
+      'should spend 250 PD to catalogue and 500 PD to confirm a VISITED galaxy from the scientific card',
+      async () => {
+        const mutableStates =
+          new Map<
+            bigint,
+            DiscoveryStateValue
+          >([
+            [
+              0n,
+              DiscoveryState
+                .VISITED,
+            ],
+          ]);
+
+        let globalDiscoveryPoints =
+          1000n;
+
+        const baseRepositories =
+          repositories(
+            mutableStates,
+          );
+
+        const repositoryBundle:
+          GenesisLocalRepositories =
+          {
+            ...baseRepositories,
+
+            pointsRepository: {
+              async getGlobalDiscoveryPoints() {
+                return globalDiscoveryPoints;
+              },
+
+              async setGlobalDiscoveryPoints(
+                _generationKey,
+                value,
+              ) {
+                globalDiscoveryPoints =
+                  value;
+              },
+
+              async getGalaxyDiscoveryPoints() {
+                throw new Error(
+                  '26.1 galaxy scientific milestones use global PD only.',
+                );
+              },
+
+              async setGalaxyDiscoveryPoints() {
+                throw new Error(
+                  '26.1 galaxy scientific milestones must not write per-galaxy PD.',
+                );
+              },
+            },
+
+            discoveryRepository: {
+              async getState(
+                _generationKey,
+                locator,
+              ) {
+                if (
+                  !(
+                    locator instanceof
+                    GalaxyLocator
+                  )
+                ) {
+                  throw new Error(
+                    '26.1 scientific transitions operate on GalaxyLocator only.',
+                  );
+                }
+
+                return (
+                  mutableStates.get(
+                    locator
+                      .galaxyIndex,
+                  ) ??
+                  DiscoveryState
+                    .UNKNOWN
+                );
+              },
+
+              async setState(
+                _generationKey,
+                locator,
+                state,
+              ) {
+                if (
+                  !(
+                    locator instanceof
+                    GalaxyLocator
+                  )
+                ) {
+                  throw new Error(
+                    '26.1 scientific transitions mutate GalaxyLocator only.',
+                  );
+                }
+
+                mutableStates.set(
+                  locator
+                    .galaxyIndex,
+                  state,
+                );
+              },
+
+              async getKnownDiscoveries() {
+                return galaxyDiscoveriesFromStates(
+                  mutableStates,
+                );
+              },
+
+              async getKnownDiscoveriesInSector() {
+                throw new Error(
+                  '26.1 scientific transitions must not materialize sector content.',
+                );
+              },
+            },
+          };
+
+        const scientificRuntime:
+          GalaxyScientificKnowledgeRuntime =
+          {
+            async commit(
+              _generationKey,
+              galaxyIndex,
+              action,
+            ) {
+              const stateBefore =
+                mutableStates.get(
+                  galaxyIndex,
+                ) ??
+                DiscoveryState.UNKNOWN;
+
+              const transition =
+                GalaxyScientificStateTransitionEngine
+                  .evaluate(
+                    stateBefore,
+                    action,
+                  );
+
+              if (
+                globalDiscoveryPoints <
+                transition.discoveryPointCost
+              ) {
+                throw new RangeError(
+                  'PD insuficientes.',
+                );
+              }
+
+              const globalDiscoveryPointsBefore =
+                globalDiscoveryPoints;
+
+              globalDiscoveryPoints -=
+                transition.discoveryPointCost;
+
+              mutableStates.set(
+                galaxyIndex,
+                transition.stateAfter,
+              );
+
+              return Object.freeze({
+                ...transition,
+                globalDiscoveryPointsBefore,
+                globalDiscoveryPointsAfter:
+                  globalDiscoveryPoints,
+              });
+            },
+          };
+
+        configure(
+          '0',
+          repositoryBundle,
+          undefined,
+          scientificRuntime,
+        );
+
+        await TestBed
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            GalaxyDetailPage,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .facade
+          .load(
+            '0',
+          );
+
+        fixture.detectChanges();
+
+        let element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const catalogueAction =
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-action"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          catalogueAction
+            ?.textContent,
+        ).toContain(
+          '250 PD',
+        );
+
+        expect(
+          catalogueAction
+            ?.disabled,
+        ).toBe(false);
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-cost"]',
+          )?.textContent,
+        ).toContain(
+          '1000 PD',
+        );
+
+        await fixture
+          .componentInstance
+          .facade
+          .catalogueDisplayedGalaxy();
+
+        fixture.detectChanges();
+
+        element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          mutableStates.get(
+            0n,
+          ),
+        ).toBe(
+          DiscoveryState
+            .CATALOGUED,
+        );
+
+        expect(
+          globalDiscoveryPoints,
+        ).toBe(
+          750n,
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .facade
+            .model()
+            ?.globalDiscoveryPoints,
+        ).toBe(
+          750n,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-physical-properties"]',
+          ),
+        ).toBeTruthy();
+
+        const confirmAction =
+          element.querySelector(
+            '[data-testid="galaxy-detail-confirm-action"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          confirmAction
+            ?.textContent,
+        ).toContain(
+          '500 PD',
+        );
+
+        expect(
+          confirmAction
+            ?.disabled,
+        ).toBe(false);
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-scientific-action-success"]',
+          )?.textContent,
+        ).toContain(
+          '250 PD',
+        );
+
+        await fixture
+          .componentInstance
+          .facade
+          .confirmDisplayedGalaxy();
+
+        fixture.detectChanges();
+
+        element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          mutableStates.get(
+            0n,
+          ),
+        ).toBe(
+          DiscoveryState
+            .CONFIRMED,
+        );
+
+        expect(
+          globalDiscoveryPoints,
+        ).toBe(
+          250n,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-structure"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-nucleus"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-confirm-action"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-scientific-action-success"]',
+          )?.textContent,
+        ).toContain(
+          '500 PD',
+        );
+      },
+      15_000,
+    );
+
+    it(
+      'should disable galaxy cataloguing when the global PD balance is below 250',
+      async () => {
+        const visitedStates =
+          new Map<
+            bigint,
+            DiscoveryStateValue
+          >([
+            [
+              0n,
+              DiscoveryState.VISITED,
+            ],
+          ]);
+
+        const baseRepositories =
+          repositories(
+            visitedStates,
+          );
+
+        const repositoryBundle:
+          GenesisLocalRepositories =
+          {
+            ...baseRepositories,
+
+            pointsRepository: {
+              ...baseRepositories.pointsRepository,
+
+              async getGlobalDiscoveryPoints() {
+                return 249n;
+              },
+            },
+          };
+
+        configure(
+          '0',
+          repositoryBundle,
+        );
+
+        await TestBed
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            GalaxyDetailPage,
+          );
+
+        fixture.detectChanges();
+
+        await fixture
+          .componentInstance
+          .facade
+          .load(
+            '0',
+          );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const action =
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-action"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          action
+            ?.disabled,
+        ).toBe(true);
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-catalogue-insufficient-pd"]',
+          )?.textContent,
+        ).toContain(
+          '1 PD',
+        );
+      },
+      15_000,
     );
 
     it(
@@ -998,9 +1919,7 @@ describe(
 
             pointsRepository: {
               async getGlobalDiscoveryPoints() {
-                throw new Error(
-                  '11.5 must not read global PD.',
-                );
+                return 1000n;
               },
 
               async setGlobalDiscoveryPoints() {
@@ -1250,221 +2169,7 @@ describe(
           ),
         ).toBeNull();
       },
-      30_000,
-    );
-
-    it(
-      'should recognize a recent galaxy and return through the point-11.6 history path without reading PD',
-      async () => {
-        const states =
-          new Map<
-            bigint,
-            DiscoveryStateValue
-          >([
-            [
-              0n,
-              DiscoveryState
-                .VISITED,
-            ],
-            [
-              1n,
-              DiscoveryState
-                .VISITED,
-            ],
-          ]);
-
-        let activeGalaxyIndex =
-          1n;
-
-        let recentGalaxyIndices:
-          readonly bigint[] =
-          [
-            0n,
-          ];
-
-        const baseRepositories =
-          repositories(
-            states,
-            activeGalaxyIndex,
-            [
-              generationKey,
-            ],
-            galaxyDiscoveriesFromStates(
-              states,
-            ),
-            recentGalaxyIndices,
-          );
-
-        const repositoryBundle:
-          GenesisLocalRepositories =
-          {
-            ...baseRepositories,
-
-            navigationRepository: {
-              async getNavigation() {
-                return {
-                  activeGalaxyIndex,
-                  recentGalaxyIndices,
-                };
-              },
-
-              async setNavigation() {
-                throw new Error(
-                  'GalaxyDetailFacade must delegate 11.6 navigation writes to the runtime.',
-                );
-              },
-            },
-          };
-
-        const focusRuntime:
-          GalaxyFocusRuntime =
-          {
-            async changeFocus() {
-              throw new Error(
-                'A recent galaxy must use the point-11.6 return path.',
-              );
-            },
-
-            async returnToRecentGalaxy(
-              _generationKey,
-              targetGalaxyIndex,
-            ) {
-              expect(
-                targetGalaxyIndex,
-              ).toBe(
-                0n,
-              );
-
-              const previousFocusGalaxyIndex =
-                activeGalaxyIndex;
-
-              activeGalaxyIndex =
-                targetGalaxyIndex;
-
-              recentGalaxyIndices =
-                [
-                  previousFocusGalaxyIndex,
-                ];
-
-              return Object.freeze({
-                previousFocusGalaxyIndex,
-                activeGalaxyIndex:
-                  targetGalaxyIndex,
-                targetStateBefore:
-                  DiscoveryState
-                    .VISITED,
-                targetStateAfter:
-                  DiscoveryState
-                    .VISITED,
-                didPromoteTargetToVisited:
-                  false,
-                recentGalaxyIndices,
-              });
-            },
-          };
-
-        configure(
-          '0',
-          repositoryBundle,
-          focusRuntime,
-        );
-
-        await TestBed
-          .compileComponents();
-
-        const fixture =
-          TestBed.createComponent(
-            GalaxyDetailPage,
-          );
-
-        fixture.detectChanges();
-
-        await fixture
-          .componentInstance
-          .facade
-          .load(
-            '0',
-          );
-
-        fixture.detectChanges();
-
-        const before =
-          fixture.nativeElement as
-            HTMLElement;
-
-        expect(
-          fixture
-            .componentInstance
-            .facade
-            .model()
-            ?.isRecentFocus,
-        ).toBe(true);
-
-        expect(
-          before.querySelector(
-            '[data-testid="galaxy-detail-recent-badge"]',
-          )?.textContent,
-        ).toContain(
-          'FOCO ANTERIOR',
-        );
-
-        expect(
-          before.querySelector(
-            '[data-testid="galaxy-detail-change-focus-action"]',
-          )?.textContent,
-        ).toContain(
-          'Regresar a esta galaxia',
-        );
-
-        await fixture
-          .componentInstance
-          .facade
-          .changeFocusToDisplayedGalaxy();
-
-        fixture.detectChanges();
-
-        expect(
-          activeGalaxyIndex,
-        ).toBe(
-          0n,
-        );
-
-        expect(
-          recentGalaxyIndices,
-        ).toEqual([
-          1n,
-        ]);
-
-        expect(
-          fixture
-            .componentInstance
-            .facade
-            .model()
-            ?.isCurrentFocus,
-        ).toBe(true);
-
-        expect(
-          fixture
-            .componentInstance
-            .facade
-            .model()
-            ?.isRecentFocus,
-        ).toBe(false);
-
-        expect(
-          (
-            fixture.nativeElement as
-              HTMLElement
-          )
-            .querySelector(
-              '[data-testid="galaxy-detail-focus-success"]',
-            )
-            ?.textContent,
-        ).toContain(
-          'sin reiniciar su progreso persistido',
-        );
-      },
-      30_000,
+      15_000,
     );
 
     it(

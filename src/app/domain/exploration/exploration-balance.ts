@@ -398,11 +398,12 @@ const DISCOVERY_REWARD_REASON_BALANCES:
 
 /**
  * One external-galaxy search opportunity is unlocked for each new 100-PD
- * global progression bucket. The points are never spent.
+ * global progression bucket reached. The search itself never spends PD.
  *
- * Opportunities accumulate: persistence records how many attempts were already
- * consumed and the runtime derives the remaining stock from total earned
- * opportunities minus consumed opportunities.
+ * Opportunities accumulate: persistence records a monotonic earned-opportunity
+ * high-water mark plus how many attempts were consumed. Point-26.1 galaxy
+ * scientific spending may reduce the current PD balance, but it never revokes
+ * an opportunity that was already earned.
  */
 const EXTERNAL_GALAXY_SEARCH_DISCOVERY_POINT_STEP =
   100n;
@@ -1074,3 +1075,5 @@ function validateNonDecreasingNumber<T>(
     }
   }
 }
+
+

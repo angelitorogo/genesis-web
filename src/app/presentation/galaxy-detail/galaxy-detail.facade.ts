@@ -10,12 +10,20 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  type GalaxyExplorationTelemetry,
+} from '../../domain/exploration/galaxy-exploration-telemetry';
+
+import {
   type GalaxyGeneralProfile,
 } from '../../domain/exploration/galaxy-general-profile';
 
 import {
   type GalaxyKnowledgeStatistics,
 } from '../../domain/exploration/galaxy-knowledge-statistics';
+
+import {
+  type GalaxyScientificProfile,
+} from '../../domain/exploration/galaxy-scientific-profile';
 
 import {
   GalaxyLocator,
@@ -26,6 +34,10 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  GalaxyExplorationTelemetryEngine,
+} from '../../simulation/exploration/galaxy-exploration-telemetry-engine';
+
+import {
   GalaxyGeneralProfileEngine,
 } from '../../simulation/exploration/galaxy-general-profile-engine';
 
@@ -34,12 +46,25 @@ import {
 } from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
 
 import {
+  GalaxyScientificProfileEngine,
+} from '../../simulation/exploration/galaxy-scientific-profile-engine';
+
+import {
+  GalaxyScientificStateTransitionAction,
+  type GalaxyScientificStateTransitionActionValue,
+} from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
+
+import {
   GALAXY_FOCUS_RUNTIME,
 } from '../runtime/galaxy-focus.runtime';
 
 import {
   GalaxyFocusTransitionRuntime,
 } from '../runtime/galaxy-focus-transition.runtime';
+
+import {
+  GALAXY_SCIENTIFIC_KNOWLEDGE_RUNTIME,
+} from '../runtime/galaxy-scientific-knowledge.runtime';
 
 import {
   GENESIS_LOCAL_REPOSITORIES,
@@ -59,6 +84,15 @@ export interface GalaxyDetailModel {
 
   readonly statistics:
     GalaxyKnowledgeStatistics;
+
+  readonly explorationTelemetry:
+    GalaxyExplorationTelemetry;
+
+  readonly scientificProfile:
+    GalaxyScientificProfile;
+
+  readonly globalDiscoveryPoints:
+    bigint;
 
   readonly isCurrentFocus:
     boolean;
@@ -117,7 +151,7 @@ const INITIAL_STATE:
   });
 
 /**
- * Point-11.5/11.6 galaxy-detail facade.
+ * Point-26.1 galaxy scientific-detail facade, preserving the 11.5/11.6 focus flow.
  *
  * Loading remains knowledge-safe exactly as in 11.3/11.4: a requested
  * GalaxyLocator must already exist at DETECTED or later and statistics are
@@ -128,10 +162,15 @@ const INITIAL_STATE:
  * routes that explicit action through returnToRecentGalaxy(), which validates
  * the persisted history atomically before applying the same focus transition.
  *
- * The facade still does not read/write Discovery Points, materialize hidden
- * procedural content, expose fictitious completion percentages or
- * model physical or FTL travel. Point 11.7 is a presentation-only
- * reorientation shown after the persisted focus has been confirmed.
+ * Point 26.1 adds a separate scientific projection gated by the same persisted
+ * DiscoveryState: exact baseline physical magnitudes require CATALOGUED and
+ * structural/nuclear details require CONFIRMED. Opening the route never upgrades
+ * knowledge. Point 26.1 now reads the global PD balance only to present the
+ * affordability of galaxy scientific milestones; the atomic runtime owns the
+ * actual PD debit together with the DiscoveryState write. It still does not
+ * model physical/FTL travel. The point-26.1 telemetry extension may expose only the
+ * real phase-5 addressable sector denominator already used by the galactic map;
+ * its percentage is sector coverage, never hidden-content completion.
  */
 @Injectable({
   providedIn:
@@ -152,6 +191,11 @@ export class GalaxyDetailFacade {
   private readonly focusTransitionRuntime =
     inject(
       GalaxyFocusTransitionRuntime,
+    );
+
+  private readonly scientificKnowledgeRuntime =
+    inject(
+      GALAXY_SCIENTIFIC_KNOWLEDGE_RUNTIME,
     );
 
   private readonly universeSeedFacade =
@@ -184,10 +228,28 @@ export class GalaxyDetailFacade {
       '',
     );
 
+  private readonly scientificActionPendingSignal =
+    signal<boolean>(
+      false,
+    );
+
+  private readonly scientificActionSuccessSignal =
+    signal<string>(
+      '',
+    );
+
+  private readonly scientificActionErrorSignal =
+    signal<string>(
+      '',
+    );
+
   private loadSequence =
     0;
 
   private focusSequence =
+    0;
+
+  private scientificActionSequence =
     0;
 
   readonly state =
@@ -236,6 +298,21 @@ export class GalaxyDetailFacade {
       .focusErrorSignal
       .asReadonly();
 
+  readonly scientificActionPending =
+    this
+      .scientificActionPendingSignal
+      .asReadonly();
+
+  readonly scientificActionSuccessMessage =
+    this
+      .scientificActionSuccessSignal
+      .asReadonly();
+
+  readonly scientificActionErrorMessage =
+    this
+      .scientificActionErrorSignal
+      .asReadonly();
+
   async load(
     galaxyIndexValue:
       string | null,
@@ -259,6 +336,18 @@ export class GalaxyDetailFacade {
 
     this
       .focusErrorSignal
+      .set(
+        '',
+      );
+
+    this
+      .scientificActionSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .scientificActionErrorSignal
       .set(
         '',
       );
@@ -376,13 +465,25 @@ export class GalaxyDetailFacade {
         return;
       }
 
-      const knownDiscoveries =
-        await this
-          .repositories
-          .discoveryRepository
-          .getKnownDiscoveries(
-            generationKey,
-          );
+      const [
+        knownDiscoveries,
+        globalDiscoveryPoints,
+      ] =
+        await Promise.all([
+          this
+            .repositories
+            .discoveryRepository
+            .getKnownDiscoveries(
+              generationKey,
+            ),
+
+          this
+            .repositories
+            .pointsRepository
+            .getGlobalDiscoveryPoints(
+              generationKey,
+            ),
+        ]);
 
       if (
         loadId !==
@@ -444,6 +545,23 @@ export class GalaxyDetailFacade {
             knownDiscoveries,
           );
 
+      const explorationTelemetry =
+        GalaxyExplorationTelemetryEngine
+          .build(
+            generationKey,
+            galaxyIndex,
+            discoveryState,
+            knownDiscoveries,
+          );
+
+      const scientificProfile =
+        GalaxyScientificProfileEngine
+          .build(
+            generationKey,
+            galaxyIndex,
+            discoveryState,
+          );
+
       const isCurrentFocus =
         navigation
           .activeGalaxyIndex ===
@@ -476,6 +594,9 @@ export class GalaxyDetailFacade {
             Object.freeze({
               profile,
               statistics,
+              explorationTelemetry,
+              scientificProfile,
+              globalDiscoveryPoints,
               isCurrentFocus,
 
               isVisitable:
@@ -512,7 +633,7 @@ export class GalaxyDetailFacade {
               .length >
               0
               ? error.message
-              : 'No se pudo cargar la ficha general de galaxia.',
+              : 'No se pudo cargar la ficha científica de galaxia.',
         });
     }
   }
@@ -690,6 +811,203 @@ export class GalaxyDetailFacade {
       ) {
         this
           .focusPendingSignal
+          .set(
+            false,
+          );
+      }
+    }
+  }
+
+  async catalogueDisplayedGalaxy():
+    Promise<void> {
+
+    await this
+      .commitScientificKnowledgeTransition(
+        GalaxyScientificStateTransitionAction
+          .CATALOGUE,
+      );
+  }
+
+  async confirmDisplayedGalaxy():
+    Promise<void> {
+
+    await this
+      .commitScientificKnowledgeTransition(
+        GalaxyScientificStateTransitionAction
+          .CONFIRM,
+      );
+  }
+
+  private async commitScientificKnowledgeTransition(
+    action:
+      GalaxyScientificStateTransitionActionValue,
+  ): Promise<void> {
+
+    const actionId =
+      ++this
+        .scientificActionSequence;
+
+    this
+      .scientificActionSuccessSignal
+      .set(
+        '',
+      );
+
+    this
+      .scientificActionErrorSignal
+      .set(
+        '',
+      );
+
+    const context =
+      this
+        .loadedContextSignal();
+
+    const model =
+      this
+        .model();
+
+    if (
+      context ===
+        null ||
+      model ===
+        null
+    ) {
+      this
+        .scientificActionErrorSignal
+        .set(
+          'No hay una galaxia conocida cargada para ejecutar esta acción científica.',
+        );
+
+      return;
+    }
+
+    this
+      .scientificActionPendingSignal
+      .set(
+        true,
+      );
+
+    try {
+      const result =
+        await this
+          .scientificKnowledgeRuntime
+          .commit(
+            context
+              .generationKey,
+            context
+              .galaxyIndex,
+            action,
+          );
+
+      if (
+        actionId !==
+        this.scientificActionSequence
+      ) {
+        return;
+      }
+
+      await this
+        .load(
+          context
+            .galaxyIndex
+            .toString(
+              10,
+            ),
+        );
+
+      if (
+        actionId !==
+        this.scientificActionSequence
+      ) {
+        return;
+      }
+
+      const refreshed =
+        this
+          .model();
+
+      if (
+        refreshed ===
+          null ||
+        DiscoveryState
+          .fromCode(
+            refreshed
+              .scientificProfile
+              .knowledgeState
+              .code,
+          ) !==
+        result
+          .stateAfter
+      ) {
+        throw new Error(
+          'El hito científico se persistió, pero la ficha no pudo confirmar el nuevo estado.',
+        );
+      }
+
+      if (
+        result.stateAfter ===
+          DiscoveryState.CATALOGUED &&
+        refreshed
+          .scientificProfile
+          .physicalProperties ===
+          null
+      ) {
+        throw new Error(
+          'La galaxia quedó Catalogada, pero la proyección física no se desbloqueó.',
+        );
+      }
+
+      if (
+        result.stateAfter ===
+          DiscoveryState.CONFIRMED &&
+        refreshed
+          .scientificProfile
+          .structure ===
+          null
+      ) {
+        throw new Error(
+          'La galaxia quedó Confirmada, pero la estructura científica no se desbloqueó.',
+        );
+      }
+
+      this
+        .scientificActionSuccessSignal
+        .set(
+          result.stateAfter ===
+            DiscoveryState.CATALOGUED
+            ? `Catalogación completada por ${result.discoveryPointCost} PD. Saldo global: ${result.globalDiscoveryPointsAfter} PD. Las magnitudes físicas de la galaxia ya están disponibles.`
+            : `Confirmación completada por ${result.discoveryPointCost} PD. Saldo global: ${result.globalDiscoveryPointsAfter} PD. La estructura y el núcleo galáctico ya están disponibles.`,
+        );
+    } catch (
+      error
+    ) {
+      if (
+        actionId !==
+        this.scientificActionSequence
+      ) {
+        return;
+      }
+
+      this
+        .scientificActionErrorSignal
+        .set(
+          error instanceof
+            Error &&
+          error.message
+            .trim()
+            .length >
+            0
+            ? error.message
+            : 'No se pudo completar la acción científica de la galaxia.',
+        );
+    } finally {
+      if (
+        actionId ===
+        this.scientificActionSequence
+      ) {
+        this
+          .scientificActionPendingSignal
           .set(
             false,
           );

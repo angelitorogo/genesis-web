@@ -890,7 +890,7 @@ test.describe(
             'galaxy-detail-boundary',
           ),
         ).toContainText(
-          '11.6',
+          '26.1',
         );
       },
     );
