@@ -376,11 +376,11 @@ describe(
           'GEN-V1-G1-',
         );
       },
-      30_000,
+      15_000,
     );
 
     it(
-      'should render a compact one-column catalogue with only name, state, origin and the two requested actions',
+      'should route DETECTED catalogue rows to validation instead of allowing a direct focus jump',
       async () => {
         configure(
           repositories(),
@@ -540,7 +540,7 @@ describe(
         expect(
           focusActions.length,
         ).toBe(
-          2,
+          1,
         );
 
         expect(
@@ -561,22 +561,33 @@ describe(
           'EN FOCO',
         );
 
+        const validateActions =
+          element.querySelectorAll(
+            '[data-testid="discovered-galaxy-validate-action"]',
+          );
+
         expect(
-          (
-            focusActions[
-              1
-            ] as HTMLButtonElement
-          ).disabled,
+          validateActions.length,
         ).toBe(
-          false,
+          1,
         );
 
         expect(
-          focusActions[
-            1
+          validateActions[
+            0
+          ]?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/1',
+        );
+
+        expect(
+          validateActions[
+            0
           ]?.textContent,
         ).toContain(
-          'IR A ESTA GALAXIA',
+          'VALIDAR DETECCIÓN',
         );
 
         expect(
@@ -724,7 +735,7 @@ describe(
                 1n,
               ),
               DiscoveryState
-                .DETECTED,
+                .DISCOVERED,
             ),
           ];
 
@@ -789,7 +800,7 @@ describe(
                   targetGalaxyIndex,
                 targetStateBefore:
                   DiscoveryState
-                    .DETECTED,
+                    .DISCOVERED,
                 targetStateAfter:
                   DiscoveryState
                     .VISITED,
@@ -1024,7 +1035,7 @@ describe(
             .returnPendingGalaxyIndex(),
         ).toBeNull();
       },
-      30_000,
+      15_000,
     );
 
     it(
@@ -1121,7 +1132,7 @@ describe(
             ),
         ).toBe(false);
       },
-      30_000,
+      15_000,
     );
 
     it(

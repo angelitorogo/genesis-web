@@ -398,11 +398,55 @@ export class ExplorationFacade {
       });
 
     try {
-      const generationKey =
-        this.universeSeedFacade
-          .activeGenerationKey();
+      const persistedUniverses =
+        await this.repositories
+          .universeRepository
+          .getAll();
 
-      const universeExists =
+      if (
+        refreshId !==
+        this.refreshSequence
+      ) {
+        return;
+      }
+
+      if (
+        persistedUniverses.length ===
+        0
+      ) {
+        this.stateSignal
+          .set({
+            kind:
+              'empty',
+          });
+
+        return;
+      }
+
+      const generationKey =
+        resolveExplorationGenerationKey(
+          this.universeSeedFacade
+            .activeGenerationKey(),
+          persistedUniverses,
+        );
+
+      if (
+        generationKey ===
+        null
+      ) {
+        this.stateSignal
+          .set({
+            kind:
+              'error',
+
+            message:
+              'No hay un universo activo seleccionado.',
+          });
+
+        return;
+      }
+
+      const resolvedUniverseExists =
         await this.repositories
           .universeRepository
           .exists(
@@ -417,7 +461,7 @@ export class ExplorationFacade {
       }
 
       if (
-        !universeExists
+        !resolvedUniverseExists
       ) {
         this.stateSignal
           .set({
@@ -1387,4 +1431,77 @@ function assertWithinGrid(
       `Rango permitido: ${minCoordinate}..${maxCoordinate}.`,
     );
   }
+}
+
+/**
+ * Resolves the persisted universe used by /exploration.
+ *
+ * This mirrors Home's deterministic fallback: prefer the selected persisted
+ * generation key; when that in-memory selection is stale and exactly one
+ * universe exists, use that sole persisted universe. Discovery Points are not
+ * part of active-universe identity, so spending PD can never make a universe
+ * disappear from the exploration screen.
+ */
+export function resolveExplorationGenerationKey(
+  selectedGenerationKey:
+    UniverseGenerationKey,
+
+  persistedUniverses:
+    readonly UniverseGenerationKey[],
+): UniverseGenerationKey | null {
+
+  const selected =
+    persistedUniverses
+      .find(
+        (
+          candidate,
+        ) =>
+          sameGenerationKey(
+            candidate,
+            selectedGenerationKey,
+          ),
+      );
+
+  if (
+    selected !==
+    undefined
+  ) {
+    return selected;
+  }
+
+  if (
+    persistedUniverses.length ===
+    1
+  ) {
+    return persistedUniverses[
+      0
+    ] ??
+      null;
+  }
+
+  return null;
+}
+
+function sameGenerationKey(
+  left:
+    UniverseGenerationKey,
+
+  right:
+    UniverseGenerationKey,
+): boolean {
+
+  return (
+    left
+      .generatorVersion
+      .code ===
+    right
+      .generatorVersion
+      .code &&
+    left
+      .universeSeed
+      .serialize() ===
+    right
+      .universeSeed
+      .serialize()
+  );
 }

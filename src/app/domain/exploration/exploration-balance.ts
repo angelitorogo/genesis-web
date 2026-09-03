@@ -397,13 +397,14 @@ const DISCOVERY_REWARD_REASON_BALANCES:
   ]);
 
 /**
- * One external-galaxy search opportunity is unlocked for each new 100-PD
- * global progression bucket reached. The search itself never spends PD.
+ * One external-galaxy search opportunity is unlocked for each 100 global PD
+ * actually earned over the lifetime of the universe. The search itself never
+ * spends PD.
  *
- * Opportunities accumulate: persistence records a monotonic earned-opportunity
- * high-water mark plus how many attempts were consumed. Point-26.1 galaxy
- * scientific spending may reduce the current PD balance, but it never revokes
- * an opportunity that was already earned.
+ * Spendable PD and lifetime-earned PD are deliberately separate counters:
+ * scientific spending may reduce the current balance, but it never reduces
+ * progress toward the next attempt or revokes an attempt already earned. The
+ * persisted attempt high-water mark remains a legacy repair floor.
  */
 const EXTERNAL_GALAXY_SEARCH_DISCOVERY_POINT_STEP =
   100n;
@@ -1075,5 +1076,3 @@ function validateNonDecreasingNumber<T>(
     }
   }
 }
-
-

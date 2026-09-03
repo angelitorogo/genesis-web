@@ -197,23 +197,38 @@
                     <span aria-hidden="true">→</span>
                   </a>
 
-                  <button
-                    type="button"
-                    class="dg__focus"
-                    data-testid="discovered-galaxy-focus-action"
-                    [attr.data-galaxy-index]="entry.galaxyIndex"
-                    [disabled]="entry.isCurrentFocus || facade.focusPendingGalaxyIndex() !== null"
-                    (click)="focusGalaxy(entry.galaxyIndex)"
-                  >
-                    @if (entry.isCurrentFocus) {
-                      EN FOCO
-                    } @else if (facade.focusPendingGalaxyIndex() === entry.galaxyIndex) {
-                      CAMBIANDO FOCO…
-                    } @else {
-                      IR A ESTA GALAXIA
+                  @if (entry.galaxyKnowledgeState.name === 'DETECTED') {
+                    <a
+                      class="dg__focus"
+                      data-testid="discovered-galaxy-validate-action"
+                      [attr.data-galaxy-index]="entry.galaxyIndex"
+                      [routerLink]="[
+                        '/galaxies',
+                        entry.galaxyIndex.toString()
+                      ]"
+                    >
+                      VALIDAR DETECCIÓN
                       <span aria-hidden="true">→</span>
-                    }
-                  </button>
+                    </a>
+                  } @else {
+                    <button
+                      type="button"
+                      class="dg__focus"
+                      data-testid="discovered-galaxy-focus-action"
+                      [attr.data-galaxy-index]="entry.galaxyIndex"
+                      [disabled]="entry.isCurrentFocus || facade.focusPendingGalaxyIndex() !== null"
+                      (click)="focusGalaxy(entry.galaxyIndex)"
+                    >
+                      @if (entry.isCurrentFocus) {
+                        EN FOCO
+                      } @else if (facade.focusPendingGalaxyIndex() === entry.galaxyIndex) {
+                        CAMBIANDO FOCO…
+                      } @else {
+                        IR A ESTA GALAXIA
+                        <span aria-hidden="true">→</span>
+                      }
+                    </button>
+                  }
                 </div>
               </article>
             }

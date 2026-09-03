@@ -7,9 +7,9 @@
     <header class="system-page__header">
       <div>
         <p class="system-page__eyebrow">
-          NAVEGACIÓN
+          FICHA CIENTÍFICA
           <span aria-hidden="true">/</span>
-          SISTEMA ESTELAR
+          ESTRELLA · SISTEMA
         </p>
 
         <h1 id="system-page-title">
@@ -21,8 +21,9 @@
         </h1>
 
         <p class="system-page__subtitle">
-          Espacio tridimensional del sistema en foco. La escena es una proyección
-          visual del estado de dominio y nunca una fuente autoritativa de física.
+          Identidad, arquitectura y componentes estelares del sistema conocido.
+          La profundidad de la ficha depende exclusivamente del DiscoveryState
+          persistido; navegar a esta ruta no promociona ni revela conocimiento oculto.
         </p>
       </div>
 
@@ -45,8 +46,8 @@
           <span class="system-page__pulse" aria-hidden="true"></span>
 
           <div>
-            <small>GROUND TRUTH / REGENERACIÓN</small>
-            <strong>Resolviendo el sistema estelar…</strong>
+            <small>CONOCIMIENTO PERSISTIDO / REGENERACIÓN</small>
+            <strong>Resolviendo la ficha del sistema…</strong>
           </div>
         </section>
       }
@@ -84,25 +85,37 @@
           @if (model.stellarSystemCard; as systemCard) {
             @if (sceneSnapshot(); as snapshot) {
               <section
-                class="system-page__context"
+                class="system-page__hero"
                 data-testid="system-page-context"
               >
                 <div class="system-page__identity">
-                  <small>OBJETIVO EN FOCO</small>
+                  <div class="system-page__knowledge-line">
+                    <span>26.2 · FICHA ESTELAR</span>
+                    <span
+                      class="system-page__state-badge"
+                      data-testid="system-page-discovery-state"
+                    >
+                      {{ model.discoveryStateLabel }}
+                    </span>
+                  </div>
+
                   <strong data-testid="system-page-system-title">
                     {{ systemCard.title }}
                   </strong>
+
+                  <p data-testid="system-page-summary">
+                    {{ systemCard.summary }}
+                  </p>
+
                   <code data-testid="system-page-procedural-identity">
                     {{ model.proceduralIdentity }}
                   </code>
                 </div>
 
-                <dl class="system-page__facts">
+                <dl class="system-page__facts system-page__facts--hero">
                   <div>
-                    <dt>CONOCIMIENTO</dt>
-                    <dd data-testid="system-page-discovery-state">
-                      {{ model.discoveryStateLabel }}
-                    </dd>
+                    <dt>NIVEL CIENTÍFICO</dt>
+                    <dd>{{ systemCard.knowledgeLevelLabel }}</dd>
                   </div>
 
                   <div>
@@ -114,9 +127,14 @@
 
                   <div>
                     <dt>COMPONENTES</dt>
-                    <dd>
-                      {{ systemCard.componentCount ?? 'No resueltos' }}
+                    <dd data-testid="system-page-component-count">
+                      {{ systemCard.componentCount ?? '—' }}
                     </dd>
+                  </div>
+
+                  <div>
+                    <dt>SECTOR</dt>
+                    <dd>{{ model.sectorX }}, {{ model.sectorY }}</dd>
                   </div>
                 </dl>
               </section>
@@ -131,27 +149,380 @@
                 ></app-system-scene>
 
                 <footer class="system-page__viewport-footer">
-                  <span>
-                    THREE.JS / WEBGL2 + GLSL / BODY RENDER 25.11
-                  </span>
-
+                  <span>THREE.JS / WEBGL2 + GLSL / 25.11</span>
                   <p>
-                    25.11 conserva toda la calidad visual validada hasta 25.10 y optimiza el renderer sin tocar Ground Truth: LOD dinámico por tamaño proyectado para esferas estelares/planetarias, picking mediante un único lote InstancedMesh, TNO/capturados genéricos agrupados en lotes InstancedMesh visibles, texturas lunares diferidas hasta mostrar la capa y texturas planetarias/lunares reutilizadas mediante cachés LRU con límites duros, geometrías esféricas compartidas y liberación explícita de materiales, geometrías, texturas, caches, render lists y contexto WebGL. Las lunas pequeñas permanecen esferoidales con relieve moderado y las lunas/planetas conservan sus tamaños, superficies, atmósferas, anillos y rasgos físicos de los puntos anteriores.
+                    Proyección visual del mismo Ground Truth ya permitido por el
+                    estado científico. La escena no amplía la ficha ni persiste física.
                   </p>
                 </footer>
+              </section>
+
+              <section
+                class="system-page__science"
+                aria-label="Ficha científica del sistema"
+              >
+                <article
+                  class="system-page__science-card system-page__science-card--wide"
+                  data-testid="system-page-system-profile"
+                >
+                  <header class="system-page__section-header">
+                    <div>
+                      <small>CAPA 01</small>
+                      <h2>Identidad y arquitectura</h2>
+                    </div>
+                    <span>{{ systemCard.knowledgeLevelLabel }}</span>
+                  </header>
+
+                  <p>{{ systemCard.summary }}</p>
+
+                  <p data-testid="system-page-next-scientific-step">
+                    <strong>Siguiente paso científico:</strong>
+                    {{ systemCard.nextScientificStep }}
+                  </p>
+
+                  @if (systemFacts().length > 0) {
+                    <dl class="system-page__fact-grid">
+                      @for (fact of systemFacts(); track fact.label) {
+                        <div>
+                          <dt>{{ fact.label }}</dt>
+                          <dd>{{ fact.value }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  } @else {
+                    <div
+                      class="system-page__locked"
+                      data-testid="system-page-identity-locked"
+                    >
+                      La señal está persistida, pero la identidad científica del
+                      sistema todavía no está resuelta.
+                    </div>
+                  }
+                </article>
+
+                <article
+                  class="system-page__science-card system-page__science-card--wide"
+                  data-testid="system-page-stellar-components"
+                >
+                  <header class="system-page__section-header">
+                    <div>
+                      <small>CAPA 02</small>
+                      <h2>Estrellas del sistema</h2>
+                    </div>
+                    <span>
+                      {{ systemCard.componentCount ?? 0 }} componente{{ systemCard.componentCount === 1 ? '' : 's' }}
+                    </span>
+                  </header>
+
+                  @if (systemCard.components.length > 0) {
+                    <div class="system-page__star-grid">
+                      @for (component of systemCard.components; track component.componentLabel) {
+                        <section
+                          class="system-page__star-card"
+                          [attr.data-component]="component.componentLabel"
+                          [attr.data-testid]="'system-page-star-' + component.componentLabel"
+                        >
+                          <header>
+                            <span
+                              class="system-page__star-swatch"
+                              [style.background]="component.colorHex"
+                              aria-hidden="true"
+                            ></span>
+
+                            <div>
+                              <small>COMPONENTE {{ component.componentLabel }}</small>
+                              <h3>{{ component.designation }}</h3>
+                            </div>
+                          </header>
+
+                          <dl class="system-page__star-meta">
+                            <div>
+                              <dt>Tipo espectral</dt>
+                              <dd>{{ component.spectralType ?? 'Pendiente de catalogación' }}</dd>
+                            </div>
+                            <div>
+                              <dt>Estado evolutivo</dt>
+                              <dd>{{ component.evolutionStateLabel ?? 'Pendiente de catalogación' }}</dd>
+                            </div>
+                          </dl>
+
+                          @if (component.facts.length > 0) {
+                            <dl class="system-page__fact-grid system-page__fact-grid--star">
+                              @for (fact of component.facts; track fact.label) {
+                                <div>
+                                  <dt>{{ fact.label }}</dt>
+                                  <dd>{{ fact.value }}</dd>
+                                </div>
+                              }
+                            </dl>
+                          } @else {
+                            <p class="system-page__star-lock">
+                              La componente está identificada, pero sus magnitudes
+                              físicas permanecen bloqueadas hasta Catalogado.
+                            </p>
+                          }
+                        </section>
+                      }
+                    </div>
+                  } @else {
+                    <div
+                      class="system-page__locked"
+                      data-testid="system-page-components-locked"
+                    >
+                      Detectado no resuelve cuántas estrellas contiene el sistema.
+                    </div>
+                  }
+                </article>
+
+                <article
+                  class="system-page__science-card"
+                  data-testid="system-page-orbital-architecture"
+                >
+                  <header class="system-page__section-header">
+                    <div>
+                      <small>CAPA 03</small>
+                      <h2>Arquitectura orbital estelar</h2>
+                    </div>
+                  </header>
+
+                  @if (isCatalogued(systemCard.knowledgeLevel)) {
+                    @if (systemCard.orbits.length > 0) {
+                      <div class="system-page__stack">
+                        @for (orbit of systemCard.orbits; track orbit.label) {
+                          <section class="system-page__orbit-card">
+                            <h3>{{ orbit.label }}</h3>
+                            <p>{{ orbit.roleLabel }}</p>
+                            <dl class="system-page__fact-grid system-page__fact-grid--compact">
+                              @for (fact of orbit.facts; track fact.label) {
+                                <div>
+                                  <dt>{{ fact.label }}</dt>
+                                  <dd>{{ fact.value }}</dd>
+                                </div>
+                              }
+                            </dl>
+                          </section>
+                        }
+                      </div>
+                    } @else {
+                      <p class="system-page__empty-note">
+                        Sistema simple: no existen órbitas estelares relativas.
+                      </p>
+                    }
+                  } @else {
+                    <div
+                      class="system-page__locked"
+                      data-testid="system-page-orbits-locked"
+                    >
+                      La geometría orbital se incorpora a la ficha al alcanzar Catalogado.
+                    </div>
+                  }
+                </article>
+
+                <article
+                  class="system-page__science-card"
+                  data-testid="system-page-dynamical-context"
+                >
+                  <header class="system-page__section-header">
+                    <div>
+                      <small>CAPA 04</small>
+                      <h2>Contexto dinámico</h2>
+                    </div>
+                  </header>
+
+                  @if (isCatalogued(systemCard.knowledgeLevel)) {
+                    @if (systemCard.circumbinaryFacts.length > 0) {
+                      <dl class="system-page__fact-grid system-page__fact-grid--compact">
+                        @for (fact of systemCard.circumbinaryFacts; track fact.label) {
+                          <div>
+                            <dt>{{ fact.label }}</dt>
+                            <dd>{{ fact.value }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    } @else {
+                      <p class="system-page__empty-note">
+                        Esta arquitectura no requiere evaluación circumbinaria.
+                      </p>
+                    }
+                  } @else {
+                    <div
+                      class="system-page__locked"
+                      data-testid="system-page-dynamics-locked"
+                    >
+                      La estabilidad planetaria del sistema permanece fuera de la
+                      capa identificada.
+                    </div>
+                  }
+                </article>
+
+                <article
+                  class="system-page__science-card system-page__science-card--wide"
+                  data-testid="system-page-habitability"
+                >
+                  <header class="system-page__section-header">
+                    <div>
+                      <small>CAPA 05</small>
+                      <h2>Habitabilidad del sistema</h2>
+                    </div>
+                    <span>{{ isConfirmed(systemCard.knowledgeLevel) ? 'CONFIRMADA' : 'BLOQUEADA' }}</span>
+                  </header>
+
+                  @if (isConfirmed(systemCard.knowledgeLevel)) {
+                    @if (systemCard.habitabilityFacts.length > 0) {
+                      <dl class="system-page__fact-grid">
+                        @for (fact of systemCard.habitabilityFacts; track fact.label) {
+                          <div>
+                            <dt>{{ fact.label }}</dt>
+                            <dd>{{ fact.value }}</dd>
+                          </div>
+                        }
+                      </dl>
+                    } @else {
+                      <p class="system-page__empty-note">
+                        El sistema confirmado no requiere evaluación circumbinaria de habitabilidad.
+                      </p>
+                    }
+                  } @else {
+                    <div
+                      class="system-page__locked"
+                      data-testid="system-page-habitability-locked"
+                    >
+                      Confirmado añade la caracterización final de estabilidad y
+                      habitabilidad sin materializar planetas nuevos.
+                    </div>
+                  }
+                </article>
+
+                @if (model.stellarSystemScientificAction; as action) {
+                  <article
+                    class="system-page__science-card system-page__science-card--action system-page__science-card--wide"
+                    data-testid="system-page-scientific-action"
+                  >
+                    <header class="system-page__section-header">
+                      <div>
+                        <small>ACCIÓN CIENTÍFICA DISPONIBLE</small>
+                        <h2>{{ action.label }}</h2>
+                      </div>
+                      <span>→ {{ action.targetDiscoveryStateLabel }}</span>
+                    </header>
+
+                    <div class="system-page__action-layout">
+                      <div>
+                        <p>
+                          Reobservación de nivel {{ action.minimumInstrumentLevelRank }}.
+                          La acción conserva el contrato científico existente; 26.2 no
+                          añade costes de PD propios al sistema.
+                        </p>
+
+                        <div class="system-page__instrument-list">
+                          @for (instrument of action.instrumentOptions; track instrument.instrumentType) {
+                            <span [class.system-page__instrument--available]="instrument.isAvailable">
+                              {{ instrument.label }} · {{ instrument.statusLabel }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        class="system-page__science-action"
+                        data-testid="system-page-scientific-action-button"
+                        [disabled]="!action.canExecute || facade.actionPending()"
+                        (click)="performScientificAction()"
+                      >
+                        {{ facade.actionPending() ? 'Procesando…' : action.buttonLabel }}
+                        <small>+{{ action.awardedDiscoveryPoints }} PD</small>
+                      </button>
+                    </div>
+
+                    @if (action.pendingRequirements; as pending) {
+                      <div class="system-page__action-error">
+                        <strong>Requisitos pendientes · {{ pending.instrumentLabel }} nivel {{ pending.minimumLevelRank }}</strong>
+                        <ul>
+                          @for (item of pending.items; track item) {
+                            <li>{{ item }}</li>
+                          }
+                        </ul>
+                      </div>
+                    }
+                  </article>
+                }
+
+                @if (facade.actionFeedback(); as feedback) {
+                  <p
+                    class="system-page__feedback"
+                    data-testid="system-page-scientific-action-feedback"
+                    role="status"
+                  >
+                    {{ feedback }}
+                  </p>
+                }
+
+                @if (facade.actionError(); as actionError) {
+                  <p
+                    class="system-page__feedback system-page__feedback--error"
+                    data-testid="system-page-scientific-action-error"
+                    role="alert"
+                  >
+                    {{ actionError }}
+                  </p>
+                }
+
+                @if (model.protoplanetaryDiskAnalysis; as disk) {
+                  <article
+                    class="system-page__science-card system-page__science-card--wide"
+                    data-testid="system-page-disk-analysis"
+                  >
+                    <header class="system-page__section-header">
+                      <div>
+                        <small>ANÁLISIS CONFIRMADO</small>
+                        <h2>Disco protoplanetario</h2>
+                      </div>
+                    </header>
+
+                    <p>{{ disk.summary }}</p>
+
+                    <div class="system-page__disk-grid">
+                      <section>
+                        <h3>Disco</h3>
+                        <dl class="system-page__fact-grid system-page__fact-grid--compact">
+                          @for (fact of disk.diskFacts; track fact.label) {
+                            <div>
+                              <dt>{{ fact.label }}</dt>
+                              <dd>{{ fact.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      </section>
+
+                      <section>
+                        <h3>Formación</h3>
+                        <dl class="system-page__fact-grid system-page__fact-grid--compact">
+                          @for (fact of disk.formationFacts; track fact.label) {
+                            <div>
+                              <dt>{{ fact.label }}</dt>
+                              <dd>{{ fact.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      </section>
+                    </div>
+                  </article>
+                }
               </section>
 
               <section
                 class="system-page__contract"
                 data-testid="system-page-render-contract"
               >
-                <strong>CONTRATO DE RENDER</strong>
+                <strong>26.2 · LÍMITE DE CONOCIMIENTO</strong>
 
                 <p>
-                  Flujo autoritativo: domain/simulation → snapshot inmutable →
-                  proyección Three.js. WebGL puede calcular coordenadas visuales
-                  efímeras para animar el snapshot, pero nunca persiste ni devuelve
-                  posiciones, órbitas, masas, radios, clima u otra física al dominio.
+                  Domain/simulation → ficha científica + snapshot inmutable →
+                  proyección Three.js. DETECTED no resuelve identidad; DISCOVERED/VISITED
+                  identifican arquitectura; CATALOGUED habilita física estelar y órbitas;
+                  CONFIRMED añade la caracterización final permitida. La ruta nunca
+                  persiste ni devuelve Ground Truth adicional.
                 </p>
               </section>
 
@@ -172,7 +543,7 @@
                   }"
                   data-testid="system-page-archive-link"
                 >
-                  Abrir ficha en Archivo
+                  Abrir registro del Archivo
                 </a>
 
                 <a

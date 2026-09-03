@@ -117,6 +117,14 @@ export class GalaxyDetailPage
       .changeFocusToDisplayedGalaxy();
   }
 
+  validateDetection():
+    void {
+
+    void this
+      .facade
+      .validateDisplayedGalaxyDetection();
+  }
+
   catalogueGalaxy():
     void {
 
@@ -131,6 +139,42 @@ export class GalaxyDetailPage
     void this
       .facade
       .confirmDisplayedGalaxy();
+  }
+
+  canValidateDetection(
+    state:
+      DiscoveryStateValue,
+  ): boolean {
+
+    return DiscoveryState
+      .fromCode(
+        state.code,
+      ) ===
+      DiscoveryState.DETECTED;
+  }
+
+  isDiscovered(
+    state:
+      DiscoveryStateValue,
+  ): boolean {
+
+    return DiscoveryState
+      .fromCode(
+        state.code,
+      ) ===
+      DiscoveryState.DISCOVERED;
+  }
+
+  canEstablishFocus(
+    state:
+      DiscoveryStateValue,
+  ): boolean {
+
+    return DiscoveryState
+      .fromCode(
+        state.code,
+      ).code >=
+      DiscoveryState.DISCOVERED.code;
   }
 
   canCatalogue(

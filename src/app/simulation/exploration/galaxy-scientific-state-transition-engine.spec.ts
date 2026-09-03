@@ -13,6 +13,36 @@ describe(
   'GalaxyScientificStateTransitionEngine point 26.1',
   () => {
     it(
+      'should validate only DETECTED to DISCOVERED at zero PD cost',
+      () => {
+        const result =
+          GalaxyScientificStateTransitionEngine
+            .evaluate(
+              DiscoveryState.DETECTED,
+              GalaxyScientificStateTransitionAction.VALIDATE_DETECTION,
+            );
+
+        expect(
+          result.stateBefore,
+        ).toBe(
+          DiscoveryState.DETECTED,
+        );
+
+        expect(
+          result.stateAfter,
+        ).toBe(
+          DiscoveryState.DISCOVERED,
+        );
+
+        expect(
+          result.discoveryPointCost,
+        ).toBe(
+          0n,
+        );
+      },
+    );
+
+    it(
       'should catalogue only the exact VISITED milestone for the frozen 250 PD galaxy cost',
       () => {
         const result =
@@ -87,6 +117,28 @@ describe(
     it(
       'should reject skipping, repeating or downgrading scientific milestones',
       () => {
+        for (
+          const state
+          of [
+            DiscoveryState.UNKNOWN,
+            DiscoveryState.DISCOVERED,
+            DiscoveryState.VISITED,
+            DiscoveryState.CATALOGUED,
+            DiscoveryState.CONFIRMED,
+          ]
+        ) {
+          expect(
+            () =>
+              GalaxyScientificStateTransitionEngine
+                .evaluate(
+                  state,
+                  GalaxyScientificStateTransitionAction.VALIDATE_DETECTION,
+                ),
+          ).toThrow(
+            RangeError,
+          );
+        }
+
         for (
           const state
           of [

@@ -92,9 +92,12 @@ export interface GalaxyFocusRuntime {
  * truth for the explicit choice. This runtime only applies that choice to
  * persistence:
  *
- * - the target must already be known at DETECTED or later;
+ * - DETECTED is not focusable: it must first be explicitly validated to
+ *   DISCOVERED;
  * - the current focus must itself be a known GalaxyLocator;
- * - entering a non-current known galaxy promotes it to at least VISITED;
+ * - establishing a DISCOVERED galaxy as focus promotes it exactly to VISITED;
+ * - an already-current DISCOVERED galaxy can be explicitly reaffirmed as focus
+ *   to record the VISITED milestone without changing navigation;
  * - CATALOGUED and CONFIRMED are never regressed;
  * - activeGalaxyIndex and the target DiscoveryState are committed atomically;
  * - the previous focus is moved to the front of recentGalaxyIndices while the
@@ -261,6 +264,53 @@ export class DexieGalaxyFocusRuntime
         .fromCode(
           targetStateValue.code,
         );
+
+    if (
+      targetStateBefore ===
+      DiscoveryState.DETECTED
+    ) {
+      throw new RangeError(
+        'A detected galaxy must be validated to DISCOVERED before it can become the exploration focus.',
+      );
+    }
+
+    if (
+      targetGalaxyIndex ===
+      previousFocusGalaxyIndex
+    ) {
+      if (
+        targetStateBefore !==
+        DiscoveryState.DISCOVERED
+      ) {
+        throw new RangeError(
+          'The target galaxy is already the active exploration focus.',
+        );
+      }
+
+      await this
+        .discoveryRepository
+        .setState(
+          generationKey,
+          new GalaxyLocator(
+            targetGalaxyIndex,
+          ),
+          DiscoveryState.VISITED,
+        );
+
+      return Object.freeze({
+        previousFocusGalaxyIndex,
+        activeGalaxyIndex:
+          previousFocusGalaxyIndex,
+        targetStateBefore,
+        targetStateAfter:
+          DiscoveryState.VISITED,
+        didPromoteTargetToVisited:
+          true,
+        recentGalaxyIndices:
+          navigationBefore
+            .recentGalaxyIndices,
+      });
+    }
 
     const offer =
       ExternalGalaxyFocusEngine
@@ -433,4 +483,5 @@ function createGalaxyFocusRuntime():
       TARGET_SEED_RESOLVER,
     ),
   );
+
 }

@@ -211,6 +211,90 @@ describe(
     }
 
     it(
+      'should validate DETECTED to DISCOVERED at zero PD without touching the external-search high-water mark',
+      async () => {
+        await seed(
+          DiscoveryState.DETECTED,
+          740n,
+        );
+
+        await searchStateRepository
+          .setState(
+            generationKey,
+            {
+              consecutiveFailedSearches:
+                0n,
+              consumedSearchOpportunities:
+                4n,
+              lastAnnouncedEarnedSearchOpportunities:
+                6n,
+              earnedSearchOpportunitiesHighWatermark:
+                9n,
+            },
+          );
+
+        const result =
+          await runtime
+            .commit(
+              generationKey,
+              0n,
+              GalaxyScientificStateTransitionAction.VALIDATE_DETECTION,
+            );
+
+        expect(
+          result.discoveryPointCost,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          result.globalDiscoveryPointsBefore,
+        ).toBe(
+          740n,
+        );
+
+        expect(
+          result.globalDiscoveryPointsAfter,
+        ).toBe(
+          740n,
+        );
+
+        expect(
+          await discoveryRepository
+            .getState(
+              generationKey,
+              new GalaxyLocator(
+                0n,
+              ),
+            ),
+        ).toBe(
+          DiscoveryState.DISCOVERED,
+        );
+
+        expect(
+          await pointsRepository
+            .getGlobalDiscoveryPoints(
+              generationKey,
+            ),
+        ).toBe(
+          740n,
+        );
+
+        expect(
+          (
+            await searchStateRepository
+              .getState(
+                generationKey,
+              )
+          )
+            .earnedSearchOpportunitiesHighWatermark,
+        ).toBe(
+          9n,
+        );
+      },
+    );
+
+    it(
       'should atomically spend 250 global PD for VISITED to CATALOGUED',
       async () => {
         await seed(

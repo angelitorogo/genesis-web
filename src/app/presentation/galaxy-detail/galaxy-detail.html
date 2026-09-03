@@ -651,7 +651,32 @@
                       materializa ni revela Ground Truth pendiente.
                     </p>
 
-                    @if (canCatalogue(model.scientificProfile.knowledgeState)) {
+                    @if (canValidateDetection(model.scientificProfile.knowledgeState)) {
+                      <div class="gd__lock-actions">
+                        <button
+                          class="gd__action gd__action--primary gd__action--scientific"
+                          type="button"
+                          data-testid="galaxy-detail-validate-detection-action"
+                          [disabled]="facade.scientificActionPending()"
+                          (click)="validateDetection()"
+                        >
+                          @if (facade.scientificActionPending()) {
+                            Validando detección…
+                          } @else {
+                            Validar detección · 0 PD
+                          }
+                        </button>
+
+                        <p
+                          class="gd__action-explanation"
+                          data-testid="galaxy-detail-validate-detection-cost"
+                        >
+                          DETECTED → DISCOVERED confirma la observación sin gastar PD.
+                          Desbloquea la identidad procedural ya definida, pero todavía
+                          no revela magnitudes físicas de Catalogada ni estructura de Confirmada.
+                        </p>
+                      </div>
+                    } @else if (canCatalogue(model.scientificProfile.knowledgeState)) {
                       <div class="gd__lock-actions">
                         <button
                           class="gd__action gd__action--primary gd__action--scientific"
@@ -691,8 +716,13 @@
                         class="gd__action-explanation gd__action-explanation--locked"
                         data-testid="galaxy-detail-catalogue-prerequisite"
                       >
-                        La acción se habilita cuando esta galaxia alcance exactamente
-                        el estado Visitada.
+                        @if (isDiscovered(model.scientificProfile.knowledgeState)) {
+                          Establece esta galaxia como foco de exploración para registrar
+                          DISCOVERED → VISITED sin coste de PD.
+                        } @else {
+                          La acción se habilita cuando esta galaxia alcance exactamente
+                          el estado Visitada.
+                        }
                       </p>
                     }
                   </div>
@@ -870,7 +900,10 @@
                   </div>
                 </div>
 
-                @if (model.isCurrentFocus) {
+                @if (
+                  model.isCurrentFocus &&
+                  !isDiscovered(model.scientificProfile.knowledgeState)
+                ) {
                   <div
                     class="gd__focus-status"
                     data-testid="galaxy-detail-focus-current"
@@ -884,7 +917,7 @@
                       </p>
                     </div>
                   </div>
-                } @else {
+                } @else if (canEstablishFocus(model.scientificProfile.knowledgeState)) {
                   <div class="gd__actions">
                     <button
                       class="gd__action gd__action--primary gd__action--wide"
@@ -895,12 +928,25 @@
                     >
                       @if (facade.focusPending()) {
                         Actualizando foco…
+                      } @else if (model.isCurrentFocus) {
+                        Establecer como foco de exploración
                       } @else if (model.isRecentFocus) {
                         Regresar a esta galaxia
                       } @else {
                         Establecer como foco de exploración
                       }
                     </button>
+                  </div>
+                } @else {
+                  <div
+                    class="gd__note gd__note--muted"
+                    data-testid="galaxy-detail-focus-prerequisite"
+                  >
+                    <span>FOCO BLOQUEADO</span>
+                    <p>
+                      Valida primero la detección. Una galaxia DETECTED no puede
+                      saltar directamente a VISITED.
+                    </p>
                   </div>
                 }
 
@@ -935,8 +981,9 @@
                     Cambiar el foco actualiza únicamente el contexto persistido de
                     exploración. Si esta galaxia pertenece al historial reciente,
                     regresar valida primero esa relación persistida y conserva su
-                    progreso local. Una galaxia conocida queda como mínimo en
-                    Visitada; Catalogada y Confirmada conservan su estado exacto.
+                    progreso local. DETECTED debe validarse primero a DISCOVERED;
+                    establecer el foco registra DISCOVERED → VISITED. Catalogada y
+                    Confirmada conservan su estado exacto.
                     No se leen ni gastan PD y esta acción no representa ni afirma
                     un viaje físico o FTL.
                   </p>

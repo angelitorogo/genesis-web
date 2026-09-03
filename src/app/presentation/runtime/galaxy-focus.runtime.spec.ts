@@ -200,7 +200,7 @@ describe(
     );
 
     it(
-      'should atomically focus a DETECTED galaxy and promote it to VISITED',
+      'should reject DETECTED until the observation is explicitly validated to DISCOVERED',
       async () => {
         await discoveryRepository
           .setState(
@@ -212,47 +212,16 @@ describe(
               .DETECTED,
           );
 
-        const result =
-          await runtime
+        await expect(
+          runtime
             .changeFocus(
               generationKey,
               1n,
-            );
-
-        expect(
-          result
-            .previousFocusGalaxyIndex,
-        ).toBe(
-          0n,
-        );
-
-        expect(
-          result
-            .activeGalaxyIndex,
-        ).toBe(
-          1n,
-        );
-
-        expect(
-          result
-            .targetStateBefore,
-        ).toBe(
-          DiscoveryState
-            .DETECTED,
-        );
-
-        expect(
-          result
-            .targetStateAfter,
-        ).toBe(
-          DiscoveryState
-            .VISITED,
-        );
-
-        expect(
-          result
-            .didPromoteTargetToVisited,
-        ).toBe(true);
+            ),
+        ).rejects
+          .toThrow(
+            'validated to DISCOVERED',
+          );
 
         expect(
           await navigationRepository
@@ -261,12 +230,10 @@ describe(
             ),
         ).toEqual({
           activeGalaxyIndex:
-            1n,
+            0n,
 
           recentGalaxyIndices:
-            [
-              0n,
-            ],
+            [],
         });
 
         expect(
@@ -279,20 +246,7 @@ describe(
             ),
         ).toBe(
           DiscoveryState
-            .VISITED,
-        );
-
-        expect(
-          await discoveryRepository
-            .getState(
-              generationKey,
-              new GalaxyLocator(
-                0n,
-              ),
-            ),
-        ).toBe(
-          DiscoveryState
-            .DISCOVERED,
+            .DETECTED,
         );
       },
     );
@@ -836,18 +790,32 @@ describe(
     );
 
     it(
-      'should reject a request to focus the galaxy that is already active',
+      'should explicitly promote an already-current DISCOVERED galaxy to VISITED without changing navigation',
       async () => {
-        await expect(
-          runtime
+        const result =
+          await runtime
             .changeFocus(
               generationKey,
               0n,
-            ),
-        ).rejects
-          .toThrow(
-            RangeError,
-          );
+            );
+
+        expect(
+          result.targetStateBefore,
+        ).toBe(
+          DiscoveryState.DISCOVERED,
+        );
+
+        expect(
+          result.targetStateAfter,
+        ).toBe(
+          DiscoveryState.VISITED,
+        );
+
+        expect(
+          result.didPromoteTargetToVisited,
+        ).toBe(
+          true,
+        );
 
         expect(
           await navigationRepository
@@ -871,8 +839,7 @@ describe(
               ),
             ),
         ).toBe(
-          DiscoveryState
-            .DISCOVERED,
+          DiscoveryState.VISITED,
         );
       },
     );
@@ -929,7 +896,7 @@ describe(
     );
 
     it(
-      'should roll back a VISITED promotion when the navigation write fails',
+      'should roll back a DISCOVERED to VISITED promotion when the navigation write fails',
       async () => {
         await discoveryRepository
           .setState(
@@ -938,7 +905,7 @@ describe(
               1n,
             ),
             DiscoveryState
-              .DETECTED,
+              .DISCOVERED,
           );
 
         const failingNavigation:
@@ -986,7 +953,7 @@ describe(
             ),
         ).toBe(
           DiscoveryState
-            .DETECTED,
+            .DISCOVERED,
         );
 
         expect(

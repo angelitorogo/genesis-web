@@ -535,7 +535,7 @@ describe(
             '[data-testid="external-galaxy-search-opportunity-threshold"]',
           )?.textContent,
         ).toContain(
-          '100',
+          'Cada 100 PD ganados.',
         );
 
         expect(
@@ -630,7 +630,7 @@ describe(
             '[data-testid="external-galaxy-search-opportunity-threshold"]',
           )?.textContent,
         ).toContain(
-          '200',
+          'Cada 100 PD ganados.',
         );
 
         expect(

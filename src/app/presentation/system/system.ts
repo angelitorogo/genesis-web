@@ -21,6 +21,11 @@ import {
 } from '../genesis-archive/archive-discovery-detail.facade';
 
 import {
+  ArchiveStellarSystemKnowledgeLevel,
+  type ArchiveStellarSystemFactModel,
+} from '../genesis-archive/archive-stellar-system-card';
+
+import {
   SystemScene,
 } from './system-scene';
 
@@ -89,6 +94,22 @@ export class SystemPage
       },
     );
 
+  readonly systemFacts =
+    computed<readonly ArchiveStellarSystemFactModel[]>(
+      () =>
+        this
+          .facade
+          .model()
+          ?.stellarSystemCard
+          ?.systemFacts
+          .filter(
+            fact =>
+              fact.label !==
+              'SystemSeed',
+          ) ??
+        [],
+    );
+
   ngOnInit():
     void {
 
@@ -143,5 +164,35 @@ export class SystemPage
               'version',
             ),
       });
+  }
+
+  isCatalogued(
+    knowledgeLevel:
+      ArchiveStellarSystemKnowledgeLevel,
+  ): boolean {
+
+    return (
+      knowledgeLevel ===
+        ArchiveStellarSystemKnowledgeLevel.CATALOGUED ||
+      knowledgeLevel ===
+        ArchiveStellarSystemKnowledgeLevel.CONFIRMED
+    );
+  }
+
+  isConfirmed(
+    knowledgeLevel:
+      ArchiveStellarSystemKnowledgeLevel,
+  ): boolean {
+
+    return knowledgeLevel ===
+      ArchiveStellarSystemKnowledgeLevel.CONFIRMED;
+  }
+
+  performScientificAction():
+    void {
+
+    void this
+      .facade
+      .performScientificAction();
   }
 }

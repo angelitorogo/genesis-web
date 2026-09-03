@@ -147,7 +147,7 @@
                       </div>
 
                       <p class="exploration__range-note">
-                        Esta operación no usa coordenadas X/Y de la galaxia activa. La probabilidad depende de los PD globales y de la protección anti-bloqueo persistida. Los PD no se gastan: cada 100 PD globales se añade un intento y todos los intentos no utilizados se acumulan hasta que decidas usarlos.
+                        Esta operación no usa coordenadas X/Y de la galaxia activa. La probabilidad depende de los PD disponibles y de la protección anti-bloqueo persistida. Cada 100 PD ganados se obtiene un intento de búsqueda: gastar PD no reduce ese progreso y los intentos no utilizados se acumulan hasta que decidas usarlos.
                       </p>
 
                       <p
@@ -156,9 +156,9 @@
                         [attr.data-available]="externalStatus.searchOpportunityAvailable"
                       >
                         @if (externalStatus.searchOpportunityAvailable) {
-                          {{ searchOpportunityCountLabel(externalStatus.availableSearchOpportunities) }} · próxima oportunidad a {{ externalStatus.nextSearchOpportunityThreshold }} PD. Los intentos se acumulan y no consumen PD.
+                          {{ searchOpportunityCountLabel(externalStatus.availableSearchOpportunities) }} · el siguiente intento se obtiene al ganar {{ externalStatus.discoveryPointsUntilNextOpportunity }} PD más. Los intentos se acumulan y no consumen PD.
                         } @else {
-                          BÚSQUEDA BLOQUEADA · próxima oportunidad a {{ externalStatus.nextSearchOpportunityThreshold }} PD. Faltan {{ externalStatus.discoveryPointsUntilNextOpportunity }} PD.
+                          BÚSQUEDA BLOQUEADA · faltan {{ externalStatus.discoveryPointsUntilNextOpportunity }} PD por ganar para obtener el siguiente intento.
                         }
                       </p>
 
@@ -201,19 +201,19 @@
 
                         <div>
                           <dt>
-                            Próximo desbloqueo
+                            Regla de desbloqueo
                           </dt>
 
                           <dd
                             data-testid="external-galaxy-search-opportunity-threshold"
                           >
-                            {{ externalStatus.nextSearchOpportunityThreshold }} PD
+                            Cada {{ externalStatus.searchDiscoveryPointStep }} PD ganados.
                           </dd>
                         </div>
 
                         <div>
                           <dt>
-                            PD restantes
+                            PD por ganar
                           </dt>
 
                           <dd
@@ -225,7 +225,7 @@
 
                         <div>
                           <dt>
-                            PD globales
+                            PD disponibles
                           </dt>
 
                           <dd
@@ -464,7 +464,7 @@
 
                             <div>
                               <dt>
-                                PD globales después
+                                PD disponibles después
                               </dt>
 
                               <dd>
@@ -484,15 +484,16 @@
                               Permanecer en la galaxia actual
                             </button>
 
-                            <button
-                              type="button"
+                            <a
                               class="exploration__scan"
-                              data-testid="external-galaxy-focus-action"
-                              [disabled]="facade.externalFocusPending()"
-                              (click)="focusDetectedGalaxy()"
+                              data-testid="external-galaxy-validate-detection-action"
+                              [routerLink]="[
+                                '/galaxies',
+                                preliminary.galaxyIndex.toString()
+                              ]"
                             >
-                              {{ facade.externalFocusPending() ? 'CAMBIANDO FOCO...' : 'CAMBIAR FOCO A LA GALAXIA DETECTADA' }}
-                            </button>
+                              VALIDAR DETECCIÓN EN FICHA
+                            </a>
                           }
                         }
                       } @else {

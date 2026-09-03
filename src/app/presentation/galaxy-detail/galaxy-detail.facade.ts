@@ -680,14 +680,33 @@ export class GalaxyDetailFacade {
       return;
     }
 
+    const scientificState =
+      DiscoveryState
+        .fromCode(
+          model
+            .scientificProfile
+            .knowledgeState
+            .code,
+        );
+
+    const canReaffirmCurrentDiscoveredFocus =
+      model
+        .isCurrentFocus &&
+      scientificState ===
+        DiscoveryState.DISCOVERED;
+
     if (
       !model
-        .isVisitable
+        .isVisitable &&
+      !canReaffirmCurrentDiscoveredFocus
     ) {
       this
         .focusErrorSignal
         .set(
-          'Esta galaxia ya es el foco de exploración.',
+          scientificState ===
+            DiscoveryState.DETECTED
+            ? 'Valida primero la detección de esta galaxia antes de establecerla como foco.'
+            : 'Esta galaxia ya es el foco de exploración.',
         );
 
       return;
@@ -760,17 +779,24 @@ export class GalaxyDetailFacade {
         );
       }
 
-      this
-        .focusTransitionRuntime
-        .presentPersistedFocusChange({
-          previousFocusGalaxyIndex:
-            result
-              .previousFocusGalaxyIndex,
+      if (
+        result
+          .previousFocusGalaxyIndex !==
+        result
+          .activeGalaxyIndex
+      ) {
+        this
+          .focusTransitionRuntime
+          .presentPersistedFocusChange({
+            previousFocusGalaxyIndex:
+              result
+                .previousFocusGalaxyIndex,
 
-          activeGalaxyIndex:
-            result
-              .activeGalaxyIndex,
-        });
+            activeGalaxyIndex:
+              result
+                .activeGalaxyIndex,
+          });
+      }
 
       this
         .focusSuccessSignal
@@ -816,6 +842,16 @@ export class GalaxyDetailFacade {
           );
       }
     }
+  }
+
+  async validateDisplayedGalaxyDetection():
+    Promise<void> {
+
+    await this
+      .commitScientificKnowledgeTransition(
+        GalaxyScientificStateTransitionAction
+          .VALIDATE_DETECTION,
+      );
   }
 
   async catalogueDisplayedGalaxy():
@@ -975,9 +1011,12 @@ export class GalaxyDetailFacade {
         .scientificActionSuccessSignal
         .set(
           result.stateAfter ===
-            DiscoveryState.CATALOGUED
-            ? `Catalogación completada por ${result.discoveryPointCost} PD. Saldo global: ${result.globalDiscoveryPointsAfter} PD. Las magnitudes físicas de la galaxia ya están disponibles.`
-            : `Confirmación completada por ${result.discoveryPointCost} PD. Saldo global: ${result.globalDiscoveryPointsAfter} PD. La estructura y el núcleo galáctico ya están disponibles.`,
+            DiscoveryState.DISCOVERED
+            ? `Detección validada sin coste de PD. La galaxia queda Descubierta y su identidad procedural ya está disponible. Saldo global: ${result.globalDiscoveryPointsAfter} PD.`
+            : result.stateAfter ===
+                DiscoveryState.CATALOGUED
+              ? `Catalogación completada por ${result.discoveryPointCost} PD. Saldo global: ${result.globalDiscoveryPointsAfter} PD. Las magnitudes físicas de la galaxia ya están disponibles.`
+              : `Confirmación completada por ${result.discoveryPointCost} PD. Saldo global: ${result.globalDiscoveryPointsAfter} PD. La estructura y el núcleo galáctico ya están disponibles.`,
         );
     } catch (
       error

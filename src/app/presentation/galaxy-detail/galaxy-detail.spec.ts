@@ -628,7 +628,7 @@ describe(
             '[data-testid="galaxy-detail-catalogue-prerequisite"]',
           )?.textContent,
         ).toContain(
-          'Visitada',
+          'DISCOVERED → VISITED',
         );
 
         expect(
@@ -730,16 +730,16 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-focus-current"]',
-          )?.textContent,
-        ).toContain(
-          'Esta galaxia ya define el contexto activo',
-        );
+          ),
+        ).toBeNull();
 
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-change-focus-action"]',
-          ),
-        ).toBeNull();
+          )?.textContent,
+        ).toContain(
+          'Establecer como foco de exploración',
+        );
 
         expect(
           element.querySelector(
@@ -1098,10 +1098,32 @@ describe(
 
         expect(
           element.querySelector(
-            '[data-testid="galaxy-detail-change-focus-action"]',
+            '[data-testid="galaxy-detail-validate-detection-action"]',
           )?.textContent,
         ).toContain(
-          'Establecer como foco de exploración',
+          'Validar detección · 0 PD',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-validate-detection-cost"]',
+          )?.textContent,
+        ).toContain(
+          'DETECTED → DISCOVERED',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-change-focus-action"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-focus-prerequisite"]',
+          )?.textContent,
+        ).toContain(
+          'no puede',
         );
 
         expect(
@@ -1844,7 +1866,7 @@ describe(
     );
 
     it(
-      'should change focus explicitly, promote a DETECTED galaxy to VISITED and reload its newly available identity',
+      'should validate DETECTED to DISCOVERED before explicitly establishing focus and recording VISITED',
       async () => {
         const mutableStates =
           new Map<
@@ -2004,6 +2026,44 @@ describe(
             },
           };
 
+        const scientificRuntime:
+          GalaxyScientificKnowledgeRuntime =
+          {
+            async commit(
+              _generationKey,
+              galaxyIndex,
+              action,
+            ) {
+              const stateBefore =
+                mutableStates.get(
+                  galaxyIndex,
+                ) ??
+                DiscoveryState.UNKNOWN;
+
+              const transition =
+                GalaxyScientificStateTransitionEngine
+                  .evaluate(
+                    stateBefore,
+                    action,
+                  );
+
+              const globalDiscoveryPointsBefore =
+                1000n;
+
+              mutableStates.set(
+                galaxyIndex,
+                transition.stateAfter,
+              );
+
+              return Object.freeze({
+                ...transition,
+                globalDiscoveryPointsBefore,
+                globalDiscoveryPointsAfter:
+                  globalDiscoveryPointsBefore,
+              });
+            },
+          };
+
         const focusRuntime:
           GalaxyFocusRuntime =
           {
@@ -2017,6 +2077,12 @@ describe(
                 ) ??
                 DiscoveryState
                   .UNKNOWN;
+
+              expect(
+                targetStateBefore,
+              ).toBe(
+                DiscoveryState.DISCOVERED,
+              );
 
               mutableStates.set(
                 targetGalaxyIndex,
@@ -2060,6 +2126,7 @@ describe(
           '1',
           repositoryBundle,
           focusRuntime,
+          scientificRuntime,
         );
 
         await TestBed
@@ -2090,6 +2157,77 @@ describe(
             '[data-testid="galaxy-detail-name-restricted"]',
           ),
         ).toBeTruthy();
+
+        expect(
+          before.querySelector(
+            '[data-testid="galaxy-detail-validate-detection-action"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          before.querySelector(
+            '[data-testid="galaxy-detail-change-focus-action"]',
+          ),
+        ).toBeNull();
+
+        await fixture
+          .componentInstance
+          .facade
+          .validateDisplayedGalaxyDetection();
+
+        fixture.detectChanges();
+
+        const validated =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          mutableStates.get(
+            1n,
+          ),
+        ).toBe(
+          DiscoveryState.DISCOVERED,
+        );
+
+        expect(
+          activeGalaxyIndex,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          recentGalaxyIndices,
+        ).toEqual([]);
+
+        expect(
+          validated.querySelector(
+            '[data-testid="galaxy-detail-state"]',
+          )?.textContent,
+        ).toContain(
+          'Descubierta',
+        );
+
+        expect(
+          validated.querySelector(
+            '[data-testid="galaxy-detail-name"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          validated.querySelector(
+            '[data-testid="galaxy-detail-scientific-action-success"]',
+          )?.textContent,
+        ).toContain(
+          'sin coste de PD',
+        );
+
+        expect(
+          validated.querySelector(
+            '[data-testid="galaxy-detail-change-focus-action"]',
+          )?.textContent,
+        ).toContain(
+          'Establecer como foco de exploración',
+        );
 
         await fixture
           .componentInstance

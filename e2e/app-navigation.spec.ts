@@ -829,7 +829,7 @@ test.describe(
 
 
     test(
-      'should expose the point-11.5 focus control without offering a redundant change for the current galaxy',
+      'should explicitly record DISCOVERED to VISITED when the current galaxy is established as focus',
       async ({
         page,
       }) => {
@@ -863,6 +863,52 @@ test.describe(
 
         await expect(
           page.getByTestId(
+            'galaxy-detail-state',
+          ),
+        ).toContainText(
+          'Descubierta',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-focus-current',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
+        const establishFocusAction =
+          page.getByTestId(
+            'galaxy-detail-change-focus-action',
+          );
+
+        await expect(
+          establishFocusAction,
+        ).toContainText(
+          'Establecer como foco de exploración',
+        );
+
+        await establishFocusAction
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-state',
+          ),
+        ).toContainText(
+          'Visitada',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-focus-success',
+          ),
+        ).toContainText(
+          'Visitada',
+        );
+
+        await expect(
+          page.getByTestId(
             'galaxy-detail-focus-current',
           ),
         ).toContainText(
@@ -882,7 +928,7 @@ test.describe(
             'galaxy-detail-focus-semantics',
           ),
         ).toContainText(
-          'no representa ni afirma un viaje físico o FTL',
+          'DISCOVERED → VISITED',
         );
 
         await expect(
@@ -894,7 +940,6 @@ test.describe(
         );
       },
     );
-
 
     test(
       'should keep the discovered-galaxy catalogue compact without exposing the recent-history UI',
@@ -951,7 +996,7 @@ test.describe(
 
 
     test(
-      'should accumulate external-galaxy attempts and change focus directly from the compact catalogue',
+      'should accumulate external-galaxy attempts and require DETECTED validation before focus',
       async ({
         page,
       }) => {
@@ -1003,7 +1048,7 @@ test.describe(
             'external-galaxy-search-opportunity-threshold',
           ),
         ).toContainText(
-          '100 PD',
+          'Cada 100 PD ganados.',
         );
 
         /*
@@ -1246,17 +1291,81 @@ test.describe(
             'external-galaxy-search-opportunity-threshold',
           ),
         ).toContainText(
-          '800 PD',
+          'Cada 100 PD ganados.',
         );
 
         await expect(
           searchAction,
         ).toBeDisabled();
 
+        const validateInDetailAction =
+          page.getByTestId(
+            'external-galaxy-validate-detection-action',
+          );
+
+        await expect(
+          validateInDetailAction,
+        ).toBeVisible();
+
+        await validateInDetailAction
+          .click();
+
+        await expect(
+          page,
+        ).toHaveURL(
+          new RegExp(`/galaxies/${detectedGalaxyIndex}$`),
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-state',
+          ),
+        ).toContainText(
+          'Detectada',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-change-focus-action',
+          ),
+        ).toHaveCount(
+          0,
+        );
+
         await page
           .getByTestId(
-            'external-galaxy-focus-action',
+            'galaxy-detail-validate-detection-action',
           )
+          .click();
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-state',
+          ),
+        ).toContainText(
+          'Descubierta',
+        );
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-scientific-action-success',
+          ),
+        ).toContainText(
+          'sin coste de PD',
+        );
+
+        const establishExternalFocus =
+          page.getByTestId(
+            'galaxy-detail-change-focus-action',
+          );
+
+        await expect(
+          establishExternalFocus,
+        ).toContainText(
+          'Establecer como foco de exploración',
+        );
+
+        await establishExternalFocus
           .click();
 
         const forwardFocusTransition =
@@ -1306,10 +1415,10 @@ test.describe(
 
         await expect(
           page.getByTestId(
-            'external-galaxy-focus-message',
+            'galaxy-detail-focus-success',
           ),
         ).toContainText(
-          'historial persistido de 11.6',
+          'Visitada',
         );
 
         await page.goto(
@@ -1550,6 +1659,7 @@ test.describe(
         }
       },
     );
+
 
     test(
       'should redirect an unknown route to Home',

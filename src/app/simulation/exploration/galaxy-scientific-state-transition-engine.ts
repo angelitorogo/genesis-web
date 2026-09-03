@@ -11,6 +11,9 @@ export const GALAXY_CONFIRM_DISCOVERY_POINT_COST =
 
 export const GalaxyScientificStateTransitionAction =
   Object.freeze({
+    VALIDATE_DETECTION:
+      'VALIDATE_DETECTION',
+
     CATALOGUE:
       'CATALOGUE',
 
@@ -42,6 +45,8 @@ export interface GalaxyScientificStateTransitionResult {
  *
  * These are explicit disclosure milestones over one already-known GalaxyLocator:
  *
+ * - DETECTED -> DISCOVERED validates the observation at zero PD cost and
+ *   unlocks the already-defined procedural identity;
  * - VISITED -> CATALOGUED costs 250 global PD and unlocks the frozen baseline
  *   physical projection;
  * - CATALOGUED -> CONFIRMED costs 500 global PD and unlocks frozen
@@ -70,6 +75,32 @@ export class GalaxyScientificStateTransitionEngine {
         .fromCode(
           currentState.code,
         );
+
+    if (
+      action ===
+      GalaxyScientificStateTransitionAction
+        .VALIDATE_DETECTION
+    ) {
+      if (
+        canonical !==
+        DiscoveryState.DETECTED
+      ) {
+        throw new RangeError(
+          `Validar una detección galáctica requiere exactamente DETECTED; estado actual: ${canonical.name}.`,
+        );
+      }
+
+      return Object.freeze({
+        action,
+        stateBefore:
+          canonical,
+        stateAfter:
+          DiscoveryState
+            .DISCOVERED,
+        discoveryPointCost:
+          0n,
+      });
+    }
 
     if (
       action ===

@@ -100,6 +100,16 @@ const SIGNED_LONG_MAX =
 const NO_REWARD_REASONS =
   new Set<DiscoveryRewardReason>();
 
+type ExternalSearchDiscoveryPointsRepository =
+  DiscoveryPointsRepository &
+  Partial<
+    Pick<
+      DexieDiscoveryPointsRepository,
+      | 'getLifetimeEarnedGlobalDiscoveryPoints'
+      | 'ensureLifetimeEarnedGlobalDiscoveryPointsAtLeast'
+    >
+  >;
+
 export interface ExternalGalaxySearchStatus {
   readonly globalDiscoveryPoints:
     bigint;
@@ -196,9 +206,11 @@ export interface ExternalGalaxySearchRuntime {
  * One external search is committed atomically with its anti-blocking and
  * progression-gate state:
  *
- * - one non-spendable opportunity is earned per 100 global PD reached;
- * - earned opportunities are checkpointed by a monotonic high-water mark, so
- *   later scientific PD spending cannot revoke them;
+ * - one non-spendable opportunity is earned per 100 global PD actually gained;
+ * - the lifetime-earned PD counter is monotonic, so spending the current balance
+ *   never revokes an attempt or moves the next unlock farther away;
+ * - the older attempt high-water mark remains as a conservative repair floor for
+ *   saves created before lifetime-earned PD were persisted;
  * - unused opportunities accumulate persistently and the runtime consumes only
  *   one opportunity per search;
  * - 7.4/7.5 provide the probability profile;
@@ -223,7 +235,7 @@ export class DexieExternalGalaxySearchRuntime
       UniverseNavigationRepository,
 
     private readonly pointsRepository:
-      DiscoveryPointsRepository,
+      ExternalSearchDiscoveryPointsRepository,
 
     private readonly discoveryRepository:
       DiscoveryRepository,
@@ -244,7 +256,7 @@ export class DexieExternalGalaxySearchRuntime
     return this
       .database
       .transaction(
-        'r',
+        'rw',
         this.database.universes,
         this.database.navigation,
         this.database.discoveries,
@@ -275,6 +287,14 @@ export class DexieExternalGalaxySearchRuntime
                 ),
             ]);
 
+          const lifetimeEarnedDiscoveryPoints =
+            await this
+              .resolveLifetimeEarnedDiscoveryPoints(
+                generationKey,
+                globalDiscoveryPoints,
+                persistedSearchState,
+              );
+
           const knownExternalGalaxyCount =
             countKnownExternalGalaxies(
               knownDiscoveries,
@@ -282,7 +302,7 @@ export class DexieExternalGalaxySearchRuntime
 
           const opportunity =
             evaluateSearchOpportunity(
-              globalDiscoveryPoints,
+              lifetimeEarnedDiscoveryPoints,
               persistedSearchState
                 .consumedSearchOpportunities,
               persistedSearchState
@@ -372,9 +392,17 @@ export class DexieExternalGalaxySearchRuntime
                 ),
             ]);
 
+          const lifetimeEarnedDiscoveryPoints =
+            await this
+              .resolveLifetimeEarnedDiscoveryPoints(
+                generationKey,
+                globalDiscoveryPoints,
+                persistedSearchState,
+              );
+
           const opportunity =
             evaluateSearchOpportunity(
-              globalDiscoveryPoints,
+              lifetimeEarnedDiscoveryPoints,
               persistedSearchState
                 .consumedSearchOpportunities,
               persistedSearchState
@@ -412,6 +440,90 @@ export class DexieExternalGalaxySearchRuntime
             );
         },
       );
+  }
+
+  private async resolveLifetimeEarnedDiscoveryPoints(
+    generationKey:
+      UniverseGenerationKey,
+
+    globalDiscoveryPoints:
+      bigint,
+
+    persistedSearchState:
+      Awaited<
+        ReturnType<
+          DexieExternalGalaxySearchStateRepository['getState']
+        >
+      >,
+  ): Promise<bigint> {
+
+    const searchDiscoveryPointStep =
+      ExplorationBalanceV1
+        .externalGalaxySearchDiscoveryPointStep;
+
+    const minimumHistoricalLifetimeEarnedDiscoveryPoints =
+      maxBigInt(
+        opportunityCountToEarnedDiscoveryPointFloor(
+          persistedSearchState
+            .consumedSearchOpportunities,
+          searchDiscoveryPointStep,
+        ),
+        opportunityCountToEarnedDiscoveryPointFloor(
+          persistedSearchState
+            .lastAnnouncedEarnedSearchOpportunities,
+          searchDiscoveryPointStep,
+        ),
+        opportunityCountToEarnedDiscoveryPointFloor(
+          persistedSearchState
+            .earnedSearchOpportunitiesHighWatermark,
+          searchDiscoveryPointStep,
+        ),
+      );
+
+    const ensureLifetime =
+      this
+        .pointsRepository
+        .ensureLifetimeEarnedGlobalDiscoveryPointsAtLeast;
+
+    if (
+      ensureLifetime !==
+      undefined
+    ) {
+      return ensureLifetime
+        .call(
+          this.pointsRepository,
+          generationKey,
+          minimumHistoricalLifetimeEarnedDiscoveryPoints,
+        );
+    }
+
+    const getLifetime =
+      this
+        .pointsRepository
+        .getLifetimeEarnedGlobalDiscoveryPoints;
+
+    if (
+      getLifetime !==
+      undefined
+    ) {
+      return maxBigInt(
+        globalDiscoveryPoints,
+        minimumHistoricalLifetimeEarnedDiscoveryPoints,
+        await getLifetime
+          .call(
+            this.pointsRepository,
+            generationKey,
+          ),
+      );
+    }
+
+    // Test doubles written before the lifetime counter remain compatible.
+    // Production always uses DexieDiscoveryPointsRepository and therefore
+    // persists the repaired lower bound.
+    return maxBigInt(
+      globalDiscoveryPoints,
+      minimumHistoricalLifetimeEarnedDiscoveryPoints,
+    );
   }
 
   private async searchInsideTransaction(
@@ -474,9 +586,17 @@ export class DexieExternalGalaxySearchRuntime
       );
     }
 
+    const lifetimeEarnedDiscoveryPointsBefore =
+      await this
+        .resolveLifetimeEarnedDiscoveryPoints(
+          generationKey,
+          globalDiscoveryPointsBefore,
+          persistedSearchState,
+        );
+
     const opportunity =
       evaluateSearchOpportunity(
-        globalDiscoveryPointsBefore,
+        lifetimeEarnedDiscoveryPointsBefore,
         persistedSearchState
           .consumedSearchOpportunities,
         persistedSearchState
@@ -490,7 +610,7 @@ export class DexieExternalGalaxySearchRuntime
         .searchOpportunityAvailable
     ) {
       throw new RangeError(
-        `External-galaxy search has no available attempts. The next attempt unlocks at ${opportunity.nextSearchOpportunityThreshold.toString(10)} global Discovery Points.`,
+        `External-galaxy search has no available attempts. The next attempt requires ${opportunity.discoveryPointsUntilNextOpportunity.toString(10)} additional earned global Discovery Points.`,
       );
     }
 
@@ -678,11 +798,17 @@ export class DexieExternalGalaxySearchRuntime
         );
     }
 
+    const lifetimeEarnedDiscoveryPointsAfterReward =
+      lifetimeEarnedDiscoveryPointsBefore +
+      BigInt(
+        awardedDiscoveryPoints,
+      );
+
     const earnedSearchOpportunitiesAfterReward =
       maxBigInt(
         opportunity
           .earnedSearchOpportunities,
-        globalDiscoveryPointsAfter /
+        lifetimeEarnedDiscoveryPointsAfterReward /
           ExplorationBalanceV1
             .externalGalaxySearchDiscoveryPointStep,
       );
@@ -787,7 +913,7 @@ interface ExternalGalaxySearchOpportunity {
 }
 
 function evaluateSearchOpportunity(
-  globalDiscoveryPoints:
+  lifetimeEarnedDiscoveryPoints:
     bigint,
 
   consumedSearchOpportunities:
@@ -801,13 +927,13 @@ function evaluateSearchOpportunity(
 ): ExternalGalaxySearchOpportunity {
 
   if (
-    globalDiscoveryPoints <
+    lifetimeEarnedDiscoveryPoints <
       0n ||
-    globalDiscoveryPoints >
+    lifetimeEarnedDiscoveryPoints >
       SIGNED_LONG_MAX
   ) {
     throw new RangeError(
-      'globalDiscoveryPoints must belong to the non-negative signed-Long range.',
+      'lifetimeEarnedDiscoveryPoints must belong to the non-negative signed-Long range.',
     );
   }
 
@@ -848,13 +974,13 @@ function evaluateSearchOpportunity(
     ExplorationBalanceV1
       .externalGalaxySearchDiscoveryPointStep;
 
-  const currentBalanceEarnedSearchOpportunities =
-    globalDiscoveryPoints /
+  const lifetimeEarnedSearchOpportunities =
+    lifetimeEarnedDiscoveryPoints /
     searchDiscoveryPointStep;
 
   const earnedSearchOpportunities =
     maxBigInt(
-      currentBalanceEarnedSearchOpportunities,
+      lifetimeEarnedSearchOpportunities,
       earnedSearchOpportunitiesHighWatermark,
       consumedSearchOpportunities,
       lastAnnouncedEarnedSearchOpportunities,
@@ -888,13 +1014,39 @@ function evaluateSearchOpportunity(
 
     discoveryPointsUntilNextOpportunity:
       nextSearchOpportunityThreshold >
-        globalDiscoveryPoints
+        lifetimeEarnedDiscoveryPoints
         ? nextSearchOpportunityThreshold -
-            globalDiscoveryPoints
+            lifetimeEarnedDiscoveryPoints
         : 0n,
 
     searchDiscoveryPointStep,
   });
+}
+
+function opportunityCountToEarnedDiscoveryPointFloor(
+  opportunityCount:
+    bigint,
+
+  searchDiscoveryPointStep:
+    bigint,
+): bigint {
+
+  if (
+    opportunityCount <
+      0n ||
+    searchDiscoveryPointStep <=
+      0n ||
+    opportunityCount >
+      SIGNED_LONG_MAX /
+      searchDiscoveryPointStep
+  ) {
+    throw new RangeError(
+      'Persisted external-search opportunity history cannot be represented as signed-Long lifetime Discovery Points.',
+    );
+  }
+
+  return opportunityCount *
+    searchDiscoveryPointStep;
 }
 
 function maxBigInt(
@@ -1041,5 +1193,3 @@ function createExternalGalaxySearchRuntime():
     ),
   );
 }
-
-

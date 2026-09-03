@@ -77,9 +77,10 @@ export interface GalaxyScientificKnowledgeRuntime {
 /**
  * Point-26.1 persistence boundary for explicit galaxy scientific milestones.
  *
- * The runtime re-reads both persisted GalaxyLocator state and global PD inside
- * one Dexie read/write transaction. The transition policy supplies the frozen
- * galaxy-only cost (250 PD for catalogue, 500 PD for confirmation). If either
+ * The runtime re-reads persisted GalaxyLocator state and global PD inside one
+ * Dexie read/write transaction. Validation DETECTED -> DISCOVERED costs 0 PD;
+ * the later scientific milestones retain their frozen galaxy-only costs
+ * (250 PD for catalogue, 500 PD for confirmation). If either
  * the DiscoveryState write or PD write fails, Dexie rolls the whole transaction
  * back. Before the spend is committed it also checkpoints the cumulative
  * extragalactic-search opportunity high-water mark, so reducing the spendable
@@ -188,6 +189,26 @@ export class DexieGalaxyScientificKnowledgeRuntime
         .getGlobalDiscoveryPoints(
           generationKey,
         );
+
+    if (
+      transition.discoveryPointCost ===
+      0n
+    ) {
+      await this
+        .discoveryRepository
+        .setState(
+          generationKey,
+          locator,
+          transition.stateAfter,
+        );
+
+      return Object.freeze({
+        ...transition,
+        globalDiscoveryPointsBefore,
+        globalDiscoveryPointsAfter:
+          globalDiscoveryPointsBefore,
+      });
+    }
 
     const externalSearchStateBefore =
       await this

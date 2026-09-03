@@ -1002,7 +1002,251 @@ describe(
           status
             .discoveryPointsUntilNextOpportunity,
         ).toBe(
-          275n,
+          100n,
+        );
+      },
+    );
+
+    it(
+      'should preserve PD earned before returning to exploration while a legacy lifetime row is still unreconciled',
+      async () => {
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            5n,
+          );
+
+        const progressKey =
+          [
+            generationKey
+              .universeSeed
+              .serialize(),
+            generationKey
+              .generatorVersion
+              .code,
+            0,
+            'GLOBAL',
+          ] as const;
+
+        const progressEntity =
+          await database
+            .progress
+            .get(
+              progressKey,
+            );
+
+        expect(
+          progressEntity,
+        ).toBeDefined();
+
+        if (
+          progressEntity ===
+          undefined
+        ) {
+          throw new Error(
+            'Global progress fixture must exist.',
+          );
+        }
+
+        const legacyProgressEntity =
+          {
+            ...progressEntity,
+          } as
+            typeof progressEntity &
+            {
+              lifetimeEarnedDiscoveryPoints?:
+                string;
+
+              unreconciledLifetimeEarnedDiscoveryPoints?:
+                string;
+            };
+
+        delete legacyProgressEntity
+          .lifetimeEarnedDiscoveryPoints;
+        delete legacyProgressEntity
+          .unreconciledLifetimeEarnedDiscoveryPoints;
+
+        await database
+          .progress
+          .put(
+            legacyProgressEntity,
+          );
+
+        await searchStateRepository
+          .setState(
+            generationKey,
+            {
+              consecutiveFailedSearches:
+                0n,
+              consumedSearchOpportunities:
+                7n,
+              lastAnnouncedEarnedSearchOpportunities:
+                7n,
+              earnedSearchOpportunitiesHighWatermark:
+                7n,
+            },
+          );
+
+        /*
+         * The player earns 99 PD somewhere else in the game before opening
+         * /exploration. No external-search status read/reconciliation happens
+         * between the legacy fixture and this award.
+         */
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            104n,
+          );
+
+        const afterNinetyNine =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          afterNinetyNine
+            .globalDiscoveryPoints,
+        ).toBe(
+          104n,
+        );
+
+        expect(
+          afterNinetyNine
+            .earnedSearchOpportunities,
+        ).toBe(
+          7n,
+        );
+
+        expect(
+          afterNinetyNine
+            .availableSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          afterNinetyNine
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          await pointsRepository
+            .getLifetimeEarnedGlobalDiscoveryPoints(
+              generationKey,
+            ),
+        ).toBe(
+          799n,
+        );
+
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            105n,
+          );
+
+        const afterOneHundred =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          afterOneHundred
+            .earnedSearchOpportunities,
+        ).toBe(
+          8n,
+        );
+
+        expect(
+          afterOneHundred
+            .availableSearchOpportunities,
+        ).toBe(
+          1n,
+        );
+
+        expect(
+          afterOneHundred
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          100n,
+        );
+
+        expect(
+          await pointsRepository
+            .getLifetimeEarnedGlobalDiscoveryPoints(
+              generationKey,
+            ),
+        ).toBe(
+          800n,
+        );
+
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            5n,
+          );
+
+        const afterSpend =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          afterSpend
+            .globalDiscoveryPoints,
+        ).toBe(
+          5n,
+        );
+
+        expect(
+          afterSpend
+            .earnedSearchOpportunities,
+        ).toBe(
+          8n,
+        );
+
+        expect(
+          afterSpend
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          100n,
+        );
+
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            205n,
+          );
+
+        const afterTwoHundredMore =
+          await runtime
+            .getStatus(
+              generationKey,
+            );
+
+        expect(
+          afterTwoHundredMore
+            .earnedSearchOpportunities,
+        ).toBe(
+          10n,
+        );
+
+        expect(
+          afterTwoHundredMore
+            .availableSearchOpportunities,
+        ).toBe(
+          3n,
+        );
+
+        expect(
+          afterTwoHundredMore
+            .discoveryPointsUntilNextOpportunity,
+        ).toBe(
+          100n,
         );
       },
     );
@@ -1177,5 +1421,3 @@ describe(
     );
   },
 );
-
-
