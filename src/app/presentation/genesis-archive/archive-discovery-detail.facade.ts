@@ -11,6 +11,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  type DiscoveredToVisitedEntryKindValue,
+} from '../../domain/discovery/discovered-to-visited-entry';
+
+import {
   ExplorationResultKind,
   type ExplorationLocatedResultKind,
 } from '../../domain/exploration/exploration-sector-result';
@@ -37,10 +41,6 @@ import {
 import {
   type ProtoplanetaryDiskAnalysis,
 } from '../../domain/planetary/protoplanetary-disk-analysis';
-
-import {
-  StellarSystemScientificActionType,
-} from '../../domain/planetary/stellar-system-scientific-action';
 
 import {
   GalaxySectorKeyCodec,
@@ -91,14 +91,6 @@ import {
 } from '../../simulation/planetary/protoplanetary-disk-analysis-engine';
 
 import {
-  StellarSystemScientificActionCatalogV1,
-} from '../../simulation/planetary/stellar-system-scientific-action-catalog';
-
-import {
-  StellarSystemScientificActionEngine,
-} from '../../simulation/planetary/stellar-system-scientific-action-engine';
-
-import {
   ObservationInstrumentCapabilityCatalogV1,
 } from '../../simulation/observation/observation-instrument-capability-catalog';
 
@@ -111,6 +103,10 @@ import {
 } from '../../simulation/observation/observation-instrument-progression-engine';
 
 import {
+  type StellarSystemScientificObservationRuleCode,
+} from '../../simulation/observation/stellar-system-scientific-observation-catalog';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
 
@@ -119,8 +115,13 @@ import {
 } from '../runtime/galactic-object-scientific-action.runtime';
 
 import {
-  STELLAR_SYSTEM_SCIENTIFIC_ACTION_RUNTIME,
-} from '../runtime/stellar-system-scientific-action.runtime';
+  STELLAR_SYSTEM_SCIENTIFIC_PROGRESSION_RUNTIME,
+} from '../runtime/stellar-system-scientific-progression.runtime';
+
+import {
+  StellarSystemScientificCampaignAssembler,
+  type StellarSystemScientificCampaignModel,
+} from '../runtime/stellar-system-scientific-campaign';
 
 import {
   UniverseSeedFacade,
@@ -175,6 +176,17 @@ export interface ArchiveDiscoveryDetailRequest {
 
   readonly generatorVersionCode:
     string | null;
+
+  readonly stellarSystemEntryKind?:
+    DiscoveredToVisitedEntryKindValue | null;
+
+  /**
+   * Point 26.A.9 opt-in for the shared stellar-system scientific campaign.
+   * Production Archive/System/Observatory surfaces set this to true. Keeping it
+   * optional preserves old unit fixtures that only exercise point-26.2 cards.
+   */
+  readonly includeStellarSystemScientificProgression?:
+    boolean;
 }
 
 export interface ArchiveScientificInstrumentOption {
@@ -211,41 +223,6 @@ export interface ArchiveScientificPendingRequirementsModel {
 export interface ArchiveGalacticObjectScientificActionModel {
   readonly actionType:
     GalacticObjectScientificActionType;
-
-  readonly label:
-    string;
-
-  readonly targetDiscoveryStateLabel:
-    string;
-
-  readonly awardedDiscoveryPoints:
-    number;
-
-  readonly minimumInstrumentLevelRank:
-    number;
-
-  readonly instrumentOptions:
-    readonly ArchiveScientificInstrumentOption[];
-
-  readonly selectedInstrumentType:
-    ObservationInstrumentType | null;
-
-  readonly selectedInstrumentLabel:
-    string | null;
-
-  readonly canExecute:
-    boolean;
-
-  readonly pendingRequirements:
-    ArchiveScientificPendingRequirementsModel | null;
-
-  readonly buttonLabel:
-    string;
-}
-
-export interface ArchiveStellarSystemScientificActionModel {
-  readonly actionType:
-    StellarSystemScientificActionType;
 
   readonly label:
     string;
@@ -349,8 +326,20 @@ export interface ArchiveDiscoveryDetailModel {
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
 
-  readonly stellarSystemScientificAction:
-    ArchiveStellarSystemScientificActionModel | null;
+  /**
+   * Shared point-26.A.9 scientific campaign. Optional only for compatibility
+   * with pre-A9 presentation fixtures; production stellar-system surfaces load it.
+   */
+  readonly stellarSystemScientificCampaign?:
+    StellarSystemScientificCampaignModel | null;
+
+  /**
+   * Deprecated point-17.6 presentation slot. A9 never populates it; keeping the
+   * optional key prevents old test fixtures from becoming a compile-time migration
+   * concern while removing the gameplay shortcut from every production surface.
+   */
+  readonly stellarSystemScientificAction?:
+    unknown | null;
 
   readonly protoplanetaryDiskAnalysis:
     ArchiveProtoplanetaryDiskAnalysisModel | null;
@@ -401,9 +390,9 @@ export class ArchiveDiscoveryDetailFacade {
       GALACTIC_OBJECT_SCIENTIFIC_ACTION_RUNTIME,
     );
 
-  private readonly stellarSystemScientificActionRuntime =
+  private readonly stellarSystemScientificProgressionRuntime =
     inject(
-      STELLAR_SYSTEM_SCIENTIFIC_ACTION_RUNTIME,
+      STELLAR_SYSTEM_SCIENTIFIC_PROGRESSION_RUNTIME,
     );
 
   private currentRequest:
@@ -514,19 +503,10 @@ export class ArchiveDiscoveryDetailFacade {
     const model =
       this.model();
 
-    const galacticAction =
+    const action =
       model
         ?.scientificAction ??
       null;
-
-    const stellarSystemAction =
-      model
-        ?.stellarSystemScientificAction ??
-      null;
-
-    const action =
-      galacticAction ??
-      stellarSystemAction;
 
     const request =
       this.currentRequest;
@@ -549,8 +529,8 @@ export class ArchiveDiscoveryDetailFacade {
         null ||
       generationKey ===
         null ||
-      locator ===
-        null
+      !(locator instanceof
+        GalacticObjectLocator)
     ) {
       this
         .actionErrorSignal
@@ -599,22 +579,13 @@ export class ArchiveDiscoveryDetailFacade {
         );
 
       const committed =
-        galacticAction !==
-          null
-          ? await this
-              .scientificActionRuntime
-              .commitAction(
-                session,
-                galacticAction
-                  .actionType,
-              )
-          : await this
-              .stellarSystemScientificActionRuntime
-              .commitAction(
-                session,
-                stellarSystemAction!
-                  .actionType,
-              );
+        await this
+          .scientificActionRuntime
+          .commitAction(
+            session,
+            action
+              .actionType,
+          );
 
       await this
         .resolveDetails(
@@ -636,6 +607,101 @@ export class ArchiveDiscoveryDetailFacade {
             Error
             ? error.message
             : 'No se pudo completar la acción científica.',
+        );
+    } finally {
+      this
+        .actionPendingSignal
+        .set(
+          false,
+        );
+    }
+  }
+
+  async performStellarSystemObservation(
+    ruleCode:
+      StellarSystemScientificObservationRuleCode,
+  ): Promise<void> {
+
+    const request =
+      this.currentRequest;
+
+    const generationKey =
+      this.currentGenerationKey;
+
+    const locator =
+      this.currentLocator;
+
+    if (
+      request ===
+        null ||
+      generationKey ===
+        null ||
+      !(locator instanceof
+        SystemLocator)
+    ) {
+      this
+        .actionErrorSignal
+        .set(
+          'No hay un sistema estelar válido seleccionado para observación.',
+        );
+
+      return;
+    }
+
+    if (
+      this.actionPending()
+    ) {
+      return;
+    }
+
+    this
+      .actionPendingSignal
+      .set(
+        true,
+      );
+
+    this
+      .actionErrorSignal
+      .set(
+        null,
+      );
+
+    try {
+      const committed =
+        await this
+          .stellarSystemScientificProgressionRuntime
+          .performObservation(
+            generationKey,
+            locator,
+            ruleCode,
+          );
+
+      await this
+        .resolveDetails(
+          request,
+        );
+
+      const rewardSuffix =
+        committed.awardedDiscoveryPoints >
+          0
+          ? ` · +${committed.awardedDiscoveryPoints} PD`
+          : '';
+
+      this
+        .actionFeedbackSignal
+        .set(
+          `Observación registrada${rewardSuffix} · ${stateLabel(committed.stateAfter)}.`,
+        );
+    } catch (
+      error
+    ) {
+      this
+        .actionErrorSignal
+        .set(
+          error instanceof
+            Error
+            ? error.message
+            : 'No se pudo registrar la observación científica.',
         );
     } finally {
       this
@@ -709,7 +775,7 @@ export class ArchiveDiscoveryDetailFacade {
           parsed,
         );
 
-      const discoveryState =
+      const persistedDiscoveryState =
         await this
           .repositories
           .discoveryRepository
@@ -720,7 +786,7 @@ export class ArchiveDiscoveryDetailFacade {
 
       if (
         !DiscoveryState.isKnown(
-          discoveryState,
+          persistedDiscoveryState,
         )
       ) {
         this
@@ -732,6 +798,59 @@ export class ArchiveDiscoveryDetailFacade {
 
         return;
       }
+
+      const shouldLoadStellarSystemProgression =
+        locator instanceof
+          SystemLocator &&
+        (
+          request.includeStellarSystemScientificProgression ===
+            true ||
+          (
+            request.stellarSystemEntryKind !==
+              undefined &&
+            request.stellarSystemEntryKind !==
+              null
+          )
+        );
+
+      const stellarSystemProgression =
+        shouldLoadStellarSystemProgression &&
+        locator instanceof
+          SystemLocator
+          ? request.stellarSystemEntryKind ===
+              undefined ||
+            request.stellarSystemEntryKind ===
+              null
+            ? await this
+                .stellarSystemScientificProgressionRuntime
+                .snapshot(
+                  generationKey,
+                  locator,
+                )
+            : (
+                await this
+                  .stellarSystemScientificProgressionRuntime
+                  .recordEntry(
+                    generationKey,
+                    locator,
+                    request.stellarSystemEntryKind,
+                  )
+              ).snapshot
+          : null;
+
+      const discoveryState =
+        stellarSystemProgression
+          ?.discoveryState ??
+        persistedDiscoveryState;
+
+      const stellarSystemScientificCampaign =
+        stellarSystemProgression ===
+          null
+          ? null
+          : StellarSystemScientificCampaignAssembler
+              .build(
+                stellarSystemProgression,
+              );
 
       const resultKind =
         resolveResultKind(
@@ -778,17 +897,6 @@ export class ArchiveDiscoveryDetailFacade {
                 resultKind,
                 discoveryState,
                 galacticObjectCard,
-              )
-          : null;
-
-      const stellarSystemScientificAction =
-        locator instanceof
-          SystemLocator
-          ? await this
-              .buildStellarSystemScientificActionModel(
-                generationKey,
-                locator,
-                discoveryState,
               )
           : null;
 
@@ -888,7 +996,10 @@ export class ArchiveDiscoveryDetailFacade {
 
               scientificAction,
 
-              stellarSystemScientificAction,
+              stellarSystemScientificCampaign,
+
+              stellarSystemScientificAction:
+                null,
 
               protoplanetaryDiskAnalysis,
             }),
@@ -1091,178 +1202,6 @@ export class ArchiveDiscoveryDetailFacade {
         scientificActionButtonLabel(
           discoveryState,
         ),
-    });
-  }
-
-  private async buildStellarSystemScientificActionModel(
-    generationKey:
-      UniverseGenerationKey,
-
-    locator:
-      SystemLocator,
-
-    discoveryState:
-      DiscoveryStateValue,
-  ): Promise<ArchiveStellarSystemScientificActionModel | null> {
-
-    const rule =
-      StellarSystemScientificActionCatalogV1
-        .analyzeDiskRule;
-
-    const evaluationInstrumentType =
-      rule
-        .compatibleInstrumentTypes[
-          0
-        ];
-
-    if (
-      evaluationInstrumentType ===
-        undefined
-    ) {
-      throw new RangeError(
-        'ANALIZAR DISCO no define ningún instrumento compatible.',
-      );
-    }
-
-    const evaluationSession =
-      createObservationSession(
-        generationKey,
-        locator,
-        discoveryState,
-        evaluationInstrumentType,
-        rule
-          .minimumInstrumentLevel,
-      );
-
-    const availability =
-      StellarSystemScientificActionEngine
-        .availability(
-          generationKey,
-          evaluationSession,
-          rule.actionType,
-        );
-
-    if (
-      !availability.isSystemTarget ||
-      !availability.hasAnalyzableDisk ||
-      !availability.isStateEligible
-    ) {
-      return null;
-    }
-
-    const [
-      globalDiscoveryPoints,
-      knownDiscoveries,
-    ] =
-      await Promise.all([
-        this
-          .repositories
-          .pointsRepository
-          .getGlobalDiscoveryPoints(
-            generationKey,
-          ),
-
-        this
-          .repositories
-          .discoveryRepository
-          .getKnownDiscoveries(
-            generationKey,
-          ),
-      ]);
-
-    const progression =
-      ObservationInstrumentProgressionEngine
-        .evaluate(
-          generationKey,
-          globalDiscoveryPoints,
-          knownDiscoveries,
-        );
-
-    const instrumentOptions =
-      Object.freeze(
-        rule
-          .compatibleInstrumentTypes
-          .map(
-            instrumentType =>
-              buildInstrumentOption(
-                progression,
-                instrumentType,
-                rule
-                  .minimumInstrumentLevel,
-              ),
-          ),
-      );
-
-    const selected =
-      instrumentOptions
-        .find(
-          option =>
-            option.isAvailable,
-        ) ??
-      null;
-
-    const pendingRequirements =
-      selected ===
-        null
-        ? buildPendingRequirements(
-            progression,
-            rule
-              .compatibleInstrumentTypes,
-            rule
-              .minimumInstrumentLevel,
-          )
-        : null;
-
-    const reward =
-      StellarSystemScientificActionEngine
-        .evaluate(
-          generationKey,
-          evaluationSession,
-          rule.actionType,
-        )
-        .awardedDiscoveryPoints;
-
-    return Object.freeze({
-      actionType:
-        rule.actionType,
-
-      label:
-        'ANALIZAR DISCO',
-
-      targetDiscoveryStateLabel:
-        stateLabel(
-          rule
-            .targetDiscoveryState,
-        ),
-
-      awardedDiscoveryPoints:
-        reward,
-
-      minimumInstrumentLevelRank:
-        rule
-          .minimumInstrumentLevel
-          .rank,
-
-      instrumentOptions,
-
-      selectedInstrumentType:
-        selected
-          ?.instrumentType ??
-        null,
-
-      selectedInstrumentLabel:
-        selected
-          ?.label ??
-        null,
-
-      canExecute:
-        selected !==
-        null,
-
-      pendingRequirements,
-
-      buttonLabel:
-        'Analizar disco',
     });
   }
 

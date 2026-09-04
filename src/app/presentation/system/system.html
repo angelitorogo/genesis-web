@@ -23,7 +23,8 @@
         <p class="system-page__subtitle">
           Identidad, arquitectura y componentes estelares del sistema conocido.
           La profundidad de la ficha depende exclusivamente del DiscoveryState
-          persistido; navegar a esta ruta no promociona ni revela conocimiento oculto.
+          persistido. La primera entrada válida puede registrar VISITED, pero no
+          añade evidencia ni revela Ground Truth por sí sola.
         </p>
       </div>
 
@@ -393,79 +394,82 @@
                   }
                 </article>
 
-                @if (model.stellarSystemScientificAction; as action) {
+                @if (model.stellarSystemScientificCampaign; as campaign) {
                   <article
-                    class="system-page__science-card system-page__science-card--action system-page__science-card--wide"
-                    data-testid="system-page-scientific-action"
+                    class="system-page__science-card system-page__science-card--wide system-page__campaign"
+                    data-testid="system-page-scientific-campaign"
                   >
                     <header class="system-page__section-header">
                       <div>
-                        <small>ACCIÓN CIENTÍFICA DISPONIBLE</small>
-                        <h2>{{ action.label }}</h2>
+                        <small>26.A.9 · PROGRESIÓN CIENTÍFICA</small>
+                        <h2>Campaña observacional</h2>
                       </div>
-                      <span>→ {{ action.targetDiscoveryStateLabel }}</span>
+                      <span data-testid="system-page-campaign-percent">{{ campaign.completionPercent }}%</span>
                     </header>
 
-                    <div class="system-page__action-layout">
-                      <div>
-                        <p>
-                          Reobservación de nivel {{ action.minimumInstrumentLevelRank }}.
-                          La acción conserva el contrato científico existente; 26.2 no
-                          añade costes de PD propios al sistema.
-                        </p>
+                    <p>
+                      Esta escena consume el mismo estado y las mismas evidencias que el
+                      Archivo GENESIS y el Observatorio. La navegación puede registrar
+                      VISITED una sola vez; las mediciones científicas se realizan en el
+                      Observatorio y no mediante botones de promoción.
+                    </p>
 
-                        <div class="system-page__instrument-list">
-                          @for (instrument of action.instrumentOptions; track instrument.instrumentType) {
-                            <span [class.system-page__instrument--available]="instrument.isAvailable">
-                              {{ instrument.label }} · {{ instrument.statusLabel }}
-                            </span>
-                          }
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        class="system-page__science-action"
-                        data-testid="system-page-scientific-action-button"
-                        [disabled]="!action.canExecute || facade.actionPending()"
-                        (click)="performScientificAction()"
-                      >
-                        {{ facade.actionPending() ? 'Procesando…' : action.buttonLabel }}
-                        <small>+{{ action.awardedDiscoveryPoints }} PD</small>
-                      </button>
+                    <div class="system-page__campaign-meta">
+                      <span>Estado · <strong>{{ campaign.discoveryStateLabel }}</strong></span>
+                      <span>Etapa · <strong>{{ campaign.stageLabel }}</strong></span>
+                      <span><strong data-testid="system-page-evidence-count">{{ campaign.evidenceCount }}</strong> evidencias</span>
+                      <span>Requisitos · <strong>{{ campaign.satisfiedRequirementCount }}/{{ campaign.totalRequirementCount }}</strong></span>
                     </div>
 
-                    @if (action.pendingRequirements; as pending) {
-                      <div class="system-page__action-error">
-                        <strong>Requisitos pendientes · {{ pending.instrumentLabel }} nivel {{ pending.minimumLevelRank }}</strong>
-                        <ul>
-                          @for (item of pending.items; track item) {
-                            <li>{{ item }}</li>
-                          }
-                        </ul>
-                      </div>
+                    <div class="system-page__campaign-grid">
+                      @for (dimension of campaign.dimensions; track dimension.dimensionCode) {
+                        <section
+                          class="system-page__campaign-dimension"
+                          [class.system-page__campaign-dimension--complete]="dimension.isSatisfied"
+                        >
+                          <small>{{ dimension.isSatisfied ? 'COMPLETA' : 'PENDIENTE' }}</small>
+                          <strong>{{ dimension.label }}</strong>
+                          <span>
+                            Evidencias {{ dimension.qualifyingEvidenceCount }}/{{ dimension.requiredEvidenceCount }} ·
+                            fuentes {{ dimension.independentSourceCount }}/{{ dimension.requiredIndependentSources }}
+                          </span>
+                        </section>
+                      }
+                    </div>
+
+                    @if (campaign.actions.length > 0) {
+                      <p class="system-page__campaign-note">
+                        Hay {{ campaign.actions.length }} observaciones definidas para esta etapa.
+                        Su disponibilidad depende de PD globales, hitos e instrumentos desbloqueados.
+                      </p>
+                    } @else if (campaign.discoveryStateLabel === 'Descubierto') {
+                      <p class="system-page__campaign-note">
+                        La entrada a esta escena consolida VISITED de forma idempotente. Recarga
+                        la ficha si el estado acaba de cambiar para iniciar la etapa de catalogación.
+                      </p>
+                    } @else if (campaign.discoveryStateLabel === 'Confirmado') {
+                      <p class="system-page__campaign-note">
+                        Campaña completada. CONFIRMED no tiene una promoción científica posterior.
+                      </p>
                     }
+
+                    <a
+                      class="system-page__observatory-link"
+                      [routerLink]="[
+                        '/observatory/system',
+                        model.galaxyIndex,
+                        model.sectorKey,
+                        model.galacticObjectIndex
+                      ]"
+                      [queryParams]="{
+                        seed: model.universeSeed,
+                        version: model.generatorVersionCode
+                      }"
+                      data-testid="system-page-observatory-link"
+                    >
+                      Abrir este sistema en el Observatorio →
+                    </a>
                   </article>
-                }
-
-                @if (facade.actionFeedback(); as feedback) {
-                  <p
-                    class="system-page__feedback"
-                    data-testid="system-page-scientific-action-feedback"
-                    role="status"
-                  >
-                    {{ feedback }}
-                  </p>
-                }
-
-                @if (facade.actionError(); as actionError) {
-                  <p
-                    class="system-page__feedback system-page__feedback--error"
-                    data-testid="system-page-scientific-action-error"
-                    role="alert"
-                  >
-                    {{ actionError }}
-                  </p>
                 }
 
                 @if (model.protoplanetaryDiskAnalysis; as disk) {
@@ -515,14 +519,14 @@
                 class="system-page__contract"
                 data-testid="system-page-render-contract"
               >
-                <strong>26.2 · LÍMITE DE CONOCIMIENTO</strong>
+                <strong>26.2 + 26.A.9 · FICHA, ESTADO Y EVIDENCIA ÚNICOS</strong>
 
                 <p>
-                  Domain/simulation → ficha científica + snapshot inmutable →
-                  proyección Three.js. DETECTED no resuelve identidad; DISCOVERED/VISITED
-                  identifican arquitectura; CATALOGUED habilita física estelar y órbitas;
-                  CONFIRMED añade la caracterización final permitida. La ruta nunca
-                  persiste ni devuelve Ground Truth adicional.
+                  IndexedDB → DiscoveryState + ScientificEvidence → misma ficha científica
+                  para Archivo, SystemPage y Observatorio → proyección Three.js. DETECTED
+                  no resuelve identidad; DISCOVERED/VISITED comparten disclosure; CATALOGUED
+                  habilita física estelar y órbitas; CONFIRMED exige evidencia adicional e
+                  independiente. La escena no consulta Ground Truth para decidir progresión.
                 </p>
               </section>
 

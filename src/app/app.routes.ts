@@ -101,6 +101,20 @@ export const genesisRoutes: Routes = [
     title: 'Archivo GENESIS',
   },
   {
+    path: 'observatory/system/:galaxyIndex/:sectorKey/:galacticObjectIndex',
+    data: {
+      observatoryTargetKind:
+        'system',
+    },
+    loadComponent: () =>
+      import(
+        './presentation/observatory/observatory'
+      ).then(
+        (module) => module.Observatory,
+      ),
+    title: 'Observación de sistema | GENESIS',
+  },
+  {
     path: 'observatory',
     loadComponent: () =>
       import(

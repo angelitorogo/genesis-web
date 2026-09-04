@@ -25,10 +25,6 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-action';
 
 import {
-  StellarSystemScientificActionType,
-} from '../../domain/planetary/stellar-system-scientific-action';
-
-import {
   ObservationInstrumentType,
 } from '../../domain/observation/observation-instrument';
 
@@ -53,73 +49,9 @@ import {
   type ArchiveGalacticObjectCardModel,
 } from './archive-galactic-object-card';
 
-import {
-  ArchiveStellarSystemKnowledgeLevel,
-  type ArchiveStellarSystemCardModel,
-} from './archive-stellar-system-card';
-
 describe(
   'ArchiveDiscoveryDetail',
   () => {
-    const stellarSystemCard:
-      ArchiveStellarSystemCardModel =
-      Object.freeze({
-        knowledgeLevel:
-          ArchiveStellarSystemKnowledgeLevel.DETECTED,
-        knowledgeLevelLabel:
-          'Señal estelar detectada',
-        title:
-          'Sistema estelar sin resolver',
-        summary:
-          'La multiplicidad todavía no está resuelta.',
-        nextScientificStep:
-          'Descubrir el sistema.',
-        multiplicityLabel:
-          null,
-        componentCount:
-          null,
-        systemFacts:
-          Object.freeze([]),
-        components:
-          Object.freeze([]),
-        orbits:
-          Object.freeze([]),
-        circumbinaryFacts:
-          Object.freeze([]),
-        habitabilityFacts:
-          Object.freeze([]),
-        render:
-          Object.freeze({
-            accessibleLabel:
-              'Sistema estelar todavía no resuelto',
-            knowledgeLevel:
-              ArchiveStellarSystemKnowledgeLevel.DETECTED,
-            multiplicity:
-              null,
-            components:
-              Object.freeze([
-                Object.freeze({
-                  label:
-                    'A' as const,
-                  colorHex:
-                    '#68808D',
-                  radiusScale:
-                    1,
-                  massSolar:
-                    null,
-                }),
-              ]),
-            innerOrbitEccentricity:
-              null,
-            outerOrbitEccentricity:
-              null,
-            stableHabitableZoneFraction:
-              null,
-            hasStableHabitableZone:
-              false,
-          }),
-      });
-
     const model:
       ArchiveDiscoveryDetailModel =
       Object.freeze({
@@ -168,12 +100,10 @@ describe(
         galacticObjectCard:
           null,
 
-        stellarSystemCard,
-
-        scientificAction:
+        stellarSystemCard:
           null,
 
-        stellarSystemScientificAction:
+        scientificAction:
           null,
 
         protoplanetaryDiskAnalysis:
@@ -252,18 +182,6 @@ describe(
                   errorMessage: () =>
                     '',
 
-                  actionPending: () =>
-                    false,
-
-                  actionFeedback: () =>
-                    null,
-
-                  actionError: () =>
-                    null,
-
-                  performScientificAction:
-                    vi.fn(),
-
                   load,
                 },
               },
@@ -274,7 +192,7 @@ describe(
     );
 
     it(
-      'should preserve the point-10.6 System Archive route while point 16.7 adds a state-safe procedural system card',
+      'should preserve the point-10.6 System Archive record while point 12.8 enhances only GalacticObject cards',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -298,6 +216,10 @@ describe(
             '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
           generatorVersionCode:
             '1',
+          includeStellarSystemScientificProgression:
+            true,
+          stellarSystemEntryKind:
+            'DETAILED_CARD',
         });
 
         const element =
@@ -318,30 +240,6 @@ describe(
           ),
         ).toBe(
           'SYSTEM',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-stellar-system-card"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="stellar-system-procedural-render"]',
-          )?.getAttribute(
-            'data-multiplicity',
-          ),
-        ).toBe(
-          'UNRESOLVED',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-stellar-system-multiplicity"]',
-          )?.textContent,
-        ).toContain(
-          'No resuelta',
         );
 
         expect(
@@ -390,26 +288,6 @@ describe(
           )?.textContent,
         ).toContain(
           'G0 / S0 / O7',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-stellar-system-open-system-link"]',
-          )?.getAttribute(
-            'href',
-          ),
-        ).toContain(
-          '/system/0/0/7',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-stellar-system-open-system-link"]',
-          )?.getAttribute(
-            'href',
-          ),
-        ).toContain(
-          'version=1',
         );
 
         expect(
@@ -529,9 +407,6 @@ describe(
             proceduralIdentity:
               'G0 / S0 / O0',
             galacticObjectCard,
-
-            stellarSystemCard:
-              null,
 
             scientificAction:
               Object.freeze({
@@ -729,549 +604,5 @@ describe(
         );
       },
     );
-
-    it(
-      'should render explicit pending Discovery Point and milestone requirements for a blocked scientific action',
-      async () => {
-        TestBed.resetTestingModule();
-
-        const blockedModel:
-          ArchiveDiscoveryDetailModel =
-          Object.freeze({
-            ...model,
-            locatorKind:
-              ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
-            locatorKindLabel:
-              'GalacticObjectLocator',
-            resultKind:
-              ExplorationResultKind.NEBULA,
-            familyLabel:
-              'Nebulosa',
-            discoveryState:
-              DiscoveryState.DISCOVERED,
-            discoveryStateLabel:
-              'Descubierto',
-            stellarSystemCard:
-              null,
-            galacticObjectCard:
-              Object.freeze({
-                coarseFamily:
-                  GalacticObjectScientificSurveyFamily.NEBULA,
-                scientificSubject:
-                  GalacticObjectScientificSubject.NEBULA,
-                knowledgeLevel:
-                  ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED,
-                knowledgeLevelLabel:
-                  'Identidad científica',
-                title:
-                  'Nebulosa',
-                summary:
-                  'La identidad nebular ya está establecida.',
-                nextScientificStep:
-                  'Caracterización espectroscópica de nebulosa',
-                facts:
-                  Object.freeze([]),
-                render:
-                  Object.freeze({
-                    kind:
-                      ArchiveGalacticObjectRenderKind.NEBULA,
-                    knowledgeLevel:
-                      ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED,
-                    seed:
-                      'GENESIS-12.8-PENDING-REQUIREMENTS',
-                    accessibleLabel:
-                      'Render procedural de Nebulosa',
-                    variant:
-                      'GENERIC',
-                    scale:
-                      0.5,
-                    density:
-                      0.5,
-                    energy:
-                      0.5,
-                    concentration:
-                      0.5,
-                  }),
-              }),
-            scientificAction:
-              Object.freeze({
-                actionType:
-                  GalacticObjectScientificActionType.NEBULA_SPECTROSCOPIC_CHARACTERIZATION,
-                label:
-                  'Caracterización espectroscópica de nebulosa',
-                targetDiscoveryStateLabel:
-                  'Catalogado',
-                awardedDiscoveryPoints:
-                  96,
-                minimumInstrumentLevelRank:
-                  2,
-                instrumentOptions:
-                  Object.freeze([]),
-                selectedInstrumentType:
-                  null,
-                selectedInstrumentLabel:
-                  null,
-                canExecute:
-                  false,
-                pendingRequirements:
-                  Object.freeze({
-                    instrumentLabel:
-                      'Espectroscopía',
-                    minimumLevelRank:
-                      2,
-                    items:
-                      Object.freeze([
-                        '1898 PD adicionales',
-                        'Descubrir el primer sistema',
-                        'Descubrir el primer cuerpo',
-                      ]),
-                  }),
-                buttonLabel:
-                  'Realizar caracterización',
-              }),
-          });
-
-        await TestBed
-          .configureTestingModule({
-            imports: [
-              ArchiveDiscoveryDetail,
-            ],
-            providers: [
-              provideRouter(
-                [],
-              ),
-              {
-                provide:
-                  ActivatedRoute,
-                useValue: {
-                  snapshot: {
-                    data: {
-                      archiveDiscoveryLocatorKind:
-                        ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
-                    },
-                    paramMap:
-                      convertToParamMap({
-                        galaxyIndex:
-                          '0',
-                        sectorKey:
-                          '0',
-                        galacticObjectIndex:
-                          '0',
-                      }),
-                    queryParamMap:
-                      convertToParamMap({
-                        seed:
-                          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
-                        version:
-                          '1',
-                      }),
-                  },
-                },
-              },
-              {
-                provide:
-                  ArchiveDiscoveryDetailFacade,
-                useValue: {
-                  state: () => ({
-                    kind:
-                      'content',
-                    model:
-                      blockedModel,
-                  }),
-                  model: () =>
-                    blockedModel,
-                  errorMessage: () =>
-                    '',
-                  actionPending: () =>
-                    false,
-                  actionFeedback: () =>
-                    null,
-                  actionError: () =>
-                    null,
-                  performScientificAction:
-                    vi.fn(),
-                  load:
-                    vi.fn()
-                      .mockResolvedValue(
-                        undefined,
-                      ),
-                },
-              },
-            ],
-          })
-          .compileComponents();
-
-        const fixture =
-          TestBed.createComponent(
-            ArchiveDiscoveryDetail,
-          );
-
-        fixture.detectChanges();
-
-        const requirements =
-          (fixture.nativeElement as HTMLElement)
-            .querySelector(
-              '[data-testid="archive-galactic-object-pending-requirements"]',
-            );
-
-        expect(
-          requirements?.textContent,
-        ).toContain(
-          'REQUISITOS PENDIENTES',
-        );
-
-        expect(
-          requirements?.textContent,
-        ).toContain(
-          '1898 PD adicionales',
-        );
-
-        expect(
-          requirements?.textContent,
-        ).toContain(
-          'Descubrir el primer sistema',
-        );
-
-        expect(
-          requirements?.textContent,
-        ).toContain(
-          'Descubrir el primer cuerpo',
-        );
-      },
-    );
-
-    it(
-      'should expose point-17.6 ANALIZAR DISCO for a catalogued stellar system and execute it through the shared scientific-action facade',
-      async () => {
-        TestBed.resetTestingModule();
-
-        const performScientificAction =
-          vi.fn()
-            .mockResolvedValue(
-              undefined,
-            );
-
-        const actionModel:
-          ArchiveDiscoveryDetailModel =
-          Object.freeze({
-            ...model,
-            discoveryState:
-              DiscoveryState.CATALOGUED,
-            discoveryStateLabel:
-              'Catalogado',
-            stellarSystemScientificAction:
-              Object.freeze({
-                actionType:
-                  StellarSystemScientificActionType.ANALYZE_DISK,
-                label:
-                  'ANALIZAR DISCO',
-                targetDiscoveryStateLabel:
-                  'Confirmado',
-                awardedDiscoveryPoints:
-                  48,
-                minimumInstrumentLevelRank:
-                  2,
-                instrumentOptions:
-                  Object.freeze([
-                    Object.freeze({
-                      instrumentType:
-                        ObservationInstrumentType.INFRARED,
-                      label:
-                        'Infrarrojo',
-                      minimumLevelRank:
-                        2,
-                      highestUnlockedLevelRank:
-                        2,
-                      isAvailable:
-                        true,
-                      statusLabel:
-                        'Disponible',
-                    }),
-                    Object.freeze({
-                      instrumentType:
-                        ObservationInstrumentType.RADIO,
-                      label:
-                        'Radio',
-                      minimumLevelRank:
-                        2,
-                      highestUnlockedLevelRank:
-                        2,
-                      isAvailable:
-                        true,
-                      statusLabel:
-                        'Disponible',
-                    }),
-                  ]),
-                selectedInstrumentType:
-                  ObservationInstrumentType.INFRARED,
-                selectedInstrumentLabel:
-                  'Infrarrojo',
-                canExecute:
-                  true,
-                pendingRequirements:
-                  null,
-                buttonLabel:
-                  'Analizar disco',
-              }),
-          });
-
-        await TestBed
-          .configureTestingModule({
-            imports: [
-              ArchiveDiscoveryDetail,
-            ],
-            providers: [
-              provideRouter(
-                [],
-              ),
-              {
-                provide:
-                  ActivatedRoute,
-                useValue: {
-                  snapshot: {
-                    data: {
-                      archiveDiscoveryLocatorKind:
-                        ArchiveDiscoveryLocatorKind.SYSTEM,
-                    },
-                    paramMap:
-                      convertToParamMap({
-                        galaxyIndex:
-                          '0',
-                        sectorKey:
-                          '0',
-                        galacticObjectIndex:
-                          '7',
-                      }),
-                    queryParamMap:
-                      convertToParamMap({
-                        seed:
-                          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
-                        version:
-                          '1',
-                      }),
-                  },
-                },
-              },
-              {
-                provide:
-                  ArchiveDiscoveryDetailFacade,
-                useValue: {
-                  state: () => ({
-                    kind:
-                      'content',
-                    model:
-                      actionModel,
-                  }),
-                  model: () =>
-                    actionModel,
-                  errorMessage: () =>
-                    '',
-                  actionPending: () =>
-                    false,
-                  actionFeedback: () =>
-                    null,
-                  actionError: () =>
-                    null,
-                  performScientificAction,
-                  load:
-                    vi.fn()
-                      .mockResolvedValue(
-                        undefined,
-                      ),
-                },
-              },
-            ],
-          })
-          .compileComponents();
-
-        const fixture =
-          TestBed.createComponent(
-            ArchiveDiscoveryDetail,
-          );
-
-        fixture.detectChanges();
-
-        const element =
-          fixture.nativeElement as
-            HTMLElement;
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-stellar-system-scientific-action"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-stellar-system-action-label"]',
-          )?.textContent,
-        ).toContain(
-          'ANALIZAR DISCO',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-stellar-system-action-reward"]',
-          )?.textContent,
-        ).toContain(
-          '+48 PD',
-        );
-
-        element
-          .querySelector<HTMLButtonElement>(
-            '[data-testid="archive-stellar-system-action-button"]',
-          )
-          ?.click();
-
-        expect(
-          performScientificAction,
-        ).toHaveBeenCalledTimes(
-          1,
-        );
-      },
-    );
-
-    it(
-      'should render the confirmed point-17.6 disk report without calling its protoplanet survivors mature planets',
-      async () => {
-        TestBed.resetTestingModule();
-
-        const confirmedModel:
-          ArchiveDiscoveryDetailModel =
-          Object.freeze({
-            ...model,
-            discoveryState:
-              DiscoveryState.CONFIRMED,
-            discoveryStateLabel:
-              'Confirmado',
-            protoplanetaryDiskAnalysis:
-              Object.freeze({
-                summary:
-                  'El análisis resuelve un disco protoplanetario con 5 candidatos iniciales y 4 supervivientes tras la dinámica temprana simplificada.',
-                diskFacts:
-                  Object.freeze([
-                    Object.freeze({
-                      label:
-                        'Etapa del disco',
-                      value:
-                        'Disco primordial en evolución',
-                    }),
-                    Object.freeze({
-                      label:
-                        'Línea de nieve del agua',
-                      value:
-                        '3,2 AU',
-                    }),
-                  ]),
-                formationFacts:
-                  Object.freeze([
-                    Object.freeze({
-                      label:
-                        'Candidatos iniciales',
-                      value:
-                        '5',
-                    }),
-                    Object.freeze({
-                      label:
-                        'Colisiones tempranas',
-                      value:
-                        '1',
-                    }),
-                  ]),
-              }),
-          });
-
-        await TestBed
-          .configureTestingModule({
-            imports: [
-              ArchiveDiscoveryDetail,
-            ],
-            providers: [
-              provideRouter(
-                [],
-              ),
-              {
-                provide:
-                  ActivatedRoute,
-                useValue: {
-                  snapshot: {
-                    data: {
-                      archiveDiscoveryLocatorKind:
-                        ArchiveDiscoveryLocatorKind.SYSTEM,
-                    },
-                    paramMap:
-                      convertToParamMap({
-                        galaxyIndex:
-                          '0',
-                        sectorKey:
-                          '0',
-                        galacticObjectIndex:
-                          '7',
-                      }),
-                    queryParamMap:
-                      convertToParamMap({}),
-                  },
-                },
-              },
-              {
-                provide:
-                  ArchiveDiscoveryDetailFacade,
-                useValue: {
-                  state: () => ({
-                    kind:
-                      'content',
-                    model:
-                      confirmedModel,
-                  }),
-                  model: () =>
-                    confirmedModel,
-                  errorMessage: () =>
-                    '',
-                  actionPending: () =>
-                    false,
-                  actionFeedback: () =>
-                    null,
-                  actionError: () =>
-                    null,
-                  performScientificAction:
-                    vi.fn(),
-                  load:
-                    vi.fn()
-                      .mockResolvedValue(
-                        undefined,
-                      ),
-                },
-              },
-            ],
-          })
-          .compileComponents();
-
-        const fixture =
-          TestBed.createComponent(
-            ArchiveDiscoveryDetail,
-          );
-
-        fixture.detectChanges();
-
-        const analysis =
-          (fixture.nativeElement as HTMLElement)
-            .querySelector(
-              '[data-testid="archive-protoplanetary-disk-analysis"]',
-            );
-
-        expect(
-          analysis?.textContent,
-        ).toContain(
-          '3,2 AU',
-        );
-
-        expect(
-          analysis?.textContent,
-        ).toContain(
-          '17.7 resolverá su evolución hacia un sistema planetario maduro',
-        );
-      },
-    );
-
   },
 );

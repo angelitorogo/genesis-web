@@ -128,134 +128,119 @@
                       </dd>
                     </div>
                   </dl>
-
-                  <div class="archive-discovery-detail__actions">
-                    <a
-                      [routerLink]="[
-                        '/system',
-                        model.galaxyIndex.toString(),
-                        model.sectorKey.toString(),
-                        model.galacticObjectIndex.toString()
-                      ]"
-                      [queryParams]="{
-                        seed: model.universeSeed,
-                        version: model.generatorVersionCode
-                      }"
-                      data-testid="archive-stellar-system-open-system-link"
-                    >
-                      Entrar en el sistema 3D
-                      <span aria-hidden="true">→</span>
-                    </a>
-                  </div>
                 </div>
               </section>
 
-              @if (model.stellarSystemScientificAction; as action) {
+              @if (model.stellarSystemScientificCampaign; as campaign) {
                 <section
-                  class="archive-discovery-detail__scientific-action archive-discovery-detail__disk-action"
-                  data-testid="archive-stellar-system-scientific-action"
+                  class="archive-discovery-detail__physical-section archive-discovery-detail__scientific-campaign"
+                  data-testid="archive-stellar-system-scientific-campaign"
                 >
-                  <div class="archive-discovery-detail__scientific-action-header">
+                  <header class="archive-discovery-detail__campaign-header">
                     <div>
                       <small class="archive-discovery-detail__eyebrow">
-                        ACCIÓN CIENTÍFICA / 17.6
+                        PROGRESIÓN CIENTÍFICA / 26.A.9
                       </small>
 
-                      <strong data-testid="archive-stellar-system-action-label">
-                        {{ action.label }}
-                      </strong>
+                      <h3>Campaña observacional del sistema</h3>
+
+                      <p>
+                        Archivo, SystemPage y Observatorio leen el mismo DiscoveryState
+                        persistido y las mismas evidencias observadas. Esta ficha no
+                        ejecuta observaciones ni materializa Ground Truth adicional.
+                      </p>
                     </div>
 
-                    <span data-testid="archive-stellar-system-action-reward">
-                      +{{ action.awardedDiscoveryPoints }} PD
+                    <div class="archive-discovery-detail__campaign-score">
+                      <strong data-testid="archive-stellar-system-campaign-percent">
+                        {{ campaign.completionPercent }}%
+                      </strong>
+                      <span>{{ campaign.stageLabel }}</span>
+                    </div>
+                  </header>
+
+                  <div class="archive-discovery-detail__campaign-meta">
+                    <span>
+                      Estado · <strong>{{ campaign.discoveryStateLabel }}</strong>
+                    </span>
+                    <span>
+                      Evidencias · <strong data-testid="archive-stellar-system-evidence-count">{{ campaign.evidenceCount }}</strong>
+                    </span>
+                    <span>
+                      Requisitos · <strong>{{ campaign.satisfiedRequirementCount }}/{{ campaign.totalRequirementCount }}</strong>
+                    </span>
+                    <span>
+                      PD globales · <strong>{{ campaign.globalDiscoveryPoints }}</strong>
                     </span>
                   </div>
 
-                  <p class="archive-discovery-detail__boundary">
-                    El análisis observa el disco ya existente en el Ground Truth
-                    procedural 17.1–17.5. No crea planetas ni altera su formación.
-                  </p>
-
-                  <ul class="archive-discovery-detail__instrument-list">
-                    @for (instrument of action.instrumentOptions; track instrument.instrumentType) {
-                      <li
-                        [class.archive-discovery-detail__instrument--available]="instrument.isAvailable"
+                  <div class="archive-discovery-detail__campaign-grid">
+                    @for (dimension of campaign.dimensions; track dimension.dimensionCode) {
+                      <article
+                        class="archive-discovery-detail__campaign-dimension"
+                        [class.archive-discovery-detail__campaign-dimension--complete]="dimension.isSatisfied"
                       >
-                        <span>
-                          {{ instrument.label }} · Nivel {{ instrument.minimumLevelRank }}
-                        </span>
-
+                        <span>{{ dimension.isSatisfied ? 'COMPLETA' : 'PENDIENTE' }}</span>
+                        <strong>{{ dimension.label }}</strong>
                         <small>
-                          {{ instrument.statusLabel }}
+                          Evidencias {{ dimension.qualifyingEvidenceCount }}/{{ dimension.requiredEvidenceCount }} ·
+                          fuentes {{ dimension.independentSourceCount }}/{{ dimension.requiredIndependentSources }}
                         </small>
-                      </li>
+                      </article>
                     }
-                  </ul>
+                  </div>
 
-                  @if (action.canExecute) {
-                    <p class="archive-discovery-detail__selected-instrument">
-                      Se usará {{ action.selectedInstrumentLabel }} · Nivel {{ action.minimumInstrumentLevelRank }}.
-                      El resultado avanzará a {{ action.targetDiscoveryStateLabel }}.
-                    </p>
-
-                    <button
-                      genesis-primary-button
-                      type="button"
-                      data-testid="archive-stellar-system-action-button"
-                      [disabled]="facade.actionPending()"
-                      (click)="performScientificAction()"
-                    >
-                      @if (facade.actionPending()) {
-                        Procesando…
-                      } @else {
-                        {{ action.buttonLabel }}
-                      }
-                    </button>
-                  } @else {
+                  @if (campaign.discoveryStateLabel === 'Descubierto') {
                     <p
-                      class="archive-discovery-detail__action-blocked"
-                      data-testid="archive-stellar-system-action-blocked"
+                      class="archive-discovery-detail__campaign-note"
+                      data-testid="archive-stellar-system-visit-note"
                     >
-                      El Observatorio todavía no dispone de infrarrojo o radio
-                      con el nivel científico requerido.
+                      Esta entrada detallada registra VISITED una sola vez. VISITED no
+                      añade evidencia ni cambia el disclosure físico de DISCOVERED.
                     </p>
-
-                    @if (action.pendingRequirements; as pending) {
-                      <section
-                        class="archive-discovery-detail__restricted archive-discovery-detail__pending-requirements"
-                        data-testid="archive-stellar-system-pending-requirements"
-                      >
-                        <small class="archive-discovery-detail__eyebrow">
-                          REQUISITOS PENDIENTES
-                        </small>
-
-                        <ul>
-                          @for (requirement of pending.items; track requirement) {
-                            <li>{{ requirement }}</li>
-                          }
-                        </ul>
-                      </section>
-                    }
                   }
+
+                  @if (campaign.actions.length > 0) {
+                    <div class="archive-discovery-detail__campaign-actions-summary">
+                      <strong>Observaciones de la etapa</strong>
+                      <ul>
+                        @for (action of campaign.actions; track action.ruleCode) {
+                          <li>
+                            <span>{{ action.label }} · {{ action.instrumentLabel }} L{{ action.selectedLevelRank }}</span>
+                            <small>{{ action.isAvailable ? 'Disponible' : 'Bloqueada' }}</small>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                  } @else if (campaign.discoveryStateLabel === 'Descubierto') {
+                    <p class="archive-discovery-detail__campaign-note">
+                      El siguiente paso es una entrada válida a la ficha o escena para
+                      consolidar VISITED antes de iniciar la catalogación.
+                    </p>
+                  } @else if (campaign.discoveryStateLabel === 'Confirmado') {
+                    <p class="archive-discovery-detail__campaign-note">
+                      Campaña científica completada. No existen promociones manuales ni
+                      acciones de confirmación alternativas.
+                    </p>
+                  }
+
+                  <a
+                    class="archive-discovery-detail__campaign-link"
+                    [routerLink]="[
+                      '/observatory/system',
+                      model.galaxyIndex,
+                      model.sectorKey,
+                      model.galacticObjectIndex
+                    ]"
+                    [queryParams]="{
+                      seed: model.universeSeed,
+                      version: model.generatorVersionCode
+                    }"
+                    data-testid="archive-stellar-system-observatory-link"
+                  >
+                    Abrir campaña en el Observatorio →
+                  </a>
                 </section>
-              }
-
-              @if (facade.actionFeedback(); as feedback) {
-                <p
-                  class="archive-discovery-detail__action-feedback"
-                  data-testid="archive-stellar-system-action-feedback"
-                >
-                  {{ feedback }}
-                </p>
-              }
-
-              @if (facade.actionError(); as actionError) {
-                <p
-                  class="archive-discovery-detail__action-error"
-                  data-testid="archive-stellar-system-action-error"
-                >
-                  {{ actionError }}
-                </p>
               }
 
               @if (model.protoplanetaryDiskAnalysis; as diskAnalysis) {
@@ -361,30 +346,12 @@
                   class="archive-discovery-detail__stellar-components"
                   data-testid="archive-stellar-system-components"
                 >
-                  <header class="archive-discovery-detail__stellar-components-header">
-                    <div>
-                      <small class="archive-discovery-detail__eyebrow">
-                        COMPONENTES ESTELARES
-                      </small>
+                  <header>
+                    <small class="archive-discovery-detail__eyebrow">
+                      COMPONENTES ESTELARES
+                    </small>
 
-                      <h3>Ficha por componente</h3>
-                    </div>
-
-                    @if (
-                      systemCard.knowledgeLevel === 'CATALOGUED' ||
-                      systemCard.knowledgeLevel === 'CONFIRMED'
-                    ) {
-                      <aside
-                        class="archive-discovery-detail__stellar-unit-legend"
-                        data-testid="archive-stellar-unit-legend"
-                        aria-label="Leyenda de unidades estelares"
-                      >
-                        <span><strong>M☉</strong> masas solares</span>
-                        <span><strong>R☉</strong> radios solares</span>
-                        <span><strong>L☉</strong> luminosidades solares</span>
-                        <span><strong>K</strong> kelvin</span>
-                      </aside>
-                    }
+                    <h3>Ficha por componente</h3>
                   </header>
 
                   <div class="archive-discovery-detail__stellar-component-grid">
@@ -646,23 +613,6 @@
                           El Observatorio todavía no dispone de un instrumento compatible
                           con el nivel científico requerido.
                         </p>
-
-                        @if (action.pendingRequirements; as pending) {
-                          <section
-                            class="archive-discovery-detail__restricted archive-discovery-detail__pending-requirements"
-                            data-testid="archive-galactic-object-pending-requirements"
-                          >
-                            <small class="archive-discovery-detail__eyebrow">
-                              REQUISITOS PENDIENTES
-                            </small>
-
-                            <ul>
-                              @for (requirement of pending.items; track requirement) {
-                                <li>{{ requirement }}</li>
-                              }
-                            </ul>
-                          </section>
-                        }
                       }
 
                       @if (facade.actionFeedback(); as feedback) {

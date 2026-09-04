@@ -1,7 +1,300 @@
-<genesis-placeholder-screen
-  testId="observatory-page"
-  eyebrow="OBSERVACIÓN CIENTÍFICA"
-  title="Observatorio"
-  description="Centro de observación de señales, candidatos y objetos mediante instrumentos científicos con distintos niveles de sensibilidad y precisión."
-  status="Los instrumentos y el motor de observación científica se implementarán en fases posteriores."
-></genesis-placeholder-screen>
+<genesis-screen>
+  <main
+    class="observatory"
+    data-testid="observatory-page"
+    aria-labelledby="observatory-title"
+  >
+    <header class="observatory__header">
+      <div>
+        <p class="observatory__eyebrow">
+          GENESIS WEB
+          <span aria-hidden="true">/</span>
+          OBSERVATORIO
+        </p>
+
+        <h1 id="observatory-title">Observatorio</h1>
+
+        <p>
+          Centro de adquisición de evidencia científica. Los instrumentos se
+          desbloquean mediante progresión global; cada objeto avanza únicamente
+          con sus propias observaciones persistidas.
+        </p>
+      </div>
+
+      <a
+        class="observatory__nav-link"
+        routerLink="/archive"
+      >
+        Archivo GENESIS
+      </a>
+    </header>
+
+    @if (!hasStellarSystemTarget) {
+      <section
+        class="observatory__panel observatory__landing"
+        data-testid="observatory-no-target"
+      >
+        <small>OBSERVATORIO OPERATIVO / 26.A.9</small>
+        <h2>Selecciona un objetivo científico</h2>
+        <p>
+          Abre un sistema conocido desde el Archivo GENESIS o desde SystemPage
+          para dirigir una campaña. Esta pantalla no elige objetivos ocultos ni
+          consulta el Ground Truth procedural.
+        </p>
+
+        <a
+          class="observatory__primary-link"
+          routerLink="/archive"
+          data-testid="observatory-open-archive-link"
+        >
+          Buscar en el Archivo →
+        </a>
+      </section>
+    } @else {
+      @switch (facade.state().kind) {
+        @case ('loading') {
+          <section
+            class="observatory__panel"
+            data-testid="observatory-target-loading"
+          >
+            Preparando contexto observacional persistido…
+          </section>
+        }
+
+        @case ('not-found') {
+          <section
+            class="observatory__panel observatory__panel--muted"
+            data-testid="observatory-target-not-found"
+          >
+            El sistema solicitado no forma parte del conocimiento observado de
+            esta partida. El Observatorio no materializa objetivos UNKNOWN.
+          </section>
+        }
+
+        @case ('error') {
+          <section
+            class="observatory__panel observatory__panel--error"
+            data-testid="observatory-target-error"
+          >
+            {{ facade.errorMessage() }}
+          </section>
+        }
+
+        @case ('content') {
+          @if (facade.model(); as model) {
+            @if (model.stellarSystemScientificCampaign; as campaign) {
+              <section
+                class="observatory__target"
+                data-testid="observatory-stellar-system-campaign"
+              >
+                <article class="observatory__panel observatory__identity">
+                  <div>
+                    <small>OBJETIVO / STELLAR_SYSTEM</small>
+                    <h2>{{ model.stellarSystemCard?.title ?? 'Sistema estelar' }}</h2>
+                    <code>{{ model.proceduralIdentity }}</code>
+                  </div>
+
+                  <div class="observatory__state">
+                    <strong data-testid="observatory-discovery-state">
+                      {{ campaign.discoveryStateLabel }}
+                    </strong>
+                    <span>{{ campaign.stageLabel }}</span>
+                  </div>
+                </article>
+
+                <article
+                  class="observatory__panel observatory__progress"
+                  data-testid="observatory-scientific-completeness"
+                >
+                  <header>
+                    <div>
+                      <small>SCIENTIFIC COMPLETENESS</small>
+                      <h2>Progreso de la etapa</h2>
+                    </div>
+
+                    <strong data-testid="observatory-completion-percent">
+                      {{ campaign.completionPercent }}%
+                    </strong>
+                  </header>
+
+                  <div class="observatory__metrics">
+                    <span>
+                      Evidencias
+                      <strong data-testid="observatory-evidence-count">{{ campaign.evidenceCount }}</strong>
+                    </span>
+                    <span>
+                      Requisitos
+                      <strong>{{ campaign.satisfiedRequirementCount }}/{{ campaign.totalRequirementCount }}</strong>
+                    </span>
+                    <span>
+                      PD globales
+                      <strong>{{ campaign.globalDiscoveryPoints }}</strong>
+                    </span>
+                    <span>
+                      PD galaxia
+                      <strong>{{ campaign.galaxyDiscoveryPoints }}</strong>
+                    </span>
+                  </div>
+
+                  <div class="observatory__dimension-grid">
+                    @for (dimension of campaign.dimensions; track dimension.dimensionCode) {
+                      <section
+                        class="observatory__dimension"
+                        [class.observatory__dimension--complete]="dimension.isSatisfied"
+                      >
+                        <small>{{ dimension.isSatisfied ? 'COMPLETA' : 'PENDIENTE' }}</small>
+                        <strong>{{ dimension.label }}</strong>
+                        <span>
+                          Evidencias {{ dimension.qualifyingEvidenceCount }}/{{ dimension.requiredEvidenceCount }}
+                        </span>
+                        <span>
+                          Fuentes {{ dimension.independentSourceCount }}/{{ dimension.requiredIndependentSources }}
+                        </span>
+                      </section>
+                    }
+                  </div>
+                </article>
+
+                <article
+                  class="observatory__panel observatory__actions"
+                  data-testid="observatory-scientific-actions"
+                >
+                  <header>
+                    <div>
+                      <small>OBSERVATION ENGINE / INSTRUMENTOS</small>
+                      <h2>Observaciones de esta etapa</h2>
+                    </div>
+                  </header>
+
+                  @if (campaign.actions.length > 0) {
+                    <div class="observatory__action-grid">
+                      @for (action of campaign.actions; track action.ruleCode) {
+                        <section
+                          class="observatory__action"
+                          [class.observatory__action--available]="action.isAvailable"
+                        >
+                          <div>
+                            <small>{{ action.dimensionLabel }}</small>
+                            <strong>{{ action.label }}</strong>
+                            <span>
+                              {{ action.instrumentLabel }} · L{{ action.selectedLevelRank }}
+                              (mín. L{{ action.minimumLevelRank }})
+                            </span>
+                          </div>
+
+                          @if (action.pendingRequirements.length > 0) {
+                            <ul>
+                              @for (requirement of action.pendingRequirements; track requirement) {
+                                <li>{{ requirement }}</li>
+                              }
+                            </ul>
+                          }
+
+                          <button
+                            type="button"
+                            [attr.data-rule-code]="action.ruleCode"
+                            [disabled]="!action.isAvailable || facade.actionPending()"
+                            (click)="performObservation(action)"
+                          >
+                            @if (facade.actionPending()) {
+                              Procesando…
+                            } @else if (action.isAvailable) {
+                              Realizar observación
+                            } @else {
+                              Observación bloqueada
+                            }
+                          </button>
+                        </section>
+                      }
+                    </div>
+                  } @else if (campaign.discoveryStateLabel === 'Descubierto') {
+                    <div
+                      class="observatory__transition-note"
+                      data-testid="observatory-visit-required"
+                    >
+                      <strong>Identidad científica resuelta.</strong>
+                      <p>
+                        Para iniciar la catalogación entra una vez en la ficha
+                        detallada o en la escena 3D. Ese hito registra VISITED sin
+                        añadir evidencia ni revelar magnitudes físicas.
+                      </p>
+                    </div>
+                  } @else if (campaign.discoveryStateLabel === 'Confirmado') {
+                    <div
+                      class="observatory__transition-note"
+                      data-testid="observatory-campaign-complete"
+                    >
+                      <strong>Campaña científica completada.</strong>
+                      <p>
+                        CONFIRMED procede de evidencia adicional/independiente.
+                        No existe un botón alternativo para promocionar el estado.
+                      </p>
+                    </div>
+                  } @else {
+                    <div class="observatory__transition-note">
+                      No hay observaciones aplicables en esta etapa.
+                    </div>
+                  }
+                </article>
+
+                @if (facade.actionFeedback(); as feedback) {
+                  <p
+                    class="observatory__feedback"
+                    data-testid="observatory-action-feedback"
+                    role="status"
+                  >
+                    {{ feedback }}
+                  </p>
+                }
+
+                @if (facade.actionError(); as actionError) {
+                  <p
+                    class="observatory__feedback observatory__feedback--error"
+                    data-testid="observatory-action-error"
+                    role="alert"
+                  >
+                    {{ actionError }}
+                  </p>
+                }
+
+                <nav class="observatory__target-nav">
+                  <a
+                    [routerLink]="[
+                      '/archive/system',
+                      model.galaxyIndex,
+                      model.sectorKey,
+                      model.galacticObjectIndex
+                    ]"
+                    [queryParams]="{
+                      seed: model.universeSeed,
+                      version: model.generatorVersionCode
+                    }"
+                    data-testid="observatory-archive-target-link"
+                  >
+                    Abrir ficha detallada
+                  </a>
+
+                  <a
+                    [routerLink]="[
+                      '/system',
+                      model.galaxyIndex,
+                      model.sectorKey,
+                      model.galacticObjectIndex
+                    ]"
+                    [queryParams]="{
+                      seed: model.universeSeed,
+                      version: model.generatorVersionCode
+                    }"
+                    data-testid="observatory-system-target-link"
+                  >
+                    Entrar en SystemPage 3D
+                  </a>
+                </nav>
+              </section>
+            }
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>

@@ -21,14 +21,6 @@ import {
 } from '../../domain/stellar/stellar-system-multiplicity';
 
 import {
-  ObservationInstrumentType,
-} from '../../domain/observation/observation-instrument';
-
-import {
-  StellarSystemScientificActionType,
-} from '../../domain/planetary/stellar-system-scientific-action';
-
-import {
   ArchiveDiscoveryDetailFacade,
   ArchiveDiscoveryLocatorKind,
   type ArchiveDiscoveryDetailModel,
@@ -55,9 +47,6 @@ describe(
     let load:
       ReturnType<typeof vi.fn>;
 
-    let performScientificAction:
-      ReturnType<typeof vi.fn>;
-
     let currentModel:
       ArchiveDiscoveryDetailModel;
 
@@ -70,13 +59,6 @@ describe(
           );
 
         load =
-          vi
-            .fn()
-            .mockResolvedValue(
-              undefined,
-            );
-
-        performScientificAction =
           vi
             .fn()
             .mockResolvedValue(
@@ -172,8 +154,6 @@ describe(
                   actionError: () =>
                     null,
 
-                  performScientificAction,
-
                   load,
                 },
               },
@@ -217,6 +197,10 @@ describe(
             '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
           generatorVersionCode:
             '1',
+          includeStellarSystemScientificProgression:
+            true,
+          stellarSystemEntryKind:
+            'SCENE',
         });
 
         const element =
@@ -394,7 +378,7 @@ describe(
     );
 
     it(
-      'should reuse ANALYZE DISK from point 17.6 without adding the galaxy 250/500 PD spend model to systems',
+      'should expose the shared A9 scientific campaign and route observations to Observatory without a direct state-promotion action',
       () => {
 
         const fixture =
@@ -408,41 +392,37 @@ describe(
           fixture.nativeElement as
             HTMLElement;
 
-        const action =
-          element.querySelector<HTMLButtonElement>(
+        expect(
+          element.querySelector(
+            '[data-testid="system-page-scientific-campaign"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
             '[data-testid="system-page-scientific-action-button"]',
+          ),
+        ).toBeNull();
+
+        const observatoryLink =
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="system-page-observatory-link"]',
           );
 
-        expect(action).toBeTruthy();
-        expect(action?.textContent).toContain(
-          'Analizar disco',
-        );
-        expect(action?.textContent).toContain(
-          '+48 PD',
-        );
-
-        action?.click();
-
         expect(
-          performScientificAction,
-        ).toHaveBeenCalledTimes(
-          1,
+          observatoryLink?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          '/observatory/system/3/-17/8',
         );
 
         expect(
           element.querySelector(
-            '[data-testid="system-page-scientific-action"]',
+            '[data-testid="system-page-scientific-campaign"]',
           )?.textContent,
-        ).not.toContain(
-          '250 PD',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="system-page-scientific-action"]',
-          )?.textContent,
-        ).not.toContain(
-          '500 PD',
+        ).toContain(
+          '8 evidencias',
         );
       },
     );
@@ -674,49 +654,57 @@ function systemModel(
       systemCard,
     scientificAction:
       null,
+    stellarSystemScientificCampaign:
+      Object.freeze({
+        discoveryState:
+          state,
+        discoveryStateLabel:
+          confirmed
+            ? 'Confirmado'
+            : catalogued
+              ? 'Catalogado'
+              : identified
+                ? 'Descubierto'
+                : 'Detectado',
+        stageLabel:
+          confirmed
+            ? 'Campaña científica completada'
+            : catalogued
+              ? 'Confirmación independiente'
+              : identified
+                ? 'Entrada detallada pendiente'
+                : 'Resolución del descubrimiento',
+        completionPercent:
+          confirmed
+            ? 100
+            : catalogued
+              ? 67
+              : 0,
+        satisfiedRequirementCount:
+          confirmed
+            ? 3
+            : catalogued
+              ? 2
+              : 0,
+        totalRequirementCount:
+          3,
+        evidenceCount:
+          confirmed
+            ? 11
+            : catalogued
+              ? 8
+              : 3,
+        globalDiscoveryPoints:
+          5000n,
+        galaxyDiscoveryPoints:
+          400n,
+        dimensions:
+          Object.freeze([]),
+        actions:
+          Object.freeze([]),
+      }),
     stellarSystemScientificAction:
-      catalogued &&
-      !confirmed
-        ? Object.freeze({
-            actionType:
-              StellarSystemScientificActionType.ANALYZE_DISK,
-            label:
-              'ANALIZAR DISCO',
-            targetDiscoveryStateLabel:
-              'Confirmado',
-            awardedDiscoveryPoints:
-              48,
-            minimumInstrumentLevelRank:
-              2,
-            instrumentOptions:
-              Object.freeze([
-                Object.freeze({
-                  instrumentType:
-                    ObservationInstrumentType.INFRARED,
-                  label:
-                    'Infrarrojo',
-                  minimumLevelRank:
-                    2,
-                  highestUnlockedLevelRank:
-                    2,
-                  isAvailable:
-                    true,
-                  statusLabel:
-                    'Disponible',
-                }),
-              ]),
-            selectedInstrumentType:
-              ObservationInstrumentType.INFRARED,
-            selectedInstrumentLabel:
-              'Infrarrojo',
-            canExecute:
-              true,
-            pendingRequirements:
-              null,
-            buttonLabel:
-              'Analizar disco',
-          })
-        : null,
+      null,
     protoplanetaryDiskAnalysis:
       confirmed
         ? Object.freeze({

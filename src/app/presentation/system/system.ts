@@ -12,6 +12,10 @@ import {
 } from '@angular/router';
 
 import {
+  DiscoveredToVisitedEntryKind,
+} from '../../domain/discovery/discovered-to-visited-entry';
+
+import {
   GenesisScreen,
 } from '../../ui/layout/genesis-screen/genesis-screen';
 
@@ -163,6 +167,12 @@ export class SystemPage
             .get(
               'version',
             ),
+
+        includeStellarSystemScientificProgression:
+          true,
+
+        stellarSystemEntryKind:
+          DiscoveredToVisitedEntryKind.SCENE,
       });
   }
 
@@ -188,11 +198,4 @@ export class SystemPage
       ArchiveStellarSystemKnowledgeLevel.CONFIRMED;
   }
 
-  performScientificAction():
-    void {
-
-    void this
-      .facade
-      .performScientificAction();
-  }
 }

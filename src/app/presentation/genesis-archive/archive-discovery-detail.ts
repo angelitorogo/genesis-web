@@ -11,6 +11,10 @@ import {
 } from '@angular/router';
 
 import {
+  DiscoveredToVisitedEntryKind,
+} from '../../domain/discovery/discovered-to-visited-entry';
+
+import {
   GenesisPrimaryButton,
 } from '../../ui/components/genesis-primary-button/genesis-primary-button';
 
@@ -24,6 +28,7 @@ import {
 
 import {
   ArchiveDiscoveryDetailFacade,
+  ArchiveDiscoveryLocatorKind,
 } from './archive-discovery-detail.facade';
 
 import {
@@ -83,17 +88,23 @@ export class ArchiveDiscoveryDetail
   ngOnInit():
     void {
 
+    const locatorKind =
+      this
+        .route
+        .snapshot
+        .data[
+          'archiveDiscoveryLocatorKind'
+        ] ??
+      null;
+
+    const isStellarSystem =
+      locatorKind ===
+      ArchiveDiscoveryLocatorKind.SYSTEM;
+
     void this
       .facade
       .load({
-        locatorKind:
-          this
-            .route
-            .snapshot
-            .data[
-              'archiveDiscoveryLocatorKind'
-            ] ??
-          null,
+        locatorKind,
 
         galaxyIndex:
           this
@@ -139,6 +150,14 @@ export class ArchiveDiscoveryDetail
             .get(
               'version',
             ),
+
+        includeStellarSystemScientificProgression:
+          isStellarSystem,
+
+        stellarSystemEntryKind:
+          isStellarSystem
+            ? DiscoveredToVisitedEntryKind.DETAILED_CARD
+            : null,
       });
   }
 }

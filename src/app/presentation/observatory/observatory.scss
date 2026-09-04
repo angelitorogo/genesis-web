@@ -1,0 +1,213 @@
+:host {
+  display: block;
+}
+
+.observatory {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 2vw, 2rem);
+}
+
+.observatory__header,
+.observatory__panel,
+.observatory__target,
+.observatory__progress,
+.observatory__actions {
+  display: grid;
+  gap: 1rem;
+}
+
+.observatory__header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.observatory__header h1,
+.observatory__panel h2,
+.observatory__panel p {
+  margin: 0;
+}
+
+.observatory__header p,
+.observatory__panel p,
+.observatory__dimension span,
+.observatory__action span,
+.observatory__action li {
+  color: var(--genesis-color-text-subtle);
+  line-height: 1.55;
+}
+
+.observatory__eyebrow,
+.observatory small,
+.observatory code {
+  font-family: var(--genesis-font-mono);
+}
+
+.observatory__eyebrow,
+.observatory small {
+  color: var(--genesis-color-text-muted);
+  letter-spacing: .08em;
+}
+
+.observatory__nav-link,
+.observatory__primary-link,
+.observatory__target-nav a {
+  color: var(--genesis-color-primary);
+  text-decoration: none;
+}
+
+.observatory__panel {
+  padding: 1rem;
+  border: 1px solid rgba(106, 215, 255, .18);
+  border-radius: var(--genesis-radius-lg);
+  background: rgba(8, 12, 21, .72);
+}
+
+.observatory__panel--muted {
+  color: var(--genesis-color-text-subtle);
+}
+
+.observatory__panel--error,
+.observatory__feedback--error {
+  border-color: rgba(255, 126, 126, .35);
+}
+
+.observatory__identity,
+.observatory__progress > header,
+.observatory__actions > header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.observatory__identity code {
+  display: block;
+  margin-top: .45rem;
+  color: var(--genesis-color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.observatory__state {
+  display: grid;
+  justify-items: end;
+  gap: .2rem;
+}
+
+.observatory__state strong,
+.observatory__progress > header > strong {
+  color: var(--genesis-color-primary);
+  font-family: var(--genesis-font-mono);
+}
+
+.observatory__progress > header > strong {
+  font-size: clamp(1.7rem, 4vw, 3rem);
+}
+
+.observatory__metrics,
+.observatory__dimension-grid,
+.observatory__action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .7rem;
+}
+
+.observatory__metrics span,
+.observatory__dimension,
+.observatory__action {
+  display: grid;
+  gap: .35rem;
+  min-width: 0;
+  padding: .75rem;
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-radius: var(--genesis-radius-md);
+}
+
+.observatory__metrics span {
+  color: var(--genesis-color-text-subtle);
+}
+
+.observatory__metrics strong {
+  color: var(--genesis-color-text);
+}
+
+.observatory__dimension-grid,
+.observatory__action-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.observatory__dimension--complete,
+.observatory__action--available {
+  border-color: rgba(106, 215, 255, .34);
+}
+
+.observatory__action ul {
+  margin: .35rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.observatory__action button {
+  margin-top: auto;
+  padding: .65rem .8rem;
+  border: 1px solid rgba(106, 215, 255, .38);
+  border-radius: var(--genesis-radius-md);
+  background: rgba(106, 215, 255, .08);
+  color: var(--genesis-color-primary);
+  font: 700 .72rem var(--genesis-font-mono);
+  cursor: pointer;
+}
+
+.observatory__action button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.observatory__transition-note,
+.observatory__feedback {
+  padding: .85rem 1rem;
+  border-left: 2px solid rgba(106, 215, 255, .4);
+}
+
+.observatory__feedback {
+  margin: 0;
+  border: 1px solid rgba(106, 215, 255, .22);
+  border-left-width: 2px;
+  border-radius: var(--genesis-radius-md);
+}
+
+.observatory__target-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+@media (max-width: 64rem) {
+  .observatory__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .observatory__dimension-grid,
+  .observatory__action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 42rem) {
+  .observatory__header,
+  .observatory__identity,
+  .observatory__progress > header,
+  .observatory__actions > header,
+  .observatory__metrics,
+  .observatory__dimension-grid,
+  .observatory__action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .observatory__state {
+    justify-items: start;
+  }
+
+  .observatory__target-nav {
+    display: grid;
+    justify-content: stretch;
+  }
+}
