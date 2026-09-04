@@ -1,0 +1,325 @@
+<main
+  class="fiche-qa"
+  data-testid="stellar-system-fiche-qa-page"
+>
+  <header class="fiche-qa__hero">
+    <div>
+      <a
+        class="fiche-qa__back"
+        routerLink="/laboratory/stellar-systems"
+      >
+        ← Laboratorio 04 · Sistemas estelares
+      </a>
+
+      <p class="fiche-qa__eyebrow">
+        QA VISUAL · FASE 26.2 · READ-ONLY
+      </p>
+
+      <h1>Ficha científica de estrella / sistema</h1>
+
+      <p>
+        Vista de validación aislada de la partida. Usa los SystemLocator
+        deterministas A–H, el mismo <code>ArchiveStellarSystemCardAssembler</code>
+        y el mismo renderer procedural que la ficha real. Cambiar un selector
+        no escribe IndexedDB, no concede ni consume PD y no modifica el
+        DiscoveryState persistido.
+      </p>
+    </div>
+
+    <div class="fiche-qa__contract" data-testid="stellar-system-fiche-qa-contract">
+      <strong>CONTRATO QA</strong>
+      <span>0 escrituras</span>
+      <span>0 PD</span>
+      <span>0 transiciones persistidas</span>
+    </div>
+  </header>
+
+  <section class="fiche-qa__controls" aria-label="Controles QA de ficha científica">
+    <div class="fiche-qa__control-group">
+      <p class="fiche-qa__eyebrow">ARQUITECTURA</p>
+      <div class="fiche-qa__button-row">
+        @for (caseOption of cases; track caseOption.id) {
+          <button
+            type="button"
+            data-testid="stellar-system-fiche-qa-case"
+            [attr.data-case]="caseOption.id"
+            [attr.aria-pressed]="selectedCaseId() === caseOption.id"
+            [class.fiche-qa__button--active]="selectedCaseId() === caseOption.id"
+            (click)="selectCase(caseOption.id)"
+          >
+            {{ caseOption.multiplicity.name }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="fiche-qa__control-group">
+      <p class="fiche-qa__eyebrow">FAMILIA DETERMINISTA</p>
+      <div class="fiche-qa__button-row fiche-qa__button-row--families">
+        @for (family of families(); track family.id) {
+          <button
+            type="button"
+            data-testid="stellar-system-fiche-qa-family"
+            [attr.data-family]="family.id"
+            [attr.aria-pressed]="selectedFamilyId() === family.id"
+            [class.fiche-qa__button--active]="selectedFamilyId() === family.id"
+            (click)="selectFamily(family.id)"
+          >
+            {{ family.id }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="fiche-qa__control-group fiche-qa__control-group--state">
+      <p class="fiche-qa__eyebrow">DISCOVERYSTATE SIMULADO · SOLO PRESENTACIÓN</p>
+      <div class="fiche-qa__state-grid">
+        @for (option of states; track option.state.name) {
+          <button
+            type="button"
+            data-testid="stellar-system-fiche-qa-state"
+            [attr.data-state]="option.state.name"
+            [attr.aria-pressed]="selectedState().name === option.state.name"
+            [class.fiche-qa__state--active]="selectedState().name === option.state.name"
+            (click)="selectState(option.state)"
+          >
+            <strong>{{ option.state.name }}</strong>
+            <span>{{ option.label }}</span>
+            <small>{{ option.shortDescription }}</small>
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  @if (selectedFamily(); as activeFamily) {
+    @if (card(); as systemCard) {
+      <section
+        class="fiche-qa__summary"
+        data-testid="stellar-system-fiche-qa-summary"
+        [attr.data-state]="selectedState().name"
+        [attr.data-knowledge-level]="systemCard.knowledgeLevel"
+        [attr.data-case]="selectedCase().id"
+        [attr.data-family]="activeFamily.id"
+      >
+        <div>
+          <p class="fiche-qa__eyebrow">
+            26.2 · {{ selectedState().name }} · {{ systemCard.knowledgeLevelLabel }}
+          </p>
+          <h2>{{ systemCard.title }}</h2>
+          <p>{{ systemCard.summary }}</p>
+          <code>
+            G{{ activeFamily.locator.galaxyIndex.toString() }} /
+            S{{ activeFamily.locator.sectorKey.toString() }} /
+            O{{ activeFamily.locator.galacticObjectIndex.toString() }}
+          </code>
+        </div>
+
+        <dl>
+          <div>
+            <dt>Arquitectura QA</dt>
+            <dd>{{ selectedCase().multiplicity.name }}</dd>
+          </div>
+          <div>
+            <dt>Multiplicidad revelada</dt>
+            <dd data-testid="stellar-system-fiche-qa-multiplicity">
+              {{ systemCard.multiplicityLabel ?? 'No resuelta' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Componentes reveladas</dt>
+            <dd>{{ systemCard.componentCount ?? '—' }}</dd>
+          </div>
+          <div>
+            <dt>DISCOVERED = VISITED</dt>
+            <dd data-testid="stellar-system-fiche-qa-identified-equivalence">
+              {{ identifiedDisclosureEquivalent() ? 'MISMO DISCLOSURE' : 'REVISAR' }}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="fiche-qa__workspace">
+        <article class="fiche-qa__visual">
+          <header>
+            <p class="fiche-qa__eyebrow">RENDER PROCEDURAL DE PRODUCCIÓN</p>
+            <span>{{ systemCard.knowledgeLevel }}</span>
+          </header>
+
+          <app-stellar-system-procedural-render
+            [descriptor]="systemCard.render"
+          ></app-stellar-system-procedural-render>
+        </article>
+
+        <article class="fiche-qa__panel fiche-qa__panel--identity">
+          <header>
+            <p class="fiche-qa__eyebrow">CAPA 01</p>
+            <h3>Identidad y arquitectura</h3>
+          </header>
+
+          @if (systemCard.systemFacts.length > 0) {
+            <dl class="fiche-qa__facts" data-testid="stellar-system-fiche-qa-system-facts">
+              @for (fact of systemCard.systemFacts; track fact.label) {
+                <div>
+                  <dt>{{ fact.label }}</dt>
+                  <dd>{{ fact.value }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <p class="fiche-qa__locked" data-testid="stellar-system-fiche-qa-identity-locked">
+              DETECTED conserva únicamente la señal. La identidad científica aún no está resuelta.
+            </p>
+          }
+        </article>
+
+        <article class="fiche-qa__panel fiche-qa__panel--wide">
+          <header>
+            <p class="fiche-qa__eyebrow">CAPA 02</p>
+            <h3>Componentes estelares</h3>
+          </header>
+
+          @if (systemCard.components.length > 0) {
+            <div class="fiche-qa__stars" data-testid="stellar-system-fiche-qa-components">
+              @for (component of systemCard.components; track component.componentLabel) {
+                <section class="fiche-qa__star" [attr.data-component]="component.componentLabel">
+                  <header>
+                    <span
+                      class="fiche-qa__star-dot"
+                      [style.background]="component.colorHex"
+                      aria-hidden="true"
+                    ></span>
+                    <div>
+                      <small>COMPONENTE {{ component.componentLabel }}</small>
+                      <h4>{{ component.designation }}</h4>
+                    </div>
+                  </header>
+
+                  <dl class="fiche-qa__star-meta">
+                    <div>
+                      <dt>Tipo espectral</dt>
+                      <dd>{{ component.spectralType ?? 'Bloqueado hasta CATALOGUED' }}</dd>
+                    </div>
+                    <div>
+                      <dt>Estado evolutivo</dt>
+                      <dd>{{ component.evolutionStateLabel ?? 'Bloqueado hasta CATALOGUED' }}</dd>
+                    </div>
+                  </dl>
+
+                  @if (component.facts.length > 0) {
+                    <dl class="fiche-qa__facts fiche-qa__facts--compact" data-testid="stellar-system-fiche-qa-physical-facts">
+                      @for (fact of component.facts; track fact.label) {
+                        <div>
+                          <dt>{{ fact.label }}</dt>
+                          <dd>{{ fact.value }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  } @else {
+                    <p class="fiche-qa__locked">
+                      Componente identificada; magnitudes físicas aún no reveladas.
+                    </p>
+                  }
+                </section>
+              }
+            </div>
+          } @else {
+            <p class="fiche-qa__locked">La multiplicidad permanece sin resolver.</p>
+          }
+        </article>
+
+        <article class="fiche-qa__panel">
+          <header>
+            <p class="fiche-qa__eyebrow">CAPA 03</p>
+            <h3>Arquitectura orbital</h3>
+          </header>
+
+          @if (systemCard.knowledgeLevel === knowledgeLevels.CATALOGUED || systemCard.knowledgeLevel === knowledgeLevels.CONFIRMED) {
+            @if (systemCard.orbits.length > 0) {
+              <div class="fiche-qa__stack" data-testid="stellar-system-fiche-qa-orbits">
+                @for (orbit of systemCard.orbits; track orbit.label) {
+                  <section class="fiche-qa__orbit">
+                    <strong>{{ orbit.label }}</strong>
+                    <p>{{ orbit.roleLabel }}</p>
+                    <dl class="fiche-qa__facts fiche-qa__facts--compact">
+                      @for (fact of orbit.facts; track fact.label) {
+                        <div>
+                          <dt>{{ fact.label }}</dt>
+                          <dd>{{ fact.value }}</dd>
+                        </div>
+                      }
+                    </dl>
+                  </section>
+                }
+              </div>
+            } @else {
+              <p class="fiche-qa__empty">Sistema simple: no hay órbitas estelares relativas.</p>
+            }
+          } @else {
+            <p class="fiche-qa__locked" data-testid="stellar-system-fiche-qa-orbits-locked">
+              Las órbitas estelares permanecen bloqueadas hasta CATALOGUED.
+            </p>
+          }
+        </article>
+
+        <article class="fiche-qa__panel">
+          <header>
+            <p class="fiche-qa__eyebrow">CAPA 04</p>
+            <h3>Contexto dinámico</h3>
+          </header>
+
+          @if (systemCard.circumbinaryFacts.length > 0) {
+            <dl class="fiche-qa__facts" data-testid="stellar-system-fiche-qa-dynamics">
+              @for (fact of systemCard.circumbinaryFacts; track fact.label) {
+                <div>
+                  <dt>{{ fact.label }}</dt>
+                  <dd>{{ fact.value }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <p class="fiche-qa__empty">
+              {{ systemCard.knowledgeLevel === knowledgeLevels.DETECTED || systemCard.knowledgeLevel === knowledgeLevels.IDENTIFIED
+                ? 'Contexto dinámico bloqueado hasta CATALOGUED.'
+                : 'Esta arquitectura no requiere evaluación circumbinaria.' }}
+            </p>
+          }
+        </article>
+
+        <article class="fiche-qa__panel fiche-qa__panel--wide">
+          <header>
+            <p class="fiche-qa__eyebrow">CAPA 05</p>
+            <h3>Caracterización confirmada</h3>
+            <span>{{ systemCard.knowledgeLevel === knowledgeLevels.CONFIRMED ? 'ABIERTA' : 'BLOQUEADA' }}</span>
+          </header>
+
+          @if (systemCard.knowledgeLevel === knowledgeLevels.CONFIRMED) {
+            @if (systemCard.habitabilityFacts.length > 0) {
+              <dl class="fiche-qa__facts" data-testid="stellar-system-fiche-qa-habitability">
+                @for (fact of systemCard.habitabilityFacts; track fact.label) {
+                  <div>
+                    <dt>{{ fact.label }}</dt>
+                    <dd>{{ fact.value }}</dd>
+                  </div>
+                }
+              </dl>
+            } @else {
+              <p class="fiche-qa__empty">
+                Sistema confirmado sin evaluación circumbinaria adicional para esta arquitectura.
+              </p>
+            }
+          } @else {
+            <p class="fiche-qa__locked" data-testid="stellar-system-fiche-qa-confirmation-locked">
+              Esta sección solo puede aparecer en CONFIRMED. El QA no promociona la partida para abrirla.
+            </p>
+          }
+        </article>
+      </section>
+
+      <footer class="fiche-qa__next">
+        <span>SIGUIENTE PASO CIENTÍFICO DEL MODELO</span>
+        <strong>{{ systemCard.nextScientificStep }}</strong>
+      </footer>
+    }
+  }
+</main>

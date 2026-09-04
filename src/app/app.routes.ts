@@ -155,6 +155,16 @@ export const genesisRoutes: Routes = [
     title: 'Espectroscopía | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/stellar-systems/fiche-qa',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/stellar-systems/fiche-qa/stellar-system-fiche-qa'
+      ).then(
+        (module) => module.StellarSystemFicheQaPage,
+      ),
+    title: 'Ficha estrella/sistema 26.2 | QA GENESIS',
+  },
+  {
     path: 'laboratory/stellar-systems',
     loadComponent: () =>
       import(

@@ -3,6 +3,10 @@ import {
 } from '@angular/core/testing';
 
 import {
+  provideRouter,
+} from '@angular/router';
+
+import {
   vi,
 } from 'vitest';
 
@@ -180,6 +184,9 @@ describe(
             ],
 
             providers: [
+              provideRouter(
+                [],
+              ),
               {
                 provide:
                   SYSTEM_SCENE_RUNTIME_FACTORY,
@@ -528,6 +535,105 @@ describe(
           fixture
             .componentInstance
             .trackingSelection(),
+        ).toBeNull();
+      },
+    );
+
+    it(
+      'should expose the phase-26.2 QA fiche link only for selected stars when the host explicitly enables it',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        fixture.componentRef.setInput(
+          'snapshot',
+          sceneSnapshot(),
+        );
+        fixture.detectChanges();
+
+        const selectionHandler =
+          capturedSelectionHandler as
+            SystemSceneSelectionChangeHandler;
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'star-a',
+            kind:
+              'star',
+            label:
+              'A',
+            title:
+              'Jotheria A',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          (
+            fixture.nativeElement as
+              HTMLElement
+          ).querySelector(
+            '[data-testid="system-scene-stellar-fiche-qa-link"]',
+          ),
+        ).toBeNull();
+
+        fixture.componentRef.setInput(
+          'stellarFicheQaRoute',
+          '/laboratory/stellar-systems/fiche-qa',
+        );
+
+        fixture.detectChanges();
+
+        const stellarLink =
+          (
+            fixture.nativeElement as
+              HTMLElement
+          ).querySelector<HTMLAnchorElement>(
+            '[data-testid="system-scene-stellar-fiche-qa-link"]',
+          );
+
+        expect(
+          stellarLink,
+        ).toBeTruthy();
+        expect(
+          stellarLink?.textContent,
+        ).toContain(
+          'ABRIR FICHA CIENTÍFICA · 26.2',
+        );
+        expect(
+          stellarLink?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/laboratory/stellar-systems/fiche-qa',
+        );
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'planet-1',
+            kind:
+              'planet',
+            label:
+              'b',
+            title:
+              'Jotheria b',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          (
+            fixture.nativeElement as
+              HTMLElement
+          ).querySelector(
+            '[data-testid="system-scene-stellar-fiche-qa-link"]',
+          ),
         ).toBeNull();
       },
     );

@@ -3,6 +3,10 @@ import {
 } from '@angular/common';
 
 import {
+  RouterLink,
+} from '@angular/router';
+
+import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
@@ -362,6 +366,10 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
   standalone:
     true,
 
+  imports: [
+    RouterLink,
+  ],
+
   templateUrl:
     './system-scene.html',
 
@@ -383,6 +391,16 @@ export class SystemScene
   })
   snapshot!:
     SystemSceneSnapshot;
+
+  /**
+   * Optional QA-only route exposed by hosts that deliberately allow opening
+   * the phase-26.2 stellar scientific fiche from a selected star. Production
+   * SystemPage leaves this null, so the navigation sheet stays gameplay-safe.
+   */
+  @Input()
+  stellarFicheQaRoute:
+    string | null =
+    null;
 
   @Output()
   readonly renderInfoChange =
