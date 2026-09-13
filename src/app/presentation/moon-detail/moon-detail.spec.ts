@@ -28,15 +28,15 @@ import {
 } from '../genesis-archive/archive-discovery-detail.facade';
 
 import {
-  PlanetDetailPage,
-} from './planet-detail';
+  MoonDetailPage,
+} from './moon-detail';
 
 describe(
-  'PlanetDetailPage point 26.4',
+  'MoonDetailPage point 26.5',
   () => {
 
     it(
-      'should keep a direct planet URL locked while the persisted host system is only CATALOGUED',
+      'should preserve the full lunar route when building section anchors and keep direct access locked before CONFIRMED',
       async () => {
         const model =
           systemModel();
@@ -61,7 +61,7 @@ describe(
         await TestBed
           .configureTestingModule({
             imports: [
-              PlanetDetailPage,
+              MoonDetailPage,
             ],
             providers: [
               provideRouter(
@@ -96,6 +96,8 @@ describe(
                           '8',
                         bodyIndex:
                           '0',
+                        moonIndex:
+                          '0',
                       }),
                     queryParamMap:
                       convertToParamMap({
@@ -115,7 +117,7 @@ describe(
 
         const fixture =
           TestBed.createComponent(
-            PlanetDetailPage,
+            MoonDetailPage,
           );
 
         fixture.detectChanges();
@@ -126,42 +128,18 @@ describe(
             fixture.nativeElement as
               HTMLElement
           ).querySelector(
-            '[data-testid="planet-detail-locked"]',
+            '[data-testid="moon-detail-locked"]',
           ),
         ).toBeTruthy();
         expect(
-          (
-            fixture.nativeElement as
-              HTMLElement
-          ).querySelector(
-            '[data-testid="planet-scientific-card"]',
-          ),
-        ).toBeNull();
-        expect(
           fixture
             .componentInstance
-            .planetSectionHref(
-              'moons',
+            .moonSectionHref(
+              'habitability',
             ),
         ).toBe(
-          '/system/3/-17/8/planet/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#planet-section-moons',
+          '/system/3/-17/8/planet/0/moon/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#moon-section-habitability',
         );
-        expect(
-          fixture
-            .componentInstance
-            .moonRoute(
-              0,
-            ),
-        ).toEqual([
-          '/system',
-          '3',
-          '-17',
-          '8',
-          'planet',
-          '0',
-          'moon',
-          '0',
-        ]);
       },
     );
   },

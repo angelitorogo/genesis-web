@@ -44,6 +44,9 @@ export interface PlanetScientificMoonCardModel {
   readonly designation:
     string;
 
+  readonly moonIndex:
+    number;
+
   readonly ordinalLabel:
     string;
 
@@ -157,6 +160,8 @@ export class PlanetScientificSectionsAssembler {
                 Object.freeze({
                   designation:
                     moon.designation,
+                  moonIndex:
+                    moon.moonIndex,
                   ordinalLabel:
                     `Luna ${moon.moonOrdinal}`,
                   fields:

@@ -652,6 +652,70 @@ export class SystemScene
     ]);
   }
 
+  moonScientificFicheRoute():
+    readonly string[] | null {
+
+    if (
+      !this.scientificBodyFichesUnlocked()
+    ) {
+      return null;
+    }
+
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection ===
+        null ||
+      selection.kind !==
+        'moon'
+    ) {
+      return null;
+    }
+
+    const match =
+      /^moon-(\d+)-(\d+)$/.exec(
+        selection.bodyId,
+      );
+
+    if (
+      match ===
+        null
+    ) {
+      return null;
+    }
+
+    const hostPlanetOrdinal =
+      BigInt(
+        match[1]!,
+      );
+
+    const moonOrdinal =
+      BigInt(
+        match[2]!,
+      );
+
+    if (
+      hostPlanetOrdinal <=
+        0n ||
+      moonOrdinal <=
+        0n
+    ) {
+      return null;
+    }
+
+    return Object.freeze([
+      '/system',
+      this.snapshot.address.galaxyIndex,
+      this.snapshot.address.sectorKey,
+      this.snapshot.address.galacticObjectIndex,
+      'planet',
+      (hostPlanetOrdinal - 1n).toString(),
+      'moon',
+      (moonOrdinal - 1n).toString(),
+    ]);
+  }
+
   planetScientificFicheQueryParams():
     Readonly<{
       seed: string;

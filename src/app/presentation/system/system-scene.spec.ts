@@ -987,6 +987,36 @@ describe(
         ).toContain(
           '/system/3/-17/8/planet/0',
         );
+
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'moon-1-1',
+            kind:
+              'moon' as const,
+            label:
+              'I',
+            title:
+              'Jotheria b I',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const moonFicheLink =
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="system-scene-moon-fiche-link"]',
+          );
+
+        expect(moonFicheLink).toBeTruthy();
+        expect(
+          moonFicheLink?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          '/system/3/-17/8/planet/0/moon/0',
+        );
       },
     );
 

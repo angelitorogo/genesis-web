@@ -598,6 +598,8 @@ function detailedTarget():
                     'Jotheria b I',
                   moonOrdinal:
                     1,
+                  moonIndex:
+                    0,
                   massEarth:
                     0.012,
                   radiusEarth:
@@ -608,27 +610,109 @@ function detailedTarget():
                     0.165,
                   semiMajorAxisPlanetRadii:
                     55,
+                  semiMajorAxisKilometers:
+                    384_400,
+                  eccentricity:
+                    0.055,
+                  inclinationDegrees:
+                    5.1,
                   orbitalPeriodDays:
                     27.2,
+                  rocheLimitPlanetRadii:
+                    2.9,
+                  hillSphereRadiusPlanetRadii:
+                    230,
+                  synchronousOrbitPlanetRadii:
+                    6.6,
+                  tidalForcingIndex01:
+                    0.54,
+                  tidalHeatingIndex01:
+                    0.48,
+                  tidalRegime:
+                    'STRONG',
+                  tidalLockingIndex01:
+                    0.96,
+                  tidalLockingRegime:
+                    'SYNCHRONIZED',
                   rotationPeriodHours:
                     652.8,
+                  migrationRegime:
+                    'OUTWARD',
                   isTidallyLocked:
                     true,
+                  referenceMeanInsolationEarth:
+                    0.96,
+                  inferredIceRichnessIndex01:
+                    0.72,
+                  inferredBondAlbedo01:
+                    0.34,
+                  equilibriumTemperatureKelvin:
+                    238,
                   estimatedSurfaceTemperatureKelvin:
                     245,
+                  atmosphereRetentionIndex01:
+                    0.17,
                   atmosphereRegime:
                     'EXOSPHERE',
+                  waterInventoryIndex01:
+                    0.78,
+                  subsurfaceOceanPotentialIndex01:
+                    0.81,
+                  surfaceLiquidWaterPotentialIndex01:
+                    0.12,
                   waterRegime:
                     'ICE_AND_SUBSURFACE_OCEAN',
+                  internalHeatRetentionIndex01:
+                    0.52,
+                  geologicalActivityIndex01:
+                    0.58,
                   geologyRegime:
                     'TIDALLY_ACTIVE',
-                  habitabilityRegime:
-                    'SUBSURFACE_CANDIDATE',
-                  overallHabitabilityIndex01:
-                    0.62,
+                  hasAtmosphere:
+                    true,
+                  hasWater:
+                    true,
                   hasSubsurfaceOcean:
                     true,
                   hasSurfaceLiquidWater:
+                    false,
+                  isGeologicallyActive:
+                    true,
+                  surfaceTemperatureSupportIndex01:
+                    0.31,
+                  surfaceAtmosphereSupportIndex01:
+                    0.18,
+                  surfaceGravitySupportIndex01:
+                    0.42,
+                  tidalModerationIndex01:
+                    0.66,
+                  subsurfaceEnergySupportIndex01:
+                    0.83,
+                  surfaceHabitabilityIndex01:
+                    0.22,
+                  subsurfaceHabitabilityIndex01:
+                    0.59,
+                  overallHabitabilityIndex01:
+                    0.62,
+                  surfaceHabitabilityCandidate:
+                    false,
+                  subsurfaceHabitabilityCandidate:
+                    true,
+                  habitabilityRegime:
+                    'SUBSURFACE_CANDIDATE',
+                  isPotentiallyHabitable:
+                    true,
+                  giantHostSpecialization:
+                    false,
+                  giantMoonOrbitalFamily:
+                    'NOT_APPLICABLE',
+                  giantMoonCompositionRegime:
+                    'NOT_APPLICABLE',
+                  isLargeGiantMoon:
+                    false,
+                  isTidallyActiveGiantMoon:
+                    false,
+                  isOceanBearingGiantMoonCandidate:
                     false,
                 }),
               ]),

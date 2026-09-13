@@ -98,6 +98,9 @@ export interface PlanetScientificRelevantMoonSource {
   readonly moonOrdinal:
     number;
 
+  readonly moonIndex:
+    number;
+
   readonly massEarth:
     number;
 
@@ -113,37 +116,160 @@ export interface PlanetScientificRelevantMoonSource {
   readonly semiMajorAxisPlanetRadii:
     number;
 
+  readonly semiMajorAxisKilometers:
+    number;
+
+  readonly eccentricity:
+    number;
+
+  readonly inclinationDegrees:
+    number;
+
   readonly orbitalPeriodDays:
     number;
+
+  readonly rocheLimitPlanetRadii:
+    number;
+
+  readonly hillSphereRadiusPlanetRadii:
+    number;
+
+  readonly synchronousOrbitPlanetRadii:
+    number;
+
+  readonly tidalForcingIndex01:
+    number;
+
+  readonly tidalHeatingIndex01:
+    number;
+
+  readonly tidalRegime:
+    string;
+
+  readonly tidalLockingIndex01:
+    number;
+
+  readonly tidalLockingRegime:
+    string;
 
   readonly rotationPeriodHours:
     number;
 
+  readonly migrationRegime:
+    string;
+
   readonly isTidallyLocked:
     boolean;
 
+  readonly referenceMeanInsolationEarth:
+    number;
+
+  readonly inferredIceRichnessIndex01:
+    number;
+
+  readonly inferredBondAlbedo01:
+    number;
+
+  readonly equilibriumTemperatureKelvin:
+    number;
+
   readonly estimatedSurfaceTemperatureKelvin:
+    number;
+
+  readonly atmosphereRetentionIndex01:
     number;
 
   readonly atmosphereRegime:
     string;
 
+  readonly waterInventoryIndex01:
+    number;
+
+  readonly subsurfaceOceanPotentialIndex01:
+    number;
+
+  readonly surfaceLiquidWaterPotentialIndex01:
+    number;
+
   readonly waterRegime:
     string;
+
+  readonly internalHeatRetentionIndex01:
+    number;
+
+  readonly geologicalActivityIndex01:
+    number;
 
   readonly geologyRegime:
     string;
 
-  readonly habitabilityRegime:
-    string;
+  readonly hasAtmosphere:
+    boolean;
 
-  readonly overallHabitabilityIndex01:
-    number;
+  readonly hasWater:
+    boolean;
 
   readonly hasSubsurfaceOcean:
     boolean;
 
   readonly hasSurfaceLiquidWater:
+    boolean;
+
+  readonly isGeologicallyActive:
+    boolean;
+
+  readonly surfaceTemperatureSupportIndex01:
+    number;
+
+  readonly surfaceAtmosphereSupportIndex01:
+    number;
+
+  readonly surfaceGravitySupportIndex01:
+    number;
+
+  readonly tidalModerationIndex01:
+    number;
+
+  readonly subsurfaceEnergySupportIndex01:
+    number;
+
+  readonly surfaceHabitabilityIndex01:
+    number;
+
+  readonly subsurfaceHabitabilityIndex01:
+    number;
+
+  readonly overallHabitabilityIndex01:
+    number;
+
+  readonly surfaceHabitabilityCandidate:
+    boolean;
+
+  readonly subsurfaceHabitabilityCandidate:
+    boolean;
+
+  readonly habitabilityRegime:
+    string;
+
+  readonly isPotentiallyHabitable:
+    boolean;
+
+  readonly giantHostSpecialization:
+    boolean;
+
+  readonly giantMoonOrbitalFamily:
+    string;
+
+  readonly giantMoonCompositionRegime:
+    string;
+
+  readonly isLargeGiantMoon:
+    boolean;
+
+  readonly isTidallyActiveGiantMoon:
+    boolean;
+
+  readonly isOceanBearingGiantMoonCandidate:
     boolean;
 }
 
@@ -589,6 +715,8 @@ export class PlanetScientificTargetResolver {
                             moon.name,
                           moonOrdinal:
                             moon.moonOrdinal,
+                          moonIndex:
+                            moon.moonOrdinal - 1,
                           massEarth:
                             moon.massEarth,
                           radiusEarth:
@@ -599,28 +727,110 @@ export class PlanetScientificTargetResolver {
                             moon.surfaceGravityEarth,
                           semiMajorAxisPlanetRadii:
                             moon.semiMajorAxisPlanetRadii,
+                          semiMajorAxisKilometers:
+                            moon.orbit.semiMajorAxisKilometers,
+                          eccentricity:
+                            moon.orbit.eccentricity,
+                          inclinationDegrees:
+                            moon.orbit.inclinationDegrees,
                           orbitalPeriodDays:
                             moon.orbitalPeriodDays,
+                          rocheLimitPlanetRadii:
+                            moon.orbit.rocheLimitPlanetRadii,
+                          hillSphereRadiusPlanetRadii:
+                            moon.orbit.sourceHillSphereRadiusPlanetRadii,
+                          synchronousOrbitPlanetRadii:
+                            moon.tidalState.synchronousOrbitPlanetRadii,
+                          tidalForcingIndex01:
+                            moon.tidalState.tidalForcingIndex01,
+                          tidalHeatingIndex01:
+                            moon.tidalHeatingIndex01,
+                          tidalRegime:
+                            moon.tidalState.tidalRegime,
+                          tidalLockingIndex01:
+                            moon.tidalLockingIndex01,
+                          tidalLockingRegime:
+                            moon.tidalState.tidalLockingRegime,
                           rotationPeriodHours:
                             moon.rotationPeriodHours,
+                          migrationRegime:
+                            moon.tidalState.migrationRegime,
                           isTidallyLocked:
                             moon.isTidallyLocked,
+                          referenceMeanInsolationEarth:
+                            moon.environmentState.sourceReferenceMeanInsolationEarth,
+                          inferredIceRichnessIndex01:
+                            moon.environmentState.inferredIceRichnessIndex01,
+                          inferredBondAlbedo01:
+                            moon.environmentState.inferredBondAlbedo01,
+                          equilibriumTemperatureKelvin:
+                            moon.environmentState.equilibriumTemperatureKelvin,
                           estimatedSurfaceTemperatureKelvin:
                             moon.environmentState.estimatedSurfaceTemperatureKelvin,
+                          atmosphereRetentionIndex01:
+                            moon.environmentState.atmosphereRetentionIndex01,
                           atmosphereRegime:
                             moon.atmosphereRegime,
+                          waterInventoryIndex01:
+                            moon.environmentState.waterInventoryIndex01,
+                          subsurfaceOceanPotentialIndex01:
+                            moon.environmentState.subsurfaceOceanPotentialIndex01,
+                          surfaceLiquidWaterPotentialIndex01:
+                            moon.environmentState.surfaceLiquidWaterPotentialIndex01,
                           waterRegime:
                             moon.waterRegime,
+                          internalHeatRetentionIndex01:
+                            moon.environmentState.internalHeatRetentionIndex01,
+                          geologicalActivityIndex01:
+                            moon.environmentState.geologicalActivityIndex01,
                           geologyRegime:
                             moon.geologyRegime,
-                          habitabilityRegime:
-                            moon.habitabilityRegime,
-                          overallHabitabilityIndex01:
-                            moon.overallHabitabilityIndex01,
+                          hasAtmosphere:
+                            moon.hasAtmosphere,
+                          hasWater:
+                            moon.hasWater,
                           hasSubsurfaceOcean:
                             moon.hasSubsurfaceOcean,
                           hasSurfaceLiquidWater:
                             moon.hasSurfaceLiquidWater,
+                          isGeologicallyActive:
+                            moon.isGeologicallyActive,
+                          surfaceTemperatureSupportIndex01:
+                            moon.habitabilityState.surfaceTemperatureSupportIndex01,
+                          surfaceAtmosphereSupportIndex01:
+                            moon.habitabilityState.surfaceAtmosphereSupportIndex01,
+                          surfaceGravitySupportIndex01:
+                            moon.habitabilityState.surfaceGravitySupportIndex01,
+                          tidalModerationIndex01:
+                            moon.habitabilityState.tidalModerationIndex01,
+                          subsurfaceEnergySupportIndex01:
+                            moon.habitabilityState.subsurfaceEnergySupportIndex01,
+                          surfaceHabitabilityIndex01:
+                            moon.habitabilityState.surfaceHabitabilityIndex01,
+                          subsurfaceHabitabilityIndex01:
+                            moon.habitabilityState.subsurfaceHabitabilityIndex01,
+                          overallHabitabilityIndex01:
+                            moon.overallHabitabilityIndex01,
+                          surfaceHabitabilityCandidate:
+                            moon.supportsPotentialSurfaceHabitability,
+                          subsurfaceHabitabilityCandidate:
+                            moon.supportsPotentialSubsurfaceHabitability,
+                          habitabilityRegime:
+                            moon.habitabilityRegime,
+                          isPotentiallyHabitable:
+                            moon.isPotentiallyHabitable,
+                          giantHostSpecialization:
+                            moon.hasGiantHostSpecialization,
+                          giantMoonOrbitalFamily:
+                            moon.giantMoonState.orbitalFamily,
+                          giantMoonCompositionRegime:
+                            moon.giantMoonState.compositionRegime,
+                          isLargeGiantMoon:
+                            moon.giantMoonState.isLargeMoon,
+                          isTidallyActiveGiantMoon:
+                            moon.giantMoonState.isTidallyActive,
+                          isOceanBearingGiantMoonCandidate:
+                            moon.giantMoonState.isOceanBearingCandidate,
                         }),
                     ),
                 ),

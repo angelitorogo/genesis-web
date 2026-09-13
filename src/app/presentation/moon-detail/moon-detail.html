@@ -1,0 +1,223 @@
+<genesis-screen>
+  <main
+    class="moon-detail"
+    data-testid="moon-detail-page"
+    aria-labelledby="moon-detail-title"
+  >
+    <header class="moon-detail__header">
+      <div>
+        <p class="moon-detail__eyebrow">
+          FICHA CIENTÍFICA · LUNA
+        </p>
+
+        <h1 id="moon-detail-title">
+          @if (resolution(); as currentResolution) {
+            @if (currentResolution.kind === 'AVAILABLE') {
+              {{ currentResolution.card.title }}
+            } @else {
+              Ficha de luna
+            }
+          } @else {
+            Ficha de luna
+          }
+        </h1>
+
+        <p class="moon-detail__subtitle">
+          Caracterización científica detallada del satélite organizada en General,
+          Órbita, Mareas y rotación, Entorno y Habitabilidad.
+        </p>
+      </div>
+
+      @if (planetRoute(); as route) {
+        <a
+          class="moon-detail__nav-link"
+          [routerLink]="route"
+          [queryParams]="sourceQueryParams()"
+        >
+          ← Volver al planeta
+        </a>
+      }
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section
+          class="moon-detail__panel moon-detail__state"
+          data-testid="moon-detail-loading"
+        >
+          <span class="moon-detail__pulse" aria-hidden="true"></span>
+          <p>Resolviendo sistema anfitrión y caracterización lunar…</p>
+        </section>
+      }
+
+      @case ('not-found') {
+        <section
+          class="moon-detail__panel moon-detail__state"
+          data-testid="moon-detail-system-not-found"
+        >
+          <div>
+            <strong>Sistema no encontrado</strong>
+            <p>La ruta no corresponde a un sistema disponible en el conocimiento actual de la partida.</p>
+          </div>
+        </section>
+      }
+
+      @case ('error') {
+        <section
+          class="moon-detail__panel moon-detail__state"
+          data-testid="moon-detail-error"
+        >
+          <div>
+            <strong>No se pudo resolver la ficha</strong>
+            <p>{{ facade.errorMessage() }}</p>
+          </div>
+        </section>
+      }
+
+      @case ('content') {
+        @if (resolution(); as currentResolution) {
+          @switch (currentResolution.kind) {
+            @case ('LOCKED') {
+              <section
+                class="moon-detail__panel moon-detail__state moon-detail__state--locked"
+                data-testid="moon-detail-locked"
+              >
+                <div>
+                  <small>ACCESO CIENTÍFICO · BLOQUEADO</small>
+                  <strong>El sistema anfitrión aún no está confirmado</strong>
+                  <p>{{ currentResolution.reason }}</p>
+                </div>
+              </section>
+            }
+
+            @case ('NOT_FOUND') {
+              <section
+                class="moon-detail__panel moon-detail__state"
+                data-testid="moon-detail-not-found"
+              >
+                <div>
+                  <small>OBJETIVO LUNAR · NO RESUELTO</small>
+                  <strong>No hay una ficha científica individual para esta luna</strong>
+                  <p>{{ currentResolution.reason }}</p>
+                </div>
+              </section>
+            }
+
+            @case ('AVAILABLE') {
+              @if (currentResolution.card; as card) {
+                <section
+                  class="moon-detail__hero"
+                  data-testid="moon-scientific-card"
+                >
+                  <div class="moon-detail__identity">
+                    <div class="moon-detail__knowledge-line">
+                      <span class="moon-detail__state-badge">SISTEMA ANFITRIÓN · CONFIRMADO</span>
+                      <span>{{ card.knowledgeLabel }}</span>
+                    </div>
+
+                    <strong>{{ card.title }}</strong>
+                    <p>{{ card.summary }}</p>
+                    <code>{{ card.locatorLabel }}</code>
+
+                    @if (card.sections.badges.length > 0) {
+                      <div class="moon-detail__badges">
+                        @for (badge of card.sections.badges; track badge) {
+                          <span>{{ badge }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <dl class="moon-detail__facts">
+                    <div>
+                      <dt>Planeta anfitrión</dt>
+                      <dd>{{ card.hostPlanetTitle }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Sistema anfitrión</dt>
+                      <dd>{{ card.hostSystemTitle }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Ordinal lunar</dt>
+                      <dd>{{ card.moonOrdinal }} / {{ card.hostMoonCount }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Acceso</dt>
+                      <dd>{{ card.accessLabel }}</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <nav
+                  class="moon-detail__section-nav"
+                  aria-label="Secciones científicas de la luna"
+                  data-testid="moon-detail-section-nav"
+                >
+                  @for (section of card.sections.sections; track section.id) {
+                    <a [attr.href]="moonSectionHref(section.id)">
+                      {{ section.title }}
+                    </a>
+                  }
+                </nav>
+
+                <section
+                  class="moon-detail__sections"
+                  data-testid="moon-detail-scientific-sections"
+                >
+                  @for (section of card.sections.sections; track section.id) {
+                    <article
+                      class="moon-detail__scientific-section"
+                      [id]="'moon-section-' + section.id"
+                      [attr.data-section-id]="section.id"
+                    >
+                      <header>
+                        <small>{{ section.eyebrow }}</small>
+                        <h2>{{ section.title }}</h2>
+                        <p>{{ section.summary }}</p>
+                      </header>
+
+                      <dl class="moon-detail__section-facts">
+                        @for (item of section.fields; track item.label) {
+                          <div>
+                            <dt>{{ item.label }}</dt>
+                            <dd>{{ item.value }}</dd>
+                            @if (item.note) {
+                              <small>{{ item.note }}</small>
+                            }
+                          </div>
+                        }
+                      </dl>
+                    </article>
+                  }
+                </section>
+
+                <nav class="moon-detail__actions" aria-label="Navegación de la ficha lunar">
+                  @if (planetRoute(); as route) {
+                    <a
+                      [routerLink]="route"
+                      [queryParams]="sourceQueryParams()"
+                    >
+                      ← Ficha del planeta
+                    </a>
+                  }
+
+                  @if (systemRoute(); as route) {
+                    <a
+                      [routerLink]="route"
+                      [queryParams]="sourceQueryParams()"
+                    >
+                      SystemPage 3D →
+                    </a>
+                  }
+                </nav>
+              }
+            }
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>

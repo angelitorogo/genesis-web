@@ -229,6 +229,17 @@
                                     </div>
                                   }
                                 </dl>
+
+                                @if (moonRoute(moon.moonIndex); as route) {
+                                  <a
+                                    class="planet-detail__moon-link"
+                                    data-testid="planet-detail-moon-fiche-link"
+                                    [routerLink]="route"
+                                    [queryParams]="sourceQueryParams()"
+                                  >
+                                    Abrir ficha científica →
+                                  </a>
+                                }
                               </article>
                             }
                           </div>

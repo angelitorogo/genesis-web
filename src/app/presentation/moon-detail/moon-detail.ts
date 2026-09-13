@@ -21,13 +21,13 @@ import {
 } from '../genesis-archive/archive-discovery-detail.facade';
 
 import {
-  PlanetScientificCardAssembler,
-  PlanetScientificFicheResolutionKind,
-} from './planet-scientific-card';
+  MoonScientificCardAssembler,
+  MoonScientificFicheResolutionKind,
+} from './moon-scientific-card';
 
 @Component({
   selector:
-    'app-planet-detail-page',
+    'app-moon-detail-page',
 
   standalone:
     true,
@@ -38,15 +38,15 @@ import {
   ],
 
   templateUrl:
-    './planet-detail.html',
+    './moon-detail.html',
 
   styleUrl:
-    './planet-detail.scss',
+    './moon-detail.scss',
 
   changeDetection:
     ChangeDetectionStrategy.OnPush,
 })
-export class PlanetDetailPage
+export class MoonDetailPage
   implements OnInit {
 
   readonly facade =
@@ -70,6 +70,17 @@ export class PlanetDetailPage
         ),
     );
 
+  private readonly requestedMoonIndex =
+    parseNonNegativeBigIntOrNull(
+      this
+        .route
+        .snapshot
+        .paramMap
+        .get(
+          'moonIndex',
+        ),
+    );
+
   readonly resolution =
     computed(
       () => {
@@ -87,20 +98,23 @@ export class PlanetDetailPage
 
         if (
           this.requestedBodyIndex ===
+            null ||
+          this.requestedMoonIndex ===
             null
         ) {
           return Object.freeze({
             kind:
-              PlanetScientificFicheResolutionKind.NOT_FOUND,
+              MoonScientificFicheResolutionKind.NOT_FOUND,
             reason:
-              'El índice planetario indicado en la ruta no es válido.',
+              'Los índices planetario o lunar indicados en la ruta no son válidos.',
           } as const);
         }
 
-        return PlanetScientificCardAssembler
+        return MoonScientificCardAssembler
           .build(
             model,
             this.requestedBodyIndex,
+            this.requestedMoonIndex,
           );
       },
     );
@@ -129,7 +143,7 @@ export class PlanetDetailPage
       },
     );
 
-  readonly archiveRoute =
+  readonly planetRoute =
     computed(
       () => {
         const model =
@@ -139,106 +153,23 @@ export class PlanetDetailPage
 
         if (
           model ===
+            null ||
+          this.requestedBodyIndex ===
             null
         ) {
           return null;
         }
 
         return [
-          '/archive/system',
+          '/system',
           model.galaxyIndex.toString(),
           model.sectorKey.toString(),
           model.galacticObjectIndex.toString(),
+          'planet',
+          this.requestedBodyIndex.toString(),
         ] as const;
       },
     );
-
-  planetSectionHref(
-    sectionId:
-      string,
-  ): string | null {
-
-    const model =
-      this
-        .facade
-        .model();
-
-    if (
-      model ===
-        null ||
-      this.requestedBodyIndex ===
-        null
-    ) {
-      return null;
-    }
-
-    const path =
-      [
-        '',
-        'system',
-        model.galaxyIndex.toString(),
-        model.sectorKey.toString(),
-        model.galacticObjectIndex.toString(),
-        'planet',
-        this.requestedBodyIndex.toString(),
-      ]
-        .map(
-          (segment, index) =>
-            index === 0
-              ? segment
-              : encodeURIComponent(
-                  segment,
-                ),
-        )
-        .join('/');
-
-    const query =
-      new URLSearchParams({
-        seed:
-          model.universeSeed,
-        version:
-          model.generatorVersionCode.toString(),
-      })
-        .toString();
-
-    return `${path}?${query}#planet-section-${encodeURIComponent(sectionId)}`;
-  }
-
-  moonRoute(
-    moonIndex:
-      number,
-  ): readonly string[] | null {
-
-    const model =
-      this
-        .facade
-        .model();
-
-    if (
-      model ===
-        null ||
-      this.requestedBodyIndex ===
-        null ||
-      !Number.isInteger(
-        moonIndex,
-      ) ||
-      moonIndex <
-        0
-    ) {
-      return null;
-    }
-
-    return Object.freeze([
-      '/system',
-      model.galaxyIndex.toString(),
-      model.sectorKey.toString(),
-      model.galacticObjectIndex.toString(),
-      'planet',
-      this.requestedBodyIndex.toString(),
-      'moon',
-      moonIndex.toString(),
-    ]);
-  }
 
   readonly sourceQueryParams =
     computed(
@@ -263,6 +194,61 @@ export class PlanetDetailPage
         });
       },
     );
+
+  moonSectionHref(
+    sectionId:
+      string,
+  ): string | null {
+
+    const model =
+      this
+        .facade
+        .model();
+
+    if (
+      model ===
+        null ||
+      this.requestedBodyIndex ===
+        null ||
+      this.requestedMoonIndex ===
+        null
+    ) {
+      return null;
+    }
+
+    const path =
+      [
+        '',
+        'system',
+        model.galaxyIndex.toString(),
+        model.sectorKey.toString(),
+        model.galacticObjectIndex.toString(),
+        'planet',
+        this.requestedBodyIndex.toString(),
+        'moon',
+        this.requestedMoonIndex.toString(),
+      ]
+        .map(
+          (segment, index) =>
+            index === 0
+              ? segment
+              : encodeURIComponent(
+                  segment,
+                ),
+        )
+        .join('/');
+
+    const query =
+      new URLSearchParams({
+        seed:
+          model.universeSeed,
+        version:
+          model.generatorVersionCode.toString(),
+      })
+        .toString();
+
+    return `${path}?${query}#moon-section-${encodeURIComponent(sectionId)}`;
+  }
 
   ngOnInit():
     void {
