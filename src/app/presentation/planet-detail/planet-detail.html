@@ -1,0 +1,228 @@
+<genesis-screen>
+  <main
+    class="planet-detail"
+    data-testid="planet-detail-page"
+    aria-labelledby="planet-detail-title"
+  >
+    <header class="planet-detail__header">
+      <div>
+        <p class="planet-detail__eyebrow">
+          26.3 · FICHA CIENTÍFICA / PLANETA
+        </p>
+
+        <h1 id="planet-detail-title">
+          @if (resolution(); as currentResolution) {
+            @if (currentResolution.kind === 'AVAILABLE') {
+              {{ currentResolution.card.title }}
+            } @else {
+              Ficha de planeta
+            }
+          } @else {
+            Ficha de planeta
+          }
+        </h1>
+
+        <p class="planet-detail__subtitle">
+          Entrada científica individual desbloqueada desde un sistema confirmado.
+          Esta primera capa fija identidad y contexto sin adelantar las secciones
+          físicas y ambientales de 26.4.
+        </p>
+      </div>
+
+      @if (systemRoute(); as route) {
+        <a
+          class="planet-detail__nav-link"
+          [routerLink]="route"
+          [queryParams]="sourceQueryParams()"
+        >
+          ← Volver a SystemPage 3D
+        </a>
+      }
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section
+          class="planet-detail__panel planet-detail__state"
+          data-testid="planet-detail-loading"
+        >
+          <span class="planet-detail__pulse" aria-hidden="true"></span>
+          <p>Resolviendo sistema anfitrión e identidad planetaria…</p>
+        </section>
+      }
+
+      @case ('not-found') {
+        <section
+          class="planet-detail__panel planet-detail__state"
+          data-testid="planet-detail-system-not-found"
+        >
+          <div>
+            <strong>Sistema no encontrado</strong>
+            <p>
+              La ruta no materializa un sistema que no exista en el conocimiento
+              persistido de la partida.
+            </p>
+          </div>
+        </section>
+      }
+
+      @case ('error') {
+        <section
+          class="planet-detail__panel planet-detail__state"
+          data-testid="planet-detail-error"
+        >
+          <div>
+            <strong>No se pudo resolver la ficha</strong>
+            <p>{{ facade.errorMessage() }}</p>
+          </div>
+        </section>
+      }
+
+      @case ('content') {
+        @if (resolution(); as currentResolution) {
+          @switch (currentResolution.kind) {
+            @case ('LOCKED') {
+              <section
+                class="planet-detail__panel planet-detail__state planet-detail__state--locked"
+                data-testid="planet-detail-locked"
+              >
+                <div>
+                  <small>ACCESO CIENTÍFICO · BLOQUEADO</small>
+                  <strong>El sistema anfitrión aún no está confirmado</strong>
+                  <p>{{ currentResolution.reason }}</p>
+                  <p>
+                    Catalogar el sistema permite ver sus cuerpos en 3D, pero la
+                    investigación individual solo se abre en CONFIRMED.
+                  </p>
+                </div>
+              </section>
+            }
+
+            @case ('NOT_FOUND') {
+              <section
+                class="planet-detail__panel planet-detail__state"
+                data-testid="planet-detail-not-found"
+              >
+                <div>
+                  <small>OBJETIVO PLANETARIO · NO RESUELTO</small>
+                  <strong>No existe un planeta accesible en ese índice</strong>
+                  <p>{{ currentResolution.reason }}</p>
+                </div>
+              </section>
+            }
+
+            @case ('AVAILABLE') {
+              @if (currentResolution.card; as card) {
+                <section
+                  class="planet-detail__hero"
+                  data-testid="planet-scientific-card"
+                >
+                  <div class="planet-detail__identity">
+                    <div class="planet-detail__knowledge-line">
+                      <span class="planet-detail__state-badge">SISTEMA CONFIRMED</span>
+                      <span>{{ card.planetaryKnowledgeLabel }}</span>
+                    </div>
+
+                    <strong>{{ card.title }}</strong>
+                    <p>{{ card.summary }}</p>
+                    <code>{{ card.locatorLabel }}</code>
+                  </div>
+
+                  <dl class="planet-detail__facts">
+                    <div>
+                      <dt>Sistema anfitrión</dt>
+                      <dd>{{ card.hostSystemTitle }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Ordinal planetario</dt>
+                      <dd>{{ card.planetOrdinal }} / {{ card.hostPlanetCount }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Arquitectura orbital</dt>
+                      <dd>{{ card.orbitTopologyLabel }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Acceso</dt>
+                      <dd>{{ card.accessLabel }}</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <section class="planet-detail__grid">
+                  <article class="planet-detail__panel">
+                    <header>
+                      <small>CAPA 01 · 26.3</small>
+                      <h2>Identidad planetaria</h2>
+                    </header>
+
+                    <p>
+                      La ficha base conserva la designación y pertenencia al
+                      sistema ya confirmadas. No interpreta el renderer 3D como
+                      fuente física y no expone seeds procedurales.
+                    </p>
+                  </article>
+
+                  <article class="planet-detail__panel">
+                    <header>
+                      <small>SIGUIENTE CAPA · 26.4</small>
+                      <h2>Investigación detallada</h2>
+                    </header>
+
+                    <p>{{ card.nextScientificStep }}</p>
+
+                    <div class="planet-detail__section-preview" aria-label="Secciones de 26.4 todavía no implementadas">
+                      <span>GENERAL</span>
+                      <span>ÓRBITA</span>
+                      <span>SUPERFICIE</span>
+                      <span>ATMÓSFERA</span>
+                      <span>CLIMA</span>
+                      <span>GEOLOGÍA</span>
+                      <span>LUNAS</span>
+                    </div>
+                  </article>
+                </section>
+
+                <aside
+                  class="planet-detail__contract"
+                  data-testid="planet-detail-disclosure-contract"
+                >
+                  <strong>CONTRATO 26.3</strong>
+                  <p>
+                    CONFIRMED en el sistema desbloquea esta ficha, pero no
+                    convierte el planeta en CONFIRMED. Masa, radio, composición,
+                    rotación, superficie, atmósfera, clima, geología, agua,
+                    magnetosfera, radiación y lunas permanecen fuera de esta capa
+                    hasta que 26.4 defina su disclosure científico.
+                  </p>
+                </aside>
+
+                <nav class="planet-detail__actions" aria-label="Navegación de la ficha planetaria">
+                  @if (systemRoute(); as route) {
+                    <a
+                      [routerLink]="route"
+                      [queryParams]="sourceQueryParams()"
+                    >
+                      ← SystemPage 3D
+                    </a>
+                  }
+
+                  @if (archiveRoute(); as route) {
+                    <a
+                      [routerLink]="route"
+                      [queryParams]="sourceQueryParams()"
+                    >
+                      Ficha del sistema →
+                    </a>
+                  }
+                </nav>
+              }
+            }
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>

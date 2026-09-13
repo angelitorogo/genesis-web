@@ -33,6 +33,16 @@ export const genesisRoutes: Routes = [
     title: 'Mapa galáctico | GENESIS',
   },
   {
+    path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/planet/:bodyIndex',
+    loadComponent: () =>
+      import(
+        './presentation/planet-detail/planet-detail'
+      ).then(
+        (module) => module.PlanetDetailPage,
+      ),
+    title: 'Ficha de planeta | GENESIS',
+  },
+  {
     path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex',
     loadComponent: () =>
       import(

@@ -597,6 +597,75 @@ export class SystemScene
       : 'LOCKED';
   }
 
+  planetScientificFicheRoute():
+    readonly string[] | null {
+
+    if (
+      !this.scientificBodyFichesUnlocked()
+    ) {
+      return null;
+    }
+
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection ===
+        null ||
+      selection.kind !==
+        'planet'
+    ) {
+      return null;
+    }
+
+    const match =
+      /^planet-(\d+)$/.exec(
+        selection.bodyId,
+      );
+
+    if (
+      match ===
+        null
+    ) {
+      return null;
+    }
+
+    const ordinal =
+      BigInt(
+        match[1]!,
+      );
+
+    if (
+      ordinal <=
+        0n
+    ) {
+      return null;
+    }
+
+    return Object.freeze([
+      '/system',
+      this.snapshot.address.galaxyIndex,
+      this.snapshot.address.sectorKey,
+      this.snapshot.address.galacticObjectIndex,
+      'planet',
+      (ordinal - 1n).toString(),
+    ]);
+  }
+
+  planetScientificFicheQueryParams():
+    Readonly<{
+      seed: string;
+      version: number;
+    }> {
+
+    return Object.freeze({
+      seed:
+        this.snapshot.universeSeed,
+      version:
+        this.snapshot.generatorVersionCode,
+    });
+  }
+
   planetCount():
     number {
     return this.snapshot.planets.length;

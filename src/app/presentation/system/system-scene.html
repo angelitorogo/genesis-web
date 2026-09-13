@@ -366,6 +366,19 @@
                 </a>
               }
             }
+
+            @if (bodyCard.kind === 'planet') {
+              @if (planetScientificFicheRoute(); as planetFicheRoute) {
+                <a
+                  class="system-scene__follow-button"
+                  data-testid="system-scene-planet-fiche-link"
+                  [routerLink]="planetFicheRoute"
+                  [queryParams]="planetScientificFicheQueryParams()"
+                >
+                  ABRIR FICHA CIENTÍFICA · 26.3
+                </a>
+              }
+            }
           </div>
 
           <small class="system-scene__body-card-contract">

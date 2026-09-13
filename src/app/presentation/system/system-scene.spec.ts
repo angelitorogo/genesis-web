@@ -905,6 +905,12 @@ describe(
           'REQUIERE SISTEMA CONFIRMED',
         );
 
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-planet-fiche-link"]',
+          ),
+        ).toBeNull();
+
         const confirmedSnapshot =
           Object.freeze({
             ...sceneSnapshot(),
@@ -963,6 +969,23 @@ describe(
             ?.textContent,
         ).toContain(
           'DESBLOQUEADA POR CONFIRMACIÓN',
+        );
+
+        const planetFicheLink =
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="system-scene-planet-fiche-link"]',
+          );
+
+        expect(planetFicheLink).toBeTruthy();
+        expect(planetFicheLink?.textContent).toContain(
+          'ABRIR FICHA CIENTÍFICA · 26.3',
+        );
+        expect(
+          planetFicheLink?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          '/system/3/-17/8/planet/0',
         );
       },
     );
