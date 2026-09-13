@@ -7,7 +7,7 @@
     <header class="planet-detail__header">
       <div>
         <p class="planet-detail__eyebrow">
-          26.3 · FICHA CIENTÍFICA / PLANETA
+          FICHA CIENTÍFICA · PLANETA
         </p>
 
         <h1 id="planet-detail-title">
@@ -23,9 +23,8 @@
         </h1>
 
         <p class="planet-detail__subtitle">
-          Entrada científica individual desbloqueada desde un sistema confirmado.
-          Esta primera capa fija identidad y contexto sin adelantar las secciones
-          físicas y ambientales de 26.4.
+          Caracterización científica detallada del planeta organizada en General,
+          Órbita, Superficie, Atmósfera, Clima, Geología y Lunas.
         </p>
       </div>
 
@@ -47,7 +46,7 @@
           data-testid="planet-detail-loading"
         >
           <span class="planet-detail__pulse" aria-hidden="true"></span>
-          <p>Resolviendo sistema anfitrión e identidad planetaria…</p>
+          <p>Resolviendo sistema anfitrión y caracterización planetaria…</p>
         </section>
       }
 
@@ -59,8 +58,8 @@
           <div>
             <strong>Sistema no encontrado</strong>
             <p>
-              La ruta no materializa un sistema que no exista en el conocimiento
-              persistido de la partida.
+              La ruta no corresponde a un sistema disponible en el conocimiento
+              actual de la partida.
             </p>
           </div>
         </section>
@@ -92,7 +91,7 @@
                   <p>{{ currentResolution.reason }}</p>
                   <p>
                     Catalogar el sistema permite ver sus cuerpos en 3D, pero la
-                    investigación individual solo se abre en CONFIRMED.
+                    investigación individual solo se abre al confirmar el sistema.
                   </p>
                 </div>
               </section>
@@ -119,7 +118,7 @@
                 >
                   <div class="planet-detail__identity">
                     <div class="planet-detail__knowledge-line">
-                      <span class="planet-detail__state-badge">SISTEMA CONFIRMED</span>
+                      <span class="planet-detail__state-badge">SISTEMA ANFITRIÓN · CONFIRMADO</span>
                       <span>{{ card.planetaryKnowledgeLabel }}</span>
                     </div>
 
@@ -151,53 +150,93 @@
                   </dl>
                 </section>
 
-                <section class="planet-detail__grid">
-                  <article class="planet-detail__panel">
-                    <header>
-                      <small>CAPA 01 · 26.3</small>
-                      <h2>Identidad planetaria</h2>
-                    </header>
-
-                    <p>
-                      La ficha base conserva la designación y pertenencia al
-                      sistema ya confirmadas. No interpreta el renderer 3D como
-                      fuente física y no expone seeds procedurales.
-                    </p>
-                  </article>
-
-                  <article class="planet-detail__panel">
-                    <header>
-                      <small>SIGUIENTE CAPA · 26.4</small>
-                      <h2>Investigación detallada</h2>
-                    </header>
-
-                    <p>{{ card.nextScientificStep }}</p>
-
-                    <div class="planet-detail__section-preview" aria-label="Secciones de 26.4 todavía no implementadas">
-                      <span>GENERAL</span>
-                      <span>ÓRBITA</span>
-                      <span>SUPERFICIE</span>
-                      <span>ATMÓSFERA</span>
-                      <span>CLIMA</span>
-                      <span>GEOLOGÍA</span>
-                      <span>LUNAS</span>
-                    </div>
-                  </article>
-                </section>
-
-                <aside
-                  class="planet-detail__contract"
-                  data-testid="planet-detail-disclosure-contract"
+                <nav
+                  class="planet-detail__section-nav"
+                  aria-label="Secciones científicas del planeta"
+                  data-testid="planet-detail-section-nav"
                 >
-                  <strong>CONTRATO 26.3</strong>
-                  <p>
-                    CONFIRMED en el sistema desbloquea esta ficha, pero no
-                    convierte el planeta en CONFIRMED. Masa, radio, composición,
-                    rotación, superficie, atmósfera, clima, geología, agua,
-                    magnetosfera, radiación y lunas permanecen fuera de esta capa
-                    hasta que 26.4 defina su disclosure científico.
-                  </p>
-                </aside>
+                  @for (section of card.sections.sections; track section.id) {
+                    <a [attr.href]="planetSectionHref(section.id)">
+                      {{ section.title }}
+                    </a>
+                  }
+                </nav>
+
+                <section
+                  class="planet-detail__sections"
+                  data-testid="planet-detail-scientific-sections"
+                >
+                  @for (section of card.sections.sections; track section.id) {
+                    <article
+                      class="planet-detail__scientific-section"
+                      [id]="'planet-section-' + section.id"
+                      [attr.data-section-id]="section.id"
+                    >
+                      <header>
+                        <small>{{ section.eyebrow }}</small>
+                        <h2>{{ section.title }}</h2>
+                        <p>{{ section.summary }}</p>
+                      </header>
+
+                      <dl class="planet-detail__section-facts">
+                        @for (item of section.fields; track item.label) {
+                          <div>
+                            <dt>{{ item.label }}</dt>
+                            <dd>{{ item.value }}</dd>
+                            @if (item.note) {
+                              <small>{{ item.note }}</small>
+                            }
+                          </div>
+                        }
+                      </dl>
+
+                      @if (section.id === 'moons') {
+                        @if (card.sections.relevantMoons.length === 0) {
+                          <p
+                            class="planet-detail__empty-detail"
+                            data-testid="planet-detail-no-relevant-moons"
+                          >
+                            {{ card.sections.relevantMoonsEmptyMessage }}
+                          </p>
+                        } @else {
+                          <div
+                            class="planet-detail__moon-grid"
+                            data-testid="planet-detail-relevant-moons"
+                          >
+                            @for (moon of card.sections.relevantMoons; track moon.designation) {
+                              <article class="planet-detail__moon-card">
+                                <header>
+                                  <small>{{ moon.ordinalLabel }}</small>
+                                  <h3>{{ moon.designation }}</h3>
+                                </header>
+
+                                @if (moon.badges.length > 0) {
+                                  <div class="planet-detail__moon-badges">
+                                    @for (badge of moon.badges; track badge) {
+                                      <span>{{ badge }}</span>
+                                    }
+                                  </div>
+                                }
+
+                                <dl>
+                                  @for (item of moon.fields; track item.label) {
+                                    <div>
+                                      <dt>{{ item.label }}</dt>
+                                      <dd>{{ item.value }}</dd>
+                                      @if (item.note) {
+                                        <small>{{ item.note }}</small>
+                                      }
+                                    </div>
+                                  }
+                                </dl>
+                              </article>
+                            }
+                          </div>
+                        }
+                      }
+                    </article>
+                  }
+                </section>
 
                 <nav class="planet-detail__actions" aria-label="Navegación de la ficha planetaria">
                   @if (systemRoute(); as route) {

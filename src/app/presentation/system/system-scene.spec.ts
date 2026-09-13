@@ -978,7 +978,7 @@ describe(
 
         expect(planetFicheLink).toBeTruthy();
         expect(planetFicheLink?.textContent).toContain(
-          'ABRIR FICHA CIENTÍFICA · 26.3',
+          'ABRIR FICHA CIENTÍFICA · 26.4',
         );
         expect(
           planetFicheLink?.getAttribute(

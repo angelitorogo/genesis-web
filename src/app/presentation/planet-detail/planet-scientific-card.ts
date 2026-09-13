@@ -24,8 +24,13 @@ import {
 
 import {
   PlanetScientificTargetResolver,
-  type PlanetScientificIdentitySource,
+  type PlanetScientificResolvedTarget,
 } from '../../simulation/planetary/planet-scientific-target-resolver';
+
+import {
+  PlanetScientificSectionsAssembler,
+  type PlanetScientificSectionsModel,
+} from './planet-scientific-sections';
 
 import {
   ArchiveDiscoveryLocatorKind,
@@ -75,11 +80,11 @@ export interface PlanetScientificCardModel {
   readonly planetaryKnowledgeLabel:
     string;
 
-  readonly nextScientificStep:
-    string;
-
   readonly locatorLabel:
     string;
+
+  readonly sections:
+    PlanetScientificSectionsModel;
 }
 
 export type PlanetScientificFicheResolution =
@@ -105,28 +110,28 @@ export type PlanetScientificFicheResolution =
         PlanetScientificCardModel;
     };
 
-export interface PlanetScientificIdentityResolver {
-  resolve(
+export interface PlanetScientificTargetResolutionResolver {
+  resolveDetailed(
     generationKey:
       UniverseGenerationKey,
 
     locator:
       BodyLocator,
-  ): PlanetScientificIdentitySource | null;
+  ): PlanetScientificResolvedTarget | null;
 }
 
-const DEFAULT_IDENTITY_RESOLVER:
-  PlanetScientificIdentityResolver =
+const DEFAULT_TARGET_RESOLVER:
+  PlanetScientificTargetResolutionResolver =
   Object.freeze({
-    resolve(
+    resolveDetailed(
       generationKey:
         UniverseGenerationKey,
 
       locator:
         BodyLocator,
-    ): PlanetScientificIdentitySource | null {
+    ): PlanetScientificResolvedTarget | null {
       return PlanetScientificTargetResolver
-        .resolve(
+        .resolveDetailed(
           generationKey,
           locator,
         );
@@ -134,13 +139,13 @@ const DEFAULT_IDENTITY_RESOLVER:
   });
 
 /**
- * Point-26.3 state-safe planet fiche assembler.
+ * Point-26.4 state-safe detailed planet fiche assembler.
  *
- * The host system must already be CONFIRMED before any procedural planet
- * identity is materialized. Even then, 26.3 exposes only the identity/context
- * layer inherited from the confirmed system. Phase-19 physical Ground Truth and
- * all phase-20/21 environment data remain outside this model until 26.4 defines
- * their own scientific disclosure.
+ * The host system must already be CONFIRMED before the detailed target is
+ * materialized. Point 26.4 projects the already-frozen phase-19/20/21 science
+ * into explicit UI sections. It does not create a separate planetary
+ * DiscoveryState and never exposes generation keys, procedural seeds or domain
+ * aggregates to the presentation model.
  */
 export class PlanetScientificCardAssembler {
 
@@ -154,8 +159,8 @@ export class PlanetScientificCardAssembler {
       bigint,
 
     resolver:
-      PlanetScientificIdentityResolver =
-        DEFAULT_IDENTITY_RESOLVER,
+      PlanetScientificTargetResolutionResolver =
+        DEFAULT_TARGET_RESOLVER,
   ): PlanetScientificFicheResolution {
 
     if (
@@ -192,7 +197,7 @@ export class PlanetScientificCardAssembler {
         kind:
           PlanetScientificFicheResolutionKind.LOCKED,
         reason:
-          'La investigación individual de cuerpos requiere que el sistema anfitrión esté CONFIRMED.',
+          'La investigación individual de cuerpos requiere que el sistema anfitrión esté confirmado.',
       });
     }
 
@@ -214,23 +219,26 @@ export class PlanetScientificCardAssembler {
         bodyIndex,
       );
 
-    const identity =
-      resolver.resolve(
+    const target =
+      resolver.resolveDetailed(
         generationKey,
         locator,
       );
 
     if (
-      identity ===
+      target ===
         null
     ) {
       return Object.freeze({
         kind:
           PlanetScientificFicheResolutionKind.NOT_FOUND,
         reason:
-          'El índice solicitado no corresponde a un planeta maduro de este sistema.',
+          'El índice solicitado no corresponde a un planeta de este sistema.',
       });
     }
+
+    const identity =
+      target.identity;
 
     return Object.freeze({
       kind:
@@ -240,7 +248,7 @@ export class PlanetScientificCardAssembler {
           title:
             identity.designation,
           summary:
-            `${identity.designation} es el planeta ${identity.planetOrdinal} del sistema confirmado ${identity.hostSystemDesignation}. La confirmación del sistema habilita su investigación individual, pero no confirma automáticamente las propiedades científicas del planeta.`,
+            `${identity.designation} es el planeta ${identity.planetOrdinal} del sistema ${identity.hostSystemDesignation}. Su sistema anfitrión está confirmado y permite consultar esta caracterización científica detallada.`,
           hostSystemTitle:
             identity.hostSystemDesignation,
           planetOrdinal:
@@ -253,13 +261,16 @@ export class PlanetScientificCardAssembler {
           hostPlanetCount:
             identity.hostPlanetCount,
           accessLabel:
-            'Investigación individual habilitada',
+            'Consulta científica habilitada',
           planetaryKnowledgeLabel:
-            'Ficha base · sin campaña planetaria propia todavía',
-          nextScientificStep:
-            '26.4 · General / Órbita / Superficie / Atmósfera / Clima / Geología / Lunas',
+            'Caracterización científica detallada',
           locatorLabel:
             `G${systemModel.galaxyIndex.toString()} / S${systemModel.sectorKey.toString()} / O${systemModel.galacticObjectIndex.toString()} / B${bodyIndex.toString()}`,
+          sections:
+            PlanetScientificSectionsAssembler
+              .build(
+                target,
+              ),
         }),
     });
   }

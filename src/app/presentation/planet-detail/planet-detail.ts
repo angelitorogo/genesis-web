@@ -153,6 +153,57 @@ export class PlanetDetailPage
       },
     );
 
+  planetSectionHref(
+    sectionId:
+      string,
+  ): string | null {
+
+    const model =
+      this
+        .facade
+        .model();
+
+    if (
+      model ===
+        null ||
+      this.requestedBodyIndex ===
+        null
+    ) {
+      return null;
+    }
+
+    const path =
+      [
+        '',
+        'system',
+        model.galaxyIndex.toString(),
+        model.sectorKey.toString(),
+        model.galacticObjectIndex.toString(),
+        'planet',
+        this.requestedBodyIndex.toString(),
+      ]
+        .map(
+          (segment, index) =>
+            index === 0
+              ? segment
+              : encodeURIComponent(
+                  segment,
+                ),
+        )
+        .join('/');
+
+    const query =
+      new URLSearchParams({
+        seed:
+          model.universeSeed,
+        version:
+          model.generatorVersionCode.toString(),
+      })
+        .toString();
+
+    return `${path}?${query}#planet-section-${encodeURIComponent(sectionId)}`;
+  }
+
   readonly sourceQueryParams =
     computed(
       () => {
