@@ -28,6 +28,9 @@ const MILESTONES_IN_CANONICAL_ORDER:
       .FIRST_SYSTEM_DISCOVERED,
 
     ObservationProgressMilestone
+      .FIRST_SYSTEM_CATALOGUED,
+
+    ObservationProgressMilestone
       .FIRST_BODY_DISCOVERED,
 
     ObservationProgressMilestone
@@ -78,8 +81,6 @@ const FAMILY_UNLOCK_RULES:
         2_500n,
         ObservationProgressMilestone
           .FIRST_SYSTEM_DISCOVERED,
-        ObservationProgressMilestone
-          .FIRST_BODY_DISCOVERED,
       ),
     ),
 
@@ -160,8 +161,6 @@ const LEVEL_UNLOCK_RULES:
         2_500n,
         ObservationProgressMilestone
           .FIRST_SYSTEM_DISCOVERED,
-        ObservationProgressMilestone
-          .FIRST_BODY_DISCOVERED,
       ),
     ),
 
@@ -173,9 +172,7 @@ const LEVEL_UNLOCK_RULES:
         ObservationProgressMilestone
           .FIRST_SYSTEM_DISCOVERED,
         ObservationProgressMilestone
-          .FIRST_BODY_DISCOVERED,
-        ObservationProgressMilestone
-          .FIRST_GALACTIC_OBJECT_CATALOGUED,
+          .FIRST_SYSTEM_CATALOGUED,
       ),
     ),
 
@@ -186,6 +183,8 @@ const LEVEL_UNLOCK_RULES:
         10_000n,
         ObservationProgressMilestone
           .FIRST_SYSTEM_DISCOVERED,
+        ObservationProgressMilestone
+          .FIRST_SYSTEM_CATALOGUED,
         ObservationProgressMilestone
           .FIRST_BODY_DISCOVERED,
         ObservationProgressMilestone

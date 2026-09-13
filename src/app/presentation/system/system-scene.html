@@ -4,6 +4,7 @@
   data-testid="system-scene"
   [attr.data-render-state]="renderState()"
   [attr.data-system-identity]="snapshot.proceduralIdentity"
+  [attr.data-scientific-body-fiches]="scientificBodyFicheAccessCode()"
   [attr.aria-label]="snapshot.accessibleLabel"
 >
   <canvas
@@ -330,6 +331,18 @@
             </small>
           }
 
+          <small
+            class="system-scene__body-card-contract"
+            data-testid="system-scene-scientific-fiche-access"
+            [attr.data-access]="scientificBodyFicheAccessCode()"
+          >
+            @if (scientificBodyFichesUnlocked()) {
+              FICHA CIENTÍFICA INDIVIDUAL · DESBLOQUEADA POR CONFIRMACIÓN
+            } @else {
+              FICHA CIENTÍFICA INDIVIDUAL · BLOQUEADA · REQUIERE SISTEMA CONFIRMED
+            }
+          </small>
+
           <div class="system-scene__body-card-actions">
             <button
               type="button"
@@ -357,7 +370,7 @@
 
           <small class="system-scene__body-card-contract">
             Ficha de navegación 24.8 derivada del snapshot de presentación.
-            La ficha científica completa se ampliará en Fase 26 sin usar Three.js como fuente física.
+            Seleccionar, inspeccionar y seguir un cuerpo no equivale a abrir su ficha científica individual.
           </small>
         </aside>
       }

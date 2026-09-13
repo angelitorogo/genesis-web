@@ -225,8 +225,6 @@ describe(
             [
               ObservationProgressMilestone
                 .FIRST_SYSTEM_DISCOVERED,
-              ObservationProgressMilestone
-                .FIRST_BODY_DISCOVERED,
             ],
           ],
           [
@@ -307,8 +305,6 @@ describe(
             [
               ObservationProgressMilestone
                 .FIRST_SYSTEM_DISCOVERED,
-              ObservationProgressMilestone
-                .FIRST_BODY_DISCOVERED,
             ],
           ],
           [
@@ -318,9 +314,7 @@ describe(
               ObservationProgressMilestone
                 .FIRST_SYSTEM_DISCOVERED,
               ObservationProgressMilestone
-                .FIRST_BODY_DISCOVERED,
-              ObservationProgressMilestone
-                .FIRST_GALACTIC_OBJECT_CATALOGUED,
+                .FIRST_SYSTEM_CATALOGUED,
             ],
           ],
           [
@@ -329,6 +323,8 @@ describe(
             [
               ObservationProgressMilestone
                 .FIRST_SYSTEM_DISCOVERED,
+              ObservationProgressMilestone
+                .FIRST_SYSTEM_CATALOGUED,
               ObservationProgressMilestone
                 .FIRST_BODY_DISCOVERED,
               ObservationProgressMilestone
@@ -361,8 +357,6 @@ describe(
         ).toEqual([
           ObservationProgressMilestone
             .FIRST_SYSTEM_DISCOVERED,
-          ObservationProgressMilestone
-            .FIRST_BODY_DISCOVERED,
         ]);
       },
     );
@@ -490,7 +484,7 @@ describe(
     );
 
     it(
-      'should unlock exactly twelve combinations at 2500 PD plus first body discovered',
+      'should unlock exactly twelve combinations at 2500 PD after the first system is discovered, without requiring a body',
       () => {
         expect(
           unlockedCount(
@@ -504,15 +498,6 @@ describe(
                 ),
                 DiscoveryState.DISCOVERED,
               ),
-              known(
-                new BodyLocator(
-                  0n,
-                  10n,
-                  1n,
-                  1n,
-                ),
-                DiscoveryState.DISCOVERED,
-              ),
             ],
           ),
         ).toBe(
@@ -522,7 +507,89 @@ describe(
     );
 
     it(
-      'should unlock exactly twenty combinations at 5000 PD plus first galactic object catalogued',
+      'should unlock the L4 families required to confirm the first catalogued system without body or galactic-object milestones',
+      () => {
+        const overview =
+          ObservationInstrumentProgressionEngine
+            .evaluate(
+              canonicalGenerationKey,
+              5_000n,
+              [
+                known(
+                  new SystemLocator(
+                    0n,
+                    10n,
+                    1n,
+                  ),
+                  DiscoveryState.CATALOGUED,
+                ),
+              ],
+            );
+
+        expect(
+          overview.achievedMilestones,
+        ).toEqual([
+          ObservationProgressMilestone
+            .FIRST_SYSTEM_DISCOVERED,
+          ObservationProgressMilestone
+            .FIRST_SYSTEM_CATALOGUED,
+        ]);
+
+        expect(
+          overview.statuses
+            .filter(
+              status =>
+                status.isUnlocked,
+            )
+            .length,
+        ).toBe(
+          16,
+        );
+
+        for (
+          const instrumentType
+          of [
+            ObservationInstrumentType.OPTICAL,
+            ObservationInstrumentType.INFRARED,
+            ObservationInstrumentType.RADIO,
+            ObservationInstrumentType.SPECTROSCOPY,
+          ]
+        ) {
+          expect(
+            overview.isUnlocked(
+              instrumentType,
+              ObservationInstrumentLevel.LEVEL_4,
+            ),
+          ).toBe(
+            true,
+          );
+        }
+
+        const xRayL1 =
+          overview.status(
+            ObservationInstrumentType.X_RAY,
+            ObservationInstrumentLevel.LEVEL_1,
+          );
+
+        expect(
+          xRayL1.isUnlocked,
+        ).toBe(
+          false,
+        );
+
+        expect(
+          xRayL1.missingMilestones,
+        ).toEqual([
+          ObservationProgressMilestone
+            .FIRST_BODY_DISCOVERED,
+          ObservationProgressMilestone
+            .FIRST_GALACTIC_OBJECT_CATALOGUED,
+        ]);
+      },
+    );
+
+    it(
+      'should preserve the twenty-combination frontier at 5000 PD once system, body and galactic-object milestones are present',
       () => {
         expect(
           unlockedCount(
@@ -534,7 +601,7 @@ describe(
                   10n,
                   1n,
                 ),
-                DiscoveryState.DISCOVERED,
+                DiscoveryState.CATALOGUED,
               ),
               known(
                 new BodyLocator(
@@ -640,6 +707,8 @@ describe(
         ).toEqual([
           ObservationProgressMilestone
             .FIRST_SYSTEM_DISCOVERED,
+          ObservationProgressMilestone
+            .FIRST_SYSTEM_CATALOGUED,
           ObservationProgressMilestone
             .FIRST_BODY_DISCOVERED,
           ObservationProgressMilestone

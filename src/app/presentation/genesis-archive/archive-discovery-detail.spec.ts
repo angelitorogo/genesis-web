@@ -1,4 +1,8 @@
 import {
+  signal,
+} from '@angular/core';
+
+import {
   TestBed,
 } from '@angular/core/testing';
 
@@ -29,6 +33,11 @@ import {
 } from '../../domain/observation/observation-instrument';
 
 import {
+  StellarSystemScientificObservationRuleCode,
+} from '../../simulation/observation/stellar-system-scientific-observation-catalog';
+
+
+import {
   GalacticObjectScientificSubject,
   GalacticObjectScientificSurveyFamily,
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
@@ -48,6 +57,11 @@ import {
   ArchiveGalacticObjectRenderKind,
   type ArchiveGalacticObjectCardModel,
 } from './archive-galactic-object-card';
+
+import {
+  ArchiveStellarSystemKnowledgeLevel,
+  type ArchiveStellarSystemCardModel,
+} from './archive-stellar-system-card';
 
 describe(
   'ArchiveDiscoveryDetail',
@@ -314,6 +328,303 @@ describe(
           element.textContent,
         ).toContain(
           '12.8 conserva la identidad persistida',
+        );
+      },
+    );
+
+    it(
+      'should execute stellar observations directly in the discovery fiche, refresh progress and expose SystemPage 3D',
+      async () => {
+        TestBed.resetTestingModule();
+
+        const stellarSystemCard:
+          ArchiveStellarSystemCardModel =
+          Object.freeze({
+            knowledgeLevel:
+              ArchiveStellarSystemKnowledgeLevel.DETECTED,
+            knowledgeLevelLabel:
+              'Señal detectada',
+            title:
+              'Sistema estelar sin resolver',
+            summary:
+              'Existe una fuente estelar persistente, todavía sin resolver.',
+            nextScientificStep:
+              'Resolver naturaleza, identidad y arquitectura básica.',
+            multiplicityLabel:
+              null,
+            componentCount:
+              null,
+            systemFacts:
+              Object.freeze([]),
+            components:
+              Object.freeze([]),
+            orbits:
+              Object.freeze([]),
+            circumbinaryFacts:
+              Object.freeze([]),
+            habitabilityFacts:
+              Object.freeze([]),
+            render:
+              Object.freeze({
+                accessibleLabel:
+                  'Señal estelar detectada sin resolver.',
+                knowledgeLevel:
+                  ArchiveStellarSystemKnowledgeLevel.DETECTED,
+                multiplicity:
+                  null,
+                components:
+                  Object.freeze([]),
+                innerOrbitEccentricity:
+                  null,
+                outerOrbitEccentricity:
+                  null,
+                stableHabitableZoneFraction:
+                  null,
+                hasStableHabitableZone:
+                  false,
+              }),
+          });
+
+        const ruleCode =
+          StellarSystemScientificObservationRuleCode
+            .RESOLVE_NATURE_OPTICAL;
+
+        const baseCampaign =
+          Object.freeze({
+            discoveryState:
+              DiscoveryState.DETECTED,
+            discoveryStateLabel:
+              'Detectado',
+            stageLabel:
+              'Resolución del descubrimiento',
+            completionPercent:
+              0,
+            satisfiedRequirementCount:
+              0,
+            totalRequirementCount:
+              3,
+            evidenceCount:
+              0,
+            globalDiscoveryPoints:
+              1_880n,
+            galaxyDiscoveryPoints:
+              402n,
+            dimensions:
+              Object.freeze([]),
+            actions:
+              Object.freeze([
+                Object.freeze({
+                  ruleCode,
+                  label:
+                    'Resolver naturaleza estelar',
+                  dimensionLabel:
+                    'Naturaleza estelar',
+                  instrumentLabel:
+                    'Óptico',
+                  selectedLevelRank:
+                    2,
+                  minimumLevelRank:
+                    1,
+                  isAvailable:
+                    true,
+                  isCompleted:
+                    false,
+                  pendingRequirements:
+                    Object.freeze([]),
+                }),
+              ]),
+          });
+
+        const modelSignal =
+          signal<ArchiveDiscoveryDetailModel>(
+            Object.freeze({
+              ...model,
+              stellarSystemCard,
+              stellarSystemScientificCampaign:
+                baseCampaign,
+            }),
+          );
+
+        const performStellarSystemObservation =
+          vi
+            .fn()
+            .mockImplementation(
+              async () => {
+                const current =
+                  modelSignal();
+
+                modelSignal.set(
+                  Object.freeze({
+                    ...current,
+                    stellarSystemScientificCampaign:
+                      Object.freeze({
+                        ...baseCampaign,
+                        completionPercent:
+                          25,
+                        satisfiedRequirementCount:
+                          1,
+                        evidenceCount:
+                          1,
+                        actions:
+                          Object.freeze([
+                            Object.freeze({
+                              ...baseCampaign.actions[0]!,
+                              isCompleted:
+                                true,
+                            }),
+                          ]),
+                      }),
+                  }),
+                );
+              },
+            );
+
+        await TestBed
+          .configureTestingModule({
+            imports: [
+              ArchiveDiscoveryDetail,
+            ],
+            providers: [
+              provideRouter([]),
+              {
+                provide:
+                  ActivatedRoute,
+                useValue: {
+                  snapshot: {
+                    data: {
+                      archiveDiscoveryLocatorKind:
+                        ArchiveDiscoveryLocatorKind.SYSTEM,
+                    },
+                    paramMap:
+                      convertToParamMap({
+                        galaxyIndex:
+                          '0',
+                        sectorKey:
+                          '0',
+                        galacticObjectIndex:
+                          '7',
+                      }),
+                    queryParamMap:
+                      convertToParamMap({
+                        seed:
+                          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+                        version:
+                          '1',
+                      }),
+                  },
+                },
+              },
+              {
+                provide:
+                  ArchiveDiscoveryDetailFacade,
+                useValue: {
+                  state: () => ({
+                    kind:
+                      'content',
+                    model:
+                      modelSignal(),
+                  }),
+                  model:
+                    modelSignal.asReadonly(),
+                  errorMessage: () =>
+                    '',
+                  actionPending: () =>
+                    false,
+                  actionFeedback: () =>
+                    null,
+                  actionError: () =>
+                    null,
+                  performStellarSystemObservation,
+                  performScientificAction:
+                    vi.fn(),
+                  load:
+                    vi.fn()
+                      .mockResolvedValue(
+                        undefined,
+                      ),
+                },
+              },
+            ],
+          })
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            ArchiveDiscoveryDetail,
+          );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const actionButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-rule-code="RESOLVE_NATURE_OPTICAL"]',
+          );
+
+        expect(
+          actionButton?.disabled,
+        ).toBe(false);
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-stellar-system-campaign-percent"]',
+          )?.textContent,
+        ).toContain(
+          '0%',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-stellar-system-system-page-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          '/system/0/0/7',
+        );
+
+        actionButton?.click();
+
+        expect(
+          performStellarSystemObservation,
+        ).toHaveBeenCalledWith(
+          ruleCode,
+        );
+
+        fixture.detectChanges();
+
+        const appliedButton =
+          element.querySelector<HTMLButtonElement>(
+            '[data-rule-code="RESOLVE_NATURE_OPTICAL"]',
+          );
+
+        expect(
+          appliedButton?.disabled,
+        ).toBe(true);
+
+        expect(
+          appliedButton?.textContent,
+        ).toContain(
+          'YA APLICADA',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-stellar-system-campaign-percent"]',
+          )?.textContent,
+        ).toContain(
+          '25%',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-stellar-system-evidence-count"]',
+          )?.textContent,
+        ).toContain(
+          '1',
         );
       },
     );

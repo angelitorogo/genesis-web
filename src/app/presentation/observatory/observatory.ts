@@ -142,6 +142,7 @@ export class Observatory
   ): void {
 
     if (
+      action.isCompleted ||
       !action.isAvailable ||
       this.facade.actionPending()
     ) {

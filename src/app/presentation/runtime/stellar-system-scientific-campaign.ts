@@ -14,6 +14,7 @@ import {
 } from '../../domain/observation/observation-instrument';
 
 import {
+  StellarSystemScientificObservationCatalogV1,
   StellarSystemScientificObservationRuleCode,
   type StellarSystemScientificObservationRuleCode as StellarSystemScientificObservationRuleCodeValue,
 } from '../../simulation/observation/stellar-system-scientific-observation-catalog';
@@ -66,6 +67,14 @@ export interface StellarSystemScientificCampaignActionModel {
     number;
 
   readonly isAvailable:
+    boolean;
+
+  /**
+   * True when this exact observation method already contributes qualifying
+   * evidence for the current campaign stage. Presentation surfaces disable the
+   * action so re-opening Archive/Observatory cannot invite a no-op retry.
+   */
+  readonly isCompleted?:
     boolean;
 
   readonly pendingRequirements:
@@ -196,6 +205,7 @@ export class StellarSystemScientificCampaignAssembler {
           snapshot.rules.map(
             rule =>
               buildAction(
+                snapshot,
                 rule,
               ),
           ),
@@ -205,6 +215,9 @@ export class StellarSystemScientificCampaignAssembler {
 }
 
 function buildAction(
+  snapshot:
+    StellarSystemScientificProgressionSnapshot,
+
   rule:
     StellarSystemScientificRuleAvailability,
 ): StellarSystemScientificCampaignActionModel {
@@ -254,11 +267,73 @@ function buildAction(
       rule.minimumLevel.rank,
     isAvailable:
       rule.isAvailable,
+
+    isCompleted:
+      actionAlreadyApplied(
+        snapshot,
+        rule,
+      ),
+
     pendingRequirements:
       Object.freeze([
         ...pending,
       ]),
   });
+}
+
+
+function actionAlreadyApplied(
+  snapshot:
+    StellarSystemScientificProgressionSnapshot,
+
+  availability:
+    StellarSystemScientificRuleAvailability,
+): boolean {
+
+  const observationRule =
+    StellarSystemScientificObservationCatalogV1
+      .rule(
+        availability.ruleCode,
+      );
+
+  const requirementResult =
+    snapshot.completeness
+      .requirements
+      .find(
+        result =>
+          result.requirement
+            .dimensionCode ===
+          availability.dimensionCode,
+      );
+
+  if (
+    requirementResult ===
+    undefined
+  ) {
+    return false;
+  }
+
+  const expectedSourceKey =
+    `${observationRule.sourceKey}:${availability.instrumentType}`;
+
+  return snapshot.evidence
+    .some(
+      evidence =>
+        evidence.dimensionCode ===
+          availability.dimensionCode &&
+        evidence.evidenceCode ===
+          observationRule.evidenceCode &&
+        evidence.sourceKey ===
+          expectedSourceKey &&
+        evidence.quality01 >=
+          requirementResult
+            .requirement
+            .minimumQuality01 &&
+        evidence.uncertainty01 <=
+          requirementResult
+            .requirement
+            .maximumUncertainty01,
+    );
 }
 
 export function discoveryStateLabel(
@@ -474,6 +549,9 @@ function milestoneLabel(
   ) {
     case ObservationProgressMilestone.FIRST_SYSTEM_DISCOVERED:
       return 'Descubrir el primer sistema';
+
+    case ObservationProgressMilestone.FIRST_SYSTEM_CATALOGUED:
+      return 'Catalogar el primer sistema';
 
     case ObservationProgressMilestone.FIRST_BODY_DISCOVERED:
       return 'Descubrir el primer cuerpo';

@@ -139,15 +139,17 @@
                   <header class="archive-discovery-detail__campaign-header">
                     <div>
                       <small class="archive-discovery-detail__eyebrow">
-                        PROGRESIÓN CIENTÍFICA / 26.A.9
+                        PROGRESIÓN CIENTÍFICA / 26.2 + 26.A
                       </small>
 
                       <h3>Campaña observacional del sistema</h3>
 
                       <p>
-                        Archivo, SystemPage y Observatorio leen el mismo DiscoveryState
-                        persistido y las mismas evidencias observadas. Esta ficha no
-                        ejecuta observaciones ni materializa Ground Truth adicional.
+                        La ficha, SystemPage y Observatorio comparten el mismo
+                        DiscoveryState persistido y las mismas evidencias. Las
+                        observaciones de esta etapa pueden ejecutarse aquí sin
+                        crear una segunda progresión ni materializar Ground Truth
+                        adicional.
                       </p>
                     </div>
 
@@ -161,7 +163,7 @@
 
                   <div class="archive-discovery-detail__campaign-meta">
                     <span>
-                      Estado · <strong>{{ campaign.discoveryStateLabel }}</strong>
+                      Estado · <strong data-testid="archive-stellar-system-campaign-state">{{ campaign.discoveryStateLabel }}</strong>
                     </span>
                     <span>
                       Evidencias · <strong data-testid="archive-stellar-system-evidence-count">{{ campaign.evidenceCount }}</strong>
@@ -171,6 +173,9 @@
                     </span>
                     <span>
                       PD globales · <strong>{{ campaign.globalDiscoveryPoints }}</strong>
+                    </span>
+                    <span>
+                      PD galaxia · <strong>{{ campaign.galaxyDiscoveryPoints }}</strong>
                     </span>
                   </div>
 
@@ -190,56 +195,158 @@
                     }
                   </div>
 
-                  @if (campaign.discoveryStateLabel === 'Descubierto') {
+                  @if (campaign.actions.length > 0) {
+                    <section
+                      class="archive-discovery-detail__campaign-observations"
+                      data-testid="archive-stellar-system-scientific-actions"
+                    >
+                      <div>
+                        <small class="archive-discovery-detail__eyebrow">
+                          OBSERVATION ENGINE / INSTRUMENTOS
+                        </small>
+                        <h3>Observaciones de esta etapa</h3>
+                      </div>
+
+                      <div class="archive-discovery-detail__stellar-component-grid archive-discovery-detail__campaign-action-grid">
+                        @for (action of campaign.actions; track action.ruleCode) {
+                          <article
+                            class="archive-discovery-detail__scientific-action"
+                            [attr.data-action-status]="
+                              action.isCompleted
+                                ? 'completed'
+                                : action.isAvailable
+                                  ? 'available'
+                                  : 'blocked'
+                            "
+                          >
+                            <div class="archive-discovery-detail__scientific-action-header">
+                              <div>
+                                <small>{{ action.dimensionLabel }}</small>
+                                <strong>{{ action.label }}</strong>
+                              </div>
+
+                              <span>
+                                @if (action.isCompleted) {
+                                  YA APLICADA
+                                } @else if (action.isAvailable) {
+                                  DISPONIBLE
+                                } @else {
+                                  BLOQUEADA
+                                }
+                              </span>
+                            </div>
+
+                            <p>
+                              {{ action.instrumentLabel }} · L{{ action.selectedLevelRank }}
+                              (mín. L{{ action.minimumLevelRank }})
+                            </p>
+
+                            @if (!action.isCompleted && action.pendingRequirements.length > 0) {
+                              <ul class="archive-discovery-detail__instrument-list">
+                                @for (requirement of action.pendingRequirements; track requirement) {
+                                  <li>{{ requirement }}</li>
+                                }
+                              </ul>
+                            }
+
+                            <button
+                              genesis-primary-button
+                              type="button"
+                              [attr.data-rule-code]="action.ruleCode"
+                              [disabled]="
+                                action.isCompleted ||
+                                !action.isAvailable ||
+                                facade.actionPending()
+                              "
+                              (click)="performStellarSystemObservation(action)"
+                            >
+                              @if (action.isCompleted) {
+                                YA APLICADA
+                              } @else if (facade.actionPending()) {
+                                Procesando…
+                              } @else if (action.isAvailable) {
+                                REALIZAR OBSERVACIÓN
+                              } @else {
+                                OBSERVACIÓN BLOQUEADA
+                              }
+                            </button>
+                          </article>
+                        }
+                      </div>
+                    </section>
+                  } @else if (campaign.discoveryStateLabel === 'Descubierto') {
                     <p
                       class="archive-discovery-detail__campaign-note"
                       data-testid="archive-stellar-system-visit-note"
                     >
-                      Esta entrada detallada registra VISITED una sola vez. VISITED no
-                      añade evidencia ni cambia el disclosure físico de DISCOVERED.
-                    </p>
-                  }
-
-                  @if (campaign.actions.length > 0) {
-                    <div class="archive-discovery-detail__campaign-actions-summary">
-                      <strong>Observaciones de la etapa</strong>
-                      <ul>
-                        @for (action of campaign.actions; track action.ruleCode) {
-                          <li>
-                            <span>{{ action.label }} · {{ action.instrumentLabel }} L{{ action.selectedLevelRank }}</span>
-                            <small>{{ action.isAvailable ? 'Disponible' : 'Bloqueada' }}</small>
-                          </li>
-                        }
-                      </ul>
-                    </div>
-                  } @else if (campaign.discoveryStateLabel === 'Descubierto') {
-                    <p class="archive-discovery-detail__campaign-note">
-                      El siguiente paso es una entrada válida a la ficha o escena para
-                      consolidar VISITED antes de iniciar la catalogación.
+                      La identidad está resuelta. Esta ficha detallada constituye
+                      una entrada válida y registra VISITED una sola vez, sin
+                      añadir evidencia ni ampliar el disclosure físico.
                     </p>
                   } @else if (campaign.discoveryStateLabel === 'Confirmado') {
-                    <p class="archive-discovery-detail__campaign-note">
-                      Campaña científica completada. No existen promociones manuales ni
-                      acciones de confirmación alternativas.
+                    <p
+                      class="archive-discovery-detail__campaign-note"
+                      data-testid="archive-stellar-system-campaign-complete"
+                    >
+                      Campaña científica completada. CONFIRMED procede de
+                      evidencia adicional e independiente; no existe una
+                      promoción manual alternativa.
                     </p>
                   }
 
-                  <a
-                    class="archive-discovery-detail__campaign-link"
-                    [routerLink]="[
-                      '/observatory/system',
-                      model.galaxyIndex,
-                      model.sectorKey,
-                      model.galacticObjectIndex
-                    ]"
-                    [queryParams]="{
-                      seed: model.universeSeed,
-                      version: model.generatorVersionCode
-                    }"
-                    data-testid="archive-stellar-system-observatory-link"
-                  >
-                    Abrir campaña en el Observatorio →
-                  </a>
+                  @if (facade.actionFeedback(); as feedback) {
+                    <p
+                      class="archive-discovery-detail__action-feedback"
+                      data-testid="archive-stellar-system-action-feedback"
+                      role="status"
+                    >
+                      {{ feedback }}
+                    </p>
+                  }
+
+                  @if (facade.actionError(); as actionError) {
+                    <p
+                      class="archive-discovery-detail__action-error"
+                      data-testid="archive-stellar-system-action-error"
+                      role="alert"
+                    >
+                      {{ actionError }}
+                    </p>
+                  }
+
+                  <nav class="archive-discovery-detail__actions">
+                    <a
+                      [routerLink]="[
+                        '/system',
+                        model.galaxyIndex,
+                        model.sectorKey,
+                        model.galacticObjectIndex
+                      ]"
+                      [queryParams]="{
+                        seed: model.universeSeed,
+                        version: model.generatorVersionCode
+                      }"
+                      data-testid="archive-stellar-system-system-page-link"
+                    >
+                      Abrir SystemPage 3D →
+                    </a>
+
+                    <a
+                      [routerLink]="[
+                        '/observatory/system',
+                        model.galaxyIndex,
+                        model.sectorKey,
+                        model.galacticObjectIndex
+                      ]"
+                      [queryParams]="{
+                        seed: model.universeSeed,
+                        version: model.generatorVersionCode
+                      }"
+                      data-testid="archive-stellar-system-observatory-link"
+                    >
+                      Abrir Observatorio →
+                    </a>
+                  </nav>
                 </section>
               }
 

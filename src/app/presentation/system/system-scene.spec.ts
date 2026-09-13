@@ -11,6 +11,10 @@ import {
 } from 'vitest';
 
 import {
+  DiscoveryState,
+} from '../../domain/discovery/discovery-state';
+
+import {
   MinorBodyKind,
 } from '../../domain/planetary/minor-body-kind';
 
@@ -833,6 +837,133 @@ describe(
             '[data-testid="system-scene-body-card"]',
           ),
         ).toBeTruthy();
+      },
+    );
+
+    it(
+      'should keep individual scientific body fiches locked at CATALOGUED and unlock them only at CONFIRMED',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            SystemScene,
+          );
+
+        fixture.componentRef.setInput(
+          'snapshot',
+          sceneSnapshot(),
+        );
+
+        fixture.detectChanges();
+
+        const selectionHandler =
+          capturedSelectionHandler as
+            SystemSceneSelectionChangeHandler;
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'planet-1',
+            kind:
+              'planet' as const,
+            label:
+              'b',
+            title:
+              'Jotheria b',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const cataloguedAccess =
+          element.querySelector<HTMLElement>(
+            '[data-testid="system-scene-scientific-fiche-access"]',
+          );
+
+        expect(
+          element.querySelector<HTMLElement>(
+            '[data-testid="system-scene"]',
+          )?.dataset['scientificBodyFiches'],
+        ).toBe(
+          'LOCKED',
+        );
+
+        expect(
+          cataloguedAccess
+            ?.dataset['access'],
+        ).toBe(
+          'LOCKED',
+        );
+
+        expect(
+          cataloguedAccess
+            ?.textContent,
+        ).toContain(
+          'REQUIERE SISTEMA CONFIRMED',
+        );
+
+        const confirmedSnapshot =
+          Object.freeze({
+            ...sceneSnapshot(),
+            discoveryStateCode:
+              DiscoveryState.CONFIRMED.code,
+            discoveryStateLabel:
+              'Confirmado',
+            knowledgeLevel:
+              ArchiveStellarSystemKnowledgeLevel.CONFIRMED,
+          } satisfies SystemSceneSnapshot);
+
+        fixture.componentRef.setInput(
+          'snapshot',
+          confirmedSnapshot,
+        );
+
+        fixture.detectChanges();
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'planet-1',
+            kind:
+              'planet' as const,
+            label:
+              'b',
+            title:
+              'Jotheria b',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const confirmedAccess =
+          element.querySelector<HTMLElement>(
+            '[data-testid="system-scene-scientific-fiche-access"]',
+          );
+
+        expect(
+          element.querySelector<HTMLElement>(
+            '[data-testid="system-scene"]',
+          )?.dataset['scientificBodyFiches'],
+        ).toBe(
+          'UNLOCKED',
+        );
+
+        expect(
+          confirmedAccess
+            ?.dataset['access'],
+        ).toBe(
+          'UNLOCKED',
+        );
+
+        expect(
+          confirmedAccess
+            ?.textContent,
+        ).toContain(
+          'DESBLOQUEADA POR CONFIRMACIÓN',
+        );
       },
     );
 

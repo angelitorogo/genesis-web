@@ -648,6 +648,38 @@ export class ArchiveDiscoveryDetailFacade {
       return;
     }
 
+    const currentAction =
+      this
+        .model()
+        ?.stellarSystemScientificCampaign
+        ?.actions
+        .find(
+          action =>
+            action.ruleCode ===
+            ruleCode,
+        ) ??
+      null;
+
+    if (
+      currentAction
+        ?.isCompleted ===
+      true
+    ) {
+      this
+        .actionErrorSignal
+        .set(
+          null,
+        );
+
+      this
+        .actionFeedbackSignal
+        .set(
+          'Esta observación ya está aplicada con calidad suficiente para la etapa actual.',
+        );
+
+      return;
+    }
+
     if (
       this.actionPending()
     ) {
@@ -662,6 +694,12 @@ export class ArchiveDiscoveryDetailFacade {
 
     this
       .actionErrorSignal
+      .set(
+        null,
+      );
+
+    this
+      .actionFeedbackSignal
       .set(
         null,
       );
@@ -687,10 +725,16 @@ export class ArchiveDiscoveryDetailFacade {
           ? ` · +${committed.awardedDiscoveryPoints} PD`
           : '';
 
+      const visibleState =
+        this
+          .model()
+          ?.discoveryState ??
+        committed.stateAfter;
+
       this
         .actionFeedbackSignal
         .set(
-          `Observación registrada${rewardSuffix} · ${stateLabel(committed.stateAfter)}.`,
+          `Observación registrada${rewardSuffix} · ${stateLabel(visibleState)}.`,
         );
     } catch (
       error
@@ -1532,6 +1576,9 @@ function milestoneRequirementLabel(
   ) {
     case ObservationProgressMilestone.FIRST_SYSTEM_DISCOVERED:
       return 'Descubrir el primer sistema';
+
+    case ObservationProgressMilestone.FIRST_SYSTEM_CATALOGUED:
+      return 'Catalogar el primer sistema';
 
     case ObservationProgressMilestone.FIRST_BODY_DISCOVERED:
       return 'Descubrir el primer cuerpo';

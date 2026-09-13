@@ -224,6 +224,25 @@ function isMilestoneAchieved(
   if (
     milestone ===
     ObservationProgressMilestone
+      .FIRST_SYSTEM_CATALOGUED
+  ) {
+    return knownDiscoveries
+      .some(
+        (
+          discovery,
+        ) =>
+          discovery.locator instanceof
+            SystemLocator &&
+          discovery.state.code >=
+            DiscoveryState
+              .CATALOGUED
+              .code,
+      );
+  }
+
+  if (
+    milestone ===
+    ObservationProgressMilestone
       .FIRST_BODY_DISCOVERED
   ) {
     return knownDiscoveries

@@ -185,6 +185,108 @@ describe(
         );
       },
     );
+
+    it(
+      'should render a qualifying persisted observation as already applied and prevent a no-op retry',
+      async () => {
+        const base =
+          stellarModel();
+
+        const action =
+          base
+            .stellarSystemScientificCampaign
+            ?.actions[0];
+
+        if (
+          action ===
+          undefined
+        ) {
+          throw new Error(
+            'Expected one stellar campaign action fixture.',
+          );
+        }
+
+        const model:
+          ArchiveDiscoveryDetailModel =
+          Object.freeze({
+            ...base,
+            stellarSystemScientificCampaign:
+              Object.freeze({
+                ...base.stellarSystemScientificCampaign!,
+                actions:
+                  Object.freeze([
+                    Object.freeze({
+                      ...action,
+                      isCompleted:
+                        true,
+                    }),
+                  ]),
+              }),
+          });
+
+        const facade =
+          facadeStub(
+            model,
+          );
+
+        await TestBed
+          .configureTestingModule({
+            imports: [
+              Observatory,
+            ],
+            providers: [
+              provideRouter([]),
+              {
+                provide:
+                  ActivatedRoute,
+                useValue:
+                  routeStub(
+                    true,
+                  ),
+              },
+              {
+                provide:
+                  ArchiveDiscoveryDetailFacade,
+                useValue:
+                  facade,
+              },
+            ],
+          })
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            Observatory,
+          );
+
+        fixture.detectChanges();
+
+        const button =
+          (
+            fixture.nativeElement as
+              HTMLElement
+          )
+            .querySelector<HTMLButtonElement>(
+              '[data-rule-code="RESOLVE_NATURE_OPTICAL"]',
+            );
+
+        expect(
+          button?.disabled,
+        ).toBe(true);
+
+        expect(
+          button?.textContent,
+        ).toContain(
+          'Ya aplicada',
+        );
+
+        button?.click();
+
+        expect(
+          facade.performStellarSystemObservation,
+        ).not.toHaveBeenCalled();
+      },
+    );
   },
 );
 
@@ -374,6 +476,8 @@ function stellarModel():
                 1,
               isAvailable:
                 true,
+              isCompleted:
+                false,
               pendingRequirements:
                 Object.freeze([]),
             }),

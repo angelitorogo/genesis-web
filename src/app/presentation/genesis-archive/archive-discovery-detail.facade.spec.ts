@@ -1429,7 +1429,6 @@ describe(
           items: [
             '1898 PD adicionales',
             'Descubrir el primer sistema',
-            'Descubrir el primer cuerpo',
           ],
         });
       },

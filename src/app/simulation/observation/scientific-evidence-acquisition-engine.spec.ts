@@ -11,8 +11,6 @@ import {
 } from '../../domain/discovery/stellar-system-scientific-profile';
 
 import {
-  BodyLocator,
-  GalacticObjectLocator,
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -79,50 +77,15 @@ function known(
     typeof DiscoveryState.VISITED |
     typeof DiscoveryState.CATALOGUED |
     typeof DiscoveryState.CONFIRMED,
-
-  advancedMilestones =
-    false,
 ): readonly KnownDiscovery[] {
 
-  const discoveries:
-    KnownDiscovery[] =
-    [
-      new KnownDiscovery(
-        generationKey,
-        systemLocator,
-        systemState,
-      ),
-    ];
-
-  if (
-    advancedMilestones
-  ) {
-    discoveries.push(
-      new KnownDiscovery(
-        generationKey,
-        new BodyLocator(
-          0n,
-          0n,
-          0n,
-          0n,
-        ),
-        DiscoveryState.DISCOVERED,
-      ),
-      new KnownDiscovery(
-        generationKey,
-        new GalacticObjectLocator(
-          0n,
-          0n,
-          1n,
-        ),
-        DiscoveryState.CATALOGUED,
-      ),
-    );
-  }
-
-  return Object.freeze(
-    discoveries,
-  );
+  return Object.freeze([
+    new KnownDiscovery(
+      generationKey,
+      systemLocator,
+      systemState,
+    ),
+  ]);
 }
 
 describe(
@@ -160,12 +123,9 @@ describe(
             [
               ObservationInstrumentLevel.LEVEL_3,
               2500n,
-              [
-                ...known(
-                  DiscoveryState.DISCOVERED,
-                  true,
-                ),
-              ],
+              known(
+                DiscoveryState.DISCOVERED,
+              ),
               0.94,
               0.14,
             ],
@@ -173,8 +133,7 @@ describe(
               ObservationInstrumentLevel.LEVEL_4,
               5000n,
               known(
-                DiscoveryState.DISCOVERED,
-                true,
+                DiscoveryState.CATALOGUED,
               ),
               1.00,
               0.072,
@@ -376,7 +335,6 @@ describe(
                     5000n,
                     known(
                       DiscoveryState.CATALOGUED,
-                      true,
                     ),
                     rule,
                     rule.compatibleInstrumentTypes[0],

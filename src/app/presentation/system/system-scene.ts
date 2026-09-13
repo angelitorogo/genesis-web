@@ -48,6 +48,10 @@ import {
 } from './system-simulation-clock';
 
 import {
+  systemSceneScientificAccess,
+} from './system-scene-scientific-access';
+
+import {
   SystemSceneCameraController,
 } from './system-scene-camera-controller';
 
@@ -577,6 +581,21 @@ export class SystemScene
     this
       .renderInfoSignal
       .asReadonly();
+
+  scientificBodyFichesUnlocked():
+    boolean {
+    return systemSceneScientificAccess(
+      this.snapshot.discoveryStateCode,
+    ).scientificBodyFichesUnlocked;
+  }
+
+  scientificBodyFicheAccessCode():
+    'LOCKED' |
+    'UNLOCKED' {
+    return this.scientificBodyFichesUnlocked()
+      ? 'UNLOCKED'
+      : 'LOCKED';
+  }
 
   planetCount():
     number {
@@ -4908,11 +4927,14 @@ class ThreeSystemSceneRuntime
       }
 
       const position =
-        this.positionFromContributions(
-          body.motionContributions,
-          simulationDay,
-          sceneScale,
-        );
+        body.motionContributions.length ===
+          0
+          ? body.position
+          : this.positionFromContributions(
+              body.motionContributions,
+              simulationDay,
+              sceneScale,
+            );
 
       object.position.set(
         position.x,

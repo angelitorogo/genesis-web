@@ -20,7 +20,7 @@ describe(
   () => {
 
     it(
-      'should preserve the five canonical progress milestones and validate unlock requirements',
+      'should preserve the six canonical progress milestones and validate unlock requirements',
       () => {
         expect(
           Object.values(
@@ -29,6 +29,8 @@ describe(
         ).toEqual([
           ObservationProgressMilestone
             .FIRST_SYSTEM_DISCOVERED,
+          ObservationProgressMilestone
+            .FIRST_SYSTEM_CATALOGUED,
           ObservationProgressMilestone
             .FIRST_BODY_DISCOVERED,
           ObservationProgressMilestone

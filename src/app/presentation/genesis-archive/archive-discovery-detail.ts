@@ -26,6 +26,11 @@ import {
   GenesisScreen,
 } from '../../ui/layout/genesis-screen/genesis-screen';
 
+
+import {
+  type StellarSystemScientificCampaignActionModel,
+} from '../runtime/stellar-system-scientific-campaign';
+
 import {
   ArchiveDiscoveryDetailFacade,
   ArchiveDiscoveryLocatorKind,
@@ -83,6 +88,27 @@ export class ArchiveDiscoveryDetail
     void this
       .facade
       .performScientificAction();
+  }
+
+
+  performStellarSystemObservation(
+    action:
+      StellarSystemScientificCampaignActionModel,
+  ): void {
+
+    if (
+      action.isCompleted ||
+      !action.isAvailable ||
+      this.facade.actionPending()
+    ) {
+      return;
+    }
+
+    void this
+      .facade
+      .performStellarSystemObservation(
+        action.ruleCode,
+      );
   }
 
   ngOnInit():

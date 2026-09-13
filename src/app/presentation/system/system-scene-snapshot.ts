@@ -1,5 +1,4 @@
 import {
-  DiscoveryState,
   type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
 
@@ -125,6 +124,11 @@ export type {
 import {
   buildSystemSceneHabitableZonePresentationV2,
 } from './system-scene-habitable-zone-presentation';
+
+import {
+  SystemSceneScientificDisclosureTier,
+  systemSceneScientificAccess,
+} from './system-scene-scientific-access';
 
 import {
   buildTripleDensePlanetaryLayoutV1,
@@ -871,6 +875,15 @@ const DEFAULT_OUTER_RADIUS_AU =
 const TARGET_OUTER_RADIUS_SCENE =
   4.8;
 
+const IDENTIFIED_TARGET_OUTER_RADIUS_SCENE =
+  2.6;
+
+const IDENTIFIED_STAR_RADIUS_SCENE =
+  0.22;
+
+const IDENTIFIED_STELLAR_ORBIT_COLOR =
+  '#6A9FB7';
+
 const MINOR_BODY_MIN_STAR_CLEARANCE_SCENE =
   0.22;
 
@@ -931,55 +944,28 @@ export class SystemSceneSnapshotBuilder {
         source,
       );
 
+    const scientificAccess =
+      systemSceneScientificAccess(
+        source.discoveryState.code,
+      );
+
     if (
-      source.discoveryState.code <
-      DiscoveryState.CATALOGUED.code
+      scientificAccess.disclosureTier ===
+      SystemSceneScientificDisclosureTier.UNRESOLVED
     ) {
-      return Object.freeze({
-        ...baseSnapshot,
-        accessibleLabel:
-          `${baseSnapshot.accessibleLabel} Arquitectura física todavía no resuelta.`,
-        stars:
-          Object.freeze([]),
-        planets:
-          Object.freeze([]),
-        moons:
-          Object.freeze([]),
-        minorBodies:
-          Object.freeze([]),
-        asteroidBelts:
-          Object.freeze([]),
-        habitableZone:
-          null,
-        orbitalRiskTargets:
-          Object.freeze([]),
-        layers:
-          Object.freeze({
-            moonCount: 0,
-            minorBodyCount: 0,
-            habitableZoneAvailable: false,
-            orbitalRiskTargetCount: 0,
-            orbitalCrossingTargetCount: 0,
-            orbitalApproachTargetCount: 0,
-            orbitalCollisionGeometryTargetCount: 0,
-          }),
-        orbits:
-          Object.freeze([]),
-        motions:
-          Object.freeze([]),
-        simulation:
-          Object.freeze({
-            epochSimulationDay:
-              0,
-            playbackDaysPerRealSecond:
-              1,
-          }),
-        scale:
-          buildLinearFitSystemScale(
-            DEFAULT_OUTER_RADIUS_AU,
-            TARGET_OUTER_RADIUS_SCENE,
-          ),
-      });
+      return unresolvedSceneSnapshot(
+        baseSnapshot,
+      );
+    }
+
+    if (
+      scientificAccess.disclosureTier ===
+      SystemSceneScientificDisclosureTier.IDENTIFIED_STELLAR
+    ) {
+      return identifiedSceneSnapshot(
+        source,
+        baseSnapshot,
+      );
     }
 
     const world =
@@ -1022,6 +1008,406 @@ export class SystemSceneSnapshotBuilder {
         projected.scale,
     });
   }
+}
+
+function unresolvedSceneSnapshot(
+  baseSnapshot:
+    ReturnType<typeof snapshotBase>,
+): SystemSceneSnapshot {
+
+  return Object.freeze({
+    ...baseSnapshot,
+    accessibleLabel:
+      `${baseSnapshot.accessibleLabel} Señal detectada: el sistema permanece visualmente sin resolver.`,
+    stars:
+      Object.freeze([]),
+    planets:
+      Object.freeze([]),
+    moons:
+      Object.freeze([]),
+    minorBodies:
+      Object.freeze([]),
+    asteroidBelts:
+      Object.freeze([]),
+    habitableZone:
+      null,
+    orbitalRiskTargets:
+      Object.freeze([]),
+    layers:
+      emptyLayerAvailability(),
+    orbits:
+      Object.freeze([]),
+    motions:
+      Object.freeze([]),
+    simulation:
+      unavailableSimulation(),
+    scale:
+      buildLinearFitSystemScale(
+        DEFAULT_OUTER_RADIUS_AU,
+        TARGET_OUTER_RADIUS_SCENE,
+      ),
+  });
+}
+
+/**
+ * Point-26.2 identified-system projection for DISCOVERED/VISITED.
+ *
+ * This projection intentionally consumes only the state-safe Archive card. It
+ * never materializes StellarSystem Ground Truth. Multiplicity and component
+ * identity are already observed knowledge at this layer, so the renderer may
+ * show the identified star(s) and schematic stellar orbit guides. Physical
+ * masses, radii, luminosities, periods, eccentricities and planetary bodies
+ * remain unavailable until CATALOGUED.
+ */
+function identifiedSceneSnapshot(
+  source:
+    SystemSceneSnapshotSource,
+
+  baseSnapshot:
+    ReturnType<typeof snapshotBase>,
+): SystemSceneSnapshot {
+
+  const card =
+    source.stellarSystemCard;
+
+  const multiplicityName =
+    card.render.multiplicity
+      ?.name ??
+    null;
+
+  const renderComponents =
+    card.render.components;
+
+  const positions =
+    identifiedStarPositions(
+      multiplicityName,
+      renderComponents.length,
+    );
+
+  const orbits =
+    identifiedStellarOrbits(
+      multiplicityName,
+    );
+
+  const stars =
+    Object.freeze(
+      renderComponents.map(
+        (
+          component,
+          index,
+        ) => {
+          const label =
+            component.label;
+
+          const componentCard =
+            card.components.find(
+              candidate =>
+                candidate.componentLabel ===
+                label,
+            ) ??
+            null;
+
+          return Object.freeze({
+            id:
+              `identified-star-${label}`,
+            kind:
+              'star' as const,
+            label,
+            title:
+              componentCard?.designation ??
+              `Estrella ${label}`,
+            colorHex:
+              component.colorHex,
+            radiusScene:
+              IDENTIFIED_STAR_RADIUS_SCENE,
+            position:
+              positions[index] ??
+              positions[0]!,
+            orbitId:
+              identifiedStarOrbitId(
+                multiplicityName,
+                label,
+              ),
+            motionContributions:
+              Object.freeze([]),
+            surfaceStyle:
+              'emissive' as const,
+            lightIntensity:
+              1.4,
+            sourceLuminositySolar:
+              null,
+            spin:
+              Object.freeze({
+                source:
+                  'UNAVAILABLE' as const,
+                rotationPeriodHours:
+                  null,
+                axialTiltDegrees:
+                  null,
+                isRetrograde:
+                  null,
+                isSynchronized:
+                  false,
+                epochPhaseDegrees:
+                  0,
+              }),
+            surfaceEnvironment:
+              null,
+            giantAtmosphere:
+              null,
+            specialPresentation:
+              null,
+          });
+        },
+      ),
+    );
+
+  return Object.freeze({
+    ...baseSnapshot,
+    accessibleLabel:
+      `${baseSnapshot.accessibleLabel} Arquitectura estelar identificada: ${stars.length} componente${stars.length === 1 ? '' : 's'} visible${stars.length === 1 ? '' : 's'} y órbitas estelares esquemáticas; cuerpos planetarios y magnitudes físicas permanecen bloqueados hasta Catalogado.`,
+    stars,
+    planets:
+      Object.freeze([]),
+    moons:
+      Object.freeze([]),
+    minorBodies:
+      Object.freeze([]),
+    asteroidBelts:
+      Object.freeze([]),
+    habitableZone:
+      null,
+    orbitalRiskTargets:
+      Object.freeze([]),
+    layers:
+      emptyLayerAvailability(),
+    orbits,
+    motions:
+      Object.freeze([]),
+    simulation:
+      unavailableSimulation(),
+    scale:
+      buildLinearFitSystemScale(
+        2,
+        IDENTIFIED_TARGET_OUTER_RADIUS_SCENE,
+      ),
+  });
+}
+
+function identifiedStarPositions(
+  multiplicityName:
+    string | null,
+
+  componentCount:
+    number,
+): readonly SystemSceneVector3[] {
+
+  if (
+    multiplicityName ===
+      'BINARY'
+  ) {
+    return Object.freeze([
+      Object.freeze({
+        x: -0.58,
+        y: 0,
+        z: 0,
+      }),
+      Object.freeze({
+        x: 0.58,
+        y: 0,
+        z: 0,
+      }),
+    ]);
+  }
+
+  if (
+    multiplicityName ===
+      'TRIPLE'
+  ) {
+    return Object.freeze([
+      Object.freeze({
+        x: -0.46,
+        y: 0,
+        z: 0,
+      }),
+      Object.freeze({
+        x: 0.46,
+        y: 0,
+        z: 0,
+      }),
+      Object.freeze({
+        x: 0.35,
+        y: 0.18,
+        z: 1.35,
+      }),
+    ]);
+  }
+
+  const count =
+    Math.max(
+      1,
+      componentCount,
+    );
+
+  return Object.freeze(
+    Array.from(
+      {
+        length:
+          count,
+      },
+      () =>
+        Object.freeze({
+          x: 0,
+          y: 0,
+          z: 0,
+        }),
+    ),
+  );
+}
+
+function identifiedStellarOrbits(
+  multiplicityName:
+    string | null,
+): readonly SystemSceneOrbitSnapshot[] {
+
+  if (
+    multiplicityName ===
+      'BINARY'
+  ) {
+    return Object.freeze([
+      identifiedOrbit(
+        'identified-stellar-inner',
+        'Órbita estelar A–B · esquema observado',
+        0.82,
+        0.56,
+        12,
+        18,
+      ),
+    ]);
+  }
+
+  if (
+    multiplicityName ===
+      'TRIPLE'
+  ) {
+    return Object.freeze([
+      identifiedOrbit(
+        'identified-stellar-inner',
+        'Órbita estelar interior A–B · esquema observado',
+        0.70,
+        0.48,
+        10,
+        16,
+      ),
+      identifiedOrbit(
+        'identified-stellar-outer',
+        'Órbita estelar exterior · esquema observado',
+        1.65,
+        1.12,
+        38,
+        24,
+      ),
+    ]);
+  }
+
+  return Object.freeze([]);
+}
+
+function identifiedOrbit(
+  id:
+    string,
+
+  label:
+    string,
+
+  semiMajorScene:
+    number,
+
+  semiMinorScene:
+    number,
+
+  rotationDegrees:
+    number,
+
+  inclinationDegrees:
+    number,
+): SystemSceneOrbitSnapshot {
+
+  return Object.freeze({
+    id,
+    kind:
+      'stellar' as const,
+    label,
+    colorHex:
+      IDENTIFIED_STELLAR_ORBIT_COLOR,
+    opacity:
+      0.32,
+    semiMajorScene,
+    semiMinorScene,
+    focusOffsetScene:
+      0,
+    rotationDegrees,
+    inclinationDegrees,
+    motionId:
+      null,
+    motionScale:
+      1,
+    anchorMotionContributions:
+      Object.freeze([]),
+  });
+}
+
+function identifiedStarOrbitId(
+  multiplicityName:
+    string | null,
+
+  componentLabel:
+    string,
+): string | null {
+
+  if (
+    multiplicityName ===
+      'BINARY'
+  ) {
+    return 'identified-stellar-inner';
+  }
+
+  if (
+    multiplicityName ===
+      'TRIPLE'
+  ) {
+    return componentLabel ===
+      'C'
+      ? 'identified-stellar-outer'
+      : 'identified-stellar-inner';
+  }
+
+  return null;
+}
+
+function emptyLayerAvailability():
+  SystemSceneLayerAvailabilitySnapshot {
+
+  return Object.freeze({
+    moonCount: 0,
+    minorBodyCount: 0,
+    habitableZoneAvailable: false,
+    orbitalRiskTargetCount: 0,
+    orbitalCrossingTargetCount: 0,
+    orbitalApproachTargetCount: 0,
+    orbitalCollisionGeometryTargetCount: 0,
+  });
+}
+
+function unavailableSimulation():
+  SystemSceneSimulationSnapshot {
+
+  return Object.freeze({
+    epochSimulationDay:
+      0,
+    playbackDaysPerRealSecond:
+      1,
+  });
 }
 
 function snapshotBase(

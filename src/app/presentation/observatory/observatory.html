@@ -171,7 +171,8 @@
                       @for (action of campaign.actions; track action.ruleCode) {
                         <section
                           class="observatory__action"
-                          [class.observatory__action--available]="action.isAvailable"
+                          [class.observatory__action--available]="action.isAvailable && !action.isCompleted"
+                          [class.observatory__action--complete]="action.isCompleted"
                         >
                           <div>
                             <small>{{ action.dimensionLabel }}</small>
@@ -193,10 +194,16 @@
                           <button
                             type="button"
                             [attr.data-rule-code]="action.ruleCode"
-                            [disabled]="!action.isAvailable || facade.actionPending()"
+                            [disabled]="
+                              action.isCompleted ||
+                              !action.isAvailable ||
+                              facade.actionPending()
+                            "
                             (click)="performObservation(action)"
                           >
-                            @if (facade.actionPending()) {
+                            @if (action.isCompleted) {
+                              Ya aplicada
+                            } @else if (facade.actionPending()) {
                               Procesando…
                             } @else if (action.isAvailable) {
                               Realizar observación
