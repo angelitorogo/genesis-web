@@ -162,58 +162,56 @@
                   <header>
                     <div>
                       <small>OBSERVATION ENGINE / INSTRUMENTOS</small>
-                      <h2>Observaciones de esta etapa</h2>
+                      <h2>Campaña de esta etapa</h2>
                     </div>
                   </header>
 
-                  @if (campaign.actions.length > 0) {
-                    <div class="observatory__action-grid">
-                      @for (action of campaign.actions; track action.ruleCode) {
-                        <section
-                          class="observatory__action"
-                          [class.observatory__action--available]="action.isAvailable && !action.isCompleted"
-                          [class.observatory__action--complete]="action.isCompleted"
-                        >
-                          <div>
-                            <small>{{ action.dimensionLabel }}</small>
-                            <strong>{{ action.label }}</strong>
-                            <span>
-                              {{ action.instrumentLabel }} · L{{ action.selectedLevelRank }}
-                              (mín. L{{ action.minimumLevelRank }})
-                            </span>
-                          </div>
+                  @if (campaign.stageAction; as stageAction) {
+                    <section
+                      class="observatory__action observatory__action--stage"
+                      data-testid="observatory-stage-action"
+                      [class.observatory__action--available]="stageAction.isAvailable && !stageAction.isComplete"
+                      [class.observatory__action--complete]="stageAction.isComplete"
+                    >
+                      <div>
+                        <small>CAMPAÑA COORDINADA</small>
+                        <strong>{{ stageAction.label }}</strong>
+                        <span>{{ stageAction.description }}</span>
+                        <span>
+                          {{ stageAction.instrumentSummary }} ·
+                          {{ stageAction.pendingObservationCount }} medición{{ stageAction.pendingObservationCount === 1 ? '' : 'es' }} interna{{ stageAction.pendingObservationCount === 1 ? '' : 's' }}
+                        </span>
+                      </div>
 
-                          @if (action.pendingRequirements.length > 0) {
-                            <ul>
-                              @for (requirement of action.pendingRequirements; track requirement) {
-                                <li>{{ requirement }}</li>
-                              }
-                            </ul>
+                      @if (!stageAction.isComplete && stageAction.pendingRequirements.length > 0) {
+                        <ul>
+                          @for (requirement of stageAction.pendingRequirements; track requirement) {
+                            <li>{{ requirement }}</li>
                           }
-
-                          <button
-                            type="button"
-                            [attr.data-rule-code]="action.ruleCode"
-                            [disabled]="
-                              action.isCompleted ||
-                              !action.isAvailable ||
-                              facade.actionPending()
-                            "
-                            (click)="performObservation(action)"
-                          >
-                            @if (action.isCompleted) {
-                              Ya aplicada
-                            } @else if (facade.actionPending()) {
-                              Procesando…
-                            } @else if (action.isAvailable) {
-                              Realizar observación
-                            } @else {
-                              Observación bloqueada
-                            }
-                          </button>
-                        </section>
+                        </ul>
                       }
-                    </div>
+
+                      <button
+                        type="button"
+                        data-testid="observatory-stage-action-button"
+                        [disabled]="
+                          stageAction.isComplete ||
+                          !stageAction.isAvailable ||
+                          facade.actionPending()
+                        "
+                        (click)="performStageObservation()"
+                      >
+                        @if (stageAction.isComplete) {
+                          Etapa completada
+                        } @else if (facade.actionPending()) {
+                          Procesando campaña…
+                        } @else if (stageAction.isAvailable) {
+                          {{ stageAction.buttonLabel }}
+                        } @else {
+                          Campaña bloqueada
+                        }
+                      </button>
+                    </section>
                   } @else if (campaign.discoveryStateLabel === 'Descubierto') {
                     <div
                       class="observatory__transition-note"

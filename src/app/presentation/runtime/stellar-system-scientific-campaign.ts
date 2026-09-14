@@ -81,6 +81,38 @@ export interface StellarSystemScientificCampaignActionModel {
     readonly string[];
 }
 
+export interface StellarSystemScientificCampaignStageActionModel {
+  readonly label:
+    string;
+
+  readonly description:
+    string;
+
+  readonly buttonLabel:
+    string;
+
+  readonly pendingObservationCount:
+    number;
+
+  readonly completedObservationCount:
+    number;
+
+  readonly totalObservationCount:
+    number;
+
+  readonly instrumentSummary:
+    string;
+
+  readonly isAvailable:
+    boolean;
+
+  readonly isComplete:
+    boolean;
+
+  readonly pendingRequirements:
+    readonly string[];
+}
+
 export interface StellarSystemScientificCampaignModel {
   readonly discoveryState:
     DiscoveryStateValue;
@@ -114,6 +146,15 @@ export interface StellarSystemScientificCampaignModel {
 
   readonly actions:
     readonly StellarSystemScientificCampaignActionModel[];
+
+  /**
+   * One player-facing action for the whole current scientific stage. The
+   * individual observation rules remain available in `actions` as internal
+   * evidence mechanics, but Archive/Observatory must never expose one button
+   * per rule.
+   */
+  readonly stageAction?:
+    StellarSystemScientificCampaignStageActionModel | null;
 }
 
 /**
@@ -142,6 +183,17 @@ export class StellarSystemScientificCampaignAssembler {
           completeness.totalWeight
         ) *
         100,
+      );
+
+    const actions =
+      Object.freeze(
+        snapshot.rules.map(
+          rule =>
+            buildAction(
+              snapshot,
+              rule,
+            ),
+        ),
       );
 
     return Object.freeze({
@@ -200,18 +252,167 @@ export class StellarSystemScientificCampaignAssembler {
           ),
         ),
 
-      actions:
-        Object.freeze(
-          snapshot.rules.map(
-            rule =>
-              buildAction(
-                snapshot,
-                rule,
-              ),
-          ),
+      actions,
+
+      stageAction:
+        buildStageAction(
+          snapshot.discoveryState,
+          actions,
         ),
     });
   }
+}
+
+function buildStageAction(
+  state:
+    DiscoveryStateValue,
+
+  actions:
+    readonly StellarSystemScientificCampaignActionModel[],
+): StellarSystemScientificCampaignStageActionModel | null {
+
+  const canonical =
+    DiscoveryState.fromCode(
+      state.code,
+    );
+
+  if (
+    canonical ===
+      DiscoveryState.DISCOVERED ||
+    canonical ===
+      DiscoveryState.CONFIRMED ||
+    actions.length ===
+      0
+  ) {
+    return null;
+  }
+
+  const pending =
+    actions.filter(
+      action =>
+        action.isCompleted !==
+        true,
+    );
+
+  const completedObservationCount =
+    actions.length -
+    pending.length;
+
+  const pendingRequirements =
+    Object.freeze(
+      [
+        ...new Set(
+          pending.flatMap(
+            action =>
+              action.pendingRequirements,
+          ),
+        ),
+      ],
+    );
+
+  const instrumentSummary =
+    [
+      ...new Set(
+        (
+          pending.length >
+            0
+            ? pending
+            : actions
+        ).map(
+          action =>
+            `${action.instrumentLabel} · L${action.selectedLevelRank}`,
+        ),
+      ),
+    ].join(
+      ' · ',
+    );
+
+  const copy =
+    stageCopy(
+      canonical,
+    );
+
+  return Object.freeze({
+    ...copy,
+    pendingObservationCount:
+      pending.length,
+    completedObservationCount,
+    totalObservationCount:
+      actions.length,
+    instrumentSummary,
+    isAvailable:
+      pending.length >
+        0 &&
+      pending.every(
+        action =>
+          action.isAvailable,
+      ),
+    isComplete:
+      pending.length ===
+      0,
+    pendingRequirements,
+  });
+}
+
+function stageCopy(
+  state:
+    DiscoveryStateValue,
+): Readonly<{
+  label: string;
+  description: string;
+  buttonLabel: string;
+}> {
+
+  if (
+    state ===
+    DiscoveryState.DETECTED
+  ) {
+    return Object.freeze({
+      label:
+        'Resolver descubrimiento del sistema',
+      description:
+        'Integra naturaleza estelar, identidad y arquitectura básica en una única campaña observacional.',
+      buttonLabel:
+        'RESOLVER DESCUBRIMIENTO',
+    });
+  }
+
+  if (
+    state ===
+    DiscoveryState.VISITED
+  ) {
+    return Object.freeze({
+      label:
+        'Completar catalogación científica',
+      description:
+        'Coordina automáticamente las mediciones necesarias de clasificación, propiedades físicas y arquitectura orbital.',
+      buttonLabel:
+        'CATALOGAR SISTEMA',
+    });
+  }
+
+  if (
+    state ===
+    DiscoveryState.CATALOGUED
+  ) {
+    return Object.freeze({
+      label:
+        'Confirmar caracterización del sistema',
+      description:
+        'Obtiene la evidencia independiente final necesaria para cerrar la caracterización científica del sistema.',
+      buttonLabel:
+        'CONFIRMAR SISTEMA',
+    });
+  }
+
+  return Object.freeze({
+    label:
+      'Campaña científica',
+    description:
+      'Ejecuta de forma coordinada las observaciones pendientes de esta etapa.',
+    buttonLabel:
+      'REALIZAR CAMPAÑA',
+  });
 }
 
 function buildAction(

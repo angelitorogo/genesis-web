@@ -1,4 +1,5 @@
 import {
+  DiscoveryState,
   type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
 
@@ -773,9 +774,9 @@ export interface SystemSceneSnapshotSource {
     ArchiveStellarSystemCardModel;
 
   /**
-   * Laboratory/debug-only Ground Truth reveal for phase-22 minor bodies.
-   * Gameplay callers leave this false so undiscovered individual bodies are
-   * never leaked by the system renderer.
+   * Explicit laboratory/debug override for phase-22 minor bodies. Production
+   * gameplay does not need to set it: a CONFIRMED host system now authorizes
+   * the same read-only materialization boundary used by the 26.6 fiche.
    */
   readonly revealMinorBodyGroundTruth?:
     boolean;
@@ -1575,7 +1576,9 @@ function materializeSceneWorld(
       locator,
       system,
       source.revealMinorBodyGroundTruth ===
-        true,
+        true ||
+      source.discoveryState.code >=
+        DiscoveryState.CONFIRMED.code,
     );
 
   return Object.freeze({

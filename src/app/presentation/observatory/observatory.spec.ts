@@ -101,7 +101,7 @@ describe(
     );
 
     it(
-      'should load the targeted system without recording VISITED and execute the selected A9 observation through the shared facade',
+      'should load the targeted system without recording VISITED and execute one coordinated stage campaign through the shared facade',
       async () => {
         const model =
           stellarModel();
@@ -170,7 +170,7 @@ describe(
 
         const button =
           element.querySelector<HTMLButtonElement>(
-            '[data-rule-code="RESOLVE_NATURE_OPTICAL"]',
+            '[data-testid="observatory-stage-action-button"]',
           );
 
         expect(button).toBeTruthy();
@@ -179,9 +179,9 @@ describe(
         button?.click();
 
         expect(
-          facade.performStellarSystemObservation,
-        ).toHaveBeenCalledWith(
-          StellarSystemScientificObservationRuleCode.RESOLVE_NATURE_OPTICAL,
+          facade.performStellarSystemStageObservation,
+        ).toHaveBeenCalledTimes(
+          1,
         );
       },
     );
@@ -221,6 +221,18 @@ describe(
                         true,
                     }),
                   ]),
+                stageAction:
+                  Object.freeze({
+                    ...base.stellarSystemScientificCampaign!.stageAction!,
+                    pendingObservationCount:
+                      0,
+                    completedObservationCount:
+                      1,
+                    isAvailable:
+                      false,
+                    isComplete:
+                      true,
+                  }),
               }),
           });
 
@@ -267,7 +279,7 @@ describe(
               HTMLElement
           )
             .querySelector<HTMLButtonElement>(
-              '[data-rule-code="RESOLVE_NATURE_OPTICAL"]',
+              '[data-testid="observatory-stage-action-button"]',
             );
 
         expect(
@@ -277,13 +289,13 @@ describe(
         expect(
           button?.textContent,
         ).toContain(
-          'Ya aplicada',
+          'Etapa completada',
         );
 
         button?.click();
 
         expect(
-          facade.performStellarSystemObservation,
+          facade.performStellarSystemStageObservation,
         ).not.toHaveBeenCalled();
       },
     );
@@ -393,6 +405,13 @@ function facadeStub(
         .mockResolvedValue(
           undefined,
         ),
+
+    performStellarSystemStageObservation:
+      vi
+        .fn()
+        .mockResolvedValue(
+          undefined,
+        ),
   };
 }
 
@@ -482,6 +501,29 @@ function stellarModel():
                 Object.freeze([]),
             }),
           ]),
+        stageAction:
+          Object.freeze({
+            label:
+              'Resolver descubrimiento del sistema',
+            description:
+              'Integra la etapa en una sola campaña.',
+            buttonLabel:
+              'RESOLVER DESCUBRIMIENTO',
+            pendingObservationCount:
+              1,
+            completedObservationCount:
+              0,
+            totalObservationCount:
+              1,
+            instrumentSummary:
+              'Óptico · L1',
+            isAvailable:
+              true,
+            isComplete:
+              false,
+            pendingRequirements:
+              Object.freeze([]),
+          }),
       }),
     stellarSystemScientificAction:
       null,

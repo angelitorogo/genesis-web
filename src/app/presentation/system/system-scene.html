@@ -393,6 +393,20 @@
                 </a>
               }
             }
+
+
+            @if (bodyCard.kind === 'minor-body') {
+              @if (minorBodyScientificFicheRoute(); as minorBodyFicheRoute) {
+                <a
+                  class="system-scene__follow-button"
+                  data-testid="system-scene-minor-body-fiche-link"
+                  [routerLink]="minorBodyFicheRoute"
+                  [queryParams]="planetScientificFicheQueryParams()"
+                >
+                  ABRIR FICHA CIENTÍFICA
+                </a>
+              }
+            }
           </div>
 
           <small class="system-scene__body-card-contract">

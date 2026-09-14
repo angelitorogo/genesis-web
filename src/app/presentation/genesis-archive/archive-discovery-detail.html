@@ -195,84 +195,82 @@
                     }
                   </div>
 
-                  @if (campaign.actions.length > 0) {
+                  @if (campaign.stageAction; as stageAction) {
                     <section
                       class="archive-discovery-detail__campaign-observations"
                       data-testid="archive-stellar-system-scientific-actions"
                     >
                       <div>
                         <small class="archive-discovery-detail__eyebrow">
-                          OBSERVATION ENGINE / INSTRUMENTOS
+                          CAMPAÑA OBSERVACIONAL / ETAPA ÚNICA
                         </small>
-                        <h3>Observaciones de esta etapa</h3>
+                        <h3>{{ stageAction.label }}</h3>
+                        <p>{{ stageAction.description }}</p>
                       </div>
 
-                      <div class="archive-discovery-detail__stellar-component-grid archive-discovery-detail__campaign-action-grid">
-                        @for (action of campaign.actions; track action.ruleCode) {
-                          <article
-                            class="archive-discovery-detail__scientific-action"
-                            [attr.data-action-status]="
-                              action.isCompleted
-                                ? 'completed'
-                                : action.isAvailable
-                                  ? 'available'
-                                  : 'blocked'
-                            "
-                          >
-                            <div class="archive-discovery-detail__scientific-action-header">
-                              <div>
-                                <small>{{ action.dimensionLabel }}</small>
-                                <strong>{{ action.label }}</strong>
-                              </div>
+                      <article
+                        class="archive-discovery-detail__scientific-action"
+                        data-testid="archive-stellar-system-stage-action"
+                        [attr.data-action-status]="
+                          stageAction.isComplete
+                            ? 'completed'
+                            : stageAction.isAvailable
+                              ? 'available'
+                              : 'blocked'
+                        "
+                      >
+                        <div class="archive-discovery-detail__scientific-action-header">
+                          <div>
+                            <small>Observación coordinada</small>
+                            <strong>Una sola acción para completar la etapa</strong>
+                          </div>
 
-                              <span>
-                                @if (action.isCompleted) {
-                                  YA APLICADA
-                                } @else if (action.isAvailable) {
-                                  DISPONIBLE
-                                } @else {
-                                  BLOQUEADA
-                                }
-                              </span>
-                            </div>
-
-                            <p>
-                              {{ action.instrumentLabel }} · L{{ action.selectedLevelRank }}
-                              (mín. L{{ action.minimumLevelRank }})
-                            </p>
-
-                            @if (!action.isCompleted && action.pendingRequirements.length > 0) {
-                              <ul class="archive-discovery-detail__instrument-list">
-                                @for (requirement of action.pendingRequirements; track requirement) {
-                                  <li>{{ requirement }}</li>
-                                }
-                              </ul>
+                          <span>
+                            @if (stageAction.isComplete) {
+                              COMPLETA
+                            } @else if (stageAction.isAvailable) {
+                              DISPONIBLE
+                            } @else {
+                              BLOQUEADA
                             }
+                          </span>
+                        </div>
 
-                            <button
-                              genesis-primary-button
-                              type="button"
-                              [attr.data-rule-code]="action.ruleCode"
-                              [disabled]="
-                                action.isCompleted ||
-                                !action.isAvailable ||
-                                facade.actionPending()
-                              "
-                              (click)="performStellarSystemObservation(action)"
-                            >
-                              @if (action.isCompleted) {
-                                YA APLICADA
-                              } @else if (facade.actionPending()) {
-                                Procesando…
-                              } @else if (action.isAvailable) {
-                                REALIZAR OBSERVACIÓN
-                              } @else {
-                                OBSERVACIÓN BLOQUEADA
-                              }
-                            </button>
-                          </article>
+                        <p>
+                          {{ stageAction.instrumentSummary }} ·
+                          {{ stageAction.pendingObservationCount }} medición{{ stageAction.pendingObservationCount === 1 ? '' : 'es' }} coordinada{{ stageAction.pendingObservationCount === 1 ? '' : 's' }} internamente
+                        </p>
+
+                        @if (!stageAction.isComplete && stageAction.pendingRequirements.length > 0) {
+                          <ul class="archive-discovery-detail__instrument-list">
+                            @for (requirement of stageAction.pendingRequirements; track requirement) {
+                              <li>{{ requirement }}</li>
+                            }
+                          </ul>
                         }
-                      </div>
+
+                        <button
+                          genesis-primary-button
+                          type="button"
+                          data-testid="archive-stellar-system-stage-action-button"
+                          [disabled]="
+                            stageAction.isComplete ||
+                            !stageAction.isAvailable ||
+                            facade.actionPending()
+                          "
+                          (click)="performStellarSystemStageObservation()"
+                        >
+                          @if (stageAction.isComplete) {
+                            ETAPA COMPLETADA
+                          } @else if (facade.actionPending()) {
+                            Procesando campaña…
+                          } @else if (stageAction.isAvailable) {
+                            {{ stageAction.buttonLabel }}
+                          } @else {
+                            CAMPAÑA BLOQUEADA
+                          }
+                        </button>
+                      </article>
                     </section>
                   } @else if (campaign.discoveryStateLabel === 'Descubierto') {
                     <p

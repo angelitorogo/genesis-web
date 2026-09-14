@@ -756,6 +756,181 @@ export class ArchiveDiscoveryDetailFacade {
     }
   }
 
+  async performStellarSystemStageObservation():
+    Promise<void> {
+
+    const request =
+      this.currentRequest;
+
+    const generationKey =
+      this.currentGenerationKey;
+
+    const locator =
+      this.currentLocator;
+
+    const campaign =
+      this
+        .model()
+        ?.stellarSystemScientificCampaign ??
+      null;
+
+    if (
+      request ===
+        null ||
+      generationKey ===
+        null ||
+      !(locator instanceof
+        SystemLocator) ||
+      campaign ===
+        null
+    ) {
+      this
+        .actionErrorSignal
+        .set(
+          'No hay una etapa científica válida seleccionada para este sistema.',
+        );
+
+      return;
+    }
+
+    const pendingActions =
+      campaign.actions.filter(
+        action =>
+          action.isCompleted !==
+          true,
+      );
+
+    if (
+      pendingActions.length ===
+      0
+    ) {
+      this
+        .actionErrorSignal
+        .set(
+          null,
+        );
+
+      this
+        .actionFeedbackSignal
+        .set(
+          'La campaña observacional de esta etapa ya está completada.',
+        );
+
+      return;
+    }
+
+    if (
+      pendingActions.some(
+        action =>
+          !action.isAvailable,
+      )
+    ) {
+      this
+        .actionErrorSignal
+        .set(
+          'La campaña de esta etapa sigue bloqueada por requisitos de progresión o instrumentación.',
+        );
+
+      return;
+    }
+
+    if (
+      this.actionPending()
+    ) {
+      return;
+    }
+
+    this
+      .actionPendingSignal
+      .set(
+        true,
+      );
+
+    this
+      .actionErrorSignal
+      .set(
+        null,
+      );
+
+    this
+      .actionFeedbackSignal
+      .set(
+        null,
+      );
+
+    try {
+      let totalAwardedDiscoveryPoints =
+        0;
+
+      const stageStateCode =
+        campaign.discoveryState.code;
+
+      for (
+        const action
+        of pendingActions
+      ) {
+        const committed =
+          await this
+            .stellarSystemScientificProgressionRuntime
+            .performObservation(
+              generationKey,
+              locator,
+              action.ruleCode,
+            );
+
+        totalAwardedDiscoveryPoints +=
+          committed.awardedDiscoveryPoints;
+
+        if (
+          committed.stateAfter.code !==
+          stageStateCode
+        ) {
+          break;
+        }
+      }
+
+      await this
+        .resolveDetails(
+          request,
+        );
+
+      const rewardSuffix =
+        totalAwardedDiscoveryPoints >
+          0
+          ? ` · +${totalAwardedDiscoveryPoints} PD`
+          : '';
+
+      const visibleState =
+        this
+          .model()
+          ?.discoveryState ??
+        campaign.discoveryState;
+
+      this
+        .actionFeedbackSignal
+        .set(
+          `Campaña de etapa completada${rewardSuffix} · ${stateLabel(visibleState)}.`,
+        );
+    } catch (
+      error
+    ) {
+      this
+        .actionErrorSignal
+        .set(
+          error instanceof
+            Error
+            ? error.message
+            : 'No se pudo completar la campaña observacional de esta etapa.',
+        );
+    } finally {
+      this
+        .actionPendingSignal
+        .set(
+          false,
+        );
+    }
+  }
+
   private async resolveDetails(
     request:
       ArchiveDiscoveryDetailRequest,

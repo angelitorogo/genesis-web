@@ -1,10 +1,18 @@
 import {
+  vi,
+} from 'vitest';
+
+import {
   DiscoveryState,
 } from '../../domain/discovery/discovery-state';
 
 import {
   ExplorationResultKind,
 } from '../../domain/exploration/exploration-sector-result';
+
+import {
+  AsteroidBeltGenerator,
+} from '../../simulation/planetary/asteroid-belt-generator';
 
 import {
   ArchiveDiscoveryLocatorKind,
@@ -352,6 +360,65 @@ describe(
           'Zona habitable',
         );
       },
+    );
+
+    it(
+      'should automatically materialize phase-22 minor bodies for a CONFIRMED production system',
+      () => {
+        const asteroidGenerator =
+          vi.spyOn(
+            AsteroidBeltGenerator,
+            'generate',
+          );
+
+        const catalogued =
+          systemModel();
+
+        SystemSceneSnapshotBuilder
+          .build(
+            catalogued,
+          );
+
+        expect(
+          asteroidGenerator,
+        ).not.toHaveBeenCalled();
+
+        const confirmed =
+          {
+            ...catalogued,
+            discoveryState:
+              DiscoveryState.CONFIRMED,
+            discoveryStateLabel:
+              'Confirmado',
+            stellarSystemCard: {
+              ...catalogued.stellarSystemCard!,
+              knowledgeLevel:
+                ArchiveStellarSystemKnowledgeLevel.CONFIRMED,
+            },
+          } as ArchiveDiscoveryDetailModel;
+
+        const snapshot =
+          SystemSceneSnapshotBuilder
+            .build(
+              confirmed,
+            );
+
+        expect(
+          asteroidGenerator,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          snapshot.layers.minorBodyCount,
+        ).toBe(
+          snapshot.minorBodies.length,
+        );
+
+        asteroidGenerator
+          .mockRestore();
+      },
+      30_000,
     );
 
     it(

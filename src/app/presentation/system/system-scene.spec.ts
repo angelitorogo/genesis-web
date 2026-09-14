@@ -1017,6 +1017,86 @@ describe(
         ).toContain(
           '/system/3/-17/8/planet/0/moon/0',
         );
+
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'minor-1-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+            kind:
+              'minor-body' as const,
+            label:
+              'AST-001',
+            title:
+              'Asteroide AST-001',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const minorBodyFicheLink =
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="system-scene-minor-body-fiche-link"]',
+          );
+
+        expect(minorBodyFicheLink).toBeTruthy();
+        expect(
+          minorBodyFicheLink?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          '/system/3/-17/8/minor-body/asteroid/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+        );
+
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'minor-2-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+            kind:
+              'minor-body' as const,
+            label:
+              'COM-005',
+            title:
+              'Cometa COM-005',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="system-scene-minor-body-fiche-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toContain(
+          '/system/3/-17/8/minor-body/comet/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+        );
+
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'minor-3-CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+            kind:
+              'minor-body' as const,
+            label:
+              'TNO-003',
+            title:
+              'TNO TNO-003',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-minor-body-fiche-link"]',
+          ),
+        ).toBeNull();
       },
     );
 

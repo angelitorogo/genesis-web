@@ -19,10 +19,6 @@ import {
   ArchiveDiscoveryLocatorKind,
 } from '../genesis-archive/archive-discovery-detail.facade';
 
-import {
-  type StellarSystemScientificCampaignActionModel,
-} from '../runtime/stellar-system-scientific-campaign';
-
 @Component({
   selector:
     'app-observatory',
@@ -136,14 +132,10 @@ export class Observatory
       });
   }
 
-  performObservation(
-    action:
-      StellarSystemScientificCampaignActionModel,
-  ): void {
+  performStageObservation():
+    void {
 
     if (
-      action.isCompleted ||
-      !action.isAvailable ||
       this.facade.actionPending()
     ) {
       return;
@@ -151,8 +143,6 @@ export class Observatory
 
     void this
       .facade
-      .performStellarSystemObservation(
-        action.ruleCode,
-      );
+      .performStellarSystemStageObservation();
   }
 }

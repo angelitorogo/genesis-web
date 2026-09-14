@@ -433,6 +433,29 @@ describe(
                     Object.freeze([]),
                 }),
               ]),
+            stageAction:
+              Object.freeze({
+                label:
+                  'Resolver descubrimiento del sistema',
+                description:
+                  'Integra la etapa en una sola campaña.',
+                buttonLabel:
+                  'RESOLVER DESCUBRIMIENTO',
+                pendingObservationCount:
+                  1,
+                completedObservationCount:
+                  0,
+                totalObservationCount:
+                  1,
+                instrumentSummary:
+                  'Óptico · L2',
+                isAvailable:
+                  true,
+                isComplete:
+                  false,
+                pendingRequirements:
+                  Object.freeze([]),
+              }),
           });
 
         const modelSignal =
@@ -445,7 +468,7 @@ describe(
             }),
           );
 
-        const performStellarSystemObservation =
+        const performStellarSystemStageObservation =
           vi
             .fn()
             .mockImplementation(
@@ -473,6 +496,18 @@ describe(
                                 true,
                             }),
                           ]),
+                        stageAction:
+                          Object.freeze({
+                            ...baseCampaign.stageAction!,
+                            pendingObservationCount:
+                              0,
+                            completedObservationCount:
+                              1,
+                            isAvailable:
+                              false,
+                            isComplete:
+                              true,
+                          }),
                       }),
                   }),
                 );
@@ -534,7 +569,7 @@ describe(
                     null,
                   actionError: () =>
                     null,
-                  performStellarSystemObservation,
+                  performStellarSystemStageObservation,
                   performScientificAction:
                     vi.fn(),
                   load:
@@ -561,7 +596,7 @@ describe(
 
         const actionButton =
           element.querySelector<HTMLButtonElement>(
-            '[data-rule-code="RESOLVE_NATURE_OPTICAL"]',
+            '[data-testid="archive-stellar-system-stage-action-button"]',
           );
 
         expect(
@@ -589,16 +624,16 @@ describe(
         actionButton?.click();
 
         expect(
-          performStellarSystemObservation,
-        ).toHaveBeenCalledWith(
-          ruleCode,
+          performStellarSystemStageObservation,
+        ).toHaveBeenCalledTimes(
+          1,
         );
 
         fixture.detectChanges();
 
         const appliedButton =
           element.querySelector<HTMLButtonElement>(
-            '[data-rule-code="RESOLVE_NATURE_OPTICAL"]',
+            '[data-testid="archive-stellar-system-stage-action-button"]',
           );
 
         expect(
@@ -608,7 +643,7 @@ describe(
         expect(
           appliedButton?.textContent,
         ).toContain(
-          'YA APLICADA',
+          'ETAPA COMPLETADA',
         );
 
         expect(

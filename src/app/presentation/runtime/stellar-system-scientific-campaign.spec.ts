@@ -105,6 +105,20 @@ describe(
           'Descubrir el primer sistema',
           'Catalogar el primer sistema',
         ]);
+        expect(model.stageAction).not.toBeNull();
+        expect(model.stageAction?.label).toBe(
+          'Resolver descubrimiento del sistema',
+        );
+        expect(model.stageAction?.buttonLabel).toBe(
+          'RESOLVER DESCUBRIMIENTO',
+        );
+        expect(model.stageAction?.pendingObservationCount).toBe(1);
+        expect(model.stageAction?.isAvailable).toBe(false);
+        expect(model.stageAction?.pendingRequirements).toEqual([
+          '250 PD adicionales',
+          'Descubrir el primer sistema',
+          'Catalogar el primer sistema',
+        ]);
       },
     );
 
@@ -233,6 +247,73 @@ describe(
             .actions[0]
             ?.isCompleted,
         ).toBe(true);
+      },
+    );
+
+    it(
+      'should aggregate every internal observation rule into one player-facing stage action',
+      () => {
+        const rules =
+          [
+            StellarSystemScientificObservationRuleCode.CLASSIFICATION_PHOTOMETRY,
+            StellarSystemScientificObservationRuleCode.PHYSICAL_PROPERTIES_OPTICAL,
+            StellarSystemScientificObservationRuleCode.PHYSICAL_PROPERTIES_RADIO,
+            StellarSystemScientificObservationRuleCode.ORBITAL_ARCHITECTURE_ASTROMETRY,
+            StellarSystemScientificObservationRuleCode.ORBITAL_ARCHITECTURE_RADIO_TIMING,
+          ].map(
+            ruleCode => {
+              const rule =
+                StellarSystemScientificObservationCatalogV1.rule(
+                  ruleCode,
+                );
+
+              return Object.freeze({
+                ruleCode,
+                dimensionCode:
+                  rule.dimensionCode,
+                instrumentType:
+                  rule.compatibleInstrumentTypes[0]!,
+                selectedLevel:
+                  ObservationInstrumentLevel.LEVEL_4,
+                minimumLevel:
+                  ObservationInstrumentLevel.LEVEL_2,
+                isAvailable:
+                  true,
+                missingGlobalDiscoveryPoints:
+                  0n,
+                missingMilestones:
+                  Object.freeze([]),
+              });
+            },
+          );
+
+        const model =
+          StellarSystemScientificCampaignAssembler.build(
+            new StellarSystemScientificProgressionSnapshot(
+              DiscoveryState.VISITED,
+              [],
+              evaluateScientificCompleteness(
+                STELLAR_SYSTEM_SCIENTIFIC_PROFILE_V1
+                  .cataloguingProfile
+                  .requirements,
+                [],
+              ),
+              10_000n,
+              1_000n,
+              rules,
+            ),
+          );
+
+        expect(model.actions).toHaveLength(5);
+        expect(model.stageAction).not.toBeNull();
+        expect(model.stageAction?.label).toBe(
+          'Completar catalogación científica',
+        );
+        expect(model.stageAction?.buttonLabel).toBe(
+          'CATALOGAR SISTEMA',
+        );
+        expect(model.stageAction?.pendingObservationCount).toBe(5);
+        expect(model.stageAction?.isAvailable).toBe(true);
       },
     );
 

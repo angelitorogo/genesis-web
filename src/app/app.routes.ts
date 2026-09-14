@@ -33,6 +33,16 @@ export const genesisRoutes: Routes = [
     title: 'Mapa galáctico | GENESIS',
   },
   {
+    path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/minor-body/:minorBodyKind/:proceduralId',
+    loadComponent: () =>
+      import(
+        './presentation/minor-body-detail/minor-body-detail'
+      ).then(
+        (module) => module.MinorBodyDetailPage,
+      ),
+    title: 'Ficha de asteroide / cometa | GENESIS',
+  },
+  {
     path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/planet/:bodyIndex/moon/:moonIndex',
     loadComponent: () =>
       import(

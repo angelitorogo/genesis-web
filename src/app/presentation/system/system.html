@@ -442,10 +442,10 @@
                       }
                     </div>
 
-                    @if (campaign.actions.length > 0) {
+                    @if (campaign.stageAction; as stageAction) {
                       <p class="system-page__campaign-note">
-                        Hay {{ campaign.actions.length }} observaciones definidas para esta etapa.
-                        Su disponibilidad depende de PD globales, hitos e instrumentos desbloqueados.
+                        Esta etapa se resuelve como una única campaña observacional.
+                        Coordina {{ stageAction.pendingObservationCount }} medición{{ stageAction.pendingObservationCount === 1 ? '' : 'es' }} interna{{ stageAction.pendingObservationCount === 1 ? '' : 's' }} sin exponer microacciones al jugador.
                       </p>
                     } @else if (campaign.discoveryStateLabel === 'Descubierto') {
                       <p class="system-page__campaign-note">

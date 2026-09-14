@@ -716,6 +716,80 @@ export class SystemScene
     ]);
   }
 
+  minorBodyScientificFicheRoute():
+    readonly string[] | null {
+
+    if (
+      !this.scientificBodyFichesUnlocked()
+    ) {
+      return null;
+    }
+
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection ===
+        null ||
+      selection.kind !==
+        'minor-body'
+    ) {
+      return null;
+    }
+
+    const body =
+      this.snapshot.minorBodies.find(
+        candidate =>
+          candidate.id ===
+          selection.bodyId,
+      );
+
+    if (
+      body ===
+        undefined
+    ) {
+      return null;
+    }
+
+    const targetKind =
+      body.minorBodyKind.name ===
+        'ASTEROID'
+        ? 'asteroid'
+        : body.minorBodyKind.name ===
+          'COMET'
+          ? 'comet'
+          : null;
+
+    if (
+      targetKind ===
+        null
+    ) {
+      return null;
+    }
+
+    const match =
+      /^minor-\d+-([0-9A-F]{32})$/.exec(
+        body.id,
+      );
+
+    if (
+      match ===
+        null
+    ) {
+      return null;
+    }
+
+    return Object.freeze([
+      '/system',
+      this.snapshot.address.galaxyIndex,
+      this.snapshot.address.sectorKey,
+      this.snapshot.address.galacticObjectIndex,
+      'minor-body',
+      targetKind,
+      match[1]!,
+    ]);
+  }
+
   planetScientificFicheQueryParams():
     Readonly<{
       seed: string;

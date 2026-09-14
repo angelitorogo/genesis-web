@@ -28,10 +28,6 @@ import {
 
 
 import {
-  type StellarSystemScientificCampaignActionModel,
-} from '../runtime/stellar-system-scientific-campaign';
-
-import {
   ArchiveDiscoveryDetailFacade,
   ArchiveDiscoveryLocatorKind,
 } from './archive-discovery-detail.facade';
@@ -91,14 +87,10 @@ export class ArchiveDiscoveryDetail
   }
 
 
-  performStellarSystemObservation(
-    action:
-      StellarSystemScientificCampaignActionModel,
-  ): void {
+  performStellarSystemStageObservation():
+    void {
 
     if (
-      action.isCompleted ||
-      !action.isAvailable ||
       this.facade.actionPending()
     ) {
       return;
@@ -106,9 +98,7 @@ export class ArchiveDiscoveryDetail
 
     void this
       .facade
-      .performStellarSystemObservation(
-        action.ruleCode,
-      );
+      .performStellarSystemStageObservation();
   }
 
   ngOnInit():

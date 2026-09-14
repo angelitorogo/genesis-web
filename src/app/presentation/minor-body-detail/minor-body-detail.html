@@ -1,0 +1,217 @@
+<genesis-screen>
+  <main
+    class="minor-body-detail"
+    data-testid="minor-body-detail-page"
+    aria-labelledby="minor-body-detail-title"
+  >
+    <header class="minor-body-detail__header">
+      <div>
+        <p class="minor-body-detail__eyebrow">
+          FICHA CIENTÍFICA · CUERPO MENOR
+        </p>
+
+        <h1 id="minor-body-detail-title">
+          @if (resolution(); as currentResolution) {
+            @if (currentResolution.kind === 'AVAILABLE') {
+              {{ currentResolution.card.title }}
+            } @else {
+              Ficha de asteroide / cometa
+            }
+          } @else {
+            Ficha de asteroide / cometa
+          }
+        </h1>
+
+        <p class="minor-body-detail__subtitle">
+          Caracterización científica individual de asteroides y cometas identificados en el sistema.
+        </p>
+      </div>
+
+      @if (systemRoute(); as route) {
+        <a
+          class="minor-body-detail__nav-link"
+          [routerLink]="route"
+          [queryParams]="sourceQueryParams()"
+        >
+          ← Volver a SystemPage 3D
+        </a>
+      }
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section
+          class="minor-body-detail__panel minor-body-detail__state"
+          data-testid="minor-body-detail-loading"
+        >
+          <span class="minor-body-detail__pulse" aria-hidden="true"></span>
+          <p>Resolviendo sistema anfitrión y cuerpo menor…</p>
+        </section>
+      }
+
+      @case ('not-found') {
+        <section
+          class="minor-body-detail__panel minor-body-detail__state"
+          data-testid="minor-body-detail-system-not-found"
+        >
+          <div>
+            <strong>Sistema no encontrado</strong>
+            <p>La ruta no corresponde a un sistema disponible en el conocimiento actual de la partida.</p>
+          </div>
+        </section>
+      }
+
+      @case ('error') {
+        <section
+          class="minor-body-detail__panel minor-body-detail__state"
+          data-testid="minor-body-detail-error"
+        >
+          <div>
+            <strong>No se pudo resolver la ficha</strong>
+            <p>{{ facade.errorMessage() }}</p>
+          </div>
+        </section>
+      }
+
+      @case ('content') {
+        @if (resolution(); as currentResolution) {
+          @switch (currentResolution.kind) {
+            @case ('LOCKED') {
+              <section
+                class="minor-body-detail__panel minor-body-detail__state minor-body-detail__state--locked"
+                data-testid="minor-body-detail-locked"
+              >
+                <div>
+                  <small>ACCESO CIENTÍFICO · BLOQUEADO</small>
+                  <strong>El sistema anfitrión aún no está confirmado</strong>
+                  <p>{{ currentResolution.reason }}</p>
+                </div>
+              </section>
+            }
+
+            @case ('NOT_FOUND') {
+              <section
+                class="minor-body-detail__panel minor-body-detail__state"
+                data-testid="minor-body-detail-not-found"
+              >
+                <div>
+                  <small>CUERPO MENOR · NO RESUELTO</small>
+                  <strong>No hay una ficha científica para esta identidad</strong>
+                  <p>{{ currentResolution.reason }}</p>
+                </div>
+              </section>
+            }
+
+            @case ('AVAILABLE') {
+              @if (currentResolution.card; as card) {
+                <section
+                  class="minor-body-detail__hero"
+                  data-testid="minor-body-scientific-card"
+                >
+                  <div class="minor-body-detail__identity">
+                    <div class="minor-body-detail__knowledge-line">
+                      <span class="minor-body-detail__state-badge">SISTEMA ANFITRIÓN · CONFIRMADO</span>
+                      <span>{{ card.knowledgeLabel }}</span>
+                    </div>
+
+                    <strong>{{ card.title }}</strong>
+                    <p>{{ card.summary }}</p>
+                    <code>{{ card.locatorLabel }}</code>
+
+                    @if (card.sections.badges.length > 0) {
+                      <div class="minor-body-detail__badges">
+                        @for (badge of card.sections.badges; track badge) {
+                          <span>{{ badge }}</span>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  <dl class="minor-body-detail__facts">
+                    <div>
+                      <dt>Clase</dt>
+                      <dd>{{ card.kindLabel }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Sistema anfitrión</dt>
+                      <dd>{{ card.hostSystemTitle }}</dd>
+                    </div>
+
+                    <div>
+                      <dt>Acceso</dt>
+                      <dd>{{ card.accessLabel }}</dd>
+                    </div>
+                  </dl>
+                </section>
+
+                <nav
+                  class="minor-body-detail__section-nav"
+                  aria-label="Secciones científicas del cuerpo menor"
+                  data-testid="minor-body-detail-section-nav"
+                >
+                  @for (section of card.sections.sections; track section.id) {
+                    <a [attr.href]="minorBodySectionHref(section.id)">
+                      {{ section.title }}
+                    </a>
+                  }
+                </nav>
+
+                <section
+                  class="minor-body-detail__sections"
+                  data-testid="minor-body-detail-scientific-sections"
+                >
+                  @for (section of card.sections.sections; track section.id) {
+                    <article
+                      class="minor-body-detail__scientific-section"
+                      [id]="'minor-body-section-' + section.id"
+                      [attr.data-section-id]="section.id"
+                    >
+                      <header>
+                        <small>{{ section.eyebrow }}</small>
+                        <h2>{{ section.title }}</h2>
+                        <p>{{ section.summary }}</p>
+                      </header>
+
+                      <dl class="minor-body-detail__section-facts">
+                        @for (item of section.fields; track item.label) {
+                          <div>
+                            <dt>{{ item.label }}</dt>
+                            <dd>{{ item.value }}</dd>
+                            @if (item.note) {
+                              <small>{{ item.note }}</small>
+                            }
+                          </div>
+                        }
+                      </dl>
+                    </article>
+                  }
+                </section>
+
+                <nav class="minor-body-detail__actions" aria-label="Navegación de la ficha del cuerpo menor">
+                  @if (systemRoute(); as route) {
+                    <a
+                      [routerLink]="route"
+                      [queryParams]="sourceQueryParams()"
+                    >
+                      ← SystemPage 3D
+                    </a>
+                  }
+
+                  @if (archiveRoute(); as route) {
+                    <a
+                      [routerLink]="route"
+                      [queryParams]="sourceQueryParams()"
+                    >
+                      Ficha del sistema →
+                    </a>
+                  }
+                </nav>
+              }
+            }
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>
