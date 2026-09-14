@@ -1,7 +1,10 @@
 <genesis-screen>
   <main
+    id="planet-detail-content"
+    tabindex="-1"
     class="planet-detail"
     data-testid="planet-detail-page"
+    [attr.aria-busy]="facade.state().kind === 'loading'"
     aria-labelledby="planet-detail-title"
   >
     <header class="planet-detail__header">
@@ -44,6 +47,8 @@
         <section
           class="planet-detail__panel planet-detail__state"
           data-testid="planet-detail-loading"
+          role="status"
+          aria-live="polite"
         >
           <span class="planet-detail__pulse" aria-hidden="true"></span>
           <p>Resolviendo sistema anfitrión y caracterización planetaria…</p>
@@ -54,6 +59,7 @@
         <section
           class="planet-detail__panel planet-detail__state"
           data-testid="planet-detail-system-not-found"
+          role="status"
         >
           <div>
             <strong>Sistema no encontrado</strong>
@@ -69,6 +75,7 @@
         <section
           class="planet-detail__panel planet-detail__state"
           data-testid="planet-detail-error"
+          role="alert"
         >
           <div>
             <strong>No se pudo resolver la ficha</strong>
@@ -171,10 +178,11 @@
                       class="planet-detail__scientific-section"
                       [id]="'planet-section-' + section.id"
                       [attr.data-section-id]="section.id"
+                      [attr.aria-labelledby]="'planet-section-title-' + section.id"
                     >
                       <header>
                         <small>{{ section.eyebrow }}</small>
-                        <h2>{{ section.title }}</h2>
+                        <h2 [id]="'planet-section-title-' + section.id">{{ section.title }}</h2>
                         <p>{{ section.summary }}</p>
                       </header>
 
@@ -183,7 +191,11 @@
                           class="planet-detail__earth-comparison"
                           data-testid="planet-detail-earth-size-comparison"
                         >
-                          <div class="planet-detail__size-pair" aria-label="Comparación lineal de diámetros con la Tierra">
+                          <div
+                            class="planet-detail__size-pair"
+                            role="img"
+                            [attr.aria-label]="'Comparación de diámetro: ' + card.sections.comparison.worldLabel + ' ' + card.sections.comparison.worldDiameterPercent + ' %, Tierra ' + card.sections.comparison.earthDiameterPercent + ' %.'"
+                          >
                             <div class="planet-detail__size-item">
                               <div class="planet-detail__size-frame">
                                 <span

@@ -21,6 +21,10 @@ import {
 } from '../genesis-archive/archive-discovery-detail.facade';
 
 import {
+  scientificRouteUniverseRef,
+} from '../scientific/scientific-route-identity';
+
+import {
   PlanetScientificCardAssembler,
   PlanetScientificFicheResolutionKind,
 } from './planet-scientific-card';
@@ -194,10 +198,12 @@ export class PlanetDetailPage
 
     const query =
       new URLSearchParams({
-        seed:
-          model.universeSeed,
-        version:
-          model.generatorVersionCode.toString(),
+        u:
+          model.routeUniverseRef ??
+          scientificRouteUniverseRef(
+            model.universeSeed,
+            model.generatorVersionCode,
+          ),
       })
         .toString();
 
@@ -256,10 +262,12 @@ export class PlanetDetailPage
         }
 
         return Object.freeze({
-          seed:
-            model.universeSeed,
-          version:
-            model.generatorVersionCode,
+          u:
+            model.routeUniverseRef ??
+            scientificRouteUniverseRef(
+              model.universeSeed,
+              model.generatorVersionCode,
+            ),
         });
       },
     );
@@ -298,6 +306,15 @@ export class PlanetDetailPage
             .paramMap
             .get(
               'galacticObjectIndex',
+            ),
+
+        universeRef:
+          this
+            .route
+            .snapshot
+            .queryParamMap
+            .get(
+              'u',
             ),
 
         universeSeed:

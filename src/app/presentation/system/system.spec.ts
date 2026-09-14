@@ -118,10 +118,8 @@ describe(
 
                     queryParamMap:
                       convertToParamMap({
-                        seed:
-                          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
-                        version:
-                          '1',
+                        u:
+                          '96F17ABD83F31EF747FC750C996EB1C2',
                       }),
                   },
                 },
@@ -193,10 +191,12 @@ describe(
             '-17',
           galacticObjectIndex:
             '8',
+          universeRef:
+            '96F17ABD83F31EF747FC750C996EB1C2',
           universeSeed:
-            '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+            null,
           generatorVersionCode:
-            '1',
+            null,
           includeStellarSystemScientificProgression:
             true,
           stellarSystemEntryKind:
@@ -270,7 +270,7 @@ describe(
             '[data-testid="system-page-render-contract"]',
           )?.textContent,
         ).toContain(
-          '26.2',
+          'CONOCIMIENTO CIENTÍFICO CONSISTENTE',
         );
       },
     );
@@ -415,6 +415,21 @@ describe(
           ),
         ).toContain(
           '/observatory/system/3/-17/8',
+        );
+
+        expect(
+          observatoryLink?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          'u=96F17ABD83F31EF747FC750C996EB1C2',
+        );
+        expect(
+          observatoryLink?.getAttribute(
+            'href',
+          ),
+        ).not.toContain(
+          'seed=',
         );
 
         expect(
@@ -618,6 +633,8 @@ function systemModel(
       '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
     generatorVersionCode:
       1,
+    routeUniverseRef:
+      '96F17ABD83F31EF747FC750C996EB1C2',
     locatorKind:
       ArchiveDiscoveryLocatorKind.SYSTEM,
     locatorKindLabel:

@@ -447,7 +447,7 @@ describe(
             )
             ?.textContent,
         ).toContain(
-          'FICHA DE CUERPO · 24.8',
+          'FICHA DE CUERPO',
         );
 
         expect(
@@ -606,7 +606,7 @@ describe(
         expect(
           stellarLink?.textContent,
         ).toContain(
-          'ABRIR FICHA CIENTÍFICA · 26.2',
+          'ABRIR FICHA CIENTÍFICA',
         );
         expect(
           stellarLink?.getAttribute(
@@ -902,7 +902,7 @@ describe(
           cataloguedAccess
             ?.textContent,
         ).toContain(
-          'REQUIERE SISTEMA CONFIRMED',
+          'REQUIERE SISTEMA CONFIRMADO',
         );
 
         expect(
@@ -968,7 +968,7 @@ describe(
           confirmedAccess
             ?.textContent,
         ).toContain(
-          'DESBLOQUEADA POR CONFIRMACIÓN',
+          'DISPONIBLE',
         );
 
         const planetFicheLink =
@@ -978,7 +978,7 @@ describe(
 
         expect(planetFicheLink).toBeTruthy();
         expect(planetFicheLink?.textContent).toContain(
-          'ABRIR FICHA CIENTÍFICA · 26.4',
+          'ABRIR FICHA CIENTÍFICA',
         );
         expect(
           planetFicheLink?.getAttribute(
@@ -986,6 +986,21 @@ describe(
           ),
         ).toContain(
           '/system/3/-17/8/planet/0',
+        );
+
+        expect(
+          planetFicheLink?.getAttribute(
+            'href',
+          ),
+        ).toContain(
+          'u=96F17ABD83F31EF747FC750C996EB1C2',
+        );
+        expect(
+          planetFicheLink?.getAttribute(
+            'href',
+          ),
+        ).not.toContain(
+          'seed=',
         );
 
 

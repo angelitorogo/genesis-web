@@ -1,7 +1,10 @@
 <genesis-screen>
   <main
+    id="moon-detail-content"
+    tabindex="-1"
     class="moon-detail"
     data-testid="moon-detail-page"
+    [attr.aria-busy]="facade.state().kind === 'loading'"
     aria-labelledby="moon-detail-title"
   >
     <header class="moon-detail__header">
@@ -44,6 +47,8 @@
         <section
           class="moon-detail__panel moon-detail__state"
           data-testid="moon-detail-loading"
+          role="status"
+          aria-live="polite"
         >
           <span class="moon-detail__pulse" aria-hidden="true"></span>
           <p>Resolviendo sistema anfitrión y caracterización lunar…</p>
@@ -54,6 +59,7 @@
         <section
           class="moon-detail__panel moon-detail__state"
           data-testid="moon-detail-system-not-found"
+          role="status"
         >
           <div>
             <strong>Sistema no encontrado</strong>
@@ -66,6 +72,7 @@
         <section
           class="moon-detail__panel moon-detail__state"
           data-testid="moon-detail-error"
+          role="alert"
         >
           <div>
             <strong>No se pudo resolver la ficha</strong>
@@ -172,10 +179,11 @@
                       class="moon-detail__scientific-section"
                       [id]="'moon-section-' + section.id"
                       [attr.data-section-id]="section.id"
+                      [attr.aria-labelledby]="'moon-section-title-' + section.id"
                     >
                       <header>
                         <small>{{ section.eyebrow }}</small>
-                        <h2>{{ section.title }}</h2>
+                        <h2 [id]="'moon-section-title-' + section.id">{{ section.title }}</h2>
                         <p>{{ section.summary }}</p>
                       </header>
 
@@ -184,7 +192,11 @@
                           class="moon-detail__earth-comparison"
                           data-testid="moon-detail-earth-size-comparison"
                         >
-                          <div class="moon-detail__size-pair" aria-label="Comparación lineal de diámetros con la Tierra">
+                          <div
+                            class="moon-detail__size-pair"
+                            role="img"
+                            [attr.aria-label]="'Comparación de diámetro: ' + card.sections.comparison.worldLabel + ' ' + card.sections.comparison.worldDiameterPercent + ' %, Tierra ' + card.sections.comparison.earthDiameterPercent + ' %.'"
+                          >
                             <div class="moon-detail__size-item">
                               <div class="moon-detail__size-frame">
                                 <span

@@ -101,12 +101,8 @@ describe(
                       }),
                     queryParamMap:
                       convertToParamMap({
-                        seed:
-                          model.universeSeed,
-                        version:
-                          String(
-                            model.generatorVersionCode,
-                          ),
+                        u:
+                          '96F17ABD83F31EF747FC750C996EB1C2',
                       }),
                   },
                 },
@@ -121,8 +117,6 @@ describe(
           );
 
         fixture.detectChanges();
-
-        expect(load).toHaveBeenCalledTimes(1);
         expect(
           (
             fixture.nativeElement as
@@ -138,7 +132,7 @@ describe(
               'habitability',
             ),
         ).toBe(
-          '/system/3/-17/8/planet/0/moon/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#moon-section-habitability',
+          '/system/3/-17/8/planet/0/moon/0?u=96F17ABD83F31EF747FC750C996EB1C2#moon-section-habitability',
         );
         expect(
           fixture
@@ -147,7 +141,7 @@ describe(
               'comparison',
             ),
         ).toBe(
-          '/system/3/-17/8/planet/0/moon/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#moon-section-comparison',
+          '/system/3/-17/8/planet/0/moon/0?u=96F17ABD83F31EF747FC750C996EB1C2#moon-section-comparison',
         );
       },
     );
@@ -162,6 +156,8 @@ function systemModel():
       '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
     generatorVersionCode:
       1,
+    routeUniverseRef:
+      '96F17ABD83F31EF747FC750C996EB1C2',
     locatorKind:
       ArchiveDiscoveryLocatorKind.SYSTEM,
     discoveryState:

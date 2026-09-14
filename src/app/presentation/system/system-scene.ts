@@ -31,6 +31,10 @@ import {
 } from '../../domain/planetary/minor-body-kind';
 
 import {
+  scientificRouteQueryParams,
+} from '../scientific/scientific-route-identity';
+
+import {
   type SystemSceneAsteroidBeltSnapshot,
   type SystemSceneBodySnapshot,
   type SystemSceneHabitableZoneSnapshot,
@@ -792,16 +796,13 @@ export class SystemScene
 
   planetScientificFicheQueryParams():
     Readonly<{
-      seed: string;
-      version: number;
+      u: string;
     }> {
 
-    return Object.freeze({
-      seed:
-        this.snapshot.universeSeed,
-      version:
-        this.snapshot.generatorVersionCode,
-    });
+    return scientificRouteQueryParams(
+      this.snapshot.universeSeed,
+      this.snapshot.generatorVersionCode,
+    );
   }
 
   planetCount():

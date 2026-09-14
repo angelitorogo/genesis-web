@@ -3,6 +3,7 @@
     class="observatory"
     data-testid="observatory-page"
     aria-labelledby="observatory-title"
+    [attr.aria-busy]="facade.state().kind === 'loading'"
   >
     <header class="observatory__header">
       <div>
@@ -34,12 +35,12 @@
         class="observatory__panel observatory__landing"
         data-testid="observatory-no-target"
       >
-        <small>OBSERVATORIO OPERATIVO / 26.A.9</small>
+        <small>OBSERVATORIO OPERATIVO</small>
         <h2>Selecciona un objetivo científico</h2>
         <p>
           Abre un sistema conocido desde el Archivo GENESIS o desde SystemPage
-          para dirigir una campaña. Esta pantalla no elige objetivos ocultos ni
-          consulta el Ground Truth procedural.
+          para dirigir una campaña. Esta pantalla trabaja únicamente con objetivos
+          ya conocidos y respeta el nivel de conocimiento científico alcanzado.
         </p>
 
         <a
@@ -56,6 +57,8 @@
           <section
             class="observatory__panel"
             data-testid="observatory-target-loading"
+            role="status"
+            aria-live="polite"
           >
             Preparando contexto observacional persistido…
           </section>
@@ -65,9 +68,11 @@
           <section
             class="observatory__panel observatory__panel--muted"
             data-testid="observatory-target-not-found"
+            role="status"
           >
             El sistema solicitado no forma parte del conocimiento observado de
-            esta partida. El Observatorio no materializa objetivos UNKNOWN.
+            esta partida. El Observatorio no materializa objetivos todavía
+            desconocidos.
           </section>
         }
 
@@ -75,6 +80,7 @@
           <section
             class="observatory__panel observatory__panel--error"
             data-testid="observatory-target-error"
+            role="alert"
           >
             {{ facade.errorMessage() }}
           </section>
@@ -89,7 +95,7 @@
               >
                 <article class="observatory__panel observatory__identity">
                   <div>
-                    <small>OBJETIVO / STELLAR_SYSTEM</small>
+                    <small>OBJETIVO / SISTEMA ESTELAR</small>
                     <h2>{{ model.stellarSystemCard?.title ?? 'Sistema estelar' }}</h2>
                     <code>{{ model.proceduralIdentity }}</code>
                   </div>
@@ -108,7 +114,7 @@
                 >
                   <header>
                     <div>
-                      <small>SCIENTIFIC COMPLETENESS</small>
+                      <small>PROGRESO CIENTÍFICO</small>
                       <h2>Progreso de la etapa</h2>
                     </div>
 
@@ -161,7 +167,7 @@
                 >
                   <header>
                     <div>
-                      <small>OBSERVATION ENGINE / INSTRUMENTOS</small>
+                      <small>INSTRUMENTOS CIENTÍFICOS</small>
                       <h2>Campaña de esta etapa</h2>
                     </div>
                   </header>
@@ -220,8 +226,9 @@
                       <strong>Identidad científica resuelta.</strong>
                       <p>
                         Para iniciar la catalogación entra una vez en la ficha
-                        detallada o en la escena 3D. Ese hito registra VISITED sin
-                        añadir evidencia ni revelar magnitudes físicas.
+                        detallada o en la escena 3D. Ese acceso registra la primera
+                        visita sin añadir evidencia ni revelar magnitudes físicas
+                        no autorizadas.
                       </p>
                     </div>
                   } @else if (campaign.discoveryStateLabel === 'Confirmado') {
@@ -231,7 +238,7 @@
                     >
                       <strong>Campaña científica completada.</strong>
                       <p>
-                        CONFIRMED procede de evidencia adicional/independiente.
+                        La confirmación procede de evidencia adicional e independiente.
                         No existe un botón alternativo para promocionar el estado.
                       </p>
                     </div>
@@ -270,10 +277,7 @@
                       model.sectorKey,
                       model.galacticObjectIndex
                     ]"
-                    [queryParams]="{
-                      seed: model.universeSeed,
-                      version: model.generatorVersionCode
-                    }"
+                    [queryParams]="{ u: model.routeUniverseRef }"
                     data-testid="observatory-archive-target-link"
                   >
                     Abrir ficha detallada
@@ -286,10 +290,7 @@
                       model.sectorKey,
                       model.galacticObjectIndex
                     ]"
-                    [queryParams]="{
-                      seed: model.universeSeed,
-                      version: model.generatorVersionCode
-                    }"
+                    [queryParams]="{ u: model.routeUniverseRef }"
                     data-testid="observatory-system-target-link"
                   >
                     Entrar en SystemPage 3D

@@ -30,6 +30,10 @@ import {
 } from '../genesis-archive/archive-stellar-system-card';
 
 import {
+  scientificRouteUniverseRef,
+} from '../scientific/scientific-route-identity';
+
+import {
   SystemScene,
 } from './system-scene';
 
@@ -114,6 +118,28 @@ export class SystemPage
         [],
     );
 
+  readonly sourceQueryParams =
+    computed(
+      () => {
+        const model =
+          this
+            .facade
+            .model();
+
+        return model ===
+          null
+          ? null
+          : Object.freeze({
+              u:
+                model.routeUniverseRef ??
+                scientificRouteUniverseRef(
+                  model.universeSeed,
+                  model.generatorVersionCode,
+                ),
+            });
+      },
+    );
+
   ngOnInit():
     void {
 
@@ -148,6 +174,15 @@ export class SystemPage
             .paramMap
             .get(
               'galacticObjectIndex',
+            ),
+
+        universeRef:
+          this
+            .route
+            .snapshot
+            .queryParamMap
+            .get(
+              'u',
             ),
 
         universeSeed:

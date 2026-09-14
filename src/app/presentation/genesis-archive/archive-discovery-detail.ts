@@ -149,6 +149,15 @@ export class ArchiveDiscoveryDetail
               'galacticObjectIndex',
             ),
 
+        universeRef:
+          this
+            .route
+            .snapshot
+            .queryParamMap
+            .get(
+              'u',
+            ),
+
         universeSeed:
           this
             .route

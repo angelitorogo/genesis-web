@@ -21,6 +21,10 @@ import {
 } from '../genesis-archive/archive-discovery-detail.facade';
 
 import {
+  scientificRouteUniverseRef,
+} from '../scientific/scientific-route-identity';
+
+import {
   MoonScientificCardAssembler,
   MoonScientificFicheResolutionKind,
 } from './moon-scientific-card';
@@ -187,10 +191,12 @@ export class MoonDetailPage
         }
 
         return Object.freeze({
-          seed:
-            model.universeSeed,
-          version:
-            model.generatorVersionCode,
+          u:
+            model.routeUniverseRef ??
+            scientificRouteUniverseRef(
+              model.universeSeed,
+              model.generatorVersionCode,
+            ),
         });
       },
     );
@@ -240,10 +246,12 @@ export class MoonDetailPage
 
     const query =
       new URLSearchParams({
-        seed:
-          model.universeSeed,
-        version:
-          model.generatorVersionCode.toString(),
+        u:
+          model.routeUniverseRef ??
+          scientificRouteUniverseRef(
+            model.universeSeed,
+            model.generatorVersionCode,
+          ),
       })
         .toString();
 
@@ -284,6 +292,15 @@ export class MoonDetailPage
             .paramMap
             .get(
               'galacticObjectIndex',
+            ),
+
+        universeRef:
+          this
+            .route
+            .snapshot
+            .queryParamMap
+            .get(
+              'u',
             ),
 
         universeSeed:

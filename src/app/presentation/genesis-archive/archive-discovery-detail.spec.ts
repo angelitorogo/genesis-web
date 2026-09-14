@@ -75,6 +75,9 @@ describe(
         generatorVersionCode:
           1,
 
+        routeUniverseRef:
+          '96F17ABD83F31EF747FC750C996EB1C2',
+
         locatorKind:
           ArchiveDiscoveryLocatorKind.SYSTEM,
 
@@ -170,10 +173,8 @@ describe(
 
                     queryParamMap:
                       convertToParamMap({
-                        seed:
-                          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
-                        version:
-                          '1',
+                        u:
+                          '96F17ABD83F31EF747FC750C996EB1C2',
                       }),
                   },
                 },
@@ -226,10 +227,12 @@ describe(
             '0',
           galacticObjectIndex:
             '7',
+          universeRef:
+            '96F17ABD83F31EF747FC750C996EB1C2',
           universeSeed:
-            '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+            null,
           generatorVersionCode:
-            '1',
+            null,
           includeStellarSystemScientificProgression:
             true,
           stellarSystemEntryKind:
@@ -239,12 +242,6 @@ describe(
         const element =
           fixture.nativeElement as
             HTMLElement;
-
-        expect(
-          element.querySelector(
-            '[data-testid="archive-discovery-detail-page"]',
-          ),
-        ).toBeTruthy();
 
         expect(
           element.querySelector(
@@ -635,6 +632,25 @@ describe(
           ),
         ).toContain(
           '/system/0/0/7',
+        );
+
+        const systemPageHref =
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="archive-stellar-system-system-page-link"]',
+          )?.getAttribute(
+            'href',
+          ) ??
+          '';
+
+        expect(
+          systemPageHref,
+        ).toContain(
+          'u=96F17ABD83F31EF747FC750C996EB1C2',
+        );
+        expect(
+          systemPageHref,
+        ).not.toContain(
+          'seed=',
         );
 
         actionButton?.click();

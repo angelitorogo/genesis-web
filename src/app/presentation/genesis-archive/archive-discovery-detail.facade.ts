@@ -124,6 +124,11 @@ import {
 } from '../runtime/stellar-system-scientific-campaign';
 
 import {
+  isScientificRouteUniverseRef,
+  scientificRouteUniverseRef,
+} from '../scientific/scientific-route-identity';
+
+import {
   UniverseSeedFacade,
 } from '../universe/universe-seed.facade';
 
@@ -171,10 +176,18 @@ export interface ArchiveDiscoveryDetailRequest {
   readonly galacticObjectIndex:
     string | null;
 
-  readonly universeSeed:
+  readonly universeRef?:
     string | null;
 
-  readonly generatorVersionCode:
+  /**
+   * Legacy compatibility only. Point 26.10 no longer emits the raw seed in
+   * shareable routes, but old bookmarks remain readable.
+   */
+  readonly universeSeed?:
+    string | null;
+
+  /** Legacy companion of universeSeed; see universeSeed above. */
+  readonly generatorVersionCode?:
     string | null;
 
   readonly stellarSystemEntryKind?:
@@ -280,6 +293,10 @@ export interface ArchiveDiscoveryDetailModel {
 
   readonly generatorVersionCode:
     number;
+
+  /** Opaque public reference used by stable phase-26 routes. */
+  readonly routeUniverseRef?:
+    string;
 
   readonly locatorKind:
     ArchiveDiscoveryLocatorKind;
@@ -1156,6 +1173,16 @@ export class ArchiveDiscoveryDetailFacade {
                 generationKey
                   .generatorVersion
                   .code,
+
+              routeUniverseRef:
+                scientificRouteUniverseRef(
+                  generationKey
+                    .universeSeed
+                    .serialize(),
+                  generationKey
+                    .generatorVersion
+                    .code,
+                ),
 
               locatorKind:
                 parsed.locatorKind,
@@ -2210,6 +2237,9 @@ interface ParsedArchiveDiscoveryDetailRequest {
   readonly galacticObjectIndex:
     bigint;
 
+  readonly universeRef:
+    string | null;
+
   readonly universeSeed:
     string | null;
 
@@ -2256,8 +2286,12 @@ function parseRequest(
       ),
 
     ...parseGenerationIdentity(
-      request.universeSeed,
-      request.generatorVersionCode,
+      request.universeRef ??
+        null,
+      request.universeSeed ??
+        null,
+      request.generatorVersionCode ??
+        null,
     ),
   };
 }
@@ -2449,12 +2483,18 @@ function parseSignedLong(
 }
 
 function parseGenerationIdentity(
+  universeRef:
+    string | null,
+
   universeSeed:
     string | null,
 
   generatorVersionCode:
     string | null,
 ): {
+  readonly universeRef:
+    string | null;
+
   readonly universeSeed:
     string | null;
 
@@ -2463,15 +2503,50 @@ function parseGenerationIdentity(
 } {
 
   if (
+    universeRef !==
+      null
+  ) {
+    if (
+      universeSeed !==
+        null ||
+      generatorVersionCode !==
+        null
+    ) {
+      throw new RangeError(
+        'La ruta científica no puede mezclar la referencia pública del universo con seed/version legacy.',
+      );
+    }
+
+    if (
+      !isScientificRouteUniverseRef(
+        universeRef,
+      )
+    ) {
+      throw new RangeError(
+        'La referencia pública del universo de la ficha no tiene un formato válido.',
+      );
+    }
+
+    return {
+      universeRef,
+      universeSeed:
+        null,
+      generatorVersionCode:
+        null,
+    };
+  }
+
+  if (
     universeSeed ===
       null &&
     generatorVersionCode ===
       null
   ) {
     return {
+      universeRef:
+        null,
       universeSeed:
         null,
-
       generatorVersionCode:
         null,
     };
@@ -2484,7 +2559,7 @@ function parseGenerationIdentity(
       null
   ) {
     throw new RangeError(
-      'La identidad de universo de la ficha requiere seed y versión de generador.',
+      'La identidad legacy de universo de la ficha requiere seed y versión de generador.',
     );
   }
 
@@ -2494,7 +2569,7 @@ function parseGenerationIdentity(
     )
   ) {
     throw new RangeError(
-      'La seed de universo de la ficha no tiene un formato válido.',
+      'La seed legacy de universo de la ficha no tiene un formato válido.',
     );
   }
 
@@ -2526,13 +2601,14 @@ function parseGenerationIdentity(
   }
 
   return {
+    universeRef:
+      null,
     universeSeed:
       UniverseSeed
         .parse(
           universeSeed,
         )
         .serialize(),
-
     generatorVersionCode:
       versionCode,
   };
@@ -2548,6 +2624,26 @@ function resolveGenerationKey(
   persistedUniverses:
     readonly UniverseGenerationKey[],
 ): UniverseGenerationKey | null {
+
+  if (
+    request.universeRef !==
+      null
+  ) {
+    return persistedUniverses
+      .find(
+        candidate =>
+          scientificRouteUniverseRef(
+            candidate
+              .universeSeed
+              .serialize(),
+            candidate
+              .generatorVersion
+              .code,
+          ) ===
+          request.universeRef,
+      ) ??
+      null;
+  }
 
   if (
     request.universeSeed !==

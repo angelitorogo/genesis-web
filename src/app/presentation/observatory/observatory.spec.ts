@@ -176,6 +176,25 @@ describe(
         expect(button).toBeTruthy();
         expect(button?.disabled).toBe(false);
 
+        const systemHref =
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="observatory-system-target-link"]',
+          )?.getAttribute(
+            'href',
+          ) ??
+          '';
+
+        expect(
+          systemHref,
+        ).toContain(
+          'u=96F17ABD83F31EF747FC750C996EB1C2',
+        );
+        expect(
+          systemHref,
+        ).not.toContain(
+          'seed=',
+        );
+
         button?.click();
 
         expect(
@@ -335,10 +354,8 @@ function routeStub(
         convertToParamMap(
           targeted
             ? {
-                seed:
-                  '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
-                version:
-                  '1',
+                u:
+                  '96F17ABD83F31EF747FC750C996EB1C2',
               }
             : {},
         ),
@@ -423,6 +440,8 @@ function stellarModel():
       '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
     generatorVersionCode:
       1,
+    routeUniverseRef:
+      '96F17ABD83F31EF747FC750C996EB1C2',
     locatorKind:
       'system',
     locatorKindLabel:

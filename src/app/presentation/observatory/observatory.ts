@@ -104,6 +104,15 @@ export class Observatory
               'galacticObjectIndex',
             ),
 
+        universeRef:
+          this
+            .route
+            .snapshot
+            .queryParamMap
+            .get(
+              'u',
+            ),
+
         universeSeed:
           this
             .route

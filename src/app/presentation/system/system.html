@@ -1,8 +1,11 @@
 <genesis-screen>
   <main
+    id="system-page-content"
+    tabindex="-1"
     class="system-page"
     data-testid="system-page"
     aria-labelledby="system-page-title"
+    [attr.aria-busy]="facade.state().kind === 'loading'"
   >
     <header class="system-page__header">
       <div>
@@ -22,9 +25,8 @@
 
         <p class="system-page__subtitle">
           Identidad, arquitectura y componentes estelares del sistema conocido.
-          La profundidad de la ficha depende exclusivamente del DiscoveryState
-          persistido. La primera entrada válida puede registrar VISITED, pero no
-          añade evidencia ni revela Ground Truth por sí sola.
+          La profundidad de la ficha depende exclusivamente del conocimiento
+          científico registrado y de las evidencias obtenidas.
         </p>
       </div>
 
@@ -43,11 +45,13 @@
         <section
           class="system-page__panel system-page__state"
           data-testid="system-page-loading"
+          role="status"
+          aria-live="polite"
         >
           <span class="system-page__pulse" aria-hidden="true"></span>
 
           <div>
-            <small>CONOCIMIENTO PERSISTIDO / REGENERACIÓN</small>
+            <small>CONOCIMIENTO CIENTÍFICO</small>
             <strong>Resolviendo la ficha del sistema…</strong>
           </div>
         </section>
@@ -57,13 +61,14 @@
         <section
           class="system-page__panel system-page__state"
           data-testid="system-page-not-found"
+          role="status"
         >
           <div>
             <small>SISTEMA NO DISPONIBLE</small>
             <strong>No existe una identidad conocida para esta ruta.</strong>
             <p>
-              La página no materializa Ground Truth de un sistema que no figure
-              en el conocimiento persistido del universo seleccionado.
+              La ficha solo puede abrir sistemas que ya forman parte del
+              conocimiento científico registrado de la partida.
             </p>
           </div>
         </section>
@@ -73,6 +78,7 @@
         <section
           class="system-page__panel system-page__state system-page__state--error"
           data-testid="system-page-error"
+          role="alert"
         >
           <div>
             <small>ERROR DE SISTEMA</small>
@@ -91,7 +97,7 @@
               >
                 <div class="system-page__identity">
                   <div class="system-page__knowledge-line">
-                    <span>26.2 · FICHA ESTELAR</span>
+                    <span>FICHA CIENTÍFICA · SISTEMA</span>
                     <span
                       class="system-page__state-badge"
                       data-testid="system-page-discovery-state"
@@ -150,15 +156,11 @@
                 ></app-system-scene>
 
                 <footer class="system-page__viewport-footer">
-                  <span>THREE.JS / WEBGL2 + GLSL / 25.11</span>
+                  <span>REPRESENTACIÓN 3D CIENTÍFICA</span>
                   <p>
-                    26.2 · Proyección visual limitada por el estado científico. DETECTED no
-                    materializa el sistema; DISCOVERED/VISITED muestran solo las estrellas y
-                    sus órbitas estelares identificadas; CATALOGUED habilita el sistema completo
-                    y permite selección, inspección y seguimiento, pero mantiene bloqueadas las
-                    fichas científicas individuales. CONFIRMED desbloquea la investigación
-                    científica individual de los cuerpos. La escena no persiste física ni amplía
-                    el conocimiento observado.
+                    La representación se limita al conocimiento científico disponible.
+                    A medida que progresa la investigación se habilitan arquitectura, cuerpos y
+                    fichas individuales, sin ampliar por sí sola el conocimiento observado.
                   </p>
                 </footer>
               </section>
@@ -406,7 +408,7 @@
                   >
                     <header class="system-page__section-header">
                       <div>
-                        <small>26.A.9 · PROGRESIÓN CIENTÍFICA</small>
+                        <small>PROGRESIÓN CIENTÍFICA</small>
                         <h2>Campaña observacional</h2>
                       </div>
                       <span data-testid="system-page-campaign-percent">{{ campaign.completionPercent }}%</span>
@@ -415,7 +417,7 @@
                     <p>
                       Esta escena consume el mismo estado y las mismas evidencias que el
                       Archivo GENESIS y el Observatorio. La navegación puede registrar
-                      VISITED una sola vez; las mediciones científicas se realizan en el
+                      la primera visita una sola vez; las mediciones científicas se realizan en el
                       Observatorio y no mediante botones de promoción.
                     </p>
 
@@ -449,12 +451,12 @@
                       </p>
                     } @else if (campaign.discoveryStateLabel === 'Descubierto') {
                       <p class="system-page__campaign-note">
-                        La entrada a esta escena consolida VISITED de forma idempotente. Recarga
+                        La entrada a esta escena consolida la primera visita de forma idempotente. Recarga
                         la ficha si el estado acaba de cambiar para iniciar la etapa de catalogación.
                       </p>
                     } @else if (campaign.discoveryStateLabel === 'Confirmado') {
                       <p class="system-page__campaign-note">
-                        Campaña completada. CONFIRMED no tiene una promoción científica posterior.
+                        Campaña completada. El estado confirmado no tiene una promoción científica posterior.
                       </p>
                     }
 
@@ -466,10 +468,7 @@
                         model.sectorKey,
                         model.galacticObjectIndex
                       ]"
-                      [queryParams]="{
-                        seed: model.universeSeed,
-                        version: model.generatorVersionCode
-                      }"
+                      [queryParams]="sourceQueryParams()"
                       data-testid="system-page-observatory-link"
                     >
                       Abrir este sistema en el Observatorio →
@@ -524,14 +523,12 @@
                 class="system-page__contract"
                 data-testid="system-page-render-contract"
               >
-                <strong>26.2 + 26.A.9 · FICHA, ESTADO Y EVIDENCIA ÚNICOS</strong>
+                <strong>CONOCIMIENTO CIENTÍFICO CONSISTENTE</strong>
 
                 <p>
-                  IndexedDB → DiscoveryState + ScientificEvidence → misma ficha científica
-                  para Archivo, SystemPage y Observatorio → proyección Three.js. DETECTED
-                  no resuelve identidad; DISCOVERED/VISITED comparten disclosure; CATALOGUED
-                  habilita física estelar y órbitas; CONFIRMED exige evidencia adicional e
-                  independiente. La escena no consulta Ground Truth para decidir progresión.
+                  Archivo, ficha del sistema y Observatorio comparten el mismo estado de
+                  conocimiento y las mismas evidencias. La escena 3D refleja ese resultado y no
+                  decide ni modifica la progresión científica.
                 </p>
               </section>
 
@@ -546,10 +543,7 @@
                     snapshot.address.sectorKey,
                     snapshot.address.galacticObjectIndex
                   ]"
-                  [queryParams]="{
-                    seed: snapshot.universeSeed,
-                    version: snapshot.generatorVersionCode
-                  }"
+                  [queryParams]="sourceQueryParams()"
                   data-testid="system-page-archive-link"
                 >
                   Abrir registro del Archivo

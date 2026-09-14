@@ -26,6 +26,10 @@ import {
 } from '../genesis-archive/archive-discovery-detail.facade';
 
 import {
+  scientificRouteUniverseRef,
+} from '../scientific/scientific-route-identity';
+
+import {
   MinorBodyScientificCardAssembler,
   MinorBodyScientificFicheResolutionKind,
 } from './minor-body-scientific-card';
@@ -188,10 +192,12 @@ export class MinorBodyDetailPage
         }
 
         return Object.freeze({
-          seed:
-            model.universeSeed,
-          version:
-            model.generatorVersionCode,
+          u:
+            model.routeUniverseRef ??
+            scientificRouteUniverseRef(
+              model.universeSeed,
+              model.generatorVersionCode,
+            ),
         });
       },
     );
@@ -241,10 +247,12 @@ export class MinorBodyDetailPage
 
     const query =
       new URLSearchParams({
-        seed:
-          model.universeSeed,
-        version:
-          model.generatorVersionCode.toString(),
+        u:
+          model.routeUniverseRef ??
+          scientificRouteUniverseRef(
+            model.universeSeed,
+            model.generatorVersionCode,
+          ),
       })
         .toString();
 
@@ -285,6 +293,15 @@ export class MinorBodyDetailPage
             .paramMap
             .get(
               'galacticObjectIndex',
+            ),
+
+        universeRef:
+          this
+            .route
+            .snapshot
+            .queryParamMap
+            .get(
+              'u',
             ),
 
         universeSeed:

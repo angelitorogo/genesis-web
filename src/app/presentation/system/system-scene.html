@@ -23,8 +23,8 @@
     class="system-scene__hud"
     aria-hidden="true"
   >
-    <span>WEBGL2 / GLSL / SYSTEM SCENE</span>
-    <span>25.11 · LOD · INSTANCING · LAZY TEXTURES · BOUNDED CACHE · EXPLICIT DISPOSAL · WEBGL2</span>
+    <span>ESCENA CIENTÍFICA 3D</span>
+    <span>REPRESENTACIÓN 3D ADAPTATIVA · WEBGL2</span>
   </div>
 
 
@@ -166,7 +166,7 @@
               <b>{{ formatAu(habitableZone.dynamicallyHabitableInnerEdgeAu) }}–{{ formatAu(habitableZone.dynamicallyHabitableOuterEdgeAu) }} AU</b>
             </span>
             <small>
-              {{ habitableZone.topology === 'CIRCUMSTELLAR' ? 'Circunestelar' : 'Circumbinaria' }} · los AU son Ground Truth; el ancho visual se adapta para legibilidad.
+              {{ habitableZone.topology === 'CIRCUMSTELLAR' ? 'Circunestelar' : 'Circumbinaria' }} · las distancias en UA conservan el valor científico; el ancho visual se adapta para legibilidad.
             </small>
           </section>
         }
@@ -184,7 +184,7 @@
             <b>{{ asteroidBeltCount() }}</b>
           </span>
           <small>
-            {{ asteroidBeltLegend() }} · visualización derivada solo de los límites físicos congelados de 22.2; no inventa asteroides extra.
+            {{ asteroidBeltLegend() }} · visualización derivada de los límites físicos del cinturón; no añade cuerpos que no existan en el sistema.
           </small>
         </section>
       }
@@ -194,7 +194,7 @@
           class="system-scene__science-card"
           data-testid="system-scene-orbital-risk-legend"
         >
-          <strong>RIESGO ORBITAL · FASE 23.7</strong>
+          <strong>RIESGO ORBITAL</strong>
           <span>
             <i class="system-scene__swatch system-scene__swatch--crossing"></i>
             Cruce radial
@@ -243,7 +243,7 @@
             data-testid="system-scene-body-card"
           >
             <div>
-              <span>FICHA DE CUERPO · 24.8</span>
+              <span>FICHA DE CUERPO</span>
 
               <strong>
                 {{ bodyCard.title }}
@@ -337,9 +337,9 @@
             [attr.data-access]="scientificBodyFicheAccessCode()"
           >
             @if (scientificBodyFichesUnlocked()) {
-              FICHA CIENTÍFICA INDIVIDUAL · DESBLOQUEADA POR CONFIRMACIÓN
+              FICHA CIENTÍFICA INDIVIDUAL · DISPONIBLE
             } @else {
-              FICHA CIENTÍFICA INDIVIDUAL · BLOQUEADA · REQUIERE SISTEMA CONFIRMED
+              FICHA CIENTÍFICA INDIVIDUAL · BLOQUEADA · REQUIERE SISTEMA CONFIRMADO
             }
           </small>
 
@@ -362,7 +362,7 @@
                   data-testid="system-scene-stellar-fiche-qa-link"
                   [routerLink]="ficheQaRoute"
                 >
-                  ABRIR FICHA CIENTÍFICA · 26.2
+                  ABRIR FICHA CIENTÍFICA
                 </a>
               }
             }
@@ -375,7 +375,7 @@
                   [routerLink]="planetFicheRoute"
                   [queryParams]="planetScientificFicheQueryParams()"
                 >
-                  ABRIR FICHA CIENTÍFICA · 26.4
+                  ABRIR FICHA CIENTÍFICA
                 </a>
               }
             }
@@ -410,8 +410,7 @@
           </div>
 
           <small class="system-scene__body-card-contract">
-            Ficha de navegación 24.8 derivada del snapshot de presentación.
-            Seleccionar, inspeccionar y seguir un cuerpo no equivale a abrir su ficha científica individual.
+            Seleccionar, inspeccionar y seguir un cuerpo no modifica su estado científico ni equivale a abrir su ficha individual.
           </small>
         </aside>
       }

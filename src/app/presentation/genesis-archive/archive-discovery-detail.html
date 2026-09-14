@@ -1,7 +1,10 @@
 <genesis-screen>
   <main
+    id="archive-discovery-detail-content"
+    tabindex="-1"
     class="archive-discovery-detail"
     data-testid="archive-discovery-detail-page"
+    [attr.aria-busy]="facade.state().kind === 'loading'"
   >
     @if (facade.model(); as headerModel) {
       @if (headerModel.locatorKind === 'galactic-object') {
@@ -30,6 +33,8 @@
         <section
           class="archive-discovery-detail__panel"
           data-testid="archive-discovery-detail-loading"
+          role="status"
+          aria-live="polite"
         >
           Resolviendo registro científico…
         </section>
@@ -39,6 +44,7 @@
         <section
           class="archive-discovery-detail__panel archive-discovery-detail__panel--muted"
           data-testid="archive-discovery-detail-not-found"
+          role="status"
         >
           <strong>
             El registro científico solicitado no existe en el universo indicado.
@@ -55,6 +61,7 @@
         <section
           class="archive-discovery-detail__panel archive-discovery-detail__panel--error"
           data-testid="archive-discovery-detail-error"
+          role="alert"
         >
           {{ facade.errorMessage() }}
         </section>
@@ -99,7 +106,7 @@
                 <div class="archive-discovery-detail__science-copy">
                   <div>
                     <small class="archive-discovery-detail__eyebrow">
-                      ARQUITECTURA ESTELAR / 16.7
+                      ARQUITECTURA ESTELAR
                     </small>
 
                     <h3 data-testid="archive-stellar-system-title">
@@ -155,17 +162,15 @@
                   <header class="archive-discovery-detail__campaign-header">
                     <div>
                       <small class="archive-discovery-detail__eyebrow">
-                        PROGRESIÓN CIENTÍFICA / 26.2 + 26.A
+                        PROGRESIÓN CIENTÍFICA
                       </small>
 
                       <h3>Campaña observacional del sistema</h3>
 
                       <p>
-                        La ficha, SystemPage y Observatorio comparten el mismo
-                        DiscoveryState persistido y las mismas evidencias. Las
-                        observaciones de esta etapa pueden ejecutarse aquí sin
-                        crear una segunda progresión ni materializar Ground Truth
-                        adicional.
+                        La ficha, la escena del sistema y el Observatorio comparten el
+                        mismo estado científico y las mismas evidencias. Las observaciones
+                        realizadas aquí actualizan esa única progresión.
                       </p>
                     </div>
 
@@ -294,15 +299,15 @@
                       data-testid="archive-stellar-system-visit-note"
                     >
                       La identidad está resuelta. Esta ficha detallada constituye
-                      una entrada válida y registra VISITED una sola vez, sin
-                      añadir evidencia ni ampliar el disclosure físico.
+                      una entrada válida y registra la primera visita una sola vez, sin
+                      añadir evidencia ni revelar información física adicional.
                     </p>
                   } @else if (campaign.discoveryStateLabel === 'Confirmado') {
                     <p
                       class="archive-discovery-detail__campaign-note"
                       data-testid="archive-stellar-system-campaign-complete"
                     >
-                      Campaña científica completada. CONFIRMED procede de
+                      Campaña científica completada. La confirmación procede de
                       evidencia adicional e independiente; no existe una
                       promoción manual alternativa.
                     </p>
@@ -336,10 +341,7 @@
                         model.sectorKey,
                         model.galacticObjectIndex
                       ]"
-                      [queryParams]="{
-                        seed: model.universeSeed,
-                        version: model.generatorVersionCode
-                      }"
+                      [queryParams]="{ u: model.routeUniverseRef }"
                       data-testid="archive-stellar-system-system-page-link"
                     >
                       Abrir SystemPage 3D →
@@ -352,10 +354,7 @@
                         model.sectorKey,
                         model.galacticObjectIndex
                       ]"
-                      [queryParams]="{
-                        seed: model.universeSeed,
-                        version: model.generatorVersionCode
-                      }"
+                      [queryParams]="{ u: model.routeUniverseRef }"
                       data-testid="archive-stellar-system-observatory-link"
                     >
                       Abrir Observatorio →
@@ -372,15 +371,14 @@
                   <header>
                     <div>
                       <small class="archive-discovery-detail__eyebrow">
-                        ANÁLISIS DE DISCO / 17.6
+                        ANÁLISIS DEL DISCO
                       </small>
 
                       <h3>Disco protoplanetario confirmado</h3>
                     </div>
 
                     <p>
-                      Resultado observacional regenerable; no se persiste una
-                      segunda copia del Ground Truth procedural.
+                      Caracterización científica del disco derivada del sistema confirmado.
                     </p>
                   </header>
 
@@ -394,7 +392,7 @@
                   <div class="archive-discovery-detail__disk-analysis-grid">
                     <section>
                       <small class="archive-discovery-detail__eyebrow">
-                        ESTRUCTURA DEL DISCO / 17.2–17.3
+                        ESTRUCTURA DEL DISCO
                       </small>
 
                       <dl class="archive-discovery-detail__physical-facts">
@@ -409,7 +407,7 @@
 
                     <section>
                       <small class="archive-discovery-detail__eyebrow">
-                        FORMACIÓN TEMPRANA / 17.4–17.5
+                        FORMACIÓN TEMPRANA
                       </small>
 
                       <dl class="archive-discovery-detail__physical-facts">
@@ -424,9 +422,8 @@
                   </div>
 
                   <p class="archive-discovery-detail__boundary">
-                    Los candidatos y supervivientes de 17.4–17.5 siguen siendo
-                    cuerpos protoplanetarios tempranos. 17.7 resolverá su
-                    evolución hacia un sistema planetario maduro.
+                    Los candidatos y supervivientes describen la etapa temprana de formación
+                    que precede a la arquitectura planetaria madura del sistema.
                   </p>
                 </section>
               }
@@ -446,8 +443,8 @@
                     </div>
 
                     <p>
-                      La identidad del sistema permanece ligada a SystemLocator/SystemSeed;
-                      A, B y C son componentes internos y no nuevos localizadores.
+                      Las componentes A, B y C pertenecen al mismo sistema anfitrión y
+                      se presentan como componentes estelares internas.
                     </p>
                   </header>
 
@@ -538,7 +535,7 @@
                 >
                   <header>
                     <small class="archive-discovery-detail__eyebrow">
-                      JERARQUÍA ORBITAL / 16.4
+                      JERARQUÍA ORBITAL
                     </small>
 
                     <h3>Órbitas estelares relativas</h3>
@@ -572,7 +569,7 @@
                   <header>
                     <div>
                       <small class="archive-discovery-detail__eyebrow">
-                        ESTABILIDAD CIRCUMBINARIA / 16.5
+                        ESTABILIDAD CIRCUMBINARIA
                       </small>
 
                       <h3>Compatibilidad con órbitas planetarias P-type</h3>
@@ -598,7 +595,7 @@
                   <header>
                     <div>
                       <small class="archive-discovery-detail__eyebrow">
-                        ZONA HABITABLE Y ESTABILIDAD / 16.6
+                        ZONA HABITABLE Y ESTABILIDAD
                       </small>
 
                       <h3>Ventana circumbinaria confirmada</h3>
