@@ -187,6 +187,20 @@ export interface ArchiveGalacticObjectFact {
     string;
 }
 
+export interface ArchiveGalacticObjectScientificSection {
+  readonly id:
+    string;
+
+  readonly title:
+    string;
+
+  readonly summary:
+    string;
+
+  readonly facts:
+    readonly ArchiveGalacticObjectFact[];
+}
+
 /**
  * Point-12.8 renderer-only input.
  *
@@ -263,6 +277,9 @@ export interface ArchiveGalacticObjectCardModel {
 
   readonly facts:
     readonly ArchiveGalacticObjectFact[];
+
+  readonly scientificSections:
+    readonly ArchiveGalacticObjectScientificSection[];
 
   readonly render:
     ArchiveGalacticObjectRenderDescriptor;
@@ -366,6 +383,8 @@ export class ArchiveGalacticObjectCardAssembler {
           ),
         facts:
           Object.freeze([]),
+        scientificSections:
+          Object.freeze([]),
         render:
           createSignalRenderDescriptor(
             coarseFamily,
@@ -389,7 +408,7 @@ export class ArchiveGalacticObjectCardAssembler {
       null
     ) {
       const title =
-        'Objeto extremo sin clasificación física V1';
+        'Objeto extremo sin clasificación física';
 
       return Object.freeze({
         coarseFamily,
@@ -402,10 +421,12 @@ export class ArchiveGalacticObjectCardAssembler {
           ),
         title,
         summary:
-          'El objeto extremo está descubierto, pero pertenece a la reserva física que 12.6/12.7 mantienen sin especialización inventada.',
+          'El objeto extremo está descubierto, pero su naturaleza concreta todavía no dispone de una especialización física confirmada.',
         nextScientificStep:
-          'Sin cadena científica específica V1',
+          'Caracterización física no disponible',
         facts:
+          Object.freeze([]),
+        scientificSections:
           Object.freeze([]),
         render:
           createIdentifiedRenderDescriptor(
@@ -444,6 +465,8 @@ export class ArchiveGalacticObjectCardAssembler {
             scientificSubject,
           ),
         facts:
+          Object.freeze([]),
+        scientificSections:
           Object.freeze([]),
         render:
           createIdentifiedRenderDescriptor(
@@ -534,8 +557,8 @@ function activeGalacticNucleusCardOrNull(
 
   const summary =
     isQuasar
-      ? 'La fuente persistente de las coordenadas galácticas 0,0 corresponde al QUASAR del núcleo de esta galaxia.'
-      : 'La fuente persistente de las coordenadas galácticas 0,0 corresponde al agujero negro supermasivo activo del núcleo de esta galaxia.';
+      ? 'La fuente situada en el centro galáctico está identificada como un QUASAR.'
+      : 'La fuente situada en el centro galáctico está identificada como un núcleo galáctico activo.';
 
   const render:
     ArchiveGalacticObjectRenderDescriptor =
@@ -549,8 +572,8 @@ function activeGalacticNucleusCardOrNull(
         renderSeed,
       accessibleLabel:
         isQuasar
-          ? 'Render procedural del QUASAR central de la galaxia'
-          : 'Render procedural del agujero negro y núcleo galáctico activo',
+          ? 'Representación científica del QUASAR central de la galaxia'
+          : 'Representación científica del núcleo galáctico activo',
       variant:
         nucleusState.name,
       renderProfile:
@@ -577,6 +600,20 @@ function activeGalacticNucleusCardOrNull(
         1,
     });
 
+  const facts =
+    Object.freeze([
+      fact(
+        'Naturaleza nuclear',
+        isQuasar
+          ? 'QUASAR'
+          : 'Núcleo galáctico activo',
+      ),
+      fact(
+        'Ubicación',
+        'Centro galáctico',
+      ),
+    ]);
+
   return Object.freeze({
     coarseFamily,
     scientificSubject:
@@ -592,8 +629,19 @@ function activeGalacticNucleusCardOrNull(
       isQuasar
         ? 'Caracterización del QUASAR central'
         : 'Caracterización del núcleo galáctico activo',
-    facts:
-      Object.freeze([]),
+    facts,
+    scientificSections:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'nucleus',
+          title:
+            'Núcleo galáctico',
+          summary:
+            'Identidad nuclear ya resuelta sin adelantar la caracterización compacta detallada.',
+          facts,
+        }),
+      ]),
     render,
   });
 }
@@ -709,7 +757,7 @@ function buildPhysicalCard(
         knowledgeLevel,
         title,
         confirmed
-          ? 'La caracterización física de la nebulosa está confirmada y la ficha puede mostrar sus magnitudes básicas regenerables.'
+          ? 'La caracterización física de la nebulosa está confirmada y sus magnitudes principales están disponibles.'
           : 'La espectroscopía ya permite una ficha física básica; las magnitudes de confirmación permanecen restringidas.',
         confirmed
           ? 'Ciclo científico completado'
@@ -724,7 +772,7 @@ function buildPhysicalCard(
           seed:
             renderSeed,
           accessibleLabel:
-            `Render procedural de ${title}`,
+            `Representación científica de ${title}`,
           variant:
             nebula.nebulaType,
           renderProfile:
@@ -838,7 +886,7 @@ function buildPhysicalCard(
         knowledgeLevel,
         title,
         confirmed
-          ? 'La región H II está confirmada; la ficha integra ionización y actividad de formación estelar sin persistir Ground Truth duplicado.'
+          ? 'La región H II está confirmada; la ficha integra ionización y actividad de formación estelar.'
           : 'La caracterización de ionización está catalogada; la actividad de formación estelar sigue pendiente de confirmación.',
         confirmed
           ? 'Ciclo científico completado'
@@ -853,7 +901,7 @@ function buildPhysicalCard(
           seed:
             renderSeed,
           accessibleLabel:
-            `Render procedural de ${title}`,
+            `Representación científica de ${title}`,
           variant:
             confirmed
               ? hii.starFormationProfile.activity
@@ -1002,7 +1050,7 @@ function buildPhysicalCard(
           seed:
             renderSeed,
           accessibleLabel:
-            `Render procedural de ${title}`,
+            `Representación científica de ${title}`,
           variant:
             null,
           renderProfile:
@@ -1142,7 +1190,7 @@ function buildPhysicalCard(
           seed:
             renderSeed,
           accessibleLabel:
-            `Render procedural de ${title}`,
+            `Representación científica de ${title}`,
           variant:
             null,
           renderProfile:
@@ -1270,7 +1318,7 @@ function buildPhysicalCard(
         knowledgeLevel,
         title,
         confirmed
-          ? 'La evolución física del remanente está confirmada y vinculada a su identidad persistente.'
+          ? 'La evolución física del remanente está confirmada y su caracterización científica está completa.'
           : 'La onda de choque está caracterizada; la reconstrucción evolutiva completa permanece pendiente de confirmación.',
         confirmed
           ? 'Ciclo científico completado'
@@ -1285,7 +1333,7 @@ function buildPhysicalCard(
           seed:
             renderSeed,
           accessibleLabel:
-            `Render procedural de ${title}`,
+            `Representación científica de ${title}`,
           variant:
             remnant.morphology,
           renderProfile:
@@ -1379,8 +1427,202 @@ function physicalCard(
       Object.freeze([
         ...facts,
       ]),
+    scientificSections:
+      scientificSectionsFor(
+        scientificSubject,
+        facts,
+      ),
     render,
   });
+}
+
+function scientificSectionsFor(
+  scientificSubject:
+    GalacticObjectScientificSubject,
+
+  facts:
+    readonly ArchiveGalacticObjectFact[],
+): readonly ArchiveGalacticObjectScientificSection[] {
+
+  const section = (
+    id:
+      string,
+
+    title:
+      string,
+
+    summary:
+      string,
+
+    labels:
+      readonly string[],
+  ): ArchiveGalacticObjectScientificSection | null => {
+
+    const sectionFacts =
+      facts.filter(
+        fact =>
+          labels.includes(
+            fact.label,
+          ),
+      );
+
+    return sectionFacts.length ===
+      0
+      ? null
+      : Object.freeze({
+          id,
+          title,
+          summary,
+          facts:
+            Object.freeze([
+              ...sectionFacts,
+            ]),
+        });
+  };
+
+  const candidates:
+    readonly (ArchiveGalacticObjectScientificSection | null)[] =
+    scientificSubject ===
+      GalacticObjectScientificSubject.NEBULA
+      ? [
+          section(
+            'general',
+            'General',
+            'Clasificación, escala espacial y estado térmico de la nebulosa.',
+            [
+              'Tipo nebular',
+              'Radio',
+              'Temperatura del gas',
+            ],
+          ),
+          section(
+            'medium',
+            'Medio interestelar',
+            'Contenido gaseoso, ionización y polvo caracterizados por la campaña científica.',
+            [
+              'Masa gaseosa',
+              'Densidad H',
+              'Fracción ionizada',
+              'Polvo / gas',
+            ],
+          ),
+        ]
+      : scientificSubject ===
+          GalacticObjectScientificSubject.HII_REGION
+        ? [
+            section(
+              'ionized-region',
+              'Región ionizada',
+              'Dimensiones y condiciones físicas del gas ionizado.',
+              [
+                'Radio ionizado',
+                'Temperatura electrónica',
+                'Densidad electrónica',
+              ],
+            ),
+            section(
+              'star-formation',
+              'Formación estelar',
+              'Actividad de formación estelar y potencia ionizante confirmadas.',
+              [
+                'Formación estelar',
+                'Tasa de formación',
+                'Estrellas ionizantes',
+                'Fotones ionizantes',
+              ],
+            ),
+          ]
+        : scientificSubject ===
+            GalacticObjectScientificSubject.OPEN_CLUSTER
+          ? [
+              section(
+                'structure',
+                'Estructura',
+                'Población, masa y estructura dinámica del cúmulo abierto.',
+                [
+                  'Población estelar',
+                  'Masa',
+                  'Radio de semimasa',
+                  'Fracción binaria',
+                  'Radio de marea',
+                  'Fracción ligada',
+                ],
+              ),
+              section(
+                'evolution',
+                'Evolución estelar',
+                'Edad y metalicidad de la población estelar cuando están confirmadas.',
+                [
+                  'Edad',
+                  'Metalicidad',
+                ],
+              ),
+            ]
+          : scientificSubject ===
+              GalacticObjectScientificSubject.GLOBULAR_CLUSTER
+            ? [
+                section(
+                  'structure',
+                  'Estructura',
+                  'Población y concentración del cúmulo globular.',
+                  [
+                    'Población estelar',
+                    'Masa',
+                    'Radio del núcleo',
+                    'Radio de semiluz',
+                    'Concentración central',
+                    'Radio de marea',
+                  ],
+                ),
+                section(
+                  'population',
+                  'Población antigua',
+                  'Edad, metalicidad y fracción de remanentes de la población confirmada.',
+                  [
+                    'Edad',
+                    'Metalicidad',
+                    'Fracción de remanentes',
+                  ],
+                ),
+              ]
+            : scientificSubject ===
+                GalacticObjectScientificSubject.SUPERNOVA_REMNANT
+              ? [
+                  section(
+                    'shock',
+                    'Onda de choque',
+                    'Morfología y estado físico actual de la expansión.',
+                    [
+                      'Morfología',
+                      'Radio',
+                      'Velocidad de expansión',
+                      'Temperatura de choque',
+                    ],
+                  ),
+                  section(
+                    'evolution',
+                    'Evolución y entorno',
+                    'Reconstrucción energética y material disponible tras la confirmación.',
+                    [
+                      'Edad',
+                      'Energía de explosión',
+                      'Densidad ambiente H',
+                      'Masa eyectada',
+                      'Masa barrida',
+                    ],
+                  ),
+                ]
+              : [];
+
+  return Object.freeze(
+    candidates.filter(
+      (
+        candidate,
+      ): candidate is ArchiveGalacticObjectScientificSection =>
+        candidate !==
+        null,
+    ),
+  );
 }
 
 function renderProfileForObservedMorphology(
@@ -1543,7 +1785,7 @@ function createSignalRenderDescriptor(
       ArchiveGalacticObjectKnowledgeLevel.SIGNAL,
     seed,
     accessibleLabel:
-      `Render procedural de señal no clasificada: ${title}`,
+      `Representación científica de señal no clasificada: ${title}`,
     variant:
       null,
     renderProfile,
@@ -1581,7 +1823,7 @@ function createIdentifiedRenderDescriptor(
     knowledgeLevel,
     seed,
     accessibleLabel:
-      `Render procedural científico de ${title}`,
+      `Representación científica de ${title}`,
     variant:
       null,
     renderProfile,
@@ -1743,7 +1985,7 @@ function identifiedSummary(
       return 'La agrupación está identificada como cúmulo globular. La estructura debe caracterizarse antes de confirmar su población antigua.';
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT:
-      return 'La fuente extrema está identificada como remanente de supernova persistente. La onda de choque debe caracterizarse antes de reconstruir su evolución.';
+      return 'La fuente extrema está identificada como remanente de supernova. La onda de choque debe caracterizarse antes de reconstruir su evolución.';
   }
 }
 

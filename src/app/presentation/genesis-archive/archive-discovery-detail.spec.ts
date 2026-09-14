@@ -257,20 +257,22 @@ describe(
         );
 
         expect(
-          element.querySelector(
-            '[data-testid="archive-discovery-detail-universe-seed"]',
-          )?.textContent,
+          element.textContent,
         ).toContain(
-          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+          'Ficha científica del sistema',
         );
 
         expect(
           element.querySelector(
+            '[data-testid="archive-discovery-detail-universe-seed"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
             '[data-testid="archive-discovery-detail-generator-version"]',
-          )?.textContent,
-        ).toContain(
-          'V1',
-        );
+          ),
+        ).toBeNull();
 
         expect(
           element.querySelector(
@@ -325,9 +327,23 @@ describe(
         );
 
         expect(
-          element.textContent,
+          element.querySelector(
+            '[data-testid="archive-discovery-detail-boundary"]',
+          )?.textContent,
         ).toContain(
-          '12.8 conserva la identidad persistida',
+          'únicamente conocimiento científico ya observado',
+        );
+
+        expect(
+          element.textContent,
+        ).not.toContain(
+          'Ground Truth',
+        );
+
+        expect(
+          element.textContent,
+        ).not.toContain(
+          'renderer-only',
         );
       },
     );
@@ -703,6 +719,27 @@ describe(
                 }),
               ]),
 
+            scientificSections:
+              Object.freeze([
+                Object.freeze({
+                  id:
+                    'shock',
+                  title:
+                    'Onda de choque',
+                  summary:
+                    'Morfología y estado físico actual de la expansión.',
+                  facts:
+                    Object.freeze([
+                      Object.freeze({
+                        label:
+                          'Radio',
+                        value:
+                          '12,4 pc',
+                      }),
+                    ]),
+                }),
+              ]),
+
             render:
               Object.freeze({
                 kind:
@@ -712,7 +749,7 @@ describe(
                 seed:
                   'GENESIS-12.8-ARCHIVE-COMPONENT',
                 accessibleLabel:
-                  'Render procedural de Remanente de supernova',
+                  'Representación científica de Remanente de supernova',
                 variant:
                   'SHELL',
                 scale:
@@ -891,6 +928,43 @@ describe(
             HTMLElement;
 
         expect(
+          element.textContent,
+        ).toContain(
+          'Ficha científica del objeto galáctico',
+        );
+
+        expect(
+          element.textContent,
+        ).not.toContain(
+          'Ficha de descubrimiento',
+        );
+
+        for (
+          const internalLabel
+          of [
+            '12.8',
+            'Ground Truth',
+            'DiscoveryState',
+            'renderer-only',
+            'IDENTIDAD PROCEDURAL PERSISTENTE',
+            'SECTOR KEY',
+            'ÍNDICE PROCEDURAL',
+          ]
+        ) {
+          expect(
+            element.textContent,
+          ).not.toContain(
+            internalLabel,
+          );
+        }
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'REFERENCIA DEL ARCHIVO',
+        );
+
+        expect(
           element.querySelector(
             '[data-testid="archive-galactic-object-card"]',
           )?.getAttribute(
@@ -920,6 +994,14 @@ describe(
           )?.textContent,
         ).toContain(
           '12,4 pc',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-galactic-object-scientific-fiche"]',
+          )?.textContent,
+        ).toContain(
+          'Onda de choque',
         );
 
         expect(

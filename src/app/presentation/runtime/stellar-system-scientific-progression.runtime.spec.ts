@@ -574,7 +574,7 @@ describe(
           10n,
           8n,
         ),
-        DiscoveryState.DISCOVERED,
+        DiscoveryState.CATALOGUED,
       );
 
       await repository.setState(

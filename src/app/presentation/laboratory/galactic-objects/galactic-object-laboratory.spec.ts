@@ -587,7 +587,7 @@ describe(
         expect(
           confirmed?.textContent,
         ).toContain(
-          'sin clasificación física V1',
+          'Objeto extremo sin clasificación física',
         );
 
         expect(

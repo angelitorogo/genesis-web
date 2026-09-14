@@ -51,7 +51,7 @@ describe(
         seed:
           'GENESIS-12.8-COMPONENT-VECTOR',
         accessibleLabel:
-          'Render procedural de remanente de supernova',
+          'Representación científica de remanente de supernova',
         variant:
           'SHELL',
         scale:
@@ -129,6 +129,24 @@ describe(
           ),
         ).toBe(
           descriptor.accessibleLabel,
+        );
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'REPRESENTACIÓN CIENTÍFICA',
+        );
+
+        expect(
+          element.textContent,
+        ).not.toContain(
+          '12.8',
+        );
+
+        expect(
+          element.textContent,
+        ).not.toContain(
+          'RENDER PROCEDURAL',
         );
       },
     );

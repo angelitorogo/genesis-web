@@ -170,6 +170,15 @@ describe(
           expect(
             card.render.quasarNucleusRenderModel ?? null,
           ).toBeNull();
+
+          expect(
+            card.scientificSections.map(
+              section =>
+                section.id,
+            ),
+          ).toEqual([
+            'nucleus',
+          ]);
         }
       },
     );
@@ -214,6 +223,15 @@ describe(
           expect(
             card.render.agnNucleusRenderModel ?? null,
           ).toBeNull();
+
+          expect(
+            card.scientificSections.map(
+              section =>
+                section.id,
+            ),
+          ).toEqual([
+            'nucleus',
+          ]);
         }
       },
     );
@@ -1389,7 +1407,7 @@ describe(
         expect(
           card.title,
         ).toContain(
-          'sin clasificación física V1',
+          'sin clasificación física',
         );
 
         expect(
@@ -1906,6 +1924,143 @@ describe(
         );
       },
       30_000,
+    );
+
+
+    it(
+      'should expose point-26.7 scientific sections without widening the persisted disclosure boundary',
+      () => {
+        const catalogued =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                0n,
+                123456789n,
+                3n,
+              ),
+              ExplorationResultKind.NEBULA,
+              DiscoveryState.CATALOGUED,
+            );
+
+        expect(
+          catalogued.scientificSections.length,
+        ).toBeGreaterThan(0);
+
+        const visibleLabels =
+          new Set(
+            catalogued.facts.map(
+              fact =>
+                fact.label,
+            ),
+          );
+
+        for (
+          const section
+          of catalogued.scientificSections
+        ) {
+          for (
+            const fact
+            of section.facts
+          ) {
+            expect(
+              visibleLabels.has(
+                fact.label,
+              ),
+            ).toBe(true);
+          }
+        }
+
+        const serialized =
+          JSON.stringify(
+            catalogued.scientificSections,
+          );
+
+        expect(serialized).not.toContain(
+          'generationKey',
+        );
+        expect(serialized).not.toContain(
+          'systemSeed',
+        );
+        expect(serialized).not.toContain(
+          'physicalProperties',
+        );
+      },
+    );
+
+    it(
+      'should split confirmed cluster and remnant data into family-specific 26.7 sections',
+      () => {
+        const cluster =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                0n,
+                0n,
+                2n,
+              ),
+              ExplorationResultKind.STAR_CLUSTER,
+              DiscoveryState.CONFIRMED,
+            );
+
+        expect(
+          cluster.scientificSections.map(
+            section =>
+              section.id,
+          ),
+        ).toEqual([
+          'structure',
+          'evolution',
+        ]);
+
+        const remnant =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              findPersistentSupernovaRemnantLocator(
+                generationKey,
+              ),
+              ExplorationResultKind.EXTREME_OBJECT,
+              DiscoveryState.CONFIRMED,
+            );
+
+        expect(
+          remnant.scientificSections.map(
+            section =>
+              section.id,
+          ),
+        ).toEqual([
+          'shock',
+          'evolution',
+        ]);
+      },
+      30_000,
+    );
+
+    it(
+      'should keep the reserved extreme-object complement sectionless instead of inventing phase-27 physics',
+      () => {
+        const card =
+          ArchiveGalacticObjectCardAssembler
+            .build(
+              generationKey,
+              new GalacticObjectLocator(
+                0n,
+                0n,
+                18n,
+              ),
+              ExplorationResultKind.EXTREME_OBJECT,
+              DiscoveryState.CONFIRMED,
+            );
+
+        expect(
+          card.scientificSubject,
+        ).toBeNull();
+        expect(
+          card.scientificSections,
+        ).toEqual([]);
+      },
     );
 
   },

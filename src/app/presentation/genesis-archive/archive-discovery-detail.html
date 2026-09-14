@@ -3,11 +3,27 @@
     class="archive-discovery-detail"
     data-testid="archive-discovery-detail-page"
   >
-    <genesis-section-title
-      eyebrow="ARCHIVO GENESIS / DESCUBRIMIENTO"
-      title="Ficha de descubrimiento"
-      description="Registro recargable del descubrimiento persistente, con render procedural y detalle científico limitado por el estado observado."
-    ></genesis-section-title>
+    @if (facade.model(); as headerModel) {
+      @if (headerModel.locatorKind === 'galactic-object') {
+        <genesis-section-title
+          eyebrow="ARCHIVO GENESIS / OBJETO GALÁCTICO"
+          title="Ficha científica del objeto galáctico"
+          description="Caracterización científica persistente del objeto, con profundidad limitada por el conocimiento observado."
+        ></genesis-section-title>
+      } @else {
+        <genesis-section-title
+          eyebrow="ARCHIVO GENESIS / SISTEMA ESTELAR"
+          title="Ficha científica del sistema"
+          description="Caracterización científica persistente del sistema, con profundidad limitada por el conocimiento observado."
+        ></genesis-section-title>
+      }
+    } @else {
+      <genesis-section-title
+        eyebrow="ARCHIVO GENESIS"
+        title="Ficha científica"
+        description="Resolviendo el registro científico persistente…"
+      ></genesis-section-title>
+    }
 
     @switch (facade.state().kind) {
       @case ('loading') {
@@ -15,7 +31,7 @@
           class="archive-discovery-detail__panel"
           data-testid="archive-discovery-detail-loading"
         >
-          Resolviendo descubrimiento persistido…
+          Resolviendo registro científico…
         </section>
       }
 
@@ -25,7 +41,7 @@
           data-testid="archive-discovery-detail-not-found"
         >
           <strong>
-            El descubrimiento solicitado no existe en el universo indicado.
+            El registro científico solicitado no existe en el universo indicado.
           </strong>
 
           <p>
@@ -54,7 +70,7 @@
             <header class="archive-discovery-detail__record-header">
               <div>
                 <small>
-                  FAMILIA OPERACIONAL
+                  CLASIFICACIÓN
                 </small>
 
                 <h2 data-testid="archive-discovery-detail-family">
@@ -620,7 +636,7 @@
                 <div class="archive-discovery-detail__science-copy">
                   <div>
                     <small class="archive-discovery-detail__eyebrow">
-                      CLASIFICACIÓN CIENTÍFICA / 12.8
+                      FICHA CIENTÍFICA · OBJETO GALÁCTICO
                     </small>
 
                     <h3 data-testid="archive-galactic-object-title">
@@ -742,35 +758,56 @@
                 </div>
               </section>
 
-              @if (card.facts.length > 0) {
+              @if (card.scientificSections.length > 0) {
                 <section
-                  class="archive-discovery-detail__physical-section"
+                  class="archive-discovery-detail__physical-section archive-discovery-detail__galactic-fiche"
                   data-testid="archive-galactic-object-physical-facts"
                 >
                   <header>
-                    <small class="archive-discovery-detail__eyebrow">
-                      DATOS FÍSICOS AUTORIZADOS
-                    </small>
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        CARACTERIZACIÓN CIENTÍFICA
+                      </small>
+
+                      <h3>Ficha física</h3>
+                    </div>
 
                     <p>
-                      Solo se muestran magnitudes desbloqueadas por la progresión
-                      científica persistida.
+                      La profundidad de cada sección depende únicamente del nivel
+                      de conocimiento científico persistido.
                     </p>
                   </header>
 
-                  <dl class="archive-discovery-detail__physical-facts">
-                    @for (fact of card.facts; track fact.label) {
-                      <div>
-                        <dt>
-                          {{ fact.label }}
-                        </dt>
+                  <div
+                    class="archive-discovery-detail__galactic-fiche-sections"
+                    data-testid="archive-galactic-object-scientific-fiche"
+                  >
+                    @for (section of card.scientificSections; track section.id) {
+                      <article
+                        class="archive-discovery-detail__galactic-fiche-section"
+                        data-testid="archive-galactic-object-scientific-section"
+                        [attr.data-section-id]="section.id"
+                      >
+                        <header>
+                          <div>
+                            <small>SECCIÓN CIENTÍFICA</small>
+                            <h4>{{ section.title }}</h4>
+                          </div>
 
-                        <dd>
-                          {{ fact.value }}
-                        </dd>
-                      </div>
+                          <p>{{ section.summary }}</p>
+                        </header>
+
+                        <dl class="archive-discovery-detail__physical-facts">
+                          @for (fact of section.facts; track fact.label) {
+                            <div>
+                              <dt>{{ fact.label }}</dt>
+                              <dd>{{ fact.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      </article>
                     }
-                  </dl>
+                  </div>
                 </section>
               } @else {
                 <section
@@ -778,12 +815,12 @@
                   data-testid="archive-galactic-object-physical-restricted"
                 >
                   <small class="archive-discovery-detail__eyebrow">
-                    DATOS FÍSICOS RESTRINGIDOS
+                    CARACTERIZACIÓN PENDIENTE
                   </small>
 
                   <p>
-                    La ficha no regenera ni muestra magnitudes físicas hasta que
-                    el estado científico alcance Catalogado.
+                    La identidad conocida todavía no autoriza una ficha física
+                    seccionada para este objeto.
                   </p>
                 </section>
               }
@@ -791,85 +828,33 @@
 
             <section class="archive-discovery-detail__identity-section">
               <small class="archive-discovery-detail__eyebrow">
-                IDENTIDAD PROCEDURAL PERSISTENTE
+                REFERENCIA DEL ARCHIVO
               </small>
 
               <dl class="archive-discovery-detail__facts">
                 <div>
-                  <dt>
-                    UNIVERSO
-                  </dt>
-
-                  <dd data-testid="archive-discovery-detail-universe-seed">
-                    {{ model.universeSeed }}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt>
-                    GENERADOR
-                  </dt>
-
-                  <dd data-testid="archive-discovery-detail-generator-version">
-                    V{{ model.generatorVersionCode }}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt>
-                    LOCALIZADOR
-                  </dt>
-
-                  <dd data-testid="archive-discovery-detail-locator-kind">
-                    {{ model.locatorKindLabel }}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt>
-                    GALAXIA
-                  </dt>
-
+                  <dt>GALAXIA</dt>
                   <dd data-testid="archive-discovery-detail-galaxy-index">
                     {{ model.galaxyIndex.toString() }}
                   </dd>
                 </div>
 
                 <div>
-                  <dt>
-                    SECTOR
-                  </dt>
-
+                  <dt>SECTOR</dt>
                   <dd data-testid="archive-discovery-detail-sector">
                     ({{ model.sectorX }}, {{ model.sectorY }})
                   </dd>
                 </div>
 
                 <div>
-                  <dt>
-                    SECTOR KEY
-                  </dt>
-
-                  <dd>
-                    {{ model.sectorKey.toString() }}
-                  </dd>
-                </div>
-
-                <div>
-                  <dt>
-                    ÍNDICE PROCEDURAL
-                  </dt>
-
+                  <dt>OBJETO</dt>
                   <dd data-testid="archive-discovery-detail-object-index">
                     {{ model.galacticObjectIndex.toString() }}
                   </dd>
                 </div>
 
                 <div>
-                  <dt>
-                    IDENTIDAD
-                  </dt>
-
+                  <dt>REFERENCIA</dt>
                   <dd data-testid="archive-discovery-detail-identity">
                     {{ model.proceduralIdentity }}
                   </dd>
@@ -881,13 +866,9 @@
               class="archive-discovery-detail__boundary"
               data-testid="archive-discovery-detail-boundary"
             >
-              12.8 conserva la identidad persistida y regenera únicamente el
-              Ground Truth que el DiscoveryState permite mostrar. Para sistemas,
-              16.7 mantiene DETECTED sin nombre ni multiplicidad; DISCOVERED/VISITED
-              pueden mostrar identidad y arquitectura; CATALOGUED habilita fichas
-              estelares, órbitas y compatibilidad circumbinaria; CONFIRMED añade
-              el cruce de zona habitable de 16.6. Todos los renders son
-              renderer-only, esquemáticos y no persisten propiedades duplicadas.
+              Esta ficha muestra únicamente conocimiento científico ya observado y
+              registrado. La representación visual facilita la lectura del objeto y
+              no modifica sus propiedades científicas.
             </p>
           </article>
         }
