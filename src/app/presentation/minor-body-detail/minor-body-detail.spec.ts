@@ -136,6 +136,98 @@ describe(
         );
       },
     );
+    it(
+      'should accept a stable TNO route and preserve it in section anchors',
+      async () => {
+        const model =
+          systemModel();
+
+        const state =
+          signal<ArchiveDiscoveryDetailUiState>({
+            kind:
+              'content',
+            model,
+          });
+
+        const modelSignal =
+          signal<ArchiveDiscoveryDetailModel | null>(
+            model,
+          );
+
+        await TestBed
+          .configureTestingModule({
+            imports: [
+              MinorBodyDetailPage,
+            ],
+            providers: [
+              provideRouter(
+                [],
+              ),
+              {
+                provide:
+                  ArchiveDiscoveryDetailFacade,
+                useValue: {
+                  state,
+                  model:
+                    modelSignal,
+                  errorMessage:
+                    signal<string | null>(
+                      null,
+                    ),
+                  load:
+                    vi.fn(
+                      async () => {},
+                    ),
+                },
+              },
+              {
+                provide:
+                  ActivatedRoute,
+                useValue: {
+                  snapshot: {
+                    paramMap:
+                      convertToParamMap({
+                        galaxyIndex:
+                          '3',
+                        sectorKey:
+                          '-17',
+                        galacticObjectIndex:
+                          '8',
+                        minorBodyKind:
+                          'tno',
+                        proceduralId:
+                          'cccccccccccccccccccccccccccccccc',
+                      }),
+                    queryParamMap:
+                      convertToParamMap({
+                        u:
+                          '96F17ABD83F31EF747FC750C996EB1C2',
+                      }),
+                  },
+                },
+              },
+            ],
+          })
+          .compileComponents();
+
+        const fixture =
+          TestBed.createComponent(
+            MinorBodyDetailPage,
+          );
+
+        fixture.detectChanges();
+
+        expect(
+          fixture
+            .componentInstance
+            .minorBodySectionHref(
+              'composition',
+            ),
+        ).toBe(
+          '/system/3/-17/8/minor-body/tno/CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC?u=96F17ABD83F31EF747FC750C996EB1C2#minor-body-section-composition',
+        );
+      },
+    );
   },
 );
 

@@ -18,15 +18,15 @@
             @if (currentResolution.kind === 'AVAILABLE') {
               {{ currentResolution.card.title }}
             } @else {
-              Ficha de asteroide / cometa
+              Ficha de cuerpo menor
             }
           } @else {
-            Ficha de asteroide / cometa
+            Ficha de cuerpo menor
           }
         </h1>
 
         <p class="minor-body-detail__subtitle">
-          Caracterización física, orbital, dinámica y de riesgo de asteroides y cometas identificados en el sistema.
+          Caracterización física, orbital, dinámica y de riesgo de asteroides, cometas y objetos transneptunianos identificados en el sistema.
         </p>
       </div>
 
@@ -151,6 +151,12 @@
                     </div>
                   </dl>
                 </section>
+
+                <app-scientific-body-preview
+                  class="minor-body-detail__preview"
+                  data-testid="minor-body-scientific-preview"
+                  [model]="card.preview"
+                ></app-scientific-body-preview>
 
                 <nav
                   class="minor-body-detail__section-nav"

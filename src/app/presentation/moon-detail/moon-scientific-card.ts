@@ -24,9 +24,22 @@ import {
 } from '../../simulation/planetary/moon-scientific-target-resolver';
 
 import {
+  PlanetScientificTargetResolver,
+  type PlanetScientificResolvedTarget,
+} from '../../simulation/planetary/planet-scientific-target-resolver';
+
+import {
   ArchiveDiscoveryLocatorKind,
   type ArchiveDiscoveryDetailModel,
 } from '../genesis-archive/archive-discovery-detail.facade';
+
+
+import {
+  ScientificBodyPreviewAssembler,
+  DEFAULT_SCIENTIFIC_BODY_PREVIEW_SCENE_RESOLVER,
+  type ScientificBodyPreviewModel,
+  type ScientificBodyPreviewSceneResolver,
+} from '../scientific/scientific-body-preview';
 
 import {
   MoonScientificSectionsAssembler,
@@ -78,6 +91,9 @@ export interface MoonScientificCardModel {
 
   readonly sections:
     MoonScientificSectionsModel;
+
+  readonly preview:
+    ScientificBodyPreviewModel;
 }
 
 export type MoonScientificFicheResolution =
@@ -114,6 +130,14 @@ export interface MoonScientificTargetResolutionResolver {
     moonIndex:
       bigint,
   ): MoonScientificResolvedTarget | null;
+
+  resolveHostPlanetDetailed?(
+    generationKey:
+      UniverseGenerationKey,
+
+    planetLocator:
+      BodyLocator,
+  ): PlanetScientificResolvedTarget | null;
 }
 
 const DEFAULT_TARGET_RESOLVER:
@@ -134,6 +158,20 @@ const DEFAULT_TARGET_RESOLVER:
           generationKey,
           planetLocator,
           moonIndex,
+        );
+    },
+
+    resolveHostPlanetDetailed(
+      generationKey:
+        UniverseGenerationKey,
+
+      planetLocator:
+        BodyLocator,
+    ): PlanetScientificResolvedTarget | null {
+      return PlanetScientificTargetResolver
+        .resolveDetailed(
+          generationKey,
+          planetLocator,
         );
     },
   });
@@ -162,6 +200,10 @@ export class MoonScientificCardAssembler {
     resolver:
       MoonScientificTargetResolutionResolver =
         DEFAULT_TARGET_RESOLVER,
+
+    previewSceneResolver:
+      ScientificBodyPreviewSceneResolver =
+        DEFAULT_SCIENTIFIC_BODY_PREVIEW_SCENE_RESOLVER,
   ): MoonScientificFicheResolution {
 
     if (
@@ -241,6 +283,16 @@ export class MoonScientificCardAssembler {
       });
     }
 
+    const hostPlanetTarget =
+      resolver
+        .resolveHostPlanetDetailed
+        ?.call(
+          resolver,
+          generationKey,
+          planetLocator,
+        ) ??
+      null;
+
     return Object.freeze({
       kind:
         MoonScientificFicheResolutionKind.AVAILABLE,
@@ -268,6 +320,13 @@ export class MoonScientificCardAssembler {
             MoonScientificSectionsAssembler
               .build(
                 target,
+              ),
+          preview:
+            ScientificBodyPreviewAssembler
+              .moon(
+                target,
+                hostPlanetTarget,
+                previewSceneResolver.build(systemModel),
               ),
         }),
     });

@@ -10,6 +10,7 @@ export interface SystemScenePlanetTextureInput {
   readonly planetId: string;
   readonly surfaceStyle: SystemScenePlanetTextureSurfaceStyle;
   readonly baseColorHex: string;
+  readonly visualSeedUint32?: number;
 }
 
 export interface SystemScenePlanetTextureData {
@@ -83,7 +84,7 @@ export function buildSystemScenePlanetTextureV1(
 ): SystemScenePlanetTextureData {
   assertInput(input);
 
-  const seedUint32 = systemScenePlanetTextureSeed(input);
+  const seedUint32 = input.visualSeedUint32 ?? systemScenePlanetTextureSeed(input);
   const width = SYSTEM_SCENE_PLANET_TEXTURE_WIDTH;
   const height = SYSTEM_SCENE_PLANET_TEXTURE_HEIGHT;
   const rgba = new Uint8Array(width * height * 4);

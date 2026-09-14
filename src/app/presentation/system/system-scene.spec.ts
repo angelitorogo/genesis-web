@@ -1108,6 +1108,33 @@ describe(
         fixture.detectChanges();
 
         expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="system-scene-minor-body-fiche-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toContain(
+          '/system/3/-17/8/minor-body/tno/CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+        );
+
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'minor-4-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
+            kind:
+              'minor-body' as const,
+            label:
+              'CAP-002',
+            title:
+              'Capturado CAP-002',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
           element.querySelector(
             '[data-testid="system-scene-minor-body-fiche-link"]',
           ),

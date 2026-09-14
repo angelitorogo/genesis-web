@@ -82,14 +82,27 @@ export class MinorBodyScientificSectionsAssembler {
       MinorBodyScientificResolvedTarget,
   ): MinorBodyScientificSectionsModel {
 
-    return target.detail.kind ===
+    if (
+      target.detail.kind ===
       MinorBodyScientificTargetKind.ASTEROID
-      ? asteroidSections(
-          target.detail,
-        )
-      : cometSections(
-          target.detail,
-        );
+    ) {
+      return asteroidSections(
+        target.detail,
+      );
+    }
+
+    if (
+      target.detail.kind ===
+      MinorBodyScientificTargetKind.COMET
+    ) {
+      return cometSections(
+        target.detail,
+      );
+    }
+
+    return transNeptunianSections(
+      target.detail,
+    );
   }
 }
 
@@ -585,9 +598,168 @@ function cometSections(
   });
 }
 
+function transNeptunianSections(
+  detail:
+    Extract<
+      MinorBodyScientificDetailSource,
+      {
+        kind:
+          typeof MinorBodyScientificTargetKind.TRANS_NEPTUNIAN_OBJECT;
+      }
+    >,
+): MinorBodyScientificSectionsModel {
+
+  const general =
+    detail.general;
+
+  return Object.freeze({
+    badges:
+      Object.freeze([
+        transNeptunianRegimeLabel(
+          general.dynamicalRegime,
+        ),
+        general.isDwarfPlanetScaleCandidate
+          ? 'Escala de planeta enano'
+          : 'Cuerpo transneptuniano menor',
+        detail.composition.iceFraction01 >=
+          0.65
+          ? 'Rico en hielo'
+          : 'Mezcla hielo-roca',
+        dynamicsBadge(
+          detail.dynamics,
+        ),
+      ]),
+    sections:
+      Object.freeze([
+        section(
+          'general',
+          'SECCIÓN 01',
+          'General',
+          'Tamaño, densidad, reflectividad y familia dinámica del objeto transneptuniano.',
+          [
+            field(
+              'Diámetro',
+              `${number(general.diameterKilometers)} km`,
+            ),
+            field(
+              'Régimen dinámico',
+              transNeptunianRegimeLabel(
+                general.dynamicalRegime,
+              ),
+            ),
+            field(
+              'Densidad aparente',
+              `${number(general.bulkDensityGramsPerCubicCentimeter)} g/cm³`,
+            ),
+            field(
+              'Albedo geométrico',
+              number(
+                general.geometricAlbedo01,
+              ),
+            ),
+            field(
+              'Escala de planeta enano',
+              yesNo(
+                general.isDwarfPlanetScaleCandidate,
+              ),
+              'Criterio geométrico de tamaño del generador; no implica clasificación oficial de planeta enano.',
+            ),
+            field(
+              'Soporte del reservorio exterior',
+              index01(
+                general.reservoirSupportIndex01,
+              ),
+            ),
+            field(
+              'Polvo residual de formación',
+              `${NUMBER_6.format(general.sourceResidualDustMassEarth)} M⊕`,
+            ),
+          ],
+        ),
+        section(
+          'orbit',
+          'SECCIÓN 02',
+          'Órbita',
+          'Elementos orbitales del objeto en el reservorio exterior del sistema.',
+          [
+            field(
+              'Semieje mayor',
+              `${number(detail.orbit.semiMajorAxisAu)} UA`,
+            ),
+            field(
+              'Excentricidad',
+              number(
+                detail.orbit.eccentricity,
+              ),
+            ),
+            field(
+              'Inclinación',
+              `${number(detail.orbit.inclinationDegrees)}°`,
+            ),
+            field(
+              'Periastro',
+              `${number(detail.orbit.periapsisAu)} UA`,
+            ),
+            field(
+              'Apoastro',
+              `${number(detail.orbit.apoapsisAu)} UA`,
+            ),
+            field(
+              'Longitud del nodo ascendente',
+              `${number(detail.orbit.longitudeAscendingNodeDegrees)}°`,
+            ),
+            field(
+              'Argumento del periastro',
+              `${number(detail.orbit.argumentOfPeriapsisDegrees)}°`,
+            ),
+            field(
+              'Anomalía media',
+              `${number(detail.orbit.meanAnomalyDegrees)}°`,
+            ),
+            field(
+              'Periodo orbital',
+              `${number(detail.orbit.orbitalPeriodYears)} años`,
+            ),
+          ],
+        ),
+        section(
+          'composition',
+          'SECCIÓN 03',
+          'Composición',
+          'Fracciones de hielo y roca del cuerpo materializado en el reservorio transneptuniano.',
+          [
+            field(
+              'Hielo',
+              percent(
+                detail.composition.iceFraction01,
+              ),
+            ),
+            field(
+              'Roca',
+              percent(
+                detail.composition.rockFraction01,
+              ),
+            ),
+          ],
+        ),
+        ...dynamicsSections(
+          detail.dynamics,
+          4,
+          5,
+        ),
+      ]),
+  });
+}
+
 function dynamicsSections(
   dynamics:
     MinorBodyScientificDynamicsSource,
+
+  encounterSectionNumber =
+    5,
+
+  riskSectionNumber =
+    6,
 ): readonly MinorBodyScientificSectionModel[] {
 
   const encounterFields:
@@ -729,14 +901,14 @@ function dynamicsSections(
   return Object.freeze([
     section(
       'encounters',
-      'SECCIÓN 05',
+      `SECCIÓN ${String(encounterSectionNumber).padStart(2, '0')}`,
       'Encuentros',
       'Cruces orbitales, corredores de aproximación y encuentros cercanos resueltos por la dinámica del sistema.',
       encounterFields,
     ),
     section(
       'risk',
-      'SECCIÓN 06',
+      `SECCIÓN ${String(riskSectionNumber).padStart(2, '0')}`,
       'Riesgo orbital',
       `Geometría de riesgo posterior a encuentros y estimación temporal a ${number(dynamics.timeWindowYears)} años. Un corredor de riesgo no afirma que vaya a producirse un impacto.`,
       riskFields,
@@ -1082,6 +1254,28 @@ function temporalRiskRegimeLabel(
       return 'Probabilidad baja';
     case 'MATERIAL':
       return 'Probabilidad relevante';
+    default:
+      return value;
+  }
+}
+
+function transNeptunianRegimeLabel(
+  value:
+    string,
+): string {
+  switch (
+    value
+  ) {
+    case 'COLD_CLASSICAL':
+      return 'Clásico frío';
+    case 'HOT_CLASSICAL':
+      return 'Clásico caliente';
+    case 'RESONANT':
+      return 'Resonante';
+    case 'SCATTERED':
+      return 'Dispersado';
+    case 'DETACHED':
+      return 'Desacoplado';
     default:
       return value;
   }

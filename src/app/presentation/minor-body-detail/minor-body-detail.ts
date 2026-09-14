@@ -30,6 +30,10 @@ import {
 } from '../scientific/scientific-route-identity';
 
 import {
+  ScientificBodyPreview,
+} from '../scientific-body-preview/scientific-body-preview';
+
+import {
   MinorBodyScientificCardAssembler,
   MinorBodyScientificFicheResolutionKind,
 } from './minor-body-scientific-card';
@@ -44,6 +48,7 @@ import {
   imports: [
     GenesisScreen,
     RouterLink,
+    ScientificBodyPreview,
   ],
 
   templateUrl:
@@ -340,7 +345,9 @@ function parseTargetKindOrNull(
     value ===
       MinorBodyScientificTargetKind.ASTEROID ||
     value ===
-      MinorBodyScientificTargetKind.COMET
+      MinorBodyScientificTargetKind.COMET ||
+    value ===
+      MinorBodyScientificTargetKind.TRANS_NEPTUNIAN_OBJECT
   ) {
     return value;
   }

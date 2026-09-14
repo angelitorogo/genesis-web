@@ -9,6 +9,7 @@ export interface SystemSceneGiantAtmosphereTextureInput {
   readonly systemIdentity: string;
   readonly planetId: string;
   readonly atmosphere: SystemSceneGiantAtmospherePresentationSnapshot;
+  readonly visualSeedUint32?: number;
 }
 
 export interface SystemSceneGiantAtmosphereTextureData {
@@ -43,6 +44,16 @@ const TWO_PI = Math.PI * 2;
  * identity. Banding, vortices and haze are visual circulation proxies; no pixel
  * is promoted to atmospheric Ground Truth.
  */
+export function systemSceneGiantAtmosphereTextureSeedV1(
+  systemIdentity: string,
+  planetId: string,
+  regime: string,
+): number {
+  return hash32(
+    `${systemIdentity}|${planetId}|${regime}|GENESIS-25.4-GIANT-ATMOSPHERE-V1`,
+  );
+}
+
 export function buildSystemSceneGiantAtmosphereTextureV1(
   input: SystemSceneGiantAtmosphereTextureInput,
 ): SystemSceneGiantAtmosphereTextureData {
@@ -56,9 +67,13 @@ export function buildSystemSceneGiantAtmosphereTextureV1(
     throw new RangeError('Point-25.4 requires the frozen deep-envelope presentation source.');
   }
 
-  const seedUint32 = hash32(
-    `${input.systemIdentity}|${input.planetId}|${input.atmosphere.regime}|GENESIS-25.4-GIANT-ATMOSPHERE-V1`,
-  );
+  const seedUint32 =
+    input.visualSeedUint32 ??
+    systemSceneGiantAtmosphereTextureSeedV1(
+      input.systemIdentity,
+      input.planetId,
+      input.atmosphere.regime,
+    );
   const width = SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_WIDTH;
   const height = SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_HEIGHT;
   const albedoRgba = new Uint8Array(width * height * 4);

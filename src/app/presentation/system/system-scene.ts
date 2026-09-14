@@ -762,7 +762,10 @@ export class SystemScene
         : body.minorBodyKind.name ===
           'COMET'
           ? 'comet'
-          : null;
+          : body.minorBodyKind.name ===
+            'TRANS_NEPTUNIAN_OBJECT'
+            ? 'tno'
+            : null;
 
     if (
       targetKind ===
@@ -4150,7 +4153,7 @@ class ThreeSystemSceneRuntime
       );
 
     const appearance =
-      createPlanetAppearance(
+      createSystemScenePlanetAppearanceV1(
         planet,
         systemIdentity,
         this.planetTextureCache,
@@ -5887,7 +5890,7 @@ interface SystemSceneBodyLodBindingV1 {
   level: SystemSceneBodyLodLevelV1;
 }
 
-interface SystemScenePlanetTextureResourceV1 {
+export interface SystemScenePlanetTextureResourceV1 {
   readonly giantAtmosphereTexture:
     SystemSceneGiantAtmosphereTextureData | null;
   readonly textureData:
@@ -5905,7 +5908,13 @@ interface SystemScenePlanetTextureResourceV1 {
   dispose(): void;
 }
 
-interface PlanetAppearance {
+export interface SystemScenePlanetVisualSeedPackV1 {
+  readonly planetTextureSeedUint32: number;
+  readonly surfaceTextureSeedUint32: number;
+  readonly giantAtmosphereTextureSeedUint32: number | null;
+}
+
+export interface PlanetAppearance {
   readonly material:
     THREE.MeshStandardMaterial;
 
@@ -5919,7 +5928,7 @@ interface PlanetAppearance {
     SystemScenePlanetLightBindingV1;
 }
 
-function createPlanetAppearance(
+export function createSystemScenePlanetAppearanceV1(
   planet:
     SystemSceneBodySnapshot,
 
@@ -5927,20 +5936,46 @@ function createPlanetAppearance(
     string,
 
   textureCache:
-    SystemSceneBoundedResourceCacheV1<SystemScenePlanetTextureResourceV1>,
+    SystemSceneBoundedResourceCacheV1<SystemScenePlanetTextureResourceV1> | null,
+
+  visualSeeds:
+    SystemScenePlanetVisualSeedPackV1 | null =
+      null,
 ): PlanetAppearance {
 
   const textureLease =
-    textureCache.acquire(
-      `${systemIdentity}|${planet.id}|25.11`,
-      planet.giantAtmosphere === null
-        ? 768 * 1024
-        : 512 * 1024,
-      () => createSystemScenePlanetTextureResourceV1(
-        planet,
-        systemIdentity,
-      ),
-    );
+    textureCache === null
+      ? (() => {
+          const resource =
+            createSystemScenePlanetTextureResourceV1(
+              planet,
+              systemIdentity,
+              visualSeeds,
+            );
+          let disposed = false;
+          return Object.freeze({
+            resource,
+            cached: false,
+            dispose: () => {
+              if (disposed) {
+                return;
+              }
+              disposed = true;
+              resource.dispose();
+            },
+          });
+        })()
+      : textureCache.acquire(
+          `${systemIdentity}|${planet.id}|25.11`,
+          planet.giantAtmosphere === null
+            ? 768 * 1024
+            : 512 * 1024,
+          () => createSystemScenePlanetTextureResourceV1(
+            planet,
+            systemIdentity,
+            visualSeeds,
+          ),
+        );
 
   const textureResource =
     textureLease.resource;
@@ -6268,6 +6303,10 @@ function createSystemScenePlanetTextureResourceV1(
 
   systemIdentity:
     string,
+
+  visualSeeds:
+    SystemScenePlanetVisualSeedPackV1 | null =
+      null,
 ): SystemScenePlanetTextureResourceV1 {
 
   const giantAtmosphereTexture =
@@ -6278,6 +6317,9 @@ function createSystemScenePlanetTextureResourceV1(
           systemIdentity,
           planetId: planet.id,
           atmosphere: planet.giantAtmosphere,
+          visualSeedUint32:
+            visualSeeds?.giantAtmosphereTextureSeedUint32 ??
+            undefined,
         });
 
   const textureData =
@@ -6288,6 +6330,8 @@ function createSystemScenePlanetTextureResourceV1(
           planetId: planet.id,
           surfaceStyle: planetTextureSurfaceStyle(planet),
           baseColorHex: planet.colorHex,
+          visualSeedUint32:
+            visualSeeds?.planetTextureSeedUint32,
         })
       : null;
 
@@ -6301,6 +6345,8 @@ function createSystemScenePlanetTextureResourceV1(
           planetId: planet.id,
           baseTexture: textureData,
           surface: planet.surfaceEnvironment,
+          visualSeedUint32:
+            visualSeeds?.surfaceTextureSeedUint32,
         });
 
   const visualSeed =

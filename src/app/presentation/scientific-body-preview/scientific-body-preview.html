@@ -1,0 +1,85 @@
+<section
+  class="scientific-preview"
+  data-testid="scientific-body-preview"
+  [attr.data-preview-kind]="model.kind"
+  [attr.aria-label]="model.accessibleLabel"
+>
+  <header class="scientific-preview__header">
+    <div>
+      <small>REPRESENTACIÓN 3D</small>
+      <strong>Inspección visual adaptativa</strong>
+      <span>WebGL · escala visual no comparativa</span>
+    </div>
+
+    <div class="scientific-preview__actions" aria-label="Controles de representación 3D">
+      @if (contextAvailable()) {
+        <button
+          type="button"
+          class="scientific-preview__action"
+          data-testid="scientific-body-preview-context-toggle"
+          [attr.aria-pressed]="contextEnabled()"
+          (click)="toggleContext()"
+        >
+          {{ contextActionLabel() }}
+        </button>
+      }
+
+      <button
+        type="button"
+        class="scientific-preview__action"
+        data-testid="scientific-body-preview-rotation-toggle"
+        [attr.aria-pressed]="autoRotate()"
+        (click)="toggleAutoRotate()"
+      >
+        {{ autoRotate() ? 'PAUSAR ANIMACIÓN' : 'REANUDAR ANIMACIÓN' }}
+      </button>
+
+      <button
+        type="button"
+        class="scientific-preview__action"
+        (click)="resetView()"
+      >
+        RESTABLECER VISTA
+      </button>
+    </div>
+  </header>
+
+  <div class="scientific-preview__viewport">
+    <canvas
+      #canvas
+      class="scientific-preview__canvas"
+      data-testid="scientific-body-preview-canvas"
+      tabindex="0"
+      role="img"
+      [attr.aria-label]="model.accessibleLabel + ' Arrastra para rotar; usa la rueda o las teclas más y menos para zoom; flechas para orientar y Home para restablecer.'"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp($event)"
+      (pointercancel)="onPointerUp($event)"
+      (wheel)="onWheel($event)"
+      (keydown)="onKeyDown($event)"
+    ></canvas>
+
+    @if (renderState() === 'initializing') {
+      <div class="scientific-preview__state" role="status" aria-live="polite">
+        Inicializando representación 3D…
+      </div>
+    } @else if (renderState() === 'unavailable') {
+      <div class="scientific-preview__state" role="status">
+        WebGL2 no está disponible en este dispositivo. La ficha científica continúa disponible.
+      </div>
+    } @else if (renderState() === 'error') {
+      <div class="scientific-preview__state" role="alert">
+        No se pudo inicializar la representación 3D. La ficha científica continúa disponible.
+      </div>
+    }
+  </div>
+
+  <footer class="scientific-preview__legend">
+    <span>Arrastrar · rotar</span>
+    <span>Rueda / + − · zoom</span>
+    @if (contextEnabled() && (model.kind === 'PLANET' || model.kind === 'MOON')) {
+      <span>Órbitas keplerianas a escala relativa · tamaños de cuerpos amplificados · tiempo orbital acelerado uniformemente</span>
+    }
+  </footer>
+</section>

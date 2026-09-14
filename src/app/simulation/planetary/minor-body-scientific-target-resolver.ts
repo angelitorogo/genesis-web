@@ -94,6 +94,8 @@ export const MinorBodyScientificTargetKind =
       'asteroid',
     COMET:
       'comet',
+    TRANS_NEPTUNIAN_OBJECT:
+      'tno',
   } as const);
 
 export type MinorBodyScientificTargetKind =
@@ -250,9 +252,48 @@ export interface MinorBodyScientificCometDetailSource {
     }>;
 }
 
+export interface MinorBodyScientificTransNeptunianDetailSource {
+  readonly kind:
+    typeof MinorBodyScientificTargetKind.TRANS_NEPTUNIAN_OBJECT;
+
+  readonly dynamics:
+    MinorBodyScientificDynamicsSource;
+
+  readonly general:
+    Readonly<{
+      diameterKilometers: number;
+      dynamicalRegime: string;
+      bulkDensityGramsPerCubicCentimeter: number;
+      geometricAlbedo01: number;
+      reservoirSupportIndex01: number;
+      sourceResidualDustMassEarth: number;
+      isDwarfPlanetScaleCandidate: boolean;
+    }>;
+
+  readonly orbit:
+    Readonly<{
+      semiMajorAxisAu: number;
+      eccentricity: number;
+      inclinationDegrees: number;
+      periapsisAu: number;
+      apoapsisAu: number;
+      longitudeAscendingNodeDegrees: number;
+      argumentOfPeriapsisDegrees: number;
+      meanAnomalyDegrees: number;
+      orbitalPeriodYears: number;
+    }>;
+
+  readonly composition:
+    Readonly<{
+      iceFraction01: number;
+      rockFraction01: number;
+    }>;
+}
+
 export type MinorBodyScientificDetailSource =
   | MinorBodyScientificAsteroidDetailSource
-  | MinorBodyScientificCometDetailSource;
+  | MinorBodyScientificCometDetailSource
+  | MinorBodyScientificTransNeptunianDetailSource;
 
 export interface MinorBodyScientificResolvedTarget {
   readonly identity:
@@ -266,8 +307,8 @@ const PROCEDURAL_ID_PATTERN =
   /^[0-9A-F]{32}$/;
 
 /**
- * Point-26.8 deterministic resolver for one already-addressed relevant asteroid
- * or comet. The route reuses the frozen point-22.10 `(kind, proceduralId)`
+ * Point-26.8 deterministic resolver for one already-addressed relevant asteroid,
+ * comet or trans-Neptunian object. The route reuses the frozen point-22.10 `(kind, proceduralId)`
  * identity and never derives a new locator/seed level.
  *
  * The returned payload is a primitive scientific projection only. It exposes
@@ -325,6 +366,13 @@ export class MinorBodyScientificTargetResolver {
 
     const cometSystem =
       CometGenerator
+        .generate(
+          generationKey,
+          context.planetarySystem,
+        );
+
+    const transNeptunianSystem =
+      TransNeptunianObjectGenerator
         .generate(
           generationKey,
           context.planetarySystem,
@@ -449,6 +497,101 @@ export class MinorBodyScientificTargetResolver {
                   asteroid.taxonomy.binaryMassRatio01,
                 binarySeparationPrimaryRadii:
                   asteroid.taxonomy.binarySeparationPrimaryRadii,
+              }),
+          }),
+      });
+    }
+
+    if (
+      kind ===
+      MinorBodyScientificTargetKind.TRANS_NEPTUNIAN_OBJECT
+    ) {
+      const transNeptunianObject =
+        transNeptunianSystem
+          .relevantObjects
+          .find(
+            candidate =>
+              candidate.proceduralId ===
+              proceduralId,
+          );
+
+      if (
+        transNeptunianObject ===
+          undefined
+      ) {
+        return null;
+      }
+
+      const dynamics =
+        resolveDynamicsProjection(
+          generationKey,
+          context.planetarySystem,
+          asteroidSystem,
+          cometSystem,
+          kind,
+          proceduralId,
+        );
+
+      const properties =
+        transNeptunianObject.properties;
+
+      return Object.freeze({
+        identity:
+          Object.freeze({
+            kind,
+            designation:
+              transNeptunianObject.localDesignation,
+            hostSystemDesignation:
+              context.hostSystemDesignation,
+          }),
+        detail:
+          Object.freeze({
+            kind,
+            dynamics,
+            general:
+              Object.freeze({
+                diameterKilometers:
+                  transNeptunianObject.diameterKilometers,
+                dynamicalRegime:
+                  transNeptunianObject.dynamicalRegime,
+                bulkDensityGramsPerCubicCentimeter:
+                  properties.bulkDensityGramsPerCubicCentimeter,
+                geometricAlbedo01:
+                  properties.geometricAlbedo,
+                reservoirSupportIndex01:
+                  transNeptunianSystem.reservoirSupportIndex01,
+                sourceResidualDustMassEarth:
+                  transNeptunianSystem.sourceResidualDustMassEarth,
+                isDwarfPlanetScaleCandidate:
+                  properties.isDwarfPlanetScaleCandidate,
+              }),
+            orbit:
+              Object.freeze({
+                semiMajorAxisAu:
+                  properties.semiMajorAxisAu,
+                eccentricity:
+                  properties.eccentricity,
+                inclinationDegrees:
+                  properties.inclinationDegrees,
+                periapsisAu:
+                  properties.periapsisAu,
+                apoapsisAu:
+                  properties.apoapsisAu,
+                longitudeAscendingNodeDegrees:
+                  properties.longitudeOfAscendingNodeDegrees,
+                argumentOfPeriapsisDegrees:
+                  properties.argumentOfPeriapsisDegrees,
+                meanAnomalyDegrees:
+                  properties.meanAnomalyDegrees,
+                orbitalPeriodYears:
+                  properties.orbitalPeriodYears,
+              }),
+            composition:
+              Object.freeze({
+                iceFraction01:
+                  properties.iceFraction01,
+                rockFraction01:
+                  properties.rockFraction01,
               }),
           }),
       });
@@ -663,7 +806,10 @@ function resolveDynamicsProjection(
     expectedKind ===
       MinorBodyScientificTargetKind.ASTEROID
       ? 'ASTEROID'
-      : 'COMET';
+      : expectedKind ===
+        MinorBodyScientificTargetKind.COMET
+        ? 'COMET'
+        : 'TRANS_NEPTUNIAN_OBJECT';
 
   const orbitalEntry =
     orbitalCatalog.entries.find(

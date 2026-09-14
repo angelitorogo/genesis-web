@@ -24,6 +24,14 @@ import {
 } from '../genesis-archive/archive-discovery-detail.facade';
 
 import {
+  type ScientificBodyPreviewSceneResolver,
+} from '../scientific/scientific-body-preview';
+
+import {
+  type SystemSceneSnapshot,
+} from '../system/system-scene-snapshot';
+
+import {
   PlanetScientificCardAssembler,
   PlanetScientificFicheResolutionKind,
   type PlanetScientificTargetResolutionResolver,
@@ -83,6 +91,7 @@ describe(
               ),
               0n,
               resolver,
+              previewSceneResolver(),
             );
 
         expect(result.kind).toBe(
@@ -181,6 +190,18 @@ describe(
           'Caracterización científica detallada',
         );
         expect(
+          result.card.preview.kind,
+        ).toBe(
+          'PLANET',
+        );
+        expect(
+          result.card.preview.kind === 'PLANET'
+            ? result.card.preview.moons.length
+            : -1,
+        ).toBe(
+          1,
+        );
+        expect(
           result.card.summary,
         ).toContain(
           'Su sistema anfitrión está confirmado',
@@ -230,6 +251,8 @@ describe(
             'systemSeed',
             'moonSeed',
             'generationKey',
+            'presentationSeedUint32',
+            'shapeSeedUint32',
             'formationSnapshot',
             'formationBlueprint',
             'hostPlanetarySystem',
@@ -298,6 +321,7 @@ describe(
                       target,
                   ),
               }),
+              previewSceneResolver(),
             );
 
         expect(result.kind).toBe(
@@ -797,4 +821,121 @@ function systemModel(
           'Jotheria',
       },
   } as unknown as ArchiveDiscoveryDetailModel;
+}
+
+function previewSceneResolver():
+  ScientificBodyPreviewSceneResolver {
+
+  return Object.freeze({
+    build: () =>
+      previewScene(),
+  });
+}
+
+function previewScene():
+  SystemSceneSnapshot {
+
+  return {
+    universeSeed:
+      '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+    generatorVersionCode:
+      1,
+    proceduralIdentity:
+      'G3/S-17/O8',
+    planets: [
+      {
+        id: 'planet-1',
+        kind: 'planet',
+        label: 'Jotheria b',
+        title: 'Jotheria b',
+        colorHex: '#7A8287',
+        radiusScene: 0.22,
+        position: { x: 0, y: 0, z: 0 },
+        orbitId: 'planet-orbit-1',
+        motionContributions: [],
+        surfaceStyle: 'rocky',
+        lightIntensity: 0,
+        sourceLuminositySolar: null,
+        spin: {
+          source: 'PLANET_19_3',
+          rotationPeriodHours: 24,
+          axialTiltDegrees: 23.4,
+          epochPhaseDegrees: 17,
+          isSynchronized: false,
+        },
+        surfaceEnvironment: null,
+        giantAtmosphere: null,
+        specialPresentation: null,
+      },
+    ],
+    moons: [
+      previewMoonSnapshot(),
+    ],
+    minorBodies: [],
+  } as unknown as SystemSceneSnapshot;
+}
+
+function previewMoonSnapshot() {
+  return {
+    id: 'moon-1-1',
+    kind: 'moon' as const,
+    label: 'Jotheria b I',
+    title: 'Jotheria b I',
+    hostPlanetId: 'planet-1',
+    hostPlanetOrdinal: 1,
+    colorHex: '#A9ADB2',
+    radiusScene: 0.05,
+    position: { x: 0, y: 0, z: 0 },
+    orbitId: 'moon-orbit-1-1',
+    motionContributions: [],
+    spin: {
+      source: 'MOON_21_4' as const,
+      rotationPeriodHours: 652.8,
+      axialTiltDegrees: 6.7,
+      epochPhaseDegrees: 31,
+      isSynchronized: true,
+    },
+    visualPresentation: {
+      version: 1 as const,
+      sourceMoonIdentity: 'Jotheria b I',
+      sourceHostPlanetType: 'ROCKY',
+      sourceRadiusEarth: 0.27,
+      sourceMassEarth: 0.012,
+      sourceMeanDensityGramsPerCubicCentimeter: 3.3,
+      sourceSurfaceGravityEarth: 0.165,
+      sourceAtmosphereRetentionIndex01: 0.17,
+      sourceAtmosphereRegime: 'EXOSPHERE',
+      sourceWaterInventoryIndex01: 0.78,
+      sourceInferredIceRichnessIndex01: 0.72,
+      sourceSubsurfaceOceanPotentialIndex01: 0.81,
+      sourceSurfaceLiquidWaterPotentialIndex01: 0.12,
+      sourceWaterRegime: 'ICE_AND_SUBSURFACE_OCEAN',
+      sourceEstimatedSurfaceTemperatureKelvin: 245,
+      sourceGeologicalActivityIndex01: 0.58,
+      sourceTidalHeatingIndex01: 0.48,
+      sourceGeologyRegime: 'TIDALLY_ACTIVE',
+      sourceOverallHabitabilityIndex01: 0.51,
+      sourceIsPotentiallyHabitable: true,
+      sourceGiantHostSpecialization: false,
+      sourceGiantCompositionRegime: 'NOT_APPLICABLE',
+      sourceIsLargeGiantMoon: false,
+      sourceIsTidallyActiveGiantMoon: false,
+      sourceIsOceanBearingGiantMoonCandidate: false,
+      shapeClass: 'MAJOR_PLANETARY' as const,
+      surfaceStyle: 'ICY' as const,
+      presentationRadiusScene: 0.05,
+      presentationIrregularity01: 0.01,
+      presentationLiquidCoverage01: 0,
+      presentationIceCoverage01: 0.62,
+      presentationVolcanicCoverage01: 0.12,
+      presentationCloudCoverage01: 0,
+      presentationAtmospherePresent: false,
+      presentationAtmosphereStrength01: 0,
+      presentationAtmosphereShellScale: 1,
+      presentationBaseColorHex: '#A9ADB2',
+      presentationAccentColorHex: '#D8E4EC',
+      presentationAtmosphereColorHex: '#B0D0E8',
+      presentationSeedUint32: 0x12345678,
+    },
+  };
 }

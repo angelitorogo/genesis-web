@@ -16,6 +16,14 @@ import {
 } from '../../simulation/planetary/moon-scientific-target-resolver';
 
 import {
+  type ScientificBodyPreviewSceneResolver,
+} from '../scientific/scientific-body-preview';
+
+import {
+  type SystemSceneSnapshot,
+} from '../system/system-scene-snapshot';
+
+import {
   MoonScientificCardAssembler,
   MoonScientificFicheResolutionKind,
   type MoonScientificTargetResolutionResolver,
@@ -77,6 +85,7 @@ describe(
               0n,
               0n,
               resolver,
+              previewSceneResolver(),
             );
 
         expect(result.kind).toBe(
@@ -94,6 +103,9 @@ describe(
 
         expect(result.card.title).toBe(
           'Jotheria b I',
+        );
+        expect(result.card.preview.kind).toBe(
+          'MOON',
         );
         expect(result.card.hostPlanetTitle).toBe(
           'Jotheria b',
@@ -171,6 +183,8 @@ describe(
             'bodySeed',
             'systemSeed',
             'generationKey',
+            'presentationSeedUint32',
+            'shapeSeedUint32',
             'planetarySystem',
             'Ground Truth',
             'Fase 21',
@@ -421,4 +435,86 @@ function systemModel(
         'Jotheria',
     },
   } as unknown as ArchiveDiscoveryDetailModel;
+}
+
+function previewSceneResolver():
+  ScientificBodyPreviewSceneResolver {
+
+  return Object.freeze({
+    build: () =>
+      ({
+        universeSeed:
+          '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
+        generatorVersionCode:
+          1,
+        proceduralIdentity:
+          'G3/S-17/O8',
+        planets: [],
+        moons: [
+          {
+            id: 'moon-1-1',
+            kind: 'moon',
+            label: 'Jotheria b I',
+            title: 'Jotheria b I',
+            hostPlanetId: 'planet-1',
+            hostPlanetOrdinal: 1,
+            colorHex: '#A9ADB2',
+            radiusScene: 0.05,
+            position: { x: 0, y: 0, z: 0 },
+            orbitId: 'moon-orbit-1-1',
+            motionContributions: [],
+            spin: {
+              source: 'MOON_21_4',
+              rotationPeriodHours: 652.8,
+              axialTiltDegrees: 6.7,
+              epochPhaseDegrees: 31,
+              isSynchronized: true,
+            },
+            visualPresentation: {
+              version: 1,
+              sourceMoonIdentity: 'Jotheria b I',
+              sourceHostPlanetType: 'ROCKY',
+              sourceRadiusEarth: 0.27,
+              sourceMassEarth: 0.012,
+              sourceMeanDensityGramsPerCubicCentimeter: 3.3,
+              sourceSurfaceGravityEarth: 0.165,
+              sourceAtmosphereRetentionIndex01: 0.17,
+              sourceAtmosphereRegime: 'EXOSPHERE',
+              sourceWaterInventoryIndex01: 0.78,
+              sourceInferredIceRichnessIndex01: 0.72,
+              sourceSubsurfaceOceanPotentialIndex01: 0.81,
+              sourceSurfaceLiquidWaterPotentialIndex01: 0.12,
+              sourceWaterRegime: 'ICE_AND_SUBSURFACE_OCEAN',
+              sourceEstimatedSurfaceTemperatureKelvin: 245,
+              sourceGeologicalActivityIndex01: 0.58,
+              sourceTidalHeatingIndex01: 0.48,
+              sourceGeologyRegime: 'TIDALLY_ACTIVE',
+              sourceOverallHabitabilityIndex01: 0.51,
+              sourceIsPotentiallyHabitable: true,
+              sourceGiantHostSpecialization: false,
+              sourceGiantCompositionRegime: 'NOT_APPLICABLE',
+              sourceIsLargeGiantMoon: false,
+              sourceIsTidallyActiveGiantMoon: false,
+              sourceIsOceanBearingGiantMoonCandidate: false,
+              shapeClass: 'MAJOR_PLANETARY',
+              surfaceStyle: 'ICY',
+              presentationRadiusScene: 0.05,
+              presentationIrregularity01: 0.01,
+              presentationLiquidCoverage01: 0,
+              presentationIceCoverage01: 0.62,
+              presentationVolcanicCoverage01: 0.12,
+              presentationCloudCoverage01: 0,
+              presentationAtmospherePresent: false,
+              presentationAtmosphereStrength01: 0,
+              presentationAtmosphereShellScale: 1,
+              presentationBaseColorHex: '#A9ADB2',
+              presentationAccentColorHex: '#D8E4EC',
+              presentationAtmosphereColorHex: '#B0D0E8',
+              presentationSeedUint32: 0x12345678,
+            },
+          },
+        ],
+        minorBodies: [],
+      } as unknown as SystemSceneSnapshot),
+  });
 }

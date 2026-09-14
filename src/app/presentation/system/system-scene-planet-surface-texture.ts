@@ -11,6 +11,7 @@ export interface SystemScenePlanetSurfaceTextureInput {
   readonly planetId: string;
   readonly baseTexture: SystemScenePlanetTextureData;
   readonly surface: SystemScenePlanetSurfacePresentationSnapshot;
+  readonly visualSeedUint32?: number;
 }
 
 export interface SystemScenePlanetSurfaceTextureData {
@@ -83,7 +84,7 @@ export function buildSystemScenePlanetSurfaceTextureV1(
 
   const uniqueWidth = width - 1;
   const uniquePixelCount = uniqueWidth * height;
-  const seed = surfaceSeed(input.systemIdentity, input.planetId);
+  const seed = input.visualSeedUint32 ?? systemScenePlanetSurfaceTextureSeedV1(input.systemIdentity, input.planetId);
   const fields = buildFields(baseTexture, seed, uniqueWidth, height);
   const semantic = new Uint8Array(uniquePixelCount);
   semantic.fill(LAND);
@@ -427,7 +428,7 @@ function copySeamColumn(rgba: Uint8Array, width: number, height: number): void {
   }
 }
 
-function surfaceSeed(systemIdentity: string, planetId: string): number {
+export function systemScenePlanetSurfaceTextureSeedV1(systemIdentity: string, planetId: string): number {
   const key = `${systemIdentity}|${planetId}|GENESIS-25.3-SURFACE-V1`;
   let hash = 0x811c9dc5;
   for (let index = 0; index < key.length; index += 1) {

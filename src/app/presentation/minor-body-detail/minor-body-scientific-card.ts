@@ -29,6 +29,14 @@ import {
   type ArchiveDiscoveryDetailModel,
 } from '../genesis-archive/archive-discovery-detail.facade';
 
+
+import {
+  ScientificBodyPreviewAssembler,
+  DEFAULT_SCIENTIFIC_BODY_PREVIEW_SCENE_RESOLVER,
+  type ScientificBodyPreviewModel,
+  type ScientificBodyPreviewSceneResolver,
+} from '../scientific/scientific-body-preview';
+
 import {
   MinorBodyScientificSectionsAssembler,
   type MinorBodyScientificSectionsModel,
@@ -73,6 +81,9 @@ export interface MinorBodyScientificCardModel {
 
   readonly sections:
     MinorBodyScientificSectionsModel;
+
+  readonly preview:
+    ScientificBodyPreviewModel;
 }
 
 export type MinorBodyScientificFicheResolution =
@@ -141,7 +152,7 @@ const DEFAULT_TARGET_RESOLVER:
   });
 
 /**
- * Point-26.8 state-safe asteroid/comet scientific fiche assembler.
+ * Point-26.8 state-safe asteroid/comet/TNO scientific fiche assembler.
  *
  * Host-system confirmation remains the outer scientific-access boundary used by
  * the existing body fiches. The individual target itself is addressed only by
@@ -167,6 +178,10 @@ export class MinorBodyScientificCardAssembler {
     resolver:
       MinorBodyScientificTargetResolutionResolver =
         DEFAULT_TARGET_RESOLVER,
+
+    previewSceneResolver:
+      ScientificBodyPreviewSceneResolver =
+        DEFAULT_SCIENTIFIC_BODY_PREVIEW_SCENE_RESOLVER,
   ): MinorBodyScientificFicheResolution {
 
     if (
@@ -244,7 +259,10 @@ export class MinorBodyScientificCardAssembler {
           targetKind ===
             MinorBodyScientificTargetKind.ASTEROID
             ? 'La identidad solicitada no corresponde a un asteroide relevante de este sistema.'
-            : 'La identidad solicitada no corresponde a un cometa relevante de este sistema.',
+            : targetKind ===
+              MinorBodyScientificTargetKind.COMET
+              ? 'La identidad solicitada no corresponde a un cometa relevante de este sistema.'
+              : 'La identidad solicitada no corresponde a un objeto transneptuniano relevante de este sistema.',
       });
     }
 
@@ -252,7 +270,10 @@ export class MinorBodyScientificCardAssembler {
       target.identity.kind ===
         MinorBodyScientificTargetKind.ASTEROID
         ? 'Asteroide'
-        : 'Cometa';
+        : target.identity.kind ===
+          MinorBodyScientificTargetKind.COMET
+          ? 'Cometa'
+          : 'Objeto transneptuniano';
 
     return Object.freeze({
       kind:
@@ -276,6 +297,13 @@ export class MinorBodyScientificCardAssembler {
             MinorBodyScientificSectionsAssembler
               .build(
                 target,
+              ),
+          preview:
+            ScientificBodyPreviewAssembler
+              .minorBody(
+                target,
+                proceduralId,
+                previewSceneResolver.build(systemModel),
               ),
         }),
     });

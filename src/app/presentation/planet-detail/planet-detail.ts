@@ -25,6 +25,10 @@ import {
 } from '../scientific/scientific-route-identity';
 
 import {
+  ScientificBodyPreview,
+} from '../scientific-body-preview/scientific-body-preview';
+
+import {
   PlanetScientificCardAssembler,
   PlanetScientificFicheResolutionKind,
 } from './planet-scientific-card';
@@ -39,6 +43,7 @@ import {
   imports: [
     GenesisScreen,
     RouterLink,
+    ScientificBodyPreview,
   ],
 
   templateUrl:

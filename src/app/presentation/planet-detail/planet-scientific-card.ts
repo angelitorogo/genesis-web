@@ -37,6 +37,14 @@ import {
   type ArchiveDiscoveryDetailModel,
 } from '../genesis-archive/archive-discovery-detail.facade';
 
+
+import {
+  ScientificBodyPreviewAssembler,
+  DEFAULT_SCIENTIFIC_BODY_PREVIEW_SCENE_RESOLVER,
+  type ScientificBodyPreviewModel,
+  type ScientificBodyPreviewSceneResolver,
+} from '../scientific/scientific-body-preview';
+
 export const PlanetScientificFicheResolutionKind =
   Object.freeze({
     LOCKED:
@@ -85,6 +93,9 @@ export interface PlanetScientificCardModel {
 
   readonly sections:
     PlanetScientificSectionsModel;
+
+  readonly preview:
+    ScientificBodyPreviewModel;
 }
 
 export type PlanetScientificFicheResolution =
@@ -161,6 +172,10 @@ export class PlanetScientificCardAssembler {
     resolver:
       PlanetScientificTargetResolutionResolver =
         DEFAULT_TARGET_RESOLVER,
+
+    previewSceneResolver:
+      ScientificBodyPreviewSceneResolver =
+        DEFAULT_SCIENTIFIC_BODY_PREVIEW_SCENE_RESOLVER,
   ): PlanetScientificFicheResolution {
 
     if (
@@ -270,6 +285,12 @@ export class PlanetScientificCardAssembler {
             PlanetScientificSectionsAssembler
               .build(
                 target,
+              ),
+          preview:
+            ScientificBodyPreviewAssembler
+              .planet(
+                target,
+                previewSceneResolver.build(systemModel),
               ),
         }),
     });
