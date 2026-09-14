@@ -4,6 +4,11 @@ import {
   type MinorBodyScientificResolvedTarget,
 } from '../../simulation/planetary/minor-body-scientific-target-resolver';
 
+import {
+  type MinorBodyScientificDynamicsSource,
+  type MinorBodyScientificRiskTargetSource,
+} from '../../simulation/planetary/minor-body-scientific-dynamics-projection';
+
 export interface MinorBodyScientificFieldModel {
   readonly label:
     string;
@@ -67,7 +72,7 @@ const NUMBER_6 =
     },
   );
 
-/** Point-26.6 presentation-only formatter for asteroid/comet science. */
+/** Point-26.8 presentation-only formatter for asteroid/comet science and frozen phase-23 dynamics. */
 export class MinorBodyScientificSectionsAssembler {
 
   private constructor() {}
@@ -120,6 +125,9 @@ function asteroidSections(
     ),
     beltRegionLabel(
       general.beltRegion,
+    ),
+    dynamicsBadge(
+      detail.dynamics,
     ),
   ];
 
@@ -329,6 +337,9 @@ function asteroidSections(
             ),
           ],
         ),
+        ...dynamicsSections(
+          detail.dynamics,
+        ),
       ]),
   });
 }
@@ -359,6 +370,9 @@ function cometSections(
         detail.activity.periapsis.hasComa
           ? 'Coma activa en periastro'
           : 'Sin coma en periastro',
+        dynamicsBadge(
+          detail.dynamics,
+        ),
       ]),
     sections:
       Object.freeze([
@@ -564,8 +578,213 @@ function cometSections(
             ),
           ],
         ),
+        ...dynamicsSections(
+          detail.dynamics,
+        ),
       ]),
   });
+}
+
+function dynamicsSections(
+  dynamics:
+    MinorBodyScientificDynamicsSource,
+): readonly MinorBodyScientificSectionModel[] {
+
+  const encounterFields:
+    MinorBodyScientificFieldModel[] = [
+      field(
+        'Objetivos evaluables',
+        dynamics.assessedTargetCount.toString(),
+        'Planetas y lunas relevantes con geometría individual disponible.',
+      ),
+      field(
+        'Cruces radiales',
+        dynamics.radialCrossingTargetCount.toString(),
+        'Compartir distancias estelares no implica coincidir en el mismo lugar ni al mismo tiempo.',
+      ),
+      field(
+        'Corredores de aproximación',
+        dynamics.approachCorridorTargetCount.toString(),
+        'Geometrías capaces de entrar en la región dinámica del objetivo.',
+      ),
+      field(
+        'Encuentros cercanos resueltos',
+        dynamics.resolvedEncounterCount.toString(),
+        'La resolución temporal actual permite como máximo un encuentro ganador por cuerpo.',
+      ),
+    ];
+
+  if (
+    dynamics.encounter ===
+      null
+  ) {
+    encounterFields.push(
+      field(
+        'Resultado dinámico',
+        'Sin encuentro cercano resuelto',
+        'Puede haber cruces o corredores geométricos sin coincidencia temporal.',
+      ),
+    );
+  } else {
+    const encounter =
+      dynamics.encounter;
+
+    encounterFields.push(
+      field(
+        'Objetivo del encuentro',
+        encounter.targetName,
+        targetKindLabel(
+          encounter.targetKind,
+        ),
+      ),
+      field(
+        'Resultado del encuentro',
+        encounterOutcomeLabel(
+          encounter.outcomeRegime,
+        ),
+      ),
+      field(
+        'Aproximación mínima',
+        auDistance(
+          encounter.closestApproachAu,
+        ),
+      ),
+      field(
+        'Velocidad relativa',
+        `${number(encounter.relativeSpeedKmPerSecond)} km/s`,
+      ),
+      field(
+        'Intensidad del encuentro',
+        index01(
+          encounter.encounterStrengthIndex01,
+        ),
+      ),
+      field(
+        'Cambio orbital',
+        yesNo(
+          encounter.orbitalChangeOccurred,
+        ),
+      ),
+      field(
+        'Órbita posterior',
+        `${conicRegimeLabel(encounter.outgoingConicRegime)} · a ${signedAu(encounter.outgoingSemiMajorAxisAu)} · e ${number(encounter.outgoingEccentricity)} · i ${number(encounter.outgoingInclinationDegrees)}°`,
+      ),
+    );
+  }
+
+  const riskFields:
+    MinorBodyScientificFieldModel[] = [
+      field(
+        'Candidatos de riesgo orbital',
+        dynamics.riskCandidateCount.toString(),
+        'Entrada geométrica en el corredor dinámico de un planeta o en la región orbital de una luna.',
+      ),
+      field(
+        'Corredores geométricos de colisión planetaria',
+        dynamics.directCollisionGeometryTargetCount.toString(),
+        'Geometría de trayectoria; no equivale a un impacto observado.',
+      ),
+      field(
+        'Índice máximo de riesgo orbital',
+        index01(
+          dynamics.highestOrbitalRiskIndex01,
+        ),
+      ),
+      field(
+        `Probabilidad temporal máxima (${number(dynamics.timeWindowYears)} años)`,
+        probabilityPercent(
+          dynamics.highestTemporalImpactProbability01,
+        ),
+        'Estimación analítica de horizonte finito; no materializa un evento de impacto.',
+      ),
+    ];
+
+  if (
+    dynamics.relevantTargets.length ===
+      0
+  ) {
+    riskFields.push(
+      field(
+        'Evaluación de objetivos',
+        'Sin cruces radiales ni corredores relevantes',
+      ),
+    );
+  } else {
+    dynamics.relevantTargets.forEach(
+      (
+        target,
+        index,
+      ) => {
+        riskFields.push(
+          riskTargetField(
+            target,
+            index,
+            dynamics.timeWindowYears,
+          ),
+        );
+      },
+    );
+  }
+
+  return Object.freeze([
+    section(
+      'encounters',
+      'SECCIÓN 05',
+      'Encuentros',
+      'Cruces orbitales, corredores de aproximación y encuentros cercanos resueltos por la dinámica del sistema.',
+      encounterFields,
+    ),
+    section(
+      'risk',
+      'SECCIÓN 06',
+      'Riesgo orbital',
+      `Geometría de riesgo posterior a encuentros y estimación temporal a ${number(dynamics.timeWindowYears)} años. Un corredor de riesgo no afirma que vaya a producirse un impacto.`,
+      riskFields,
+    ),
+  ]);
+}
+
+function riskTargetField(
+  target:
+    MinorBodyScientificRiskTargetSource,
+
+  index:
+    number,
+
+  timeWindowYears:
+    number,
+): MinorBodyScientificFieldModel {
+
+  const geometry = [
+    targetKindLabel(
+      target.targetKind,
+    ),
+    `riesgo ${index01(target.orbitalRiskIndex01)}`,
+    `exposición ${index01(target.orbitalExposureIndex01)}`,
+    `P(${number(timeWindowYears)} a) ${probabilityPercent(target.temporalImpactProbability01)}`,
+  ];
+
+  if (
+    target.minimumNodalSeparationAu !==
+      null
+  ) {
+    geometry.push(
+      `separación nodal ${auDistance(target.minimumNodalSeparationAu)}`,
+    );
+  }
+
+  geometry.push(
+    `velocidad ${number(target.characteristicRelativeSpeedKmPerSecond)} km/s`,
+    `enfoque gravitatorio ×${number(target.gravitationalFocusingFactor)}`,
+  );
+
+  return field(
+    `Objetivo ${index + 1} · ${target.targetName}`,
+    impactRiskRegimeLabel(
+      target.regime,
+    ),
+    `${geometry.join(' · ')} · ${temporalRiskRegimeLabel(target.temporalRegime)}${target.directCollisionGeometryCandidate ? ' · corredor físico planetario' : ''}${target.isSinglePassage ? ' · paso único' : ''}`,
+  );
 }
 
 function section(
@@ -698,6 +917,174 @@ function activityMorphology(
     : visible.join(
         ' · ',
       );
+}
+
+function dynamicsBadge(
+  dynamics:
+    MinorBodyScientificDynamicsSource,
+): string {
+  if (
+    dynamics.directCollisionGeometryTargetCount >
+    0
+  ) {
+    return 'Corredor geométrico de colisión';
+  }
+
+  if (
+    dynamics.riskCandidateCount >
+    0
+  ) {
+    return 'Riesgo orbital detectado';
+  }
+
+  if (
+    dynamics.radialCrossingTargetCount >
+    0
+  ) {
+    return 'Cruce orbital';
+  }
+
+  return 'Sin cruces relevantes';
+}
+
+function probabilityPercent(
+  probability01:
+    number,
+): string {
+  if (
+    probability01 ===
+      0
+  ) {
+    return '0 %';
+  }
+
+  const percentValue =
+    probability01 *
+    100;
+
+  if (
+    percentValue <
+      0.000001
+  ) {
+    return `${new Intl.NumberFormat('es-ES', {
+      notation: 'scientific',
+      maximumSignificantDigits: 3,
+    }).format(percentValue)} %`;
+  }
+
+  return `${new Intl.NumberFormat('es-ES', {
+    maximumFractionDigits: 8,
+  }).format(percentValue)} %`;
+}
+
+function auDistance(
+  value:
+    number,
+): string {
+  return `${NUMBER_6.format(value)} UA · ${NUMBER_2.format(value * 149_597_870.7)} km`;
+}
+
+function signedAu(
+  value:
+    number,
+): string {
+  return `${NUMBER_6.format(value)} UA`;
+}
+
+function targetKindLabel(
+  value:
+    string,
+): string {
+  return value ===
+    'PLANET'
+    ? 'Planeta'
+    : value ===
+      'MOON'
+      ? 'Luna'
+      : value;
+}
+
+function encounterOutcomeLabel(
+  value:
+    string,
+): string {
+  switch (
+    value
+  ) {
+    case 'BOUND_PERTURBATION':
+      return 'Perturbación ligada';
+    case 'TEMPORARY_CAPTURE':
+      return 'Captura temporal';
+    case 'EJECTION':
+      return 'Eyección';
+    case 'UNBOUND_DEFLECTION':
+      return 'Deflexión no ligada';
+    case 'NO_ENCOUNTER':
+      return 'Sin encuentro';
+    default:
+      return value;
+  }
+}
+
+function conicRegimeLabel(
+  value:
+    string,
+): string {
+  return value ===
+    'ELLIPTIC'
+    ? 'Elíptica ligada'
+    : value ===
+      'HYPERBOLIC'
+      ? 'Hiperbólica no ligada'
+      : value;
+}
+
+function impactRiskRegimeLabel(
+  value:
+    string,
+): string {
+  switch (
+    value
+  ) {
+    case 'NONE':
+      return 'Sin riesgo orbital';
+    case 'RADIAL_CROSSING_ONLY':
+      return 'Cruce radial';
+    case 'PLANET_APPROACH_CORRIDOR':
+      return 'Corredor de aproximación planetaria';
+    case 'PLANET_COLLISION_CORRIDOR':
+      return 'Corredor geométrico de colisión planetaria';
+    case 'MOON_ORBITAL_REGION':
+      return 'Región orbital lunar';
+    default:
+      return value;
+  }
+}
+
+function temporalRiskRegimeLabel(
+  value:
+    string,
+): string {
+  switch (
+    value
+  ) {
+    case 'NONE':
+      return 'Sin probabilidad temporal';
+    case 'ORBITAL_RISK_ONLY':
+      return 'Riesgo orbital sin corredor físico de colisión';
+    case 'SINGLE_PASSAGE':
+      return 'Probabilidad de paso único';
+    case 'EXTREMELY_LOW':
+      return 'Probabilidad extremadamente baja';
+    case 'VERY_LOW':
+      return 'Probabilidad muy baja';
+    case 'LOW':
+      return 'Probabilidad baja';
+    case 'MATERIAL':
+      return 'Probabilidad relevante';
+    default:
+      return value;
+  }
 }
 
 function beltRegionLabel(

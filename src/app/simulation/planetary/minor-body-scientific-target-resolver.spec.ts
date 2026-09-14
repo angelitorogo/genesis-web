@@ -20,7 +20,7 @@ import {
 } from './minor-body-scientific-target-resolver';
 
 describe(
-  'MinorBodyScientificTargetResolver point 26.6',
+  'MinorBodyScientificTargetResolver point 26.8',
   () => {
 
     it(

@@ -47,6 +47,36 @@ import {
 } from './comet-generator';
 
 import {
+  CapturedExtrasolarObjectGenerator,
+} from './captured-extrasolar-object-generator';
+
+import {
+  InterstellarObjectGenerator,
+} from './interstellar-object-generator';
+
+import {
+  MinorBodyDynamicsEngine,
+} from './minor-body-dynamics-engine';
+
+import {
+  MINOR_BODY_SCIENTIFIC_RISK_WINDOW_YEARS,
+  MinorBodyScientificDynamicsProjectionAssembler,
+  type MinorBodyScientificDynamicsSource,
+} from './minor-body-scientific-dynamics-projection';
+
+import {
+  MoonGenerator,
+} from './moon-generator';
+
+import {
+  PlanetGenerator,
+} from './planet-generator';
+
+import {
+  TransNeptunianObjectGenerator,
+} from './trans-neptunian-object-generator';
+
+import {
   PlanetaryFormationMaturationGenerator,
 } from './planetary-formation-maturation-generator';
 
@@ -86,6 +116,9 @@ export interface MinorBodyScientificIdentitySource {
 export interface MinorBodyScientificAsteroidDetailSource {
   readonly kind:
     typeof MinorBodyScientificTargetKind.ASTEROID;
+
+  readonly dynamics:
+    MinorBodyScientificDynamicsSource;
 
   readonly general:
     Readonly<{
@@ -172,6 +205,9 @@ export interface MinorBodyScientificCometDetailSource {
   readonly kind:
     typeof MinorBodyScientificTargetKind.COMET;
 
+  readonly dynamics:
+    MinorBodyScientificDynamicsSource;
+
   readonly general:
     Readonly<{
       diameterKilometers: number;
@@ -230,13 +266,15 @@ const PROCEDURAL_ID_PATTERN =
   /^[0-9A-F]{32}$/;
 
 /**
- * Point-26.6 deterministic resolver for one already-addressed relevant asteroid
+ * Point-26.8 deterministic resolver for one already-addressed relevant asteroid
  * or comet. The route reuses the frozen point-22.10 `(kind, proceduralId)`
  * identity and never derives a new locator/seed level.
  *
  * The returned payload is a primitive scientific projection only. It exposes
- * phase-22 physical/orbital facts and comet activity at the two frozen apsides.
- * Phase-23 encounter/risk products remain outside this resolver for point 26.8.
+ * phase-22 physical/orbital facts plus the already-frozen phase-23 proximity,
+ * close-encounter, orbital-risk and finite-horizon probability products. No
+ * impact event is materialized and no procedural seed/domain aggregate reaches
+ * presentation.
  */
 export class MinorBodyScientificTargetResolver {
 
@@ -278,16 +316,24 @@ export class MinorBodyScientificTargetResolver {
       return null;
     }
 
+    const asteroidSystem =
+      AsteroidBeltGenerator
+        .generate(
+          generationKey,
+          context.planetarySystem,
+        );
+
+    const cometSystem =
+      CometGenerator
+        .generate(
+          generationKey,
+          context.planetarySystem,
+        );
+
     if (
       kind ===
       MinorBodyScientificTargetKind.ASTEROID
     ) {
-      const asteroidSystem =
-        AsteroidBeltGenerator
-          .generate(
-            generationKey,
-            context.planetarySystem,
-          );
 
       const asteroid =
         asteroidSystem
@@ -305,6 +351,16 @@ export class MinorBodyScientificTargetResolver {
         return null;
       }
 
+      const dynamics =
+        resolveDynamicsProjection(
+          generationKey,
+          context.planetarySystem,
+          asteroidSystem,
+          cometSystem,
+          kind,
+          proceduralId,
+        );
+
       return Object.freeze({
         identity:
           Object.freeze({
@@ -317,6 +373,7 @@ export class MinorBodyScientificTargetResolver {
         detail:
           Object.freeze({
             kind,
+            dynamics,
             general:
               Object.freeze({
                 diameterKilometers:
@@ -397,13 +454,6 @@ export class MinorBodyScientificTargetResolver {
       });
     }
 
-    const cometSystem =
-      CometGenerator
-        .generate(
-          generationKey,
-          context.planetarySystem,
-        );
-
     const comet =
       cometSystem
         .relevantComets
@@ -419,6 +469,16 @@ export class MinorBodyScientificTargetResolver {
     ) {
       return null;
     }
+
+    const dynamics =
+      resolveDynamicsProjection(
+        generationKey,
+        context.planetarySystem,
+        asteroidSystem,
+        cometSystem,
+        kind,
+        proceduralId,
+      );
 
     const periapsisActivity =
       CometActivityEngine
@@ -448,6 +508,7 @@ export class MinorBodyScientificTargetResolver {
       detail:
         Object.freeze({
           kind,
+          dynamics,
           general:
             Object.freeze({
               diameterKilometers:
@@ -517,6 +578,159 @@ export class MinorBodyScientificTargetResolver {
         }),
     });
   }
+}
+
+function resolveDynamicsProjection(
+  generationKey:
+    UniverseGenerationKey,
+
+  planetarySystem:
+    ReturnType<typeof PlanetarySystemGenerator.generate>,
+
+  asteroidSystem:
+    ReturnType<typeof AsteroidBeltGenerator.generate>,
+
+  cometSystem:
+    ReturnType<typeof CometGenerator.generate>,
+
+  expectedKind:
+    MinorBodyScientificTargetKind,
+
+  proceduralId:
+    string,
+): MinorBodyScientificDynamicsSource {
+
+  const planets =
+    planetarySystem.hasPlanets
+      ? PlanetGenerator
+          .generateAll(
+            generationKey,
+            planetarySystem,
+          )
+      : Object.freeze([]);
+
+  const moonSystems =
+    planets.length ===
+      0
+      ? Object.freeze([])
+      : MoonGenerator
+          .generateAll(
+            generationKey,
+            planetarySystem,
+            planets,
+          );
+
+  const transNeptunianObjects =
+    TransNeptunianObjectGenerator
+      .generate(
+        generationKey,
+        planetarySystem,
+      );
+
+  const interstellarObjects =
+    InterstellarObjectGenerator
+      .generate(
+        generationKey,
+        planetarySystem,
+      );
+
+  const capturedExtrasolarObjects =
+    CapturedExtrasolarObjectGenerator
+      .generate(
+        generationKey,
+        planetarySystem,
+      );
+
+  const dynamicsState =
+    MinorBodyDynamicsEngine
+      .initialize(
+        generationKey,
+        planetarySystem,
+        asteroidSystem,
+        cometSystem,
+        transNeptunianObjects,
+        interstellarObjects,
+        capturedExtrasolarObjects,
+      );
+
+  const orbitalCatalog =
+    MinorBodyDynamicsEngine
+      .orbitalElements(
+        dynamicsState,
+      );
+
+  const expectedDomainKindName =
+    expectedKind ===
+      MinorBodyScientificTargetKind.ASTEROID
+      ? 'ASTEROID'
+      : 'COMET';
+
+  const orbitalEntry =
+    orbitalCatalog.entries.find(
+      entry =>
+        entry.orbitalElements.proceduralId ===
+          proceduralId &&
+        entry.orbitalElements.kind.name ===
+          expectedDomainKindName,
+    );
+
+  if (
+    orbitalEntry ===
+      undefined
+  ) {
+    throw new RangeError(
+      'Point-26.8 selected minor body must preserve its exact point-22 -> point-23 orbital identity.',
+    );
+  }
+
+  const proximityCatalog =
+    MinorBodyDynamicsEngine
+      .proximities(
+        orbitalCatalog,
+        planets,
+        moonSystems,
+      );
+
+  const resonanceCatalog =
+    MinorBodyDynamicsEngine
+      .resonances(
+        orbitalCatalog,
+        proximityCatalog,
+      );
+
+  const giantInfluenceCatalog =
+    MinorBodyDynamicsEngine
+      .giantInfluences(
+        resonanceCatalog,
+      );
+
+  const closeEncounterCatalog =
+    MinorBodyDynamicsEngine
+      .closeEncounters(
+        giantInfluenceCatalog,
+      );
+
+  const impactRiskCatalog =
+    MinorBodyDynamicsEngine
+      .impactRisks(
+        closeEncounterCatalog,
+      );
+
+  const temporalImpactCatalog =
+    MinorBodyDynamicsEngine
+      .temporalImpactProbabilities(
+        impactRiskCatalog,
+        MINOR_BODY_SCIENTIFIC_RISK_WINDOW_YEARS,
+      );
+
+  return MinorBodyScientificDynamicsProjectionAssembler
+    .build(
+      proximityCatalog,
+      closeEncounterCatalog,
+      impactRiskCatalog,
+      temporalImpactCatalog,
+      proceduralId,
+    );
 }
 
 function activitySource(

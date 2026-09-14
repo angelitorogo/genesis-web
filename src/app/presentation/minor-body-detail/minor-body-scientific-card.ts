@@ -141,12 +141,14 @@ const DEFAULT_TARGET_RESOLVER:
   });
 
 /**
- * Point-26.6 state-safe asteroid/comet fiche assembler.
+ * Point-26.8 state-safe asteroid/comet scientific fiche assembler.
  *
  * Host-system confirmation remains the outer scientific-access boundary used by
  * the existing body fiches. The individual target itself is addressed only by
- * its frozen point-22.10 `(kind, proceduralId)` identity; the card never returns
- * that 128-bit id, seeds, generation keys or domain aggregates to presentation.
+ * its frozen point-22.10 `(kind, proceduralId)` identity; point 26.8 adds only
+ * knowledge-safe projections of the already-frozen phase-23 dynamics. The card
+ * never returns that 128-bit id, seeds, generation keys or domain aggregates to
+ * presentation.
  */
 export class MinorBodyScientificCardAssembler {
 
@@ -261,13 +263,13 @@ export class MinorBodyScientificCardAssembler {
             target.identity.designation,
           kindLabel,
           summary:
-            `${target.identity.designation} es un ${kindLabel.toLowerCase()} individual del sistema ${target.identity.hostSystemDesignation}. La ficha reúne su caracterización física y orbital disponible.`,
+            `${target.identity.designation} es un ${kindLabel.toLowerCase()} individual del sistema ${target.identity.hostSystemDesignation}. La ficha reúne su caracterización física, orbital, dinámica y de riesgo disponible.`,
           hostSystemTitle:
             target.identity.hostSystemDesignation,
           accessLabel:
             'Caracterización detallada habilitada',
           knowledgeLabel:
-            'Cuerpo menor individual caracterizado',
+            'Caracterización física y dinámica disponible',
           locatorLabel:
             `G${systemModel.galaxyIndex.toString()} / S${systemModel.sectorKey.toString()} / O${systemModel.galacticObjectIndex.toString()} / ${target.identity.designation}`,
           sections:

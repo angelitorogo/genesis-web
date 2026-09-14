@@ -32,7 +32,7 @@ import {
 } from './minor-body-detail';
 
 describe(
-  'MinorBodyDetailPage point 26.6',
+  'MinorBodyDetailPage point 26.8',
   () => {
 
     it(
@@ -135,10 +135,10 @@ describe(
           fixture
             .componentInstance
             .minorBodySectionHref(
-              'activity',
+              'risk',
             ),
         ).toBe(
-          '/system/3/-17/8/minor-body/comet/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#minor-body-section-activity',
+          '/system/3/-17/8/minor-body/comet/BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#minor-body-section-risk',
         );
       },
     );

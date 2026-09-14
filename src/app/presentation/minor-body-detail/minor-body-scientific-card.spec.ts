@@ -23,7 +23,7 @@ import {
 } from './minor-body-scientific-card';
 
 describe(
-  'MinorBodyScientificCardAssembler point 26.6',
+  'MinorBodyScientificCardAssembler point 26.8',
   () => {
 
     it(
@@ -59,7 +59,7 @@ describe(
     );
 
     it(
-      'should build a safe four-section asteroid fiche without returning the procedural id',
+      'should build a safe asteroid fiche with encounter and orbital-risk sections without returning the procedural id',
       () => {
         const resolver:
           MinorBodyScientificTargetResolutionResolver =
@@ -110,7 +110,41 @@ describe(
           'Órbita',
           'Composición',
           'Estructura',
+          'Encuentros',
+          'Riesgo orbital',
         ]);
+
+        const encounters =
+          result.card.sections.sections.find(
+            section =>
+              section.id ===
+              'encounters',
+          );
+
+        const risk =
+          result.card.sections.sections.find(
+            section =>
+              section.id ===
+              'risk',
+          );
+
+        expect(encounters?.fields.some(
+          field =>
+            field.label ===
+              'Resultado del encuentro' &&
+            field.value ===
+              'Perturbación ligada',
+        )).toBe(true);
+        expect(risk?.fields.some(
+          field =>
+            field.label ===
+              'Probabilidad temporal máxima (100 años)',
+        )).toBe(true);
+        expect(risk?.fields.some(
+          field =>
+            field.label ===
+              'Objetivo 1 · Jotheria c',
+        )).toBe(true);
 
         const serialized =
           JSON.stringify(
@@ -128,6 +162,7 @@ describe(
             'bodySeed',
             'generationKey',
             'planetarySystem',
+            'proceduralId',
             'GroundTruth',
           ]
         ) {
@@ -190,6 +225,8 @@ describe(
           'Órbita',
           'Núcleo',
           'Actividad',
+          'Encuentros',
+          'Riesgo orbital',
         ]);
 
         const activity =
@@ -274,6 +311,91 @@ function systemModel(
   } as unknown as ArchiveDiscoveryDetailModel;
 }
 
+function dynamicsSource() {
+  return Object.freeze({
+    timeWindowYears:
+      100,
+    assessedTargetCount:
+      4,
+    radialCrossingTargetCount:
+      2,
+    approachCorridorTargetCount:
+      1,
+    resolvedEncounterCount:
+      1,
+    riskCandidateCount:
+      1,
+    directCollisionGeometryTargetCount:
+      1,
+    highestOrbitalRiskIndex01:
+      0.64,
+    highestTemporalImpactProbability01:
+      2e-7,
+    encounter:
+      Object.freeze({
+        targetKind:
+          'PLANET',
+        targetName:
+          'Jotheria c',
+        outcomeRegime:
+          'BOUND_PERTURBATION',
+        closestApproachAu:
+          0.004,
+        relativeSpeedKmPerSecond:
+          11.2,
+        encounterStrengthIndex01:
+          0.41,
+        orbitalChangeOccurred:
+          true,
+        outgoingConicRegime:
+          'ELLIPTIC',
+        outgoingSemiMajorAxisAu:
+          3.1,
+        outgoingEccentricity:
+          0.21,
+        outgoingInclinationDegrees:
+          7.5,
+      }),
+    relevantTargets:
+      Object.freeze([
+        Object.freeze({
+          targetKind:
+            'PLANET',
+          targetName:
+            'Jotheria c',
+          regime:
+            'PLANET_COLLISION_CORRIDOR',
+          radialRangesOverlap:
+            true,
+          riskCandidate:
+            true,
+          directCollisionGeometryCandidate:
+            true,
+          orbitalRiskIndex01:
+            0.64,
+          orbitalExposureIndex01:
+            0.53,
+          minimumNodalSeparationAu:
+            0.000001,
+          targetCorridorRadiusAu:
+            0.02,
+          gravitationalFocusingFactor:
+            1.8,
+          characteristicRelativeSpeedKmPerSecond:
+            17.4,
+          temporalRegime:
+            'VERY_LOW',
+          temporalImpactProbability01:
+            2e-7,
+          expectedImpactCount:
+            2e-7,
+          isSinglePassage:
+            false,
+        }),
+      ]),
+  });
+}
+
 function asteroidTarget():
   MinorBodyScientificResolvedTarget {
   return Object.freeze({
@@ -290,6 +412,8 @@ function asteroidTarget():
       Object.freeze({
         kind:
           MinorBodyScientificTargetKind.ASTEROID,
+        dynamics:
+          dynamicsSource(),
         general:
           Object.freeze({
             diameterKilometers: 87.4,
@@ -354,6 +478,8 @@ function cometTarget():
       Object.freeze({
         kind:
           MinorBodyScientificTargetKind.COMET,
+        dynamics:
+          dynamicsSource(),
         general:
           Object.freeze({
             diameterKilometers: 14.2,
