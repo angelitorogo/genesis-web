@@ -3,6 +3,11 @@ import {
   type PlanetScientificResolvedTarget,
 } from '../../simulation/planetary/planet-scientific-target-resolver';
 
+import {
+  WorldEarthComparisonAssembler,
+  type WorldEarthComparisonModel,
+} from '../scientific/world-earth-comparison';
+
 export type PlanetScientificSectionId =
   | 'general'
   | 'orbit'
@@ -10,7 +15,8 @@ export type PlanetScientificSectionId =
   | 'atmosphere'
   | 'climate'
   | 'geology'
-  | 'moons';
+  | 'moons'
+  | 'comparison';
 
 export interface PlanetScientificFieldModel {
   readonly label:
@@ -60,6 +66,9 @@ export interface PlanetScientificMoonCardModel {
 export interface PlanetScientificSectionsModel {
   readonly sections:
     readonly PlanetScientificSectionModel[];
+
+  readonly comparison:
+    WorldEarthComparisonModel;
 
   readonly relevantMoons:
     readonly PlanetScientificMoonCardModel[];
@@ -111,7 +120,7 @@ const SCIENTIFIC_3 =
  *
  * This assembler never regenerates or reinterprets physical state. It receives
  * the safe primitive snapshot produced by PlanetScientificTargetResolver and
- * only formats it for the seven user-facing scientific sections.
+ * only formats it for the user-facing scientific sections and point-26.9 comparison.
  */
 export class PlanetScientificSectionsAssembler {
 
@@ -124,6 +133,21 @@ export class PlanetScientificSectionsAssembler {
 
     const detail =
       target.detail;
+
+    const comparison =
+      WorldEarthComparisonAssembler
+        .build({
+          worldLabel:
+            target.identity.designation,
+          massEarth:
+            detail.general.massEarth,
+          radiusEarth:
+            detail.general.radiusEarth,
+          densityGramsPerCubicCentimeter:
+            detail.general.densityGramsPerCubicCentimeter,
+          surfaceGravityEarth:
+            detail.general.surfaceGravityEarth,
+        });
 
     return Object.freeze({
       sections:
@@ -149,7 +173,11 @@ export class PlanetScientificSectionsAssembler {
           moonsSection(
             detail,
           ),
+          comparisonSection(
+            comparison,
+          ),
         ]),
+      comparison,
       relevantMoons:
         Object.freeze(
           detail
@@ -772,6 +800,48 @@ function moonsSection(
   );
 }
 
+
+function comparisonSection(
+  comparison:
+    WorldEarthComparisonModel,
+): PlanetScientificSectionModel {
+
+  return section(
+    'comparison',
+    'SECCIÓN 08',
+    'Comparación con la Tierra',
+    'Comparación adimensional con la Tierra y escala lineal de tamaño basada en el radio físico ya determinado.',
+    [
+      field(
+        'Radio relativo',
+        `${formatRelative(comparison.radiusEarth)} × el radio terrestre`,
+      ),
+      field(
+        'Masa relativa',
+        `${formatRelative(comparison.massEarth)} × la masa terrestre`,
+      ),
+      field(
+        'Área superficial relativa',
+        `${formatRelative(comparison.surfaceAreaEarth)} × la superficie terrestre`,
+        'Derivada del cuadrado del radio relativo.',
+      ),
+      field(
+        'Volumen relativo',
+        `${formatRelative(comparison.volumeEarth)} × el volumen terrestre`,
+        'Derivado del cubo del radio relativo.',
+      ),
+      field(
+        'Densidad relativa',
+        `${formatRelative(comparison.densityEarth)} × la densidad media terrestre`,
+      ),
+      field(
+        'Gravedad superficial relativa',
+        `${formatRelative(comparison.surfaceGravityEarth)} × la gravedad terrestre`,
+      ),
+    ],
+  );
+}
+
 function section(
   id:
     PlanetScientificSectionId,
@@ -836,6 +906,16 @@ function formatAdaptive(
   }
 
   return DECIMAL_3.format(
+    value,
+  );
+}
+
+function formatRelative(
+  value:
+    number,
+): string {
+
+  return formatAdaptive(
     value,
   );
 }

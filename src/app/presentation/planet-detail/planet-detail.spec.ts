@@ -149,6 +149,15 @@ describe(
         expect(
           fixture
             .componentInstance
+            .planetSectionHref(
+              'comparison',
+            ),
+        ).toBe(
+          '/system/3/-17/8/planet/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#planet-section-comparison',
+        );
+        expect(
+          fixture
+            .componentInstance
             .moonRoute(
               0,
             ),

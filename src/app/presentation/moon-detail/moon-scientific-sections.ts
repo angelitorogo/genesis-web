@@ -2,12 +2,18 @@ import {
   type MoonScientificResolvedTarget,
 } from '../../simulation/planetary/moon-scientific-target-resolver';
 
+import {
+  WorldEarthComparisonAssembler,
+  type WorldEarthComparisonModel,
+} from '../scientific/world-earth-comparison';
+
 export type MoonScientificSectionId =
   | 'general'
   | 'orbit'
   | 'tides'
   | 'environment'
-  | 'habitability';
+  | 'habitability'
+  | 'comparison';
 
 export interface MoonScientificFieldModel {
   readonly label:
@@ -40,6 +46,9 @@ export interface MoonScientificSectionModel {
 export interface MoonScientificSectionsModel {
   readonly sections:
     readonly MoonScientificSectionModel[];
+
+  readonly comparison:
+    WorldEarthComparisonModel;
 
   readonly badges:
     readonly string[];
@@ -107,6 +116,21 @@ export class MoonScientificSectionsAssembler {
       MoonScientificResolvedTarget,
   ): MoonScientificSectionsModel {
 
+    const comparison =
+      WorldEarthComparisonAssembler
+        .build({
+          worldLabel:
+            target.identity.designation,
+          massEarth:
+            target.detail.general.massEarth,
+          radiusEarth:
+            target.detail.general.radiusEarth,
+          densityGramsPerCubicCentimeter:
+            target.detail.general.meanDensityGramsPerCubicCentimeter,
+          surfaceGravityEarth:
+            target.detail.general.surfaceGravityEarth,
+        });
+
     return Object.freeze({
       sections:
         Object.freeze([
@@ -125,7 +149,11 @@ export class MoonScientificSectionsAssembler {
           habitabilitySection(
             target,
           ),
+          comparisonSection(
+            comparison,
+          ),
         ]),
+      comparison,
       badges:
         Object.freeze(
           badges(
@@ -468,6 +496,48 @@ function habitabilitySection(
   );
 }
 
+
+function comparisonSection(
+  comparison:
+    WorldEarthComparisonModel,
+): MoonScientificSectionModel {
+
+  return section(
+    'comparison',
+    'SECCIÓN 06',
+    'Comparación con la Tierra',
+    'Comparación adimensional con la Tierra y escala lineal de tamaño basada en el radio físico del satélite.',
+    [
+      field(
+        'Radio relativo',
+        `${formatRelative(comparison.radiusEarth)} × el radio terrestre`,
+      ),
+      field(
+        'Masa relativa',
+        `${formatRelative(comparison.massEarth)} × la masa terrestre`,
+      ),
+      field(
+        'Área superficial relativa',
+        `${formatRelative(comparison.surfaceAreaEarth)} × la superficie terrestre`,
+        'Derivada del cuadrado del radio relativo.',
+      ),
+      field(
+        'Volumen relativo',
+        `${formatRelative(comparison.volumeEarth)} × el volumen terrestre`,
+        'Derivado del cubo del radio relativo.',
+      ),
+      field(
+        'Densidad relativa',
+        `${formatRelative(comparison.densityEarth)} × la densidad media terrestre`,
+      ),
+      field(
+        'Gravedad superficial relativa',
+        `${formatRelative(comparison.surfaceGravityEarth)} × la gravedad terrestre`,
+      ),
+    ],
+  );
+}
+
 function badges(
   target:
     MoonScientificResolvedTarget,
@@ -573,6 +643,16 @@ function formatAdaptive(
     : DECIMAL_3.format(
         value,
       );
+}
+
+function formatRelative(
+  value:
+    number,
+): string {
+
+  return formatAdaptive(
+    value,
+  );
 }
 
 function formatIndex(

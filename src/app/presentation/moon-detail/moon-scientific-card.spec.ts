@@ -56,7 +56,7 @@ describe(
     );
 
     it(
-      'should expose five scientific sections for an individually characterized moon without leaking procedural internals',
+      'should expose the lunar sections plus the point-26.9 Earth comparison without leaking procedural internals',
       () => {
         const resolver:
           MoonScientificTargetResolutionResolver =
@@ -112,7 +112,46 @@ describe(
           'tides',
           'environment',
           'habitability',
+          'comparison',
         ]);
+        expect(
+          result.card.sections.comparison.radiusEarth,
+        ).toBe(0.27);
+        expect(
+          result.card.sections.comparison.earthDiameterPercent,
+        ).toBe(100);
+        expect(
+          result.card.sections.comparison.worldDiameterPercent,
+        ).toBeCloseTo(
+          27,
+          8,
+        );
+        expect(
+          result.card.sections.comparison.surfaceAreaEarth,
+        ).toBeCloseTo(
+          0.27 ** 2,
+          8,
+        );
+        expect(
+          result.card.sections.comparison.volumeEarth,
+        ).toBeCloseTo(
+          0.27 ** 3,
+          8,
+        );
+
+        const comparisonSection =
+          result.card.sections.sections.find(
+            section =>
+              section.id ===
+                'comparison',
+          );
+
+        expect(
+          comparisonSection?.title,
+        ).toBe(
+          'Comparación con la Tierra',
+        );
+
         expect(result.card.sections.badges).toContain(
           'Océano subsuperficial',
         );

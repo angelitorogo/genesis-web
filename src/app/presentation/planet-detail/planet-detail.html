@@ -24,7 +24,7 @@
 
         <p class="planet-detail__subtitle">
           Caracterización científica detallada del planeta organizada en General,
-          Órbita, Superficie, Atmósfera, Clima, Geología y Lunas.
+          Órbita, Superficie, Atmósfera, Clima, Geología, Lunas y Comparación con la Tierra.
         </p>
       </div>
 
@@ -177,6 +177,41 @@
                         <h2>{{ section.title }}</h2>
                         <p>{{ section.summary }}</p>
                       </header>
+
+                      @if (section.id === 'comparison') {
+                        <div
+                          class="planet-detail__earth-comparison"
+                          data-testid="planet-detail-earth-size-comparison"
+                        >
+                          <div class="planet-detail__size-pair" aria-label="Comparación lineal de diámetros con la Tierra">
+                            <div class="planet-detail__size-item">
+                              <div class="planet-detail__size-frame">
+                                <span
+                                  class="planet-detail__size-circle planet-detail__size-circle--world"
+                                  [style.width.%]="card.sections.comparison.worldDiameterPercent"
+                                  aria-hidden="true"
+                                ></span>
+                              </div>
+                              <strong>{{ card.sections.comparison.worldLabel }}</strong>
+                            </div>
+
+                            <div class="planet-detail__size-item">
+                              <div class="planet-detail__size-frame">
+                                <span
+                                  class="planet-detail__size-circle planet-detail__size-circle--earth"
+                                  [style.width.%]="card.sections.comparison.earthDiameterPercent"
+                                  aria-hidden="true"
+                                ></span>
+                              </div>
+                              <strong>Tierra</strong>
+                            </div>
+                          </div>
+
+                          <p>
+                            Escala lineal por diámetro. El cuerpo mayor ocupa el 100 % del marco y el menor conserva la proporción física de su radio.
+                          </p>
+                        </div>
+                      }
 
                       <dl class="planet-detail__section-facts">
                         @for (item of section.fields; track item.label) {

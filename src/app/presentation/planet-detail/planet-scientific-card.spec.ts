@@ -63,7 +63,7 @@ describe(
     );
 
     it(
-      'should expose the seven 26.4 scientific sections after system confirmation without leaking procedural internals',
+      'should expose the scientific sections plus the point-26.9 Earth comparison after system confirmation without leaking procedural internals',
       () => {
         const resolver:
           PlanetScientificTargetResolutionResolver =
@@ -124,10 +124,57 @@ describe(
           'climate',
           'geology',
           'moons',
+          'comparison',
         ]);
         expect(
           result.card.sections.relevantMoons,
         ).toHaveLength(1);
+        expect(
+          result.card.sections.comparison.radiusEarth,
+        ).toBe(1.08);
+        expect(
+          result.card.sections.comparison.worldDiameterPercent,
+        ).toBe(100);
+        expect(
+          result.card.sections.comparison.earthDiameterPercent,
+        ).toBeCloseTo(
+          100 / 1.08,
+          8,
+        );
+        expect(
+          result.card.sections.comparison.surfaceAreaEarth,
+        ).toBeCloseTo(
+          1.08 ** 2,
+          8,
+        );
+        expect(
+          result.card.sections.comparison.volumeEarth,
+        ).toBeCloseTo(
+          1.08 ** 3,
+          8,
+        );
+
+        const comparisonSection =
+          result.card.sections.sections.find(
+            section =>
+              section.id ===
+                'comparison',
+          );
+
+        expect(
+          comparisonSection?.title,
+        ).toBe(
+          'Comparación con la Tierra',
+        );
+        expect(
+          comparisonSection?.fields.find(
+            field =>
+              field.label ===
+                'Volumen relativo',
+          )?.value,
+        ).toContain(
+          'volumen terrestre',
+        );
         expect(
           result.card.planetaryKnowledgeLabel,
         ).toBe(

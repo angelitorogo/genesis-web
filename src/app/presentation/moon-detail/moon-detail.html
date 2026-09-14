@@ -24,7 +24,7 @@
 
         <p class="moon-detail__subtitle">
           Caracterización científica detallada del satélite organizada en General,
-          Órbita, Mareas y rotación, Entorno y Habitabilidad.
+          Órbita, Mareas y rotación, Entorno, Habitabilidad y Comparación con la Tierra.
         </p>
       </div>
 
@@ -178,6 +178,41 @@
                         <h2>{{ section.title }}</h2>
                         <p>{{ section.summary }}</p>
                       </header>
+
+                      @if (section.id === 'comparison') {
+                        <div
+                          class="moon-detail__earth-comparison"
+                          data-testid="moon-detail-earth-size-comparison"
+                        >
+                          <div class="moon-detail__size-pair" aria-label="Comparación lineal de diámetros con la Tierra">
+                            <div class="moon-detail__size-item">
+                              <div class="moon-detail__size-frame">
+                                <span
+                                  class="moon-detail__size-circle moon-detail__size-circle--world"
+                                  [style.width.%]="card.sections.comparison.worldDiameterPercent"
+                                  aria-hidden="true"
+                                ></span>
+                              </div>
+                              <strong>{{ card.sections.comparison.worldLabel }}</strong>
+                            </div>
+
+                            <div class="moon-detail__size-item">
+                              <div class="moon-detail__size-frame">
+                                <span
+                                  class="moon-detail__size-circle moon-detail__size-circle--earth"
+                                  [style.width.%]="card.sections.comparison.earthDiameterPercent"
+                                  aria-hidden="true"
+                                ></span>
+                              </div>
+                              <strong>Tierra</strong>
+                            </div>
+                          </div>
+
+                          <p>
+                            Escala lineal por diámetro. El cuerpo mayor ocupa el 100 % del marco y el menor conserva la proporción física de su radio.
+                          </p>
+                        </div>
+                      }
 
                       <dl class="moon-detail__section-facts">
                         @for (item of section.fields; track item.label) {

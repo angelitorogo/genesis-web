@@ -140,6 +140,15 @@ describe(
         ).toBe(
           '/system/3/-17/8/planet/0/moon/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#moon-section-habitability',
         );
+        expect(
+          fixture
+            .componentInstance
+            .moonSectionHref(
+              'comparison',
+            ),
+        ).toBe(
+          '/system/3/-17/8/planet/0/moon/0?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1&version=1#moon-section-comparison',
+        );
       },
     );
   },
