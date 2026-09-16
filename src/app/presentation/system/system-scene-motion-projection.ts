@@ -26,6 +26,10 @@ export interface SystemSceneMotionProjectionContribution {
 
   readonly presentationTimeScale?:
     number;
+
+  /** Renderer-only multiplier applied after AU -> scene projection. */
+  readonly postProjectionScale?:
+    number;
 }
 
 export interface SystemSceneMotionProjectionVector3 {
@@ -120,6 +124,12 @@ export function projectSystemSceneMotionContributions(
             presentationTimeScale,
         );
 
+    const postProjectionScale =
+      finitePositiveOr(
+        contribution.postProjectionScale,
+        1,
+      );
+
     const linearScenePerAu =
       contribution.linearScenePerAu ??
       null;
@@ -136,15 +146,18 @@ export function projectSystemSceneMotionContributions(
       sceneX +=
         position.xAu *
         contribution.scale *
-        linearScenePerAu;
+        linearScenePerAu *
+        postProjectionScale;
       sceneY +=
         position.yAu *
         contribution.scale *
-        linearScenePerAu;
+        linearScenePerAu *
+        postProjectionScale;
       sceneZ +=
         position.zAu *
         contribution.scale *
-        linearScenePerAu;
+        linearScenePerAu *
+        postProjectionScale;
       continue;
     }
 
@@ -154,7 +167,12 @@ export function projectSystemSceneMotionContributions(
 
     if (
       projectionSpace ===
-        SystemSceneProjectionSpace.GLOBAL
+        SystemSceneProjectionSpace.GLOBAL &&
+      Math.abs(
+        postProjectionScale -
+        1,
+      ) <=
+        1e-12
     ) {
       globalXAu +=
         position.xAu *
@@ -169,28 +187,53 @@ export function projectSystemSceneMotionContributions(
     }
 
     const projected =
-      systemSceneProjectAuVectorInSpace(
-        {
-          x:
-            position.xAu,
-          y:
-            position.yAu,
-          z:
-            position.zAu,
-        },
-        sceneScale,
-        projectionSpace,
-      );
+      projectionSpace ===
+        SystemSceneProjectionSpace.GLOBAL
+        ? systemSceneProjectAuVector(
+            {
+              x:
+                position.xAu *
+                contribution.scale,
+              y:
+                position.yAu *
+                contribution.scale,
+              z:
+                position.zAu *
+                contribution.scale,
+            },
+            sceneScale,
+          )
+        : systemSceneProjectAuVectorInSpace(
+            {
+              x:
+                position.xAu,
+              y:
+                position.yAu,
+              z:
+                position.zAu,
+            },
+            sceneScale,
+            projectionSpace,
+          );
+
+    const physicalScale =
+      projectionSpace ===
+        SystemSceneProjectionSpace.GLOBAL
+        ? 1
+        : contribution.scale;
 
     sceneX +=
       projected.x *
-      contribution.scale;
+      physicalScale *
+      postProjectionScale;
     sceneY +=
       projected.y *
-      contribution.scale;
+      physicalScale *
+      postProjectionScale;
     sceneZ +=
       projected.z *
-      contribution.scale;
+      physicalScale *
+      postProjectionScale;
   }
 
   const globalProjected =
@@ -217,6 +260,21 @@ export function projectSystemSceneMotionContributions(
       sceneZ +
       globalProjected.z,
   });
+}
+
+function finitePositiveOr(
+  value:
+    number | undefined,
+
+  fallback:
+    number,
+): number {
+
+  return value !== undefined &&
+    Number.isFinite(value) &&
+    value > 0
+    ? value
+    : fallback;
 }
 
 /**

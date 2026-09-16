@@ -64,7 +64,16 @@ const V1_DYNAMICS_BRANCH =
     'GENESIS-EARLY-PLANETARY-DYNAMICS-V1',
   );
 
-const V1_MAX_LOG_MIGRATION =
+const V1_BASE_MAX_INWARD_LOG_MIGRATION =
+  0.90;
+
+const V1_LOW_MASS_INWARD_LOG_MIGRATION_BOOST =
+  2.10;
+
+const V1_LONG_LIVED_DISK_INWARD_LOG_MIGRATION_BOOST =
+  0.35;
+
+const V1_MAX_OUTWARD_LOG_MIGRATION =
   0.62;
 
 const V1_COLLISION_GUARANTEED_SPACING_RATIO =
@@ -104,8 +113,12 @@ interface V1MigratingBody {
  *
  * V1 migrates point-17.4 candidates radially inside the frozen disk envelope
  * and resolves only strong convergent encounters as perfect-merger collisions.
- * It deliberately does not integrate eccentricity/inclination, resonances,
- * scattering/ejections, gas-envelope growth or mature planetary stability.
+ * Inward migration uses the host mass and primordial-disk lifetime as a radial
+ * leverage proxy: low-mass, long-lived disks may build compact inner chains,
+ * while outward migration remains deliberately modest. The model never reads
+ * habitable-zone geometry. It deliberately does not integrate eccentricity/
+ * inclination, resonances, scattering/ejections, gas-envelope growth or
+ * mature planetary stability.
  */
 export class EarlyPlanetaryDynamicsGenerator {
 
@@ -212,6 +225,7 @@ export class EarlyPlanetaryDynamicsGenerator {
           survivor =>
             materializeBodyV1(
               survivor,
+              diskProfile,
             ),
         )
         .sort(
@@ -357,19 +371,31 @@ function migrateCandidateV1(
 
   const migrationStrength01 =
     clamp01(
-      migrationPropensity01 *
-      (
-        0.42 +
-        0.58 *
-          deterministicUnitV1(
-            systemSeed,
-            `migration-strength:${candidate.formationOrdinal}`,
-          )
-      ),
+      0.30 +
+      0.70 *
+        (
+          0.45 *
+            gasMobility01 +
+          0.20 *
+            candidate
+              .growthPotential01 +
+          0.35 *
+            deterministicUnitV1(
+              systemSeed,
+              `migration-strength:${candidate.formationOrdinal}`,
+            )
+        ),
     );
 
+  const maximumLogDisplacement =
+    outward
+      ? V1_MAX_OUTWARD_LOG_MIGRATION
+      : maximumInwardLogMigrationV1(
+          diskProfile,
+        );
+
   const signedLogDisplacement =
-    V1_MAX_LOG_MIGRATION *
+    maximumLogDisplacement *
     migrationStrength01 *
     (
       outward
@@ -835,6 +861,9 @@ function mergeBodiesV1(
 function materializeBodyV1(
   survivor:
     V1MigratingBody,
+
+  diskProfile:
+    ProtoplanetaryDiskProfile,
 ): EarlyProtoplanetBody {
 
   const descriptor =
@@ -843,6 +872,7 @@ function materializeBodyV1(
         .formationMassWeightedRadiusAu,
       survivor
         .migratedRadiusAu,
+      diskProfile,
     );
 
   return new EarlyProtoplanetBody(
@@ -869,12 +899,49 @@ function materializeBodyV1(
   );
 }
 
+function maximumInwardLogMigrationV1(
+  diskProfile:
+    ProtoplanetaryDiskProfile,
+): number {
+
+  const lowMassCompactness01 =
+    clamp01(
+      (
+        0.85 -
+        diskProfile
+          .centralMassSolar
+      ) /
+      0.77,
+    );
+
+  const longLivedDiskOpportunity01 =
+    clamp01(
+      (
+        diskProfile
+          .dispersalAgeMillionYears -
+        5.5
+      ) /
+      6.5,
+    );
+
+  return (
+    V1_BASE_MAX_INWARD_LOG_MIGRATION +
+    V1_LOW_MASS_INWARD_LOG_MIGRATION_BOOST *
+      lowMassCompactness01 +
+    V1_LONG_LIVED_DISK_INWARD_LOG_MIGRATION_BOOST *
+      longLivedDiskOpportunity01
+  );
+}
+
 function migrationDescriptorV1(
   formationRadiusAu:
     number,
 
   orbitalRadiusAu:
     number,
+
+  diskProfile:
+    ProtoplanetaryDiskProfile,
 ): {
   readonly direction:
     ProtoplanetMigrationDirection;
@@ -901,12 +968,22 @@ function migrationDescriptorV1(
     };
   }
 
+  const direction =
+    displacement <
+      0
+      ? ProtoplanetMigrationDirection.INWARD
+      : ProtoplanetMigrationDirection.OUTWARD;
+
+  const maximumLogDisplacement =
+    direction ===
+      ProtoplanetMigrationDirection.INWARD
+      ? maximumInwardLogMigrationV1(
+          diskProfile,
+        )
+      : V1_MAX_OUTWARD_LOG_MIGRATION;
+
   return {
-    direction:
-      displacement <
-        0
-        ? ProtoplanetMigrationDirection.INWARD
-        : ProtoplanetMigrationDirection.OUTWARD,
+    direction,
     strength01:
       clamp01(
         Math.abs(
@@ -915,7 +992,7 @@ function migrationDescriptorV1(
             formationRadiusAu,
           ),
         ) /
-        V1_MAX_LOG_MIGRATION,
+        maximumLogDisplacement,
       ),
   };
 }

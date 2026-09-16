@@ -210,6 +210,7 @@ function generateCircumbinaryV1(
     );
 
   const stellarEvolutionRegime =
+    assessment.isRadiativeReferenceApplicable &&
     assessment.stellarEvolutionRegime ===
       CircumbinaryStellarEvolutionRegime.MAIN_SEQUENCE_PAIR
       ? PlanetarySystemHabitableZoneEvolutionRegime.MAIN_SEQUENCE_INNER_PAIR
@@ -228,6 +229,8 @@ function generateCircumbinaryV1(
     assessment.stableHabitableZoneFraction,
     dynamicalRegime,
     stellarEvolutionRegime,
+    assessment.isRadiativeReferenceApplicable,
+    assessment.radiativeReferenceRegime,
   );
 }
 

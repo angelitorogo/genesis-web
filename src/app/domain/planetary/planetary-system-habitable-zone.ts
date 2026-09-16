@@ -3,6 +3,10 @@ import {
 } from '../generation/procedural-locator';
 
 import {
+  CircumbinaryRadiativeReferenceRegime,
+} from '../habitability/circumbinary-habitability-assessment';
+
+import {
   PlanetarySystemHabitableZoneDynamicalRegime,
 } from './planetary-system-habitable-zone-dynamical-regime';
 
@@ -69,6 +73,12 @@ export class PlanetarySystemHabitableZone {
 
     readonly stellarEvolutionRegime:
       PlanetarySystemHabitableZoneEvolutionRegime,
+
+    readonly radiativeReferenceApplicable:
+      boolean = true,
+
+    readonly radiativeReferenceRegime:
+      CircumbinaryRadiativeReferenceRegime | null = null,
   ) {
     if (
       !Object.values(
@@ -181,6 +191,48 @@ export class PlanetarySystemHabitableZone {
       );
     }
 
+    if (
+      typeof radiativeReferenceApplicable !==
+        'boolean'
+    ) {
+      throw new RangeError(
+        'radiativeReferenceApplicable must be boolean.',
+      );
+    }
+
+    if (
+      orbitTopology ===
+        PlanetarySystemOrbitTopology.CIRCUMSTELLAR &&
+      !radiativeReferenceApplicable
+    ) {
+      throw new RangeError(
+        'CIRCUMSTELLAR HZ references are always applicable in V1.',
+      );
+    }
+
+    if (
+      radiativeReferenceRegime !== null &&
+      !Object.values(
+        CircumbinaryRadiativeReferenceRegime,
+      ).includes(
+        radiativeReferenceRegime,
+      )
+    ) {
+      throw new RangeError(
+        'radiativeReferenceRegime must be a known CircumbinaryRadiativeReferenceRegime or null.',
+      );
+    }
+
+    if (
+      !radiativeReferenceApplicable &&
+      dynamicalRegime !==
+        PlanetarySystemHabitableZoneDynamicalRegime.NO_DYNAMICAL_OVERLAP
+    ) {
+      throw new RangeError(
+        'An inapplicable radiative reference cannot expose a dynamically habitable interval.',
+      );
+    }
+
     validateDynamicalInterval(
       radiativeInnerEdgeAu,
       radiativeOuterEdgeAu,
@@ -235,6 +287,7 @@ export class PlanetarySystemHabitableZone {
     boolean {
 
     return (
+      this.radiativeReferenceApplicable &&
       this.hasDynamicallyAvailableHabitableZone &&
       this.stellarEvolutionRegime !==
         PlanetarySystemHabitableZoneEvolutionRegime.REFERENCE_ONLY

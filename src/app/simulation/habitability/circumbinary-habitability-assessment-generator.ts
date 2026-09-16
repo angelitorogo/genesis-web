@@ -9,6 +9,7 @@ import {
 import {
   CircumbinaryHabitabilityAssessment,
   CircumbinaryPlanetaryStabilityRegime,
+  CircumbinaryRadiativeReferenceRegime,
   CircumbinaryStellarEvolutionRegime,
 } from '../../domain/habitability/circumbinary-habitability-assessment';
 
@@ -33,6 +34,10 @@ import {
 } from '../../domain/stellar/stellar-physical-properties';
 
 import {
+  type StellarOrbitHierarchy,
+} from '../../domain/stellar/stellar-orbit-hierarchy';
+
+import {
   StellarSystemComponentLabel,
 } from '../../domain/stellar/stellar-system-component-label';
 
@@ -54,6 +59,17 @@ export const CIRCUMBINARY_V1_INNER_HABITABLE_EFFECTIVE_FLUX_SOLAR =
 
 export const CIRCUMBINARY_V1_OUTER_HABITABLE_EFFECTIVE_FLUX_SOLAR =
   0.356;
+
+/**
+ * Conservative validity limits for treating A+B as one radiative point source.
+ * These affect only whether the nominal combined-luminosity interval is allowed
+ * to make a circumbinary HZ claim; the nominal diagnostic edges are retained.
+ */
+export const CIRCUMBINARY_V1_MAX_POINT_SOURCE_FLUX_DEVIATION_FRACTION =
+  0.15;
+
+export const CIRCUMBINARY_V1_MAX_TERTIARY_FLUX_CONTRIBUTION_FRACTION =
+  0.10;
 
 const OVERLAP_TOLERANCE =
   1e-12;
@@ -86,6 +102,12 @@ export class CircumbinaryHabitabilityAssessmentGenerator {
 
     secondaryCompanion:
       StellarCompanion,
+
+    orbitHierarchy:
+      StellarOrbitHierarchy | null = null,
+
+    tertiaryCompanion:
+      StellarCompanion | null = null,
   ): CircumbinaryHabitabilityAssessment {
     assertSupportedVersion(
       generationKey,
@@ -150,6 +172,32 @@ export class CircumbinaryHabitabilityAssessmentGenerator {
         ? CircumbinaryStellarEvolutionRegime.MAIN_SEQUENCE_PAIR
         : CircumbinaryStellarEvolutionRegime.REFERENCE_ONLY;
 
+    const radiativeApplicability =
+      assessRadiativeReferenceApplicabilityV1(
+        compatibility.hostMultiplicity,
+        radiativeHabitableInnerEdgeAu,
+        radiativeHabitableOuterEdgeAu,
+        primaryPhysicalProperties,
+        secondaryCompanion,
+        orbitHierarchy,
+        tertiaryCompanion,
+      );
+
+    if (
+      !radiativeApplicability.applicable
+    ) {
+      return noStableZone(
+        compatibility.hostMultiplicity,
+        combinedReferenceLuminositySolar,
+        radiativeHabitableInnerEdgeAu,
+        radiativeHabitableOuterEdgeAu,
+        stellarEvolutionRegime,
+        radiativeApplicability.regime,
+        radiativeApplicability.maximumInnerPairFluxDeviationFraction01,
+        radiativeApplicability.maximumTertiaryFluxContributionFraction01,
+      );
+    }
+
     if (
       !compatibility.isCompatible
     ) {
@@ -159,6 +207,9 @@ export class CircumbinaryHabitabilityAssessmentGenerator {
         radiativeHabitableInnerEdgeAu,
         radiativeHabitableOuterEdgeAu,
         stellarEvolutionRegime,
+        radiativeApplicability.regime,
+        radiativeApplicability.maximumInnerPairFluxDeviationFraction01,
+        radiativeApplicability.maximumTertiaryFluxContributionFraction01,
       );
     }
 
@@ -198,6 +249,9 @@ export class CircumbinaryHabitabilityAssessmentGenerator {
         radiativeHabitableInnerEdgeAu,
         radiativeHabitableOuterEdgeAu,
         stellarEvolutionRegime,
+        radiativeApplicability.regime,
+        radiativeApplicability.maximumInnerPairFluxDeviationFraction01,
+        radiativeApplicability.maximumTertiaryFluxContributionFraction01,
       );
     }
 
@@ -239,6 +293,9 @@ export class CircumbinaryHabitabilityAssessmentGenerator {
         ? CircumbinaryPlanetaryStabilityRegime.FULL_STABLE_HABITABLE_ZONE
         : CircumbinaryPlanetaryStabilityRegime.PARTIAL_STABLE_HABITABLE_ZONE,
       stellarEvolutionRegime,
+      radiativeApplicability.regime,
+      radiativeApplicability.maximumInnerPairFluxDeviationFraction01,
+      radiativeApplicability.maximumTertiaryFluxContributionFraction01,
     );
   }
 }
@@ -258,6 +315,16 @@ function noStableZone(
 
   stellarEvolutionRegime:
     CircumbinaryStellarEvolutionRegime,
+
+  radiativeReferenceRegime:
+    CircumbinaryRadiativeReferenceRegime =
+      CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE,
+
+  maximumInnerPairFluxDeviationFraction01:
+    number = 0,
+
+  maximumTertiaryFluxContributionFraction01:
+    number = 0,
 ): CircumbinaryHabitabilityAssessment {
   return new CircumbinaryHabitabilityAssessment(
     hostMultiplicity,
@@ -269,7 +336,158 @@ function noStableZone(
     0,
     CircumbinaryPlanetaryStabilityRegime.NO_STABLE_HABITABLE_ZONE,
     stellarEvolutionRegime,
+    radiativeReferenceRegime,
+    maximumInnerPairFluxDeviationFraction01,
+    maximumTertiaryFluxContributionFraction01,
   );
+}
+
+interface RadiativeReferenceApplicabilityV1 {
+  readonly applicable: boolean;
+  readonly regime: CircumbinaryRadiativeReferenceRegime;
+  readonly maximumInnerPairFluxDeviationFraction01: number;
+  readonly maximumTertiaryFluxContributionFraction01: number;
+}
+
+function assessRadiativeReferenceApplicabilityV1(
+  multiplicity: StellarSystemMultiplicity,
+  radiativeInnerEdgeAu: number,
+  radiativeOuterEdgeAu: number,
+  primaryPhysicalProperties: StellarPhysicalProperties,
+  secondaryCompanion: StellarCompanion,
+  orbitHierarchy: StellarOrbitHierarchy | null,
+  tertiaryCompanion: StellarCompanion | null,
+): RadiativeReferenceApplicabilityV1 {
+  // Legacy/direct unit callers that do not provide hierarchy retain the old
+  // applicability semantics. Production StellarSystemGenerator always passes it.
+  if (orbitHierarchy === null || orbitHierarchy.innerOrbit === null) {
+    return Object.freeze({
+      applicable: true,
+      regime: CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE,
+      maximumInnerPairFluxDeviationFraction01: 0,
+      maximumTertiaryFluxContributionFraction01: 0,
+    });
+  }
+
+  const innerDeviation =
+    maximumInnerPairPointSourceFluxDeviationV1(
+      radiativeInnerEdgeAu,
+      orbitHierarchy.innerOrbit.apoastronAu,
+      primaryPhysicalProperties.initialMassSolar,
+      secondaryCompanion.physicalProperties.initialMassSolar,
+      primaryPhysicalProperties.luminositySolar,
+      secondaryCompanion.physicalProperties.luminositySolar,
+    );
+
+  const innerDeviation01 =
+    clamp01(innerDeviation);
+
+  if (
+    !Number.isFinite(innerDeviation) ||
+    innerDeviation >
+      CIRCUMBINARY_V1_MAX_POINT_SOURCE_FLUX_DEVIATION_FRACTION
+  ) {
+    return Object.freeze({
+      applicable: false,
+      regime: CircumbinaryRadiativeReferenceRegime.INNER_PAIR_NOT_COMPACT,
+      maximumInnerPairFluxDeviationFraction01: innerDeviation01,
+      maximumTertiaryFluxContributionFraction01: 0,
+    });
+  }
+
+  let tertiaryContribution = 0;
+
+  if (
+    multiplicity === StellarSystemMultiplicity.TRIPLE &&
+    orbitHierarchy.outerOrbit !== null &&
+    tertiaryCompanion !== null
+  ) {
+    tertiaryContribution =
+      maximumTertiaryFluxContributionV1(
+        radiativeOuterEdgeAu,
+        orbitHierarchy.outerOrbit.periastronAu,
+        primaryPhysicalProperties.luminositySolar +
+          secondaryCompanion.physicalProperties.luminositySolar,
+        tertiaryCompanion.physicalProperties.luminositySolar,
+      );
+
+    if (
+      !Number.isFinite(tertiaryContribution) ||
+      tertiaryContribution >
+        CIRCUMBINARY_V1_MAX_TERTIARY_FLUX_CONTRIBUTION_FRACTION
+    ) {
+      return Object.freeze({
+        applicable: false,
+        regime: CircumbinaryRadiativeReferenceRegime.TERTIARY_IRRADIATION_SIGNIFICANT,
+        maximumInnerPairFluxDeviationFraction01: innerDeviation01,
+        maximumTertiaryFluxContributionFraction01: clamp01(tertiaryContribution),
+      });
+    }
+  }
+
+  return Object.freeze({
+    applicable: true,
+    regime: CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE,
+    maximumInnerPairFluxDeviationFraction01: innerDeviation01,
+    maximumTertiaryFluxContributionFraction01: clamp01(tertiaryContribution),
+  });
+}
+
+function maximumInnerPairPointSourceFluxDeviationV1(
+  radiusAu: number,
+  innerPairApoastronAu: number,
+  primaryMassSolar: number,
+  secondaryMassSolar: number,
+  primaryLuminositySolar: number,
+  secondaryLuminositySolar: number,
+): number {
+  const totalMass = primaryMassSolar + secondaryMassSolar;
+  const totalLuminosity = primaryLuminositySolar + secondaryLuminositySolar;
+  const primaryExcursion = innerPairApoastronAu * secondaryMassSolar / totalMass;
+  const secondaryExcursion = innerPairApoastronAu * primaryMassSolar / totalMass;
+
+  if (radiusAu <= Math.max(primaryExcursion, secondaryExcursion)) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const referenceFlux = totalLuminosity / (radiusAu * radiusAu);
+
+  const configurations = [
+    primaryLuminositySolar / ((radiusAu - primaryExcursion) ** 2) +
+      secondaryLuminositySolar / ((radiusAu + secondaryExcursion) ** 2),
+    primaryLuminositySolar / ((radiusAu + primaryExcursion) ** 2) +
+      secondaryLuminositySolar / ((radiusAu - secondaryExcursion) ** 2),
+    primaryLuminositySolar / (radiusAu * radiusAu + primaryExcursion * primaryExcursion) +
+      secondaryLuminositySolar / (radiusAu * radiusAu + secondaryExcursion * secondaryExcursion),
+  ];
+
+  return Math.max(
+    ...configurations.map(flux => Math.abs(flux / referenceFlux - 1)),
+  );
+}
+
+function maximumTertiaryFluxContributionV1(
+  radiativeOuterEdgeAu: number,
+  tertiaryPeriastronAu: number,
+  innerPairLuminositySolar: number,
+  tertiaryLuminositySolar: number,
+): number {
+  const minimumDistanceToTertiaryAu =
+    tertiaryPeriastronAu - radiativeOuterEdgeAu;
+
+  if (minimumDistanceToTertiaryAu <= 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const innerPairReferenceFlux =
+    innerPairLuminositySolar /
+    (radiativeOuterEdgeAu * radiativeOuterEdgeAu);
+
+  const maximumTertiaryFlux =
+    tertiaryLuminositySolar /
+    (minimumDistanceToTertiaryAu * minimumDistanceToTertiaryAu);
+
+  return maximumTertiaryFlux / innerPairReferenceFlux;
 }
 
 function isMainSequencePair(

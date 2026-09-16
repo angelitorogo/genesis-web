@@ -56,6 +56,12 @@ const V1_MIN_OUTER_RADIUS_AU =
 const V1_MAX_OUTER_RADIUS_AU =
   360;
 
+const V1_SOLAR_MASS_INNER_CAVITY_FLOOR_AU =
+  0.008;
+
+const V1_MIN_INNER_CAVITY_FLOOR_AU =
+  0.0025;
+
 /**
  * Point-17.2 pure bulk protoplanetary-disk generator.
  *
@@ -235,7 +241,9 @@ export class ProtoplanetaryDiskProfileGenerator {
 
     const innerRadiusAu =
       Math.max(
-        0.008,
+        innerCavityFloorAuV1(
+          centralMassSolar,
+        ),
         3.0 *
           earlyRadiusSolar *
           V1_SOLAR_RADIUS_AU,
@@ -341,6 +349,21 @@ export class ProtoplanetaryDiskProfileGenerator {
       accretionRateSolarMassPerYear,
     );
   }
+}
+
+function innerCavityFloorAuV1(
+  centralMassSolar:
+    number,
+): number {
+
+  return clamp(
+    V1_SOLAR_MASS_INNER_CAVITY_FLOOR_AU *
+      Math.sqrt(
+        centralMassSolar,
+      ),
+    V1_MIN_INNER_CAVITY_FLOOR_AU,
+    V1_SOLAR_MASS_INNER_CAVITY_FLOOR_AU,
+  );
 }
 
 function dispersalAgeMillionYearsV1(

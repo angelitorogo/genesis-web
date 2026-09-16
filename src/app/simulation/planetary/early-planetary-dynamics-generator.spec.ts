@@ -305,6 +305,118 @@ describe(
     );
 
     it(
+      'should allow substantially deeper inward migration in low-mass long-lived disks without consulting habitable-zone geometry',
+      () => {
+        const lowMassDisk =
+          migrationDiskProfile(
+            0.10,
+            10,
+          );
+
+        const solarMassDisk =
+          migrationDiskProfile(
+            1,
+            6,
+          );
+
+        const sourceCandidate =
+          candidate(
+            1,
+            0.30,
+            1,
+            ProtoplanetCandidateComposition.ROCKY,
+            0.90,
+            0.20,
+          );
+
+        const lowPopulation =
+          singleCandidatePopulation(
+            lowMassDisk,
+            sourceCandidate,
+          );
+
+        const solarPopulation =
+          singleCandidatePopulation(
+            solarMassDisk,
+            sourceCandidate,
+          );
+
+        let lowestLowMassRadiusAu =
+          sourceCandidate.orbitalRadiusAu;
+
+        let lowestSolarMassRadiusAu =
+          sourceCandidate.orbitalRadiusAu;
+
+        for (
+          let index = 1;
+          index <=
+            64;
+          index += 1
+        ) {
+          const seed =
+            new SystemSeed(
+              index
+                .toString(16)
+                .toUpperCase()
+                .padStart(
+                  32,
+                  '0',
+                ),
+            );
+
+          const lowOutcome =
+            EarlyPlanetaryDynamicsGenerator
+              .generate(
+                generationKey,
+                seed,
+                lowMassDisk,
+                migrationDiskStructure(
+                  lowMassDisk,
+                ),
+                lowPopulation,
+              );
+
+          const solarOutcome =
+            EarlyPlanetaryDynamicsGenerator
+              .generate(
+                generationKey,
+                seed,
+                solarMassDisk,
+                migrationDiskStructure(
+                  solarMassDisk,
+                ),
+                solarPopulation,
+              );
+
+          lowestLowMassRadiusAu =
+            Math.min(
+              lowestLowMassRadiusAu,
+              lowOutcome.bodies[0]
+                .orbitalRadiusAu,
+            );
+
+          lowestSolarMassRadiusAu =
+            Math.min(
+              lowestSolarMassRadiusAu,
+              solarOutcome.bodies[0]
+                .orbitalRadiusAu,
+            );
+        }
+
+        expect(
+          lowestLowMassRadiusAu,
+        ).toBeLessThan(0.08);
+
+        expect(
+          lowestLowMassRadiusAu,
+        ).toBeLessThan(
+          lowestSolarMassRadiusAu *
+            0.60,
+        );
+      },
+    );
+
+    it(
       'should support a point-17.4 disk with no candidates',
       () => {
         const disk =
@@ -344,6 +456,109 @@ describe(
     );
   },
 );
+
+function migrationDiskProfile(
+  centralMassSolar:
+    number,
+
+  dispersalAgeMillionYears:
+    number,
+): ProtoplanetaryDiskProfile {
+
+  const ageMillionYears =
+    dispersalAgeMillionYears *
+    0.5;
+
+  const diskMassSolar =
+    centralMassSolar *
+    0.08;
+
+  return new ProtoplanetaryDiskProfile(
+    ProtoplanetaryDiskStage.EVOLVING_PRIMORDIAL_DISK,
+    ageMillionYears,
+    dispersalAgeMillionYears,
+    0.5,
+    centralMassSolar,
+    diskMassSolar,
+    0.08,
+    0.003,
+    8,
+    30,
+    120,
+    1,
+    0.04,
+    5e-9,
+  );
+}
+
+function migrationDiskStructure(
+  disk:
+    ProtoplanetaryDiskProfile,
+): ProtoplanetaryDiskStructure {
+
+  const dustMassSolar =
+    disk.diskMassSolar *
+    0.02;
+
+  const gasMassSolar =
+    disk.diskMassSolar -
+    dustMassSolar;
+
+  return new ProtoplanetaryDiskStructure(
+    disk.diskMassSolar,
+    disk.innerRadiusAu,
+    disk.outerRadiusAu,
+    gasMassSolar,
+    dustMassSolar,
+    0.98,
+    0.02,
+    dustMassSolar /
+      gasMassSolar,
+    0.05,
+    0.75,
+    0.5,
+    [],
+    [
+      new ProtoplanetaryCondensationRegion(
+        ProtoplanetaryCondensationRegionKind.ROCKY_SILICATE_SOLIDS,
+        disk.innerRadiusAu,
+        1.08,
+        1200,
+        170,
+      ),
+      new ProtoplanetaryCondensationRegion(
+        ProtoplanetaryCondensationRegionKind.WATER_ICE_RICH_SOLIDS,
+        1.08,
+        disk.outerRadiusAu,
+        170,
+        35,
+      ),
+    ],
+  );
+}
+
+function singleCandidatePopulation(
+  disk:
+    ProtoplanetaryDiskProfile,
+
+  sourceCandidate:
+    ProtoplanetCandidate,
+): ProtoplanetCandidatePopulation {
+
+  return new ProtoplanetCandidatePopulation(
+    disk.innerRadiusAu,
+    disk.outerRadiusAu,
+    10,
+    sourceCandidate.solidMassEarth,
+    10 -
+      sourceCandidate.solidMassEarth,
+    sourceCandidate.solidMassEarth /
+      10,
+    [
+      sourceCandidate,
+    ],
+  );
+}
 
 function diskProfile():
   ProtoplanetaryDiskProfile {

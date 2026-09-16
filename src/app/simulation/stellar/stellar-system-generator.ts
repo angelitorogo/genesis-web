@@ -309,6 +309,8 @@ export class StellarSystemGenerator {
           primaryPhysicalProperties,
           single.primaryStar,
           secondaryCompanion,
+          orbitHierarchy,
+          null,
         );
 
     return new StellarSystem(
@@ -413,6 +415,8 @@ export class StellarSystemGenerator {
           primaryPhysicalProperties,
           binary.primaryStar,
           binary.secondaryCompanion!,
+          orbitHierarchy,
+          tertiaryCompanion,
         );
 
     return new StellarSystem(

@@ -8,6 +8,7 @@ import {
 
 import {
   CircumbinaryPlanetaryStabilityRegime,
+  CircumbinaryRadiativeReferenceRegime,
   CircumbinaryStellarEvolutionRegime,
 } from '../../domain/habitability/circumbinary-habitability-assessment';
 
@@ -31,6 +32,10 @@ import {
 import {
   type StellarPhysicalProperties,
 } from '../../domain/stellar/stellar-physical-properties';
+
+import {
+  type StellarOrbitHierarchy,
+} from '../../domain/stellar/stellar-orbit-hierarchy';
 
 import {
   StellarSystemComponentLabel,
@@ -67,6 +72,8 @@ describe(
     ): StellarPhysicalProperties {
       return {
         luminositySolar,
+        initialMassSolar:
+          1,
       } as StellarPhysicalProperties;
     }
 
@@ -93,6 +100,8 @@ describe(
 
         physicalProperties: {
           luminositySolar,
+          initialMassSolar:
+            0.5,
         },
 
         currentEvolutionState:
@@ -297,6 +306,115 @@ describe(
         expect(brownDwarfB.stellarEvolutionRegime).toBe(
           CircumbinaryStellarEvolutionRegime.REFERENCE_ONLY,
         );
+      },
+    );
+
+    it(
+      'should reject the combined A+B point-source HZ when a wide inner pair makes the nominal zone radiatively non-compact',
+      () => {
+        const hierarchy = {
+          innerOrbit: {
+            apoastronAu:
+              5,
+          },
+          outerOrbit:
+            null,
+        } as unknown as StellarOrbitHierarchy;
+
+        const report =
+          CircumbinaryHabitabilityAssessmentGenerator.generate(
+            generationKey,
+            binaryCompatibility(12),
+            physical(0.75),
+            star(),
+            companion(0.25),
+            hierarchy,
+            null,
+          );
+
+        expect(report.isRadiativeReferenceApplicable).toBe(false);
+        expect(report.radiativeReferenceRegime).toBe(
+          CircumbinaryRadiativeReferenceRegime.INNER_PAIR_NOT_COMPACT,
+        );
+        expect(report.hasStableHabitableZone).toBe(false);
+        expect(report.maximumInnerPairFluxDeviationFraction01).toBeGreaterThan(0.15);
+      },
+    );
+
+    it(
+      'should keep a compact A+B radiative reference valid when the binary excursion is small compared with the HZ radius',
+      () => {
+        const hierarchy = {
+          innerOrbit: {
+            apoastronAu:
+              0.05,
+          },
+          outerOrbit:
+            null,
+        } as unknown as StellarOrbitHierarchy;
+
+        const report =
+          CircumbinaryHabitabilityAssessmentGenerator.generate(
+            generationKey,
+            binaryCompatibility(0.2),
+            physical(0.75),
+            star(),
+            companion(0.25),
+            hierarchy,
+            null,
+          );
+
+        expect(report.isRadiativeReferenceApplicable).toBe(true);
+        expect(report.radiativeReferenceRegime).toBe(
+          CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE,
+        );
+        expect(report.maximumInnerPairFluxDeviationFraction01).toBeLessThanOrEqual(0.15);
+      },
+    );
+
+    it(
+      'should invalidate the A+B HZ in a hierarchical triple when C contributes too much flux at its closest approach',
+      () => {
+        const hierarchy = {
+          innerOrbit: {
+            apoastronAu:
+              0.04,
+          },
+          outerOrbit: {
+            periastronAu:
+              1.9,
+          },
+        } as unknown as StellarOrbitHierarchy;
+
+        const tertiary = {
+          ...companion(0.5),
+          componentLabel:
+            StellarSystemComponentLabel.C,
+          physicalProperties: {
+            luminositySolar:
+              0.5,
+            initialMassSolar:
+              0.3,
+          },
+        } as unknown as StellarCompanion;
+
+        const report =
+          CircumbinaryHabitabilityAssessmentGenerator.generate(
+            generationKey,
+            tripleCompatibility(0.2, 1.5),
+            physical(0.75),
+            star(),
+            companion(0.25),
+            hierarchy,
+            tertiary,
+          );
+
+        expect(report.isRadiativeReferenceApplicable).toBe(false);
+        expect(report.radiativeReferenceRegime).toBe(
+          CircumbinaryRadiativeReferenceRegime.TERTIARY_IRRADIATION_SIGNIFICANT,
+        );
+        expect(report.hasStableHabitableZone).toBe(false);
+        expect(report.maximumTertiaryFluxContributionFraction01).toBeGreaterThan(0.1);
       },
     );
 

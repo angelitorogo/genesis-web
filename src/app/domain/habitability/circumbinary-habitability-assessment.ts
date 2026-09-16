@@ -29,6 +29,28 @@ export enum CircumbinaryPlanetaryStabilityRegime {
  * and B are both still on the main sequence. Other states retain the useful
  * reference-zone geometry but are explicitly marked REFERENCE_ONLY.
  */
+
+/**
+ * Whether the combined A+B point-source radiative approximation is valid for
+ * the generated stellar hierarchy.
+ *
+ * APPLICABLE_COMPACT_SOURCE means the inner binary is compact enough, and for
+ * TRIPLE systems component C is radiatively remote enough, that the frozen
+ * combined-luminosity reference interval can be interpreted as a circumbinary
+ * HZ. The other regimes retain the nominal reference edges for diagnostics but
+ * explicitly forbid treating them as a usable radiative HZ.
+ */
+export enum CircumbinaryRadiativeReferenceRegime {
+  APPLICABLE_COMPACT_SOURCE =
+    'APPLICABLE_COMPACT_SOURCE',
+
+  INNER_PAIR_NOT_COMPACT =
+    'INNER_PAIR_NOT_COMPACT',
+
+  TERTIARY_IRRADIATION_SIGNIFICANT =
+    'TERTIARY_IRRADIATION_SIGNIFICANT',
+}
+
 export enum CircumbinaryStellarEvolutionRegime {
   MAIN_SEQUENCE_PAIR =
     'MAIN_SEQUENCE_PAIR',
@@ -73,6 +95,16 @@ export class CircumbinaryHabitabilityAssessment {
 
     readonly stellarEvolutionRegime:
       CircumbinaryStellarEvolutionRegime,
+
+    readonly radiativeReferenceRegime:
+      CircumbinaryRadiativeReferenceRegime =
+        CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE,
+
+    readonly maximumInnerPairFluxDeviationFraction01:
+      number = 0,
+
+    readonly maximumTertiaryFluxContributionFraction01:
+      number = 0,
   ) {
     if (
       hostMultiplicity !==
@@ -270,6 +302,46 @@ export class CircumbinaryHabitabilityAssessment {
         `Unknown CircumbinaryStellarEvolutionRegime: ${String(stellarEvolutionRegime)}.`,
       );
     }
+
+    if (
+      !Object.values(
+        CircumbinaryRadiativeReferenceRegime,
+      ).includes(
+        radiativeReferenceRegime,
+      )
+    ) {
+      throw new RangeError(
+        `Unknown CircumbinaryRadiativeReferenceRegime: ${String(radiativeReferenceRegime)}.`,
+      );
+    }
+
+    assertNormalized(
+      maximumInnerPairFluxDeviationFraction01,
+      'maximumInnerPairFluxDeviationFraction01',
+    );
+
+    assertNormalized(
+      maximumTertiaryFluxContributionFraction01,
+      'maximumTertiaryFluxContributionFraction01',
+    );
+
+    if (
+      radiativeReferenceRegime !==
+        CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE &&
+      planetaryStabilityRegime !==
+        CircumbinaryPlanetaryStabilityRegime.NO_STABLE_HABITABLE_ZONE
+    ) {
+      throw new RangeError(
+        'An out-of-domain circumbinary radiative reference cannot expose a stable habitable interval.',
+      );
+    }
+  }
+
+  get isRadiativeReferenceApplicable():
+    boolean {
+
+    return this.radiativeReferenceRegime ===
+      CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE;
   }
 
   get hasStableHabitableZone():

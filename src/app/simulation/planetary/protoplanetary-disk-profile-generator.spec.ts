@@ -223,6 +223,67 @@ describe(
     );
 
     it(
+      'should scale the minimum inner disk cavity with host mass instead of imposing a universal 0.008 AU floor',
+      () => {
+        const lowMass =
+          ProtoplanetaryDiskProfileGenerator
+            .generateOrNull(
+              generationKey,
+              physicalFor(
+                0.1,
+                0.15,
+                0.02,
+              ),
+              stellarYouth(
+                StellarYouthStage.PRE_MAIN_SEQUENCE,
+                1,
+                0.45,
+                1.8,
+                1.5,
+              ),
+            )!;
+
+        const solarMass =
+          ProtoplanetaryDiskProfileGenerator
+            .generateOrNull(
+              generationKey,
+              physicalFor(
+                1,
+                1,
+                1,
+              ),
+              stellarYouth(
+                StellarYouthStage.PRE_MAIN_SEQUENCE,
+                1,
+                0.45,
+                1.8,
+                1.5,
+              ),
+            )!;
+
+        expect(
+          lowMass.innerRadiusAu,
+        ).toBeLessThan(0.008);
+
+        expect(
+          lowMass.innerRadiusAu,
+        ).toBeGreaterThanOrEqual(
+          0.0025,
+        );
+
+        expect(
+          lowMass.innerRadiusAu,
+        ).toBeLessThan(
+          solarMass.innerRadiusAu,
+        );
+
+        expect(
+          solarMass.innerRadiusAu,
+        ).toBeGreaterThan(0.008);
+      },
+    );
+
+    it(
       'should make lower-mass primordial disks survive longer than high-mass-host disks in V1',
       () => {
         const lowMass =

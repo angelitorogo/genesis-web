@@ -3,10 +3,6 @@ import {
 } from '../../../domain/discovery/discovery-state';
 
 import {
-  SystemOrbitalMotionEngine,
-} from '../../../simulation/orbital/system-orbital-motion-engine';
-
-import {
   type SystemSceneBodySnapshot,
   type SystemSceneSnapshot,
   SystemSceneSnapshotBuilder,
@@ -15,10 +11,13 @@ import {
 import {
   SystemSceneProjectionSpace,
   SystemSceneScaleProjectionMode,
-  systemSceneProjectAuVector,
-  systemSceneProjectAuVectorInSpace,
   systemSceneProjectedRadiusAu,
+  systemSceneProjectedRadiusAuInSpace,
 } from '../../system/system-scene-scale-projection';
+
+import {
+  projectSystemSceneMotionContributions,
+} from '../../system/system-scene-motion-projection';
 
 import {
   STELLAR_SYSTEM_LABORATORY_FAMILY_IDS,
@@ -54,7 +53,7 @@ describe(
             `SINGLE family ${familyId} must use the 24.5 adaptive scale`,
           ).toBe(
             SystemSceneScaleProjectionMode
-              .SINGLE_ADAPTIVE_LOG_V1,
+              .SINGLE_PRESENTATION_V3,
           );
 
           const star =
@@ -101,19 +100,82 @@ describe(
 
             expect(
               periapsisScene,
-              `SINGLE family ${familyId} planet ${planet.label} orbit must not intersect the visual stellar body`,
+              `SINGLE family ${familyId} planet ${planet.label} orbit centreline must remain outside the rendered stellar photosphere plus the planet body`,
             ).toBeGreaterThan(
               star.radiusScene +
-              planet.radiusScene +
-              0.18,
+              planet.radiusScene,
+            );
+
+            const stellarClearance =
+              snapshot.stellarOrbitClearance;
+
+            expect(
+              stellarClearance,
+              `SINGLE family ${familyId} must expose the V5 stellar/orbit clearance diagnostic`,
+            ).not.toBeNull();
+
+            expect(
+              stellarClearance?.clearanceMode,
+              `SINGLE family ${familyId} must satisfy the V5 renderer clearance without best-effort fallback`,
+            ).toBe(
+              'ENFORCED',
             );
 
             expect(
-              planet.radiusScene /
-              star.radiusScene,
-              `SINGLE family ${familyId} planet ${planet.label} must remain visually subordinate to the star`,
-            ).toBeLessThan(
-              0.3,
+              stellarClearance?.clearanceSatisfied,
+              `SINGLE family ${familyId} must keep the nearest planetary orbit outside the useful optical envelope`,
+            ).toBe(
+              true,
+            );
+
+            if (
+              stellarClearance
+                ?.nearestPlanetPeriapsisRadiusScene !==
+                  null &&
+              stellarClearance
+                ?.nearestPlanetPeriapsisRadiusScene !==
+                  undefined
+            ) {
+              expect(
+                stellarClearance
+                  .nearestPlanetPeriapsisRadiusScene,
+                `SINGLE family ${familyId} nearest orbit must remain outside the V5 optical host envelope`,
+              ).toBeGreaterThan(
+                stellarClearance
+                  .hostOpticalEnvelopeRadiusScene,
+              );
+
+              expect(
+                stellarClearance
+                  .actualOpticalClearanceScene,
+                `SINGLE family ${familyId} must honour the V5 adaptive optical clearance`,
+              ).toBeGreaterThanOrEqual(
+                stellarClearance
+                  .requestedMinimumClearanceScene ??
+                  0,
+              );
+            }
+
+            // V5 deliberately presents the stellar photosphere and the
+            // planet with different, non-authoritative visual scales. A
+            // close-in giant may therefore have a larger rendered radius
+            // than a strongly clearance-limited star: their size ratio is
+            // not a physical or a renderer contract. The useful optical
+            // halo must, however, stay clear of the entire planet body at
+            // periapsis, not just of its orbit centreline.
+            expect(
+              Number.isFinite(planet.radiusScene) &&
+                planet.radiusScene > 0,
+              `SINGLE family ${familyId} planet ${planet.label} must retain a finite, positive presentation radius`,
+            ).toBe(true);
+
+            expect(
+              periapsisScene - planet.radiusScene,
+              `SINGLE family ${familyId} planet ${planet.label} must keep its body outside the V5 useful optical halo at periapsis`,
+            ).toBeGreaterThan(
+              stellarClearance
+                ?.hostOpticalEnvelopeRadiusScene ??
+                Number.POSITIVE_INFINITY,
             );
           }
         }
@@ -148,9 +210,9 @@ describe(
               caseId ===
                 StellarSystemLaboratoryCaseId.TRIPLE
                 ? SystemSceneScaleProjectionMode
-                    .TRIPLE_HIERARCHICAL_V1
+                    .TRIPLE_PRESENTATION_V3
                 : SystemSceneScaleProjectionMode
-                    .BINARY_ADAPTIVE_LOG_V1,
+                    .BINARY_PRESENTATION_V3,
             );
 
             expect(
@@ -244,20 +306,20 @@ describe(
                     ),
                 )!;
 
-              if (
+              expect(
+                planetaryContribution.linearScenePerAu,
+                `${caseId} family ${familyId} must preserve the shared nonlinear V3 radial projection instead of a per-orbit linear override`,
+              ).toBeUndefined();
+
+              expect(
+                planetaryContribution.projectionSpace,
+                `${caseId} family ${familyId} must select the correct V3 projection space`,
+              ).toBe(
                 caseId ===
-                StellarSystemLaboratoryCaseId.BINARY
-              ) {
-                expect(
-                  planetaryContribution.linearScenePerAu,
-                  `BINARY family ${familyId} must preserve the already-validated V2 projection contract`,
-                ).toBeUndefined();
-              } else {
-                expect(
-                  planetaryContribution.linearScenePerAu,
-                  `TRIPLE family ${familyId} must use the V4 local deconfliction projection`,
-                ).toBeDefined();
-              }
+                  StellarSystemLaboratoryCaseId.TRIPLE
+                  ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+                  : undefined,
+              );
 
               expect(
                 planet.radiusScene /
@@ -289,7 +351,7 @@ describe(
             snapshot.scale.projectionMode,
           ).toBe(
             SystemSceneScaleProjectionMode
-              .TRIPLE_HIERARCHICAL_V1,
+              .TRIPLE_PRESENTATION_V3,
           );
 
           const primary =
@@ -385,7 +447,7 @@ describe(
     );
 
     it(
-      'should deconflict dense TRIPLE A-H planetary envelopes without changing their physical motions',
+      'should preserve dense TRIPLE A-H planetary radial ordering without per-orbit presentation distortion',
       () => {
         for (
           const familyId
@@ -408,8 +470,15 @@ describe(
                 orbit => {
                   expect(
                     orbit.linearScenePerAu,
-                    `TRIPLE family ${familyId} ${orbit.label} must use the V4 per-orbit local presentation scale`,
-                  ).toBeDefined();
+                    `TRIPLE family ${familyId} ${orbit.label} must not bypass the V3 shared local radial projection with a per-orbit linear override`,
+                  ).toBeUndefined();
+
+                  expect(
+                    orbit.projectionSpace,
+                    `TRIPLE family ${familyId} ${orbit.label} must remain in the V3 triple-local projection space`,
+                  ).toBe(
+                    SystemSceneProjectionSpace.TRIPLE_LOCAL,
+                  );
 
                   const motion =
                     snapshot.motions.find(
@@ -425,27 +494,30 @@ describe(
                         orbit.id,
                     )!;
 
-                  const scenePerAu =
-                    orbit.linearScenePerAu!;
-
                   return {
                     orbit,
                     body,
                     motion,
                     periapsisScene:
-                      motion.semiMajorAxisAu *
-                      (
-                        1 -
-                        motion.eccentricity
-                      ) *
-                      scenePerAu,
+                      systemSceneProjectedRadiusAuInSpace(
+                        motion.semiMajorAxisAu *
+                        (
+                          1 -
+                          motion.eccentricity
+                        ),
+                        snapshot.scale,
+                        SystemSceneProjectionSpace.TRIPLE_LOCAL,
+                      ),
                     apoapsisScene:
-                      motion.semiMajorAxisAu *
-                      (
-                        1 +
-                        motion.eccentricity
-                      ) *
-                      scenePerAu,
+                      systemSceneProjectedRadiusAuInSpace(
+                        motion.semiMajorAxisAu *
+                        (
+                          1 +
+                          motion.eccentricity
+                        ),
+                        snapshot.scale,
+                        SystemSceneProjectionSpace.TRIPLE_LOCAL,
+                      ),
                   };
                 },
               )
@@ -475,13 +547,41 @@ describe(
               ]!;
 
             expect(
-              current.orbit.semiMajorScene -
-                previous.orbit.semiMajorScene,
-              `TRIPLE family ${familyId} neighbouring ${previous.orbit.label}/${current.orbit.label} visual tracks must leave body clearance`,
-            ).toBeGreaterThanOrEqual(
-              previous.body.radiusScene +
-              current.body.radiusScene +
-              0.02,
+              current.orbit.semiMajorScene,
+              `TRIPLE family ${familyId} neighbouring ${previous.orbit.label}/${current.orbit.label} must preserve strict radial ordering under the shared V3 projection`,
+            ).toBeGreaterThan(
+              previous.orbit.semiMajorScene,
+            );
+
+            expect(
+              previous.orbit.semiMajorScene,
+              `TRIPLE family ${familyId} ${previous.orbit.label} must use the exact shared triple-local V3 projection`,
+            ).toBeCloseTo(
+              systemSceneProjectedRadiusAuInSpace(
+                previous.motion.semiMajorAxisAu,
+                snapshot.scale,
+                SystemSceneProjectionSpace.TRIPLE_LOCAL,
+              ),
+              10,
+            );
+
+            expect(
+              current.orbit.semiMajorScene,
+              `TRIPLE family ${familyId} ${current.orbit.label} must use the exact shared triple-local V3 projection`,
+            ).toBeCloseTo(
+              systemSceneProjectedRadiusAuInSpace(
+                current.motion.semiMajorAxisAu,
+                snapshot.scale,
+                SystemSceneProjectionSpace.TRIPLE_LOCAL,
+              ),
+              10,
+            );
+
+            expect(
+              current.motion.semiMajorAxisAu,
+              `TRIPLE family ${familyId} ${current.orbit.label} physical semimajor axis must remain unchanged and ordered`,
+            ).toBeGreaterThan(
+              previous.motion.semiMajorAxisAu,
             );
           }
         }
@@ -562,123 +662,17 @@ function scenePositionAt(
     number;
 } {
 
-  let globalXAu = 0;
-  let globalYAu = 0;
-  let globalZAu = 0;
-  let sceneX = 0;
-  let sceneY = 0;
-  let sceneZ = 0;
-
-  for (
-    const contribution
-    of body.motionContributions
-  ) {
-    const motion =
+  return projectSystemSceneMotionContributions(
+    body.motionContributions,
+    motionId =>
       snapshot.motions.find(
-        candidate =>
-          candidate.id ===
-          contribution.motionId,
-      )!;
-
-    const position =
-      SystemOrbitalMotionEngine
-        .positionAtSimulationDay(
-          motion,
-          simulationDay,
-        );
-
-    const linearScenePerAu =
-      contribution.linearScenePerAu ??
-      null;
-
-    if (
-      linearScenePerAu !==
-        null
-    ) {
-      sceneX +=
-        position.xAu *
-        contribution.scale *
-        linearScenePerAu;
-      sceneY +=
-        position.yAu *
-        contribution.scale *
-        linearScenePerAu;
-      sceneZ +=
-        position.zAu *
-        contribution.scale *
-        linearScenePerAu;
-      continue;
-    }
-
-    const space =
-      contribution.projectionSpace ??
-      SystemSceneProjectionSpace.GLOBAL;
-
-    if (
-      space ===
-      SystemSceneProjectionSpace.GLOBAL
-    ) {
-      globalXAu +=
-        position.xAu *
-        contribution.scale;
-      globalYAu +=
-        position.yAu *
-        contribution.scale;
-      globalZAu +=
-        position.zAu *
-        contribution.scale;
-      continue;
-    }
-
-    const projected =
-      systemSceneProjectAuVectorInSpace(
-        {
-          x:
-            position.xAu,
-          y:
-            position.yAu,
-          z:
-            position.zAu,
-        },
-        snapshot.scale,
-        space,
-      );
-
-    sceneX +=
-      projected.x *
-      contribution.scale;
-    sceneY +=
-      projected.y *
-      contribution.scale;
-    sceneZ +=
-      projected.z *
-      contribution.scale;
-  }
-
-  const global =
-    systemSceneProjectAuVector(
-      {
-        x:
-          globalXAu,
-        y:
-          globalYAu,
-        z:
-          globalZAu,
-      },
-      snapshot.scale,
-    );
-
-  return {
-    x:
-      sceneX +
-      global.x,
-    y:
-      sceneY +
-      global.y,
-    z:
-      sceneZ +
-      global.z,
-  };
+        motion =>
+          motion.id ===
+          motionId,
+      ),
+    simulationDay,
+    snapshot.scale,
+  );
 }
 
 function distance(

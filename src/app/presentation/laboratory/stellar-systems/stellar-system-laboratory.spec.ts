@@ -7,6 +7,10 @@ import {
 } from '@angular/router';
 
 import {
+  systemSceneMoonPresentationTimeScale,
+} from '../../system/system-scene-secondary-motion';
+
+import {
   StellarSystemLaboratoryPage,
 } from './stellar-system-laboratory';
 
@@ -339,13 +343,38 @@ describe(
           ),
         ).toBe(true);
 
-        expect(
-          moonLocalContributions.some(
-            contribution =>
-              contribution.presentationTimeScale! <
-              1,
-          ),
-        ).toBe(true);
+        for (
+          const moon
+          of snapshot.moons
+        ) {
+          const localContribution =
+            moon.motionContributions[
+              moon.motionContributions.length - 1
+            ]!;
+
+          const localMotion =
+            snapshot.motions.find(
+              motion =>
+                motion.id ===
+                localContribution.motionId,
+            );
+
+          expect(
+            localMotion,
+            `${moon.label} must retain its local physical moon motion`,
+          ).toBeDefined();
+
+          expect(
+            localContribution.presentationTimeScale,
+            `${moon.label} must use the point-24.6 cadence limiter for the current renderer playback rate`,
+          ).toBeCloseTo(
+            systemSceneMoonPresentationTimeScale(
+              localMotion!.periodDays,
+              snapshot.simulation.playbackDaysPerRealSecond,
+            ),
+            12,
+          );
+        }
 
         expect(
           snapshot.minorBodies.length,

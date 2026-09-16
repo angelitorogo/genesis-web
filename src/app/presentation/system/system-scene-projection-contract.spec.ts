@@ -116,6 +116,237 @@ describe(
     );
 
     it(
+      'should reject a V4 BINARY snapshot whose photospheres still overlap at inner-pair periapsis',
+      () => {
+
+        const base =
+          projectionSnapshot();
+
+        const multistellarPresentation =
+          Object.freeze({
+            version:
+              4 as const,
+            architecture:
+              'BINARY' as const,
+            innerPairMinimumCenterSeparationScene:
+              0.50,
+            innerPairPhotosphereBudgetScene:
+              0.29,
+            innerPairMinimumPhotosphereGapScene:
+              0,
+            tertiaryMinimumCenterSeparationToInnerStarScene:
+              null,
+            tertiaryMinimumPhotosphereGapScene:
+              null,
+            limited:
+              true,
+            stars:
+              Object.freeze([
+                Object.freeze({
+                  id: 'star-a',
+                  label: 'A',
+                  radiusScene: 0.31,
+                  opticalRadiusScene: 0.42,
+                  limitedByInnerPair: true,
+                  limitedByTertiaryClearance: false,
+                }),
+                Object.freeze({
+                  id: 'star-b',
+                  label: 'B',
+                  radiusScene: 0.25,
+                  opticalRadiusScene: 0.38,
+                  limitedByInnerPair: true,
+                  limitedByTertiaryClearance: false,
+                }),
+              ]),
+          });
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            multistellarPresentation,
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /photospheres must remain separated/,
+        );
+      },
+    );
+
+
+    it(
+      'should reject V5.1 metadata when the declared compressed P-type stellar core still exceeds its reserved scene envelope',
+      () => {
+
+        const base =
+          projectionSnapshot();
+
+        const multistellarPTypeClearance =
+          Object.freeze({
+            version:
+              5.1 as const,
+            architecture:
+              'BINARY' as const,
+            consistencyRegime:
+              'CONSISTENT' as const,
+            stellarOuterExcursionAu:
+              0.30,
+            circumbinaryStabilityInnerEdgeAu:
+              1.20,
+            nearestPlanetPeriapsisAu:
+              1.45,
+            physicalStabilityClearanceAu:
+              0.90,
+            physicalPlanetClearanceAu:
+              1.15,
+            visualClearanceBoundaryScene:
+              0.80,
+            uncompressedStellarCenterEnvelopeScene:
+              1.20,
+            targetStellarCenterEnvelopeScene:
+              0.288,
+            innerPairPresentationScale:
+              0.50,
+            presentationCompressed:
+              true,
+          });
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            multistellarPTypeClearance,
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /compressed stellar-centre envelope must remain inside/,
+        );
+      },
+    );
+
+    it(
+      'should reject V5.2 metadata when post-projection compaction does not satisfy the reserved stellar-core target',
+      () => {
+
+        const base =
+          projectionSnapshot();
+
+        const multistellarCoreCompaction =
+          Object.freeze({
+            version:
+              5.2 as const,
+            architecture:
+              'BINARY' as const,
+            postProjectionScale:
+              0.50,
+            uncompressedPrimaryCenterExcursionScene:
+              1.20,
+            uncompressedSecondaryCenterExcursionScene:
+              0.90,
+            uncompressedStellarCenterEnvelopeScene:
+              1.20,
+            compressedPrimaryCenterExcursionScene:
+              0.60,
+            compressedSecondaryCenterExcursionScene:
+              0.45,
+            compressedStellarCenterEnvelopeScene:
+              0.60,
+            targetStellarCenterEnvelopeScene:
+              0.40,
+            targetSatisfied:
+              false,
+            applied:
+              true,
+          });
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            multistellarCoreCompaction,
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /post-projection stellar core must satisfy/,
+        );
+      },
+    );
+
+    it(
+      'should reject a V5 snapshot whose useful optical halo still invades the mandatory nearest-planet clearance',
+      () => {
+
+        const base =
+          projectionSnapshot();
+
+        const stellarOrbitClearance =
+          Object.freeze({
+            version:
+              5 as const,
+            nearestPlanetPeriapsisRadiusScene:
+              0.50,
+            requestedMinimumClearanceScene:
+              0.08,
+            maximumOpticalEnvelopeRadiusScene:
+              0.42,
+            hostPhotosphereEnvelopeRadiusScene:
+              0.31,
+            hostOpticalEnvelopeRadiusScene:
+              0.46,
+            actualOpticalClearanceScene:
+              0.04,
+            clearanceSatisfied:
+              false,
+            clearanceMode:
+              'ENFORCED' as const,
+            geometricOverlapDetected:
+              false,
+            limited:
+              true,
+            stars:
+              Object.freeze([
+                Object.freeze({
+                  id: 'star-a',
+                  label: 'A',
+                  radiusScene: 0.20,
+                  opticalRadiusScene: 0.28,
+                  maxCenterExcursionScene: 0.18,
+                  limited: true,
+                }),
+              ]),
+          });
+
+        const snapshot =
+          Object.freeze({
+            ...base,
+            stellarOrbitClearance,
+          }) as SystemSceneSnapshot;
+
+        expect(
+          () =>
+            assertSystemSceneProjectionSnapshot(
+              snapshot,
+            ),
+        ).toThrowError(
+          /unresolved radial-envelope overlap must be explicit/,
+        );
+      },
+    );
+
+    it(
       'should reject a mutable root before Three.js can treat it as renderer state',
       () => {
 

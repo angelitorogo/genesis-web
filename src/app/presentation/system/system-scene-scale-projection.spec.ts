@@ -1,8 +1,11 @@
 import {
   buildLinearFitSystemScale,
   buildMultipleAdaptiveSystemScaleV1,
+  buildMultipleAdaptiveSystemScaleV3,
   buildSingleAdaptiveSystemScaleV1,
+  buildSingleAdaptiveSystemScaleV3,
   buildTripleHierarchicalSystemScaleV1,
+  buildTripleHierarchicalSystemScaleV3,
   singleSystemPlanetRadiusScene,
   singleSystemStarRadiusScene,
   SystemSceneProjectionSpace,
@@ -11,6 +14,7 @@ import {
   systemSceneProjectAuVectorInSpace,
   systemSceneProjectedOverlayRadiusAuInSpace,
   systemSceneProjectedRadiusAu,
+  systemSceneProjectedRadiusAuInSpace,
 } from './system-scene-scale-projection';
 
 describe(
@@ -380,6 +384,148 @@ describe(
             .local
             .targetOuterRadiusScene,
         );
+      },
+    );
+    it(
+      'should reserve substantial inner resolution for the 0.11-0.20 AU SINGLE HZ without changing radial order',
+      () => {
+        const scale =
+          buildSingleAdaptiveSystemScaleV3({
+            outerRadiusAu: 8,
+            targetOuterRadiusScene: 4.8,
+            innerPeriapsisAu: 0.42,
+            starRadiusScene: 0.34,
+            maxPlanetRadiusScene: 0.06,
+            habitableZoneInnerAu: 0.11,
+            habitableZoneOuterAu: 0.20,
+          });
+
+        const project =
+          (radiusAu: number) =>
+            systemSceneProjectedRadiusAu(
+              radiusAu,
+              scale,
+            );
+
+        const hzInner = project(0.11);
+        const hzOuter = project(0.20);
+
+        expect(scale.projectionMode).toBe(
+          SystemSceneScaleProjectionMode.SINGLE_PRESENTATION_V3,
+        );
+        expect(hzInner).toBeGreaterThan(0.85);
+        expect(hzOuter - hzInner).toBeGreaterThan(0.30);
+        expect(hzInner).toBeLessThan(hzOuter);
+        expect(hzOuter).toBeLessThan(project(0.42));
+        expect(project(0.42)).toBeLessThan(project(1.2));
+        expect(project(1.2)).toBeLessThan(project(8));
+      },
+    );
+
+    it(
+      'should also keep the reported 0.13-0.23 AU SINGLE HZ readable while fitting the complete system',
+      () => {
+        const scale =
+          buildSingleAdaptiveSystemScaleV3({
+            outerRadiusAu: 11,
+            targetOuterRadiusScene: 4.8,
+            innerPeriapsisAu: 0.52,
+            starRadiusScene: 0.38,
+            maxPlanetRadiusScene: 0.065,
+            habitableZoneInnerAu: 0.13,
+            habitableZoneOuterAu: 0.23,
+          });
+
+        const inner = systemSceneProjectedRadiusAu(0.13, scale);
+        const outer = systemSceneProjectedRadiusAu(0.23, scale);
+
+        expect(inner).toBeGreaterThan(0.85);
+        expect(outer - inner).toBeGreaterThan(0.30);
+        expect(systemSceneProjectedRadiusAu(11, scale)).toBeCloseTo(4.8, 12);
+      },
+    );
+
+    it(
+      'should use one shared V3 radial projection for BINARY HZ, periapsis, apoapsis and belt radii',
+      () => {
+        const scale =
+          buildMultipleAdaptiveSystemScaleV3({
+            architecture: 'BINARY',
+            outerRadiusAu: 9,
+            targetOuterRadiusScene: 4.8,
+            innerBinaryPeriapsisAu: 0.08,
+            primaryStarRadiusScene: 0.30,
+            secondaryStarRadiusScene: 0.25,
+            habitableZoneInnerAu: 0.13,
+            habitableZoneOuterAu: 0.23,
+          });
+
+        const project =
+          (radiusAu: number) =>
+            systemSceneProjectedRadiusAuInSpace(
+              radiusAu,
+              scale,
+              SystemSceneProjectionSpace.GLOBAL,
+            );
+
+        const physical = [0.13, 0.23, 0.31, 0.36, 0.42, 0.80, 1.25];
+        const projected = physical.map(project);
+
+        expect(scale.projectionMode).toBe(
+          SystemSceneScaleProjectionMode.BINARY_PRESENTATION_V3,
+        );
+        expect(project(0.23) - project(0.13)).toBeGreaterThan(0.30);
+        expect(
+          projected.every((value, index) =>
+            index === 0 || value > projected[index - 1]!,
+          ),
+        ).toBe(true);
+      },
+    );
+
+    it(
+      'should preserve the same local radial projection for TRIPLE HZ, planets and belts',
+      () => {
+        const scale =
+          buildTripleHierarchicalSystemScaleV3({
+            outerRadiusAu: 18,
+            targetOuterRadiusScene: 4.8,
+            innerBinaryPeriapsisAu: 0.07,
+            innerBinaryApoapsisAu: 0.15,
+            localPlanetOuterRadiusAu: 3.4,
+            outerRelativePeriapsisAu: 5.2,
+            outerRelativeApoapsisAu: 12.4,
+            primaryStarRadiusScene: 0.30,
+            secondaryStarRadiusScene: 0.25,
+            tertiaryStarRadiusScene: 0.27,
+            maxPlanetRadiusScene: 0.07,
+            innerPairOuterScale: -0.31,
+            tertiaryOuterScale: 0.69,
+            habitableZoneInnerAu: 0.11,
+            habitableZoneOuterAu: 0.20,
+          });
+
+        const projectLocal =
+          (radiusAu: number) =>
+            systemSceneProjectedRadiusAuInSpace(
+              radiusAu,
+              scale,
+              SystemSceneProjectionSpace.TRIPLE_LOCAL,
+            );
+
+        expect(scale.projectionMode).toBe(
+          SystemSceneScaleProjectionMode.TRIPLE_PRESENTATION_V3,
+        );
+        expect(projectLocal(0.20) - projectLocal(0.11)).toBeGreaterThan(0.30);
+
+        const physical = [0.11, 0.20, 0.28, 0.35, 0.44, 0.90, 1.40, 3.40];
+        const projected = physical.map(projectLocal);
+
+        expect(
+          projected.every((value, index) =>
+            index === 0 || value > projected[index - 1]!,
+          ),
+        ).toBe(true);
       },
     );
 

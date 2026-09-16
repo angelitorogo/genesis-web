@@ -107,9 +107,9 @@ import {
   adaptiveSystemPlanetRadiusScene,
   adaptiveSystemStarRadiusScene,
   buildLinearFitSystemScale,
-  buildMultipleAdaptiveSystemScaleV1,
-  buildSingleAdaptiveSystemScaleV1,
-  buildTripleHierarchicalSystemScaleV1,
+  buildMultipleAdaptiveSystemScaleV3,
+  buildSingleAdaptiveSystemScaleV3,
+  buildTripleHierarchicalSystemScaleV3,
   SystemSceneProjectionSpace,
   systemSceneProjectedOverlayRadiusAuInSpace,
   systemSceneProjectedRadiusAu,
@@ -123,8 +123,35 @@ export type {
 } from './system-scene-scale-projection';
 
 import {
-  buildSystemSceneHabitableZonePresentationV2,
+  buildSystemSceneHabitableZonePresentationV3,
 } from './system-scene-habitable-zone-presentation';
+
+import {
+  buildSystemSceneHostVisualEnvelopeV3,
+  type SystemSceneHostVisualEnvelopeV3,
+} from './system-scene-host-visual-envelope';
+
+import {
+  buildSystemSceneMultistellarPresentationV4,
+  systemSceneHabitableZoneVisualRegimeV4,
+  type SystemSceneHabitableZoneVisualRegimeV4,
+  type SystemSceneMultistellarPresentationV4,
+} from './system-scene-multistellar-presentation';
+
+import {
+  buildSystemSceneStellarOrbitClearanceV5,
+  type SystemSceneStellarOrbitClearanceV5,
+} from './system-scene-stellar-orbit-clearance';
+
+import {
+  buildSystemSceneMultistellarPTypeClearanceV51,
+  type SystemSceneMultistellarPTypeClearanceV51,
+} from './system-scene-multistellar-p-type-clearance';
+
+import {
+  buildSystemSceneMultistellarCoreCompactionV52,
+  type SystemSceneMultistellarCoreCompactionV52,
+} from './system-scene-multistellar-core-compaction';
 
 import {
   SystemSceneScientificDisclosureTier,
@@ -351,6 +378,10 @@ export interface SystemSceneOrbitSnapshot {
   readonly motionScale:
     number;
 
+  /** Renderer-only V5.2 multiplier applied after AU -> scene projection. */
+  readonly postProjectionScale?:
+    number;
+
   readonly anchorMotionContributions:
     readonly SystemSceneMotionContributionSnapshot[];
 
@@ -379,6 +410,10 @@ export interface SystemSceneBodySnapshot {
     string;
 
   readonly radiusScene:
+    number;
+
+  /** Star-only optical reference retained when the photosphere is envelope-limited. */
+  readonly opticalRadiusScene?:
     number;
 
   readonly position:
@@ -557,6 +592,16 @@ export interface SystemSceneHabitableZoneSnapshot {
     'CIRCUMSTELLAR' |
     'CIRCUMBINARY';
 
+  readonly radiativeReferenceApplicable?:
+    boolean;
+
+  readonly radiativeReferenceRegime?:
+    string | null;
+
+  /** V4 renderer semantics: radiative-only is not presented as a usable HZ. */
+  readonly visualRegime?:
+    SystemSceneHabitableZoneVisualRegimeV4;
+
   readonly radiativeInnerEdgeAu:
     number;
 
@@ -586,6 +631,19 @@ export interface SystemSceneHabitableZoneSnapshot {
 
   readonly dynamicalOverlapFraction01:
     number;
+
+  /** Point-16.5 P-type stability envelope, exposed only to the renderer. */
+  readonly circumbinaryStabilityInnerEdgeAu?:
+    number | null;
+
+  readonly circumbinaryStabilityOuterEdgeAu?:
+    number | null;
+
+  readonly circumbinaryStabilityInnerRadiusScene?:
+    number | null;
+
+  readonly circumbinaryStabilityOuterRadiusScene?:
+    number | null;
 
   readonly anchorMotionContributions:
     readonly SystemSceneMotionContributionSnapshot[];
@@ -731,6 +789,26 @@ export interface SystemSceneSnapshot {
 
   readonly habitableZone:
     SystemSceneHabitableZoneSnapshot | null;
+
+  /** Renderer-only V3 constraint for stellar photospheres around the HZ host. */
+  readonly hostVisualEnvelope?:
+    SystemSceneHostVisualEnvelopeV3 | null;
+
+  /** Renderer-only V4 close-pair/triple photosphere deconfliction. */
+  readonly multistellarPresentation?:
+    SystemSceneMultistellarPresentationV4 | null;
+
+  /** Renderer-only V5.1 P-type stellar-motion consistency diagnostic. */
+  readonly multistellarPTypeClearance?:
+    SystemSceneMultistellarPTypeClearanceV51 | null;
+
+  /** Renderer-only V5.2 post-projection A-B core compaction. */
+  readonly multistellarCoreCompaction?:
+    SystemSceneMultistellarCoreCompactionV52 | null;
+
+  /** Renderer-only V5 mandatory stellar/planetary-orbit optical clearance. */
+  readonly stellarOrbitClearance?:
+    SystemSceneStellarOrbitClearanceV5 | null;
 
   readonly orbitalRiskTargets:
     readonly SystemSceneOrbitalRiskTargetSnapshot[];
@@ -995,6 +1073,16 @@ export class SystemSceneSnapshotBuilder {
         projected.asteroidBelts,
       habitableZone:
         projected.habitableZone,
+      hostVisualEnvelope:
+        projected.hostVisualEnvelope,
+      multistellarPresentation:
+        projected.multistellarPresentation,
+      multistellarPTypeClearance:
+        projected.multistellarPTypeClearance,
+      multistellarCoreCompaction:
+        projected.multistellarCoreCompaction,
+      stellarOrbitClearance:
+        projected.stellarOrbitClearance,
       orbitalRiskTargets:
         projected.orbitalRiskTargets,
       layers:
@@ -2056,6 +2144,21 @@ function projectSceneGeometry(
   readonly habitableZone:
     SystemSceneHabitableZoneSnapshot | null;
 
+  readonly hostVisualEnvelope:
+    SystemSceneHostVisualEnvelopeV3;
+
+  readonly multistellarPresentation:
+    SystemSceneMultistellarPresentationV4 | null;
+
+  readonly multistellarPTypeClearance:
+    SystemSceneMultistellarPTypeClearanceV51 | null;
+
+  readonly multistellarCoreCompaction:
+    SystemSceneMultistellarCoreCompactionV52 | null;
+
+  readonly stellarOrbitClearance:
+    SystemSceneStellarOrbitClearanceV5 | null;
+
   readonly orbitalRiskTargets:
     readonly SystemSceneOrbitalRiskTargetSnapshot[];
 
@@ -2231,6 +2334,11 @@ function projectSceneGeometry(
       ),
     );
 
+  const starOpticalRadiusSceneById =
+    new Map(
+      starRadiusSceneById,
+    );
+
   const planetRadiusSceneByOrdinal =
     new Map(
       world.planets.map(
@@ -2306,7 +2414,7 @@ function projectSceneGeometry(
   const sceneScale =
     world.multiplicityName ===
       'SINGLE'
-      ? buildSingleAdaptiveSystemScaleV1({
+      ? buildSingleAdaptiveSystemScaleV3({
           outerRadiusAu,
           targetOuterRadiusScene:
             TARGET_OUTER_RADIUS_SCENE,
@@ -2315,6 +2423,10 @@ function projectSceneGeometry(
           starRadiusScene:
             primaryStarRadiusScene,
           maxPlanetRadiusScene,
+          habitableZoneInnerAu:
+            world.habitableZone.radiativeInnerEdgeAu,
+          habitableZoneOuterAu:
+            world.habitableZone.radiativeOuterEdgeAu,
         })
       : world.multiplicityName ===
           'TRIPLE' &&
@@ -2324,7 +2436,7 @@ function projectSceneGeometry(
           null &&
         tertiary !==
           null
-        ? buildTripleHierarchicalSystemScaleV1({
+        ? buildTripleHierarchicalSystemScaleV3({
             outerRadiusAu,
             targetOuterRadiusScene:
               TARGET_OUTER_RADIUS_SCENE,
@@ -2344,10 +2456,17 @@ function projectSceneGeometry(
             maxPlanetRadiusScene,
             innerPairOuterScale,
             tertiaryOuterScale,
+            habitableZoneInnerAu:
+              world.habitableZone.radiativeInnerEdgeAu,
+            habitableZoneOuterAu:
+              world.habitableZone.radiativeOuterEdgeAu,
           })
-        : buildMultipleAdaptiveSystemScaleV1({
+        : buildMultipleAdaptiveSystemScaleV3({
             architecture:
-              'BINARY',
+              world.multiplicityName ===
+                'TRIPLE'
+                ? 'TRIPLE'
+                : 'BINARY',
             outerRadiusAu,
             targetOuterRadiusScene:
               TARGET_OUTER_RADIUS_SCENE,
@@ -2357,7 +2476,410 @@ function projectSceneGeometry(
               null,
             primaryStarRadiusScene,
             secondaryStarRadiusScene,
+            habitableZoneInnerAu:
+              world.habitableZone.radiativeInnerEdgeAu,
+            habitableZoneOuterAu:
+              world.habitableZone.radiativeOuterEdgeAu,
           });
+
+  const pTypeProjectionSpace =
+    world.multiplicityName ===
+      'TRIPLE'
+      ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+      : SystemSceneProjectionSpace.GLOBAL;
+
+  const uncompressedPrimaryCenterExcursionScene =
+    innerOrbit === null ||
+    secondary === null
+      ? 0
+      : world.multiplicityName ===
+          'TRIPLE'
+        ? systemSceneProjectedRadiusAuInSpace(
+            innerOrbit.apoastronAu,
+            sceneScale,
+            pTypeProjectionSpace,
+          ) *
+          Math.abs(primaryInnerScale)
+        : systemSceneProjectedRadiusAuInSpace(
+            innerOrbit.apoastronAu *
+              Math.abs(primaryInnerScale),
+            sceneScale,
+            pTypeProjectionSpace,
+          );
+
+  const uncompressedSecondaryCenterExcursionScene =
+    innerOrbit === null ||
+    secondary === null
+      ? 0
+      : world.multiplicityName ===
+          'TRIPLE'
+        ? systemSceneProjectedRadiusAuInSpace(
+            innerOrbit.apoastronAu,
+            sceneScale,
+            pTypeProjectionSpace,
+          ) *
+          Math.abs(secondaryInnerScale)
+        : systemSceneProjectedRadiusAuInSpace(
+            innerOrbit.apoastronAu *
+              Math.abs(secondaryInnerScale),
+            sceneScale,
+            pTypeProjectionSpace,
+          );
+
+  const circumbinaryStabilityInnerEdgeAu =
+    world.stellarSystem
+      .circumbinaryPlanetCompatibility
+      ?.minimumStableSemiMajorAxisAu ??
+    null;
+
+  const projectedCircumbinaryStabilityInnerScene =
+    circumbinaryStabilityInnerEdgeAu ===
+      null
+      ? null
+      : systemSceneProjectedOverlayRadiusAuInSpace(
+          circumbinaryStabilityInnerEdgeAu,
+          sceneScale,
+          pTypeProjectionSpace,
+        );
+
+  const multistellarPTypeClearance =
+    world.multiplicityName ===
+        'SINGLE' ||
+      innerOrbit ===
+        null ||
+      secondary ===
+        null
+      ? null
+      : buildSystemSceneMultistellarPTypeClearanceV51({
+          architecture:
+            world.multiplicityName ===
+              'TRIPLE'
+              ? 'TRIPLE'
+              : 'BINARY',
+          stellarOuterExcursionAu:
+            innerStellarOuterBoundAu,
+          circumbinaryStabilityInnerEdgeAu,
+          nearestPlanetPeriapsisAu:
+            innerPlanetPeriapsisAu,
+          uncompressedStellarCenterEnvelopeScene:
+            Math.max(
+              uncompressedPrimaryCenterExcursionScene,
+              uncompressedSecondaryCenterExcursionScene,
+            ),
+          projectedStabilityInnerEdgeScene:
+            projectedCircumbinaryStabilityInnerScene,
+          projectedNearestPlanetPeriapsisScene:
+            innerPlanetPeriapsisAu ===
+              null
+              ? null
+              : systemSceneProjectedOverlayRadiusAuInSpace(
+                  innerPlanetPeriapsisAu,
+                  sceneScale,
+                  pTypeProjectionSpace,
+                ),
+        });
+
+  const multistellarCoreCompaction =
+    multistellarPTypeClearance ===
+        null ||
+      innerOrbit ===
+        null ||
+      secondary ===
+        null
+      ? null
+      : buildSystemSceneMultistellarCoreCompactionV52({
+          architecture:
+            world.multiplicityName ===
+              'TRIPLE'
+              ? 'TRIPLE'
+              : 'BINARY',
+          requestedPostProjectionScale:
+            multistellarPTypeClearance
+              .innerPairPresentationScale,
+          uncompressedPrimaryCenterExcursionScene,
+          uncompressedSecondaryCenterExcursionScene,
+          targetStellarCenterEnvelopeScene:
+            multistellarPTypeClearance
+              .targetStellarCenterEnvelopeScene,
+        });
+
+  const innerPairPostProjectionScale =
+    multistellarCoreCompaction
+      ?.postProjectionScale ??
+    1;
+
+  const habitableZoneProjectionSpace =
+    pTypeProjectionSpace;
+
+  const hostVisualConstraintInnerAu =
+    world.multiplicityName ===
+      'SINGLE'
+      ? world.habitableZone
+          .radiativeInnerEdgeAu
+      : world.habitableZone
+          .dynamicallyHabitableInnerEdgeAu;
+
+  const projectedHabitableZoneInnerScene =
+    hostVisualConstraintInnerAu ===
+      null
+      ? null
+      : systemSceneProjectedOverlayRadiusAuInSpace(
+          hostVisualConstraintInnerAu,
+          sceneScale,
+          habitableZoneProjectionSpace,
+        );
+
+  const projectedNearestPlanetPeriapsisScene =
+    innerPlanetPeriapsisAu ===
+      null
+      ? null
+      : systemSceneProjectedOverlayRadiusAuInSpace(
+          innerPlanetPeriapsisAu,
+          sceneScale,
+          world.multiplicityName ===
+            'TRIPLE'
+            ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+            : SystemSceneProjectionSpace.GLOBAL,
+        );
+
+  const starMaxCenterExcursionSceneById =
+    new Map(
+      world.stars.map(
+        star => {
+          const isPrimary =
+            star.label ===
+              'A';
+          const isSecondary =
+            star.label ===
+              'B';
+
+          let maxCenterExcursionScene =
+            0;
+
+          if (
+            innerOrbit !==
+              null &&
+            (
+              isPrimary ||
+              isSecondary
+            )
+          ) {
+            const barycentricScale =
+              isPrimary
+                ? Math.abs(
+                    primaryInnerScale,
+                  )
+                : Math.abs(
+                    secondaryInnerScale,
+                  );
+
+            maxCenterExcursionScene =
+              world.multiplicityName ===
+                'TRIPLE'
+                ? systemSceneProjectedRadiusAuInSpace(
+                    innerOrbit.apoastronAu,
+                    sceneScale,
+                    SystemSceneProjectionSpace.TRIPLE_LOCAL,
+                  ) *
+                  barycentricScale *
+                  innerPairPostProjectionScale
+                : systemSceneProjectedRadiusAuInSpace(
+                    innerOrbit.apoastronAu *
+                      barycentricScale,
+                    sceneScale,
+                    SystemSceneProjectionSpace.GLOBAL,
+                  ) *
+                  innerPairPostProjectionScale;
+          }
+
+          return [
+            star.id,
+            maxCenterExcursionScene,
+          ] as const;
+        },
+      ),
+    );
+
+  const hostVisualEnvelope =
+    buildSystemSceneHostVisualEnvelopeV3(
+      world.stars.map(
+        star => {
+          const isPrimary =
+            star.label ===
+              'A';
+          const isSecondary =
+            star.label ===
+              'B';
+          const participatesInHabitableZoneHost =
+            world.multiplicityName ===
+              'SINGLE'
+              ? isPrimary
+              : isPrimary ||
+                isSecondary;
+
+          return Object.freeze({
+            id:
+              star.id,
+            baseRadiusScene:
+              starOpticalRadiusSceneById.get(
+                star.id,
+              )!,
+            maxCenterExcursionScene:
+              starMaxCenterExcursionSceneById.get(
+                star.id,
+              ) ??
+              0,
+            participatesInHabitableZoneHost,
+          });
+        },
+      ),
+      projectedHabitableZoneInnerScene,
+      projectedNearestPlanetPeriapsisScene,
+    );
+
+  for (
+    const starLayout
+    of hostVisualEnvelope.stars
+  ) {
+    starRadiusSceneById.set(
+      starLayout.id,
+      starLayout.radiusScene,
+    );
+    starOpticalRadiusSceneById.set(
+      starLayout.id,
+      starLayout.opticalRadiusScene,
+    );
+  }
+
+  const multistellarPresentation =
+    world.multiplicityName ===
+      'SINGLE' ||
+    innerOrbit ===
+      null
+      ? null
+      : buildSystemSceneMultistellarPresentationV4(
+          world.multiplicityName ===
+            'TRIPLE'
+            ? 'TRIPLE'
+            : 'BINARY',
+          world.stars.map(
+            star =>
+              Object.freeze({
+                id:
+                  star.id,
+                label:
+                  star.label,
+                baseRadiusScene:
+                  starRadiusSceneById.get(
+                    star.id,
+                  )!,
+                opticalRadiusScene:
+                  starOpticalRadiusSceneById.get(
+                    star.id,
+                  )!,
+              }),
+          ),
+          projectedInnerPairMinimumCenterSeparationScene(
+            innerOrbit.periastronAu,
+            primaryInnerScale,
+            secondaryInnerScale,
+            innerPairPostProjectionScale,
+            sceneScale,
+            world.multiplicityName ===
+              'TRIPLE'
+              ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+              : SystemSceneProjectionSpace.GLOBAL,
+          ),
+          world.multiplicityName ===
+              'TRIPLE' &&
+            outerOrbit !==
+              null
+            ? projectedTertiaryMinimumCenterSeparationToInnerStarScene(
+                outerOrbit.periastronAu,
+                innerOrbit.apoastronAu,
+                innerPairOuterScale,
+                tertiaryOuterScale,
+                primaryInnerScale,
+                secondaryInnerScale,
+                innerPairPostProjectionScale,
+                sceneScale,
+              )
+            : null,
+        );
+
+  if (
+    multistellarPresentation !==
+      null
+  ) {
+    for (
+      const starLayout
+      of multistellarPresentation.stars
+    ) {
+      starRadiusSceneById.set(
+        starLayout.id,
+        starLayout.radiusScene,
+      );
+      starOpticalRadiusSceneById.set(
+        starLayout.id,
+        starLayout.opticalRadiusScene,
+      );
+    }
+  }
+
+  const stellarOrbitClearance =
+    buildSystemSceneStellarOrbitClearanceV5(
+      world.stars.map(
+        star => {
+          const isPrimary =
+            star.label ===
+              'A';
+          const isSecondary =
+            star.label ===
+              'B';
+
+          return Object.freeze({
+            id:
+              star.id,
+            label:
+              star.label,
+            baseRadiusScene:
+              starRadiusSceneById.get(
+                star.id,
+              )!,
+            baseOpticalRadiusScene:
+              starOpticalRadiusSceneById.get(
+                star.id,
+              )!,
+            maxCenterExcursionScene:
+              starMaxCenterExcursionSceneById.get(
+                star.id,
+              ) ??
+              0,
+            participatesInPlanetaryHostClearance:
+              world.multiplicityName ===
+                'SINGLE'
+                ? isPrimary
+                : isPrimary ||
+                  isSecondary,
+          });
+        },
+      ),
+      projectedNearestPlanetPeriapsisScene,
+    );
+
+  for (
+    const starLayout
+    of stellarOrbitClearance.stars
+  ) {
+    starRadiusSceneById.set(
+      starLayout.id,
+      starLayout.radiusScene,
+    );
+    starOpticalRadiusSceneById.set(
+      starLayout.id,
+      starLayout.opticalRadiusScene,
+    );
+  }
 
   const triplePlanetaryLayout =
     world.multiplicityName ===
@@ -2382,19 +2904,6 @@ function projectSceneGeometry(
         )
       : null;
 
-  const triplePlanetaryLayoutByOrdinal =
-    new Map(
-      triplePlanetaryLayout
-        ?.entries
-        .map(
-          entry =>
-            [
-              entry.ordinal,
-              entry,
-            ] as const,
-        ) ??
-      [],
-    );
 
   if (
     triplePlanetaryLayout !==
@@ -2538,6 +3047,8 @@ function projectSceneGeometry(
                 innerMotion.id,
               scale:
                 primaryInnerScale,
+              postProjectionScale:
+                innerPairPostProjectionScale,
               ...(
                 world.multiplicityName ===
                   'TRIPLE'
@@ -2559,6 +3070,7 @@ function projectSceneGeometry(
               'A',
               innerMotion,
               primaryInnerScale,
+              innerPairPostProjectionScale,
               innerPairAnchorContributions,
               sceneScale,
               world.multiplicityName ===
@@ -2581,6 +3093,8 @@ function projectSceneGeometry(
                 innerMotion.id,
               scale:
                 secondaryInnerScale,
+              postProjectionScale:
+                innerPairPostProjectionScale,
               ...(
                 world.multiplicityName ===
                   'TRIPLE'
@@ -2602,6 +3116,7 @@ function projectSceneGeometry(
               'B',
               innerMotion,
               secondaryInnerScale,
+              innerPairPostProjectionScale,
               innerPairAnchorContributions,
               sceneScale,
               world.multiplicityName ===
@@ -2638,6 +3153,7 @@ function projectSceneGeometry(
               'C',
               outerMotion,
               tertiaryOuterScale,
+              1,
               Object.freeze([]),
               sceneScale,
               SystemSceneProjectionSpace.TRIPLE_OUTER,
@@ -2663,6 +3179,10 @@ function projectSceneGeometry(
             star.colorHex,
           radiusScene:
             starRadiusSceneById.get(
+              star.id,
+            )!,
+          opticalRadiusScene:
+            starOpticalRadiusSceneById.get(
               star.id,
             )!,
           position:
@@ -2738,12 +3258,6 @@ function projectSceneGeometry(
         const orbitId =
           `orbit-planet-${planet.planetOrdinal}`;
 
-        const tripleLayoutEntry =
-          triplePlanetaryLayoutByOrdinal.get(
-            planet.planetOrdinal,
-          ) ??
-          null;
-
         const motion =
           Object.freeze({
             id:
@@ -2797,15 +3311,6 @@ function projectSceneGeometry(
                   ? {
                       projectionSpace:
                         SystemSceneProjectionSpace.TRIPLE_LOCAL,
-                      ...(
-                        tripleLayoutEntry ===
-                          null
-                          ? {}
-                          : {
-                              linearScenePerAu:
-                                tripleLayoutEntry.scenePerAu,
-                            }
-                      ),
                     }
                   : {}
               ),
@@ -2819,8 +3324,6 @@ function projectSceneGeometry(
             : SystemSceneProjectionSpace.GLOBAL;
 
         const semiMajorScene =
-          tripleLayoutEntry
-            ?.semiMajorScene ??
           systemSceneProjectedRadiusAuInSpace(
             planet.orbit.semiMajorAxisAu,
             sceneScale,
@@ -2841,33 +3344,22 @@ function projectSceneGeometry(
               0.26,
             semiMajorScene,
             semiMinorScene:
-              tripleLayoutEntry ===
-                null
-                ? systemSceneProjectedRadiusAuInSpace(
-                    planet.orbit.semiMajorAxisAu *
-                      Math.sqrt(
-                        1 -
-                          planet.orbit.eccentricity ** 2,
-                      ),
-                    sceneScale,
-                    planetProjectionSpace,
-                  )
-                : semiMajorScene *
+              systemSceneProjectedRadiusAuInSpace(
+                planet.orbit.semiMajorAxisAu *
                   Math.sqrt(
                     1 -
                       planet.orbit.eccentricity ** 2,
                   ),
+                sceneScale,
+                planetProjectionSpace,
+              ),
             focusOffsetScene:
-              tripleLayoutEntry ===
-                null
-                ? systemSceneProjectedRadiusAuInSpace(
-                    planet.orbit.semiMajorAxisAu *
-                      planet.orbit.eccentricity,
-                    sceneScale,
-                    planetProjectionSpace,
-                  )
-                : semiMajorScene *
+              systemSceneProjectedRadiusAuInSpace(
+                planet.orbit.semiMajorAxisAu *
                   planet.orbit.eccentricity,
+                sceneScale,
+                planetProjectionSpace,
+              ),
             rotationDegrees:
               motion.rotationDegrees,
             inclinationDegrees:
@@ -2885,15 +3377,6 @@ function projectSceneGeometry(
                 : {
                     projectionSpace:
                       planetProjectionSpace,
-                  }
-            ),
-            ...(
-              tripleLayoutEntry ===
-                null
-                ? {}
-                : {
-                    linearScenePerAu:
-                      tripleLayoutEntry.scenePerAu,
                   }
             ),
           }),
@@ -3016,9 +3499,8 @@ function projectSceneGeometry(
 
   const maximumVisibleStarRadiusScene =
     Math.max(
-      primaryStarRadiusScene,
-      secondaryStarRadiusScene,
-      tertiaryStarRadiusScene,
+      0,
+      ...starRadiusSceneById.values(),
     );
 
   const minorBodies =
@@ -3032,35 +3514,6 @@ function projectSceneGeometry(
       playbackDaysPerRealSecond,
     );
 
-  const habitableHostVisualExtentScene =
-    world.multiplicityName ===
-      'SINGLE' ||
-    innerOrbit ===
-      null ||
-    secondary ===
-      null
-      ? primaryStarRadiusScene
-      : Math.max(
-          primaryStarRadiusScene +
-            systemSceneProjectedRadiusAuInSpace(
-              innerOrbit.semiMajorAxisAu,
-              sceneScale,
-              world.multiplicityName === 'TRIPLE'
-                ? SystemSceneProjectionSpace.TRIPLE_LOCAL
-                : SystemSceneProjectionSpace.GLOBAL,
-            ) *
-            Math.abs(primaryInnerScale),
-          secondaryStarRadiusScene +
-            systemSceneProjectedRadiusAuInSpace(
-              innerOrbit.semiMajorAxisAu,
-              sceneScale,
-              world.multiplicityName === 'TRIPLE'
-                ? SystemSceneProjectionSpace.TRIPLE_LOCAL
-                : SystemSceneProjectionSpace.GLOBAL,
-            ) *
-            Math.abs(secondaryInnerScale),
-        );
-
   const asteroidBelts =
     projectAsteroidBeltLayers(
       world,
@@ -3073,7 +3526,6 @@ function projectSceneGeometry(
       world,
       innerPairAnchorContributions,
       sceneScale,
-      habitableHostVisualExtentScene,
     );
 
   const orbitalRiskTargets =
@@ -3097,6 +3549,11 @@ function projectSceneGeometry(
     minorBodies,
     asteroidBelts,
     habitableZone,
+    hostVisualEnvelope,
+    multistellarPresentation,
+    multistellarPTypeClearance,
+    multistellarCoreCompaction,
+    stellarOrbitClearance,
     orbitalRiskTargets,
     layers:
       Object.freeze({
@@ -3296,9 +3753,6 @@ function projectHabitableZoneLayer(
 
   sceneScale:
     SystemSceneScaleSnapshot,
-
-  habitableHostVisualExtentScene:
-    number,
 ): SystemSceneHabitableZoneSnapshot | null {
 
   const zone =
@@ -3322,6 +3776,49 @@ function projectHabitableZoneLayer(
   const dynamicOuter =
     zone.dynamicallyHabitableOuterEdgeAu;
 
+  const topology =
+    zone.orbitTopology ===
+      'CIRCUMSTELLAR'
+      ? 'CIRCUMSTELLAR' as const
+      : 'CIRCUMBINARY' as const;
+
+  const compatibility =
+    topology ===
+      'CIRCUMBINARY'
+      ? world.stellarSystem
+          .circumbinaryPlanetCompatibility
+      : null;
+
+  const stabilityInnerAu =
+    compatibility
+      ?.minimumStableSemiMajorAxisAu ??
+    null;
+
+  const stabilityOuterAu =
+    compatibility
+      ?.maximumStableSemiMajorAxisAu ??
+    null;
+
+  const stabilityInnerScene =
+    stabilityInnerAu ===
+      null
+      ? null
+      : systemSceneProjectedOverlayRadiusAuInSpace(
+          stabilityInnerAu,
+          sceneScale,
+          projectionSpace,
+        );
+
+  const stabilityOuterScene =
+    stabilityOuterAu ===
+      null
+      ? null
+      : systemSceneProjectedOverlayRadiusAuInSpace(
+          stabilityOuterAu,
+          sceneScale,
+          projectionSpace,
+        );
+
   const rawRadiativeInnerScene =
     systemSceneProjectedOverlayRadiusAuInSpace(
       zone.radiativeInnerEdgeAu,
@@ -3336,8 +3833,28 @@ function projectHabitableZoneLayer(
       projectionSpace,
     );
 
+  const rawDynamicInnerScene =
+    dynamicInner ===
+      null
+      ? null
+      : systemSceneProjectedOverlayRadiusAuInSpace(
+          dynamicInner,
+          sceneScale,
+          projectionSpace,
+        );
+
+  const rawDynamicOuterScene =
+    dynamicOuter ===
+      null
+      ? null
+      : systemSceneProjectedOverlayRadiusAuInSpace(
+          dynamicOuter,
+          sceneScale,
+          projectionSpace,
+        );
+
   const presentation =
-    buildSystemSceneHabitableZonePresentationV2({
+    buildSystemSceneHabitableZonePresentationV3({
       radiativeInnerAu:
         zone.radiativeInnerEdgeAu,
       radiativeOuterAu:
@@ -3346,18 +3863,30 @@ function projectHabitableZoneLayer(
         dynamicInner,
       dynamicallyHabitableOuterAu:
         dynamicOuter,
-      rawRadiativeInnerScene,
-      rawRadiativeOuterScene,
-      hostVisualExtentScene:
-        habitableHostVisualExtentScene,
+      projectedRadiativeInnerScene:
+        rawRadiativeInnerScene,
+      projectedRadiativeOuterScene:
+        rawRadiativeOuterScene,
+      projectedDynamicallyHabitableInnerScene:
+        rawDynamicInnerScene,
+      projectedDynamicallyHabitableOuterScene:
+        rawDynamicOuterScene,
     });
 
   return Object.freeze({
-    topology:
-      zone.orbitTopology ===
-        'CIRCUMSTELLAR'
-        ? 'CIRCUMSTELLAR' as const
-        : 'CIRCUMBINARY' as const,
+    topology,
+    visualRegime:
+      systemSceneHabitableZoneVisualRegimeV4(
+        topology,
+        dynamicInner,
+        dynamicOuter,
+        zone.dynamicalOverlapFraction01,
+        zone.radiativeReferenceApplicable,
+      ),
+    radiativeReferenceApplicable:
+      zone.radiativeReferenceApplicable,
+    radiativeReferenceRegime:
+      zone.radiativeReferenceRegime,
     radiativeInnerEdgeAu:
       zone.radiativeInnerEdgeAu,
     radiativeOuterEdgeAu:
@@ -3385,6 +3914,14 @@ function projectHabitableZoneLayer(
       ) > 1e-9,
     dynamicalOverlapFraction01:
       zone.dynamicalOverlapFraction01,
+    circumbinaryStabilityInnerEdgeAu:
+      stabilityInnerAu,
+    circumbinaryStabilityOuterEdgeAu:
+      stabilityOuterAu,
+    circumbinaryStabilityInnerRadiusScene:
+      stabilityInnerScene,
+    circumbinaryStabilityOuterRadiusScene:
+      stabilityOuterScene,
     anchorMotionContributions:
       Object.freeze([
         ...anchorMotionContributions,
@@ -4507,6 +5044,139 @@ function minorBodyRadiusScene(
   );
 }
 
+function projectedInnerPairMinimumCenterSeparationScene(
+  relativePeriastronAu:
+    number,
+
+  primaryScale:
+    number,
+
+  secondaryScale:
+    number,
+
+  postProjectionScale:
+    number,
+
+  sceneScale:
+    SystemSceneScaleSnapshot,
+
+  projectionSpace:
+    SystemSceneProjectionSpaceValue,
+): number {
+
+  const primaryFraction =
+    Math.abs(
+      primaryScale,
+    );
+  const secondaryFraction =
+    Math.abs(
+      secondaryScale,
+    );
+
+  if (
+    projectionSpace ===
+      SystemSceneProjectionSpace.GLOBAL
+  ) {
+    return Math.max(
+      1e-6,
+      (
+        systemSceneProjectedRadiusAu(
+          relativePeriastronAu *
+            primaryFraction,
+          sceneScale,
+        ) +
+        systemSceneProjectedRadiusAu(
+          relativePeriastronAu *
+            secondaryFraction,
+          sceneScale,
+        )
+      ) *
+        postProjectionScale,
+    );
+  }
+
+  return Math.max(
+    1e-6,
+    systemSceneProjectedRadiusAuInSpace(
+      relativePeriastronAu,
+      sceneScale,
+      projectionSpace,
+    ) *
+      (
+        primaryFraction +
+        secondaryFraction
+      ) *
+      postProjectionScale,
+  );
+}
+
+function projectedTertiaryMinimumCenterSeparationToInnerStarScene(
+  outerRelativePeriastronAu:
+    number,
+
+  innerRelativeApoastronAu:
+    number,
+
+  innerPairOuterScale:
+    number,
+
+  tertiaryOuterScale:
+    number,
+
+  primaryInnerScale:
+    number,
+
+  secondaryInnerScale:
+    number,
+
+  innerPairPostProjectionScale:
+    number,
+
+  sceneScale:
+    SystemSceneScaleSnapshot,
+): number {
+
+  const outerRelativeSeparationScene =
+    systemSceneProjectedRadiusAuInSpace(
+      outerRelativePeriastronAu,
+      sceneScale,
+      SystemSceneProjectionSpace.TRIPLE_OUTER,
+    ) *
+    (
+      Math.abs(
+        innerPairOuterScale,
+      ) +
+      Math.abs(
+        tertiaryOuterScale,
+      )
+    );
+
+  const innerRelativeApoastronScene =
+    systemSceneProjectedRadiusAuInSpace(
+      innerRelativeApoastronAu,
+      sceneScale,
+      SystemSceneProjectionSpace.TRIPLE_LOCAL,
+    );
+
+  const nearestInnerStarExcursionScene =
+    innerRelativeApoastronScene *
+    Math.max(
+      Math.abs(
+        primaryInnerScale,
+      ),
+      Math.abs(
+        secondaryInnerScale,
+      ),
+    ) *
+    innerPairPostProjectionScale;
+
+  return Math.max(
+    1e-6,
+    outerRelativeSeparationScene -
+      nearestInnerStarExcursionScene,
+  );
+}
+
 function stellarOrbitSnapshot(
   orbitId:
     string,
@@ -4518,6 +5188,9 @@ function stellarOrbitSnapshot(
     SystemSceneOrbitalMotionSnapshot,
 
   motionScale:
+    number,
+
+  postProjectionScale:
     number,
 
   anchorMotionContributions:
@@ -4537,19 +5210,22 @@ function stellarOrbitSnapshot(
     );
 
   const semiMajorScene =
-    projectionSpace ===
-      SystemSceneProjectionSpace.GLOBAL
-      ? systemSceneProjectedRadiusAu(
-          motion.semiMajorAxisAu *
-            absoluteScale,
-          sceneScale,
-        )
-      : systemSceneProjectedRadiusAuInSpace(
-          motion.semiMajorAxisAu,
-          sceneScale,
-          projectionSpace,
-        ) *
-        absoluteScale;
+    (
+      projectionSpace ===
+        SystemSceneProjectionSpace.GLOBAL
+        ? systemSceneProjectedRadiusAu(
+            motion.semiMajorAxisAu *
+              absoluteScale,
+            sceneScale,
+          )
+        : systemSceneProjectedRadiusAuInSpace(
+            motion.semiMajorAxisAu,
+            sceneScale,
+            projectionSpace,
+          ) *
+          absoluteScale
+    ) *
+    postProjectionScale;
 
   return Object.freeze({
     id:
@@ -4558,9 +5234,9 @@ function stellarOrbitSnapshot(
       'stellar' as const,
     label,
     colorHex:
-      '#FFFFFF',
+      '#D7A46A',
     opacity:
-      0.22,
+      0.34,
     semiMajorScene,
     semiMinorScene:
       semiMajorScene *
@@ -4578,6 +5254,7 @@ function stellarOrbitSnapshot(
     motionId:
       motion.id,
     motionScale,
+    postProjectionScale,
     anchorMotionContributions,
     ...(
       projectionSpace ===

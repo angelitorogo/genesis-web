@@ -514,6 +514,38 @@ function previewSceneResolver():
             },
           },
         ],
+        orbits: [
+          {
+            id: 'moon-orbit-1-1',
+            kind: 'moon',
+            label: 'Jotheria b I',
+            colorHex: '#7EAFC6',
+            opacity: 0.32,
+            semiMajorScene: 0.14,
+            semiMinorScene: 0.139,
+            focusOffsetScene: 0.006,
+            rotationDegrees: 12,
+            inclinationDegrees: 5.1,
+            motionId: 'moon-1-1-motion',
+            motionScale: 1,
+            anchorMotionContributions: [],
+          },
+        ],
+        motions: [
+          {
+            id: 'moon-1-1-motion',
+            semiMajorAxisAu: 0.00257,
+            eccentricity: 0.04,
+            periodDays: 27.3,
+            rotationDegrees: 12,
+            inclinationDegrees: 5.1,
+            epochMeanAnomalyDegrees: 31,
+          },
+        ],
+        simulation: {
+          epochSimulationDay: 0,
+          playbackDaysPerRealSecond: 1,
+        },
         minorBodies: [],
       } as unknown as SystemSceneSnapshot),
   });

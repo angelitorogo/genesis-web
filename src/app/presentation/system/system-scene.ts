@@ -79,6 +79,10 @@ import {
 } from './system-scene-projection-contract';
 
 import {
+  SystemSceneHabitableZoneVisualRegimeV4,
+} from './system-scene-multistellar-presentation';
+
+import {
   systemSceneBodyAxialTiltRadians,
   systemSceneBodyDisplaySpinRadians,
   systemSceneSphereSegments,
@@ -3016,64 +3020,142 @@ class ThreeSystemSceneRuntime
     group.name =
       'Habitable zone';
 
-    const radiativeGeometry =
-      new THREE.RingGeometry(
-        habitableZone.radiativeInnerRadiusScene,
-        habitableZone.radiativeOuterRadiusScene,
-        192,
+    const visualRegime =
+      habitableZone.visualRegime ??
+      (
+        habitableZone.topology ===
+          'CIRCUMSTELLAR'
+          ? SystemSceneHabitableZoneVisualRegimeV4
+              .CIRCUMSTELLAR
+          : habitableZone.dynamicallyHabitableInnerRadiusScene ===
+                null ||
+              habitableZone.dynamicallyHabitableOuterRadiusScene ===
+                null
+            ? SystemSceneHabitableZoneVisualRegimeV4
+                .CIRCUMBINARY_RADIATIVE_ONLY
+            : habitableZone.dynamicalOverlapFraction01 >=
+                1 -
+                  1e-9
+              ? SystemSceneHabitableZoneVisualRegimeV4
+                  .CIRCUMBINARY_FULLY_STABLE
+              : SystemSceneHabitableZoneVisualRegimeV4
+                  .CIRCUMBINARY_PARTIALLY_STABLE
       );
 
-    const radiativeMaterial =
-      new THREE.MeshBasicMaterial({
-        color:
-          0x4c9fb2,
-        transparent:
-          true,
-        opacity:
-          0.14,
-        side:
-          THREE.DoubleSide,
-        depthWrite:
-          false,
-        depthTest:
-          false,
-        blending:
-          THREE.AdditiveBlending,
-      });
+    const radiativeOnly =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMBINARY_RADIATIVE_ONLY;
 
-    const radiativeBand =
-      new THREE.Mesh(
+    const radiativeNotApplicable =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMBINARY_RADIATIVE_NOT_APPLICABLE;
+
+    const partiallyStable =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMBINARY_PARTIALLY_STABLE;
+
+    const circumstellar =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMSTELLAR;
+
+    if (
+      !radiativeNotApplicable
+    ) {
+      const radiativeGeometry =
+        new THREE.RingGeometry(
+          habitableZone.radiativeInnerRadiusScene,
+          habitableZone.radiativeOuterRadiusScene,
+          192,
+        );
+
+      const radiativeMaterial =
+        new THREE.MeshBasicMaterial({
+          color:
+            radiativeOnly
+              ? 0x7c98a2
+              : 0x4c9fb2,
+          transparent:
+            true,
+          opacity:
+            circumstellar
+              ? 0.14
+              : radiativeOnly
+                ? 0.024
+                : partiallyStable
+                  ? 0.052
+                  : 0.08,
+          side:
+            THREE.DoubleSide,
+          depthWrite:
+            false,
+          depthTest:
+            false,
+          blending:
+            radiativeOnly
+              ? THREE.NormalBlending
+              : THREE.AdditiveBlending,
+        });
+
+      const radiativeBand =
+        new THREE.Mesh(
+          radiativeGeometry,
+          radiativeMaterial,
+        );
+
+      radiativeBand.rotation.x =
+        -Math.PI / 2;
+      radiativeBand.renderOrder =
+        70;
+
+      group.add(
+        radiativeBand,
+      );
+
+      this.frameDisposables.push(
         radiativeGeometry,
         radiativeMaterial,
       );
 
-    radiativeBand.rotation.x =
-      -Math.PI / 2;
-    radiativeBand.renderOrder =
-      70;
+      const radiativeBoundaryOpacity =
+        circumstellar
+          ? 0.58
+          : radiativeOnly
+            ? 0.34
+            : partiallyStable
+              ? 0.42
+              : 0.48;
 
-    group.add(
-      radiativeBand,
-    );
+      this.addHabitableZoneBoundary(
+        group,
+        habitableZone.radiativeInnerRadiusScene,
+        radiativeOnly
+          ? 0x8ca8b1
+          : 0x5eb6c8,
+        radiativeBoundaryOpacity,
+        {
+          dashed:
+            radiativeOnly,
+        },
+      );
 
-    this.frameDisposables.push(
-      radiativeGeometry,
-      radiativeMaterial,
-    );
+      this.addHabitableZoneBoundary(
+        group,
+        habitableZone.radiativeOuterRadiusScene,
+        radiativeOnly
+          ? 0x8ca8b1
+          : 0x5eb6c8,
+        radiativeBoundaryOpacity,
+        {
+          dashed:
+            radiativeOnly,
+        },
+      );
 
-    this.addHabitableZoneBoundary(
-      group,
-      habitableZone.radiativeInnerRadiusScene,
-      0x5eb6c8,
-      0.58,
-    );
-
-    this.addHabitableZoneBoundary(
-      group,
-      habitableZone.radiativeOuterRadiusScene,
-      0x5eb6c8,
-      0.58,
-    );
+    }
 
     const dynamicInner =
       habitableZone.dynamicallyHabitableInnerRadiusScene;
@@ -3149,6 +3231,57 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    if (
+      !circumstellar &&
+      habitableZone.circumbinaryStabilityInnerRadiusScene !==
+        undefined &&
+      habitableZone.circumbinaryStabilityInnerRadiusScene !==
+        null
+    ) {
+      this.addHabitableZoneBoundary(
+        group,
+        habitableZone.circumbinaryStabilityInnerRadiusScene,
+        0xe3af64,
+        radiativeNotApplicable
+          ? 0.78
+          : 0.52,
+        {
+          dashed:
+            true,
+          dashSize:
+            0.075,
+          gapSize:
+            0.045,
+          renderOrder:
+            76,
+        },
+      );
+
+      if (
+        habitableZone.circumbinaryStabilityOuterRadiusScene !==
+          undefined &&
+        habitableZone.circumbinaryStabilityOuterRadiusScene !==
+          null
+      ) {
+        this.addHabitableZoneBoundary(
+          group,
+          habitableZone.circumbinaryStabilityOuterRadiusScene,
+          0xe3af64,
+          0.38,
+          {
+            dashed:
+              true,
+            dashSize:
+              0.06,
+            gapSize:
+              0.055,
+            renderOrder:
+              75,
+          },
+        );
+      }
+    }
+
     this.habitableZoneGroup =
       group;
     this.habitableZoneSnapshot =
@@ -3175,6 +3308,21 @@ class ThreeSystemSceneRuntime
 
     opacity:
       number,
+
+    options?:
+      Readonly<{
+        dashed?:
+          boolean;
+
+        dashSize?:
+          number;
+
+        gapSize?:
+          number;
+
+        renderOrder?:
+          number;
+      }>,
   ): void {
 
     const points =
@@ -3209,19 +3357,42 @@ class ThreeSystemSceneRuntime
           points,
         );
 
-    const material =
-      new THREE.LineBasicMaterial({
-        color,
-        transparent:
-          true,
-        opacity,
-        depthWrite:
-          false,
-        depthTest:
-          false,
-        blending:
-          THREE.AdditiveBlending,
-      });
+    const material:
+      THREE.LineBasicMaterial |
+      THREE.LineDashedMaterial =
+      options
+        ?.dashed ===
+        true
+        ? new THREE.LineDashedMaterial({
+            color,
+            transparent:
+              true,
+            opacity,
+            dashSize:
+              options.dashSize ??
+              0.052,
+            gapSize:
+              options.gapSize ??
+              0.042,
+            depthWrite:
+              false,
+            depthTest:
+              false,
+            blending:
+              THREE.AdditiveBlending,
+          })
+        : new THREE.LineBasicMaterial({
+            color,
+            transparent:
+              true,
+            opacity,
+            depthWrite:
+              false,
+            depthTest:
+              false,
+            blending:
+              THREE.AdditiveBlending,
+          });
 
     const line =
       new THREE.LineLoop(
@@ -3229,7 +3400,16 @@ class ThreeSystemSceneRuntime
         material,
       );
 
+    if (
+      material instanceof
+      THREE.LineDashedMaterial
+    ) {
+      line.computeLineDistances();
+    }
+
     line.renderOrder =
+      options
+        ?.renderOrder ??
       74;
 
     group.add(
@@ -3664,15 +3844,31 @@ class ThreeSystemSceneRuntime
       ),
     );
 
-    const material =
-      new THREE.LineBasicMaterial({
-        color:
-          orbit.colorHex,
-        transparent:
-          true,
-        opacity:
-          orbit.opacity,
-      });
+    const material:
+      THREE.LineBasicMaterial |
+      THREE.LineDashedMaterial =
+      orbit.kind ===
+        'stellar'
+        ? new THREE.LineDashedMaterial({
+            color:
+              orbit.colorHex,
+            transparent:
+              true,
+            opacity:
+              orbit.opacity,
+            dashSize:
+              0.055,
+            gapSize:
+              0.035,
+          })
+        : new THREE.LineBasicMaterial({
+            color:
+              orbit.colorHex,
+            transparent:
+              true,
+            opacity:
+              orbit.opacity,
+          });
 
     this.frameDisposables.push(
       geometry,
@@ -3762,6 +3958,10 @@ class ThreeSystemSceneRuntime
       orbit.projectionSpace ??
       SystemSceneProjectionSpace.GLOBAL;
 
+    const orbitPostProjectionScale =
+      orbit.postProjectionScale ??
+      1;
+
     for (
       let index = 0;
       index <
@@ -3800,15 +4000,18 @@ class ThreeSystemSceneRuntime
           xScene =
             sample.x *
             orbit.motionScale *
-            linearScenePerAu;
+            linearScenePerAu *
+            orbitPostProjectionScale;
           yScene =
             sample.y *
             orbit.motionScale *
-            linearScenePerAu;
+            linearScenePerAu *
+            orbitPostProjectionScale;
           zScene =
             sample.z *
             orbit.motionScale *
-            linearScenePerAu;
+            linearScenePerAu *
+            orbitPostProjectionScale;
         } else {
           const rawSample =
             projectionSpace ===
@@ -3840,11 +4043,15 @@ class ThreeSystemSceneRuntime
               projectionSpace,
             );
 
-          const postProjectionScale =
+          const physicalScaleAfterProjection =
             projectionSpace ===
               SystemSceneProjectionSpace.GLOBAL
               ? 1
               : orbit.motionScale;
+
+          const postProjectionScale =
+            physicalScaleAfterProjection *
+            orbitPostProjectionScale;
 
           xScene =
             projected.x *
@@ -3903,6 +4110,13 @@ class ThreeSystemSceneRuntime
     positionAttribute.needsUpdate =
       true;
     line.geometry.computeBoundingSphere();
+
+    if (
+      line.material instanceof
+      THREE.LineDashedMaterial
+    ) {
+      line.computeLineDistances();
+    }
 
     const anchorPosition =
       this.positionFromContributions(
@@ -3980,6 +4194,10 @@ class ThreeSystemSceneRuntime
         star,
       );
 
+    const opticalRadiusScene =
+      star.opticalRadiusScene ??
+      star.radiusScene;
+
     const coronaMaterial =
       stellarSpriteMaterial(
         this.starHaloTexture,
@@ -3993,7 +4211,7 @@ class ThreeSystemSceneRuntime
       );
 
     const coronaDiameter =
-      star.radiusScene *
+      opticalRadiusScene *
       optics.coronaDiameterScale;
 
     corona.scale.set(
@@ -4017,7 +4235,7 @@ class ThreeSystemSceneRuntime
       );
 
     const bloomDiameter =
-      star.radiusScene *
+      opticalRadiusScene *
       optics.bloomDiameterScale;
 
     bloom.scale.set(
@@ -4041,7 +4259,7 @@ class ThreeSystemSceneRuntime
       );
 
     const aureoleDiameter =
-      star.radiusScene *
+      opticalRadiusScene *
       optics.aureoleDiameterScale;
 
     aureole.scale.set(
@@ -4068,9 +4286,9 @@ class ThreeSystemSceneRuntime
       );
 
     glare.scale.set(
-      star.radiusScene *
+      opticalRadiusScene *
         optics.glareDiameterScale,
-      star.radiusScene *
+      opticalRadiusScene *
         optics.glareDiameterScale,
       1,
     );
@@ -7004,10 +7222,14 @@ function stellarOpticalProfile(
         510,
     );
 
+  const opticalRadiusScene =
+    star.opticalRadiusScene ??
+    star.radiusScene;
+
   const sizeEnergy =
     clamp01(
       (
-        star.radiusScene -
+        opticalRadiusScene -
         0.16
       ) /
       (

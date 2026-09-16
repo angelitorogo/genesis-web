@@ -74,6 +74,15 @@ const V1_MAX_CANDIDATE_SOLID_MASS_EARTH =
 const V1_MIN_RADIAL_SPACING_RATIO =
   1.16;
 
+const V1_SITE_OCCURRENCE_WEIGHT_FLOOR =
+  0.20;
+
+const V1_SITE_OCCURRENCE_SOLID_WEIGHT_EXPONENT =
+  0.45;
+
+const V1_CANDIDATE_MASS_WEIGHT_EXPONENT =
+  0.58;
+
 interface V1FormationSite {
   readonly index:
     number;
@@ -110,6 +119,11 @@ interface V1FormationSite {
  * into distinct solid candidates. Candidate sites are weighted by the point-
  * 17.2 surface-density envelope, point-17.3 condensable-solid availability,
  * dust depletion inside gaps and the already-frozen sector formation profile.
+ * Site OCCURRENCE deliberately tempers annulus-mass weighting so a log-spaced
+ * inner disk can host smaller embryos instead of being statistically erased by
+ * the much larger solid reservoir at large radii. Candidate MASS remains
+ * outer-weighted, but with the same tempered radial-drift proxy. No habitable-
+ * zone geometry is consulted here.
  *
  * The generator intentionally creates no migration, eccentricity, inclination,
  * resonances, mergers or collision history. Those transformations belong to
@@ -368,12 +382,31 @@ export class ProtoplanetCandidatePopulationGenerator {
       );
     }
 
+    const maximumAvailableSolidWeight =
+      Math.max(
+        ...sites.map(
+          site =>
+            site.availableSolidWeight,
+        ),
+        0,
+      );
+
     const candidateMassWeights =
       selectedSites.map(
-        site =>
-          Math.max(
+        site => {
+          const normalizedAvailableSolidWeight01 =
+            maximumAvailableSolidWeight <=
+              0
+              ? 0
+              : clamp01(
+                  site.availableSolidWeight /
+                    maximumAvailableSolidWeight,
+                );
+
+          return Math.max(
             1e-12,
-            site.availableSolidWeight *
+            normalizedAvailableSolidWeight01 **
+              V1_CANDIDATE_MASS_WEIGHT_EXPONENT *
               (
                 0.60 +
                 0.80 *
@@ -382,7 +415,8 @@ export class ProtoplanetCandidatePopulationGenerator {
                     `candidate-mass-weight:${site.index}`,
                   )
               ),
-          ),
+          );
+        },
       );
 
     const totalCandidateMassWeight =
@@ -718,6 +752,15 @@ function selectSeparatedSitesV1(
     number,
 ): readonly V1FormationSite[] {
 
+  const maximumSelectionWeight =
+    Math.max(
+      ...sites.map(
+        site =>
+          site.selectionWeight,
+      ),
+      0,
+    );
+
   const ranked =
     sites
       .filter(
@@ -736,13 +779,31 @@ function selectSeparatedSitesV1(
               ),
             );
 
+          const normalizedSelectionWeight01 =
+            maximumSelectionWeight <=
+              0
+              ? 0
+              : clamp01(
+                  site.selectionWeight /
+                    maximumSelectionWeight,
+                );
+
+          const occurrenceWeight =
+            V1_SITE_OCCURRENCE_WEIGHT_FLOOR +
+            (
+              1 -
+              V1_SITE_OCCURRENCE_WEIGHT_FLOOR
+            ) *
+              normalizedSelectionWeight01 **
+                V1_SITE_OCCURRENCE_SOLID_WEIGHT_EXPONENT;
+
           return {
             site,
             priority:
               -Math.log(
                 unit,
               ) /
-              site.selectionWeight,
+              occurrenceWeight,
           };
         },
       )

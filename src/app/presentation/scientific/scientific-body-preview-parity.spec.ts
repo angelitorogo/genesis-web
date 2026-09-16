@@ -65,6 +65,18 @@ describe(
 
         const source =
           scene.planets[0];
+
+        if (
+          source.kind !==
+            'planet' ||
+          source.surfaceStyle ===
+            'emissive'
+        ) {
+          throw new Error(
+            'ScientificBodyPreview parity fixture must expose a non-emissive planet source.',
+          );
+        }
+
         const identity =
           `${scene.universeSeed}|v${scene.generatorVersionCode}|${scene.proceduralIdentity}`;
 

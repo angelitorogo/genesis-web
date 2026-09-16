@@ -14,6 +14,15 @@ export const SystemSceneScaleProjectionMode =
 
     TRIPLE_HIERARCHICAL_V1:
       'TRIPLE_HIERARCHICAL_V1',
+
+    SINGLE_PRESENTATION_V3:
+      'SINGLE_PRESENTATION_V3',
+
+    BINARY_PRESENTATION_V3:
+      'BINARY_PRESENTATION_V3',
+
+    TRIPLE_PRESENTATION_V3:
+      'TRIPLE_PRESENTATION_V3',
   } as const);
 
 export type SystemSceneScaleProjectionMode =
@@ -53,6 +62,10 @@ export interface SystemSceneRadialScaleSnapshot {
 
   readonly logarithmicStrength:
     number;
+
+  /** Optional V3 concave projection inside innerReferenceAu. */
+  readonly innerLogarithmicStrength?:
+    number;
 }
 
 export interface SystemSceneTripleHierarchyScaleSnapshot {
@@ -88,6 +101,10 @@ export interface SystemSceneScaleSnapshot {
     number | null;
 
   readonly logarithmicStrength?:
+    number;
+
+  /** Optional V3 concave projection inside innerReferenceAu. */
+  readonly innerLogarithmicStrength?:
     number;
 
   readonly tripleHierarchy?:
@@ -143,6 +160,22 @@ export interface MultipleAdaptiveSystemScaleInput {
     number;
 }
 
+export interface SystemScenePresentationV3HabitableFocusInput {
+  readonly habitableZoneInnerAu:
+    number | null;
+
+  readonly habitableZoneOuterAu:
+    number | null;
+}
+
+export interface SingleAdaptiveSystemScaleV3Input
+  extends SingleAdaptiveSystemScaleInput,
+    SystemScenePresentationV3HabitableFocusInput {}
+
+export interface MultipleAdaptiveSystemScaleV3Input
+  extends MultipleAdaptiveSystemScaleInput,
+    SystemScenePresentationV3HabitableFocusInput {}
+
 export interface TripleHierarchicalSystemScaleInput {
   readonly outerRadiusAu:
     number;
@@ -184,6 +217,10 @@ export interface TripleHierarchicalSystemScaleInput {
     number;
 }
 
+export interface TripleHierarchicalSystemScaleV3Input
+  extends TripleHierarchicalSystemScaleInput,
+    SystemScenePresentationV3HabitableFocusInput {}
+
 const SINGLE_V1_LOGARITHMIC_STRENGTH =
   8;
 
@@ -216,6 +253,369 @@ const TRIPLE_HIERARCHICAL_LOCAL_STELLAR_TARGET_SCENE =
 
 const TRIPLE_HIERARCHICAL_OUTER_CLEARANCE_SCENE =
   0.48;
+
+const PRESENTATION_V3_INNER_LOGARITHMIC_STRENGTH =
+  3.2;
+
+const PRESENTATION_V3_OUTER_LOGARITHMIC_STRENGTH =
+  6;
+
+const PRESENTATION_V3_MIN_FOCUS_SCENE =
+  1.34;
+
+const PRESENTATION_V3_MAX_FOCUS_SCENE =
+  2.08;
+
+const PRESENTATION_V3_HZ_OUTER_MARGIN_FACTOR =
+  1.12;
+
+/**
+ * Phase-26 renderer-only presentation V3.
+ *
+ * A scientifically meaningful inner band (normally the radiative HZ) becomes
+ * the first projection reference. The projection remains strictly monotonic
+ * and shared by bodies, orbit samples, overlays and belts, but the inner
+ * interval is now concave instead of linear so compact systems receive more
+ * screen-space resolution without moving any layer independently.
+ */
+export function buildSingleAdaptiveSystemScaleV3(
+  input:
+    SingleAdaptiveSystemScaleV3Input,
+): SystemSceneScaleSnapshot {
+
+  const outerRadiusAu =
+    presentationV3OuterRadiusAu(
+      input.outerRadiusAu,
+      input.habitableZoneOuterAu,
+    );
+
+  const targetOuterRadiusScene =
+    positiveFiniteOr(
+      input.targetOuterRadiusScene,
+      4.8,
+    );
+
+  const focusAu =
+    presentationV3FocusAu(
+      input.habitableZoneOuterAu,
+      input.innerPeriapsisAu,
+      outerRadiusAu,
+    );
+
+  const bodyClearanceScene =
+    Math.max(
+      input.starRadiusScene *
+        1.8,
+      input.starRadiusScene +
+        input.maxPlanetRadiusScene +
+        0.30,
+    );
+
+  const focusScene =
+    focusAu ===
+      null
+      ? null
+      : presentationV3FocusScene(
+          focusAu,
+          outerRadiusAu,
+          targetOuterRadiusScene,
+          bodyClearanceScene,
+        );
+
+  return Object.freeze({
+    outerRadiusAu,
+    orbitScaleScenePerAu:
+      targetOuterRadiusScene /
+      outerRadiusAu,
+    targetOuterRadiusScene,
+    projectionMode:
+      SystemSceneScaleProjectionMode
+        .SINGLE_PRESENTATION_V3,
+    innerReferenceAu:
+      focusAu,
+    innerReferenceScene:
+      focusScene,
+    logarithmicStrength:
+      PRESENTATION_V3_OUTER_LOGARITHMIC_STRENGTH,
+    innerLogarithmicStrength:
+      PRESENTATION_V3_INNER_LOGARITHMIC_STRENGTH,
+  });
+}
+
+export function buildMultipleAdaptiveSystemScaleV3(
+  input:
+    MultipleAdaptiveSystemScaleV3Input,
+): SystemSceneScaleSnapshot {
+
+  const outerRadiusAu =
+    presentationV3OuterRadiusAu(
+      input.outerRadiusAu,
+      input.habitableZoneOuterAu,
+    );
+
+  const targetOuterRadiusScene =
+    positiveFiniteOr(
+      input.targetOuterRadiusScene,
+      4.8,
+    );
+
+  const focusAu =
+    presentationV3FocusAu(
+      input.habitableZoneOuterAu,
+      input.innerBinaryPeriapsisAu,
+      outerRadiusAu,
+    );
+
+  const pairClearanceScene =
+    input.primaryStarRadiusScene +
+    input.secondaryStarRadiusScene +
+    0.24;
+
+  const focusScene =
+    focusAu ===
+      null
+      ? null
+      : presentationV3FocusScene(
+          focusAu,
+          outerRadiusAu,
+          targetOuterRadiusScene,
+          pairClearanceScene,
+        );
+
+  return Object.freeze({
+    outerRadiusAu,
+    orbitScaleScenePerAu:
+      targetOuterRadiusScene /
+      outerRadiusAu,
+    targetOuterRadiusScene,
+    projectionMode:
+      input.architecture ===
+        'TRIPLE'
+        ? SystemSceneScaleProjectionMode
+            .TRIPLE_PRESENTATION_V3
+        : SystemSceneScaleProjectionMode
+            .BINARY_PRESENTATION_V3,
+    innerReferenceAu:
+      focusAu,
+    innerReferenceScene:
+      focusScene,
+    logarithmicStrength:
+      PRESENTATION_V3_OUTER_LOGARITHMIC_STRENGTH,
+    innerLogarithmicStrength:
+      PRESENTATION_V3_INNER_LOGARITHMIC_STRENGTH,
+  });
+}
+
+export function buildTripleHierarchicalSystemScaleV3(
+  input:
+    TripleHierarchicalSystemScaleV3Input,
+): SystemSceneScaleSnapshot {
+
+  const targetOuterRadiusScene =
+    positiveFiniteOr(
+      input.targetOuterRadiusScene,
+      4.8,
+    );
+
+  const pairClearanceScene =
+    Math.max(
+      input.primaryStarRadiusScene +
+        input.secondaryStarRadiusScene +
+        0.24,
+      0.68,
+    );
+
+  const localOuterRadiusAu =
+    presentationV3OuterRadiusAu(
+      Math.max(
+        input.innerBinaryApoapsisAu,
+        input.localPlanetOuterRadiusAu,
+      ),
+      input.habitableZoneOuterAu,
+    );
+
+  const localFocusAu =
+    presentationV3FocusAu(
+      input.habitableZoneOuterAu,
+      input.innerBinaryPeriapsisAu,
+      localOuterRadiusAu,
+    ) ??
+    positiveFiniteOr(
+      input.innerBinaryPeriapsisAu,
+      localOuterRadiusAu *
+        0.2,
+    );
+
+  const localFocusScene =
+    presentationV3FocusScene(
+      localFocusAu,
+      localOuterRadiusAu,
+      targetOuterRadiusScene,
+      pairClearanceScene,
+    );
+
+  const hasPlanets =
+    input.localPlanetOuterRadiusAu >
+      Number.EPSILON;
+
+  const localTargetRadiusScene =
+    clamp(
+      Math.max(
+        localFocusScene *
+          1.46,
+        hasPlanets
+          ? 2.34
+          : 1.72,
+      ),
+      Math.min(
+        1.72,
+        targetOuterRadiusScene *
+          0.45,
+      ),
+      Math.min(
+        3.08,
+        targetOuterRadiusScene *
+          0.68,
+      ),
+    );
+
+  const localScale =
+    Object.freeze({
+      outerRadiusAu:
+        localOuterRadiusAu,
+      targetOuterRadiusScene:
+        localTargetRadiusScene,
+      innerReferenceAu:
+        localFocusAu,
+      innerReferenceScene:
+        Math.min(
+          localFocusScene,
+          localTargetRadiusScene *
+            0.82,
+        ),
+      logarithmicStrength:
+        5.2,
+      innerLogarithmicStrength:
+        PRESENTATION_V3_INNER_LOGARITHMIC_STRENGTH,
+    } satisfies SystemSceneRadialScaleSnapshot);
+
+  const innerPairScale =
+    Math.abs(
+      input.innerPairOuterScale,
+    );
+
+  const tertiaryScale =
+    Math.abs(
+      input.tertiaryOuterScale,
+    );
+
+  const outerFitFromInnerPair =
+    innerPairScale >
+      Number.EPSILON
+      ? (
+          targetOuterRadiusScene -
+          localTargetRadiusScene -
+          0.18
+        ) /
+        innerPairScale
+      : Number.POSITIVE_INFINITY;
+
+  const outerFitFromTertiary =
+    tertiaryScale >
+      Number.EPSILON
+      ? (
+          targetOuterRadiusScene -
+          input.tertiaryStarRadiusScene -
+          0.18
+        ) /
+        tertiaryScale
+      : Number.POSITIVE_INFINITY;
+
+  const outerTargetRelativeScene =
+    clamp(
+      Math.min(
+        targetOuterRadiusScene,
+        outerFitFromInnerPair,
+        outerFitFromTertiary,
+      ),
+      localTargetRadiusScene +
+        input.tertiaryStarRadiusScene +
+        TRIPLE_HIERARCHICAL_OUTER_CLEARANCE_SCENE +
+        0.35,
+      targetOuterRadiusScene,
+    );
+
+  const outerPeriapsisScene =
+    Math.min(
+      outerTargetRelativeScene *
+        0.82,
+      Math.max(
+        localTargetRadiusScene +
+          input.tertiaryStarRadiusScene +
+          input.maxPlanetRadiusScene +
+          TRIPLE_HIERARCHICAL_OUTER_CLEARANCE_SCENE,
+        pairClearanceScene *
+          2.15,
+      ),
+    );
+
+  const outerScale =
+    Object.freeze({
+      outerRadiusAu:
+        positiveFiniteOr(
+          input.outerRelativeApoapsisAu,
+          1,
+        ),
+      targetOuterRadiusScene:
+        outerTargetRelativeScene,
+      innerReferenceAu:
+        positiveFiniteOr(
+          input.outerRelativePeriapsisAu,
+          input.outerRelativeApoapsisAu *
+            0.5,
+        ),
+      innerReferenceScene:
+        outerPeriapsisScene,
+      logarithmicStrength:
+        TRIPLE_HIERARCHICAL_OUTER_LOGARITHMIC_STRENGTH,
+    } satisfies SystemSceneRadialScaleSnapshot);
+
+  const effectiveOuterRadiusAu =
+    Math.max(
+      positiveFiniteOr(
+        input.outerRadiusAu,
+        input.outerRelativeApoapsisAu,
+      ),
+      localOuterRadiusAu,
+    );
+
+  return Object.freeze({
+    outerRadiusAu:
+      effectiveOuterRadiusAu,
+    orbitScaleScenePerAu:
+      targetOuterRadiusScene /
+      effectiveOuterRadiusAu,
+    targetOuterRadiusScene,
+    projectionMode:
+      SystemSceneScaleProjectionMode
+        .TRIPLE_PRESENTATION_V3,
+    innerReferenceAu:
+      localScale.innerReferenceAu,
+    innerReferenceScene:
+      localScale.innerReferenceScene,
+    logarithmicStrength:
+      localScale.logarithmicStrength,
+    innerLogarithmicStrength:
+      localScale.innerLogarithmicStrength,
+    tripleHierarchy:
+      Object.freeze({
+        outer:
+          outerScale,
+        local:
+          localScale,
+      }),
+  });
+}
 
 /**
  * Presentation-only point-24.5 scale contract for single-star systems.
@@ -611,9 +1011,9 @@ export function systemSceneProjectedRadiusAu(
   }
 
   if (
-    scale.projectionMode ===
-      SystemSceneScaleProjectionMode
-        .TRIPLE_HIERARCHICAL_V1 &&
+    isTripleHierarchicalSystemSceneScale(
+      scale,
+    ) &&
     scale.tripleHierarchy !==
       null &&
     scale.tripleHierarchy !==
@@ -692,9 +1092,24 @@ export function systemSceneProjectedRadiusAu(
     clampedRadiusAu <=
     innerReferenceAu
   ) {
-    return innerReferenceScene *
+    const normalizedInner =
       clampedRadiusAu /
       innerReferenceAu;
+
+    const innerStrength =
+      scale.innerLogarithmicStrength ??
+      0;
+
+    return innerReferenceScene *
+      (
+        innerStrength >
+          Number.EPSILON
+          ? logarithmicUnitInterval(
+              normalizedInner,
+              innerStrength,
+            )
+          : normalizedInner
+      );
   }
 
   const normalizedOuterSpan =
@@ -786,9 +1201,9 @@ export function systemSceneProjectedRadiusAuInSpace(
 ): number {
 
   if (
-    scale.projectionMode !==
-      SystemSceneScaleProjectionMode
-        .TRIPLE_HIERARCHICAL_V1 ||
+    !isTripleHierarchicalSystemSceneScale(
+      scale,
+    ) ||
     scale.tripleHierarchy ===
       null ||
     scale.tripleHierarchy ===
@@ -853,8 +1268,9 @@ export function systemSceneProjectedOverlayRadiusAuInSpace(
   }
 
   const radialScale =
-    scale.projectionMode ===
-        SystemSceneScaleProjectionMode.TRIPLE_HIERARCHICAL_V1 &&
+    isTripleHierarchicalSystemSceneScale(
+      scale,
+    ) &&
       scale.tripleHierarchy !==
         null &&
       scale.tripleHierarchy !==
@@ -1032,11 +1448,40 @@ export function isAdaptiveSystemSceneScale(
         .BINARY_ADAPTIVE_LOG_V1 ||
     scale.projectionMode ===
       SystemSceneScaleProjectionMode
-        .TRIPLE_ADAPTIVE_LOG_V1
-    ||
+        .TRIPLE_ADAPTIVE_LOG_V1 ||
     scale.projectionMode ===
       SystemSceneScaleProjectionMode
-        .TRIPLE_HIERARCHICAL_V1
+        .SINGLE_PRESENTATION_V3 ||
+    scale.projectionMode ===
+      SystemSceneScaleProjectionMode
+        .BINARY_PRESENTATION_V3 ||
+    scale.projectionMode ===
+      SystemSceneScaleProjectionMode
+        .TRIPLE_PRESENTATION_V3 ||
+    isTripleHierarchicalSystemSceneScale(
+      scale,
+    )
+  );
+}
+
+function isTripleHierarchicalSystemSceneScale(
+  scale:
+    SystemSceneScaleSnapshot,
+): boolean {
+
+  return (
+    scale.projectionMode ===
+      SystemSceneScaleProjectionMode
+        .TRIPLE_HIERARCHICAL_V1 ||
+    (
+      scale.projectionMode ===
+        SystemSceneScaleProjectionMode
+          .TRIPLE_PRESENTATION_V3 &&
+      scale.tripleHierarchy !==
+        null &&
+      scale.tripleHierarchy !==
+        undefined
+    )
   );
 }
 
@@ -1107,9 +1552,24 @@ function projectedRadiusWithRadialScale(
     clampedRadiusAu <=
     innerReferenceAu
   ) {
-    return innerReferenceScene *
+    const normalizedInner =
       clampedRadiusAu /
       innerReferenceAu;
+
+    const innerStrength =
+      scale.innerLogarithmicStrength ??
+      0;
+
+    return innerReferenceScene *
+      (
+        innerStrength >
+          Number.EPSILON
+          ? logarithmicUnitInterval(
+              normalizedInner,
+              innerStrength,
+            )
+          : normalizedInner
+      );
   }
 
   return innerReferenceScene +
@@ -1161,6 +1621,127 @@ function logarithmicUnitInterval(
   ) /
   Math.log1p(
     strength,
+  );
+}
+
+function presentationV3OuterRadiusAu(
+  outerRadiusAu:
+    number,
+
+  habitableZoneOuterAu:
+    number | null,
+): number {
+
+  const baseOuter =
+    positiveFiniteOr(
+      outerRadiusAu,
+      1,
+    );
+
+  if (
+    habitableZoneOuterAu ===
+      null ||
+    !Number.isFinite(
+      habitableZoneOuterAu,
+    ) ||
+    habitableZoneOuterAu <=
+      0
+  ) {
+    return baseOuter;
+  }
+
+  return Math.max(
+    baseOuter,
+    habitableZoneOuterAu *
+      PRESENTATION_V3_HZ_OUTER_MARGIN_FACTOR,
+  );
+}
+
+function presentationV3FocusAu(
+  habitableZoneOuterAu:
+    number | null,
+
+  fallbackInnerAu:
+    number | null,
+
+  outerRadiusAu:
+    number,
+): number | null {
+
+  const candidates = [
+    habitableZoneOuterAu,
+    fallbackInnerAu,
+  ];
+
+  for (
+    const candidate
+    of candidates
+  ) {
+    if (
+      candidate !==
+        null &&
+      Number.isFinite(
+        candidate,
+      ) &&
+      candidate >
+        0 &&
+      candidate <
+        outerRadiusAu
+    ) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function presentationV3FocusScene(
+  focusAu:
+    number,
+
+  outerRadiusAu:
+    number,
+
+  targetOuterRadiusScene:
+    number,
+
+  minimumClearanceScene:
+    number,
+): number {
+
+  const radialFraction =
+    clamp(
+      focusAu /
+        outerRadiusAu,
+      0,
+      1,
+    );
+
+  const scientificFocusTarget =
+    targetOuterRadiusScene *
+    (
+      0.29 +
+      0.10 *
+        Math.sqrt(
+          radialFraction,
+        )
+    );
+
+  return clamp(
+    Math.max(
+      scientificFocusTarget,
+      minimumClearanceScene,
+    ),
+    Math.min(
+      PRESENTATION_V3_MIN_FOCUS_SCENE,
+      targetOuterRadiusScene *
+        0.40,
+    ),
+    Math.min(
+      PRESENTATION_V3_MAX_FOCUS_SCENE,
+      targetOuterRadiusScene *
+        0.46,
+    ),
   );
 }
 

@@ -150,10 +150,24 @@
     box-shadow: 0 0 .55rem currentColor;
 
     &--radiative { color: #5eb6c8; background: #5eb6c8; }
+    &--radiative-muted { color: #8ca8b1; background: #8ca8b1; box-shadow: none; }
     &--stable { color: #74e5aa; background: #74e5aa; }
+    &--stability { color: #e3af64; background: #e3af64; }
     &--crossing { color: #f2d56b; background: #f2d56b; }
     &--approach { color: #ffaa52; background: #ffaa52; }
     &--collision { color: #ff624a; background: #ff624a; }
+  }
+
+  &__science-row--muted {
+    color: rgba(184, 221, 238, .52);
+  }
+
+  &__science-row--warning {
+    color: rgba(236, 199, 139, .82);
+
+    b {
+      color: rgba(244, 214, 165, .94);
+    }
   }
 
   &__risk-detail {

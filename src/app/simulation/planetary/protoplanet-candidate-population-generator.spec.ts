@@ -148,6 +148,79 @@ describe(
     );
 
     it(
+      'should preserve inner logarithmic-disk embryo occupancy across a deterministic low-mass population batch',
+      () => {
+        const disk =
+          compactLowMassDiskProfile();
+
+        const structure =
+          compactLowMassDiskStructure(
+            disk,
+          );
+
+        let populatedSystems =
+          0;
+
+        let systemsWithInnerCandidate =
+          0;
+
+        for (
+          let index = 1;
+          index <=
+            32;
+          index += 1
+        ) {
+          const seed =
+            new SystemSeed(
+              index
+                .toString(16)
+                .toUpperCase()
+                .padStart(
+                  32,
+                  '0',
+                ),
+            );
+
+          const population =
+            ProtoplanetCandidatePopulationGenerator
+              .generate(
+                generationKey,
+                seed,
+                disk,
+                structure,
+                richFormationProfile(),
+              );
+
+          if (
+            population.hasCandidates
+          ) {
+            populatedSystems +=
+              1;
+          }
+
+          if (
+            population.candidates.some(
+              candidate =>
+                candidate.orbitalRadiusAu <
+                0.10,
+            )
+          ) {
+            systemsWithInnerCandidate +=
+              1;
+          }
+        }
+
+        expect(
+          populatedSystems,
+        ).toBeGreaterThanOrEqual(24);
+
+        expect(
+          systemsWithInnerCandidate,
+        ).toBeGreaterThanOrEqual(8);
+      },
+    );
+
+    it(
       'should keep every initial candidate inside the disk, radially separated and capped at a solid-core scale',
       () => {
         const disk =
@@ -815,6 +888,53 @@ function broadCondensationRegions(
       10,
     ),
   ];
+}
+
+function compactLowMassDiskProfile():
+  ProtoplanetaryDiskProfile {
+
+  return new ProtoplanetaryDiskProfile(
+    ProtoplanetaryDiskStage.EVOLVING_PRIMORDIAL_DISK,
+    6,
+    10,
+    0.6,
+    0.1,
+    0.02,
+    0.20,
+    0.003,
+    8,
+    30,
+    85,
+    1,
+    0.04,
+    5e-9,
+  );
+}
+
+function compactLowMassDiskStructure(
+  disk:
+    ProtoplanetaryDiskProfile,
+): ProtoplanetaryDiskStructure {
+
+  return new ProtoplanetaryDiskStructure(
+    disk.diskMassSolar,
+    disk.innerRadiusAu,
+    disk.outerRadiusAu,
+    0.0196,
+    0.0004,
+    0.98,
+    0.02,
+    0.0004 /
+      0.0196,
+    0.10,
+    0.72,
+    0.50,
+    [],
+    broadCondensationRegions(
+      disk.innerRadiusAu,
+      disk.outerRadiusAu,
+    ),
+  );
 }
 
 function expectedComposition(

@@ -295,6 +295,8 @@ function generateOrbitalLayoutV1(
       architecture.planetSlots,
       semiMajorAxes,
       draws,
+      architecture.orbitTopology,
+      envelope,
     );
 
   const orbits =
@@ -648,6 +650,12 @@ function generateEccentricitiesV1(
 
   draws:
     readonly PlanetaryOrbitDrawsV1[],
+
+  topology:
+    PlanetarySystemOrbitTopology,
+
+  envelope:
+    OrbitalGenerationEnvelope,
 ): readonly number[] {
 
   return Object.freeze(
@@ -678,10 +686,20 @@ function generateEccentricitiesV1(
             index,
           );
 
+        const apsidalEnvelopeCap =
+          topology ===
+            PlanetarySystemOrbitTopology.CIRCUMBINARY
+            ? circumbinaryApsidalEnvelopeEccentricityCapV1(
+                semiMajorAxes[index],
+                envelope,
+              )
+            : V1_ABSOLUTE_ECCENTRICITY_CAP;
+
         const cap =
           Math.min(
             excitationCap,
             geometricCap,
+            apsidalEnvelopeCap,
           );
 
         return cap *
@@ -690,6 +708,35 @@ function generateEccentricitiesV1(
             1.5;
       },
     ),
+  );
+}
+
+function circumbinaryApsidalEnvelopeEccentricityCapV1(
+  semiMajorAxisAu:
+    number,
+
+  envelope:
+    OrbitalGenerationEnvelope,
+): number {
+
+  const innerCap =
+    1 -
+    envelope.innerAu /
+      semiMajorAxisAu;
+
+  const outerCap =
+    envelope.outerAu /
+      semiMajorAxisAu -
+    1;
+
+  return Math.max(
+    0,
+    Math.min(
+      V1_ABSOLUTE_ECCENTRICITY_CAP,
+      innerCap,
+      outerCap,
+    ) *
+      0.995,
   );
 }
 

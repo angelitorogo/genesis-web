@@ -921,6 +921,10 @@ describe(
         ).toBeGreaterThanOrEqual(3);
 
         expect(
+          system.orbits[0].periastronAu,
+        ).toBeGreaterThanOrEqual(3);
+
+        expect(
           system.orbits[1].semiMajorAxisAu,
         ).toBeGreaterThan(
           system.orbits[0].semiMajorAxisAu,
@@ -1119,6 +1123,15 @@ describe(
 
           expect(
             orbit.semiMajorAxisAu,
+          ).toBeLessThanOrEqual(8);
+
+
+          expect(
+            orbit.periastronAu,
+          ).toBeGreaterThanOrEqual(2.5);
+
+          expect(
+            orbit.apoastronAu,
           ).toBeLessThanOrEqual(8);
 
           expect(

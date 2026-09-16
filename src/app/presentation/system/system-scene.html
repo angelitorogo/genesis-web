@@ -155,19 +155,83 @@
             data-testid="system-scene-habitable-zone-legend"
           >
             <strong>ZONA HABITABLE</strong>
-            <span>
-              <i class="system-scene__swatch system-scene__swatch--radiative"></i>
-              Radiativa
-              <b>{{ formatAu(habitableZone.radiativeInnerEdgeAu) }}–{{ formatAu(habitableZone.radiativeOuterEdgeAu) }} AU</b>
-            </span>
-            <span>
-              <i class="system-scene__swatch system-scene__swatch--stable"></i>
-              Dinámicamente estable
-              <b>{{ formatAu(habitableZone.dynamicallyHabitableInnerEdgeAu) }}–{{ formatAu(habitableZone.dynamicallyHabitableOuterEdgeAu) }} AU</b>
-            </span>
-            <small>
-              {{ habitableZone.topology === 'CIRCUMSTELLAR' ? 'Circunestelar' : 'Circumbinaria' }} · las distancias en UA conservan el valor científico; el ancho visual se adapta para legibilidad.
-            </small>
+
+            @if (habitableZone.visualRegime === 'CIRCUMBINARY_RADIATIVE_NOT_APPLICABLE') {
+              <span class="system-scene__science-row--warning">
+                <i class="system-scene__swatch system-scene__swatch--stability"></i>
+                Referencia radiativa A+B
+                <b>NO APLICABLE</b>
+              </span>
+
+              @if (habitableZone.circumbinaryStabilityInnerEdgeAu !== null && habitableZone.circumbinaryStabilityInnerEdgeAu !== undefined) {
+                <span class="system-scene__science-row--warning">
+                  <i class="system-scene__swatch system-scene__swatch--stability"></i>
+                  @if (habitableZone.circumbinaryStabilityOuterEdgeAu !== null && habitableZone.circumbinaryStabilityOuterEdgeAu !== undefined) {
+                    Ventana P estable
+                    <b>{{ formatAu(habitableZone.circumbinaryStabilityInnerEdgeAu) }}–{{ formatAu(habitableZone.circumbinaryStabilityOuterEdgeAu) }} AU</b>
+                  } @else {
+                    Límite P estable
+                    <b>≥ {{ formatAu(habitableZone.circumbinaryStabilityInnerEdgeAu) }} AU</b>
+                  }
+                </span>
+              }
+
+              <small>
+                Circumbinaria · la separación del par interior o la irradiación de la tercera estrella deja fuera de dominio la aproximación A+B como fuente puntual. No se dibuja una banda HZ ficticia; solo se muestra la ventana orbital P-type estable.
+              </small>
+            } @else {
+              <span
+                [class.system-scene__science-row--muted]="habitableZone.visualRegime === 'CIRCUMBINARY_RADIATIVE_ONLY'"
+              >
+                <i
+                  class="system-scene__swatch system-scene__swatch--radiative"
+                  [class.system-scene__swatch--radiative-muted]="habitableZone.visualRegime === 'CIRCUMBINARY_RADIATIVE_ONLY'"
+                ></i>
+                {{ habitableZone.visualRegime === 'CIRCUMBINARY_RADIATIVE_ONLY' ? 'Radiativa de referencia' : 'Radiativa' }}
+                <b>{{ formatAu(habitableZone.radiativeInnerEdgeAu) }}–{{ formatAu(habitableZone.radiativeOuterEdgeAu) }} AU</b>
+              </span>
+
+              @if (habitableZone.visualRegime === 'CIRCUMBINARY_RADIATIVE_ONLY') {
+                <span class="system-scene__science-row--warning">
+                  <i class="system-scene__swatch system-scene__swatch--stability"></i>
+                  Sin HZ dinámicamente estable
+                  <b>—</b>
+                </span>
+
+                @if (habitableZone.circumbinaryStabilityInnerEdgeAu !== null && habitableZone.circumbinaryStabilityInnerEdgeAu !== undefined) {
+                  <span class="system-scene__science-row--warning">
+                    <i class="system-scene__swatch system-scene__swatch--stability"></i>
+                    @if (habitableZone.circumbinaryStabilityOuterEdgeAu !== null && habitableZone.circumbinaryStabilityOuterEdgeAu !== undefined) {
+                      Ventana P estable
+                      <b>{{ formatAu(habitableZone.circumbinaryStabilityInnerEdgeAu) }}–{{ formatAu(habitableZone.circumbinaryStabilityOuterEdgeAu) }} AU</b>
+                    } @else {
+                      Límite P estable
+                      <b>≥ {{ formatAu(habitableZone.circumbinaryStabilityInnerEdgeAu) }} AU</b>
+                    }
+                  </span>
+                }
+
+                <small>
+                  Circumbinaria · la referencia radiativa A+B es válida, pero no coincide con ninguna región orbital planetaria estable.
+                </small>
+              } @else {
+                <span>
+                  <i class="system-scene__swatch system-scene__swatch--stable"></i>
+                  Dinámicamente estable
+                  <b>{{ formatAu(habitableZone.dynamicallyHabitableInnerEdgeAu) }}–{{ formatAu(habitableZone.dynamicallyHabitableOuterEdgeAu) }} AU</b>
+                </span>
+                @if (habitableZone.topology === 'CIRCUMBINARY' && habitableZone.circumbinaryStabilityInnerEdgeAu !== null && habitableZone.circumbinaryStabilityInnerEdgeAu !== undefined && habitableZone.circumbinaryStabilityOuterEdgeAu !== null && habitableZone.circumbinaryStabilityOuterEdgeAu !== undefined) {
+                  <span class="system-scene__science-row--muted">
+                    <i class="system-scene__swatch system-scene__swatch--stability"></i>
+                    Ventana P estable total
+                    <b>{{ formatAu(habitableZone.circumbinaryStabilityInnerEdgeAu) }}–{{ formatAu(habitableZone.circumbinaryStabilityOuterEdgeAu) }} AU</b>
+                  </span>
+                }
+                <small>
+                  {{ habitableZone.topology === 'CIRCUMSTELLAR' ? 'Circunestelar' : habitableZone.visualRegime === 'CIRCUMBINARY_PARTIALLY_STABLE' ? 'Circumbinaria · intersección estable parcial' : 'Circumbinaria · intersección estable completa' }} · las distancias en UA conservan el valor científico y la banda se proyecta sin ensanchado radial independiente.
+                </small>
+              }
+            }
           </section>
         }
       }
