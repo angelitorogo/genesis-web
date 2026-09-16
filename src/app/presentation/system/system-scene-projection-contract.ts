@@ -6,6 +6,10 @@ import {
   type SystemSceneSnapshot,
 } from './system-scene-snapshot';
 
+import {
+  systemSceneProjectedRadiusAuInSpace,
+} from './system-scene-scale-projection';
+
 export const SYSTEM_SCENE_PROJECTION_AUTHORITY =
   Object.freeze({
     authoritativePhysicsSource:
@@ -430,6 +434,39 @@ export function assertSystemSceneProjectionSnapshot(
       throw new RangeError(
         'SystemScene V5.2 post-projection scale must match the V5.1 requested scene-space compaction ratio.',
       );
+    }
+  }
+
+  // V5.3: validate the immutable *final* projection, not merely a proposed
+  // scale factor. The same first-periapsis anchor must reach the actual radial
+  // projector used by orbital guides, planet motion, HZ and asteroid belts.
+  const firstOrbitAnchor = snapshot.firstOrbitAnchor;
+  if (firstOrbitAnchor !== undefined && firstOrbitAnchor !== null) {
+    assertFrozen(firstOrbitAnchor, 'snapshot.firstOrbitAnchor');
+    if (
+      firstOrbitAnchor.applied &&
+      firstOrbitAnchor.anchoredPeriapsisScene <=
+        firstOrbitAnchor.originalPeriapsisScene
+    ) {
+      throw new RangeError('SystemScene V5.3 must expand an applied first-orbit anchor.');
+    }
+    const projectedFirst = systemSceneProjectedRadiusAuInSpace(
+      firstOrbitAnchor.nearestPeriapsisAu,
+      snapshot.scale,
+      firstOrbitAnchor.projectionSpace,
+    );
+    if (Math.abs(projectedFirst - firstOrbitAnchor.anchoredPeriapsisScene) > 1e-8) {
+      throw new RangeError('SystemScene V5.3 first-orbit anchor is not applied to the final radial projector.');
+    }
+    const v5 = snapshot.stellarOrbitClearance;
+    if (v5 !== undefined && v5 !== null &&
+      v5.clearanceMode === 'ENFORCED' &&
+      v5.actualOpticalClearanceScene !== null &&
+      v5.actualOpticalClearanceScene + 1e-9 <
+        firstOrbitAnchor.minimumBodyToHaloGapScene +
+        firstOrbitAnchor.firstPlanetRadiusScene
+    ) {
+      throw new RangeError('SystemScene V5.3 first planetary body must clear the host optical envelope by its fixed minimum gap.');
     }
   }
 

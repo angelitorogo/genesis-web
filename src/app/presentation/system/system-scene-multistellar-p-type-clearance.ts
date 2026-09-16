@@ -101,6 +101,7 @@ const VALUE_TOLERANCE =
 export function buildSystemSceneMultistellarPTypeClearanceV51(
   input:
     SystemSceneMultistellarPTypeClearanceInputV51,
+  presentationCenterFraction: number = 0.36,
 ): SystemSceneMultistellarPTypeClearanceV51 {
 
   assertNonNegativeFinite(
@@ -203,14 +204,11 @@ export function buildSystemSceneMultistellarPTypeClearanceV51(
     });
   }
 
-  /*
-   * Reserve most of the first P-type annulus for planets and halo clearance.
-   * 36% leaves the stellar pair clearly readable while preventing the old
-   * adaptive projection from visually placing A/B on top of the first planet.
-   */
+  /* V5.3 may reserve a moderately larger inner pair for readable stars.
+   * The default remains V5.1's 36% for all existing standalone consumers. */
   const targetStellarCenterEnvelopeScene =
     visualClearanceBoundaryScene *
-    0.36;
+    clamp(presentationCenterFraction, 0.20, 0.46);
 
   const innerPairPresentationScale =
     clamp(

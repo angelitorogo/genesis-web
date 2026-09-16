@@ -154,6 +154,11 @@ import {
 } from './system-scene-multistellar-core-compaction';
 
 import {
+  buildSystemSceneFirstOrbitAnchorV53,
+  type SystemSceneFirstOrbitAnchorV53,
+} from './system-scene-first-orbit-anchor';
+
+import {
   SystemSceneScientificDisclosureTier,
   systemSceneScientificAccess,
 } from './system-scene-scientific-access';
@@ -806,6 +811,9 @@ export interface SystemSceneSnapshot {
   readonly multistellarCoreCompaction?:
     SystemSceneMultistellarCoreCompactionV52 | null;
 
+  /** Renderer-only V5.3 shared first-orbit anchor; no physics mutation. */
+  readonly firstOrbitAnchor?: SystemSceneFirstOrbitAnchorV53 | null;
+
   /** Renderer-only V5 mandatory stellar/planetary-orbit optical clearance. */
   readonly stellarOrbitClearance?:
     SystemSceneStellarOrbitClearanceV5 | null;
@@ -1083,6 +1091,8 @@ export class SystemSceneSnapshotBuilder {
         projected.multistellarCoreCompaction,
       stellarOrbitClearance:
         projected.stellarOrbitClearance,
+      firstOrbitAnchor:
+        projected.firstOrbitAnchor,
       orbitalRiskTargets:
         projected.orbitalRiskTargets,
       layers:
@@ -2159,6 +2169,9 @@ function projectSceneGeometry(
   readonly stellarOrbitClearance:
     SystemSceneStellarOrbitClearanceV5 | null;
 
+  readonly firstOrbitAnchor:
+    SystemSceneFirstOrbitAnchorV53 | null;
+
   readonly orbitalRiskTargets:
     readonly SystemSceneOrbitalRiskTargetSnapshot[];
 
@@ -2411,7 +2424,7 @@ function projectSceneGeometry(
         ) ??
         0.24;
 
-  const sceneScale =
+  const initialSceneScale =
     world.multiplicityName ===
       'SINGLE'
       ? buildSingleAdaptiveSystemScaleV3({
@@ -2487,6 +2500,39 @@ function projectSceneGeometry(
       'TRIPLE'
       ? SystemSceneProjectionSpace.TRIPLE_LOCAL
       : SystemSceneProjectionSpace.GLOBAL;
+
+  const firstOrbitAnchor = buildSystemSceneFirstOrbitAnchorV53({
+    architecture: world.multiplicityName === 'TRIPLE'
+      ? 'TRIPLE'
+      : world.multiplicityName === 'SINGLE'
+        ? 'SINGLE'
+        : 'BINARY',
+    projectionSpace: pTypeProjectionSpace,
+    nearestPeriapsisAu: innerPlanetPeriapsisAu,
+    originalPeriapsisScene: innerPlanetPeriapsisAu === null
+      ? null
+      : systemSceneProjectedRadiusAuInSpace(
+          innerPlanetPeriapsisAu,
+          initialSceneScale,
+          pTypeProjectionSpace,
+        ),
+    localOuterRadiusScene: pTypeProjectionSpace ===
+      SystemSceneProjectionSpace.TRIPLE_LOCAL
+      ? initialSceneScale.tripleHierarchy?.local.targetOuterRadiusScene ??
+        initialSceneScale.targetOuterRadiusScene
+      : initialSceneScale.targetOuterRadiusScene,
+    basePrimaryRadiusScene: primaryStarRadiusScene,
+    baseSecondaryRadiusScene: secondaryStarRadiusScene,
+    // Conservative body allowance: protects every later planet as well.
+    firstPlanetRadiusScene: maxPlanetRadiusScene,
+  });
+
+  // The shared projector, not a single orbit-specific offset, owns the anchor.
+  // Orbital guides, motions, HZ, belts and risk all reuse this same scale.
+  const sceneScale: SystemSceneScaleSnapshot = Object.freeze({
+    ...initialSceneScale,
+    firstOrbitAnchor,
+  });
 
   const uncompressedPrimaryCenterExcursionScene =
     innerOrbit === null ||
@@ -2577,7 +2623,7 @@ function projectSceneGeometry(
                   sceneScale,
                   pTypeProjectionSpace,
                 ),
-        });
+        }, firstOrbitAnchor === null ? 0.36 : 0.46);
 
   const multistellarCoreCompaction =
     multistellarPTypeClearance ===
@@ -2865,6 +2911,8 @@ function projectSceneGeometry(
         },
       ),
       projectedNearestPlanetPeriapsisScene,
+      firstOrbitAnchor?.targetPhotosphereRadiusScene ?? null,
+      firstOrbitAnchor?.firstPlanetRadiusScene ?? 0,
     );
 
   for (
@@ -3554,6 +3602,7 @@ function projectSceneGeometry(
     multistellarPTypeClearance,
     multistellarCoreCompaction,
     stellarOrbitClearance,
+    firstOrbitAnchor,
     orbitalRiskTargets,
     layers:
       Object.freeze({

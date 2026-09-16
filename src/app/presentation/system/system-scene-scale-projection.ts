@@ -1,3 +1,8 @@
+import {
+  systemSceneApplyFirstOrbitAnchorV53,
+  type SystemSceneFirstOrbitAnchorV53,
+} from './system-scene-first-orbit-anchor';
+
 export const SystemSceneScaleProjectionMode =
   Object.freeze({
     LINEAR_FIT:
@@ -77,6 +82,9 @@ export interface SystemSceneTripleHierarchyScaleSnapshot {
 }
 
 export interface SystemSceneScaleSnapshot {
+  /** V5.3 renderer-only monotone anchor, never an input to simulation. */
+  readonly firstOrbitAnchor?: SystemSceneFirstOrbitAnchorV53 | null;
+
   readonly outerRadiusAu:
     number;
 
@@ -993,6 +1001,19 @@ export function buildLinearFitSystemScale(
 }
 
 export function systemSceneProjectedRadiusAu(
+  radiusAu: number,
+  scale: SystemSceneScaleSnapshot,
+): number {
+  return systemSceneApplyFirstOrbitAnchorV53(
+    systemSceneProjectedRadiusAuBase(radiusAu, scale),
+    scale,
+    scale.tripleHierarchy != null
+      ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+      : SystemSceneProjectionSpace.GLOBAL,
+  );
+}
+
+function systemSceneProjectedRadiusAuBase(
   radiusAu:
     number,
 
@@ -1217,12 +1238,15 @@ export function systemSceneProjectedRadiusAuInSpace(
     );
   }
 
-  return projectedRadiusWithRadialScale(
-    radiusAu,
-    space ===
-      SystemSceneProjectionSpace.TRIPLE_OUTER
-      ? scale.tripleHierarchy.outer
-      : scale.tripleHierarchy.local,
+  return systemSceneApplyFirstOrbitAnchorV53(
+    projectedRadiusWithRadialScale(
+      radiusAu,
+      space === SystemSceneProjectionSpace.TRIPLE_OUTER
+        ? scale.tripleHierarchy.outer
+        : scale.tripleHierarchy.local,
+    ),
+    scale,
+    space,
   );
 }
 
@@ -1314,15 +1338,12 @@ export function systemSceneProjectedOverlayRadiusAuInSpace(
       outerRadiusAu -
     1;
 
-  return targetOuterRadiusScene *
-    (
-      1 +
-      0.32 *
-        Math.log1p(
-          2 *
-          excessRatio,
-        )
-    );
+  return systemSceneApplyFirstOrbitAnchorV53(
+    targetOuterRadiusScene *
+      (1 + 0.32 * Math.log1p(2 * excessRatio)),
+    scale,
+    space,
+  );
 }
 
 export function systemSceneProjectAuVectorInSpace(

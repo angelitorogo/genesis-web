@@ -286,6 +286,11 @@ describe(
               );
             }
 
+            // V5.3 reserves the first orbit for the *whole* planet body
+            // and the complete A+B optical host envelope. A visual-size
+            // ratio inherited from 24.5 (planet < 40% of the smallest
+            // photosphere) is not a clearance contract: the A/B photospheres
+            // may be individually capped to prevent stellar collisions.
             const smallestStarRadius =
               Math.min(
                 ...snapshot.stars.map(
@@ -293,6 +298,20 @@ describe(
                     star.radiusScene,
                 ),
               );
+            expect(
+              Number.isFinite(smallestStarRadius) &&
+                smallestStarRadius > 0,
+              `${caseId} family ${familyId} must keep all stellar photospheres finite and visible`,
+            ).toBe(true);
+
+            const firstOrbitAnchor =
+              snapshot.scale.firstOrbitAnchor;
+            const stellarClearance =
+              snapshot.stellarOrbitClearance;
+            expect(
+              stellarClearance,
+              `${caseId} family ${familyId} must expose the V5 stellar clearance diagnostic`,
+            ).toBeDefined();
 
             for (
               const planet
@@ -321,13 +340,56 @@ describe(
                   : undefined,
               );
 
+              // A planet must remain distinguishable from even the
+              // smallest stellar disc. Its exact size ratio is not fixed:
+              // V4 separates photospheres and V5.3 protects the orbital gap.
               expect(
                 planet.radiusScene /
-                smallestStarRadius,
-                `${caseId} family ${familyId} planet ${planet.label} must remain visually subordinate to every stellar component`,
-              ).toBeLessThan(
-                0.4,
-              );
+                  smallestStarRadius,
+                `${caseId} family ${familyId} planet ${planet.label} must remain visually smaller than every stellar photosphere`,
+              ).toBeLessThan(1);
+
+              // Verify the actual V5.3 purpose, not a legacy size ratio.
+              // Compare a planet's *surface* at periapsis with the entire
+              // host optical envelope. Both use the shared V3/V5.3 radial
+              // projector; no per-orbit offsets or modified AU are allowed.
+              if (
+                firstOrbitAnchor != null &&
+                stellarClearance?.clearanceMode === 'ENFORCED'
+              ) {
+                const planetaryMotion =
+                  snapshot.motions.find(
+                    motion =>
+                      motion.id ===
+                      planetaryContribution.motionId,
+                  )!;
+                const periapsisScene =
+                  systemSceneProjectedRadiusAuInSpace(
+                    planetaryMotion.semiMajorAxisAu *
+                      (1 - planetaryMotion.eccentricity),
+                    snapshot.scale,
+                    caseId ===
+                      StellarSystemLaboratoryCaseId.TRIPLE
+                      ? SystemSceneProjectionSpace.TRIPLE_LOCAL
+                      : SystemSceneProjectionSpace.GLOBAL,
+                  );
+                expect(
+                  periapsisScene - planet.radiusScene,
+                  `${caseId} family ${familyId} planet ${planet.label} must clear the complete optical host envelope with the V5.3 body-to-halo margin`,
+                ).toBeGreaterThanOrEqual(
+                  stellarClearance.hostOpticalEnvelopeRadiusScene +
+                    firstOrbitAnchor.minimumBodyToHaloGapScene -
+                    1e-8,
+                );
+              } else if (
+                stellarClearance?.clearanceMode ===
+                  'BEST_EFFORT_GEOMETRIC_OVERLAP'
+              ) {
+                expect(
+                  stellarClearance.geometricOverlapDetected,
+                  `${caseId} family ${familyId} may use best-effort only for a diagnosed geometric overlap`,
+                ).toBe(true);
+              }
             }
           }
         }

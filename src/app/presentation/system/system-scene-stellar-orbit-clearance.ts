@@ -58,6 +58,8 @@ const VALUE_TOLERANCE = 1e-9;
 export function buildSystemSceneStellarOrbitClearanceV5(
   stars: readonly SystemSceneStellarOrbitClearanceStarInputV5[],
   nearestPlanetPeriapsisRadiusScene: number | null,
+  readabilityTargetRadiusScene: number | null = null,
+  firstPlanetBodyRadiusScene: number = 0,
 ): SystemSceneStellarOrbitClearanceV5 {
 
   const safeStars = stars.map(star => Object.freeze({
@@ -131,7 +133,7 @@ export function buildSystemSceneStellarOrbitClearanceV5(
       periapsis * 0.18,
     );
 
-  const requestedMinimumClearanceScene =
+  const legacyRequestedMinimumClearanceScene =
     Math.min(
       MAX_OPTICAL_CLEARANCE_SCENE,
       periapsis * 0.24,
@@ -140,6 +142,16 @@ export function buildSystemSceneStellarOrbitClearanceV5(
         periapsis * OPTICAL_CLEARANCE_TO_PERIAPSIS_RATIO,
       ),
     );
+
+  const requestedMinimumClearanceScene =
+    readabilityTargetRadiusScene === null
+      ? legacyRequestedMinimumClearanceScene
+      : 0.14 + Math.max(
+          0,
+          Number.isFinite(firstPlanetBodyRadiusScene)
+            ? firstPlanetBodyRadiusScene
+            : 0,
+        );
 
   const maximumOpticalEnvelopeRadiusScene =
     Math.max(
@@ -210,7 +222,9 @@ export function buildSystemSceneStellarOrbitClearanceV5(
             availableOpticalRadiusScene *
               MAX_PHOTOSPHERE_TO_AVAILABLE_OPTICAL_RATIO,
             periapsis *
-              MAX_PHOTOSPHERE_TO_PERIAPSIS_RATIO,
+              (readabilityTargetRadiusScene === null
+                ? MAX_PHOTOSPHERE_TO_PERIAPSIS_RATIO
+                : 0.28),
           ),
         );
 
