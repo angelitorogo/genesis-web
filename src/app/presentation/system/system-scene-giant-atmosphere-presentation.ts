@@ -9,6 +9,8 @@ export interface SystemSceneGiantAtmosphereGasComponentInput {
 }
 
 export interface SystemSceneGiantAtmospherePresentationInput {
+  /** Explicitly distinguish V2's visual envelope from confirmed V1 phase-20 gas chemistry. */
+  readonly source?: 'V2_4_1_BULK_ENVELOPE_PRESENTATION';
   readonly planetType: string;
   readonly massEarth: number;
   readonly radiusEarth: number;
@@ -32,7 +34,7 @@ export interface SystemSceneGiantAtmospherePresentationInput {
  * Truth and are never written back into the simulation/domain.
  */
 export interface SystemSceneGiantAtmospherePresentationSnapshot {
-  readonly source: 'PHASE_19_20_DEEP_ENVELOPE';
+  readonly source: 'PHASE_19_20_DEEP_ENVELOPE' | 'V2_4_1_BULK_ENVELOPE_PRESENTATION';
   readonly regime: SystemSceneGiantAtmosphereRegime;
 
   readonly massEarth: number;
@@ -206,7 +208,7 @@ export function buildSystemSceneGiantAtmospherePresentationV1(
   );
 
   return Object.freeze({
-    source: 'PHASE_19_20_DEEP_ENVELOPE' as const,
+    source: input.source ?? 'PHASE_19_20_DEEP_ENVELOPE',
     regime,
     massEarth: input.massEarth,
     radiusEarth: input.radiusEarth,

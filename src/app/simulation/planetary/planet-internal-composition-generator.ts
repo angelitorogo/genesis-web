@@ -22,7 +22,7 @@ import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
-interface SolidMaterialProfileV1 {
+export interface SolidMaterialProfileV1 {
   readonly metallicCoreFraction01:
     number;
 
@@ -346,7 +346,7 @@ function materializeCompositionV1(
   );
 }
 
-function weightedMaterialProfileV1(
+export function weightedMaterialProfileV1(
   refractoryRichFraction01:
     number,
 

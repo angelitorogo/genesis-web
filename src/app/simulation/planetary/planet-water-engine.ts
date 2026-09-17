@@ -639,7 +639,7 @@ function surfaceWaterCoveragesV1(
   };
 }
 
-function waterInventoryIndexForPlanetV1(
+export function waterInventoryIndexForPlanetV1(
   planetType:
     PlanetType,
 

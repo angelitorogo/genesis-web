@@ -1,4 +1,5 @@
 export interface SystemScenePlanetSurfacePresentationInput {
+  readonly source?: 'V2_4_1_HOST_ENVIRONMENT_ESTIMATE';
   readonly waterInventoryIndex01: number;
   readonly surfaceLiquidWaterCoverageFraction01: number | null;
   readonly surfaceIceCoverageFraction01: number | null;
@@ -22,7 +23,7 @@ export interface SystemScenePlanetSurfacePresentationInput {
  * guesses back into the domain.
  */
 export interface SystemScenePlanetSurfacePresentationSnapshot {
-  readonly source: 'PHASE_20_SURFACE_ENVIRONMENT';
+  readonly source: 'PHASE_20_SURFACE_ENVIRONMENT' | 'V2_4_1_HOST_ENVIRONMENT_ESTIMATE';
   readonly solidSurfaceAvailable: boolean;
 
   readonly waterInventoryIndex01: number;
@@ -85,7 +86,7 @@ export function buildSystemScenePlanetSurfacePresentationV1(
     }
 
     return Object.freeze({
-      source: 'PHASE_20_SURFACE_ENVIRONMENT' as const,
+      source: input.source ?? 'PHASE_20_SURFACE_ENVIRONMENT' as const,
       solidSurfaceAvailable: false,
       waterInventoryIndex01: input.waterInventoryIndex01,
       surfaceLiquidWaterCoverageFraction01: liquid,
@@ -157,7 +158,7 @@ export function buildSystemScenePlanetSurfacePresentationV1(
         );
 
   return Object.freeze({
-    source: 'PHASE_20_SURFACE_ENVIRONMENT' as const,
+    source: input.source ?? 'PHASE_20_SURFACE_ENVIRONMENT' as const,
     solidSurfaceAvailable: true,
     waterInventoryIndex01: input.waterInventoryIndex01,
     surfaceLiquidWaterCoverageFraction01: liquid,

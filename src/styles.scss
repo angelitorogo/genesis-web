@@ -110,3 +110,121 @@
   color: var(--genesis-color-primary);
   font-weight: 700;
 }
+
+/* V2 laboratory-only multi-host architecture inspector. */
+
+.stellar-lab__multihost-toggle,
+.stellar-lab__multihost-catalog {
+  border: 1px solid rgba(106, 215, 255, 0.24);
+  border-radius: var(--genesis-radius-lg);
+  background: rgba(15, 19, 31, 0.76);
+  padding: 1rem;
+}
+.stellar-lab__multihost-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  p:not(.stellar-lab__eyebrow) {
+    margin: 0.35rem 0 0;
+    color: var(--genesis-color-text-subtle);
+    font-size: 0.78rem;
+  }
+  button {
+    padding: 0.7rem;
+    background: rgba(106, 215, 255, 0.09);
+    color: var(--genesis-color-primary);
+    border: 1px solid rgba(106, 215, 255, 0.4);
+    border-radius: 0.5rem;
+    cursor: pointer;
+  }
+}
+.stellar-lab__multihost-catalog {
+  h2 { margin: 0.3rem 0; }
+  p { color: var(--genesis-color-text-subtle); font-size: 0.78rem; }
+}
+.stellar-lab__host-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.5rem;
+  article {
+    display: grid;
+    gap: 0.4rem;
+    border: 1px solid rgba(106, 215, 255, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.65rem;
+    color: var(--genesis-color-text);
+    span, small { color: var(--genesis-color-text-subtle); }
+    &[data-usable="false"] { opacity: 0.55; }
+  }
+}
+.stellar-lab__multihost-warning { font-weight: 700; }
+
+.stellar-lab__multihost-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.8rem 0;
+  button {
+    border: 1px solid rgba(106, 215, 255, 0.26);
+    border-radius: 0.4rem;
+    background: rgba(15, 19, 31, 0.76);
+    color: var(--genesis-color-text);
+    padding: 0.5rem;
+    cursor: pointer;
+    &[aria-pressed="true"] {
+      border-color: var(--genesis-color-primary);
+      color: var(--genesis-color-primary);
+    }
+  }
+}
+
+/* V2.1 read-only scientific QA. The shared logarithmic ruler never moves bodies. */
+.stellar-lab__domain-diagnostics {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(106, 215, 255, 0.25);
+  border-radius: 0.65rem;
+  background: rgba(5, 12, 24, 0.65);
+
+  h3 { margin: 0; font-size: 0.95rem; }
+  p, small { color: var(--genesis-color-text-subtle); line-height: 1.4; }
+  p { margin: 0; font-size: 0.68rem; }
+  small { font-size: 0.61rem; }
+  details { border-top: 1px solid rgba(106, 215, 255, 0.16); padding-top: 0.45rem; }
+  summary { cursor: pointer; font-size: 0.72rem; font-weight: 700; }
+}
+.stellar-lab__domain-grid { display: grid; gap: 0.5rem; }
+.stellar-lab__domain-grid article {
+  min-width: 0; display: grid; gap: 0.3rem;
+  padding: 0.55rem; border: 1px solid rgba(106, 215, 255, 0.12);
+  border-radius: 0.45rem;
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.4rem; font-size: 0.67rem; }
+  header span { color: var(--genesis-color-text-subtle); font-size: 0.58rem; }
+}
+.stellar-lab__domain-track {
+  position: relative; height: 1.25rem;
+  border-radius: 0.3rem; background: rgba(125, 140, 170, 0.13);
+  overflow: hidden;
+}
+.stellar-lab__domain-range {
+  position: absolute; top: 0.23rem; height: 0.8rem;
+  border-radius: 0.18rem; background: rgba(111, 207, 160, 0.30);
+  border: 1px solid rgba(111, 207, 160, 0.7);
+  &--sampling { border-right: 2px dashed rgba(111, 207, 160, 0.85); }
+}
+.stellar-lab__domain-orbit {
+  position: absolute; top: 0.43rem; height: 0.4rem;
+  min-width: 2px; border-radius: 0.15rem;
+  background: #6acfff; border: 1px solid rgba(255, 255, 255, 0.75);
+  &--outside { background: #ff9f75; }
+}
+.stellar-lab__domain-assignments {
+  display: grid; gap: 0.3rem; margin-top: 0.45rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  > div { display: grid; gap: 0.2rem; padding: 0.5rem;
+    border: 1px solid rgba(106, 215, 255, 0.13); border-radius: 0.3rem;
+    font-size: 0.63rem; overflow-wrap: anywhere; }
+}

@@ -1,4 +1,8 @@
 import {
+  systemSceneMultihostProjectVectorV221,
+  type SystemSceneMultihostRadialProjectionV22,
+} from './system-scene-multihost-radial-projection';
+import {
   SystemOrbitalMotionEngine,
   type SystemOrbitalMotionDefinition,
 } from '../../simulation/orbital/system-orbital-motion-engine';
@@ -30,6 +34,9 @@ export interface SystemSceneMotionProjectionContribution {
   /** Renderer-only multiplier applied after AU -> scene projection. */
   readonly postProjectionScale?:
     number;
+
+  /** Shared by V2.2 S-type motion and orbit guides; never changes physical AU. */
+  readonly hostRadialProjectionV22?: SystemSceneMultihostRadialProjectionV22;
 }
 
 export interface SystemSceneMotionProjectionVector3 {
@@ -129,6 +136,18 @@ export function projectSystemSceneMotionContributions(
         contribution.postProjectionScale,
         1,
       );
+
+    const hostRadialProjectionV22 = contribution.hostRadialProjectionV22;
+    if (hostRadialProjectionV22 !== undefined) {
+      const projected = systemSceneMultihostProjectVectorV221(
+        {x: position.xAu, y: position.yAu, z: position.zAu},
+        hostRadialProjectionV22, contribution.scale,
+      );
+      sceneX += projected.x * postProjectionScale;
+      sceneY += projected.y * postProjectionScale;
+      sceneZ += projected.z * postProjectionScale;
+      continue;
+    }
 
     const linearScenePerAu =
       contribution.linearScenePerAu ??

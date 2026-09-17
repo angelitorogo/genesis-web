@@ -10,6 +10,8 @@ export type SystemSceneCometActivityRegimeV1 =
   | 'EXTREME';
 
 export interface SystemSceneCometPresentationInputV1 {
+  /** Explicit V2.3 source switch: reuse a drawing algorithm, not V1 Ground Truth. */
+  readonly previewOnlyV23?: true;
   readonly proceduralId: string;
   readonly diameterKilometers: number;
   readonly iceFraction01: number;
@@ -31,7 +33,7 @@ export interface SystemSceneCometPresentationInputV1 {
 
 export interface SystemSceneCometPresentationV1 {
   readonly version: 1;
-  readonly source: 'PHASE_22_6_COMET_ACTIVITY';
+  readonly source: 'PHASE_22_6_COMET_ACTIVITY' | 'V2_3_EXPERIMENTAL';
   readonly proceduralId: string;
   readonly sourceDiameterKilometers: number;
   readonly iceFraction01: number;
@@ -160,7 +162,7 @@ export function buildSystemSceneCometPresentationV1(
 
   return Object.freeze({
     version: SYSTEM_SCENE_COMET_PRESENTATION_VERSION,
-    source: 'PHASE_22_6_COMET_ACTIVITY' as const,
+    source: input.previewOnlyV23 ? 'V2_3_EXPERIMENTAL' as const : 'PHASE_22_6_COMET_ACTIVITY' as const,
     proceduralId: input.proceduralId,
     sourceDiameterKilometers: input.diameterKilometers,
     iceFraction01: input.iceFraction01,

@@ -10,6 +10,11 @@ import {
 } from '../../../domain/discovery/discovery-state';
 
 import {
+  assessMultihostOrbitalDomainsV21,
+} from '../../../simulation/planetary/multihost-orbital-domain-assessor';
+
+
+import {
   RouterLink,
 } from '@angular/router';
 
@@ -25,6 +30,8 @@ import {
   SystemSceneSnapshotBuilder,
   type SystemSceneSnapshot,
 } from '../../system/system-scene-snapshot';
+
+import { type MultihostScientificPlanetV241 } from '../../../domain/planetary/multihost-scientific-planet-v241';
 
 import {
   STELLAR_SYSTEM_LABORATORY_CASES,
@@ -119,6 +126,10 @@ export class StellarSystemLaboratoryPage {
           ]!,
     );
 
+  /** V2 candidates are isolated QA and never written to a saved universe. */
+  readonly experimentalMultihost = signal(false);
+  readonly experimentalMultihostFamily = signal<'ALL' | 'S_TYPE' | 'P_TYPE'>('ALL');
+
   readonly rendererQaSnapshot =
     computed<SystemSceneSnapshot>(
       () => {
@@ -151,16 +162,100 @@ export class StellarSystemLaboratoryPage {
               previewStage.label,
             stellarSystemCard:
               previewStage.card,
+            // QA compares with the same complete V1 laboratory system;
+            // switching overlays must not suppress real comets or asteroid belts.
             revealMinorBodyGroundTruth:
               true,
+            experimentalMultihostPreview:
+              this.experimentalMultihost(),
+            experimentalMultihostFamily: this.experimentalMultihostFamily(),
           });
       },
     );
+
+  /** Scientific metadata is keyed by the new V2 planet identity, never by a
+   * V1 BodyLocator. The laboratory only reads this frozen snapshot. */
+  readonly scientificPlanetById = computed(() => new Map<string, MultihostScientificPlanetV241>(
+    this.rendererQaSnapshot().scientificMultihostPlanetsV241?.planets.map((item: MultihostScientificPlanetV241) => [item.id, item] as const) ?? [],
+  ));
+
+  /**
+   * V2.1 readonly QA assessment. Even V1 bodies are only linked to their frozen
+   * host: we do NOT reclassify V1 stability using a different V2 fit.
+   */
+  readonly orbitalDomainsV21 = computed(() => {
+    const snapshot = this.rendererQaSnapshot();
+    const catalog = snapshot.experimentalMultihostCatalog;
+    if (catalog === undefined) return null;
+    const legacyHostId = snapshot.multiplicityName === 'SINGLE'
+      ? 'A' as const : 'AB' as const;
+    const previewIds = new Set([
+      ...catalog.candidates.map(candidate => candidate.id),
+      ...(snapshot.formedMultihostSystemV22?.planets.map(planet => planet.id) ?? []),
+    ]);
+    return assessMultihostOrbitalDomainsV21({
+      catalog,
+      legacyHostId,
+      legacyPlanets: snapshot.planets
+        .filter(planet => !previewIds.has(planet.id))
+        .map(planet => ({ id: planet.id, label: planet.label })),
+    });
+  });
+
+  candidateCount(
+    candidates: readonly { readonly hostId: string }[],
+    hostId: string,
+  ): number {
+    return candidates.filter(candidate => candidate.hostId === hostId).length;
+  }
+
+  renderedMultihostPlanetCount(hostId?: string): number {
+    return this.rendererQaSnapshot().planets.filter(planet =>
+      planet.multihostOrbitV221 !== undefined &&
+      (hostId === undefined || planet.multihostOrbitV221.hostId === hostId),
+    ).length;
+  }
+
+  laboratoryMultihostMoonCount(): number {
+    return this.rendererQaSnapshot().moons.filter(moon =>
+      moon.previewOnlyV221 === true,
+    ).length;
+  }
+
+  moonCountForHost(hostId: string): number {
+    const planets = new Set(this.rendererQaSnapshot().planets.filter(planet =>
+      planet.multihostOrbitV221?.hostId === hostId).map(planet => planet.id));
+    return this.rendererQaSnapshot().moons.filter(moon =>
+      moon.previewOnlyV221 && planets.has(moon.hostPlanetId)).length;
+  }
+
+  minorCountForHost(hostId: string, kind: 'ASTEROID' | 'COMET'): number {
+    return this.rendererQaSnapshot().minorBodies.filter(body =>
+      body.previewOnlyV23 && body.hostIdV23 === hostId &&
+      body.minorBodyKind.name === kind).length;
+  }
+
+  beltCountForHost(hostId: string): number {
+    return (this.rendererQaSnapshot().asteroidBelts ?? []).filter(belt =>
+      belt.previewOnlyV23 && belt.id.includes(`-${hostId}-belt`)).length;
+  }
+
+  selectExperimentalMultihostFamily(family: 'ALL' | 'S_TYPE' | 'P_TYPE'): void {
+    this.experimentalMultihostFamily.set(family);
+  }
+
+  toggleExperimentalMultihost(): void {
+    this.experimentalMultihost.update((enabled: boolean) => !enabled);
+  }
 
   selectCase(
     caseId:
       StellarSystemLaboratoryCaseId,
   ): void {
+
+    // A hidden P-type filter from a previous TRIPLE must not leave the new
+    // S-only BINARY laboratory empty. This is QA selection state only.
+    this.experimentalMultihostFamily.set('ALL');
 
     this
       .selectedCaseId

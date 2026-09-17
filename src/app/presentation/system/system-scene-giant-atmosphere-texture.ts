@@ -63,8 +63,9 @@ export function buildSystemSceneGiantAtmosphereTextureV1(
   if (input.planetId.trim().length === 0) {
     throw new RangeError('planetId must not be blank.');
   }
-  if (input.atmosphere.source !== 'PHASE_19_20_DEEP_ENVELOPE') {
-    throw new RangeError('Point-25.4 requires the frozen deep-envelope presentation source.');
+  if (input.atmosphere.source !== 'PHASE_19_20_DEEP_ENVELOPE' &&
+      input.atmosphere.source !== 'V2_4_1_BULK_ENVELOPE_PRESENTATION') {
+    throw new RangeError('Point-25.4 requires a V1 atmospheric state or an explicit V2.4.1 visual-envelope source.');
   }
 
   const seedUint32 =

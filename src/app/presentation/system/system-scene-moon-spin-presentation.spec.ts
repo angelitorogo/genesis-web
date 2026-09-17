@@ -82,6 +82,33 @@ describe(
     );
 
     it(
+      'should accept V2.2.1 laboratory moon proxies without changing the slow inspection spin cadence',
+      () => {
+        const elapsedRealSeconds = 45;
+        const simulationDay =
+          timing.epochSimulationDay +
+          elapsedRealSeconds * timing.playbackDaysPerRealSecond;
+
+        const laboratoryMoon = systemSceneMoonDisplaySpinRadiansV2(
+          {
+            ...baseSpin,
+            source: 'V2_2_1_LAB_MOON',
+            rotationPeriodHours: 36,
+          },
+          simulationDay,
+          timing,
+        );
+
+        expect(laboratoryMoon).toBeCloseTo(
+          Math.PI * 2 *
+            elapsedRealSeconds /
+            SYSTEM_SCENE_MOON_DISPLAY_CYCLE_SECONDS_V2,
+          12,
+        );
+      },
+    );
+
+    it(
       'should preserve the deterministic epoch phase and keep unavailable periods static',
       () => {
         const staticMoon = systemSceneMoonDisplaySpinRadiansV2(

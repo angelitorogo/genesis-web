@@ -1,3 +1,4 @@
+import { systemSceneMultihostProjectVectorV221 } from './system-scene-multihost-radial-projection';
 import {
   isPlatformBrowser,
 } from '@angular/common';
@@ -50,6 +51,11 @@ import {
 import {
   SystemSimulationClock,
 } from './system-simulation-clock';
+
+import {
+  formatSystemSceneBinarySeparationAu,
+  systemSceneBinarySeparationAu,
+} from './system-scene-binary-separation';
 
 import {
   systemSceneScientificAccess,
@@ -310,6 +316,14 @@ export interface SystemSceneRuntime {
       SystemSceneLayerVisibility,
   ): void;
 
+  setOrbitGuidesVisible?(
+    visible: boolean,
+  ): void;
+
+  setBinarySeparationChangeHandler?(
+    handler: (separationAu: number | null) => void,
+  ): void;
+
   setPageVisible?(
     visible:
       boolean,
@@ -505,6 +519,12 @@ export class SystemScene
     signal(
       true,
     );
+
+  private readonly orbitGuidesVisibleSignal = signal(true);
+  private readonly binarySeparationLabelSignal = signal<string | null>(null);
+
+  readonly orbitGuidesVisible = this.orbitGuidesVisibleSignal.asReadonly();
+  readonly binarySeparationLabel = this.binarySeparationLabelSignal.asReadonly();
 
   private readonly moonsVisibleSignal =
     signal(
@@ -956,6 +976,12 @@ export class SystemScene
     this.applyLayerVisibility();
   }
 
+  toggleOrbitGuides(): void {
+    if (this.snapshot.orbits.length === 0) return;
+    this.orbitGuidesVisibleSignal.update(value => !value);
+    this.runtime?.setOrbitGuidesVisible?.(this.orbitGuidesVisibleSignal());
+  }
+
   toggleMoons():
     void {
 
@@ -1182,6 +1208,13 @@ export class SystemScene
             },
           );
 
+      this.runtime.setBinarySeparationChangeHandler?.(value => {
+        const label = formatSystemSceneBinarySeparationAu(value);
+        if (label !== this.binarySeparationLabelSignal()) {
+          this.binarySeparationLabelSignal.set(label);
+        }
+      });
+
       this.installResizeHandling();
       this.installVisibilityHandling();
       this.resizeRuntime();
@@ -1239,6 +1272,30 @@ export class SystemScene
       null;
   }
 
+  binaryHostAvailable(hostId: 'A' | 'B'): boolean {
+    return this.snapshot.multiplicityName === 'BINARY' &&
+      this.snapshot.stars.some(star => star.label === hostId &&
+        star.localSystemFocusRadiusScene !== undefined);
+  }
+
+  isBinaryHostFocused(hostId: 'A' | 'B'): boolean {
+    const star = this.snapshot.stars.find(body => body.label === hostId);
+    return star !== undefined && this.trackingSelectionSignal()?.bodyId === star.id;
+  }
+
+  /** Camera-only V2.3.4 local framing: track the entire SINGLE disk of A/B.
+   * No scientific selection, orbital state or persistable data is changed. */
+  focusBinaryHost(hostId: 'A' | 'B'): void {
+    if (this.snapshot.multiplicityName !== 'BINARY') return;
+    const star = this.snapshot.stars.find(body => body.label === hostId);
+    if (star === undefined || star.localSystemFocusRadiusScene === undefined) return;
+    if (this.runtime?.followBody?.(star.id) !== true) return;
+    this.trackingSelectionSignal.set(Object.freeze({
+      bodyId: star.id, kind: 'star' as const, label: star.label, title: star.title,
+    }));
+    this.bodyCardOpenSignal.set(false);
+  }
+
   resetView():
     void {
 
@@ -1288,6 +1345,9 @@ export class SystemScene
           this.capturedObjectCount() >
             0,
       });
+
+    // A separate global switch: never override the per-body layer preferences.
+    this.runtime?.setOrbitGuidesVisible?.(this.orbitGuidesVisibleSignal());
 
     const trackingSelection =
       this.trackingSelectionSignal();
@@ -1589,6 +1649,8 @@ export class SystemScene
     this.trackingSelectionSignal.set(
       null,
     );
+
+    this.binarySeparationLabelSignal.set(null);
 
     try {
       assertSystemSceneProjectionSnapshot(
@@ -1989,6 +2051,10 @@ class ThreeSystemSceneRuntime
   private readonly animatedOrbits =
     new Map<string, THREE.LineLoop>();
 
+  private orbitGuidesVisible = true;
+  private binarySeparationChangeHandler:
+    ((separationAu: number | null) => void) | null = null;
+
   private readonly orbitLocalSamplesAu =
     new Map<
       string,
@@ -2032,6 +2098,10 @@ class ThreeSystemSceneRuntime
   private habitableZoneSnapshot:
     SystemSceneHabitableZoneSnapshot | null =
     null;
+
+  /** V2.3: each circumstellar zone follows its own moving stellar anchor. */
+  private readonly multihostHabitableZoneBindings:
+    Array<{readonly group: THREE.Group; readonly snapshot: SystemSceneHabitableZoneSnapshot}> = [];
 
   private readonly asteroidBeltLayerBindings:
     Array<{
@@ -2186,6 +2256,8 @@ class ThreeSystemSceneRuntime
       this.applySimulationDay(
         simulationState.simulationDay,
       );
+
+      this.publishBinarySeparation(simulationState.simulationDay);
 
       this.updateTrackedBodyCamera(
         activeTimestampMilliseconds,
@@ -2465,10 +2537,14 @@ class ThreeSystemSceneRuntime
         ),
       );
 
-    this.cameraController.frameSystem(
-      snapshot.scale
-        .targetOuterRadiusScene,
-    );
+    const cameraFrameRadiusScene =
+      snapshot.laboratoryFrameRadiusSceneV224 ??
+        snapshot.scale.targetOuterRadiusScene;
+    // V2.2.4 changes only camera framing. Do not feed this back into scale:
+    // doing that invalidated already-projected bodies and blanked the scene.
+    this.camera.far = Math.max(1_000, cameraFrameRadiusScene * 7);
+    this.camera.updateProjectionMatrix();
+    this.cameraController.frameSystem(cameraFrameRadiusScene);
 
     this.initializeSelectionProxyBatch(
       snapshot.stars.length +
@@ -2487,6 +2563,10 @@ class ThreeSystemSceneRuntime
       this.addHabitableZone(
         snapshot.habitableZone,
       );
+    }
+
+    for (const zone of snapshot.multihostHabitableZonesV23 ?? []) {
+      this.addHabitableZone(zone, true);
     }
 
     for (
@@ -2565,6 +2645,7 @@ class ThreeSystemSceneRuntime
       snapshot.simulation
         .epochSimulationDay,
     );
+    this.publishBinarySeparation(snapshot.simulation.epochSimulationDay);
     this.renderFrame();
 
     this.updateAnimationLoop();
@@ -2650,6 +2731,49 @@ class ThreeSystemSceneRuntime
     this.renderFrame();
   }
 
+  setOrbitGuidesVisible(visible: boolean): void {
+    this.assertAlive();
+    this.orbitGuidesVisible = visible;
+    this.applyOrbitGuideVisibility();
+    this.renderFrame();
+  }
+
+  setBinarySeparationChangeHandler(
+    handler: (separationAu: number | null) => void,
+  ): void {
+    this.assertAlive();
+    this.binarySeparationChangeHandler = handler;
+  }
+
+  private publishBinarySeparation(simulationDay: number): void {
+    if (this.binarySeparationChangeHandler === null || this.currentSnapshot === null) return;
+    this.binarySeparationChangeHandler(systemSceneBinarySeparationAu(
+      this.currentSnapshot,
+      simulationDay,
+      this.motionById,
+    ));
+  }
+
+  private applyOrbitGuideVisibility(): void {
+    const snapshot = this.currentSnapshot;
+    if (snapshot === null) return;
+    for (const orbit of snapshot.orbits) {
+      const line = this.animatedOrbits.get(orbit.id);
+      if (line === undefined) continue;
+      let layerVisible = true;
+      if (orbit.kind === 'planetary') layerVisible = this.layerVisibility.planets;
+      else if (orbit.kind === 'moon') layerVisible = this.layerVisibility.moons;
+      else if (orbit.kind === 'minor-body') {
+        const key = this.minorBodyOrbitLayerKeys.get(orbit.id) ?? 'capturedObjects';
+        layerVisible = this.layerVisibility[key];
+      }
+      line.visible = this.orbitGuidesVisible && layerVisible;
+    }
+    for (const overlay of this.orbitalRiskOrbitOverlays) {
+      overlay.line.visible = this.orbitGuidesVisible && this.layerVisibility.orbitalRisk;
+    }
+  }
+
   private applyLayerVisibilityToObjects():
     void {
     for (
@@ -2715,6 +2839,10 @@ class ThreeSystemSceneRuntime
       object.visible =
         this.layerVisibility.capturedObjects;
     }
+
+    // Apply after normal layers so ON restores only guides whose own layer is ON.
+    // Risk markers and HZ/belt boundaries are separate science overlays.
+    this.applyOrbitGuideVisibility();
 
     if (
       this.trackedBodyId !==
@@ -2977,9 +3105,13 @@ class ThreeSystemSceneRuntime
 
     this.cameraController.beginBodyTracking(
       this.trackedWorldPosition,
-      systemSceneVisualExtentRadiusScene(
-        body,
-      ),
+      body.kind === 'star' &&
+        body.localSystemFocusRadiusScene !== undefined
+        ? Math.max(
+            body.radiusScene,
+            body.localSystemFocusRadiusScene * (2.25 / 8.5),
+          )
+        : systemSceneVisualExtentRadiusScene(body),
     );
 
     this.updateAnimationLoop();
@@ -3012,6 +3144,7 @@ class ThreeSystemSceneRuntime
   private addHabitableZone(
     habitableZone:
       SystemSceneHabitableZoneSnapshot,
+    multihost = false,
   ): void {
 
     const group =
@@ -3044,8 +3177,8 @@ class ThreeSystemSceneRuntime
 
     const radiativeOnly =
       visualRegime ===
-      SystemSceneHabitableZoneVisualRegimeV4
-        .CIRCUMBINARY_RADIATIVE_ONLY;
+        SystemSceneHabitableZoneVisualRegimeV4.CIRCUMBINARY_RADIATIVE_ONLY ||
+      (multihost && habitableZone.dynamicallyHabitableInnerRadiusScene === null);
 
     const radiativeNotApplicable =
       visualRegime ===
@@ -3081,10 +3214,10 @@ class ThreeSystemSceneRuntime
           transparent:
             true,
           opacity:
-            circumstellar
-              ? 0.14
-              : radiativeOnly
-                ? 0.024
+            radiativeOnly
+              ? 0.024
+              : circumstellar
+                ? 0.14
                 : partiallyStable
                   ? 0.052
                   : 0.08,
@@ -3121,10 +3254,10 @@ class ThreeSystemSceneRuntime
       );
 
       const radiativeBoundaryOpacity =
-        circumstellar
-          ? 0.58
-          : radiativeOnly
-            ? 0.34
+        radiativeOnly
+          ? 0.34
+          : circumstellar
+            ? 0.58
             : partiallyStable
               ? 0.42
               : 0.48;
@@ -3282,10 +3415,12 @@ class ThreeSystemSceneRuntime
       }
     }
 
-    this.habitableZoneGroup =
-      group;
-    this.habitableZoneSnapshot =
-      habitableZone;
+    if (multihost) {
+      this.multihostHabitableZoneBindings.push({group, snapshot: habitableZone});
+    } else {
+      this.habitableZoneGroup = group;
+      this.habitableZoneSnapshot = habitableZone;
+    }
 
     this.habitableZoneLayerObjects.push(
       group,
@@ -3988,7 +4123,14 @@ class ThreeSystemSceneRuntime
           orbit.linearScenePerAu ??
           null;
 
-        if (
+        if (orbit.hostRadialProjectionV22 !== undefined) {
+          const projected = systemSceneMultihostProjectVectorV221(
+            sample, orbit.hostRadialProjectionV22, orbit.motionScale,
+          );
+          xScene = projected.x * orbitPostProjectionScale;
+          yScene = projected.y * orbitPostProjectionScale;
+          zScene = projected.z * orbitPostProjectionScale;
+        } else if (
           linearScenePerAu !==
             null &&
           Number.isFinite(
@@ -5450,6 +5592,12 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    for (const binding of this.multihostHabitableZoneBindings) {
+      binding.group.position.copy(this.positionFromContributions(
+        binding.snapshot.anchorMotionContributions, simulationDay, sceneScale,
+      ));
+    }
+
     for (
       const binding
       of this.asteroidBeltLayerBindings
@@ -5775,6 +5923,7 @@ class ThreeSystemSceneRuntime
       null;
     this.habitableZoneSnapshot =
       null;
+    this.multihostHabitableZoneBindings.length = 0;
     this.asteroidBeltLayerBindings.length =
       0;
     this.orbitalRiskOrbitOverlays.length =

@@ -95,6 +95,21 @@
     }
   }
 
+  &__binary-separation {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.38rem;
+    padding: .27rem .48rem;
+    border: 1px solid rgba(106, 215, 255, .16);
+    border-radius: .4rem;
+    background: rgba(106, 215, 255, .045);
+    color: rgba(190, 228, 243, .88);
+    font: 700 .5rem var(--genesis-font-mono);
+    letter-spacing: .04em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
   &__layer-button--active {
     border-color: rgba(106, 215, 255, .7) !important;
     background: rgba(106, 215, 255, .2) !important;

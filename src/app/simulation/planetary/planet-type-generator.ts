@@ -347,7 +347,7 @@ function classifyV1(
     PlanetarySystemHabitableZoneEvolutionRegime.REFERENCE_ONLY;
 
   const planetType =
-    classifyPlanetTypeV1(
+    classifyPlanetTypeFromBulkV1(
       physicalProperties,
       habitableZoneClassification
         .radiativeRelation,
@@ -374,9 +374,11 @@ function classifyV1(
   );
 }
 
-function classifyPlanetTypeV1(
+/** Shared physical phenotype rules: V1 calls this with its native PlanetPhysicalProperties;
+ * V2.4.1 calls it with frozen V2.2 bulk values without inventing V1 identities. */
+export function classifyPlanetTypeFromBulkV1(
   physicalProperties:
-    PlanetPhysicalProperties,
+    Pick<PlanetPhysicalProperties, 'massEarth' | 'radiusEarth' | 'envelopeMassFraction01'>,
 
   radiativeRelation:
     PlanetaryOrbitHabitableZoneRelation,
@@ -505,7 +507,7 @@ function classifyPlanetTypeV1(
 
 function isIceGiantV1(
   physicalProperties:
-    PlanetPhysicalProperties,
+    Pick<PlanetPhysicalProperties, 'massEarth' | 'radiusEarth' | 'envelopeMassFraction01'>,
 
   envelopeMassFraction01:
     number,
@@ -530,7 +532,7 @@ function isIceGiantV1(
 
 function isGasGiantV1(
   physicalProperties:
-    PlanetPhysicalProperties,
+    Pick<PlanetPhysicalProperties, 'massEarth' | 'radiusEarth' | 'envelopeMassFraction01'>,
 
   envelopeMassFraction01:
     number,

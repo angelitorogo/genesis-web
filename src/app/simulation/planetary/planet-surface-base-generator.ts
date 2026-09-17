@@ -318,42 +318,13 @@ function generateSurfaceV1(
     PlanetInternalComposition,
 ): PlanetSurfaceBaseProperties {
 
-  const patternRandom =
-    randomForBodyBranchV1(
-      typeClassification.bodySeed,
-      V1_PLANET_SURFACE_PATTERN_BRANCH,
-    );
-
-  const albedoRandom =
-    randomForBodyBranchV1(
-      typeClassification.bodySeed,
-      V1_PLANET_SURFACE_ALBEDO_BRANCH,
-    );
-
-  const surfaceRegime =
-    surfaceRegimeForTypeV1(
-      typeClassification.planetType,
-    );
-
-  const surfaceFractions =
-    surfaceFractionsV1(
-      typeClassification,
-      internalComposition,
-      patternRandom.nextDouble(),
-    );
-
-  const referenceBondAlbedo01 =
-    referenceBondAlbedoV1(
-      typeClassification,
-      surfaceFractions,
-      albedoRandom.nextDouble(),
-    );
-
-  const baseSolidSurfaceRoughness01 =
-    solidSurfaceRoughnessV1(
-      typeClassification.planetType,
-      patternRandom.nextDouble(),
-    );
+  const surface = buildPlanetSurfaceFromInputsV1({
+    planetType: typeClassification.planetType,
+    bodySeed: typeClassification.bodySeed,
+    iceBearingFractionOfSolids01: internalComposition.iceBearingFractionOfSolids01,
+    tidalHeatingProxy: typeClassification.tidalHeatingProxy,
+    referenceMeanInsolationEarth: typeClassification.referenceMeanInsolationEarth,
+  });
 
   return new PlanetSurfaceBaseProperties(
     typeClassification.planetOrdinal,
@@ -363,14 +334,52 @@ function generateSurfaceV1(
     typeClassification.sourceEnvelopeMassFraction01,
     internalComposition.iceBearingFractionOfSolids01,
     typeClassification.referenceMeanInsolationEarth,
-    surfaceRegime,
-    referenceBondAlbedo01,
-    surfaceFractions.mineral,
-    surfaceFractions.volatileBearing,
-    surfaceFractions.molten,
-    surfaceFractions.deepEnvelope,
-    baseSolidSurfaceRoughness01,
+    surface.surfaceRegime,
+    surface.referenceBondAlbedo01,
+    surface.baseMineralSurfaceFraction01,
+    surface.baseVolatileBearingSurfaceFraction01,
+    surface.baseMoltenSurfaceFraction01,
+    surface.baseDeepEnvelopeSurfaceFraction01,
+    surface.baseSolidSurfaceRoughness01,
   );
+}
+
+/** Point-19.6 V1 *calculation* shared across V1/V2; the caller owns provenance.
+ * This does not mint a V1 Planet, BodyLocator or save identity for V2 inputs. */
+export function buildPlanetSurfaceFromInputsV1(input: Readonly<{
+  planetType: PlanetType;
+  bodySeed: BodySeed;
+  iceBearingFractionOfSolids01: number;
+  tidalHeatingProxy: number;
+  referenceMeanInsolationEarth: number;
+}>): Readonly<{
+  surfaceRegime: PlanetSurfaceBaseRegime;
+  referenceBondAlbedo01: number;
+  baseMineralSurfaceFraction01: number;
+  baseVolatileBearingSurfaceFraction01: number;
+  baseMoltenSurfaceFraction01: number;
+  baseDeepEnvelopeSurfaceFraction01: number;
+  baseSolidSurfaceRoughness01: number | null;
+}> {
+  const pattern = randomForBodyBranchV1(input.bodySeed, V1_PLANET_SURFACE_PATTERN_BRANCH);
+  const albedo = randomForBodyBranchV1(input.bodySeed, V1_PLANET_SURFACE_ALBEDO_BRANCH);
+  const source = {
+    planetType: input.planetType,
+    tidalHeatingProxy: input.tidalHeatingProxy,
+    referenceMeanInsolationEarth: input.referenceMeanInsolationEarth,
+  };
+  const fractions = surfaceFractionsV1(source, {
+    iceBearingFractionOfSolids01: input.iceBearingFractionOfSolids01,
+  }, pattern.nextDouble());
+  return Object.freeze({
+    surfaceRegime: surfaceRegimeForTypeV1(input.planetType),
+    referenceBondAlbedo01: referenceBondAlbedoV1(source, fractions, albedo.nextDouble()),
+    baseMineralSurfaceFraction01: fractions.mineral,
+    baseVolatileBearingSurfaceFraction01: fractions.volatileBearing,
+    baseMoltenSurfaceFraction01: fractions.molten,
+    baseDeepEnvelopeSurfaceFraction01: fractions.deepEnvelope,
+    baseSolidSurfaceRoughness01: solidSurfaceRoughnessV1(input.planetType, pattern.nextDouble()),
+  });
 }
 
 function surfaceRegimeForTypeV1(
@@ -410,10 +419,10 @@ function surfaceRegimeForTypeV1(
 
 function surfaceFractionsV1(
   typeClassification:
-    PlanetTypeClassification,
+    Pick<PlanetTypeClassification, 'planetType' | 'tidalHeatingProxy' | 'referenceMeanInsolationEarth'>,
 
   internalComposition:
-    PlanetInternalComposition,
+    Pick<PlanetInternalComposition, 'iceBearingFractionOfSolids01'>,
 
   patternDraw:
     number,
@@ -579,7 +588,7 @@ function solidFractions(
 
 function normalizedHeatingStrengthV1(
   typeClassification:
-    PlanetTypeClassification,
+    Pick<PlanetTypeClassification, 'tidalHeatingProxy' | 'referenceMeanInsolationEarth'>,
 ): number {
 
   const tidalStrength =
@@ -610,7 +619,7 @@ function normalizedHeatingStrengthV1(
 
 function referenceBondAlbedoV1(
   typeClassification:
-    PlanetTypeClassification,
+    Pick<PlanetTypeClassification, 'planetType'>,
 
   surfaceFractions:
     SurfaceFractionsV1,

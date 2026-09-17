@@ -6,6 +6,9 @@ export type SystemSceneSphereBodyKind =
 export type SystemSceneBodySpinSource =
   | 'UNAVAILABLE'
   | 'PLANET_19_3'
+  | 'QA_PREVIEW_V2'
+  | 'V2_2_FORMED'
+  | 'V2_2_1_LAB_MOON'
   | 'MOON_21_4';
 
 export interface SystemSceneBodySpinSnapshot {
@@ -192,9 +195,21 @@ export function systemSceneBodyDisplaySpinRadians(
     timing,
   );
 
+  // The V2 QA spheres are NOT scientifically generated planets. Give their
+  // surfaces an explicitly visual turn every 75 real seconds, leaving all
+  // authoritative planet/moon spin data and the saved simulation untouched.
+  if (spin.source === 'QA_PREVIEW_V2') {
+    const elapsedRealSeconds = (simulationDay - timing.epochSimulationDay) /
+      timing.playbackDaysPerRealSecond;
+    return normalizeRadians(
+      degreesToRadians(spin.epochPhaseDegrees) +
+      elapsedRealSeconds * TWO_PI / 75,
+    );
+  }
+
   if (
-    spin.source !==
-      'PLANET_19_3' ||
+    (spin.source !== 'PLANET_19_3' &&
+     spin.source !== 'V2_2_FORMED') ||
     spin.isSynchronized ||
     spin.rotationPeriodHours ===
       null
@@ -363,6 +378,8 @@ function assertSpin(
   if (
     spin.source !==
       'UNAVAILABLE' &&
+    spin.source !==
+      'QA_PREVIEW_V2' &&
     spin.rotationPeriodHours ===
       null
   ) {

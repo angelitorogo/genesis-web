@@ -66,6 +66,13 @@ describe(
     let setPageVisible:
       NonNullable<SystemSceneRuntime['setPageVisible']>;
 
+    let setOrbitGuidesVisible:
+      NonNullable<SystemSceneRuntime['setOrbitGuidesVisible']>;
+
+    const capturedBinarySeparation = {
+      handler: null as ((value: number | null) => void) | null,
+    };
+
     let runtimeFactory:
       ReturnType<typeof vi.fn>;
 
@@ -77,6 +84,7 @@ describe(
 
         capturedSelectionHandler =
           null;
+        capturedBinarySeparation.handler = null;
 
         resize =
           vi.fn(
@@ -151,6 +159,8 @@ describe(
             ): void => {},
           );
 
+        setOrbitGuidesVisible = vi.fn((_visible: boolean): void => {});
+
         const runtime:
           SystemSceneRuntime =
           {
@@ -160,6 +170,10 @@ describe(
             followBody,
             stopFollowing,
             setLayerVisibility,
+            setOrbitGuidesVisible,
+            setBinarySeparationChangeHandler: handler => {
+              capturedBinarySeparation.handler = handler;
+            },
             setPageVisible,
             dispose,
           };
@@ -203,6 +217,86 @@ describe(
           .compileComponents();
       },
     );
+
+    it('toggles every orbital guide independently of the existing body layers and restores the previous setting', () => {
+      const fixture = TestBed.createComponent(SystemScene);
+      fixture.componentRef.setInput('snapshot', sceneSnapshot());
+      fixture.detectChanges();
+      const button = (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLButtonElement>('[data-testid="system-scene-layer-orbit-guides"]');
+      expect(button?.disabled).toBe(false);
+      expect(button?.getAttribute('aria-pressed')).toBe('true');
+      expect(setOrbitGuidesVisible).toHaveBeenLastCalledWith(true);
+      button?.click();
+      fixture.detectChanges();
+      expect(button?.getAttribute('aria-pressed')).toBe('false');
+      expect(fixture.componentInstance.orbitGuidesVisible()).toBe(false);
+      expect(setOrbitGuidesVisible).toHaveBeenLastCalledWith(false);
+      expect(fixture.componentInstance.planetsVisible()).toBe(true);
+      button?.click();
+      fixture.detectChanges();
+      expect(button?.getAttribute('aria-pressed')).toBe('true');
+      expect(setOrbitGuidesVisible).toHaveBeenLastCalledWith(true);
+    });
+
+    it('displays the physical binary measurement received from animation frames and hides it for SINGLE/TRIPLE', () => {
+      const fixture = TestBed.createComponent(SystemScene);
+      const binary = sceneSnapshot();
+      fixture.componentRef.setInput('snapshot', binary);
+      fixture.detectChanges();
+      const label = () => (fixture.nativeElement as HTMLElement)
+        .querySelector<HTMLOutputElement>('[data-testid="system-scene-binary-separation"]');
+      expect(label()?.textContent).toContain('— UA');
+      expect(capturedBinarySeparation.handler).not.toBeNull();
+      capturedBinarySeparation.handler?.(4.25);
+      fixture.detectChanges();
+      expect(label()?.textContent).toContain('4,25 UA');
+      capturedBinarySeparation.handler?.(4.75);
+      fixture.detectChanges();
+      expect(label()?.textContent).toContain('4,75 UA');
+      fixture.componentRef.setInput('snapshot', {...binary, multiplicityName: 'SINGLE'});
+      fixture.detectChanges();
+      expect(label()).toBeNull();
+      fixture.componentRef.setInput('snapshot', {...binary, multiplicityName: 'TRIPLE'});
+      fixture.detectChanges();
+      expect(label()).toBeNull();
+    });
+
+    it('V2.3.4 changes ONLY the camera between general view and moving local A/B views', () => {
+      const fixture = TestBed.createComponent(SystemScene);
+      const original = sceneSnapshot();
+      const stars = Object.freeze(original.stars.map(star => Object.freeze({
+        ...star, localSystemFocusRadiusScene: 4.92,
+      })));
+      const binary = Object.freeze({...original, stars, laboratoryFrameRadiusSceneV224: 22});
+      fixture.componentRef.setInput('snapshot', binary);
+      fixture.detectChanges();
+      const host = fixture.nativeElement as HTMLElement;
+      const button = (id: string) => host.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`)!;
+      expect(button('system-scene-focus-host-a').disabled).toBe(false);
+      expect(button('system-scene-focus-host-b').disabled).toBe(false);
+      button('system-scene-focus-host-a').click();
+      fixture.detectChanges();
+      expect(followBody).toHaveBeenLastCalledWith(stars[0]!.id);
+      expect(button('system-scene-focus-host-a').getAttribute('aria-pressed')).toBe('true');
+      expect(fixture.componentInstance.selection()).toBeNull();
+      button('system-scene-focus-host-b').click();
+      fixture.detectChanges();
+      expect(followBody).toHaveBeenLastCalledWith(stars[1]!.id);
+      expect(button('system-scene-focus-host-b').getAttribute('aria-pressed')).toBe('true');
+      expect(button('system-scene-reset-view').textContent).toContain('VISTA GENERAL');
+      button('system-scene-reset-view').click();
+      fixture.detectChanges();
+      expect(resetView).toHaveBeenCalledTimes(1);
+      expect(fixture.componentInstance.trackingSelection()).toBeNull();
+      expect(binary.stars).toBe(stars);
+      expect(binary.motions).toBe(original.motions);
+      expect(binary.scale).toBe(original.scale);
+      fixture.componentRef.setInput('snapshot', {...binary, multiplicityName: 'TRIPLE'});
+      fixture.detectChanges();
+      expect(host.querySelector('[data-testid="system-scene-focus-host-a"]')).toBeNull();
+      expect(host.querySelector('[data-testid="system-scene-focus-host-b"]')).toBeNull();
+    });
 
     it(
       'should initialize the injected Three.js runtime, render the exact snapshot and expose READY state',

@@ -117,6 +117,42 @@ describe(
       },
     );
 
+    it('keeps V2.2 formed-planet physical rotation but limits only its visual cadence', () => {
+      const spin = Object.freeze({
+        source: 'V2_2_FORMED' as const,
+        rotationPeriodHours: 17,
+        axialTiltDegrees: null,
+        isRetrograde: null,
+        isSynchronized: false,
+        epochPhaseDegrees: 25,
+      } satisfies SystemSceneBodySpinSnapshot);
+      const timing = Object.freeze({epochSimulationDay: 100, playbackDaysPerRealSecond: 5});
+      const start = systemSceneBodyDisplaySpinRadians(spin, 100, timing);
+      const after = systemSceneBodyDisplaySpinRadians(spin, 100 + 5 * 7.5, timing);
+      expect(start).not.toBe(after);
+      expect(spin.rotationPeriodHours).toBe(17);
+      expect(systemSceneBodySpinRadians(spin, 100.25))
+        .not.toBe(systemSceneBodySpinRadians(spin, 100));
+    });
+
+    it('turns only QA test spheres at a legible 75-second display cadence', () => {
+      const spin = Object.freeze({
+        source: 'QA_PREVIEW_V2' as const,
+        rotationPeriodHours: null,
+        axialTiltDegrees: null,
+        isRetrograde: null,
+        isSynchronized: false,
+        epochPhaseDegrees: 30,
+      } satisfies SystemSceneBodySpinSnapshot);
+      const timing = Object.freeze({epochSimulationDay: 100, playbackDaysPerRealSecond: 2});
+      const start = systemSceneBodyDisplaySpinRadians(spin, 100, timing);
+      const quarter = systemSceneBodyDisplaySpinRadians(spin, 100 + 2 * 75 / 4, timing);
+      expect(quarter - start).toBeCloseTo(Math.PI / 2, 9);
+      expect(spin.rotationPeriodHours).toBeNull();
+      expect(systemSceneBodyDisplaySpinRadians(spin, 100 + 2 * 75, timing))
+        .toBeCloseTo(start, 9);
+    });
+
     it(
       'should preserve a fixed presentation phase when authoritative spin is unavailable',
       () => {

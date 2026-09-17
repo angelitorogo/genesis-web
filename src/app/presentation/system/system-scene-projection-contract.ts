@@ -1,3 +1,4 @@
+import { projectSystemSceneMotionContributions } from './system-scene-motion-projection';
 import {
   type SystemSceneBodySnapshot,
   type SystemSceneMinorBodySnapshot,
@@ -49,6 +50,120 @@ export function assertSystemSceneProjectionSnapshot(
     snapshot.address,
     'snapshot.address',
   );
+
+  // V2.2's scientific formation aggregate is opt-in and immutable. Its
+  // planet identities must be separate from the frozen V1 snapshot identities.
+  const formedV22 = snapshot.formedMultihostSystemV22;
+  if (formedV22 !== undefined) {
+    assertFrozen(formedV22, 'snapshot.formedMultihostSystemV22');
+    assertFrozenArray(formedV22.planets, 'snapshot.formedMultihostSystemV22.planets',
+      (planet, label) => {
+        assertFrozen(planet, label);
+        if (planet.origin !== 'V2_2_FORMED' ||
+            !(planet.periapsisAu > 0 && planet.periapsisAu < planet.apoapsisAu) ||
+            !(planet.massEarth > 0)) {
+          throw new RangeError(`${label}: invalid V2.2 formed body.`);
+        }
+      });
+    assertFrozenArray(formedV22.disks, 'snapshot.formedMultihostSystemV22.disks',
+      (disk, label) => {
+        assertFrozen(disk, label);
+        assertFrozenArray(disk.planets, `${label}.planets`, assertFrozen);
+      });
+    const formedIds = new Set(formedV22.planets.map(planet => planet.id));
+    if (snapshot.planets.some(planet => planet.id.startsWith('preview-')) ||
+        snapshot.planets.some(planet => planet.id.startsWith('v22-') &&
+          !formedIds.has(planet.id))) {
+      throw new RangeError('V2.2 renderer cannot mix V2.1 test particles or foreign formation identities.');
+    }
+    const motions = new Map(snapshot.motions.map(motion => [motion.id, motion]));
+    const orbits = new Map(snapshot.orbits.map(orbit => [orbit.id, orbit]));
+    const renderedPlanets = new Map(snapshot.planets.map(planet => [planet.id, planet]));
+    for (const planet of snapshot.planets.filter(body => formedIds.has(body.id))) {
+      const host = planet.multihostOrbitV221;
+      const orbit = planet.orbitId === null ? undefined : orbits.get(planet.orbitId);
+      const motion = host === undefined ? undefined : motions.get(host.motionId);
+      const local = host === undefined ? undefined : planet.motionContributions.find(
+        contribution => contribution.motionId === host.motionId);
+      if (host === undefined || !Object.isFrozen(host) ||
+          !formedV22.planets.some(candidate => candidate.id === planet.id &&
+            candidate.hostId === host.hostId && candidate.periodDays === host.orbitalPeriodDays) ||
+          host.translationState !== 'ACTIVE' ||
+          !(host.orbitalPeriodDays > 0) || motion === undefined ||
+          orbit === undefined || orbit.kind !== 'planetary' ||
+          orbit.motionId !== host.motionId || !(orbit.semiMajorScene > 0) ||
+          local === undefined || !(local.presentationTimeScale !== undefined &&
+          local.presentationTimeScale > 0) ||
+          planet.motionContributions.length < (host.hostId === 'ABC' ? 1 :
+            host.hostId === 'AB' && snapshot.multiplicityName === 'BINARY' ? 1 : 2)) {
+        throw new RangeError(`V2.2.1 ${planet.id}: no rendered planet without host, orbit guide and live translation.`);
+      }
+      // A radial mapping that exists only on the body (not the guide) created
+      // the apparent orbitless / free-floating worlds reported in V2.2.
+      if (local.hostRadialProjectionV22 !== orbit.hostRadialProjectionV22) {
+        throw new RangeError(`V2.2.1 ${planet.id}: orbit and translation must share one radial projection.`);
+      }
+      const later = projectSystemSceneMotionContributions(
+        planet.motionContributions, id => motions.get(id),
+        snapshot.simulation.epochSimulationDay +
+          15 * snapshot.simulation.playbackDaysPerRealSecond, snapshot.scale);
+      const moved = Math.hypot(later.x - planet.position.x,
+        later.y - planet.position.y, later.z - planet.position.z);
+      if (!(Number.isFinite(moved) && moved > 1e-7)) {
+        throw new RangeError(`V2.2.1 ${planet.id}: planet must actually translate in the laboratory.`);
+      }
+    }
+    for (const moon of snapshot.moons.filter(item => item.previewOnlyV221 === true)) {
+      if (!renderedPlanets.has(moon.hostPlanetId) || !/\-moon-qa(?:-[12])?$/.test(moon.id) ||
+          moon.spin.source !== 'V2_2_1_LAB_MOON' ||
+          moon.orbitId === null || !orbits.has(moon.orbitId) ||
+          moon.motionContributions.length !==
+            renderedPlanets.get(moon.hostPlanetId)!.motionContributions.length + 1) {
+        throw new RangeError('V2.2.1 moon proxy must be explicitly QA and orbit a visible V2 planet.');
+      }
+    }
+    // V2.3 experimental inventory must never masquerade as persisted V1
+    // small bodies: every object follows one explicit stellar host and guide.
+    if (snapshot.multiplicityName === 'BINARY') {
+      if (snapshot.layers.minorBodyCount !== snapshot.minorBodies.length) {
+        throw new RangeError('V2.3 minor-body layer count must equal its visible inventory.');
+      }
+      for (const body of snapshot.minorBodies.filter(item => item.previewOnlyV23)) {
+        const star = snapshot.stars.find(item => item.label === body.hostIdV23);
+        const orbit = orbits.get(body.orbitId);
+        const local = body.motionContributions.at(-1);
+        const motion = local === undefined ? undefined : motions.get(local.motionId);
+        const asteroid = body.minorBodyKind.name === 'ASTEROID';
+        if (star === undefined || orbit?.kind !== 'minor-body' ||
+            orbit.anchorMotionContributions !== star.motionContributions ||
+            local === undefined || motion === undefined || !(motion.periodDays > 0) ||
+            orbit.motionId !== local.motionId ||
+            orbit.hostRadialProjectionV22 !== local.hostRadialProjectionV22 ||
+            body.motionContributions.length !== star.motionContributions.length + 1 ||
+            !star.motionContributions.every((item, i) => body.motionContributions[i] === item) ||
+            (asteroid ? body.asteroidPresentation?.source !== 'V2_3_EXPERIMENTAL' ||
+                body.cometPresentation !== null :
+                body.cometPresentation?.source !== 'V2_3_EXPERIMENTAL' ||
+                body.asteroidPresentation !== null)) {
+          throw new RangeError(`V2.3 ${body.id}: small body has no valid experimental provenance, stellar host or orbit.`);
+        }
+      }
+      for (const belt of (snapshot.asteroidBelts ?? []).filter(item => item.previewOnlyV23)) {
+        const star = snapshot.stars.find(item => item.label ===
+          (belt.id.includes('-A-belt') ? 'A' : belt.id.includes('-B-belt') ? 'B' : 'NONE'));
+        if (star === undefined || belt.anchorMotionContributions !== star.motionContributions ||
+            !(belt.innerEdgeAu > 0 && belt.innerEdgeAu < belt.peakAu! &&
+              belt.peakAu! < belt.outerEdgeAu && belt.innerRadiusScene > 0 &&
+              belt.innerRadiusScene < belt.peakRadiusScene! &&
+              belt.peakRadiusScene! < belt.outerRadiusScene)) {
+          throw new RangeError(`V2.3 ${belt.id}: invalid experimental circumstellar belt.`);
+        }
+      }
+    }
+    if (snapshot.layers.moonCount !== snapshot.moons.length) {
+      throw new RangeError('V2.2.1 moon layer count must match visible V1 and QA moons.');
+    }
+  }
 
   assertFrozenArray(
     snapshot.stars,
@@ -118,14 +233,11 @@ export function assertSystemSceneProjectionSnapshot(
             orbit.postProjectionScale,
           ) ||
           orbit.postProjectionScale <=
-            0 ||
-          orbit.postProjectionScale >
-            1 +
-              1e-9
+            0
         )
       ) {
         throw new RangeError(
-          `${label}.postProjectionScale must be finite in (0, 1].`,
+          `${label}.postProjectionScale must be finite and > 0.`,
         );
       }
     },
@@ -575,6 +687,42 @@ export function assertSystemSceneProjectionSnapshot(
       'snapshot.habitableZone.anchorMotionContributions',
     );
   }
+
+  if (snapshot.multihostHabitableZonesV23 !== undefined) {
+    if (snapshot.multiplicityName !== 'BINARY') {
+      throw new RangeError('V2.3 local HZ is restricted to the binary laboratory.');
+    }
+    const ids = new Set<string>();
+    assertFrozenArray(snapshot.multihostHabitableZonesV23,
+      'snapshot.multihostHabitableZonesV23', (zone, label) => {
+        assertFrozen(zone, label);
+        assertMotionContributions(zone.anchorMotionContributions,
+          `${label}.anchorMotionContributions`);
+        const host = snapshot.stars.find(star => star.label === zone.hostId);
+        if ((zone.hostId !== 'A' && zone.hostId !== 'B') || ids.has(zone.hostId) ||
+          host === undefined ||
+          zone.topology !== 'CIRCUMSTELLAR' ||
+          zone.source !== 'V1_FLUX_REFERENCE_V23' ||
+          zone.anchorMotionContributions !== host.motionContributions ||
+          !(zone.radiativeInnerEdgeAu > 0 &&
+            zone.radiativeOuterEdgeAu > zone.radiativeInnerEdgeAu) ||
+          !(zone.radiativeInnerRadiusScene > 0 &&
+            zone.radiativeOuterRadiusScene > zone.radiativeInnerRadiusScene) ||
+          (zone.dynamicallyHabitableInnerEdgeAu === null) !==
+            (zone.dynamicallyHabitableOuterEdgeAu === null) ||
+          (zone.dynamicallyHabitableInnerRadiusScene === null) !==
+            (zone.dynamicallyHabitableOuterRadiusScene === null)) {
+          throw new RangeError(`${label}: invalid or duplicate host-local HZ.`);
+        }
+        if (zone.dynamicallyHabitableInnerEdgeAu !== null && (
+          zone.dynamicallyHabitableOuterEdgeAu! <= zone.dynamicallyHabitableInnerEdgeAu ||
+          zone.dynamicallyHabitableInnerEdgeAu < zone.radiativeInnerEdgeAu - 1e-10 ||
+          zone.dynamicallyHabitableOuterEdgeAu! > zone.radiativeOuterEdgeAu + 1e-10)) {
+          throw new RangeError(`${label}: dynamical HZ must be within its radiative reference.`);
+        }
+        ids.add(zone.hostId);
+      });
+  }
 }
 
 function assertBodyProjection(
@@ -719,6 +867,47 @@ function assertMotionContributions(
         contributionLabel,
       );
 
+      if (contribution.hostRadialProjectionV22 !== undefined) {
+        const radial = contribution.hostRadialProjectionV22;
+        assertFrozen(radial, `${contributionLabel}.hostRadialProjectionV22`);
+        if (!(radial.firstPeriapsisAu > 0 &&
+              radial.lastApoapsisAu > radial.firstPeriapsisAu &&
+              radial.firstPeriapsisScene > 0 &&
+              radial.lastApoapsisScene > radial.firstPeriapsisScene) ||
+            contribution.linearScenePerAu !== undefined) {
+          throw new RangeError('V2.2 host radial mapping must be monotone and exclusive of a linear override.');
+        }
+        if (radial.singleSystemScaleV233 !== undefined) {
+          const single = radial.singleSystemScaleV233;
+          assertFrozen(single, `${contributionLabel}.singleSystemScaleV233`);
+          if (single.projectionMode !== 'SINGLE_PRESENTATION_V3' ||
+              !(single.outerRadiusAu >= radial.lastApoapsisAu) ||
+              !(single.targetOuterRadiusScene > 0)) {
+            throw new RangeError('V2.3.3 binary host must reuse a valid frozen V1 SINGLE V3 projection.');
+          }
+        }
+        if (radial.orbitLadderV233 !== undefined) {
+          const ladder = radial.orbitLadderV233;
+          assertFrozen(ladder, `${contributionLabel}.orbitLadderV233`);
+          if (radial.singleSystemScaleV233 === undefined || ladder.length < 3 ||
+              ladder[0]!.radiusAu !== radial.firstPeriapsisAu ||
+              ladder[0]!.radiusScene !== radial.firstPeriapsisScene ||
+              ladder.at(-1)!.radiusAu !== radial.lastApoapsisAu ||
+              ladder.at(-1)!.radiusScene !== radial.lastApoapsisScene) {
+            throw new RangeError('V2.3.3 binary orbit ladder must span the complete local disk.');
+          }
+          for (let index = 0; index < ladder.length; index++) {
+            const anchor = ladder[index]!;
+            assertFrozen(anchor, `${contributionLabel}.orbitLadderV233[${index}]`);
+            if (!(Number.isFinite(anchor.radiusAu) && Number.isFinite(anchor.radiusScene)) ||
+                (index > 0 && !(anchor.radiusAu > ladder[index - 1]!.radiusAu &&
+                  anchor.radiusScene > ladder[index - 1]!.radiusScene))) {
+              throw new RangeError('V2.3.3 binary orbit ladder must be strictly monotonic.');
+            }
+          }
+        }
+      }
+
       if (
         contribution.postProjectionScale !==
           undefined &&
@@ -727,14 +916,11 @@ function assertMotionContributions(
             contribution.postProjectionScale,
           ) ||
           contribution.postProjectionScale <=
-            0 ||
-          contribution.postProjectionScale >
-            1 +
-              1e-9
+            0
         )
       ) {
         throw new RangeError(
-          `${contributionLabel}.postProjectionScale must be finite in (0, 1].`,
+          `${contributionLabel}.postProjectionScale must be finite and > 0.`,
         );
       }
     },

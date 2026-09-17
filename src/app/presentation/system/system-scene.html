@@ -135,10 +135,55 @@
 
     <button
       type="button"
+      data-testid="system-scene-layer-orbit-guides"
+      [attr.aria-pressed]="orbitGuidesVisible()"
+      [attr.aria-label]="orbitGuidesVisible() ? 'Ocultar líneas orbitales' : 'Mostrar líneas orbitales'"
+      [disabled]="snapshot.orbits.length === 0"
+      [class.system-scene__layer-button--active]="orbitGuidesVisible()"
+      (click)="toggleOrbitGuides()"
+    >
+      ÓRBITAS · {{ orbitGuidesVisible() ? 'ON' : 'OFF' }}
+    </button>
+
+    @if (snapshot.multiplicityName === 'BINARY') {
+      <output
+        class="system-scene__binary-separation"
+        data-testid="system-scene-binary-separation"
+        aria-label="Distancia física instantánea entre las estrellas A y B en unidades astronómicas"
+      >
+        DISTANCIA A–B · {{ binarySeparationLabel() ?? '—' }} UA
+      </output>
+    }
+
+    @if (snapshot.multiplicityName === 'BINARY' && snapshot.laboratoryFrameRadiusSceneV224 !== undefined) {
+      <button
+        type="button"
+        data-testid="system-scene-focus-host-a"
+        [disabled]="!binaryHostAvailable('A')"
+        [attr.aria-pressed]="isBinaryHostFocused('A')"
+        [class.system-scene__layer-button--active]="isBinaryHostFocused('A')"
+        (click)="focusBinaryHost('A')"
+      >
+        ENFOCAR A
+      </button>
+      <button
+        type="button"
+        data-testid="system-scene-focus-host-b"
+        [disabled]="!binaryHostAvailable('B')"
+        [attr.aria-pressed]="isBinaryHostFocused('B')"
+        [class.system-scene__layer-button--active]="isBinaryHostFocused('B')"
+        (click)="focusBinaryHost('B')"
+      >
+        ENFOCAR B
+      </button>
+    }
+
+    <button
+      type="button"
       data-testid="system-scene-reset-view"
       (click)="resetView()"
     >
-      {{ trackingSelection() ? 'VOLVER AL SISTEMA' : 'RECENTRAR' }}
+      {{ snapshot.multiplicityName === 'BINARY' && snapshot.laboratoryFrameRadiusSceneV224 !== undefined ? 'VISTA GENERAL' : trackingSelection() ? 'VOLVER AL SISTEMA' : 'RECENTRAR' }}
     </button>
   </div>
 
@@ -565,7 +610,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.layers.habitableZoneAvailable ? 1 : 0 }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · LOD · INST · CACHE · MOON SURF · ATM · TERM · NIGHT · GLSL · WGPU {{ renderInfo()?.webGpuEvaluation === 'API_AVAILABLE_NOT_SELECTED' ? 'OPT' : 'N/A' }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.multihostHabitableZonesV23?.length ?? (snapshot.layers.habitableZoneAvailable ? 1 : 0) }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · LOD · INST · CACHE · MOON SURF · ATM · TERM · NIGHT · GLSL · WGPU {{ renderInfo()?.webGpuEvaluation === 'API_AVAILABLE_NOT_SELECTED' ? 'OPT' : 'N/A' }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
     </div>
   }
 </section>

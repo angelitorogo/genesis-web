@@ -1,3 +1,4 @@
+import { presentationPlanetRadiusFromPhysicsV1 } from './system-scene-planet-size-v1';
 import {
   DiscoveryState,
   type DiscoveryStateValue,
@@ -104,7 +105,6 @@ import {
 
 
 import {
-  adaptiveSystemPlanetRadiusScene,
   adaptiveSystemStarRadiusScene,
   buildLinearFitSystemScale,
   buildMultipleAdaptiveSystemScaleV3,
@@ -154,9 +154,29 @@ import {
 } from './system-scene-multistellar-core-compaction';
 
 import {
+  type MultihostFormedPlanetarySystemV22,
+} from '../../domain/planetary/multihost-formed-planetary-system';
+import {
+  generateMultihostFormedPlanetarySystemV22,
+} from '../../simulation/planetary/multihost-formed-planetary-system-generator';
+import {
+  type MultihostPlanetaryCatalog,
+} from '../../domain/planetary/multihost-planetary-catalog';
+import {
+  generateMultihostPlanetaryCatalog,
+} from '../../simulation/planetary/multihost-planetary-catalog-generator';
+import {
+  buildSystemSceneMultihostLaboratoryPreview,
+} from './system-scene-multihost-laboratory-preview';
+
+import {
   buildSystemSceneFirstOrbitAnchorV53,
   type SystemSceneFirstOrbitAnchorV53,
 } from './system-scene-first-orbit-anchor';
+
+import {
+  type SystemSceneMultihostLayoutV222,
+} from './system-scene-multihost-hierarchical-layout';
 
 import {
   SystemSceneScientificDisclosureTier,
@@ -395,6 +415,10 @@ export interface SystemSceneOrbitSnapshot {
 
   readonly linearScenePerAu?:
     number;
+
+  /** V2.2.1: same host-local radial projection as the animated planet. */
+  readonly hostRadialProjectionV22?: import('./system-scene-multihost-radial-projection')
+    .SystemSceneMultihostRadialProjectionV22;
 }
 
 export interface SystemSceneBodySnapshot {
@@ -417,9 +441,25 @@ export interface SystemSceneBodySnapshot {
   readonly radiusScene:
     number;
 
+  /** V2.4.1 shares V1 calculations, but isn't a V1 materialized Planet. */
+  readonly previewOnlyV241?: true;
+  /** V2.3 non-authoritative appearance only; never a V1 physical environment. */
+  readonly previewOnlyV23?: true;
+
+  /** V2.2.1 renderer contract; absent for unchanged V1 bodies. */
+  readonly multihostOrbitV221?: Readonly<{
+    hostId: import('../../domain/planetary/multihost-planetary-catalog').MultihostOrbitalHostId;
+    orbitalPeriodDays: number;
+    motionId: string;
+    translationState: 'ACTIVE';
+  }>;
+
   /** Star-only optical reference retained when the photosphere is envelope-limited. */
   readonly opticalRadiusScene?:
     number;
+
+  /** V2.2.4 binary QA: zoom/track the complete local S-type subsystem. */
+  readonly localSystemFocusRadiusScene?: number;
 
   readonly position:
     SystemSceneVector3;
@@ -462,6 +502,8 @@ export interface SystemSceneBodySnapshot {
 }
 
 export interface SystemSceneMoonSnapshot {
+  /** Synthetic moon solely for the V2.2.1 QA scene; never lunar Ground Truth. */
+  readonly previewOnlyV221?: true;
   readonly id:
     string;
 
@@ -504,6 +546,8 @@ export interface SystemSceneMoonSnapshot {
 }
 
 export interface SystemSceneMinorBodySnapshot {
+  readonly previewOnlyV23?: true;
+  readonly hostIdV23?: 'A' | 'B';
   readonly id:
     string;
 
@@ -542,6 +586,7 @@ export interface SystemSceneMinorBodySnapshot {
 }
 
 export interface SystemSceneAsteroidBeltSnapshot {
+  readonly previewOnlyV23?: true;
   readonly id:
     string;
 
@@ -657,6 +702,15 @@ export interface SystemSceneHabitableZoneSnapshot {
     SystemSceneProjectionSpaceValue;
 }
 
+/** V2.3 laboratory-only per-star HZ; original V1 habitableZone stays untouched. */
+export interface SystemSceneMultihostHabitableZoneV23
+  extends SystemSceneHabitableZoneSnapshot {
+  readonly hostId: 'A' | 'B';
+  readonly source: 'V1_FLUX_REFERENCE_V23';
+  readonly referenceLuminositySolar: number;
+  readonly limitation: string;
+}
+
 export interface SystemSceneOrbitalRiskTargetSnapshot {
   readonly id:
     string;
@@ -744,6 +798,20 @@ export interface SystemSceneSimulationSnapshot {
  * projection.
  */
 export interface SystemSceneSnapshot {
+  /** Explicitly opt-in QA catalogue; never attached to gameplay snapshots. */
+  readonly experimentalMultihostCatalog?: MultihostPlanetaryCatalog;
+  /** V2.4.1 scientific calculations from frozen V2.2 bodies; lab-only, no saves. */
+  readonly scientificMultihostPlanetsV241?: import('../../domain/planetary/multihost-scientific-planet-v241')
+    .MultihostScientificPlanetCatalogV241;
+  /** V2.2 only: formed host-local bodies, never V1 save identities. */
+  readonly formedMultihostSystemV22?: MultihostFormedPlanetarySystemV22;
+  /** Host-local scientific references; never written to a V1 save. */
+  readonly multihostHabitableZonesV23?: readonly SystemSceneMultihostHabitableZoneV23[];
+  /** V2.2.3 laboratory-only hierarchical presentation envelopes. */
+  readonly multihostLayoutV222?: SystemSceneMultihostLayoutV222;
+  /** V2.2.4 binary QA camera only; never feeds the AU/scene projection. */
+  readonly laboratoryFrameRadiusSceneV224?: number;
+
   readonly universeSeed:
     string;
 
@@ -838,6 +906,10 @@ export interface SystemSceneSnapshot {
 }
 
 export interface SystemSceneSnapshotSource {
+  /** Laboratory-only test-particle preview: cannot persist candidates. */
+  readonly experimentalMultihostPreview?: boolean;
+  readonly experimentalMultihostFamily?: 'ALL' | 'S_TYPE' | 'P_TYPE';
+
   readonly universeSeed:
     string;
 
@@ -1065,7 +1137,7 @@ export class SystemSceneSnapshotBuilder {
         world,
       );
 
-    return Object.freeze({
+    const renderedSnapshot: SystemSceneSnapshot = Object.freeze({
       ...baseSnapshot,
       accessibleLabel:
         `${baseSnapshot.accessibleLabel} ${projected.stars.length} estrella${projected.stars.length === 1 ? '' : 's'}, ${projected.planets.length} planeta${projected.planets.length === 1 ? '' : 's'}, ${projected.moons.length} luna${projected.moons.length === 1 ? '' : 's'} relevante${projected.moons.length === 1 ? '' : 's'} y ${projected.minorBodies.length} cuerpo${projected.minorBodies.length === 1 ? '' : 's'} menor${projected.minorBodies.length === 1 ? '' : 'es'} disponible${projected.minorBodies.length === 1 ? '' : 's'} por capas. Zona habitable de referencia disponible. ${projected.layers.orbitalRiskTargetCount} objetivo${projected.layers.orbitalRiskTargetCount === 1 ? '' : 's'} con corredor de riesgo y ${projected.layers.orbitalCrossingTargetCount} objetivo${projected.layers.orbitalCrossingTargetCount === 1 ? '' : 's'} con cruce radial solamente.`,
@@ -1106,6 +1178,47 @@ export class SystemSceneSnapshotBuilder {
       scale:
         projected.scale,
     });
+
+    if (source.experimentalMultihostPreview === true) {
+      if (world.stars.length === 0) return renderedSnapshot;
+      const hierarchy = world.stellarSystem.orbitHierarchy;
+      const compatibility = world.stellarSystem.circumbinaryPlanetCompatibility;
+      const starA = world.stars.find(star => star.label === 'A')!;
+      const starB = world.stars.find(star => star.label === 'B') ?? null;
+      const starC = world.stars.find(star => star.label === 'C') ?? null;
+      const catalog = generateMultihostPlanetaryCatalog({
+        seed: world.stellarSystem.seed.normalizedValue,
+        massA: starA.referenceMassSolar,
+        massB: starB?.referenceMassSolar ?? null,
+        massC: starC?.referenceMassSolar ?? null,
+        radiusAAu: starA.radiusSolar * 0.00465046726,
+        radiusBAu: starB === null ? null : starB.radiusSolar * 0.00465046726,
+        radiusCAu: starC === null ? null : starC.radiusSolar * 0.00465046726,
+        innerBinaryAxisAu: hierarchy.innerOrbit?.semiMajorAxisAu ?? null,
+        innerBinaryEccentricity: hierarchy.innerOrbit?.eccentricity ?? null,
+        outerBinaryAxisAu: hierarchy.outerOrbit?.semiMajorAxisAu ?? null,
+        outerBinaryEccentricity: hierarchy.outerOrbit?.eccentricity ?? null,
+        frozenPAbInnerAu: compatibility?.minimumStableSemiMajorAxisAu ?? null,
+        frozenPAbOuterAu: compatibility?.maximumStableSemiMajorAxisAu ?? null,
+        samplingOuterAu: Math.max(1, renderedSnapshot.scale.outerRadiusAu),
+      });
+      const formedSystem = generateMultihostFormedPlanetarySystemV22({
+        systemSeed: world.stellarSystem.seed.normalizedValue,
+        windows: catalog.windows,
+        // V2.4 experimental BINARY formation: independent stellar snow lines.
+        // SINGLE/TRIPLE/V1 use the unmodified V2.2 generator branch.
+        ...(world.multiplicityName === 'BINARY' ? {
+          hostLuminositiesSolarV241: {
+            A: starA.luminositySolar,
+            ...(starB === null ? {} : {B: starB.luminositySolar}),
+          },
+        } : {}),
+      });
+      return buildSystemSceneMultihostLaboratoryPreview(
+        renderedSnapshot, catalog, source.experimentalMultihostFamily ?? 'ALL', formedSystem,
+      );
+    }
+    return renderedSnapshot;
   }
 }
 
@@ -5551,138 +5664,14 @@ function projectPlanetGiantAtmosphere(
  * much larger than solid worlds, while rocky families keep a smaller but still
  * clearly differentiated spread so bodies no longer collapse to one size.
  */
-function presentationPlanetRadiusScene(
-  planet:
-    Planet,
-): number {
-
-  const radiusEarth =
-    Math.max(
-      planet.radiusEarth,
-      0.12,
-    );
-
-  const type =
-    planet.typeClassification
-      .planetType;
-
-  const baseline =
-    adaptiveSystemPlanetRadiusScene(
-      radiusEarth,
-    );
-
-  const deepEnvelope =
-    planet.surfaceBaseProperties
-      .isDeepEnvelopeSurface ||
-    type ===
-      PlanetType.MINI_NEPTUNE ||
-    type ===
-      PlanetType.GAS_GIANT ||
-    type ===
-      PlanetType.ICE_GIANT;
-
-  const familyRadius =
-    deepEnvelope
-      ? scaledRadius(
-          radiusEarth,
-          1.8,
-          16,
-          0.050,
-          0.122,
-        )
-      : scaledRadius(
-          radiusEarth,
-          0.30,
-          2.8,
-          0.013,
-          0.036,
-        );
-
-  const subtypeScale =
-    type ===
-      PlanetType.GAS_GIANT
-      ? 1.20
-      : type ===
-          PlanetType.ICE_GIANT
-        ? 1.06
-        : type ===
-            PlanetType.MINI_NEPTUNE
-          ? 0.88
-          : type ===
-              PlanetType.SUPER_EARTH
-            ? 1.10
-            : type ===
-                PlanetType.OCEAN
-              ? 1.02
-              : type ===
-                  PlanetType.DESERT
-                ? 0.97
-                : type ===
-                    PlanetType.ICE
-                  ? 0.98
-                  : type ===
-                      PlanetType.VOLCANIC
-                    ? 0.92
-                    : 0.88;
-
-  const density =
-    planet.physicalProperties
-      .densityGramsPerCubicCentimeter;
-
-  const densityScale =
-    deepEnvelope
-      ? clamp(
-          1.07 -
-            0.040 *
-              (density - 1.4),
-          0.94,
-          1.12,
-        )
-      : clamp(
-          1.00 -
-            0.022 *
-              (density - 4.1),
-          0.92,
-          1.05,
-        );
-
-  const envelopeScale =
-    deepEnvelope
-      ? clamp(
-          0.94 +
-            0.18 *
-              planet.physicalProperties
-                .envelopeMassFraction01,
-          0.94,
-          1.12,
-        )
-      : 1;
-
-  const blendedRadius =
-    (
-      deepEnvelope
-        ? 0.16 *
-            baseline +
-          0.84 *
-            familyRadius
-        : 0.22 *
-            baseline +
-          0.78 *
-            familyRadius
-    ) *
-    subtypeScale *
-    densityScale *
-    envelopeScale;
-
-  return clamp(
-    blendedRadius,
-    deepEnvelope
-      ? 0.048
-      : 0.012,
-    deepEnvelope
-      ? 0.138
-      : 0.040,
-  );
+function presentationPlanetRadiusScene(planet: Planet): number {
+  return presentationPlanetRadiusFromPhysicsV1({
+    radiusEarth: planet.radiusEarth,
+    planetType: planet.typeClassification.planetType,
+    densityGramsPerCubicCentimeter: planet.physicalProperties.densityGramsPerCubicCentimeter,
+    envelopeMassFraction01: planet.physicalProperties.envelopeMassFraction01,
+    isDeepEnvelopeSurface: planet.surfaceBaseProperties.isDeepEnvelopeSurface,
+  });
 }
 
 function planetSurfaceStyle(
@@ -5720,60 +5709,6 @@ function planetSurfaceStyle(
   }
 }
 
-function scaledRadius(
-  value:
-    number,
-
-  minInput:
-    number,
-
-  maxInput:
-    number,
-
-  minRadius:
-    number,
-
-  maxRadius:
-    number,
-): number {
-
-  if (
-    maxInput <=
-    minInput
-  ) {
-    return (
-      minRadius +
-      maxRadius
-    ) / 2;
-  }
-
-  const normalized =
-    clamp01(
-      (
-        Math.sqrt(
-          value,
-        ) -
-        Math.sqrt(
-          minInput,
-        )
-      ) /
-      (
-        Math.sqrt(
-          maxInput,
-        ) -
-        Math.sqrt(
-          minInput,
-        )
-      ),
-    );
-
-  return minRadius +
-    (
-      maxRadius -
-      minRadius
-    ) *
-      normalized;
-}
 
 function radiusRange(
   values:

@@ -55,7 +55,8 @@ export function systemSceneMoonDisplaySpinRadiansV2(
 
 function validateSpin(spin: SystemSceneMoonSpinPresentationInputV2): void {
   if (
-    spin.source !== 'MOON_21_4' ||
+    (spin.source !== 'MOON_21_4' &&
+     spin.source !== 'V2_2_1_LAB_MOON') ||
     !Number.isFinite(spin.epochPhaseDegrees) ||
     (
       spin.rotationPeriodHours !== null &&
@@ -65,7 +66,7 @@ function validateSpin(spin: SystemSceneMoonSpinPresentationInputV2): void {
       )
     )
   ) {
-    throw new RangeError('Moon display spin requires one valid frozen point-21.4 spin snapshot.');
+    throw new RangeError('Moon display spin requires one valid point-21.4 or V2.2.1 laboratory spin snapshot.');
   }
 }
 

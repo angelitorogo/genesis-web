@@ -14,6 +14,9 @@ import {
   StellarSystemLaboratoryPage,
 } from './stellar-system-laboratory';
 
+import { StellarSystemLaboratoryFamilyId } from './stellar-system-laboratory-fixtures';
+import { systemSceneBinarySeparationAu } from '../../system/system-scene-binary-separation';
+
 describe(
   'StellarSystemLaboratoryPage',
   () => {
@@ -115,6 +118,166 @@ describe(
       },
       30_000,
     );
+
+    it('should switch on experimental multihost QA without altering the stored V1 stage', () => {
+      const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+      fixture.componentInstance.selectCase('BINARY');
+      fixture.detectChanges();
+      const baseline = fixture.componentInstance.rendererQaSnapshot();
+      expect(baseline.experimentalMultihostCatalog).toBeUndefined();
+      fixture.componentInstance.toggleExperimentalMultihost();
+      fixture.detectChanges();
+      const preview = fixture.componentInstance.rendererQaSnapshot();
+      expect(preview.experimentalMultihostCatalog?.version).toBe('V2_EXPERIMENTAL');
+      expect(preview.formedMultihostSystemV22?.version).toBe('V2_2_FORMATION_V1');
+      expect(preview.formedMultihostSystemV22?.planets.every(planet =>
+        planet.origin === 'V2_2_FORMED')).toBe(true);
+      for (const planet of preview.planets.filter(planet => planet.multihostOrbitV221 !== undefined)) {
+        expect(planet.orbitId).not.toBeNull();
+        expect(preview.orbits.some(orbit => orbit.id === planet.orbitId)).toBe(true);
+        expect(preview.motions.some(motion => motion.id === planet.multihostOrbitV221!.motionId)).toBe(true);
+        expect(planet.multihostOrbitV221!.translationState).toBe('ACTIVE');
+      }
+      expect(preview.experimentalMultihostCatalog?.windows.map(window => window.hostId))
+        .toEqual(['A', 'B', 'AB']);
+      expect(preview.multihostLayoutV222?.version).toBe('V2_2_4_BINARY_LAYOUT_V1');
+      expect(preview.multihostLayoutV222?.hostEnvelopes.map(envelope => envelope.hostId))
+        .toEqual(['A', 'B']);
+      expect(preview.planets.length).toBeGreaterThan(0);
+      expect(preview.planets.length).toBeLessThanOrEqual(20);
+      expect(preview.planets.every(planet =>
+        planet.multihostOrbitV221?.hostId === 'A' ||
+        planet.multihostOrbitV221?.hostId === 'B')).toBe(true);
+      expect(preview.planets.filter(planet => planet.multihostOrbitV221 !== undefined).length)
+        .toBe(fixture.componentInstance.renderedMultihostPlanetCount());
+      // BINARY QA deliberately hides legacy barycentric V1 planets and moons;
+      // leaving QA restores the original source without changing saved data.
+      expect(preview.planets.some(planet =>
+        baseline.planets.some(original => original.id === planet.id))).toBe(false);
+      expect(preview.moons.every(moon => moon.previewOnlyV221 === true)).toBe(true);
+      expect(preview.moons.filter(moon => moon.previewOnlyV221 === true).length)
+        .toBe(fixture.componentInstance.laboratoryMultihostMoonCount());
+      expect(preview.minorBodies.every(body => body.previewOnlyV23)).toBe(true);
+      expect(preview.asteroidBelts?.every(belt => belt.previewOnlyV23)).toBe(true);
+      expect(preview.habitableZone).toBeNull();
+      expect(preview.layers.minorBodyCount).toBe(preview.minorBodies.length);
+      expect(preview.layers.habitableZoneAvailable).toBe(true);
+      expect(preview.multihostHabitableZonesV23?.map(zone => zone.hostId)).toEqual(['A', 'B']);
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="multihost-v23-habitable-zone"]'))
+        .toHaveLength(2);
+      expect(preview.layers.moonCount).toBe(preview.moons.length);
+      expect(preview.motions.length).toBeGreaterThanOrEqual(baseline.motions.length);
+      expect(preview.motions.slice(0, baseline.motions.length))
+        .toEqual(baseline.motions);
+      expect(fixture.nativeElement.querySelector('[data-testid="multihost-v22-formed-system"]'))
+        .toBeTruthy();
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="multihost-v22-disk"]'))
+        .toHaveLength(2);
+      expect(fixture.nativeElement.querySelector('[data-testid="multihost-v2-laboratory-catalog"]'))
+        .toBeTruthy();
+      expect(fixture.nativeElement.querySelector('[data-testid="multihost-v222-layout"]'))
+        .toBeTruthy();
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="multihost-v222-envelope"]'))
+        .toHaveLength(2);
+      fixture.componentInstance.toggleExperimentalMultihost();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.rendererQaSnapshot().experimentalMultihostCatalog)
+        .toBeUndefined();
+      expect(fixture.componentInstance.rendererQaSnapshot().formedMultihostSystemV22)
+        .toBeUndefined();
+      const restored = fixture.componentInstance.rendererQaSnapshot();
+      expect(restored.planets.map(planet => planet.id))
+        .toEqual(baseline.planets.map(planet => planet.id));
+      expect(restored.moons.map(moon => moon.id))
+        .toEqual(baseline.moons.map(moon => moon.id));
+      expect(restored.minorBodies.map(body => body.id))
+        .toEqual(baseline.minorBodies.map(body => body.id));
+    }, 30_000);
+
+    it('frames wide/compact real binary families differently while keeping A/B locally explorable', () => {
+      const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+      const page = fixture.componentInstance;
+      page.selectCase('BINARY');
+      page.toggleExperimentalMultihost();
+      const measure = (family: StellarSystemLaboratoryFamilyId) => {
+        page.selectFamily(family);
+        const snapshot = page.rendererQaSnapshot();
+        const a = snapshot.stars.find(star => star.label === 'A')!;
+        const b = snapshot.stars.find(star => star.label === 'B')!;
+        const gap = Math.hypot(
+          a.position.x - b.position.x,
+          a.position.y - b.position.y,
+          a.position.z - b.position.z,
+        );
+        const disk = snapshot.multihostLayoutV222!.hostEnvelopes
+          .find(envelope => envelope.hostId === 'A')!;
+        const camera = snapshot.laboratoryFrameRadiusSceneV224!;
+        return {
+          snapshot, a, b, gap, disk, camera,
+          distanceAu: systemSceneBinarySeparationAu(snapshot, snapshot.simulation.epochSimulationDay)!,
+        };
+      };
+      const close = measure(StellarSystemLaboratoryFamilyId.D);
+      const wide = measure(StellarSystemLaboratoryFamilyId.F);
+      expect(wide.distanceAu).toBeGreaterThan(close.distanceAu * 10);
+      expect(wide.gap).toBeGreaterThan(close.gap * 1.45);
+      expect(wide.gap / wide.disk.outerEnvelopeScene)
+        .toBeGreaterThan(close.gap / close.disk.outerEnvelopeScene * 1.4);
+      for (const sample of [close, wide]) {
+        expect(sample.a.localSystemFocusRadiusScene)
+          .toBeGreaterThan(sample.disk.outerEnvelopeScene);
+        expect(sample.b.localSystemFocusRadiusScene).toBeGreaterThan(0);
+        for (const star of [sample.a, sample.b]) {
+          expect(sample.camera).toBeGreaterThan(
+            Math.hypot(star.position.x, star.position.y, star.position.z) +
+              star.localSystemFocusRadiusScene!,
+          );
+        }
+        expect(sample.snapshot.planets.every(planet =>
+          sample.snapshot.orbits.some(orbit => orbit.id === planet.orbitId))).toBe(true);
+        expect(sample.snapshot.habitableZone).toBeNull();
+      }
+      expect(wide.camera).toBeGreaterThan(close.camera);
+    }, 30_000);
+
+    it('shows read-only V2.1 host domains and per-planet provenance for binary and triple QA', () => {
+      const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+      const page = fixture.componentInstance;
+      page.selectCase('BINARY');
+      page.toggleExperimentalMultihost();
+      fixture.detectChanges();
+      const binary = page.orbitalDomainsV21();
+      expect(binary?.version).toBe('V2_1_QA');
+      expect(binary?.domains.map(domain => domain.host.id))
+        .toEqual(['A', 'B', 'AB']);
+      expect(binary?.assignments.filter(assignment =>
+        assignment.origin === 'V1_FROZEN').length)
+        .toBe(page.rendererQaSnapshot().planets.filter(planet =>
+          !planet.id.startsWith('preview-') && !planet.id.startsWith('v22-')).length);
+      expect(binary?.assignments.filter(assignment =>
+        assignment.origin === 'V1_FROZEN').every(assignment =>
+          assignment.stability === 'NOT_REASSESSED_V1')).toBe(true);
+      const element = fixture.nativeElement as HTMLElement;
+      expect(element.querySelector('[data-testid="multihost-v21-diagnostics"]'))
+        .toBeTruthy();
+      expect(element.querySelectorAll('[data-testid="multihost-v21-host-domain"]'))
+        .toHaveLength(2);
+      expect(element.querySelector('[data-testid="multihost-v21-planet-assignments"]'))
+        .toBeTruthy();
+      expect(element.querySelector('[data-host="AB"]')).toBeNull();
+      expect(element.textContent).toContain('SOLO S-A / S-B');
+      page.selectCase('TRIPLE');
+      fixture.detectChanges();
+      expect(page.orbitalDomainsV21()?.domains.map(domain => domain.host.id))
+        .toEqual(['A', 'B', 'AB', 'C', 'ABC']);
+      expect(element.querySelectorAll('[data-testid="multihost-v21-host-domain"]'))
+        .toHaveLength(5);
+      page.toggleExperimentalMultihost();
+      fixture.detectChanges();
+      expect(page.orbitalDomainsV21()).toBeNull();
+      expect(element.querySelector('[data-testid="multihost-v21-diagnostics"]'))
+        .toBeNull();
+    }, 30_000);
 
     it(
       'should expose the three implemented architectures and exactly eight A-H families',

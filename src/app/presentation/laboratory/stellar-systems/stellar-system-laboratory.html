@@ -59,6 +59,188 @@
     }
   </section>
 
+  <section class="stellar-lab__multihost-toggle" aria-label="Ensayo experimental multihost V2">
+    <div>
+      <p class="stellar-lab__eyebrow">V2 · {{ selectedCase().id === 'BINARY' ? 'ENSAYO S-TYPE A/B' : 'ARQUITECTURA S-TYPE + P-TYPE' }}</p>
+      <strong>{{ selectedCase().id === 'BINARY' ? 'Binario · dos subsistemas circumestelares A/B (solo QA)' : 'V2.2.3 · layout jerárquico multihost + descompactación visual' }}</strong>
+      <p>{{ selectedCase().id === 'BINARY' ? 'Binario S-type experimental: planetas formados V2.2 por estrella con diversidad de texturas y anillos visuales, lunas, asteroides, cometas y cinturones QA propios, y una HZ de referencia para A y B. Se ocultan las capas V1 globales sin anfitrión local. Ninguna hipótesis QA constituye Ground Truth ni modifica las partidas V1.' : 'Comparativa de laboratorio: V2.2 forma una población orbital y masa planetaria independiente por anfitrión. El triple sigue en V2.2.3; sus lunas nuevas son QA y la HZ/menores siguen siendo V1. Sin persistencia ni fichas V2.' }}</p>
+    </div>
+    <button type="button" data-testid="multihost-v2-laboratory-toggle"
+      [attr.aria-pressed]="experimentalMultihost()"
+      (click)="toggleExperimentalMultihost()">
+      {{ experimentalMultihost() ? 'Volver al sistema real V1' : selectedCase().id === 'BINARY' ? 'Explorar binario S-A/S-B (laboratorio)' : 'Explorar V2.2.3 S/P (laboratorio)' }}
+    </button>
+  </section>
+
+  @if (experimentalMultihost() && rendererQaSnapshot().experimentalMultihostCatalog; as catalog) {
+    <section class="stellar-lab__multihost-catalog" data-testid="multihost-v2-laboratory-catalog">
+      <p class="stellar-lab__eyebrow">{{ selectedCase().id === 'BINARY' ? 'BINARY · SOLO S-A / S-B · QA NO PERSISTIBLE' : 'V2.1 DOMINIOS + V2.2 FORMACIÓN + V2.2.3 LAYOUT · SIN PERSISTENCIA' }}</p>
+      <h2>Anfitriones posibles y ventanas dinámicas</h2>
+      <p>{{ selectedCase().id === 'BINARY' ? 'Solo A/B S-type visibles. Cada estrella tiene referencia de zona habitable independiente calculada con el criterio de flujo V1 y recorte dinámico aproximado. No se dibujan planetas/órbitas V1 globales. Aspectos planetarios y lunas, asteroides, cometas y cinturones locales son hipótesis visuales V2.3, no nuevos objetos científicos V1. No cambian los periodos físicos ni las partidas.' : 'El límite exterior de muestreo no representa necesariamente una frontera de estabilidad. El triple mantiene V2.2.3 y las poblaciones V1/V2 previamente disponibles; periodos físicos y persistencia inalterados.' }}</p>
+      <div class="stellar-lab__multihost-filters" aria-label="Mostrar familias orbitales experimentales">
+        <button type="button" [attr.aria-pressed]="experimentalMultihostFamily() === 'ALL'" (click)="selectExperimentalMultihostFamily('ALL')">Todas</button>
+        <button type="button" [attr.aria-pressed]="experimentalMultihostFamily() === 'S_TYPE'" (click)="selectExperimentalMultihostFamily('S_TYPE')">S-type · A/B/C</button>
+        @if (selectedCase().id !== 'BINARY') {
+          <button type="button" [attr.aria-pressed]="experimentalMultihostFamily() === 'P_TYPE'" (click)="selectExperimentalMultihostFamily('P_TYPE')">P-type · AB/ABC</button>
+        }
+      </div>
+      <div class="stellar-lab__host-grid">
+        @for (window of catalog.windows; track window.hostId) {
+          @if (selectedCase().id !== 'BINARY' || window.hostId === 'A' || window.hostId === 'B') {
+          <article [attr.data-host]="window.hostId" [attr.data-usable]="window.usable">
+            <strong>{{ window.family }} · {{ window.hostId }}</strong>
+            <span>{{ window.usable ? 'Ventana abierta' : 'Sin intervalo muestreable' }}</span>
+            <small>Interior: {{ window.innerStableAu.toPrecision(4) }} UA · Exterior dinámico: {{ window.outerStableAu === null ? 'sin límite conocido' : window.outerStableAu.toPrecision(4) + ' UA' }}</small>
+            <small>Testigos V2.1: {{ candidateCount(catalog.candidates, window.hostId) }} · Formados V2.2: {{ candidateCount(rendererQaSnapshot().formedMultihostSystemV22?.planets ?? [], window.hostId) }} · Render V2.3: {{ renderedMultihostPlanetCount(window.hostId) }}</small>
+            @if (selectedCase().id === 'BINARY') {
+              <small data-testid="multihost-v23-host-ecosystem">Lunas QA: {{ moonCountForHost(window.hostId) }} · asteroides QA: {{ minorCountForHost(window.hostId, 'ASTEROID') }} · cometas QA: {{ minorCountForHost(window.hostId, 'COMET') }} · cinturones QA: {{ beltCountForHost(window.hostId) }}</small>
+            }
+          </article>
+          }
+        }
+      </div>
+      @if (rendererQaSnapshot().formedMultihostSystemV22; as formed) {
+        <section class="stellar-lab__domain-diagnostics" data-testid="multihost-v22-formed-system" aria-labelledby="multihost-v22-heading">
+          <h3 id="multihost-v22-heading">{{ selectedCase().id === 'BINARY' ? 'BINARY · dos sistemas locales S-type' : 'V2.2 · población formada ' + formed.planets.length }} · render {{ renderedMultihostPlanetCount() }} · lunas QA {{ laboratoryMultihostMoonCount() }}</h3>
+          <p>{{ selectedCase().id === 'BINARY' ? 'Planetas formados V2.2, proyección V1 por estrella y modelos de referencia V2.4.1 de atmósfera, clima y agua. Presión, océanos y composición son estimaciones de laboratorio, NO datos V1 ni observaciones. La migración de gigantes interiores es un escenario acotado por una región de origen fría S-type, no una simulación N-body. Irradiación variable de la compañera y generación científica de lunas y cuerpos menores V2 pendientes.' : 'Inventario científico completo: ' + formed.planets.length + ' planetas. La escena mezcla V1 y selección V2, con capas HZ/menores V1 y lunas QA.' }}</p>
+          @if (rendererQaSnapshot().multihostHabitableZonesV23; as zones) {
+            <div class="stellar-lab__host-grid" data-testid="multihost-v23-habitable-zones">
+              @for (zone of zones; track zone.hostId) {
+                <article data-testid="multihost-v23-habitable-zone" [attr.data-host]="zone.hostId" [attr.data-stable-overlap]="zone.dynamicallyHabitableInnerEdgeAu !== null">
+                  <strong>HZ {{ zone.hostId }} · referencia de flujo V1</strong>
+                  <span>Radiativa: {{ zone.radiativeInnerEdgeAu.toPrecision(4) }}–{{ zone.radiativeOuterEdgeAu.toPrecision(4) }} UA</span>
+                  <small>
+                    {{ zone.dynamicallyHabitableInnerEdgeAu === null ? 'Sin solapamiento S-type estable en este modelo aproximado' : 'Intersección dinámica aproximada: ' + zone.dynamicallyHabitableInnerEdgeAu.toPrecision(4) + '–' + zone.dynamicallyHabitableOuterEdgeAu!.toPrecision(4) + ' UA' }}
+                  </small>
+                  <small>Irradiación variable de la compañera y estabilidad secular pendientes; no acredita habitabilidad.</small>
+                </article>
+              }
+            </div>
+          }
+          <div class="stellar-lab__host-grid">
+            @for (disk of formed.disks; track disk.hostId) {
+              @if (selectedCase().id !== 'BINARY' || disk.hostId === 'A' || disk.hostId === 'B') {
+              <article data-testid="multihost-v22-disk" [attr.data-host]="disk.hostId" [attr.data-formation]="disk.status">
+                <strong>{{ disk.hostId }} · {{ disk.planets.length }} planetas</strong>
+                <span>{{ disk.status === 'FORMED' ? 'Disco con formación' : disk.status === 'NO_USABLE_WINDOW' ? 'Sin ventana muestreable' : 'Sin formación' }}</span>
+                <small>Disco: {{ disk.diskMassEarth.toPrecision(4) }} M⊕ · Sólidos iniciales: {{ disk.initialSolidsEarth.toPrecision(4) }} M⊕</small>
+                <small>Consumidos: {{ disk.accretedSolidsEarth.toPrecision(4) }} M⊕ sólidos + {{ disk.accretedGasEarth.toPrecision(4) }} M⊕ gas</small>
+              </article>
+              }
+            }
+          </div>
+          <details data-testid="multihost-v22-formed-planets">
+            <summary>{{ selectedCase().id === 'BINARY' ? 'Planetas S-type visibles A/B' : 'Planetas V2.2 generados (' + formed.planets.length + ')' }}</summary>
+            <div class="stellar-lab__domain-assignments">
+              @for (planet of formed.planets; track planet.id) {
+                @if (selectedCase().id !== 'BINARY' || planet.hostId === 'A' || planet.hostId === 'B') {
+                <div [attr.data-host]="planet.hostId" data-testid="multihost-v22-formed-planet">
+                  <strong>{{ planet.designation }} · {{ planet.bulkType }}</strong>
+                  <span>{{ planet.hostId }} / {{ planet.family }} · {{ planet.massEarth.toPrecision(4) }} M⊕ · {{ planet.radiusEarth.toPrecision(3) }} R⊕</span>
+                  <small>a={{ planet.semiMajorAxisAu.toPrecision(5) }} UA · q={{ planet.periapsisAu.toPrecision(5) }} UA · Q={{ planet.apoapsisAu.toPrecision(5) }} UA · periodo {{ planet.periodDays.toPrecision(5) }} días</small>
+                  @if (scientificPlanetById().get(planet.id); as detail) {
+                    <small data-testid="multihost-v241-planet-environment">V2.4.1 · tipo {{ detail.type }} · {{ detail.formationPath.regime === 'MIGRATION_SCENARIO' ? 'Migración hipotética desde ' + detail.formationPath.estimatedBirthAxisAu!.toPrecision(3) + ' UA' : detail.formationPath.regime === 'IN_SITU' ? 'Formación local' : 'Origen no resuelto' }}</small>
+                    <small>Teq: {{ detail.environment.equilibriumTemperatureKelvin === null ? 'sin referencia' : detail.environment.equilibriumTemperatureKelvin.toFixed(1) + ' K' }} · superficie: {{ detail.environment.climate.meanSurfaceTemperatureKelvin === null ? 'no definida' : detail.environment.climate.meanSurfaceTemperatureKelvin.toFixed(1) + ' K' }} · presión estimada: {{ detail.environment.atmosphere.pressurePascal === null ? 'no definida' : detail.environment.atmosphere.pressurePascal.toPrecision(3) + ' Pa' }}</small>
+                    <small>Agua superficial: {{ detail.environment.water.regime }} (hipótesis; no demuestra habitabilidad). No incorpora irradiación de la estrella compañera.</small>
+                  }
+                </div>
+                }
+              }
+            </div>
+          </details>
+          @if (selectedCase().id !== 'BINARY') {
+            @for (limitation of formed.limitations; track limitation) {
+              <p class="stellar-lab__domain-limitation">{{ limitation }}</p>
+            }
+          }
+        </section>
+      }
+
+      @if (rendererQaSnapshot().multihostLayoutV222; as layout) {
+        <section class="stellar-lab__domain-diagnostics" data-testid="multihost-v222-layout" aria-labelledby="multihost-v222-heading">
+          <h3 id="multihost-v222-heading">{{ selectedCase().id === 'BINARY' ? 'Binario · envolventes locales A/B' : 'V2.2.3 · envolventes jerárquicas de presentación' }}</h3>
+          <p>{{ selectedCase().id === 'BINARY' ? 'La escena experimental muestra exclusivamente los subsistemas de A y B con sus órbitas locales. Sin órbitas planetarias centrales superpuestas.' : 'La escena abre la jerarquía estelar solo a nivel visual, con subsistemas S-type y capas P-type compartidas.' }} Escalas de apertura: interior ×{{ layout.stellarInnerSpreadScale.toFixed(2) }} · exterior ×{{ layout.stellarOuterSpreadScale.toFixed(2) }}.</p>
+          <div class="stellar-lab__host-grid">
+            @for (envelope of layout.hostEnvelopes; track envelope.hostId) {
+              <article data-testid="multihost-v222-envelope" [attr.data-host]="envelope.hostId" [attr.data-family]="envelope.family">
+                <strong>{{ envelope.hostId }} · {{ envelope.family === 'S_TYPE' ? 'subsistema local' : 'capa compartida' }}</strong>
+                <span>{{ envelope.renderedPlanetCount }} planetas renderizados · centro {{ envelope.centerScene.x.toFixed(2) }}, {{ envelope.centerScene.y.toFixed(2) }}, {{ envelope.centerScene.z.toFixed(2) }}</span>
+                <small>Primer radio visible: {{ envelope.firstOrbitScene.toFixed(3) }} scene · Envolvente exterior: {{ envelope.outerEnvelopeScene.toFixed(3) }} scene</small>
+              </article>
+            }
+          </div>
+          @if (selectedCase().id !== 'BINARY') {
+            @for (note of layout.notes; track note) {
+              <p class="stellar-lab__domain-limitation">{{ note }}</p>
+            }
+          }
+        </section>
+      }
+      @if (orbitalDomainsV21(); as diagnostic) {
+        <section class="stellar-lab__domain-diagnostics" data-testid="multihost-v21-diagnostics" aria-labelledby="multihost-v21-heading">
+          <h3 id="multihost-v21-heading">V2.1 · anfitrión de cada planeta y estabilidad orbital</h3>
+          <p>{{ selectedCase().id === 'BINARY' ? 'Diagnóstico visible restringido a los dos anfitriones locales A/B. El catálogo científico completo sigue disponible internamente sin alterar sus datos.' : 'Escala logarítmica compartida entre anfitriones: ' + diagnostic.displayMinimumAu.toPrecision(3) + '–' + diagnostic.displayMaximumAu.toPrecision(3) + ' UA; los filtros afectan al 3D y este diagnóstico muestra el catálogo completo.' }}</p>
+          <div class="stellar-lab__domain-grid">
+            @for (domain of diagnostic.domains; track domain.host.id) {
+              @if (selectedCase().id !== 'BINARY' || domain.host.id === 'A' || domain.host.id === 'B') {
+              <article [attr.data-host]="domain.host.id" [attr.data-domain-state]="domain.state" data-testid="multihost-v21-host-domain">
+                <header>
+                  <strong>{{ domain.host.id }} · {{ domain.host.family }}</strong>
+                  <span>{{ domain.state === 'CLOSED' ? 'SIN VENTANA DINÁMICA' : domain.state === 'UNSAMPLED' ? 'SIN MUESTRA SUFICIENTE' : domain.state === 'OPEN_BOUNDED' ? 'ACOTADA' : 'EXTREMO EXTERIOR DESCONOCIDO' }}</span>
+                </header>
+                <div class="stellar-lab__domain-track" role="img" [attr.aria-label]="'Anfitrión ' + domain.host.id + ': límite interior ' + domain.innerStableAu + ' UA; límite exterior dinámico ' + (domain.outerStableAu === null ? 'desconocido' : domain.outerStableAu + ' UA')">
+                  <span class="stellar-lab__domain-range" [class.stellar-lab__domain-range--sampling]="domain.outerStableAu === null" [style.left.%]="domain.startPercent" [style.width.%]="domain.widthPercent"></span>
+                  @for (assessment of diagnostic.assessments; track assessment.bodyId) {
+                    @if (assessment.hostId === domain.host.id) {
+                      <span class="stellar-lab__domain-orbit" [class.stellar-lab__domain-orbit--outside]="assessment.verdict !== 'WITHIN_APPROXIMATE_WINDOW'" [style.left.%]="assessment.startPercent" [style.width.%]="assessment.widthPercent" [attr.title]="assessment.bodyId + ': q=' + assessment.periapsisAu.toPrecision(4) + ' UA, Q=' + assessment.apoapsisAu.toPrecision(4) + ' UA · ' + assessment.verdict"></span>
+                    }
+                  }
+                </div>
+                <small>{{ domain.innerStableAu.toPrecision(4) }} UA → {{ domain.outerStableAu === null ? 'límite dinámico no determinado' : domain.outerStableAu.toPrecision(4) + ' UA' }} · Muestra hasta {{ domain.samplingOuterAu.toPrecision(4) }} UA · {{ domain.candidateCount }} candidatos</small>
+                <small>{{ domain.limitation }}</small>
+              </article>
+              }
+            }
+          </div>
+          <details data-testid="multihost-v21-planet-assignments">
+            <summary>Asignación orbital por cuerpo ({{ diagnostic.assignments.length }})</summary>
+            <div class="stellar-lab__domain-assignments">
+              @for (assignment of diagnostic.assignments; track assignment.bodyId) {
+                @if (selectedCase().id !== 'BINARY' || assignment.hostId === 'A' || assignment.hostId === 'B') {
+                <div [attr.data-host]="assignment.hostId" [attr.data-origin]="assignment.origin">
+                  <strong>{{ assignment.label }}</strong>
+                  <span>{{ assignment.family }} / {{ assignment.hostId }} · {{ assignment.gravitatingMassSolar.toPrecision(3) }} M☉</span>
+                  <small>{{ assignment.origin === 'V1_FROZEN' ? 'V1 existente · no reevaluado con V2' : 'V2 testigo · no persistible' }}</small>
+                </div>
+                }
+              }
+            </div>
+          </details>
+          <details data-testid="multihost-v21-apsidal-assessments">
+            <summary>Diagnóstico por recorrido orbital q–Q ({{ diagnostic.assessments.length }})</summary>
+            <div class="stellar-lab__domain-assignments">
+              @for (assessment of diagnostic.assessments; track assessment.bodyId) {
+                @if (selectedCase().id !== 'BINARY' || assessment.hostId === 'A' || assessment.hostId === 'B') {
+                <div [attr.data-verdict]="assessment.verdict">
+                  <strong>{{ assessment.bodyId }} · {{ assessment.hostId }}</strong>
+                  <span>q {{ assessment.periapsisAu.toPrecision(4) }} UA · Q {{ assessment.apoapsisAu.toPrecision(4) }} UA</span>
+                  <small>{{ assessment.verdict }} · margen interior {{ assessment.innerClearanceAu.toPrecision(3) }} UA · exterior {{ assessment.outerClearanceAu === null ? 'desconocido' : assessment.outerClearanceAu.toPrecision(3) + ' UA' }}</small>
+                </div>
+                }
+              }
+            </div>
+          </details>
+          @if (selectedCase().id !== 'BINARY') {
+          @for (limitation of diagnostic.limitations; track limitation) {
+            <p class="stellar-lab__domain-limitation">{{ limitation }}</p>
+          }
+          }
+        </section>
+      }
+      <p class="stellar-lab__multihost-warning">{{ selectedCase().id === 'BINARY' ? 'BINARIO V2.3 — referencia HZ A/B con constantes radiativas V1 y límites S-type V2.1; no es una evaluación climática de la irradiación variable de la otra estrella. Los planetas y las lunas siguen en fase V2.2/QA; falta integrar físicamente la diversidad planetaria, lunas y cuerpos menores por anfitrión. No se altera V1 ni se mezclan sus identidades en el laboratorio.' : 'TRIPLE/SINGLE conservan la presentación V2.2.3. Lunas científicas y capas auxiliares actuales son V1; los satélites extra son QA. Sin fichas ni persistencia V2 todavía.' }}</p>
+    </section>
+  }
+
   <section
     class="stellar-lab__families"
     aria-label="Selector de familia procedural A a H"
