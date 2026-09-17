@@ -122,6 +122,63 @@ export function assertSystemSceneProjectionSnapshot(
         throw new RangeError('V2.2.1 moon proxy must be explicitly QA and orbit a visible V2 planet.');
       }
     }
+    // V2.4.2: all A/B moons must be traceable to their immutable scientific
+    // record and moving visible planet. The renderer cannot mint QA satellites
+    // or modify a physical Roche/Hill-bounded orbit when limiting GPU draw count.
+    const scienceMoons = snapshot.scientificMultihostMoonsV242;
+    if (scienceMoons !== undefined) {
+      if (snapshot.multiplicityName !== 'BINARY' ||
+          snapshot.scientificMultihostPlanetsV241 === undefined ||
+          scienceMoons.sourceSystemSeed !== formedV22.sourceSystemSeed ||
+          scienceMoons.version !== 'V2_4_2_MOON_SCIENCE') {
+        throw new RangeError('V2.4.2 scientific moon catalogue belongs only to the matching binary S-type laboratory.');
+      }
+      assertFrozen(scienceMoons, 'snapshot.scientificMultihostMoonsV242');
+      assertFrozenArray(scienceMoons.moons, 'snapshot.scientificMultihostMoonsV242.moons', assertFrozen);
+      assertFrozenArray(scienceMoons.systems, 'snapshot.scientificMultihostMoonsV242.systems', assertFrozen);
+      const modelIds = new Set(scienceMoons.moons.map(moon => moon.id));
+      if (modelIds.size !== scienceMoons.moons.length ||
+          scienceMoons.moons.some(moon =>
+            moon.version !== 'V2_4_2_S_TYPE_MOON' ||
+            moon.origin !== 'V2_4_2_DETERMINISTIC_SATELLITE_MODEL' ||
+            !(moon.massEarth > 0 && moon.periodDays > 0) ||
+            moon.semiMajorAxisPlanetRadii * (1 - moon.eccentricity) <= moon.rocheLimitPlanetRadii ||
+            moon.semiMajorAxisPlanetRadii * (1 + moon.eccentricity) >= moon.progradeOuterLimitPlanetRadii ||
+            !formedV22.planets.some(parent => parent.id === moon.hostPlanetId &&
+              parent.hostId === moon.hostId && parent.ordinal === moon.hostPlanetOrdinal)) ||
+          scienceMoons.systems.some(system =>
+            system.modeledMoonCount !== system.moons.length ||
+            !Number.isInteger(system.estimatedTotalMoonCount) ||
+            system.estimatedTotalMoonCount < system.modeledMoonCount ||
+            system.moons.some(moon => moon.hostPlanetId !== system.hostPlanetId ||
+              !modelIds.has(moon.id)))) {
+        throw new RangeError('V2.4.2 moon catalogue violates physical bounds or parent identity.');
+      }
+      for (const moon of snapshot.moons.filter(item => item.scientificV242 === true)) {
+        const physical = scienceMoons.moons.find(item => item.id === moon.id);
+        const parent = renderedPlanets.get(moon.hostPlanetId);
+        const guide = orbits.get(moon.orbitId);
+        const local = moon.motionContributions.at(-1);
+        const motion = local === undefined ? undefined : motions.get(local.motionId);
+        if (physical === undefined || parent === undefined || guide?.kind !== 'moon' ||
+            moon.previewOnlyV221 || moon.spin.source !== 'V2_4_2_SCIENTIFIC_MOON' ||
+            guide.motionId !== local?.motionId || guide.anchorMotionContributions !== parent.motionContributions ||
+            local?.linearScenePerAu === undefined || !(local.linearScenePerAu > 0) ||
+            motion?.periodDays !== physical.periodDays ||
+            motion.semiMajorAxisAu !== physical.semiMajorAxisAu ||
+            moon.motionContributions.length !== parent.motionContributions.length + 1 ||
+            !parent.motionContributions.every((part, index) => part === moon.motionContributions[index]) ||
+            moon.visualPresentation.sourceMoonIdentity !== physical.formationSeedHex ||
+            moon.visualPresentation.sourceMassEarth !== physical.massEarth ||
+            moon.visualPresentation.sourceRadiusEarth !== physical.radiusEarth) {
+          throw new RangeError(`V2.4.2 ${moon.id}: renderer has a moon without valid scientific source or planet-relative orbit.`);
+        }
+      }
+      if (snapshot.moons.some(moon => moon.previewOnlyV221 === true) ||
+          snapshot.moons.some(moon => moon.scientificV242 !== true)) {
+        throw new RangeError('V2.4.2 binary laboratory must not mix legacy QA or barycentric V1 moon entities.');
+      }
+    }
     // V2.3 experimental inventory must never masquerade as persisted V1
     // small bodies: every object follows one explicit stellar host and guide.
     if (snapshot.multiplicityName === 'BINARY') {

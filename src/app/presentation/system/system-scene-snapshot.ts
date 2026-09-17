@@ -504,6 +504,8 @@ export interface SystemSceneBodySnapshot {
 export interface SystemSceneMoonSnapshot {
   /** Synthetic moon solely for the V2.2.1 QA scene; never lunar Ground Truth. */
   readonly previewOnlyV221?: true;
+  /** Scientific V2.4.2 laboratory moon; not a V1 MoonLocator or persisted entity. */
+  readonly scientificV242?: true;
   readonly id:
     string;
 
@@ -800,6 +802,9 @@ export interface SystemSceneSimulationSnapshot {
 export interface SystemSceneSnapshot {
   /** Explicitly opt-in QA catalogue; never attached to gameplay snapshots. */
   readonly experimentalMultihostCatalog?: MultihostPlanetaryCatalog;
+  /** V2.4.2 scientific satellite catalog for binary A/B; lab-only, no saves. */
+  readonly scientificMultihostMoonsV242?: import('../../domain/planetary/multihost-scientific-moon-v242')
+    .MultihostScientificMoonCatalogV242;
   /** V2.4.1 scientific calculations from frozen V2.2 bodies; lab-only, no saves. */
   readonly scientificMultihostPlanetsV241?: import('../../domain/planetary/multihost-scientific-planet-v241')
     .MultihostScientificPlanetCatalogV241;

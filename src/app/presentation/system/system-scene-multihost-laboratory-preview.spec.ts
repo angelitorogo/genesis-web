@@ -258,12 +258,12 @@ describe('Multihost V2 experimental scene projection boundary', () => {
       expect(record!.thermal.liquidOceanCoverageFraction01)
         .toBe(record!.environment.water.surfaceLiquidWaterCoverageFraction01);
     }
-    expect(result.moons.every(moon => moon.previewOnlyV221)).toBe(true);
+    expect(result.moons.every(moon => moon.scientificV242 && !moon.previewOnlyV221)).toBe(true);
     expect(source.planets).toHaveLength(0);
     expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
   });
 
-  it('reuses V1 visual algorithms on V2.2 worlds while keeping V2.3 satellites and debris explicitly QA and host-local', () => {
+  it('reuses V1 visual algorithms on V2.2 worlds with V2.4.2 moons and V2.3 debris explicitly QA and host-local', () => {
     const source = makeSnapshot(false);
     const catalog = generateMultihostPlanetaryCatalog({
       ...BASE_INPUT, seed: '00000000000000000000000000000001',
@@ -280,11 +280,10 @@ describe('Multihost V2 experimental scene projection boundary', () => {
     expect(result.planets.every(planet => planet.previewOnlyV23 &&
       planet.specialPresentation?.sourcePlanetType !== undefined)).toBe(true);
     expect(result.moons.length).toBeGreaterThan(0);
-    expect(result.moons.every(moon => moon.previewOnlyV221 &&
+    expect(result.moons.every(moon => moon.scientificV242 && !moon.previewOnlyV221 &&
       result.planets.some(planet => planet.id === moon.hostPlanetId))).toBe(true);
-    // Moon formation is still QA-only. A deterministic planet population may
-    // happen to show a single lunar visual style; do not require artificial
-    // variety or add satellites solely to satisfy this fixture.
+    // Scientific V2.4.2 moon counts do not depend on the old visual QA styles.
+    // Deterministic formation may produce a single surface style in this seed.
     expect(result.moons.every(moon =>
       ['ROCKY', 'ICY', 'OCEANIC', 'VOLCANIC', 'MIXED']
         .includes(moon.visualPresentation.surfaceStyle))).toBe(true);
@@ -308,6 +307,61 @@ describe('Multihost V2 experimental scene projection boundary', () => {
     expect(source.minorBodies).toHaveLength(0);
     expect(source.asteroidBelts).toHaveLength(0);
     expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
+  });
+
+  it('V2.4.2 renders only catalogued A/B moons, preserves physical orbits and rejects forged render identities', () => {
+    const source = makeSnapshot(false);
+    const catalog = generateMultihostPlanetaryCatalog({
+      ...BASE_INPUT, seed: '00000000000000000000000000000001',
+    });
+    const formed = generateMultihostFormedPlanetarySystemV22({
+      systemSeed: catalog.sourceSystemSeed, windows: catalog.windows,
+      hostLuminositiesSolarV241: {A: 1, B: 0.42},
+    });
+    const untouched = JSON.stringify(formed);
+    const result = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed);
+    const again = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed);
+    const scientific = result.scientificMultihostMoonsV242!;
+    expect(scientific.version).toBe('V2_4_2_MOON_SCIENCE');
+    expect(scientific.sourceSystemSeed).toBe(formed.sourceSystemSeed);
+    expect(scientific.systems).toHaveLength(result.scientificMultihostPlanetsV241!.planets.length);
+    expect(scientific.moons.length).toBe(scientific.systems.reduce((total, item) =>
+      total + item.modeledMoonCount, 0));
+    expect(JSON.stringify(formed)).toBe(untouched);
+    expect(again.scientificMultihostMoonsV242).toEqual(scientific);
+    expect(result.moons.map(moon => moon.id)).toEqual(again.moons.map(moon => moon.id));
+    expect(result.moons.length).toBeGreaterThan(10);
+    expect(result.moons.length).toBeLessThanOrEqual(
+      systemSceneMultihostRenderBudgetV221('BINARY').globalLaboratoryMoonCap);
+    const moonHosts = new Set(result.moons.map(moon =>
+      result.planets.find(planet => planet.id === moon.hostPlanetId)?.multihostOrbitV221?.hostId));
+    expect(moonHosts.has('A')).toBe(true);
+    expect(moonHosts.has('B')).toBe(true);
+    expect(result.moons.every(moon => moon.scientificV242 && !moon.previewOnlyV221)).toBe(true);
+    for (const visual of result.moons) {
+      const physical = scientific.moons.find(moon => moon.id === visual.id)!;
+      const parent = result.planets.find(planet => planet.id === visual.hostPlanetId)!;
+      const guide = result.orbits.find(orbit => orbit.id === visual.orbitId)!;
+      const motion = result.motions.find(entry => entry.id === guide.motionId)!;
+      expect(parent.multihostOrbitV221?.hostId).toBe(physical.hostId);
+      expect(physical.semiMajorAxisPlanetRadii * (1 - physical.eccentricity))
+        .toBeGreaterThan(physical.rocheLimitPlanetRadii);
+      expect(physical.semiMajorAxisPlanetRadii * (1 + physical.eccentricity))
+        .toBeLessThan(physical.progradeOuterLimitPlanetRadii);
+      expect(motion.periodDays).toBe(physical.periodDays);
+      expect(motion.semiMajorAxisAu).toBe(physical.semiMajorAxisAu);
+      expect(guide.anchorMotionContributions).toBe(parent.motionContributions);
+      expect(visual.visualPresentation.sourceMassEarth).toBe(physical.massEarth);
+      expect(visual.visualPresentation.sourceRadiusEarth).toBe(physical.radiusEarth);
+      expect(visual.spin.source).toBe('V2_4_2_SCIENTIFIC_MOON');
+    }
+    expect(source.moons).toHaveLength(0);
+    expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
+    const first = result.moons[0]!;
+    const forged = Object.freeze({...result, moons: Object.freeze([
+      Object.freeze({...first, hostPlanetId: 'fake-planet'}), ...result.moons.slice(1),
+    ])});
+    expect(() => assertSystemSceneProjectionSnapshot(forged)).toThrow(RangeError);
   });
 
   it('V2.3.4 compares the EXACT V1 SINGLE scale, first-orbit anchor and every sampled AU against BOTH binary hosts', () => {
@@ -428,22 +482,23 @@ describe('Multihost V2 experimental scene projection boundary', () => {
     }
   });
 
-  it('anchors visual QA moons to formed moving planets, never to the stellar barycenter', () => {
+  it('anchors V2.4.2 scientific moons to moving formed planets, never to the stellar barycenter', () => {
     const source = makeSnapshot(false);
     const catalog = generateMultihostPlanetaryCatalog(BASE_INPUT);
     const formed = generateMultihostFormedPlanetarySystemV22({
       systemSeed: catalog.sourceSystemSeed, windows: catalog.windows,
     });
     const result = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed);
-    const qa = result.moons.filter(moon => moon.previewOnlyV221 === true);
-    expect(qa.length).toBeGreaterThan(0);
-    expect(qa.length).toBeLessThanOrEqual(
+    const scientificMoons = result.moons.filter(moon => moon.scientificV242 === true);
+    expect(scientificMoons.length).toBeGreaterThan(0);
+    expect(scientificMoons.length).toBeLessThanOrEqual(
       systemSceneMultihostRenderBudgetV221('BINARY').globalLaboratoryMoonCap);
-    for (const moon of qa) {
+    for (const moon of scientificMoons) {
       const parent = result.planets.find(planet => planet.id === moon.hostPlanetId)!;
       expect(parent.multihostOrbitV221).toBeDefined();
-      expect(moon.spin.source).toBe('V2_2_1_LAB_MOON');
-      expect(moon.title).toContain('NO formada ni persistida');
+      expect(moon.spin.source).toBe('V2_4_2_SCIENTIFIC_MOON');
+      expect(moon.title).toContain('Roche/Hill físicos verificados');
+      expect(result.scientificMultihostMoonsV242?.moons.some(item => item.id === moon.id)).toBe(true);
       expect(moon.motionContributions.slice(0, -1)).toEqual(parent.motionContributions);
       const guide = result.orbits.find(orbit => orbit.id === moon.orbitId)!;
       expect(guide.kind).toBe('moon');
@@ -755,7 +810,7 @@ describe('Multihost V2 experimental scene projection boundary', () => {
       expect(zone.anchorMotionContributions).toBe(star.motionContributions);
       expect(zone.radiativeInnerRadiusScene).toBeLessThan(zone.radiativeOuterRadiusScene);
     }
-    expect(result.moons.every(moon => moon.previewOnlyV221 === true)).toBe(true);
+    expect(result.moons.every(moon => moon.scientificV242 === true)).toBe(true);
     for (const star of result.stars) {
       const stellar = star.motionContributions[0]!;
       const stellarMotion = result.motions.find(motion => motion.id === stellar.motionId)!;

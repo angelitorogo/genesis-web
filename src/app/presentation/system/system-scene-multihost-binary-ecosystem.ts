@@ -1,6 +1,7 @@
 import { buildSystemScenePlanetSurfacePresentationV1 } from './system-scene-planet-surface-presentation';
 import { presentationPlanetRadiusFromPhysicsV1 } from './system-scene-planet-size-v1';
 import { type MultihostScientificPlanetV241 } from '../../domain/planetary/multihost-scientific-planet-v241';
+import { type MultihostMoonSystemV242 } from '../../domain/planetary/multihost-scientific-moon-v242';
 import { buildSystemSceneGiantAtmospherePresentationV1 } from './system-scene-giant-atmosphere-presentation';
 import { MinorBodyKind } from '../../domain/planetary/minor-body-kind';
 import { type MultihostFormedPlanetV22 } from '../../domain/planetary/multihost-formed-planetary-system';
@@ -67,6 +68,7 @@ export function binaryPlanetScientificV241(
   body: SystemSceneBodySnapshot,
   scientific: MultihostScientificPlanetV241,
   appearance: BinaryPlanetAppearanceV23 | undefined,
+  moonSystem?: MultihostMoonSystemV242,
 ): SystemSceneBodySnapshot {
   if (body.id !== scientific.id || body.multihostOrbitV221?.hostId !== scientific.hostId) {
     throw new RangeError('V2.4.1 planet science must match the rendered V2.2 ID and host.');
@@ -88,8 +90,8 @@ export function binaryPlanetScientificV241(
     MINI_NEPTUNE: '#97ACCA', GAS_GIANT: '#D9B48B', ICE_GIANT: '#7CA7C4',
   });
   // The V1 rings are explicitly a presentation proxy even for V1 giants.
-  // The old V2.3 moon count remains *visual QA* until V2.4.2.
-  const moonCount = appearance?.tentativeMoonCount ?? 0;
+  // V2.4.2 satellite counts come from the scientific host-local model.
+  const moonCount = moonSystem?.modeledMoonCount ?? appearance?.tentativeMoonCount ?? 0;
   const special = buildSystemScenePlanetSpecialPresentationV1({
     planetId: scientific.formationSeedHex,
     planetType: type,
@@ -103,9 +105,10 @@ export function binaryPlanetScientificV241(
     rarityTraits: Object.freeze([]),
     giantMoonProfile: isGiant ? Object.freeze({
       sourceMoonCount: moonCount,
-      sourceSatelliteCapacityIndex01: Math.min(1, scientific.physics.massEarth / 100),
+      sourceSatelliteCapacityIndex01: moonSystem?.satelliteCapacityIndex01 ?? Math.min(1, scientific.physics.massEarth / 100),
       richnessIndex01: Math.min(1, moonCount / 3),
-      architectureRegime: 'V2_3_NON_AUTHORITATIVE_MOON_PROXY',
+      architectureRegime: moonSystem === undefined ? 'V2_3_NON_AUTHORITATIVE_MOON_PROXY' :
+        'V2_4_2_SATELLITE_MODEL',
     }) : null,
   });
   const environment = scientific.environment;

@@ -56,7 +56,8 @@ export function systemSceneMoonDisplaySpinRadiansV2(
 function validateSpin(spin: SystemSceneMoonSpinPresentationInputV2): void {
   if (
     (spin.source !== 'MOON_21_4' &&
-     spin.source !== 'V2_2_1_LAB_MOON') ||
+     spin.source !== 'V2_2_1_LAB_MOON' &&
+     spin.source !== 'V2_4_2_SCIENTIFIC_MOON') ||
     !Number.isFinite(spin.epochPhaseDegrees) ||
     (
       spin.rotationPeriodHours !== null &&

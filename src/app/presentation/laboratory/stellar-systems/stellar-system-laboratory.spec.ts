@@ -154,8 +154,9 @@ describe(
       // leaving QA restores the original source without changing saved data.
       expect(preview.planets.some(planet =>
         baseline.planets.some(original => original.id === planet.id))).toBe(false);
-      expect(preview.moons.every(moon => moon.previewOnlyV221 === true)).toBe(true);
-      expect(preview.moons.filter(moon => moon.previewOnlyV221 === true).length)
+      expect(preview.scientificMultihostMoonsV242?.version).toBe('V2_4_2_MOON_SCIENCE');
+      expect(preview.moons.every(moon => moon.scientificV242 === true)).toBe(true);
+      expect(preview.moons.filter(moon => moon.scientificV242 === true).length)
         .toBe(fixture.componentInstance.laboratoryMultihostMoonCount());
       expect(preview.minorBodies.every(body => body.previewOnlyV23)).toBe(true);
       expect(preview.asteroidBelts?.every(belt => belt.previewOnlyV23)).toBe(true);

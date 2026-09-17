@@ -32,7 +32,7 @@ const BUDGETS: Readonly<Record<SystemSceneMultiplicityV221, SystemSceneMultihost
     BINARY: Object.freeze({
       globalPlanetCap: 20,
       perHostPlanetCap: 10,
-      globalLaboratoryMoonCap: 10,
+      globalLaboratoryMoonCap: 36, // V2.4.2: visible scientific subset across A/B; SINGLE/TRIPLE frozen.
     }),
     TRIPLE: Object.freeze({
       globalPlanetCap: 20,

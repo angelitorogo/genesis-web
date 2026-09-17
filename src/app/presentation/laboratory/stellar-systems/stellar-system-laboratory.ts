@@ -218,7 +218,7 @@ export class StellarSystemLaboratoryPage {
 
   laboratoryMultihostMoonCount(): number {
     return this.rendererQaSnapshot().moons.filter(moon =>
-      moon.previewOnlyV221 === true,
+      moon.scientificV242 === true || moon.previewOnlyV221 === true,
     ).length;
   }
 
@@ -226,7 +226,23 @@ export class StellarSystemLaboratoryPage {
     const planets = new Set(this.rendererQaSnapshot().planets.filter(planet =>
       planet.multihostOrbitV221?.hostId === hostId).map(planet => planet.id));
     return this.rendererQaSnapshot().moons.filter(moon =>
-      moon.previewOnlyV221 && planets.has(moon.hostPlanetId)).length;
+      (moon.scientificV242 === true || moon.previewOnlyV221 === true) &&
+      planets.has(moon.hostPlanetId)).length;
+  }
+
+  /** V2 reference population estimate; only individually modeled relevant
+   * moons can be given IDs, physical orbits or visual bodies. */
+  estimatedMoonPopulationForHost(hostId: string): number {
+    return this.rendererQaSnapshot().scientificMultihostMoonsV242?.systems
+      .filter(system => system.hostId === hostId)
+      .reduce((count, system) => count + system.estimatedTotalMoonCount, 0) ?? 0;
+  }
+
+  /** Individually modeled relevant moons, distinct from 36 visible slots. */
+  scientificMoonCountForHost(hostId: string): number {
+    return this.rendererQaSnapshot().scientificMultihostMoonsV242?.systems
+      .filter(system => system.hostId === hostId)
+      .reduce((count, system) => count + system.modeledMoonCount, 0) ?? 0;
   }
 
   minorCountForHost(hostId: string, kind: 'ASTEROID' | 'COMET'): number {

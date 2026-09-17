@@ -9,6 +9,7 @@ export type SystemSceneBodySpinSource =
   | 'QA_PREVIEW_V2'
   | 'V2_2_FORMED'
   | 'V2_2_1_LAB_MOON'
+  | 'V2_4_2_SCIENTIFIC_MOON'
   | 'MOON_21_4';
 
 export interface SystemSceneBodySpinSnapshot {

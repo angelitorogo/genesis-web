@@ -2,6 +2,10 @@ import { createMultihostPreviewMoonV221 } from './system-scene-multihost-preview
 import { generateBinaryEcosystemV23, type BinaryEcosystemV23 } from '../../simulation/planetary/multihost-binary-ecosystem-generator';
 import { binaryPlanetScientificV241, materializeBinarySmallBodiesV23 } from './system-scene-multihost-binary-ecosystem';
 import { generateMultihostScientificPlanetsV241 } from '../../simulation/planetary/multihost-scientific-planet-generator-v241';
+import { generateMultihostScientificMoonsV242 } from '../../simulation/planetary/multihost-scientific-moon-generator-v242';
+import { projectMultihostScientificMoonV242 } from './system-scene-multihost-scientific-moons-v242';
+import { type MultihostScientificMoonCatalogV242 } from '../../domain/planetary/multihost-scientific-moon-v242';
+import { type MultihostScientificPlanetCatalogV241 } from '../../domain/planetary/multihost-scientific-planet-v241';
 import { generateMultihostCircumstellarHabitableZonesV23 } from '../../simulation/planetary/multihost-circumstellar-habitable-zone-generator';
 import { withMultihostLaboratoryStellarCadenceV221 } from './system-scene-multihost-star-cadence';
 import {
@@ -55,8 +59,8 @@ import {
  * V2.2.1 is deliberately a PRESENTATION boundary: the full formed aggregate is
  * left untouched, while a bounded balanced subset is materialized as complete
  * renderable planets. Every rendered V2.2 planet has an orbit, motion, host,
- * physical orbital period and a live translation binding. Renderer-only moons
- * exercise satellite anchoring without claiming that V2 moon formation exists.
+ * physical orbital period and a live translation binding. Binary A/B uses
+ * V2.4.2 planetocentric science; older triple previews remain QA satellites.
  */
 export function buildSystemSceneMultihostLaboratoryPreview(
   snapshot: SystemSceneSnapshot,
@@ -103,6 +107,10 @@ export function buildSystemSceneMultihostLaboratoryPreview(
       })
     : null;
   const scienceById = new Map(scientificPlanetsV241?.planets.map(item => [item.id, item]) ?? []);
+  const scientificMoonsV242 = binarySOnly && formedSystem !== null && scientificPlanetsV241 !== null
+    ? generateMultihostScientificMoonsV242(formedSystem, scientificPlanetsV241)
+    : null;
+  const moonSystemByPlanet = new Map(scientificMoonsV242?.systems.map(item => [item.hostPlanetId, item]) ?? []);
 
   const candidateBodies = formedSystem === null
     ? catalog.candidates.filter(candidate =>
@@ -323,11 +331,17 @@ export function buildSystemSceneMultihostLaboratoryPreview(
     const style = stylesById.get(body.id);
     const scientific = scienceById.get(body.id);
     planets.push(formed !== null && scientific !== undefined
-      ? binaryPlanetScientificV241(body, scientific, style) : body);
+      ? binaryPlanetScientificV241(body, scientific, style, moonSystemByPlanet.get(body.id)) : body);
     if (formed !== null) renderedFormedById.set(body.id, formed);
   }
 
-  if (formedSystem !== null) {
+  if (scientificMoonsV242 !== null && scientificPlanetsV241 !== null) {
+    materializeLaboratoryScientificMoonsV242(
+      planets, scientificPlanetsV241, scientificMoonsV242, moons, motions, orbits,
+      base, budget.globalLaboratoryMoonCap,
+    );
+  } else if (formedSystem !== null) {
+    // Triple / non-binary preview retained bit for bit until multihost triple science.
     materializeLaboratoryMoonsV221(
       planets,
       renderedFormedById,
@@ -399,11 +413,11 @@ export function buildSystemSceneMultihostLaboratoryPreview(
 
   return Object.freeze({
     ...base,
-    title: `${base.title} · ${formedSystem === null ? 'V2 QA (experimental)' : binarySOnly ? 'V2.4.1 BINARY A/B · radios V1 y aspectos de referencia' : 'V2.2.3 multihost hierarchical layout'}`,
+    title: `${base.title} · ${formedSystem === null ? 'V2 QA (experimental)' : binarySOnly ? 'V2.4.2 BINARY A/B · planetas y lunas por anfitrión' : 'V2.2.3 multihost hierarchical layout'}`,
     accessibleLabel: formedSystem === null
       ? `V2 experimental superpuesta a ${base.planets.length} planetas reales V1, ${base.moons.length} lunas V1 y ${planets.length - base.planets.length} testigos V2. Candidatos sin Ground Truth.`
       : binarySOnly
-        ? `BINARY V2.4.1 laboratorio: ${scientificPlanetsV241?.planets.length ?? 0} planetas con masa/radio/órbita V2.2, clasificación V1 de bulk, radios visuales idénticos al algoritmo SINGLE y variedad de aspectos radiativos HIPOTÉTICOS. V2.2 sigue fijando los planetas; composición V2 estimada y envoltura gigante VISUAL sin química medida. Atmósferas, clima y agua son modelos V2 estimados a partir de inventarios; no representan mediciones ni ejecutan el agregado Atmosphere V1. ${moons.length} lunas QA, ${smallBodies?.minorBodies.length ?? 0} menores QA; no se persiste ni se simula irradiación variable de compañera.`
+        ? `BINARY V2.4.1 laboratorio: ${scientificPlanetsV241?.planets.length ?? 0} planetas con masa/radio/órbita V2.2, clasificación V1 de bulk, radios visuales idénticos al algoritmo SINGLE y variedad de aspectos radiativos HIPOTÉTICOS. V2.2 sigue fijando los planetas; composición V2 estimada y envoltura gigante VISUAL sin química medida. Atmósferas, clima y agua son modelos V2 estimados a partir de inventarios; no representan mediciones ni ejecutan el agregado Atmosphere V1. ${scientificMoonsV242?.systems.reduce((sum, system) => sum + system.estimatedTotalMoonCount, 0) ?? 0} lunas estimadas de población total, ${scientificMoonsV242?.moons.length ?? 0} relevantes V2.4.2 con órbitas y ${moons.length} visibles (Hill/Roche/Kepler y modelos de referencia, no fase 21 V1), ${smallBodies?.minorBodies.length ?? 0} menores QA; no se persiste ni se simula irradiación variable de compañera.`
         : `V2.2.3: ${formedSystem.planets.length} planetas formados en el agregado; ${planets.length - base.planets.length} planetas V2.2 renderizados con órbita y traslación completas dentro del límite visual ${budget.globalPlanetCap}; ${moons.length - base.moons.length} lunas QA de laboratorio. La presentación separa sistemas S locales y capas P compartidas, manteniendo HZ y cuerpos menores V1 coherentes.`,
     stars: finalStars,
     planets: Object.freeze(planets),
@@ -432,6 +446,7 @@ export function buildSystemSceneMultihostLaboratoryPreview(
     ...(layoutPlan === null ? {} : { multihostLayoutV222: layoutPlan.layout }),
     ...(formedSystem === null ? {} : { formedMultihostSystemV22: formedSystem }),
     ...(scientificPlanetsV241 === null ? {} : { scientificMultihostPlanetsV241: scientificPlanetsV241 }),
+    ...(scientificMoonsV242 === null ? {} : { scientificMultihostMoonsV242: scientificMoonsV242 }),
   });
 }
 
@@ -453,6 +468,36 @@ function buildQaLocalLinearProjectionByHost(
     localLinearByHost.set(host, visiblePeriapsis / first.periapsisAu);
   }
   return localLinearByHost;
+}
+
+/** Round-robin the V2 scientific moon catalogue across visible planets.
+ * Render budget does not feed into scientific moon counts or the per-host disk. */
+function materializeLaboratoryScientificMoonsV242(
+  planets: readonly SystemSceneBodySnapshot[],
+  scientificPlanets: MultihostScientificPlanetCatalogV241,
+  catalog: MultihostScientificMoonCatalogV242,
+  moons: SystemSceneMoonSnapshot[],
+  motions: SystemSceneOrbitalMotionSnapshot[],
+  orbits: SystemSceneOrbitSnapshot[],
+  snapshot: SystemSceneSnapshot,
+  moonCap: number,
+): void {
+  const scienceById = new Map(scientificPlanets.planets.map(item => [item.id, item]));
+  const moonGroups = new Map(catalog.systems.map(item => [item.hostPlanetId, item.moons]));
+  const selected = planets.filter(planet => scienceById.has(planet.id));
+  const maxPerPlanet = Math.max(0, ...selected.map(planet => moonGroups.get(planet.id)?.length ?? 0));
+  for (let index = 0; index < maxPerPlanet && moons.length < moonCap; index++) {
+    for (const parent of selected) {
+      if (moons.length >= moonCap) break;
+      const science = scienceById.get(parent.id);
+      const moon = moonGroups.get(parent.id)?.[index];
+      if (science === undefined || moon === undefined) continue;
+      const rendered = projectMultihostScientificMoonV242(moon, parent, science, snapshot, motions);
+      motions.push(rendered.motion);
+      orbits.push(rendered.orbit);
+      moons.push(rendered.body);
+    }
+  }
 }
 
 function materializeLaboratoryMoonsV221(
