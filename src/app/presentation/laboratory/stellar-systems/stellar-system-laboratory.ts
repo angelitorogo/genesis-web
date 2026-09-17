@@ -245,15 +245,34 @@ export class StellarSystemLaboratoryPage {
       .reduce((count, system) => count + system.modeledMoonCount, 0) ?? 0;
   }
 
+  estimatedMinorPopulationForHost(hostId: string, kind: 'ASTEROID' | 'COMET'): number {
+    const inventory = this.rendererQaSnapshot().scientificMultihostMinorBodiesV243?.hosts
+      .find(item => item.hostId === hostId);
+    return kind === 'ASTEROID' ? inventory?.estimatedAsteroidPopulation ?? 0 :
+      inventory?.estimatedCometPopulation ?? 0;
+  }
+
+  scientificMinorCountForHost(hostId: string, kind: 'ASTEROID' | 'COMET'): number {
+    return this.rendererQaSnapshot().scientificMultihostMinorBodiesV243?.bodies.filter(item =>
+      item.hostId === hostId && item.kind === kind).length ?? 0;
+  }
+
+  scientificBeltCountForHost(hostId: string): number {
+    return this.rendererQaSnapshot().scientificMultihostMinorBodiesV243?.belts.filter(item =>
+      item.hostId === hostId).length ?? 0;
+  }
+
   minorCountForHost(hostId: string, kind: 'ASTEROID' | 'COMET'): number {
     return this.rendererQaSnapshot().minorBodies.filter(body =>
-      body.previewOnlyV23 && body.hostIdV23 === hostId &&
+      (body.scientificV243 ? body.hostIdV243 === hostId :
+        body.previewOnlyV23 && body.hostIdV23 === hostId) &&
       body.minorBodyKind.name === kind).length;
   }
 
   beltCountForHost(hostId: string): number {
     return (this.rendererQaSnapshot().asteroidBelts ?? []).filter(belt =>
-      belt.previewOnlyV23 && belt.id.includes(`-${hostId}-belt`)).length;
+      belt.scientificV243 ? belt.hostIdV243 === hostId :
+        belt.previewOnlyV23 && belt.id.includes(`-${hostId}-belt`)).length;
   }
 
   selectExperimentalMultihostFamily(family: 'ALL' | 'S_TYPE' | 'P_TYPE'): void {

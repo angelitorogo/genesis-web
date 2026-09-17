@@ -1,4 +1,6 @@
 import { projectSystemSceneMotionContributions } from './system-scene-motion-projection';
+import { buildSystemSceneMinorBodyOrbitPresentationV1 } from './system-scene-minor-body-orbit-v1';
+import { systemSceneMultihostProjectedRadiusV22 } from './system-scene-multihost-radial-projection';
 import {
   type SystemSceneBodySnapshot,
   type SystemSceneMinorBodySnapshot,
@@ -179,6 +181,129 @@ export function assertSystemSceneProjectionSnapshot(
         throw new RangeError('V2.4.2 binary laboratory must not mix legacy QA or barycentric V1 moon entities.');
       }
     }
+    // V2.4.3 scientific host-local minor bodies supersede V2.3 QA only in
+    // binary laboratory snapshots; never manufacture V1 persisted identities.
+    const minorScience = snapshot.scientificMultihostMinorBodiesV243;
+    if (minorScience !== undefined) {
+      if (snapshot.multiplicityName !== 'BINARY' ||
+          minorScience.sourceSystemSeed !== formedV22.sourceSystemSeed ||
+          minorScience.version !== 'V2_4_3_MINOR_BODY_SCIENCE' ||
+          snapshot.minorBodies.some(body => body.scientificV243 !== true || body.previewOnlyV23 === true) ||
+          (snapshot.asteroidBelts ?? []).some(belt => belt.scientificV243 !== true || belt.previewOnlyV23 === true)) {
+        throw new RangeError('V2.4.3 refuses mixed QA/V1 small bodies in the scientific binary laboratory.');
+      }
+      assertFrozen(minorScience, 'snapshot.scientificMultihostMinorBodiesV243');
+      assertFrozenArray(minorScience.hosts, 'snapshot.scientificMultihostMinorBodiesV243.hosts', assertFrozen);
+      assertFrozenArray(minorScience.belts, 'snapshot.scientificMultihostMinorBodiesV243.belts', assertFrozen);
+      assertFrozenArray(minorScience.bodies, 'snapshot.scientificMultihostMinorBodiesV243.bodies', assertFrozen);
+      const ids = new Set([...minorScience.belts, ...minorScience.bodies].map(item => item.id));
+      if (ids.size !== minorScience.belts.length + minorScience.bodies.length ||
+          minorScience.hosts.some(inventory => inventory.allocatedBeltMassEarth +
+            inventory.allocatedCometReservoirEarth > inventory.remainingSolidsEarth * (1 + 1e-9) ||
+            inventory.modeledAsteroidMassEarth > inventory.allocatedBeltMassEarth * (1 + 1e-9) ||
+            inventory.modeledCometMassEarth > inventory.allocatedCometReservoirEarth * (1 + 1e-9) ||
+            (inventory.cometReservoir === null && (inventory.allocatedCometReservoirEarth !== 0 ||
+              inventory.bodies.some(body => body.kind === 'COMET'))) ||
+            (inventory.cometReservoir !== null && (
+              inventory.cometReservoir.hostId !== inventory.hostId ||
+              inventory.cometReservoir.innerEdgeAu <= inventory.cometReservoir.snowLineAu ||
+              inventory.cometReservoir.innerEdgeAu >= inventory.cometReservoir.outerEdgeAu))) ||
+          minorScience.bodies.some(body => {
+            const disk = formedV22.disks.find(value => value.hostId === body.hostId);
+            const outer = disk === undefined ? 0 : Math.min(disk.window.referenceOuterAu,
+              disk.window.outerStableAu ?? disk.window.referenceOuterAu);
+            return body.version !== 'V2_4_3_S_TYPE_MINOR_BODY' ||
+              body.source !== 'V2_4_3_DETERMINISTIC_RESIDUAL_FORMATION' ||
+              disk === undefined || body.periapsisAu <= disk.window.innerStableAu ||
+              body.apoapsisAu >= outer || !(body.massEarth > 0 && body.periodDays > 0) ||
+              (body.kind === 'ASTEROID'
+                ? disk.planets.some(planet => body.periapsisAu <= planet.apoapsisAu &&
+                    body.apoapsisAu >= planet.periapsisAu) || body.cometOrbitClass !== undefined
+                : (() => {
+                    const host = minorScience.hosts.find(value => value.hostId === body.hostId);
+                    const reservoir = host?.cometReservoir;
+                    const crossing = disk.planets.some(planet =>
+                      body.periapsisAu <= planet.apoapsisAu && body.apoapsisAu >= planet.periapsisAu);
+                    return reservoir === undefined || reservoir === null ||
+                      body.cometReservoirId !== reservoir.id ||
+                      body.apoapsisAu <= reservoir.innerEdgeAu ||
+                      body.apoapsisAu >= reservoir.outerEdgeAu ||
+                      body.crossesPlanetaryRadialEnvelope !== crossing ||
+                      (body.cometOrbitClass === 'RESERVOIR_BOUND'
+                        ? crossing || body.periapsisAu <= reservoir.snowLineAu
+                        : body.cometOrbitClass !== 'INBOUND_VISITOR' || !crossing ||
+                          body.periapsisAu >= reservoir.innerEdgeAu);
+                  })());
+          })) {
+        throw new RangeError('V2.4.3 scientific small-body provenance, bounds or mass budgets invalid.');
+      }
+      const physicalBodies = new Map(minorScience.bodies.map(body => [body.id, body]));
+      const physicalBelts = new Map(minorScience.belts.map(belt => [belt.id, belt]));
+      for (const body of snapshot.minorBodies) {
+        const record = physicalBodies.get(body.id);
+        const star = snapshot.stars.find(item => item.label === body.hostIdV243);
+        const orbit = orbits.get(body.orbitId);
+        const local = body.motionContributions.at(-1);
+        const motion = local === undefined ? undefined : motions.get(local.motionId);
+        const asteroid = record?.kind === 'ASTEROID';
+        if (record === undefined || star === undefined ||
+            record.hostId !== body.hostIdV243 || orbit?.kind !== 'minor-body' ||
+            orbit.anchorMotionContributions !== star.motionContributions ||
+            orbit.motionId !== local?.motionId || motion === undefined ||
+            motion.semiMajorAxisAu !== record.semiMajorAxisAu ||
+            motion.periodDays !== record.periodDays ||
+            orbit.hostRadialProjectionV22 !== local?.hostRadialProjectionV22 ||
+            (asteroid
+              ? local?.hostRadialProjectionV22 === undefined || local.linearScenePerAu !== undefined
+              : (() => {
+                  const spec = snapshot.orbits.find(candidate =>
+                    candidate.kind === 'planetary' &&
+                    snapshot.planets.some(planet => planet.orbitId === candidate.id &&
+                      planet.multihostOrbitV221?.hostId === record.hostId))?.hostRadialProjectionV22;
+                  if (spec === undefined || local?.linearScenePerAu === undefined ||
+                      orbit.linearScenePerAu !== local.linearScenePerAu ||
+                      local.hostRadialProjectionV22 !== undefined ||
+                      orbit.hostRadialProjectionV22 !== undefined ||
+                      motion.longitudeAscendingNodeDegrees !== record.longitudeAscendingNodeDegrees ||
+                      motion.argumentOfPeriapsisDegrees !== record.argumentOfPeriapsisDegrees) return true;
+                  const ellipse = buildSystemSceneMinorBodyOrbitPresentationV1({
+                    semiMajorAxisAu: record.semiMajorAxisAu,
+                    eccentricity: record.eccentricity,
+                    projectedSemiMajorScene: systemSceneMultihostProjectedRadiusV22(
+                      record.semiMajorAxisAu, spec),
+                    maximumVisibleStarRadiusScene: Math.max(
+                      star.radiusScene, star.opticalRadiusScene ?? star.radiusScene),
+                  });
+                  return Math.abs(orbit.semiMajorScene - ellipse.semiMajorScene) > 1e-9 ||
+                    Math.abs(orbit.semiMinorScene - ellipse.semiMinorScene) > 1e-9 ||
+                    Math.abs(orbit.focusOffsetScene - ellipse.focusOffsetScene) > 1e-9 ||
+                    Math.abs(local.linearScenePerAu -
+                      ellipse.semiMajorScene / record.semiMajorAxisAu) > 1e-9;
+                })()) ||
+            body.motionContributions.length !== star.motionContributions.length + 1 ||
+            !star.motionContributions.every((part, index) => part === body.motionContributions[index]) ||
+            (asteroid ? body.asteroidPresentation?.source !== 'V2_4_3_SCIENTIFIC_REFERENCE' ||
+                body.cometPresentation !== null :
+                body.cometPresentation?.source !== 'V2_4_3_SCIENTIFIC_REFERENCE' ||
+                body.asteroidPresentation !== null)) {
+          throw new RangeError(`V2.4.3 ${body.id}: visible minor body lacks scientific identity, host or motion.`);
+        }
+      }
+      for (const belt of snapshot.asteroidBelts ?? []) {
+        const record = physicalBelts.get(belt.id);
+        const star = snapshot.stars.find(item => item.label === belt.hostIdV243);
+        if (record === undefined || star === undefined ||
+            record.hostId !== belt.hostIdV243 ||
+            belt.anchorMotionContributions !== star.motionContributions ||
+            belt.innerEdgeAu !== record.innerEdgeAu || belt.outerEdgeAu !== record.outerEdgeAu ||
+            belt.peakAu !== record.peakAu ||
+            !(belt.innerRadiusScene > 0 && belt.innerRadiusScene < belt.peakRadiusScene! &&
+              belt.peakRadiusScene! < belt.outerRadiusScene)) {
+          throw new RangeError(`V2.4.3 ${belt.id}: visible belt lacks scientific identity or host.`);
+        }
+      }
+    }
+
     // V2.3 experimental inventory must never masquerade as persisted V1
     // small bodies: every object follows one explicit stellar host and guide.
     if (snapshot.multiplicityName === 'BINARY') {
@@ -933,6 +1058,11 @@ function assertMotionContributions(
               radial.lastApoapsisScene > radial.firstPeriapsisScene) ||
             contribution.linearScenePerAu !== undefined) {
           throw new RangeError('V2.2 host radial mapping must be monotone and exclusive of a linear override.');
+        }
+        if (radial.outerMinorBodyExtensionLimitSceneV243 !== undefined &&
+          !(radial.outerMinorBodyExtensionLimitSceneV243 > 0 &&
+            radial.outerMinorBodyExtensionLimitSceneV243 <= 0.13)) {
+          throw new RangeError('V2.4.3 comet-only radial extension must remain inside A/B separation budget.');
         }
         if (radial.singleSystemScaleV233 !== undefined) {
           const single = radial.singleSystemScaleV233;

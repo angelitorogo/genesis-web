@@ -18,6 +18,7 @@ export type SystemSceneAsteroidMultiplicityRegime =
 export interface SystemSceneAsteroidPresentationInputV1 {
   /** Explicit V2.3 source switch: reuse a drawing algorithm, not V1 Ground Truth. */
   readonly previewOnlyV23?: true;
+  readonly scientificV243?: true;
   readonly proceduralId: string;
   readonly diameterKilometers: number;
   readonly compositionRegime: SystemSceneAsteroidCompositionRegime;
@@ -36,7 +37,7 @@ export interface SystemSceneAsteroidPresentationInputV1 {
 
 export interface SystemSceneAsteroidPresentationV1 {
   readonly version: 1;
-  readonly source: 'PHASE_22_4_ASTEROID_TAXONOMY' | 'V2_3_EXPERIMENTAL';
+  readonly source: 'PHASE_22_4_ASTEROID_TAXONOMY' | 'V2_3_EXPERIMENTAL' | 'V2_4_3_SCIENTIFIC_REFERENCE';
   readonly proceduralId: string;
   readonly sourceDiameterKilometers: number;
   readonly compositionRegime: SystemSceneAsteroidCompositionRegime;
@@ -164,7 +165,8 @@ export function buildSystemSceneAsteroidPresentationV1(
 
   return Object.freeze({
     version: SYSTEM_SCENE_ASTEROID_PRESENTATION_VERSION,
-    source: input.previewOnlyV23 ? 'V2_3_EXPERIMENTAL' as const : 'PHASE_22_4_ASTEROID_TAXONOMY' as const,
+    source: input.scientificV243 ? 'V2_4_3_SCIENTIFIC_REFERENCE' as const :
+      input.previewOnlyV23 ? 'V2_3_EXPERIMENTAL' as const : 'PHASE_22_4_ASTEROID_TAXONOMY' as const,
     proceduralId: input.proceduralId,
     sourceDiameterKilometers: input.diameterKilometers,
     compositionRegime: input.compositionRegime,

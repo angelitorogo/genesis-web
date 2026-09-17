@@ -324,6 +324,7 @@ import {
   projectSystemSceneMotionContributions,
   type SystemSceneMotionProjectionContribution,
 } from './system-scene-motion-projection';
+import { buildSystemSceneMinorBodyOrbitPresentationV1 } from './system-scene-minor-body-orbit-v1';
 
 import {
   systemSceneStellarLightIntensity,
@@ -548,6 +549,8 @@ export interface SystemSceneMoonSnapshot {
 }
 
 export interface SystemSceneMinorBodySnapshot {
+  readonly scientificV243?: true;
+  readonly hostIdV243?: 'A' | 'B';
   readonly previewOnlyV23?: true;
   readonly hostIdV23?: 'A' | 'B';
   readonly id:
@@ -588,6 +591,8 @@ export interface SystemSceneMinorBodySnapshot {
 }
 
 export interface SystemSceneAsteroidBeltSnapshot {
+  readonly scientificV243?: true;
+  readonly hostIdV243?: 'A' | 'B';
   readonly previewOnlyV23?: true;
   readonly id:
     string;
@@ -803,6 +808,9 @@ export interface SystemSceneSnapshot {
   /** Explicitly opt-in QA catalogue; never attached to gameplay snapshots. */
   readonly experimentalMultihostCatalog?: MultihostPlanetaryCatalog;
   /** V2.4.2 scientific satellite catalog for binary A/B; lab-only, no saves. */
+  /** V2.4.3 independent S-type minor-body inventory for the binary laboratory. */
+  readonly scientificMultihostMinorBodiesV243?: import('../../domain/planetary/multihost-scientific-minor-bodies-v243')
+    .MultihostScientificMinorBodyCatalogV243;
   readonly scientificMultihostMoonsV242?: import('../../domain/planetary/multihost-scientific-moon-v242')
     .MultihostScientificMoonCatalogV242;
   /** V2.4.1 scientific calculations from frozen V2.2 bodies; lab-only, no saves. */
@@ -1047,12 +1055,6 @@ const IDENTIFIED_STAR_RADIUS_SCENE =
 
 const IDENTIFIED_STELLAR_ORBIT_COLOR =
   '#6A9FB7';
-
-const MINOR_BODY_MIN_STAR_CLEARANCE_SCENE =
-  0.22;
-
-const MINOR_BODY_MIN_PERIAPSIS_FLOOR_SCENE =
-  0.48;
 
 export class SystemSceneSnapshotBuilder {
 
@@ -4783,40 +4785,15 @@ function projectMinorBodyLayer(
         projectionSpace,
       );
 
-    const projectedPeriapsisScene =
-      semiMajorScene *
-      (
-        1 -
-        orbital.eccentricity
-      );
-
-    const minimumPeriapsisScene =
-      Math.max(
-        MINOR_BODY_MIN_PERIAPSIS_FLOOR_SCENE,
-        maximumVisibleStarRadiusScene +
-          MINOR_BODY_MIN_STAR_CLEARANCE_SCENE,
-      );
-
-    const presentationExpansionFactor =
-      projectedPeriapsisScene >
-        Number.EPSILON &&
-      projectedPeriapsisScene <
-        minimumPeriapsisScene
-        ? minimumPeriapsisScene /
-          projectedPeriapsisScene
-        : 1;
-
-    const presentedSemiMajorScene =
-      semiMajorScene *
-      presentationExpansionFactor;
-
-    const presentedLinearScenePerAu =
-      presentationExpansionFactor > 1 &&
-      orbital.semiMajorAxisAu >
-        Number.EPSILON
-        ? presentedSemiMajorScene /
-          orbital.semiMajorAxisAu
-        : null;
+    const v1MinorOrbit = buildSystemSceneMinorBodyOrbitPresentationV1({
+      semiMajorAxisAu: orbital.semiMajorAxisAu,
+      eccentricity: orbital.eccentricity,
+      projectedSemiMajorScene: semiMajorScene,
+      maximumVisibleStarRadiusScene,
+    });
+    const presentationExpansionFactor = v1MinorOrbit.presentationExpansionFactor;
+    const presentedSemiMajorScene = v1MinorOrbit.semiMajorScene;
+    const presentedLinearScenePerAu = v1MinorOrbit.linearScenePerAu;
 
     const localContribution =
       Object.freeze({
@@ -4929,15 +4906,9 @@ function projectMinorBodyLayer(
         semiMajorScene:
           presentedSemiMajorScene,
         semiMinorScene:
-          presentedSemiMajorScene *
-          Math.sqrt(
-            1 -
-            orbital.eccentricity **
-              2,
-          ),
+          v1MinorOrbit.semiMinorScene,
         focusOffsetScene:
-          presentedSemiMajorScene *
-          orbital.eccentricity,
+          v1MinorOrbit.focusOffsetScene,
         rotationDegrees:
           motion.rotationDegrees,
         inclinationDegrees:

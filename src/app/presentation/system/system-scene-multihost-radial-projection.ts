@@ -15,6 +15,8 @@ export interface SystemSceneMultihostRadialProjectionV22 {
   readonly lastApoapsisScene: number;
   /** BINARY-only: production SINGLE V3 projection with its V5.3 first-orbit anchor. */
   readonly singleSystemScaleV233?: SystemSceneScaleSnapshot;
+  /** Comet overlay only: bounded, monotone extension beyond the V1 last planet. */
+  readonly outerMinorBodyExtensionLimitSceneV243?: number;
   /** Legacy V2.3.3 field, intentionally absent on new V2.3.4 disks. */
   readonly orbitLadderV233?: readonly Readonly<{
     readonly radiusAu: number;
@@ -49,9 +51,11 @@ export function systemSceneMultihostProjectedRadiusV22(
     // Exceptional overlays outside the SINGLE builder's outer boundary must
     // not collapse to a single radius (its production function clamps here).
     // Rendered planets and host HZ never enter this extension.
-    return single.targetOuterRadiusScene +
-      single.targetOuterRadiusScene * 0.20 *
+    const extension = single.targetOuterRadiusScene * 0.20 *
       Math.log1p((radiusAu - single.outerRadiusAu) / single.outerRadiusAu);
+    const minorCap = spec.outerMinorBodyExtensionLimitSceneV243;
+    return single.targetOuterRadiusScene +
+      (minorCap === undefined ? extension : minorCap * (1 - Math.exp(-extension / minorCap)));
   }
   if (radiusAu <= spec.firstPeriapsisAu) {
     return radiusAu / spec.firstPeriapsisAu * spec.firstPeriapsisScene;

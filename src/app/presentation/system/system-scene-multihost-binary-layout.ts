@@ -204,7 +204,7 @@ export function buildSystemSceneBinarySubsystemLayoutV224(
         'V2.3.4 BINARY: dos proyecciones SINGLE V3 + ancla V5.3 completas, 4,8 unidades cada una, sin escalado afín ni escalera uniforme; separación estelar reservada en periastro y contraste físico 3/93 UA preservado.',
         'Vista general: cámara para ambas excursiones estelares y sus discos completos. Vista local: seguimiento de la estrella A o B con el disco SINGLE completo, sin alterar el catálogo científico.',
         'Las órbitas planetarias V1 no se superponen a V2 en el modo BINARY QA. El sistema V1 original sigue disponible al desactivar el modo experimental.',
-        'La HZ radiativa por estrella se añade en V2.3.1; el inventario local de cinturones V2.3 es únicamente un ensayo QA no persistible, no generación científica V1.',
+        'La HZ radiativa por estrella se añade en V2.3.1; V2.4.3 sustituye los menores QA por inventarios científicos V2 separados por anfitrión, sin escribir datos de generación V1.',
       ]),
     }),
   });

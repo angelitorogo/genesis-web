@@ -158,8 +158,8 @@ describe(
       expect(preview.moons.every(moon => moon.scientificV242 === true)).toBe(true);
       expect(preview.moons.filter(moon => moon.scientificV242 === true).length)
         .toBe(fixture.componentInstance.laboratoryMultihostMoonCount());
-      expect(preview.minorBodies.every(body => body.previewOnlyV23)).toBe(true);
-      expect(preview.asteroidBelts?.every(belt => belt.previewOnlyV23)).toBe(true);
+      expect(preview.minorBodies.every(body => body.scientificV243 && !body.previewOnlyV23)).toBe(true);
+      expect(preview.asteroidBelts?.every(belt => belt.scientificV243 && !belt.previewOnlyV23)).toBe(true);
       expect(preview.habitableZone).toBeNull();
       expect(preview.layers.minorBodyCount).toBe(preview.minorBodies.length);
       expect(preview.layers.habitableZoneAvailable).toBe(true);

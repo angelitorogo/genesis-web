@@ -10,7 +10,10 @@ import {
   SystemSceneProjectionSpace,
 } from './system-scene-scale-projection';
 import { buildSystemSceneFirstOrbitAnchorV53 } from './system-scene-first-orbit-anchor';
-import { systemSceneMultihostProjectedRadiusV22 } from './system-scene-multihost-radial-projection';
+import { systemSceneMultihostProjectedRadiusV22, systemSceneMultihostProjectVectorV221 } from './system-scene-multihost-radial-projection';
+import { systemSceneCometActivityAtSimulationDayV1 } from './system-scene-comet-presentation';
+import { buildSystemSceneMinorBodyOrbitPresentationV1 } from './system-scene-minor-body-orbit-v1';
+import { SystemOrbitalMotionEngine } from '../../simulation/orbital/system-orbital-motion-engine';
 import {
   assertSystemSceneProjectionSnapshot,
 } from './system-scene-projection-contract';
@@ -19,6 +22,7 @@ import {
 } from './system-scene-multihost-laboratory-preview';
 import {
   projectSystemSceneMotionContributions,
+  sampleSystemSceneOrbitLocalAu,
 } from './system-scene-motion-projection';
 import {
   MULTIHOST_V221_SECONDS_PER_ORBIT,
@@ -263,7 +267,7 @@ describe('Multihost V2 experimental scene projection boundary', () => {
     expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
   });
 
-  it('reuses V1 visual algorithms on V2.2 worlds with V2.4.2 moons and V2.3 debris explicitly QA and host-local', () => {
+  it('reuses V1 visual algorithms on V2.2 worlds with scientific V2.4.2 moons and V2.4.3 debris', () => {
     const source = makeSnapshot(false);
     const catalog = generateMultihostPlanetaryCatalog({
       ...BASE_INPUT, seed: '00000000000000000000000000000001',
@@ -288,18 +292,18 @@ describe('Multihost V2 experimental scene projection boundary', () => {
       ['ROCKY', 'ICY', 'OCEANIC', 'VOLCANIC', 'MIXED']
         .includes(moon.visualPresentation.surfaceStyle))).toBe(true);
     expect(result.minorBodies.length).toBeGreaterThan(0);
-    expect(result.minorBodies.some(body => body.hostIdV23 === 'A')).toBe(true);
-    expect(result.minorBodies.some(body => body.hostIdV23 === 'B')).toBe(true);
+    expect(result.scientificMultihostMinorBodiesV243?.hosts.some(host => host.hostId === 'A')).toBe(true);
+    expect(result.scientificMultihostMinorBodiesV243?.hosts.some(host => host.hostId === 'B')).toBe(true);
     expect(result.asteroidBelts!.length).toBeGreaterThan(0);
     for (const body of result.minorBodies) {
-      const star = result.stars.find(item => item.label === body.hostIdV23)!;
+      const star = result.stars.find(item => item.label === body.hostIdV243)!;
       const orbit = result.orbits.find(item => item.id === body.orbitId)!;
       const local = body.motionContributions.at(-1)!;
       expect(orbit.kind).toBe('minor-body');
       expect(orbit.anchorMotionContributions).toBe(star.motionContributions);
       expect(orbit.hostRadialProjectionV22).toBe(local.hostRadialProjectionV22);
       expect((body.asteroidPresentation ?? body.cometPresentation)?.source)
-        .toBe('V2_3_EXPERIMENTAL');
+        .toBe('V2_4_3_SCIENTIFIC_REFERENCE');
       expect(result.motions.some(item => item.id === orbit.motionId)).toBe(true);
     }
     expect(result.layers.minorBodyCount).toBe(result.minorBodies.length);
@@ -799,10 +803,10 @@ describe('Multihost V2 experimental scene projection boundary', () => {
       (orbit.kind === 'minor-body' && result.minorBodies.some(body => body.orbitId === orbit.id)))).toBe(true);
     expect(result.multihostLayoutV222?.hostEnvelopes.map(envelope => envelope.hostId))
       .toEqual(['A', 'B']);
-    expect(result.asteroidBelts?.every(belt => belt.previewOnlyV23)).toBe(true);
+    expect(result.asteroidBelts?.every(belt => belt.scientificV243 && !belt.previewOnlyV23)).toBe(true);
     expect(result.habitableZone).toBeNull();
     expect(result.layers.minorBodyCount).toBe(result.minorBodies.length);
-    expect(result.minorBodies.every(body => body.previewOnlyV23)).toBe(true);
+    expect(result.minorBodies.every(body => body.scientificV243 && !body.previewOnlyV23)).toBe(true);
     expect(result.layers.habitableZoneAvailable).toBe(true);
     expect(result.multihostHabitableZonesV23?.map(zone => zone.hostId)).toEqual(['A', 'B']);
     for (const zone of result.multihostHabitableZonesV23 ?? []) {
@@ -841,6 +845,167 @@ describe('Multihost V2 experimental scene projection boundary', () => {
     expect(pOnly.planets).toHaveLength(0);
     expect(pOnly.orbits.every(orbit => orbit.kind === 'stellar')).toBe(true);
     expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
+  });
+
+  it('V2.4.3 retains complete A/B minor-body science behind bounded host-relative renderer layers', () => {
+    const fixture = makeSnapshot(false);
+    const source: SystemSceneSnapshot = Object.freeze({
+      ...fixture,
+      stars: Object.freeze(fixture.stars.map(star => star.label === 'B'
+        ? Object.freeze({...star, sourceLuminositySolar: 0.42}) : star)),
+    });
+    const before = JSON.stringify(source);
+    let seenVisible = 0;
+    let seenScientific = 0;
+    let visibleComets = 0;
+    let inboundVisitors = 0;
+    for (let ordinal = 1; ordinal <= 10; ordinal++) {
+      const seed = ordinal.toString(16).padStart(32, '0').toUpperCase();
+      const catalog = generateMultihostPlanetaryCatalog({...BASE_INPUT, seed});
+      const formed = generateMultihostFormedPlanetarySystemV22({
+        systemSeed: catalog.sourceSystemSeed, windows: catalog.windows,
+        hostLuminositiesSolarV241: {A: 1, B: 0.42},
+      });
+      const result = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed);
+      const science = result.scientificMultihostMinorBodiesV243!;
+      expect(science.version).toBe('V2_4_3_MINOR_BODY_SCIENCE');
+      expect(science.sourceSystemSeed).toBe(catalog.sourceSystemSeed);
+      expect(science.hosts.map(host => host.hostId)).toEqual(['A', 'B']);
+      expect(result.minorBodies.length).toBeLessThanOrEqual(26);
+      expect(result.asteroidBelts!.length).toBeLessThanOrEqual(4);
+      expect(result.minorBodies.length).toBeLessThanOrEqual(science.bodies.length);
+      expect(result.asteroidBelts!.length).toBeLessThanOrEqual(science.belts.length);
+      expect(result.minorBodies.every(body => body.scientificV243 === true &&
+        body.previewOnlyV23 !== true)).toBe(true);
+      expect(result.asteroidBelts!.every(belt => belt.scientificV243 === true &&
+        belt.previewOnlyV23 !== true)).toBe(true);
+      seenVisible += result.minorBodies.length;
+      seenScientific += science.bodies.length;
+      for (const body of result.minorBodies) {
+        const physical = science.bodies.find(item => item.id === body.id)!;
+        const guide = result.orbits.find(item => item.id === body.orbitId)!;
+        const motion = result.motions.find(item => item.id === guide.motionId)!;
+        const host = result.stars.find(item => item.label === physical.hostId)!;
+        expect(physical).toBeDefined();
+        expect(body.hostIdV243).toBe(physical.hostId);
+        expect(body.motionContributions.slice(0, -1)).toEqual(host.motionContributions);
+        expect(guide.anchorMotionContributions).toBe(host.motionContributions);
+        expect(guide.hostRadialProjectionV22)
+          .toBe(body.motionContributions.at(-1)!.hostRadialProjectionV22);
+        expect(motion.periodDays).toBe(physical.periodDays);
+        expect(motion.semiMajorAxisAu).toBe(physical.semiMajorAxisAu);
+        expect((body.asteroidPresentation ?? body.cometPresentation)?.source)
+          .toBe('V2_4_3_SCIENTIFIC_REFERENCE');
+        if (physical.kind === 'COMET') {
+          visibleComets++;
+          inboundVisitors += Number(physical.cometOrbitClass === 'INBOUND_VISITOR');
+          expect(body.title).toContain('reservorio frío S-type');
+          expect(guide.hostRadialProjectionV22).toBeUndefined();
+          expect(guide.linearScenePerAu).toBe(body.motionContributions.at(-1)!.linearScenePerAu);
+          const ellipse = buildSystemSceneMinorBodyOrbitPresentationV1({
+            semiMajorAxisAu: physical.semiMajorAxisAu, eccentricity: physical.eccentricity,
+            projectedSemiMajorScene: systemSceneMultihostProjectedRadiusV22(
+              physical.semiMajorAxisAu,
+              result.planets.find(p => p.multihostOrbitV221?.hostId === physical.hostId)!
+                .motionContributions.at(-1)!.hostRadialProjectionV22!,
+            ),
+            maximumVisibleStarRadiusScene: Math.max(host.radiusScene,
+              host.opticalRadiusScene ?? host.radiusScene),
+          });
+          expect(guide.semiMajorScene).toBeCloseTo(ellipse.semiMajorScene, 9);
+          expect(guide.semiMinorScene).toBeCloseTo(ellipse.semiMinorScene, 9);
+          expect(guide.focusOffsetScene).toBeCloseTo(ellipse.focusOffsetScene, 9);
+          const visual = {...body.cometPresentation!, epochMeanAnomalyDegrees: 0};
+          const near = systemSceneCometActivityAtSimulationDayV1(visual, 0, body.radiusScene);
+          const far = systemSceneCometActivityAtSimulationDayV1(visual,
+            physical.periodDays / (2 * visual.presentationTimeScale), body.radiusScene);
+          expect(near.incidentFluxEarth).toBeGreaterThan(far.incidentFluxEarth);
+          expect(near.activityIndex01).toBeGreaterThanOrEqual(far.activityIndex01);
+        }
+      }
+      expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
+    }
+    expect(seenScientific).toBeGreaterThan(20);
+    expect(seenVisible).toBeGreaterThan(10);
+    expect(visibleComets).toBeGreaterThan(0);
+    expect(inboundVisitors).toBeGreaterThan(0);
+    expect(JSON.stringify(source)).toBe(before);
+    expect(source.minorBodies).toHaveLength(0);
+  });
+
+  it('uses exactly the V1 Kepler ellipse/clearance and Ω/i/ω orientation for every binary comet', () => {
+    const fixture = makeSnapshot(false);
+    const source = Object.freeze({...fixture,
+      stars: Object.freeze(fixture.stars.map(star => star.label === 'B'
+        ? Object.freeze({...star, sourceLuminositySolar: 0.42}) : star)),
+    });
+    let visitors = 0;
+    let tilted = 0;
+    let rotatedPeriapsides = 0;
+    for (const axis of [12, 21.75, 93]) for (let n = 1; n <= 10; n++) {
+      const seed = n.toString(16).padStart(32, '0').toUpperCase();
+      const catalog = generateMultihostPlanetaryCatalog({...BASE_INPUT, seed, innerBinaryAxisAu: axis});
+      const formed = generateMultihostFormedPlanetarySystemV22({
+        systemSeed: catalog.sourceSystemSeed, windows: catalog.windows,
+        hostLuminositiesSolarV241: {A: 1, B: 0.42},
+      });
+      const result = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed);
+      const physical = result.scientificMultihostMinorBodiesV243!;
+      const motions = new Map(result.motions.map(motion => [motion.id, motion]));
+      for (const body of result.minorBodies.filter(item => item.cometPresentation !== null)) {
+        const comet = physical.bodies.find(item => item.id === body.id)!;
+        const orbit = result.orbits.find(item => item.id === body.orbitId)!;
+        const local = body.motionContributions.at(-1)!;
+        const motion = motions.get(local.motionId)!;
+        const host = result.stars.find(item => item.label === comet.hostId)!;
+        const hostPlanet = result.planets.find(item => item.multihostOrbitV221?.hostId === comet.hostId)!;
+        const projection = hostPlanet.motionContributions.at(-1)!.hostRadialProjectionV22!;
+        const reference = buildSystemSceneMinorBodyOrbitPresentationV1({
+          semiMajorAxisAu: comet.semiMajorAxisAu,
+          eccentricity: comet.eccentricity,
+          projectedSemiMajorScene: systemSceneMultihostProjectedRadiusV22(comet.semiMajorAxisAu, projection),
+          maximumVisibleStarRadiusScene: Math.max(host.radiusScene,
+            host.opticalRadiusScene ?? host.radiusScene),
+        });
+        expect(orbit.semiMajorScene).toBeCloseTo(reference.semiMajorScene, 9);
+        expect(orbit.semiMinorScene).toBeCloseTo(reference.semiMinorScene, 9);
+        expect(orbit.focusOffsetScene).toBeCloseTo(reference.focusOffsetScene, 9);
+        expect(local.hostRadialProjectionV22).toBeUndefined();
+        expect(orbit.hostRadialProjectionV22).toBeUndefined();
+        expect(local.linearScenePerAu).toBeCloseTo(reference.semiMajorScene / comet.semiMajorAxisAu, 9);
+        expect(orbit.linearScenePerAu).toBe(local.linearScenePerAu);
+        expect(motion.longitudeAscendingNodeDegrees).toBe(comet.longitudeAscendingNodeDegrees);
+        expect(motion.argumentOfPeriapsisDegrees).toBe(comet.argumentOfPeriapsisDegrees);
+        expect(orbit.inclinationDegrees).toBe(comet.inclinationDegrees);
+        expect(body.cometPresentation!.eccentricity).toBe(comet.eccentricity);
+        const points = sampleSystemSceneOrbitLocalAu(motion, 'minor-body', 128);
+        const radii = points.map(point => Math.hypot(point.x, point.y, point.z) * local.linearScenePerAu!);
+        expect(Math.min(...radii)).toBeCloseTo(reference.semiMajorScene * (1-comet.eccentricity), 7);
+        expect(Math.max(...radii)).toBeCloseTo(reference.semiMajorScene * (1+comet.eccentricity), 7);
+        // The moving V2 nucleus uses precisely the same V1 local AU sample
+        // and affine scale as the Three.js guide (not a warped radial map).
+        const epoch = result.simulation.epochSimulationDay;
+        const parentAtEpoch = projectSystemSceneMotionContributions(
+          host.motionContributions, id => motions.get(id), epoch, result.scale);
+        const nucleusAtEpoch = projectSystemSceneMotionContributions(
+          body.motionContributions, id => motions.get(id), epoch, result.scale);
+        const point = SystemOrbitalMotionEngine.positionAtSimulationDay(
+          motion, epoch * local.presentationTimeScale!);
+        expect(nucleusAtEpoch.x - parentAtEpoch.x).toBeCloseTo(point.xAu * local.linearScenePerAu!, 7);
+        expect(nucleusAtEpoch.y - parentAtEpoch.y).toBeCloseTo(point.yAu * local.linearScenePerAu!, 7);
+        expect(nucleusAtEpoch.z - parentAtEpoch.z).toBeCloseTo(point.zAu * local.linearScenePerAu!, 7);
+        if (comet.cometOrbitClass === 'INBOUND_VISITOR') {
+          visitors++;
+          expect(comet.eccentricity).toBeGreaterThanOrEqual(0.724);
+          tilted += Number(comet.inclinationDegrees > 20);
+          rotatedPeriapsides += Number(Math.abs(comet.argumentOfPeriapsisDegrees ?? 0) > 1);
+        }
+      }
+      expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
+    }
+    expect(visitors).toBeGreaterThan(10);
+    expect(tilted).toBeGreaterThan(3);
+    expect(rotatedPeriapsides).toBeGreaterThan(10);
   });
 
   it('filters S/P families without mutating the catalogue or existing scene', () => {

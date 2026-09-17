@@ -1,6 +1,8 @@
 import { createMultihostPreviewMoonV221 } from './system-scene-multihost-preview-moons';
 import { generateBinaryEcosystemV23, type BinaryEcosystemV23 } from '../../simulation/planetary/multihost-binary-ecosystem-generator';
-import { binaryPlanetScientificV241, materializeBinarySmallBodiesV23 } from './system-scene-multihost-binary-ecosystem';
+import { binaryPlanetScientificV241 } from './system-scene-multihost-binary-ecosystem';
+import { generateMultihostScientificMinorBodiesV243 } from '../../simulation/planetary/multihost-scientific-minor-body-generator-v243';
+import { materializeBinaryScientificMinorBodiesV243 } from './system-scene-multihost-scientific-minor-bodies-v243';
 import { generateMultihostScientificPlanetsV241 } from '../../simulation/planetary/multihost-scientific-planet-generator-v241';
 import { generateMultihostScientificMoonsV242 } from '../../simulation/planetary/multihost-scientific-moon-generator-v242';
 import { projectMultihostScientificMoonV242 } from './system-scene-multihost-scientific-moons-v242';
@@ -111,6 +113,12 @@ export function buildSystemSceneMultihostLaboratoryPreview(
     ? generateMultihostScientificMoonsV242(formedSystem, scientificPlanetsV241)
     : null;
   const moonSystemByPlanet = new Map(scientificMoonsV242?.systems.map(item => [item.hostPlanetId, item]) ?? []);
+  const scientificMinorBodiesV243 = binarySOnly && formedSystem !== null && familyFilter !== 'P_TYPE'
+    ? generateMultihostScientificMinorBodiesV243(formedSystem, {
+        A: stars.get('A')?.sourceLuminositySolar,
+        B: stars.get('B')?.sourceLuminositySolar,
+      })
+    : null;
 
   const candidateBodies = formedSystem === null
     ? catalog.candidates.filter(candidate =>
@@ -355,8 +363,8 @@ export function buildSystemSceneMultihostLaboratoryPreview(
     );
   }
 
-  const smallBodies = ecosystem === null ? null : materializeBinarySmallBodiesV23(
-    ecosystem, base, stars, hostRadialProjections, motions, orbits,
+  const smallBodies = scientificMinorBodiesV243 === null ? null : materializeBinaryScientificMinorBodiesV243(
+    scientificMinorBodiesV243, base, stars, hostRadialProjections, motions, orbits,
   );
 
   // General view contains both complete 4.8-unit SINGLE disks throughout
@@ -413,11 +421,11 @@ export function buildSystemSceneMultihostLaboratoryPreview(
 
   return Object.freeze({
     ...base,
-    title: `${base.title} · ${formedSystem === null ? 'V2 QA (experimental)' : binarySOnly ? 'V2.4.2 BINARY A/B · planetas y lunas por anfitrión' : 'V2.2.3 multihost hierarchical layout'}`,
+    title: `${base.title} · ${formedSystem === null ? 'V2 QA (experimental)' : binarySOnly ? 'V2.4.3 BINARY A/B · planetas, lunas y menores científicos' : 'V2.2.3 multihost hierarchical layout'}`,
     accessibleLabel: formedSystem === null
       ? `V2 experimental superpuesta a ${base.planets.length} planetas reales V1, ${base.moons.length} lunas V1 y ${planets.length - base.planets.length} testigos V2. Candidatos sin Ground Truth.`
       : binarySOnly
-        ? `BINARY V2.4.1 laboratorio: ${scientificPlanetsV241?.planets.length ?? 0} planetas con masa/radio/órbita V2.2, clasificación V1 de bulk, radios visuales idénticos al algoritmo SINGLE y variedad de aspectos radiativos HIPOTÉTICOS. V2.2 sigue fijando los planetas; composición V2 estimada y envoltura gigante VISUAL sin química medida. Atmósferas, clima y agua son modelos V2 estimados a partir de inventarios; no representan mediciones ni ejecutan el agregado Atmosphere V1. ${scientificMoonsV242?.systems.reduce((sum, system) => sum + system.estimatedTotalMoonCount, 0) ?? 0} lunas estimadas de población total, ${scientificMoonsV242?.moons.length ?? 0} relevantes V2.4.2 con órbitas y ${moons.length} visibles (Hill/Roche/Kepler y modelos de referencia, no fase 21 V1), ${smallBodies?.minorBodies.length ?? 0} menores QA; no se persiste ni se simula irradiación variable de compañera.`
+        ? `BINARY V2.4.3 laboratorio: ${scientificPlanetsV241?.planets.length ?? 0} planetas con masa/radio/órbita V2.2, clasificación V1 de bulk, radios visuales idénticos al algoritmo SINGLE y variedad de aspectos radiativos HIPOTÉTICOS. V2.2 sigue fijando los planetas; composición V2 estimada y envoltura gigante VISUAL sin química medida. Atmósferas, clima y agua son modelos V2 estimados a partir de inventarios; no representan mediciones ni ejecutan el agregado Atmosphere V1. ${scientificMoonsV242?.systems.reduce((sum, system) => sum + system.estimatedTotalMoonCount, 0) ?? 0} lunas estimadas de población total, ${scientificMoonsV242?.moons.length ?? 0} relevantes V2.4.2 con órbitas y ${moons.length} visibles (Hill/Roche/Kepler y modelos de referencia, no fase 21 V1), ${scientificMinorBodiesV243?.hosts.reduce((sum, item) => sum + item.estimatedAsteroidPopulation, 0) ?? 0} asteroides de población estimada, ${scientificMinorBodiesV243?.bodies.length ?? 0} menores relevantes con órbitas y ${smallBodies?.minorBodies.length ?? 0} visibles, ${scientificMinorBodiesV243?.belts.length ?? 0} cinturones físicos de referencia en A/B; ${scientificMinorBodiesV243?.hosts.filter(host => host.cometReservoir !== null).length ?? 0} reservorios cometarios fríos S-type y ${scientificMinorBodiesV243?.bodies.filter(body => body.cometOrbitClass === 'INBOUND_VISITOR').length ?? 0} visitantes con órbitas excéntricas de referencia (sin N-body, circumbinarios ni persistencia); no se simula irradiación variable de compañera.`
         : `V2.2.3: ${formedSystem.planets.length} planetas formados en el agregado; ${planets.length - base.planets.length} planetas V2.2 renderizados con órbita y traslación completas dentro del límite visual ${budget.globalPlanetCap}; ${moons.length - base.moons.length} lunas QA de laboratorio. La presentación separa sistemas S locales y capas P compartidas, manteniendo HZ y cuerpos menores V1 coherentes.`,
     stars: finalStars,
     planets: Object.freeze(planets),
@@ -447,6 +455,7 @@ export function buildSystemSceneMultihostLaboratoryPreview(
     ...(formedSystem === null ? {} : { formedMultihostSystemV22: formedSystem }),
     ...(scientificPlanetsV241 === null ? {} : { scientificMultihostPlanetsV241: scientificPlanetsV241 }),
     ...(scientificMoonsV242 === null ? {} : { scientificMultihostMoonsV242: scientificMoonsV242 }),
+    ...(scientificMinorBodiesV243 === null ? {} : { scientificMultihostMinorBodiesV243: scientificMinorBodiesV243 }),
   });
 }
 
