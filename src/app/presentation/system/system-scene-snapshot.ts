@@ -809,6 +809,8 @@ export interface SystemSceneSnapshot {
   readonly experimentalMultihostCatalog?: MultihostPlanetaryCatalog;
   /** V2.4.2 scientific satellite catalog for binary A/B; lab-only, no saves. */
   /** V2.4.3 independent S-type minor-body inventory for the binary laboratory. */
+  readonly scientificMultihostHabitabilityV244?: import('../../domain/planetary/multihost-habitability-v244')
+    .MultihostHabitabilityCatalogV244;
   readonly scientificMultihostMinorBodiesV243?: import('../../domain/planetary/multihost-scientific-minor-bodies-v243')
     .MultihostScientificMinorBodyCatalogV243;
   readonly scientificMultihostMoonsV242?: import('../../domain/planetary/multihost-scientific-moon-v242')
@@ -1223,6 +1225,17 @@ export class SystemSceneSnapshotBuilder {
       });
       return buildSystemSceneMultihostLaboratoryPreview(
         renderedSnapshot, catalog, source.experimentalMultihostFamily ?? 'ALL', formedSystem,
+        world.multiplicityName === 'BINARY' && hierarchy.innerOrbit !== null &&
+          world.stellarSystem.secondaryCompanion !== null
+          ? Object.freeze({
+              binarySemiMajorAxisAu: hierarchy.innerOrbit.semiMajorAxisAu,
+              binaryEccentricity: hierarchy.innerOrbit.eccentricity,
+              stellarEvolution: Object.freeze({
+                A: world.stellarSystem.primaryStar.evolutionState.name,
+                B: world.stellarSystem.secondaryCompanion.lifetimeProfile.evolutionAssessment.evolutionState.name,
+              }),
+            })
+          : null,
       );
     }
     return renderedSnapshot;

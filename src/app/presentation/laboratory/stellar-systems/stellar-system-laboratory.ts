@@ -32,6 +32,7 @@ import {
 } from '../../system/system-scene-snapshot';
 
 import { type MultihostScientificPlanetV241 } from '../../../domain/planetary/multihost-scientific-planet-v241';
+import { type MultihostHabitablePlanetV244 } from '../../../domain/planetary/multihost-habitability-v244';
 
 import {
   STELLAR_SYSTEM_LABORATORY_CASES,
@@ -179,6 +180,12 @@ export class StellarSystemLaboratoryPage {
     this.rendererQaSnapshot().scientificMultihostPlanetsV241?.planets.map((item: MultihostScientificPlanetV241) => [item.id, item] as const) ?? [],
   ));
 
+  readonly habitablePlanetById = computed(() => new Map<string, MultihostHabitablePlanetV244>(
+    this.rendererQaSnapshot().scientificMultihostHabitabilityV244?.planets.map(
+      (planet: MultihostHabitablePlanetV244) => [planet.planetId, planet] as const,
+    ) ?? [],
+  ));
+
   /**
    * V2.1 readonly QA assessment. Even V1 bodies are only linked to their frozen
    * host: we do NOT reclassify V1 stability using a different V2 fit.
@@ -201,6 +208,12 @@ export class StellarSystemLaboratoryPage {
         .map(planet => ({ id: planet.id, label: planet.label })),
     });
   });
+
+  orbitalReferenceCountForHost(hostId: string): number {
+    return this.rendererQaSnapshot().scientificMultihostHabitabilityV244?.planets.filter(
+      (planet: MultihostHabitablePlanetV244) => planet.hostId === hostId && planet.orbitalReferenceCandidate,
+    ).length ?? 0;
+  }
 
   candidateCount(
     candidates: readonly { readonly hostId: string }[],

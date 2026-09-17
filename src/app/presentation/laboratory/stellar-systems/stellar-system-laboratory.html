@@ -102,7 +102,7 @@
       @if (rendererQaSnapshot().formedMultihostSystemV22; as formed) {
         <section class="stellar-lab__domain-diagnostics" data-testid="multihost-v22-formed-system" aria-labelledby="multihost-v22-heading">
           <h3 id="multihost-v22-heading">{{ selectedCase().id === 'BINARY' ? 'BINARY · dos sistemas locales S-type' : 'V2.2 · población formada ' + formed.planets.length }} · render {{ renderedMultihostPlanetCount() }} · {{ selectedCase().id === 'BINARY' ? 'lunas V2.4.2 visibles' : 'lunas QA' }} {{ laboratoryMultihostMoonCount() }}</h3>
-          <p>{{ selectedCase().id === 'BINARY' ? 'Planetas formados V2.2, proyección V1 por estrella y modelos de referencia V2.4.1 de atmósfera, clima y agua. Presión, océanos y composición son estimaciones de laboratorio, NO datos V1 ni observaciones. La migración de gigantes interiores es un escenario acotado por una región de origen fría S-type, no una simulación N-body. Lunas V2.4.2: población potencial estimada separada de lunas relevantes con masa y órbita individual; hasta ocho relevantes por gigante y 36 visibles por escena binaria. Órbitas relevantes Roche/Hill y periodos Kepler; no se modelan las órbitas de las pequeñas/irregulares ni se persiste. Los menores V2.4.3 consumen un subpresupuesto acotado de sólidos remanentes por estrella, usan Kepler y huecos orbitales de referencia; aún faltan dinámica secular, irradiación variable de la compañera y persistencia.' : 'Inventario científico completo: ' + formed.planets.length + ' planetas. La escena mezcla V1 y selección V2, con capas HZ/menores V1 y lunas QA.' }}</p>
+          <p>{{ selectedCase().id === 'BINARY' ? 'Planetas formados V2.2, proyección V1 por estrella y modelos de referencia V2.4.1 de atmósfera, clima y agua. Presión, océanos y composición son estimaciones de laboratorio, NO datos V1 ni observaciones. La migración de gigantes interiores es un escenario acotado por una región de origen fría S-type, no una simulación N-body. Lunas V2.4.2: población potencial estimada separada de lunas relevantes con masa y órbita individual; hasta ocho relevantes por gigante y 36 visibles por escena binaria. Órbitas relevantes Roche/Hill y periodos Kepler; no se modelan las órbitas de las pequeñas/irregulares ni se persiste. Los menores V2.4.3 consumen un subpresupuesto acotado de sólidos remanentes por estrella, usan Kepler y huecos orbitales de referencia; aún faltan dinámica secular, simulación temporal de irradiación de la compañera (V2.4.4 aporta cotas) y persistencia.' : 'Inventario científico completo: ' + formed.planets.length + ' planetas. La escena mezcla V1 y selección V2, con capas HZ/menores V1 y lunas QA.' }}</p>
           @if (rendererQaSnapshot().multihostHabitableZonesV23; as zones) {
             <div class="stellar-lab__host-grid" data-testid="multihost-v23-habitable-zones">
               @for (zone of zones; track zone.hostId) {
@@ -112,10 +112,27 @@
                   <small>
                     {{ zone.dynamicallyHabitableInnerEdgeAu === null ? 'Sin solapamiento S-type estable en este modelo aproximado' : 'Intersección dinámica aproximada: ' + zone.dynamicallyHabitableInnerEdgeAu.toPrecision(4) + '–' + zone.dynamicallyHabitableOuterEdgeAu!.toPrecision(4) + ' UA' }}
                   </small>
-                  <small>Irradiación variable de la compañera y estabilidad secular pendientes; no acredita habitabilidad.</small>
+                  <small>Cotas de irradiación A+B calculadas por planeta en V2.4.4; simulación temporal y estabilidad secular pendientes. No acredita habitabilidad.</small>
                 </article>
               }
             </div>
+          }
+          @if (rendererQaSnapshot().scientificMultihostHabitabilityV244; as assessment) {
+            <section data-testid="multihost-v244-habitability" aria-label="V2.4.4 habitabilidad de referencia A/B">
+              <h4>V2.4.4 · evaluación por anfitrión con ecuaciones V1 18.6/18.7</h4>
+              <p>La HZ solo describe condiciones radiativas y una ventana orbital aproximada; no demuestra agua, estabilidad a largo plazo ni vida. La contribución de la otra estrella se presenta como cotas geométricas, no como clima resuelto.</p>
+              <div class="stellar-lab__host-grid">
+                @for (host of assessment.hosts; track host.hostId) {
+                  <article data-testid="multihost-v244-host" [attr.data-host]="host.hostId">
+                    <strong>HZ {{ host.hostId }} · {{ host.dynamicalRegime }}</strong>
+                    <span>Radiativa V1: {{ host.radiativeInnerEdgeAu.toPrecision(4) }}–{{ host.radiativeOuterEdgeAu.toPrecision(4) }} UA</span>
+                    <small>Ventana S-type: {{ host.dynamicallyHabitableInnerEdgeAu === null ? 'sin solapamiento dinámico' : host.dynamicallyHabitableInnerEdgeAu.toPrecision(4) + '–' + host.dynamicallyHabitableOuterEdgeAu!.toPrecision(4) + ' UA' }}</small>
+                    <small>Evolución: {{ host.stellarEvolutionRegime }} · candidato de referencia persistente V1: {{ host.persistentReferenceCandidate ? 'sí (solo geometría de referencia)' : 'no acreditado' }}</small>
+                    <small>Planetas con órbita íntegramente en HZ dinámica: {{ orbitalReferenceCountForHost(host.hostId) }}</small>
+                  </article>
+                }
+              </div>
+            </section>
           }
           <div class="stellar-lab__host-grid">
             @for (disk of formed.disks; track disk.hostId) {
@@ -141,7 +158,12 @@
                   @if (scientificPlanetById().get(planet.id); as detail) {
                     <small data-testid="multihost-v241-planet-environment">V2.4.1 · tipo {{ detail.type }} · {{ detail.formationPath.regime === 'MIGRATION_SCENARIO' ? 'Migración hipotética desde ' + detail.formationPath.estimatedBirthAxisAu!.toPrecision(3) + ' UA' : detail.formationPath.regime === 'IN_SITU' ? 'Formación local' : 'Origen no resuelto' }}</small>
                     <small>Teq: {{ detail.environment.equilibriumTemperatureKelvin === null ? 'sin referencia' : detail.environment.equilibriumTemperatureKelvin.toFixed(1) + ' K' }} · superficie: {{ detail.environment.climate.meanSurfaceTemperatureKelvin === null ? 'no definida' : detail.environment.climate.meanSurfaceTemperatureKelvin.toFixed(1) + ' K' }} · presión estimada: {{ detail.environment.atmosphere.pressurePascal === null ? 'no definida' : detail.environment.atmosphere.pressurePascal.toPrecision(3) + ' Pa' }}</small>
-                    <small>Agua superficial: {{ detail.environment.water.regime }} (hipótesis; no demuestra habitabilidad). No incorpora irradiación de la estrella compañera.</small>
+                    <small>Agua superficial: {{ detail.environment.water.regime }} (hipótesis de V2.4.1; no demuestra habitabilidad). La irradiación de la compañera se evalúa por separado en V2.4.4.</small>
+                  }
+                  @if (habitablePlanetById().get(planet.id); as hz) {
+                    <small data-testid="multihost-v244-planet-habitability">HZ V1 · {{ hz.hostId }}: radiativa {{ hz.radiativeRelation }} · dinámica {{ hz.dynamicallyAvailableRelation ?? 'SIN SOLAPAMIENTO' }} · entorno: {{ hz.environmentalReference }}</small>
+                    <small>Flujo combinado A+B: {{ hz.irradiance.status }} · {{ hz.irradiance.totalMinimumSolar === null ? '?' : hz.irradiance.totalMinimumSolar.toPrecision(3) }}–{{ hz.irradiance.totalMaximumSolar === null ? '?' : hz.irradiance.totalMaximumSolar.toPrecision(3) }} S⊕ · {{ hz.binaryFluxReferenceRegime }}</small>
+                    <small>Temperatura superficial estimada con cotas: {{ hz.irradiance.estimatedSurfaceTemperatureMinKelvin === null ? 'no definida' : hz.irradiance.estimatedSurfaceTemperatureMinKelvin.toFixed(1) + ' K' }}–{{ hz.irradiance.estimatedSurfaceTemperatureMaxKelvin === null ? 'no definida' : hz.irradiance.estimatedSurfaceTemperatureMaxKelvin.toFixed(1) + ' K' }} (no clima temporal ni habitabilidad probada).</small>
                   }
                 </div>
                 }
@@ -237,7 +259,7 @@
           }
         </section>
       }
-      <p class="stellar-lab__multihost-warning">{{ selectedCase().id === 'BINARY' ? 'BINARIO V2.3 — referencia HZ A/B con constantes radiativas V1 y límites S-type V2.1; no es una evaluación climática de la irradiación variable de la otra estrella. Planetas V2.4.1 y lunas V2.4.2 poseen modelos de referencia por anfitrión A/B; el catálogo científico estimado V2.4.3 de menores ya distingue población, objetos modelados y visibles; siguen pendientes la dinámica secular N-body y la irradiación variable de la compañera. No se altera V1 ni se mezclan sus identidades en el laboratorio.' : 'TRIPLE/SINGLE conservan la presentación V2.2.3. Lunas científicas y capas auxiliares actuales son V1; los satélites extra son QA. Sin fichas ni persistencia V2 todavía.' }}</p>
+      <p class="stellar-lab__multihost-warning">{{ selectedCase().id === 'BINARY' ? 'BINARIO V2.4.4 — geometría HZ 18.6 y clasificación orbital 18.7 V1 independientes para A/B, más cotas conservadoras de irradiación de la compañera, sin clima temporal ni estabilidad secular. Planetas V2.4.1 y lunas V2.4.2 poseen modelos de referencia por anfitrión A/B; el catálogo científico estimado V2.4.3 de menores ya distingue población, objetos modelados y visibles; siguen pendientes la dinámica secular N-body y la irradiación variable resuelta por fase (solo cotas en V2.4.4). No se altera V1 ni se mezclan sus identidades en el laboratorio.' : 'TRIPLE/SINGLE conservan la presentación V2.2.3. Lunas científicas y capas auxiliares actuales son V1; los satélites extra son QA. Sin fichas ni persistencia V2 todavía.' }}</p>
     </section>
   }
 

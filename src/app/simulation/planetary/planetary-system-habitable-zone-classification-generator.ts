@@ -169,7 +169,7 @@ export class PlanetarySystemHabitableZoneClassificationGenerator {
   }
 }
 
-function classifyIntervalV1(
+export function classifyIntervalV1(
   periastronAu:
     number,
 

@@ -16,6 +16,7 @@ import {
 
 import { StellarSystemLaboratoryFamilyId } from './stellar-system-laboratory-fixtures';
 import { systemSceneBinarySeparationAu } from '../../system/system-scene-binary-separation';
+import { type MultihostHabitableHostV244, type MultihostHabitablePlanetV244 } from '../../../domain/planetary/multihost-habitability-v244';
 
 describe(
   'StellarSystemLaboratoryPage',
@@ -164,6 +165,20 @@ describe(
       expect(preview.layers.minorBodyCount).toBe(preview.minorBodies.length);
       expect(preview.layers.habitableZoneAvailable).toBe(true);
       expect(preview.multihostHabitableZonesV23?.map(zone => zone.hostId)).toEqual(['A', 'B']);
+      expect(preview.scientificMultihostHabitabilityV244?.version)
+        .toBe('V2_4_4_S_TYPE_HABITABILITY');
+      expect(preview.scientificMultihostHabitabilityV244?.hosts.map((host: MultihostHabitableHostV244) => host.hostId))
+        .toEqual(['A', 'B']);
+      expect(preview.scientificMultihostHabitabilityV244?.planets.length)
+        .toBe(preview.scientificMultihostPlanetsV241?.planets.length);
+      expect(preview.scientificMultihostHabitabilityV244?.planets.every((planet: MultihostHabitablePlanetV244) =>
+        planet.irradiance.status === 'BOUNDED')).toBe(true);
+      expect(fixture.nativeElement.querySelector('[data-testid="multihost-v244-habitability"]'))
+        .toBeTruthy();
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="multihost-v244-host"]'))
+        .toHaveLength(2);
+      expect(fixture.nativeElement.querySelectorAll('[data-testid="multihost-v244-planet-habitability"]'))
+        .toHaveLength(preview.scientificMultihostPlanetsV241?.planets.length ?? 0);
       expect(fixture.nativeElement.querySelectorAll('[data-testid="multihost-v23-habitable-zone"]'))
         .toHaveLength(2);
       expect(preview.layers.moonCount).toBe(preview.moons.length);

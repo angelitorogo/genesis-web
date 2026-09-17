@@ -169,6 +169,33 @@ function makeSnapshot(triple: boolean): SystemSceneSnapshot {
 }
 
 describe('Multihost V2 experimental scene projection boundary', () => {
+
+  it('V2.4.4 attaches matching host-specific V1-reference habitability without touching the scene or changing V1', () => {
+    const source = makeSnapshot(false);
+    const catalog = generateMultihostPlanetaryCatalog(BASE_INPUT);
+    const formed = generateMultihostFormedPlanetarySystemV22({
+      systemSeed: catalog.sourceSystemSeed, windows: catalog.windows,
+      hostLuminositiesSolarV241: {A: 1, B: 1},
+    });
+    const context = Object.freeze({
+      binarySemiMajorAxisAu: 12, binaryEccentricity: 0.12,
+      stellarEvolution: Object.freeze({A: 'MAIN_SEQUENCE' as const, B: 'MAIN_SEQUENCE' as const}),
+    });
+    const result = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed, context);
+    const habitability = result.scientificMultihostHabitabilityV244!;
+    expect(habitability.version).toBe('V2_4_4_S_TYPE_HABITABILITY');
+    expect(habitability.hosts.map(host => host.hostId)).toEqual(['A', 'B']);
+    expect(habitability.planets.length).toBe(result.scientificMultihostPlanetsV241?.planets.length);
+    expect(habitability.planets.every(planet => planet.irradiance.status === 'BOUNDED')).toBe(true);
+    expect(result.habitableZone).toBeNull();
+    expect(source.scientificMultihostHabitabilityV244).toBeUndefined();
+    expect(result.planets.every(planet => habitability.planets.some(body => body.planetId === planet.id))).toBe(true);
+    expect(() => assertSystemSceneProjectionSnapshot(result)).not.toThrow();
+    const triple = makeSnapshot(true);
+    const originalTriple = buildSystemSceneMultihostLaboratoryPreview(triple, catalog, 'ALL', formed);
+    expect(originalTriple.scientificMultihostHabitabilityV244).toBeUndefined();
+  });
+
   it('renders V2.2 formed bodies rather than test particles while retaining the whole V1 scene', () => {
     const source = makeSnapshot(false);
     const catalog = generateMultihostPlanetaryCatalog(BASE_INPUT);

@@ -138,17 +138,8 @@ function generateCircumstellarV1(
     );
   }
 
-  const radiativeInnerEdgeAu =
-    Math.sqrt(
-      referenceLuminositySolar /
-      PLANETARY_HABITABLE_ZONE_V1_INNER_EFFECTIVE_FLUX_SOLAR,
-    );
-
-  const radiativeOuterEdgeAu =
-    Math.sqrt(
-      referenceLuminositySolar /
-      PLANETARY_HABITABLE_ZONE_V1_OUTER_EFFECTIVE_FLUX_SOLAR,
-    );
+  const { radiativeInnerEdgeAu, radiativeOuterEdgeAu } =
+    planetarySystemReferenceZoneEdgesV1(referenceLuminositySolar);
 
   const stellarEvolutionRegime =
     stellarSystem
@@ -263,4 +254,21 @@ function mapDynamicalRegimeV1(
   throw new RangeError(
     `Unsupported CircumbinaryPlanetaryStabilityRegime: ${String(regime)}.`,
   );
+}
+
+/** Phase 18.6 SINGLE source calculation, reused per S-type host by V2.4.4.
+ * Pure AU geometry only: no locator, seed, PRNG or assertion of habitability. */
+export function planetarySystemReferenceZoneEdgesV1(luminositySolar: number): Readonly<{
+  radiativeInnerEdgeAu: number;
+  radiativeOuterEdgeAu: number;
+}> {
+  if (!(Number.isFinite(luminositySolar) && luminositySolar > 0)) {
+    throw new RangeError('Phase-18.6 luminosity must be positive and finite.');
+  }
+  return Object.freeze({
+    radiativeInnerEdgeAu: Math.sqrt(luminositySolar /
+      PLANETARY_HABITABLE_ZONE_V1_INNER_EFFECTIVE_FLUX_SOLAR),
+    radiativeOuterEdgeAu: Math.sqrt(luminositySolar /
+      PLANETARY_HABITABLE_ZONE_V1_OUTER_EFFECTIVE_FLUX_SOLAR),
+  });
 }

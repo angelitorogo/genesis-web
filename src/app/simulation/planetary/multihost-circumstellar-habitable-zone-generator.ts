@@ -2,8 +2,7 @@ import {
   type MultihostStableWindow,
 } from '../../domain/planetary/multihost-planetary-catalog';
 import {
-  PLANETARY_HABITABLE_ZONE_V1_INNER_EFFECTIVE_FLUX_SOLAR,
-  PLANETARY_HABITABLE_ZONE_V1_OUTER_EFFECTIVE_FLUX_SOLAR,
+  planetarySystemReferenceZoneEdgesV1,
 } from './planetary-system-habitable-zone-generator';
 
 /**
@@ -38,10 +37,8 @@ export function generateMultihostCircumstellarHabitableZonesV23(
     const luminosity = luminosities[hostId];
     if (window === undefined || luminosity == null ||
         !Number.isFinite(luminosity) || luminosity <= 0) continue;
-    const radiativeInnerEdgeAu = Math.sqrt(
-      luminosity / PLANETARY_HABITABLE_ZONE_V1_INNER_EFFECTIVE_FLUX_SOLAR);
-    const radiativeOuterEdgeAu = Math.sqrt(
-      luminosity / PLANETARY_HABITABLE_ZONE_V1_OUTER_EFFECTIVE_FLUX_SOLAR);
+    const {radiativeInnerEdgeAu, radiativeOuterEdgeAu} =
+      planetarySystemReferenceZoneEdgesV1(luminosity);
     // A null outer bound means no calibrated dynamical cutoff, NOT infinity in
     // the empirical S-type fit. Do not use the arbitrary sampling horizon to
     // claim additional stability.
@@ -50,8 +47,10 @@ export function generateMultihostCircumstellarHabitableZonesV23(
       window.outerStableAu ?? Number.POSITIVE_INFINITY);
     // "usable" is a PLANET-FORMATION sampling threshold (span >= 1.55),
     // not a criterion for whether a narrower HZ can intersect this window.
-    const overlap = Number.isFinite(inner) &&
-      Number.isFinite(outer) && outer > inner;
+    // Match the frozen V1 16.6 near-zero overlap tolerance: a tangent
+    // HZ/window contact is not a dynamically usable annulus.
+    const overlap = Number.isFinite(inner) && Number.isFinite(outer) &&
+      outer - inner > 1e-12 * Math.max(1, inner, outer);
     result.push(Object.freeze({
       hostId,
       source: 'V1_FLUX_REFERENCE_V23' as const,
