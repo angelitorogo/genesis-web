@@ -226,7 +226,7 @@ describe(
     );
 
     it(
-      'should refresh planetary counts when switching families and SINGLE/BINARY/TRIPLE without changing the renderer snapshot',
+      'should refresh planetary counts when switching families and SINGLE/BINARY/TRIPLE using the same generated scene',
       () => {
         const fixture =
           TestBed.createComponent(StellarSystemLaboratoryPage);
@@ -283,7 +283,7 @@ describe(
     );
 
     it(
-      'should generate BINARY from two complete SINGLE systems and use their fiches for the same render',
+      'should preserve two complete SINGLE sources and append the same generated P planets to scene and cards',
       () => {
         const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
         const page = fixture.componentInstance;
@@ -298,20 +298,29 @@ describe(
         const frame = page.frame();
         const element = fixture.nativeElement as HTMLElement;
         expect(frame.sourceSystems?.map(source => source.family.id)).toEqual(['A', 'B']);
-        expect(binary).toBe(page.rendererQaBaseSnapshot());
+        const binaryBase = page.rendererQaBaseSnapshot();
+        const binaryP = page.circumbinaryPopulation()!;
+        expect(binary).not.toBe(binaryBase);
+        expect(binary.planets.length).toBe(binaryBase.planets.length + binaryP.planets.length);
+        expect(binary.planets.slice(binaryBase.planets.length).map(body => body.id))
+          .toEqual(binaryP.planets.map(planet => `lab-p-planet-${planet.planetOrdinal}`));
+        expect(page.scientificStages()[2]!.card.circumbinaryFacts.some(fact =>
+          fact.label === 'Planetas P generados' && fact.value === String(binaryP.planets.length))).toBe(true);
         expect(binary.stars.map(star => star.label)).toEqual(['A', 'B']);
         expect(binary.stars.map(star => star.id)).toEqual(['lab-a-' + a.stars[0]!.id, 'lab-b-' + b.stars[0]!.id]);
         expect(binary.stars.map(star => star.colorHex)).toEqual([a.stars[0]!.colorHex, b.stars[0]!.colorHex]);
         expect(frame.stages[2]?.card.components.map(component => component.colorHex))
           .toEqual(binary.stars.map(star => star.colorHex));
         for (const group of ['planets', 'moons', 'minorBodies'] as const) {
-          expect(binary[group].map(body => body.id)).toEqual([
+          expect(binary[group].slice(0, binaryBase[group].length).map(body => body.id)).toEqual([
             ...a[group].map(body => `lab-a-${body.id}`),
             ...b[group].map(body => `lab-b-${body.id}`),
           ]);
         }
-        expect(binary.habitableZones?.length).toBe(Number(a.habitableZone !== null) + Number(b.habitableZone !== null));
-        expect(binary.habitableZones?.every(zone => zone.topology === 'CIRCUMSTELLAR')).toBe(true);
+        expect(binary.habitableZones?.slice(0, binaryBase.habitableZones?.length).map(zone => zone.topology))
+          .toEqual(binaryBase.habitableZones?.map(zone => zone.topology));
+        expect(binary.habitableZones?.every(zone =>
+          zone.topology === 'CIRCUMSTELLAR' || zone.topology === 'CIRCUMBINARY')).toBe(true);
         expect(element.querySelector('[data-testid="stellar-system-laboratory-binary-composition-note"]')?.textContent)
           .toContain('GENERACIÓN BINARIA SOLO EN LABORATORIO');
         expect(element.querySelector('[data-testid="stellar-system-laboratory-binary-sources"]')?.textContent)
@@ -319,22 +328,71 @@ describe(
         page.selectFamily(StellarSystemLaboratoryFamilyId.F);
         fixture.detectChanges();
         expect(page.frame().sourceSystems?.map(source => source.family.id)).toEqual(['F', 'G']);
-        expect(page.rendererQaSnapshot()).toBe(page.rendererQaBaseSnapshot());
+        expect(page.rendererQaSnapshot().planets.length)
+          .toBe(page.rendererQaBaseSnapshot().planets.length + page.circumbinaryPopulation()!.planets.length);
         page.selectCase('TRIPLE');
         fixture.detectChanges();
         const triple = page.rendererQaSnapshot();
         expect(page.frame().sourceSystems?.map(source => source.family.id)).toEqual(['A', 'B', 'C']);
         expect(triple.stars.map(star => star.label)).toEqual(['A', 'B', 'C']);
-        expect(triple.habitableZones?.every(zone => zone.topology === 'CIRCUMSTELLAR')).toBe(true);
+        expect(triple.habitableZones?.every(zone =>
+          zone.topology === 'CIRCUMSTELLAR' || zone.topology === 'CIRCUMBINARY')).toBe(true);
         expect(triple.habitableZones?.length).toBeGreaterThan(0);
         expect(element.querySelector('[data-testid="stellar-system-laboratory-triple-composition-note"]')?.textContent)
           .toContain('GENERACIÓN TRIPLE SOLO EN LABORATORIO');
         expect(element.querySelector('[data-testid="stellar-system-laboratory-triple-sources"]')?.textContent)
           .toContain('Sistema C: simple familia C');
-        expect(triple).toBe(page.rendererQaBaseSnapshot());
+        expect(triple.planets.length)
+          .toBe(page.rendererQaBaseSnapshot().planets.length + page.circumbinaryPopulation()!.planets.length);
+        expect(triple.stars).toEqual(page.rendererQaBaseSnapshot().stars);
       },
       90_000,
     );
+
+    it('counts generated P planets in the laboratory inventory and discloses their real orbits in catalogued fiches', () => {
+      const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+      const page = fixture.componentInstance;
+      page.selectCase(StellarSystemLaboratoryCaseId.BINARY);
+      page.selectFamily(StellarSystemLaboratoryFamilyId.B);
+      fixture.detectChanges();
+      const population = page.circumbinaryPopulation()!;
+      const base = page.rendererQaBaseSnapshot();
+      const snapshot = page.rendererQaSnapshot();
+      const element = fixture.nativeElement as HTMLElement;
+      expect(population.planets.length).toBeGreaterThan(0);
+      expect(snapshot.planets.length).toBe(base.planets.length + population.planets.length);
+      expect(page.planetTypeCounts().reduce((sum, item) => sum + item.count, 0))
+        .toBe(snapshot.planets.length);
+      expect(element.querySelector('[data-testid="stellar-system-laboratory-planet-total"]')
+        ?.textContent?.trim()).toBe(String(snapshot.planets.length));
+      expect(element.querySelector('[data-testid="stellar-system-laboratory-circumbinary-population"]')
+        ?.textContent).toContain(population.status);
+      const catalogue = page.scientificStages()[2]!.card;
+      expect(catalogue.orbits.some(orbit => orbit.roleLabel === 'Órbita alrededor del baricentro A–B'))
+        .toBe(true);
+      expect(catalogue.circumbinaryFacts.some(fact =>
+        fact.label === 'Planetas P generados' && fact.value === String(population.planets.length))).toBe(true);
+      expect(page.scientificStages()[0]!.card).toBe(page.frame().stages[0]!.card);
+      expect(page.scientificStages()[1]!.card).toBe(page.frame().stages[1]!.card);
+    }, 120_000);
+
+    it('reflects genuine inner-pair P planets in the TRIPLE inventory without changing its C system', () => {
+      const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+      const page = fixture.componentInstance;
+      page.selectCase(StellarSystemLaboratoryCaseId.TRIPLE);
+      page.selectFamily(StellarSystemLaboratoryFamilyId.G);
+      fixture.detectChanges();
+      const population = page.circumbinaryPopulation()!;
+      const snapshot = page.rendererQaSnapshot();
+      const base = page.rendererQaBaseSnapshot();
+      expect(population.planets.length).toBeGreaterThan(0);
+      expect(snapshot.stars).toBe(base.stars);
+      expect(snapshot.planets.length).toBe(base.planets.length + population.planets.length);
+      expect(page.planetTypeCounts().reduce((sum, item) => sum + item.count, 0))
+        .toBe(snapshot.planets.length);
+      expect(page.scientificStages()[3]!.card.circumbinaryFacts.some(fact =>
+        fact.label === 'Planetas P generados' && fact.value === String(population.planets.length))).toBe(true);
+    }, 120_000);
 
     it(
       'should show DETECTED, DISCOVERED, CATALOGUED and CONFIRMED side by side for one real fixture',

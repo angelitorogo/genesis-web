@@ -40,6 +40,12 @@ import {
 import {
   laboratoryOrbitalSpacingProfile,
 } from './stellar-system-laboratory-orbital-spacing';
+import {
+  generateLaboratoryCircumbinaryPopulation,
+} from './stellar-system-laboratory-circumbinary-generation';
+import {
+  appendLaboratoryCircumbinaryScene,
+} from './stellar-system-laboratory-circumbinary-scene';
 
 import {
   STELLAR_SYSTEM_LABORATORY_CASES,
@@ -191,9 +197,75 @@ export class StellarSystemLaboratoryPage {
     );
   });
 
-  // The renderer consumes exactly the SAME generated laboratory binary as
-  // its cards/inventory. There is no separate visual redistribution pipeline.
-  readonly rendererQaSnapshot = this.rendererQaBaseSnapshot;
+  /** Independent phase-17–19 P formation using the ACTUAL composed A–B orbit.
+   * No render-side planet insertion or borrowing from either SINGLE source.
+   */
+  readonly circumbinaryPopulation = computed(() => {
+    const active = this.frame();
+    const sources = active.sourceSystems;
+    if (sources === undefined) return null;
+    const base = this.rendererQaBaseSnapshot();
+    const inner = base.motions.find(motion => motion.id === 'lab-binary-relative');
+    const outer = base.motions.find(motion => motion.id === 'lab-triple-outer-relative');
+    if (inner === undefined) throw new Error('Missing generated A–B orbit.');
+    return generateLaboratoryCircumbinaryPopulation(
+      active.family, sources, inner, sources.length === 3 ? outer : undefined,
+    );
+  });
+
+  /** Render, inventory and catalogue consume exactly ONE frozen P population. */
+  readonly rendererQaSnapshot = computed<SystemSceneSnapshot>(() => {
+    const base = this.rendererQaBaseSnapshot();
+    const population = this.circumbinaryPopulation();
+    return population === null ? base : appendLaboratoryCircumbinaryScene(base, population);
+  });
+
+  /** Preserve discovery-state disclosure: never expose P Ground Truth in
+   * DETECTED/DISCOVERED cards. The same generated bodies feed the visual QA.
+   */
+  readonly scientificStages = computed(() => {
+    const active = this.frame();
+    const population = this.circumbinaryPopulation();
+    if (population === null) return active.stages;
+    return active.stages.map(stage => {
+      if (stage.discoveryState.code !== DiscoveryState.CATALOGUED.code &&
+          stage.discoveryState.code !== DiscoveryState.CONFIRMED.code) return stage;
+      const compatibility = population.compatibility;
+      const compatibilityFacts = compatibility === null ? [] : [
+        { label: 'Límite interior de estabilidad P', value: `${compatibility.minimumStableSemiMajorAxisAu.toFixed(2)} UA` },
+        { label: 'Límite exterior de estabilidad P', value: population.stableOuterLimitAu === null
+          ? 'Sin límite exterior de la estrella C' : `${population.stableOuterLimitAu.toFixed(2)} UA` },
+      ];
+      const facts = [
+        { label: 'Población P · A–B', value: population.status },
+        { label: 'Planetas P generados', value: population.planets.length.toString() },
+        ...compatibilityFacts,
+        ...population.planets.map(planet => ({
+          label: `P${planet.planetOrdinal} · ${planet.planetType}`,
+          value: `${planet.orbit.semiMajorAxisAu.toFixed(2)} UA · ${planet.orbitalPeriod.periodDays.toFixed(1)} días · ${planet.massEarth.toFixed(2)} M⊕`,
+        })),
+      ];
+      const pOrbits = population.planets.map(planet => ({
+        label: `P${planet.planetOrdinal} · planeta circumbinario`,
+        roleLabel: 'Órbita alrededor del baricentro A–B',
+        facts: [
+          { label: 'Tipo', value: planet.planetType },
+          { label: 'Semieje mayor', value: `${planet.orbit.semiMajorAxisAu.toFixed(2)} UA` },
+          { label: 'Excentricidad', value: planet.orbit.eccentricity.toFixed(3) },
+          { label: 'Periodo', value: `${planet.orbitalPeriod.periodDays.toFixed(1)} días` },
+        ],
+      }));
+      return Object.freeze({
+        ...stage,
+        card: Object.freeze({
+          ...stage.card,
+          circumbinaryFacts: Object.freeze([...stage.card.circumbinaryFacts, ...facts]),
+          orbits: Object.freeze([...stage.card.orbits, ...pOrbits]),
+          summary: `${stage.card.summary} Generación independiente A–B: ${population.status}`,
+        }),
+      });
+    });
+  });
 
   readonly orbitalSpacingProfile = computed(() =>
     laboratoryOrbitalSpacingProfile(this.selectedFamilyId()),

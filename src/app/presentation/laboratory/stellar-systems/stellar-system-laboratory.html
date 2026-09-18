@@ -258,8 +258,9 @@
               diversidad planetaria, lunas y cuerpos menores propios.
               Las dos HZ proceden de sus respectivas estrellas y acompañan
               su órbita. Las fichas inferiores corresponden a estas mismas
-              estrellas. No se generan planetas circumbinarios ni se
-              redistribuye artificialmente el inventario. La separación orbital
+              estrellas. Los planetas P se generan de forma independiente con
+              los motores planetarios existentes cuando su estabilidad lo permite;
+              no se redistribuye artificialmente el inventario original. La separación orbital
               se criba con las extensiones planetarias/HZ/cinturones y ambas masas:
               algunas familias resultan más compactas que otras. No certifica
               estabilidad N-cuerpos, especialmente de cometas y capturados.
@@ -277,7 +278,26 @@
               jerárquica se calcula según masas y extensiones orbitales reales:
               el binario interior puede ser relativamente compacto aunque C
               requiera una órbita exterior más amplia. Es cribado analítico,
-              no una certificación N-cuerpos. No cambia /system ni el motor global.
+              no una certificación N-cuerpos. Los planetas circumbinarios P,
+              si existen, se generan alrededor del baricentro A–B con un límite
+              exterior impuesto por C. No cambia /system ni el motor global.
+            </p>
+          }
+          @if (circumbinaryPopulation(); as population) {
+            <p data-testid="stellar-system-laboratory-circumbinary-population">
+              PLANETAS CIRCUMBINARIOS P · A–B:
+              {{ population.status }}
+              @if (population.compatibility; as compatibility) {
+                Intervalo dinámico: desde
+                {{ compatibility.minimumStableSemiMajorAxisAu.toFixed(2) }} UA
+                @if (population.stableOuterLimitAu !== null) {
+                  hasta {{ population.stableOuterLimitAu.toFixed(2) }} UA.
+                } @else {
+                  sin límite exterior por una tercera estrella.
+                }
+              }
+              Se aplica un anillo experimental de supervivencia hasta 4 veces el semieje mayor A–B. La formación y la estabilidad a largo plazo son aproximadas;
+              no se garantiza habitabilidad ni estabilidad N-cuerpos.
             </p>
           }
           <p>
@@ -379,7 +399,7 @@
       aria-label="Progresión visual del conocimiento científico"
     >
       @for (
-        stage of activeFrame.stages;
+        stage of scientificStages();
         track stage.discoveryState.name
       ) {
         <article

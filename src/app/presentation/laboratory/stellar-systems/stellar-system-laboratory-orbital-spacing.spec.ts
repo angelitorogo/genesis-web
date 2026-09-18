@@ -72,8 +72,8 @@ describe('Laboratory orbital diversity: full source systems, analytic separation
     // existing conservative rule, the HZ of a host with an occupied region.
     expect(laboratoryProtectedSingleExtentAu({
       ...empty,
-      asteroidBelts: [{ outerEdgeAu: 6 }] as SystemSceneSnapshot['asteroidBelts'],
-    })).toBe(80);
+      asteroidBelts: [{ outerEdgeAu: 6 }],
+    } as unknown as SystemSceneSnapshot)).toBe(80);
 
     // Having planets but no belt preserves the previous HZ clearance.
     const planetHost = {
