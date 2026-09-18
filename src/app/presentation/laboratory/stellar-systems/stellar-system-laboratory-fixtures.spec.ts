@@ -132,7 +132,7 @@ describe(
     );
 
     it(
-      'should build the four canonical knowledge stages from the production point-16.7 card assembler',
+      'should build the binary knowledge cards from the same two existing SINGLE fixtures',
       () => {
         const frame =
           StellarSystemLaboratoryFixtures
@@ -169,6 +169,8 @@ describe(
           frame.stages[0]?.card.multiplicityLabel,
         ).toBeNull();
 
+        expect(frame.stages[0]?.card.render.components).toHaveLength(1);
+
         expect(
           frame.stages[1]?.card.multiplicityLabel,
         ).toBe(
@@ -187,9 +189,13 @@ describe(
           frame.stages[2]?.card.habitabilityFacts,
         ).toEqual([]);
 
-        expect(
-          frame.stages[3]?.card.habitabilityFacts.length,
-        ).toBeGreaterThan(0);
+        expect(frame.sourceSystems?.map(source => source.family.id)).toEqual(['A', 'B']);
+        expect(frame.stages[2]?.card.components.map(component => component.colorHex))
+          .toEqual(frame.sourceSystems?.map(source => source.stages[2]!.card.components[0]!.colorHex));
+        expect(frame.stages[3]?.card.circumbinaryFacts).toEqual([]);
+        // A single star's HZ belongs to the planetary snapshot, not to the
+        // old circumbinary habitability assessment of a different system.
+        expect(frame.stages[3]?.card.habitabilityFacts).toEqual([]);
       },
       30_000,
     );

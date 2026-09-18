@@ -94,6 +94,20 @@ export function assertSystemSceneProjectionSnapshot(
     );
   }
 
+  if (snapshot.habitableZones !== undefined) {
+    assertFrozenArray(
+      snapshot.habitableZones,
+      'snapshot.habitableZones',
+      (zone, label) => {
+        assertFrozen(zone, label);
+        assertMotionContributions(
+          zone.anchorMotionContributions,
+          `${label}.anchorMotionContributions`,
+        );
+      },
+    );
+  }
+
   assertFrozenArray(
     snapshot.orbits,
     'snapshot.orbits',

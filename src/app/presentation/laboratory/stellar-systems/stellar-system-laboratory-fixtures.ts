@@ -149,6 +149,9 @@ export interface StellarSystemLaboratoryFrame {
 
   readonly stages:
     readonly StellarSystemLaboratoryKnowledgeStage[];
+
+  /** Only BINARY: two independently generated, complete SINGLE source systems. */
+  readonly sourceSystems?: readonly [StellarSystemLaboratoryFrame, StellarSystemLaboratoryFrame];
 }
 
 export const STELLAR_SYSTEM_LABORATORY_CASES:
@@ -172,7 +175,7 @@ export const STELLAR_SYSTEM_LABORATORY_CASES:
       multiplicity:
         StellarSystemMultiplicity.BINARY,
       description:
-        'Primaria A y compañera B con órbita relativa A–B, estabilidad circumbinaria y evaluación de zona habitable cuando el conocimiento lo permite.',
+        'Dos sistemas simples generados por separado, cada uno con sus cuerpos y zona habitable, unidos por una órbita estelar común en este laboratorio.',
     }),
     Object.freeze({
       id:
@@ -327,40 +330,48 @@ export class StellarSystemLaboratoryFixtures {
       );
     }
 
-    const stages =
-      Object.freeze([
-        stage(
-          family.locator,
-          DiscoveryState.DETECTED,
-          'Detectado',
-          'SIGNAL',
-        ),
-        stage(
-          family.locator,
-          DiscoveryState.DISCOVERED,
-          'Descubierto',
-          'IDENTIFIED',
-        ),
-        stage(
-          family.locator,
-          DiscoveryState.CATALOGUED,
-          'Catalogado',
-          'CATALOGUED',
-        ),
-        stage(
-          family.locator,
-          DiscoveryState.CONFIRMED,
-          'Confirmado',
-          'CONFIRMED',
-        ),
-      ]);
+    // The BINARY laboratory fixture is BUILT from two real SINGLE fixtures.
+    // This does not call the old P-type BINARY materializer to create cards;
+    // source systems (including sparse/empty ones) are never replenished.
+    const sourceSystems = caseId === StellarSystemLaboratoryCaseId.BINARY
+      ? Object.freeze([
+          this.frame(StellarSystemLaboratoryCaseId.SINGLE, familyId),
+          this.frame(
+            StellarSystemLaboratoryCaseId.SINGLE,
+            STELLAR_SYSTEM_LABORATORY_FAMILY_IDS[
+              (STELLAR_SYSTEM_LABORATORY_FAMILY_IDS.indexOf(familyId) + 1) %
+                STELLAR_SYSTEM_LABORATORY_FAMILY_IDS.length
+            ]!,
+          ),
+        ] as const)
+      : undefined;
 
-    const frame =
-      Object.freeze({
-        caseDefinition,
-        family,
-        stages,
-      });
+    const definitions = Object.freeze([
+      [DiscoveryState.DETECTED, 'Detectado', 'SIGNAL'],
+      [DiscoveryState.DISCOVERED, 'Descubierto', 'IDENTIFIED'],
+      [DiscoveryState.CATALOGUED, 'Catalogado', 'CATALOGUED'],
+      [DiscoveryState.CONFIRMED, 'Confirmado', 'CONFIRMED'],
+    ] as const);
+    const stages = Object.freeze(definitions.map(([state, label, badge], index) =>
+      sourceSystems === undefined
+        ? stage(family.locator, state, label, badge)
+        : Object.freeze({
+            discoveryState: state,
+            label,
+            badge,
+            card: composeTwoSingleCards(
+              sourceSystems[0].stages[index]!.card,
+              sourceSystems[1].stages[index]!.card,
+            ),
+          }),
+    ));
+
+    const frame: StellarSystemLaboratoryFrame = Object.freeze({
+      caseDefinition,
+      family,
+      stages,
+      ...(sourceSystems === undefined ? {} : { sourceSystems }),
+    });
 
     frameCache.set(
       cacheKey,
@@ -494,6 +505,66 @@ function stage(
           locator,
           discoveryState,
         ),
+  });
+}
+
+/** Fiches describe the SAME two generated SINGLE source systems as the 3D scene. */
+function composeTwoSingleCards(
+  a: ArchiveStellarSystemCardModel,
+  b: ArchiveStellarSystemCardModel,
+): ArchiveStellarSystemCardModel {
+  const prefixFacts = (label: 'A' | 'B', facts: ArchiveStellarSystemCardModel['systemFacts']) =>
+    facts.map(fact => Object.freeze({ ...fact, label: `${label} · ${fact.label}` }));
+  const sourceComponents = [
+    ...a.components.map(component => Object.freeze({ ...component, componentLabel: 'A' as const })),
+    ...b.components.map(component => Object.freeze({ ...component, componentLabel: 'B' as const })),
+  ];
+  const renderComponents = [
+    ...a.render.components.map(component => Object.freeze({ ...component, label: 'A' as const })),
+    ...b.render.components.map(component => Object.freeze({ ...component, label: 'B' as const })),
+  ];
+  const identified = a.componentCount !== null && b.componentCount !== null;
+  return Object.freeze({
+    ...a,
+    title: identified ? 'Binario de dos sistemas simples · A + B' : a.title,
+    summary: identified
+      ? 'Dos sistemas simples independientes, generados con sus propias estrellas y poblaciones. Sus estrellas comparten una órbita binaria; cada planeta pertenece a su estrella de origen.'
+      : a.summary,
+    multiplicityLabel: identified ? 'Binario' : null,
+    componentCount: identified ? 2 : null,
+    systemFacts: Object.freeze([
+      ...prefixFacts('A', a.systemFacts),
+      ...prefixFacts('B', b.systemFacts),
+    ]),
+    components: Object.freeze(sourceComponents),
+    orbits: Object.freeze([
+      ...(sourceComponents.length === 2 ? [Object.freeze({
+        label: 'Órbita mutua A–B',
+        roleLabel: 'Las dos estrellas giran alrededor del baricentro; los planetas conservan su host S-type.',
+        facts: Object.freeze([]),
+      })] : []),
+      ...a.orbits.map(orbit => Object.freeze({ ...orbit, label: `A · ${orbit.label}` })),
+      ...b.orbits.map(orbit => Object.freeze({ ...orbit, label: `B · ${orbit.label}` })),
+    ]),
+    // No inherited circumbinary/P-type stability claim: these are S-type hosts.
+    circumbinaryFacts: Object.freeze([]),
+    habitabilityFacts: Object.freeze([
+      ...prefixFacts('A', a.habitabilityFacts),
+      ...prefixFacts('B', b.habitabilityFacts),
+    ]),
+    nextScientificStep: identified
+      ? 'Inspeccionar ambos sistemas y evaluar en una etapa posterior sus perturbaciones gravitatorias mutuas.'
+      : a.nextScientificStep,
+    render: Object.freeze({
+      ...a.render,
+      accessibleLabel: 'Binario de dos sistemas simples independientes A y B',
+      multiplicity: identified ? StellarSystemMultiplicity.BINARY : null,
+      components: Object.freeze(identified ? renderComponents : a.render.components),
+      innerOrbitEccentricity: identified ? 0.12 : null,
+      outerOrbitEccentricity: null,
+      stableHabitableZoneFraction: null,
+      hasStableHabitableZone: false,
+    }),
   });
 }
 

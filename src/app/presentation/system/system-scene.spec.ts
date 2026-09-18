@@ -322,6 +322,15 @@ describe(
       },
     );
 
+    it('only forwards the close-zoom setting when the host opts in', () => {
+      const fixture = TestBed.createComponent(SystemScene);
+      const snapshot = sceneSnapshot();
+      fixture.componentRef.setInput('snapshot', snapshot);
+      fixture.componentRef.setInput('laboratoryCloseZoom', true);
+      fixture.detectChanges();
+      expect(render).toHaveBeenCalledWith(snapshot, true);
+    });
+
     it(
       'should reject mutable scene input before it reaches even an injected renderer runtime',
       () => {

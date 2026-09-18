@@ -59,6 +59,9 @@ export class SystemSceneCameraController {
   private systemMaxTargetRadius =
     2;
 
+  private laboratoryCloseZoom =
+    false;
+
   private bodyTrackingActive =
     false;
 
@@ -323,13 +326,17 @@ export class SystemSceneCameraController {
   frameSystem(
     outerRadiusScene:
       number,
+    laboratoryCloseZoom = false,
   ): void {
 
     this.stopBodyTracking();
 
+    this.laboratoryCloseZoom = laboratoryCloseZoom;
+
     const limits =
       systemSceneCameraLimits(
         outerRadiusScene,
+        laboratoryCloseZoom,
       );
 
     this.controls.minDistance =
@@ -426,6 +433,7 @@ export class SystemSceneCameraController {
         bodyRadiusScene,
         this.controls.minDistance,
         this.controls.maxDistance,
+        this.laboratoryCloseZoom,
       );
 
     this.controls.minTargetRadius =
@@ -672,6 +680,7 @@ export class SystemSceneCameraController {
 export function systemSceneCameraLimits(
   outerRadiusScene:
     number,
+  laboratoryCloseZoom = false,
 ): SystemSceneCameraLimits {
 
   const safeOuterRadius =
@@ -693,11 +702,15 @@ export function systemSceneCameraLimits(
   return Object.freeze({
     homeDistance,
     minDistance:
-      Math.max(
-        0.28,
-        safeOuterRadius *
-          0.055,
-      ),
+      laboratoryCloseZoom
+        ? Math.max(
+            0.012,
+            Math.max(0.28, safeOuterRadius * 0.055) * 0.075,
+          )
+        : Math.max(
+            0.28,
+            safeOuterRadius * 0.055,
+          ),
     maxDistance:
       Math.max(
         28,
@@ -722,6 +735,7 @@ export function systemSceneBodyFocusDistance(
 
   maxDistance:
     number,
+  laboratoryCloseZoom = false,
 ): number {
 
   const safeRadius =
@@ -756,13 +770,19 @@ export function systemSceneBodyFocusDistance(
         );
 
   const preferredDistance =
-    Math.max(
-      0.78,
-      safeRadius *
-        8.5,
-      safeMinDistance *
-        1.6,
-    );
+    laboratoryCloseZoom
+      ? Math.max(
+          0.10,
+          safeRadius * 3.5,
+          safeMinDistance * 1.6,
+        )
+      : Math.max(
+          0.78,
+          safeRadius *
+            8.5,
+          safeMinDistance *
+            1.6,
+        );
 
   return Math.max(
     safeMinDistance,

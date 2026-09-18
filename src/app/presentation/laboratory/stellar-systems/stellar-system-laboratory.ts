@@ -31,6 +31,10 @@ import {
 } from '../../system/system-scene-snapshot';
 
 import {
+  composeLaboratoryBinaryScene,
+} from './stellar-system-laboratory-binary-composition';
+
+import {
   STELLAR_SYSTEM_LABORATORY_CASES,
   StellarSystemLaboratoryCaseId,
   StellarSystemLaboratoryFamilyId,
@@ -136,43 +140,57 @@ export class StellarSystemLaboratoryPage {
           ]!,
     );
 
-  readonly rendererQaSnapshot =
-    computed<SystemSceneSnapshot>(
-      () => {
-        const frame =
-          this.frame();
+  /** BINARY generation starts with two complete SINGLE fixture frames. */
+  readonly rendererQaBaseSnapshot = computed<SystemSceneSnapshot>(() => {
+    const active = this.frame();
+    if (this.selectedCaseId() !== StellarSystemLaboratoryCaseId.BINARY) {
+      return this.snapshotForFrame(active);
+    }
+    const pair = active.sourceSystems;
+    if (pair === undefined) {
+      throw new Error('Binary laboratory source systems must be generated first.');
+    }
+    const a = this.snapshotForFrame(pair[0]);
+    const b = this.snapshotForFrame(pair[1]);
+    const massA = pair[0].stages.find(stage =>
+      stage.discoveryState.code === DiscoveryState.CATALOGUED.code,
+    )!.card.render.components[0]?.massSolar;
+    const massB = pair[1].stages.find(stage =>
+      stage.discoveryState.code === DiscoveryState.CATALOGUED.code,
+    )!.card.render.components[0]?.massSolar;
+    if (massA == null || massB == null) {
+      throw new Error('Binary component mass is absent from the generated SINGLE fiches.');
+    }
+    return composeLaboratoryBinaryScene(a, b, active.family, [massA, massB]);
+  });
 
-        const previewStage =
-          this.rendererQaStage();
+  // The renderer consumes exactly the SAME generated laboratory binary as
+  // its cards/inventory. There is no separate visual redistribution pipeline.
+  readonly rendererQaSnapshot = this.rendererQaBaseSnapshot;
 
-        const generationKey =
-          StellarSystemLaboratoryFixtures
-            .generationKey();
-
-        return SystemSceneSnapshotBuilder
-          .buildFromSource({
-            universeSeed:
-              generationKey
-                .universeSeed
-                .serialize(),
-            generatorVersionCode:
-              generationKey
-                .generatorVersionCode,
-            locator:
-              frame.family.locator,
-            proceduralIdentity:
-              `G${frame.family.locator.galaxyIndex.toString()} / S${frame.family.locator.sectorKey.toString()} / O${frame.family.locator.galacticObjectIndex.toString()}`,
-            discoveryState:
-              previewStage.discoveryState,
-            discoveryStateLabel:
-              previewStage.label,
-            stellarSystemCard:
-              previewStage.card,
-            revealMinorBodyGroundTruth:
-              true,
-          });
-      },
-    );
+  private snapshotForFrame(
+    frame: ReturnType<typeof StellarSystemLaboratoryFixtures.frame>,
+  ): SystemSceneSnapshot {
+    if (frame.caseDefinition.id !== StellarSystemLaboratoryCaseId.SINGLE &&
+        frame.caseDefinition.id !== StellarSystemLaboratoryCaseId.TRIPLE) {
+      throw new RangeError('A laboratory BINARY must be assembled from two SINGLE sources.');
+    }
+    const previewStage = frame.stages.find(
+      stage => stage.discoveryState.code === DiscoveryState.CATALOGUED.code,
+    ) ?? frame.stages[frame.stages.length - 1]!;
+    const generationKey = StellarSystemLaboratoryFixtures.generationKey();
+    return SystemSceneSnapshotBuilder.buildFromSource({
+      universeSeed: generationKey.universeSeed.serialize(),
+      generatorVersionCode: generationKey.generatorVersionCode,
+      locator: frame.family.locator,
+      proceduralIdentity:
+        `G${frame.family.locator.galaxyIndex.toString()} / S${frame.family.locator.sectorKey.toString()} / O${frame.family.locator.galacticObjectIndex.toString()}`,
+      discoveryState: previewStage.discoveryState,
+      discoveryStateLabel: previewStage.label,
+      stellarSystemCard: previewStage.card,
+      revealMinorBodyGroundTruth: true,
+    });
+  }
 
   /** Read-only breakdown from the SAME planets already used by the QA renderer. */
   readonly planetTypeCounts =

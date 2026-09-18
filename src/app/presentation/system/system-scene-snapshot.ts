@@ -795,6 +795,10 @@ export interface SystemSceneSnapshot {
   readonly habitableZone:
     SystemSceneHabitableZoneSnapshot | null;
 
+  /** Host-specific HZ layers supplied only by laboratory composites. */
+  readonly habitableZones?:
+    readonly SystemSceneHabitableZoneSnapshot[];
+
   /** Renderer-only V3 constraint for stellar photospheres around the HZ host. */
   readonly hostVisualEnvelope?:
     SystemSceneHostVisualEnvelopeV3 | null;

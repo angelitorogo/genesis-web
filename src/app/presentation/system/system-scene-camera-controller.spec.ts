@@ -92,6 +92,19 @@ describe(
       },
     );
 
+    it('allows much closer camera limits and body following only when the laboratory opts in', () => {
+      const normal = systemSceneCameraLimits(8);
+      const laboratory = systemSceneCameraLimits(8, true);
+      expect(laboratory.homeDistance).toBe(normal.homeDistance);
+      expect(laboratory.maxDistance).toBe(normal.maxDistance);
+      expect(laboratory.minDistance).toBeLessThan(normal.minDistance * 0.1);
+      expect(systemSceneCameraLimits(8)).toEqual(normal);
+      expect(systemSceneBodyFocusDistance(0.04, laboratory.minDistance, laboratory.maxDistance, true))
+        .toBeLessThan(systemSceneBodyFocusDistance(0.04, normal.minDistance, normal.maxDistance));
+      expect(systemSceneBodyFocusDistance(0.30, laboratory.minDistance, laboratory.maxDistance, true))
+        .toBeGreaterThan(0.30 * 3);
+    });
+
     it(
       'should classify pointer travel independently from render frame rate',
       () => {

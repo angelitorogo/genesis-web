@@ -149,7 +149,34 @@
       aria-live="polite"
     >
       @if (habitableZoneVisible()) {
-        @if (snapshot.habitableZone; as habitableZone) {
+        @if (snapshot.habitableZones && snapshot.habitableZones.length > 1) {
+          <section
+            class="system-scene__science-card"
+            data-testid="system-scene-multiple-habitable-zones-legend"
+          >
+            <strong>ZONAS HABITABLES · ESTRELLAS A Y B</strong>
+            @for (zone of snapshot.habitableZones; track $index) {
+              <span>
+                <i class="system-scene__swatch system-scene__swatch--radiative"></i>
+                Estrella {{ $index === 0 ? 'A' : 'B' }} · radiativa
+                <b>{{ formatAu(zone.radiativeInnerEdgeAu) }}–{{ formatAu(zone.radiativeOuterEdgeAu) }} AU</b>
+              </span>
+              @if (zone.dynamicallyHabitableInnerEdgeAu !== null && zone.dynamicallyHabitableOuterEdgeAu !== null) {
+                <span>
+                  <i class="system-scene__swatch system-scene__swatch--stable"></i>
+                  Estrella {{ $index === 0 ? 'A' : 'B' }} · dinámica
+                  <b>{{ formatAu(zone.dynamicallyHabitableInnerEdgeAu) }}–{{ formatAu(zone.dynamicallyHabitableOuterEdgeAu) }} AU</b>
+                </span>
+              }
+            }
+            <small>
+              Composición visual exclusiva del laboratorio: cada HZ corresponde
+              a su sistema simple original y acompaña a su propia estrella.
+              La estabilidad mutua A–B no se recalcula en este experimento.
+            </small>
+          </section>
+        } @else {
+          @if (snapshot.habitableZone; as habitableZone) {
           <section
             class="system-scene__science-card"
             data-testid="system-scene-habitable-zone-legend"
@@ -233,6 +260,7 @@
               }
             }
           </section>
+          }
         }
       }
 
@@ -565,7 +593,7 @@
       data-testid="system-scene-ready"
       aria-hidden="true"
     >
-      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ snapshot.layers.habitableZoneAvailable ? 1 : 0 }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · LOD · INST · CACHE · MOON SURF · ATM · TERM · NIGHT · GLSL · WGPU {{ renderInfo()?.webGpuEvaluation === 'API_AVAILABLE_NOT_SELECTED' ? 'OPT' : 'N/A' }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
+      SCENE READY · {{ snapshot.stars.length }}★ · {{ snapshot.planets.length }}◎ · {{ snapshot.moons.length }}☾ · {{ snapshot.minorBodies.length }}◇ · HZ {{ habitableZoneCount() }} · RISK {{ snapshot.layers.orbitalRiskTargetCount }} · CROSS {{ snapshot.layers.orbitalCrossingTargetCount }} · LOD · INST · CACHE · MOON SURF · ATM · TERM · NIGHT · GLSL · WGPU {{ renderInfo()?.webGpuEvaluation === 'API_AVAILABLE_NOT_SELECTED' ? 'OPT' : 'N/A' }} · SIM {{ snapshot.simulation.playbackDaysPerRealSecond }} d/s
     </div>
   }
 </section>

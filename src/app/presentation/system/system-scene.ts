@@ -292,6 +292,7 @@ export interface SystemSceneRuntime {
   render(
     snapshot:
       SystemSceneSnapshot,
+    laboratoryCloseZoom?: boolean,
   ): SystemSceneRenderInfo;
 
   resetView?():
@@ -403,6 +404,10 @@ export class SystemScene
   })
   snapshot!:
     SystemSceneSnapshot;
+
+  /** Opt-in camera-only close-up, enabled exclusively by the laboratory. */
+  @Input()
+  laboratoryCloseZoom = false;
 
   /**
    * Optional QA-only route exposed by hosts that deliberately allow opening
@@ -819,9 +824,8 @@ export class SystemScene
 
   habitableZoneCount():
     number {
-    return this.snapshot.layers.habitableZoneAvailable
-      ? 1
-      : 0;
+    return this.snapshot.habitableZones?.length ??
+      (this.snapshot.layers.habitableZoneAvailable ? 1 : 0);
   }
 
   asteroidBeltCount():
@@ -1214,10 +1218,8 @@ export class SystemScene
     void {
 
     if (
-      changes[
-        'snapshot'
-      ] !==
-        undefined &&
+      (changes['snapshot'] !== undefined ||
+        changes['laboratoryCloseZoom'] !== undefined) &&
       this.runtime !==
         null
     ) {
@@ -1666,12 +1668,11 @@ export class SystemScene
         );
       }
 
-      const info =
-        this
-          .runtime
-          .render(
-            this.snapshot,
-          );
+      // Keep the production runtime call's original one-argument contract.
+      // Only the laboratory explicitly opts into the extra camera setting.
+      const info = this.laboratoryCloseZoom
+        ? this.runtime.render(this.snapshot, true)
+        : this.runtime.render(this.snapshot);
 
       this.applyLayerVisibility();
 
@@ -2025,13 +2026,11 @@ class ThreeSystemSceneRuntime
     THREE.Object3D[] =
     [];
 
-  private habitableZoneGroup:
-    THREE.Group | null =
-    null;
-
-  private habitableZoneSnapshot:
-    SystemSceneHabitableZoneSnapshot | null =
-    null;
+  private readonly habitableZoneBindings:
+    Array<{
+      readonly group: THREE.Group;
+      readonly snapshot: SystemSceneHabitableZoneSnapshot;
+    }> = [];
 
   private readonly asteroidBeltLayerBindings:
     Array<{
@@ -2416,12 +2415,16 @@ class ThreeSystemSceneRuntime
   render(
     snapshot:
       SystemSceneSnapshot,
+    laboratoryCloseZoom = false,
   ): SystemSceneRenderInfo {
 
     this.assertAlive();
     assertSystemSceneProjectionSnapshot(
       snapshot,
     );
+
+    this.camera.near = laboratoryCloseZoom ? 0.003 : 0.01;
+    this.camera.updateProjectionMatrix();
 
     this.scene.name =
       `GENESIS System ${snapshot.proceduralIdentity}`;
@@ -2468,6 +2471,7 @@ class ThreeSystemSceneRuntime
     this.cameraController.frameSystem(
       snapshot.scale
         .targetOuterRadiusScene,
+      laboratoryCloseZoom,
     );
 
     this.initializeSelectionProxyBatch(
@@ -2480,13 +2484,9 @@ class ThreeSystemSceneRuntime
       snapshot.minorBodies,
     );
 
-    if (
-      snapshot.habitableZone !==
-        null
-    ) {
-      this.addHabitableZone(
-        snapshot.habitableZone,
-      );
+    for (const zone of snapshot.habitableZones ??
+      (snapshot.habitableZone === null ? [] : [snapshot.habitableZone])) {
+      this.addHabitableZone(zone);
     }
 
     for (
@@ -3282,10 +3282,10 @@ class ThreeSystemSceneRuntime
       }
     }
 
-    this.habitableZoneGroup =
-      group;
-    this.habitableZoneSnapshot =
-      habitableZone;
+    this.habitableZoneBindings.push({
+      group,
+      snapshot: habitableZone,
+    });
 
     this.habitableZoneLayerObjects.push(
       group,
@@ -5431,23 +5431,13 @@ class ThreeSystemSceneRuntime
       );
     }
 
-    if (
-      this.habitableZoneGroup !==
-        null &&
-      this.habitableZoneSnapshot !==
-        null
-    ) {
-      const habitableZoneAnchor =
-        this.positionFromContributions(
-          this.habitableZoneSnapshot
-            .anchorMotionContributions,
-          simulationDay,
-          sceneScale,
-        );
-
-      this.habitableZoneGroup.position.copy(
-        habitableZoneAnchor,
+    for (const binding of this.habitableZoneBindings) {
+      const anchor = this.positionFromContributions(
+        binding.snapshot.anchorMotionContributions,
+        simulationDay,
+        sceneScale,
       );
+      binding.group.position.copy(anchor);
     }
 
     for (
@@ -5771,10 +5761,8 @@ class ThreeSystemSceneRuntime
       0;
     this.orbitalRiskLayerObjects.length =
       0;
-    this.habitableZoneGroup =
-      null;
-    this.habitableZoneSnapshot =
-      null;
+    this.habitableZoneBindings.length =
+      0;
     this.asteroidBeltLayerBindings.length =
       0;
     this.orbitalRiskOrbitOverlays.length =

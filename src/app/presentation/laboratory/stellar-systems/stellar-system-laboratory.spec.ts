@@ -18,6 +18,10 @@ import {
   StellarSystemLaboratoryPage,
 } from './stellar-system-laboratory';
 
+import {
+  StellarSystemLaboratoryFamilyId,
+} from './stellar-system-laboratory-fixtures';
+
 describe(
   'StellarSystemLaboratoryPage',
   () => {
@@ -257,6 +261,53 @@ describe(
         checkSelectedSystem('Sistema triple', 'C');
       },
       60_000,
+    );
+
+    it(
+      'should generate BINARY from two complete SINGLE systems and use their fiches for the same render',
+      () => {
+        const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+        const page = fixture.componentInstance;
+        fixture.detectChanges();
+        const a = page.rendererQaSnapshot();
+        page.selectFamily(StellarSystemLaboratoryFamilyId.B);
+        fixture.detectChanges();
+        const b = page.rendererQaSnapshot();
+        page.selectCase('BINARY');
+        fixture.detectChanges();
+        const binary = page.rendererQaSnapshot();
+        const frame = page.frame();
+        const element = fixture.nativeElement as HTMLElement;
+        expect(frame.sourceSystems?.map(source => source.family.id)).toEqual(['A', 'B']);
+        expect(binary).toBe(page.rendererQaBaseSnapshot());
+        expect(binary.stars.map(star => star.label)).toEqual(['A', 'B']);
+        expect(binary.stars.map(star => star.id)).toEqual(['lab-a-' + a.stars[0]!.id, 'lab-b-' + b.stars[0]!.id]);
+        expect(binary.stars.map(star => star.colorHex)).toEqual([a.stars[0]!.colorHex, b.stars[0]!.colorHex]);
+        expect(frame.stages[2]?.card.components.map(component => component.colorHex))
+          .toEqual(binary.stars.map(star => star.colorHex));
+        for (const group of ['planets', 'moons', 'minorBodies'] as const) {
+          expect(binary[group].map(body => body.id)).toEqual([
+            ...a[group].map(body => `lab-a-${body.id}`),
+            ...b[group].map(body => `lab-b-${body.id}`),
+          ]);
+        }
+        expect(binary.habitableZones?.length).toBe(Number(a.habitableZone !== null) + Number(b.habitableZone !== null));
+        expect(binary.habitableZones?.every(zone => zone.topology === 'CIRCUMSTELLAR')).toBe(true);
+        expect(element.querySelector('[data-testid="stellar-system-laboratory-binary-composition-note"]')?.textContent)
+          .toContain('GENERACIÓN BINARIA SOLO EN LABORATORIO');
+        expect(element.querySelector('[data-testid="stellar-system-laboratory-binary-sources"]')?.textContent)
+          .toContain('Sistema B: simple familia B');
+        page.selectFamily(StellarSystemLaboratoryFamilyId.F);
+        fixture.detectChanges();
+        expect(page.frame().sourceSystems?.map(source => source.family.id)).toEqual(['F', 'G']);
+        expect(page.rendererQaSnapshot()).toBe(page.rendererQaBaseSnapshot());
+        page.selectCase('TRIPLE');
+        fixture.detectChanges();
+        expect(page.rendererQaSnapshot().stars).toHaveLength(3);
+        expect(page.rendererQaSnapshot().habitableZones).toBeUndefined();
+        expect(page.rendererQaSnapshot()).toBe(page.rendererQaBaseSnapshot());
+      },
+      90_000,
     );
 
     it(

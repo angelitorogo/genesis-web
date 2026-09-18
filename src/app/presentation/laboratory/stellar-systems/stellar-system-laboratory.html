@@ -20,10 +20,10 @@
       </h1>
 
       <p>
-        Inspección read-only de sistemas simples, binarios y triples reales.
-        Cada familia A–H usa un SystemLocator determinista y el mismo
-        ensamblador de fichas y renderer procedural de 16.7. Ninguna selección
-        modifica la partida ni el DiscoveryState persistido.
+        Laboratorio read-only. Los binarios de este laboratorio se generan desde
+        dos sistemas simples completos, cada uno con sus propios cuerpos y HZ;
+        las fichas y el render consultan los mismos sistemas de origen. Simples
+        y triples conservan su funcionamiento. No se modifica la partida.
       </p>
     </div>
 
@@ -75,7 +75,7 @@
       </div>
 
       <span>
-        8 sistemas deterministas reales
+        8 casos deterministas
       </span>
     </div>
 
@@ -152,7 +152,7 @@
     >
       <div>
         <p class="stellar-lab__eyebrow">
-          CASO ACTIVO · SISTEMA REAL
+          CASO ACTIVO · SISTEMA DEL LABORATORIO
         </p>
 
         <h2>
@@ -160,7 +160,15 @@
         </h2>
 
         <p>
-          {{ activeFrame.caseDefinition.description }}
+          @if (selectedCaseId() === 'BINARY') {
+            Binario generado a partir de dos sistemas simples completos: A y B
+            conservan sus propias estrellas, planetas, lunas, cometas, cinturones
+            y zonas habitables. Las tarjetas y la escena comparten el mismo origen.
+            La órbita mutua se calcula para sus dos masas; la estabilidad gravitatoria
+            a largo plazo entre ambos subsistemas aún no está evaluada.
+          } @else {
+            {{ activeFrame.caseDefinition.description }}
+          }
         </p>
       </div>
 
@@ -180,7 +188,7 @@
         </div>
 
         <div>
-          <dt>Locator</dt>
+          <dt>Locator {{ activeFrame.sourceSystems ? 'de muestra (no genera A/B)' : '' }}</dt>
           <dd>
             G{{ activeFrame.family.locator.galaxyIndex.toString() }} /
             S{{ activeFrame.family.locator.sectorKey.toString() }} /
@@ -189,12 +197,18 @@
         </div>
 
         <div>
-          <dt>SystemSeed</dt>
+          <dt>{{ activeFrame.sourceSystems ? 'Seed de muestra (no genera A/B)' : 'SystemSeed' }}</dt>
           <dd class="stellar-lab__mono">
             {{ activeFrame.family.systemSeedHex }}
           </dd>
         </div>
       </dl>
+      @if (activeFrame.sourceSystems; as pair) {
+        <p data-testid="stellar-system-laboratory-binary-sources">
+          Sistema A: simple familia {{ pair[0].family.id }} · O{{ pair[0].family.locator.galacticObjectIndex.toString() }} · seed {{ pair[0].family.systemSeedHex }}.
+          Sistema B: simple familia {{ pair[1].family.id }} · O{{ pair[1].family.locator.galacticObjectIndex.toString() }} · seed {{ pair[1].family.systemSeedHex }}.
+        </p>
+      }
     </section>
 
     <section
@@ -212,6 +226,19 @@
             Renderer real Three.js del sistema seleccionado
           </h3>
 
+          @if (selectedCaseId() === 'BINARY') {
+            <p data-testid="stellar-system-laboratory-binary-composition-note">
+              GENERACIÓN BINARIA SOLO EN LABORATORIO: dos sistemas simples
+              completos generados por el motor existente, con identidad,
+              diversidad planetaria, lunas y cuerpos menores propios.
+              Las dos HZ proceden de sus respectivas estrellas y acompañan
+              su órbita. Las fichas inferiores corresponden a estas mismas
+              estrellas. No se generan planetas circumbinarios ni se
+              redistribuye artificialmente el inventario. La separación orbital
+              evita solapamientos en esta muestra, pero no certifica estabilidad
+              N-cuerpos. No cambia la partida, /system ni los motores globales.
+            </p>
+          }
           <p>
             Esta vista usa el mismo <code>SystemScene</code> de <code>/system</code>. 25.11 mantiene toda la representación validada hasta 25.10 y añade la capa final de optimización: LOD por tamaño aparente, geometrías esféricas compartidas, picking y TNO/capturados genéricos instanciados, lunas ocultas materializadas solo al mostrar su capa y texturas planetarias/lunares reutilizadas mediante cachés acotadas y liberación explícita de recursos. No se modifica física, Ground Truth ni la proyección read-only 24.10.
           </p>
@@ -263,7 +290,12 @@
           <div>
             <dt>HZ radiativa</dt>
             <dd>
-              @if (rendererQaSnapshot().habitableZone; as hz) {
+              @if (selectedCaseId() === 'BINARY') {
+                @for (zone of rendererQaSnapshot().habitableZones ?? []; track $index) {
+                  {{ (zone.anchorMotionContributions[0]?.scale ?? 0) < 0 ? 'A' : 'B' }} · {{ zone.radiativeInnerEdgeAu.toFixed(2) }}–{{ zone.radiativeOuterEdgeAu.toFixed(2) }} AU
+                }
+                @if (!rendererQaSnapshot().habitableZones?.length) { — }
+              } @else if (rendererQaSnapshot().habitableZone; as hz) {
                 {{ hz.radiativeInnerEdgeAu.toFixed(2) }}–{{ hz.radiativeOuterEdgeAu.toFixed(2) }} AU
               } @else {
                 —
@@ -282,7 +314,8 @@
 
       <app-system-scene
         [snapshot]="rendererQaSnapshot()"
-        stellarFicheQaRoute="/laboratory/stellar-systems/fiche-qa"
+        [laboratoryCloseZoom]="true"
+        [stellarFicheQaRoute]="selectedCaseId() === 'BINARY' ? null : '/laboratory/stellar-systems/fiche-qa'"
       ></app-system-scene>
     </section>
 
@@ -475,7 +508,7 @@
   }
 
   <footer class="stellar-lab__footer">
-    Las familias A–H son muestras QA deterministas de sistemas reales. El
+    Las familias A–H son muestras QA deterministas; los binarios combinan dos sistemas simples de origen. El
     laboratorio simula únicamente el nivel de conocimiento de presentación:
     no persiste DiscoveryState, no concede PD y no altera el Ground Truth.
   </footer>

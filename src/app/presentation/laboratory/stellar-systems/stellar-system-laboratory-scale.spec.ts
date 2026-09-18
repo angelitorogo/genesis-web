@@ -1,4 +1,8 @@
 import {
+  ArchiveStellarSystemCardAssembler,
+} from '../../genesis-archive/archive-stellar-system-card';
+
+import {
   DiscoveryState,
 } from '../../../domain/discovery/discovery-state';
 
@@ -699,8 +703,14 @@ function cataloguedSnapshot(
         catalogued.discoveryState,
       discoveryStateLabel:
         catalogued.label,
-      stellarSystemCard:
-        catalogued.card,
+      // This historical 24.5 test intentionally exercises the GLOBAL P-type
+      // engine's original binary contracts. The laboratory's two-SINGLE
+      // composite is tested in stellar-system-laboratory-binary-composition.spec.ts.
+      stellarSystemCard: caseId === StellarSystemLaboratoryCaseId.BINARY
+        ? ArchiveStellarSystemCardAssembler.build(
+            generationKey, frame.family.locator, DiscoveryState.CATALOGUED,
+          )
+        : catalogued.card,
     });
 }
 
