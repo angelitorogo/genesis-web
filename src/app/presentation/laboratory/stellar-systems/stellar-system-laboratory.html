@@ -104,6 +104,44 @@
     </div>
   </section>
 
+  <section
+    class="stellar-lab__planet-types"
+    data-testid="stellar-system-laboratory-planet-types"
+    aria-labelledby="stellar-lab-planet-types-heading"
+  >
+    <div class="stellar-lab__planet-types-heading">
+      <div>
+        <p class="stellar-lab__eyebrow">
+          INVENTARIO PLANETARIO · SISTEMA SELECCIONADO
+        </p>
+
+        <h2 id="stellar-lab-planet-types-heading">
+          Planetas por tipo · {{ selectedCase().label }} · Familia {{ selectedFamilyId() }}
+        </h2>
+      </div>
+
+      <div class="stellar-lab__planet-types-total">
+        <span>Total de planetas</span>
+        <strong data-testid="stellar-system-laboratory-planet-total">
+          {{ rendererQaSnapshot().planets.length }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="stellar-lab__planet-types-grid">
+      @for (planetType of planetTypeCounts(); track planetType.type) {
+        <div
+          class="stellar-lab__planet-type"
+          data-testid="stellar-system-laboratory-planet-type"
+          [attr.data-type]="planetType.type"
+        >
+          <span>{{ planetType.label }}</span>
+          <strong>{{ planetType.count }}</strong>
+        </div>
+      }
+    </div>
+  </section>
+
   @if (frame(); as activeFrame) {
     <section
       class="stellar-lab__active"

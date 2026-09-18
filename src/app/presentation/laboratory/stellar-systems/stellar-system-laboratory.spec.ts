@@ -7,6 +7,10 @@ import {
 } from '@angular/router';
 
 import {
+  PlanetType,
+} from '../../../domain/planetary/planet-type';
+
+import {
   systemSceneMoonPresentationTimeScale,
 } from '../../system/system-scene-secondary-motion';
 
@@ -145,6 +149,114 @@ describe(
         ).toHaveLength(8);
       },
       30_000,
+    );
+
+    it(
+      'should show all nine canonical planet types with exact totals for the selected real system',
+      () => {
+        const fixture =
+          TestBed.createComponent(StellarSystemLaboratoryPage);
+
+        fixture.detectChanges();
+
+        const element = fixture.nativeElement as HTMLElement;
+        const section = element.querySelector(
+          '[data-testid="stellar-system-laboratory-planet-types"]',
+        );
+        const planets = fixture.componentInstance.rendererQaSnapshot().planets;
+        const types = Object.values(PlanetType);
+        const rows = Array.from(
+          section?.querySelectorAll<HTMLElement>(
+            '[data-testid="stellar-system-laboratory-planet-type"]',
+          ) ?? [],
+        );
+
+        expect(section).toBeTruthy();
+        expect(section?.textContent).toContain('Sistema simple');
+        expect(section?.textContent).toContain('Familia A');
+        expect(rows.map(row => row.dataset['type'])).toEqual(types);
+        expect(planets.length).toBeGreaterThan(0);
+
+        for (const type of types) {
+          const row = rows.find(candidate => candidate.dataset['type'] === type);
+          const expected = planets.filter(
+            planet => planet.specialPresentation?.sourcePlanetType === type,
+          ).length;
+
+          expect(row?.textContent).toContain(String(expected));
+          expect(fixture.componentInstance.planetTypeCounts()
+            .find(entry => entry.type === type)?.count).toBe(expected);
+        }
+
+        expect(planets.every(
+          planet => types.includes(
+            planet.specialPresentation?.sourcePlanetType as PlanetType,
+          ),
+        )).toBe(true);
+        expect(fixture.componentInstance.planetTypeCounts()
+          .reduce((sum, entry) => sum + entry.count, 0)).toBe(planets.length);
+        expect(section?.querySelector(
+          '[data-testid="stellar-system-laboratory-planet-total"]',
+        )?.textContent?.trim()).toBe(String(planets.length));
+      },
+      30_000,
+    );
+
+    it(
+      'should refresh planetary counts when switching families and SINGLE/BINARY/TRIPLE without changing the renderer snapshot',
+      () => {
+        const fixture =
+          TestBed.createComponent(StellarSystemLaboratoryPage);
+
+        const checkSelectedSystem = (name: string, family: string): void => {
+          fixture.detectChanges();
+
+          const page = fixture.componentInstance;
+          const element = fixture.nativeElement as HTMLElement;
+          const section = element.querySelector(
+            '[data-testid="stellar-system-laboratory-planet-types"]',
+          );
+          const planets = page.rendererQaSnapshot().planets;
+          const rows = Array.from(
+            section?.querySelectorAll<HTMLElement>(
+              '[data-testid="stellar-system-laboratory-planet-type"]',
+            ) ?? [],
+          );
+
+          expect(section?.textContent).toContain(name);
+          expect(section?.textContent).toContain(`Familia ${family}`);
+          expect(rows).toHaveLength(Object.values(PlanetType).length);
+          expect(rows.reduce(
+            (sum, row) => sum + Number(row.querySelector('strong')?.textContent),
+            0,
+          )).toBe(planets.length);
+          expect(section?.querySelector(
+            '[data-testid="stellar-system-laboratory-planet-total"]',
+          )?.textContent?.trim()).toBe(String(planets.length));
+          expect(element.querySelectorAll('app-system-scene')).toHaveLength(1);
+        };
+
+        const select = (testId: string, attribute: string, value: string): void => {
+          const element = fixture.nativeElement as HTMLElement;
+          const button = element.querySelector<HTMLButtonElement>(
+            `[data-testid="${testId}"][data-${attribute}="${value}"]`,
+          );
+
+          expect(button).toBeTruthy();
+          button!.click();
+        };
+
+        checkSelectedSystem('Sistema simple', 'A');
+        select('stellar-system-laboratory-family-button', 'family', 'H');
+        checkSelectedSystem('Sistema simple', 'H');
+        select('stellar-system-laboratory-case-button', 'case', 'BINARY');
+        checkSelectedSystem('Sistema binario', 'A');
+        select('stellar-system-laboratory-case-button', 'case', 'TRIPLE');
+        checkSelectedSystem('Sistema triple', 'A');
+        select('stellar-system-laboratory-family-button', 'family', 'C');
+        checkSelectedSystem('Sistema triple', 'C');
+      },
+      60_000,
     );
 
     it(

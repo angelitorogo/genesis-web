@@ -14,6 +14,10 @@ import {
 } from '@angular/router';
 
 import {
+  PlanetType,
+} from '../../../domain/planetary/planet-type';
+
+import {
   StellarSystemProceduralRender,
 } from '../../genesis-archive/stellar-system-procedural-render';
 
@@ -33,6 +37,19 @@ import {
   StellarSystemLaboratoryFixtures,
   type StellarSystemLaboratoryCase,
 } from './stellar-system-laboratory-fixtures';
+
+/** All nine canonical point-19.4 types, including types absent from a sample. */
+const PLANET_TYPE_LABELS: Readonly<Record<PlanetType, string>> = Object.freeze({
+  [PlanetType.ROCKY]: 'Rocosos',
+  [PlanetType.SUPER_EARTH]: 'Supertierras',
+  [PlanetType.DESERT]: 'Desérticos',
+  [PlanetType.OCEAN]: 'Oceánicos',
+  [PlanetType.ICE]: 'Helados',
+  [PlanetType.VOLCANIC]: 'Volcánicos',
+  [PlanetType.MINI_NEPTUNE]: 'Minineptunos',
+  [PlanetType.GAS_GIANT]: 'Gigantes gaseosos',
+  [PlanetType.ICE_GIANT]: 'Gigantes helados',
+});
 
 @Component({
   selector:
@@ -154,6 +171,26 @@ export class StellarSystemLaboratoryPage {
             revealMinorBodyGroundTruth:
               true,
           });
+      },
+    );
+
+  /** Read-only breakdown from the SAME planets already used by the QA renderer. */
+  readonly planetTypeCounts =
+    computed(
+      () => {
+        const planets =
+          this.rendererQaSnapshot().planets;
+
+        return Object.values(PlanetType).map(
+          type => ({
+            type,
+            label: PLANET_TYPE_LABELS[type],
+            count: planets.filter(
+              planet =>
+                planet.specialPresentation?.sourcePlanetType === type,
+            ).length,
+          }),
+        );
       },
     );
 
