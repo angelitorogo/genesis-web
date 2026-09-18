@@ -125,6 +125,24 @@ describe(
       30_000,
     );
 
+    it('shows the selected orbital spacing regime only for composed multiples', () => {
+      const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+      fixture.detectChanges();
+      const regime = () => (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="stellar-system-laboratory-spacing-regime"]',
+      );
+      expect(regime()).toBeNull();
+      fixture.componentInstance.selectCase(StellarSystemLaboratoryCaseId.BINARY);
+      fixture.detectChanges();
+      expect(regime()?.textContent).toContain('Compacto');
+      fixture.componentInstance.selectFamily(StellarSystemLaboratoryFamilyId.H);
+      fixture.detectChanges();
+      expect(regime()?.textContent).toContain('Muy amplio');
+      fixture.componentInstance.selectCase(StellarSystemLaboratoryCaseId.TRIPLE);
+      fixture.detectChanges();
+      expect(regime()?.textContent).toContain('Compacto');
+    }, 90_000);
+
     it(
       'should expose the three implemented architectures and exactly eight A-H families',
       () => {

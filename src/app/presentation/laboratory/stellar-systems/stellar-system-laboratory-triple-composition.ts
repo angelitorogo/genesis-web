@@ -1,4 +1,9 @@
 import { type StellarSystemLaboratoryFamily } from './stellar-system-laboratory-fixtures';
+import {
+  laboratoryOrbitalSpacingProfile,
+  laboratoryProtectedSingleExtentAu,
+  laboratoryTripleOuterSemiMajorAxisAu,
+} from './stellar-system-laboratory-orbital-spacing';
 
 import {
   projectSystemSceneMotionContributions,
@@ -36,7 +41,7 @@ import {
  */
 const LOCAL_SYSTEM_RADIUS_SCENE = 2.15;
 const LOCAL_MINOR_ORBIT_LIMIT_SCENE = 2.38;
-const OUTER_PERIASTRON_SEPARATION_SCENE = 12.4;
+
 const OUTER_ECCENTRICITY = 0.18;
 export const LAB_TRIPLE_OUTER_ORBIT_SECONDS_PER_REVOLUTION = 720;
 
@@ -70,14 +75,20 @@ export function composeLaboratoryTripleScene(
   }
 
   const massAB = massA + massB;
-  const innerExtentAu = innerMotion.semiMajorAxisAu * (1 + innerMotion.eccentricity) +
-    Math.max(outerRadiusAu(singleA), outerRadiusAu(singleB));
-  const cExtentAu = outerRadiusAu(singleC);
-  // Hierarchical spacing policy: outer periastron is well outside both the
-  // complete A-B subsystem and C's complete SINGLE system. It is deliberately
-  // conservative presentation geometry, not an N-body stability certificate.
-  const outerSemiMajorAxisAu = 9 * Math.max(innerExtentAu, cExtentAu) /
-    (1 - OUTER_ECCENTRICITY);
+  // Screen the outer orbit against the *actual* generated inner binary and
+  // the untouched third SINGLE source. The hierarchy is assembled from real
+  // sources before rendering, never simulated by redistributing planets.
+  const spacing = laboratoryOrbitalSpacingProfile(family.id);
+  const outerSemiMajorAxisAu = laboratoryTripleOuterSemiMajorAxisAu(
+    innerMotion.semiMajorAxisAu,
+    innerMotion.eccentricity,
+    laboratoryProtectedSingleExtentAu(singleA),
+    laboratoryProtectedSingleExtentAu(singleB),
+    laboratoryProtectedSingleExtentAu(singleC),
+    massA, massB, massC,
+    OUTER_ECCENTRICITY,
+    spacing.safetyFactor,
+  );
   const outerMotion: SystemSceneOrbitalMotionSnapshot = Object.freeze({
     id: 'lab-triple-outer-relative',
     semiMajorAxisAu: outerSemiMajorAxisAu,
@@ -89,7 +100,19 @@ export function composeLaboratoryTripleScene(
   });
 
   const playbackDaysPerRealSecond = singleA.simulation.playbackDaysPerRealSecond;
-  const outerScenePerAu = OUTER_PERIASTRON_SEPARATION_SCENE /
+  // Physical diversity must not create a purely visual overlap at periapsis:
+  // reserve the maximum inner A/B stellar excursion (not merely positions at
+  // epoch zero) plus both local orbital presentation envelopes.
+  const innerVisualEnvelope = Math.max(
+    3,
+    ...inner.orbits.filter(orbit => orbit.kind === 'stellar').map(orbit =>
+      orbit.semiMajorScene * (1 + innerMotion.eccentricity) + LOCAL_MINOR_ORBIT_LIMIT_SCENE),
+  );
+  const outerPeriastronScene = Math.max(
+    spacing.outerDisplayPeriastronScene,
+    innerVisualEnvelope + LOCAL_MINOR_ORBIT_LIMIT_SCENE + 0.45,
+  );
+  const outerScenePerAu = outerPeriastronScene /
     (outerMotion.semiMajorAxisAu * (1 - outerMotion.eccentricity));
   const outerTimeScale = outerMotion.periodDays /
     (playbackDaysPerRealSecond * LAB_TRIPLE_OUTER_ORBIT_SECONDS_PER_REVOLUTION);
@@ -460,18 +483,6 @@ function appendSingleC(options: AppendSingleCOptions): void {
       targetLabel: `C · ${risk.targetLabel}`,
     }));
   }
-}
-
-function outerRadiusAu(source: SystemSceneSnapshot): number {
-  return Math.max(
-    0.2,
-    source.habitableZone?.radiativeOuterEdgeAu ?? 0,
-    ...source.planets.map(planet => {
-      const orbit = source.orbits.find(candidate => candidate.id === planet.orbitId);
-      const motion = source.motions.find(candidate => candidate.id === orbit?.motionId);
-      return motion === undefined ? 0 : motion.semiMajorAxisAu * (1 + motion.eccentricity);
-    }),
-  );
 }
 
 function localReferenceRadius(source: SystemSceneSnapshot): number {

@@ -20,10 +20,11 @@
       </h1>
 
       <p>
-        Laboratorio read-only. Los binarios de este laboratorio se generan desde
-        dos sistemas simples completos, cada uno con sus propios cuerpos y HZ;
-        las fichas y el render consultan los mismos sistemas de origen. Simples
-        y triples conservan su funcionamiento. No se modifica la partida.
+        Laboratorio read-only. Los binarios y triples se componen a partir de
+        sistemas simples completos: conservan sus planetas, lunas y HZ.
+        Su separación física se determina según la extensión orbital real de
+        cada fuente y un régimen compacto, intermedio o amplio. Las fichas y
+        el render comparten origen. No se modifica la partida.
       </p>
     </div>
 
@@ -164,8 +165,9 @@
             Binario generado a partir de dos sistemas simples completos: A y B
             conservan sus propias estrellas, planetas, lunas, cometas, cinturones
             y zonas habitables. Las tarjetas y la escena comparten el mismo origen.
-            La órbita mutua se calcula para sus dos masas; la estabilidad gravitatoria
-            a largo plazo entre ambos subsistemas aún no está evaluada.
+            La órbita mutua se calcula a partir de las dos masas y de la extensión
+            real de sus planetas, cinturones y HZ. El cribado analítico de separación
+            no sustituye una simulación gravitatoria a largo plazo.
           } @else {
             {{ activeFrame.caseDefinition.description }}
           }
@@ -186,6 +188,23 @@
             {{ activeFrame.family.id }}
           </dd>
         </div>
+
+        @if (activeFrame.sourceSystems) {
+          <div>
+            <dt>Margen orbital aplicado</dt>
+            <dd data-testid="stellar-system-laboratory-spacing-regime">
+              {{ orbitalSpacingProfile().label }} · condicionado por extensión real
+            </dd>
+          </div>
+          @for (range of orbitalDistanceRanges(); track range.id) {
+            <div>
+              <dt>{{ range.label }} · periastro / apoastro</dt>
+              <dd [attr.data-testid]="range.id === 'lab-binary-relative' ? 'stellar-system-laboratory-binary-range' : 'stellar-system-laboratory-triple-range'">
+                {{ range.periastronAu.toFixed(2) }} / {{ range.apastronAu.toFixed(2) }} UA
+              </dd>
+            </div>
+          }
+        }
 
         <div>
           <dt>Locator {{ activeFrame.sourceSystems ? 'de muestra (la arquitectura se compone desde SINGLE)' : '' }}</dt>
@@ -241,8 +260,10 @@
               su órbita. Las fichas inferiores corresponden a estas mismas
               estrellas. No se generan planetas circumbinarios ni se
               redistribuye artificialmente el inventario. La separación orbital
-              evita solapamientos en esta muestra, pero no certifica estabilidad
-              N-cuerpos. No cambia la partida, /system ni los motores globales.
+              se criba con las extensiones planetarias/HZ/cinturones y ambas masas:
+              algunas familias resultan más compactas que otras. No certifica
+              estabilidad N-cuerpos, especialmente de cometas y capturados.
+              No cambia la partida, /system ni los motores globales.
             </p>
           }
           @if (selectedCaseId() === 'TRIPLE') {
@@ -253,9 +274,10 @@
               un segundo binario exterior. Cada estrella conserva sus propios
               planetas, lunas, cuerpos menores, cinturones y HZ. Las fichas y
               el renderer usan esas mismas tres fuentes SINGLE. La separación
-              jerárquica evita solapamientos de esta muestra, pero aún no
-              certifica estabilidad N-cuerpos. No cambia la partida, /system ni
-              los motores globales.
+              jerárquica se calcula según masas y extensiones orbitales reales:
+              el binario interior puede ser relativamente compacto aunque C
+              requiera una órbita exterior más amplia. Es cribado analítico,
+              no una certificación N-cuerpos. No cambia /system ni el motor global.
             </p>
           }
           <p>

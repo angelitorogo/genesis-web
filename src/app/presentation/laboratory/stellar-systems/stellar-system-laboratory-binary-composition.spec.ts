@@ -1,4 +1,9 @@
 import { DiscoveryState } from '../../../domain/discovery/discovery-state';
+import {
+  laboratoryCircumstellarCriticalFraction,
+  laboratoryOrbitalSpacingProfile,
+  laboratoryProtectedSingleExtentAu,
+} from './stellar-system-laboratory-orbital-spacing';
 import { SystemSceneSnapshotBuilder, type SystemSceneSnapshot } from '../../system/system-scene-snapshot';
 import { assertSystemSceneProjectionSnapshot } from '../../system/system-scene-projection-contract';
 import { projectSystemSceneMotionContributions } from '../../system/system-scene-motion-projection';
@@ -45,6 +50,27 @@ const distance = (a: { x: number; y: number; z: number }, b: { x: number; y: num
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 describe('Binary laboratory: two FULLY generated SINGLE systems with identical scene and fiche sources', () => {
+  it('screens BOTH source systems against the family-specific orbital clearance without changing their planets', () => {
+    for (const family of STELLAR_SYSTEM_LABORATORY_FAMILY_IDS) {
+      const { a, b, masses, binary } = sample(family);
+      const relative = binary.motions.find(motion => motion.id === 'lab-binary-relative')!;
+      const [massA, massB] = masses;
+      const boundA = relative.semiMajorAxisAu * laboratoryCircumstellarCriticalFraction(
+        massB / (massA + massB), relative.eccentricity,
+      );
+      const boundB = relative.semiMajorAxisAu * laboratoryCircumstellarCriticalFraction(
+        massA / (massA + massB), relative.eccentricity,
+      );
+      expect(boundA).toBeGreaterThanOrEqual(
+        laboratoryProtectedSingleExtentAu(a) * laboratoryOrbitalSpacingProfile(family).safetyFactor - 1e-7,
+      );
+      expect(boundB).toBeGreaterThanOrEqual(
+        laboratoryProtectedSingleExtentAu(b) * laboratoryOrbitalSpacingProfile(family).safetyFactor - 1e-7,
+      );
+      expect(binary.planets).toHaveLength(a.planets.length + b.planets.length);
+    }
+  }, 120_000);
+
   it('preserves all source bodies, identity, colors, orbit periods and host-specific HZ across A-H', () => {
     for (const family of STELLAR_SYSTEM_LABORATORY_FAMILY_IDS) {
       const { frame, a, b, binary } = sample(family);

@@ -1,4 +1,9 @@
 import { type StellarSystemLaboratoryFamily } from './stellar-system-laboratory-fixtures';
+import {
+  laboratoryBinarySemiMajorAxisAu,
+  laboratoryOrbitalSpacingProfile,
+  laboratoryProtectedSingleExtentAu,
+} from './stellar-system-laboratory-orbital-spacing';
 
 import {
   projectSystemSceneMotionContributions,
@@ -30,7 +35,7 @@ import {
  */
 const LOCAL_SYSTEM_RADIUS_SCENE = 2.15;
 const LOCAL_MINOR_ORBIT_LIMIT_SCENE = 2.38;
-const BINARY_PERIASTRON_SEPARATION_SCENE = 6.45;
+
 // All cadence changes belong to this QA composition, never to the generators
 // or the authoritative orbital periods. Inner orbits must not race at zoom.
 export const LAB_BINARY_ORBIT_SECONDS_PER_REVOLUTION = 300;
@@ -60,22 +65,20 @@ export function composeLaboratoryBinaryScene(
     throw new RangeError('Both source-star masses must come from the catalogued SINGLE cards.');
   }
 
-  // A wide laboratory binary: preserve each existing SINGLE planetary system,
-  // including empty systems, instead of stealing planets from a P-type binary.
-  // The periastron is at least twelve times the furthest planet/HZ radius;
-  // this is a spacing policy, NOT an N-body stability certification.
-  const outerRadiusAu = (source: SystemSceneSnapshot): number => Math.max(
-    0.2,
-    source.habitableZone?.radiativeOuterEdgeAu ?? 0,
-    ...source.planets.map(planet => {
-      const orbit = source.orbits.find(candidate => candidate.id === planet.orbitId);
-      const motion = source.motions.find(candidate => candidate.id === orbit?.motionId);
-      return motion === undefined ? 0 : motion.semiMajorAxisAu * (1 + motion.eccentricity);
-    }),
-  );
+  // Select separation from BOTH actual, complete source populations before
+  // composing the hierarchy. No planets are cut/reassigned, and no global
+  // system generator is changed. Compact inputs can yield compact binaries;
+  // an extended planetary system still requires a wider binary.
+  const spacing = laboratoryOrbitalSpacingProfile(family.id);
   const binaryEccentricity = 0.12;
-  const semiMajorAxisAu = 12 * Math.max(outerRadiusAu(singleA), outerRadiusAu(singleB)) /
-    (1 - binaryEccentricity);
+  const semiMajorAxisAu = laboratoryBinarySemiMajorAxisAu(
+    laboratoryProtectedSingleExtentAu(singleA),
+    laboratoryProtectedSingleExtentAu(singleB),
+    massA,
+    massB,
+    binaryEccentricity,
+    spacing.safetyFactor,
+  );
   const relativeMotion: SystemSceneOrbitalMotionSnapshot = Object.freeze({
     id: 'lab-binary-relative',
     semiMajorAxisAu,
@@ -85,7 +88,7 @@ export function composeLaboratoryBinaryScene(
     inclinationDegrees: 18,
     epochMeanAnomalyDegrees: 0,
   });
-  const relativeScenePerAu = BINARY_PERIASTRON_SEPARATION_SCENE /
+  const relativeScenePerAu = spacing.innerDisplayPeriastronScene /
     (relativeMotion.semiMajorAxisAu * (1 - relativeMotion.eccentricity));
   const playbackDaysPerRealSecond = singleA.simulation.playbackDaysPerRealSecond;
   const binaryTimeScale = relativeMotion.periodDays /

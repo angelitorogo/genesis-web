@@ -1,4 +1,9 @@
 import { DiscoveryState } from '../../../domain/discovery/discovery-state';
+import {
+  laboratoryCircumstellarCriticalFraction,
+  laboratoryOrbitalSpacingProfile,
+  laboratoryProtectedSingleExtentAu,
+} from './stellar-system-laboratory-orbital-spacing';
 import { SystemSceneSnapshotBuilder, type SystemSceneSnapshot } from '../../system/system-scene-snapshot';
 import { assertSystemSceneProjectionSnapshot } from '../../system/system-scene-projection-contract';
 import { projectSystemSceneMotionContributions } from '../../system/system-scene-motion-projection';
@@ -56,6 +61,26 @@ const distance = (
 ) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
 describe('TRIPLE laboratory: (complete SINGLE A + complete SINGLE B) + complete SINGLE C', () => {
+  it('screens inner and outer orbital extents for each family without dropping any of the three source populations', () => {
+    for (const family of STELLAR_SYSTEM_LABORATORY_FAMILY_IDS) {
+      const { triple, a, b, c, masses } = sample(family);
+      const [massA, massB, massC] = masses;
+      const inner = triple.motions.find(motion => motion.id === 'lab-binary-relative')!;
+      const outer = triple.motions.find(motion => motion.id === 'lab-triple-outer-relative')!;
+      const envelope = inner.semiMajorAxisAu * (1 + inner.eccentricity) *
+        Math.max(massA, massB) / (massA + massB) +
+        Math.max(laboratoryProtectedSingleExtentAu(a), laboratoryProtectedSingleExtentAu(b));
+      const factor = laboratoryOrbitalSpacingProfile(family).safetyFactor;
+      expect(outer.semiMajorAxisAu * laboratoryCircumstellarCriticalFraction(
+        massC / (massA + massB + massC), outer.eccentricity,
+      )).toBeGreaterThanOrEqual(envelope * factor - 1e-7);
+      expect(outer.semiMajorAxisAu * laboratoryCircumstellarCriticalFraction(
+        (massA + massB) / (massA + massB + massC), outer.eccentricity,
+      )).toBeGreaterThanOrEqual(laboratoryProtectedSingleExtentAu(c) * factor - 1e-7);
+      expect(triple.planets).toHaveLength(a.planets.length + b.planets.length + c.planets.length);
+    }
+  }, 120_000);
+
   it('preserves all three source systems, their own planets/moons/minors/belts and circumstellar HZ across A-H', () => {
     for (const family of STELLAR_SYSTEM_LABORATORY_FAMILY_IDS) {
       const { frame, a, b, c, masses, triple } = sample(family);

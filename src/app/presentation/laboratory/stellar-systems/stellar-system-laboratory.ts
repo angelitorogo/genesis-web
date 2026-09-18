@@ -37,6 +37,9 @@ import {
 import {
   composeLaboratoryTripleScene,
 } from './stellar-system-laboratory-triple-composition';
+import {
+  laboratoryOrbitalSpacingProfile,
+} from './stellar-system-laboratory-orbital-spacing';
 
 import {
   STELLAR_SYSTEM_LABORATORY_CASES,
@@ -191,6 +194,22 @@ export class StellarSystemLaboratoryPage {
   // The renderer consumes exactly the SAME generated laboratory binary as
   // its cards/inventory. There is no separate visual redistribution pipeline.
   readonly rendererQaSnapshot = this.rendererQaBaseSnapshot;
+
+  readonly orbitalSpacingProfile = computed(() =>
+    laboratoryOrbitalSpacingProfile(this.selectedFamilyId()),
+  );
+
+  /** Physical orbital distance ranges; never the display's scene-space units. */
+  readonly orbitalDistanceRanges = computed(() => this.rendererQaSnapshot().motions
+    .filter(motion => motion.id === 'lab-binary-relative' ||
+      motion.id === 'lab-triple-outer-relative')
+    .map(motion => Object.freeze({
+      id: motion.id,
+      label: motion.id === 'lab-binary-relative' ? 'A–B' : '(A–B)–C',
+      periastronAu: motion.semiMajorAxisAu * (1 - motion.eccentricity),
+      apastronAu: motion.semiMajorAxisAu * (1 + motion.eccentricity),
+    })),
+  );
 
   private snapshotForFrame(
     frame: ReturnType<typeof StellarSystemLaboratoryFixtures.frame>,
