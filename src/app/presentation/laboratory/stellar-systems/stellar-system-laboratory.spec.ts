@@ -19,6 +19,7 @@ import {
 } from './stellar-system-laboratory';
 
 import {
+  StellarSystemLaboratoryCaseId,
   StellarSystemLaboratoryFamilyId,
 } from './stellar-system-laboratory-fixtures';
 
@@ -303,9 +304,16 @@ describe(
         expect(page.rendererQaSnapshot()).toBe(page.rendererQaBaseSnapshot());
         page.selectCase('TRIPLE');
         fixture.detectChanges();
-        expect(page.rendererQaSnapshot().stars).toHaveLength(3);
-        expect(page.rendererQaSnapshot().habitableZones).toBeUndefined();
-        expect(page.rendererQaSnapshot()).toBe(page.rendererQaBaseSnapshot());
+        const triple = page.rendererQaSnapshot();
+        expect(page.frame().sourceSystems?.map(source => source.family.id)).toEqual(['A', 'B', 'C']);
+        expect(triple.stars.map(star => star.label)).toEqual(['A', 'B', 'C']);
+        expect(triple.habitableZones?.every(zone => zone.topology === 'CIRCUMSTELLAR')).toBe(true);
+        expect(triple.habitableZones?.length).toBeGreaterThan(0);
+        expect(element.querySelector('[data-testid="stellar-system-laboratory-triple-composition-note"]')?.textContent)
+          .toContain('GENERACIÓN TRIPLE SOLO EN LABORATORIO');
+        expect(element.querySelector('[data-testid="stellar-system-laboratory-triple-sources"]')?.textContent)
+          .toContain('Sistema C: simple familia C');
+        expect(triple).toBe(page.rendererQaBaseSnapshot());
       },
       90_000,
     );
@@ -428,7 +436,7 @@ describe(
           snapshot.motions.some(
             motion =>
               motion.id ===
-              'stellar-outer-relative',
+              'lab-triple-outer-relative',
           ),
         ).toBe(true);
 
@@ -657,5 +665,53 @@ describe(
       },
       30_000,
     );
+    it('exposes orbit guides in all laboratory systems, but stellar telemetry and host centring only in multiples', () => {
+      const fixture = TestBed.createComponent(StellarSystemLaboratoryPage);
+      fixture.detectChanges();
+      const page = fixture.componentInstance;
+      const element = fixture.nativeElement as HTMLElement;
+      const singleOrbitButton = element.querySelector<HTMLButtonElement>(
+        '[data-testid="system-scene-lab-orbit-lines"]',
+      )!;
+      expect(singleOrbitButton.getAttribute('aria-pressed')).toBe('true');
+      expect(element.querySelectorAll('[data-testid="system-scene-lab-center-system"]')).toHaveLength(0);
+      expect(element.querySelector('[data-testid="system-scene-lab-stellar-distances"]')).toBeNull();
+      singleOrbitButton.click();
+      fixture.detectChanges();
+      expect(singleOrbitButton.getAttribute('aria-pressed')).toBe('false');
+      singleOrbitButton.click();
+      fixture.detectChanges();
+      expect(singleOrbitButton.getAttribute('aria-pressed')).toBe('true');
+
+      page.selectCase(StellarSystemLaboratoryCaseId.BINARY);
+      fixture.detectChanges();
+      expect(element.querySelectorAll('[data-testid="system-scene-lab-center-system"]')).toHaveLength(2);
+      expect(element.querySelector('[data-testid="system-scene-lab-stellar-distances"]')).toBeTruthy();
+      const orbitButton = element.querySelector<HTMLButtonElement>(
+        '[data-testid="system-scene-lab-orbit-lines"]',
+      )!;
+      expect(orbitButton.getAttribute('aria-pressed')).toBe('true');
+      orbitButton.click();
+      fixture.detectChanges();
+      expect(orbitButton.getAttribute('aria-pressed')).toBe('false');
+      expect(element.querySelectorAll('[data-testid="system-scene-lab-center-system"]')
+        .length).toBe(page.rendererQaSnapshot().stars.length);
+      element.querySelector<HTMLButtonElement>(
+        '[data-testid="system-scene-lab-center-system"][data-star="A"]',
+      )!.click(); // Must also work if the test environment has no WebGL2 runtime.
+
+      page.selectCase(StellarSystemLaboratoryCaseId.TRIPLE);
+      fixture.detectChanges();
+      expect(element.querySelectorAll('[data-testid="system-scene-lab-center-system"]')).toHaveLength(3);
+      expect(element.querySelector('[data-testid="system-scene-lab-center-system"][data-star="C"]'))
+        .toBeTruthy();
+      expect(element.querySelector('[data-testid="system-scene-lab-stellar-distances"]')).toBeTruthy();
+      page.selectCase(StellarSystemLaboratoryCaseId.SINGLE);
+      fixture.detectChanges();
+      expect(element.querySelector('[data-testid="system-scene-lab-orbit-lines"]')).toBeTruthy();
+      expect(element.querySelectorAll('[data-testid="system-scene-lab-center-system"]')).toHaveLength(0);
+      expect(element.querySelector('[data-testid="system-scene-lab-stellar-distances"]')).toBeNull();
+    }, 90_000);
+
   },
 );

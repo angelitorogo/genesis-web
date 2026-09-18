@@ -35,6 +35,10 @@ import {
 } from './stellar-system-laboratory-binary-composition';
 
 import {
+  composeLaboratoryTripleScene,
+} from './stellar-system-laboratory-triple-composition';
+
+import {
   STELLAR_SYSTEM_LABORATORY_CASES,
   StellarSystemLaboratoryCaseId,
   StellarSystemLaboratoryFamilyId,
@@ -140,28 +144,48 @@ export class StellarSystemLaboratoryPage {
           ]!,
     );
 
-  /** BINARY generation starts with two complete SINGLE fixture frames. */
+  /**
+   * LAB-only hierarchy: BINARY = SINGLE A + SINGLE B.
+   * TRIPLE = (SINGLE A + SINGLE B) + SINGLE C.
+   */
   readonly rendererQaBaseSnapshot = computed<SystemSceneSnapshot>(() => {
     const active = this.frame();
-    if (this.selectedCaseId() !== StellarSystemLaboratoryCaseId.BINARY) {
+    const caseId = this.selectedCaseId();
+    if (caseId === StellarSystemLaboratoryCaseId.SINGLE) {
       return this.snapshotForFrame(active);
     }
-    const pair = active.sourceSystems;
-    if (pair === undefined) {
-      throw new Error('Binary laboratory source systems must be generated first.');
+    const sources = active.sourceSystems;
+    if (sources === undefined) {
+      throw new Error(`${caseId} laboratory source systems must be generated first.`);
     }
-    const a = this.snapshotForFrame(pair[0]);
-    const b = this.snapshotForFrame(pair[1]);
-    const massA = pair[0].stages.find(stage =>
+    const sourceSnapshots = sources.map(source => this.snapshotForFrame(source));
+    const masses = sources.map(source => source.stages.find(stage =>
       stage.discoveryState.code === DiscoveryState.CATALOGUED.code,
-    )!.card.render.components[0]?.massSolar;
-    const massB = pair[1].stages.find(stage =>
-      stage.discoveryState.code === DiscoveryState.CATALOGUED.code,
-    )!.card.render.components[0]?.massSolar;
-    if (massA == null || massB == null) {
-      throw new Error('Binary component mass is absent from the generated SINGLE fiches.');
+    )!.card.render.components[0]?.massSolar);
+    if (masses.some(mass => mass == null)) {
+      throw new Error(`${caseId} component mass is absent from the generated SINGLE fiches.`);
     }
-    return composeLaboratoryBinaryScene(a, b, active.family, [massA, massB]);
+    if (caseId === StellarSystemLaboratoryCaseId.BINARY) {
+      if (sourceSnapshots.length !== 2 || masses.length !== 2) {
+        throw new Error('Binary laboratory generation requires exactly two SINGLE sources.');
+      }
+      return composeLaboratoryBinaryScene(
+        sourceSnapshots[0]!,
+        sourceSnapshots[1]!,
+        active.family,
+        [masses[0]!, masses[1]!],
+      );
+    }
+    if (sourceSnapshots.length !== 3 || masses.length !== 3) {
+      throw new Error('Triple laboratory generation requires exactly three SINGLE sources.');
+    }
+    return composeLaboratoryTripleScene(
+      sourceSnapshots[0]!,
+      sourceSnapshots[1]!,
+      sourceSnapshots[2]!,
+      active.family,
+      [masses[0]!, masses[1]!, masses[2]!],
+    );
   });
 
   // The renderer consumes exactly the SAME generated laboratory binary as
@@ -171,9 +195,8 @@ export class StellarSystemLaboratoryPage {
   private snapshotForFrame(
     frame: ReturnType<typeof StellarSystemLaboratoryFixtures.frame>,
   ): SystemSceneSnapshot {
-    if (frame.caseDefinition.id !== StellarSystemLaboratoryCaseId.SINGLE &&
-        frame.caseDefinition.id !== StellarSystemLaboratoryCaseId.TRIPLE) {
-      throw new RangeError('A laboratory BINARY must be assembled from two SINGLE sources.');
+    if (frame.caseDefinition.id !== StellarSystemLaboratoryCaseId.SINGLE) {
+      throw new RangeError('Laboratory composed multiples must be assembled only from SINGLE sources.');
     }
     const previewStage = frame.stages.find(
       stage => stage.discoveryState.code === DiscoveryState.CATALOGUED.code,

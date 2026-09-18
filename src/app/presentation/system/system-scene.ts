@@ -60,6 +60,12 @@ import {
 } from './system-scene-camera-controller';
 
 import {
+  laboratoryStarDistances,
+  laboratorySubsystemRadius,
+  type LaboratoryStarDistance,
+} from './system-scene-laboratory-controls';
+
+import {
   buildSystemSceneBodyCard,
   type SystemSceneBodyCard,
 } from './system-scene-body-card';
@@ -236,6 +242,8 @@ export type SystemSceneMinorBodyLayerKey =
   | 'capturedObjects';
 
 export interface SystemSceneLayerVisibility {
+  /** Only supplied by the binary/triple laboratory. */
+  readonly orbits?: boolean;
   readonly planets:
     boolean;
 
@@ -303,6 +311,8 @@ export interface SystemSceneRuntime {
       string,
   ): boolean;
 
+  focusLaboratorySystem?(starId: string, radiusScene: number): boolean;
+
   stopFollowing?():
     void;
 
@@ -327,6 +337,7 @@ export type SystemSceneRuntimeFactory =
 
     onSelectionChange?:
       SystemSceneSelectionChangeHandler,
+    onSimulationDay?: (simulationDay: number) => void,
   ) => SystemSceneRuntime;
 
 export class SystemSceneWebGl2UnavailableError
@@ -357,10 +368,12 @@ export const SYSTEM_SCENE_RUNTIME_FACTORY =
 
             onSelectionChange?:
               SystemSceneSelectionChangeHandler,
+            onSimulationDay?: (simulationDay: number) => void,
           ) =>
             createThreeSystemSceneRuntime(
               canvas,
               onSelectionChange,
+              onSimulationDay,
             ),
     },
   );
@@ -408,6 +421,14 @@ export class SystemScene
   /** Opt-in camera-only close-up, enabled exclusively by the laboratory. */
   @Input()
   laboratoryCloseZoom = false;
+
+  /** Opt-in controls for composed multiples, never enabled by /system. */
+  @Input()
+  laboratoryMultipleControls = false;
+
+  /** Opt-in orbit-guide toggle for SINGLE laboratory previews as well. */
+  @Input()
+  laboratoryOrbitControls = false;
 
   /**
    * Optional QA-only route exposed by hosts that deliberately allow opening
@@ -545,6 +566,36 @@ export class SystemScene
     signal(
       false,
     );
+
+  private readonly orbitLinesVisibleSignal = signal(true);
+  private readonly focusedLaboratoryStarSignal = signal<string | null>(null);
+  private readonly laboratoryDistancesSignal = signal<readonly LaboratoryStarDistance[]>([]);
+
+  readonly orbitLinesVisible = this.orbitLinesVisibleSignal.asReadonly();
+  readonly focusedLaboratoryStar = this.focusedLaboratoryStarSignal.asReadonly();
+  readonly laboratoryDistances = this.laboratoryDistancesSignal.asReadonly();
+
+  toggleOrbitLines(): void {
+    if (!this.laboratoryOrbitControls && !this.laboratoryMultipleControls) return;
+    this.orbitLinesVisibleSignal.update(value => !value);
+    this.applyLayerVisibility();
+  }
+
+  centerLaboratorySystem(starId: string): void {
+    if (!this.laboratoryMultipleControls || this.snapshot.stars.length < 2 ||
+        !this.snapshot.stars.some(star => star.id === starId)) return;
+    const radius = laboratorySubsystemRadius(this.snapshot, starId);
+    if (this.runtime?.focusLaboratorySystem?.(starId, radius)) {
+      this.focusedLaboratoryStarSignal.set(starId);
+      this.trackingSelectionSignal.set(null);
+    }
+  }
+
+  private updateLaboratoryDistances(day: number): void {
+    if (this.laboratoryMultipleControls && this.snapshot.stars.length > 1) {
+      this.laboratoryDistancesSignal.set(laboratoryStarDistances(this.snapshot, day));
+    }
+  }
 
   readonly planetsVisible =
     this.planetsVisibleSignal.asReadonly();
@@ -1134,6 +1185,7 @@ export class SystemScene
     if (
       followed
     ) {
+      this.focusedLaboratoryStarSignal.set(null);
       this.trackingSelectionSignal.set(
         selection,
       );
@@ -1184,6 +1236,7 @@ export class SystemScene
                   selection,
                 );
             },
+            day => this.updateLaboratoryDistances(day),
           );
 
       this.installResizeHandling();
@@ -1252,6 +1305,7 @@ export class SystemScene
     this.trackingSelectionSignal.set(
       null,
     );
+    this.focusedLaboratoryStarSignal.set(null);
   }
 
   private applyLayerVisibility():
@@ -1259,6 +1313,8 @@ export class SystemScene
 
     this.runtime
       ?.setLayerVisibility?.({
+        ...(this.laboratoryOrbitControls || this.laboratoryMultipleControls
+          ? { orbits: this.orbitLinesVisibleSignal() } : {}),
         planets:
           this.planetsVisibleSignal() &&
           this.snapshot.planets.length >
@@ -1591,6 +1647,8 @@ export class SystemScene
     this.trackingSelectionSignal.set(
       null,
     );
+    this.focusedLaboratoryStarSignal.set(null);
+    this.laboratoryDistancesSignal.set([]);
 
     try {
       assertSystemSceneProjectionSnapshot(
@@ -1673,6 +1731,8 @@ export class SystemScene
       const info = this.laboratoryCloseZoom
         ? this.runtime.render(this.snapshot, true)
         : this.runtime.render(this.snapshot);
+
+      this.updateLaboratoryDistances(this.snapshot.simulation.epochSimulationDay);
 
       this.applyLayerVisibility();
 
@@ -1850,11 +1910,13 @@ function createThreeSystemSceneRuntime(
   onSelectionChange:
     SystemSceneSelectionChangeHandler =
     () => {},
+  onSimulationDay?: (simulationDay: number) => void,
 ): SystemSceneRuntime {
 
   return new ThreeSystemSceneRuntime(
     canvas,
     onSelectionChange,
+    onSimulationDay,
   );
 }
 
@@ -2103,6 +2165,7 @@ class ThreeSystemSceneRuntime
     SystemSceneLayerVisibility =
     Object.freeze({
       planets: true,
+      orbits: true,
       moons: false,
       habitableZone: false,
       orbitalRisk: false,
@@ -2186,6 +2249,12 @@ class ThreeSystemSceneRuntime
         simulationState.simulationDay,
       );
 
+      if (this.onSimulationDay &&
+          realTimestampMilliseconds - this.lastTelemetryTimestamp >= 250) {
+        this.lastTelemetryTimestamp = realTimestampMilliseconds;
+        this.onSimulationDay(simulationState.simulationDay);
+      }
+
       this.updateTrackedBodyCamera(
         activeTimestampMilliseconds,
       );
@@ -2196,12 +2265,15 @@ class ThreeSystemSceneRuntime
   private disposed =
     false;
 
+  private lastTelemetryTimestamp = Number.NEGATIVE_INFINITY;
+
   constructor(
     private readonly canvas:
       HTMLCanvasElement,
 
     private readonly onSelectionChange:
       SystemSceneSelectionChangeHandler,
+    private readonly onSimulationDay?: (simulationDay: number) => void,
   ) {
 
     const context =
@@ -2436,6 +2508,7 @@ class ThreeSystemSceneRuntime
       );
 
     this.clearFrameObjects();
+    this.lastTelemetryTimestamp = Number.NEGATIVE_INFINITY;
     this.currentSnapshot =
       snapshot;
     this.simulationClock =
@@ -2716,6 +2789,21 @@ class ThreeSystemSceneRuntime
         this.layerVisibility.capturedObjects;
     }
 
+    // Apply last so turning off orbit GUIDES never hides their bodies, and
+    // turning guides on cannot reveal an otherwise hidden moon/planet layer.
+    for (const [id, line] of this.animatedOrbits) {
+      const orbit = this.currentSnapshot?.orbits.find(candidate => candidate.id === id);
+      const minorLayer = this.minorBodyOrbitLayerKeys.get(id);
+      const hostLayerVisible = orbit?.kind === 'planetary'
+        ? this.layerVisibility.planets
+        : orbit?.kind === 'moon'
+          ? this.layerVisibility.moons
+          : orbit?.kind === 'minor-body'
+            ? this.layerVisibility[minorLayer ?? 'capturedObjects']
+            : true;
+      line.visible = (this.layerVisibility.orbits ?? true) && hostLayerVisible;
+    }
+
     if (
       this.trackedBodyId !==
         null
@@ -2982,6 +3070,21 @@ class ThreeSystemSceneRuntime
       ),
     );
 
+    this.updateAnimationLoop();
+    this.renderFrame();
+    return true;
+  }
+
+  focusLaboratorySystem(starId: string, radiusScene: number): boolean {
+    this.assertAlive();
+    if (!this.currentSnapshot?.stars.some(star => star.id === starId) ||
+        !Number.isFinite(radiusScene) || radiusScene <= 0) return false;
+    const star = this.animatedBodies.get(starId);
+    if (!star) return false;
+    this.scene.updateMatrixWorld(true);
+    star.getWorldPosition(this.trackedWorldPosition);
+    this.trackedBodyId = starId;
+    this.cameraController.beginBodyTracking(this.trackedWorldPosition, radiusScene);
     this.updateAnimationLoop();
     this.renderFrame();
     return true;

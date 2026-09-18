@@ -133,14 +133,59 @@
       CAPTURADOS · {{ capturedObjectCount() }}
     </button>
 
+    @if (laboratoryOrbitControls || laboratoryMultipleControls) {
+      <button
+        type="button"
+        data-testid="system-scene-lab-orbit-lines"
+        [attr.aria-pressed]="orbitLinesVisible()"
+        [class.system-scene__layer-button--active]="orbitLinesVisible()"
+        (click)="toggleOrbitLines()"
+      >
+        ÓRBITAS · {{ orbitLinesVisible() ? 'ON' : 'OFF' }}
+      </button>
+    }
+
+    @if (laboratoryMultipleControls && snapshot.stars.length > 1) {
+      @for (star of snapshot.stars; track star.id) {
+        <button
+          type="button"
+          data-testid="system-scene-lab-center-system"
+          [attr.data-star]="star.label"
+          [attr.aria-pressed]="focusedLaboratoryStar() === star.id"
+          [class.system-scene__layer-button--active]="focusedLaboratoryStar() === star.id"
+          (click)="centerLaboratorySystem(star.id)"
+        >
+          CENTRAR SISTEMA {{ star.label }}
+        </button>
+      }
+    }
+
     <button
       type="button"
       data-testid="system-scene-reset-view"
       (click)="resetView()"
     >
-      {{ trackingSelection() ? 'VOLVER AL SISTEMA' : 'RECENTRAR' }}
+      {{ trackingSelection() || focusedLaboratoryStar() ? 'VOLVER AL SISTEMA' : 'RECENTRAR' }}
     </button>
   </div>
+
+  @if (laboratoryMultipleControls && snapshot.stars.length > 1) {
+    <aside
+      class="system-scene__stellar-distances"
+      data-testid="system-scene-lab-stellar-distances"
+      aria-label="Separación instantánea entre las estrellas"
+      aria-live="off"
+    >
+      <strong>DISTANCIAS ESTELARES · INSTANTÁNEAS</strong>
+      @for (distance of laboratoryDistances(); track distance.pair) {
+        <div [attr.data-pair]="distance.pair" data-testid="system-scene-lab-star-distance">
+          <span>{{ distance.pair }}</span>
+          <b>{{ distance.au.toFixed(2) }} UA</b>
+        </div>
+      }
+      <small>Separación física en el instante de la simulación; no es la distancia de la escena a escala.</small>
+    </aside>
+  }
 
   @if (habitableZoneVisible() || orbitalRiskVisible() || (asteroidsVisible() && asteroidBeltCount() > 0)) {
     <aside

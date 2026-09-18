@@ -101,6 +101,39 @@
     box-shadow: 0 0 .8rem rgba(106, 215, 255, .12);
   }
 
+  &__stellar-distances {
+    position: absolute;
+    z-index: 3;
+    right: 1rem;
+    bottom: 2.5rem;
+    display: grid;
+    gap: .35rem;
+    width: min(20rem, calc(100% - 2rem));
+    padding: .65rem .8rem;
+    border: 1px solid rgba(106, 215, 255, .25);
+    border-radius: .55rem;
+    background: rgba(3, 8, 15, .82);
+    color: rgba(210, 232, 241, .86);
+    font: 600 .65rem var(--genesis-font-mono);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+
+    > strong {
+      color: var(--genesis-color-primary);
+      font-size: .61rem;
+      letter-spacing: .07em;
+    }
+
+    > div {
+      display: flex;
+      justify-content: space-between;
+      gap: .7rem;
+    }
+
+    b { color: #e1f6ff; }
+    small { color: rgba(186, 214, 227, .62); line-height: 1.35; }
+  }
+
   &__science-panel {
     position: absolute;
     z-index: 4;

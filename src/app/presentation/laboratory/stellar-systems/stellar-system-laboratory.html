@@ -188,7 +188,7 @@
         </div>
 
         <div>
-          <dt>Locator {{ activeFrame.sourceSystems ? 'de muestra (no genera A/B)' : '' }}</dt>
+          <dt>Locator {{ activeFrame.sourceSystems ? 'de muestra (la arquitectura se compone desde SINGLE)' : '' }}</dt>
           <dd>
             G{{ activeFrame.family.locator.galaxyIndex.toString() }} /
             S{{ activeFrame.family.locator.sectorKey.toString() }} /
@@ -197,16 +197,22 @@
         </div>
 
         <div>
-          <dt>{{ activeFrame.sourceSystems ? 'Seed de muestra (no genera A/B)' : 'SystemSeed' }}</dt>
+          <dt>{{ activeFrame.sourceSystems ? 'Seed de muestra (no materializa el múltiple)' : 'SystemSeed' }}</dt>
           <dd class="stellar-lab__mono">
             {{ activeFrame.family.systemSeedHex }}
           </dd>
         </div>
       </dl>
-      @if (activeFrame.sourceSystems; as pair) {
-        <p data-testid="stellar-system-laboratory-binary-sources">
-          Sistema A: simple familia {{ pair[0].family.id }} · O{{ pair[0].family.locator.galacticObjectIndex.toString() }} · seed {{ pair[0].family.systemSeedHex }}.
-          Sistema B: simple familia {{ pair[1].family.id }} · O{{ pair[1].family.locator.galacticObjectIndex.toString() }} · seed {{ pair[1].family.systemSeedHex }}.
+      @if (activeFrame.sourceSystems; as sources) {
+        <p
+          [attr.data-testid]="sources.length === 2 ? 'stellar-system-laboratory-binary-sources' : 'stellar-system-laboratory-triple-sources'"
+        >
+          @for (source of sources; track source.family.id; let index = $index) {
+            Sistema {{ index === 0 ? 'A' : index === 1 ? 'B' : 'C' }}:
+            simple familia {{ source.family.id }} ·
+            O{{ source.family.locator.galacticObjectIndex.toString() }} ·
+            seed {{ source.family.systemSeedHex }}.
+          }
         </p>
       }
     </section>
@@ -237,6 +243,19 @@
               redistribuye artificialmente el inventario. La separación orbital
               evita solapamientos en esta muestra, pero no certifica estabilidad
               N-cuerpos. No cambia la partida, /system ni los motores globales.
+            </p>
+          }
+          @if (selectedCaseId() === 'TRIPLE') {
+            <p data-testid="stellar-system-laboratory-triple-composition-note">
+              GENERACIÓN TRIPLE SOLO EN LABORATORIO: primero se generan tres
+              sistemas simples completos A, B y C. A y B forman el binario
+              interior; después el baricentro A–B y el sistema simple C forman
+              un segundo binario exterior. Cada estrella conserva sus propios
+              planetas, lunas, cuerpos menores, cinturones y HZ. Las fichas y
+              el renderer usan esas mismas tres fuentes SINGLE. La separación
+              jerárquica evita solapamientos de esta muestra, pero aún no
+              certifica estabilidad N-cuerpos. No cambia la partida, /system ni
+              los motores globales.
             </p>
           }
           <p>
@@ -292,7 +311,7 @@
             <dd>
               @if (selectedCaseId() === 'BINARY') {
                 @for (zone of rendererQaSnapshot().habitableZones ?? []; track $index) {
-                  {{ (zone.anchorMotionContributions[0]?.scale ?? 0) < 0 ? 'A' : 'B' }} · {{ zone.radiativeInnerEdgeAu.toFixed(2) }}–{{ zone.radiativeOuterEdgeAu.toFixed(2) }} AU
+                  {{ zone.anchorMotionContributions[0].scale < 0 ? 'A' : 'B' }} · {{ zone.radiativeInnerEdgeAu.toFixed(2) }}–{{ zone.radiativeOuterEdgeAu.toFixed(2) }} AU
                 }
                 @if (!rendererQaSnapshot().habitableZones?.length) { — }
               } @else if (rendererQaSnapshot().habitableZone; as hz) {
@@ -315,6 +334,8 @@
       <app-system-scene
         [snapshot]="rendererQaSnapshot()"
         [laboratoryCloseZoom]="true"
+        [laboratoryOrbitControls]="true"
+        [laboratoryMultipleControls]="selectedCaseId() !== 'SINGLE'"
         [stellarFicheQaRoute]="selectedCaseId() === 'BINARY' ? null : '/laboratory/stellar-systems/fiche-qa'"
       ></app-system-scene>
     </section>

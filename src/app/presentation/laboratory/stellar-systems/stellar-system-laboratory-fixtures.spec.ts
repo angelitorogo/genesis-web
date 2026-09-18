@@ -201,7 +201,7 @@ describe(
     );
 
     it(
-      'should keep the selected fixture stable across repeated reads and preserve the rare TRIPLE architecture',
+      'should keep TRIPLE stable and build it from three complete SINGLE source systems',
       () => {
         const first =
           StellarSystemLaboratoryFixtures
@@ -222,8 +222,12 @@ describe(
         expect(first.stages[1]?.card.multiplicityLabel).toBe(
           'Triple',
         );
+        expect(first.sourceSystems?.map(source => source.family.id)).toEqual(['H', 'A', 'B']);
         expect(first.stages[2]?.card.components).toHaveLength(3);
-        expect(first.stages[2]?.card.orbits).toHaveLength(2);
+        expect(first.stages[2]?.card.components.map(component => component.colorHex))
+          .toEqual(first.sourceSystems?.map(source => source.stages[2]!.card.components[0]!.colorHex));
+        expect(first.stages[2]?.card.orbits.map(orbit => orbit.label).slice(0, 2))
+          .toEqual(['Órbita interior A–B', 'Órbita exterior (A–B)–C']);
       },
       30_000,
     );

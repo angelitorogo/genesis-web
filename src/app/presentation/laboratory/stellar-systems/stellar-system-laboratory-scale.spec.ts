@@ -703,14 +703,14 @@ function cataloguedSnapshot(
         catalogued.discoveryState,
       discoveryStateLabel:
         catalogued.label,
-      // This historical 24.5 test intentionally exercises the GLOBAL P-type
-      // engine's original binary contracts. The laboratory's two-SINGLE
-      // composite is tested in stellar-system-laboratory-binary-composition.spec.ts.
-      stellarSystemCard: caseId === StellarSystemLaboratoryCaseId.BINARY
-        ? ArchiveStellarSystemCardAssembler.build(
+      // This historical 24.5 test intentionally exercises the GLOBAL
+      // multistellar contracts. LAB composed BINARY/TRIPLE scenes are covered
+      // by their dedicated composition specs and do not replace global physics.
+      stellarSystemCard: caseId === StellarSystemLaboratoryCaseId.SINGLE
+        ? catalogued.card
+        : ArchiveStellarSystemCardAssembler.build(
             generationKey, frame.family.locator, DiscoveryState.CATALOGUED,
-          )
-        : catalogued.card,
+          ),
     });
 }
 

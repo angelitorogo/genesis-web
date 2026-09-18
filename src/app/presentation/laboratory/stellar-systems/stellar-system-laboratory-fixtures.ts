@@ -150,8 +150,10 @@ export interface StellarSystemLaboratoryFrame {
   readonly stages:
     readonly StellarSystemLaboratoryKnowledgeStage[];
 
-  /** Only BINARY: two independently generated, complete SINGLE source systems. */
-  readonly sourceSystems?: readonly [StellarSystemLaboratoryFrame, StellarSystemLaboratoryFrame];
+  /** LAB-only composed multiples: complete SINGLE source systems, never synthetic planets. */
+  readonly sourceSystems?:
+    | readonly [StellarSystemLaboratoryFrame, StellarSystemLaboratoryFrame]
+    | readonly [StellarSystemLaboratoryFrame, StellarSystemLaboratoryFrame, StellarSystemLaboratoryFrame];
 }
 
 export const STELLAR_SYSTEM_LABORATORY_CASES:
@@ -185,7 +187,7 @@ export const STELLAR_SYSTEM_LABORATORY_CASES:
       multiplicity:
         StellarSystemMultiplicity.TRIPLE,
       description:
-        'Par interior A–B y componente C exterior en jerarquía simplificada, incluyendo la restricción dinámica de C sobre la región circumbinaria.',
+        'Tres sistemas simples completos: A y B forman un binario interior; ese binario A–B y el sistema simple C forman un segundo binario exterior jerárquico.',
     }),
   ]);
 
@@ -330,21 +332,21 @@ export class StellarSystemLaboratoryFixtures {
       );
     }
 
-    // The BINARY laboratory fixture is BUILT from two real SINGLE fixtures.
-    // This does not call the old P-type BINARY materializer to create cards;
-    // source systems (including sparse/empty ones) are never replenished.
+    // LAB composed multiples are generated FROM COMPLETE SINGLE fixtures.
+    // BINARY = A + B. TRIPLE = (A + B) + C. No old P-type/TRIPLE planetary
+    // materializer participates in these laboratory cards or renderer inputs.
+    const sourceIndex = STELLAR_SYSTEM_LABORATORY_FAMILY_IDS.indexOf(familyId);
+    const singleAtOffset = (offset: number) => this.frame(
+      StellarSystemLaboratoryCaseId.SINGLE,
+      STELLAR_SYSTEM_LABORATORY_FAMILY_IDS[
+        (sourceIndex + offset) % STELLAR_SYSTEM_LABORATORY_FAMILY_IDS.length
+      ]!,
+    );
     const sourceSystems = caseId === StellarSystemLaboratoryCaseId.BINARY
-      ? Object.freeze([
-          this.frame(StellarSystemLaboratoryCaseId.SINGLE, familyId),
-          this.frame(
-            StellarSystemLaboratoryCaseId.SINGLE,
-            STELLAR_SYSTEM_LABORATORY_FAMILY_IDS[
-              (STELLAR_SYSTEM_LABORATORY_FAMILY_IDS.indexOf(familyId) + 1) %
-                STELLAR_SYSTEM_LABORATORY_FAMILY_IDS.length
-            ]!,
-          ),
-        ] as const)
-      : undefined;
+      ? Object.freeze([singleAtOffset(0), singleAtOffset(1)] as const)
+      : caseId === StellarSystemLaboratoryCaseId.TRIPLE
+        ? Object.freeze([singleAtOffset(0), singleAtOffset(1), singleAtOffset(2)] as const)
+        : undefined;
 
     const definitions = Object.freeze([
       [DiscoveryState.DETECTED, 'Detectado', 'SIGNAL'],
@@ -359,10 +361,16 @@ export class StellarSystemLaboratoryFixtures {
             discoveryState: state,
             label,
             badge,
-            card: composeTwoSingleCards(
-              sourceSystems[0].stages[index]!.card,
-              sourceSystems[1].stages[index]!.card,
-            ),
+            card: sourceSystems.length === 2
+              ? composeTwoSingleCards(
+                  sourceSystems[0].stages[index]!.card,
+                  sourceSystems[1].stages[index]!.card,
+                )
+              : composeThreeSingleCards(
+                  sourceSystems[0].stages[index]!.card,
+                  sourceSystems[1].stages[index]!.card,
+                  sourceSystems[2].stages[index]!.card,
+                ),
           }),
     ));
 
@@ -562,6 +570,79 @@ function composeTwoSingleCards(
       components: Object.freeze(identified ? renderComponents : a.render.components),
       innerOrbitEccentricity: identified ? 0.12 : null,
       outerOrbitEccentricity: null,
+      stableHabitableZoneFraction: null,
+      hasStableHabitableZone: false,
+    }),
+  });
+}
+
+
+/** Fiches describe the SAME three generated SINGLE sources as the hierarchical 3D scene. */
+function composeThreeSingleCards(
+  a: ArchiveStellarSystemCardModel,
+  b: ArchiveStellarSystemCardModel,
+  c: ArchiveStellarSystemCardModel,
+): ArchiveStellarSystemCardModel {
+  const prefixFacts = (label: 'A' | 'B' | 'C', facts: ArchiveStellarSystemCardModel['systemFacts']) =>
+    facts.map(fact => Object.freeze({ ...fact, label: `${label} · ${fact.label}` }));
+  const sourceComponents = [
+    ...a.components.map(component => Object.freeze({ ...component, componentLabel: 'A' as const })),
+    ...b.components.map(component => Object.freeze({ ...component, componentLabel: 'B' as const })),
+    ...c.components.map(component => Object.freeze({ ...component, componentLabel: 'C' as const })),
+  ];
+  const renderComponents = [
+    ...a.render.components.map(component => Object.freeze({ ...component, label: 'A' as const })),
+    ...b.render.components.map(component => Object.freeze({ ...component, label: 'B' as const })),
+    ...c.render.components.map(component => Object.freeze({ ...component, label: 'C' as const })),
+  ];
+  const identified = a.componentCount !== null && b.componentCount !== null && c.componentCount !== null;
+  return Object.freeze({
+    ...a,
+    title: identified ? 'Triple jerárquico de tres sistemas simples · (A + B) + C' : a.title,
+    summary: identified
+      ? 'A y B son sistemas simples completos que forman un binario interior. El sistema simple C orbita con el baricentro A–B en una segunda órbita binaria exterior. Cada planeta conserva su estrella de origen.'
+      : a.summary,
+    multiplicityLabel: identified ? 'Triple' : null,
+    componentCount: identified ? 3 : null,
+    systemFacts: Object.freeze([
+      ...prefixFacts('A', a.systemFacts),
+      ...prefixFacts('B', b.systemFacts),
+      ...prefixFacts('C', c.systemFacts),
+    ]),
+    components: Object.freeze(sourceComponents),
+    orbits: Object.freeze([
+      ...(sourceComponents.length === 3 ? [
+        Object.freeze({
+          label: 'Órbita interior A–B',
+          roleLabel: 'Los sistemas simples A y B orbitan su baricentro común.',
+          facts: Object.freeze([]),
+        }),
+        Object.freeze({
+          label: 'Órbita exterior (A–B)–C',
+          roleLabel: 'El baricentro del binario A–B y el sistema simple C orbitan el baricentro global.',
+          facts: Object.freeze([]),
+        }),
+      ] : []),
+      ...a.orbits.map(orbit => Object.freeze({ ...orbit, label: `A · ${orbit.label}` })),
+      ...b.orbits.map(orbit => Object.freeze({ ...orbit, label: `B · ${orbit.label}` })),
+      ...c.orbits.map(orbit => Object.freeze({ ...orbit, label: `C · ${orbit.label}` })),
+    ]),
+    circumbinaryFacts: Object.freeze([]),
+    habitabilityFacts: Object.freeze([
+      ...prefixFacts('A', a.habitabilityFacts),
+      ...prefixFacts('B', b.habitabilityFacts),
+      ...prefixFacts('C', c.habitabilityFacts),
+    ]),
+    nextScientificStep: identified
+      ? 'Inspeccionar la jerarquía interior A–B y la órbita exterior con C; evaluar perturbaciones mutuas en una etapa posterior.'
+      : a.nextScientificStep,
+    render: Object.freeze({
+      ...a.render,
+      accessibleLabel: 'Triple jerárquico de tres sistemas simples completos A, B y C',
+      multiplicity: identified ? StellarSystemMultiplicity.TRIPLE : null,
+      components: Object.freeze(identified ? renderComponents : a.render.components),
+      innerOrbitEccentricity: identified ? 0.12 : null,
+      outerOrbitEccentricity: identified ? 0.18 : null,
       stableHabitableZoneFraction: null,
       hasStableHabitableZone: false,
     }),
