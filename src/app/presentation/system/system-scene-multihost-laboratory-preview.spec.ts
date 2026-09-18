@@ -1,4 +1,6 @@
 import { presentationPlanetRadiusFromPhysicsV1 } from './system-scene-planet-size-v1';
+import { manifestFromMultihostSceneV245 } from './system-scene-multihost-manifest-v245';
+import { multihostManifestMatchesV245 } from '../../domain/planetary/multihost-model-manifest-v245';
 import {
   type SystemSceneSnapshot,
   type SystemSceneBodySnapshot,
@@ -1048,4 +1050,37 @@ describe('Multihost V2 experimental scene projection boundary', () => {
     expect(Object.isFrozen(p.planets)).toBe(true);
     expect(source.planets).toHaveLength(0);
   });
+
+  it('V2.4.5 assembles every A/B science catalogue into one stable, linked manifest without touching V1', () => {
+    const source = makeSnapshot(false);
+    const catalog = generateMultihostPlanetaryCatalog(BASE_INPUT);
+    const formed = generateMultihostFormedPlanetarySystemV22({
+      systemSeed: catalog.sourceSystemSeed, windows: catalog.windows,
+      hostLuminositiesSolarV241: {A: 1, B: 1},
+    });
+    const context = Object.freeze({
+      binarySemiMajorAxisAu: 12, binaryEccentricity: 0.12,
+      stellarEvolution: Object.freeze({A: 'MAIN_SEQUENCE' as const, B: 'MAIN_SEQUENCE' as const}),
+    });
+    const snapshot = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed, context);
+    const repeat = buildSystemSceneMultihostLaboratoryPreview(source, catalog, 'ALL', formed, context);
+    const manifest = manifestFromMultihostSceneV245(snapshot);
+    expect(multihostManifestMatchesV245(manifest, manifestFromMultihostSceneV245(repeat))).toBe(true);
+    expect(manifest.version).toBe('V2_4_5_MODEL_MANIFEST');
+    expect(manifest.sourceSystemSeed).toBe(catalog.sourceSystemSeed);
+    expect(manifest.identities.length).toBe(
+      snapshot.scientificMultihostPlanetsV241!.planets.length +
+      snapshot.scientificMultihostMoonsV242!.moons.length +
+      snapshot.scientificMultihostMinorBodiesV243!.belts.length +
+      snapshot.scientificMultihostMinorBodiesV243!.bodies.length,
+    );
+    expect(manifest.identities.every(item => /^[0-9A-F]{32}$/.test(item.publicRef))).toBe(true);
+    expect(manifest.identities.filter(item => item.kind === 'MOON').every(item =>
+      manifest.identities.some(parent => parent.kind === 'PLANET' &&
+        parent.publicRef === item.parentPublicRef && parent.hostId === item.hostId))).toBe(true);
+    expect(source.planets).toHaveLength(0);
+    expect(source.scientificMultihostPlanetsV241).toBeUndefined();
+    expect(() => manifestFromMultihostSceneV245(makeSnapshot(true))).toThrow(RangeError);
+  });
+
 });

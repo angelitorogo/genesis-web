@@ -298,6 +298,49 @@ describe(
       expect(host.querySelector('[data-testid="system-scene-focus-host-b"]')).toBeNull();
     });
 
+    it('routes V2 objects to an individual scientific page instead of expanding a panel or using a V1 body index', () => {
+      const fixture = TestBed.createComponent(SystemScene);
+      const base = sceneSnapshot();
+      const id = 'v22-reference-A-b';
+      const world = {
+        ...base,
+        discoveryStateCode: DiscoveryState.CONFIRMED.code,
+        planets: [{...base.planets[0]!, id}],
+        scientificMultihostPlanetsV241: {planets: [{
+          id, designation: 'A · b', hostId: 'A', type: 'GAS_GIANT',
+          physics: {massEarth: 100, radiusEarth: 9, semiMajorAxisAu: 3,
+            periapsisAu: 2.8, apoapsisAu: 3.2, periodDays: 700},
+          formationPath: {regime: 'IN_SITU'},
+          environment: {atmosphere: {regime: 'DEEP_ENVELOPE'},
+            climate: {meanSurfaceTemperatureKelvin: null}, water: {regime: 'DEEP_ENVELOPE'}},
+        }]},
+        scientificMultihostMoonsV242: {moons: []},
+        scientificMultihostMinorBodiesV243: {bodies: []},
+        scientificMultihostHabitabilityV244: {planets: []},
+      } as unknown as SystemSceneSnapshot;
+      fixture.componentRef.setInput('snapshot', world);
+      fixture.detectChanges();
+      (capturedSelectionHandler as SystemSceneSelectionChangeHandler)({
+        bodyId: id, kind: 'planet', label: 'A · b', title: 'A · b',
+      });
+      fixture.detectChanges();
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelector('[data-testid="system-scene-planet-fiche-link"]')).toBeNull();
+      const link = host.querySelector<HTMLAnchorElement>(
+        '[data-testid="system-scene-v2-scientific-fiche-link"]',
+      );
+      expect(link).not.toBeNull();
+      expect(link?.textContent).toContain('ABRIR FICHA CIENTÍFICA');
+      expect(link?.getAttribute('href')).toMatch(/\/v2\/planet\/[A-F0-9]{32}\?u=[A-F0-9]{32}/);
+      expect(host.querySelector('[data-testid="system-scene-v2-scientific-fiche"]')).toBeNull();
+      host.querySelector<HTMLButtonElement>('[data-testid="system-scene-body-card-close"]')?.click();
+      fixture.detectChanges();
+      expect(host.querySelector('[data-testid="system-scene-v2-scientific-fiche-link"]')).toBeNull();
+      fixture.componentRef.setInput('snapshot', {...world, multiplicityName: 'SINGLE'});
+      fixture.detectChanges();
+      expect(host.querySelector('[data-testid="system-scene-v2-scientific-fiche-link"]')).toBeNull();
+    });
+
     it(
       'should initialize the injected Three.js runtime, render the exact snapshot and expose READY state',
       () => {

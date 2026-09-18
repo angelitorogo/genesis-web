@@ -347,3 +347,27 @@
     box-shadow: 0 0 .45rem rgba(106, 215, 255, .62);
   }
 }
+
+/* V2 reference sheets are displayed from their own catalogue, never routed to
+   V1 BodyLocator/MoonLocator. Scroll within the sheet without stealing zoom. */
+.system-scene__v2-fiche {
+  max-height: min(35vh, 19rem);
+  overflow-y: auto;
+  margin-top: .6rem;
+  padding: .6rem;
+  border: 1px solid rgba(106, 215, 255, .28);
+  border-radius: .4rem;
+  background: rgba(8, 18, 30, .94);
+  font-size: .72rem;
+
+  h3 { margin: 0 0 .55rem; color: var(--genesis-color-primary); font-size: .8rem; }
+  dl { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .45rem; margin: 0 0 .55rem; }
+  dl div { min-width: 0; }
+  dt { opacity: .7; }
+  dd { overflow-wrap: anywhere; margin: .15rem 0 0; }
+  small { display: block; opacity: .75; }
+}
+
+@media (max-width: 48rem) {
+  .system-scene__v2-fiche dl { grid-template-columns: 1fr; }
+}

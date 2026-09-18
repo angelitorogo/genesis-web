@@ -1,6 +1,7 @@
 import {
   systemSceneBodyFocusDistance,
   systemSceneCameraLimits,
+  systemSceneBinaryCloseUpMinDistance,
   systemScenePointerTravelPixels,
 } from './system-scene-camera-controller';
 
@@ -91,6 +92,14 @@ describe(
         );
       },
     );
+
+    it('should allow V2 binary close-up independent of the full A/B frame', () => {
+      expect(systemSceneBinaryCloseUpMinDistance(2.2, 0.08)).toBeCloseTo(0.10, 12);
+      expect(systemSceneBinaryCloseUpMinDistance(0.28, 0.08)).toBeCloseTo(0.10, 12);
+      expect(systemSceneBinaryCloseUpMinDistance(2.2, 0.01)).toBeCloseTo(0.045, 12);
+      expect(systemSceneBinaryCloseUpMinDistance(0.06, 0.08)).toBeCloseTo(0.06, 12);
+      expect(() => systemSceneBinaryCloseUpMinDistance(2.2, Number.NaN)).toThrow(RangeError);
+    });
 
     it(
       'should classify pointer travel independently from render frame rate',

@@ -578,6 +578,100 @@ export class ScientificBodyPreviewAssembler {
     });
   }
 
+  /** Routed V2 fiches use the SAME appearance projector and interactive
+   * ScientificBodyPreview as V1; V2 identities never masquerade as V1 locators.
+   * The renderer budget may omit a body: return null instead of inventing it. */
+  static referenceV2(
+    scene: SystemSceneSnapshot,
+    sourceId: string,
+  ): ScientificBodyPreviewModel | null {
+    if (scene.multiplicityName !== 'BINARY' ||
+        scene.scientificMultihostPlanetsV241 === undefined ||
+        scene.scientificMultihostMoonsV242 === undefined ||
+        scene.scientificMultihostMinorBodiesV243 === undefined) return null;
+    const planet = scene.scientificMultihostPlanetsV241.planets.find(item => item.id === sourceId);
+    if (planet !== undefined) {
+      const body = scene.planets.find(item => item.id === sourceId);
+      if (body === undefined) return null;
+      const byId = new Map(scene.scientificMultihostMoonsV242.moons.map(item => [item.id, item]));
+      const moons = scene.moons.filter(item => item.hostPlanetId === sourceId && byId.has(item.id) &&
+        scene.orbits.some(orbit => orbit.id === item.orbitId &&
+          scene.motions.some(motion => motion.id === orbit.motionId)))
+        .map(item => moonVisual(scene, item, byId.get(item.id)!.semiMajorAxisPlanetRadii));
+      return Object.freeze({
+        kind: ScientificBodyPreviewKind.PLANET,
+        accessibleLabel: `${planet.designation}. Vista científica V2 con renderizador V1 y ${moons.length} lunas visibles.`,
+        primary: planetVisual(scene, body, planet.physics.radiusEarth),
+        moons: Object.freeze(moons),
+        epochSimulationDay: scene.simulation.epochSimulationDay,
+        spinPlaybackDaysPerRealSecond: scene.simulation.playbackDaysPerRealSecond,
+      });
+    }
+    const moon = scene.scientificMultihostMoonsV242.moons.find(item => item.id === sourceId);
+    if (moon !== undefined) {
+      const body = scene.moons.find(item => item.id === sourceId);
+      if (body === undefined) return null;
+      const hostScience = scene.scientificMultihostPlanetsV241.planets.find(item => item.id === moon.hostPlanetId);
+      const hostBody = scene.planets.find(item => item.id === moon.hostPlanetId);
+      if (hostScience === undefined || hostBody === undefined) return null;
+      const otherMoons = scene.moons.filter(item => item.hostPlanetId === moon.hostPlanetId &&
+        scene.scientificMultihostMoonsV242!.moons.some(science => science.id === item.id) &&
+        scene.orbits.some(orbit => orbit.id === item.orbitId &&
+          scene.motions.some(motion => motion.id === orbit.motionId)))
+        .map(item => {
+          const science = scene.scientificMultihostMoonsV242!.moons.find(candidate => candidate.id === item.id)!;
+          return moonVisual(scene, item, science.semiMajorAxisPlanetRadii);
+        });
+      return Object.freeze({
+        kind: ScientificBodyPreviewKind.MOON,
+        accessibleLabel: `${moon.designation}. Vista científica V2 con renderizador V1 y planeta anfitrión.`,
+        primary: moonVisual(scene, body, moon.semiMajorAxisPlanetRadii),
+        hostPlanet: planetVisual(scene, hostBody, hostScience.physics.radiusEarth),
+        moons: Object.freeze(otherMoons),
+        epochSimulationDay: scene.simulation.epochSimulationDay,
+        spinPlaybackDaysPerRealSecond: scene.simulation.playbackDaysPerRealSecond,
+      });
+    }
+    const science = scene.scientificMultihostMinorBodiesV243.bodies.find(item => item.id === sourceId);
+    const source = scene.minorBodies.find(item => item.id === sourceId);
+    if (science === undefined || source === undefined) return null;
+    if (science.kind === 'ASTEROID' && source.asteroidPresentation !== null) {
+      return Object.freeze({
+        kind: ScientificBodyPreviewKind.ASTEROID,
+        accessibleLabel: `${science.designation}. Asteroide V2 representado mediante V1.`,
+        title: science.designation,
+        primary: safeAsteroidVisual(source.asteroidPresentation),
+      });
+    }
+    if (science.kind === 'COMET' && source.cometPresentation !== null) {
+      const presentation = source.cometPresentation;
+      const activity = systemSceneCometActivityAtDistanceV1(
+        presentation, presentation.periapsisAu, SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE,
+      );
+      return Object.freeze({
+        kind: ScientificBodyPreviewKind.COMET,
+        accessibleLabel: `${science.designation}. Cometa V2 representado mediante V1.`,
+        title: science.designation,
+        primary: safeCometVisual(presentation),
+        activity: Object.freeze({
+          activityRegime: activity.activityRegime,
+          hasComa: activity.hasComa, hasDustTail: activity.hasDustTail,
+          hasIonTail: activity.hasIonTail,
+          presentationComaRadiusScale: activity.presentationComaRadiusScale,
+          presentationComaOpacity01: activity.presentationComaOpacity01,
+          presentationDustTailOpacity01: activity.presentationDustTailOpacity01,
+          presentationIonTailOpacity01: activity.presentationIonTailOpacity01,
+          presentationComaRadiusScene: activity.presentationComaRadiusScene,
+          presentationDustTailLengthScene: activity.presentationDustTailLengthScene,
+          presentationDustTailWidthScene: activity.presentationDustTailWidthScene,
+          presentationIonTailLengthScene: activity.presentationIonTailLengthScene,
+          presentationIonTailWidthScene: activity.presentationIonTailWidthScene,
+        }),
+      });
+    }
+    return null;
+  }
+
   static moon(
     target:
       MoonScientificResolvedTarget,
@@ -1161,9 +1255,10 @@ function moonOrdinalFromSnapshot(
 ): number {
 
   const match =
-    /moon-(\d+)-(\d+)$/.exec(
-      moon.id,
-    );
+    /moon-(\d+)-(\d+)$/.exec(moon.id);
+  const v2Match = moon.scientificV242 === true
+    ? /-v242-m(\d+)$/.exec(moon.id) : null;
+  if (v2Match !== null) return Number(v2Match[1]);
 
   if (
     match ===

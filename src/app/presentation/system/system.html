@@ -165,6 +165,117 @@
                 </footer>
               </section>
 
+              @if (v245Available()) {
+                <section class="system-page__panel system-page__v245" data-testid="system-page-v245-model"
+                  aria-labelledby="system-page-v245-title" [attr.aria-busy]="!v245Ready() || v245Busy()">
+                  <header class="system-page__section-header">
+                    <div>
+                      <small>V2.4.5 · SELECCIÓN PERSISTENTE POR SISTEMA</small>
+                      <h2 id="system-page-v245-title">Modelo circumestelar A/B</h2>
+                    </div>
+                    <button class="system-page__science-action" type="button" data-testid="system-page-v245-toggle"
+                      [attr.aria-pressed]="v245Enabled()"
+                      [disabled]="!v245Ready() || v245Busy()" (click)="toggleV245()">
+                      {{ !v245Ready() ? 'Comprobando partida…' : v245Busy() ? 'Guardando…' :
+                        v245Enabled() ? 'Volver a V1 y retirar selección' : 'Habilitar / actualizar modelo V2' }}
+                    </button>
+                  </header>
+                  <p>Modelo experimental de referencia para un sistema binario CONFIRMADO. Guarda únicamente una selección
+                    con huella e identidades V2 en esta partida: no cambia GeneratorVersion V1, Ground Truth,
+                    DiscoveryState, puntos ni observaciones científicas. Las fichas V2 son independientes de
+                    BodyLocator/MoonLocator V1 y utilizan identificadores públicos opacos.</p>
+                  @if (v245Error(); as error) {
+                    <p data-testid="system-page-v245-error" role="alert">{{ error }}</p>
+                  }
+                  @if (v245Manifest(); as manifest) {
+                    <p data-testid="system-page-v245-status" role="status">
+                      Modelo de referencia recuperable · {{ manifest.identities.length }} identidades V2 ·
+                      {{ manifest.habitableHostCount }} anfitriones HZ · sin confirmación de habitabilidad.
+                    </p>
+                    @if (sceneSnapshot(); as binary) {
+                      <div class="system-page__v245-hosts">
+                        @for (host of binary.scientificMultihostHabitabilityV244?.hosts ?? []; track host.hostId) {
+                          <section class="system-page__v245-host" [attr.data-host]="host.hostId">
+                            <h3>Estrella {{ host.hostId }}</h3>
+                            <p>HZ radiativa {{ host.radiativeInnerEdgeAu.toPrecision(3) }}–{{ host.radiativeOuterEdgeAu.toPrecision(3) }} UA.
+                              Intervalo estable: {{ host.dynamicallyHabitableInnerEdgeAu === null ? 'no disponible' : host.dynamicallyHabitableInnerEdgeAu.toPrecision(3) + '–' + host.dynamicallyHabitableOuterEdgeAu?.toPrecision(3) + ' UA' }}.
+                            </p>
+                            <p>Planetas: {{ v245CountForHost(binary.scientificMultihostPlanetsV241?.planets ?? [], host.hostId) }} ·
+                              Lunas modeladas: {{ v245CountForHost(binary.scientificMultihostMoonsV242?.moons ?? [], host.hostId) }} ·
+                              Cuerpos menores: {{ v245CountForHost(binary.scientificMultihostMinorBodiesV243?.bodies ?? [], host.hostId) }}.
+                            </p>
+                          </section>
+                        }
+                      </div>
+                      <details data-testid="system-page-v245-planets" open>
+                        <summary>Fichas planetarias V2 · masas, órbitas y entorno estimado</summary>
+                        <div class="system-page__v245-entries">
+                          @for (planet of binary.scientificMultihostPlanetsV241?.planets ?? []; track planet.id) {
+                            @if (v245Identity(planet.id); as identity) {
+                              <article class="system-page__v245-body" [id]="'v245-' + identity.publicRef"
+                                [attr.data-host]="planet.hostId" data-testid="system-page-v245-planet">
+                                <strong>{{ planet.designation }} · {{ planet.type }} · A/B {{ planet.hostId }}</strong>
+                                <small>Ref. {{ identity.publicRef }}</small>
+                                <span>Masa {{ planet.physics.massEarth.toPrecision(4) }} M⊕ · radio {{ planet.physics.radiusEarth.toPrecision(3) }} R⊕ ·
+                                  órbita {{ planet.physics.semiMajorAxisAu.toPrecision(4) }} UA · periodo {{ planet.physics.periodDays.toPrecision(5) }} d.</span>
+                                <span>Entorno {{ planet.environment.water.regime }} · escenario {{ planet.formationPath.regime }}.
+                                  Agua/clima estimados, no observados.</span>
+                              </article>
+                            }
+                          }
+                        </div>
+                      </details>
+                      <details data-testid="system-page-v245-moons">
+                        <summary>Fichas de lunas V2 · identificadores y planeta anfitrión</summary>
+                        <div class="system-page__v245-entries">
+                          @for (moon of binary.scientificMultihostMoonsV242?.moons ?? []; track moon.id) {
+                            @if (v245Identity(moon.id); as identity) {
+                              <article class="system-page__v245-body" [id]="'v245-' + identity.publicRef"
+                                [attr.data-host]="moon.hostId" data-testid="system-page-v245-moon">
+                                <strong>{{ moon.designation }} · estrella {{ moon.hostId }}</strong>
+                                <small>Ref. {{ identity.publicRef }}</small>
+                                <span>Masa {{ moon.massEarth.toPrecision(4) }} M⊕ · periodo {{ moon.periodDays.toPrecision(4) }} d.
+                                  @if (identity.parentPublicRef; as parentRef) {
+                                    <a [href]="'#v245-' + parentRef">Ver planeta anfitrión</a>
+                                  }
+                                </span>
+                                <span>Agua: {{ moon.environment.waterRegime }} · modelo de referencia V2.</span>
+                              </article>
+                            }
+                          }
+                        </div>
+                      </details>
+                      <details data-testid="system-page-v245-minors">
+                        <summary>Fichas de asteroides, cometas y cinturones V2</summary>
+                        <div class="system-page__v245-entries">
+                          @for (belt of binary.scientificMultihostMinorBodiesV243?.belts ?? []; track belt.id) {
+                            @if (v245Identity(belt.id); as identity) {
+                              <article class="system-page__v245-body" [id]="'v245-' + identity.publicRef"
+                                data-testid="system-page-v245-belt">
+                                <strong>Cinturón {{ belt.region }} · {{ belt.hostId }}</strong>
+                                <small>Ref. {{ identity.publicRef }}</small>
+                                <span>{{ belt.innerEdgeAu.toPrecision(4) }}–{{ belt.outerEdgeAu.toPrecision(4) }} UA · población estimada {{ belt.estimatedPopulation }}.</span>
+                              </article>
+                            }
+                          }
+                          @for (body of binary.scientificMultihostMinorBodiesV243?.bodies ?? []; track body.id) {
+                            @if (v245Identity(body.id); as identity) {
+                              <article class="system-page__v245-body" [id]="'v245-' + identity.publicRef"
+                                [attr.data-host]="body.hostId" data-testid="system-page-v245-minor">
+                                <strong>{{ body.designation }} · {{ body.kind }} · {{ body.hostId }}</strong>
+                                <small>Ref. {{ identity.publicRef }}</small>
+                                <span>Diámetro {{ body.diameterKilometers.toPrecision(4) }} km · e {{ body.eccentricity.toPrecision(4) }} ·
+                                  q {{ body.periapsisAu.toPrecision(4) }} / Q {{ body.apoapsisAu.toPrecision(4) }} UA.</span>
+                              </article>
+                            }
+                          }
+                        </div>
+                      </details>
+                    }
+                  }
+                </section>
+              }
+
               <section
                 class="system-page__science"
                 aria-label="Ficha científica del sistema"

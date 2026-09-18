@@ -65,6 +65,9 @@ import {
   SystemSceneCameraController,
 } from './system-scene-camera-controller';
 
+import { systemSceneV2ReferenceFiche } from './system-scene-v2-reference-fiche';
+import { systemSceneV2FicheRoute } from './system-scene-v2-fiche-route';
+
 import {
   buildSystemSceneBodyCard,
   type SystemSceneBodyCard,
@@ -515,6 +518,8 @@ export class SystemScene
       false,
     );
 
+  private readonly v2ScientificFicheOpenSignal = signal(false);
+
   private readonly planetsVisibleSignal =
     signal(
       true,
@@ -599,6 +604,23 @@ export class SystemScene
     this
       .bodyCardOpenSignal
       .asReadonly();
+
+  readonly v2ScientificFicheOpen = this.v2ScientificFicheOpenSignal.asReadonly();
+
+  selectedV2ScientificFicheRoute(): readonly string[] | null {
+    const selected = this.selectionSignal();
+    return selected === null ? null : systemSceneV2FicheRoute(this.snapshot, selected.bodyId);
+  }
+
+  selectedV2ScientificFiche() {
+    const selected = this.selectionSignal();
+    return selected === null ? null : systemSceneV2ReferenceFiche(this.snapshot, selected.bodyId);
+  }
+
+  toggleV2ScientificFiche(): void {
+    if (this.selectedV2ScientificFiche() === null) return;
+    this.v2ScientificFicheOpenSignal.update(open => !open);
+  }
 
   readonly renderState =
     this
@@ -1116,6 +1138,7 @@ export class SystemScene
     this.bodyCardOpenSignal.set(
       false,
     );
+    this.v2ScientificFicheOpenSignal.set(false);
   }
 
   isSelectedBodyTracked():
@@ -1192,6 +1215,7 @@ export class SystemScene
                 .set(
                   selection,
                 );
+              this.v2ScientificFicheOpenSignal.set(false);
 
               this
                 .bodyCardOpenSignal
@@ -1208,7 +1232,7 @@ export class SystemScene
             },
           );
 
-      this.runtime.setBinarySeparationChangeHandler?.(value => {
+      this.runtime?.setBinarySeparationChangeHandler?.(value => {
         const label = formatSystemSceneBinarySeparationAu(value);
         if (label !== this.binarySeparationLabelSignal()) {
           this.binarySeparationLabelSignal.set(label);
@@ -1245,6 +1269,8 @@ export class SystemScene
       SimpleChanges,
   ):
     void {
+
+    if (changes['snapshot'] !== undefined) this.v2ScientificFicheOpenSignal.set(false);
 
     if (
       changes[
@@ -1294,6 +1320,7 @@ export class SystemScene
       bodyId: star.id, kind: 'star' as const, label: star.label, title: star.title,
     }));
     this.bodyCardOpenSignal.set(false);
+    this.v2ScientificFicheOpenSignal.set(false);
   }
 
   resetView():
@@ -3112,6 +3139,7 @@ class ThreeSystemSceneRuntime
             body.localSystemFocusRadiusScene * (2.25 / 8.5),
           )
         : systemSceneVisualExtentRadiusScene(body),
+      this.currentSnapshot?.multiplicityName === 'BINARY' && body.kind !== 'star',
     );
 
     this.updateAnimationLoop();

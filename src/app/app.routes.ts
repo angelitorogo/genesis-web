@@ -33,6 +33,13 @@ export const genesisRoutes: Routes = [
     title: 'Mapa galáctico | GENESIS',
   },
   {
+    path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/v2/:kind/:publicRef',
+    loadComponent: () =>
+      import('./presentation/v2-scientific-detail/v2-scientific-detail')
+        .then(module => module.V2ScientificDetailPage),
+    title: 'Ficha científica del modelo circumestelar V2 | GENESIS',
+  },
+  {
     path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/minor-body/:minorBodyKind/:proceduralId',
     loadComponent: () =>
       import(

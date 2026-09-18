@@ -36,6 +36,8 @@ import {
   type SystemSceneRuntime,
 } from './system-scene';
 
+import { MULTIHOST_MODEL_REPOSITORY_V245 } from '../runtime/multihost-model-v245.runtime';
+
 import {
   SystemPage,
 } from './system';
@@ -157,6 +159,15 @@ describe(
               },
 
               {
+                provide: MULTIHOST_MODEL_REPOSITORY_V245,
+                useValue: {
+                  load: vi.fn().mockResolvedValue(null),
+                  save: vi.fn().mockResolvedValue(undefined),
+                  clear: vi.fn().mockResolvedValue(undefined),
+                },
+              },
+
+              {
                 provide:
                   SYSTEM_SCENE_RUNTIME_FACTORY,
 
@@ -272,6 +283,9 @@ describe(
         ).toContain(
           'CONOCIMIENTO CIENTÍFICO CONSISTENTE',
         );
+
+        // V2.4.5 never discloses an optional binary model below CONFIRMED.
+        expect(element.querySelector('[data-testid="system-page-v245-model"]')).toBeNull();
       },
     );
 
@@ -374,6 +388,11 @@ describe(
             '[data-testid="system-page-habitability-locked"]',
           ),
         ).toBeNull();
+
+        // The actual system page offers a persisted reference model only by
+        // explicit opt-in; the canonical V1 snapshot remains the default.
+        expect(element.querySelector('[data-testid="system-page-v245-model"]')).toBeTruthy();
+        expect(fixture.componentInstance.v245Enabled()).toBe(false);
       },
     );
 

@@ -921,7 +921,8 @@ export interface SystemSceneSnapshot {
 }
 
 export interface SystemSceneSnapshotSource {
-  /** Laboratory-only test-particle preview: cannot persist candidates. */
+  /** Opt-in experimental reference only. Production access requires CONFIRMED
+   * and a persisted V2.4.5 selection; the canonical V1 save is unchanged. */
   readonly experimentalMultihostPreview?: boolean;
   readonly experimentalMultihostFamily?: 'ALL' | 'S_TYPE' | 'P_TYPE';
 
@@ -1065,6 +1066,7 @@ export class SystemSceneSnapshotBuilder {
   static build(
     model:
       ArchiveDiscoveryDetailModel,
+    options: Readonly<{experimentalMultihostPreview?: boolean}> = {},
   ): SystemSceneSnapshot {
 
     if (
@@ -1098,6 +1100,10 @@ export class SystemSceneSnapshotBuilder {
           model.discoveryStateLabel,
         stellarSystemCard:
           model.stellarSystemCard,
+        ...(options.experimentalMultihostPreview === true &&
+          model.discoveryState.code >= DiscoveryState.CONFIRMED.code &&
+          model.stellarSystemCard.componentCount === 2
+          ? {experimentalMultihostPreview: true as const, experimentalMultihostFamily: 'ALL' as const} : {}),
       }),
     );
   }

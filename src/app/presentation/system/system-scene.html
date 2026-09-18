@@ -516,6 +516,17 @@
                 </a>
               }
             }
+
+            @if (selectedV2ScientificFicheRoute(); as v2FicheRoute) {
+              <a
+                class="system-scene__follow-button"
+                data-testid="system-scene-v2-scientific-fiche-link"
+                [routerLink]="v2FicheRoute"
+                [queryParams]="planetScientificFicheQueryParams()"
+              >
+                ABRIR FICHA CIENTÍFICA
+              </a>
+            }
           </div>
 
           <small class="system-scene__body-card-contract">

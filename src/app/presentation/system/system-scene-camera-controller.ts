@@ -59,6 +59,8 @@ export class SystemSceneCameraController {
   private systemMaxTargetRadius =
     2;
 
+  private systemMinDistance = 0.28;
+
   private bodyTrackingActive =
     false;
 
@@ -332,6 +334,7 @@ export class SystemSceneCameraController {
         outerRadiusScene,
       );
 
+    this.systemMinDistance = limits.minDistance;
     this.controls.minDistance =
       limits.minDistance;
     this.controls.maxDistance =
@@ -378,7 +381,15 @@ export class SystemSceneCameraController {
 
     bodyRadiusScene:
       number,
+
+    closeUp = false,
   ): void {
+
+    // The wide binary camera is framed by both stellar excursions. Its global
+    // zoom floor must not prevent inspection of a host-local planet/moon.
+    this.controls.minDistance = closeUp
+      ? systemSceneBinaryCloseUpMinDistance(this.systemMinDistance, bodyRadiusScene)
+      : this.systemMinDistance;
 
     this.bodyTrackingActive =
       true;
@@ -617,6 +628,7 @@ export class SystemSceneCameraController {
       null;
     this.controls.maxTargetRadius =
       this.systemMaxTargetRadius;
+    this.controls.minDistance = this.systemMinDistance;
     this.controls.cursor.copy(
       this.controls.target,
     );
@@ -816,4 +828,15 @@ export function systemScenePointerTravelPixels(
     endY -
       startY,
   );
+}
+
+/** Camera-only binary inspection floor: independently of the size of the A/B
+ * hierarchy, a selected planet/moon must be zoomable down to its own envelope.
+ * SINGLE and full-system camera limits keep their original behavior. */
+export function systemSceneBinaryCloseUpMinDistance(globalMin: number, bodyRadiusScene: number): number {
+  if (!Number.isFinite(globalMin) || globalMin <= 0 ||
+      !Number.isFinite(bodyRadiusScene) || bodyRadiusScene <= 0) {
+    throw new RangeError('Binary close-up requires positive, finite camera and body radii.');
+  }
+  return Math.min(globalMin, Math.max(0.045, bodyRadiusScene * 1.25));
 }

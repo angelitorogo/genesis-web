@@ -1,0 +1,96 @@
+<genesis-screen>
+  <main class="planet-detail" data-testid="v2-scientific-detail-page"
+    aria-labelledby="v2-fiche-title" [attr.aria-busy]="status() === 'loading'">
+    <header class="planet-detail__header">
+      <div>
+        <p class="planet-detail__eyebrow">FICHA CIENTÍFICA · MODELO CIRCUMESTELAR V2</p>
+        <h1 id="v2-fiche-title">{{ fiche()?.title ?? 'Ficha científica V2' }}</h1>
+        <p class="planet-detail__subtitle">Ficha individual, navegación y vista 3D como en V1.
+          Los datos del modelo V2 son estimaciones, no observaciones confirmadas.
+        </p>
+      </div>
+      @if (systemRoute(); as route) {
+        <a class="planet-detail__nav-link" data-testid="v2-fiche-back-to-system"
+          [routerLink]="route" [queryParams]="sourceQueryParams()">← Volver a SystemPage 3D</a>
+      }
+    </header>
+    @if (status() === 'loading') {
+      <section class="planet-detail__panel planet-detail__state" role="status">
+        Resolviendo el modelo persistido y la identidad científica V2…
+      </section>
+    } @else if (status() !== 'available') {
+      <section class="planet-detail__panel planet-detail__state" role="alert"
+        data-testid="v2-fiche-unavailable">
+        <div><strong>Ficha científica V2 no disponible</strong><p>{{ message() }}</p></div>
+      </section>
+    } @else if (fiche(); as body) {
+      <section class="planet-detail__hero" data-testid="v2-scientific-card">
+        <div class="planet-detail__identity">
+          <div class="planet-detail__knowledge-line">
+            <span class="planet-detail__state-badge">SISTEMA CONFIRMADO · MODELO V2 ESTIMADO</span>
+            <span>ANFITRIÓN {{ body.hostId }}</span>
+          </div>
+          <strong>{{ body.title }}</strong>
+          <p>{{ body.provenance }}</p>
+          <code>Referencia pública V2 · {{ identity()?.publicRef }}</code>
+        </div>
+        <dl class="planet-detail__facts">
+          <div><dt>Tipo de cuerpo</dt><dd>{{ body.kind }}</dd></div>
+          <div><dt>Estrella anfitriona</dt><dd>{{ body.hostId }}</dd></div>
+          <div><dt>Acceso</dt><dd>Modelo V2 seleccionado y validado</dd></div>
+          <div><dt>Procedencia</dt><dd>Estimación científica; no Ground Truth V1</dd></div>
+        </dl>
+      </section>
+      @if (preview(); as visual) {
+        <app-scientific-body-preview class="planet-detail__preview"
+          data-testid="v2-scientific-preview" [model]="visual"></app-scientific-body-preview>
+      } @else {
+        <section class="planet-detail__panel" role="status" data-testid="v2-fiche-no-visual">
+          Este cuerpo existe en el catálogo V2 pero no está materializado en el presupuesto visual de la escena.
+          No se genera un sustituto ficticio para la ficha.
+        </section>
+      }
+      <nav class="planet-detail__section-nav" aria-label="Secciones científicas V2"
+        data-testid="v2-fiche-section-nav">
+        @for (section of sections(); track section.id) {
+          <a [attr.href]="'#v2-section-' + section.id">{{ section.title }}</a>
+        }
+      </nav>
+      <section class="planet-detail__sections" data-testid="v2-fiche-scientific-sections">
+        @for (section of sections(); track section.id) {
+          <article class="planet-detail__scientific-section" [id]="'v2-section-' + section.id"
+            [attr.aria-labelledby]="'v2-section-title-' + section.id">
+            <header><small>V2 · {{ body.hostId }}</small>
+              <h2 [id]="'v2-section-title-' + section.id">{{ section.title }}</h2>
+              <p>{{ section.summary }}</p>
+            </header>
+            <dl class="planet-detail__section-facts">
+              @for (item of section.facts; track item.label) {
+                <div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>
+              }
+            </dl>
+            @if (section.id === 'moons' && relatedMoons().length > 0) {
+              <div class="planet-detail__moon-grid">
+                @for (moon of relatedMoons(); track moon.publicRef) {
+                  <article class="planet-detail__moon-card">
+                    <h3>Luna científica · {{ moon.hostId }}</h3>
+                    <a class="planet-detail__moon-link" data-testid="v2-fiche-moon-link"
+                      [routerLink]="ficheRoute(moon)" [queryParams]="sourceQueryParams()">
+                      Abrir ficha científica →
+                    </a>
+                  </article>
+                }
+              </div>
+            }
+          </article>
+        }
+      </section>
+      @if (hostPlanet(); as parent) {
+        <nav class="planet-detail__actions">
+          <a data-testid="v2-fiche-parent-link" [routerLink]="ficheRoute(parent)"
+            [queryParams]="sourceQueryParams()">← Ficha del planeta anfitrión</a>
+        </nav>
+      }
+    }
+  </main>
+</genesis-screen>
