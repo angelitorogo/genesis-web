@@ -11,9 +11,7 @@ import {
   type GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
-import {
-  GeneratorVersion,
-} from '../../domain/generation/generator-version';
+import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
 
 import {
   type UniverseGenerationKey,
@@ -61,15 +59,8 @@ export class GalacticObjectScientificSubjectResolver {
       DiscoveryStateValue,
   ): GalacticObjectScientificSubject | null {
 
-    if (
-      generationKey
-        .generatorVersion !==
-      GeneratorVersion.V1
-    ) {
-      throw new RangeError(
-        `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
-      );
-    }
+    // Frozen galactic subtype physics is shared with V2; never persist this key.
+    const physicalKey = frozenPhysicalSourceKey(generationKey);
 
     const canonicalState =
       DiscoveryState
@@ -89,7 +80,7 @@ export class GalacticObjectScientificSubjectResolver {
     if (
       HiiRegionGenerator
         .isHiiRegionLocator(
-          generationKey,
+          physicalKey,
           locator,
         )
     ) {
@@ -100,7 +91,7 @@ export class GalacticObjectScientificSubjectResolver {
     if (
       NebulaGenerator
         .isNebulaLocator(
-          generationKey,
+          physicalKey,
           locator,
         )
     ) {
@@ -111,7 +102,7 @@ export class GalacticObjectScientificSubjectResolver {
     if (
       OpenClusterGenerator
         .isOpenClusterLocator(
-          generationKey,
+          physicalKey,
           locator,
         )
     ) {
@@ -122,7 +113,7 @@ export class GalacticObjectScientificSubjectResolver {
     if (
       GlobularClusterGenerator
         .isGlobularClusterLocator(
-          generationKey,
+          physicalKey,
           locator,
         )
     ) {
@@ -133,7 +124,7 @@ export class GalacticObjectScientificSubjectResolver {
     if (
       SupernovaRemnantGenerator
         .isSupernovaRemnantLocator(
-          generationKey,
+          physicalKey,
           locator,
         )
     ) {

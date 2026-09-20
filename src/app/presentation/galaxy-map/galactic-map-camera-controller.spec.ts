@@ -186,6 +186,26 @@ describe(
     );
 
 
+    it('restores a saved viewpoint and keeps the original reset-to-default action', () => {
+      const controller = new GalacticMapCameraController(camera(), canvas(), () => {});
+      controller.restoreView({
+        distance: 0.8, azimuthRadians: 0.65, polarRadians: 1.2,
+        targetX: 0.2, targetY: -0.1, targetZ: 0.15, rotationEnabled: false,
+      });
+      const restored = controller.cameraState();
+      expect(restored.distance).toBeCloseTo(0.8);
+      expect(restored.azimuthRadians).toBeCloseTo(0.65);
+      expect(restored.polarRadians).toBeCloseTo(1.2);
+      expect(restored.targetX).toBeCloseTo(0.2);
+      expect(restored.targetY).toBeCloseTo(-0.1);
+      expect(restored.targetZ).toBeCloseTo(0.15);
+      expect(restored.rotationEnabled).toBe(false);
+      controller.resetView();
+      expect(controller.cameraState().distance).toBeGreaterThan(3);
+      expect(controller.cameraState().targetX).toBe(0);
+      controller.dispose();
+    });
+
     it(
       'should enable and disable camera rotation without disabling zoom or pan',
       () => {

@@ -115,6 +115,15 @@ describe(
       },
     );
 
+    it('uses the same read-only structural progress formula for a V2 bootstrap galaxy', () => {
+      const v2 = new UniverseGenerationKey(canonicalSeed.copy(), GeneratorVersion.V2);
+      const overview = ExplorationProgressOverviewEngine.buildProgressOverview(v2, 0n, 0n, [
+        known(new GalaxyLocator(0n), DiscoveryState.DISCOVERED, v2),
+      ]);
+      expect(overview.globalDiscoveryPoints).toBe(0n);
+      expect(overview.galaxyProgress.galaxyProgressUnits).toBe(2n);
+    });
+
     it(
       'should preserve global Discovery Points independently from local galaxy progress',
       () => {

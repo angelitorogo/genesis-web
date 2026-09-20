@@ -96,6 +96,8 @@ export const MinorBodyScientificTargetKind =
       'comet',
     TRANS_NEPTUNIAN_OBJECT:
       'tno',
+    CAPTURED_EXTRASOLAR_OBJECT:
+      'captured',
   } as const);
 
 export type MinorBodyScientificTargetKind =
@@ -333,6 +335,12 @@ export class MinorBodyScientificTargetResolver {
 
     proceduralId:
       string,
+
+    physicalHost?: Readonly<{
+      hostSystemDesignation: string;
+      planetarySystem: ReturnType<typeof PlanetarySystemGenerator.generate>;
+      asteroidSystem: ReturnType<typeof AsteroidBeltGenerator.generate>;
+    }>,
   ): MinorBodyScientificResolvedTarget | null {
 
     if (
@@ -344,11 +352,14 @@ export class MinorBodyScientificTargetResolver {
       return null;
     }
 
-    const context =
-      resolveMaturePlanetarySystem(
-        generationKey,
-        systemLocator,
-      );
+    if (kind === MinorBodyScientificTargetKind.CAPTURED_EXTRASOLAR_OBJECT) return null;
+    if (physicalHost !== undefined &&
+        !generationKey.equals(physicalHost.planetarySystem.generationKey)) {
+      throw new Error('Minor-body scientific source must match its physical host.');
+    }
+    const context = physicalHost ?? resolveMaturePlanetarySystem(
+      generationKey, systemLocator,
+    );
 
     if (
       context ===
@@ -357,12 +368,8 @@ export class MinorBodyScientificTargetResolver {
       return null;
     }
 
-    const asteroidSystem =
-      AsteroidBeltGenerator
-        .generate(
-          generationKey,
-          context.planetarySystem,
-        );
+    const asteroidSystem = physicalHost?.asteroidSystem ??
+      AsteroidBeltGenerator.generate(generationKey, context.planetarySystem);
 
     const cometSystem =
       CometGenerator

@@ -1,3 +1,5 @@
+import { v2CometPresentationDay } from './system-scene-v2-minor-cadence';
+
 import {
   SystemOrbitalMotionEngine,
   type SystemOrbitalMotionDefinition,
@@ -25,6 +27,10 @@ export interface SystemSceneMotionProjectionContribution {
     number;
 
   readonly presentationTimeScale?:
+    number;
+
+  /** V2 comet-only bounded TRUE-anomaly cadence; no physical epoch mutation. */
+  readonly presentationCometPhaseWarp?:
     number;
 
   /** Renderer-only multiplier applied after AU -> scene projection. */
@@ -116,13 +122,13 @@ export function projectSystemSceneMotionContributions(
       contribution.presentationTimeScale ??
       1;
 
-    const position =
-      SystemOrbitalMotionEngine
-        .positionAtSimulationDay(
-          motion,
-          simulationDay *
-            presentationTimeScale,
-        );
+    const presentationDay = simulationDay * presentationTimeScale;
+    const orbitalDay = contribution.presentationCometPhaseWarp === undefined
+      ? presentationDay
+      : v2CometPresentationDay(presentationDay, motion.periodDays,
+          motion.eccentricity, motion.epochMeanAnomalyDegrees,
+          contribution.presentationCometPhaseWarp);
+    const position = SystemOrbitalMotionEngine.positionAtSimulationDay(motion, orbitalDay);
 
     const postProjectionScale =
       finitePositiveOr(

@@ -16,7 +16,7 @@
         </p>
 
         <h1 id="system-page-title">
-          @if (facade.model()?.stellarSystemCard; as systemCard) {
+          @if (stellarCard(); as systemCard) {
             {{ systemCard.title }}
           } @else {
             Sistema estelar
@@ -89,7 +89,7 @@
 
       @case ('content') {
         @if (facade.model(); as model) {
-          @if (model.stellarSystemCard; as systemCard) {
+          @if (stellarCard(); as systemCard) {
             @if (sceneSnapshot(); as snapshot) {
               <section
                 class="system-page__hero"
@@ -153,6 +153,8 @@
               >
                 <app-system-scene
                   [snapshot]="snapshot"
+                  [laboratoryCloseZoom]="true"
+                  [gameplaySceneControls]="true"
                 ></app-system-scene>
 
                 <footer class="system-page__viewport-footer">

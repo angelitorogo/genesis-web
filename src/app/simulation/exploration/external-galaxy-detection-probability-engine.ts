@@ -35,9 +35,9 @@ export class ExternalGalaxyDetectionProbabilityEngine {
   ): ExternalGalaxyDetectionProbabilityProfile {
 
     if (
-      generationKey
-        .generatorVersion ===
-      GeneratorVersion.V1
+      (generationKey
+        .generatorVersion === GeneratorVersion.V1 || generationKey
+        .generatorVersion === GeneratorVersion.V2)
     ) {
       return this.evaluateV1(
         globalDiscoveryPoints,

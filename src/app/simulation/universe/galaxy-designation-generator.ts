@@ -5,6 +5,7 @@ import {
 import {
   GeneratorVersion,
 } from '../../domain/generation/generator-version';
+import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
 
 import {
   type UniverseGenerationKey,
@@ -152,13 +153,13 @@ export class GalaxyDesignationGenerator {
     }
 
     if (
-      generationKey
-        .generatorVersion ===
-      GeneratorVersion.V1
+      generationKey.generatorVersion === GeneratorVersion.V1 ||
+      generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return this.generateV1(
         generationKey,
         galaxyIndex,
+        frozenPhysicalSourceKey(generationKey),
       );
     }
 
@@ -173,12 +174,15 @@ export class GalaxyDesignationGenerator {
 
     galaxyIndex:
       bigint,
+
+    physicalKey:
+      UniverseGenerationKey,
   ): GalaxyDesignation {
 
     const galaxySeed =
       ProceduralTargetResolver
         .resolveTargetSeed(
-          generationKey,
+          physicalKey,
           new GalaxyLocator(
             galaxyIndex,
           ),

@@ -1,0 +1,26 @@
+<genesis-screen>
+  <main class="genesis-codes" data-testid="codes-page">
+    <a routerLink="/" class="genesis-codes__back">← Volver a Home</a>
+    <section class="genesis-codes__card" aria-labelledby="codes-title">
+      <p class="genesis-codes__eyebrow">CENTRO DE MANDO / CANJE</p>
+      <h1 id="codes-title">Códigos</h1>
+      <p class="genesis-codes__description">Introduce un código hexadecimal para el universo V2 activo.</p>
+      <form (submit)="accept($event)" data-testid="codes-form">
+        <label for="codes-input">Código</label>
+        <input id="codes-input" data-testid="codes-input" type="text" inputmode="text"
+          autocomplete="off" autocapitalize="characters" spellcheck="false"
+          placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" [value]="code()"
+          (input)="setCode(codeInput.value)" #codeInput [disabled]="pending()" required />
+        <button data-testid="codes-accept" type="submit" [disabled]="pending() || !code().trim()">
+          {{ pending() ? 'Validando…' : 'Aceptar' }}
+        </button>
+      </form>
+      @if (feedback(); as result) {
+        <p class="genesis-codes__feedback" data-testid="codes-feedback"
+          [attr.data-kind]="result.kind" [attr.role]="result.kind === 'error' ? 'alert' : 'status'">
+          {{ result.message }}
+        </p>
+      }
+    </section>
+  </main>
+</genesis-screen>

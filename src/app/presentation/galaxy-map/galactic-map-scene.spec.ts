@@ -104,6 +104,13 @@ import {
   GalacticMapLodLevel,
 } from './galactic-map-visible-sector-lod';
 
+import {
+  galacticMapViewStorageKey,
+  readGalacticMapView,
+  saveGalacticMapView,
+  type GalacticMapViewSnapshot,
+} from './galactic-map-view-persistence';
+
 describe(
   'GalacticMapScene',
   () => {
@@ -237,6 +244,8 @@ describe(
     let resetCalls:
       number;
 
+    let restoreCalls: GalacticMapViewSnapshot[];
+
     let markerSelectCalls:
       Array<readonly [
         number,
@@ -254,6 +263,9 @@ describe(
         number,
         number,
       ]>;
+
+    let previewCalls: Array<readonly [number, number, number]>;
+    let previewClearCalls: number;
 
     let markerSelectionResult:
       GalacticMapDiscoveryMarker | null;
@@ -383,6 +395,9 @@ describe(
 
         resetCalls =
           0;
+        restoreCalls = [];
+        localStorage.removeItem(galacticMapViewStorageKey(model()));
+        localStorage.removeItem(galacticMapViewStorageKey(model(1n)));
 
         markerSelectCalls =
           [];
@@ -392,6 +407,9 @@ describe(
 
         sectorSelectCalls =
           [];
+
+        previewCalls = [];
+        previewClearCalls = 0;
 
         markerSelectionResult =
           null;
@@ -469,6 +487,14 @@ describe(
 
             galaxySpinRadians() {
               return galaxySpinRadians;
+            },
+
+            restoreView(snapshot) {
+              restoreCalls.push(snapshot);
+              cameraState = snapshot.camera;
+              galaxySpinRadians = snapshot.galaxySpinRadians;
+              cameraStateListener?.(cameraState);
+              galaxySpinStateListener?.(galaxySpinRadians);
             },
 
             setCameraStateListener(
@@ -608,6 +634,14 @@ describe(
 
             clearSectorSelection() {},
 
+            previewSectorAt(clientX, clientY, size) {
+              previewCalls.push([clientX, clientY, size]);
+              return { anchor: selectedSector, size, total: size * size,
+                valid: true, skipped: 0, pending: size * size, cells: [] };
+            },
+
+            clearSectorPreview() { previewClearCalls++; },
+
             dispose() {
               disposeCalls +=
                 1;
@@ -637,6 +671,75 @@ describe(
           .compileComponents();
       },
     );
+
+    afterEach(() => {
+      localStorage.removeItem(galacticMapViewStorageKey(model()));
+      localStorage.removeItem(galacticMapViewStorageKey(model(1n)));
+    });
+
+    it('restores the same galaxy view after navigation, preserving refreshes and isolating another galaxy', () => {
+      const firstModel = model();
+      const key = galacticMapViewStorageKey(firstModel);
+      const snapshot: GalacticMapViewSnapshot = {
+        version: 1,
+        camera: {
+          distance: 0.8, azimuthRadians: 0.5, polarRadians: 1.0,
+          targetX: 0.2, targetY: -0.1, targetZ: 0, rotationEnabled: false,
+        },
+        galaxySpinRadians: 0.6,
+        layers: { systems: true, nebulae: false, starClusters: true,
+          extremeObjects: true, regions: true, habitableZone: true },
+      };
+      saveGalacticMapView(key, snapshot);
+      const fixture = TestBed.createComponent(GalacticMapScene);
+      fixture.componentRef.setInput('model', firstModel);
+      fixture.detectChanges();
+      expect(restoreCalls).toHaveLength(1);
+      expect(restoreCalls[0]).toEqual(snapshot);
+      expect(fixture.componentInstance.cameraState()?.distance).toBe(0.8);
+      expect(fixture.componentInstance.galaxySpinRadians()).toBe(0.6);
+      expect(fixture.componentInstance.layerVisibility().nebulae).toBe(false);
+      // A new model of the SAME galaxy after exploration must keep the zoom/spin.
+      fixture.componentRef.setInput('model', model());
+      fixture.detectChanges();
+      expect(restoreCalls).toHaveLength(2);
+      expect(restoreCalls[1]).toEqual(snapshot);
+      fixture.componentInstance.resetView();
+      expect(readGalacticMapView(key)?.camera.distance).toBe(3.5);
+      expect(readGalacticMapView(key)?.galaxySpinRadians).toBe(0);
+      // Switching to a different galaxy must not import the old camera/layers.
+      fixture.componentRef.setInput('model', model(1n));
+      fixture.detectChanges();
+      expect(restoreCalls).toHaveLength(2);
+      expect(fixture.componentInstance.layerVisibility().nebulae).toBe(true);
+      fixture.destroy();
+    });
+
+    it('previsualiza el bloque bajo el ratón sin seleccionar ni explorar y se borra al salir o arrastrar', () => {
+      const fixture = TestBed.createComponent(GalacticMapScene);
+      fixture.componentRef.setInput('model', model());
+      fixture.componentRef.setInput('blockSize', 4);
+      fixture.detectChanges();
+      const component = fixture.componentInstance;
+      component.onCanvasPointerMove({ ...pointerEvent(1, 120, 140), buttons: 0 });
+      fixture.detectChanges();
+      expect(previewCalls.at(-1)).toEqual([120, 140, 4]);
+      expect(fixture.nativeElement.querySelector('[data-testid="galactic-map-sector-block-preview"]')
+        ?.getAttribute('data-preview-size')).toBe('4');
+      expect(sectorSelectCalls).toHaveLength(0);
+      component.onCanvasPointerLeave();
+      fixture.detectChanges();
+      expect(component.sectorPreview()).toBeNull();
+      expect(previewClearCalls).toBeGreaterThan(0);
+      component.onCanvasPointerMove({ ...pointerEvent(1, 120, 140), buttons: 0 });
+      component.onCanvasPointerDown(pointerEvent(1, 120, 140));
+      expect(component.sectorPreview()).toBeNull();
+      const before = previewCalls.length;
+      component.onCanvasPointerMove({ ...pointerEvent(1, 180, 190), buttons: 1 });
+      expect(previewCalls).toHaveLength(before);
+      component.onCanvasPointerUp(pointerEvent(1, 180, 190));
+      expect(sectorSelectCalls).toHaveLength(0);
+    });
 
     it(
       'should initialize the point-10.9 worker-backed renderer with visible-sector LOD, coverage, markers and six thematic layers',
@@ -1529,6 +1632,12 @@ describe(
 
         fixture.detectChanges();
 
+        // Initialising a new galaxy now resets the runtime once when
+        // there is no previously saved view. Count only the explicit
+        // user-requested reset below, not the initialisation reset.
+        const resetCallsBeforeUserAction = resetCalls;
+        expect(resetCallsBeforeUserAction).toBe(1);
+
         fixture
           .componentInstance
           .onCanvasPointerDown(
@@ -1566,7 +1675,7 @@ describe(
         expect(
           resetCalls,
         ).toBe(
-          1,
+          resetCallsBeforeUserAction + 1,
         );
 
         expect(

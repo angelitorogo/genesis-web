@@ -3,8 +3,11 @@ import {
 } from '@angular/core/testing';
 
 import {
-  type UniverseGenerationKey,
+  UniverseGenerationKey,
 } from '../../../domain/generation/universe-generation-key';
+import { GeneratorVersion } from '../../../domain/generation/generator-version';
+import { UniverseSeed } from '../../../domain/universe/universe-seed';
+import { GENESIS_LOCAL_REPOSITORIES } from '../../runtime/genesis-local-repositories';
 
 import {
   UniverseBootstrapService,
@@ -30,6 +33,9 @@ describe(
 
     let bootstrappedKeys:
       UniverseGenerationKey[];
+    let persistedKeys: UniverseGenerationKey[];
+    let repositoryReads: number;
+    let repositoryFailure: Error | null;
 
     beforeEach(
       async () => {
@@ -41,6 +47,9 @@ describe(
 
         bootstrappedKeys =
           [];
+        persistedKeys = [];
+        repositoryReads = 0;
+        repositoryFailure = null;
 
         await TestBed
           .configureTestingModule({
@@ -49,6 +58,20 @@ describe(
             ],
 
             providers: [
+              {
+                provide: GENESIS_LOCAL_REPOSITORIES,
+                useValue: {
+                  universeRepository: {
+                    getAll: async () => {
+                      repositoryReads += 1;
+                      if (repositoryFailure !== null) {
+                        throw repositoryFailure;
+                      }
+                      return persistedKeys;
+                    },
+                  },
+                },
+              },
               {
                 provide:
                   UniverseBootstrapService,
@@ -171,6 +194,9 @@ describe(
           'ABCD-0000-0000-0000-0000-0000-0000-0001',
         );
 
+        expect(repositoryReads).toBe(1);
+        expect(bootstrappedKeys[0]?.generatorVersion).toBe(GeneratorVersion.V2);
+        expect(facade.generatorVersion()).toBe(GeneratorVersion.V2);
         expect(
           facade.feedback(),
         ).toEqual({
@@ -183,11 +209,53 @@ describe(
       },
     );
 
+    it('reopens existing V1 save instead of rewriting its seed as V2', async () => {
+      const seed = UniverseSeed.parse('ABCD-0000-0000-0000-0000-0000-0000-0001');
+      const savedV1 = new UniverseGenerationKey(seed, GeneratorVersion.V1);
+      persistedKeys = [savedV1];
+      bootstrapCreated = false;
+      const fixture = TestBed.createComponent(UniverseSeedSettings);
+      fixture.detectChanges();
+      fixture.componentInstance.seed.updateDraft(seed.serialize());
+      await fixture.componentInstance.applySeed();
+      expect(bootstrappedKeys).toHaveLength(1);
+      expect(bootstrappedKeys[0]?.equals(savedV1)).toBe(true);
+      expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V1);
+    });
+
+    it('selects the existing V2 save and does not collide with an existing V1 of the same seed', async () => {
+      const seed = UniverseSeed.parse('ABCD-0000-0000-0000-0000-0000-0000-0001');
+      const savedV1 = new UniverseGenerationKey(seed, GeneratorVersion.V1);
+      const savedV2 = new UniverseGenerationKey(seed.copy(), GeneratorVersion.V2);
+      persistedKeys = [savedV1, savedV2];
+      bootstrapCreated = false;
+      const fixture = TestBed.createComponent(UniverseSeedSettings);
+      fixture.detectChanges();
+      fixture.componentInstance.seed.updateDraft(seed.serialize());
+      await fixture.componentInstance.applySeed();
+      expect(bootstrappedKeys[0]?.equals(savedV2)).toBe(true);
+      expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V2);
+    });
+
+    it('rejects invalid draft before reading persistence and retains the current version', async () => {
+      const fixture = TestBed.createComponent(UniverseSeedSettings);
+      fixture.detectChanges();
+      fixture.componentInstance.seed.updateDraft('INVALID');
+      await fixture.componentInstance.applySeed();
+      expect(repositoryReads).toBe(0);
+      expect(bootstrappedKeys).toHaveLength(0);
+      expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V1);
+    });
+
     it(
       'should report activation without resetting an already persisted universe',
       async () => {
         bootstrapCreated =
           false;
+        const existing = new UniverseGenerationKey(
+          UniverseSeed.parse(DEFAULT_UNIVERSE_SEED), GeneratorVersion.V1,
+        );
+        persistedKeys = [existing];
 
         const fixture =
           TestBed.createComponent(
@@ -200,18 +268,14 @@ describe(
           .componentInstance
           .applySeed();
 
-        expect(
-          TestBed
-            .inject(
-              UniverseSeedFacade,
-            )
-            .feedback(),
-        ).toEqual({
-          kind:
-            'success',
-
-          message:
-            'Universo activado correctamente.',
+        expect(repositoryReads).toBe(1);
+        expect(bootstrappedKeys).toHaveLength(1);
+        expect(bootstrappedKeys[0]?.equals(existing)).toBe(true);
+        const active = TestBed.inject(UniverseSeedFacade);
+        expect(active.activeGenerationKey().equals(existing)).toBe(true);
+        expect(active.feedback()).toEqual({
+          kind: 'success',
+          message: 'Universo activado correctamente.',
         });
       },
     );
@@ -290,6 +354,7 @@ describe(
           .componentInstance
           .applySeed();
 
+        expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V1);
         expect(
           TestBed
             .inject(
@@ -305,6 +370,23 @@ describe(
         });
       },
     );
+
+    it('does not bootstrap or alter the active seed when reading persistence fails', async () => {
+      repositoryFailure = new Error('IndexedDB read failed.');
+      const fixture = TestBed.createComponent(UniverseSeedSettings);
+      fixture.detectChanges();
+      const before = TestBed.inject(UniverseSeedFacade).activeGenerationKey();
+      fixture.componentInstance.seed.updateDraft('ABCD-0000-0000-0000-0000-0000-0000-0001');
+      await fixture.componentInstance.applySeed();
+      expect(repositoryReads).toBe(1);
+      expect(bootstrappedKeys).toHaveLength(0);
+      const facade = TestBed.inject(UniverseSeedFacade);
+      expect(facade.activeGenerationKey().equals(before)).toBe(true);
+      expect(facade.feedback()).toEqual({
+        kind: 'error',
+        message: 'No se pudo crear o activar el universo local.',
+      });
+    });
 
     it(
       'should copy the serialized seed',

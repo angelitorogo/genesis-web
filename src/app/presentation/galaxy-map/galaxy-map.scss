@@ -366,3 +366,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.galactic-map__block-controls{padding:1rem;margin-bottom:1rem;border:1px solid var(--genesis-color-border-subtle);border-radius:8px}
+.galactic-map__block-controls p{color:var(--genesis-color-text-muted)}
+.galactic-map__block-options{display:flex;flex-wrap:wrap;gap:.4rem}
+.galactic-map__block-options button{padding:.5rem;border:1px solid var(--genesis-color-border-subtle);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.galactic-map__block-options button[aria-pressed=true]{border-color:var(--genesis-color-primary);background:#234}

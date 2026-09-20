@@ -188,7 +188,7 @@ export function universeEntityToGenerationKey(
   }
 
   let generatorVersion:
-    typeof GeneratorVersion.V1;
+    GeneratorVersion;
 
   switch (
     entity.generatorVersionCode
@@ -196,6 +196,14 @@ export function universeEntityToGenerationKey(
     case 1:
       generatorVersion =
         GeneratorVersion.V1;
+
+      break;
+
+    case 2:
+      // Keep V2 separate from V1 when restoring persisted identities.
+      // Creation is gated independently until the full cutover is ready.
+      generatorVersion =
+        GeneratorVersion.V2;
 
       break;
 

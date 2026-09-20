@@ -23,6 +23,8 @@ import {
 import {
   scientificRouteUniverseRef,
 } from '../scientific/scientific-route-identity';
+import { SystemMultihostGameCutover } from '../system/system-multihost-game-cutover';
+import { SystemV2SingleScientificSession } from '../system/system-v2-single-scientific-session';
 
 import {
   ScientificBodyPreview,
@@ -90,6 +92,16 @@ export class MoonDetailPage
         ),
     );
 
+  readonly multihostSession = computed(() => {
+    const model = this.facade.model();
+    return model === null ? null : SystemMultihostGameCutover.sessionOrNull(model);
+  });
+
+  readonly v2SingleSession = computed(() => {
+    const model = this.facade.model();
+    return model === null ? null : SystemV2SingleScientificSession.buildOrNull(model);
+  });
+
   readonly resolution =
     computed(
       () => {
@@ -119,12 +131,12 @@ export class MoonDetailPage
           } as const);
         }
 
-        return MoonScientificCardAssembler
-          .build(
-            model,
-            this.requestedBodyIndex,
-            this.requestedMoonIndex,
-          );
+        return this.multihostSession()?.moonFiche(this.requestedBodyIndex, this.requestedMoonIndex) ??
+          this.v2SingleSession()?.moonFiche(this.requestedBodyIndex, this.requestedMoonIndex) ??
+          (model.generatorVersionCode === 2
+            ? MoonScientificCardAssembler.build(model, this.requestedBodyIndex, this.requestedMoonIndex,
+                { resolveDetailed: () => null })
+            : MoonScientificCardAssembler.build(model, this.requestedBodyIndex, this.requestedMoonIndex));
       },
     );
 

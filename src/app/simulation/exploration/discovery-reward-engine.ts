@@ -69,9 +69,9 @@ export class DiscoveryRewardEngine {
   ): DiscoveryRewardResult {
 
     if (
-      generationKey
-        .generatorVersion ===
-      GeneratorVersion.V1
+      (generationKey
+        .generatorVersion === GeneratorVersion.V1 || generationKey
+        .generatorVersion === GeneratorVersion.V2)
     ) {
       return this.evaluateV1(
         generationKey,

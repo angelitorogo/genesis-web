@@ -35,6 +35,7 @@ import {
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
 
 import {
   isGalacticNucleusLocator,
@@ -669,6 +670,8 @@ function buildPhysicalCard(
     DiscoveryStateValue,
 ): ArchiveGalacticObjectCardModel {
 
+  const physicalKey = frozenPhysicalSourceKey(generationKey);
+
   const confirmed =
     state.code >=
     DiscoveryState.CONFIRMED.code;
@@ -685,7 +688,7 @@ function buildPhysicalCard(
       const nebula =
         NebulaGenerator
           .generate(
-            generationKey,
+            physicalKey,
             locator,
           );
 
@@ -815,7 +818,7 @@ function buildPhysicalCard(
       const hii =
         HiiRegionGenerator
           .generate(
-            generationKey,
+            physicalKey,
             locator,
           );
 
@@ -956,7 +959,7 @@ function buildPhysicalCard(
       const cluster =
         OpenClusterGenerator
           .generate(
-            generationKey,
+            physicalKey,
             locator,
           );
 
@@ -1088,7 +1091,7 @@ function buildPhysicalCard(
       const cluster =
         GlobularClusterGenerator
           .generate(
-            generationKey,
+            physicalKey,
             locator,
           );
 
@@ -1228,7 +1231,7 @@ function buildPhysicalCard(
       const remnant =
         SupernovaRemnantGenerator
           .generate(
-            generationKey,
+            physicalKey,
             locator,
           );
 
@@ -1636,13 +1639,15 @@ function renderProfileForObservedMorphology(
     GalacticObjectScientificSurveyFamily,
 ): ArchiveGalacticObjectRenderProfile | null {
 
+  const physicalKey = frozenPhysicalSourceKey(generationKey);
+
   if (
     coarseFamily ===
       GalacticObjectScientificSurveyFamily.STAR_CLUSTER
   ) {
     return OpenClusterGenerator
       .isOpenClusterLocator(
-        generationKey,
+        physicalKey,
         locator,
       )
       ? ArchiveGalacticObjectRenderProfile
@@ -1658,7 +1663,7 @@ function renderProfileForObservedMorphology(
     if (
       !SupernovaRemnantGenerator
         .isSupernovaRemnantLocator(
-          generationKey,
+          physicalKey,
           locator,
         )
     ) {
@@ -1668,7 +1673,7 @@ function renderProfileForObservedMorphology(
     const morphology =
       SupernovaRemnantGenerator
         .resolveMorphology(
-          generationKey,
+          physicalKey,
           locator,
         );
 
@@ -1700,7 +1705,7 @@ function renderProfileForObservedMorphology(
   const nebulaType =
     NebulaGenerator
       .resolveType(
-        generationKey,
+        physicalKey,
         locator,
       );
 
@@ -1711,7 +1716,7 @@ function renderProfileForObservedMorphology(
     const activity =
       HiiRegionGenerator
         .resolveActivity(
-          generationKey,
+          physicalKey,
           locator,
         );
 

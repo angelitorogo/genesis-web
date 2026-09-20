@@ -57,6 +57,9 @@ describe(
     let followBody:
       NonNullable<SystemSceneRuntime['followBody']>;
 
+    let focusLaboratorySystem:
+      NonNullable<SystemSceneRuntime['focusLaboratorySystem']>;
+
     let stopFollowing:
       NonNullable<SystemSceneRuntime['stopFollowing']>;
 
@@ -130,6 +133,10 @@ describe(
             ): boolean => true,
           );
 
+        focusLaboratorySystem = vi.fn(
+          (_starId: string, _radiusScene: number): boolean => true,
+        );
+
         stopFollowing =
           vi.fn(
             (): void => {},
@@ -158,6 +165,7 @@ describe(
             render,
             resetView,
             followBody,
+            focusLaboratorySystem,
             stopFollowing,
             setLayerVisibility,
             setPageVisible,
@@ -329,6 +337,54 @@ describe(
       fixture.componentRef.setInput('laboratoryCloseZoom', true);
       fixture.detectChanges();
       expect(render).toHaveBeenCalledWith(snapshot, true);
+    });
+
+    it('enables production orbit visibility, real AU telemetry and star-only camera tracking without lab IDs', () => {
+      const fixture = TestBed.createComponent(SystemScene);
+      const snapshot = sceneSnapshot();
+      fixture.componentRef.setInput('snapshot', snapshot);
+      fixture.componentRef.setInput('gameplaySceneControls', true);
+      fixture.componentRef.setInput('laboratoryCloseZoom', true);
+      fixture.detectChanges();
+      const element = fixture.nativeElement as HTMLElement;
+      expect(render).toHaveBeenCalledWith(snapshot, true);
+      const orbits = element.querySelector<HTMLButtonElement>(
+        '[data-testid="system-scene-lab-orbit-lines"]',
+      )!;
+      expect(orbits).toBeTruthy();
+      orbits.click();
+      fixture.detectChanges();
+      expect(orbits.getAttribute('aria-pressed')).toBe('false');
+      expect(setLayerVisibility).toHaveBeenLastCalledWith(
+        expect.objectContaining({ orbits: false }),
+      );
+
+      expect(element.querySelectorAll('[data-testid="system-scene-lab-star-distance"]')).toHaveLength(1);
+      const controls = element.querySelectorAll<HTMLButtonElement>(
+        '[data-testid="system-scene-lab-center-system"]',
+      );
+      expect(controls).toHaveLength(2);
+      expect(controls[0]!.textContent).toContain('CENTRAR ESTRELLA A');
+      controls[0]!.click();
+      fixture.detectChanges();
+      expect(focusLaboratorySystem).toHaveBeenCalledWith('star-a', expect.any(Number));
+      expect(fixture.componentInstance.focusedLaboratoryStar()).toBe('star-a');
+      element.querySelector<HTMLButtonElement>('[data-testid="system-scene-reset-view"]')!.click();
+      expect(fixture.componentInstance.focusedLaboratoryStar()).toBeNull();
+    });
+
+    it('does not leak stellar distances or stellar focus before orbital cataloguing', () => {
+      const fixture = TestBed.createComponent(SystemScene);
+      fixture.componentRef.setInput('snapshot', Object.freeze({
+        ...sceneSnapshot(),
+        knowledgeLevel: ArchiveStellarSystemKnowledgeLevel.IDENTIFIED,
+      }));
+      fixture.componentRef.setInput('gameplaySceneControls', true);
+      fixture.detectChanges();
+      const element = fixture.nativeElement as HTMLElement;
+      expect(element.querySelector('[data-testid="system-scene-lab-stellar-distances"]')).toBeNull();
+      expect(element.querySelector('[data-testid="system-scene-lab-center-system"]')).toBeNull();
+      expect(element.querySelector('[data-testid="system-scene-lab-orbit-lines"]')).toBeTruthy();
     });
 
     it(
@@ -920,6 +976,29 @@ describe(
           ),
         ).toBeNull();
 
+        // Captured objects follow the same disclosure rule as planets,
+        // moons, asteroids, comets and TNO: no individual card at CATALOGUED.
+        selectionHandler(
+          Object.freeze({
+            bodyId:
+              'minor-4-DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
+            kind:
+              'minor-body' as const,
+            label:
+              'CAP-002',
+            title:
+              'Capturado CAP-002',
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="system-scene-minor-body-fiche-link"]',
+          ),
+        ).toBeNull();
+
         const confirmedSnapshot =
           Object.freeze({
             ...sceneSnapshot(),
@@ -1143,11 +1222,19 @@ describe(
 
         fixture.detectChanges();
 
-        expect(
-          element.querySelector(
+        const capturedFicheLink =
+          element.querySelector<HTMLAnchorElement>(
             '[data-testid="system-scene-minor-body-fiche-link"]',
-          ),
-        ).toBeNull();
+          );
+
+        expect(capturedFicheLink).toBeTruthy();
+        expect(capturedFicheLink?.getAttribute('href')).toContain(
+          '/system/3/-17/8/minor-body/captured/DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD',
+        );
+        expect(capturedFicheLink?.getAttribute('href')).toContain(
+          'u=96F17ABD83F31EF747FC750C996EB1C2',
+        );
+        expect(capturedFicheLink?.getAttribute('href')).not.toContain('seed=');
       },
     );
 

@@ -291,6 +291,7 @@ export class PlanetScientificCardAssembler {
               .planet(
                 target,
                 previewSceneResolver.build(systemModel),
+                previewSceneResolver.planetBodyId?.(systemModel, bodyIndex),
               ),
         }),
     });

@@ -124,12 +124,17 @@ export class MinorBodyDetailPage
           } as const);
         }
 
-        return MinorBodyScientificCardAssembler
-          .build(
-            model,
-            this.requestedTargetKind,
-            this.requestedProceduralId,
+        try {
+          return MinorBodyScientificCardAssembler.build(
+            model, this.requestedTargetKind, this.requestedProceduralId,
           );
+        } catch (error) {
+          return Object.freeze({
+            kind: MinorBodyScientificFicheResolutionKind.NOT_FOUND,
+            reason: `No se pudo reconstruir la ficha científica: ${error instanceof Error
+              ? error.message : 'error de resolución desconocido'}.`,
+          } as const);
+        }
       },
     );
 
@@ -347,7 +352,8 @@ function parseTargetKindOrNull(
     value ===
       MinorBodyScientificTargetKind.COMET ||
     value ===
-      MinorBodyScientificTargetKind.TRANS_NEPTUNIAN_OBJECT
+      MinorBodyScientificTargetKind.TRANS_NEPTUNIAN_OBJECT ||
+    value === MinorBodyScientificTargetKind.CAPTURED_EXTRASOLAR_OBJECT
   ) {
     return value;
   }

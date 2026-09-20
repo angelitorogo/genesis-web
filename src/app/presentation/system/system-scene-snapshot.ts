@@ -1,3 +1,7 @@
+import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
+import { v2HostMinorBodyOrbitalCatalog } from './system-scene-v2-minor-body-source';
+import { v2MinorBodyTimeScale, V2_COMET_PHASE_WARP } from './system-scene-v2-minor-cadence';
+import { withV2SinglePlanetCadence } from './system-scene-v2-planet-cadence';
 import {
   DiscoveryState,
   type DiscoveryStateValue,
@@ -284,6 +288,10 @@ import {
 } from '../../simulation/stellar/stellar-system-generator';
 
 import {
+  type GeneratedSingleHost,
+} from '../../simulation/stellar/stellar-multihost-formation';
+
+import {
   GalaxyGenerator,
 } from '../../simulation/universe/galaxy-generator';
 
@@ -444,6 +452,10 @@ export interface SystemSceneBodySnapshot {
   /** Direct domain luminosity for stars; null for non-stellar spherical bodies. */
   readonly sourceLuminositySolar:
     number | null;
+
+  /** Real stellar photosphere (never the exaggerated renderer size). V2 activity only. */
+  readonly sourceRadiusSolar?: number;
+  readonly sourceEffectiveTemperatureKelvin?: number;
 
   readonly spin:
     SystemSceneBodySpinSnapshot;
@@ -756,6 +768,16 @@ export interface SystemSceneSnapshot {
   readonly proceduralIdentity:
     string;
 
+  /** Optional, public-only body-to-route mapping for new multihost scenes.
+   * Absence means historical V1 ordinal addressing; when present, missing
+   * entries MUST NOT fall back to parsing a visual id. */
+  readonly scientificPlanetBindings?: readonly Readonly<{
+    sceneBodyId: string; bodyIndex: string;
+  }>[];
+  readonly scientificMoonBindings?: readonly Readonly<{
+    sceneBodyId: string; bodyIndex: string; moonIndex: string;
+  }>[];
+
   readonly title:
     string;
 
@@ -935,6 +957,8 @@ interface ResolvedStarSceneSource {
   readonly radiusSolar:
     number;
 
+  readonly effectiveTemperatureKelvin: number;
+
   readonly massSolar:
     number;
 
@@ -1064,9 +1088,95 @@ export class SystemSceneSnapshotBuilder {
         source,
       );
 
+    return projectResolvedSceneWorld(baseSnapshot, world);
+  }
+
+  /**
+   * Stage 6 opt-in: project one ALREADY MATERIALIZED physical SINGLE host.
+   * Unlike buildFromSource, this boundary never selects multiplicity or
+   * generates a second planet/atmosphere/moon population behind the renderer.
+   * An aggregate compositor will attach these local snapshots to A/B/C orbits.
+   * No live route, persistence or V1 generator switch occurs here.
+   */
+  static buildFromGeneratedSingle(
+    source: SystemSceneSnapshotSource,
+    host: GeneratedSingleHost,
+  ): SystemSceneSnapshot {
+    const key = new UniverseGenerationKey(
+      UniverseSeed.parse(source.universeSeed),
+      GeneratorVersion.fromCode(source.generatorVersionCode),
+    );
+    const locator = source.locator;
+    const actual = host.stellarSystem.locator;
+    if (source.discoveryState.code < DiscoveryState.CATALOGUED.code ||
+        !host.internalGenerationKey.equals(host.stellarSystem.generationKey) ||
+        host.stellarSystem.multiplicity.name !== 'SINGLE' ||
+        locator.galaxyIndex !== actual.galaxyIndex ||
+        locator.sectorKey !== actual.sectorKey ||
+        locator.galacticObjectIndex !== actual.galacticObjectIndex ||
+        host.planets.length !== host.atmospheres.length ||
+        host.planets.length !== host.moonSystems.length) {
+      throw new RangeError('Generated SINGLE scene needs a complete, catalogued source at the same system address.');
+    }
+    // A is physically generated in the unchanged V1 source scope even when
+    // the public parent belongs to unreleased V2. Never expose that private
+    // V1 key as a V2 public route or persistence identity.
+    if (host.label === 'A' && !multihostPhysicalSourceKey(key).equals(host.internalGenerationKey)) {
+      throw new RangeError('Primary A scene must share the public parent generation key.');
+    }
+    for (const planet of host.planets) {
+      if (planet.hostPlanetarySystem !== host.planetarySystem ||
+          host.atmospheres.filter(atmosphere => atmosphere.hostPlanet === planet).length !== 1 ||
+          host.moonSystems.filter(moons => moons.hostPlanet === planet).length !== 1) {
+        throw new Error('Generated SINGLE scene contains an unrelated planet, atmosphere or moon system.');
+      }
+    }
+    const world: MaterializedStellarSceneWorld = Object.freeze({
+      stellarSystem: host.stellarSystem,
+      generationKey: host.internalGenerationKey,
+      locator: host.stellarSystem.locator,
+      title: host.stellarSystem.designation.name,
+      multiplicityName: 'SINGLE',
+      componentCount: 1,
+      stars: resolveStarSources(host.stellarSystem, host.physical, host.spectral),
+      planetarySystem: host.planetarySystem,
+      planets: host.planets,
+      atmospheres: host.atmospheres,
+      moonSystems: host.moonSystems,
+      minorBodyOrbitalCatalog: source.discoveryState.code >= DiscoveryState.CONFIRMED.code &&
+        key.generatorVersion === GeneratorVersion.V2
+        ? v2HostMinorBodyOrbitalCatalog(host) : null,
+      asteroidBelts: source.discoveryState.code >= DiscoveryState.CONFIRMED.code
+        ? host.asteroidBelts : null,
+      habitableZone: host.planetarySystem?.habitableZone ??
+        PlanetarySystemHabitableZoneGenerator.generate(host.internalGenerationKey, host.stellarSystem),
+      impactRiskCatalog: null,
+    });
+    const base = snapshotBase(source);
+    const projected = withV2SinglePlanetCadence(projectResolvedSceneWorld(Object.freeze({
+      ...base,
+      title: `${base.title} · ${host.label}`,
+      multiplicityName: 'SINGLE',
+      componentCount: 1,
+    }), world));
+    // V2-only optical presentation; V1 snapshots retain their exact radii.
+    if (source.generatorVersionCode !== GeneratorVersion.V2.code) return projected;
+    return Object.freeze({ ...projected, stars: Object.freeze(projected.stars.map(star =>
+      Object.freeze({ ...star, radiusScene: star.radiusScene * 0.78,
+        opticalRadiusScene: (star.opticalRadiusScene ?? star.radiusScene) * 0.78 }))) });
+  }
+}
+
+/** Shared projection: legacy V1 and pre-generated sources must pass through the
+ * EXACT SAME geometry implementation. Physics is already frozen at this point. */
+function projectResolvedSceneWorld(
+  baseSnapshot: ReturnType<typeof snapshotBase>,
+  world: MaterializedStellarSceneWorld,
+): SystemSceneSnapshot {
     const projected =
       projectSceneGeometry(
         world,
+        baseSnapshot.generatorVersionCode,
       );
 
     return Object.freeze({
@@ -1110,7 +1220,6 @@ export class SystemSceneSnapshotBuilder {
       scale:
         projected.scale,
     });
-  }
 }
 
 function unresolvedSceneSnapshot(
@@ -1738,6 +1847,7 @@ function resolveStarSources(
         primarySpectralAppearance.color.hex,
       radiusSolar:
         primaryPhysicalProperties.radiusSolar,
+      effectiveTemperatureKelvin: primaryPhysicalProperties.effectiveTemperatureKelvin,
       massSolar:
         primaryPhysicalProperties.currentMassSolar,
       luminositySolar:
@@ -1855,6 +1965,7 @@ function companionSource(
       companion.spectralAppearance.color.hex,
     radiusSolar:
       companion.physicalProperties.radiusSolar,
+    effectiveTemperatureKelvin: companion.physicalProperties.effectiveTemperatureKelvin,
     massSolar:
       companion.physicalProperties.currentMassSolar,
     luminositySolar:
@@ -2139,6 +2250,9 @@ function resolvePlanetaryWorld(
 function projectSceneGeometry(
   world:
     MaterializedStellarSceneWorld,
+
+  generatorVersionCode:
+    number,
 ): {
   readonly stars:
     readonly SystemSceneBodySnapshot[];
@@ -3255,6 +3369,10 @@ function projectSceneGeometry(
             ),
           sourceLuminositySolar:
             star.luminositySolar,
+          ...(generatorVersionCode === 2 ? {
+            sourceRadiusSolar: star.radiusSolar,
+            sourceEffectiveTemperatureKelvin: star.effectiveTemperatureKelvin,
+          } : {}),
           spin:
             Object.freeze({
               source:
@@ -3564,6 +3682,7 @@ function projectSceneGeometry(
       sceneScale,
       maximumVisibleStarRadiusScene,
       playbackDaysPerRealSecond,
+      generatorVersionCode === 2,
     );
 
   const asteroidBelts =
@@ -4586,6 +4705,9 @@ function projectMinorBodyLayer(
 
   playbackDaysPerRealSecond:
     number,
+
+  useV2Cadence:
+    boolean,
 ): readonly SystemSceneMinorBodySnapshot[] {
 
   const catalog =
@@ -4600,6 +4722,22 @@ function projectMinorBodyLayer(
 
   const minorBodies:
     SystemSceneMinorBodySnapshot[] = [];
+
+  // Rank actual BOUND members independently within each family of this host.
+  // Unbound visitors never receive an invented periodic orbit.
+  const ranks = new Map<string, { rank: number; count: number }>();
+  if (useV2Cadence) {
+    for (const kind of MinorBodyKind.values) {
+      const entries = catalog.entries.filter(entry => entry.orbitalElements.kind === kind &&
+        entry.orbitalElements.isBound && entry.orbitalElements.orbitalPeriodYears !== null &&
+        entry.orbitalElements.meanAnomalyDegrees !== null)
+        .sort((left, right) => left.orbitalElements.semiMajorAxisAu -
+          right.orbitalElements.semiMajorAxisAu ||
+          left.orbitalElements.proceduralId.localeCompare(right.orbitalElements.proceduralId));
+      entries.forEach((entry, index) => ranks.set(`${kind.code}:${entry.orbitalElements.proceduralId}`,
+        { rank: index + 1, count: entries.length }));
+    }
+  }
 
   for (
     const entry
@@ -4711,10 +4849,15 @@ function projectMinorBodyLayer(
         scale:
           1,
         presentationTimeScale:
-          systemSceneMinorBodyPresentationTimeScale(
-            motion.periodDays,
-            playbackDaysPerRealSecond,
-          ),
+          useV2Cadence
+            ? v2MinorBodyTimeScale(motion.periodDays, playbackDaysPerRealSecond,
+                orbital.kind, ranks.get(`${orbital.kind.code}:${orbital.proceduralId}`)!.rank,
+                ranks.get(`${orbital.kind.code}:${orbital.proceduralId}`)!.count,
+                orbital.proceduralId)
+            : systemSceneMinorBodyPresentationTimeScale(motion.periodDays,
+                playbackDaysPerRealSecond),
+        ...(useV2Cadence && orbital.kind === MinorBodyKind.COMET
+          ? { presentationCometPhaseWarp: V2_COMET_PHASE_WARP } : {}),
         ...(
           presentedLinearScenePerAu ===
             null
@@ -4779,6 +4922,7 @@ function projectMinorBodyLayer(
             localContribution
               .presentationTimeScale ??
               1,
+            localContribution.presentationCometPhaseWarp,
           )
         : null;
 
@@ -4951,6 +5095,9 @@ function cometPresentationForBody(
 
   presentationTimeScale:
     number,
+
+  presentationCometPhaseWarp?:
+    number,
 ): SystemSceneCometPresentationV1 {
 
   const orbit =
@@ -4993,6 +5140,7 @@ function cometPresentationForBody(
       orbit.apoapsisAu,
     referenceLuminositySolar,
     presentationTimeScale,
+    ...(presentationCometPhaseWarp === undefined ? {} : { presentationCometPhaseWarp }),
   });
 }
 

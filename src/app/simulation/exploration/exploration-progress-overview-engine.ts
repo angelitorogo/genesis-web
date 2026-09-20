@@ -73,7 +73,8 @@ export class ExplorationProgressOverviewEngine {
     if (
       generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+      GeneratorVersion.V1 ||
+      generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return this.buildV1(
         globalDiscoveryPoints,

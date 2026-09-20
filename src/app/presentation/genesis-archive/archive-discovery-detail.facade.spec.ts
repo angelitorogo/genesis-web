@@ -85,6 +85,10 @@ import {
 import {
   DEFAULT_UNIVERSE_SEED,
 } from '../universe/universe-seed.facade';
+import { ProceduralTargetResolver } from '../../simulation/regeneration/procedural-target-resolver';
+import { StellarSystemMultiplicitySelector } from '../../simulation/stellar/stellar-system-multiplicity-selector';
+import { StellarSystemMultiplicity } from '../../domain/stellar/stellar-system-multiplicity';
+import { StellarMultihostFormation } from '../../simulation/stellar/stellar-multihost-formation';
 
 import {
   ArchiveDiscoveryDetailFacade,
@@ -1618,6 +1622,44 @@ describe(
           ],
         });
       },
+    );
+
+    it.each([StellarSystemMultiplicity.SINGLE, StellarSystemMultiplicity.BINARY, StellarSystemMultiplicity.TRIPLE])(
+      '13.2 resolves one persisted V2 %s archive card without private seeds or fabricated parent disk',
+      async multiplicity => {
+        const v2 = new UniverseGenerationKey(generationKey.universeSeed.copy(), GeneratorVersion.V2);
+        let selected: SystemLocator | null = null;
+        for (let i = 0n; i < 128n; i++) {
+          const address = new SystemLocator(0n, 0n, i);
+          const physicalSeed = ProceduralTargetResolver.resolveTargetSeed(generationKey, address);
+          if (StellarSystemMultiplicitySelector.select(generationKey, physicalSeed as Parameters<
+            typeof StellarSystemMultiplicitySelector.select>[1]) === multiplicity) {
+            selected = address;
+            break;
+          }
+        }
+        if (selected === null) throw new Error('Missing V2 stellar fixture.');
+        const { facade, stateReads } = configure({ universes: [generationKey, v2],
+          discoveryState: DiscoveryState.CONFIRMED });
+        await facade.load({ locatorKind: ArchiveDiscoveryLocatorKind.SYSTEM,
+          galaxyIndex: selected.galaxyIndex.toString(), sectorKey: selected.sectorKey.toString(),
+          galacticObjectIndex: selected.galacticObjectIndex.toString(),
+          universeSeed: v2.universeSeed.serialize(), generatorVersionCode: '2',
+          includeStellarSystemScientificProgression: false });
+        expect(facade.state().kind).toBe('content');
+        const loaded = facade.model()!;
+        expect(loaded.generatorVersionCode).toBe(2);
+        expect(loaded.stellarSystemCard?.render.multiplicity).toBe(multiplicity);
+        expect(loaded.stellarSystemCard?.systemFacts.some(fact => fact.label === 'SystemSeed')).toBe(false);
+        expect(JSON.stringify(loaded.stellarSystemCard)).not.toContain('GEN-V1');
+        if (multiplicity !== StellarSystemMultiplicity.SINGLE) {
+          const formation = StellarMultihostFormation.generateOrNull(v2, selected)!;
+          expect(loaded.stellarSystemCard?.systemFacts.find(fact => fact.label === 'Planetas generados')?.value)
+            .toBe(String(formation.publicPlanets.length));
+          expect(loaded.protoplanetaryDiskAnalysis).toBeNull();
+        }
+        expect(stateReads).toEqual([selected]);
+      }, 120_000,
     );
   },
 );

@@ -76,6 +76,11 @@ export class GalaxyArchiveEngine {
       const discovery
       of knownDiscoveries
     ) {
+      if (generationKey.generatorVersion === GeneratorVersion.V2 &&
+          !discovery.generationKey.equals(generationKey)) {
+        throw new RangeError('V2 archive cannot contain discoveries from another universe or generator version.');
+      }
+
       const stateCode:
         number =
         discovery
@@ -93,9 +98,9 @@ export class GalaxyArchiveEngine {
     }
 
     if (
-      generationKey
-        .generatorVersion ===
-      GeneratorVersion.V1
+      (generationKey
+        .generatorVersion === GeneratorVersion.V1 || generationKey
+        .generatorVersion === GeneratorVersion.V2)
     ) {
       return this.buildV1(
         generationKey,

@@ -234,20 +234,14 @@ export class GenesisBackupValidator {
         `${path}.generatorVersionCode`,
       );
 
-    if (
-      generatorVersionCode !==
-      GeneratorVersion.V1.code
-    ) {
+    const version = GeneratorVersion.fromCodeOrNull(generatorVersionCode);
+    if (version === null || !GeneratorVersion.isReleasedForNewUniverses(version)) {
       throw new GenesisBackupValidationError(
         `${path}.generatorVersionCode is unsupported: ${generatorVersionCode}.`,
       );
     }
 
-    const generationKey =
-      new UniverseGenerationKey(
-        parsedSeed,
-        GeneratorVersion.V1,
-      );
+    const generationKey = new UniverseGenerationKey(parsedSeed, version);
 
     const identity =
       `${universeSeed}|${generatorVersionCode}`;

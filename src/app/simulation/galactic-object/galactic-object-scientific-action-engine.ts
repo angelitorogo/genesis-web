@@ -29,9 +29,7 @@ import {
   GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
-import {
-  GeneratorVersion,
-} from '../../domain/generation/generator-version';
+import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
 
 import {
   type UniverseGenerationKey,
@@ -96,9 +94,7 @@ export class GalacticObjectScientificActionEngine {
       GalacticObjectScientificActionType,
   ): GalacticObjectScientificActionAvailability {
 
-    requireV1(
-      generationKey,
-    );
+    const physicalKey = frozenPhysicalSourceKey(generationKey);
 
     const rule =
       GalacticObjectScientificActionCatalogV1
@@ -125,7 +121,7 @@ export class GalacticObjectScientificActionEngine {
     const matchesScientificTarget =
       isGalacticObject
         ? this.matchesRuleTargetV1(
-            generationKey,
+            physicalKey,
             targetLocator,
             currentState,
             rule.surveyFamily,
@@ -344,21 +340,5 @@ function surveyFamilyForV1(
 
     default:
       return null;
-  }
-}
-
-function requireV1(
-  generationKey:
-    UniverseGenerationKey,
-): void {
-
-  if (
-    generationKey
-      .generatorVersion !==
-    GeneratorVersion.V1
-  ) {
-    throw new RangeError(
-      `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
-    );
   }
 }

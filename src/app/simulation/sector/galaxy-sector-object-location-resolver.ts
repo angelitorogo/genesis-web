@@ -15,6 +15,8 @@ import {
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+import { GeneratorVersion } from '../../domain/generation/generator-version';
+import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
 
 import {
   GalaxySectorKeyCodec,
@@ -96,17 +98,15 @@ export class GalaxySectorObjectLocationResolver {
       );
     }
 
-    switch (
-      generationKey
-        .generatorVersion
-        .name
-    ) {
-      case 'V1':
-        return resolveV1(
-          generationKey,
-          locator,
-        );
+    if (generationKey.generatorVersion === GeneratorVersion.V1) {
+      return resolveV1(generationKey, locator);
     }
+    if (generationKey.generatorVersion === GeneratorVersion.V2) {
+      // Galactic layout is frozen physically; the V1 key is PRIVATE and is
+      // never used to persist a discovery or generate a public V2 route.
+      return resolveV1(frozenPhysicalSourceKey(generationKey), locator);
+    }
+    throw new RangeError(`Unsupported GeneratorVersion: ${generationKey.generatorVersionCode}.`);
   }
 }
 

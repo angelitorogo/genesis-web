@@ -38,6 +38,9 @@
     <span class="seed-panel__normalized">
       {{ seed.normalizedSeed() }}
     </span>
+    <span class="seed-panel__label" data-testid="universe-active-version">
+      Generador activo: {{ seed.generatorVersion().name }}
+    </span>
   </div>
 
   <div class="seed-panel__actions">
@@ -56,7 +59,7 @@
       for="universe-seed-input"
       class="seed-panel__label"
     >
-      Introducir seed manualmente
+      Introducir seed manualmente (semilla nueva: V2; existente: versión guardada)
     </label>
 
     <input

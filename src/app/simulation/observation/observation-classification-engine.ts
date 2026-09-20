@@ -55,7 +55,8 @@ export class ObservationClassificationEngine {
       subject
         .generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+      GeneratorVersion.V1 ||
+      subject.generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return this
         .createUnclassifiedV1(

@@ -6,6 +6,7 @@ import {
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+import { GeneratorVersion } from '../../domain/generation/generator-version';
 
 import {
   InitialExplorationStateGenerator,
@@ -38,6 +39,14 @@ export class UniverseBootstrapService {
     generationKey:
       UniverseGenerationKey,
   ): Promise<UniverseBootstrapResult> {
+
+    // Both canonical versions can be created; unknown/forged versions are
+    // rejected BEFORE any repository writes. The storage key includes version.
+    if (!GeneratorVersion.isReleasedForNewUniverses(generationKey.generatorVersion)) {
+      throw new RangeError(
+        `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+      );
+    }
 
     const initialState =
       InitialExplorationStateGenerator

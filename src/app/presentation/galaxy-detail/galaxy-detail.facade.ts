@@ -393,12 +393,7 @@ export class GalaxyDetailFacade {
       }
 
       const generationKey =
-        resolveActiveGenerationKey(
-          this
-            .universeSeedFacade
-            .activeGenerationKey(),
-          universes,
-        );
+        this.universeSeedFacade.resolvePersistedUniverse(universes);
 
       if (
         generationKey ===
@@ -583,6 +578,10 @@ export class GalaxyDetailFacade {
             galaxyIndex,
           }),
         );
+
+      if (!this.universeSeedFacade.activeGenerationKey().equals(generationKey)) {
+        this.universeSeedFacade.activatePersistedUniverse(generationKey);
+      }
 
       this
         .stateSignal
@@ -1087,67 +1086,4 @@ function parseGalaxyIndex(
   }
 
   return parsed;
-}
-
-function resolveActiveGenerationKey(
-  selectedGenerationKey:
-    UniverseGenerationKey,
-
-  persistedUniverses:
-    readonly UniverseGenerationKey[],
-): UniverseGenerationKey | null {
-
-  const selected =
-    persistedUniverses
-      .find(
-        (
-          candidate,
-        ) =>
-          sameGenerationKey(
-            candidate,
-            selectedGenerationKey,
-          ),
-      );
-
-  if (
-    selected !==
-    undefined
-  ) {
-    return selected;
-  }
-
-  if (
-    persistedUniverses.length ===
-    1
-  ) {
-    return persistedUniverses[
-      0
-    ];
-  }
-
-  return null;
-}
-
-function sameGenerationKey(
-  left:
-    UniverseGenerationKey,
-
-  right:
-    UniverseGenerationKey,
-): boolean {
-
-  return (
-    left
-      .generatorVersion
-      .code ===
-      right
-        .generatorVersion
-        .code &&
-    left
-      .universeSeed
-      .serialize() ===
-      right
-        .universeSeed
-        .serialize()
-  );
 }

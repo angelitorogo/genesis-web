@@ -89,6 +89,7 @@ import {
 import {
   ProtoplanetaryDiskAnalysisEngine,
 } from '../../simulation/planetary/protoplanetary-disk-analysis-engine';
+import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
 
 import {
   ObservationInstrumentCapabilityCatalogV1,
@@ -141,6 +142,7 @@ import {
   ArchiveStellarSystemCardAssembler,
   type ArchiveStellarSystemCardModel,
 } from './archive-stellar-system-card';
+import { ArchiveV2StellarSystemCardAssembler } from './archive-v2-stellar-system-card';
 
 const SIGNED_LONG_MIN =
   -(1n << 63n);
@@ -986,9 +988,7 @@ export class ArchiveDiscoveryDetailFacade {
       const generationKey =
         resolveGenerationKey(
           parsed,
-          this
-            .universeSeedFacade
-            .activeGenerationKey(),
+          this.universeSeedFacade.resolvePersistedUniverse(universes),
           universes,
         );
 
@@ -1115,12 +1115,9 @@ export class ArchiveDiscoveryDetailFacade {
       const stellarSystemCard =
         locator instanceof
           SystemLocator
-          ? ArchiveStellarSystemCardAssembler
-              .build(
-                generationKey,
-                locator,
-                discoveryState,
-              )
+          ? generationKey.generatorVersion.code === 2
+            ? ArchiveV2StellarSystemCardAssembler.build(generationKey, locator, discoveryState)
+            : ArchiveStellarSystemCardAssembler.build(generationKey, locator, discoveryState)
           : null;
 
       const scientificAction =
@@ -1142,11 +1139,18 @@ export class ArchiveDiscoveryDetailFacade {
         discoveryState.code >=
           DiscoveryState.CONFIRMED.code
           ? buildProtoplanetaryDiskAnalysisModel(
-              ProtoplanetaryDiskAnalysisEngine
-                .analyzeOrNull(
-                  generationKey,
-                  locator,
-                ),
+              // The V2 multiple's A/B/C/P disk populations do not have one
+              // authoritative parent disk. Never display the V1 parent disk
+              // as a physical property of the complete multihost system.
+              generationKey.generatorVersion.code === 2 &&
+              stellarSystemCard?.render.multiplicity?.name !== 'SINGLE'
+                ? null
+                : ProtoplanetaryDiskAnalysisEngine.analyzeOrNull(
+                    generationKey.generatorVersion.code === 2
+                      ? multihostPhysicalSourceKey(generationKey)
+                      : generationKey,
+                    locator,
+                  ),
             )
           : null;
 
@@ -2619,7 +2623,7 @@ function resolveGenerationKey(
     ParsedArchiveDiscoveryDetailRequest,
 
   selectedGenerationKey:
-    UniverseGenerationKey,
+    UniverseGenerationKey | null,
 
   persistedUniverses:
     readonly UniverseGenerationKey[],
@@ -2674,7 +2678,7 @@ function resolveGenerationKey(
         (
           candidate,
         ) =>
-          sameGenerationKey(
+          selectedGenerationKey !== null && sameGenerationKey(
             candidate,
             selectedGenerationKey,
           ),

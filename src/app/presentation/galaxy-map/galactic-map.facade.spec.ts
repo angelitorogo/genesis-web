@@ -58,7 +58,24 @@ import {
 
 import {
   DEFAULT_UNIVERSE_SEED,
+  UniverseSeedFacade,
 } from '../universe/universe-seed.facade';
+
+import {
+  GalaxySectorGridGenerator,
+} from '../../simulation/sector/galaxy-sector-grid-generator';
+
+import {
+  GalaxyGenerator,
+} from '../../simulation/universe/galaxy-generator';
+
+import {
+  GalaxyVisualStructureGenerator,
+} from '../../simulation/universe/galaxy-visual-structure-generator';
+
+import {
+  buildGalacticMapEnvironmentalLayers,
+} from './galactic-map-environmental-layers';
 
 import {
   GalacticMapDiscoveryMarkerKind,
@@ -286,6 +303,52 @@ describe(
         GalacticMapFacade,
       );
     }
+
+    it(
+      'should assemble a newly persisted V2 galaxy map with V2 coverage and cartographic GHZ identity',
+      async () => {
+        const v2Key = new UniverseGenerationKey(
+          UniverseSeed.parse(DEFAULT_UNIVERSE_SEED),
+          GeneratorVersion.V2,
+        );
+        const facade = configure(repositories([v2Key]));
+        TestBed.inject(UniverseSeedFacade).activatePersistedUniverse(v2Key);
+
+        await facade.refresh();
+
+        expect(facade.state().kind).toBe('content');
+        const model = facade.model();
+        expect(model?.generationKey).toBe(v2Key);
+        expect(model?.visualStructure).not.toBeNull();
+        expect(model?.hasDetailedScene).toBe(true);
+        expect(model?.explorationCoverage?.generationKey).toBe(v2Key);
+        expect(model?.environmentalLayers?.generationKey).toBe(v2Key);
+
+        // The default seed is not guaranteed to contain a FAVORED or
+        // HIGH_POTENTIAL radial band. Do not fabricate a GHZ to make a
+        // cartographic test pass: V2 must reproduce the frozen V1 physical
+        // projection while retaining its own public generation identity.
+        const physicalGalaxy = GalaxyGenerator.generate(generationKey, 0n);
+        const expectedPhysicalLayers = buildGalacticMapEnvironmentalLayers(
+          physicalGalaxy,
+          GalaxySectorGridGenerator.generate(physicalGalaxy),
+          GalaxyVisualStructureGenerator.generate(physicalGalaxy),
+        );
+
+        expect(model?.environmentalLayers?.habitabilityRings).toEqual(
+          expectedPhysicalLayers.habitabilityRings,
+        );
+        expect(model?.environmentalLayers?.hasHabitableZone).toBe(
+          expectedPhysicalLayers.hasHabitableZone,
+        );
+        expect(model?.environmentalLayers?.habitabilityModelStatus).toBe(
+          expectedPhysicalLayers.habitabilityModelStatus,
+        );
+        expect(model?.environmentalLayers?.radialSampleCount).toBe(
+          expectedPhysicalLayers.radialSampleCount,
+        );
+      },
+    );
 
     it(
       'should reuse one persisted discovery snapshot for 10.3 sector coverage and 10.4 persistent markers and 10.5 thematic/environmental layers',

@@ -485,9 +485,26 @@ export class PlanetScientificTargetResolver {
           planet,
         );
 
+    return this.projectGenerated(target.identity, planet, atmosphere, moonSystem);
+  }
+
+  /**
+   * Shared scientific projection of an ALREADY materialized body. Neither the
+   * multihost adapter nor this boundary regenerate physical properties.
+   * The caller supplies a public identity whose locator can differ from the
+   * private source planet locator; the source entities are never exposed.
+   */
+  static projectGenerated(
+    identity: PlanetScientificIdentitySource,
+    planet: ReturnType<typeof PlanetGenerator.generate>,
+    atmosphere: ReturnType<typeof AtmosphereGenerator.generate>,
+    moonSystem: ReturnType<typeof MoonGenerator.generate>,
+  ): PlanetScientificResolvedTarget {
+    if (atmosphere.hostPlanet !== planet || moonSystem.hostPlanet !== planet) {
+      throw new Error('Scientific projection must receive one consistent generated planet.');
+    }
     return Object.freeze({
-      identity:
-        target.identity,
+      identity,
       detail:
         Object.freeze({
           general:

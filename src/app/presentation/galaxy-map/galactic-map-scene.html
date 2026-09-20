@@ -52,10 +52,27 @@
     aria-label="Representación tridimensional interactiva de la galaxia activa"
     (pointerdown)="onCanvasPointerDown($event)"
     (pointermove)="onCanvasPointerMove($event)"
+    (pointerleave)="onCanvasPointerLeave()"
     (pointerup)="onCanvasPointerUp($event)"
     (pointercancel)="onCanvasPointerCancel($event)"
     (contextmenu)="onCanvasContextMenu($event)"
   ></canvas>
+
+  @if (sectorPreview(); as preview) {
+    <div class="galactic-map-scene__preview-status"
+      data-testid="galactic-map-sector-block-preview" aria-live="polite"
+      [attr.data-preview-valid]="preview.valid"
+      [attr.data-preview-size]="preview.size"
+      [attr.data-preview-pending]="preview.pending"
+      [attr.data-preview-skipped]="preview.skipped">
+      <strong>{{ preview.size }}×{{ preview.size }} · {{ preview.total }} sectores</strong>
+      @if (preview.valid) {
+        <span>{{ preview.pending }} por explorar · {{ preview.skipped }} ya explorados</span>
+      } @else {
+        <span>Fuera de los límites · mueve el cursor hacia el interior</span>
+      }
+    </div>
+  }
 
   <div
     class="galactic-map-scene__vignette"
@@ -429,13 +446,15 @@
           materializar Ground Truth oculto antes de resolverlo.
         </p>
 
+      }
+      @if (!selectedSector.explored || blockSize > 1) {
         <button
           type="button"
           class="galactic-map-scene__marker-link galactic-map-scene__marker-link--button"
           data-testid="galactic-map-explore-sector-link"
           (click)="requestSectorExploration(selectedSector)"
         >
-          Explorar este sector
+          {{ blockSize > 1 ? 'Explorar bloque ' + blockSize + '×' + blockSize : 'Explorar este sector' }}
           <span aria-hidden="true">→</span>
         </button>
       }

@@ -240,6 +240,12 @@ export const genesisRoutes: Routes = [
     title: 'Estadísticas | GENESIS',
   },
   {
+    path: 'codes',
+    loadComponent: () =>
+      import('./presentation/codes/codes').then((module) => module.CodesPage),
+    title: 'Códigos | GENESIS',
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import(

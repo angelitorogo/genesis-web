@@ -167,12 +167,28 @@
           </section>
 
           @if (model.hasDetailedScene) {
+            @if (model.generationKey.generatorVersionCode === 2 && maxBlockSize() > 1) {
+              <section class="galactic-map__block-controls" data-testid="galactic-map-block-controls"
+                aria-label="Mejoras de exploración por bloques">
+                <strong>Exploración por bloques</strong>
+                <p>Selecciona el tamaño y pulsa sobre un sector del mapa. El sector seleccionado es el inicio del bloque (X..X+N−1, Y..Y+N−1). No se vuelven a recompensar sectores explorados.</p>
+                <div class="galactic-map__block-options" role="group" aria-label="Tamaño del bloque">
+                  @for (size of blockSizes(); track size) {
+                    <button type="button" [attr.data-testid]="'galactic-map-block-size-' + size"
+                      [attr.aria-pressed]="selectedBlockSize() === size"
+                      [disabled]="facade.inlineExplorationPending()"
+                      (click)="setBlockSize(size)">{{ size }}×{{ size }}</button>
+                  }
+                </div>
+              </section>
+            }
             <section
               class="galactic-map__viewport"
               aria-label="Escena galáctica Three.js interactiva"
             >
               <app-galactic-map-scene
                 [model]="model"
+                [blockSize]="selectedBlockSize()"
                 (sectorExplore)="exploreSector($event)"
               ></app-galactic-map-scene>
 
@@ -218,6 +234,7 @@
           @if (
             facade.inlineExplorationPending() ||
             facade.inlineExplorationResult() !== null ||
+            facade.blockProgress() !== null ||
             facade.inlineExplorationErrorMessage()
           ) {
             <div
@@ -305,6 +322,19 @@
                     <strong>
                       Guardando conocimiento observado…
                     </strong>
+                  </section>
+                }
+
+                @if (facade.blockProgress(); as block) {
+                  <section class="galactic-map__inline-progress" data-testid="galactic-map-block-progress" aria-live="polite">
+                    <p class="galactic-map__meta">EXPLORACIÓN {{ block.size }}×{{ block.size }}</p>
+                    <h2 id="galactic-map-inline-title">{{ facade.inlineExplorationPending() ? 'Explorando bloque…' : 'Bloque procesado' }}</h2>
+                    <dl class="galactic-map__inline-facts">
+                      <div><dt>Sectores registrados</dt><dd data-testid="galactic-map-block-processed">{{ block.processed }}</dd></div>
+                      <div><dt>Ya explorados</dt><dd data-testid="galactic-map-block-skipped">{{ block.skipped }}</dd></div>
+                      <div><dt>Total del bloque</dt><dd>{{ block.total }}</dd></div>
+                      <div><dt>PD obtenidos</dt><dd data-testid="galactic-map-block-points">+{{ block.awarded }} PD</dd></div>
+                    </dl>
                   </section>
                 }
 

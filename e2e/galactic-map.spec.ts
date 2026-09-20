@@ -1733,12 +1733,14 @@ test.describe(
           '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
         );
 
+        // Settings creates this fresh universe with V2, so the legacy
+        // route parameter must identify V2 rather than the old V1 default.
         expect(
           markerUrl.searchParams.get(
             'version',
           ),
         ).toBe(
-          '1',
+          '2',
         );
 
         const relativePosition =
@@ -1858,7 +1860,7 @@ test.describe(
         await expect(
           page,
         ).toHaveURL(
-          /\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+\?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5&version=1$/,
+          /\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+\?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5&version=2$/,
         );
 
         await expect(

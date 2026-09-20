@@ -1,3 +1,5 @@
+import { v2CometPresentationDay } from './system-scene-v2-minor-cadence';
+
 export type SystemSceneCometPeriodRegimeV1 =
   | 'SHORT_PERIOD'
   | 'LONG_PERIOD';
@@ -27,6 +29,8 @@ export interface SystemSceneCometPresentationInputV1 {
   readonly orbitalPeriodYears: number;
   readonly epochMeanAnomalyDegrees: number;
   readonly presentationTimeScale: number;
+  /** Optional V2 renderer-only clock: must match the body motion contribution. */
+  readonly presentationCometPhaseWarp?: number;
 }
 
 export interface SystemSceneCometPresentationV1 {
@@ -49,6 +53,7 @@ export interface SystemSceneCometPresentationV1 {
   readonly orbitalPeriodYears: number;
   readonly epochMeanAnomalyDegrees: number;
   readonly presentationTimeScale: number;
+  readonly presentationCometPhaseWarp?: number;
   readonly shapeSeedUint32: number;
   readonly presentationNucleusColorHex: string;
   readonly presentationComaColorHex: string;
@@ -179,6 +184,8 @@ export function buildSystemSceneCometPresentationV1(
     orbitalPeriodYears: input.orbitalPeriodYears,
     epochMeanAnomalyDegrees: input.epochMeanAnomalyDegrees,
     presentationTimeScale: input.presentationTimeScale,
+    ...(input.presentationCometPhaseWarp === undefined ? {} :
+      { presentationCometPhaseWarp: input.presentationCometPhaseWarp }),
     shapeSeedUint32,
     presentationNucleusColorHex: rgbToHex(nucleusColor),
     presentationComaColorHex: rgbToHex(comaColor),
@@ -217,7 +224,11 @@ export function systemSceneCometActivityAtSimulationDayV1(
       eccentricity: comet.eccentricity,
       periodDays: comet.orbitalPeriodYears * DAYS_PER_YEAR,
       epochMeanAnomalyDegrees: comet.epochMeanAnomalyDegrees,
-      simulationDay: simulationDay * comet.presentationTimeScale,
+      simulationDay: comet.presentationCometPhaseWarp === undefined
+        ? simulationDay * comet.presentationTimeScale
+        : v2CometPresentationDay(simulationDay * comet.presentationTimeScale,
+            comet.orbitalPeriodYears * DAYS_PER_YEAR, comet.eccentricity,
+            comet.epochMeanAnomalyDegrees, comet.presentationCometPhaseWarp),
     });
 
   return systemSceneCometActivityAtDistanceV1(
@@ -487,6 +498,12 @@ function validateInput(
     if (!Number.isFinite(value) || value <= 0) {
       throw new RangeError(`${name} must be positive and finite.`);
     }
+  }
+
+  if (input.presentationCometPhaseWarp !== undefined &&
+      (!Number.isFinite(input.presentationCometPhaseWarp) ||
+        input.presentationCometPhaseWarp < 0 || input.presentationCometPhaseWarp > 0.6)) {
+    throw new RangeError('Comet phase warp must be finite in [0, 0.6].');
   }
 
   for (const [name, value] of [

@@ -12,6 +12,7 @@ import {
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+import { GeneratorVersion } from '../../domain/generation/generator-version';
 
 import {
   type GenesisSeed,
@@ -36,19 +37,20 @@ export const ProceduralTargetResolver =
         | MoonLocator,
     ): GenesisSeed {
 
-      switch (
-        generationKey
-          .generatorVersion
-          .name
-      ) {
-        case 'V1':
-          return resolveV1(
-            generationKey
-              .universeSeed,
-
-            locator,
-          );
+      if (generationKey.generatorVersion === GeneratorVersion.V1) {
+        return resolveV1(generationKey.universeSeed, locator);
       }
+      if (generationKey.generatorVersion === GeneratorVersion.V2) {
+        // V2 inherits the frozen galactic distribution and parent-system seed.
+        // A V2 BODY/MOON ordinal is a PUBLIC multihost catalog index, NOT the
+        // private V1 body ordinal; do not expose a fabricated V1 identity here.
+        if (locator instanceof BodyLocator || locator instanceof MoonLocator ||
+            locator instanceof CivilizationLocator) {
+          throw new RangeError('V2 public body/moon/civilization seed resolution requires the stage-13 multihost public index.');
+        }
+        return resolveV1(generationKey.universeSeed, locator);
+      }
+      throw new RangeError(`Unsupported GeneratorVersion: ${generationKey.generatorVersionCode}.`);
     },
   });
 

@@ -6,10 +6,6 @@ import {
 } from '@angular/core';
 
 import {
-  type UniverseGenerationKey,
-} from '../../domain/generation/universe-generation-key';
-
-import {
   UniverseSeedFacade,
 } from '../universe/universe-seed.facade';
 
@@ -153,12 +149,7 @@ export class HomeFacade {
       }
 
       const activeGenerationKey =
-        resolveActiveGenerationKey(
-          this
-            .universeSeedFacade
-            .activeGenerationKey(),
-          universes,
-        );
+        this.universeSeedFacade.resolvePersistedUniverse(universes);
 
       if (
         activeGenerationKey ===
@@ -212,6 +203,12 @@ export class HomeFacade {
         return;
       }
 
+      // The persisted key, not the hard-coded default seed/version, is the
+      // active session whenever a unique saved universe is recoverable.
+      if (!this.universeSeedFacade.activeGenerationKey().equals(activeGenerationKey)) {
+        this.universeSeedFacade.activatePersistedUniverse(activeGenerationKey);
+      }
+
       const dashboard =
         HomeDashboardAssembler
           .assemble(
@@ -258,67 +255,4 @@ export class HomeFacade {
         });
     }
   }
-}
-
-function resolveActiveGenerationKey(
-  selectedGenerationKey:
-    UniverseGenerationKey,
-
-  persistedUniverses:
-    readonly UniverseGenerationKey[],
-): UniverseGenerationKey | null {
-
-  const selected =
-    persistedUniverses
-      .find(
-        (
-          candidate,
-        ) =>
-          sameGenerationKey(
-            candidate,
-            selectedGenerationKey,
-          ),
-      );
-
-  if (
-    selected !==
-    undefined
-  ) {
-    return selected;
-  }
-
-  if (
-    persistedUniverses.length ===
-    1
-  ) {
-    return persistedUniverses[
-      0
-    ];
-  }
-
-  return null;
-}
-
-function sameGenerationKey(
-  left:
-    UniverseGenerationKey,
-
-  right:
-    UniverseGenerationKey,
-): boolean {
-
-  return (
-    left
-      .generatorVersion
-      .code ===
-      right
-        .generatorVersion
-        .code &&
-    left
-      .universeSeed
-      .serialize() ===
-      right
-        .universeSeed
-        .serialize()
-  );
 }

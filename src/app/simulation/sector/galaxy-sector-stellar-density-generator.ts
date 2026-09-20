@@ -92,7 +92,8 @@ export class GalaxySectorStellarDensityGenerator {
       galaxy
         .generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+      GeneratorVersion.V1 ||
+      galaxy.generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return this.generateV1(
         galaxy,

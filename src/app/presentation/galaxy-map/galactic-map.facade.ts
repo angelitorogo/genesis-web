@@ -110,6 +110,8 @@ import {
 import {
   type GalacticMapSectorSelection,
 } from './galactic-map-sector-selection';
+import { planGalacticMapSectorBlock } from './galactic-map-sector-block';
+import { CODES_REDEMPTION_RUNTIME } from '../codes/codes-redemption.runtime';
 
 /**
  * Galactic-map application facade. Read-side map assembly remains the frozen
@@ -126,6 +128,14 @@ import {
  * SYSTEM, NEBULA, STAR_CLUSTER and EXTREME_OBJECT. This taxonomy remains
  * separate from formal scientific classification.
  */
+export interface GalacticMapBlockProgress {
+  readonly size: number;
+  readonly total: number;
+  readonly skipped: number;
+  readonly processed: number;
+  readonly awarded: number;
+}
+
 @Injectable({
   providedIn:
     'root',
@@ -141,6 +151,11 @@ export class GalacticMapFacade {
     inject(
       UniverseSeedFacade,
     );
+
+  private readonly codes = inject(CODES_REDEMPTION_RUNTIME);
+
+  private readonly blockProgressSignal = signal<GalacticMapBlockProgress | null>(null);
+  readonly blockProgress = this.blockProgressSignal.asReadonly();
 
   private readonly explorationProgressRuntime =
     inject(
@@ -281,12 +296,7 @@ export class GalacticMapFacade {
       }
 
       const generationKey =
-        resolveActiveGenerationKey(
-          this
-            .universeSeedFacade
-            .activeGenerationKey(),
-          universes,
-        );
+        this.universeSeedFacade.resolvePersistedUniverse(universes);
 
       if (
         generationKey ===
@@ -437,6 +447,10 @@ export class GalacticMapFacade {
         return;
       }
 
+      if (!this.universeSeedFacade.activeGenerationKey().equals(generationKey)) {
+        this.universeSeedFacade.activatePersistedUniverse(generationKey);
+      }
+
       this
         .stateSignal
         .set({
@@ -494,6 +508,9 @@ export class GalacticMapFacade {
     selection:
       GalacticMapSectorSelection,
   ): Promise<void> {
+
+    if (this.inlineExplorationPending()) return;
+    this.blockProgressSignal.set(null);
 
     const explorationId =
       ++this
@@ -644,6 +661,74 @@ export class GalacticMapFacade {
     }
   }
 
+  /** Sequentially commits canonical 9.3 → 9.4 → 9.5 scans; every sector is atomic.
+   * A failure leaves already committed sectors visible, with no false all-or-nothing claim.
+   */
+  async exploreBlock(selection: GalacticMapSectorSelection, size: number): Promise<void> {
+    if (size === 1) return this.exploreSector(selection);
+    if (this.inlineExplorationPending()) return;
+    const explorationId = ++this.inlineExplorationSequence;
+    this.inlineExplorationResultSignal.set(null);
+    this.inlineExplorationProgressSignal.set(null);
+    this.inlineExplorationErrorSignal.set('');
+    this.blockProgressSignal.set(null);
+    const model = this.model();
+    if (model === null || model.explorationCoverage === null) {
+      this.inlineExplorationErrorSignal.set('No hay una galaxia descubierta activa para explorar.');
+      return;
+    }
+    this.inlineExplorationPendingSignal.set(true);
+    let committed = 0;
+    let awarded = 0;
+    try {
+      // A forged UI value never grants a non-redeemed upgrade.
+      const unlocked = await this.codes.getMaxSectorBlockSize(model.generationKey);
+      if (model.generationKey.generatorVersionCode !== 2 || size > unlocked) {
+        throw new Error('Este tamaño de exploración no está desbloqueado para el universo V2 activo.');
+      }
+      const coverage = model.explorationCoverage;
+      const plan = planGalacticMapSectorBlock(
+        coverage.grid, selection, size, coverage.exploredSectors,
+      );
+      this.blockProgressSignal.set({ size, total: plan.total, skipped: plan.skipped, processed: 0, awarded: 0 });
+      for (const coordinates of plan.pending) {
+        // Prevent applying the remainder to an unrelated active galaxy/universe.
+        const current = this.model();
+        if (current === null || !current.generationKey.equals(model.generationKey) ||
+            current.galaxyIndex !== model.galaxyIndex) {
+          throw new Error('Ha cambiado el universo activo. El bloque se ha detenido.');
+        }
+        const prepared = ExplorationSectorScanEngine.prepareSector(
+          model.generationKey, model.galaxyIndex, coordinates.x, coordinates.y,
+        );
+        const result = ExplorationSectorResultEngine.resolve(
+          ExplorationSectorScanEngine.scan(prepared),
+        );
+        // Existing runtime owns one transaction per sector and suppresses duplicate rewards.
+        const progress = await this.explorationProgressRuntime.commitResolvedResult(result);
+        committed++;
+        awarded += progress.awardedDiscoveryPoints;
+        this.blockProgressSignal.set({
+          size, total: plan.total, skipped: plan.skipped,
+          processed: committed, awarded,
+        });
+      }
+    } catch (error) {
+      this.inlineExplorationErrorSignal.set(
+        `${error instanceof Error ? error.message : 'No se pudo explorar el bloque.'} ` +
+        `Sectores registrados antes del error: ${committed}.`,
+      );
+    } finally {
+      if (committed > 0 && explorationId === this.inlineExplorationSequence) {
+        // One refresh only, after the serial batch: no repeated Three.js scene recreation.
+        await this.refresh(true);
+      }
+      if (explorationId === this.inlineExplorationSequence) {
+        this.inlineExplorationPendingSignal.set(false);
+      }
+    }
+  }
+
   clearInlineExploration():
     void {
 
@@ -655,6 +740,8 @@ export class GalacticMapFacade {
 
     ++this
       .inlineExplorationSequence;
+
+    this.blockProgressSignal.set(null);
 
     this
       .inlineExplorationResultSignal
@@ -815,67 +902,4 @@ export class GalacticMapFacade {
       markers,
     );
   }
-}
-
-function resolveActiveGenerationKey(
-  selectedGenerationKey:
-    UniverseGenerationKey,
-
-  persistedUniverses:
-    readonly UniverseGenerationKey[],
-): UniverseGenerationKey | null {
-
-  const selected =
-    persistedUniverses
-      .find(
-        (
-          candidate,
-        ) =>
-          sameGenerationKey(
-            candidate,
-            selectedGenerationKey,
-          ),
-      );
-
-  if (
-    selected !==
-    undefined
-  ) {
-    return selected;
-  }
-
-  if (
-    persistedUniverses.length ===
-    1
-  ) {
-    return persistedUniverses[
-      0
-    ];
-  }
-
-  return null;
-}
-
-function sameGenerationKey(
-  left:
-    UniverseGenerationKey,
-
-  right:
-    UniverseGenerationKey,
-): boolean {
-
-  return (
-    left
-      .generatorVersion
-      .code ===
-      right
-        .generatorVersion
-        .code &&
-    left
-      .universeSeed
-      .serialize() ===
-      right
-        .universeSeed
-        .serialize()
-  );
 }

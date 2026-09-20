@@ -907,6 +907,79 @@ describe(
     );
 
     it(
+      'should evaluate V2 instrument unlocks with the frozen V1 rules without mixing universe identities',
+      () => {
+        const v2Key =
+          new UniverseGenerationKey(
+            canonicalSeed.copy(),
+            GeneratorVersion.V2,
+          );
+
+        const v1Known =
+          milestoneDiscoveries(true);
+
+        const v2Known =
+          v1Known.map(
+            discovery =>
+              new KnownDiscovery(
+                v2Key,
+                discovery.locator,
+                discovery.state,
+              ),
+          );
+
+        const v1Overview =
+          ObservationInstrumentProgressionEngine.evaluate(
+            canonicalGenerationKey,
+            10_000n,
+            v1Known,
+          );
+
+        const v2Overview =
+          ObservationInstrumentProgressionEngine.evaluate(
+            v2Key,
+            10_000n,
+            v2Known,
+          );
+
+        expect(v2Overview.achievedMilestones).toEqual(
+          v1Overview.achievedMilestones,
+        );
+        expect(v2Overview.statuses).toEqual(
+          v1Overview.statuses,
+        );
+
+        expect(() =>
+          ObservationInstrumentProgressionEngine.evaluate(
+            v2Key,
+            10_000n,
+            v1Known,
+          ),
+        ).toThrow(/cannot mix discoveries/);
+
+        const otherV2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B2',
+            ),
+            GeneratorVersion.V2,
+          );
+
+        expect(() =>
+          ObservationInstrumentProgressionEngine.evaluate(
+            v2Key,
+            10_000n,
+            [new KnownDiscovery(
+              otherV2,
+              new GalaxyLocator(1n),
+              DiscoveryState.DETECTED,
+            )],
+          ),
+        ).toThrow(/cannot mix discoveries/);
+      },
+    );
+
+    it(
       'should remain deterministic query-order independent seed-independent and safe at signed Long maximum while rejecting invalid inputs',
       () => {
         const discoveries =

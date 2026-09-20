@@ -403,6 +403,27 @@ export class GalacticMapCameraController {
     });
   }
 
+  /** Restore an inspected viewpoint without replacing the default saved by OrbitControls. */
+  restoreView(state: GalacticMapCameraState): void {
+    this.suppressControlsChange = true;
+    try {
+      const target = new THREE.Vector3(state.targetX, state.targetY, state.targetZ);
+      this.controls.target.copy(target);
+      this.camera.position.copy(target).add(
+        new THREE.Vector3().setFromSphericalCoords(
+          state.distance, state.polarRadians, state.azimuthRadians,
+        ),
+      );
+      this.controls.enableRotate = state.rotationEnabled;
+      this.camera.lookAt(target);
+      this.controls.update();
+      this.camera.updateMatrixWorld(true);
+    } finally {
+      this.suppressControlsChange = false;
+    }
+    this.onChange();
+  }
+
   setRotationEnabled(
     enabled:
       boolean,

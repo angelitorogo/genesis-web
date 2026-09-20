@@ -43,7 +43,9 @@ const SIGNED_LONG_MAX =
   9_223_372_036_854_775_807n;
 
 /**
- * Pure V1 progression evaluator for observation-instrument accessibility.
+ * Pure progression evaluator for observation-instrument accessibility.
+ * V2 deliberately reuses the frozen V1 unlock catalog and thresholds;
+ * the supplied V2 discoveries must belong to the exact same universe.
  *
  * Unlocks are derived exclusively from:
  * - accumulated global Discovery Points;
@@ -71,6 +73,32 @@ export class ObservationInstrumentProgressionEngine {
         .generatorVersion ===
       GeneratorVersion.V1
     ) {
+      return this.evaluateV1(
+        globalDiscoveryPoints,
+        knownDiscoveries,
+      );
+    }
+
+    if (
+      generationKey
+        .generatorVersion ===
+      GeneratorVersion.V2
+    ) {
+      // Do not unlock V2 instruments using persisted milestones from V1,
+      // another V2 seed or an accidentally mixed discovery list.
+      if (
+        knownDiscoveries.some(
+          discovery =>
+            !discovery.generationKey.equals(generationKey),
+        )
+      ) {
+        throw new RangeError(
+          'V2 instrument progression cannot mix discoveries from another universe.',
+        );
+      }
+
+      // Stage 13.1 inherits the existing instrument economy; it must not
+      // silently invent different V2 thresholds or mutate persisted PD.
       return this.evaluateV1(
         globalDiscoveryPoints,
         knownDiscoveries,

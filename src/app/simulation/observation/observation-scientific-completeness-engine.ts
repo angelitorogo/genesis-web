@@ -58,7 +58,8 @@ export class ObservationScientificCompletenessEngine {
     if (
       generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+      GeneratorVersion.V1 ||
+      generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return this.evaluateV1(
         generationKey,

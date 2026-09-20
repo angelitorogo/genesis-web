@@ -213,6 +213,10 @@ describe(
           ),
         ).toBeTruthy();
 
+        expect(element.querySelector(
+          '[data-testid="system-scene-lab-orbit-lines"]',
+        )).toBeTruthy();
+
         expect(
           element.querySelector(
             '[data-testid="system-page-system-title"]',

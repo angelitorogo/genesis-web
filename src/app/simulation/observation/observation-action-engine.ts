@@ -57,7 +57,8 @@ export class ObservationActionEngine {
     if (
       generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+      GeneratorVersion.V1 ||
+      generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return this.availabilityV1(
         observationSession,
@@ -91,7 +92,8 @@ export class ObservationActionEngine {
     if (
       generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+      GeneratorVersion.V1 ||
+      generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return Object.freeze(
         ObservationActionCatalogV1

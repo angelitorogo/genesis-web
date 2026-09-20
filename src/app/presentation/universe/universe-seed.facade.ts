@@ -1,3 +1,4 @@
+import { resolveSavedUniverse, readSavedUniverseRef, saveUniverseRef } from './active-universe-selection';
 import {
   computed,
   Injectable,
@@ -37,6 +38,8 @@ export interface UniverseSeedFeedback {
     'root',
 })
 export class UniverseSeedFacade {
+  private explicitlySelected = false;
+
   private readonly activeGenerationKeyState =
     signal(
       new UniverseGenerationKey(
@@ -142,7 +145,7 @@ export class UniverseSeedFacade {
     });
   }
 
-  applyDraft():
+  applyDraft(version: GeneratorVersion = this.activeGenerationKeyState().generatorVersion):
     boolean {
 
     const candidate =
@@ -171,19 +174,12 @@ export class UniverseSeedFacade {
         candidate,
       );
 
-    const currentVersion =
-      this
-        .activeGenerationKeyState()
-        .generatorVersion;
+    if (!GeneratorVersion.isReleasedForNewUniverses(version)) {
+      throw new RangeError(`Unsupported GeneratorVersion: ${version.code}.`);
+    }
 
-    this
-      .activeGenerationKeyState
-      .set(
-        new UniverseGenerationKey(
-          seed,
-          currentVersion,
-        ),
-      );
+    this.activeGenerationKeyState.set(new UniverseGenerationKey(seed, version));
+    this.explicitlySelected = true;
 
     this.draftState.set(
       seed.serialize(),
@@ -200,8 +196,32 @@ export class UniverseSeedFacade {
     return true;
   }
 
+  /** Resolve only a key actually present in IndexedDB; never bootstrap from a saved ref. */
+  resolvePersistedUniverse(universes: readonly UniverseGenerationKey[]): UniverseGenerationKey | null {
+    return resolveSavedUniverse(
+      universes,
+      this.activeGenerationKeyState(),
+      this.explicitlySelected,
+      this.explicitlySelected ? null : readSavedUniverseRef(),
+    );
+  }
+
+  /** Write the selection only AFTER bootstrap has completed successfully. */
+  private rememberSuccessfulSelection(): void {
+    this.explicitlySelected = true;
+    saveUniverseRef(this.activeGenerationKeyState());
+  }
+
+  /** Only call with an already persisted key (or to roll back a failed bootstrap). */
+  activatePersistedUniverse(key: UniverseGenerationKey): void {
+    this.activeGenerationKeyState.set(key);
+    this.draftState.set(key.universeSeed.serialize());
+    this.explicitlySelected = true;
+  }
+
   markUniverseCreated():
     void {
+    this.rememberSuccessfulSelection();
 
     this.feedbackState.set({
       kind:
@@ -214,6 +234,7 @@ export class UniverseSeedFacade {
 
   markUniverseActivated():
     void {
+    this.rememberSuccessfulSelection();
 
     this.feedbackState.set({
       kind:

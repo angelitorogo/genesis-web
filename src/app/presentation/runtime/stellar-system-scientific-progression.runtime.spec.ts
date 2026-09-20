@@ -256,6 +256,55 @@ describe(
     );
 
     it(
+      'should open an already detected V2 system in the scientific archive without inventing a visit or borrowing V1 points',
+      async () => {
+        const v2Key =
+          new UniverseGenerationKey(
+            generationKey.universeSeed.copy(),
+            GeneratorVersion.V2,
+          );
+
+        await universeRepository.createIfAbsent(v2Key);
+        await discoveryRepository.setState(
+          v2Key,
+          locator,
+          DiscoveryState.DETECTED,
+        );
+        await pointsRepository.setGlobalDiscoveryPoints(v2Key, 0n);
+        await pointsRepository.setGalaxyDiscoveryPoints(v2Key, 0n, 0n);
+
+        // This is the exact Archive page entry for a detected SYSTEM.
+        const opened = await runtime.recordEntry(
+          v2Key,
+          locator,
+          DiscoveredToVisitedEntryKind.DETAILED_CARD,
+        );
+
+        expect(opened.stateBefore).toBe(DiscoveryState.DETECTED);
+        expect(opened.stateAfter).toBe(DiscoveryState.DETECTED);
+        expect(opened.awardedDiscoveryPoints).toBe(0);
+        expect(opened.snapshot.discoveryState).toBe(DiscoveryState.DETECTED);
+        expect(opened.snapshot.evidence).toHaveLength(0);
+        expect(opened.snapshot.rules).toHaveLength(3);
+        expect(opened.snapshot.globalDiscoveryPoints).toBe(0n);
+        expect(opened.snapshot.galaxyDiscoveryPoints).toBe(0n);
+        expect(await discoveryRepository.getState(v2Key, locator))
+          .toBe(DiscoveryState.DETECTED);
+        expect(await pointsRepository.getGlobalDiscoveryPoints(v2Key)).toBe(0n);
+        expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey))
+          .toBe(10_000n);
+        expect(await discoveryRepository.getKnownDiscoveries(v2Key))
+          .toEqual([
+            expect.objectContaining({
+              generationKey: v2Key,
+              locator,
+              state: DiscoveryState.DETECTED,
+            }),
+          ]);
+      },
+    );
+
+    it(
       'should drive DETECTED -> DISCOVERED -> VISITED -> CATALOGUED -> CONFIRMED from one persisted state/evidence boundary',
       async () => {
         for (

@@ -1,6 +1,7 @@
 import {
   type UniverseGenerationKey,
 } from '../../../domain/generation/universe-generation-key';
+import { GeneratorVersion } from '../../../domain/generation/generator-version';
 
 import {
   type UniverseRepository,
@@ -35,6 +36,12 @@ export class DexieUniverseRepository
   generationKey:
     UniverseGenerationKey,
 ): Promise<boolean> {
+
+  // Repository-level fail-closed protection even when bypassing bootstrap:
+  // only canonical released versions may create persistent rows.
+  if (!GeneratorVersion.isReleasedForNewUniverses(generationKey.generatorVersion)) {
+    throw new RangeError(`Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`);
+  }
 
   await this.database
     .openDatabase();

@@ -325,6 +325,29 @@ describe(
       },
     );
 
+    it('persists V1 and V2 of the same seed independently with their own progress', async () => {
+      const v2 = new UniverseGenerationKey(generationKey.universeSeed.copy(), GeneratorVersion.V2);
+      expect(await universeRepository.createIfAbsent(generationKey)).toBe(true);
+      expect(await universeRepository.createIfAbsent(v2)).toBe(true);
+      expect(await universeRepository.createIfAbsent(v2)).toBe(false);
+      expect(await universeRepository.exists(generationKey)).toBe(true);
+      expect(await universeRepository.exists(v2)).toBe(true);
+      const all = await universeRepository.getAll();
+      expect(all).toHaveLength(2);
+      expect(all.some(key => key.equals(generationKey))).toBe(true);
+      expect(all.some(key => key.equals(v2))).toBe(true);
+      await navigationRepository.setNavigation(generationKey,
+        { activeGalaxyIndex: 0n, recentGalaxyIndices: [] });
+      await navigationRepository.setNavigation(v2,
+        { activeGalaxyIndex: 7n, recentGalaxyIndices: [] });
+      expect((await navigationRepository.getNavigation(generationKey)).activeGalaxyIndex).toBe(0n);
+      expect((await navigationRepository.getNavigation(v2)).activeGalaxyIndex).toBe(7n);
+      await pointsRepository.setGlobalDiscoveryPoints(generationKey, 12n);
+      await pointsRepository.setGlobalDiscoveryPoints(v2, 34n);
+      expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey)).toBe(12n);
+      expect(await pointsRepository.getGlobalDiscoveryPoints(v2)).toBe(34n);
+    });
+
     it(
       'should reject repository access for an unknown universe',
       async () => {

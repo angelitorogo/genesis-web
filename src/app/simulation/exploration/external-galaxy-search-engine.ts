@@ -37,6 +37,8 @@ const SEARCH_DOMAIN =
     'GENESIS-EXTERNAL-GALAXY-SEARCH-V1',
   );
 
+const SEARCH_DOMAIN_V2 = utf8ToBytes('GENESIS-EXTERNAL-GALAXY-SEARCH-V2');
+
 const SIGNED_LONG_MAX =
   9_223_372_036_854_775_807n;
 
@@ -127,9 +129,9 @@ export class ExternalGalaxySearchEngine {
     }
 
     if (
-      generationKey
-        .generatorVersion !==
-      GeneratorVersion.V1
+      (generationKey
+        .generatorVersion !== GeneratorVersion.V1 && generationKey
+        .generatorVersion !== GeneratorVersion.V2)
     ) {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
@@ -218,7 +220,8 @@ function deriveAttemptSeedV1(
     sha256
       .create()
       .update(
-        SEARCH_DOMAIN,
+        generationKey.generatorVersion === GeneratorVersion.V2
+          ? SEARCH_DOMAIN_V2 : SEARCH_DOMAIN,
       )
       .update(
         hexToBytes(

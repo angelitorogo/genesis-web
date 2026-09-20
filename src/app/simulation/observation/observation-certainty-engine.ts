@@ -41,7 +41,7 @@ export class ObservationCertaintyEngine {
       UniverseGenerationKey,
   ): ObservationCertaintyAssessment {
 
-    assertV1(
+    assertReleasedVersion(
       generationKey,
     );
 
@@ -62,7 +62,7 @@ export class ObservationCertaintyEngine {
       ObservationCertainty,
   ): ObservationCertaintyTransition {
 
-    assertV1(
+    assertReleasedVersion(
       generationKey,
     );
 
@@ -105,7 +105,7 @@ export class ObservationCertaintyEngine {
       ObservationCertaintyAssessment,
   ): ObservationCertaintyAssessment {
 
-    assertV1(
+    assertReleasedVersion(
       generationKey,
     );
 
@@ -136,7 +136,7 @@ export class ObservationCertaintyEngine {
   }
 }
 
-function assertV1(
+function assertReleasedVersion(
   generationKey:
     UniverseGenerationKey,
 ): void {
@@ -144,7 +144,8 @@ function assertV1(
   if (
     generationKey
       .generatorVersion !==
-    GeneratorVersion.V1
+    GeneratorVersion.V1 &&
+    generationKey.generatorVersion !== GeneratorVersion.V2
   ) {
     throw new RangeError(
       `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,

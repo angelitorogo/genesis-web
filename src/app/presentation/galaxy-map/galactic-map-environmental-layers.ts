@@ -4,6 +4,10 @@ import {
 } from '../../domain/habitability/galactic-habitability-profile';
 
 import {
+  frozenPhysicalSourceKey,
+} from '../../domain/generation/frozen-physical-source-key';
+
+import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
 
@@ -285,6 +289,12 @@ export function buildGalacticMapEnvironmentalLayers(
     );
   }
 
+  // The GHZ is a read-only, frozen galactic-physics projection. V2 uses
+  // the same V1 physical inputs while the returned map stays V2-identified.
+  // Never persist or expose this private key or use it for V2 body indices.
+  const physicalSourceKey =
+    frozenPhysicalSourceKey(galaxy.generationKey);
+
   const halfExtent =
     grid.halfExtentInSectors;
 
@@ -328,14 +338,14 @@ export function buildGalacticMapEnvironmentalLayers(
     const planetFormation =
       PlanetFormationProfileGenerator
         .generate(
-          galaxy.generationKey,
+          physicalSourceKey,
           sectorStellarPopulation,
         );
 
     const stellarPopulation =
       StellarPopulationProfileGenerator
         .generate(
-          galaxy.generationKey,
+          physicalSourceKey,
           galaxy.physicalProperties,
           sectorStellarPopulation,
         );
@@ -343,7 +353,7 @@ export function buildGalacticMapEnvironmentalLayers(
     const habitability =
       GalacticHabitabilityProfileGenerator
         .generate(
-          galaxy.generationKey,
+          physicalSourceKey,
           stellarDensity,
           planetFormation,
           stellarPopulation,

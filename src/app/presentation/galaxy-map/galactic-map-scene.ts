@@ -85,6 +85,13 @@ import {
 } from './galactic-map-model';
 
 import {
+  galacticMapViewStorageKey,
+  readGalacticMapView,
+  saveGalacticMapView,
+  type GalacticMapViewSnapshot,
+} from './galactic-map-view-persistence';
+
+import {
   galacticMapRelativeRegionLabel,
   resolveGalacticMapRelativePosition,
   type GalacticMapRelativePosition,
@@ -105,6 +112,11 @@ import {
   sectorLocalPosition,
   type GalacticMapSectorOverlay,
 } from './galactic-map-sector-overlay';
+
+import {
+  previewGalacticMapSectorBlock,
+  type GalacticMapSectorBlockPreview,
+} from './galactic-map-sector-block-preview';
 
 import {
   resolveGalacticMapSectorSelection,
@@ -338,6 +350,9 @@ export interface GalacticMapSceneRuntime {
   galaxySpinRadians():
     number;
 
+  /** Optional for older test doubles; provided by the real Three.js runtime. */
+  restoreView?(snapshot: GalacticMapViewSnapshot): void;
+
   setCameraStateListener(
     listener:
       ((state: GalacticMapCameraState) => void) | null,
@@ -400,6 +415,11 @@ export interface GalacticMapSceneRuntime {
 
   clearSectorSelection():
     void;
+
+  /** Read-only hover preview. Optional for inert/testing runtimes. */
+  previewSectorAt?(clientX: number, clientY: number, size: number): GalacticMapSectorBlockPreview | null;
+
+  clearSectorPreview?(): void;
 
   dispose():
     void;
@@ -500,6 +520,8 @@ export class GalacticMapScene
   model!:
     GalacticMapModel;
 
+  @Input() blockSize = 1;
+
   @Output()
   readonly sectorExplore =
     new EventEmitter<GalacticMapSectorSelection>();
@@ -537,6 +559,26 @@ export class GalacticMapScene
   private runtime:
     GalacticMapSceneRuntime | null =
     null;
+
+  private activeViewKey: string | null = null;
+  private restoringView = true;
+
+  private captureView(): GalacticMapViewSnapshot | null {
+    if (this.runtime === null || this.activeViewKey === null ||
+        this.renderStateSignal() !== 'ready') return null;
+    return {
+      version: 1,
+      camera: this.runtime.cameraState(),
+      galaxySpinRadians: this.runtime.galaxySpinRadians(),
+      layers: this.layerVisibilitySignal(),
+    };
+  }
+
+  private persistView(): void {
+    if (this.restoringView || this.activeViewKey === null) return;
+    const snapshot = this.captureView();
+    if (snapshot !== null) saveGalacticMapView(this.activeViewKey, snapshot);
+  }
 
   private resizeObserver:
     ResizeObserver | null =
@@ -594,6 +636,8 @@ export class GalacticMapScene
     signal<GalacticMapSectorSelection | null>(
       null,
     );
+
+  private readonly sectorPreviewSignal = signal<GalacticMapSectorBlockPreview | null>(null);
 
   private readonly lodStateSignal =
     signal<GalacticMapLodState | null>(
@@ -656,6 +700,8 @@ export class GalacticMapScene
       .sectorSelectionSignal
       .asReadonly();
 
+  readonly sectorPreview = this.sectorPreviewSignal.asReadonly();
+
   readonly lodState =
     this
       .lodStateSignal
@@ -706,6 +752,7 @@ export class GalacticMapScene
             .set(
               state,
             );
+          this.persistView();
         },
       );
 
@@ -718,6 +765,7 @@ export class GalacticMapScene
             .set(
               radians,
             );
+          this.persistView();
         },
       );
 
@@ -794,10 +842,15 @@ export class GalacticMapScene
     ) {
       this.renderModel();
     }
+    if (changes['blockSize'] !== undefined) {
+      this.clearHoverPreview();
+    }
   }
 
   ngOnDestroy():
     void {
+
+    this.persistView();
 
     this
       .resizeObserver
@@ -824,6 +877,7 @@ export class GalacticMapScene
     this.pointerGesture =
       null;
 
+    this.clearHoverPreview();
     this.activePointerIds.clear();
     this.multiPointerGesture =
       false;
@@ -911,6 +965,8 @@ export class GalacticMapScene
         nextVisibility,
       );
 
+    this.persistView();
+
     const selectedMarker =
       this.markerSelectionSignal();
 
@@ -975,6 +1031,8 @@ export class GalacticMapScene
       .set(
         this.runtime.galaxySpinRadians(),
       );
+
+    this.persistView();
   }
 
   onCanvasPointerDown(
@@ -982,6 +1040,7 @@ export class GalacticMapScene
       PointerEvent,
   ): void {
 
+    this.clearHoverPreview();
     this.activePointerIds.add(
       event.pointerId,
     );
@@ -1035,14 +1094,18 @@ export class GalacticMapScene
     const gesture =
       this.pointerGesture;
 
-    if (
-      gesture ===
-        null ||
-      gesture.pointerId !==
-        event.pointerId
-    ) {
+    if (gesture === null) {
+      if (event.pointerType === 'mouse' && event.buttons === 0 &&
+        this.activePointerIds.size === 0 && !this.multiPointerGesture) {
+        const preview = this.runtime?.previewSectorAt?.(event.clientX, event.clientY, this.blockSize) ?? null;
+        const previous = this.sectorPreviewSignal();
+        if (preview !== previous) this.sectorPreviewSignal.set(preview);
+      } else {
+        this.clearHoverPreview();
+      }
       return;
     }
+    if (gesture.pointerId !== event.pointerId) return;
 
     const deltaX =
       event.clientX -
@@ -1062,7 +1125,17 @@ export class GalacticMapScene
     ) {
       gesture.moved =
         true;
+      this.clearHoverPreview();
     }
+  }
+
+  onCanvasPointerLeave(): void {
+    this.clearHoverPreview();
+  }
+
+  private clearHoverPreview(): void {
+    this.sectorPreviewSignal.set(null);
+    this.runtime?.clearSectorPreview?.();
   }
 
   onCanvasPointerUp(
@@ -1172,6 +1245,7 @@ export class GalacticMapScene
       PointerEvent,
   ): void {
 
+    this.clearHoverPreview();
     this.activePointerIds.delete(
       event.pointerId,
     );
@@ -1266,7 +1340,7 @@ export class GalacticMapScene
   ): void {
 
     if (
-      selection.explored
+      selection.explored && this.blockSize === 1
     ) {
       return;
     }
@@ -1528,11 +1602,19 @@ export class GalacticMapScene
 
     if (
       this.runtime ===
-      null
+        null
     ) {
       return;
     }
 
+    this.clearHoverPreview();
+    const nextViewKey = galacticMapViewStorageKey(this.model);
+    const sameGalaxy = this.activeViewKey === nextViewKey;
+    const previousSnapshot = sameGalaxy ? this.captureView() : null;
+    if (!sameGalaxy) this.persistView();
+    const snapshot = sameGalaxy ? previousSnapshot : readGalacticMapView(nextViewKey);
+    this.activeViewKey = nextViewKey;
+    this.restoringView = true;
     try {
       this
         .selectionSignal
@@ -1552,6 +1634,10 @@ export class GalacticMapScene
           null,
         );
 
+      // A galaxy with no stored view starts at the original default, never
+      // at another galaxy's last camera position when this component is reused.
+      if (!sameGalaxy && snapshot === null) this.runtime.resetView();
+
       const info =
         this
           .runtime
@@ -1559,9 +1645,13 @@ export class GalacticMapScene
             this.model,
           );
 
-      this.runtime.setLayerVisibility(
-        this.layerVisibilitySignal(),
-      );
+      if (snapshot !== null) {
+        this.layerVisibilitySignal.set(snapshot.layers);
+      } else if (!sameGalaxy) {
+        this.layerVisibilitySignal.set(INITIAL_GALACTIC_MAP_LAYER_VISIBILITY);
+      }
+      this.runtime.setLayerVisibility(this.layerVisibilitySignal());
+      if (snapshot !== null) this.runtime.restoreView?.(snapshot);
 
       this
         .particleCountSignal
@@ -1639,6 +1729,8 @@ export class GalacticMapScene
         .set(
           'error',
         );
+    } finally {
+      this.restoringView = false;
     }
   }
 }
@@ -1870,6 +1962,10 @@ class ThreeGalacticMapSceneRuntime
     > | null =
     null;
 
+  private sectorPreviewMesh: THREE.InstancedMesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | null = null;
+  private sectorPreviewSignature: string | null = null;
+  private sectorPreviewValue: GalacticMapSectorBlockPreview | null = null;
+
   private pixelRatio =
     1;
 
@@ -2058,6 +2154,7 @@ class ThreeGalacticMapSceneRuntime
       GalacticMapModel,
   ): GalacticMapSceneRenderInfo {
 
+    this.clearSectorPreview();
     this.disposePoints();
     this.clearSelection();
     this.clearSectorSelection();
@@ -2150,6 +2247,21 @@ class ThreeGalacticMapSceneRuntime
 
       this.sectorOverlay =
         sectorOverlay;
+
+      const cellSize = sectorCellSize(explorationCoverage, this.activeHaloOuterRadiusNormalized);
+      const geometry = new THREE.PlaneGeometry(cellSize * 0.82, cellSize * 0.82);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0xffffff, transparent: true, opacity: 0.35,
+        depthTest: false, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+      });
+      const previewMesh = new THREE.InstancedMesh(geometry, material, 100);
+      previewMesh.name = 'galactic-map-sector-block-hover-preview';
+      previewMesh.count = 0;
+      previewMesh.visible = false;
+      previewMesh.renderOrder = 1050;
+      previewMesh.frustumCulled = false;
+      galaxyGroup.add(previewMesh);
+      this.sectorPreviewMesh = previewMesh;
     }
 
     const environmentalLayers =
@@ -2241,6 +2353,16 @@ class ThreeGalacticMapSceneRuntime
     number {
 
     return this.galaxySpinRadiansValue;
+  }
+
+  restoreView(snapshot: GalacticMapViewSnapshot): void {
+    this.cameraController.restoreView(snapshot.camera);
+    this.galaxySpinRadiansValue = normalizeSignedRadians(snapshot.galaxySpinRadians);
+    this.applyCurrentGalaxyVisualRotation();
+    this.updateVisibleSectorMaterialization();
+    this.renderFrame();
+    this.emitGalaxySpinState();
+    this.emitCameraState();
   }
 
   setCameraStateListener(
@@ -2412,7 +2534,63 @@ class ThreeGalacticMapSceneRuntime
     return canonicalSelection;
   }
 
-  selectSectorAt(
+  selectSectorAt(clientX: number, clientY: number): GalacticMapSectorSelection | null {
+    const selection = this.resolveSectorAt(clientX, clientY);
+    if (selection === null) {
+      this.clearSectorSelection();
+    } else {
+      this.showSectorSelectionMarker(selection);
+    }
+    return selection;
+  }
+
+  previewSectorAt(clientX: number, clientY: number, size: number): GalacticMapSectorBlockPreview | null {
+    const selection = this.resolveSectorAt(clientX, clientY);
+    const coverage = this.activeCoverage;
+    if (selection === null || coverage === null || this.sectorPreviewMesh === null) {
+      this.clearSectorPreview();
+      return null;
+    }
+    const signature = `${selection.sectorKey.toString()}:${size}`;
+    if (signature === this.sectorPreviewSignature) return this.sectorPreviewValue;
+    const preview = previewGalacticMapSectorBlock(coverage, selection, size);
+    const mesh = this.sectorPreviewMesh;
+    const matrix = new THREE.Matrix4();
+    const position = new THREE.Vector3();
+    const scale = new THREE.Vector3(1, 1, 1);
+    const orientation = new THREE.Quaternion();
+    const pendingColor = new THREE.Color(0x6ad7ff);
+    const exploredColor = new THREE.Color(0x95a6b8);
+    const invalidColor = new THREE.Color(0xff735c);
+    preview.cells.forEach((cell, index) => {
+      const projected = sectorLocalPosition(coverage, cell.coordinates, this.activeHaloOuterRadiusNormalized);
+      position.set(projected.x, projected.y, 0.015);
+      matrix.compose(position, orientation, scale);
+      mesh.setMatrixAt(index, matrix);
+      mesh.setColorAt(index, !preview.valid ? invalidColor : cell.explored ? exploredColor : pendingColor);
+    });
+    mesh.count = preview.cells.length;
+    mesh.visible = mesh.count > 0;
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
+    this.sectorPreviewSignature = signature;
+    this.sectorPreviewValue = preview;
+    this.renderFrame();
+    return preview;
+  }
+
+  clearSectorPreview(): void {
+    const mesh = this.sectorPreviewMesh;
+    if (mesh?.visible) {
+      mesh.visible = false;
+      mesh.count = 0;
+      this.renderFrame();
+    }
+    this.sectorPreviewValue = null;
+    this.sectorPreviewSignature = null;
+  }
+
+  private resolveSectorAt(
     clientX:
       number,
 
@@ -2434,7 +2612,6 @@ class ThreeGalacticMapSceneRuntime
       this.activeHaloOuterRadiusNormalized <=
         0
     ) {
-      this.clearSectorSelection();
       return null;
     }
 
@@ -2456,7 +2633,6 @@ class ThreeGalacticMapSceneRuntime
       clientY >
         rect.bottom
     ) {
-      this.clearSectorSelection();
       return null;
     }
 
@@ -2528,7 +2704,6 @@ class ThreeGalacticMapSceneRuntime
       intersection ===
         null
     ) {
-      this.clearSectorSelection();
       return null;
     }
 
@@ -2544,13 +2719,8 @@ class ThreeGalacticMapSceneRuntime
       selection ===
         null
     ) {
-      this.clearSectorSelection();
       return null;
     }
-
-    this.showSectorSelectionMarker(
-      selection,
-    );
 
     return selection;
   }
@@ -2633,6 +2803,7 @@ class ThreeGalacticMapSceneRuntime
 
     this.clearSelection();
     this.clearSectorSelection();
+    this.clearSectorPreview();
     this.disposePoints();
 
     this
@@ -3789,6 +3960,12 @@ class ThreeGalacticMapSceneRuntime
     this
       .sectorOverlay
       ?.dispose();
+
+    this.sectorPreviewMesh?.geometry.dispose();
+    this.sectorPreviewMesh?.material.dispose();
+    this.sectorPreviewMesh = null;
+    this.sectorPreviewSignature = null;
+    this.sectorPreviewValue = null;
 
     this
       .discoveryMarkerOverlay

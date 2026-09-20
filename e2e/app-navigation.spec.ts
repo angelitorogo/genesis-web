@@ -46,6 +46,36 @@ async function setGlobalDiscoveryPoints(
         );
 
       try {
+        // Stage 12.2 creates a new universe as V2; an existing V1 save
+        // must keep V1. Resolve the *persisted* version instead of writing
+        // artificial PD into the old hard-coded V1 progress record.
+        const universes =
+          await new Promise<
+            readonly {
+              universeSeed: string;
+              generatorVersionCode: number;
+            }[]
+          >((resolve, reject) => {
+            const request = database.transaction(
+              'universes',
+              'readonly',
+            ).objectStore('universes').getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+        const matches = universes.filter(
+          (universe) => universe.universeSeed === universeSeed,
+        );
+        if (
+          matches.length !== 1 ||
+          ![1, 2].includes(matches[0].generatorVersionCode)
+        ) {
+          throw new Error(
+            'E2E progress setup requires exactly one persisted V1/V2 universe for the target seed.',
+          );
+        }
+        const generatorVersionCode = matches[0].generatorVersionCode;
+
         const transaction =
           database.transaction(
             'progress',
@@ -58,8 +88,7 @@ async function setGlobalDiscoveryPoints(
           )
           .put({
             universeSeed,
-            generatorVersionCode:
-              1,
+            generatorVersionCode,
             scopeCode:
               0,
             scopeKey:
@@ -67,6 +96,8 @@ async function setGlobalDiscoveryPoints(
             galaxyIndex:
               null,
             discoveryPoints:
+              discoveryPointsText,
+            lifetimeEarnedDiscoveryPoints:
               discoveryPointsText,
             updatedAtEpochMs:
               Date.now(),
@@ -1180,6 +1211,7 @@ test.describe(
 
         let detected =
           false;
+        let remainingAttemptsAfterDetection: number | null = null;
 
         for (
           let attempt =
@@ -1219,6 +1251,13 @@ test.describe(
             failuresBefore,
           );
 
+          // The newly created V2 universe uses its own deterministic
+          // search sequence: detection may occur before the seventh try.
+          // Every executed search consumes exactly one opportunity.
+          await expect(
+            page.getByTestId('external-galaxy-search-available-attempts'),
+          ).toHaveText(String(7 - attempt));
+
           if (
             await result
               .getAttribute(
@@ -1228,6 +1267,7 @@ test.describe(
           ) {
             detected =
               true;
+            remainingAttemptsAfterDetection = 7 - attempt;
 
             break;
           }
@@ -1238,6 +1278,8 @@ test.describe(
         ).toBe(
           true,
         );
+        expect(remainingAttemptsAfterDetection).not.toBeNull();
+        const remainingAttempts = remainingAttemptsAfterDetection ?? 0;
 
         const detectedGalaxyIndex =
           (
@@ -1278,12 +1320,14 @@ test.describe(
           '740',
         );
 
+        // Detection awards 40 PD (700 -> 740): no new 100-PD
+        // threshold is crossed, and unused attempts are not forfeited.
         await expect(
           page.getByTestId(
             'external-galaxy-search-available-attempts',
           ),
         ).toHaveText(
-          '0',
+          String(remainingAttempts),
         );
 
         await expect(
@@ -1294,6 +1338,8 @@ test.describe(
           'Cada 100 PD ganados.',
         );
 
+        // Search is disabled while the detected galaxy awaits a focus
+        // decision, even when unused search opportunities remain.
         await expect(
           searchAction,
         ).toBeDisabled();
@@ -1500,13 +1546,24 @@ test.describe(
           '740',
         );
 
+        // Returning to Exploration must retain the unspent attempts.
         await expect(
           page.getByTestId(
             'external-galaxy-search-available-attempts',
           ),
         ).toHaveText(
-          '0',
+          String(remainingAttempts),
         );
+
+        if (remainingAttempts > 0) {
+          await expect(
+            page.getByTestId('external-galaxy-search-action'),
+          ).toBeEnabled();
+        } else {
+          await expect(
+            page.getByTestId('external-galaxy-search-action'),
+          ).toBeDisabled();
+        }
       },
     );
 

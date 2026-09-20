@@ -90,9 +90,9 @@ export class ExplorationSectorScanEngine {
   ): ExplorationSectorSelection {
 
     if (
-      generationKey
-        .generatorVersion !==
-      GeneratorVersion.V1
+      (generationKey
+        .generatorVersion !== GeneratorVersion.V1 && generationKey
+        .generatorVersion !== GeneratorVersion.V2)
     ) {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,

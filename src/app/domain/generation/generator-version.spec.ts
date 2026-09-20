@@ -46,7 +46,7 @@ describe(
         const unknownCodes = [
           -1,
           0,
-          2,
+          3,
           99,
         ];
 
@@ -85,12 +85,21 @@ describe(
           () =>
             GeneratorVersion
               .fromCode(
-                2,
+                3,
               ),
         ).toThrow(
           RangeError,
         );
       },
     );
+
+    it('releases canonical V2 while preserving distinct persistence identities', () => {
+      expect(GeneratorVersion.V2).toEqual({ name: 'V2', code: 2 });
+      expect(GeneratorVersion.fromCodeOrNull(2)).toBe(GeneratorVersion.V2);
+      expect(GeneratorVersion.fromCode(2)).toBe(GeneratorVersion.V2);
+      expect(GeneratorVersion.V2).not.toBe(GeneratorVersion.V1);
+      expect(GeneratorVersion.isReleasedForNewUniverses(GeneratorVersion.V1)).toBe(true);
+      expect(GeneratorVersion.isReleasedForNewUniverses(GeneratorVersion.V2)).toBe(true);
+    });
   },
 );

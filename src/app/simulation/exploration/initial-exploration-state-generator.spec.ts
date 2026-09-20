@@ -482,6 +482,17 @@ describe(
       },
     );
 
+    it('prepares the same initial knowledge for reserved V2 without changing V1', () => {
+      const v1 = InitialExplorationStateGenerator.generate(canonicalGenerationKey);
+      const v2 = InitialExplorationStateGenerator.generate(new UniverseGenerationKey(
+        canonicalUniverseSeed.copy(), GeneratorVersion.V2));
+      expect(v2.activeGalaxyIndex).toBe(v1.activeGalaxyIndex);
+      expect(v2.discoveryPoints).toBe(v1.discoveryPoints);
+      expect([...v2.knownDiscoveries.entries()]).toEqual([...v1.knownDiscoveries.entries()]);
+      expect(v2.knownDiscoveries).not.toBe(v1.knownDiscoveries);
+      expect(GeneratorVersion.isReleasedForNewUniverses(GeneratorVersion.V2)).toBe(true);
+    });
+
     it(
       'should reject unsupported generator versions',
       () => {

@@ -53,7 +53,8 @@ export class InitialExplorationStateGenerator {
     if (
       generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+      GeneratorVersion.V1 ||
+      generationKey.generatorVersion === GeneratorVersion.V2
     ) {
       return this.generateV1();
     }

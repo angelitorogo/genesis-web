@@ -327,6 +327,7 @@ export class MoonScientificCardAssembler {
                 target,
                 hostPlanetTarget,
                 previewSceneResolver.build(systemModel),
+                previewSceneResolver.planetBodyId?.(systemModel, bodyIndex),
               ),
         }),
     });

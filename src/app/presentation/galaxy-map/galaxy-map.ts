@@ -1,7 +1,9 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
+  signal,
   OnInit,
 } from '@angular/core';
 
@@ -41,6 +43,8 @@ import {
   GenesisScreen,
 } from '../../ui/layout/genesis-screen/genesis-screen';
 
+import { CODES_REDEMPTION_RUNTIME } from '../codes/codes-redemption.runtime';
+
 import {
   GalacticMapFacade,
 } from './galactic-map.facade';
@@ -78,6 +82,17 @@ import {
 export class GalacticMapPage
   implements OnInit {
 
+  private readonly codes = inject(CODES_REDEMPTION_RUNTIME);
+  readonly maxBlockSize = signal(1);
+  readonly selectedBlockSize = signal(1);
+  readonly blockSizes = computed(() => Array.from({ length: this.maxBlockSize() }, (_, i) => i + 1));
+
+  setBlockSize(size: number): void {
+    if (Number.isInteger(size) && size >= 1 && size <= this.maxBlockSize() && !this.facade.inlineExplorationPending()) {
+      this.selectedBlockSize.set(size);
+    }
+  }
+
   readonly facade =
     inject(
       GalacticMapFacade,
@@ -86,9 +101,19 @@ export class GalacticMapPage
   ngOnInit():
     void {
 
-    void this
-      .facade
-      .refresh();
+    void this.loadMapAndUnlocks();
+  }
+
+  private async loadMapAndUnlocks(): Promise<void> {
+    await this.facade.refresh();
+    const model = this.facade.model();
+    if (model === null || model.generationKey.generatorVersionCode !== 2) return;
+    try {
+      this.maxBlockSize.set(await this.codes.getMaxSectorBlockSize(model.generationKey));
+    } catch {
+      // Reading a testing entitlement must not make cartography unavailable.
+      this.maxBlockSize.set(1);
+    }
   }
 
   exploreSector(
@@ -98,8 +123,8 @@ export class GalacticMapPage
 
     void this
       .facade
-      .exploreSector(
-        selection,
+      .exploreBlock(
+        selection, this.selectedBlockSize(),
       );
   }
 

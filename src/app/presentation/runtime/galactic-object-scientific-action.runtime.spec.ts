@@ -391,6 +391,41 @@ describe(
     );
 
     it(
+      'should commit a V2 discovery atomically without touching the same-seed V1 universe and reject duplicate rewards',
+      async () => {
+        const v2 = new UniverseGenerationKey(generationKey.universeSeed, GeneratorVersion.V2);
+        await universeRepository.createIfAbsent(v2);
+        await pointsRepository.setGlobalDiscoveryPoints(v2, 0n);
+        await discoveryRepository.setState(v2, remnantLocator, DiscoveryState.DETECTED);
+
+        const observation = new ObservationSession(
+          new Observatory(v2), remnantLocator, DiscoveryState.DETECTED,
+        );
+        const instrument = ObservationInstrumentCatalogV1.instrument(ObservationInstrumentType.X_RAY);
+        const v2Session = new LeveledInstrumentObservationSession(
+          new InstrumentObservationSession(observation, instrument),
+          ObservationInstrumentCapabilityCatalogV1.profile(
+            ObservationInstrumentType.X_RAY, ObservationInstrumentLevel.LEVEL_2,
+          ),
+        );
+
+        const result = await runtime.commitAction(
+          v2Session, GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+        );
+        expect(result.actionResult.newDiscoveryState).toBe(DiscoveryState.DISCOVERED);
+        expect(await discoveryRepository.getState(v2, remnantLocator)).toBe(DiscoveryState.DISCOVERED);
+        expect(await pointsRepository.getGlobalDiscoveryPoints(v2)).toBe(24n);
+        expect(await discoveryRepository.getState(generationKey, remnantLocator)).toBe(DiscoveryState.DETECTED);
+        expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey)).toBe(0n);
+
+        await expect(runtime.commitAction(
+          v2Session, GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+        )).rejects.toThrow(RangeError);
+        expect(await pointsRepository.getGlobalDiscoveryPoints(v2)).toBe(24n);
+      },
+    );
+
+    it(
       'should reject signed-Long PD overflow without advancing persisted discovery state',
       async () => {
         await pointsRepository

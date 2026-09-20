@@ -168,9 +168,9 @@ export class ExplorationSectorResultEngine {
         .generationKey;
 
     if (
-      generationKey
-        .generatorVersion !==
-      GeneratorVersion.V1
+      (generationKey
+        .generatorVersion !== GeneratorVersion.V1 && generationKey
+        .generatorVersion !== GeneratorVersion.V2)
     ) {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
@@ -370,9 +370,9 @@ export class ExplorationSectorResultEngine {
   ): ExplorationGalacticObjectResultKind {
 
     if (
-      generationKey
-        .generatorVersion !==
-      GeneratorVersion.V1
+      (generationKey
+        .generatorVersion !== GeneratorVersion.V1 && generationKey
+        .generatorVersion !== GeneratorVersion.V2)
     ) {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,

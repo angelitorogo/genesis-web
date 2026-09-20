@@ -151,6 +151,48 @@ describe(
     );
 
     it(
+      'should render a new V2 galaxy using frozen galactic physics without leaking a V1 map identity',
+      () => {
+        const v2Key = new UniverseGenerationKey(
+          generationKey.universeSeed,
+          GeneratorVersion.V2,
+        );
+        const galaxyV1 = GalaxyGenerator.generate(generationKey, 0n);
+        const galaxyV2 = GalaxyGenerator.generate(v2Key, 0n);
+        const gridV1 = GalaxySectorGridGenerator.generate(galaxyV1);
+        const gridV2 = GalaxySectorGridGenerator.generate(galaxyV2);
+        const v1 = buildGalacticMapEnvironmentalLayers(
+          galaxyV1,
+          gridV1,
+          GalaxyVisualStructureGenerator.generate(galaxyV1),
+        );
+        const v2 = buildGalacticMapEnvironmentalLayers(
+          galaxyV2,
+          gridV2,
+          GalaxyVisualStructureGenerator.generate(galaxyV2),
+        );
+
+        expect(v2.generationKey).toBe(v2Key);
+        expect(v2.grid.generationKey).toBe(v2Key);
+        expect(v2.galaxyIndex).toBe(0n);
+        expect(v2.regionRadii).toEqual(v1.regionRadii);
+        expect(v2.habitabilityRings).toEqual(v1.habitabilityRings);
+        // This independently verified seed DOES contain a speculative GHZ.
+        // Empty rings in a different seed must not disable GHZ rendering globally.
+        expect(v1.hasHabitableZone).toBe(true);
+        expect(v2.hasHabitableZone).toBe(true);
+        expect(v2.habitabilityRings.length).toBeGreaterThan(0);
+        expect(v2.habitabilityModelStatus).toBe(v1.habitabilityModelStatus);
+        expect(v2.radialSampleCount).toBe(v1.radialSampleCount);
+        expect(() => buildGalacticMapEnvironmentalLayers(
+          galaxyV2,
+          gridV1,
+          GalaxyVisualStructureGenerator.generate(galaxyV2),
+        )).toThrow('canonical grid');
+      },
+    );
+
+    it(
       'should be deterministic and query-order independent for the same galaxy',
       () => {
         const galaxy =

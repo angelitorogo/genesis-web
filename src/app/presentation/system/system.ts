@@ -40,6 +40,8 @@ import {
 import {
   SystemSceneSnapshotBuilder,
 } from './system-scene-snapshot';
+import { SystemMultihostGameCutover } from './system-multihost-game-cutover';
+import { SystemV2SingleScientificSession } from './system-v2-single-scientific-session';
 
 @Component({
   selector:
@@ -76,6 +78,20 @@ export class SystemPage
       ActivatedRoute,
     );
 
+  readonly multihostSession = computed(() => {
+    const model = this.facade.model();
+    return model === null ? null : SystemMultihostGameCutover.sessionOrNull(model);
+  });
+
+  readonly v2SingleSession = computed(() => {
+    const model = this.facade.model();
+    return model === null ? null : SystemV2SingleScientificSession.buildOrNull(model);
+  });
+
+  readonly stellarCard = computed(() =>
+    this.multihostSession()?.stellarSystemCard ?? this.facade.model()?.stellarSystemCard ?? null,
+  );
+
   readonly sceneSnapshot =
     computed(
       () => {
@@ -95,10 +111,7 @@ export class SystemPage
           return null;
         }
 
-        return SystemSceneSnapshotBuilder
-          .build(
-            model,
-          );
+        return this.multihostSession()?.scene ?? this.v2SingleSession()?.scene ?? SystemSceneSnapshotBuilder.build(model);
       },
     );
 
@@ -106,12 +119,10 @@ export class SystemPage
     computed<readonly ArchiveStellarSystemFactModel[]>(
       () =>
         this
-          .facade
-          .model()
-          ?.stellarSystemCard
+          .stellarCard()
           ?.systemFacts
           .filter(
-            fact =>
+            (fact: ArchiveStellarSystemFactModel) =>
               fact.label !==
               'SystemSeed',
           ) ??

@@ -1,3 +1,4 @@
+import { v2CometReadableActivity } from '../system/system-scene-v2-comet-tail-presentation';
 import {
   type PlanetScientificResolvedTarget,
 } from '../../simulation/planetary/planet-scientific-target-resolver';
@@ -70,6 +71,8 @@ export const ScientificBodyPreviewKind =
       'COMET',
     TRANS_NEPTUNIAN_OBJECT:
       'TRANS_NEPTUNIAN_OBJECT',
+    CAPTURED_EXTRASOLAR_OBJECT:
+      'CAPTURED_EXTRASOLAR_OBJECT',
   } as const);
 
 export type ScientificBodyPreviewKind =
@@ -464,7 +467,8 @@ export type ScientificBodyPreviewModel =
     }>
   | Readonly<{
       kind:
-        typeof ScientificBodyPreviewKind.TRANS_NEPTUNIAN_OBJECT;
+        typeof ScientificBodyPreviewKind.TRANS_NEPTUNIAN_OBJECT |
+        typeof ScientificBodyPreviewKind.CAPTURED_EXTRASOLAR_OBJECT;
       accessibleLabel:
         string;
       title:
@@ -477,6 +481,8 @@ export interface ScientificBodyPreviewSceneResolver {
   build(
     systemModel: ArchiveDiscoveryDetailModel,
   ): SystemSceneSnapshot;
+  /** Optional public identity bridge for snapshots whose visual IDs are not legacy ordinals. */
+  planetBodyId?(systemModel: ArchiveDiscoveryDetailModel, bodyIndex: bigint): string;
 }
 
 export const DEFAULT_SCIENTIFIC_BODY_PREVIEW_SCENE_RESOLVER:
@@ -508,9 +514,10 @@ export class ScientificBodyPreviewAssembler {
 
     scene:
       SystemSceneSnapshot,
+    sourceBodyId?: string,
   ): ScientificBodyPreviewModel {
 
-    const planetId =
+    const planetId = sourceBodyId ??
       `planet-${target.identity.planetOrdinal}`;
 
     const sourcePlanet =
@@ -587,9 +594,10 @@ export class ScientificBodyPreviewAssembler {
 
     scene:
       SystemSceneSnapshot,
+    sourceHostPlanetId?: string,
   ): ScientificBodyPreviewModel {
 
-    const hostPlanetId =
+    const hostPlanetId = sourceHostPlanetId ??
       `planet-${target.identity.hostPlanetOrdinal}`;
 
     const sourceMoon =
@@ -797,12 +805,13 @@ export class ScientificBodyPreviewAssembler {
     const presentation =
       source.cometPresentation;
 
-    const activity =
-      systemSceneCometActivityAtDistanceV1(
-        presentation,
-        presentation.periapsisAu,
-        SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE,
-      );
+    const physicalActivity = systemSceneCometActivityAtDistanceV1(
+      presentation, presentation.periapsisAu, SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE,
+    );
+    const activity = scene.generatorVersionCode === 2
+      ? v2CometReadableActivity(presentation, physicalActivity,
+          SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE)
+      : physicalActivity;
 
     return Object.freeze({
       kind:
@@ -893,7 +902,9 @@ function requiredMinorBody(
       : kind ===
         MinorBodyScientificTargetKind.COMET
         ? 'COMET'
-        : 'TRANS_NEPTUNIAN_OBJECT';
+        : kind === MinorBodyScientificTargetKind.CAPTURED_EXTRASOLAR_OBJECT
+          ? 'CAPTURED_EXTRASOLAR_OBJECT'
+          : 'TRANS_NEPTUNIAN_OBJECT';
 
   const source =
     scene.minorBodies.find(

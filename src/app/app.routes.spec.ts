@@ -345,6 +345,13 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
+  it('should navigate to Códigos', async () => {
+    const harness = await RouterTestingHarness.create('/codes');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="codes-page"]')).toBeTruthy();
+    expect(harness.routeNativeElement?.querySelector('[data-testid="codes-input"]')).toBeTruthy();
+    expect(harness.routeNativeElement?.querySelector('[data-testid="codes-accept"]')).toBeTruthy();
+  });
+
   it('should navigate to Statistics', async () => {
     const harness =
       await RouterTestingHarness.create(

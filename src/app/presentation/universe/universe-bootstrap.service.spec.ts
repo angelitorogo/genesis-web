@@ -572,6 +572,19 @@ describe(
       },
     );
 
+    it('creates a canonical V2 universe with its own initial navigation and discovery state', async () => {
+      const { service, createCalls, navigationWrites, pointWrites, discoveryWrites, deletes } = configure();
+      const released = new UniverseGenerationKey(generationKey.universeSeed, GeneratorVersion.V2);
+      const result = await service.ensureInitialized(released);
+      expect(result).toEqual({ generationKey: released, created: true });
+      expect(createCalls).toEqual([released]);
+      expect(navigationWrites).toEqual([{ activeGalaxyIndex: 0n, recentGalaxyIndices: [] }]);
+      expect(pointWrites).toEqual([0n]);
+      expect(discoveryWrites).toHaveLength(1);
+      expect(discoveryWrites[0]?.locator).toBeInstanceOf(GalaxyLocator);
+      expect(deletes).toEqual([]);
+    });
+
     it(
       'should reject unsupported generator versions before creating any universe row',
       async () => {

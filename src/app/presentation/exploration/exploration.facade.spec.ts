@@ -384,6 +384,15 @@ describe(
               activeGenerationKey:
                 () =>
                   generationKey,
+              resolvePersistedUniverse:
+                (persisted: readonly UniverseGenerationKey[]) =>
+                  persisted.find(candidate => candidate.equals(generationKey)) ?? null,
+              activatePersistedUniverse:
+                (selected: UniverseGenerationKey) => {
+                  if (!selected.equals(generationKey)) {
+                    throw new Error('Unexpected universe activation in exploration fixture.');
+                  }
+                },
             },
           },
         ],

@@ -1,3 +1,5 @@
+import { v2CometReadableActivity } from './system-scene-v2-comet-tail-presentation';
+import { v2CometStellarIrradianceAtDay } from './system-scene-v2-comet-stellar-flux';
 import {
   isPlatformBrowser,
 } from '@angular/common';
@@ -62,8 +64,12 @@ import {
 import {
   laboratoryStarDistances,
   laboratorySubsystemRadius,
+  productionStarFocusRadius,
   type LaboratoryStarDistance,
 } from './system-scene-laboratory-controls';
+import { ArchiveStellarSystemKnowledgeLevel } from '../genesis-archive/archive-stellar-system-card';
+import { systemSceneGameplayHostLayout, systemSceneHabitableZoneHostLabel } from './system-scene-gameplay-hosts';
+import { systemScenePlanetFicheRoute, systemSceneMoonFicheRoute } from './system-scene-scientific-route';
 
 import {
   buildSystemSceneBodyCard,
@@ -430,6 +436,10 @@ export class SystemScene
   @Input()
   laboratoryOrbitControls = false;
 
+  /** Gameplay controls operate on the canonical snapshot, never on lab fixtures. */
+  @Input()
+  gameplaySceneControls = false;
+
   /**
    * Optional QA-only route exposed by hosts that deliberately allow opening
    * the phase-26.2 stellar scientific fiche from a selected star. Production
@@ -575,16 +585,42 @@ export class SystemScene
   readonly focusedLaboratoryStar = this.focusedLaboratoryStarSignal.asReadonly();
   readonly laboratoryDistances = this.laboratoryDistancesSignal.asReadonly();
 
+  /** Rendered host population only; the simulation/scientific sources stay authoritative. */
+  gameplayHostLayout() {
+    return this.gameplaySceneControls ? systemSceneGameplayHostLayout(this.snapshot) : [];
+  }
+
+  habitableZoneHostLabel(zone: SystemSceneHabitableZoneSnapshot): string {
+    return systemSceneHabitableZoneHostLabel(this.snapshot, zone);
+  }
+
+
   toggleOrbitLines(): void {
-    if (!this.laboratoryOrbitControls && !this.laboratoryMultipleControls) return;
+    if (!this.laboratoryOrbitControls && !this.laboratoryMultipleControls &&
+        !this.gameplaySceneControls) return;
     this.orbitLinesVisibleSignal.update(value => !value);
     this.applyLayerVisibility();
   }
 
+  /** Production reveals stellar telemetry only when its orbit is catalogued. */
+  stellarDistanceControlsAvailable(): boolean {
+    if (this.snapshot.stars.length < 2) return false;
+    if (this.laboratoryMultipleControls) return true;
+    return this.gameplaySceneControls &&
+      (this.snapshot.knowledgeLevel === ArchiveStellarSystemKnowledgeLevel.CATALOGUED ||
+       this.snapshot.knowledgeLevel === ArchiveStellarSystemKnowledgeLevel.CONFIRMED) &&
+      this.snapshot.orbits.some(orbit => orbit.kind === 'stellar') &&
+      this.snapshot.stars.every(star => star.motionContributions.length > 0) &&
+      this.snapshot.motions.length > 0;
+  }
+
   centerLaboratorySystem(starId: string): void {
-    if (!this.laboratoryMultipleControls || this.snapshot.stars.length < 2 ||
+    if ((!this.laboratoryMultipleControls && !this.gameplaySceneControls) ||
+        this.snapshot.stars.length < 2 ||
         !this.snapshot.stars.some(star => star.id === starId)) return;
-    const radius = laboratorySubsystemRadius(this.snapshot, starId);
+    const radius = this.laboratoryMultipleControls
+      ? laboratorySubsystemRadius(this.snapshot, starId)
+      : productionStarFocusRadius(this.snapshot, starId);
     if (this.runtime?.focusLaboratorySystem?.(starId, radius)) {
       this.focusedLaboratoryStarSignal.set(starId);
       this.trackingSelectionSignal.set(null);
@@ -592,8 +628,10 @@ export class SystemScene
   }
 
   private updateLaboratoryDistances(day: number): void {
-    if (this.laboratoryMultipleControls && this.snapshot.stars.length > 1) {
+    if (this.stellarDistanceControlsAvailable()) {
       this.laboratoryDistancesSignal.set(laboratoryStarDistances(this.snapshot, day));
+    } else {
+      this.laboratoryDistancesSignal.set([]);
     }
   }
 
@@ -661,123 +699,16 @@ export class SystemScene
       : 'LOCKED';
   }
 
-  planetScientificFicheRoute():
-    readonly string[] | null {
-
-    if (
-      !this.scientificBodyFichesUnlocked()
-    ) {
-      return null;
-    }
-
-    const selection =
-      this.selectionSignal();
-
-    if (
-      selection ===
-        null ||
-      selection.kind !==
-        'planet'
-    ) {
-      return null;
-    }
-
-    const match =
-      /^planet-(\d+)$/.exec(
-        selection.bodyId,
-      );
-
-    if (
-      match ===
-        null
-    ) {
-      return null;
-    }
-
-    const ordinal =
-      BigInt(
-        match[1]!,
-      );
-
-    if (
-      ordinal <=
-        0n
-    ) {
-      return null;
-    }
-
-    return Object.freeze([
-      '/system',
-      this.snapshot.address.galaxyIndex,
-      this.snapshot.address.sectorKey,
-      this.snapshot.address.galacticObjectIndex,
-      'planet',
-      (ordinal - 1n).toString(),
-    ]);
+  planetScientificFicheRoute(): readonly string[] | null {
+    const selection = this.selectionSignal();
+    return this.scientificBodyFichesUnlocked() && selection?.kind === 'planet'
+      ? systemScenePlanetFicheRoute(this.snapshot, selection.bodyId) : null;
   }
 
-  moonScientificFicheRoute():
-    readonly string[] | null {
-
-    if (
-      !this.scientificBodyFichesUnlocked()
-    ) {
-      return null;
-    }
-
-    const selection =
-      this.selectionSignal();
-
-    if (
-      selection ===
-        null ||
-      selection.kind !==
-        'moon'
-    ) {
-      return null;
-    }
-
-    const match =
-      /^moon-(\d+)-(\d+)$/.exec(
-        selection.bodyId,
-      );
-
-    if (
-      match ===
-        null
-    ) {
-      return null;
-    }
-
-    const hostPlanetOrdinal =
-      BigInt(
-        match[1]!,
-      );
-
-    const moonOrdinal =
-      BigInt(
-        match[2]!,
-      );
-
-    if (
-      hostPlanetOrdinal <=
-        0n ||
-      moonOrdinal <=
-        0n
-    ) {
-      return null;
-    }
-
-    return Object.freeze([
-      '/system',
-      this.snapshot.address.galaxyIndex,
-      this.snapshot.address.sectorKey,
-      this.snapshot.address.galacticObjectIndex,
-      'planet',
-      (hostPlanetOrdinal - 1n).toString(),
-      'moon',
-      (moonOrdinal - 1n).toString(),
-    ]);
+  moonScientificFicheRoute(): readonly string[] | null {
+    const selection = this.selectionSignal();
+    return this.scientificBodyFichesUnlocked() && selection?.kind === 'moon'
+      ? systemSceneMoonFicheRoute(this.snapshot, selection.bodyId) : null;
   }
 
   minorBodyScientificFicheRoute():
@@ -825,7 +756,9 @@ export class SystemScene
           : body.minorBodyKind.name ===
             'TRANS_NEPTUNIAN_OBJECT'
             ? 'tno'
-            : null;
+            : body.minorBodyKind.name === 'CAPTURED_EXTRASOLAR_OBJECT'
+              ? 'captured'
+              : null;
 
     if (
       targetKind ===
@@ -835,7 +768,7 @@ export class SystemScene
     }
 
     const match =
-      /^minor-\d+-([0-9A-F]{32})$/.exec(
+      /^(?:mh-[abc]-)?minor-\d+-([0-9A-F]{32})$/.exec(
         body.id,
       );
 
@@ -1313,7 +1246,7 @@ export class SystemScene
 
     this.runtime
       ?.setLayerVisibility?.({
-        ...(this.laboratoryOrbitControls || this.laboratoryMultipleControls
+        ...(this.laboratoryOrbitControls || this.laboratoryMultipleControls || this.gameplaySceneControls
           ? { orbits: this.orbitLinesVisibleSignal() } : {}),
         planets:
           this.planetsVisibleSignal() &&
@@ -5665,6 +5598,11 @@ class ThreeSystemSceneRuntime
         0,
         0,
       );
+      const stellarFluxes = snapshot.generatorVersionCode === 2
+        ? v2CometStellarIrradianceAtDay(snapshot, body, simulationDay)
+        : null;
+      const totalFlux = stellarFluxes?.reduce((sum, source) => sum + source.fluxEarth, 0)
+        ?? activity.incidentFluxEarth;
 
       for (
         const star
@@ -5697,13 +5635,9 @@ class ThreeSystemSceneRuntime
               .lengthSq(),
             0.0025,
           );
-        const fluxWeight =
-          Math.max(
-            star.sourceLuminositySolar ??
-              0.01,
-            0.01,
-          ) /
-          distanceSquared;
+        const fluxWeight = stellarFluxes === null
+          ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01) / distanceSquared
+          : (stellarFluxes.find(source => source.starId === star.id)?.fluxEarth ?? 0);
 
         if (
           this.cometLightDirectionScratch
@@ -5738,7 +5672,9 @@ class ThreeSystemSceneRuntime
 
       applySystemSceneCometActivityVisualV1(
         binding,
-        activity,
+        snapshot.generatorVersionCode === 2
+          ? v2CometReadableActivity(presentation, activity, body.radiusScene, totalFlux)
+          : activity,
         this.cometLightDirectionAccumulator,
       );
     }

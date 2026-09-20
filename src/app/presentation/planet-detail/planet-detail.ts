@@ -23,6 +23,8 @@ import {
 import {
   scientificRouteUniverseRef,
 } from '../scientific/scientific-route-identity';
+import { SystemMultihostGameCutover } from '../system/system-multihost-game-cutover';
+import { SystemV2SingleScientificSession } from '../system/system-v2-single-scientific-session';
 
 import {
   ScientificBodyPreview,
@@ -79,6 +81,16 @@ export class PlanetDetailPage
         ),
     );
 
+  readonly multihostSession = computed(() => {
+    const model = this.facade.model();
+    return model === null ? null : SystemMultihostGameCutover.sessionOrNull(model);
+  });
+
+  readonly v2SingleSession = computed(() => {
+    const model = this.facade.model();
+    return model === null ? null : SystemV2SingleScientificSession.buildOrNull(model);
+  });
+
   readonly resolution =
     computed(
       () => {
@@ -106,11 +118,12 @@ export class PlanetDetailPage
           } as const);
         }
 
-        return PlanetScientificCardAssembler
-          .build(
-            model,
-            this.requestedBodyIndex,
-          );
+        return this.multihostSession()?.planetFiche(this.requestedBodyIndex) ??
+          this.v2SingleSession()?.planetFiche(this.requestedBodyIndex) ??
+          (model.generatorVersionCode === 2
+            ? PlanetScientificCardAssembler.build(model, this.requestedBodyIndex,
+                { resolveDetailed: () => null })
+            : PlanetScientificCardAssembler.build(model, this.requestedBodyIndex));
       },
     );
 

@@ -299,7 +299,7 @@ describe(
     );
 
     it(
-      'should expose exactly the four point-9.6 real access links',
+      'should expose five real access links including Códigos',
       async () => {
         const {
           element,
@@ -319,7 +319,7 @@ describe(
             )
             .length,
         ).toBe(
-          4,
+          5,
         );
 
         expect(
@@ -349,6 +349,10 @@ describe(
               '[data-testid="statistics-link"]',
             ),
         ).toBeTruthy();
+
+        expect(
+          element.querySelector('[data-testid="codes-link"]')?.getAttribute('href'),
+        ).toBe('/codes');
       },
     );
 

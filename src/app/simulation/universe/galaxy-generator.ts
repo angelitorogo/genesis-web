@@ -5,6 +5,7 @@ import {
 import {
   GeneratorVersion,
 } from '../../domain/generation/generator-version';
+import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
 
 import {
   type UniverseGenerationKey,
@@ -82,6 +83,17 @@ export class GalaxyGenerator {
       return this.generateV1(
         generationKey,
         galaxyIndex,
+      );
+    }
+
+    if (generationKey.generatorVersion === GeneratorVersion.V2) {
+      // Only the physical inputs borrow V1. The returned galaxy and technical
+      // designation retain the public V2 identity, never the private key.
+      const source = this.generateV1(frozenPhysicalSourceKey(generationKey), galaxyIndex);
+      return new Galaxy(
+        generationKey, source.index, source.seed,
+        GalaxyDesignationGenerator.generate(generationKey, galaxyIndex),
+        source.type, source.physicalProperties, source.nucleus,
       );
     }
 

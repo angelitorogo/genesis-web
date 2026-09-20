@@ -1,6 +1,8 @@
 import {
   GeneratorVersion,
 } from '../../domain/generation/generator-version';
+import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
+import { GalaxyGenerator } from '../universe/galaxy-generator';
 
 import {
   GalacticObjectLocator,
@@ -140,6 +142,21 @@ export class GalaxySectorContentGenerator {
         locator,
         sectorSeed,
       );
+    }
+
+    if (galaxy.generationKey.generatorVersion === GeneratorVersion.V2) {
+      // Physical occupancy/PRNG draws stay exactly V1, but the resulting
+      // sector and its child addresses belong to the public V2 universe.
+      const physicalGalaxy = GalaxyGenerator.generate(
+        frozenPhysicalSourceKey(galaxy.generationKey), galaxy.index,
+      );
+      if (physicalGalaxy.seed.normalizedValue !== galaxy.seed.normalizedValue) {
+        throw new RangeError('V2 galaxy does not match its frozen physical source.');
+      }
+      const physical = this.generate(physicalGalaxy, coordinates);
+      return new GalaxySectorContent(galaxy.generationKey, locator, coordinates,
+        physical.seed, physical.stellarDensity, physical.systemLocators,
+        physical.galacticObjectLocators);
     }
 
     throw new RangeError(

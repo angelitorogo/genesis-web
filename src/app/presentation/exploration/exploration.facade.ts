@@ -424,11 +424,7 @@ export class ExplorationFacade {
       }
 
       const generationKey =
-        resolveExplorationGenerationKey(
-          this.universeSeedFacade
-            .activeGenerationKey(),
-          persistedUniverses,
-        );
+        this.universeSeedFacade.resolvePersistedUniverse(persistedUniverses);
 
       if (
         generationKey ===
@@ -609,6 +605,10 @@ export class ExplorationFacade {
           externalSearchStatus,
           generationKey,
         );
+
+      if (!this.universeSeedFacade.activeGenerationKey().equals(generationKey)) {
+        this.universeSeedFacade.activatePersistedUniverse(generationKey);
+      }
 
       this.stateSignal
         .set({

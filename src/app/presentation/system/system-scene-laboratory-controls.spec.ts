@@ -9,7 +9,7 @@ import {
   type StellarSystemLaboratoryFrame,
 } from '../laboratory/stellar-systems/stellar-system-laboratory-fixtures';
 import { SystemSceneSnapshotBuilder, type SystemSceneSnapshot } from './system-scene-snapshot';
-import { laboratoryStarDistances, laboratorySubsystemRadius } from './system-scene-laboratory-controls';
+import { laboratoryStarDistances, laboratorySubsystemRadius, productionStarFocusRadius } from './system-scene-laboratory-controls';
 
 function single(frame: StellarSystemLaboratoryFrame): SystemSceneSnapshot {
   const stage = frame.stages.find(entry => entry.discoveryState.code === DiscoveryState.CATALOGUED.code)!;
@@ -56,7 +56,10 @@ describe('Lab-only real-time distances and complete subsystem focus', () => {
     for (const star of snapshot.stars) {
       expect(laboratorySubsystemRadius(snapshot, star.id))
         .toBeGreaterThan(star.opticalRadiusScene ?? star.radiusScene);
+      expect(productionStarFocusRadius(snapshot, star.id))
+        .toBeGreaterThan(star.opticalRadiusScene ?? star.radiusScene);
     }
+    expect(() => productionStarFocusRadius(snapshot, 'nonexistent')).toThrow(RangeError);
   }, 90_000);
 
   it('reports three distinct stellar pairs in a hierarchical triple, with an unchanged inner A–B separation', () => {

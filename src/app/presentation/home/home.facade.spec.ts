@@ -28,6 +28,7 @@ import {
 
 import {
   DEFAULT_UNIVERSE_SEED,
+  UniverseSeedFacade,
 } from '../universe/universe-seed.facade';
 
 import {
@@ -284,6 +285,21 @@ describe(
         ).toBeNull();
       },
     );
+
+    it('restores the exact persisted V2 generation key when it is the sole saved universe', async () => {
+      const v2 = new UniverseGenerationKey(
+        UniverseSeed.parse('ABCD-0000-0000-0000-0000-0000-0000-0001'),
+        GeneratorVersion.V2,
+      );
+      const facade = configure(repositories([v2], [
+        new KnownDiscovery(v2, new GalaxyLocator(0n), DiscoveryState.DISCOVERED),
+      ]));
+      await facade.refresh();
+      expect(facade.state().kind).toBe('content');
+      const active = TestBed.inject(UniverseSeedFacade).activeGenerationKey();
+      expect(active.equals(v2)).toBe(true);
+      expect(active.generatorVersion).toBe(GeneratorVersion.V2);
+    });
 
     it(
       'should never choose an arbitrary universe when multiple persisted universes do not match the active selection',
