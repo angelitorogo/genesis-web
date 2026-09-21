@@ -175,6 +175,16 @@ import {
 } from './system-scene-atmosphere-material';
 
 import {
+  createV2BodyLightBinding,
+  installV2BodyLightingOnSurfaces,
+  installV2MoonAtmosphereLighting,
+  v2SmallBodyDayNightProfile,
+  systemSceneLightingTargets,
+  v2TripleBodyLightFluxes,
+  v2TripleLightingSources,
+} from './system-scene-v2-body-lighting';
+
+import {
   buildSystemSceneRenderBackendAssessmentV1,
   systemSceneWebGpuApiAvailable,
   type SystemSceneRenderBackendAssessmentV1,
@@ -1959,9 +1969,12 @@ class ThreeSystemSceneRuntime
   private readonly spinningBodies =
     new Map<string, THREE.Object3D>();
 
-  /** Point-25.6 shared uniforms for planet terminator/night-side/atmosphere shells. */
-  private readonly planetLightBindings =
+  /** Point-25.6 uniforms: planets plus each V2 moon and minor body use the same stellar pass. */
+  private readonly bodyLightBindings =
     new Map<string, SystemScenePlanetLightBindingV1>();
+
+  /** The actual presentation day applied to every animated body this frame. */
+  private lightingSimulationDay = 0;
 
   private readonly planetLightPlanetWorldPosition =
     new THREE.Vector3();
@@ -4413,7 +4426,7 @@ class ThreeSystemSceneRuntime
         this.planetTextureCache,
       );
 
-    this.planetLightBindings.set(
+    this.bodyLightBindings.set(
       planet.id,
       appearance.lightBinding,
     );
@@ -4502,6 +4515,9 @@ class ThreeSystemSceneRuntime
       ringRenderable !==
         null
     ) {
+      if (this.currentSnapshot?.generatorVersionCode === 2) {
+        installV2BodyLightingOnSurfaces(ringRenderable.group, appearance.lightBinding);
+      }
       axialPivot.add(
         ringRenderable.group,
       );
@@ -4576,6 +4592,10 @@ class ThreeSystemSceneRuntime
       new THREE.Group();
     spinPivot.name =
       `${moon.title} domain spin`;
+
+    if (this.currentSnapshot?.generatorVersionCode === 2) {
+      this.bodyLightBindings.set(moon.id, createV2BodyLightBinding());
+    }
 
     if (
       this.layerVisibility.moons
@@ -4674,6 +4694,19 @@ class ThreeSystemSceneRuntime
         sharedMoonGeometry,
       );
 
+    const moonLight = this.bodyLightBindings.get(moon.id);
+    if (moonLight !== undefined) {
+      installV2BodyLightingOnSurfaces(
+        renderable.root,
+        moonLight,
+        v2SmallBodyDayNightProfile(
+          moon.visualPresentation.presentationAtmospherePresent,
+          moon.visualPresentation.presentationAtmosphereColorHex,
+        ),
+      );
+      installV2MoonAtmosphereLighting(renderable.root, moonLight);
+    }
+
     spinPivot.add(
       renderable.root,
     );
@@ -4706,6 +4739,9 @@ class ThreeSystemSceneRuntime
     bodies:
       readonly SystemSceneMinorBodySnapshot[],
   ): void {
+    // V2 requires a separate multistellar terminator for every object.
+    // V1 retains its existing instancing/LOD resource behaviour.
+    if (this.currentSnapshot?.generatorVersionCode === 2) return;
 
     for (
       const layerKey
@@ -4846,6 +4882,10 @@ class ThreeSystemSceneRuntime
       body.position.z,
     );
 
+    const minorLight = this.currentSnapshot?.generatorVersionCode === 2
+      ? createV2BodyLightBinding()
+      : null;
+
     if (
       body.minorBodyKind.name ===
         'ASTEROID' &&
@@ -4937,6 +4977,11 @@ class ThreeSystemSceneRuntime
           material,
         );
       }
+    }
+
+    if (minorLight !== null) {
+      this.bodyLightBindings.set(body.id, minorLight);
+      installV2BodyLightingOnSurfaces(group, minorLight);
     }
 
     this.animatedBodies.set(
@@ -5369,6 +5414,7 @@ class ThreeSystemSceneRuntime
 
     const sceneScale =
       snapshot.scale;
+    this.lightingSimulationDay = simulationDay;
 
     for (
       const body
@@ -5824,7 +5870,7 @@ class ThreeSystemSceneRuntime
     this.pendingMoonVisuals.clear();
     this.animatedBodies.clear();
     this.spinningBodies.clear();
-    this.planetLightBindings.clear();
+    this.bodyLightBindings.clear();
     this.animatedOrbits.clear();
     this.orbitLocalSamplesAu.clear();
 
@@ -5870,7 +5916,7 @@ class ThreeSystemSceneRuntime
       );
   }
 
-  private updatePlanetLightDirections():
+  private updateBodyLightDirections():
     void {
 
     const snapshot =
@@ -5879,7 +5925,7 @@ class ThreeSystemSceneRuntime
     if (
       snapshot ===
         null ||
-      this.planetLightBindings.size ===
+      this.bodyLightBindings.size ===
         0
     ) {
       return;
@@ -5897,17 +5943,24 @@ class ThreeSystemSceneRuntime
       )
       .invert();
 
+    // Only the V2 TRIPLE path changes: its independently magnified A/B and C
+    // orbits must not be used to estimate physical stellar flux.
+    const tripleSources = snapshot.generatorVersionCode === 2 &&
+      snapshot.multiplicityName === 'TRIPLE'
+      ? v2TripleLightingSources(snapshot, this.lightingSimulationDay)
+      : null;
+
     for (
-      const planet
-      of snapshot.planets
+      const body
+      of systemSceneLightingTargets(snapshot)
     ) {
       const binding =
-        this.planetLightBindings.get(
-          planet.id,
+        this.bodyLightBindings.get(
+          body.id,
         );
       const planetObject =
         this.animatedBodies.get(
-          planet.id,
+          body.id,
         );
 
       if (
@@ -5921,6 +5974,9 @@ class ThreeSystemSceneRuntime
 
       planetObject.getWorldPosition(
         this.planetLightPlanetWorldPosition,
+      );
+      const tripleFluxes = tripleSources === null ? null : v2TripleBodyLightFluxes(
+        body.motionContributions, snapshot.motions, tripleSources, this.lightingSimulationDay,
       );
       this.planetLightTopFluxes[0] =
         0;
@@ -5968,13 +6024,9 @@ class ThreeSystemSceneRuntime
           continue;
         }
 
-        const flux =
-          Math.max(
-            star.sourceLuminositySolar ??
-              0.01,
-            0.01,
-          ) /
-          distanceSquared;
+        const flux = tripleFluxes === null
+          ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01) / distanceSquared
+          : (tripleFluxes.find(source => source.starId === star.id)?.flux ?? 0);
 
         this.planetLightDirectionScratch
           .normalize();
@@ -6105,7 +6157,7 @@ class ThreeSystemSceneRuntime
     this.updateBodyLod();
     this.updateMinorBodyInstanceBatches();
     this.updateSelectionProxyBatch();
-    this.updatePlanetLightDirections();
+    this.updateBodyLightDirections();
 
     this
       .renderer

@@ -34,14 +34,14 @@ export function v2StellarLuminosityFromPhotosphere(
  * star–comet distances real in SINGLE/BINARY/TRIPLE, even while the renderer
  * deliberately spaces the stars farther apart for legibility.
  */
-function physicalPositionAu(
+export function v2PhysicalPositionAu(
   contributions: readonly SystemSceneMotionContributionSnapshot[],
   motions: SystemSceneSnapshot['motions'], day: number,
 ): readonly [number, number, number] {
   let x = 0, y = 0, z = 0;
   for (const part of contributions) {
     const motion = motions.find(candidate => candidate.id === part.motionId);
-    if (!motion) throw new RangeError(`Unknown comet irradiation motion: ${part.motionId}`);
+    if (!motion) throw new RangeError(`Unknown V2 irradiation motion: ${part.motionId}`);
     const presentationDay = day * (part.presentationTimeScale ?? 1);
     const orbitalDay = part.presentationCometPhaseWarp === undefined
       ? presentationDay
@@ -56,7 +56,7 @@ function physicalPositionAu(
   return [x, y, z];
 }
 
-function stellarLuminosity(star: SystemSceneBodySnapshot): number {
+export function v2PhysicalStellarLuminosity(star: SystemSceneBodySnapshot): number {
   const r = star.sourceRadiusSolar;
   const t = star.sourceEffectiveTemperatureKelvin;
   if (r !== undefined && t !== undefined) {
@@ -77,13 +77,13 @@ export function v2CometStellarIrradianceAtDay(
   simulationDay: number,
 ): readonly V2CometStellarIrradiance[] {
   if (!Number.isFinite(simulationDay)) throw new RangeError('Comet irradiation day must be finite.');
-  const position = physicalPositionAu(comet.motionContributions, snapshot.motions, simulationDay);
+  const position = v2PhysicalPositionAu(comet.motionContributions, snapshot.motions, simulationDay);
   return Object.freeze(snapshot.stars.map(star => {
-    const source = physicalPositionAu(star.motionContributions, snapshot.motions, simulationDay);
+    const source = v2PhysicalPositionAu(star.motionContributions, snapshot.motions, simulationDay);
     const radius = star.sourceRadiusSolar ?? 0;
     const distance = Math.hypot(position[0] - source[0], position[1] - source[1],
       position[2] - source[2]);
-    const luminosity = stellarLuminosity(star);
+    const luminosity = v2PhysicalStellarLuminosity(star);
     // A numerical collision must not give infinitely bright comet tails.
     const boundedDistance = Math.max(distance, radius * SOLAR_RADIUS_AU, 1e-9);
     const fluxEarth = luminosity / boundedDistance ** 2;
