@@ -1,3 +1,4 @@
+import { buildV2CometVisualOrbit } from './system-scene-v2-comet-orbit-presentation';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
 import { v2HostMinorBodyOrbitalCatalog } from './system-scene-v2-minor-body-source';
 import { v2MinorBodyTimeScale, V2_COMET_PHASE_WARP } from './system-scene-v2-minor-cadence';
@@ -403,6 +404,9 @@ export interface SystemSceneOrbitSnapshot {
 
   readonly linearScenePerAu?:
     number;
+
+  /** Visual comet-only elliptical shape, never an authoritative orbital element. */
+  readonly presentationEccentricity?: number;
 }
 
 export interface SystemSceneBodySnapshot {
@@ -3672,6 +3676,8 @@ function projectSceneGeometry(
       0,
       ...starRadiusSceneById.values(),
     );
+  const maximumOpticalStarRadiusScene = Math.max(0, ...stars.map(
+    star => star.opticalRadiusScene ?? star.radiusScene));
 
   const minorBodies =
     projectMinorBodyLayer(
@@ -3681,6 +3687,7 @@ function projectSceneGeometry(
       orbits,
       sceneScale,
       maximumVisibleStarRadiusScene,
+      maximumOpticalStarRadiusScene,
       playbackDaysPerRealSecond,
       generatorVersionCode === 2,
     );
@@ -4703,6 +4710,8 @@ function projectMinorBodyLayer(
   maximumVisibleStarRadiusScene:
     number,
 
+  maximumOpticalStarRadiusScene: number,
+
   playbackDaysPerRealSecond:
     number,
 
@@ -4830,12 +4839,21 @@ function projectMinorBodyLayer(
           projectedPeriapsisScene
         : 1;
 
-    const presentedSemiMajorScene =
-      semiMajorScene *
-      presentationExpansionFactor;
+    const cometVisual = useV2Cadence && orbital.kind === MinorBodyKind.COMET
+      ? buildV2CometVisualOrbit({
+          physicalSemiMajorScene: semiMajorScene,
+          physicalEccentricity: orbital.eccentricity,
+          starOpticalRadiusScene: maximumOpticalStarRadiusScene,
+          cometRadiusScene: minorBodyRadiusScene(entry.body, orbital.kind),
+          maximumApoapsisScene: 4.8,
+        }) : null;
+
+    const presentedSemiMajorScene = cometVisual?.semiMajorScene ??
+      semiMajorScene * presentationExpansionFactor;
+    const visualEccentricity = cometVisual?.eccentricity ?? orbital.eccentricity;
 
     const presentedLinearScenePerAu =
-      presentationExpansionFactor > 1 &&
+      (cometVisual !== null || presentationExpansionFactor > 1) &&
       orbital.semiMajorAxisAu >
         Number.EPSILON
         ? presentedSemiMajorScene /
@@ -4857,7 +4875,8 @@ function projectMinorBodyLayer(
             : systemSceneMinorBodyPresentationTimeScale(motion.periodDays,
                 playbackDaysPerRealSecond),
         ...(useV2Cadence && orbital.kind === MinorBodyKind.COMET
-          ? { presentationCometPhaseWarp: V2_COMET_PHASE_WARP } : {}),
+          ? { presentationCometPhaseWarp: V2_COMET_PHASE_WARP,
+              presentationEccentricity: visualEccentricity } : {}),
         ...(
           presentedLinearScenePerAu ===
             null
@@ -4960,14 +4979,10 @@ function projectMinorBodyLayer(
           presentedSemiMajorScene,
         semiMinorScene:
           presentedSemiMajorScene *
-          Math.sqrt(
-            1 -
-            orbital.eccentricity **
-              2,
-          ),
+          Math.sqrt(1 - visualEccentricity ** 2),
         focusOffsetScene:
           presentedSemiMajorScene *
-          orbital.eccentricity,
+          visualEccentricity,
         rotationDegrees:
           motion.rotationDegrees,
         inclinationDegrees:
@@ -4976,6 +4991,7 @@ function projectMinorBodyLayer(
           motion.id,
         motionScale:
           1,
+        ...(cometVisual === null ? {} : { presentationEccentricity: visualEccentricity }),
         anchorMotionContributions:
           anchorContributions,
         ...(

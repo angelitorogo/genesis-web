@@ -1,3 +1,4 @@
+import { v2CometVisualPositionAu } from './system-scene-v2-comet-orbit-presentation';
 import { v2CometPresentationDay } from './system-scene-v2-minor-cadence';
 
 import {
@@ -32,6 +33,9 @@ export interface SystemSceneMotionProjectionContribution {
   /** V2 comet-only bounded TRUE-anomaly cadence; no physical epoch mutation. */
   readonly presentationCometPhaseWarp?:
     number;
+
+  /** V2 comet-only screen silhouette; physical motion eccentricity is frozen. */
+  readonly presentationEccentricity?: number;
 
   /** Renderer-only multiplier applied after AU -> scene projection. */
   readonly postProjectionScale?:
@@ -128,7 +132,9 @@ export function projectSystemSceneMotionContributions(
       : v2CometPresentationDay(presentationDay, motion.periodDays,
           motion.eccentricity, motion.epochMeanAnomalyDegrees,
           contribution.presentationCometPhaseWarp);
-    const position = SystemOrbitalMotionEngine.positionAtSimulationDay(motion, orbitalDay);
+    const position = contribution.presentationEccentricity === undefined
+      ? SystemOrbitalMotionEngine.positionAtSimulationDay(motion, orbitalDay)
+      : v2CometVisualPositionAu(motion, orbitalDay, contribution.presentationEccentricity);
 
     const postProjectionScale =
       finitePositiveOr(

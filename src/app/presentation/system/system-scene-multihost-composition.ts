@@ -1,3 +1,5 @@
+import { buildV2CometVisualOrbit, type V2CometVisualOrbit,
+  V2_COMET_MAX_LOCAL_APOAPSIS_SCENE } from './system-scene-v2-comet-orbit-presentation';
 import { type BodyLocator } from '../../domain/generation/procedural-locator';
 import { StellarMultihostPublicTargetIndex } from '../../simulation/stellar/stellar-multihost-public-target-index';
 import { type GeneratedMultipleHost, type MultihostLabel } from '../../simulation/stellar/stellar-multihost-formation';
@@ -155,12 +157,31 @@ export class SystemSceneMultihostComposition {
       }).sort((a, b) => a.radiusAu - b.radiusAu);
       const planetRank = new Map(rankedPlanetMotions.map((item, index) => [item.motionId, index + 1]));
       const scales = new Map<string, number>();
+      const cometVisuals = new Map<string, V2CometVisualOrbit>();
+      const ownStar = local.stars[0]!;
+      const localStarRadius = base.generatorVersionCode === 2
+        ? Math.max(0.055, Math.min(0.19, ownStar.radiusScene * factor))
+        : Math.max(0.075, Math.min(0.24, ownStar.radiusScene * factor));
+      const localStarOpticalRadius = Math.max(localStarRadius,
+        Math.min(base.generatorVersionCode === 2 ? 0.235 : 0.3,
+          (ownStar.opticalRadiusScene ?? ownStar.radiusScene) * factor));
       for (const motion of local.motions) {
         const guideForMotion = orbitByMotion.get(motion.id);
         const rawAxis = (guideForMotion?.semiMajorScene ??
           motion.semiMajorAxisAu * local.scale.orbitScaleScenePerAu) * factor;
-        const visualAxis = guideForMotion?.kind === 'minor-body'
-          ? Math.min(rawAxis, 2.38 / (1 + motion.eccentricity)) : rawAxis;
+        const comet = base.generatorVersionCode === 2 && guideForMotion?.kind === 'minor-body' &&
+          guideForMotion.presentationEccentricity !== undefined;
+        const visual = comet ? buildV2CometVisualOrbit({
+          physicalSemiMajorScene: rawAxis,
+          physicalEccentricity: motion.eccentricity,
+          starOpticalRadiusScene: localStarOpticalRadius,
+          cometRadiusScene: local.minorBodies.find(body =>
+            body.motionContributions.at(-1)?.motionId === motion.id)?.radiusScene ?? 0,
+          maximumApoapsisScene: V2_COMET_MAX_LOCAL_APOAPSIS_SCENE,
+        }) : null;
+        if (visual !== null) cometVisuals.set(motion.id, visual);
+        const visualAxis = visual?.semiMajorScene ?? (guideForMotion?.kind === 'minor-body'
+          ? Math.min(rawAxis, 2.38 / (1 + motion.eccentricity)) : rawAxis);
         const weight = Math.abs(guideForMotion?.motionScale ?? 1);
         scales.set(motion.id, visualAxis / (motion.semiMajorAxisAu * (weight || 1)));
         motions.push(Object.freeze({ ...motion, id: namespaced(motion.id) }));
@@ -183,6 +204,8 @@ export class SystemSceneMultihostComposition {
             ? v2PlanetTimeScale(physical.periodDays, playback, physical.semiMajorAxisAu,
                 radialRank, rankedPlanetMotions.length) : null;
           return Object.freeze({ ...part, motionId: namespaced(part.motionId),
+            ...(cometVisuals.has(part.motionId)
+              ? { presentationEccentricity: cometVisuals.get(part.motionId)!.eccentricity } : {}),
             linearScenePerAu: scales.get(part.motionId) ?? part.linearScenePerAu ?? local.scale.orbitScaleScenePerAu * factor,
             presentationTimeScale: planetCadence ?? minorCadence ?? (physical === undefined ? previousTime : Math.min(previousTime,
               physical.periodDays / (playback * minimum),
@@ -205,10 +228,14 @@ export class SystemSceneMultihostComposition {
         const linear = orbit.motionId === null ? undefined : scales.get(orbit.motionId);
         const semi = physical && linear !== undefined
           ? physical.semiMajorAxisAu * Math.abs(orbit.motionScale) * linear : orbit.semiMajorScene * factor;
+        const cometVisual = orbit.motionId === null ? undefined : cometVisuals.get(orbit.motionId);
         orbits.push(Object.freeze({ ...orbit, id: namespaced(orbit.id), label: `${source.label} · ${orbit.label}`,
           semiMajorScene: semi,
-          semiMinorScene: semi * (orbit.semiMajorScene ? orbit.semiMinorScene / orbit.semiMajorScene : 1),
-          focusOffsetScene: semi * (orbit.semiMajorScene ? orbit.focusOffsetScene / orbit.semiMajorScene : 0),
+          semiMinorScene: cometVisual?.semiMinorScene ??
+            semi * (orbit.semiMajorScene ? orbit.semiMinorScene / orbit.semiMajorScene : 1),
+          focusOffsetScene: cometVisual?.focusOffsetScene ??
+            semi * (orbit.semiMajorScene ? orbit.focusOffsetScene / orbit.semiMajorScene : 0),
+          ...(cometVisual === undefined ? {} : { presentationEccentricity: cometVisual.eccentricity }),
           motionId: orbit.motionId === null ? null : namespaced(orbit.motionId),
           anchorMotionContributions: partsFor(orbit.anchorMotionContributions),
           linearScenePerAu: linear, postProjectionScale: undefined }));

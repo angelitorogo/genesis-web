@@ -3872,7 +3872,8 @@ class ThreeSystemSceneRuntime
       this.orbitLocalSamplesAu.set(
         orbit.id,
         sampleSystemSceneOrbitLocalAu(
-          motion,
+          orbit.presentationEccentricity === undefined ? motion :
+            { ...motion, eccentricity: orbit.presentationEccentricity },
           orbit.kind,
           ORBIT_SEGMENT_COUNT,
         ),
