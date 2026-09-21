@@ -4,7 +4,7 @@
   data-testid="galactic-map-scene"
   [attr.data-render-state]="renderState()"
   [attr.data-particle-count]="particleCount()"
-  [attr.data-rotation-enabled]="cameraState()?.rotationEnabled ?? null"
+  [attr.data-rotation-enabled]="cameraState() === null ? null : (cameraState()!.rotationEnabled ? 'true' : 'false')"
   [attr.data-camera-distance]="cameraState()?.distance ?? null"
   [attr.data-camera-azimuth]="cameraState()?.azimuthRadians ?? null"
   [attr.data-camera-polar]="cameraState()?.polarRadians ?? null"

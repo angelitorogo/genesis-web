@@ -13,6 +13,32 @@ async function select(page: Page, seed: string): Promise<void> {
   await expect(page.getByTestId('universe-active-version')).toContainText('V2');
 }
 
+/** Wait for the real map bootstrap and report its explicit failure states. */
+async function readyMap(page: Page) {
+  await page.goto('/galaxy-map');
+  await expect(page.getByTestId('galaxy-map-page')).toBeVisible({ timeout: 15_000 });
+
+  const mapError = page.getByTestId('galaxy-map-error');
+  const mapEmpty = page.getByTestId('galaxy-map-empty');
+  await expect(
+    page.getByTestId('galactic-map-context').or(mapError).or(mapEmpty),
+  ).toBeVisible({ timeout: 15_000 });
+
+  if (await mapError.isVisible()) {
+    throw new Error(`Fallo al cargar el mapa V2: ${await mapError.innerText()}`);
+  }
+  if (await mapEmpty.isVisible()) {
+    throw new Error('El mapa no encuentra el universo V2 seleccionado.');
+  }
+  if (await page.getByTestId('galactic-map-detailed-scene-restricted').isVisible()) {
+    throw new Error('El mapa V2 restringe la escena: la galaxia no está descubierta.');
+  }
+
+  const scene = page.getByTestId('galactic-map-scene');
+  await expect(scene).toHaveAttribute('data-render-state', 'ready', { timeout: 15_000 });
+  return scene;
+}
+
 async function points(page: Page): Promise<number> {
   await page.goto('/');
   await expect(page.getByTestId('home-dashboard')).toBeVisible();
@@ -26,9 +52,7 @@ test('14.3 — dos universos V2, progreso, recarga y navegación conservan su id
   // Playwright uses a fresh context; the user's other browser and V1 save are untouched.
   await select(page, A);
   expect(await points(page)).toBe(0);
-  await page.goto('/galaxy-map');
-  const scene = page.getByTestId('galactic-map-scene');
-  await expect(scene).toHaveAttribute('data-render-state', 'ready');
+  const scene = await readyMap(page);
   const canvas = page.getByTestId('galactic-map-canvas');
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('No hay canvas del mapa.');
@@ -51,16 +75,14 @@ test('14.3 — dos universos V2, progreso, recarga y navegación conservan su id
   await page.reload();
   await expect(page.getByTestId('home-dashboard')).toBeVisible();
   expect(await points(page)).toBe(0);
-  await page.goto('/galaxy-map');
-  await expect(page.getByTestId('galactic-map-scene')).toHaveAttribute('data-explored-sector-count', '0');
+  await expect(await readyMap(page)).toHaveAttribute('data-explored-sector-count', '0');
 
   await select(page, A);
   expect(await points(page)).toBe(progressA);
   await page.reload();
   await expect(page.getByTestId('home-dashboard')).toBeVisible();
   expect(await points(page)).toBe(progressA);
-  await page.goto('/galaxy-map');
-  await expect(page.getByTestId('galactic-map-scene')).toHaveAttribute('data-explored-sector-count', '1');
+  await expect(await readyMap(page)).toHaveAttribute('data-explored-sector-count', '1');
   await page.goto('/galaxies');
   await expect(page.getByTestId('discovered-galaxies-page')).toBeVisible();
   await page.goto('/galaxies/0');
