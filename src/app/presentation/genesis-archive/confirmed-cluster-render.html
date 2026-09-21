@@ -1,0 +1,45 @@
+<div
+  #viewport
+  class="confirmed-cluster"
+  data-testid="confirmed-cluster-3d-render"
+  [attr.data-cluster-kind]="clusterKind()"
+  [attr.data-render-mode]="fallback() ? 'FALLBACK' : '3D'"
+>
+  @if (fallback()) {
+    @if (clusterKind() === 'GLOBULAR') {
+      <app-globular-cluster-render [descriptor]="descriptor()" />
+    } @else {
+      <app-open-cluster-render [descriptor]="descriptor()" />
+    }
+    <span class="confirmed-cluster__fallback">Visor 3D no disponible · representación anterior</span>
+  } @else {
+    <canvas
+      #canvas
+      class="confirmed-cluster__canvas"
+      tabindex="0"
+      role="img"
+      [attr.aria-label]="descriptor().accessibleLabel + '. Visualización 3D del mismo patrón del cúmulo ya observado. Arrastra para girar, rueda o teclas más/menos para acercar y alejar, flechas para orientar y Inicio para restablecer.'"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp()"
+      (pointercancel)="onPointerUp()"
+      (wheel)="onWheel($event)"
+      (keydown)="onKeyDown($event)"
+      (webglcontextlost)="onContextLost($event)"
+    ></canvas>
+    <div class="confirmed-cluster__toolbar" aria-label="Controles de vista del cúmulo">
+      <button type="button" (click)="adjustZoom(1.12)" aria-label="Acercar">+</button>
+      <button type="button" (click)="adjustZoom(1 / 1.12)" aria-label="Alejar">−</button>
+      <button type="button" (click)="resetView()">Centrar</button>
+      <button type="button" (click)="toggleAnimation()" [attr.aria-pressed]="autoRotate()">
+        {{ autoRotate() ? 'Pausar giro' : 'Girar' }}
+      </button>
+    </div>
+    <div class="confirmed-cluster__legend" aria-hidden="true">
+      3D · Vista inicial equivalente a la representación anterior · Arrastrar: orbitar · Rueda: zoom
+    </div>
+    <span class="confirmed-cluster__disclaimer">
+      Muestra visual fiel al patrón 2D del mismo objeto · Colores por temperatura aproximada · No son estrellas catalogadas individualmente
+    </span>
+  }
+</div>

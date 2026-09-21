@@ -53,12 +53,15 @@ import {
   GlobularClusterRender,
 } from './globular-cluster-render';
 
+import { ConfirmedClusterRender } from './confirmed-cluster-render';
+
 
 import {
   SupernovaRemnantRender,
 } from './supernova-remnant-render';
 
 import {
+  ArchiveGalacticObjectKnowledgeLevel,
   ArchiveGalacticObjectRenderKind,
   ArchiveGalacticObjectRenderProfile,
   type ArchiveGalacticObjectRenderDescriptor,
@@ -88,6 +91,7 @@ import {
     HiiRegionIntenseRender,
     OpenClusterRender,
     GlobularClusterRender,
+    ConfirmedClusterRender,
     SupernovaRemnantRender,
   ],
 
@@ -258,6 +262,10 @@ export class GalacticObjectProceduralRender {
         );
       },
     );
+
+  readonly usesConfirmedCluster3d = computed(() =>
+    this.descriptor().knowledgeLevel === ArchiveGalacticObjectKnowledgeLevel.CONFIRMED &&
+    (this.usesOpenClusterRenderer() || this.usesGlobularClusterRenderer()));
 
   readonly usesOpenClusterRenderer =
     computed(

@@ -1031,7 +1031,7 @@ describe(
     );
 
     it(
-      'should route scientific OPEN_CLUSTER descriptors through the same dedicated renderer',
+      'should route confirmed OPEN_CLUSTER to the interactive renderer within the original figure',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -1064,9 +1064,11 @@ describe(
 
         expect(
           element.querySelector(
-            '[data-testid="open-cluster-render"]',
+            '[data-testid="confirmed-cluster-3d-render"]',
           ),
         ).toBeTruthy();
+
+        expect(element.querySelector('[data-testid="confirmed-cluster-3d-render"]')?.getAttribute('data-cluster-kind')).toBe('OPEN');
       },
     );
 
@@ -1121,7 +1123,7 @@ describe(
     );
 
     it(
-      'should route scientific GLOBULAR_CLUSTER descriptors through the same dedicated renderer',
+      'should route confirmed GLOBULAR_CLUSTER to the interactive renderer within the original figure',
       () => {
         const fixture =
           TestBed.createComponent(
@@ -1154,9 +1156,11 @@ describe(
 
         expect(
           element.querySelector(
-            '[data-testid="globular-cluster-render"]',
+            '[data-testid="confirmed-cluster-3d-render"]',
           ),
         ).toBeTruthy();
+
+        expect(element.querySelector('[data-testid="confirmed-cluster-3d-render"]')?.getAttribute('data-cluster-kind')).toBe('GLOBULAR');
       },
     );
 

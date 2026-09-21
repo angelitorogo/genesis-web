@@ -1693,13 +1693,27 @@ describe(
           4,
         );
 
-        expect(
-          element.querySelectorAll(
-            '[data-testid="open-cluster-render"]',
-          ),
-        ).toHaveLength(
-          4,
+        // Before CONFIRMED, the same selected sample retains its legacy 2D renderer.
+        // CONFIRMED now mounts the 3D wrapper, which can fall back to 2D when
+        // WebGL is unavailable in the test environment.
+        const earlierStates = element.querySelectorAll<HTMLElement>(
+          '[data-testid="galactic-object-laboratory-state"]:not([data-state="CONFIRMED"])',
         );
+        expect(earlierStates).toHaveLength(3);
+        for (const state of earlierStates) {
+          expect(state.querySelector('[data-testid="open-cluster-render"]')).toBeTruthy();
+          expect(state.querySelector('[data-testid="confirmed-cluster-3d-render"]')).toBeNull();
+        }
+
+        const confirmedState = element.querySelector<HTMLElement>(
+          '[data-testid="galactic-object-laboratory-state"][data-state="CONFIRMED"]',
+        );
+        expect(confirmedState).not.toBeNull();
+        const confirmedRenderer = confirmedState?.querySelector(
+          '[data-testid="confirmed-cluster-3d-render"]',
+        );
+        expect(confirmedRenderer).toBeTruthy();
+        expect(confirmedRenderer?.getAttribute('data-cluster-kind')).toBe('OPEN');
       },
       30_000,
     );
@@ -1819,13 +1833,27 @@ describe(
           4,
         );
 
-        expect(
-          element.querySelectorAll(
-            '[data-testid="globular-cluster-render"]',
-          ),
-        ).toHaveLength(
-          4,
+        // Before CONFIRMED, the same selected sample retains its legacy 2D renderer.
+        // CONFIRMED now mounts the 3D wrapper, which can fall back to 2D when
+        // WebGL is unavailable in the test environment.
+        const earlierStates = element.querySelectorAll<HTMLElement>(
+          '[data-testid="galactic-object-laboratory-state"]:not([data-state="CONFIRMED"])',
         );
+        expect(earlierStates).toHaveLength(3);
+        for (const state of earlierStates) {
+          expect(state.querySelector('[data-testid="globular-cluster-render"]')).toBeTruthy();
+          expect(state.querySelector('[data-testid="confirmed-cluster-3d-render"]')).toBeNull();
+        }
+
+        const confirmedState = element.querySelector<HTMLElement>(
+          '[data-testid="galactic-object-laboratory-state"][data-state="CONFIRMED"]',
+        );
+        expect(confirmedState).not.toBeNull();
+        const confirmedRenderer = confirmedState?.querySelector(
+          '[data-testid="confirmed-cluster-3d-render"]',
+        );
+        expect(confirmedRenderer).toBeTruthy();
+        expect(confirmedRenderer?.getAttribute('data-cluster-kind')).toBe('GLOBULAR');
       },
       30_000,
     );

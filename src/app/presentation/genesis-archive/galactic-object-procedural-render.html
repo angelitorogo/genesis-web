@@ -28,6 +28,9 @@
     <app-hii-region-intense-render
       [descriptor]="descriptor()"
     ></app-hii-region-intense-render>
+  } @else if (usesConfirmedCluster3d()) {
+    <app-confirmed-cluster-render [descriptor]="descriptor()"
+      [clusterKind]="usesOpenClusterRenderer() ? 'OPEN' : 'GLOBULAR'" />
   } @else if (usesOpenClusterRenderer()) {
     <app-open-cluster-render
       [descriptor]="descriptor()"
