@@ -114,6 +114,10 @@ describe(
 
         readonly discoveryState?:
           DiscoveryStateValue;
+
+        /** Provide read-only scientific prerequisites for one real archive route. */
+        readonly scientificActionsEnabled?:
+          boolean;
       } = {},
     ): {
       readonly facade:
@@ -172,6 +176,7 @@ describe(
 
           pointsRepository: {
             async getGlobalDiscoveryPoints() {
+              if (options.scientificActionsEnabled) return 0n;
               throw new Error(
                 '10.6 archive detail must not read global PD.',
               );
@@ -216,6 +221,7 @@ describe(
             },
 
             async getKnownDiscoveries() {
+              if (options.scientificActionsEnabled) return [];
               throw new Error(
                 '10.6 archive detail must resolve only the requested persisted locator.',
               );
@@ -482,6 +488,60 @@ describe(
         );
       },
     );
+
+    it('27.10 V2 routes a genuine discovered IMBH from the persisted archive locator to its next action, without leaking facts', async () => {
+      const key = new UniverseGenerationKey(UniverseSeed.parse(
+        '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'), GeneratorVersion.V2);
+      const locator = new GalacticObjectLocator(0n, -73014444020n, 0n);
+      const request = {
+        locatorKind: ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+        galaxyIndex: '0', sectorKey: locator.sectorKey.toString(10),
+        galacticObjectIndex: '0',
+        universeSeed: key.universeSeed.serialize(), generatorVersionCode: '2',
+      };
+
+      // The route loads an already-persisted discovery; never inserts one.
+      const discovered = configure({
+        universes: [key], discoveryState: DiscoveryState.DISCOVERED,
+        scientificActionsEnabled: true,
+      });
+      await discovered.facade.load(request);
+      expect(discovered.facade.state().kind).toBe('content');
+      // One persisted state read is sufficient; action derivation reuses it.
+      expect(discovered.stateReads).toEqual([locator]);
+      expect(discovered.facade.model()?.resultKind).toBe(ExplorationResultKind.EXTREME_OBJECT);
+      expect(discovered.facade.model()?.galacticObjectCard?.scientificSubject).toBeNull();
+      expect(discovered.facade.model()?.galacticObjectCard?.facts).toHaveLength(0);
+      expect(discovered.facade.model()?.scientificAction?.actionType)
+        .toBe(GalacticObjectScientificActionType.IMBH_COMPACT_CHARACTERIZATION);
+      expect(discovered.facade.model()?.scientificAction?.minimumInstrumentLevelRank).toBe(3);
+      // Tool unlocks depend on existing PD/instrument progression, never minted here.
+      expect(discovered.facade.model()?.scientificAction?.canExecute).toBe(false);
+    });
+
+    it('27.10 V2 offers independent confirmation on a persisted catalogued IMBH, with actual model values', async () => {
+      const key = new UniverseGenerationKey(UniverseSeed.parse(
+        '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'), GeneratorVersion.V2);
+      const locator = new GalacticObjectLocator(0n, -73014444020n, 0n);
+      const { facade } = configure({
+        universes: [key], discoveryState: DiscoveryState.CATALOGUED,
+        scientificActionsEnabled: true,
+      });
+      await facade.load({
+        locatorKind: ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+        galaxyIndex: '0', sectorKey: locator.sectorKey.toString(10),
+        galacticObjectIndex: '0', universeSeed: key.universeSeed.serialize(),
+        generatorVersionCode: '2',
+      });
+      expect(facade.state().kind).toBe('content');
+      expect(facade.model()?.galacticObjectCard?.title).toBe('Agujero negro de masa intermedia');
+      expect(facade.model()?.galacticObjectCard?.facts.some(f => f.label === 'Masa (modelo)')).toBe(true);
+      expect(facade.model()?.scientificAction?.actionType)
+        .toBe(GalacticObjectScientificActionType.IMBH_INDEPENDENT_CONFIRMATION);
+      expect(facade.model()?.scientificAction?.minimumInstrumentLevelRank).toBe(4);
+      expect(facade.model()?.scientificAction?.instrumentOptions.map(i => i.instrumentType))
+        .toEqual([ObservationInstrumentType.RADIO, ObservationInstrumentType.X_RAY]);
+    });
 
     it(
       'should keep an absent persisted locator as not-found instead of materializing it',

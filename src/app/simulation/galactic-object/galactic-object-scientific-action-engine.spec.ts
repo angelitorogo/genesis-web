@@ -658,7 +658,7 @@ describe(
     );
 
     it(
-      'should expose all thirteen availability rows without filtering the catalog',
+      'should expose all fifteen V1 + V2 availability rows without filtering the catalog',
       () => {
         expect(
           GalacticObjectScientificActionEngine
@@ -671,7 +671,7 @@ describe(
                 ObservationInstrumentLevel.LEVEL_2,
               ),
             ),
-        ).toHaveLength(13);
+        ).toHaveLength(15);
       },
     );
 

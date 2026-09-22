@@ -22,6 +22,10 @@ export enum GalacticObjectScientificSubject {
 
   SUPERNOVA_REMNANT =
     'SUPERNOVA_REMNANT',
+
+  /** 27.10 V2: rare real 27.2 specialization, not the reserved complement. */
+  INTERMEDIATE_MASS_BLACK_HOLE =
+    'INTERMEDIATE_MASS_BLACK_HOLE',
 }
 
 /**

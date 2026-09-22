@@ -74,9 +74,7 @@ import {
   ExplorationSectorResultEngine,
 } from '../../simulation/exploration/exploration-sector-result-engine';
 
-import {
-  GalacticObjectScientificActionCatalogV1,
-} from '../../simulation/galactic-object/galactic-object-scientific-action-catalog';
+import { GalacticObjectScientificActionCatalogV2 } from '../../simulation/galactic-object/galactic-object-scientific-action-catalog-v2';
 
 import {
   GalacticObjectScientificActionEngine,
@@ -1496,7 +1494,7 @@ function resolveNextScientificRule(
     return family ===
       null
       ? null
-      : GalacticObjectScientificActionCatalogV1
+      : GalacticObjectScientificActionCatalogV2
           .surveyRule(
             family,
           );
@@ -1517,7 +1515,7 @@ function resolveNextScientificRule(
     return null;
   }
 
-  return GalacticObjectScientificActionCatalogV1
+  return GalacticObjectScientificActionCatalogV2
     .subjectRules(
       subject,
     )

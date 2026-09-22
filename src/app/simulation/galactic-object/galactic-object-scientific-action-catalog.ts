@@ -495,6 +495,9 @@ function validateCatalogV1():
       GalacticObjectScientificSubject,
     )
   ) {
+    // 27.10 V2 adds IMBH in a separate additive catalog. V1 stays frozen.
+    if (subject === GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE) continue;
+
     const subjectRules =
       RULES.filter(
         (

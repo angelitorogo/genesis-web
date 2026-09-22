@@ -36,6 +36,7 @@ import {
 import {
   SupernovaRemnantGenerator,
 } from './supernova-remnant-generator';
+import { IntermediateMassBlackHoleGenerator } from './intermediate-mass-black-hole-generator';
 
 /**
  * Point-12.7 Ground-Truth-to-scientific-action routing boundary.
@@ -130,6 +131,12 @@ export class GalacticObjectScientificSubjectResolver {
     ) {
       return GalacticObjectScientificSubject
         .SUPERNOVA_REMNANT;
+    }
+
+    // Check only the 27.2 rare, actually populated, non-nuclear complement.
+    // No branch is queried before DISCOVERED: DETECTED remains strictly coarse.
+    if (IntermediateMassBlackHoleGenerator.isIntermediateMassBlackHoleLocator(generationKey, locator)) {
+      return GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE;
     }
 
     // Point 12.6 intentionally preserves a reserved EXTREME_OBJECT complement.

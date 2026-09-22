@@ -39,6 +39,7 @@ import {
 import {
   GenesisIndexedDb,
 } from '../../data/local/indexed-db/genesis-indexed-db';
+import { DexieScientificEvidenceRepository } from '../../data/local/repository/dexie-scientific-evidence.repository';
 
 import {
   DexieDiscoveryPointsRepository,
@@ -52,6 +53,8 @@ import {
 import {
   GalacticObjectScientificActionEngine,
 } from '../../simulation/galactic-object/galactic-object-scientific-action-engine';
+import { GalacticObjectScientificActionCatalogV2 } from '../../simulation/galactic-object/galactic-object-scientific-action-catalog-v2';
+import { ScientificEvidenceAcquisitionEngine } from '../../simulation/observation/scientific-evidence-acquisition-engine';
 
 import {
   ProceduralTargetResolver,
@@ -152,6 +155,7 @@ export class DexieGalacticObjectScientificActionRuntime
         this.database.universes,
         this.database.discoveries,
         this.database.progress,
+        this.database.observations,
         async () =>
           this.commitInsideTransaction(
             observationSession,
@@ -230,6 +234,21 @@ export class DexieGalacticObjectScientificActionRuntime
       throw new RangeError(
         'Point-12.7 global Discovery Points exceed signed Long range.',
       );
+    }
+
+    // 27.10 V2: persist two distinguishable observation campaigns on the
+    // existing observations store, in this SAME state/PD transaction. No
+    // fabricated mass measurement, new physics or new schema is introduced.
+    const evidenceRule = GalacticObjectScientificActionCatalogV2.evidenceRule(actionType);
+    if (evidenceRule !== null) {
+      const knownDiscoveries = await this.discoveryRepository.getKnownDiscoveries(generationKey);
+      const acquired = ScientificEvidenceAcquisitionEngine.acquire(
+        generationKey, globalBefore, knownDiscoveries, evidenceRule,
+        currentSession.instrumentType, currentSession.level, Date.now(),
+      );
+      await new DexieScientificEvidenceRepository(
+        this.database, TARGET_SEED_RESOLVER,
+      ).recordEvidence(generationKey, observationSession.targetLocator, acquired.evidence);
     }
 
     await this

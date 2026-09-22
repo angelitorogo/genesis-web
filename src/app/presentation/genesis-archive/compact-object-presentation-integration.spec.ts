@@ -38,6 +38,30 @@ describe('27.10 — actual scientific presentation integration', () => {
     expect(root.querySelector('[data-testid="stellar-system-render-single-bloom"]')).toBeNull();
   });
 
+  it('never draws a hidden IMBH silhouette before scientific cataloguing', () => {
+    const key = new UniverseGenerationKey(UniverseSeed.parse(
+      '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'), GeneratorVersion.V2);
+    const rare = new GalacticObjectLocator(0n, -73014444020n, 0n);
+    const fixture = TestBed.createComponent(GalacticObjectProceduralRender);
+    for (const state of [DiscoveryState.DETECTED, DiscoveryState.DISCOVERED]) {
+      const card = ArchiveGalacticObjectCardAssembler.build(
+        key, rare, ExplorationResultKind.EXTREME_OBJECT, state);
+      fixture.componentRef.setInput('descriptor', card.render);
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="compact-science-shadow"]')).toBeNull();
+      expect(root.querySelector('[data-testid="compact-science-disk"]')).toBeNull();
+      expect(root.querySelector('[data-testid="compact-science-jets"]')).toBeNull();
+      expect(root.textContent).not.toContain('Agujero negro de masa intermedia');
+    }
+    const catalogued = ArchiveGalacticObjectCardAssembler.build(
+      key, rare, ExplorationResultKind.EXTREME_OBJECT, DiscoveryState.CATALOGUED);
+    fixture.componentRef.setInput('descriptor', catalogued.render);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement)
+      .querySelector('[data-testid="compact-science-shadow"]')).toBeTruthy();
+  });
+
   it('routes a real catalogued IMBH to the compact diagram, never to an invented cloud', () => {
     const key = new UniverseGenerationKey(UniverseSeed.parse(
       '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'), GeneratorVersion.V1);

@@ -55,9 +55,7 @@ import {
   ObservationActionEngine,
 } from '../observation/observation-action-engine';
 
-import {
-  GalacticObjectScientificActionCatalogV1,
-} from './galactic-object-scientific-action-catalog';
+import { GalacticObjectScientificActionCatalogV2 } from './galactic-object-scientific-action-catalog-v2';
 
 import {
   GalacticObjectScientificSubjectResolver,
@@ -97,7 +95,7 @@ export class GalacticObjectScientificActionEngine {
     const physicalKey = frozenPhysicalSourceKey(generationKey);
 
     const rule =
-      GalacticObjectScientificActionCatalogV1
+      GalacticObjectScientificActionCatalogV2
         .rule(
           actionType,
         );
@@ -188,7 +186,7 @@ export class GalacticObjectScientificActionEngine {
   ): readonly GalacticObjectScientificActionAvailability[] {
 
     return Object.freeze(
-      GalacticObjectScientificActionCatalogV1
+      GalacticObjectScientificActionCatalogV2
         .supportedActions
         .map(
           (

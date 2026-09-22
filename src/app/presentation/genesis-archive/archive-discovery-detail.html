@@ -538,7 +538,7 @@
                   <h3>Binaria compacta A–B · magnitudes de referencia</h3>
                   <p>Órbita actual existente. El inspiral circular es una referencia matemática, no una fecha de fusión ni una evolución simulada.</p>
                   <dl class="archive-discovery-detail__physical-facts">
-                    @for (fact of systemCard.compactBinaryFacts ?? []; track fact.label) {
+                    @for (fact of systemCard.compactBinaryFacts; track fact.label) {
                       <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd></div>
                     }
                   </dl>

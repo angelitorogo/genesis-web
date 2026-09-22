@@ -99,7 +99,7 @@ describe(
           const subject
           of Object.values(
             GalacticObjectScientificSubject,
-          )
+          ).filter(subject => subject !== GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE)
         ) {
           const rules =
             GalacticObjectScientificActionCatalogV1

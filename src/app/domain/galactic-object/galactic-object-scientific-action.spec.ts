@@ -76,13 +76,13 @@ describe(
     }
 
     it(
-      'should expose exactly thirteen canonical action types',
+      'should preserve thirteen V1 action types and append two V2 compact actions',
       () => {
         expect(
           Object.values(
             GalacticObjectScientificActionType,
           ),
-        ).toHaveLength(13);
+        ).toHaveLength(15);
       },
     );
 

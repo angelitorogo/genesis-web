@@ -414,51 +414,72 @@ export class ArchiveGalacticObjectCardAssembler {
           state,
         );
 
-    if (
-      scientificSubject ===
-      null
-    ) {
-      // Reserved extreme complement: disclose the exceptionally rare 27.2
-      // specialization only after its OWN persisted scientific level reaches
-      // CATALOGUED. Unclassified objects stay unclassified.
-      if (coarseFamily === GalacticObjectScientificSurveyFamily.EXTREME_OBJECT &&
-          state.code >= DiscoveryState.CATALOGUED.code) {
-        const intermediate = IntermediateMassBlackHoleGenerator.generate(generationKey, locator);
-        if (intermediate !== null) {
-          const massFacts: readonly ArchiveGalacticObjectFact[] = Object.freeze([
-            fact('Clase compacta', 'Agujero negro de masa intermedia · modelo'),
-            fact('Masa (modelo)', formatQuantity(intermediate.physicalProperties.massSolar, 'M☉', 1)),
-            fact('Radio de Schwarzschild (referencia)',
-              formatQuantity(intermediate.physicalProperties.schwarzschildRadiusKm, 'km', 1)),
-          ]);
-          const title = 'Agujero negro de masa intermedia';
-          return Object.freeze({
-            coarseFamily,
-            scientificSubject: null,
+    if (scientificSubject === GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE) {
+      // DISCOVERED unlocks scientific investigation, NOT the IMBH mass,
+      // identity or compact diagram. CATALOGUED is the first public disclosure.
+      if (state.code < DiscoveryState.CATALOGUED.code) {
+        const title = 'Objeto extremo sin clasificación física';
+        return Object.freeze({
+          coarseFamily,
+          scientificSubject: null,
+          knowledgeLevel,
+          knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
+          title,
+          summary: 'La señal descubierta necesita una campaña multibanda adicional. Su naturaleza física y sus magnitudes no se muestran hasta completar la caracterización.',
+          nextScientificStep: 'Caracterización multibanda de fuente extrema',
+          facts: Object.freeze([]),
+          scientificSections: Object.freeze([]),
+          render: createIdentifiedRenderDescriptor(
+            ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
             knowledgeLevel,
-            knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
+            renderSeed,
             title,
-            summary: 'Fuente extrema catalogada como candidata compacta en el modelo. No se presupone acreción ni emisión en jets.',
-            nextScientificStep: state.code >= DiscoveryState.CONFIRMED.code
-              ? 'Caracterización compacta completada; acreción no determinada'
-              : 'Obtener evidencia independiente para confirmar la clasificación.',
-            facts: massFacts,
-            scientificSections: Object.freeze([Object.freeze({
-              id: 'intermediate-black-hole', title: 'Estructura compacta',
-              summary: 'Magnitudes estimadas del modelo; no equivalen a observaciones del horizonte.',
-              facts: massFacts,
-            })]),
-            render: Object.freeze({
-              kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
-              knowledgeLevel, seed: renderSeed,
-              accessibleLabel: 'Diagrama científico de agujero negro de masa intermedia, sin disco observado',
-              variant: 'INTERMEDIATE_MASS_BLACK_HOLE', renderProfile: null,
-              compactVisual: compactObjectScientificVisual('BLACK_HOLE'),
-              scale: .5, density: .5, energy: .5, concentration: .5,
-            }),
-          });
-        }
+          ),
+        });
       }
+
+      const intermediate = IntermediateMassBlackHoleGenerator.generate(generationKey, locator);
+      if (intermediate === null) {
+        throw new Error('27.10 V2: la clasificación científica no coincide con el objeto procedural.');
+      }
+      const massFacts: readonly ArchiveGalacticObjectFact[] = Object.freeze([
+        fact('Clase compacta', 'Agujero negro de masa intermedia · modelo'),
+        fact('Masa (modelo)', formatQuantity(intermediate.physicalProperties.massSolar, 'M☉', 1)),
+        fact('Radio de Schwarzschild (referencia)',
+          formatQuantity(intermediate.physicalProperties.schwarzschildRadiusKm, 'km', 1)),
+      ]);
+      const title = 'Agujero negro de masa intermedia';
+      return Object.freeze({
+        coarseFamily,
+        scientificSubject,
+        knowledgeLevel,
+        knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
+        title,
+        summary: state.code >= DiscoveryState.CONFIRMED.code
+          ? 'Clasificación compacta confirmada mediante una segunda campaña del modelo. No se presupone acreción ni emisión en jets.'
+          : 'Fuente extrema catalogada mediante caracterización compacta. La clasificación requiere confirmación independiente; no se presuponen discos ni jets.',
+        nextScientificStep: state.code >= DiscoveryState.CONFIRMED.code
+          ? 'Caracterización compacta completada; acreción no determinada'
+          : 'Confirmación independiente mediante seguimiento temporal',
+        facts: massFacts,
+        scientificSections: Object.freeze([Object.freeze({
+          id: 'intermediate-black-hole', title: 'Estructura compacta',
+          summary: 'Magnitudes estimadas del modelo; no equivalen a una observación directa del horizonte.',
+          facts: massFacts,
+        })]),
+        render: Object.freeze({
+          kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+          knowledgeLevel, seed: renderSeed,
+          accessibleLabel: 'Diagrama científico de agujero negro de masa intermedia, sin disco observado',
+          variant: 'INTERMEDIATE_MASS_BLACK_HOLE', renderProfile: null,
+          compactVisual: compactObjectScientificVisual('BLACK_HOLE'),
+          scale: .5, density: .5, energy: .5, concentration: .5,
+        }),
+      });
+    }
+
+    if (scientificSubject === null) {
+      // The rest of the reserved complement stays scientifically unresolved.
       const title =
         'Objeto extremo sin clasificación física';
 
@@ -2032,6 +2053,9 @@ function scientificSubjectLabel(
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT:
       return 'Remanente de supernova';
+
+    case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
+      return 'Agujero negro de masa intermedia';
   }
 }
 
@@ -2057,6 +2081,9 @@ function identifiedSummary(
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT:
       return 'La fuente extrema está identificada como remanente de supernova. La onda de choque debe caracterizarse antes de reconstruir su evolución.';
+
+    case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
+      return 'Fuente extrema candidata: se requiere caracterización multibanda antes de publicar las magnitudes físicas del modelo.';
   }
 }
 
@@ -2101,6 +2128,9 @@ function characterizationActionLabel(
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT:
       return 'Caracterización de la onda de choque';
+
+    case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
+      return 'Caracterización multibanda de fuente extrema';
   }
 }
 
@@ -2126,6 +2156,9 @@ function confirmationActionLabel(
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT:
       return 'Confirmación evolutiva del remanente';
+
+    case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
+      return 'Confirmación independiente mediante seguimiento temporal';
   }
 }
 
@@ -2151,6 +2184,9 @@ function renderKindForSubject(
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT:
       return ArchiveGalacticObjectRenderKind.SUPERNOVA_REMNANT;
+
+    case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
+      return ArchiveGalacticObjectRenderKind.EXTREME_OBJECT;
   }
 }
 

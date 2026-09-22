@@ -16,6 +16,7 @@ import {
 
 import {
   GalacticObjectLocator,
+  SystemLocator,
   type ProceduralLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -62,6 +63,7 @@ import {
 import {
   DexieUniverseRepository,
 } from '../../data/local/repository/dexie-universe.repository';
+import { DexieScientificEvidenceRepository } from '../../data/local/repository/dexie-scientific-evidence.repository';
 
 import {
   ObservationInstrumentCapabilityCatalogV1,
@@ -223,6 +225,8 @@ describe(
 
       level:
         ObservationInstrumentLevel,
+
+      locator: GalacticObjectLocator = remnantLocator,
     ): LeveledInstrumentObservationSession {
 
       const observatory =
@@ -233,7 +237,7 @@ describe(
       const baseSession =
         new ObservationSession(
           observatory,
-          remnantLocator,
+          locator,
           state,
         );
 
@@ -424,6 +428,74 @@ describe(
         expect(await pointsRepository.getGlobalDiscoveryPoints(v2)).toBe(24n);
       },
     );
+
+    it('27.10 V2 atomically persists distinct real observation evidence and state/PD for the rare IMBH', async () => {
+      const rare = new GalacticObjectLocator(0n, -73014444020n, 0n);
+      // A previously catalogued stellar system and earned PD unlock L3 optical
+      // and L4 radio. No hidden state, invented IMBH or instrument upgrades.
+      await discoveryRepository.setState(generationKey,
+        new SystemLocator(0n, 10n, 7n), DiscoveryState.CATALOGUED);
+      await pointsRepository.setGlobalDiscoveryPoints(generationKey, 10_000n);
+      await discoveryRepository.setState(generationKey, rare, DiscoveryState.DETECTED);
+      const baseline = await pointsRepository.getGlobalDiscoveryPoints(generationKey);
+      const evidenceRepo = new DexieScientificEvidenceRepository(database, TARGET_SEED_RESOLVER);
+      const first = await runtime.commitAction(
+        session(DiscoveryState.DETECTED, ObservationInstrumentType.RADIO,
+          ObservationInstrumentLevel.LEVEL_2, rare),
+        GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+      );
+      expect(first.actionResult.newDiscoveryState).toBe(DiscoveryState.DISCOVERED);
+      expect(await evidenceRepo.getEvidence(generationKey, rare)).toHaveLength(0);
+      const second = await runtime.commitAction(
+        session(DiscoveryState.DISCOVERED, ObservationInstrumentType.OPTICAL,
+          ObservationInstrumentLevel.LEVEL_3, rare),
+        GalacticObjectScientificActionType.IMBH_COMPACT_CHARACTERIZATION,
+      );
+      expect(second.actionResult.newDiscoveryState).toBe(DiscoveryState.CATALOGUED);
+      expect(await discoveryRepository.getState(generationKey, rare)).toBe(DiscoveryState.CATALOGUED);
+      const firstEvidence = await evidenceRepo.getEvidence(generationKey, rare);
+      expect(firstEvidence).toHaveLength(1);
+      expect(firstEvidence[0].evidenceCode).toBe('MULTIBAND_CHARACTERIZATION');
+      const third = await runtime.commitAction(
+        session(DiscoveryState.CATALOGUED, ObservationInstrumentType.RADIO,
+          ObservationInstrumentLevel.LEVEL_4, rare),
+        GalacticObjectScientificActionType.IMBH_INDEPENDENT_CONFIRMATION,
+      );
+      expect(third.actionResult.newDiscoveryState).toBe(DiscoveryState.CONFIRMED);
+      expect(await discoveryRepository.getState(generationKey, rare)).toBe(DiscoveryState.CONFIRMED);
+      const evidence = await evidenceRepo.getEvidence(generationKey, rare);
+      expect(evidence).toHaveLength(2);
+      expect(new Set(evidence.map(item => item.independenceKey)).size).toBe(2);
+      expect(evidence.map(item => item.evidenceCode).sort()).toEqual([
+        'INDEPENDENT_TEMPORAL_FOLLOWUP', 'MULTIBAND_CHARACTERIZATION',
+      ]);
+      expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey)).toBe(
+        baseline + BigInt(first.actionResult.awardedDiscoveryPoints +
+          second.actionResult.awardedDiscoveryPoints + third.actionResult.awardedDiscoveryPoints),
+      );
+      const total = await pointsRepository.getGlobalDiscoveryPoints(generationKey);
+      await expect(runtime.commitAction(
+        session(DiscoveryState.DISCOVERED, ObservationInstrumentType.OPTICAL,
+          ObservationInstrumentLevel.LEVEL_3, rare),
+        GalacticObjectScientificActionType.IMBH_COMPACT_CHARACTERIZATION,
+      )).rejects.toThrow(RangeError);
+      expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey)).toBe(total);
+      expect(await evidenceRepo.getEvidence(generationKey, rare)).toEqual(evidence);
+    });
+
+    it('27.10 V2 rejects locked compact campaigns atomically without inventing observed evidence', async () => {
+      const rare = new GalacticObjectLocator(0n, -73014444020n, 0n);
+      await discoveryRepository.setState(generationKey, rare, DiscoveryState.DISCOVERED);
+      const evidenceRepo = new DexieScientificEvidenceRepository(database, TARGET_SEED_RESOLVER);
+      await expect(runtime.commitAction(
+        session(DiscoveryState.DISCOVERED, ObservationInstrumentType.OPTICAL,
+          ObservationInstrumentLevel.LEVEL_3, rare),
+        GalacticObjectScientificActionType.IMBH_COMPACT_CHARACTERIZATION,
+      )).rejects.toThrow(RangeError);
+      expect(await discoveryRepository.getState(generationKey, rare)).toBe(DiscoveryState.DISCOVERED);
+      expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey)).toBe(0n);
+      expect(await evidenceRepo.getEvidence(generationKey, rare)).toHaveLength(0);
+    });
 
     it(
       'should reject signed-Long PD overflow without advancing persisted discovery state',
