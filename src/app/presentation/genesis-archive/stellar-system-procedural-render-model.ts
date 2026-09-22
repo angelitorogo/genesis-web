@@ -6,6 +6,7 @@ import {
 import {
   StellarSystemMultiplicity,
 } from '../../domain/stellar/stellar-system-multiplicity';
+import { type CompactObjectScientificVisual } from './compact-object-scientific-visual';
 
 export interface StellarSystemRenderStarLightProfileModel {
   readonly coronaRadius:
@@ -78,6 +79,8 @@ export interface StellarSystemRenderPointModel {
 
   readonly colorHex:
     string;
+
+  readonly compactVisual?: CompactObjectScientificVisual | null;
 
   readonly lightProfile:
     StellarSystemRenderStarLightProfileModel;
@@ -547,6 +550,7 @@ function renderPoint(
     radius,
     colorHex:
       component.colorHex,
+    compactVisual: component.compactVisual ?? null,
     lightProfile:
       starLightProfile(
         component.colorHex,

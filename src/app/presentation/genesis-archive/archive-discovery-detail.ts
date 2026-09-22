@@ -39,6 +39,7 @@ import {
 import {
   StellarSystemProceduralRender,
 } from './stellar-system-procedural-render';
+import { CompactObjectScientificRender } from './compact-object-scientific-render';
 
 @Component({
   selector:
@@ -54,6 +55,7 @@ import {
     RouterLink,
     GalacticObjectProceduralRender,
     StellarSystemProceduralRender,
+    CompactObjectScientificRender,
   ],
 
   templateUrl:

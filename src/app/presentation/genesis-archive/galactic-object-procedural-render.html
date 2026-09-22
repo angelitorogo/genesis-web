@@ -4,7 +4,9 @@
   [attr.data-render-kind]="descriptor().kind"
   [attr.data-knowledge-level]="descriptor().knowledgeLevel"
 >
-  @if (agnNucleusRenderModel(); as model) {
+  @if (descriptor().kind === 'EXTREME_OBJECT' && descriptor().compactVisual; as visual) {
+    <app-compact-object-scientific-render [visual]="visual" />
+  } @else if (agnNucleusRenderModel(); as model) {
     <app-agn-nucleus-render
       [model]="model"
     ></app-agn-nucleus-render>

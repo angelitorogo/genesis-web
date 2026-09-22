@@ -68,9 +68,23 @@
           [class.stellar-system-render__component--binary-optical]="!model.unresolved && descriptor().multiplicity?.name === 'BINARY'"
           [class.stellar-system-render__component--triple-optical]="!model.unresolved && descriptor().multiplicity?.name === 'TRIPLE'"
           [attr.data-component]="component.label"
-          [attr.data-star-treatment]="model.unresolved ? 'UNRESOLVED_V1' : descriptor().multiplicity?.name === 'SINGLE' ? 'SINGLE_OPTICAL_V3' : descriptor().multiplicity?.name === 'BINARY' ? 'BINARY_OPTICAL_V1' : 'TRIPLE_OPTICAL_V1'"
+          [attr.data-star-treatment]="model.unresolved ? 'UNRESOLVED_V1' : component.compactVisual ? 'COMPACT_SCHEMATIC_27_10' : descriptor().multiplicity?.name === 'SINGLE' ? 'SINGLE_OPTICAL_V3' : descriptor().multiplicity?.name === 'BINARY' ? 'BINARY_OPTICAL_V1' : 'TRIPLE_OPTICAL_V1'"
         >
-          @if (!model.unresolved) {
+          @if (component.compactVisual; as compact) {
+            <g [attr.data-compact-kind]="compact.kind" data-testid="stellar-system-render-compact-object">
+              @if (compact.kind === 'BLACK_HOLE') {
+                <circle [attr.cx]="component.x" [attr.cy]="component.y"
+                  [attr.r]="component.radius * 1.35" fill="none" stroke="#bf8d63" stroke-width=".8" stroke-dasharray="2 1.2" />
+                <circle [attr.cx]="component.x" [attr.cy]="component.y"
+                  [attr.r]="component.radius" fill="#020408" stroke="#d6af86" stroke-width=".6" />
+              } @else {
+                <circle [attr.cx]="component.x" [attr.cy]="component.y"
+                  [attr.r]="component.radius * 1.6" fill="#6fbce7" fill-opacity=".12" />
+                <circle [attr.cx]="component.x" [attr.cy]="component.y"
+                  [attr.r]="component.radius" fill="#a5e7ff" stroke="#effcff" stroke-width=".5" />
+              }
+            </g>
+          } @else if (!model.unresolved) {
             <circle
               class="stellar-system-render__single-corona"
               data-testid="stellar-system-render-single-corona"

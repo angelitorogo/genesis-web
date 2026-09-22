@@ -1,0 +1,40 @@
+<figure class="compact-science" data-testid="compact-object-scientific-render"
+  [attr.data-compact-kind]="visual().kind" [attr.data-disk]="visual().hasAccretionDisk"
+  [attr.data-jets]="visual().hasRelativisticJets">
+  <svg viewBox="0 0 320 192" role="img" [attr.aria-label]="visual().label + '. Ilustración, no imagen observada ni representación a escala.'">
+    <rect x="0" y="0" width="320" height="192" rx="12" fill="#07101e" />
+    <circle cx="160" cy="96" r="75" fill="none" stroke="#3d6583" stroke-opacity=".25" stroke-dasharray="2 7" />
+    <path d="M22 96H298 M160 16V176" stroke="#66849a" stroke-opacity=".13" stroke-dasharray="3 6" />
+    @if (visual().kind === 'BLACK_HOLE') {
+      @if (visual().hasRelativisticJets) {
+        <path data-testid="compact-science-jets" d="M147 77L135 12H185L173 77Z M147 115L135 180H185L173 115Z"
+          fill="#74bdea" fill-opacity=".20" stroke="#a6dff7" stroke-opacity=".68" />
+      }
+      @if (visual().hasAccretionDisk) {
+        <ellipse data-testid="compact-science-disk" cx="160" cy="96" rx="105" ry="26"
+          fill="none" stroke="#eda467" stroke-width="12" stroke-opacity=".24" />
+        <path d="M55 96A105 26 0 0 1 265 96" fill="none" stroke="#ffd6a0" stroke-width="3.8" />
+        <path d="M55 96A105 26 0 0 0 265 96" fill="none" stroke="#d6753e" stroke-width="2.2" />
+      } @else {
+        <circle cx="160" cy="96" r="34" fill="none" stroke="#7aa8c6" stroke-width="1.2" stroke-dasharray="3 5" />
+      }
+      <circle data-testid="compact-science-shadow" cx="160" cy="96" r="19" fill="#010205" stroke="#edbc84" stroke-opacity=".68" stroke-width="1.6" />
+    } @else {
+      @if (visual().kind === 'PULSAR' || visual().kind === 'MILLISECOND_PULSAR') {
+        <path data-testid="compact-science-pulsar-beams" d="M160 96L96 13L126 10L166 96Z M160 96L194 180L224 176L166 96Z"
+          fill="#8feafa" fill-opacity=".22" stroke="#a4f3ff" stroke-opacity=".6" />
+      }
+      @if (visual().kind === 'MAGNETAR') {
+        <g data-testid="compact-science-magnetic-field" fill="none" stroke="#a4b9ff" stroke-width="1.3" stroke-opacity=".85">
+          <ellipse cx="160" cy="96" rx="60" ry="33" transform="rotate(48 160 96)" />
+          <ellipse cx="160" cy="96" rx="60" ry="33" transform="rotate(-48 160 96)" />
+          <ellipse cx="160" cy="96" rx="53" ry="38" transform="rotate(90 160 96)" />
+        </g>
+      }
+      <circle data-testid="compact-science-neutron-surface" cx="160" cy="96" r="18" fill="#a9dfff" stroke="#f0fbff" stroke-width="2" />
+      <circle cx="155" cy="91" r="9" fill="#ebffff" fill-opacity=".62" />
+    }
+    <text x="14" y="179" fill="#aac3d5" font-size="8.6" letter-spacing="1.1">DIAGRAMA CIENTÍFICO · NO A ESCALA</text>
+  </svg>
+  <figcaption>{{ visual().label }}. Los elementos representados son ilustrativos; no son una observación.</figcaption>
+</figure>

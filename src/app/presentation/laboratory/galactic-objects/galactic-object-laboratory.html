@@ -1026,4 +1026,19 @@
       </aside>
     }
   }
+  <section class="object-lab__compact-gallery" data-testid="compact-science-laboratory-gallery"
+    aria-labelledby="compact-science-gallery-title">
+    <header>
+      <p class="object-lab__eyebrow">27.10 · REFERENCIA VISUAL</p>
+      <h2 id="compact-science-gallery-title">Objetos compactos: diagramas científicos</h2>
+      <p>Ilustraciones de prueba para comprobar el render. No son objetos descubiertos,
+        no crean estrellas ni evidencias y no representan tamaños reales. Los haces
+        del púlsar y el campo del magnetar son hipótesis del modelo, no detecciones.</p>
+    </header>
+    <div class="object-lab__compact-diagrams">
+      @for (visual of compactDiagramExamples; track visual.kind) {
+        <app-compact-object-scientific-render [visual]="visual" />
+      }
+    </div>
+  </section>
 </main>

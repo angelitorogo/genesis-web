@@ -508,6 +508,10 @@
                           </p>
                         }
 
+                        @if (component.compactVisual; as visual) {
+                          <app-compact-object-scientific-render [visual]="visual" />
+                        }
+
                         @if (component.proceduralCode) {
                           <code>{{ component.proceduralCode }}</code>
                         }
@@ -525,6 +529,19 @@
                       </article>
                     }
                   </div>
+                </section>
+              }
+
+              @if (systemCard.compactBinaryFacts?.length) {
+                <section class="archive-discovery-detail__physical-section"
+                  data-testid="archive-compact-binary-fiche">
+                  <h3>Binaria compacta A–B · magnitudes de referencia</h3>
+                  <p>Órbita actual existente. El inspiral circular es una referencia matemática, no una fecha de fusión ni una evolución simulada.</p>
+                  <dl class="archive-discovery-detail__physical-facts">
+                    @for (fact of systemCard.compactBinaryFacts ?? []; track fact.label) {
+                      <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd></div>
+                    }
+                  </dl>
                 </section>
               }
 
@@ -629,6 +646,9 @@
                 <app-galactic-object-procedural-render
                   [descriptor]="card.render"
                 ></app-galactic-object-procedural-render>
+                @if ((card.render.kind === 'AGN_NUCLEUS' || card.render.kind === 'QUASAR_NUCLEUS') && card.render.compactVisual; as nucleusVisual) {
+                  <app-compact-object-scientific-render [visual]="nucleusVisual" />
+                }
 
                 <div class="archive-discovery-detail__science-copy">
                   <div>

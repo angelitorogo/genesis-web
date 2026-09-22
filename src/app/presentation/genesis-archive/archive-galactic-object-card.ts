@@ -86,6 +86,14 @@ import {
   createQuasarNucleusRenderModel,
   type QuasarNucleusRenderModel,
 } from '../laboratory/galactic-objects/quasar-nucleus-render-model';
+import { GalacticSupermassiveBlackHoleGenerator } from '../../simulation/nuclear/galactic-supermassive-black-hole-generator';
+import { IntermediateMassBlackHoleGenerator } from '../../simulation/galactic-object/intermediate-mass-black-hole-generator';
+import { CompactAccretionEngine } from '../../simulation/stellar/compact-accretion-engine';
+import {
+  compactObjectScientificVisual,
+  type CompactObjectScientificVisual,
+} from './compact-object-scientific-visual';
+
 
 export const ArchiveGalacticObjectKnowledgeLevel =
   Object.freeze({
@@ -240,6 +248,8 @@ export interface ArchiveGalacticObjectRenderDescriptor {
 
   readonly quasarNucleusRenderModel?:
     QuasarNucleusRenderModel | null;
+
+  readonly compactVisual?: CompactObjectScientificVisual | null;
 
   readonly scale:
     number;
@@ -408,6 +418,47 @@ export class ArchiveGalacticObjectCardAssembler {
       scientificSubject ===
       null
     ) {
+      // Reserved extreme complement: disclose the exceptionally rare 27.2
+      // specialization only after its OWN persisted scientific level reaches
+      // CATALOGUED. Unclassified objects stay unclassified.
+      if (coarseFamily === GalacticObjectScientificSurveyFamily.EXTREME_OBJECT &&
+          state.code >= DiscoveryState.CATALOGUED.code) {
+        const intermediate = IntermediateMassBlackHoleGenerator.generate(generationKey, locator);
+        if (intermediate !== null) {
+          const massFacts: readonly ArchiveGalacticObjectFact[] = Object.freeze([
+            fact('Clase compacta', 'Agujero negro de masa intermedia · modelo'),
+            fact('Masa (modelo)', formatQuantity(intermediate.physicalProperties.massSolar, 'M☉', 1)),
+            fact('Radio de Schwarzschild (referencia)',
+              formatQuantity(intermediate.physicalProperties.schwarzschildRadiusKm, 'km', 1)),
+          ]);
+          const title = 'Agujero negro de masa intermedia';
+          return Object.freeze({
+            coarseFamily,
+            scientificSubject: null,
+            knowledgeLevel,
+            knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
+            title,
+            summary: 'Fuente extrema catalogada como candidata compacta en el modelo. No se presupone acreción ni emisión en jets.',
+            nextScientificStep: state.code >= DiscoveryState.CONFIRMED.code
+              ? 'Caracterización compacta completada; acreción no determinada'
+              : 'Obtener evidencia independiente para confirmar la clasificación.',
+            facts: massFacts,
+            scientificSections: Object.freeze([Object.freeze({
+              id: 'intermediate-black-hole', title: 'Estructura compacta',
+              summary: 'Magnitudes estimadas del modelo; no equivalen a observaciones del horizonte.',
+              facts: massFacts,
+            })]),
+            render: Object.freeze({
+              kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+              knowledgeLevel, seed: renderSeed,
+              accessibleLabel: 'Diagrama científico de agujero negro de masa intermedia, sin disco observado',
+              variant: 'INTERMEDIATE_MASS_BLACK_HOLE', renderProfile: null,
+              compactVisual: compactObjectScientificVisual('BLACK_HOLE'),
+              scale: .5, density: .5, energy: .5, concentration: .5,
+            }),
+          });
+        }
+      }
       const title =
         'Objeto extremo sin clasificación física';
 
@@ -561,6 +612,15 @@ function activeGalacticNucleusCardOrNull(
       ? 'La fuente situada en el centro galáctico está identificada como un QUASAR.'
       : 'La fuente situada en el centro galáctico está identificada como un núcleo galáctico activo.';
 
+  const canShowCompactPhysics = knowledgeLevel === ArchiveGalacticObjectKnowledgeLevel.CATALOGUED ||
+    knowledgeLevel === ArchiveGalacticObjectKnowledgeLevel.CONFIRMED;
+  const compactHole = canShowCompactPhysics
+    ? GalacticSupermassiveBlackHoleGenerator.fromGalaxy(galaxy)
+    : null;
+  const accretion = canShowCompactPhysics
+    ? CompactAccretionEngine.fromExistingGalaxy(galaxy)
+    : null;
+
   const render:
     ArchiveGalacticObjectRenderDescriptor =
     Object.freeze({
@@ -591,6 +651,7 @@ function activeGalacticNucleusCardOrNull(
               galaxy,
             )
           : null,
+      compactVisual: compactHole === null ? null : compactObjectScientificVisual('BLACK_HOLE', accretion !== null, accretion?.jet !== null && accretion?.jet !== undefined),
       scale:
         1,
       density:
@@ -601,19 +662,23 @@ function activeGalacticNucleusCardOrNull(
         1,
     });
 
-  const facts =
-    Object.freeze([
-      fact(
-        'Naturaleza nuclear',
-        isQuasar
-          ? 'QUASAR'
-          : 'Núcleo galáctico activo',
-      ),
-      fact(
-        'Ubicación',
-        'Centro galáctico',
-      ),
-    ]);
+  const facts: readonly ArchiveGalacticObjectFact[] = Object.freeze([
+    fact('Naturaleza nuclear', isQuasar ? 'QUASAR' : 'Núcleo galáctico activo'),
+    fact('Ubicación', 'Centro galáctico'),
+    ...(compactHole === null ? [] : [
+      fact('Objeto central', 'Agujero negro supermasivo existente'),
+      fact('Masa del agujero negro (modelo)',
+        formatQuantity(compactHole.physicalProfile.massSolarMasses, 'M☉', 1)),
+      fact('Radio de Schwarzschild (referencia)',
+        formatQuantity(compactHole.physicalProfile.schwarzschildRadiusKm, 'km', 0)),
+    ]),
+    ...(accretion === null ? [] : [
+      fact('Disco de acreción', 'Referencia ilustrativa vinculada al estado activo'),
+      fact('Fracción de Eddington (plantilla, no medida)',
+        formatPercent(accretion.disk.eddingtonRatio)),
+      fact('Jets relativistas (perfil 27.7)', accretion.jet === null ? 'No caracterizados; el render nuclear histórico es ilustrativo' : 'Modelo con parámetros suministrados'),
+    ]),
+  ]);
 
   return Object.freeze({
     coarseFamily,
@@ -638,8 +703,9 @@ function activeGalacticNucleusCardOrNull(
             'nucleus',
           title:
             'Núcleo galáctico',
-          summary:
-            'Identidad nuclear ya resuelta sin adelantar la caracterización compacta detallada.',
+          summary: compactHole === null
+            ? 'Identidad nuclear resuelta; propiedades compactas y disco científico todavía restringidos.'
+            : 'Agujero negro central reutilizado del modelo galáctico. Magnitudes de referencia y acreción ilustrativa; no se atribuyen jets sin evidencia.',
           facts,
         }),
       ]),

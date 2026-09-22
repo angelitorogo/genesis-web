@@ -28,6 +28,8 @@ import {
 import {
   GalacticObjectProceduralRender,
 } from '../../genesis-archive/galactic-object-procedural-render';
+import { CompactObjectScientificRender } from '../../genesis-archive/compact-object-scientific-render';
+import { compactObjectScientificVisual } from '../../genesis-archive/compact-object-scientific-visual';
 
 import {
   GALACTIC_NUCLEUS_LABORATORY_CASES,
@@ -69,6 +71,7 @@ type LaboratoryView =
     QuasarNucleusRender,
     QuiescentNucleusRender,
     GalacticObjectProceduralRender,
+    CompactObjectScientificRender,
     RouterLink,
   ],
 
@@ -82,6 +85,14 @@ type LaboratoryView =
     ChangeDetectionStrategy.OnPush,
 })
 export class GalacticObjectLaboratoryPage {
+  /** Presentation-only exemplars: NEVER generated celestial objects or discoveries. */
+  readonly compactDiagramExamples = Object.freeze([
+    compactObjectScientificVisual('BLACK_HOLE'),
+    compactObjectScientificVisual('NEUTRON_STAR'),
+    compactObjectScientificVisual('PULSAR'),
+    compactObjectScientificVisual('MAGNETAR'),
+  ]);
+
 
   readonly objectGroups =
     Object.freeze([

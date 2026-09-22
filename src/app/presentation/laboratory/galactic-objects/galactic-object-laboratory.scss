@@ -28,3 +28,8 @@ small{color:rgba(255,255,255,.42)}.object-lab__button--active{border-color:rgba(
 }
 @media(max-width:1180px){.object-lab{&__progression{grid-template-columns:repeat(2,1fr)}&__nuclear-meta dl{grid-template-columns:repeat(3,1fr)}}}
 @media(max-width:760px){.object-lab{width:calc(100% - 1rem);&__catalog,&__progression{grid-template-columns:1fr}&__hero,&__active{flex-direction:column}&__nuclear-meta dl{grid-template-columns:1fr 1fr}}}
+
+.object-lab__compact-gallery{display:grid;gap:.8rem;padding:1rem;border:1px solid rgba(106,215,255,.18);border-radius:var(--genesis-radius-lg);background:rgba(15,19,31,.76)}
+.object-lab__compact-gallery h2{margin:.25rem 0;font-size:1.15rem}
+.object-lab__compact-gallery p{margin:.3rem 0;color:var(--genesis-color-text-subtle);font-size:.78rem}
+.object-lab__compact-diagrams{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:.75rem;align-items:start}

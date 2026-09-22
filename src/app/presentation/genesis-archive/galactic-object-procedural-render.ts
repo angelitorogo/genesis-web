@@ -54,6 +54,7 @@ import {
 } from './globular-cluster-render';
 
 import { ConfirmedClusterRender } from './confirmed-cluster-render';
+import { CompactObjectScientificRender } from './compact-object-scientific-render';
 
 
 import {
@@ -92,6 +93,7 @@ import {
     OpenClusterRender,
     GlobularClusterRender,
     ConfirmedClusterRender,
+    CompactObjectScientificRender,
     SupernovaRemnantRender,
   ],
 
