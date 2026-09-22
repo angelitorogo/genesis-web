@@ -50,6 +50,8 @@ import {
   type GalaxyFocusRuntime,
 } from '../runtime/galaxy-focus.runtime';
 
+import { ACCRETION_DISK_OBSERVATION_RUNTIME } from '../runtime/accretion-disk-observation.runtime';
+
 import {
   GALAXY_SCIENTIFIC_KNOWLEDGE_RUNTIME,
   type GalaxyScientificKnowledgeRuntime,
@@ -358,6 +360,7 @@ describe(
             useValue:
               scientificRuntime,
           },
+          { provide: ACCRETION_DISK_OBSERVATION_RUNTIME, useValue: { async inspect() { return null; }, async observe() { throw new Error('No observation expected in legacy galaxy tests.'); } } },
         ],
       });
     }
@@ -2434,5 +2437,50 @@ describe(
         );
       },
     );
+    it('28.1 links the confirmed canonical active nucleus to the observing action without displaying model facts beforehand', async () => {
+      // The B5 seed physically assigns AGN to galaxy 40 (same V1/V2 source).
+      const states = new Map(defaultStates);
+      states.set(40n, DiscoveryState.CONFIRMED);
+      configure('40', repositories(states, 40n));
+      let observed = false;
+      let commits = 0;
+      TestBed.overrideProvider(ACCRETION_DISK_OBSERVATION_RUNTIME, {
+        useValue: {
+          async inspect() {
+            return {
+              observed,
+              canObserve: !observed,
+              instrumentLabel: 'Espectroscopia · nivel 3',
+              requirementLabel: 'Disponible',
+              observedInstrumentLabel: observed ? 'Espectroscopia' : null,
+              modelFacts: observed ? [{ label: 'Régimen de referencia', value: '4 %' }] : [],
+            };
+          },
+          async observe() { commits++; observed = true; },
+        },
+      });
+      const fixture = TestBed.createComponent(GalaxyDetailPage);
+      fixture.detectChanges();
+      const facade = fixture.componentInstance.facade;
+      await facade.load('40');
+      fixture.detectChanges();
+      expect(facade.model()?.accretionDiskObservation?.observed).toBe(false);
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-observe-action"]'))
+        .not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-model-facts"]'))
+        .toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="compact-science-disk"]')).toBeNull();
+      await facade.observeAccretionDisk();
+      fixture.detectChanges();
+      expect(commits).toBe(1);
+      expect(facade.model()?.accretionDiskObservation?.observed).toBe(true);
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-evidence"]'))
+        .not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-model-facts"]'))
+        .not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="compact-science-disk"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-observe-action"]'))
+        .toBeNull();
+    });
   },
 );

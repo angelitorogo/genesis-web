@@ -69,6 +69,10 @@ import {
 import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
+import {
+  ACCRETION_DISK_OBSERVATION_RUNTIME,
+  type AccretionDiskObservationStatus,
+} from '../runtime/accretion-disk-observation.runtime';
 
 import {
   UniverseSeedFacade,
@@ -93,6 +97,9 @@ export interface GalaxyDetailModel {
 
   readonly globalDiscoveryPoints:
     bigint;
+
+  readonly accretionDiskObservation:
+    AccretionDiskObservationStatus | null;
 
   readonly isCurrentFocus:
     boolean;
@@ -198,6 +205,8 @@ export class GalaxyDetailFacade {
       GALAXY_SCIENTIFIC_KNOWLEDGE_RUNTIME,
     );
 
+  private readonly accretionDiskRuntime = inject(ACCRETION_DISK_OBSERVATION_RUNTIME);
+
   private readonly universeSeedFacade =
     inject(
       UniverseSeedFacade,
@@ -243,6 +252,10 @@ export class GalaxyDetailFacade {
       '',
     );
 
+  private readonly accretionPendingSignal = signal(false);
+  private readonly accretionSuccessSignal = signal('');
+  private readonly accretionErrorSignal = signal('');
+
   private loadSequence =
     0;
 
@@ -251,6 +264,10 @@ export class GalaxyDetailFacade {
 
   private scientificActionSequence =
     0;
+
+  readonly accretionPending = this.accretionPendingSignal.asReadonly();
+  readonly accretionSuccess = this.accretionSuccessSignal.asReadonly();
+  readonly accretionError = this.accretionErrorSignal.asReadonly();
 
   readonly state =
     this
@@ -351,6 +368,9 @@ export class GalaxyDetailFacade {
       .set(
         '',
       );
+
+    this.accretionSuccessSignal.set('');
+    this.accretionErrorSignal.set('');
 
     this
       .stateSignal
@@ -557,6 +577,13 @@ export class GalaxyDetailFacade {
             discoveryState,
           );
 
+      const accretionDiskObservation = scientificProfile.nucleus?.stateName === 'AGN' ||
+        scientificProfile.nucleus?.stateName === 'QUASAR'
+        ? await this.accretionDiskRuntime.inspect(generationKey, galaxyIndex)
+        : null;
+
+      if (loadId !== this.loadSequence) return;
+
       const isCurrentFocus =
         navigation
           .activeGalaxyIndex ===
@@ -596,6 +623,7 @@ export class GalaxyDetailFacade {
               explorationTelemetry,
               scientificProfile,
               globalDiscoveryPoints,
+              accretionDiskObservation,
               isCurrentFocus,
 
               isVisitable:
@@ -840,6 +868,33 @@ export class GalaxyDetailFacade {
             false,
           );
       }
+    }
+  }
+
+  /** 28.1: action on an already-confirmed, canonical active nucleus. */
+  async observeAccretionDisk(): Promise<void> {
+    const context = this.loadedContextSignal();
+    const model = this.model();
+    if (this.accretionPendingSignal() || context === null || model === null ||
+        model.accretionDiskObservation === null ||
+        !model.accretionDiskObservation.canObserve) {
+      this.accretionErrorSignal.set('El disco no está disponible o la campaña ya está registrada.');
+      return;
+    }
+    this.accretionPendingSignal.set(true);
+    this.accretionSuccessSignal.set('');
+    this.accretionErrorSignal.set('');
+    try {
+      await this.accretionDiskRuntime.observe(context.generationKey, context.galaxyIndex);
+      await this.load(context.galaxyIndex.toString(10));
+      if (this.model()?.accretionDiskObservation?.observed !== true) {
+        throw new Error('La evidencia se guardó, pero la ficha no confirmó su lectura.');
+      }
+      this.accretionSuccessSignal.set('Campaña registrada en el conocimiento observado. Las magnitudes mostradas son referencias del modelo 27.7, no mediciones instrumentales. No se han concedido PD.');
+    } catch (error) {
+      this.accretionErrorSignal.set(error instanceof Error ? error.message : 'No pudo registrarse la observación del disco.');
+    } finally {
+      this.accretionPendingSignal.set(false);
     }
   }
 

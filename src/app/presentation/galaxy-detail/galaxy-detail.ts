@@ -45,6 +45,9 @@ import {
 } from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
 
 
+import { CompactObjectScientificRender } from '../genesis-archive/compact-object-scientific-render';
+import { compactObjectScientificVisual } from '../genesis-archive/compact-object-scientific-visual';
+
 import {
   GenesisScreen,
 } from '../../ui/layout/genesis-screen/genesis-screen';
@@ -63,6 +66,7 @@ import {
   imports: [
     GenesisScreen,
     RouterLink,
+    CompactObjectScientificRender,
   ],
 
   templateUrl:
@@ -76,6 +80,8 @@ import {
 })
 export class GalaxyDetailPage
   implements OnInit {
+  readonly accretionDiskVisual = compactObjectScientificVisual('BLACK_HOLE', true, false);
+
 
   readonly facade =
     inject(
@@ -131,6 +137,10 @@ export class GalaxyDetailPage
     void this
       .facade
       .catalogueDisplayedGalaxy();
+  }
+
+  observeAccretionDisk(): void {
+    void this.facade.observeAccretionDisk();
   }
 
   confirmGalaxy():

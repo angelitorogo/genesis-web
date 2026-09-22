@@ -572,6 +572,54 @@
                         </dl>
                       </section>
                     }
+
+                    @if (model.accretionDiskObservation; as disk) {
+                      <section class="gd__section gd__section--science"
+                        data-testid="galaxy-detail-accretion-observation"
+                        aria-labelledby="gd-accretion-title">
+                        <div class="gd__section-heading">
+                          <div>
+                            <small>28.1 / OBSERVACIÓN ESPECIAL</small>
+                            <h3 id="gd-accretion-title">Observar disco de acreción</h3>
+                          </div>
+                          <span class="gd__availability">{{ disk.observed ? 'CAMPAÑA REGISTRADA' : 'PENDIENTE' }}</span>
+                        </div>
+                        <p>Solo para núcleos AGN o cuásares realmente activos. La observación registra
+                          una evidencia instrumental; no mide automáticamente la masa, el flujo ni la
+                          temperatura del disco y no modifica el estado de descubrimiento.</p>
+                        @if (disk.observed) {
+                          <p data-testid="galaxy-detail-accretion-evidence">
+                            Evidencia de campaña persistida · {{ disk.observedInstrumentLabel }}.
+                            La campaña no acredita por sí sola una detección astronómica independiente.
+                          </p>
+                          <app-compact-object-scientific-render [visual]="accretionDiskVisual" />
+                          <dl class="gd__facts gd__facts--deep" data-testid="galaxy-detail-accretion-model-facts">
+                            @for (fact of disk.modelFacts; track fact.label) {
+                              <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd></div>
+                            }
+                          </dl>
+                          <p>Valores calculados por la aproximación 27.7 de disco delgado, estacionario
+                            y sin giro. No son medidas observadas ni incluyen variabilidad, inclinación
+                            o transferencia radiativa.</p>
+                        } @else {
+                          <p data-testid="galaxy-detail-accretion-requirement">
+                            Instrumento: {{ disk.instrumentLabel }}. {{ disk.requirementLabel }}
+                          </p>
+                          <button type="button" class="gd__action gd__action--primary"
+                            data-testid="galaxy-detail-accretion-observe-action"
+                            [disabled]="!disk.canObserve || facade.accretionPending()"
+                            (click)="observeAccretionDisk()">
+                            {{ facade.accretionPending() ? 'Observando…' : 'Observar disco de acreción · 0 PD' }}
+                          </button>
+                        }
+                        @if (facade.accretionSuccess(); as message) {
+                          <p role="status" data-testid="galaxy-detail-accretion-success">{{ message }}</p>
+                        }
+                        @if (facade.accretionError(); as message) {
+                          <p role="alert" data-testid="galaxy-detail-accretion-error">{{ message }}</p>
+                        }
+                      </section>
+                    }
                   </div>
                 } @else {
                   <section
