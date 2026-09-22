@@ -1,5 +1,6 @@
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
+import { type PulsarSecondGenerationPopulation } from '../../domain/planetary/pulsar-second-generation-planet';
 import { BodyLocator, SystemLocator } from '../../domain/generation/procedural-locator';
 import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import { UniverseSeed } from '../../domain/universe/universe-seed';
@@ -21,6 +22,7 @@ import { SystemSceneSnapshotBuilder, type SystemSceneSnapshot, type SystemSceneS
 export class SystemV2SingleScientificSession {
   readonly scene: SystemSceneSnapshot;
   readonly planetCount: number;
+  readonly pulsarPlanetPopulation: PulsarSecondGenerationPopulation | null;
   private readonly publicKey: UniverseGenerationKey;
   private readonly locator: SystemLocator;
   private readonly host: GeneratedSingleHost;
@@ -40,6 +42,7 @@ export class SystemV2SingleScientificSession {
     this.locator = new SystemLocator(model.galaxyIndex, model.sectorKey, model.galacticObjectIndex);
     this.host = host;
     this.planetCount = host.planets.length;
+    this.pulsarPlanetPopulation = host.pulsarPlanetPopulation ?? null;
     if (host.label !== 'A' || model.stellarSystemCard?.render.multiplicity?.name !== 'SINGLE' ||
         host.planets.length !== host.atmospheres.length || host.planets.length !== host.moonSystems.length) {
       throw new Error('The persisted V2 SINGLE identity and its frozen physical sources disagree.');

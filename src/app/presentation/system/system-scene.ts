@@ -813,7 +813,7 @@ export class SystemScene
 
   planetCount():
     number {
-    return this.snapshot.planets.length;
+    return this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0);
   }
 
   habitableZoneCount():
@@ -940,7 +940,7 @@ export class SystemScene
     void {
 
     if (
-      this.snapshot.planets.length ===
+      this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0) ===
         0
     ) {
       return;
@@ -1260,7 +1260,7 @@ export class SystemScene
           ? { orbits: this.orbitLinesVisibleSignal() } : {}),
         planets:
           this.planetsVisibleSignal() &&
-          this.snapshot.planets.length >
+          this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0) >
             0,
         moons:
           this.moonsVisibleSignal() &&
@@ -1599,7 +1599,7 @@ export class SystemScene
       );
 
       if (
-        this.snapshot.planets.length ===
+        this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0) ===
           0
       ) {
         this.planetsVisibleSignal.set(
@@ -2496,6 +2496,7 @@ class ThreeSystemSceneRuntime
     this.initializeSelectionProxyBatch(
       snapshot.stars.length +
       snapshot.planets.length +
+      (snapshot.pulsarPlanetVisuals?.length ?? 0) +
       snapshot.moons.length +
       snapshot.minorBodies.length,
     );
@@ -2548,6 +2549,10 @@ class ThreeSystemSceneRuntime
         planet,
         planetTextureSystemIdentity,
       );
+    }
+
+    for (const planet of snapshot.pulsarPlanetVisuals ?? []) {
+      this.addPlanet(planet, planetTextureSystemIdentity);
     }
 
     for (
@@ -2604,6 +2609,7 @@ class ThreeSystemSceneRuntime
       physicalBodyCount:
         snapshot.stars.length +
         snapshot.planets.length +
+        (snapshot.pulsarPlanetVisuals?.length ?? 0) +
         snapshot.moons.length +
         snapshot.minorBodies.length,
 
@@ -5422,6 +5428,7 @@ class ThreeSystemSceneRuntime
       of [
         ...snapshot.stars,
         ...snapshot.planets,
+        ...(snapshot.pulsarPlanetVisuals ?? []),
         ...snapshot.moons,
         ...snapshot.minorBodies,
       ]

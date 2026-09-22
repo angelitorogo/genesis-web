@@ -88,6 +88,8 @@ export class SystemPage
     return model === null ? null : SystemV2SingleScientificSession.buildOrNull(model);
   });
 
+  readonly pulsarPlanetPopulation = computed(() => this.v2SingleSession()?.pulsarPlanetPopulation ?? null);
+
   readonly stellarCard = computed(() =>
     this.multihostSession()?.stellarSystemCard ?? this.facade.model()?.stellarSystemCard ?? null,
   );

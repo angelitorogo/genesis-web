@@ -199,6 +199,7 @@ function findBody(
     of [
       ...snapshot.stars,
       ...snapshot.planets,
+      ...(snapshot.pulsarPlanetVisuals ?? []),
       ...snapshot.moons,
       ...snapshot.minorBodies,
     ]

@@ -60,6 +60,9 @@ export function assertSystemSceneProjectionSnapshot(
     'snapshot.planets',
     assertBodyProjection,
   );
+  if (snapshot.pulsarPlanetVisuals !== undefined) {
+    assertFrozenArray(snapshot.pulsarPlanetVisuals, 'snapshot.pulsarPlanetVisuals', assertBodyProjection);
+  }
   assertFrozenArray(
     snapshot.moons,
     'snapshot.moons',

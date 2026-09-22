@@ -1,4 +1,5 @@
 import { buildV2CometVisualOrbit } from './system-scene-v2-comet-orbit-presentation';
+import { projectPulsarSecondGenerationPlanets } from './system-scene-pulsar-planets';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
 import { v2HostMinorBodyOrbitalCatalog } from './system-scene-v2-minor-body-source';
 import { v2MinorBodyTimeScale, V2_COMET_PHASE_WARP } from './system-scene-v2-minor-cadence';
@@ -809,6 +810,9 @@ export interface SystemSceneSnapshot {
   readonly planets:
     readonly SystemSceneBodySnapshot[];
 
+  /** V2 SINGLE separate-identity post-collapse worlds. Never phase-18 body indices. */
+  readonly pulsarPlanetVisuals?: readonly SystemSceneBodySnapshot[];
+
   readonly moons:
     readonly SystemSceneMoonSnapshot[];
 
@@ -1165,9 +1169,21 @@ export class SystemSceneSnapshotBuilder {
     }), world));
     // V2-only optical presentation; V1 snapshots retain their exact radii.
     if (source.generatorVersionCode !== GeneratorVersion.V2.code) return projected;
-    return Object.freeze({ ...projected, stars: Object.freeze(projected.stars.map(star =>
-      Object.freeze({ ...star, radiusScene: star.radiusScene * 0.78,
-        opticalRadiusScene: (star.opticalRadiusScene ?? star.radiusScene) * 0.78 }))) });
+    const visuallyAdjusted = Object.freeze({ ...projected,
+      stars: Object.freeze(projected.stars.map(star => Object.freeze({
+        ...star, radiusScene: star.radiusScene * 0.78,
+        opticalRadiusScene: (star.opticalRadiusScene ?? star.radiusScene) * 0.78,
+      }))),
+    });
+    const population = host.pulsarPlanetPopulation;
+    if (population === undefined || population === null) return visuallyAdjusted;
+    const extras = projectPulsarSecondGenerationPlanets(population, visuallyAdjusted);
+    return Object.freeze({ ...visuallyAdjusted,
+      pulsarPlanetVisuals: extras.planets,
+      orbits: Object.freeze([...visuallyAdjusted.orbits, ...extras.orbits]),
+      motions: Object.freeze([...visuallyAdjusted.motions, ...extras.motions]),
+      accessibleLabel: `${visuallyAdjusted.accessibleLabel} ${extras.planets.length} planeta(s) postcolapso de segunda generación: hipótesis de formación.`,
+    });
   }
 }
 

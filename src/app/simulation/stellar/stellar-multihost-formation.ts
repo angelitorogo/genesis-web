@@ -17,6 +17,10 @@ import { StellarRelativeOrbit } from '../../domain/stellar/stellar-relative-orbi
 import { StellarOrbitHierarchy } from '../../domain/stellar/stellar-orbit-hierarchy';
 import { PlanetarySystemFormationBlueprint } from '../../domain/planetary/planetary-system-formation-blueprint';
 import { type Planet } from '../../domain/planetary/planet';
+import { type PulsarSecondGenerationPopulation } from '../../domain/planetary/pulsar-second-generation-planet';
+import { PulsarSecondGenerationGenerator } from '../planetary/pulsar-second-generation-generator';
+import { StellarNeutronStarEngine } from './stellar-neutron-star-engine';
+import { StellarPulsarEngine } from './stellar-pulsar-engine';
 import { type CircumbinaryHabitabilityAssessment } from '../../domain/habitability/circumbinary-habitability-assessment';
 import { type CircumbinaryPlanetCompatibility } from '../../domain/planetary/circumbinary-planet-compatibility';
 
@@ -63,6 +67,8 @@ export interface GeneratedSingleHost {
   readonly lifetime: ReturnType<typeof StellarGenerator.generateLifetimeProfile>;
   readonly planetarySystem: ReturnType<typeof PlanetarySystemGenerator.generate> | null;
   readonly planets: readonly Planet[];
+  /** V2 SINGLE extension with distinct second-generation identity; never a phase-18 ordinal. */
+  readonly pulsarPlanetPopulation?: PulsarSecondGenerationPopulation | null;
   readonly atmospheres: ReturnType<typeof AtmosphereGenerator.generateAll>;
   readonly moonSystems: ReturnType<typeof MoonGenerator.generateAll>;
   readonly asteroidBelts: ReturnType<typeof AsteroidBeltGenerator.generate> | null;
@@ -117,6 +123,25 @@ const NO_P = (status: GeneratedCircumbinaryPopulation['status'], inner: number |
     compatibility: null, habitability: null,
   });
 
+/**
+ * Optional, separate 27.9 V2 physical extension of an ALREADY GENERATED SINGLE.
+ * This does not mutate old planets, consume their PRNG stream or assign a
+ * legacy BodyLocator. It only runs in the public V2 SINGLE generation path.
+ */
+export function withSecondGenerationPulsarPlanets(host: GeneratedSingleHost): GeneratedSingleHost {
+  // The old phase-18 planets have no proven post-collapse orbits. Mixing them
+  // with a fallback population would invent stable, non-intersecting histories.
+  if (host.planets.length !== 0) return host;
+  const neutron = StellarNeutronStarEngine.fromExistingStar(
+    host.stellarSystem.primaryStar, host.physical, host.lifetime,
+  );
+  const pulsar = neutron === null ? null : StellarPulsarEngine.fromExistingNeutronStar(neutron);
+  const population = PulsarSecondGenerationGenerator.generate(
+    pulsar, host.stellarSystem.seed.normalizedValue,
+  );
+  return population === null ? host : Object.freeze({ ...host, pulsarPlanetPopulation: population });
+}
+
 /** Produces no writes and never changes the persisted V1 seed resolver. */
 export class StellarMultihostFormation {
   private constructor() {}
@@ -136,7 +161,7 @@ export class StellarMultihostFormation {
     if (StellarSystemMultiplicitySelector.select(physicalKey, parentSeed) !== StellarSystemMultiplicity.SINGLE) {
       return null;
     }
-    return generateSingleHost('A', physicalKey, locator);
+    return withSecondGenerationPulsarPlanets(generateSingleHost('A', physicalKey, locator));
   }
 
   static generateOrNull(key: UniverseGenerationKey, locator: SystemLocator): GeneratedMultipleHost | null {

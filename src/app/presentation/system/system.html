@@ -403,6 +403,45 @@
                   }
                 </article>
 
+                @if (pulsarPlanetPopulation(); as population) {
+                  <article class="system-page__science-card system-page__science-card--wide"
+                    data-testid="system-page-second-generation-pulsar-planets">
+                    <header class="system-page__section-header">
+                      <div><small>27.9 V2 · ORIGEN POSTCOLAPSO</small>
+                        <h2>Planetas de segunda generación</h2></div>
+                      <span>{{ population.planets.length }} cuerpo{{ population.planets.length === 1 ? '' : 's' }}</span>
+                    </header>
+                    <p>La simulación ha generado una población excepcionalmente rara alrededor de un púlsar
+                      existente. Formación a partir de un disco de material retornado: hipótesis explícita del
+                      modelo, no observación confirmada ni supervivencia atribuida a planetas antiguos.
+                      No implica habitabilidad, detección ni recompensa de PD.</p>
+                    <dl class="system-page__fact-grid" data-testid="system-page-fallback-budget">
+                      <div><dt>Reserva inicial del disco · modelo</dt>
+                        <dd>{{ population.diskMassEarth.toPrecision(3) }} M⊕</dd></div>
+                      <div><dt>Origen</dt><dd>Material retornado tras el colapso · hipotético</dd></div>
+                      <div><dt>Identidades</dt><dd>Separadas de planetas anteriores a la supernova</dd></div>
+                    </dl>
+                    <div class="system-page__star-grid">
+                      @for (planet of population.planets; track planet.identityHex) {
+                        <section class="system-page__star-card"
+                          [attr.data-testid]="'system-page-pulsar-planet-' + planet.ordinal">
+                          <header><div><small>PLANETA POSTCOLAPSO {{ planet.ordinal }}</small>
+                            <h3>PSG-{{ planet.identityHex.slice(0, 8) }}</h3></div></header>
+                          <dl class="system-page__fact-grid system-page__fact-grid--compact">
+                            <div><dt>Masa · modelo</dt><dd>{{ planet.massEarth.toPrecision(3) }} M⊕</dd></div>
+                            <div><dt>Radio · modelo</dt><dd>{{ planet.radiusEarth.toPrecision(3) }} R⊕</dd></div>
+                            <div><dt>Semieje mayor</dt><dd>{{ planet.semiMajorAxisAu.toFixed(3) }} UA</dd></div>
+                            <div><dt>Período orbital</dt><dd>{{ planet.orbitalPeriodDays.toFixed(2) }} días</dd></div>
+                          </dl>
+                        </section>
+                      }
+                    </div>
+                    <p>La escena 3D muestra estas órbitas como población especial. Sus identificadores
+                      no son BodyLocator anteriores; no se crean fichas de planeta convencionales ni
+                      se revela una observación inexistente.</p>
+                  </article>
+                }
+
                 @if (model.stellarSystemScientificCampaign; as campaign) {
                   <article
                     class="system-page__science-card system-page__science-card--wide system-page__campaign"
