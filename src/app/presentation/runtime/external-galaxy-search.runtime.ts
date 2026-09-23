@@ -87,6 +87,10 @@ import {
 } from '../../simulation/exploration/external-galaxy-search-pity-engine';
 
 import {
+  GalaxyOperationalAccessPolicy,
+} from '../../simulation/exploration/galaxy-operational-access-policy';
+
+import {
   ExternalGalaxyPreliminaryInformationGenerator,
 } from '../../simulation/observation/galaxy/external-galaxy-preliminary-information-generator';
 
@@ -572,17 +576,46 @@ export class DexieExternalGalaxySearchRuntime
         knownDiscoveries,
       );
 
+    const activeGalaxyDiscovery =
+      knownDiscoveries
+        .find(
+          (
+            discovery,
+          ) =>
+            discovery.locator instanceof
+              GalaxyLocator &&
+            discovery.locator
+              .galaxyIndex ===
+              navigation
+                .activeGalaxyIndex,
+        );
+
     if (
+      activeGalaxyDiscovery ===
+        undefined ||
       !knownGalaxyIndices.has(
-        navigation
-          .activeGalaxyIndex
-          .toString(
-            10,
-          ),
-      )
+          navigation
+            .activeGalaxyIndex
+            .toString(
+              10,
+            ),
+        )
     ) {
       throw new RangeError(
         'The active exploration focus must reference a known galaxy before an external search can run.',
+      );
+    }
+
+    if (
+      !GalaxyOperationalAccessPolicy
+        .evaluate(
+          navigation.activeGalaxyIndex,
+          activeGalaxyDiscovery.state,
+        )
+        .canExploreSectors
+    ) {
+      throw new RangeError(
+        'La galaxia activa debe estar Confirmada antes de realizar una búsqueda extragaláctica.',
       );
     }
 

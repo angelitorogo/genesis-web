@@ -53,6 +53,14 @@ import {
 } from '../../simulation/exploration/exploration-sector-scan-engine';
 
 import {
+  GalaxyOperationalAccessPolicy,
+} from '../../simulation/exploration/galaxy-operational-access-policy';
+
+import {
+  GalaxyKnownNameResolver,
+} from '../../simulation/exploration/galaxy-known-name-resolver';
+
+import {
   ExternalGalaxyPreliminaryInformationGenerator,
 } from '../../simulation/observation/galaxy/external-galaxy-preliminary-information-generator';
 
@@ -363,11 +371,16 @@ export class GalacticMapFacade {
             knowledgeState,
           );
 
+      const operationalAccess =
+        GalaxyOperationalAccessPolicy
+          .evaluate(
+            galaxyIndex,
+            knowledgeState,
+          );
+
       const detailedGalaxy =
-        knowledgeState.code >=
-        DiscoveryState
-          .DISCOVERED
-          .code
+        operationalAccess
+          .canOpenGalacticMap
           ? GalaxyGenerator
               .generate(
                 generationKey,
@@ -469,10 +482,12 @@ export class GalacticMapFacade {
               explorationCoverage,
               discoveryMarkers,
               environmentalLayers,
-              detailedGalaxy
-                ?.designation
-                .name ??
-                null,
+              GalaxyKnownNameResolver
+                .resolve(
+                  generationKey,
+                  galaxyIndex,
+                  knowledgeState,
+                ),
             ),
         });
     } catch (
@@ -539,6 +554,19 @@ export class GalacticMapFacade {
         .inlineExplorationErrorSignal
         .set(
           'No hay un mapa galáctico activo desde el que explorar el sector.',
+        );
+
+      return;
+    }
+
+    if (
+      !model
+        .canExploreSectors
+    ) {
+      this
+        .inlineExplorationErrorSignal
+        .set(
+          'La exploración de sectores se habilita al confirmar la galaxia. En estado Catalogada el mapa es solo de consulta.',
         );
 
       return;
@@ -675,6 +703,12 @@ export class GalacticMapFacade {
     const model = this.model();
     if (model === null || model.explorationCoverage === null) {
       this.inlineExplorationErrorSignal.set('No hay una galaxia descubierta activa para explorar.');
+      return;
+    }
+    if (!model.canExploreSectors) {
+      this.inlineExplorationErrorSignal.set(
+        'La exploración de sectores se habilita al confirmar la galaxia. En estado Catalogada el mapa es solo de consulta.',
+      );
       return;
     }
     this.inlineExplorationPendingSignal.set(true);

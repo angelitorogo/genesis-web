@@ -25,6 +25,7 @@ import {
 } from '../../domain/exploration/discovery-reward-reason';
 
 import {
+  GalaxyLocator,
   type ProceduralLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -57,6 +58,10 @@ import {
 import {
   ExplorationProgressOverviewEngine,
 } from '../../simulation/exploration/exploration-progress-overview-engine';
+
+import {
+  GalaxyOperationalAccessPolicy,
+} from '../../simulation/exploration/galaxy-operational-access-policy';
 
 import {
   ProceduralTargetResolver,
@@ -143,6 +148,22 @@ export class DexieExplorationSectorProgressRuntime
         .scanResult
         .selection
         .galaxyIndex;
+
+    const galaxyKnowledgeState =
+      await this
+        .discoveryRepository
+        .getState(
+          generationKey,
+          new GalaxyLocator(
+            galaxyIndex,
+          ),
+        );
+
+    GalaxyOperationalAccessPolicy
+      .assertSectorExplorationAllowed(
+        galaxyIndex,
+        galaxyKnowledgeState,
+      );
 
     const globalBefore =
       await this

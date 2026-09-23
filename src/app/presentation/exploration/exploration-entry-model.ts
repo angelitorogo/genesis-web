@@ -11,6 +11,10 @@ import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
 
+import {
+  GalaxyOperationalAccessPolicy,
+} from '../../simulation/exploration/galaxy-operational-access-policy';
+
 const SIGNED_LONG_MAX =
   9_223_372_036_854_775_807n;
 
@@ -105,8 +109,30 @@ export class ExplorationEntryModel {
 
     return new GalaxyLocator(
       this
-        .activeGalaxyIndex,
+      .activeGalaxyIndex,
     );
+  }
+
+  get canRunExplorationOperations():
+    boolean {
+
+    return GalaxyOperationalAccessPolicy
+      .evaluate(
+        this.activeGalaxyIndex,
+        this.activeGalaxyDiscoveryState,
+      )
+      .canExploreSectors;
+  }
+
+  get usesOriginOperationalException():
+    boolean {
+
+    return GalaxyOperationalAccessPolicy
+      .evaluate(
+        this.activeGalaxyIndex,
+        this.activeGalaxyDiscoveryState,
+      )
+      .usesOriginOperationalException;
   }
 }
 

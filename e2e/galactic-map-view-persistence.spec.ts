@@ -37,12 +37,18 @@ test('15.3 — retains galactic map camera and render orientation after navigati
   await expect(page.getByTestId('universe-active-version')).toContainText('V2');
   const scene = await mapReady(page);
   const canvas = page.getByTestId('galactic-map-canvas');
+
+  // The access notice above the viewport can place the canvas centre below the
+  // initial browser fold. Let Playwright scroll and hit-test the real canvas
+  // before reading coordinates; otherwise mouse.wheel() may scroll the page
+  // instead of reaching OrbitControls.
+  await canvas.hover();
+
   const bounds = await canvas.boundingBox();
   if (!bounds) throw new Error('Missing galactic map canvas');
   const cx = bounds.x + bounds.width / 2;
   const cy = bounds.y + bounds.height / 2;
   const initialDistance = Number(await scene.getAttribute('data-camera-distance'));
-  await page.mouse.move(cx, cy);
   await page.mouse.wheel(0, -460);
   await expect.poll(async () => Number(await scene.getAttribute('data-camera-distance')))
     .toBeLessThan(initialDistance - 0.05);

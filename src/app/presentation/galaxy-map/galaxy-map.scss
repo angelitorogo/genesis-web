@@ -189,6 +189,29 @@
     min-height: 26rem;
   }
 
+  &__access-notice {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border-left: 2px solid var(--genesis-color-primary);
+    background: rgba(15, 19, 31, 0.68);
+
+    span {
+      color: var(--genesis-color-primary);
+      white-space: nowrap;
+    }
+
+    p {
+      margin: 0;
+      color: var(--genesis-color-text-muted);
+      line-height: 1.55;
+      text-transform: none;
+      letter-spacing: 0.02em;
+    }
+  }
+
   &__boundary {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -237,7 +260,8 @@
 @media (max-width: 40rem) {
   .galactic-map {
     &__facts,
-    &__boundary {
+    &__boundary,
+    &__access-notice {
       grid-template-columns: 1fr;
     }
 

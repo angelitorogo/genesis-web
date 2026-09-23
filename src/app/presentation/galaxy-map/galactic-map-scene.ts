@@ -1340,6 +1340,8 @@ export class GalacticMapScene
   ): void {
 
     if (
+      !this.model
+        .canExploreSectors ||
       selection.explored && this.blockSize === 1
     ) {
       return;

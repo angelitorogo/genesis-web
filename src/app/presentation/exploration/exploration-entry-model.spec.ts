@@ -88,6 +88,12 @@ describe(
             3n,
           ),
         );
+
+        expect(
+          model.canRunExplorationOperations,
+        ).toBe(
+          false,
+        );
       },
     );
 
@@ -116,6 +122,18 @@ describe(
         ).toBe(
           DiscoveryState
             .DISCOVERED,
+        );
+
+        expect(
+          model.canRunExplorationOperations,
+        ).toBe(
+          true,
+        );
+
+        expect(
+          model.usesOriginOperationalException,
+        ).toBe(
+          true,
         );
       },
     );

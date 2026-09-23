@@ -92,6 +92,53 @@ describe(
             0n,
           ),
         );
+
+        expect(dashboard.canOpenGalacticMap).toBe(true);
+        expect(dashboard.canRunExplorationOperations).toBe(true);
+        expect(dashboard.isGalacticMapReadOnly).toBe(false);
+      },
+    );
+
+    it(
+      'should project visited, catalogued and confirmed external access separately',
+      () => {
+        const visited =
+          new HomeDashboardModel(
+            generationKey,
+            7n,
+            DiscoveryState.VISITED,
+            0n,
+            0n,
+          );
+
+        expect(visited.canOpenGalacticMap).toBe(false);
+        expect(visited.canRunExplorationOperations).toBe(false);
+
+        const catalogued =
+          new HomeDashboardModel(
+            generationKey,
+            7n,
+            DiscoveryState.CATALOGUED,
+            0n,
+            0n,
+          );
+
+        expect(catalogued.canOpenGalacticMap).toBe(true);
+        expect(catalogued.isGalacticMapReadOnly).toBe(true);
+        expect(catalogued.canRunExplorationOperations).toBe(false);
+
+        const confirmed =
+          new HomeDashboardModel(
+            generationKey,
+            7n,
+            DiscoveryState.CONFIRMED,
+            0n,
+            0n,
+          );
+
+        expect(confirmed.canOpenGalacticMap).toBe(true);
+        expect(confirmed.canRunExplorationOperations).toBe(true);
+        expect(confirmed.isGalacticMapReadOnly).toBe(false);
       },
     );
 

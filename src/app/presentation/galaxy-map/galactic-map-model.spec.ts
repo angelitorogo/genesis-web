@@ -245,6 +245,81 @@ describe(
     );
 
     it(
+      'should separate fiche-only, read-only map and full exploration access for external galaxies',
+      () => {
+        const externalGalaxy =
+          GalaxyGenerator
+            .generate(
+              generationKey,
+              1n,
+            );
+
+        const visitedModel =
+          new GalacticMapModel(
+            generationKey,
+            1n,
+            ExternalGalaxyPreliminaryInformationGenerator
+              .generate(
+                generationKey,
+                1n,
+                DiscoveryState.VISITED,
+              ),
+            null,
+            null,
+            null,
+            null,
+            null,
+            externalGalaxy.designation.name,
+          );
+
+        expect(visitedModel.canOpenGalacticMap).toBe(false);
+        expect(visitedModel.canExploreSectors).toBe(false);
+        expect(visitedModel.hasDetailedScene).toBe(false);
+
+        const cataloguedModel =
+          new GalacticMapModel(
+            generationKey,
+            1n,
+            ExternalGalaxyPreliminaryInformationGenerator
+              .generate(
+                generationKey,
+                1n,
+                DiscoveryState.CATALOGUED,
+              ),
+            GalaxyVisualStructureGenerator
+              .generate(
+                externalGalaxy,
+              ),
+            externalGalaxy.type,
+          );
+
+        expect(cataloguedModel.canOpenGalacticMap).toBe(true);
+        expect(cataloguedModel.isReadOnlyMap).toBe(true);
+        expect(cataloguedModel.canExploreSectors).toBe(false);
+
+        const confirmedModel =
+          new GalacticMapModel(
+            generationKey,
+            1n,
+            ExternalGalaxyPreliminaryInformationGenerator
+              .generate(
+                generationKey,
+                1n,
+                DiscoveryState.CONFIRMED,
+              ),
+            GalaxyVisualStructureGenerator
+              .generate(
+                externalGalaxy,
+              ),
+            externalGalaxy.type,
+          );
+
+        expect(confirmedModel.canExploreSectors).toBe(true);
+        expect(confirmedModel.isReadOnlyMap).toBe(false);
+      },
+    );
+
+    it(
       'should reject a proper name before DISCOVERED',
       () => {
         const information =

@@ -447,7 +447,7 @@
         </p>
 
       }
-      @if (!selectedSector.explored || blockSize > 1) {
+      @if (model.canExploreSectors && (!selectedSector.explored || blockSize > 1)) {
         <button
           type="button"
           class="galactic-map-scene__marker-link galactic-map-scene__marker-link--button"
@@ -457,6 +457,11 @@
           {{ blockSize > 1 ? 'Explorar bloque ' + blockSize + '×' + blockSize : 'Explorar este sector' }}
           <span aria-hidden="true">→</span>
         </button>
+      } @else if (!model.canExploreSectors && !selectedSector.explored) {
+        <p data-testid="galactic-map-sector-read-only-message">
+          Mapa en modo consulta. Confirma la galaxia desde su ficha científica
+          para habilitar la exploración de sectores.
+        </p>
       }
     </aside>
   }

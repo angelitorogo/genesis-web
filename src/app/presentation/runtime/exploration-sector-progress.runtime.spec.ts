@@ -203,6 +203,31 @@ describe(
         );
     }
 
+    function resolveForGalaxy(
+      galaxyIndex:
+        bigint,
+
+      x:
+        number,
+
+      y:
+        number,
+    ) {
+      return ExplorationSectorResultEngine
+        .resolve(
+          ExplorationSectorScanEngine
+            .scan(
+              ExplorationSectorScanEngine
+                .prepareSector(
+                  generationKey,
+                  galaxyIndex,
+                  x,
+                  y,
+                ),
+            ),
+        );
+    }
+
 
 
     function resolveStatic() {
@@ -332,6 +357,97 @@ describe(
         expect(
           second.galaxyProgressDelta,
         ).toBe(0n);
+      },
+    );
+
+    it.each([
+      DiscoveryState.VISITED,
+      DiscoveryState.CATALOGUED,
+    ])(
+      'should reject external sector persistence atomically while the galaxy is %s',
+      async (
+        state,
+      ) => {
+        const galaxyIndex =
+          7n;
+
+        await discoveryRepository
+          .setState(
+            generationKey,
+            new GalaxyLocator(
+              galaxyIndex,
+            ),
+            state,
+          );
+
+        const result =
+          resolveForGalaxy(
+            galaxyIndex,
+            0,
+            0,
+          );
+
+        await expect(
+          runtime
+            .commitResolvedResult(
+              result,
+            ),
+        ).rejects.toThrow(
+          'Confirmada',
+        );
+
+        expect(
+          await discoveryRepository
+            .getState(
+              generationKey,
+              result.scanResult.selection.sectorLocator,
+            ),
+        ).toBe(
+          DiscoveryState.UNKNOWN,
+        );
+
+        expect(
+          await pointsRepository
+            .getGlobalDiscoveryPoints(
+              generationKey,
+            ),
+        ).toBe(
+          0n,
+        );
+      },
+    );
+
+    it(
+      'should allow sector persistence after an external galaxy is confirmed',
+      async () => {
+        const galaxyIndex =
+          7n;
+
+        await discoveryRepository
+          .setState(
+            generationKey,
+            new GalaxyLocator(
+              galaxyIndex,
+            ),
+            DiscoveryState.CONFIRMED,
+          );
+
+        const result =
+          resolveForGalaxy(
+            galaxyIndex,
+            0,
+            0,
+          );
+
+        const progress =
+          await runtime
+            .commitResolvedResult(
+              result,
+            );
+
+        expect(progress.sectorState).toBe(
+          DiscoveryState.DETECTED,
+        );
       },
     );
 

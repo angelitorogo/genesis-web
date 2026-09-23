@@ -471,7 +471,6 @@ export class ExplorationFacade {
       const [
         navigation,
         knownDiscoveries,
-        externalSearchStatus,
       ] =
         await Promise.all([
           this.repositories
@@ -483,11 +482,6 @@ export class ExplorationFacade {
           this.repositories
             .discoveryRepository
             .getKnownDiscoveries(
-              generationKey,
-            ),
-
-          this.externalGalaxySearchRuntime
-            .getStatus(
               generationKey,
             ),
         ]);
@@ -508,17 +502,26 @@ export class ExplorationFacade {
             knownDiscoveries,
           );
 
-      const centralSector =
-        ExplorationSectorScanEngine
-          .prepareSector(
-            generationKey,
-            entry.activeGalaxyIndex,
-            0,
-            0,
-          );
+      const externalSearchStatus =
+        entry
+          .canRunExplorationOperations
+          ? await this
+              .externalGalaxySearchRuntime
+              .getStatus(
+                generationKey,
+              )
+          : null;
 
-      let selectedSector =
-        centralSector;
+      if (
+        refreshId !==
+        this.refreshSequence
+      ) {
+        return;
+      }
+
+      let selectedSector:
+        ExplorationSectorSelection | null =
+        null;
 
       let selectedSectorFromMap =
         false;
@@ -527,9 +530,27 @@ export class ExplorationFacade {
         false;
 
       if (
-        mapSector !==
+        entry
+          .canRunExplorationOperations &&
+        externalSearchStatus !==
           null
       ) {
+        const centralSector =
+          ExplorationSectorScanEngine
+            .prepareSector(
+              generationKey,
+              entry.activeGalaxyIndex,
+              0,
+              0,
+            );
+
+        selectedSector =
+          centralSector;
+
+        if (
+          mapSector !==
+            null
+        ) {
         const sectorX =
           parseIntegerCoordinate(
             mapSector.sectorX,
@@ -566,23 +587,24 @@ export class ExplorationFacade {
         selectedSectorFromMap =
           true;
 
-        selectedSectorExplored =
-          knownDiscoveries
-            .some(
-              (
-                discovery,
-              ) =>
-                discovery.locator instanceof
-                  SectorLocator &&
-                discovery.locator
-                  .galaxyIndex ===
-                  selectedSector.galaxyIndex &&
-                discovery.locator
-                  .sectorKey ===
-                  selectedSector
-                    .sectorLocator
-                    .sectorKey,
-            );
+          selectedSectorExplored =
+            knownDiscoveries
+              .some(
+                (
+                  discovery,
+                ) =>
+                  discovery.locator instanceof
+                    SectorLocator &&
+                  discovery.locator
+                    .galaxyIndex ===
+                    selectedSector?.galaxyIndex &&
+                  discovery.locator
+                    .sectorKey ===
+                    selectedSector
+                      ?.sectorLocator
+                      .sectorKey,
+              );
+        }
       }
 
       this.selectedSectorSignal
@@ -600,11 +622,28 @@ export class ExplorationFacade {
           selectedSectorExplored,
         );
 
-      await this
-        .publishExternalSearchStatus(
-          externalSearchStatus,
-          generationKey,
-        );
+      if (
+        entry
+          .canRunExplorationOperations &&
+        externalSearchStatus !==
+          null
+      ) {
+        await this
+          .publishExternalSearchStatus(
+            externalSearchStatus,
+            generationKey,
+          );
+      } else {
+        this.externalSearchStatusSignal
+          .set(
+            null,
+          );
+
+        this.externalSearchOpportunityNotificationSignal
+          .set(
+            null,
+          );
+      }
 
       if (!this.universeSeedFacade.activeGenerationKey().equals(generationKey)) {
         this.universeSeedFacade.activatePersistedUniverse(generationKey);
@@ -685,6 +724,18 @@ export class ExplorationFacade {
       this.externalSearchErrorSignal
         .set(
           'No hay un contexto de exploración activo.',
+        );
+
+      return;
+    }
+
+    if (
+      !entry
+        .canRunExplorationOperations
+    ) {
+      this.externalSearchErrorSignal
+        .set(
+          'La galaxia activa debe estar Confirmada antes de realizar operaciones de exploración.',
         );
 
       return;
@@ -975,6 +1026,19 @@ export class ExplorationFacade {
   async scanSelectedSector():
     Promise<void> {
 
+    if (
+      this.entry()
+        ?.canRunExplorationOperations !==
+      true
+    ) {
+      this.scanErrorSignal
+        .set(
+          'La galaxia activa debe estar Confirmada antes de explorar sectores.',
+        );
+
+      return;
+    }
+
     const selection =
       this.selectedSector();
 
@@ -1050,12 +1114,21 @@ export class ExplorationFacade {
 
       if (
         entry ===
-        null ||
+          null ||
         referenceSector ===
         null
       ) {
         throw new Error(
           'No hay un contexto de exploración activo.',
+        );
+      }
+
+      if (
+        !entry
+          .canRunExplorationOperations
+      ) {
+        throw new Error(
+          'La galaxia activa debe estar Confirmada antes de explorar sectores.',
         );
       }
 

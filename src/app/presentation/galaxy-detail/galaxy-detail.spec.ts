@@ -2294,7 +2294,15 @@ describe(
           after.querySelector(
             '[data-testid="galaxy-detail-map-link"]',
           ),
-        ).toBeTruthy();
+        ).toBeNull();
+
+        expect(
+          after.querySelector(
+            '[data-testid="galaxy-detail-map-restricted"]',
+          )?.textContent,
+        ).toContain(
+          'Catalogar',
+        );
 
         expect(
           after.querySelector(

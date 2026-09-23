@@ -840,6 +840,68 @@ describe(
     );
 
     it(
+      'should reject an external search from an unconfirmed external focus without consuming its opportunity',
+      async () => {
+        await discoveryRepository
+          .setState(
+            generationKey,
+            new GalaxyLocator(
+              7n,
+            ),
+            DiscoveryState.VISITED,
+          );
+
+        await navigationRepository
+          .setNavigation(
+            generationKey,
+            {
+              activeGalaxyIndex:
+                7n,
+              recentGalaxyIndices:
+                [
+                  0n,
+                ],
+            },
+          );
+
+        await pointsRepository
+          .setGlobalDiscoveryPoints(
+            generationKey,
+            100n,
+          );
+
+        await expect(
+          runtime.search(
+            generationKey,
+          ),
+        ).rejects.toThrow(
+          'Confirmada',
+        );
+
+        expect(
+          (
+            await searchStateRepository
+              .getState(
+                generationKey,
+              )
+          )
+            .consumedSearchOpportunities,
+        ).toBe(
+          0n,
+        );
+
+        expect(
+          await pointsRepository
+            .getGlobalDiscoveryPoints(
+              generationKey,
+            ),
+        ).toBe(
+          100n,
+        );
+      },
+    );
+
+    it(
       'should preserve the pity streak when point-11.5 or 11.6 navigation is updated',
       async () => {
         await searchStateRepository

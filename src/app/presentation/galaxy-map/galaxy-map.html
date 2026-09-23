@@ -166,8 +166,35 @@
             </dl>
           </section>
 
+          @if (model.usesOriginOperationalException) {
+            <section
+              class="galactic-map__meta galactic-map__access-notice"
+              data-testid="galactic-map-origin-operational-access"
+              role="status"
+            >
+              <span>ACCESO NATAL</span>
+              <p>
+                Esta es la galaxia natal. Mantiene acceso operativo para que el
+                universo nuevo pueda explorar, obtener PD y progresar sin bloqueo.
+              </p>
+            </section>
+          } @else if (model.isReadOnlyMap) {
+            <section
+              class="galactic-map__meta galactic-map__access-notice"
+              data-testid="galactic-map-read-only-notice"
+              role="status"
+            >
+              <span>MAPA DE CONSULTA</span>
+              <p>
+                La galaxia está Catalogada: puedes inspeccionar su cartografía,
+                pero la exploración de sectores se habilita únicamente al
+                Confirmarla desde su ficha científica.
+              </p>
+            </section>
+          }
+
           @if (model.hasDetailedScene) {
-            @if (model.generationKey.generatorVersionCode === 2 && maxBlockSize() > 1) {
+            @if (model.canExploreSectors && model.generationKey.generatorVersionCode === 2 && maxBlockSize() > 1) {
               <section class="galactic-map__block-controls" data-testid="galactic-map-block-controls"
                 aria-label="Mejoras de exploración por bloques">
                 <strong>Exploración por bloques</strong>
@@ -200,13 +227,19 @@
                 </span>
 
                 <p>
-                  Los puntos continúan siendo muestras de render sin identidad
-                  física seleccionable. El clic cartográfico resuelve ahora el sector
-                  real bajo el cursor; el layout determinista, el índice espacial y la
-                  compactación de buffers siguen ejecutándose en el Web Worker. El
-                  hilo principal conserva cámara, controles y Three.js, sin
-                  materializar por ello sistemas, estrellas físicas, planetas ni
-                  Ground Truth de sectores no solicitados.
+                  @if (model.canExploreSectors) {
+                    Los puntos continúan siendo muestras de render sin identidad
+                    física seleccionable. El clic cartográfico resuelve ahora el sector
+                    real bajo el cursor; el layout determinista, el índice espacial y la
+                    compactación de buffers siguen ejecutándose en el Web Worker. El
+                    hilo principal conserva cámara, controles y Three.js, sin
+                    materializar por ello sistemas, estrellas físicas, planetas ni
+                    Ground Truth de sectores no solicitados.
+                  } @else {
+                    Vista cartográfica de consulta: cámara, capas y sectores conocidos
+                    permanecen disponibles, pero ningún sector puede escanearse ni
+                    persistirse hasta que la galaxia alcance el estado Confirmada.
+                  }
                 </p>
               </div>
             </section>
@@ -220,14 +253,22 @@
               </small>
 
               <strong>
-                La galaxia debe alcanzar el estado Descubierta para materializar
-                su geometría visual detallada.
+                Esta galaxia solo permite consultar su ficha científica hasta
+                alcanzar el estado Catalogada.
               </strong>
 
               <p>
-                El mapa mantiene únicamente la información observacional ya
-                conocida y no revela Ground Truth oculto.
+                En Catalogada se abrirá el mapa en modo de consulta. La
+                exploración de sectores se habilitará al Confirmarla.
               </p>
+
+              <a
+                class="galactic-map__link galactic-map__secondary-link"
+                [routerLink]="['/galaxies', model.galaxyIndex.toString()]"
+                data-testid="galactic-map-open-galaxy-fiche"
+              >
+                Abrir ficha científica
+              </a>
             </section>
           }
 

@@ -723,6 +723,91 @@ describe(
     );
 
     it(
+      'should keep an external visited galaxy on its fiche-only projection',
+      async () => {
+        let knownDiscoveryReads =
+          0;
+
+        const facade =
+          configure(
+            repositories(
+              [
+                generationKey,
+              ],
+              7n,
+              DiscoveryState.VISITED,
+              [],
+              () => {
+                knownDiscoveryReads +=
+                  1;
+              },
+            ),
+          );
+
+        await facade.refresh();
+
+        const model =
+          facade.model();
+
+        expect(model?.canOpenGalacticMap).toBe(false);
+        expect(model?.canExploreSectors).toBe(false);
+        expect(model?.visualStructure).toBeNull();
+        expect(model?.galaxyType).toBeNull();
+        expect(knownDiscoveryReads).toBe(0);
+      },
+    );
+
+    it(
+      'should expose an external catalogued galaxy map as read-only and a confirmed one as explorable',
+      async () => {
+        const cataloguedFacade =
+          configure(
+            repositories(
+              [
+                generationKey,
+              ],
+              7n,
+              DiscoveryState.CATALOGUED,
+            ),
+          );
+
+        await cataloguedFacade.refresh();
+
+        expect(
+          cataloguedFacade.model()?.hasDetailedScene,
+        ).toBe(true);
+        expect(
+          cataloguedFacade.model()?.isReadOnlyMap,
+        ).toBe(true);
+        expect(
+          cataloguedFacade.model()?.canExploreSectors,
+        ).toBe(false);
+
+        TestBed.resetTestingModule();
+
+        const confirmedFacade =
+          configure(
+            repositories(
+              [
+                generationKey,
+              ],
+              7n,
+              DiscoveryState.CONFIRMED,
+            ),
+          );
+
+        await confirmedFacade.refresh();
+
+        expect(
+          confirmedFacade.model()?.canExploreSectors,
+        ).toBe(true);
+        expect(
+          confirmedFacade.model()?.isReadOnlyMap,
+        ).toBe(false);
+      },
+    );
+
+    it(
       'should expose Empty when there is no persisted universe',
       async () => {
         const facade =

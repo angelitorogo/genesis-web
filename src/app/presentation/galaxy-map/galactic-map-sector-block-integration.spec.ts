@@ -41,6 +41,7 @@ describe('Mapa V2: exploración en lotes con canje real exigido', () => {
     );
     Object.defineProperty(facade, 'model', { value: () => ({
       generationKey: key, galaxyIndex: 0n, explorationCoverage: coverage,
+      canExploreSectors: true,
     } as unknown as GalacticMapModel) });
     vi.spyOn(facade, 'refresh').mockResolvedValue(undefined);
   });

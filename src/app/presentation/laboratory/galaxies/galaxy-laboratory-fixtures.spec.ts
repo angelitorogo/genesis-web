@@ -222,7 +222,7 @@ describe(
     );
 
     it(
-      'should expose each family only through a real DISCOVERED detailed map model',
+      'should expose each family only through a real CONFIRMED detailed map model',
       () => {
         for (
           const candidate of
@@ -240,7 +240,7 @@ describe(
               .knowledgeState,
           ).toBe(
             DiscoveryState
-              .DISCOVERED,
+              .CONFIRMED,
           );
 
           expect(

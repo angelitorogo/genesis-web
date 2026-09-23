@@ -722,7 +722,7 @@ export class GalacticNucleusLaboratoryFixtures {
             GENERATION_KEY,
             galaxy.index,
             DiscoveryState
-              .DISCOVERED,
+              .CONFIRMED,
           ),
         GalaxyVisualStructureGenerator
           .generate(

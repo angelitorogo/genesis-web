@@ -7,6 +7,10 @@ import {
 } from '@angular/router';
 
 import {
+  vi,
+} from 'vitest';
+
+import {
   KnownDiscovery,
 } from '../../domain/discovery/known-discovery';
 
@@ -361,6 +365,12 @@ describe(
         },
       };
 
+    afterEach(
+      () => {
+        vi.restoreAllMocks();
+      },
+    );
+
     beforeEach(
       async () => {
         failures =
@@ -503,6 +513,87 @@ describe(
             ),
           ).toBeNull();
         }
+      },
+    );
+
+    it(
+      'should expose only the fiche and reject direct operations for an external visited galaxy',
+      async () => {
+        vi.spyOn(
+          repositories.navigationRepository,
+          'getNavigation',
+        ).mockResolvedValue({
+          activeGalaxyIndex:
+            7n,
+          recentGalaxyIndices:
+            [
+              0n,
+            ],
+        });
+
+        vi.spyOn(
+          repositories.discoveryRepository,
+          'getKnownDiscoveries',
+        ).mockResolvedValue([
+          new KnownDiscovery(
+            generationKey,
+            new GalaxyLocator(
+              7n,
+            ),
+            DiscoveryState.VISITED,
+          ),
+        ]);
+
+        const searchSpy =
+          vi.spyOn(
+            externalRuntime,
+            'search',
+          );
+
+        const {
+          fixture,
+          element,
+        } =
+          await fixtureAndElement();
+
+        expect(
+          element.querySelector(
+            '[data-testid="exploration-access-restricted"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="external-galaxy-search"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="exploration-open-active-galaxy-fiche"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/7',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="exploration-open-read-only-map"]',
+          ),
+        ).toBeNull();
+
+        await fixture.componentInstance.facade
+          .searchExternalGalaxy();
+
+        expect(searchSpy).not.toHaveBeenCalled();
+        expect(
+          fixture.componentInstance.facade
+            .externalSearchErrorMessage(),
+        ).toContain(
+          'Confirmada',
+        );
       },
     );
 

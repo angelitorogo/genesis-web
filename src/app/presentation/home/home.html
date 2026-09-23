@@ -285,15 +285,26 @@
 
             <a
               class="genesis-home__primary-action"
-              routerLink="/exploration"
+              [routerLink]="dashboard.canRunExplorationOperations
+                ? '/exploration'
+                : ['/galaxies', dashboard.activeGalaxyIndex.toString()]"
               data-testid="perform-exploration-link"
+              [attr.data-access-restricted]="!dashboard.canRunExplorationOperations"
             >
               <span>
                 <small>ACCIÓN PRINCIPAL</small>
-                <strong>REALIZAR EXPLORACIÓN</strong>
-                <em>
-                  Entrar en el flujo real de la galaxia actualmente en foco.
-                </em>
+                @if (dashboard.canRunExplorationOperations) {
+                  <strong>REALIZAR EXPLORACIÓN</strong>
+                  <em>
+                    Entrar en el flujo real de la galaxia actualmente en foco.
+                  </em>
+                } @else {
+                  <strong>ABRIR FICHA CIENTÍFICA</strong>
+                  <em>
+                    La exploración se habilitará cuando esta galaxia alcance el
+                    estado Confirmada.
+                  </em>
+                }
               </span>
 
               <b aria-hidden="true">→</b>
@@ -320,8 +331,14 @@
       >
         <a
           class="genesis-home__access-link"
-          routerLink="/galaxy-map"
+          [routerLink]="facade.dashboard()?.canOpenGalacticMap
+            ? '/galaxy-map'
+            : facade.dashboard()
+              ? ['/galaxies', facade.dashboard()!.activeGalaxyIndex.toString()]
+              : '/galaxy-map'"
           data-testid="galaxy-map-link"
+          [attr.data-access-restricted]="facade.dashboard() !== null && !facade.dashboard()!.canOpenGalacticMap"
+          [attr.data-read-only]="facade.dashboard()?.isGalacticMapReadOnly ?? false"
         >
           <span class="genesis-home__access-number">
             01
@@ -329,11 +346,19 @@
 
           <span class="genesis-home__access-copy">
             <strong>
-              Mapa galáctico
+              {{ facade.dashboard() !== null && !facade.dashboard()!.canOpenGalacticMap
+                ? 'Mapa galáctico restringido'
+                : 'Mapa galáctico' }}
             </strong>
 
             <span>
-              Navegación espacial y sectores conocidos.
+              @if (facade.dashboard()?.isGalacticMapReadOnly) {
+                Cartografía de consulta; exploración aún bloqueada.
+              } @else if (facade.dashboard() !== null && !facade.dashboard()!.canOpenGalacticMap) {
+                Disponible al Catalogar la galaxia activa.
+              } @else {
+                Navegación espacial y sectores conocidos.
+              }
             </span>
           </span>
 

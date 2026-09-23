@@ -128,7 +128,7 @@ describe(
           .generate(
             generationKey,
             galaxyIndex,
-            DiscoveryState.DISCOVERED,
+            DiscoveryState.CONFIRMED,
           ),
         GalaxyVisualStructureGenerator
           .generate(

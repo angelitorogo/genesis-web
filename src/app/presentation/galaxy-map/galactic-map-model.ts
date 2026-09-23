@@ -20,6 +20,11 @@ import {
 } from '../../domain/observation/galaxy/external-galaxy-preliminary-information';
 
 import {
+  GalaxyOperationalAccessMode,
+  GalaxyOperationalAccessPolicy,
+} from '../../simulation/exploration/galaxy-operational-access-policy';
+
+import {
   type GalacticMapDiscoveryMarkers,
 } from './galactic-map-discovery-markers';
 
@@ -39,7 +44,7 @@ const SIGNED_LONG_MAX =
  *
  * The public page always receives the safe point-7.6 preliminary observation.
  * Exact renderer-independent visual geometry and the canonical GalaxyType are
- * available only once the active galaxy has reached DISCOVERED or later.
+ * available only when the operational policy opens the galactic map.
  *
  * Point 10.3 contributes binary sector coverage; point 10.4 persistent object
  * markers; point 10.5 adds thematic marker families plus region/GHZ metadata.
@@ -147,42 +152,43 @@ export class GalacticMapModel {
       );
     }
 
+    const operationalAccess =
+      GalaxyOperationalAccessPolicy
+        .evaluate(
+          galaxyIndex,
+          canonicalKnowledgeState,
+        );
+
     if (
-      canonicalKnowledgeState.code <
-        DiscoveryState
-          .DISCOVERED
-          .code &&
+      !operationalAccess
+        .canOpenGalacticMap &&
       visualStructure !==
         null
     ) {
       throw new RangeError(
-        'Detailed GalaxyVisualStructure cannot be exposed before DISCOVERED.',
+        'Detailed GalaxyVisualStructure cannot be exposed before galactic-map access is available.',
       );
     }
 
     if (
-      canonicalKnowledgeState.code <
-        DiscoveryState
-          .DISCOVERED
-          .code &&
+      !operationalAccess
+        .canOpenGalacticMap &&
       galaxyType !==
         null
     ) {
       throw new RangeError(
-        'Exact GalaxyType cannot be exposed before DISCOVERED.',
+        'Exact GalaxyType cannot be exposed before galactic-map access is available.',
       );
     }
 
     if (
-      canonicalKnowledgeState.code >=
-        DiscoveryState
-          .DISCOVERED
-          .code &&
+      operationalAccess
+        .canOpenGalacticMap &&
       visualStructure ===
         null
     ) {
       throw new RangeError(
-        'DISCOVERED or later galaxies require their detailed visual structure.',
+        'Galaxies with galactic-map access require their detailed visual structure.',
       );
     }
 
@@ -208,10 +214,8 @@ export class GalacticMapModel {
     );
 
     if (
-      canonicalKnowledgeState.code <
-        DiscoveryState
-          .DISCOVERED
-          .code &&
+      !operationalAccess
+        .canOpenGalacticMap &&
       (
         explorationCoverage !==
           null ||
@@ -301,6 +305,58 @@ export class GalacticMapModel {
     return this
       .visualStructure !==
       null;
+  }
+
+  get operationalAccessMode():
+    GalaxyOperationalAccessMode {
+
+    return GalaxyOperationalAccessPolicy
+      .evaluate(
+        this.galaxyIndex,
+        this.knowledgeState,
+      )
+      .mode;
+  }
+
+  get canOpenGalacticMap():
+    boolean {
+
+    return GalaxyOperationalAccessPolicy
+      .evaluate(
+        this.galaxyIndex,
+        this.knowledgeState,
+      )
+      .canOpenGalacticMap;
+  }
+
+  get canExploreSectors():
+    boolean {
+
+    return GalaxyOperationalAccessPolicy
+      .evaluate(
+        this.galaxyIndex,
+        this.knowledgeState,
+      )
+      .canExploreSectors;
+  }
+
+  get isReadOnlyMap():
+    boolean {
+
+    return this.operationalAccessMode ===
+      GalaxyOperationalAccessMode
+        .MAP_READ_ONLY;
+  }
+
+  get usesOriginOperationalException():
+    boolean {
+
+    return GalaxyOperationalAccessPolicy
+      .evaluate(
+        this.galaxyIndex,
+        this.knowledgeState,
+      )
+      .usesOriginOperationalException;
   }
 }
 

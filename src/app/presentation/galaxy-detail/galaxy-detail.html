@@ -1066,14 +1066,21 @@
               ← Volver al catálogo
             </a>
 
-            @if (model.isCurrentFocus) {
+            @if (model.isCurrentFocus && model.canOpenGalacticMap) {
               <a
                 class="gd__action gd__action--primary"
                 routerLink="/galaxy-map"
                 data-testid="galaxy-detail-map-link"
               >
-                Abrir mapa galáctico
+                {{ model.canExploreSectors ? 'Abrir mapa galáctico' : 'Abrir mapa de consulta' }}
               </a>
+            } @else if (model.isCurrentFocus) {
+              <span
+                class="gd__action"
+                data-testid="galaxy-detail-map-restricted"
+              >
+                Mapa disponible al Catalogar
+              </span>
             }
 
             <a

@@ -424,6 +424,14 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="galactic-map-origin-operational-access"]',
+          )?.textContent,
+        ).toContain(
+          'ACCESO NATAL',
+        );
+
+        expect(
+          element.querySelector(
             '[data-testid="galactic-map-canvas"]',
           ),
         ).toBeTruthy();
@@ -606,6 +614,115 @@ describe(
           'GEN-V1-G0-',
         );
       },
+    );
+
+    it(
+      'should keep an external visited galaxy on its fiche without materializing the scene',
+      async () => {
+        vi.spyOn(
+          repositories.navigationRepository,
+          'getNavigation',
+        ).mockResolvedValue({
+          activeGalaxyIndex:
+            7n,
+          recentGalaxyIndices:
+            [
+              0n,
+            ],
+        });
+
+        vi.spyOn(
+          repositories.discoveryRepository,
+          'getState',
+        ).mockResolvedValue(
+          DiscoveryState.VISITED,
+        );
+
+        vi.spyOn(
+          repositories.discoveryRepository,
+          'getKnownDiscoveries',
+        ).mockResolvedValue([]);
+
+        const element =
+          await renderedPage();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-scene"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-detailed-scene-restricted"]',
+          )?.textContent,
+        ).toContain(
+          'solo permite consultar su ficha',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-open-galaxy-fiche"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/7',
+        );
+      },
+    );
+
+    it(
+      'should render an external catalogued galaxy as a read-only map',
+      async () => {
+        vi.spyOn(
+          repositories.navigationRepository,
+          'getNavigation',
+        ).mockResolvedValue({
+          activeGalaxyIndex:
+            7n,
+          recentGalaxyIndices:
+            [
+              0n,
+            ],
+        });
+
+        vi.spyOn(
+          repositories.discoveryRepository,
+          'getState',
+        ).mockResolvedValue(
+          DiscoveryState.CATALOGUED,
+        );
+
+        vi.spyOn(
+          repositories.discoveryRepository,
+          'getKnownDiscoveries',
+        ).mockResolvedValue([]);
+
+        const element =
+          await renderedPage();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-scene"]',
+          ),
+        ).toBeTruthy();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-read-only-notice"]',
+          )?.textContent,
+        ).toContain(
+          'MAPA DE CONSULTA',
+        );
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'Vista cartográfica de consulta',
+        );
+      },
+      30_000,
     );
 
     it(

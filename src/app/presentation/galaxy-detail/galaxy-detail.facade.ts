@@ -46,6 +46,10 @@ import {
 } from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
 
 import {
+  GalaxyOperationalAccessPolicy,
+} from '../../simulation/exploration/galaxy-operational-access-policy';
+
+import {
   GalaxyScientificProfileEngine,
 } from '../../simulation/exploration/galaxy-scientific-profile-engine';
 
@@ -111,6 +115,12 @@ export interface GalaxyDetailModel {
     boolean;
 
   readonly isOriginGalaxy:
+    boolean;
+
+  readonly canOpenGalacticMap:
+    boolean;
+
+  readonly canExploreSectors:
     boolean;
 }
 
@@ -597,6 +607,13 @@ export class GalaxyDetailFacade {
             galaxyIndex,
           );
 
+      const operationalAccess =
+        GalaxyOperationalAccessPolicy
+          .evaluate(
+            galaxyIndex,
+            profile.knowledgeState,
+          );
+
       this
         .loadedContextSignal
         .set(
@@ -634,6 +651,14 @@ export class GalaxyDetailFacade {
               isOriginGalaxy:
                 galaxyIndex ===
                 0n,
+
+              canOpenGalacticMap:
+                operationalAccess
+                  .canOpenGalacticMap,
+
+              canExploreSectors:
+                operationalAccess
+                  .canExploreSectors,
             }),
         });
     } catch (

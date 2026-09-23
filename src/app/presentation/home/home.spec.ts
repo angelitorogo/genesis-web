@@ -7,6 +7,10 @@ import {
 } from '@angular/router';
 
 import {
+  vi,
+} from 'vitest';
+
+import {
   KnownDiscovery,
 } from '../../domain/discovery/known-discovery';
 
@@ -131,6 +135,12 @@ describe(
           },
         },
       };
+
+    afterEach(
+      () => {
+        vi.restoreAllMocks();
+      },
+    );
 
     beforeEach(
       async () => {
@@ -411,6 +421,132 @@ describe(
               '[data-testid="settings-link"]',
             ),
         ).toBeNull();
+      },
+    );
+
+    it(
+      'should route an external visited focus only to its fiche',
+      async () => {
+        vi.spyOn(
+          repositories.navigationRepository,
+          'getNavigation',
+        ).mockResolvedValue({
+          activeGalaxyIndex:
+            7n,
+          recentGalaxyIndices:
+            [
+              0n,
+            ],
+        });
+
+        vi.spyOn(
+          repositories.discoveryRepository,
+          'getKnownDiscoveries',
+        ).mockResolvedValue([
+          new KnownDiscovery(
+            generationKey,
+            new GalaxyLocator(
+              7n,
+            ),
+            DiscoveryState.VISITED,
+          ),
+        ]);
+
+        const {
+          element,
+        } =
+          await renderedHome();
+
+        expect(
+          element.querySelector(
+            '[data-testid="perform-exploration-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/7',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="perform-exploration-link"]',
+          )?.textContent,
+        ).toContain(
+          'ABRIR FICHA CIENTÍFICA',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-map-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/7',
+        );
+      },
+    );
+
+    it(
+      'should expose only the read-only map for an external catalogued focus',
+      async () => {
+        vi.spyOn(
+          repositories.navigationRepository,
+          'getNavigation',
+        ).mockResolvedValue({
+          activeGalaxyIndex:
+            7n,
+          recentGalaxyIndices:
+            [
+              0n,
+            ],
+        });
+
+        vi.spyOn(
+          repositories.discoveryRepository,
+          'getKnownDiscoveries',
+        ).mockResolvedValue([
+          new KnownDiscovery(
+            generationKey,
+            new GalaxyLocator(
+              7n,
+            ),
+            DiscoveryState.CATALOGUED,
+          ),
+        ]);
+
+        const {
+          element,
+        } =
+          await renderedHome();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-map-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxy-map',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-map-link"]',
+          )?.textContent,
+        ).toContain(
+          'Cartografía de consulta',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="perform-exploration-link"]',
+          )?.getAttribute(
+            'href',
+          ),
+        ).toBe(
+          '/galaxies/7',
+        );
       },
     );
   },

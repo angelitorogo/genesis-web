@@ -102,11 +102,47 @@
               </div>
               <div>
                 <dt>Operación disponible</dt>
-                <dd data-testid="exploration-operation-scope">Búsqueda extragaláctica</dd>
+                <dd data-testid="exploration-operation-scope">
+                  {{ entry.canRunExplorationOperations ? 'Búsqueda extragaláctica' : 'Solo ficha científica' }}
+                </dd>
               </div>
             </dl>
 
-              @if (facade.externalSearchStatus(); as externalStatus) {
+              @if (!entry.canRunExplorationOperations) {
+                <section
+                  class="exploration__flow exploration__selector"
+                  data-testid="exploration-access-restricted"
+                  role="status"
+                >
+                  <p class="exploration__label">OPERACIONES RESTRINGIDAS</p>
+                  <h3>La galaxia activa todavía no está Confirmada</h3>
+                  <p>
+                    En estado Visitada solo está disponible su ficha científica.
+                    Al Catalogarla podrás consultar el mapa galáctico; al
+                    Confirmarla se habilitarán la exploración de sectores y las
+                    demás operaciones de exploración.
+                  </p>
+                  <div class="exploration__classification">
+                    <a
+                      class="exploration__action"
+                      [routerLink]="['/galaxies', entry.activeGalaxyIndex.toString()]"
+                      data-testid="exploration-open-active-galaxy-fiche"
+                    >
+                      Abrir ficha científica
+                    </a>
+
+                    @if (entry.activeGalaxyDiscoveryState.name === 'CATALOGUED') {
+                      <a
+                        class="exploration__action"
+                        routerLink="/galaxy-map"
+                        data-testid="exploration-open-read-only-map"
+                      >
+                        Abrir mapa de consulta
+                      </a>
+                    }
+                  </div>
+                </section>
+              } @else if (facade.externalSearchStatus(); as externalStatus) {
                 <section
                   class="exploration__flow"
                   data-testid="external-galaxy-search"

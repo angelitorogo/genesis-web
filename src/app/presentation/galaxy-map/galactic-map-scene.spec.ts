@@ -10,6 +10,7 @@ import {
 
 import {
   DiscoveryState,
+  type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
 
 import {
@@ -125,6 +126,10 @@ describe(
     function model(
       galaxyIndex =
         0n,
+
+      knowledgeState:
+        DiscoveryStateValue =
+        DiscoveryState.CONFIRMED,
     ): GalacticMapModel {
 
       const galaxy =
@@ -186,7 +191,7 @@ describe(
           .generate(
             generationKey,
             galaxyIndex,
-            DiscoveryState.DISCOVERED,
+            knowledgeState,
           ),
         GalaxyVisualStructureGenerator
           .generate(
@@ -1330,6 +1335,88 @@ describe(
         ).toEqual([
           selectedSector,
         ]);
+      },
+    );
+
+    it(
+      'should keep sector selection informational on a catalogued read-only map',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticMapScene,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          model(
+            1n,
+            DiscoveryState.CATALOGUED,
+          ),
+        );
+
+        fixture.detectChanges();
+
+        fixture
+          .componentInstance
+          .onCanvasPointerDown(
+            pointerEvent(
+              9,
+              120,
+              140,
+            ),
+          );
+
+        fixture
+          .componentInstance
+          .onCanvasPointerUp(
+            pointerEvent(
+              9,
+              122,
+              143,
+            ),
+          );
+
+        fixture.detectChanges();
+
+        const exploreRequests:
+          GalacticMapSectorSelection[] =
+          [];
+
+        fixture.componentInstance.sectorExplore
+          .subscribe(
+            (
+              selection,
+            ) => {
+              exploreRequests.push(
+                selection,
+              );
+            },
+          );
+
+        fixture.componentInstance
+          .requestSectorExploration(
+            selectedSector,
+          );
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-explore-sector-link"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-sector-read-only-message"]',
+          )?.textContent,
+        ).toContain(
+          'modo consulta',
+        );
+
+        expect(exploreRequests).toEqual([]);
       },
     );
 

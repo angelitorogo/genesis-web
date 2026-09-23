@@ -348,7 +348,7 @@ export class GalaxyLaboratoryFixtures {
             GENERATION_KEY,
             galaxy.index,
             DiscoveryState
-              .DISCOVERED,
+              .CONFIRMED,
           ),
         GalaxyVisualStructureGenerator
           .generate(
