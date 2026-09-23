@@ -28,6 +28,10 @@ import {
 } from '../random/sfc64-random';
 
 import {
+  V2GalacticNucleusGenerator,
+} from '../nuclear/v2-galactic-nucleus-generator';
+
+import {
   ProceduralTargetResolver,
 } from '../regeneration/procedural-target-resolver';
 
@@ -87,13 +91,17 @@ export class GalaxyGenerator {
     }
 
     if (generationKey.generatorVersion === GeneratorVersion.V2) {
-      // Only the physical inputs borrow V1. The returned galaxy and technical
-      // designation retain the public V2 identity, never the private key.
+      /*
+       * V2 keeps the validated V1 morphology and baseline physical magnitudes,
+       * but owns a versioned nuclear branch. This intentionally replaces the
+       * old V1 nuclear incidence without consuming or reordering V1 draws.
+       */
       const source = this.generateV1(frozenPhysicalSourceKey(generationKey), galaxyIndex);
       return new Galaxy(
         generationKey, source.index, source.seed,
         GalaxyDesignationGenerator.generate(generationKey, galaxyIndex),
-        source.type, source.physicalProperties, source.nucleus,
+        source.type, source.physicalProperties,
+        V2GalacticNucleusGenerator.generate(source),
       );
     }
 

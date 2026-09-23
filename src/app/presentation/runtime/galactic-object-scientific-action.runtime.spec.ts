@@ -74,6 +74,10 @@ import {
 } from '../../simulation/observation/observation-instrument-catalog';
 
 import {
+  ACCRETION_DISK_EVIDENCE_CODE,
+} from '../../simulation/observation/accretion-disk-observation-engine';
+
+import {
   SupernovaRemnantGenerator,
 } from '../../simulation/galactic-object/supernova-remnant-generator';
 
@@ -227,11 +231,13 @@ describe(
         ObservationInstrumentLevel,
 
       locator: GalacticObjectLocator = remnantLocator,
+
+      key: UniverseGenerationKey = generationKey,
     ): LeveledInstrumentObservationSession {
 
       const observatory =
         new Observatory(
-          generationKey,
+          key,
         );
 
       const baseSession =
@@ -481,6 +487,71 @@ describe(
       )).rejects.toThrow(RangeError);
       expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey)).toBe(total);
       expect(await evidenceRepo.getEvidence(generationKey, rare)).toEqual(evidence);
+    });
+
+    it('persists the two V2 active-nucleus stages from an existing DISCOVERED save without duplicating 28.1 evidence', async () => {
+      const v2 = new UniverseGenerationKey(
+        UniverseSeed.parse('7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5'),
+        GeneratorVersion.V2,
+      );
+      const centre = new GalacticObjectLocator(0n, 0n, 0n);
+      const priorMilestone = new SystemLocator(0n, 10n, 7n);
+      await universeRepository.createIfAbsent(v2);
+      await pointsRepository.setGlobalDiscoveryPoints(v2, 10_000n);
+      await discoveryRepository.setState(v2, priorMilestone, DiscoveryState.CATALOGUED);
+      await discoveryRepository.setState(v2, centre, DiscoveryState.DISCOVERED);
+
+      const evidenceRepo = new DexieScientificEvidenceRepository(database, TARGET_SEED_RESOLVER);
+      const baseline = await pointsRepository.getGlobalDiscoveryPoints(v2);
+
+      const characterize = await runtime.commitAction(
+        session(
+          DiscoveryState.DISCOVERED,
+          ObservationInstrumentType.SPECTROSCOPY,
+          ObservationInstrumentLevel.LEVEL_3,
+          centre,
+          v2,
+        ),
+        GalacticObjectScientificActionType.ACTIVE_NUCLEUS_MULTIBAND_CHARACTERIZATION,
+      );
+      expect(characterize.actionResult.newDiscoveryState).toBe(DiscoveryState.CATALOGUED);
+
+      const confirm = await runtime.commitAction(
+        session(
+          DiscoveryState.CATALOGUED,
+          ObservationInstrumentType.RADIO,
+          ObservationInstrumentLevel.LEVEL_4,
+          centre,
+          v2,
+        ),
+        GalacticObjectScientificActionType.ACTIVE_NUCLEUS_INDEPENDENT_CONFIRMATION,
+      );
+      expect(confirm.actionResult.newDiscoveryState).toBe(DiscoveryState.CONFIRMED);
+      expect(await discoveryRepository.getState(v2, centre)).toBe(DiscoveryState.CONFIRMED);
+      expect(await pointsRepository.getGlobalDiscoveryPoints(v2)).toBe(baseline + 192n);
+
+      const evidence = await evidenceRepo.getEvidence(v2, centre);
+      expect(evidence.map(item => item.evidenceCode).sort()).toEqual([
+        'INDEPENDENT_ACTIVITY_CONFIRMATION',
+        'MULTIBAND_CHARACTERIZATION',
+      ]);
+      expect(new Set(evidence.map(item => item.independenceKey)).size).toBe(2);
+      expect(evidence.some(item => item.evidenceCode === ACCRETION_DISK_EVIDENCE_CODE))
+        .toBe(false);
+
+      const total = await pointsRepository.getGlobalDiscoveryPoints(v2);
+      await expect(runtime.commitAction(
+        session(
+          DiscoveryState.DISCOVERED,
+          ObservationInstrumentType.SPECTROSCOPY,
+          ObservationInstrumentLevel.LEVEL_3,
+          centre,
+          v2,
+        ),
+        GalacticObjectScientificActionType.ACTIVE_NUCLEUS_MULTIBAND_CHARACTERIZATION,
+      )).rejects.toThrow(RangeError);
+      expect(await pointsRepository.getGlobalDiscoveryPoints(v2)).toBe(total);
+      expect(await evidenceRepo.getEvidence(v2, centre)).toEqual(evidence);
     });
 
     it('27.10 V2 rejects locked compact campaigns atomically without inventing observed evidence', async () => {

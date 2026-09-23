@@ -694,8 +694,13 @@
                     >
                       <div class="archive-discovery-detail__scientific-action-header">
                         <div>
-                          <small class="archive-discovery-detail__eyebrow">
-                            ACCIÓN CIENTÍFICA DISPONIBLE
+                          <small
+                            class="archive-discovery-detail__eyebrow"
+                            data-testid="archive-galactic-object-action-availability"
+                          >
+                            {{ action.canExecute
+                              ? 'ACCIÓN CIENTÍFICA DISPONIBLE'
+                              : 'ACCIÓN CIENTÍFICA BLOQUEADA' }}
                           </small>
 
                           <strong data-testid="archive-galactic-object-action-label">
@@ -713,11 +718,11 @@
                           <li
                             [class.archive-discovery-detail__instrument--available]="instrument.isAvailable"
                           >
-                            <span>
+                            <span class="archive-discovery-detail__instrument-label">
                               {{ instrument.label }} · Nivel {{ instrument.minimumLevelRank }}
                             </span>
 
-                            <small>
+                            <small class="archive-discovery-detail__instrument-status">
                               {{ instrument.statusLabel }}
                             </small>
                           </li>
@@ -744,13 +749,31 @@
                           }
                         </button>
                       } @else {
-                        <p
+                        <div
                           class="archive-discovery-detail__action-blocked"
                           data-testid="archive-galactic-object-action-blocked"
                         >
-                          El Observatorio todavía no dispone de un instrumento compatible
-                          con el nivel científico requerido.
-                        </p>
+                          @if (action.pendingRequirements; as requirements) {
+                            <p>
+                              Para desbloquear esta acción, la vía de progresión más cercana es
+                              <strong>
+                                {{ requirements.instrumentLabel }} · Nivel {{ requirements.minimumLevelRank }}
+                              </strong>.
+                            </p>
+
+                            @if (requirements.items.length > 0) {
+                              <ul aria-label="Requisitos científicos pendientes">
+                                @for (requirement of requirements.items; track requirement) {
+                                  <li>{{ requirement }}</li>
+                                }
+                              </ul>
+                            }
+                          } @else {
+                            <p>
+                              La acción permanece bloqueada por requisitos científicos pendientes.
+                            </p>
+                          }
+                        </div>
                       }
 
                       @if (facade.actionFeedback(); as feedback) {
@@ -771,6 +794,21 @@
                         </p>
                       }
                     </section>
+                  }
+
+                  @if (
+                    card.scientificSubject === 'ACTIVE_GALACTIC_NUCLEUS' &&
+                    card.knowledgeLevel === 'CONFIRMED'
+                  ) {
+                    <nav class="archive-discovery-detail__actions">
+                      <a
+                        [routerLink]="['/galaxies', model.galaxyIndex]"
+                        [queryParams]="{ u: model.routeUniverseRef }"
+                        data-testid="archive-active-nucleus-galaxy-link"
+                      >
+                        Abrir ficha galáctica para observar el disco →
+                      </a>
+                    </nav>
                   }
                 </div>
               </section>

@@ -33,6 +33,10 @@ import {
 } from '../../domain/generation/procedural-locator';
 
 import {
+  GeneratorVersion,
+} from '../../domain/generation/generator-version';
+
+import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
 import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
@@ -623,6 +627,10 @@ function activeGalacticNucleusCardOrNull(
     nucleusState ===
       GalacticNucleusState.QUASAR;
 
+  const supportsActiveNucleusProgression =
+    generationKey.generatorVersion ===
+      GeneratorVersion.V2;
+
   const title =
     isQuasar
       ? 'QUASAR galáctico'
@@ -704,7 +712,10 @@ function activeGalacticNucleusCardOrNull(
   return Object.freeze({
     coarseFamily,
     scientificSubject:
-      null,
+      knowledgeLevel === ArchiveGalacticObjectKnowledgeLevel.SIGNAL ||
+      !supportsActiveNucleusProgression
+        ? null
+        : GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS,
     knowledgeLevel,
     knowledgeLevelLabel:
       knowledgeLevelLabel(
@@ -713,9 +724,14 @@ function activeGalacticNucleusCardOrNull(
     title,
     summary,
     nextScientificStep:
-      isQuasar
-        ? 'Caracterización del QUASAR central'
-        : 'Caracterización del núcleo galáctico activo',
+      supportsActiveNucleusProgression
+        ? activeNucleusNextScientificStep(
+            knowledgeLevel,
+            isQuasar,
+          )
+        : isQuasar
+          ? 'Caracterización del QUASAR central'
+          : 'Caracterización del núcleo galáctico activo',
     facts,
     scientificSections:
       Object.freeze([
@@ -732,6 +748,42 @@ function activeGalacticNucleusCardOrNull(
       ]),
     render,
   });
+}
+
+function activeNucleusNextScientificStep(
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+
+  isQuasar:
+    boolean,
+): string {
+
+  if (
+    knowledgeLevel ===
+    ArchiveGalacticObjectKnowledgeLevel.SIGNAL
+  ) {
+    return isQuasar
+      ? 'Caracterización del QUASAR central'
+      : 'Caracterización del núcleo galáctico activo';
+  }
+
+  if (
+    knowledgeLevel ===
+    ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED
+  ) {
+    return isQuasar
+      ? 'Caracterización multibanda del QUASAR central'
+      : 'Caracterización multibanda del núcleo galáctico activo';
+  }
+
+  if (
+    knowledgeLevel ===
+    ArchiveGalacticObjectKnowledgeLevel.CATALOGUED
+  ) {
+    return 'Confirmación independiente de la actividad nuclear';
+  }
+
+  return 'Confirmar la galaxia y observar el disco de acreción desde su ficha';
 }
 
 function buildPhysicalCard(
@@ -2056,6 +2108,9 @@ function scientificSubjectLabel(
 
     case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
       return 'Agujero negro de masa intermedia';
+
+    case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
+      return 'Núcleo galáctico activo';
   }
 }
 
@@ -2084,6 +2139,9 @@ function identifiedSummary(
 
     case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
       return 'Fuente extrema candidata: se requiere caracterización multibanda antes de publicar las magnitudes físicas del modelo.';
+
+    case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
+      return 'El núcleo activo requiere caracterización multibanda antes de la confirmación independiente.';
   }
 }
 
@@ -2131,6 +2189,9 @@ function characterizationActionLabel(
 
     case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
       return 'Caracterización multibanda de fuente extrema';
+
+    case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
+      return 'Caracterización multibanda del núcleo galáctico activo';
   }
 }
 
@@ -2159,6 +2220,9 @@ function confirmationActionLabel(
 
     case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
       return 'Confirmación independiente mediante seguimiento temporal';
+
+    case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
+      return 'Confirmación independiente de la actividad nuclear';
   }
 }
 
@@ -2186,6 +2250,10 @@ function renderKindForSubject(
       return ArchiveGalacticObjectRenderKind.SUPERNOVA_REMNANT;
 
     case GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE:
+      return ArchiveGalacticObjectRenderKind.EXTREME_OBJECT;
+
+    case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
+      // Dedicated central cards intercept this subject before generic routing.
       return ArchiveGalacticObjectRenderKind.EXTREME_OBJECT;
   }
 }

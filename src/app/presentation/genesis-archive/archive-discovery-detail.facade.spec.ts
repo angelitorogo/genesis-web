@@ -388,6 +388,132 @@ describe(
     );
 
     it(
+      'should open the default V2 active galactic-centre fiche and offer its EXTREME_OBJECT survey without a V1 mismatch',
+      async () => {
+        const v2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              DEFAULT_UNIVERSE_SEED,
+            ),
+            GeneratorVersion.V2,
+          );
+        const {
+          facade,
+        } =
+          configure({
+            universes: [
+              v2,
+            ],
+            discoveryState:
+              DiscoveryState.DETECTED,
+            scientificActionsEnabled:
+              true,
+          });
+
+        await facade.load({
+          locatorKind:
+            ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex:
+            '0',
+          sectorKey:
+            '0',
+          galacticObjectIndex:
+            '0',
+          universeSeed:
+            v2.universeSeed.serialize(),
+          generatorVersionCode:
+            '2',
+        });
+
+        expect(
+          facade.state().kind,
+        ).toBe(
+          'content',
+        );
+        expect(
+          facade.model()?.resultKind,
+        ).toBe(
+          ExplorationResultKind.EXTREME_OBJECT,
+        );
+        expect(
+          facade.model()?.galacticObjectCard?.render.kind,
+        ).toBe(
+          'AGN_NUCLEUS',
+        );
+        expect(
+          facade.model()?.scientificAction?.actionType,
+        ).toBe(
+          GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+        );
+      },
+    );
+
+    it(
+      'should expose both post-discovery V2 nucleus stages and finish without duplicating point 28.1',
+      async () => {
+        const v2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              DEFAULT_UNIVERSE_SEED,
+            ),
+            GeneratorVersion.V2,
+          );
+        const params = {
+          locatorKind:
+            ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex:
+            '0',
+          sectorKey:
+            '0',
+          galacticObjectIndex:
+            '0',
+          universeSeed:
+            v2.universeSeed.serialize(),
+          generatorVersionCode:
+            '2',
+        } as const;
+
+        const discovered = configure({
+          universes: [v2],
+          discoveryState: DiscoveryState.DISCOVERED,
+          scientificActionsEnabled: true,
+        }).facade;
+        await discovered.load(params);
+        expect(discovered.model()?.scientificAction?.actionType).toBe(
+          GalacticObjectScientificActionType.ACTIVE_NUCLEUS_MULTIBAND_CHARACTERIZATION,
+        );
+        expect(discovered.model()?.scientificAction?.targetDiscoveryStateLabel)
+          .toBe('Catalogado');
+
+        TestBed.resetTestingModule();
+
+        const catalogued = configure({
+          universes: [v2],
+          discoveryState: DiscoveryState.CATALOGUED,
+          scientificActionsEnabled: true,
+        }).facade;
+        await catalogued.load(params);
+        expect(catalogued.model()?.scientificAction?.actionType).toBe(
+          GalacticObjectScientificActionType.ACTIVE_NUCLEUS_INDEPENDENT_CONFIRMATION,
+        );
+        expect(catalogued.model()?.scientificAction?.targetDiscoveryStateLabel)
+          .toBe('Confirmado');
+
+        TestBed.resetTestingModule();
+
+        const confirmed = configure({
+          universes: [v2],
+          discoveryState: DiscoveryState.CONFIRMED,
+          scientificActionsEnabled: true,
+        }).facade;
+        await confirmed.load(params);
+        expect(confirmed.model()?.scientificAction).toBeNull();
+        expect(confirmed.model()?.galacticObjectCard?.nextScientificStep)
+          .toBe('Confirmar la galaxia y observar el disco de acreción desde su ficha');
+      },
+    );
+
+    it(
       'should resolve a persisted GalacticObjectLocator through the frozen point-9.4 family classifier',
       async () => {
         const {

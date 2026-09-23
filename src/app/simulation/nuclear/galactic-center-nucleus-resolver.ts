@@ -3,6 +3,10 @@ import {
 } from '../../domain/universe/galactic-nucleus-state';
 
 import {
+  GeneratorVersion,
+} from '../../domain/generation/generator-version';
+
+import {
   type Galaxy,
 } from '../../domain/universe/galaxy';
 
@@ -11,8 +15,8 @@ import {
 } from '../../domain/universe/galaxy-type';
 
 /**
- * Canonical V1 interpretation of the object exposed at galactic coordinates
- * (0, 0).
+ * Canonical interpretation of the object exposed at galactic coordinates
+ * (0, 0), with version-specific nuclear invariants.
  *
  * Older V1 galaxies may still carry `nucleus === null` because the original
  * morphology contract allowed a non-differentiated centre. For exploration,
@@ -34,7 +38,14 @@ export class GalacticCenterNucleusResolver {
         ?.state ??
       GalacticNucleusState.QUIESCENT;
 
+    /*
+     * V1 keeps its frozen morphology restriction. V2 deliberately replaces
+     * that policy and permits the explicitly requested rare QUASAR outcomes
+     * in large IRREGULAR and DWARF galaxies.
+     */
     if (
+      galaxy.generationKey.generatorVersion ===
+        GeneratorVersion.V1 &&
       (
         galaxy.type ===
           GalaxyType.DWARF ||

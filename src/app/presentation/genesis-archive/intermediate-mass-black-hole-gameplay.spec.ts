@@ -41,7 +41,7 @@ describe('27.10 V2 — IMBH real gameplay integration', () => {
   it('preserves all thirteen old action rules, three surveys and two distinct new stages', () => {
     expect(Original.rules).toHaveLength(13);
     expect(Catalog.rules.slice(0, 13)).toEqual(Original.rules);
-    expect(Catalog.supportedActions).toHaveLength(15);
+    expect(Catalog.supportedActions).toHaveLength(17);
     expect(Catalog.surveyRule(Original.rules[2].surveyFamily!)).toBe(Original.rules[2]);
     const rules = Catalog.subjectRules(Subject.INTERMEDIATE_MASS_BLACK_HOLE);
     expect(rules.map(rule => rule.actionType)).toEqual([

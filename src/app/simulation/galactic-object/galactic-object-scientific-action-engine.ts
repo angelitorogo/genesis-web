@@ -36,6 +36,10 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  isGalacticNucleusLocator,
+} from '../../domain/universe/galactic-center';
+
+import {
   ObservationActionContext,
 } from '../../domain/observation/observation-action';
 
@@ -116,10 +120,25 @@ export class GalacticObjectScientificActionEngine {
       targetLocator instanceof
       GalacticObjectLocator;
 
+    /*
+     * Ordinary V2 galactic objects keep their frozen V1 physical routing.
+     * The reserved nucleus is the deliberate exception: V2 owns its nuclear
+     * Ground Truth, so downgrading this locator would compare an active V2
+     * centre with the unrelated V1 QUIESCENT/active state.
+     */
+    const scientificRoutingKey =
+      targetLocator instanceof
+        GalacticObjectLocator &&
+      isGalacticNucleusLocator(
+        targetLocator,
+      )
+        ? generationKey
+        : physicalKey;
+
     const matchesScientificTarget =
       isGalacticObject
         ? this.matchesRuleTargetV1(
-            physicalKey,
+            scientificRoutingKey,
             targetLocator,
             currentState,
             rule.surveyFamily,

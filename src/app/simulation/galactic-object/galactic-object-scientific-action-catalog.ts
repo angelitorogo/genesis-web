@@ -489,14 +489,18 @@ function validateCatalogV1():
     }
   }
 
+  const frozenV1Subjects = Object.freeze([
+    GalacticObjectScientificSubject.NEBULA,
+    GalacticObjectScientificSubject.HII_REGION,
+    GalacticObjectScientificSubject.OPEN_CLUSTER,
+    GalacticObjectScientificSubject.GLOBULAR_CLUSTER,
+    GalacticObjectScientificSubject.SUPERNOVA_REMNANT,
+  ]);
+
   for (
     const subject
-    of Object.values(
-      GalacticObjectScientificSubject,
-    )
+    of frozenV1Subjects
   ) {
-    // 27.10 V2 adds IMBH in a separate additive catalog. V1 stays frozen.
-    if (subject === GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE) continue;
 
     const subjectRules =
       RULES.filter(

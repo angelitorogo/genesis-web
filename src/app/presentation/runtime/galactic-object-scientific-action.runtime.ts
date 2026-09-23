@@ -236,7 +236,7 @@ export class DexieGalacticObjectScientificActionRuntime
       );
     }
 
-    // 27.10 V2: persist two distinguishable observation campaigns on the
+    // V2 additions: persist distinguishable observation campaigns on the
     // existing observations store, in this SAME state/PD transaction. No
     // fabricated mass measurement, new physics or new schema is introduced.
     const evidenceRule = GalacticObjectScientificActionCatalogV2.evidenceRule(actionType);

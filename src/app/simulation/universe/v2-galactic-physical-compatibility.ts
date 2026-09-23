@@ -11,7 +11,6 @@ import { GalaxySectorGrid } from '../../domain/sector/galaxy-sector-grid';
 import { type GalaxySectorObjectLocation } from '../../domain/sector/galaxy-sector-object-location';
 import { type GalaxySectorStellarPopulationProperties } from '../../domain/sector/galaxy-sector-stellar-population-properties';
 import { Galaxy } from '../../domain/universe/galaxy';
-import { GalaxyDesignation } from '../../domain/universe/galaxy-designation';
 import { InitialExplorationStateGenerator } from '../exploration/initial-exploration-state-generator';
 import { GalaxySectorContentGenerator } from '../sector/galaxy-sector-content-generator';
 import { GalaxySectorGridGenerator } from '../sector/galaxy-sector-grid-generator';
@@ -47,21 +46,10 @@ export class V2GalacticPhysicalCompatibility {
 
   static galaxy(key: UniverseGenerationKey, galaxyIndex: bigint): Galaxy {
     requireV2(key);
-    const physical = GalaxyGenerator.generate(multihostPhysicalSourceKey(key), galaxyIndex);
-    // Designations are public identity: NEVER reuse the private GEN-V1 code.
-    const designation = new GalaxyDesignation(
-      physical.designation.name,
-      `GEN-V2-G${galaxyIndex}-${physical.seed.normalizedValue}`,
-    );
-    return new Galaxy(
-      key,
-      physical.index,
-      physical.seed,
-      designation,
-      physical.type,
-      physical.physicalProperties,
-      physical.nucleus,
-    );
+    // GalaxyGenerator is the canonical public V2 binding. Morphology and
+    // baseline magnitudes still come from V1, while the nucleus follows the
+    // intentional V2 distribution instead of leaking the private V1 nucleus.
+    return GalaxyGenerator.generate(key, galaxyIndex);
   }
 
   static sector(

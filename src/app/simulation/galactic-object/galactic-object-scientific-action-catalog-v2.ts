@@ -72,19 +72,81 @@ const IMBH_EVIDENCE_RULES: ReadonlyMap<GalacticObjectScientificActionType, Scien
       })],
   ]);
 
+/**
+ * Additive V2 route for an already-generated active galactic centre. These
+ * campaigns advance observed knowledge only; neither rule generates a black
+ * hole, disk, jet or measured physical magnitude.
+ */
+const ACTIVE_NUCLEUS_RULES: readonly GalacticObjectScientificActionRule[] = Object.freeze([
+  new GalacticObjectScientificActionRule(
+    GalacticObjectScientificActionType.ACTIVE_NUCLEUS_MULTIBAND_CHARACTERIZATION,
+    ObservationActionType.REOBSERVE,
+    [ObservationInstrumentType.SPECTROSCOPY, ObservationInstrumentType.X_RAY],
+    ObservationInstrumentLevel.LEVEL_3,
+    DiscoveryState.DISCOVERED,
+    DiscoveryState.CATALOGUED,
+    null,
+    GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS,
+  ),
+  new GalacticObjectScientificActionRule(
+    GalacticObjectScientificActionType.ACTIVE_NUCLEUS_INDEPENDENT_CONFIRMATION,
+    ObservationActionType.TEMPORAL_MONITORING,
+    [ObservationInstrumentType.RADIO, ObservationInstrumentType.X_RAY],
+    ObservationInstrumentLevel.LEVEL_4,
+    DiscoveryState.CATALOGUED,
+    DiscoveryState.CONFIRMED,
+    null,
+    GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS,
+  ),
+]);
+
+const ACTIVE_NUCLEUS_EVIDENCE_RULES: ReadonlyMap<GalacticObjectScientificActionType, ScientificObservationEvidenceRule> =
+  new Map([
+    [GalacticObjectScientificActionType.ACTIVE_NUCLEUS_MULTIBAND_CHARACTERIZATION,
+      new ScientificObservationEvidenceRule({
+        profileCode: 'ACTIVE_GALACTIC_NUCLEUS',
+        ruleCode: 'ACTIVE_NUCLEUS_MULTIBAND_CAMPAIGN',
+        observationActionType: ObservationActionType.REOBSERVE,
+        compatibleInstrumentTypes: [ObservationInstrumentType.SPECTROSCOPY, ObservationInstrumentType.X_RAY],
+        minimumInstrumentLevel: ObservationInstrumentLevel.LEVEL_3,
+        dimensionCode: 'ACTIVE_NUCLEUS_OBSERVING_CAMPAIGN',
+        evidenceCode: 'MULTIBAND_CHARACTERIZATION',
+        sourceKey: 'ACTIVE_NUCLEUS_MULTIBAND',
+        independenceKey: 'SPECTROSCOPY_XRAY_CAMPAIGN',
+      })],
+    [GalacticObjectScientificActionType.ACTIVE_NUCLEUS_INDEPENDENT_CONFIRMATION,
+      new ScientificObservationEvidenceRule({
+        profileCode: 'ACTIVE_GALACTIC_NUCLEUS',
+        ruleCode: 'ACTIVE_NUCLEUS_INDEPENDENT_TEMPORAL_CAMPAIGN',
+        observationActionType: ObservationActionType.TEMPORAL_MONITORING,
+        compatibleInstrumentTypes: [ObservationInstrumentType.RADIO, ObservationInstrumentType.X_RAY],
+        minimumInstrumentLevel: ObservationInstrumentLevel.LEVEL_4,
+        dimensionCode: 'ACTIVE_NUCLEUS_OBSERVING_CAMPAIGN',
+        evidenceCode: 'INDEPENDENT_ACTIVITY_CONFIRMATION',
+        sourceKey: 'ACTIVE_NUCLEUS_TEMPORAL',
+        independenceKey: 'RADIO_XRAY_CAMPAIGN',
+      })],
+  ]);
+
 const RULES: readonly GalacticObjectScientificActionRule[] = Object.freeze([
   ...GalacticObjectScientificActionCatalogV1.rules,
   ...IMBH_RULES,
+  ...ACTIVE_NUCLEUS_RULES,
 ]);
 
-if (RULES.length !== 15 ||
+if (RULES.length !== 17 ||
     new Set(RULES.map(rule => rule.actionType)).size !== RULES.length ||
     IMBH_RULES.some(rule => rule.surveyFamily !== null ||
       rule.scientificSubject !== GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE ||
       rule.compatibleInstrumentTypes.some(type =>
         !ObservationActionCatalogV1.rule(rule.observationActionType)
+          .compatibleInstrumentTypes.includes(type))) ||
+    ACTIVE_NUCLEUS_RULES.some(rule => rule.surveyFamily !== null ||
+      rule.scientificSubject !== GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS ||
+      rule.compatibleInstrumentTypes.some(type =>
+        !ObservationActionCatalogV1.rule(rule.observationActionType)
           .compatibleInstrumentTypes.includes(type)))) {
-  throw new Error('27.10 V2 requires thirteen frozen V1 rules and two compatible IMBH rules.');
+  throw new Error('V2 requires thirteen frozen V1 rules plus two compatible IMBH and two active-nucleus rules.');
 }
 
 export class GalacticObjectScientificActionCatalogV2 {
@@ -101,9 +163,11 @@ export class GalacticObjectScientificActionCatalogV2 {
     return rule;
   }
 
-  /** Only new IMBH transitions produce point-26.A.2 evidence records. */
+  /** Additive V2 transitions produce point-26.A.2 evidence records. */
   static evidenceRule(actionType: GalacticObjectScientificActionType): ScientificObservationEvidenceRule | null {
-    return IMBH_EVIDENCE_RULES.get(actionType) ?? null;
+    return IMBH_EVIDENCE_RULES.get(actionType) ??
+      ACTIVE_NUCLEUS_EVIDENCE_RULES.get(actionType) ??
+      null;
   }
 
   static surveyRule(family: GalacticObjectScientificSurveyFamily): GalacticObjectScientificActionRule {

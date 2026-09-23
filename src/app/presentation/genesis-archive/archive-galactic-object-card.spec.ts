@@ -237,6 +237,48 @@ describe(
     );
 
     it(
+      'should present the complete V2 active-nucleus route and hand CONFIRMED off to the canonical 28.1 galaxy action',
+      () => {
+        const v2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
+            ),
+            GeneratorVersion.V2,
+          );
+        const centre =
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          );
+
+        const detected = ArchiveGalacticObjectCardAssembler.build(
+          v2, centre, ExplorationResultKind.EXTREME_OBJECT, DiscoveryState.DETECTED,
+        );
+        const discovered = ArchiveGalacticObjectCardAssembler.build(
+          v2, centre, ExplorationResultKind.EXTREME_OBJECT, DiscoveryState.DISCOVERED,
+        );
+        const catalogued = ArchiveGalacticObjectCardAssembler.build(
+          v2, centre, ExplorationResultKind.EXTREME_OBJECT, DiscoveryState.CATALOGUED,
+        );
+        const confirmed = ArchiveGalacticObjectCardAssembler.build(
+          v2, centre, ExplorationResultKind.EXTREME_OBJECT, DiscoveryState.CONFIRMED,
+        );
+
+        expect(detected.scientificSubject).toBeNull();
+        expect(discovered.scientificSubject)
+          .toBe(GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS);
+        expect(discovered.nextScientificStep)
+          .toBe('Caracterización multibanda del núcleo galáctico activo');
+        expect(catalogued.nextScientificStep)
+          .toBe('Confirmación independiente de la actividad nuclear');
+        expect(confirmed.nextScientificStep)
+          .toBe('Confirmar la galaxia y observar el disco de acreción desde su ficha');
+      },
+    );
+
+    it(
       'should keep DETECTED on the coarse point-9.4 family without materializing hidden physical properties',
       () => {
         const resolverSpy =

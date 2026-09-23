@@ -55,6 +55,15 @@ describe(
         0n,
       );
 
+    const v2Source =
+      GalaxyGenerator.generate(
+        new UniverseGenerationKey(
+          generationKey.universeSeed.copy(),
+          GeneratorVersion.V2,
+        ),
+        0n,
+      );
+
     it(
       'should interpret an undifferentiated V1 centre as QUIESCENT rather than empty',
       () => {
@@ -134,7 +143,7 @@ describe(
     );
 
     it(
-      'should reject QUASAR Ground Truth in DWARF and IRREGULAR galaxies',
+      'should preserve the frozen V1 prohibition of QUASAR in DWARF and IRREGULAR galaxies',
       () => {
         for (
           const type of [
@@ -162,6 +171,39 @@ describe(
                 ),
           ).toThrow(
             RangeError,
+          );
+        }
+      },
+    );
+
+    it(
+      'should permit the explicitly configured V2 QUASAR outcomes in DWARF and IRREGULAR galaxies',
+      () => {
+        for (
+          const type of [
+            GalaxyType.DWARF,
+            GalaxyType.IRREGULAR,
+          ]
+        ) {
+          const galaxy =
+            cloneWith(
+              v2Source,
+              type,
+              new GalacticNucleus(
+                GalacticNucleusState.QUASAR,
+                new SupermassiveBlackHole(
+                  1.0e6,
+                ),
+              ),
+            );
+
+          expect(
+            GalacticCenterNucleusResolver
+              .resolveState(
+                galaxy,
+              ),
+          ).toBe(
+            GalacticNucleusState.QUASAR,
           );
         }
       },

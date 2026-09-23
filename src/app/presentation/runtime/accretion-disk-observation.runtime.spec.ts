@@ -109,12 +109,20 @@ describe('28.1 persisted nuclear accretion-disk observing action', () => {
     expect((await reloaded.inspect(key, activeIndex))?.modelFacts).toEqual(after!.modelFacts);
   });
 
-  it('keeps the same canonical disk reference in V1/V2 and contains no fabricated jet', () => {
+  it('keeps the V2 disk deterministic, preserves V1 support and contains no fabricated jet', () => {
     const old = new UniverseGenerationKey(seed, GeneratorVersion.V1);
+    const oldActiveIndex = (() => {
+      for (let index = 0n; index < 512n; index++) {
+        if (CompactAccretionEngine.fromExistingGalaxy(GalaxyGenerator.generate(old, index)) !== null) return index;
+      }
+      throw new Error('The regression seed must contain a canonical V1 active nucleus.');
+    })();
     const disk = AccretionDiskObservationEngine.physicalDiskOrNull(key, activeIndex, DiscoveryState.CONFIRMED)!;
     expect(disk).not.toBeNull();
-    expect(AccretionDiskObservationEngine.physicalDiskOrNull(old, activeIndex, DiscoveryState.CONFIRMED))
-      .toMatchObject({ massSolar: disk.massSolar, eddingtonRatio: disk.eddingtonRatio });
+    expect(AccretionDiskObservationEngine.physicalDiskOrNull(key, activeIndex, DiscoveryState.CONFIRMED))
+      .toEqual(disk);
+    expect(AccretionDiskObservationEngine.physicalDiskOrNull(old, oldActiveIndex, DiscoveryState.CONFIRMED))
+      .not.toBeNull();
     expect(AccretionDiskObservationEngine.physicalDiskOrNull(key, activeIndex, DiscoveryState.DISCOVERED))
       .toBeNull();
     expect(CompactAccretionEngine.fromExistingGalaxy(GalaxyGenerator.generate(key, activeIndex))?.jet).toBeNull();

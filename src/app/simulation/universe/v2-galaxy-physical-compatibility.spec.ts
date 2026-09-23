@@ -5,6 +5,7 @@ import { GalaxyLocator, SystemLocator } from '../../domain/generation/procedural
 import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import { UniverseSeed } from '../../domain/universe/universe-seed';
 import { InitialExplorationStateGenerator } from '../exploration/initial-exploration-state-generator';
+import { V2GalacticNucleusGenerator } from '../nuclear/v2-galactic-nucleus-generator';
 import { ProceduralTargetResolver } from '../regeneration/procedural-target-resolver';
 import { GalaxySectorGridGenerator } from '../sector/galaxy-sector-grid-generator';
 import { GalaxySectorStellarDensityGenerator } from '../sector/galaxy-sector-stellar-density-generator';
@@ -30,7 +31,7 @@ describe('Stage 12: frozen galactic physics with a distinct V2 public identity',
       expect(newGalaxy.seed.normalizedValue).toBe(baseline.seed.normalizedValue);
       expect(newGalaxy.type).toBe(baseline.type);
       expect(newGalaxy.physicalProperties).toEqual(baseline.physicalProperties);
-      expect(newGalaxy.nucleus).toEqual(baseline.nucleus);
+      expect(newGalaxy.nucleus).toEqual(V2GalacticNucleusGenerator.generate(baseline));
       expect(newGalaxy.designation.name).toBe(baseline.designation.name);
       expect(newGalaxy.designation.proceduralCode).toBe(
         baseline.designation.proceduralCode.replace('GEN-V1-', 'GEN-V2-'),

@@ -5,11 +5,13 @@ import { KnownDiscovery } from '../../domain/discovery/known-discovery';
 import { ExternalGalaxyFocusChoice } from '../../domain/exploration/external-galaxy-focus';
 import { DiscoveryTargetType } from '../../domain/discovery/discovery-target-type';
 import { DiscoveryRewardReason } from '../../domain/exploration/discovery-reward-reason';
+import { ExplorationResultKind } from '../../domain/exploration/exploration-sector-result';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import { GalaxyLocator, SectorLocator } from '../../domain/generation/procedural-locator';
 import { ObservationClassification } from '../../domain/observation/observation-classification';
 import { UniverseSeed } from '../../domain/universe/universe-seed';
+import { GalacticNucleusState } from '../../domain/universe/galactic-nucleus-state';
 import { GenesisIndexedDb } from '../../data/local/indexed-db/genesis-indexed-db';
 import { DexieDiscoveryPointsRepository } from '../../data/local/repository/dexie-discovery-points.repository';
 import { DexieDiscoveryRepository } from '../../data/local/repository/dexie-discovery.repository';
@@ -62,7 +64,9 @@ describe('Etapa 13.1 — integración de exploración y archivo V2', () => {
     expect(found.scanResult.selection.generationKey).toBe(v2);
     expect(found.subject.generationKey).toBe(v2);
     expect(found.targetLocator).not.toBeNull();
-    expect(found.resultKind).toBe(result(v1, 0, 0).resultKind);
+    expect(GalaxyGenerator.generate(v2, 0n).nucleus?.state)
+      .not.toBe(GalacticNucleusState.QUIESCENT);
+    expect(found.resultKind).toBe(ExplorationResultKind.EXTREME_OBJECT);
     expect(ProceduralTargetResolver.resolveTargetSeed(v2, found.scanResult.selection.sectorLocator)
       .normalizedValue).toBe(ProceduralTargetResolver.resolveTargetSeed(v1,
         found.scanResult.selection.sectorLocator).normalizedValue);
@@ -157,4 +161,3 @@ describe('Etapa 13.1 — integración de exploración y archivo V2', () => {
     }
   });
 });
-

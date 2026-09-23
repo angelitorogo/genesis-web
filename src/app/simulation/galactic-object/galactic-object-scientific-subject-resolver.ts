@@ -11,11 +11,31 @@ import {
   type GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
+import {
+  GeneratorVersion,
+} from '../../domain/generation/generator-version';
+
 import { frozenPhysicalSourceKey } from '../../domain/generation/frozen-physical-source-key';
 
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+
+import {
+  isGalacticNucleusLocator,
+} from '../../domain/universe/galactic-center';
+
+import {
+  GalacticNucleusState,
+} from '../../domain/universe/galactic-nucleus-state';
+
+import {
+  GalacticCenterNucleusResolver,
+} from '../nuclear/galactic-center-nucleus-resolver';
+
+import {
+  GalaxyGenerator,
+} from '../universe/galaxy-generator';
 
 import {
   GlobularClusterGenerator,
@@ -76,6 +96,38 @@ export class GalacticObjectScientificSubjectResolver {
       throw new RangeError(
         'Point-12.7 physical scientific subject cannot be resolved before DiscoveryState.DISCOVERED.',
       );
+    }
+
+    /*
+     * The central address is version-owned Ground Truth, unlike the ordinary
+     * galactic-object families below. A V2 QUIESCENT centre keeps the existing
+     * globular-cluster scientific path. Only V2 AGN/QUASAR centres enter the
+     * additive active-nucleus route; V1 keeps its frozen private routing.
+     */
+    if (
+      isGalacticNucleusLocator(
+        locator,
+      )
+    ) {
+      const nucleusState =
+        GalacticCenterNucleusResolver.resolveState(
+          GalaxyGenerator.generate(
+            generationKey,
+            locator.galaxyIndex,
+          ),
+        );
+
+      if (
+        nucleusState ===
+        GalacticNucleusState.QUIESCENT
+      ) {
+        return GalacticObjectScientificSubject.GLOBULAR_CLUSTER;
+      }
+
+      return generationKey.generatorVersion ===
+        GeneratorVersion.V2
+        ? GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
+        : null;
     }
 
     if (

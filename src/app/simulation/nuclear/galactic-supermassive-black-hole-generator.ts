@@ -21,8 +21,9 @@ export class GalacticSupermassiveBlackHoleGenerator {
     if (!(galaxy instanceof Galaxy)) {
       throw new TypeError('27.3 requires a canonical Galaxy.');
     }
-    // Preserve V1's existing nucleus-state invariants, including the absence
-    // of QUASAR states for dwarf/irregular hosts. No seed or entropy is drawn.
+    // Apply the version-specific nucleus-state invariants. V1 forbids QUASAR
+    // in dwarf/irregular hosts; V2 intentionally permits its configured rare
+    // outcomes. No seed or entropy is drawn by this projection.
     GalacticCenterNucleusResolver.resolveState(galaxy);
     const source = galaxy.nucleus?.supermassiveBlackHole;
     if (!source) return null;

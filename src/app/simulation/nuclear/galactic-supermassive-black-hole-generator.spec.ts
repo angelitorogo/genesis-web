@@ -49,18 +49,24 @@ describe('27.3 — SMBHs reuse the preexisting galactic-centre Ground Truth', ()
     expect(Generator.generateForLocator(v1, nucleusLocator)).toEqual(result);
   });
 
-  it('preserves V2 public identity with physically identical V1 nuclear mass and reference scales', () => {
+  it('preserves public identity while each version uses its own canonical nuclear Ground Truth', () => {
     for (const index of [0n, 1n, 2n, 3n, 4n, 5n, 6n, 7n]) {
       const old = Generator.generate(v1, index);
       const current = Generator.generate(v2, index);
-      expect(current === null).toBe(old === null);
-      if (!old || !current) continue;
+      const currentGalaxy = GalaxyGenerator.generate(v2, index);
+      expect(Generator.generate(v1, index)).toEqual(old);
+      expect(Generator.generate(v2, index)).toEqual(current);
+      expect(current === null).toBe(currentGalaxy.nucleus?.supermassiveBlackHole === null);
+      if (old) expect(old.generationKey).toBe(v1);
+      if (!current) continue;
       expect(current.generationKey).toBe(v2);
-      expect(old.generationKey).toBe(v1);
-      expect(current.galaxyIndex).toBe(old.galaxyIndex);
-      expect(current.nucleusLocator).toEqual(old.nucleusLocator);
-      expect(current.nucleusState).toBe(old.nucleusState);
-      expect(current.physicalProfile).toEqual(old.physicalProfile);
+      expect(current.galaxyIndex).toBe(index);
+      expect(current.nucleusLocator).toEqual(new GalacticObjectLocator(index, 0n, 0n));
+      expect(current.nucleusState).toBe(currentGalaxy.nucleus?.state);
+      expect(current.physicalProfile.massSolarMasses)
+        .toBe(currentGalaxy.nucleus?.supermassiveBlackHole?.massSolarMasses);
+      expect(current.physicalProfile.hostTotalMassSolarMasses)
+        .toBe(currentGalaxy.physicalProperties.totalMassSolarMasses);
     }
   });
 

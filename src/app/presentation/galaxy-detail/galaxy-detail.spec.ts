@@ -2438,7 +2438,7 @@ describe(
       },
     );
     it('28.1 links the confirmed canonical active nucleus to the observing action without displaying model facts beforehand', async () => {
-      // The B5 seed physically assigns AGN to galaxy 40 (same V1/V2 source).
+      // Exercise a confirmed V2 galaxy through the observing-action boundary.
       const states = new Map(defaultStates);
       states.set(40n, DiscoveryState.CONFIRMED);
       configure('40', repositories(states, 40n));

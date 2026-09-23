@@ -26,6 +26,7 @@ describe('Stage 12.2: V2 galaxy/sector physical continuity after bootstrap relea
     expect(after.seed.normalizedValue).toBe(before.seed.normalizedValue);
     expect(after.physicalProperties).toEqual(before.physicalProperties);
     expect(after.type).toBe(before.type);
+    expect(after.nucleus).toEqual(GalaxyGenerator.generate(v2, 0n).nucleus);
     expect(after.designation.name).toBe(before.designation.name);
     expect(after.designation.proceduralCode).toMatch(/^GEN-V2-G0-/);
     expect(after.designation.proceduralCode).not.toBe(before.designation.proceduralCode);

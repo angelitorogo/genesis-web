@@ -490,6 +490,141 @@ describe(
     );
 
     it(
+      'should survey the default V2 active nucleus with its public nuclear Ground Truth instead of the frozen V1 centre',
+      () => {
+        const v2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
+            ),
+            GeneratorVersion.V2,
+          );
+        const centre =
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          );
+        const observation =
+          session(
+            centre,
+            DiscoveryState.DETECTED,
+            ObservationInstrumentType.X_RAY,
+            ObservationInstrumentLevel.LEVEL_2,
+            v2,
+          );
+
+        const survey =
+          GalacticObjectScientificActionEngine.availability(
+            v2,
+            observation,
+            GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+          );
+
+        expect(
+          survey.matchesScientificTarget,
+        ).toBe(
+          true,
+        );
+        expect(
+          survey.isAvailable,
+        ).toBe(
+          true,
+        );
+        expect(
+          GalacticObjectScientificActionEngine.evaluate(
+            v2,
+            observation,
+            GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+          ).newDiscoveryState,
+        ).toBe(
+          DiscoveryState.DISCOVERED,
+        );
+
+        expect(
+          GalacticObjectScientificActionEngine.availability(
+            v2,
+            session(
+              centre,
+              DiscoveryState.DETECTED,
+              ObservationInstrumentType.OPTICAL,
+              ObservationInstrumentLevel.LEVEL_1,
+              v2,
+            ),
+            GalacticObjectScientificActionType.STAR_CLUSTER_SURVEY,
+          ).matchesScientificTarget,
+        ).toBe(
+          false,
+        );
+      },
+    );
+
+    it(
+      'should progress the default V2 active nucleus from DISCOVERED through CATALOGUED to CONFIRMED',
+      () => {
+        const v2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
+            ),
+            GeneratorVersion.V2,
+          );
+        const centre =
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          );
+
+        const characterize =
+          GalacticObjectScientificActionEngine.evaluate(
+            v2,
+            session(
+              centre,
+              DiscoveryState.DISCOVERED,
+              ObservationInstrumentType.SPECTROSCOPY,
+              ObservationInstrumentLevel.LEVEL_3,
+              v2,
+            ),
+            GalacticObjectScientificActionType.ACTIVE_NUCLEUS_MULTIBAND_CHARACTERIZATION,
+          );
+
+        expect(characterize.newDiscoveryState).toBe(DiscoveryState.CATALOGUED);
+        expect(characterize.awardedDiscoveryPoints).toBe(96);
+
+        const confirm =
+          GalacticObjectScientificActionEngine.evaluate(
+            v2,
+            session(
+              centre,
+              DiscoveryState.CATALOGUED,
+              ObservationInstrumentType.RADIO,
+              ObservationInstrumentLevel.LEVEL_4,
+              v2,
+            ),
+            GalacticObjectScientificActionType.ACTIVE_NUCLEUS_INDEPENDENT_CONFIRMATION,
+          );
+
+        expect(confirm.newDiscoveryState).toBe(DiscoveryState.CONFIRMED);
+        expect(confirm.awardedDiscoveryPoints).toBe(96);
+
+        expect(
+          GalacticObjectScientificActionEngine.availability(
+            v2,
+            session(
+              centre,
+              DiscoveryState.DISCOVERED,
+              ObservationInstrumentType.RADIO,
+              ObservationInstrumentLevel.LEVEL_4,
+              v2,
+            ),
+            GalacticObjectScientificActionType.ACTIVE_NUCLEUS_MULTIBAND_CHARACTERIZATION,
+          ).isInstrumentAllowed,
+        ).toBe(false);
+      },
+    );
+
+    it(
       'should preserve the same 216-PD DETECTED to CONFIRMED total for every supported physical family',
       () => {
         const cases = [
@@ -658,7 +793,7 @@ describe(
     );
 
     it(
-      'should expose all fifteen V1 + V2 availability rows without filtering the catalog',
+      'should expose all seventeen V1 + V2 availability rows without filtering the catalog',
       () => {
         expect(
           GalacticObjectScientificActionEngine
@@ -671,7 +806,7 @@ describe(
                 ObservationInstrumentLevel.LEVEL_2,
               ),
             ),
-        ).toHaveLength(15);
+        ).toHaveLength(17);
       },
     );
 

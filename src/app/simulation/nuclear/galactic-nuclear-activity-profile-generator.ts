@@ -17,8 +17,8 @@ import {
 } from '../../domain/universe/galaxy';
 
 /**
- * Maps the already-generated galactic nucleus Ground Truth to the event-like
- * rarity classification introduced by roadmap point 6.7.
+ * Maps the already-generated V1/V2 galactic nucleus Ground Truth to the
+ * event-like rarity classification introduced by roadmap point 6.7.
  *
  * IMPORTANT:
  * AGN_EPISODE and QUASAR_EPISODE are interpretations of the active state in
@@ -46,9 +46,13 @@ export class GalacticNuclearActivityProfileGenerator {
       galaxy
         .generationKey
         .generatorVersion ===
-      GeneratorVersion.V1
+        GeneratorVersion.V1 ||
+      galaxy
+        .generationKey
+        .generatorVersion ===
+        GeneratorVersion.V2
     ) {
-      return this.generateV1(
+      return this.generateCanonical(
         galaxy,
       );
     }
@@ -58,7 +62,7 @@ export class GalacticNuclearActivityProfileGenerator {
     );
   }
 
-  private static generateV1(
+  private static generateCanonical(
     galaxy:
       Galaxy,
   ): GalacticNuclearActivityProfile {

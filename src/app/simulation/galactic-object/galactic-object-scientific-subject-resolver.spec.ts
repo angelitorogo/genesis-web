@@ -174,6 +174,68 @@ describe(
     );
 
     it(
+      'should resolve the reserved centre from V2 nuclear Ground Truth instead of inheriting the V1 subject',
+      () => {
+        const seed =
+          UniverseSeed.parse(
+            '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
+          );
+        const v1 =
+          new UniverseGenerationKey(
+            seed,
+            GeneratorVersion.V1,
+          );
+        const v2 =
+          new UniverseGenerationKey(
+            seed.copy(),
+            GeneratorVersion.V2,
+          );
+        const centre =
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          );
+
+        expect(
+          GalacticObjectScientificSubjectResolver.resolve(
+            v1,
+            centre,
+            DiscoveryState.DISCOVERED,
+          ),
+        ).toBe(
+          GalacticObjectScientificSubject.GLOBULAR_CLUSTER,
+        );
+        expect(
+          GalacticObjectScientificSubjectResolver.resolve(
+            v2,
+            centre,
+            DiscoveryState.DISCOVERED,
+          ),
+        ).toBe(
+          GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS,
+        );
+      },
+    );
+
+    it(
+      'should not retrofit the additive active-nucleus subject onto a frozen V1 active centre',
+      () => {
+        expect(
+          GalacticObjectScientificSubjectResolver.resolve(
+            generationKey,
+            new GalacticObjectLocator(
+              20n,
+              0n,
+              0n,
+            ),
+            DiscoveryState.DISCOVERED,
+          ),
+        ).toBeNull();
+      },
+    );
+
+    it(
       'should reject unsupported generator versions before resolving any physical subject',
       () => {
         const unsupported =

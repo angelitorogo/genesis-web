@@ -1,7 +1,7 @@
 /**
- * Point-12.7 physical subject families that already have a complete V1
- * GalacticObject Ground Truth model and therefore can expose dedicated
- * scientific actions after the target has reached DISCOVERED.
+ * Scientific subject families with a complete Ground Truth model and a
+ * dedicated post-DISCOVERED action route. The first five entries are the
+ * frozen point-12.7 V1 contract; later entries are additive V2 profiles.
  *
  * This is deliberately separate from the frozen point-8.9 generic
  * ObservationClassification catalog. It is an action-routing contract, not a
@@ -26,6 +26,10 @@ export enum GalacticObjectScientificSubject {
   /** 27.10 V2: rare real 27.2 specialization, not the reserved complement. */
   INTERMEDIATE_MASS_BLACK_HOLE =
     'INTERMEDIATE_MASS_BLACK_HOLE',
+
+  /** V2 reserved centre with existing AGN or QUASAR nuclear Ground Truth. */
+  ACTIVE_GALACTIC_NUCLEUS =
+    'ACTIVE_GALACTIC_NUCLEUS',
 }
 
 /**

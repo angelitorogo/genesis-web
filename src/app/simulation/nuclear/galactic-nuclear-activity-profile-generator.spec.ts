@@ -132,6 +132,44 @@ describe(
     );
 
     it(
+      'should interpret the canonical V2 nuclear Ground Truth without rerolling it',
+      () => {
+        const galaxy =
+          GalaxyGenerator.generate(
+            new UniverseGenerationKey(
+              canonicalSeed.copy(),
+              GeneratorVersion.V2,
+            ),
+            0n,
+          );
+
+        const profile =
+          GalacticNuclearActivityProfileGenerator.generate(
+            galaxy,
+          );
+
+        expect(
+          profile.nucleusState,
+        ).toBe(
+          galaxy.nucleus?.state,
+        );
+        expect(
+          profile.supermassiveBlackHoleMassSolarMasses,
+        ).toBe(
+          galaxy.nucleus?.supermassiveBlackHole?.massSolarMasses ??
+            null,
+        );
+        expect(
+          GalacticNuclearActivityProfileGenerator.generate(
+            galaxy,
+          ),
+        ).toEqual(
+          profile,
+        );
+      },
+    );
+
+    it(
       'should map a galaxy without a nucleus to a baseline non-event',
       () => {
         const base =

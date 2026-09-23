@@ -70,15 +70,14 @@ describe('27.7 — disks and relativistic jets are optional views of real existi
     expect(Object.isFrozen(first)).toBe(true);
   });
 
-  it('uses a distinct, explicit QUASAR proxy and keeps V1/V2 physical parity', () => {
+  it('uses a distinct, explicit QUASAR proxy for both canonical versions', () => {
     const old = Engine.fromExistingGalaxy(galaxyWith(GalacticNucleusState.QUASAR, v1))!;
     const newer = Engine.fromExistingGalaxy(galaxyWith(GalacticNucleusState.QUASAR, v2))!;
     expect(old.disk.eddingtonRatio).toBe(0.3);
+    expect(newer.disk.eddingtonRatio).toBe(0.3);
     expect((newer.disk.host as GalacticSupermassiveBlackHole).generationKey).toBe(v2);
-    expect(newer.disk.bolometricLuminosityWatts).toBe(old.disk.bolometricLuminosityWatts);
-    expect(newer.disk.maximumEffectiveTemperatureKelvin)
-      .toBe(old.disk.maximumEffectiveTemperatureKelvin);
     expect(old.jet).toBeNull();
+    expect(newer.jet).toBeNull();
   });
 
   it('never invents accretion in a QUIESCENT / absent galactic centre', () => {

@@ -849,6 +849,11 @@ describe(
               }),
           });
 
+        const galacticModelSignal =
+          signal<ArchiveDiscoveryDetailModel>(
+            galacticModel,
+          );
+
         await TestBed
           .configureTestingModule({
             imports: [
@@ -901,11 +906,11 @@ describe(
                     kind:
                       'content',
                     model:
-                      galacticModel,
+                      galacticModelSignal(),
                   }),
 
-                  model: () =>
-                    galacticModel,
+                  model:
+                    galacticModelSignal,
 
                   errorMessage: () =>
                     '',
@@ -1039,12 +1044,188 @@ describe(
           '+96 PD',
         );
 
+        expect(
+          element.querySelector(
+            '[data-testid="archive-galactic-object-action-availability"]',
+          )?.textContent,
+        ).toContain(
+          'ACCIÓN CIENTÍFICA DISPONIBLE',
+        );
+
         actionButton?.click();
 
         expect(
           performScientificAction,
         ).toHaveBeenCalledTimes(
           1,
+        );
+
+        galacticModelSignal.set(
+          Object.freeze({
+            ...galacticModel,
+            scientificAction:
+              Object.freeze({
+                ...galacticModel.scientificAction!,
+                actionType:
+                  GalacticObjectScientificActionType.EXTREME_OBJECT_SURVEY,
+                label:
+                  'Caracterización del núcleo galáctico activo',
+                awardedDiscoveryPoints:
+                  24,
+                minimumInstrumentLevelRank:
+                  2,
+                instrumentOptions:
+                  Object.freeze([
+                    Object.freeze({
+                      instrumentType:
+                        ObservationInstrumentType.RADIO,
+                      label:
+                        'Radio',
+                      minimumLevelRank:
+                        2,
+                      highestUnlockedLevelRank:
+                        1,
+                      isAvailable:
+                        false,
+                      statusLabel:
+                        'Bloqueado · faltan 936 PD',
+                    }),
+                    Object.freeze({
+                      instrumentType:
+                        ObservationInstrumentType.X_RAY,
+                      label:
+                        'Rayos X',
+                      minimumLevelRank:
+                        2,
+                      highestUnlockedLevelRank:
+                        1,
+                      isAvailable:
+                        false,
+                      statusLabel:
+                        'Bloqueado · faltan 4936 PD y faltan 2 hitos científicos',
+                    }),
+                    Object.freeze({
+                      instrumentType:
+                        ObservationInstrumentType.GAMMA_RAY,
+                      label:
+                        'Rayos gamma',
+                      minimumLevelRank:
+                        2,
+                      highestUnlockedLevelRank:
+                        1,
+                      isAvailable:
+                        false,
+                      statusLabel:
+                        'Bloqueado · faltan 7436 PD y faltan 3 hitos científicos',
+                    }),
+                  ]),
+                selectedInstrumentType:
+                  null,
+                selectedInstrumentLabel:
+                  null,
+                canExecute:
+                  false,
+                pendingRequirements:
+                  Object.freeze({
+                    instrumentLabel:
+                      'Radio',
+                    minimumLevelRank:
+                      2,
+                    items:
+                      Object.freeze([
+                        '936 PD adicionales',
+                      ]),
+                  }),
+              }),
+          }),
+        );
+
+        fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-galactic-object-action-availability"]',
+          )?.textContent,
+        ).toContain(
+          'ACCIÓN CIENTÍFICA BLOQUEADA',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-galactic-object-action-button"]',
+          ),
+        ).toBeNull();
+
+        const blockedCopy =
+          element.querySelector(
+            '[data-testid="archive-galactic-object-action-blocked"]',
+          )?.textContent ??
+          '';
+
+        expect(
+          blockedCopy,
+        ).toContain(
+          'Radio · Nivel 2',
+        );
+
+        expect(
+          blockedCopy,
+        ).toContain(
+          '936 PD adicionales',
+        );
+
+        expect(
+          blockedCopy,
+        ).not.toContain(
+          'no dispone de un instrumento compatible',
+        );
+
+        expect(
+          element.querySelectorAll(
+            '.archive-discovery-detail__instrument-list li',
+          ),
+        ).toHaveLength(
+          3,
+        );
+
+        galacticModelSignal.set(
+          Object.freeze({
+            ...galacticModel,
+            generatorVersionCode:
+              2,
+            discoveryState:
+              DiscoveryState.CONFIRMED,
+            discoveryStateLabel:
+              'Confirmado',
+            galacticObjectCard:
+              Object.freeze({
+                ...galacticObjectCard,
+                scientificSubject:
+                  GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS,
+                knowledgeLevel:
+                  ArchiveGalacticObjectKnowledgeLevel.CONFIRMED,
+                knowledgeLevelLabel:
+                  'Confirmación completa',
+                nextScientificStep:
+                  'Confirmar la galaxia y observar el disco de acreción desde su ficha',
+              }),
+            scientificAction:
+              null,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const galaxyLink =
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="archive-active-nucleus-galaxy-link"]',
+          );
+
+        expect(galaxyLink?.textContent).toContain(
+          'Abrir ficha galáctica para observar el disco',
+        );
+        expect(galaxyLink?.getAttribute('href')).toContain(
+          '/galaxies/0',
         );
       },
     );

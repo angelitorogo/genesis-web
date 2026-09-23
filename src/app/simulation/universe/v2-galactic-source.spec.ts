@@ -18,6 +18,7 @@ const coordinates = new GalaxySectorCoordinates(0, 0);
 describe('Stage 12: read-only V2 galactic bridge', () => {
   it('materializes V2 public galaxy/grid using immutable V1 physical data', () => {
     const legacy = GalaxyGenerator.generate(v1, 0n);
+    const canonicalV2 = GalaxyGenerator.generate(v2, 0n);
     const legacyGrid = GalaxySectorGridGenerator.generate(legacy);
     const actual = V2GalacticSourceBuilder.galaxy(v2, 0n);
     expect(actual.generationKey).toBe(v2);
@@ -26,7 +27,8 @@ describe('Stage 12: read-only V2 galactic bridge', () => {
     expect(actual.galaxy.seed.normalizedValue).toBe(legacy.seed.normalizedValue);
     expect(actual.galaxy.type).toBe(legacy.type);
     expect(actual.galaxy.physicalProperties).toEqual(legacy.physicalProperties);
-    expect(actual.galaxy.designation).toEqual(legacy.designation);
+    expect(actual.galaxy.designation).toEqual(canonicalV2.designation);
+    expect(actual.galaxy.nucleus).toEqual(canonicalV2.nucleus);
     expect(actual.grid.halfExtentInSectors).toBe(legacyGrid.halfExtentInSectors);
     expect(actual.grid.sectorSizeLightYears).toBe(legacyGrid.sectorSizeLightYears);
     expect(legacy.generationKey).toBe(v1);
