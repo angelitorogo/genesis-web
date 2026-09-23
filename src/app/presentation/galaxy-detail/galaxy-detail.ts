@@ -549,6 +549,52 @@ export class GalaxyDetailPage
     );
   }
 
+  hasSystemContentKnowledge(
+    knownSystems:
+      bigint,
+
+    confirmedSystems:
+      bigint,
+
+    knownItems:
+      bigint,
+  ): boolean {
+
+    return (
+      knownSystems ===
+        0n ||
+      confirmedSystems >
+        0n ||
+      knownItems >
+        0n
+    );
+  }
+
+  formatSystemContentCount(
+    value:
+      bigint,
+
+    knownSystems:
+      bigint,
+
+    confirmedSystems:
+      bigint,
+
+    knownItems:
+      bigint,
+  ): string {
+
+    return this.hasSystemContentKnowledge(
+      knownSystems,
+      confirmedSystems,
+      knownItems,
+    )
+      ? this.formatBigInt(
+          value,
+        )
+      : 'Sin datos científicos todavía';
+  }
+
   formatExplorationPercentage(
     basisPoints:
       bigint | null,

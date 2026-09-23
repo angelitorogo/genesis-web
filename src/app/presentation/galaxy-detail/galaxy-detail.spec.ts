@@ -694,6 +694,32 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="galaxy-detail-progress"]',
+          )?.textContent,
+        ).toContain(
+          'Conocimiento persistido ampliado',
+        );
+
+        for (
+          const testId
+          of [
+            'galaxy-detail-systems-breakdown',
+            'galaxy-detail-star-clusters-breakdown',
+            'galaxy-detail-nebulae-breakdown',
+            'galaxy-detail-extreme-objects-breakdown',
+            'galaxy-detail-planets-breakdown',
+            'galaxy-detail-moons-breakdown',
+          ]
+        ) {
+          expect(
+            element.querySelector(
+              `[data-testid="${testId}"]`,
+            ),
+          ).toBeTruthy();
+        }
+
+        expect(
+          element.querySelector(
             '.gd__distribution',
           ),
         ).toBeNull();
@@ -956,10 +982,57 @@ describe(
         );
         expect(
           telemetry
-            ?.inventory
-            .planets,
+            ?.breakdown
+            .confirmedSystemsWithInventory,
         ).toBe(
           1n,
+        );
+
+        expect(
+          telemetry
+            ?.inventory
+            .planets ??
+            0n,
+        ).toBeGreaterThanOrEqual(
+          1n,
+        );
+
+        expect(
+          (
+            telemetry?.breakdown.planets.rocky ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.superEarth ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.desert ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.ocean ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.ice ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.volcanic ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.miniNeptune ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.gasGiant ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.iceGiant ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.postCollapseModel ?? 0n
+          ) +
+          (
+            telemetry?.breakdown.planets.unclassified ?? 0n
+          ),
+        ).toBe(
+          telemetry?.inventory.planets,
         );
         expect(
           telemetry

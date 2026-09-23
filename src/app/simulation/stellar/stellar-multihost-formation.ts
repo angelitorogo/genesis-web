@@ -147,21 +147,28 @@ export class StellarMultihostFormation {
   private constructor() {}
 
   /**
-   * Stage 12.3: materialize the SINGLE counterpart through the EXACT same
-   * frozen-A pipeline that multiple systems use. This is a read-only physical
-   * source for determinism verification, not a new public body index or a
-   * route/persistence cutover. It deliberately does not change generateOrNull.
+   * Read-only SINGLE counterpart through the EXACT same frozen-A pipeline that
+   * multiple systems use. V1 returns the frozen physical source unchanged; V2
+   * keeps the already-established additive post-collapse pulsar extension.
+   * This does not create a public body index or persistence cutover.
    */
-  static generateV2SingleOrNull(key: UniverseGenerationKey, locator: SystemLocator): GeneratedSingleHost | null {
-    if (key.generatorVersion !== GeneratorVersion.V2) {
-      throw new RangeError('V2 single-source generation requires a canonical V2 generation key.');
-    }
+  static generateSingleOrNull(key: UniverseGenerationKey, locator: SystemLocator): GeneratedSingleHost | null {
     const physicalKey = multihostPhysicalSourceKey(key);
     const parentSeed = ProceduralTargetResolver.resolveTargetSeed(physicalKey, locator) as SystemSeed;
     if (StellarSystemMultiplicitySelector.select(physicalKey, parentSeed) !== StellarSystemMultiplicity.SINGLE) {
       return null;
     }
-    return withSecondGenerationPulsarPlanets(generateSingleHost('A', physicalKey, locator));
+    const host = generateSingleHost('A', physicalKey, locator);
+    return key.generatorVersion === GeneratorVersion.V2
+      ? withSecondGenerationPulsarPlanets(host)
+      : host;
+  }
+
+  static generateV2SingleOrNull(key: UniverseGenerationKey, locator: SystemLocator): GeneratedSingleHost | null {
+    if (key.generatorVersion !== GeneratorVersion.V2) {
+      throw new RangeError('V2 single-source generation requires a canonical V2 generation key.');
+    }
+    return this.generateSingleOrNull(key, locator);
   }
 
   static generateOrNull(key: UniverseGenerationKey, locator: SystemLocator): GeneratedMultipleHost | null {

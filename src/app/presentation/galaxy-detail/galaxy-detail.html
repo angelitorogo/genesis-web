@@ -785,158 +785,6 @@
               aria-label="Exploración y navegación de la galaxia"
             >
               <section
-                class="gd__section gd__section--progress"
-                data-testid="galaxy-detail-progress"
-                aria-labelledby="gd-progress-title"
-              >
-                <div class="gd__section-heading gd__section-heading--stacked">
-                  <div>
-                    <small>TELEMETRÍA DE EXPLORACIÓN</small>
-                    <h3 id="gd-progress-title">Conocimiento persistido</h3>
-                  </div>
-                </div>
-
-                <div class="gd__progress-lead">
-                  <div>
-                    <span>SECTORES TOTALES</span>
-                    <strong data-testid="galaxy-detail-total-sectors">
-                      {{ formatBigInt(model.explorationTelemetry.totalSectors) }}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>PORCENTAJE EXPLORADO</span>
-                    <strong data-testid="galaxy-detail-explored-percentage">
-                      {{ formatExplorationPercentage(model.explorationTelemetry.exploredPercentageBasisPoints) }}
-                    </strong>
-                  </div>
-                </div>
-
-                <dl class="gd__rail-facts gd__rail-facts--inventory">
-                  <div>
-                    <dt>SECTORES</dt>
-                    <dd data-testid="galaxy-detail-known-sectors">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.sectors) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>SISTEMAS</dt>
-                    <dd data-testid="galaxy-detail-known-systems">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.systems) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>CÚMULOS</dt>
-                    <dd data-testid="galaxy-detail-known-star-clusters">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.starClusters) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>NEBULOSAS</dt>
-                    <dd data-testid="galaxy-detail-known-nebulae">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.nebulae) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>EXTREMOS</dt>
-                    <dd data-testid="galaxy-detail-known-extreme-objects">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.extremeObjects) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>PLANETAS</dt>
-                    <dd data-testid="galaxy-detail-known-bodies">
-                      <span data-testid="galaxy-detail-known-planets">
-                        {{ formatBigInt(model.explorationTelemetry.inventory.planets) }}
-                      </span>
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>LUNAS</dt>
-                    <dd data-testid="galaxy-detail-known-moons">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.moons) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>ASTEROIDES</dt>
-                    <dd data-testid="galaxy-detail-known-asteroids">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.asteroids) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>COMETAS</dt>
-                    <dd data-testid="galaxy-detail-known-comets">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.comets) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>TNO</dt>
-                    <dd data-testid="galaxy-detail-known-tno">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.transNeptunianObjects) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>CAPTURADOS</dt>
-                    <dd data-testid="galaxy-detail-known-captured">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.capturedObjects) }}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>CIVILIZACIONES</dt>
-                    <dd data-testid="galaxy-detail-known-civilizations">
-                      {{ formatBigInt(model.explorationTelemetry.inventory.civilizations) }}
-                    </dd>
-                  </div>
-                </dl>
-
-                <!--
-                  Legacy 11.4 selectors remain non-rendered so historical e2e
-                  contracts can validate the unchanged underlying statistics while
-                  26.1 presents the new sector/inventory telemetry requested by V2.
-                -->
-                <div hidden aria-hidden="true">
-                  <span data-testid="galaxy-detail-progress-units">
-                    {{ model.statistics.progressUnits }}
-                  </span>
-                  <span data-testid="galaxy-detail-known-records">
-                    {{ model.statistics.knownRecords }}
-                  </span>
-                  <span data-testid="galaxy-detail-known-galactic-objects">
-                    {{ model.statistics.targetCounts.galacticObjects }}
-                  </span>
-                  <span data-testid="galaxy-detail-state-detected">
-                    {{ model.statistics.stateCounts.detected }}
-                  </span>
-                  <span data-testid="galaxy-detail-state-discovered">
-                    {{ model.statistics.stateCounts.discovered }}
-                  </span>
-                  <span data-testid="galaxy-detail-state-visited">
-                    {{ model.statistics.stateCounts.visited }}
-                  </span>
-                  <span data-testid="galaxy-detail-state-catalogued">
-                    {{ model.statistics.stateCounts.catalogued }}
-                  </span>
-                  <span data-testid="galaxy-detail-state-confirmed">
-                    {{ model.statistics.stateCounts.confirmed }}
-                  </span>
-                  <span data-testid="galaxy-detail-progress-no-percentage">
-                    No son PD ni un porcentaje
-                  </span>
-                </div>
-              </section>
-
-              <section
                 class="gd__section gd__section--focus"
                 data-testid="galaxy-detail-focus-control"
                 aria-labelledby="gd-focus-title"
@@ -1041,10 +889,274 @@
           </div>
 
           <section
+            class="gd__section gd__section--progress gd__section--knowledge-wide"
+            data-testid="galaxy-detail-progress"
+            aria-labelledby="gd-progress-title"
+          >
+            <div class="gd__section-heading">
+              <div>
+                <small>26.1b · TELEMETRÍA DE EXPLORACIÓN</small>
+                <h3 id="gd-progress-title">Conocimiento persistido ampliado</h3>
+              </div>
+
+              <p>
+                Los totales proceden del conocimiento persistido. Los desgloses
+                solo se resuelven cuando el estado científico ya permite conocerlos.
+              </p>
+            </div>
+
+            <div class="gd__progress-lead">
+              <div>
+                <span>SECTORES TOTALES</span>
+                <strong data-testid="galaxy-detail-total-sectors">
+                  {{ formatBigInt(model.explorationTelemetry.totalSectors) }}
+                </strong>
+              </div>
+
+              <div>
+                <span>PORCENTAJE EXPLORADO</span>
+                <strong data-testid="galaxy-detail-explored-percentage">
+                  {{ formatExplorationPercentage(model.explorationTelemetry.exploredPercentageBasisPoints) }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="gd__knowledge-grid">
+              <article class="gd__knowledge-card">
+                <span>SECTORES CONOCIDOS</span>
+                <strong data-testid="galaxy-detail-known-sectors">
+                  {{ formatBigInt(model.explorationTelemetry.inventory.sectors) }}
+                </strong>
+              </article>
+
+              <details class="gd__knowledge-card" data-testid="galaxy-detail-systems-breakdown">
+                <summary>
+                  <span>SISTEMAS</span>
+                  <strong data-testid="galaxy-detail-known-systems">
+                    {{ formatBigInt(model.explorationTelemetry.inventory.systems) }}
+                  </strong>
+                </summary>
+                <dl class="gd__rail-facts">
+                  <div><dt>SIMPLES</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.systems.single) }}</dd></div>
+                  <div><dt>BINARIOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.systems.binary) }}</dd></div>
+                  <div><dt>TRIPLES</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.systems.triple) }}</dd></div>
+                  <div><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.systems.unclassified) }}</dd></div>
+                </dl>
+              </details>
+
+              <details class="gd__knowledge-card" data-testid="galaxy-detail-star-clusters-breakdown">
+                <summary>
+                  <span>CÚMULOS</span>
+                  <strong data-testid="galaxy-detail-known-star-clusters">
+                    {{ formatBigInt(model.explorationTelemetry.inventory.starClusters) }}
+                  </strong>
+                </summary>
+                <dl class="gd__rail-facts">
+                  <div><dt>ABIERTOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.starClusters.open) }}</dd></div>
+                  <div><dt>GLOBULARES</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.starClusters.globular) }}</dd></div>
+                  <div><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.starClusters.unclassified) }}</dd></div>
+                </dl>
+              </details>
+
+              <details class="gd__knowledge-card" data-testid="galaxy-detail-nebulae-breakdown">
+                <summary>
+                  <span>NEBULOSAS</span>
+                  <strong data-testid="galaxy-detail-known-nebulae">
+                    {{ formatBigInt(model.explorationTelemetry.inventory.nebulae) }}
+                  </strong>
+                </summary>
+                <dl class="gd__rail-facts">
+                  <div><dt>EMISIÓN</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.emission) }}</dd></div>
+                  <div><dt>REFLEXIÓN</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.reflection) }}</dd></div>
+                  <div><dt>OSCURAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.dark) }}</dd></div>
+                  <div><dt>PLANETARIAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.planetary) }}</dd></div>
+                  <div><dt>REGIONES H II</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.hiiRegions) }}</dd></div>
+                  <div><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.unclassified) }}</dd></div>
+                </dl>
+              </details>
+
+              <details class="gd__knowledge-card" data-testid="galaxy-detail-extreme-objects-breakdown">
+                <summary>
+                  <span>EXTREMOS</span>
+                  <strong data-testid="galaxy-detail-known-extreme-objects">
+                    {{ formatBigInt(model.explorationTelemetry.inventory.extremeObjects) }}
+                  </strong>
+                </summary>
+                <dl class="gd__rail-facts">
+                  <div><dt>REMANENTES DE SUPERNOVA</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.supernovaRemnants) }}</dd></div>
+                  <div><dt>AN DE MASA INTERMEDIA</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.intermediateMassBlackHoles) }}</dd></div>
+                  <div><dt>AGN</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.activeGalacticNuclei) }}</dd></div>
+                  <div><dt>QUÁSARES</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.quasars) }}</dd></div>
+                  <div><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.unclassified) }}</dd></div>
+                </dl>
+              </details>
+
+              <details class="gd__knowledge-card" data-testid="galaxy-detail-planets-breakdown">
+                <summary>
+                  <span>PLANETAS</span>
+                  <strong data-testid="galaxy-detail-known-bodies">
+                    <span data-testid="galaxy-detail-known-planets">
+                      {{ formatSystemContentCount(
+                        model.explorationTelemetry.inventory.planets,
+                        model.explorationTelemetry.inventory.systems,
+                        model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                        model.explorationTelemetry.inventory.planets
+                      ) }}
+                    </span>
+                  </strong>
+                </summary>
+
+                @if (
+                  hasSystemContentKnowledge(
+                    model.explorationTelemetry.inventory.systems,
+                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.explorationTelemetry.inventory.planets
+                  )
+                ) {
+                  <dl class="gd__rail-facts">
+                    <div><dt>ROCOSOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.rocky) }}</dd></div>
+                    <div><dt>SUPERTIERRAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.superEarth) }}</dd></div>
+                    <div><dt>DESÉRTICOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.desert) }}</dd></div>
+                    <div><dt>OCEÁNICOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.ocean) }}</dd></div>
+                    <div><dt>HELADOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.ice) }}</dd></div>
+                    <div><dt>VOLCÁNICOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.volcanic) }}</dd></div>
+                    <div><dt>MININEPTUNOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.miniNeptune) }}</dd></div>
+                    <div><dt>GIGANTES GASEOSOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.gasGiant) }}</dd></div>
+                    <div><dt>GIGANTES HELADOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.iceGiant) }}</dd></div>
+                    <div><dt>POSTCOLAPSO · MODELO</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.postCollapseModel) }}</dd></div>
+                    <div><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.unclassified) }}</dd></div>
+                    <div><dt>AGUA LÍQUIDA SUPERFICIAL ≥ 40 %</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.liquidSurfaceAtLeast40Percent) }}</dd></div>
+                  </dl>
+                } @else {
+                  <p class="gd__knowledge-empty">Sin datos científicos todavía.</p>
+                }
+              </details>
+
+              <details class="gd__knowledge-card" data-testid="galaxy-detail-moons-breakdown">
+                <summary>
+                  <span>LUNAS</span>
+                  <strong data-testid="galaxy-detail-known-moons">
+                    {{ formatSystemContentCount(
+                      model.explorationTelemetry.inventory.moons,
+                      model.explorationTelemetry.inventory.systems,
+                      model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                      model.explorationTelemetry.inventory.moons
+                    ) }}
+                  </strong>
+                </summary>
+
+                @if (
+                  hasSystemContentKnowledge(
+                    model.explorationTelemetry.inventory.systems,
+                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.explorationTelemetry.inventory.moons
+                  )
+                ) {
+                  <dl class="gd__rail-facts">
+                    <div><dt>ROCOSAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.rocky) }}</dd></div>
+                    <div><dt>MIXTAS ROCA-HIELO</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.mixedRockIce) }}</dd></div>
+                    <div><dt>HELADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.icy) }}</dd></div>
+                    <div><dt>SIN CARACTERIZAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.uncharacterized) }}</dd></div>
+                    <div><dt>POTENCIAL DE AGUA LÍQUIDA SUPERFICIAL ≥ 40 %</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.surfaceLiquidPotentialAtLeast40Percent) }}</dd></div>
+                    <div><dt>INDICIOS DE OCÉANO SUBSUPERFICIAL</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.subsurfaceOceanEvidence) }}</dd></div>
+                  </dl>
+                } @else {
+                  <p class="gd__knowledge-empty">Sin datos científicos todavía.</p>
+                }
+              </details>
+
+              <article class="gd__knowledge-card">
+                <span>ASTEROIDES</span>
+                <strong data-testid="galaxy-detail-known-asteroids">
+                  {{ formatSystemContentCount(
+                    model.explorationTelemetry.inventory.asteroids,
+                    model.explorationTelemetry.inventory.systems,
+                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.explorationTelemetry.inventory.asteroids
+                  ) }}
+                </strong>
+              </article>
+
+              <article class="gd__knowledge-card">
+                <span>COMETAS</span>
+                <strong data-testid="galaxy-detail-known-comets">
+                  {{ formatSystemContentCount(
+                    model.explorationTelemetry.inventory.comets,
+                    model.explorationTelemetry.inventory.systems,
+                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.explorationTelemetry.inventory.comets
+                  ) }}
+                </strong>
+              </article>
+
+              <article class="gd__knowledge-card">
+                <span>TNO</span>
+                <strong data-testid="galaxy-detail-known-tno">
+                  {{ formatSystemContentCount(
+                    model.explorationTelemetry.inventory.transNeptunianObjects,
+                    model.explorationTelemetry.inventory.systems,
+                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.explorationTelemetry.inventory.transNeptunianObjects
+                  ) }}
+                </strong>
+              </article>
+
+              <article class="gd__knowledge-card">
+                <span>CAPTURADOS</span>
+                <strong data-testid="galaxy-detail-known-captured">
+                  {{ formatSystemContentCount(
+                    model.explorationTelemetry.inventory.capturedObjects,
+                    model.explorationTelemetry.inventory.systems,
+                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.explorationTelemetry.inventory.capturedObjects
+                  ) }}
+                </strong>
+              </article>
+
+              <article class="gd__knowledge-card">
+                <span>CIVILIZACIONES</span>
+                <strong data-testid="galaxy-detail-known-civilizations">
+                  {{ formatBigInt(model.explorationTelemetry.inventory.civilizations) }}
+                </strong>
+              </article>
+            </div>
+
+            <div hidden aria-hidden="true">
+              <span data-testid="galaxy-detail-progress-units">
+                {{ model.statistics.progressUnits }}
+              </span>
+              <span data-testid="galaxy-detail-known-records">
+                {{ model.statistics.knownRecords }}
+              </span>
+              <span data-testid="galaxy-detail-known-galactic-objects">
+                {{ model.statistics.targetCounts.galacticObjects }}
+              </span>
+              <span data-testid="galaxy-detail-state-detected">
+                {{ model.statistics.stateCounts.detected }}
+              </span>
+              <span data-testid="galaxy-detail-state-discovered">
+                {{ model.statistics.stateCounts.discovered }}
+              </span>
+              <span data-testid="galaxy-detail-state-visited">
+                {{ model.statistics.stateCounts.visited }}
+              </span>
+              <span data-testid="galaxy-detail-state-catalogued">
+                {{ model.statistics.stateCounts.catalogued }}
+              </span>
+              <span data-testid="galaxy-detail-state-confirmed">
+                {{ model.statistics.stateCounts.confirmed }}
+              </span>
+              <span data-testid="galaxy-detail-progress-no-percentage">
+                No son PD ni un porcentaje
+              </span>
+            </div>
+          </section>
+
+          <section
             class="gd__boundary"
             data-testid="galaxy-detail-boundary"
           >
-            <span>26.1 · V2</span>
+            <span>26.1b · V2</span>
 
             <p>
               La ficha científica reutiliza la ruta estable de galaxia y proyecta
