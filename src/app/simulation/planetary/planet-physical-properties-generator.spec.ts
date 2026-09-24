@@ -137,6 +137,84 @@ describe(
     );
 
     it(
+      'should let a favourable critical core dominate a finite gas budget strongly enough to reach giant-planet bulk conditions',
+      () => {
+        const fixture =
+          systemFixture(
+            [
+              slotInput(
+                10,
+                0.90,
+                0.90,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.45,
+                  0.45,
+                  0.10,
+                ),
+              ),
+              slotInput(
+                2,
+                0.35,
+                0.60,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.60,
+                  0.30,
+                  0.10,
+                ),
+              ),
+              slotInput(
+                1,
+                0.20,
+                0.50,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.70,
+                  0.20,
+                  0.10,
+                ),
+              ),
+            ],
+            100,
+          );
+
+        const properties =
+          PlanetPhysicalPropertiesGenerator
+            .generateAll(
+              generationKey,
+              fixture,
+            );
+
+        const runaway =
+          properties[0];
+
+        expect(
+          runaway.massEarth,
+        ).toBeGreaterThanOrEqual(30);
+
+        expect(
+          runaway.envelopeMassFraction01,
+        ).toBeGreaterThanOrEqual(0.20);
+
+        expect(
+          runaway.accretedEnvelopeMassEarth,
+        ).toBeGreaterThan(
+          properties[1].accretedEnvelopeMassEarth +
+            properties[2].accretedEnvelopeMassEarth,
+        );
+
+        expect(
+          properties.reduce(
+            (sum, value) =>
+              sum + value.accretedEnvelopeMassEarth,
+            0,
+          ),
+        ).toBeLessThanOrEqual(100 + 1e-9);
+      },
+    );
+
+    it(
       'should leave a zero-envelope-potential body at its inherited solid-core mass',
       () => {
         const fixture =

@@ -46,6 +46,10 @@ import {
   Sfc64Random,
 } from '../random/sfc64-random';
 
+import {
+  gasEnvelopeAccretionCapacityEarthV1,
+} from './gas-envelope-accretion-capacity';
+
 const V1_PLANET_MASS_BRANCH =
   utf8ToBytes(
     'GENESIS-PLANET-PHYSICAL-MASS-V1',
@@ -311,13 +315,9 @@ function envelopeTargetV1(
   const coreLimitedEnvelopeCapacityEarth =
     Math.min(
       availableEnvelopeMassEarth,
-      slot
-        .inheritedSolidCoreMassEarth *
-      potential *
-      (
-        4 +
-        45 *
-          potential
+      gasEnvelopeAccretionCapacityEarthV1(
+        slot.inheritedSolidCoreMassEarth,
+        potential,
       ),
     );
 

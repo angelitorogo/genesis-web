@@ -55,6 +55,11 @@ import {
   type SystemSeed,
 } from '../../domain/seed/hierarchical-seeds';
 
+import {
+  gasEnvelopeAccretionCapacityEarthV1,
+  gasEnvelopeRunawayReadinessV1,
+} from './gas-envelope-accretion-capacity';
+
 const V1_MATURATION_BRANCH =
   utf8ToBytes(
     'GENESIS-PLANETARY-FORMATION-MATURATION-V1',
@@ -450,10 +455,27 @@ function gasCaptureBudgetV1(
       ),
     );
 
+  const strongestRunawayReadiness01 =
+    Math.max(
+      0,
+      ...anchors.map(
+        anchor =>
+          gasEnvelopeRunawayReadinessV1(
+            anchor.solidCoreMassEarth,
+            anchor.envelopeAcquisitionPotential01,
+          ),
+      ),
+    );
+
   const remainingDiskFraction01 =
     1 -
     diskProfile
       .evolutionProgress01;
+
+  const diskAvailability01 =
+    0.40 +
+    0.60 *
+      remainingDiskFraction01;
 
   const diskCaptureFraction01 =
     clamp(
@@ -462,13 +484,14 @@ function gasCaptureBudgetV1(
         planetFormationProfile
           .giantPlanetFormationPropensity *
         meanEnvelopePotential01 *
-        (
-          0.40 +
-          0.60 *
-            remainingDiskFraction01
-        ),
+        diskAvailability01 +
+      0.020 *
+        planetFormationProfile
+          .giantPlanetFormationPropensity *
+        strongestRunawayReadiness01 *
+        diskAvailability01,
       0,
-      0.03,
+      0.05,
     );
 
   const diskLimitedBudgetEarth =
@@ -484,13 +507,9 @@ function gasCaptureBudgetV1(
               .envelopeAcquisitionPotential01;
 
           return (
-            anchor
-              .solidCoreMassEarth *
-            potential *
-            (
-              4 +
-              45 *
-                potential
+            gasEnvelopeAccretionCapacityEarthV1(
+              anchor.solidCoreMassEarth,
+              potential,
             )
           );
         },
