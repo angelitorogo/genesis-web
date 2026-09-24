@@ -19,6 +19,10 @@ import {
 } from '../../domain/planetary/atmosphere-gas-component';
 
 import {
+  type AtmosphereGreenhouseEffect,
+} from '../../domain/planetary/atmosphere-greenhouse-effect';
+
+import {
   type AtmosphereRetentionState,
 } from '../../domain/planetary/atmosphere-retention-state';
 
@@ -107,6 +111,9 @@ export class PlanetWaterEngine {
 
     climateVariabilityState:
       PlanetClimateVariabilityState,
+
+    greenhouseEffect?:
+      AtmosphereGreenhouseEffect,
   ): PlanetWaterInventory {
 
     assertGenerationContext(
@@ -115,6 +122,7 @@ export class PlanetWaterEngine {
       retentionState,
       climateState,
       climateVariabilityState,
+      greenhouseEffect,
     );
 
     return generateWaterInventoryV1(
@@ -122,6 +130,7 @@ export class PlanetWaterEngine {
       retentionState,
       climateState,
       climateVariabilityState,
+      greenhouseEffect,
     );
   }
 
@@ -143,6 +152,9 @@ export class PlanetWaterEngine {
 
     climateVariabilityStates:
       readonly PlanetClimateVariabilityState[],
+
+    greenhouseEffects?:
+      readonly AtmosphereGreenhouseEffect[],
   ): readonly PlanetWaterInventory[] {
 
     assertSupportedGenerationKey(
@@ -167,7 +179,13 @@ export class PlanetWaterEngine {
       climateStates.length !==
         planetarySystem.planetCount ||
       climateVariabilityStates.length !==
-        planetarySystem.planetCount
+        planetarySystem.planetCount ||
+      (
+        greenhouseEffects !==
+          undefined &&
+        greenhouseEffects.length !==
+          planetarySystem.planetCount
+      )
     ) {
       throw new RangeError(
         'PlanetWaterEngine.generateAll requires one Planet and one point-20.3/20.5/20.6 source state for every mature planet.',
@@ -207,6 +225,7 @@ export class PlanetWaterEngine {
             retentionState,
             climateState,
             climateVariabilityState,
+            greenhouseEffects?.[index],
           );
 
           return generateWaterInventoryV1(
@@ -214,6 +233,7 @@ export class PlanetWaterEngine {
             retentionState,
             climateState,
             climateVariabilityState,
+            greenhouseEffects?.[index],
           );
         },
       ),
@@ -233,12 +253,28 @@ function generateWaterInventoryV1(
 
   climateVariabilityState:
     PlanetClimateVariabilityState,
+
+  greenhouseEffect?:
+    AtmosphereGreenhouseEffect,
 ): PlanetWaterInventory {
 
   const retainedAtmosphericWaterVaporMoleFraction01 =
     retainedWaterVaporMoleFraction01(
       retentionState,
     );
+
+  const effectiveAtmosphericWaterVaporMoleFraction01 =
+    greenhouseEffect
+      ?.waterVaporEquilibriumState
+      ?.effectiveWaterVaporMoleFraction01 ??
+    retainedAtmosphericWaterVaporMoleFraction01;
+
+  const effectiveSurfacePressurePascal =
+    greenhouseEffect
+      ?.waterVaporEquilibriumState
+      ?.effectiveSurfacePressurePascal ??
+    retentionState
+      .retainedSurfacePressurePascal;
 
   const sourceIceBearingInteriorFraction01 =
     planet.internalComposition
@@ -283,7 +319,7 @@ function generateWaterInventoryV1(
   }
 
   const retainedSurfacePressurePascal =
-    retentionState.retainedSurfacePressurePascal!;
+    effectiveSurfacePressurePascal!;
 
   const minimumSurfaceTemperatureKelvin =
     climateVariabilityState.minimumSurfaceTemperatureKelvin!;
@@ -295,7 +331,7 @@ function generateWaterInventoryV1(
     waterPhaseFractionsV1(
       waterInventoryIndex01,
       retainedSurfacePressurePascal,
-      retainedAtmosphericWaterVaporMoleFraction01,
+      effectiveAtmosphericWaterVaporMoleFraction01,
       minimumSurfaceTemperatureKelvin,
       maximumSurfaceTemperatureKelvin,
     );
@@ -1016,6 +1052,9 @@ function assertGenerationContext(
 
   climateVariabilityState:
     PlanetClimateVariabilityState,
+
+  greenhouseEffect?:
+    AtmosphereGreenhouseEffect,
 ): void {
 
   assertSupportedGenerationKey(
@@ -1048,6 +1087,19 @@ function assertGenerationContext(
     'point-20.3 retention state',
   );
 
+  if (
+    greenhouseEffect !==
+      undefined
+  ) {
+    assertBodyIdentity(
+      planet,
+      greenhouseEffect.planetOrdinal,
+      greenhouseEffect.bodyLocator,
+      greenhouseEffect.bodySeed.normalizedValue,
+      'point-20.4 greenhouse state',
+    );
+  }
+
   assertBodyIdentity(
     planet,
     climateState.planetOrdinal,
@@ -1064,8 +1116,15 @@ function assertGenerationContext(
     'point-20.6 climate variability state',
   );
 
+  const expectedClimateSurfacePressurePascal =
+    greenhouseEffect
+      ?.waterVaporEquilibriumState
+      ?.effectiveSurfacePressurePascal ??
+    retentionState
+      .retainedSurfacePressurePascal;
+
   if (
-    retentionState.retainedSurfacePressurePascal !==
+    expectedClimateSurfacePressurePascal !==
       climateVariabilityState.sourceRetainedSurfacePressurePascal ||
     !nullableApproximatelyEqual(
       climateState.meanSurfaceTemperatureKelvin,

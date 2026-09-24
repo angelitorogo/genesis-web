@@ -20,6 +20,14 @@ import {
 } from './atmosphere-pressure-regime';
 
 import {
+  type AtmosphereCondensableEquilibriumState,
+} from './atmosphere-condensable-equilibrium-state';
+
+import {
+  type AtmosphereWaterVaporEquilibriumState,
+} from './atmosphere-water-vapor-equilibrium-state';
+
+import {
   AtmosphereRetentionRegime,
 } from './atmosphere-retention-regime';
 
@@ -93,6 +101,14 @@ export class AtmosphereGreenhouseEffect {
 
     greenhouseGasContributions:
       readonly AtmosphereGreenhouseGasContribution[],
+
+    readonly waterVaporEquilibriumState:
+      AtmosphereWaterVaporEquilibriumState | null =
+        null,
+
+    readonly condensableEquilibriumState:
+      AtmosphereCondensableEquilibriumState | null =
+        null,
   ) {
     if (
       !Number.isInteger(
@@ -289,6 +305,11 @@ export class AtmosphereGreenhouseEffect {
       validateSolidSurfaceGreenhouseState(
         sourceRetainedPressureRegime,
         sourceRetainedSurfacePressurePascal,
+        condensableEquilibriumState
+          ?.effectiveSurfacePressurePascal ??
+          waterVaporEquilibriumState
+            ?.effectiveSurfacePressurePascal ??
+          sourceRetainedSurfacePressurePascal,
         sourceRetainedMoleInventoryFraction01,
         weightedGreenhouseMoleFraction,
         pressureBroadeningFactor,
@@ -297,6 +318,52 @@ export class AtmosphereGreenhouseEffect {
         temperatureAmplificationFactor,
         regime,
       );
+    }
+
+    if (
+      waterVaporEquilibriumState !==
+        null
+    ) {
+      if (
+        sourceRetainedSurfacePressurePascal ===
+          null ||
+        !approximatelyEqual(
+          waterVaporEquilibriumState.sourceSurfacePressurePascal,
+          sourceRetainedSurfacePressurePascal,
+        )
+      ) {
+        throw new RangeError(
+          'Water-vapor equilibrium must preserve the point-20.3 retained surface-pressure source.',
+        );
+      }
+    }
+
+    if (
+      condensableEquilibriumState !== null
+    ) {
+      if (
+        sourceRetainedSurfacePressurePascal === null ||
+        !approximatelyEqual(
+          condensableEquilibriumState.sourceSurfacePressurePascal,
+          sourceRetainedSurfacePressurePascal,
+        )
+      ) {
+        throw new RangeError(
+          'Condensable equilibrium must preserve the point-20.3 retained surface-pressure source.',
+        );
+      }
+
+      if (
+        waterVaporEquilibriumState !== null &&
+        !approximatelyEqual(
+          condensableEquilibriumState.effectiveSurfacePressurePascal,
+          waterVaporEquilibriumState.effectiveSurfacePressurePascal,
+        )
+      ) {
+        throw new RangeError(
+          'H2O and multispecies phase-equilibrium states must expose the same final gas pressure.',
+        );
+      }
     }
 
     this.greenhouseGasContributions =
@@ -461,6 +528,8 @@ function validateSolidSurfaceGreenhouseState(
     AtmospherePressureRegime,
   sourceRetainedSurfacePressurePascal:
     number | null,
+  effectiveGreenhouseSurfacePressurePascal:
+    number | null,
   sourceRetainedMoleInventoryFraction01:
     number,
   weightedGreenhouseMoleFraction:
@@ -498,8 +567,19 @@ function validateSolidSurfaceGreenhouseState(
     );
   }
 
+  if (
+    effectiveGreenhouseSurfacePressurePascal ===
+      null ||
+    effectiveGreenhouseSurfacePressurePascal <=
+      0
+  ) {
+    throw new RangeError(
+      'Point-20.4 solid-surface greenhouse states require a positive thermodynamic gas pressure.',
+    );
+  }
+
   const expectedColumn =
-    sourceRetainedSurfacePressurePascal *
+    effectiveGreenhouseSurfacePressurePascal *
     weightedGreenhouseMoleFraction;
 
   if (
@@ -509,7 +589,7 @@ function validateSolidSurfaceGreenhouseState(
     )
   ) {
     throw new RangeError(
-      'weightedGreenhouseColumnPascal must preserve the retained pressure times weighted greenhouse mole fraction.',
+      'weightedGreenhouseColumnPascal must preserve the thermodynamic gas pressure times weighted greenhouse mole fraction.',
     );
   }
 

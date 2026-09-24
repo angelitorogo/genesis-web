@@ -137,7 +137,19 @@ describe(
 
         expect(
           moist.infraredOpticalDepthProxy,
-        ).toBeGreaterThan(0.5);
+        ).toBeGreaterThan(
+          inert.infraredOpticalDepthProxy,
+        );
+
+        expect(
+          moist.longwaveTrappingFraction01,
+        ).toBeGreaterThan(0);
+
+        expect(
+          moist.regime,
+        ).not.toBe(
+          AtmosphereGreenhouseRegime.NONE,
+        );
 
         expect(
           moist.temperatureAmplificationFactor!,

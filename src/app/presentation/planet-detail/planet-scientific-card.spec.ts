@@ -375,6 +375,234 @@ describe(
     );
 
     it(
+      'should present orbital tidal forcing on the normalized 0 to 1 scale while retaining the raw proxy only as context',
+      () => {
+        const source =
+          detailedTarget();
+
+        const target:
+          PlanetScientificResolvedTarget =
+          Object.freeze({
+            ...source,
+            detail:
+              Object.freeze({
+                ...source.detail,
+                orbit:
+                  Object.freeze({
+                    ...source.detail.orbit,
+                    tidalHeatingProxy:
+                      1112.0459010723303,
+                  }),
+                geology:
+                  Object.freeze({
+                    ...source.detail.geology,
+                    tidalHeatingIndex01:
+                      1,
+                  }),
+              }),
+          });
+
+        const result =
+          PlanetScientificCardAssembler
+            .build(
+              systemModel(
+                DiscoveryState.CONFIRMED,
+              ),
+              0n,
+              Object.freeze({
+                resolveDetailed:
+                  vi.fn(
+                    () =>
+                      target,
+                  ),
+              }),
+              previewSceneResolver(),
+            );
+
+        expect(result.kind).toBe(
+          PlanetScientificFicheResolutionKind.AVAILABLE,
+        );
+
+        if (
+          result.kind !==
+            PlanetScientificFicheResolutionKind.AVAILABLE
+        ) {
+          throw new Error(
+            'Expected available planet fiche.',
+          );
+        }
+
+        const orbit =
+          result.card.sections.sections.find(
+            section =>
+              section.id ===
+                'orbit',
+          );
+
+        const tidal =
+          orbit?.fields.find(
+            field =>
+              field.label ===
+                'Forzamiento de marea orbital',
+          );
+
+        expect(tidal?.value).toBe(
+          '1 / 1',
+        );
+        expect(tidal?.value).not.toContain(
+          '1112',
+        );
+        expect(tidal?.note).toContain(
+          'proxy orbital bruto',
+        );
+      },
+    );
+
+    it(
+      'should call synchronized thermal forcing a day/night contrast and retain diurnal wording for rotating worlds',
+      () => {
+        const source =
+          detailedTarget();
+
+        const synchronizedTarget:
+          PlanetScientificResolvedTarget =
+          Object.freeze({
+            ...source,
+            detail:
+              Object.freeze({
+                ...source.detail,
+                general:
+                  Object.freeze({
+                    ...source.detail.general,
+                    isTidallySynchronized:
+                      true,
+                    dayLengthHours:
+                      null,
+                  }),
+              }),
+          });
+
+        const build =
+          (
+            target:
+              PlanetScientificResolvedTarget,
+          ) =>
+            PlanetScientificCardAssembler
+              .build(
+                systemModel(
+                  DiscoveryState.CONFIRMED,
+                ),
+                0n,
+                Object.freeze({
+                  resolveDetailed:
+                    vi.fn(
+                      () =>
+                        target,
+                    ),
+                }),
+                previewSceneResolver(),
+              );
+
+        const synchronized =
+          build(
+            synchronizedTarget,
+          );
+
+        const rotating =
+          build(
+            source,
+          );
+
+        if (
+          synchronized.kind !==
+            PlanetScientificFicheResolutionKind.AVAILABLE ||
+          rotating.kind !==
+            PlanetScientificFicheResolutionKind.AVAILABLE
+        ) {
+          throw new Error(
+            'Expected available planet fiches.',
+          );
+        }
+
+        const synchronizedClimate =
+          synchronized.card.sections.sections.find(
+            section =>
+              section.id ===
+                'climate',
+          );
+
+        const rotatingClimate =
+          rotating.card.sections.sections.find(
+            section =>
+              section.id ===
+                'climate',
+          );
+
+        expect(
+          synchronizedClimate?.fields.some(
+            field =>
+              field.label ===
+                'Contraste térmico día/noche',
+          ),
+        ).toBe(true);
+
+        expect(
+          synchronizedClimate?.fields.some(
+            field =>
+              field.label ===
+                'Rango térmico diurno',
+          ),
+        ).toBe(false);
+
+        expect(
+          rotatingClimate?.fields.some(
+            field =>
+              field.label ===
+                'Rango térmico diurno',
+          ),
+        ).toBe(true);
+      },
+    );
+
+    it(
+      'should distinguish initial pressure potential from the current gas-phase pressure regime',
+      () => {
+        const source = detailedTarget();
+        const target: PlanetScientificResolvedTarget = Object.freeze({
+          ...source,
+          detail: Object.freeze({
+            ...source.detail,
+            atmosphere: Object.freeze({
+              ...source.detail.atmosphere,
+              pressureRegime: 'DENSE',
+              retainedPressureRegime: 'TRACE',
+              retainedSurfacePressurePascal: 64.4,
+            }),
+          }),
+        });
+
+        const result = PlanetScientificCardAssembler.build(
+          systemModel(DiscoveryState.CONFIRMED),
+          0n,
+          Object.freeze({ resolveDetailed: vi.fn(() => target) }),
+          previewSceneResolver(),
+        );
+
+        if (result.kind !== PlanetScientificFicheResolutionKind.AVAILABLE) {
+          throw new Error('Expected available planet fiche.');
+        }
+
+        const atmosphere = result.card.sections.sections.find(section => section.id === 'atmosphere');
+        const initial = atmosphere?.fields.find(field => field.label === 'Régimen potencial inicial');
+        const current = atmosphere?.fields.find(field => field.label === 'Régimen gaseoso actual');
+
+        expect(initial?.value).toBe('Densa');
+        expect(current?.value).toBe('Trazas');
+        expect(atmosphere?.fields.some(field => field.label === 'Régimen de presión')).toBe(false);
+      },
+    );
+
+    it(
       'should reject invalid or missing mature planet indices without inventing a target',
       () => {
         const resolver:

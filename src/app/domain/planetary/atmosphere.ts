@@ -12,11 +12,13 @@ import {
 } from '../seed/hierarchical-seeds';
 
 import {
+  idealGasDensityKilogramsPerCubicMeter,
   type AtmosphereBulkProperties,
 } from './atmosphere-bulk-properties';
 
 import {
   AtmosphereGas,
+  atmosphereGasMolarMassGramsPerMole,
 } from './atmosphere-gas';
 
 import {
@@ -32,6 +34,7 @@ import {
 } from './atmosphere-greenhouse-regime';
 
 import {
+  atmospherePressureRegimeForSurfacePressurePascal,
   type AtmospherePressureRegime,
 } from './atmosphere-pressure-regime';
 
@@ -414,7 +417,10 @@ export class Atmosphere {
         hostPlanet.dayLengthHours,
       ) ||
       climateVariabilityState.sourceRetainedSurfacePressurePascal !==
-        retentionState.retainedSurfacePressurePascal ||
+        effectiveSurfacePressurePascal(
+          retentionState,
+          greenhouseEffect,
+        ) ||
       !approximatelyEqual(
         climateVariabilityState.sourceLongwaveTrappingFraction01,
         greenhouseEffect.longwaveTrappingFraction01,
@@ -434,7 +440,10 @@ export class Atmosphere {
           .iceBearingFractionOfSolids01,
       ) ||
       waterInventory.sourceRetainedSurfacePressurePascal !==
-        retentionState.retainedSurfacePressurePascal ||
+        effectiveSurfacePressurePascal(
+          retentionState,
+          greenhouseEffect,
+        ) ||
       !approximatelyEqual(
         waterInventory.sourceRetainedAtmosphericWaterVaporMoleFraction01,
         retainedWaterVaporMoleFraction01(
@@ -803,41 +812,88 @@ export class Atmosphere {
   get retainedPressureRegime():
     AtmospherePressureRegime {
 
-    return this
-      .retentionState
-      .retainedPressureRegime;
+    const pressure =
+      this.retainedSurfacePressurePascal;
+
+    return pressure ===
+      null
+      ? this.retentionState.retainedPressureRegime
+      : atmospherePressureRegimeForSurfacePressurePascal(
+          pressure,
+        );
   }
 
   get retainedSurfacePressurePascal():
     number | null {
 
-    return this
-      .retentionState
-      .retainedSurfacePressurePascal;
+    return effectiveSurfacePressurePascal(
+      this.retentionState,
+      this.greenhouseEffect,
+    );
   }
 
   get retainedReferenceDensityKilogramsPerCubicMeter():
     number {
 
-    return this
-      .retentionState
-      .retainedReferenceDensityKilogramsPerCubicMeter;
+    const pressure =
+      this.retainedSurfacePressurePascal;
+
+    const meanMolarMass =
+      this.retainedMeanMolarMassGramsPerMole;
+
+    if (
+      pressure ===
+        null ||
+      meanMolarMass ===
+        null
+    ) {
+      return this
+        .retentionState
+        .retainedReferenceDensityKilogramsPerCubicMeter;
+    }
+
+    return idealGasDensityKilogramsPerCubicMeter(
+      pressure,
+      this.retentionState.densityReferenceTemperatureKelvin,
+      meanMolarMass,
+    );
   }
 
   get retainedMeanMolarMassGramsPerMole():
     number | null {
 
-    return this
-      .retentionState
-      .retainedMeanMolarMassGramsPerMole;
+    const components =
+      this.retainedGasComposition;
+
+    if (
+      components.length ===
+        0
+    ) {
+      return null;
+    }
+
+    return components.reduce(
+      (total, component) =>
+        total +
+        component.moleFraction01 *
+        atmosphereGasMolarMassGramsPerMole(
+          component.gas,
+        ),
+      0,
+    );
   }
 
   get retainedGasComposition():
     readonly AtmosphereGasComponent[] {
 
-    return this
-      .retentionState
-      .retainedGasComponents;
+    return this.greenhouseEffect
+      .condensableEquilibriumState
+      ?.effectiveGasComponents ??
+      this.greenhouseEffect
+        .waterVaporEquilibriumState
+        ?.effectiveGasComponents ??
+      this.retentionState
+        .retainedGasComponents;
   }
 
   get escapeVelocityKilometersPerSecond():
@@ -1657,6 +1713,24 @@ function nullableApproximatelyEqual(
     left,
     right,
   );
+}
+
+function effectiveSurfacePressurePascal(
+  retentionState:
+    AtmosphereRetentionState,
+
+  greenhouseEffect:
+    AtmosphereGreenhouseEffect,
+): number | null {
+
+  return greenhouseEffect
+    .condensableEquilibriumState
+    ?.effectiveSurfacePressurePascal ??
+    greenhouseEffect
+      .waterVaporEquilibriumState
+      ?.effectiveSurfacePressurePascal ??
+    retentionState
+      .retainedSurfacePressurePascal;
 }
 
 function approximatelyEqual(

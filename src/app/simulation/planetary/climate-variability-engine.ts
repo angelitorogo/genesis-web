@@ -237,7 +237,10 @@ function generateVariabilityV1(
     isDeepEnvelope
       ? V1_DEEP_ENVELOPE_HEAT_REDISTRIBUTION_EFFICIENCY
       : heatRedistributionEfficiencyV1(
-          retentionState.retainedSurfacePressurePascal!,
+          effectiveClimateSurfacePressurePascal(
+            retentionState,
+            greenhouseEffect,
+          )!,
           greenhouseEffect.longwaveTrappingFraction01,
           dayLengthHours,
         );
@@ -427,7 +430,10 @@ function generateVariabilityV1(
     axialTiltDegrees,
     rotationPeriodHours,
     dayLengthHours,
-    retentionState.retainedSurfacePressurePascal,
+    effectiveClimateSurfacePressurePascal(
+      retentionState,
+      greenhouseEffect,
+    ),
     greenhouseEffect.longwaveTrappingFraction01,
     axialSeasonalityFactor01,
     eccentricitySeasonalityFactor01,
@@ -442,6 +448,24 @@ function generateVariabilityV1(
       false,
     ),
   );
+}
+
+function effectiveClimateSurfacePressurePascal(
+  retentionState:
+    AtmosphereRetentionState,
+
+  greenhouseEffect:
+    AtmosphereGreenhouseEffect,
+): number | null {
+
+  return greenhouseEffect
+    .condensableEquilibriumState
+    ?.effectiveSurfacePressurePascal ??
+    greenhouseEffect
+      .waterVaporEquilibriumState
+      ?.effectiveSurfacePressurePascal ??
+    retentionState
+      .retainedSurfacePressurePascal;
 }
 
 function heatRedistributionEfficiencyV1(

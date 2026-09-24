@@ -37,6 +37,10 @@ import {
 } from '../../domain/planetary/atmosphere-retention-state';
 
 import {
+  AtmosphereWaterVaporEquilibriumState,
+} from '../../domain/planetary/atmosphere-water-vapor-equilibrium-state';
+
+import {
   type Planet,
 } from '../../domain/planetary/planet';
 
@@ -49,8 +53,8 @@ import {
 } from '../../domain/planetary/planetary-system';
 
 import {
-  atmosphereRadiativeColumnState,
-} from './atmosphere-radiative-column-model';
+  atmosphereMultispeciesRadiativeColumnState,
+} from './atmosphere-multispecies-condensation-model';
 
 const V1_MAX_OPTICAL_DEPTH_PROXY =
   20;
@@ -286,12 +290,12 @@ function generateGreenhouseEffectV1(
     );
   }
 
-  const contributions =
+  let contributions =
     greenhouseContributionsV1(
       retentionState.retainedGasComponents,
     );
 
-  const greenhouseActiveMoleFraction01 =
+  let greenhouseActiveMoleFraction01 =
     contributions.reduce(
       (
         total,
@@ -302,7 +306,7 @@ function generateGreenhouseEffectV1(
       0,
     );
 
-  const weightedGreenhouseMoleFraction =
+  let weightedGreenhouseMoleFraction =
     contributions.reduce(
       (
         total,
@@ -372,10 +376,6 @@ function generateGreenhouseEffectV1(
     );
   }
 
-  const weightedGreenhouseColumnPascal =
-    retainedSurfacePressurePascal *
-    weightedGreenhouseMoleFraction;
-
   const equilibriumTemperatureKelvin =
     planetaryEquilibriumTemperatureKelvin(
       retentionState.sourceReferenceMeanInsolationEarth,
@@ -383,18 +383,74 @@ function generateGreenhouseEffectV1(
     );
 
   const radiativeColumnState =
-    atmosphereRadiativeColumnState(
+    atmosphereMultispeciesRadiativeColumnState(
       retainedSurfacePressurePascal,
       planet.physicalProperties.surfaceGravityMetersPerSecondSquared,
       equilibriumTemperatureKelvin,
       retentionState.retainedGasComponents,
+      {
+        isTidallySynchronized: planet.isTidallySynchronized,
+        dayLengthHours: planet.dayLengthHours,
+      },
     );
+
+  contributions =
+    greenhouseContributionsV1(
+      radiativeColumnState.effectiveGasComponents,
+    );
+
+  greenhouseActiveMoleFraction01 =
+    contributions.reduce(
+      (total, contribution) =>
+        total +
+        contribution.retainedMoleFraction01,
+      0,
+    );
+
+  weightedGreenhouseMoleFraction =
+    contributions.reduce(
+      (total, contribution) =>
+        total +
+        contribution.weightedMoleFraction,
+      0,
+    );
+
+  const weightedGreenhouseColumnPascal =
+    radiativeColumnState.effectiveSurfacePressurePascal *
+    weightedGreenhouseMoleFraction;
 
   const pressureBroadeningFactor =
     radiativeColumnState.pressureBroadeningFactor;
 
   const infraredOpticalDepthProxy =
     radiativeColumnState.infraredOpticalDepthProxy;
+
+  const sourceWaterVaporMixingRatio01 =
+    retentionState.retainedGasComponents.find(
+      component => component.gas === AtmosphereGas.WATER_VAPOR,
+    )?.moleFraction01 ?? 0;
+
+  const sourceWaterVaporPartialPressurePascal =
+    retainedSurfacePressurePascal * sourceWaterVaporMixingRatio01;
+
+  const waterVaporEquilibriumState =
+    new AtmosphereWaterVaporEquilibriumState(
+      retainedSurfacePressurePascal,
+      sourceWaterVaporMixingRatio01,
+      sourceWaterVaporPartialPressurePascal,
+      radiativeColumnState.effectiveSurfacePressurePascal,
+      radiativeColumnState.effectiveWaterVaporMixingRatio01,
+      radiativeColumnState.effectiveWaterVaporPartialPressurePascal,
+      radiativeColumnState.saturationVaporPressurePascal,
+      Math.max(
+        0,
+        sourceWaterVaporPartialPressurePascal -
+          radiativeColumnState.effectiveWaterVaporPartialPressurePascal,
+      ),
+      radiativeColumnState.waterVaporIterationCount,
+      radiativeColumnState.waterVaporConverged,
+      radiativeColumnState.effectiveGasComponents,
+    );
 
   return new AtmosphereGreenhouseEffect(
     planet.planetOrdinal,
@@ -422,6 +478,8 @@ function generateGreenhouseEffectV1(
       false,
     ),
     contributions,
+    waterVaporEquilibriumState,
+    radiativeColumnState.condensableEquilibriumState,
   );
 }
 

@@ -410,10 +410,10 @@ function orbitSection(
       ),
       field(
         'Forzamiento de marea orbital',
-        formatNormalizedIndex(
-          orbit.tidalHeatingProxy,
+        formatNullableNormalizedIndex(
+          detail.geology.tidalHeatingIndex01,
         ),
-        'Contribución de marea en escala normalizada de 0 a 1.',
+        `Índice normalizado 0–1 derivado del proxy orbital bruto ${formatAdaptive(orbit.tidalHeatingProxy)}.`,
       ),
     ],
   );
@@ -529,17 +529,25 @@ function atmosphereSection(
     'Presión retenida, composición gaseosa, retención atmosférica y efecto invernadero.',
     [
       field(
-        'Régimen de presión',
+        'Régimen potencial inicial',
         labelPressureRegime(
           atmosphere.pressureRegime,
         ),
-        `Retenida: ${labelPressureRegime(atmosphere.retainedPressureRegime)}`,
+        'Clasificación de la atmósfera potencial antes de escape y condensación.',
       ),
       field(
-        'Presión superficial retenida',
+        'Régimen gaseoso actual',
+        labelPressureRegime(
+          atmosphere.retainedPressureRegime,
+        ),
+        'Clasificación de la presión gaseosa final tras retención y equilibrio de condensación.',
+      ),
+      field(
+        'Presión superficial gaseosa',
         formatPressure(
           atmosphere.retainedSurfacePressurePascal,
         ),
+        'Estado final tras escape atmosférico y equilibrio de condensación multiespecie.',
       ),
       field(
         'Retención atmosférica',
@@ -631,7 +639,9 @@ function climateSection(
         ),
       ),
       field(
-        'Rango térmico diurno',
+        detail.general.isTidallySynchronized
+          ? 'Contraste térmico día/noche'
+          : 'Rango térmico diurno',
         formatNullableKelvinDelta(
           climate.diurnalTemperatureRangeKelvin,
         ),

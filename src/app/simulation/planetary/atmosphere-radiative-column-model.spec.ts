@@ -492,3 +492,244 @@ describe(
     );
   },
 );
+
+describe(
+  'atmosphereRadiativeColumnState Kiraum-positive regression',
+  () => {
+    const kiraumLikeGases =
+      gases([
+        [AtmosphereGas.NITROGEN, 0.428],
+        [AtmosphereGas.CARBON_DIOXIDE, 0.392],
+        [AtmosphereGas.WATER_VAPOR, 0.021],
+        [AtmosphereGas.ARGON, 0.110],
+        [AtmosphereGas.CARBON_MONOXIDE, 0.014],
+        [AtmosphereGas.SULFUR_DIOXIDE, 0.035],
+      ]);
+
+    it(
+      'keeps a Kiraum-like moderate low-gravity CO2 column strongly greenhouse while avoiding direct broadband line addition',
+      () => {
+        const thin =
+          atmosphereRadiativeColumnState(
+            5_000,
+            0.554 *
+              EARTH_GRAVITY,
+            237.1,
+            kiraumLikeGases,
+          );
+
+        const moderate =
+          atmosphereRadiativeColumnState(
+            86_600,
+            0.554 *
+              EARTH_GRAVITY,
+            237.1,
+            kiraumLikeGases,
+          );
+
+        const co2 =
+          moderate
+            .greenhouseGasDiagnostics
+            .find(
+              diagnostic =>
+                diagnostic.gas ===
+                AtmosphereGas.CARBON_DIOXIDE,
+            )!;
+
+        const moderateWarming =
+          warmingKelvin(
+            237.1,
+            moderate.infraredOpticalDepthProxy,
+          );
+
+        const thinWarming =
+          warmingKelvin(
+            237.1,
+            thin.infraredOpticalDepthProxy,
+          );
+
+        expect(
+          co2.partialPressurePascal /
+            100_000,
+        ).toBeGreaterThan(0.30);
+
+        expect(
+          moderate.totalColumnMassEarth,
+        ).toBeGreaterThan(1);
+
+        expect(
+          moderateWarming,
+        ).toBeGreaterThan(50);
+
+        expect(
+          moderateWarming,
+        ).toBeGreaterThan(
+          thinWarming *
+            2,
+        );
+
+        expect(
+          moderateWarming,
+        ).toBeLessThan(100);
+
+        expect(
+          moderate.overlapLimitedLineOpticalDepthProxy,
+        ).toBeLessThan(
+          moderate.summedLineOpticalDepthProxy,
+        );
+
+        expect(
+          moderate.infraredOpticalDepthProxy /
+            (1 + moderate.infraredOpticalDepthProxy),
+        ).toBeGreaterThan(0.60);
+      },
+    );
+
+    it(
+      'raises greenhouse monotonically across thin to dense columns while molecular line overlap shows diminishing broadband leverage',
+      () => {
+        const pressuresBar = [
+          0.05,
+          0.1,
+          0.3,
+          0.9,
+          3,
+          10,
+        ];
+
+        const states =
+          pressuresBar.map(
+            pressureBar =>
+              atmosphereRadiativeColumnState(
+                pressureBar *
+                  100_000,
+                0.554 *
+                  EARTH_GRAVITY,
+                237.1,
+                kiraumLikeGases,
+              ),
+          );
+
+        const warmings =
+          states.map(
+            state =>
+              warmingKelvin(
+                237.1,
+                state.infraredOpticalDepthProxy,
+              ),
+          );
+
+        for (
+          let index = 1;
+          index < warmings.length;
+          index += 1
+        ) {
+          expect(
+            warmings[index],
+          ).toBeGreaterThan(
+            warmings[index - 1],
+          );
+        }
+
+        const overlapFractions =
+          states.map(
+            state =>
+              state.overlapLimitedLineOpticalDepthProxy /
+              state.summedLineOpticalDepthProxy,
+          );
+
+        for (
+          let index = 1;
+          index < overlapFractions.length;
+          index += 1
+        ) {
+          expect(
+            overlapFractions[index],
+          ).toBeLessThan(
+            overlapFractions[index - 1],
+          );
+        }
+      },
+    );
+
+    it(
+      'keeps SO2 as a bounded gas-phase IR contributor without counting its saturated bands independently from all other molecules',
+      () => {
+        const state =
+          atmosphereRadiativeColumnState(
+            86_600,
+            0.554 *
+              EARTH_GRAVITY,
+            237.1,
+            kiraumLikeGases,
+          );
+
+        const so2 =
+          state
+            .greenhouseGasDiagnostics
+            .find(
+              diagnostic =>
+                diagnostic.gas ===
+                AtmosphereGas.SULFUR_DIOXIDE,
+            )!;
+
+        expect(
+          so2.opticalDepthContribution,
+        ).toBeGreaterThan(0);
+
+        expect(
+          so2.opticalDepthContribution,
+        ).toBeLessThan(
+          state.summedLineOpticalDepthProxy,
+        );
+
+        expect(
+          state.overlapLimitedLineOpticalDepthProxy,
+        ).toBeLessThan(
+          state.summedLineOpticalDepthProxy,
+        );
+      },
+    );
+
+    it(
+      'keeps trace dry-gas fractions physical when an almost pure steam atmosphere condenses',
+      () => {
+        /* This deliberately uses the normalization tolerance boundary. The
+         * fractions sum to 1 + 2.02578286e-10, which is accepted by the
+         * atmospheric composition contract, while the represented dry N2
+         * inventory is about 20.26% larger than 1 - xH2O. Subtracting H2O from
+         * the total pressure therefore used to expose N2 with x > 1 after
+         * almost all steam condensed. */
+        const nitrogenFraction = 1.2025782860175125e-9;
+        const waterFraction = 0.999999999;
+
+        const state = atmosphereRadiativeColumnState(
+          101_325,
+          EARTH_GRAVITY,
+          120,
+          gases([
+            [AtmosphereGas.WATER_VAPOR, waterFraction],
+            [AtmosphereGas.NITROGEN, nitrogenFraction],
+          ]),
+        );
+
+        const totalFraction = state.effectiveGasComponents.reduce(
+          (sum, component) => sum + component.moleFraction01,
+          0,
+        );
+        const nitrogen = state.effectiveGasComponents.find(
+          component => component.gas === AtmosphereGas.NITROGEN,
+        );
+
+        expect(nitrogen).toBeDefined();
+        expect(nitrogen!.moleFraction01).toBeGreaterThan(0);
+        expect(nitrogen!.moleFraction01).toBeLessThanOrEqual(1);
+        expect(totalFraction).toBeCloseTo(1, 12);
+        expect(state.effectiveSurfacePressurePascal).toBeGreaterThanOrEqual(
+          101_325 * nitrogenFraction,
+        );
+      },
+    );
+
+  },
+);

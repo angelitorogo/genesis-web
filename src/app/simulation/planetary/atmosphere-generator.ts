@@ -139,6 +139,7 @@ export class AtmosphereGenerator {
           retentionState,
           climateState,
           climateVariabilityState,
+          greenhouseEffect,
         );
 
     const geologyState =
@@ -272,6 +273,7 @@ export class AtmosphereGenerator {
           retentionStates,
           climateStates,
           climateVariabilityStates,
+          greenhouseEffects,
         );
 
     const geologyStates =
