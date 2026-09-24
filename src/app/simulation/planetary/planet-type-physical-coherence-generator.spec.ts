@@ -276,6 +276,37 @@ describe(
     );
 
     it(
+      'should flag ROCKY when the same low-density Shutis-like composition requires the existing ICE family',
+      () => {
+        const fixture =
+          physicalFixture({
+            type: PlanetType.ROCKY,
+            massEarth: 1.413,
+            envelopeFraction01: 0.065,
+            density: 2.55,
+            iceBearingSolidFraction01: 0.421,
+            relation: PlanetaryOrbitHabitableZoneRelation.CROSSES_OUTER_EDGE,
+            insolation: 0.45,
+            tidalHeating: 0,
+          });
+
+        const assessment =
+          PlanetTypePhysicalCoherenceGenerator.generate(
+            generationKey,
+            fixture.physical,
+            fixture.classification,
+            fixture.composition,
+          );
+
+        expect(assessment.expectedPlanetType).toBe(PlanetType.ICE);
+        expect(assessment.issues).toContain(
+          PlanetTypePhysicalCoherenceIssue.TYPE_RULE_MISMATCH,
+        );
+        expect(assessment.planetType).toBe(PlanetType.ROCKY);
+      },
+    );
+
+    it(
       'should diagnose internal envelope and ice-bearing budgets that drift from the point-19.2/19.4 sources',
       () => {
         const fixture =

@@ -295,6 +295,64 @@ describe(
     );
 
     it(
+      'should classify a Shutis-like low-density volatile-bearing world as ICE without changing its generated bulk properties',
+      () => {
+        const fixture =
+          singlePlanetFixture({
+            massEarth: 1.413,
+            envelopeFraction01: 0.065,
+            densityGramsPerCubicCentimeter: 2.55,
+            iceBearingSolidFraction01: 0.421,
+            semiMajorAxisAu: 1.8,
+            eccentricity: 0.02,
+            radiativeRelation:
+              PlanetaryOrbitHabitableZoneRelation.CROSSES_OUTER_EDGE,
+            expectedType:
+              PlanetType.ICE,
+          });
+
+        const classification =
+          PlanetTypeGenerator.generate(
+            generationKey,
+            fixture.system,
+            fixture.physicalProperties,
+          );
+
+        expect(classification.planetType).toBe(PlanetType.ICE);
+        expect(classification.sourceMassEarth).toBe(1.413);
+        expect(classification.sourceDensityGramsPerCubicCentimeter).toBe(2.55);
+        expect(classification.sourceEnvelopeMassFraction01).toBeCloseTo(0.065, 12);
+      },
+    );
+
+    it(
+      'should keep a genuinely refractory-rich approximately ninety-percent rock/metal world in ROCKY',
+      () => {
+        const fixture =
+          singlePlanetFixture({
+            massEarth: 1.1,
+            envelopeFraction01: 0,
+            densityGramsPerCubicCentimeter: 5.4,
+            iceBearingSolidFraction01: 0.10,
+            semiMajorAxisAu: 1.2,
+            eccentricity: 0.02,
+            radiativeRelation:
+              PlanetaryOrbitHabitableZoneRelation.CROSSES_OUTER_EDGE,
+            expectedType:
+              PlanetType.ROCKY,
+          });
+
+        expect(
+          PlanetTypeGenerator.generate(
+            generationKey,
+            fixture.system,
+            fixture.physicalProperties,
+          ).planetType,
+        ).toBe(PlanetType.ROCKY);
+      },
+    );
+
+    it(
       'should prefer an ice giant over a gas giant when a Neptune-scale envelope-rich world inherits an ice-rich solid reservoir',
       () => {
         const fixture =

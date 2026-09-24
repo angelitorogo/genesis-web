@@ -41,8 +41,12 @@ const V1_MAX_INFERRED_BOND_ALBEDO01 =
  * V1 intentionally does not reuse the planet Atmosphere/Climate aggregates from
  * phase 20: a relevant moon is not promoted to Planet and has no MoonSeed yet.
  * Instead this engine projects whether its frozen point-21.3 bulk state and
- * point-21.4 tidal heat can plausibly support retained gas, water phases and
- * present-day geological activity. No new seed, hash or PRNG draw is consumed.
+ * point-21.4 tidal heat can plausibly support a present-day gas column, water
+ * phases and geological activity. The legacy atmosphereRetentionIndex01 name is
+ * a combined column-support proxy: escape support is distinct from volatile
+ * supply/replenishment support contributed by inventory and tidal activity. It
+ * is not an absolute surface-pressure measurement. No new seed, hash or PRNG
+ * draw is consumed.
  */
 export class MoonEnvironmentEngine {
 
@@ -132,6 +136,10 @@ export class MoonEnvironmentEngine {
         0.45,
       );
 
+    /* Supply/replenishment support is intentionally separate in the formula
+     * from escapeRetentionSupport01. A tiny body may retain gas poorly yet
+     * sustain a transient thin column when volatile inventory and tidal
+     * outgassing/sublimation support are strong. */
     const volatileInventorySupport01 =
       clamp01(
         0.75 *
@@ -183,6 +191,10 @@ export class MoonEnvironmentEngine {
         2.2,
       );
 
+    /* V1 has no authoritative lunar surface-pressure contract. This remains
+     * a liquid-water potential proxy gated by thermal and atmospheric-column
+     * support, never a claim that the water triple-point pressure is measured
+     * or guaranteed. The scientific fiche must present it as potential only. */
     const surfaceLiquidWaterPotentialIndex01 =
       clamp01(
         waterInventoryIndex01 *

@@ -250,6 +250,100 @@ describe(
     );
 
     it(
+      'should reproduce an Aulaum-like tiny warm moon as THIN only when strong tidal volatile replenishment supports the gas column',
+      () => {
+        const host =
+          hostFixture(
+            1,
+            1,
+            1.2203788226680443,
+          );
+
+        const physical =
+          new MoonPhysicalProperties(
+            1,
+            1,
+            4.95e-4,
+            0.13,
+            1.5,
+            0.029,
+          );
+
+        const heated =
+          MoonEnvironmentEngine.generate(
+            host,
+            physical,
+            tidalFixture(
+              host,
+              physical,
+              20,
+              1,
+            ),
+          );
+
+        const quiet =
+          MoonEnvironmentEngine.generate(
+            host,
+            physical,
+            tidalFixture(
+              host,
+              physical,
+              20,
+              0,
+            ),
+          );
+
+        expect(heated.estimatedSurfaceTemperatureKelvin).toBeCloseTo(274.6, 1);
+        expect(heated.atmosphereRetentionIndex01).toBeCloseTo(0.371, 2);
+        expect(heated.atmosphereRegime).toBe(MoonAtmosphereRegime.THIN);
+        expect(quiet.atmosphereRegime).not.toBe(MoonAtmosphereRegime.THIN);
+        expect(heated.atmosphereRetentionIndex01).toBeGreaterThan(
+          quiet.atmosphereRetentionIndex01,
+        );
+      },
+    );
+
+    it(
+      'should not promote a warm exosphere into stable surface liquid water while still allowing subsurface potential',
+      () => {
+        const host =
+          hostFixture(
+            1,
+            1,
+            2.114,
+          );
+
+        const physical =
+          new MoonPhysicalProperties(
+            1,
+            1,
+            5e-4,
+            0.13,
+            1.5,
+            0.03,
+          );
+
+        const environment =
+          MoonEnvironmentEngine.generate(
+            host,
+            physical,
+            tidalFixture(
+              host,
+              physical,
+              20,
+              0,
+            ),
+          );
+
+        expect(environment.estimatedSurfaceTemperatureKelvin).toBeGreaterThan(273);
+        expect(environment.atmosphereRegime).toBe(MoonAtmosphereRegime.EXOSPHERE);
+        expect(environment.surfaceLiquidWaterPotentialIndex01).toBeLessThan(0.35);
+        expect(environment.hasSurfaceLiquidWater).toBe(false);
+        expect(environment.hasSubsurfaceOcean).toBe(true);
+      },
+    );
+
+    it(
       'should reject point-21.3/21.4 products belonging to different moon ordinals',
       () => {
         const host =

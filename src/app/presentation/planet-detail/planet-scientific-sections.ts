@@ -406,7 +406,9 @@ function orbitSection(
       ),
       field(
         'Insolación media de referencia',
-        `${DECIMAL_3.format(orbit.referenceMeanInsolationEarth)} S⊕`,
+        formatScientificInsolationEarth(
+          orbit.referenceMeanInsolationEarth,
+        ),
       ),
       field(
         'Forzamiento de marea orbital',
@@ -526,7 +528,7 @@ function atmosphereSection(
     'atmosphere',
     'SECCIÓN 04',
     'Atmósfera',
-    'Presión retenida, composición gaseosa, retención atmosférica y efecto invernadero.',
+    'Presión gaseosa, composición, retención de volátiles y efecto invernadero.',
     [
       field(
         'Régimen potencial inicial',
@@ -550,11 +552,13 @@ function atmosphereSection(
         'Estado final tras escape atmosférico y equilibrio de condensación multiespecie.',
       ),
       field(
-        'Retención atmosférica',
+        'Retención de volátiles',
         labelRetention(
           atmosphere.retentionRegime,
         ),
-        `Inventario retenido ${formatPercent(atmosphere.atmosphericInventoryRetentionFraction01)}`,
+        retainedVolatileInventoryNote(
+          atmosphere.atmosphericInventoryRetentionFraction01,
+        ),
       ),
       field(
         'Densidad de referencia',
@@ -737,9 +741,11 @@ function geologySection(
         labelMagneticField(
           geology.magneticFieldRegime,
         ),
-        geology.hasSustainedDynamo
-          ? 'Dínamo sostenida'
-          : 'Sin dínamo sostenida',
+        magneticFieldContextNote(
+          geology.magneticFieldRegime,
+          geology.hasSustainedDynamo,
+          geology.magnetosphereRegime,
+        ),
       ),
       field(
         'Magnetosfera',
@@ -897,6 +903,52 @@ function field(
     value,
     note,
   });
+}
+
+export function formatScientificInsolationEarth(
+  value:
+    number,
+): string {
+  if (
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    throw new RangeError(
+      'referenceMeanInsolationEarth must be finite and non-negative.',
+    );
+  }
+
+  return `${formatAdaptive(value)} S⊕`;
+}
+
+export function retainedVolatileInventoryNote(
+  fraction01:
+    number,
+): string {
+  return `Inventario volátil conservado tras escape ${formatPercent(fraction01)} · puede incluir especies que después condensan y no permanecen en fase gaseosa`;
+}
+
+export function magneticFieldContextNote(
+  fieldRegime:
+    string,
+
+  hasSustainedDynamo:
+    boolean,
+
+  magnetosphereRegime:
+    string,
+): string {
+  if (hasSustainedDynamo) {
+    return 'Dínamo sostenida';
+  }
+
+  if (fieldRegime !== 'NONE') {
+    return magnetosphereRegime === 'INDUCED'
+      ? 'Campo no sostenido; interacción inducida, no una magnetosfera de dínamo global'
+      : 'Campo intrínseco/residual no sostenido; no implica magnetosfera global';
+  }
+
+  return 'Sin dínamo sostenida';
 }
 
 function formatAdaptive(

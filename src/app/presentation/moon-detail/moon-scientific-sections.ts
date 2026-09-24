@@ -338,7 +338,9 @@ function environmentSection(
     [
       field(
         'Insolación media de referencia',
-        `${DECIMAL_3.format(environment.referenceMeanInsolationEarth)} S⊕`,
+        formatScientificInsolationEarth(
+          environment.referenceMeanInsolationEarth,
+        ),
       ),
       field(
         'Albedo de Bond inferido',
@@ -363,7 +365,7 @@ function environmentSection(
         labelAtmosphere(
           environment.atmosphereRegime,
         ),
-        `Retención ${formatIndex(environment.atmosphereRetentionIndex01)}`,
+        `Soporte de columna ${formatIndex(environment.atmosphereRetentionIndex01)} · incluye escape y reposición volátil/mareal; no es presión superficial`,
       ),
       field(
         'Agua',
@@ -395,8 +397,8 @@ function environmentSection(
           environment.surfaceLiquidWaterPotentialIndex01,
         ),
         environment.hasSurfaceLiquidWater
-          ? 'Agua líquida superficial potencial'
-          : null,
+          ? 'Potencial V1: soporte térmico/atmosférico; la presión lunar absoluta no está modelada'
+          : 'Sin evidencia suficiente de líquido superficial estable',
       ),
       field(
         'Geología',
@@ -625,6 +627,22 @@ function field(
   });
 }
 
+export function formatScientificInsolationEarth(
+  value:
+    number,
+): string {
+  if (
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+    throw new RangeError(
+      'referenceMeanInsolationEarth must be finite and non-negative.',
+    );
+  }
+
+  return `${formatAdaptive(value)} S⊕`;
+}
+
 function formatAdaptive(
   value:
     number,
@@ -717,9 +735,9 @@ function labelWater(
     case 'ICE_AND_SUBSURFACE_OCEAN':
       return 'Hielo y océano subsuperficial';
     case 'SURFACE_LIQUID':
-      return 'Agua líquida superficial';
+      return 'Potencial de agua líquida superficial';
     case 'MIXED':
-      return 'Estado mixto';
+      return 'Estado mixto potencial';
     default:
       return regime;
   }

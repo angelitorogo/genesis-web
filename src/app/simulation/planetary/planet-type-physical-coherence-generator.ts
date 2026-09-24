@@ -102,6 +102,18 @@ const V1_COLD_ICE_PHENOTYPE_MAX_DENSITY_GRAMS_PER_CUBIC_CENTIMETER =
 const V1_COLD_ICE_PHENOTYPE_MAX_MASS_EARTH =
   1.0;
 
+const V1_COMPOSITIONAL_ICE_MAX_ENVELOPE_FRACTION =
+  0.10;
+
+const V1_COMPOSITIONAL_ICE_MIN_VOLATILE_BEARING_BULK_FRACTION =
+  0.40;
+
+const V1_COMPOSITIONAL_ICE_MAX_DENSITY_GRAMS_PER_CUBIC_CENTIMETER =
+  3.20;
+
+const V1_COMPOSITIONAL_ICE_MAX_MASS_EARTH =
+  1.8;
+
 const V1_OCEAN_MIN_ICE_BEARING_SOLID_FRACTION =
   0.35;
 
@@ -462,6 +474,14 @@ function classifyExpectedTypeV1(
     1 -
     iceBearingSolidFraction01;
 
+  const volatileBearingBulkFraction01 =
+    (
+      1 -
+      envelopeMassFraction01
+    ) *
+      iceBearingSolidFraction01 +
+    envelopeMassFraction01;
+
   const hasPersistentReferenceThermalContext =
     typeClassification
       .stellarEvolutionRegime !==
@@ -531,6 +551,23 @@ function classifyExpectedTypeV1(
       PlanetaryOrbitHabitableZoneRelation.WHOLLY_INTERIOR_TO_ZONE
   ) {
     return PlanetType.DESERT;
+  }
+
+  /* Composition-only fallback for low-density volatile-bearing solids.
+   * This is intentionally evaluated after VOLCANIC/OCEAN/DESERT so existing
+   * thermal/surface specializations keep precedence. ICE here describes the
+   * bulk formation/composition family, not a claim of present-day surface ice. */
+  if (
+    physicalProperties.massEarth <
+      V1_COMPOSITIONAL_ICE_MAX_MASS_EARTH &&
+    physicalProperties.densityGramsPerCubicCentimeter <=
+      V1_COMPOSITIONAL_ICE_MAX_DENSITY_GRAMS_PER_CUBIC_CENTIMETER &&
+    envelopeMassFraction01 <=
+      V1_COMPOSITIONAL_ICE_MAX_ENVELOPE_FRACTION &&
+    volatileBearingBulkFraction01 >=
+      V1_COMPOSITIONAL_ICE_MIN_VOLATILE_BEARING_BULK_FRACTION
+  ) {
+    return PlanetType.ICE;
   }
 
   if (

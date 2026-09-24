@@ -18,8 +18,10 @@ const SOURCE_TOLERANCE =
 /**
  * Point-21.5 atmosphere/water/geology state for one relevant moon.
  *
- * All values are first-order deterministic proxies. Atmosphere is expressed as
- * retention support rather than exact pressure/composition; water describes
+ * All values are first-order deterministic proxies. The legacy
+ * atmosphereRetentionIndex01 property is combined present-day gas-column
+ * support (escape retention plus volatile/tidal replenishment), not an exact
+ * pressure/composition measurement; water describes
  * phase/inventory opportunities rather than ocean depth; geology combines size
  * heat retention with the already frozen point-21.4 tidal-heating source.
  */
