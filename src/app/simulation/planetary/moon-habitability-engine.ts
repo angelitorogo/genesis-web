@@ -1,5 +1,6 @@
 import {
   type MoonEnvironmentState,
+  moonSubsurfaceThermalSupportIndex01,
 } from '../../domain/planetary/moon-environment-state';
 
 import {
@@ -61,13 +62,11 @@ export class MoonHabitabilityEngine {
       );
 
     const subsurfaceEnergySupportIndex01 =
-      clamp01(
-        0.60 *
-          environment
-            .internalHeatRetentionIndex01 +
-        0.65 *
-          environment
-            .sourceTidalHeatingIndex01,
+      moonSubsurfaceThermalSupportIndex01(
+        environment
+          .internalHeatRetentionIndex01,
+        environment
+          .sourceTidalHeatingIndex01,
       );
 
     const surfaceGeologySupport01 =

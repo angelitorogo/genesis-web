@@ -339,7 +339,112 @@ describe(
         expect(environment.atmosphereRegime).toBe(MoonAtmosphereRegime.EXOSPHERE);
         expect(environment.surfaceLiquidWaterPotentialIndex01).toBeLessThan(0.35);
         expect(environment.hasSurfaceLiquidWater).toBe(false);
+        expect(environment.subsurfaceOceanPotentialIndex01).toBeGreaterThan(0);
+        expect(environment.hasSubsurfaceOcean).toBe(false);
+      },
+    );
+
+    it(
+      'should keep structural subsurface-ocean potential without claiming a maintained ocean when energy support is negligible',
+      () => {
+        const host = hostFixture(1, 1, 0.01);
+        const physical = new MoonPhysicalProperties(
+          1,
+          1,
+          1e-4,
+          0.09,
+          1.60,
+          0.012,
+        );
+
+        const environment = MoonEnvironmentEngine.generate(
+          host,
+          physical,
+          tidalFixture(host, physical, 30, 0),
+        );
+
+        expect(environment.waterInventoryIndex01).toBeGreaterThan(0.80);
+        expect(environment.subsurfaceOceanPotentialIndex01).toBeGreaterThan(0.35);
+        expect(environment.subsurfaceThermalSupportIndex01).toBeLessThan(0.20);
+        expect(environment.hasSubsurfaceOcean).toBe(false);
+        expect(environment.waterRegime).toBe(MoonWaterRegime.SURFACE_ICE);
+      },
+    );
+
+    it(
+      'should allow a maintained subsurface ocean when strong tides provide enough energy to an ice-rich moon',
+      () => {
+        const host = hostFixture(318, 11.2, 0.01);
+        const physical = new MoonPhysicalProperties(
+          1,
+          1,
+          0.003,
+          0.20,
+          1.70,
+          0.075,
+        );
+
+        const environment = MoonEnvironmentEngine.generate(
+          host,
+          physical,
+          tidalFixture(host, physical, 6.4, 0.75),
+        );
+
+        expect(environment.waterInventoryIndex01).toBeGreaterThan(0.50);
+        expect(environment.subsurfaceThermalSupportIndex01).toBeGreaterThanOrEqual(0.20);
         expect(environment.hasSubsurfaceOcean).toBe(true);
+      },
+    );
+
+    it(
+      'should allow retained internal heat to maintain an ocean even when tidal heating is low',
+      () => {
+        const host = hostFixture(318, 11.2, 0.011);
+        const physical = new MoonPhysicalProperties(
+          1,
+          1,
+          0.0225,
+          0.404,
+          1.88,
+          0.138,
+        );
+
+        const environment = MoonEnvironmentEngine.generate(
+          host,
+          physical,
+          tidalFixture(host, physical, 20, 0),
+        );
+
+        expect(environment.internalHeatRetentionIndex01).toBeGreaterThan(0.30);
+        expect(environment.sourceTidalHeatingIndex01).toBe(0);
+        expect(environment.subsurfaceThermalSupportIndex01).toBeGreaterThanOrEqual(0.20);
+        expect(environment.hasSubsurfaceOcean).toBe(true);
+      },
+    );
+
+    it(
+      'should not invent a subsurface ocean for a water-poor moon even under extreme tidal heating',
+      () => {
+        const host = hostFixture(318, 11.2, 0.02);
+        const physical = new MoonPhysicalProperties(
+          1,
+          1,
+          0.015,
+          0.286,
+          3.53,
+          0.183,
+        );
+
+        const environment = MoonEnvironmentEngine.generate(
+          host,
+          physical,
+          tidalFixture(host, physical, 6, 1),
+        );
+
+        expect(environment.waterInventoryIndex01).toBeLessThan(0.08);
+        expect(environment.subsurfaceThermalSupportIndex01).toBeGreaterThan(0.20);
+        expect(environment.hasSubsurfaceOcean).toBe(false);
+        expect(environment.waterRegime).toBe(MoonWaterRegime.NONE);
       },
     );
 

@@ -4,6 +4,7 @@ import {
 
 import {
   MoonEnvironmentState,
+  moonSubsurfaceThermalSupportIndex01,
 } from '../../domain/planetary/moon-environment-state';
 
 import {
@@ -211,14 +212,6 @@ export class MoonEnvironmentEngine {
         1.4,
       );
 
-    const waterRegime =
-      waterRegimeV1(
-        waterInventoryIndex01,
-        subsurfaceOceanPotentialIndex01,
-        surfaceLiquidWaterPotentialIndex01,
-        estimatedSurfaceTemperatureKelvin,
-      );
-
     const radiusHeatRetention01 =
       clamp01(
         (
@@ -250,6 +243,17 @@ export class MoonEnvironmentEngine {
           radiusHeatRetention01 +
         0.40 *
           massHeatRetention01,
+      );
+
+    const waterRegime =
+      waterRegimeV1(
+        waterInventoryIndex01,
+        subsurfaceOceanPotentialIndex01,
+        surfaceLiquidWaterPotentialIndex01,
+        estimatedSurfaceTemperatureKelvin,
+        internalHeatRetentionIndex01,
+        tidalState
+          .tidalHeatingIndex01,
       );
 
     const geologicalActivityIndex01 =
@@ -312,6 +316,12 @@ function waterRegimeV1(
 
   estimatedSurfaceTemperatureKelvin:
     number,
+
+  internalHeatRetentionIndex01:
+    number,
+
+  tidalHeatingIndex01:
+    number,
 ): MoonWaterRegime {
   if (
     waterInventoryIndex01 <
@@ -322,7 +332,11 @@ function waterRegimeV1(
 
   const hasSubsurfaceOcean =
     subsurfaceOceanPotentialIndex01 >=
-    0.35;
+      0.35 &&
+    moonSubsurfaceThermalSupportIndex01(
+      internalHeatRetentionIndex01,
+      tidalHeatingIndex01,
+    ) >= 0.20;
 
   const hasSurfaceLiquidWater =
     surfaceLiquidWaterPotentialIndex01 >=

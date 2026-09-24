@@ -70,6 +70,38 @@ describe(
     );
 
     it(
+      'should reject an asserted subsurface ocean when structural potential is high but thermal support is insufficient',
+      () => {
+        expect(
+          () =>
+            new MoonEnvironmentState(
+              1,
+              1,
+              1e-4,
+              0.09,
+              1.6,
+              0.012,
+              0.01,
+              0,
+              1,
+              0.50,
+              23,
+              23,
+              0.10,
+              MoonAtmosphereRegime.EXOSPHERE,
+              0.95,
+              0.54,
+              0,
+              MoonWaterRegime.ICE_AND_SUBSURFACE_OCEAN,
+              0.01,
+              0.004,
+              MoonGeologyRegime.INERT,
+            ),
+        ).toThrow(RangeError);
+      },
+    );
+
+    it(
       'should reject atmosphere, water or geology labels that disagree with their frozen indices',
       () => {
         const create = (

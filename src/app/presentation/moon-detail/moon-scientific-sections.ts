@@ -388,8 +388,10 @@ function environmentSection(
           environment.subsurfaceOceanPotentialIndex01,
         ),
         environment.hasSubsurfaceOcean
-          ? 'Candidato a océano subsuperficial'
-          : null,
+          ? 'Océano subsuperficial con soporte energético suficiente'
+          : environment.subsurfaceOceanPotentialIndex01 >= 0.35
+            ? 'Potencial estructural elevado, pero sin soporte energético suficiente para afirmar un océano actual'
+            : null,
       ),
       field(
         'Potencial de agua líquida superficial',

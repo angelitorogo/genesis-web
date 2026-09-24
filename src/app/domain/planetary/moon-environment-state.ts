@@ -201,17 +201,19 @@ export class MoonEnvironmentState {
       'surfaceLiquidWaterPotentialIndex01',
     );
 
+    assertUnitInterval(
+      internalHeatRetentionIndex01,
+      'internalHeatRetentionIndex01',
+    );
+
     assertWaterRegimeConsistency(
       waterRegime,
       waterInventoryIndex01,
       subsurfaceOceanPotentialIndex01,
       surfaceLiquidWaterPotentialIndex01,
       estimatedSurfaceTemperatureKelvin,
-    );
-
-    assertUnitInterval(
       internalHeatRetentionIndex01,
-      'internalHeatRetentionIndex01',
+      sourceTidalHeatingIndex01,
     );
 
     assertUnitInterval(
@@ -283,6 +285,15 @@ export class MoonEnvironmentState {
     );
   }
 
+  get subsurfaceThermalSupportIndex01():
+    number {
+
+    return moonSubsurfaceThermalSupportIndex01(
+      this.internalHeatRetentionIndex01,
+      this.sourceTidalHeatingIndex01,
+    );
+  }
+
   get isGeologicallyActive():
     boolean {
 
@@ -312,6 +323,12 @@ function assertWaterRegimeConsistency(
 
   estimatedSurfaceTemperatureKelvin:
     number,
+
+  internalHeatRetentionIndex01:
+    number,
+
+  sourceTidalHeatingIndex01:
+    number,
 ): void {
   if (
     waterInventoryIndex01 <
@@ -331,7 +348,11 @@ function assertWaterRegimeConsistency(
 
   const hasSubsurface =
     subsurfaceOceanPotentialIndex01 >=
-    0.35;
+      0.35 &&
+    moonSubsurfaceThermalSupportIndex01(
+      internalHeatRetentionIndex01,
+      sourceTidalHeatingIndex01,
+    ) >= 0.20;
 
   const hasSurfaceLiquid =
     surfaceLiquidWaterPotentialIndex01 >=
@@ -375,6 +396,25 @@ function assertWaterRegimeConsistency(
       'MoonEnvironmentState waterRegime must match the frozen point-21.5 water potentials.',
     );
   }
+}
+
+export function moonSubsurfaceThermalSupportIndex01(
+  internalHeatRetentionIndex01:
+    number,
+
+  tidalHeatingIndex01:
+    number,
+): number {
+  return Math.min(
+    1,
+    Math.max(
+      0,
+      0.60 *
+        internalHeatRetentionIndex01 +
+      0.65 *
+        tidalHeatingIndex01,
+    ),
+  );
 }
 
 function assertPositiveInteger(
