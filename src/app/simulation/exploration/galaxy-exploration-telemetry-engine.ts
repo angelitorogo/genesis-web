@@ -14,6 +14,15 @@ import {
 } from '../../domain/exploration/galaxy-exploration-telemetry';
 
 import {
+  isGalaxyKnownWaterWorldCoverage,
+} from '../../domain/exploration/galaxy-known-water-world-index';
+
+import {
+  hasGalaxyKnownWaterMoonSubsurfaceOceanEvidence,
+  isGalaxyKnownWaterMoonSurfaceLiquidPotential,
+} from '../../domain/exploration/galaxy-known-water-moon-index';
+
+import {
   ExplorationResultKind,
 } from '../../domain/exploration/exploration-sector-result';
 
@@ -41,10 +50,6 @@ import {
 import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
-
-import {
-  MoonWaterRegime,
-} from '../../domain/planetary/moon-water-regime';
 
 import {
   PlanetType,
@@ -121,9 +126,6 @@ const SIGNED_LONG_MAX =
 
 const PERCENT_BASIS_POINTS =
   10_000n;
-
-const LIQUID_WATER_THRESHOLD_01 =
-  0.05;
 
 const ROCKY_MOON_MAX_ICE_01 =
   0.35;
@@ -884,10 +886,11 @@ function projectPlanet(
   }
 
   if (
-    surfaceLiquidWaterCoverageFraction01 !== null &&
-    surfaceLiquidWaterCoverageFraction01 >= LIQUID_WATER_THRESHOLD_01
+    isGalaxyKnownWaterWorldCoverage(
+      surfaceLiquidWaterCoverageFraction01,
+    )
   ) {
-    breakdown.planets.liquidSurfaceAtLeast40Percent += 1n;
+    breakdown.planets.liquidSurfaceAtLeast20Percent += 1n;
   }
 }
 
@@ -938,16 +941,17 @@ function projectMoonSystem(
     }
 
     if (
-      moon.environmentState.surfaceLiquidWaterPotentialIndex01 >=
-      LIQUID_WATER_THRESHOLD_01
+      isGalaxyKnownWaterMoonSurfaceLiquidPotential(
+        moon.environmentState.surfaceLiquidWaterPotentialIndex01,
+      )
     ) {
       breakdown.moons.surfaceLiquidPotentialAtLeast40Percent += 1n;
     }
 
     if (
-      moon.environmentState.waterRegime === MoonWaterRegime.SUBSURFACE_OCEAN ||
-      moon.environmentState.waterRegime === MoonWaterRegime.ICE_AND_SUBSURFACE_OCEAN ||
-      moon.environmentState.waterRegime === MoonWaterRegime.MIXED
+      hasGalaxyKnownWaterMoonSubsurfaceOceanEvidence(
+        moon.environmentState.waterRegime,
+      )
     ) {
       breakdown.moons.subsurfaceOceanEvidence += 1n;
     }
@@ -1056,7 +1060,7 @@ type MutableBreakdown = {
     iceGiant: bigint;
     postCollapseModel: bigint;
     unclassified: bigint;
-    liquidSurfaceAtLeast40Percent: bigint;
+    liquidSurfaceAtLeast20Percent: bigint;
   };
   moons: {
     rocky: bigint;
@@ -1130,7 +1134,7 @@ function emptyBreakdownCounts():
       iceGiant: 0n,
       postCollapseModel: 0n,
       unclassified: 0n,
-      liquidSurfaceAtLeast40Percent: 0n,
+      liquidSurfaceAtLeast20Percent: 0n,
     },
     moons: {
       rocky: 0n,

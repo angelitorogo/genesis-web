@@ -79,6 +79,10 @@ import {
 } from '../runtime/accretion-disk-observation.runtime';
 
 import {
+  scientificRouteUniverseRef,
+} from '../scientific/scientific-route-identity';
+
+import {
   UniverseSeedFacade,
 } from '../universe/universe-seed.facade';
 
@@ -87,6 +91,9 @@ const SIGNED_LONG_MAX =
   1n;
 
 export interface GalaxyDetailModel {
+  readonly routeUniverseRef:
+    string;
+
   readonly profile:
     GalaxyGeneralProfile;
 
@@ -635,6 +642,11 @@ export class GalaxyDetailFacade {
 
           model:
             Object.freeze({
+              routeUniverseRef:
+                scientificRouteUniverseRef(
+                  generationKey.universeSeed.serialize(),
+                  generationKey.generatorVersionCode,
+                ),
               profile,
               statistics,
               explorationTelemetry,

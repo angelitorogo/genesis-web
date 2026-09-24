@@ -1,0 +1,142 @@
+<genesis-screen>
+  <main class="gww" data-testid="galaxy-water-world-index-page" aria-labelledby="gww-title">
+    <header class="gww__header">
+      <div>
+        <p class="gww__eyebrow">ARCHIVO CIENTÍFICO / 26.1c</p>
+        <h1 id="gww-title">Mundos con agua líquida superficial ≥ 20 %</h1>
+        <p>
+          Índice knowledge-safe de planetas ya conocidos en sistemas confirmados.
+          No representa la población real completa de la galaxia.
+        </p>
+      </div>
+
+      @if (facade.model(); as model) {
+        <a
+          class="gww__back"
+          [routerLink]="['/galaxies', model.galaxyIndex.toString()]"
+          [queryParams]="{ u: model.routeUniverseRef }"
+          data-testid="gww-back-galaxy"
+        >
+          ← Volver a la galaxia
+        </a>
+      }
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section class="gww__state" data-testid="gww-loading">
+          Reconstruyendo catálogo científico conocido…
+        </section>
+      }
+
+      @case ('empty') {
+        <section class="gww__state" data-testid="gww-empty-universe">
+          No existe todavía un universo persistido disponible.
+        </section>
+      }
+
+      @case ('not-found') {
+        <section class="gww__state" data-testid="gww-not-found">
+          La galaxia indicada no forma parte del conocimiento persistido.
+        </section>
+      }
+
+      @case ('error') {
+        <section class="gww__state gww__state--error" data-testid="gww-error" role="alert">
+          {{ facade.errorMessage() }}
+        </section>
+      }
+
+      @case ('content') {
+        @if (facade.model(); as model) {
+          <section class="gww__summary" data-testid="gww-summary">
+            <div>
+              <small>GALAXIA</small>
+              <strong>{{ model.galaxyName ?? model.galaxyDesignationCode }}</strong>
+            </div>
+            <div>
+              <small>SISTEMAS CON MUNDOS ≥ 20 %</small>
+              <strong data-testid="gww-system-count">{{ model.index.systems.length }}</strong>
+            </div>
+            <div>
+              <small>PLANETAS CONOCIDOS ≥ 20 %</small>
+              <strong data-testid="gww-world-count">{{ formatCount(model.index.totalWorlds) }}</strong>
+            </div>
+          </section>
+
+          @if (model.index.systems.length === 0) {
+            <section class="gww__state" data-testid="gww-no-worlds">
+              <strong>Todavía no se conocen mundos con ≥ 20 % de agua líquida superficial.</strong>
+              <p>
+                El índice solo incorpora planetas de sistemas persistidos en estado CONFIRMED.
+              </p>
+            </section>
+          } @else {
+            <section class="gww__systems" aria-label="Sistemas con mundos acuáticos conocidos">
+              @for (system of model.index.systems; track systemTrackKey(system)) {
+                <article class="gww__system" data-testid="gww-system-card">
+                  <header class="gww__system-head">
+                    <div>
+                      <small>{{ multiplicityLabel(system) }}</small>
+                      <h2>{{ system.designation }}</h2>
+                      <p>
+                        {{ system.worlds.length }}
+                        {{ system.worlds.length === 1 ? 'mundo conocido' : 'mundos conocidos' }}
+                        con cobertura superficial de agua líquida ≥ 20 %.
+                      </p>
+                    </div>
+
+                    <a
+                      class="gww__action"
+                      [routerLink]="systemRoute(system)"
+                      [queryParams]="queryParams()"
+                      data-testid="gww-open-system"
+                    >
+                      ABRIR SISTEMA
+                    </a>
+                  </header>
+
+                  <div class="gww__worlds">
+                    @for (world of system.worlds; track world.locator.bodyIndex) {
+                      <section class="gww__world" data-testid="gww-world-card">
+                        <div class="gww__world-title">
+                          <div>
+                            <small>{{ planetTypeLabel(world.planetType) }}</small>
+                            <h3 data-testid="gww-world-name">{{ world.designation }}</h3>
+                          </div>
+                          <strong data-testid="gww-water-coverage">
+                            {{ formatWaterCoverage(world.surfaceLiquidWaterCoverageFraction01) }}
+                          </strong>
+                        </div>
+
+                        <dl>
+                          <div>
+                            <dt>ARQUITECTURA ORBITAL</dt>
+                            <dd>{{ orbitClassLabel(world) }}</dd>
+                          </div>
+                          <div>
+                            <dt>IDENTIDAD PÚBLICA</dt>
+                            <dd>B{{ world.locator.bodyIndex }}</dd>
+                          </div>
+                        </dl>
+
+                        <a
+                          class="gww__action gww__action--primary"
+                          [routerLink]="planetRoute(world)"
+                          [queryParams]="queryParams()"
+                          data-testid="gww-open-planet"
+                        >
+                          ABRIR FICHA CIENTÍFICA
+                        </a>
+                      </section>
+                    }
+                  </div>
+                </article>
+              }
+            </section>
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>

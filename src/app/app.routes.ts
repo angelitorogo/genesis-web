@@ -73,6 +73,26 @@ export const genesisRoutes: Routes = [
     title: 'Sistema estelar | GENESIS',
   },
   {
+    path: 'galaxies/:galaxyIndex/water-worlds',
+    loadComponent: () =>
+      import(
+        './presentation/galaxy-water-world-index/galaxy-water-world-index'
+      ).then(
+        (module) => module.GalaxyWaterWorldIndexPage,
+      ),
+    title: 'Mundos con agua líquida | GENESIS',
+  },
+  {
+    path: 'galaxies/:galaxyIndex/water-moons',
+    loadComponent: () =>
+      import(
+        './presentation/galaxy-water-moon-index/galaxy-water-moon-index'
+      ).then(
+        (module) => module.GalaxyWaterMoonIndexPage,
+      ),
+    title: 'Lunas con agua | GENESIS',
+  },
+  {
     path: 'galaxies/:galaxyIndex',
     loadComponent: () =>
       import(

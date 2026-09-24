@@ -1,0 +1,237 @@
+<genesis-screen>
+  <main class="gwm" data-testid="galaxy-water-moon-index-page" aria-labelledby="gwm-title">
+    <header class="gwm__header">
+      <div>
+        <p class="gwm__eyebrow">ARCHIVO CIENTÍFICO / 26.1c</p>
+        <h1 id="gwm-title">Lunas con agua conocida</h1>
+        <p>
+          Índice knowledge-safe de lunas ya caracterizadas en sistemas confirmados.
+          Se mantienen separados el potencial superficial y los indicios de océano subsuperficial.
+        </p>
+      </div>
+
+      @if (facade.model(); as model) {
+        <a
+          class="gwm__back"
+          [routerLink]="['/galaxies', model.galaxyIndex.toString()]"
+          [queryParams]="{ u: model.routeUniverseRef }"
+          data-testid="gwm-back-galaxy"
+        >
+          ← Volver a la galaxia
+        </a>
+      }
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section class="gwm__state" data-testid="gwm-loading">
+          Reconstruyendo catálogo lunar conocido…
+        </section>
+      }
+
+      @case ('empty') {
+        <section class="gwm__state" data-testid="gwm-empty-universe">
+          No existe todavía un universo persistido disponible.
+        </section>
+      }
+
+      @case ('not-found') {
+        <section class="gwm__state" data-testid="gwm-not-found">
+          La galaxia indicada no forma parte del conocimiento persistido.
+        </section>
+      }
+
+      @case ('error') {
+        <section class="gwm__state gwm__state--error" data-testid="gwm-error" role="alert">
+          {{ facade.errorMessage() }}
+        </section>
+      }
+
+      @case ('content') {
+        @if (facade.model(); as model) {
+          <section class="gwm__summary" data-testid="gwm-summary">
+            <div>
+              <small>GALAXIA</small>
+              <strong>{{ model.galaxyName ?? model.galaxyDesignationCode }}</strong>
+            </div>
+            <div>
+              <small>SISTEMAS CON LUNAS DESTACADAS</small>
+              <strong data-testid="gwm-system-count">{{ model.index.systems.length }}</strong>
+            </div>
+            <div>
+              <small>LUNAS ÚNICAS EN EL ÍNDICE</small>
+              <strong data-testid="gwm-unique-count">{{ formatCount(model.index.totalUniqueMoons) }}</strong>
+            </div>
+            <div>
+              <small>POTENCIAL SUPERFICIAL ≥ 40 %</small>
+              <strong data-testid="gwm-surface-count">{{ formatCount(model.index.surfaceLiquidPotentialMoonCount) }}</strong>
+            </div>
+            <div>
+              <small>OCÉANO SUBSUPERFICIAL</small>
+              <strong data-testid="gwm-subsurface-count">{{ formatCount(model.index.subsurfaceOceanEvidenceMoonCount) }}</strong>
+            </div>
+          </section>
+
+          @if (model.index.systems.length === 0) {
+            <section class="gwm__state" data-testid="gwm-no-moons">
+              <strong>Todavía no se conocen lunas que cumplan estos criterios de agua.</strong>
+              <p>
+                El índice solo incorpora lunas relevantes de sistemas persistidos en estado CONFIRMED.
+              </p>
+            </section>
+          } @else {
+            <p class="gwm__compact-note">
+              Los dos catálogos y cada sistema pueden desplegarse de forma independiente para mantener compacto el índice.
+            </p>
+
+            <details class="gwm__catalog" id="superficie" data-testid="gwm-surface-catalog">
+              <summary class="gwm__catalog-summary">
+                <div>
+                  <p class="gwm__eyebrow">AGUA SUPERFICIAL</p>
+                  <h2 id="gwm-surface-title">Potencial de agua líquida superficial ≥ 40 %</h2>
+                </div>
+                <div class="gwm__catalog-meta">
+                  <strong>{{ formatCount(model.index.surfaceLiquidPotentialMoonCount) }} LUNAS</strong>
+                  <span class="gwm__toggle-label" aria-hidden="true"></span>
+                </div>
+              </summary>
+
+              <p class="gwm__catalog-note">
+                Este valor es un índice físico de potencial, no un porcentaje observado de superficie cubierta por agua.
+              </p>
+
+              @if (!hasResults(model.index.surfaceLiquidPotentialMoonCount)) {
+                <div class="gwm__state" data-testid="gwm-no-surface-moons">
+                  No hay lunas conocidas que alcancen este umbral.
+                </div>
+              } @else {
+                <div class="gwm__systems">
+                  @for (system of model.index.systems; track systemTrackKey(system)) {
+                    @if (hasSurfaceMoons(system)) {
+                      <details class="gwm__system" data-testid="gwm-surface-system-card">
+                        <summary class="gwm__system-summary">
+                          <div>
+                            <small>{{ multiplicityLabel(system) }}</small>
+                            <h3>{{ system.designation }}</h3>
+                            <p>{{ surfaceMoons(system).length }} {{ surfaceMoons(system).length === 1 ? 'luna conocida' : 'lunas conocidas' }} con potencial superficial ≥ 40 %.</p>
+                          </div>
+                          <span class="gwm__toggle-label" aria-hidden="true"></span>
+                        </summary>
+
+                        <div class="gwm__system-content">
+                          <a class="gwm__action gwm__system-action" [routerLink]="systemRoute(system)" [queryParams]="queryParams()">
+                            ABRIR SISTEMA
+                          </a>
+
+                          <div class="gwm__moons">
+                            @for (moon of surfaceMoons(system); track moonTrackKey(moon)) {
+                              <article class="gwm__moon" data-testid="gwm-surface-moon-card">
+                                <div class="gwm__moon-title">
+                                  <div>
+                                    <small>{{ waterRegimeLabel(moon.waterRegime) }}</small>
+                                    <h4>{{ moon.designation }}</h4>
+                                  </div>
+                                  <strong>{{ formatIndex(moon.surfaceLiquidWaterPotentialIndex01) }}</strong>
+                                </div>
+                                <dl>
+                                  <div><dt>PLANETA ANFITRIÓN</dt><dd>{{ moon.hostPlanetDesignation }}</dd></div>
+                                  <div><dt>ARQUITECTURA</dt><dd>{{ orbitClassLabel(moon) }}</dd></div>
+                                  <div><dt>POTENCIAL SUBSUPERFICIAL</dt><dd>{{ formatIndex(moon.subsurfaceOceanPotentialIndex01) }}</dd></div>
+                                </dl>
+                                <a
+                                  class="gwm__action gwm__action--primary"
+                                  [routerLink]="moonRoute(moon)"
+                                  [queryParams]="queryParams()"
+                                  data-testid="gwm-open-surface-moon"
+                                >
+                                  ABRIR FICHA CIENTÍFICA
+                                </a>
+                              </article>
+                            }
+                          </div>
+                        </div>
+                      </details>
+                    }
+                  }
+                </div>
+              }
+            </details>
+
+            <details class="gwm__catalog" id="subsuperficie" data-testid="gwm-subsurface-catalog">
+              <summary class="gwm__catalog-summary">
+                <div>
+                  <p class="gwm__eyebrow">AGUA SUBSUPERFICIAL</p>
+                  <h2 id="gwm-subsurface-title">Indicios de océano subsuperficial</h2>
+                </div>
+                <div class="gwm__catalog-meta">
+                  <strong>{{ formatCount(model.index.subsurfaceOceanEvidenceMoonCount) }} LUNAS</strong>
+                  <span class="gwm__toggle-label" aria-hidden="true"></span>
+                </div>
+              </summary>
+
+              <p class="gwm__catalog-note">
+                Incluye los regímenes lunares que ya expresan océano subsuperficial o un estado mixto compatible.
+              </p>
+
+              @if (!hasResults(model.index.subsurfaceOceanEvidenceMoonCount)) {
+                <div class="gwm__state" data-testid="gwm-no-subsurface-moons">
+                  No hay lunas conocidas con estos indicios.
+                </div>
+              } @else {
+                <div class="gwm__systems">
+                  @for (system of model.index.systems; track systemTrackKey(system)) {
+                    @if (hasSubsurfaceMoons(system)) {
+                      <details class="gwm__system" data-testid="gwm-subsurface-system-card">
+                        <summary class="gwm__system-summary">
+                          <div>
+                            <small>{{ multiplicityLabel(system) }}</small>
+                            <h3>{{ system.designation }}</h3>
+                            <p>{{ subsurfaceMoons(system).length }} {{ subsurfaceMoons(system).length === 1 ? 'luna conocida' : 'lunas conocidas' }} con indicios de océano subsuperficial.</p>
+                          </div>
+                          <span class="gwm__toggle-label" aria-hidden="true"></span>
+                        </summary>
+
+                        <div class="gwm__system-content">
+                          <a class="gwm__action gwm__system-action" [routerLink]="systemRoute(system)" [queryParams]="queryParams()">
+                            ABRIR SISTEMA
+                          </a>
+
+                          <div class="gwm__moons">
+                            @for (moon of subsurfaceMoons(system); track moonTrackKey(moon)) {
+                              <article class="gwm__moon" data-testid="gwm-subsurface-moon-card">
+                                <div class="gwm__moon-title">
+                                  <div>
+                                    <small>{{ waterRegimeLabel(moon.waterRegime) }}</small>
+                                    <h4>{{ moon.designation }}</h4>
+                                  </div>
+                                  <strong>{{ formatIndex(moon.subsurfaceOceanPotentialIndex01) }}</strong>
+                                </div>
+                                <dl>
+                                  <div><dt>PLANETA ANFITRIÓN</dt><dd>{{ moon.hostPlanetDesignation }}</dd></div>
+                                  <div><dt>ARQUITECTURA</dt><dd>{{ orbitClassLabel(moon) }}</dd></div>
+                                  <div><dt>POTENCIAL SUPERFICIAL</dt><dd>{{ formatIndex(moon.surfaceLiquidWaterPotentialIndex01) }}</dd></div>
+                                </dl>
+                                <a
+                                  class="gwm__action gwm__action--primary"
+                                  [routerLink]="moonRoute(moon)"
+                                  [queryParams]="queryParams()"
+                                  data-testid="gwm-open-subsurface-moon"
+                                >
+                                  ABRIR FICHA CIENTÍFICA
+                                </a>
+                              </article>
+                            }
+                          </div>
+                        </div>
+                      </details>
+                    }
+                  }
+                </div>
+              }
+            </details>
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>

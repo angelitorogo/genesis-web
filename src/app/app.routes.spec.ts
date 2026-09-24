@@ -113,6 +113,26 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
+  it('should expose the point-26.1c water-world index route before the generic Galaxy detail route', () => {
+    const waterIndex = genesisRoutes.findIndex(route =>
+      route.path === 'galaxies/:galaxyIndex/water-worlds');
+    const galaxyDetail = genesisRoutes.findIndex(route =>
+      route.path === 'galaxies/:galaxyIndex');
+
+    expect(waterIndex).toBeGreaterThanOrEqual(0);
+    expect(waterIndex).toBeLessThan(galaxyDetail);
+  });
+
+  it('should expose the point-26.1c lunar water index route before the generic Galaxy detail route', () => {
+    const waterMoonIndex = genesisRoutes.findIndex(route =>
+      route.path === 'galaxies/:galaxyIndex/water-moons');
+    const galaxyDetail = genesisRoutes.findIndex(route =>
+      route.path === 'galaxies/:galaxyIndex');
+
+    expect(waterMoonIndex).toBeGreaterThanOrEqual(0);
+    expect(waterMoonIndex).toBeLessThan(galaxyDetail);
+  });
+
   it('should expose the point-11.3 Galaxy detail route before the catalogue route', () => {
     const detailIndex =
       genesisRoutes.findIndex(

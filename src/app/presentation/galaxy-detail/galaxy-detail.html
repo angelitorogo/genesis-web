@@ -1025,8 +1025,19 @@
                     <div><dt>GIGANTES HELADOS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.iceGiant) }}</dd></div>
                     <div><dt>POSTCOLAPSO · MODELO</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.postCollapseModel) }}</dd></div>
                     <div><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.unclassified) }}</dd></div>
-                    <div><dt>AGUA LÍQUIDA SUPERFICIAL ≥ 40 %</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.liquidSurfaceAtLeast40Percent) }}</dd></div>
+                    <div>
+                      <dt>AGUA LÍQUIDA SUPERFICIAL ≥ 20 %</dt>
+                      <dd>{{ formatBigInt(model.explorationTelemetry.breakdown.planets.liquidSurfaceAtLeast20Percent) }}</dd>
+                    </div>
                   </dl>
+                  <a
+                    class="gd__action gd__action--wide"
+                    [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'water-worlds']"
+                    [queryParams]="{ u: model.routeUniverseRef }"
+                    data-testid="galaxy-detail-water-world-index-link"
+                  >
+                    VER SISTEMAS CON MUNDOS ≥ 20 %
+                  </a>
                 } @else {
                   <p class="gd__knowledge-empty">Sin datos científicos todavía.</p>
                 }
@@ -1060,6 +1071,14 @@
                     <div><dt>POTENCIAL DE AGUA LÍQUIDA SUPERFICIAL ≥ 40 %</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.surfaceLiquidPotentialAtLeast40Percent) }}</dd></div>
                     <div><dt>INDICIOS DE OCÉANO SUBSUPERFICIAL</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.subsurfaceOceanEvidence) }}</dd></div>
                   </dl>
+                  <a
+                    class="gd__action gd__action--wide"
+                    [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'water-moons']"
+                    [queryParams]="{ u: model.routeUniverseRef }"
+                    data-testid="galaxy-detail-water-moon-index-link"
+                  >
+                    VER ÍNDICE DE LUNAS CON AGUA
+                  </a>
                 } @else {
                   <p class="gd__knowledge-empty">Sin datos científicos todavía.</p>
                 }

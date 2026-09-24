@@ -55,7 +55,7 @@ export interface GalaxyPlanetKnowledgeCounts {
   readonly iceGiant: bigint;
   readonly postCollapseModel: bigint;
   readonly unclassified: bigint;
-  readonly liquidSurfaceAtLeast40Percent: bigint;
+  readonly liquidSurfaceAtLeast20Percent: bigint;
 }
 
 export interface GalaxyMoonKnowledgeCounts {
@@ -195,7 +195,7 @@ export class GalaxyExplorationTelemetry {
     }
 
     if (
-      breakdown.planets.liquidSurfaceAtLeast40Percent > inventory.planets ||
+      breakdown.planets.liquidSurfaceAtLeast20Percent > inventory.planets ||
       breakdown.moons.surfaceLiquidPotentialAtLeast40Percent > inventory.moons ||
       breakdown.moons.subsurfaceOceanEvidence > inventory.moons ||
       breakdown.confirmedSystemsWithInventory > inventory.systems
