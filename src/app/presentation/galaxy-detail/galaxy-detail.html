@@ -282,8 +282,7 @@
             class="gd__science-layout"
             data-testid="galaxy-detail-science-layout"
           >
-            <div class="gd__science-main">
-              <section
+            <section
                 class="gd__section gd__section--summary"
                 data-testid="galaxy-detail-science-summary"
                 aria-labelledby="gd-summary-title"
@@ -391,6 +390,7 @@
                 </div>
               </section>
 
+            <div class="gd__science-main">
               @if (facade.scientificActionSuccessMessage(); as message) {
                 <div
                   class="gd__note gd__note--success gd__scientific-action-status"
@@ -574,7 +574,7 @@
                     }
 
                     @if (model.accretionDiskObservation; as disk) {
-                      <section class="gd__section gd__section--science"
+                      <section class="gd__section gd__section--science gd__section--wide"
                         data-testid="galaxy-detail-accretion-observation"
                         aria-labelledby="gd-accretion-title">
                         <div class="gd__section-heading">
@@ -592,7 +592,7 @@
                             Evidencia de campaña persistida · {{ disk.observedInstrumentLabel }}.
                             La campaña no acredita por sí sola una detección astronómica independiente.
                           </p>
-                          <app-compact-object-scientific-render [visual]="accretionDiskVisual" />
+                          <app-galaxy-accretion-disk-visualization [visual]="model.accretionDiskVisualization!" />
                           <dl class="gd__facts gd__facts--deep" data-testid="galaxy-detail-accretion-model-facts">
                             @for (fact of disk.modelFacts; track fact.label) {
                               <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd></div>

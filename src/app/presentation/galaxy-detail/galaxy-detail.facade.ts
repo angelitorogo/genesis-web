@@ -54,6 +54,11 @@ import {
 } from '../../simulation/exploration/galaxy-scientific-profile-engine';
 
 import {
+  createGalaxyAccretionDiskVisualization,
+  type GalaxyAccretionDiskVisualization,
+} from './galaxy-accretion-disk-visualization.model';
+
+import {
   GalaxyScientificStateTransitionAction,
   type GalaxyScientificStateTransitionActionValue,
 } from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
@@ -111,6 +116,9 @@ export interface GalaxyDetailModel {
 
   readonly accretionDiskObservation:
     AccretionDiskObservationStatus | null;
+
+  readonly accretionDiskVisualization:
+    GalaxyAccretionDiskVisualization | null;
 
   readonly isCurrentFocus:
     boolean;
@@ -599,6 +607,11 @@ export class GalaxyDetailFacade {
         ? await this.accretionDiskRuntime.inspect(generationKey, galaxyIndex)
         : null;
 
+      const accretionDiskVisualization =
+        accretionDiskObservation?.observed === true
+          ? createGalaxyAccretionDiskVisualization(generationKey, galaxyIndex)
+          : null;
+
       if (loadId !== this.loadSequence) return;
 
       const isCurrentFocus =
@@ -653,6 +666,7 @@ export class GalaxyDetailFacade {
               scientificProfile,
               globalDiscoveryPoints,
               accretionDiskObservation,
+              accretionDiskVisualization,
               isCurrentFocus,
 
               isVisitable:

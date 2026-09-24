@@ -1,0 +1,58 @@
+<figure class="gadv" data-testid="galaxy-detail-accretion-procedural-render">
+  <div class="gadv__header">
+    <div>
+      <small>28.1c / REFINAMIENTO VISUAL ESTRICTO</small>
+      <h4>{{ visual().heading }}</h4>
+    </div>
+    <span class="gadv__badge">{{ visual().badge }}</span>
+  </div>
+
+  <div class="gadv__readout" data-testid="galaxy-detail-accretion-readout">
+    <div class="gadv__regime">
+      <span>Régimen visual</span>
+      <strong>{{ strictInterpretation().regimeLabel }}</strong>
+      <p>{{ strictInterpretation().summary }}</p>
+    </div>
+
+    <dl class="gadv__readout-grid">
+      @for (fact of strictInterpretation().readoutFacts; track fact.label) {
+        <div>
+          <dt>{{ fact.label }}</dt>
+          <dd>{{ fact.value }}</dd>
+        </div>
+      }
+    </dl>
+  </div>
+
+  <div class="gadv__stage">
+    <div class="gadv__render-frame">
+      @if (agnModel(); as agnModel) {
+        <app-agn-nucleus-render [model]="agnModel" />
+      }
+
+      @if (quasarModel(); as quasarModel) {
+        <app-quasar-nucleus-render [model]="quasarModel" />
+      }
+    </div>
+
+    <aside class="gadv__legend" data-testid="galaxy-detail-accretion-legend">
+      <div class="gadv__legend-title">
+        <small>Lectura del esquema</small>
+        <strong>Estructura destacada</strong>
+      </div>
+
+      <dl class="gadv__legend-grid">
+        @for (fact of strictInterpretation().legendFacts; track fact.label) {
+          <div>
+            <dt>{{ fact.label }}</dt>
+            <dd>{{ fact.description }}</dd>
+          </div>
+        }
+      </dl>
+    </aside>
+  </div>
+
+  <figcaption class="gadv__caption">
+    {{ visual().caption }}
+  </figcaption>
+</figure>

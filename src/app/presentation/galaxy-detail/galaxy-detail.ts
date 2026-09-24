@@ -45,8 +45,7 @@ import {
 } from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
 
 
-import { CompactObjectScientificRender } from '../genesis-archive/compact-object-scientific-render';
-import { compactObjectScientificVisual } from '../genesis-archive/compact-object-scientific-visual';
+import { GalaxyAccretionDiskVisualizationComponent } from './galaxy-accretion-disk-visualization';
 
 import {
   GenesisScreen,
@@ -66,7 +65,7 @@ import {
   imports: [
     GenesisScreen,
     RouterLink,
-    CompactObjectScientificRender,
+    GalaxyAccretionDiskVisualizationComponent,
   ],
 
   templateUrl:
@@ -80,8 +79,6 @@ import {
 })
 export class GalaxyDetailPage
   implements OnInit {
-  readonly accretionDiskVisual = compactObjectScientificVisual('BLACK_HOLE', true, false);
-
 
   readonly facade =
     inject(

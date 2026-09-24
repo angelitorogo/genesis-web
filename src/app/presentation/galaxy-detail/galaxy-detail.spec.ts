@@ -2550,7 +2550,7 @@ describe(
         .not.toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-model-facts"]'))
         .toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-testid="compact-science-disk"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-procedural-render"]')).toBeNull();
       await facade.observeAccretionDisk();
       fixture.detectChanges();
       expect(commits).toBe(1);
@@ -2559,7 +2559,7 @@ describe(
         .not.toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-model-facts"]'))
         .not.toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-testid="compact-science-disk"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-procedural-render"]')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-observe-action"]'))
         .toBeNull();
     });
