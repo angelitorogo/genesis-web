@@ -249,9 +249,12 @@ export class MoonEnvironmentState {
   get hasWater():
     boolean {
 
+    /* Inventory and present-day surface expression are deliberately separate.
+     * A hot moon can retain a non-negligible volatile/water inventory while
+     * having no stable generalized surface-water phase in V1. */
     return this
-      .waterRegime !==
-      MoonWaterRegime.NONE;
+      .waterInventoryIndex01 >=
+      0.08;
   }
 
   get hasSubsurfaceOcean():
@@ -356,7 +359,10 @@ function assertWaterRegimeConsistency(
         : MoonWaterRegime.SUBSURFACE_OCEAN;
   } else {
     expected =
-      MoonWaterRegime.SURFACE_ICE;
+      estimatedSurfaceTemperatureKelvin >
+        273.16
+        ? MoonWaterRegime.NONE
+        : MoonWaterRegime.SURFACE_ICE;
   }
 
   if (

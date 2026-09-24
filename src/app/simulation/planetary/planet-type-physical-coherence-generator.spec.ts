@@ -105,6 +105,16 @@ describe(
               tidalHeating: 0,
             },
             {
+              type: PlanetType.ICE,
+              massEarth: 0.296,
+              envelopeFraction01: 0.068,
+              density: 2.43,
+              iceBearingSolidFraction01: 0.419,
+              relation: PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE,
+              insolation: 0.1,
+              tidalHeating: 0,
+            },
+            {
               type: PlanetType.SUPER_EARTH,
               massEarth: 5,
               envelopeFraction01: 0,

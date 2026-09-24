@@ -24,6 +24,11 @@ const WATER_CRITICAL_PRESSURE_PASCAL = 22_064_000;
 const WATER_SUBLIMATION_CLAUSIUS_KELVIN = 6_140;
 
 const MAX_PRESSURE_BROADENING_FACTOR = 2.5;
+/* Unresolved molecular bands have less broadband leverage at very low column
+ * pressure because line wings are narrow and spectral windows remain open.
+ * This smooth support term tends to 1 for ordinary/dense atmospheres and avoids
+ * a hard pressure threshold. */
+const LOW_PRESSURE_LINE_SUPPORT_HALF_COLUMN_EARTH = 0.08;
 const MAX_HYDROGEN_CIA_OPTICAL_DEPTH = 8;
 const MAX_DENSE_CONTINUUM_OPTICAL_DEPTH = 50;
 const MAX_WATER_VAPOR_EQUILIBRIUM_ITERATIONS = 8;
@@ -368,10 +373,14 @@ function evaluateRadiativeState(
       continue;
     }
 
+    const lowPressureLineSupport01 =
+      totalColumnMassEarth /
+      (totalColumnMassEarth + LOW_PRESSURE_LINE_SUPPORT_HALF_COLUMN_EARTH);
+
     const opticalDepthContribution = saturatingLineOpticalDepth(
       effectiveColumnMassEarth,
       profile,
-    ) * pressureBroadeningFactor;
+    ) * pressureBroadeningFactor * lowPressureLineSupport01;
 
     summedLineOpticalDepthProxy += opticalDepthContribution;
     greenhouseActiveMoleFraction01 += effectiveComponent.moleFraction01;

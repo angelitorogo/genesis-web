@@ -338,6 +338,18 @@ function waterRegimeV1(
       : MoonWaterRegime.SUBSURFACE_OCEAN;
   }
 
+  if (
+    estimatedSurfaceTemperatureKelvin >
+      273.16
+  ) {
+    /* Keep the separately exposed waterInventoryIndex01 intact: NONE here means
+     * no stable macroscopic surface-water expression in V1, not that volatile
+     * material was destroyed. This prevents hot airless moons from being
+     * labelled as globally ice-covered while still allowing future/local cold
+     * traps to be represented by the inventory diagnostics. */
+    return MoonWaterRegime.NONE;
+  }
+
   return MoonWaterRegime.SURFACE_ICE;
 }
 

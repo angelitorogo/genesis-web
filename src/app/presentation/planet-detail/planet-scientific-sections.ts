@@ -680,7 +680,12 @@ function geologySection(
           geology.geologyRegime,
         ),
         geology.isGeologicallyActive
-          ? 'Mundo geológicamente activo'
+          ? (
+              geology.geologicalActivityIndex01 !== null &&
+              geology.geologicalActivityIndex01 < 0.35
+                ? 'Actividad geológica moderada; no necesariamente dominante'
+                : 'Mundo geológicamente activo'
+            )
           : 'Actividad geológica no dominante',
       ),
       field(

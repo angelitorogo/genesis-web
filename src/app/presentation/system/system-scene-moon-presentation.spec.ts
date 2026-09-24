@@ -129,6 +129,25 @@ describe(
     );
 
     it(
+      'should not render a 442 K airless moon as a generalized icy surface even with a volatile-rich source',
+      () => {
+        const hot = buildSystemSceneMoonPresentationV1({
+          ...base,
+          moonIdentity: 'MOON-25-10-HOT',
+          atmosphereRegime: 'NONE',
+          waterInventoryIndex01: 0.55,
+          inferredIceRichnessIndex01: 0.70,
+          waterRegime: 'SURFACE_ICE',
+          estimatedSurfaceTemperatureKelvin: 442.5,
+          giantCompositionRegime: 'ICE_RICH',
+        });
+
+        expect(hot.surfaceStyle).not.toBe('ICY');
+        expect(hot.presentationIceCoverage01).toBeLessThan(0.05);
+      },
+    );
+
+    it(
       'should be exactly deterministic for the same frozen moon identity and sources',
       () => {
         expect(

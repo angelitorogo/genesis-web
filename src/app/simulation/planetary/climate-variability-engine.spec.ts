@@ -205,6 +205,42 @@ describe(
     );
 
     it(
+      'should increase atmospheric heat redistribution smoothly from trace to dense pressures',
+      () => {
+        const pressures = [16.9, 26.7, 29.8, 3_058, 161_800];
+        const efficiencies = pressures.map(retainedSurfacePressurePascal => {
+          const fixture = climateFixture({
+            eccentricity: 0,
+            axialTiltDegrees: 0,
+            rotationPeriodHours: 24,
+            dayLengthHours: 24,
+            retainedSurfacePressurePascal,
+            longwaveTrappingFraction01: 0.40,
+            meanSurfaceTemperatureKelvin: 264,
+          });
+
+          return ClimateVariabilityEngine.generate(
+            generationKey,
+            fixture.planet,
+            fixture.retention,
+            fixture.greenhouse,
+            fixture.climate,
+          ).heatRedistributionEfficiency01;
+        });
+
+        for (let index = 1; index < efficiencies.length; index += 1) {
+          expect(efficiencies[index]).toBeGreaterThan(efficiencies[index - 1]);
+        }
+
+        expect(efficiencies[0]).toBeLessThan(0.001);
+        expect(efficiencies[2]).toBeLessThan(0.001);
+        expect(efficiencies[3]).toBeGreaterThan(0.03);
+        expect(efficiencies[3]).toBeLessThan(0.08);
+        expect(efficiencies[4]).toBeGreaterThan(0.5);
+      },
+    );
+
+    it(
       'should classify high-eccentricity high-obliquity airless climates as extreme',
       () => {
         const fixture =

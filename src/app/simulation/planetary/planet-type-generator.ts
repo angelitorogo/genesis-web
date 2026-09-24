@@ -85,6 +85,22 @@ const V1_VOLCANIC_MIN_TIDAL_HEATING_PROXY =
 const V1_ICE_MIN_ICE_BEARING_SOLID_FRACTION =
   0.45;
 
+/* Low-density sub-Earth worlds can preserve a modest volatile envelope while
+ * still presenting an ice-dominated solid phenotype. Restrict this secondary
+ * path to cold, low-density, low-mass bodies so the ordinary solid/deep-envelope
+ * boundaries remain unchanged. */
+const V1_COLD_ICE_PHENOTYPE_MAX_ENVELOPE_FRACTION =
+  0.08;
+
+const V1_COLD_ICE_PHENOTYPE_MIN_ICE_BEARING_SOLID_FRACTION =
+  0.35;
+
+const V1_COLD_ICE_PHENOTYPE_MAX_DENSITY_GRAMS_PER_CUBIC_CENTIMETER =
+  3.20;
+
+const V1_COLD_ICE_PHENOTYPE_MAX_MASS_EARTH =
+  1.0;
+
 const V1_OCEAN_MIN_ICE_BEARING_SOLID_FRACTION =
   0.35;
 
@@ -462,6 +478,22 @@ function classifyPlanetTypeV1(
       V1_ICE_MIN_ICE_BEARING_SOLID_FRACTION &&
     radiativeRelation ===
       PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE
+  ) {
+    return PlanetType.ICE;
+  }
+
+  if (
+    hasPersistentReferenceThermalContext &&
+    radiativeRelation ===
+      PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE &&
+    physicalProperties.massEarth <=
+      V1_COLD_ICE_PHENOTYPE_MAX_MASS_EARTH &&
+    physicalProperties.densityGramsPerCubicCentimeter <=
+      V1_COLD_ICE_PHENOTYPE_MAX_DENSITY_GRAMS_PER_CUBIC_CENTIMETER &&
+    envelopeMassFraction01 <=
+      V1_COLD_ICE_PHENOTYPE_MAX_ENVELOPE_FRACTION &&
+    iceBearingSolidFraction01 >=
+      V1_COLD_ICE_PHENOTYPE_MIN_ICE_BEARING_SOLID_FRACTION
   ) {
     return PlanetType.ICE;
   }

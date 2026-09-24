@@ -369,6 +369,8 @@ function environmentSection(
         'Agua',
         labelWater(
           environment.waterRegime,
+          environment.waterInventoryIndex01,
+          environment.estimatedSurfaceTemperatureKelvin,
         ),
         `Inventario ${formatIndex(environment.waterInventoryIndex01)}`,
       ),
@@ -695,11 +697,19 @@ function labelAtmosphere(
 function labelWater(
   regime:
     string,
+
+  waterInventoryIndex01:
+    number,
+
+  estimatedSurfaceTemperatureKelvin:
+    number,
 ): string {
 
   switch (regime) {
     case 'NONE':
-      return 'Sin inventario de agua relevante';
+      return waterInventoryIndex01 >= 0.08 && estimatedSurfaceTemperatureKelvin > 273.16
+        ? 'Sin agua superficial estable'
+        : 'Sin inventario de agua relevante';
     case 'SURFACE_ICE':
       return 'Hielo superficial';
     case 'SUBSURFACE_OCEAN':

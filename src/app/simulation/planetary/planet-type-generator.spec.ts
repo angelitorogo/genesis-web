@@ -264,6 +264,37 @@ describe(
     );
 
     it(
+      'should classify a cold low-density sub-Earth with a modest volatile envelope as ICE instead of ROCKY fallback',
+      () => {
+        const fixture =
+          singlePlanetFixture({
+            massEarth: 0.296,
+            envelopeFraction01: 0.068,
+            densityGramsPerCubicCentimeter: 2.43,
+            iceBearingSolidFraction01: 0.419,
+            semiMajorAxisAu: 3,
+            eccentricity: 0.02,
+            radiativeRelation:
+              PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE,
+            expectedType:
+              PlanetType.ICE,
+          });
+
+        expect(
+          PlanetTypeGenerator
+            .generate(
+              generationKey,
+              fixture.system,
+              fixture.physicalProperties,
+            )
+            .planetType,
+        ).toBe(
+          PlanetType.ICE,
+        );
+      },
+    );
+
+    it(
       'should prefer an ice giant over a gas giant when a Neptune-scale envelope-rich world inherits an ice-rich solid reservoir',
       () => {
         const fixture =

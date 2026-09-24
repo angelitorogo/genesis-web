@@ -297,6 +297,32 @@ describe('multispecies atmospheric condensation equilibrium', () => {
     ).toBeLessThanOrEqual(saturationTolerancePascal);
   });
 
+  it('separates retained cryogenic inventory from the residual gas phase for a Wiathara-B-2-like N2 atmosphere', () => {
+    const result = state(
+      29.8,
+      0.30,
+      48.8,
+      [
+        [AtmosphereGas.NITROGEN, 0.975],
+        [AtmosphereGas.METHANE, 0.005],
+        [AtmosphereGas.HYDROGEN, 0.011],
+        [AtmosphereGas.HELIUM, 0.009],
+      ],
+    );
+
+    const nitrogen = species(result, AtmosphereGas.NITROGEN);
+
+    expect(result.condensableEquilibriumState.converged).toBe(true);
+    expect(nitrogen.sourcePartialPressurePascal).toBeGreaterThan(
+      nitrogen.effectivePartialPressurePascal,
+    );
+    expect(nitrogen.effectivePartialPressurePascal).toBeLessThanOrEqual(
+      nitrogen.saturationPressurePascal + 0.05,
+    );
+    expect(result.effectiveSurfacePressurePascal).toBeLessThan(29.8);
+    expect(result.effectiveSurfacePressurePascal).toBeGreaterThan(0);
+  });
+
   it('is exactly deterministic for identical retained inventory and forcing', () => {
     const args = [
       80_000,

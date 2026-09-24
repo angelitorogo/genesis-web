@@ -217,6 +217,39 @@ describe(
     );
 
     it(
+      'should not label a very hot volatile-bearing moon as generalized surface ice',
+      () => {
+        const host = hostFixture(1, 1, 10);
+        const physical = new MoonPhysicalProperties(
+          1,
+          1,
+          0.001,
+          0.10,
+          2.80,
+          0.10,
+        );
+        const tidal = tidalFixture(
+          host,
+          physical,
+          40,
+          0,
+        );
+
+        const environment = MoonEnvironmentEngine.generate(
+          host,
+          physical,
+          tidal,
+        );
+
+        expect(environment.estimatedSurfaceTemperatureKelvin).toBeGreaterThan(400);
+        expect(environment.waterInventoryIndex01).toBeGreaterThan(0.08);
+        expect(environment.hasSubsurfaceOcean).toBe(false);
+        expect(environment.waterRegime).toBe(MoonWaterRegime.NONE);
+        expect(environment.hasWater).toBe(true);
+      },
+    );
+
+    it(
       'should reject point-21.3/21.4 products belonging to different moon ordinals',
       () => {
         const host =

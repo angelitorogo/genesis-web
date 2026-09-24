@@ -148,17 +148,22 @@ export function buildSystemSceneMoonPresentationV1(
         )
       : 0;
 
+  const supportsGeneralizedSurfaceIce =
+    supportsGeneralizedSurfaceIceV1(input);
+
   const iceCoverage01 =
-    input.waterRegime === 'NONE'
-      ? clamp(0.12 * input.inferredIceRichnessIndex01, 0, 0.12)
-      : clamp(
-          0.16 +
-            0.50 * input.inferredIceRichnessIndex01 +
-            0.24 * input.waterInventoryIndex01 -
-            0.32 * liquidCoverage01,
-          0.08,
-          0.90,
-        );
+    !supportsGeneralizedSurfaceIce
+      ? clamp(0.05 * input.inferredIceRichnessIndex01, 0, 0.05)
+      : input.waterRegime === 'NONE'
+        ? clamp(0.12 * input.inferredIceRichnessIndex01, 0, 0.12)
+        : clamp(
+            0.16 +
+              0.50 * input.inferredIceRichnessIndex01 +
+              0.24 * input.waterInventoryIndex01 -
+              0.32 * liquidCoverage01,
+            0.08,
+            0.90,
+          );
 
   const volcanicCoverage01 =
     input.geologyRegime === 'EXTREME'
@@ -301,6 +306,12 @@ function moonShapeClass(
   return 'REGULAR_SMALL';
 }
 
+function supportsGeneralizedSurfaceIceV1(
+  input: SystemSceneMoonPresentationInputV1,
+): boolean {
+  return input.estimatedSurfaceTemperatureKelvin <= 273.16;
+}
+
 function moonSurfaceStyle(
   input: SystemSceneMoonPresentationInputV1,
 ): SystemSceneMoonSurfaceStyleV1 {
@@ -325,11 +336,17 @@ function moonSurfaceStyle(
     return 'OCEANIC';
   }
 
+  const supportsGeneralizedSurfaceIce =
+    supportsGeneralizedSurfaceIceV1(input);
+
   if (
-    input.giantCompositionRegime === 'ICE_RICH' ||
-    input.waterRegime === 'SURFACE_ICE' ||
-    input.waterRegime === 'ICE_AND_SUBSURFACE_OCEAN' ||
-    input.inferredIceRichnessIndex01 >= 0.62
+    supportsGeneralizedSurfaceIce &&
+    (
+      input.giantCompositionRegime === 'ICE_RICH' ||
+      input.waterRegime === 'SURFACE_ICE' ||
+      input.waterRegime === 'ICE_AND_SUBSURFACE_OCEAN' ||
+      input.inferredIceRichnessIndex01 >= 0.62
+    )
   ) {
     return 'ICY';
   }
