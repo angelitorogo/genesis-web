@@ -10,7 +10,9 @@ const CONSISTENCY_TOLERANCE =
  *
  * infraredWeight is a V1 effective longwave/CIA weight, not a laboratory
  * absorption coefficient. weightedMoleFraction is the species' retained mole
- * fraction multiplied by that weight and feeds the coarse optical-depth proxy.
+ * fraction multiplied by that weight and remains a composition diagnostic.
+ * The hotfix radiative-column model derives optical depth from absolute partial
+ * pressure and P/g column instead of feeding this weighted fraction directly.
  */
 export class AtmosphereGreenhouseGasContribution {
 

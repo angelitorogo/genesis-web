@@ -41,20 +41,16 @@ import {
 } from '../../domain/planetary/planet';
 
 import {
+  planetaryEquilibriumTemperatureKelvin,
+} from '../../domain/planetary/planet-climate-state';
+
+import {
   type PlanetarySystem,
 } from '../../domain/planetary/planetary-system';
 
-const V1_EARTH_REFERENCE_PRESSURE_PASCAL =
-  101_325;
-
-const V1_SOLID_GREENHOUSE_OPTICAL_DEPTH_SCALE =
-  60;
-
-const V1_SOLID_PRESSURE_BROADENING_EXPONENT =
-  0.72;
-
-const V1_MAX_PRESSURE_BROADENING_FACTOR =
-  12;
+import {
+  atmosphereRadiativeColumnState,
+} from './atmosphere-radiative-column-model';
 
 const V1_MAX_OPTICAL_DEPTH_PROXY =
   20;
@@ -76,8 +72,9 @@ const CONSISTENCY_TOLERANCE =
  *
  * V1 consumes zero PRNG draws and derives zero new seeds. It works exclusively
  * from the retained point-20.3 gas inventory. Solid worlds use retained surface
- * pressure, species-dependent longwave weights and a pressure-broadening proxy
- * to derive an infrared optical-depth proxy. A grey-atmosphere temperature
+ * pressure, gas partial pressures, the P/g atmospheric column, species-specific
+ * saturating longwave responses, H2 collision-induced absorption and a bounded
+ * H2O vapor-feedback pass to derive an infrared optical-depth proxy. A grey-atmosphere temperature
  * amplification factor is exposed only as a dimensionless point-20.5 handoff;
  * no equilibrium or surface temperature is generated here.
  *
@@ -375,28 +372,29 @@ function generateGreenhouseEffectV1(
     );
   }
 
-  const pressureBroadeningFactor =
-    Math.min(
-      V1_MAX_PRESSURE_BROADENING_FACTOR,
-      Math.pow(
-        retainedSurfacePressurePascal /
-          V1_EARTH_REFERENCE_PRESSURE_PASCAL,
-        V1_SOLID_PRESSURE_BROADENING_EXPONENT,
-      ),
-    );
-
   const weightedGreenhouseColumnPascal =
     retainedSurfacePressurePascal *
     weightedGreenhouseMoleFraction;
 
-  const infraredOpticalDepthProxy =
-    clamp(
-      V1_SOLID_GREENHOUSE_OPTICAL_DEPTH_SCALE *
-        weightedGreenhouseMoleFraction *
-        pressureBroadeningFactor,
-      0,
-      V1_MAX_OPTICAL_DEPTH_PROXY,
+  const equilibriumTemperatureKelvin =
+    planetaryEquilibriumTemperatureKelvin(
+      retentionState.sourceReferenceMeanInsolationEarth,
+      retentionState.sourceReferenceBondAlbedo01,
     );
+
+  const radiativeColumnState =
+    atmosphereRadiativeColumnState(
+      retainedSurfacePressurePascal,
+      planet.physicalProperties.surfaceGravityMetersPerSecondSquared,
+      equilibriumTemperatureKelvin,
+      retentionState.retainedGasComponents,
+    );
+
+  const pressureBroadeningFactor =
+    radiativeColumnState.pressureBroadeningFactor;
+
+  const infraredOpticalDepthProxy =
+    radiativeColumnState.infraredOpticalDepthProxy;
 
   return new AtmosphereGreenhouseEffect(
     planet.planetOrdinal,

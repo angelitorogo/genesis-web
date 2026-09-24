@@ -267,6 +267,56 @@ describe(
     );
 
     it(
+      'should not call liquid water persistent when a large part of the thermal cycle exceeds the pressure-dependent boiling point',
+      () => {
+        const fixture =
+          waterFixture({
+            planetType:
+              PlanetType.OCEAN,
+            iceBearingInteriorFraction01:
+              0.55,
+            retainedSurfacePressurePascal:
+              24_300,
+            retainedWaterVaporMoleFraction01:
+              0.024,
+            meanSurfaceTemperatureKelvin:
+              313.6,
+            minimumSurfaceTemperatureKelvin:
+              227.55,
+            maximumSurfaceTemperatureKelvin:
+              399.95,
+            stabilityIndex01:
+              0.60,
+          });
+
+        const inventory =
+          PlanetWaterEngine
+            .generate(
+              generationKey,
+              fixture.planet,
+              fixture.retention,
+              fixture.climate,
+              fixture.variability,
+            );
+
+        const boilingTemperatureKelvin =
+          waterBoilingTemperatureKelvinForPressurePascal(
+            24_300,
+          )!;
+
+        expect(
+          399.95,
+        ).toBeGreaterThan(
+          boilingTemperatureKelvin,
+        );
+
+        expect(
+          inventory.hasPersistentSurfaceLiquidWater,
+        ).toBe(false);
+      },
+    );
+
+    it(
       'should forbid ordinary liquid water below the triple-point pressure even when temperatures cross freezing',
       () => {
         const fixture =

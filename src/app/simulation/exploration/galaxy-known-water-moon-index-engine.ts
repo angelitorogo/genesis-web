@@ -18,6 +18,10 @@ import {
 import { StellarMultihostPublicTargetIndex } from '../stellar/stellar-multihost-public-target-index';
 import { StellarDesignationGenerator } from '../stellar/stellar-designation-generator';
 import { multihostPhysicalSourceKey } from '../stellar/stellar-multihost-physical-source-key';
+import {
+  stellarMultihostPublicMoonDesignation,
+  stellarMultihostPublicPlanetDesignation,
+} from '../stellar/stellar-multihost-public-designation';
 
 const SIGNED_LONG_MAX = (1n << 63n) - 1n;
 
@@ -156,10 +160,12 @@ function projectMultipleSystem(
     if (moon === null) continue;
 
     const hostLabel = publicMoon.parent.host;
-    const hostPlanetDesignation =
-      `${systemDesignation} ${hostLabel}-${publicMoon.parent.sourcePlanetOrdinal}`;
-    const designation =
-      `${hostPlanetDesignation} ${moonRomanNumeralV1(moon.moonOrdinal)}`;
+    const hostPlanetDesignation = stellarMultihostPublicPlanetDesignation(
+      systemDesignation, hostLabel, publicMoon.parent.sourcePlanetOrdinal,
+    );
+    const designation = stellarMultihostPublicMoonDesignation(
+      systemDesignation, hostLabel, publicMoon.parent.sourcePlanetOrdinal, moon.moonOrdinal,
+    );
 
     const projected = projectMoon(
       publicMoon.publicLocator,

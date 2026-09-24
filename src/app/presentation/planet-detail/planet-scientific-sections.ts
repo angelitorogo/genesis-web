@@ -409,7 +409,7 @@ function orbitSection(
         `${DECIMAL_3.format(orbit.referenceMeanInsolationEarth)} S⊕`,
       ),
       field(
-        'Calentamiento de marea',
+        'Forzamiento de marea orbital',
         formatNormalizedIndex(
           orbit.tidalHeatingProxy,
         ),
@@ -694,7 +694,7 @@ function geologySection(
         ),
       ),
       field(
-        'Índice de calentamiento de marea',
+        'Contribución térmica de marea',
         formatNullableNormalizedIndex(
           geology.tidalHeatingIndex01,
         ),

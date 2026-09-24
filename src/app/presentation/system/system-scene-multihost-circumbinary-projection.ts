@@ -1,6 +1,10 @@
 import { PlanetType } from '../../domain/planetary/planet-type';
 import { v2PlanetTimeScale } from './system-scene-v2-planet-cadence';
 import { type GeneratedMultipleHost } from '../../simulation/stellar/stellar-multihost-formation';
+import {
+  stellarMultihostPublicMoonDesignation,
+  stellarMultihostPublicPlanetDesignation,
+} from '../../simulation/stellar/stellar-multihost-public-designation';
 import { projectSystemSceneMotionContributions } from './system-scene-motion-projection';
 import { adaptiveSystemPlanetRadiusScene, buildLinearFitSystemScale } from './system-scene-scale-projection';
 import { buildSystemScenePlanetSpecialPresentationV1 } from './system-scene-planet-special-presentation';
@@ -27,6 +31,7 @@ export function appendSystemSceneMultihostCircumbinary(
   formation: GeneratedMultipleHost,
   scenePerAu: number,
   abParent: readonly SystemSceneMotionContributionSnapshot[],
+  publicSystemDesignation: string,
 ): SystemSceneSnapshot {
   const source = formation.circumbinary;
   if (!source.planets.length && source.habitability === null) return base;
@@ -64,7 +69,8 @@ export function appendSystemSceneMultihostCircumbinary(
     motions.push(motion);
     const axis = planet.orbit.semiMajorAxisAu * scenePerAu;
     orbits.push(Object.freeze({
-      id: orbitId, kind: 'planetary', label: `P${ordinal} · circumbinaria A–B`,
+      id: orbitId, kind: 'planetary',
+      label: stellarMultihostPublicPlanetDesignation(publicSystemDesignation, 'AB', ordinal),
       colorHex: '#69BDDD', opacity: 0.58, semiMajorScene: axis,
       semiMinorScene: axis * Math.sqrt(1 - motion.eccentricity ** 2),
       focusOffsetScene: axis * motion.eccentricity,
@@ -94,8 +100,11 @@ export function appendSystemSceneMultihostCircumbinary(
       [PlanetType.GAS_GIANT, PlanetType.ICE_GIANT, PlanetType.MINI_NEPTUNE].includes(type)
         ? 'gaseous' : type === PlanetType.OCEAN ? 'oceanic' :
           type === PlanetType.ICE ? 'icy' : type === PlanetType.VOLCANIC ? 'volcanic' : 'rocky';
+    const publicPlanetDesignation = stellarMultihostPublicPlanetDesignation(
+      publicSystemDesignation, 'AB', ordinal,
+    );
     const planetBody: SystemSceneBodySnapshot = Object.freeze({
-      id, kind: 'planet', label: `P${ordinal}`, title: `P${ordinal} · ${planet.designation.name} · planeta AB`,
+      id, kind: 'planet', label: publicPlanetDesignation, title: publicPlanetDesignation,
       colorHex: COLORS[type], radiusScene: adaptiveSystemPlanetRadiusScene(planet.radiusEarth),
       position: position(parts), orbitId, motionContributions: parts,
       surfaceStyle: surface, lightIntensity: 0, sourceLuminositySolar: null,
@@ -153,8 +162,11 @@ export function appendSystemSceneMultihostCircumbinary(
         presentationTimeScale: Math.min(1, moonMotion.periodDays / (playback * MOON_ORBIT_SECONDS)),
       });
       const moonParts = Object.freeze([...parts, localMoon]);
+      const publicMoonDesignation = stellarMultihostPublicMoonDesignation(
+        publicSystemDesignation, 'AB', ordinal, moon.moonOrdinal,
+      );
       orbits.push(Object.freeze({
-        id: moonOrbitId, kind: 'moon', label: moon.identity.designation.name,
+        id: moonOrbitId, kind: 'moon', label: publicMoonDesignation,
         colorHex: '#7EAFC6', opacity: 0.32, semiMajorScene: targetScene,
         semiMinorScene: targetScene * Math.sqrt(1 - moonMotion.eccentricity ** 2),
         focusOffsetScene: targetScene * moonMotion.eccentricity,
@@ -164,7 +176,7 @@ export function appendSystemSceneMultihostCircumbinary(
       }));
       moons.push(Object.freeze({
         id: moonId, kind: 'moon', label: moon.identity.designation.romanNumeral,
-        title: moon.identity.designation.name, hostPlanetId: id,
+        title: publicMoonDesignation, hostPlanetId: id,
         hostPlanetOrdinal: Number(entry.publicLocator.bodyIndex) + 1,
         colorHex: visual.presentationBaseColorHex, radiusScene: visual.presentationRadiusScene,
         position: position(moonParts), orbitId: moonOrbitId, motionContributions: moonParts,

@@ -7,6 +7,12 @@ import { ProceduralTargetResolver } from '../regeneration/procedural-target-reso
 import { StellarSystemMultiplicitySelector } from './stellar-system-multiplicity-selector';
 import { StellarMultihostFormation } from './stellar-multihost-formation';
 import { StellarMultihostScientificTargetResolver } from './stellar-multihost-scientific-target-resolver';
+import {
+  stellarMultihostPublicMoonDesignation,
+  stellarMultihostPublicPlanetDesignation,
+} from './stellar-multihost-public-designation';
+import { StellarDesignationGenerator } from './stellar-designation-generator';
+import { multihostPhysicalSourceKey } from './stellar-multihost-physical-source-key';
 
 const key = new UniverseGenerationKey(
   UniverseSeed.parse('7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'), GeneratorVersion.V1,
@@ -30,6 +36,9 @@ describe('Stage 5 multihost scientific resolution — opt-in, not active in rout
     'projects exactly the generated planets and relevant moons for %s without regeneration', multiplicity => {
       const system = StellarMultihostFormation.generateOrNull(key, populatedFixture(multiplicity))!;
       const resolver = new StellarMultihostScientificTargetResolver(system);
+      const systemName = StellarDesignationGenerator.generate(
+        multihostPhysicalSourceKey(system.parentGenerationKey), system.parentLocator,
+      ).name;
       expect(system.publicPlanets.length).toBeGreaterThan(0);
       expect(system.publicPlanets.filter(entry => entry.host === 'AB').length)
         .toBe(system.circumbinary.planets.length);
@@ -40,7 +49,10 @@ describe('Stage 5 multihost scientific resolution — opt-in, not active in rout
         expect(identity.locator).toBe(entry.publicLocator);
         expect(identity.planetOrdinal).toBe(Number(entry.publicLocator.bodyIndex) + 1);
         expect(identity.hostPlanetCount).toBe(system.publicPlanets.length);
-        expect(identity.designation).toContain(`${entry.host}-${entry.sourcePlanetOrdinal}`);
+        expect(identity.designation).toBe(stellarMultihostPublicPlanetDesignation(
+          systemName, entry.host, entry.sourcePlanetOrdinal,
+        ));
+        expect(identity.designation).not.toContain(entry.planet.designation.name);
         expect(identity.orbitTopology).toBe(entry.planet.hostPlanetarySystem.architecture.orbitTopology);
         expect(target.detail.general.massEarth).toBe(entry.planet.massEarth);
         expect(target.detail.general.planetType).toBe(entry.planet.planetType);
@@ -58,6 +70,10 @@ describe('Stage 5 multihost scientific resolution — opt-in, not active in rout
           expect(resolved.identity.hostPlanetDesignation).toBe(identity.designation);
           expect(resolved.identity.hostSystemDesignation).toBe(identity.hostSystemDesignation);
           expect(resolved.identity.moonOrdinal).toBe(moon.moonOrdinal);
+          expect(resolved.identity.designation).toBe(stellarMultihostPublicMoonDesignation(
+            systemName, entry.host, entry.sourcePlanetOrdinal, moon.moonOrdinal,
+          ));
+          expect(resolved.identity.designation).not.toContain(moon.identity.designation.name);
           expect(resolved.detail.general.massEarth).toBe(moon.massEarth);
         }
         expect(resolver.resolveMoonDetailed(key, entry.publicLocator, BigInt(entry.moonSystem.moonCount))).toBeNull();

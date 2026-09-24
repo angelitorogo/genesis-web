@@ -56,6 +56,11 @@ describe('Stage 7: opt-in physically sourced hierarchical scene, no global route
         expect(() => assertSystemSceneProjectionSnapshot(snapshot)).not.toThrow();
         expect(snapshot.multiplicityName).toBe(multiplicity.name);
         expect(snapshot.stars).toHaveLength(formation.components.length);
+        for (const source of projected.singles) {
+          const star = snapshot.stars.find(candidate => candidate.label === source.label)!;
+          expect(star.title).toBe(source.publicStellarDesignation);
+          expect(star.title).not.toContain(' · ');
+        }
         expect(snapshot.planets).toHaveLength(formation.publicPlanets.length);
         expect(snapshot.moons).toHaveLength(formation.publicPlanets.reduce(
           (sum, entry) => sum + entry.moonSystem.relevantMoonCount, 0));
@@ -81,13 +86,30 @@ describe('Stage 7: opt-in physically sourced hierarchical scene, no global route
           expect(binding.host).toBe(publicBody.host);
           const sceneBody = snapshot.planets.find(planet => planet.id === binding.sceneBodyId)!;
           expect(sceneBody).toBeDefined();
+          const scientificIdentity = projected.scientific.resolve(key, binding.publicLocator)!;
+          expect(sceneBody.title).toBe(scientificIdentity.designation);
+          expect(sceneBody.label).toBe(scientificIdentity.designation);
+          expect(sceneBody.title).not.toContain(publicBody.planet.designation.name);
+          expect(sceneBody.title).not.toContain(' · ');
           const localMotion = snapshot.motions.find(m => m.id === sceneBody.motionContributions.at(-1)?.motionId)!;
           expect(localMotion.semiMajorAxisAu).toBe(publicBody.planet.orbit.semiMajorAxisAu);
           expect(localMotion.periodDays).toBe(publicBody.planet.orbitalPeriod.periodDays);
           expect(projected.scientific.resolveDetailed(key, binding.publicLocator)!.detail.general.massEarth)
             .toBe(publicBody.planet.massEarth);
-          expect(snapshot.moons.filter(moon => moon.hostPlanetId === binding.sceneBodyId))
-            .toHaveLength(publicBody.moonSystem.relevantMoonCount);
+          const sceneMoons = snapshot.moons.filter(moon => moon.hostPlanetId === binding.sceneBodyId);
+          expect(sceneMoons).toHaveLength(publicBody.moonSystem.relevantMoonCount);
+          for (const sourceMoon of publicBody.moonSystem.relevantMoons) {
+            const publicMoon = projected.scientific.resolveMoonDetailed(
+              key, binding.publicLocator, BigInt(sourceMoon.moonOrdinal - 1),
+            )!;
+            const expectedMoonId = publicBody.host === 'AB'
+              ? `mh-p-moon-${publicBody.sourcePlanetOrdinal}-${sourceMoon.moonOrdinal}`
+              : `mh-${publicBody.host.toLowerCase()}-moon-${publicBody.sourcePlanetOrdinal}-${sourceMoon.moonOrdinal}`;
+            const sceneMoon = sceneMoons.find(candidate => candidate.id === expectedMoonId)!;
+            expect(sceneMoon.title).toBe(publicMoon.identity.designation);
+            expect(sceneMoon.title).not.toContain(sourceMoon.identity.designation.name);
+            expect(sceneMoon.title).not.toContain(' · ');
+          }
           if (publicBody.host === 'AB') {
             expect(sceneBody.motionContributions.some(part => part.motionId === 'multihost-ab-relative')).toBe(false);
             expect(sceneBody.motionContributions.some(part => part.motionId === 'multihost-abc-relative'))

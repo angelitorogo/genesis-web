@@ -63,6 +63,8 @@ describe('Stage 8: one atomic multihost scene and scientific fiche source (not g
           expect(fiche.kind).toBe(PlanetScientificFicheResolutionKind.AVAILABLE);
           if (fiche.kind !== PlanetScientificFicheResolutionKind.AVAILABLE) continue;
           expect(fiche.card.bodyIndex).toBe(BigInt(binding.bodyIndex));
+          expect(session.scene.planets.find(body => body.id === binding.sceneBodyId)?.title)
+            .toBe(fiche.card.title);
           expect(fiche.card.preview.kind).toBe('PLANET');
           if (fiche.card.preview.kind === 'PLANET') {
             expect(fiche.card.preview.primary.planetId).toBe(binding.sceneBodyId);
@@ -77,6 +79,8 @@ describe('Stage 8: one atomic multihost scene and scientific fiche source (not g
           const fiche = session.moonFiche(BigInt(moon.bodyIndex), BigInt(moon.moonIndex));
           expect(fiche.kind).toBe(MoonScientificFicheResolutionKind.AVAILABLE);
           if (fiche.kind === MoonScientificFicheResolutionKind.AVAILABLE) {
+            expect(session.scene.moons.find(body => body.id === moon.sceneBodyId)?.title)
+              .toBe(fiche.card.title);
             expect(fiche.card.preview.kind).toBe('MOON');
           }
         }

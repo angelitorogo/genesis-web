@@ -11,6 +11,7 @@ import { type UniverseGenerationKey } from '../../domain/generation/universe-gen
 import { type GeneratedPublicPlanet, StellarMultihostFormation } from '../stellar/stellar-multihost-formation';
 import { StellarDesignationGenerator } from '../stellar/stellar-designation-generator';
 import { multihostPhysicalSourceKey } from '../stellar/stellar-multihost-physical-source-key';
+import { stellarMultihostPublicPlanetDesignation } from '../stellar/stellar-multihost-public-designation';
 
 const SIGNED_LONG_MAX = (1n << 63n) - 1n;
 
@@ -143,8 +144,10 @@ function projectMultipleWorld(
 ): GalaxyKnownWaterWorld {
   return Object.freeze({
     locator: entry.publicLocator,
-    // Keep the exact public alias contract used by StellarMultihostScientificTargetResolver.
-    designation: `${systemDesignation} ${entry.host}-${entry.sourcePlanetOrdinal}`,
+    // Shared public alias contract used by scientific fiches and SystemScene.
+    designation: stellarMultihostPublicPlanetDesignation(
+      systemDesignation, entry.host, entry.sourcePlanetOrdinal,
+    ),
     planetType: entry.planet.planetType,
     surfaceLiquidWaterCoverageFraction01: entry.atmosphere.surfaceLiquidWaterCoverageFraction01!,
     hostLabel: entry.host,

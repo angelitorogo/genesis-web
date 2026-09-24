@@ -3,6 +3,10 @@ import { buildV2CometVisualOrbit, type V2CometVisualOrbit,
 import { type BodyLocator } from '../../domain/generation/procedural-locator';
 import { StellarMultihostPublicTargetIndex } from '../../simulation/stellar/stellar-multihost-public-target-index';
 import { type GeneratedMultipleHost, type MultihostLabel } from '../../simulation/stellar/stellar-multihost-formation';
+import {
+  stellarMultihostPublicMoonDesignation,
+  stellarMultihostPublicPlanetDesignation,
+} from '../../simulation/stellar/stellar-multihost-public-designation';
 import { projectSystemSceneMotionContributions } from './system-scene-motion-projection';
 import { buildLinearFitSystemScale } from './system-scene-scale-projection';
 import { systemSceneMoonPresentationTimeScale } from './system-scene-secondary-motion';
@@ -112,6 +116,7 @@ export class SystemSceneMultihostComposition {
     const belts: NonNullable<SystemSceneSnapshot['asteroidBelts']>[number][] = [];
     const zones: SystemSceneHabitableZoneSnapshot[] = [];
     const risks: SystemSceneSnapshot['orbitalRiskTargets'][number][] = [];
+    const publicTargets = StellarMultihostPublicTargetIndex.build(formation);
     const resolveMotion = (id: string) => motions.find(m => m.id === id);
     const position = (parts: readonly SystemSceneMotionContributionSnapshot[]) =>
       Object.freeze(projectSystemSceneMotionContributions(parts, resolveMotion, 0, scale));
@@ -135,6 +140,34 @@ export class SystemSceneMultihostComposition {
     for (const source of sources) {
       const prefix = `mh-${source.label.toLowerCase()}-`;
       const local = source.snapshot;
+      const publicPlanetNames = new Map<SystemSceneBodySnapshot, string>();
+      const publicOrbitNames = new Map<string, string>();
+      for (const binding of materialized.boundPlanets.filter(candidate => candidate.host === source.label)) {
+        const designation = stellarMultihostPublicPlanetDesignation(
+          materialized.publicSystemDesignation, source.label, binding.sourcePlanetOrdinal,
+        );
+        publicPlanetNames.set(binding.body, designation);
+        if (binding.body.orbitId !== null) publicOrbitNames.set(binding.body.orbitId, designation);
+      }
+      const publicMoonNames = new Map<string, string>();
+      for (const moon of local.moons) {
+        const publicMoon = publicTargets.moons.find(candidate =>
+          candidate.relevantMoon !== null &&
+          candidate.parent.host === source.label &&
+          candidate.parent.sourcePlanetOrdinal === moon.hostPlanetOrdinal &&
+          candidate.sourceIdentity.designation.romanNumeral === moon.label);
+        if (publicMoon === undefined) {
+          throw new Error('Projected multihost moon has no canonical public identity.');
+        }
+        const designation = stellarMultihostPublicMoonDesignation(
+          materialized.publicSystemDesignation,
+          source.label,
+          publicMoon.parent.sourcePlanetOrdinal,
+          publicMoon.sourceIdentity.moonOrdinal,
+        );
+        publicMoonNames.set(moon.id, designation);
+        publicOrbitNames.set(moon.orbitId, designation);
+      }
       const localRadius = Math.max(0.6, ...local.stars.map(star => star.radiusScene * 3.1),
         ...local.planets.map(planet => {
           const orbit = local.orbits.find(o => o.id === planet.orbitId);
@@ -219,7 +252,7 @@ export class SystemSceneMultihostComposition {
         ? Math.max(0.055, Math.min(0.19, star.radiusScene * factor))
         : Math.max(0.075, Math.min(0.24, star.radiusScene * factor));
       stars.push(Object.freeze({ ...star, id: namespaced(star.id), label: source.label,
-        title: `${star.title} · ${source.label}`, orbitId: `mh-orbit-star-${source.label.toLowerCase()}`,
+        title: source.publicStellarDesignation, orbitId: `mh-orbit-star-${source.label.toLowerCase()}`,
         motionContributions: hostAnchor, position: position(hostAnchor), radiusScene: starRadius,
         opticalRadiusScene: Math.max(starRadius, Math.min(isV2 ? 0.235 : 0.3,
           (star.opticalRadiusScene ?? star.radiusScene) * factor)), }));
@@ -229,7 +262,8 @@ export class SystemSceneMultihostComposition {
         const semi = physical && linear !== undefined
           ? physical.semiMajorAxisAu * Math.abs(orbit.motionScale) * linear : orbit.semiMajorScene * factor;
         const cometVisual = orbit.motionId === null ? undefined : cometVisuals.get(orbit.motionId);
-        orbits.push(Object.freeze({ ...orbit, id: namespaced(orbit.id), label: `${source.label} · ${orbit.label}`,
+        orbits.push(Object.freeze({ ...orbit, id: namespaced(orbit.id),
+          label: publicOrbitNames.get(orbit.id) ?? `${source.label} · ${orbit.label}`,
           semiMajorScene: semi,
           semiMinorScene: cometVisual?.semiMinorScene ??
             semi * (orbit.semiMajorScene ? orbit.semiMinorScene / orbit.semiMajorScene : 1),
@@ -242,8 +276,12 @@ export class SystemSceneMultihostComposition {
       }
       for (const planet of local.planets) {
         const parts = partsFor(planet.motionContributions);
-        planets.push(Object.freeze({ ...planet, id: namespaced(planet.id), label: `${source.label} · ${planet.label}`,
-          title: `${source.label} · ${planet.title}`,
+        const publicDesignation = publicPlanetNames.get(planet);
+        if (publicDesignation === undefined) {
+          throw new Error('Projected multihost planet has no canonical public identity.');
+        }
+        planets.push(Object.freeze({ ...planet, id: namespaced(planet.id), label: publicDesignation,
+          title: publicDesignation,
           orbitId: planet.orbitId === null ? null : namespaced(planet.orbitId),
           radiusScene: planet.radiusScene * factor,
           position: position(parts), motionContributions: parts }));
@@ -255,9 +293,13 @@ export class SystemSceneMultihostComposition {
           throw new Error('Moon source has no public parent planet in the same stellar host.');
         }
         const parts = partsFor(moon.motionContributions);
+        const publicDesignation = publicMoonNames.get(moon.id);
+        if (publicDesignation === undefined) {
+          throw new Error('Projected multihost moon has no canonical public designation.');
+        }
         moons.push(Object.freeze({ ...moon, id: namespaced(moon.id), hostPlanetId: namespaced(moon.hostPlanetId),
           hostPlanetOrdinal: Number(planetIdentity.publicLocator.bodyIndex) + 1,
-          label: `${source.label} · ${moon.label}`, title: `${source.label} · ${moon.title}`,
+          label: `${source.label} · ${moon.label}`, title: publicDesignation,
           orbitId: namespaced(moon.orbitId), radiusScene: moon.radiusScene * factor,
           visualPresentation: Object.freeze({ ...moon.visualPresentation,
             presentationRadiusScene: moon.visualPresentation.presentationRadiusScene * factor }),
@@ -317,8 +359,9 @@ export class SystemSceneMultihostComposition {
         orbitalCollisionGeometryTargetCount: available.filter(r => r.severity === 'COLLISION_GEOMETRY').length }),
       orbits: Object.freeze(orbits), motions: Object.freeze(motions),
       simulation: Object.freeze({ epochSimulationDay: 0, playbackDaysPerRealSecond: playback }), scale });
-    const final = appendSystemSceneMultihostCircumbinary(composite, formation, innerScale,
-      Object.freeze([...outerAB]));
+    const final = appendSystemSceneMultihostCircumbinary(
+      composite, formation, innerScale, Object.freeze([...outerAB]), materialized.publicSystemDesignation,
+    );
     const bindings = formation.publicPlanets.map(entry => {
       const bodyId = entry.host === 'AB' ? `mh-p-planet-${entry.sourcePlanetOrdinal}` :
         `mh-${entry.host.toLowerCase()}-planet-${entry.sourcePlanetOrdinal}`;

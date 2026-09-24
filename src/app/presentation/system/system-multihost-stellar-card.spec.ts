@@ -63,6 +63,17 @@ describe('Stage 9: canonical multihost stellar fiche is physically coherent and 
         expect(component.spectralType).toBe(host.spectral.spectralType.designation);
         expect(render.massSolar).toBe(host.physical.initialMassSolar);
         expect(render.colorHex).toBe(star.colorHex);
+        // Scene and scientific fiche must consume the same canonical public component name.
+        expect(star.title).toBe(component.designation);
+        expect(component.designation).toBe(`${card.title} ${host.label}`);
+        expect(star.title).not.toContain(' · ');
+        if (host.stellarSystem.designation.name !== component.designation) {
+          // A private SINGLE name may legitimately be a prefix of the canonical
+          // public name (for example Cialoria -> Cialoria A). What must never
+          // happen is for the scene to expose that private designation as the
+          // component title itself.
+          expect(star.title).not.toBe(host.stellarSystem.designation.name);
+        }
         expect(component.facts.find(f => f.label === 'Planetas circumestelares')?.value)
           .toBe(String(host.planets.length));
       }

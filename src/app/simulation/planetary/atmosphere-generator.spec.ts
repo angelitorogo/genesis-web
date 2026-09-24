@@ -20,6 +20,10 @@ import {
 } from '../../domain/planetary/atmosphere-pressure-regime';
 
 import {
+  PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
+} from '../../domain/planetary/planet-physical-properties';
+
+import {
   PlanetClimateStabilityRegime,
 } from '../../domain/planetary/planet-climate-stability-regime';
 
@@ -683,6 +687,8 @@ describe(
             deep
               ? 0.6
               : 0.01,
+          surfaceGravityMetersPerSecondSquared:
+            PLANET_V1_EARTH_SURFACE_GRAVITY_METERS_PER_SECOND_SQUARED,
         },
         internalComposition: {
           metallicCoreMassFraction01:

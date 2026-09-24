@@ -338,8 +338,10 @@ function generateWaterInventoryV1(
       WATER_V1_FREEZING_TEMPERATURE_KELVIN &&
     meanSurfaceTemperatureKelvin <
       boilingTemperatureKelvin &&
+    // Persistent means ordinary liquid conditions dominate the modeled thermal
+    // envelope; a narrow seasonal/regional liquid window is not enough.
     phaseFractions.liquidFraction01 >=
-      0.35 &&
+      0.50 &&
     coverages.surfaceLiquidWaterCoverageFraction01 >=
       0.01 &&
     climateVariabilityState.stabilityIndex01! >=

@@ -14,6 +14,8 @@ import {
 
 export interface MultihostProjectedSingleSource {
   readonly label: MultihostLabel;
+  /** Canonical public component name from the same scientific card used by the fiche. */
+  readonly publicStellarDesignation: string;
   readonly snapshot: SystemSceneSnapshot;
 }
 
@@ -37,6 +39,7 @@ export class SystemSceneMultihostMaterializedSources {
   readonly boundPlanets: readonly MultihostProjectedPlanetBinding[];
   readonly circumbinaryPublicLocators: readonly BodyLocator[];
   readonly scientific: StellarMultihostScientificTargetResolver;
+  readonly publicSystemDesignation: string;
 
   private constructor(formation: GeneratedMultipleHost, metadata: SystemSceneSnapshotSource) {
     const key = new UniverseGenerationKey(
@@ -55,10 +58,20 @@ export class SystemSceneMultihostMaterializedSources {
       throw new RangeError('Multihost visual/scientific sources must share a catalogued parent identity.');
     }
     this.scientific = new StellarMultihostScientificTargetResolver(formation);
-    this.singles = Object.freeze(formation.components.map(component => Object.freeze({
-      label: component.label,
-      snapshot: SystemSceneSnapshotBuilder.buildFromGeneratedSingle(metadata, component),
-    })));
+    this.publicSystemDesignation = metadata.stellarSystemCard.title;
+    this.singles = Object.freeze(formation.components.map(component => {
+      const componentCard = metadata.stellarSystemCard.components.find(
+        candidate => candidate.componentLabel === component.label,
+      );
+      if (componentCard === undefined) {
+        throw new Error(`Missing public stellar component designation for host ${component.label}.`);
+      }
+      return Object.freeze({
+        label: component.label,
+        publicStellarDesignation: componentCard.designation,
+        snapshot: SystemSceneSnapshotBuilder.buildFromGeneratedSingle(metadata, component),
+      });
+    }));
     const bindings: MultihostProjectedPlanetBinding[] = [];
     const projectedP: BodyLocator[] = [];
     const seenAddresses = new Set<string>();

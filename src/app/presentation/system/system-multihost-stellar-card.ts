@@ -8,6 +8,7 @@ import { stellarVisualRadiusScale } from '../genesis-archive/stellar-visual-radi
 import { type GeneratedMultipleHost, type GeneratedSingleHost } from '../../simulation/stellar/stellar-multihost-formation';
 import { type StellarRelativeOrbit } from '../../domain/stellar/stellar-relative-orbit';
 import { CircumbinaryRadiativeReferenceRegime, CircumbinaryStellarEvolutionRegime } from '../../domain/habitability/circumbinary-habitability-assessment';
+import { systemMultihostPublicStellarComponentDesignation } from './system-multihost-public-stellar-designation';
 
 const format = (value: number): string => new Intl.NumberFormat('es-ES', {
   maximumFractionDigits: 4,
@@ -19,7 +20,7 @@ function componentCard(host: GeneratedSingleHost, parentTitle: string): ArchiveS
     componentLabel: host.label,
     // A child key is an internal generation scope: never expose its own
     // stellar designation/procedural code as a second public system.
-    designation: `${parentTitle} ${host.label}`,
+    designation: systemMultihostPublicStellarComponentDesignation(parentTitle, host.label),
     proceduralCode: null,
     spectralType: host.spectral.spectralType.designation,
     evolutionStateLabel: host.stellarSystem.primaryStar.evolutionState.name,

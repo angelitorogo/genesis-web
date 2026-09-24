@@ -13,6 +13,10 @@ import { StellarDesignationGenerator } from './stellar-designation-generator';
 import { multihostPhysicalSourceKey } from './stellar-multihost-physical-source-key';
 import { type GeneratedMultipleHost, type GeneratedPublicPlanet } from './stellar-multihost-formation';
 import { StellarMultihostPublicTargetIndex } from './stellar-multihost-public-target-index';
+import {
+  stellarMultihostPublicMoonDesignation,
+  stellarMultihostPublicPlanetDesignation,
+} from './stellar-multihost-public-designation';
 
 /**
  * Stage 5: read-only bridge from ONE generated physical aggregate to the
@@ -55,9 +59,10 @@ export class StellarMultihostScientificTargetResolver {
   resolveDetailed(generationKey: UniverseGenerationKey, locator: BodyLocator): PlanetScientificResolvedTarget | null {
     const entry = this.findPlanet(generationKey, locator);
     if (entry === null) return null;
-    return PlanetScientificTargetResolver.projectGenerated(
+    const projected = PlanetScientificTargetResolver.projectGenerated(
       this.identity(entry), entry.planet, entry.atmosphere, entry.moonSystem,
     );
+    return this.withPublicMoonDesignations(projected, entry);
   }
 
   /** Matches the existing moon card's optional host-planet resolver contract. */
@@ -95,13 +100,37 @@ export class StellarMultihostScientificTargetResolver {
     return key.equals(this.source.parentGenerationKey);
   }
 
+  private withPublicMoonDesignations(
+    target: PlanetScientificResolvedTarget,
+    entry: GeneratedPublicPlanet,
+  ): PlanetScientificResolvedTarget {
+    const relevantMoons = Object.freeze(target.detail.moons.relevantMoons.map(moon => Object.freeze({
+      ...moon,
+      designation: stellarMultihostPublicMoonDesignation(
+        this.parentDesignation, entry.host, entry.sourcePlanetOrdinal, moon.moonOrdinal,
+      ),
+    })));
+    return Object.freeze({
+      ...target,
+      detail: Object.freeze({
+        ...target.detail,
+        moons: Object.freeze({
+          ...target.detail.moons,
+          relevantMoons,
+        }),
+      }),
+    });
+  }
+
   private identity(entry: GeneratedPublicPlanet): PlanetScientificIdentitySource {
     return Object.freeze({
       locator: entry.publicLocator,
       planetOrdinal: Number(entry.publicLocator.bodyIndex) + 1,
       // Parent-system names are public aliases. Internal child universe keys,
       // planet seeds and private child system designations never reach cards.
-      designation: `${this.parentDesignation} ${entry.host}-${entry.sourcePlanetOrdinal}`,
+      designation: stellarMultihostPublicPlanetDesignation(
+        this.parentDesignation, entry.host, entry.sourcePlanetOrdinal,
+      ),
       hostSystemDesignation: this.parentDesignation,
       orbitTopology: entry.planet.hostPlanetarySystem.architecture.orbitTopology,
       hostPlanetCount: this.index.planets.length,

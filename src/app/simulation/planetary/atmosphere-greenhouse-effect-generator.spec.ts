@@ -364,6 +364,9 @@ describe(
 
       envelopeMassFraction01 =
         0.01,
+
+      surfaceGravityMetersPerSecondSquared =
+        9.80665,
     ): Planet {
 
       const bodyLocator =
@@ -406,6 +409,7 @@ describe(
           0.3,
         physicalProperties: {
           envelopeMassFraction01,
+          surfaceGravityMetersPerSecondSquared,
         },
       } as Planet;
     }
