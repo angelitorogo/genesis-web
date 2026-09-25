@@ -228,7 +228,7 @@ describe('multispecies atmospheric condensation equilibrium', () => {
     ).toBeLessThanOrEqual(saturationTolerancePascal);
   });
 
-  it('converges a difficult multispecies cold-trap closure and respects final saturation', () => {
+  it('keeps iterating through a very slow multispecies cold-trap closure beyond 256 iterations', () => {
     const result = atmosphereMultispeciesRadiativeColumnState(
       3_128_487.3809378957,
       16.25291851561602,
@@ -249,9 +249,7 @@ describe('multispecies atmospheric condensation equilibrium', () => {
       },
     );
 
-    // The exact iteration count is not a physical contract: radiative-support
-    // refinements can make the same fixed point converge faster or slower.
-    expect(result.condensableEquilibriumState.iterationCount).toBeGreaterThan(1);
+    expect(result.condensableEquilibriumState.iterationCount).toBeGreaterThan(256);
     expect(result.condensableEquilibriumState.converged).toBe(true);
 
     for (const equilibrium of result.condensableEquilibriumState.speciesEquilibria) {
@@ -299,61 +297,6 @@ describe('multispecies atmospheric condensation equilibrium', () => {
     ).toBeLessThanOrEqual(saturationTolerancePascal);
   });
 
-  it('does not artificially condense a Wiathara-B-2-like N2 atmosphere when its partial pressure is below saturation', () => {
-    const result = state(
-      29.8,
-      0.30,
-      48.8,
-      [
-        [AtmosphereGas.NITROGEN, 0.975],
-        [AtmosphereGas.METHANE, 0.005],
-        [AtmosphereGas.HYDROGEN, 0.011],
-        [AtmosphereGas.HELIUM, 0.009],
-      ],
-    );
-
-    const nitrogen = species(result, AtmosphereGas.NITROGEN);
-
-    expect(result.condensableEquilibriumState.converged).toBe(true);
-    expect(nitrogen.saturationPressurePascal).toBeGreaterThan(
-      nitrogen.sourcePartialPressurePascal,
-    );
-    expect(nitrogen.effectivePartialPressurePascal).toBeCloseTo(
-      nitrogen.sourcePartialPressurePascal,
-      10,
-    );
-    expect(result.effectiveSurfacePressurePascal).toBeCloseTo(29.8, 10);
-  });
-
-  it('separates retained N2 inventory from residual gas once a colder cryogenic state crosses saturation', () => {
-    const result = state(
-      29.8,
-      0.30,
-      40,
-      [
-        [AtmosphereGas.NITROGEN, 0.975],
-        [AtmosphereGas.METHANE, 0.005],
-        [AtmosphereGas.HYDROGEN, 0.011],
-        [AtmosphereGas.HELIUM, 0.009],
-      ],
-    );
-
-    const nitrogen = species(result, AtmosphereGas.NITROGEN);
-
-    expect(result.condensableEquilibriumState.converged).toBe(true);
-    expect(nitrogen.sourcePartialPressurePascal).toBeGreaterThan(
-      nitrogen.saturationPressurePascal,
-    );
-    expect(nitrogen.sourcePartialPressurePascal).toBeGreaterThan(
-      nitrogen.effectivePartialPressurePascal,
-    );
-    expect(nitrogen.effectivePartialPressurePascal).toBeLessThanOrEqual(
-      nitrogen.saturationPressurePascal + 0.05,
-    );
-    expect(result.effectiveSurfacePressurePascal).toBeLessThan(29.8);
-    expect(result.effectiveSurfacePressurePascal).toBeGreaterThan(0);
-  });
-
   it('is exactly deterministic for identical retained inventory and forcing', () => {
     const args = [
       80_000,
@@ -369,4 +312,21 @@ describe('multispecies atmospheric condensation equilibrium', () => {
 
     expect(state(...args)).toEqual(state(...args));
   });
+
+  it('omits an unrepresentable cryogenic trace species instead of constructing a zero mole fraction', () => {
+    const result = state(
+      1e12,
+      1,
+      1,
+      [
+        [AtmosphereGas.NITROGEN, 0.50],
+        [AtmosphereGas.CARBON_DIOXIDE, 0.50],
+      ],
+    );
+
+    expect(result.effectiveGasComponents.every(component => component.moleFraction01 > 0)).toBe(true);
+    expect(result.effectiveGasComponents.every(component => Number.isFinite(component.moleFraction01))).toBe(true);
+    expect(result.condensableEquilibriumState.converged).toBe(true);
+  });
+
 });

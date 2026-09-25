@@ -227,13 +227,24 @@ function evaluateWithExistingWaterClosure(
 
   for (const [gas, pressure] of nonWaterPartialPressures) {
     if (pressure <= 0) continue;
-    components.push(new AtmosphereGasComponent(gas, pressure / safePressure));
+    const moleFraction01 = pressure / safePressure;
+    /* At extreme cryogenic phase collapse a positive saturation pressure can
+     * be so many orders of magnitude below the surviving bulk pressure that
+     * IEEE-754 division underflows to +0. A zero mole fraction is not a valid
+     * AtmosphereGasComponent; it is physically indistinguishable from an
+     * absent gas species at double precision, so omit it from the effective
+     * gas composition while preserving its source/phase diagnostic. */
+    if (!Number.isFinite(moleFraction01) || moleFraction01 <= 0) continue;
+    components.push(new AtmosphereGasComponent(gas, moleFraction01));
   }
   if (sourceWaterPartialPressurePascal > 0) {
-    components.push(new AtmosphereGasComponent(
-      AtmosphereGas.WATER_VAPOR,
-      sourceWaterPartialPressurePascal / safePressure,
-    ));
+    const waterMoleFraction01 = sourceWaterPartialPressurePascal / safePressure;
+    if (Number.isFinite(waterMoleFraction01) && waterMoleFraction01 > 0) {
+      components.push(new AtmosphereGasComponent(
+        AtmosphereGas.WATER_VAPOR,
+        waterMoleFraction01,
+      ));
+    }
   }
 
   if (components.length === 0) {
@@ -393,16 +404,23 @@ function normalizeComponents(
 ): readonly AtmosphereGasComponent[] {
   const total = components.reduce((sum, component) => sum + component.moleFraction01, 0);
   if (total <= 0) return Object.freeze([]);
-  return Object.freeze(components.map(component =>
-    new AtmosphereGasComponent(component.gas, component.moleFraction01 / total),
-  ));
+  return Object.freeze(components.flatMap(component => {
+    const moleFraction01 = component.moleFraction01 / total;
+    return Number.isFinite(moleFraction01) && moleFraction01 > 0
+      ? [new AtmosphereGasComponent(component.gas, moleFraction01)]
+      : [];
+  }));
 }
 
 function normalizeComponentsInPlace(components: AtmosphereGasComponent[]): void {
   const total = components.reduce((sum, component) => sum + component.moleFraction01, 0);
   if (Math.abs(total - 1) <= 1e-12) return;
-  const normalized = components.map(component =>
-    new AtmosphereGasComponent(component.gas, component.moleFraction01 / total));
+  const normalized = components.flatMap(component => {
+    const moleFraction01 = component.moleFraction01 / total;
+    return Number.isFinite(moleFraction01) && moleFraction01 > 0
+      ? [new AtmosphereGasComponent(component.gas, moleFraction01)]
+      : [];
+  });
   components.splice(0, components.length, ...normalized);
 }
 

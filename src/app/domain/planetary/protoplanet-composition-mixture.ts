@@ -264,9 +264,16 @@ export class ProtoplanetCompositionMixture {
   get iceBearingFraction01():
     number {
 
-    return (
-      this.iceRichFraction01 +
-      this.volatileRichFraction01
+    // Source fractions are normalized within a small floating-point tolerance.
+    // Keep this derived fraction inside its public [0, 1] contract without
+    // changing the preserved source components themselves.
+    return Math.min(
+      1,
+      Math.max(
+        0,
+        this.iceRichFraction01 +
+          this.volatileRichFraction01,
+      ),
     );
   }
 }

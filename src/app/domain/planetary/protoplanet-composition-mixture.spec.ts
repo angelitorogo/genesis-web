@@ -78,6 +78,32 @@ describe(
       },
     );
 
+
+    it(
+      'should clamp only the derived ice-bearing fraction when normalized source roundoff lands a few ulps above one',
+      () => {
+        const mixture =
+          new ProtoplanetCompositionMixture(
+            0,
+            0,
+            0.7,
+            0.3000000000000002,
+          );
+
+        expect(
+          mixture.iceRichFraction01,
+        ).toBe(0.7);
+
+        expect(
+          mixture.volatileRichFraction01,
+        ).toBe(0.3000000000000002);
+
+        expect(
+          mixture.iceBearingFraction01,
+        ).toBe(1);
+      },
+    );
+
     it(
       'should reject non-normalized mixtures and invalid contribution masses',
       () => {

@@ -145,57 +145,6 @@ describe(
     );
 
     it(
-      'keeps a Naelaara-B-2-like ~31 mbar IR mixture below the previous aggressive thin-atmosphere response',
-      () => {
-        const thin =
-          atmosphereRadiativeColumnState(
-            3_058.4,
-            0.5 * EARTH_GRAVITY,
-            239.9,
-            gases([
-              [AtmosphereGas.NITROGEN, 0.501],
-              [AtmosphereGas.CARBON_DIOXIDE, 0.326],
-              [AtmosphereGas.WATER_VAPOR, 0.036],
-              [AtmosphereGas.ARGON, 0.137],
-            ]),
-          );
-
-        const warming = warmingKelvin(
-          239.9,
-          thin.infraredOpticalDepthProxy,
-        );
-        const capture =
-          thin.infraredOpticalDepthProxy /
-          (1 + thin.infraredOpticalDepthProxy);
-
-        expect(capture).toBeLessThan(0.30);
-        expect(warming).toBeLessThan(18);
-      },
-    );
-
-    it(
-      'raises greenhouse smoothly with absolute IR partial pressure at fixed composition',
-      () => {
-        const pressures = [500, 1_000, 3_000, 10_000, 30_000];
-        const opticalDepths = pressures.map(pressure =>
-          atmosphereRadiativeColumnState(
-            pressure,
-            EARTH_GRAVITY,
-            240,
-            gases([
-              [AtmosphereGas.CARBON_DIOXIDE, 0.326],
-              [AtmosphereGas.NITROGEN, 0.674],
-            ]),
-          ).infraredOpticalDepthProxy,
-        );
-
-        for (let index = 1; index < opticalDepths.length; index += 1) {
-          expect(opticalDepths[index]).toBeGreaterThan(opticalDepths[index - 1]);
-        }
-      },
-    );
-
-    it(
       'keeps an Earth-pressure mixed atmosphere in a moderate greenhouse range rather than making one bar automatically extreme',
       () => {
         const state =

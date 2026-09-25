@@ -278,9 +278,17 @@ export class PlanetInternalComposition {
   get sourceIceBearingFraction01():
     number {
 
-    return (
-      this.sourceIceRichFraction01 +
-      this.sourceVolatileRichFraction01
+    // The four source fractions are accepted as normalized within the class
+    // consistency tolerance. Their derived ice-bearing sum can therefore land
+    // a few ulps above 1 (for example 1.0000000000000002). Preserve the
+    // original source fractions, but keep this derived public value in [0, 1].
+    return Math.min(
+      1,
+      Math.max(
+        0,
+        this.sourceIceRichFraction01 +
+          this.sourceVolatileRichFraction01,
+      ),
     );
   }
 }

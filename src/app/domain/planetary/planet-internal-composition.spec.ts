@@ -107,6 +107,41 @@ describe(
     );
 
     it(
+      'should clamp the derived source ice-bearing fraction when normalized source roundoff lands a few ulps above one',
+      () => {
+        const composition =
+          new PlanetInternalComposition(
+            1,
+            locator,
+            seed,
+            1,
+            0,
+            0,
+            0,
+            0.7,
+            0.3000000000000002,
+            0,
+            0,
+            0.7,
+            0.3000000000000002,
+            0,
+          );
+
+        expect(
+          composition.sourceIceRichFraction01,
+        ).toBe(0.7);
+
+        expect(
+          composition.sourceVolatileRichFraction01,
+        ).toBe(0.3000000000000002);
+
+        expect(
+          composition.sourceIceBearingFraction01,
+        ).toBe(1);
+      },
+    );
+
+    it(
       'should support a purely solid planet with zero gaseous envelope',
       () => {
         const composition =

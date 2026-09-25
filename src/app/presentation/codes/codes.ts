@@ -3,7 +3,11 @@ import { RouterLink } from '@angular/router';
 import { GenesisScreen } from '../../ui/layout/genesis-screen/genesis-screen';
 import { GENESIS_LOCAL_REPOSITORIES } from '../runtime/genesis-local-repositories';
 import { UniverseSeedFacade } from '../universe/universe-seed.facade';
-import { CODES_REDEMPTION_RUNTIME, TEST_PD_CODE } from './codes-redemption.runtime';
+import { CODES_REDEMPTION_RUNTIME, normalizeRedemptionCode, TEST_PD_CODE } from './codes-redemption.runtime';
+import {
+  CONFIRM_FOCUSED_GALAXY_CODE,
+  FOCUSED_GALAXY_CONFIRMATION_RUNTIME,
+} from './focused-galaxy-confirmation.runtime';
 
 type Feedback = { readonly kind: 'success' | 'error' | 'info'; readonly message: string } | null;
 
@@ -19,6 +23,7 @@ export class CodesPage {
   private readonly repositories = inject(GENESIS_LOCAL_REPOSITORIES);
   private readonly selection = inject(UniverseSeedFacade);
   private readonly runtime = inject(CODES_REDEMPTION_RUNTIME);
+  private readonly focusedGalaxyConfirmation = inject(FOCUSED_GALAXY_CONFIRMATION_RUNTIME);
   readonly code = signal(TEST_PD_CODE);
   readonly pending = signal(false);
   readonly feedback = signal<Feedback>(null);
@@ -40,6 +45,26 @@ export class CodesPage {
         this.feedback.set({ kind: 'error', message: 'Selecciona primero un universo guardado.' });
         return;
       }
+      const normalizedCode = normalizeRedemptionCode(this.code());
+      if (normalizedCode === CONFIRM_FOCUSED_GALAXY_CODE) {
+        const confirmation = await this.focusedGalaxyConfirmation.confirmFocusedGalaxy(generationKey);
+        switch (confirmation.kind) {
+          case 'confirmed':
+            this.code.set('');
+            this.feedback.set({
+              kind: 'success',
+              message: `Galaxia G${confirmation.galaxyIndex.toString()} confirmada por completo: ${confirmation.sectors.toString()} sectores, ${confirmation.systems.toString()} sistemas y ${confirmation.galacticObjects.toString()} objetos galácticos. No se han gastado ni otorgado PD.`,
+            });
+            return;
+          case 'no-focused-galaxy':
+            this.feedback.set({ kind: 'error', message: 'No hay una galaxia conocida actualmente en foco.' });
+            return;
+          case 'unsupported-version':
+            this.feedback.set({ kind: 'error', message: 'La confirmación galáctica de QA solo funciona en universos V2.' });
+            return;
+        }
+      }
+
       const result = await this.runtime.redeem(generationKey, this.code());
       switch (result.kind) {
         case 'awarded':
