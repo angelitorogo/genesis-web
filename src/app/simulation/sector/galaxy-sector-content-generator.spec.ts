@@ -190,6 +190,50 @@ describe(
     );
 
     it(
+      'should expose only the reserved galactic nucleus at V2 sector 0,0',
+      () => {
+        const v2GenerationKey =
+          new UniverseGenerationKey(
+            canonicalUniverseSeed,
+            GeneratorVersion.V2,
+          );
+
+        const v2Galaxy =
+          InitialGalaxyGenerator
+            .generate(
+              v2GenerationKey,
+            );
+
+        const content =
+          GalaxySectorContentGenerator
+            .generate(
+              v2Galaxy,
+              {
+                x:
+                  0,
+
+                y:
+                  0,
+              },
+            );
+
+        expect(
+          content.systemLocators,
+        ).toEqual([]);
+
+        expect(
+          content.galacticObjectLocators,
+        ).toEqual([
+          new GalacticObjectLocator(
+            0n,
+            0n,
+            0n,
+          ),
+        ]);
+      },
+    );
+
+    it(
       'should reserve GalacticObject index zero at 0,0 for every galaxy morphology',
       () => {
         for (

@@ -211,6 +211,7 @@ export class DexieUniverseRepository
         this.database.discoveries,
         this.database.observations,
         this.database.progress,
+        this.database.galaxyKnowledgeSnapshots,
         ],
 
         async () => {
@@ -269,6 +270,17 @@ export class DexieUniverseRepository
 
           await this.database
             .progress
+            .where(
+              '[universeSeed+generatorVersionCode]',
+            )
+            .equals([
+              universeSeed,
+              generatorVersionCode,
+            ])
+            .delete();
+
+          await this.database
+            .galaxyKnowledgeSnapshots
             .where(
               '[universeSeed+generatorVersionCode]',
             )

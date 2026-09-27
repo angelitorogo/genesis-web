@@ -11,6 +11,7 @@ import {
   ExplorationResultKind,
   ExplorationSectorResult,
   type ExplorationLocatedResultKind,
+  type ExplorationLocatedTarget,
 } from '../../domain/exploration/exploration-sector-result';
 
 import {
@@ -138,7 +139,10 @@ interface ResultBucket {
  * - every generic GalacticObjectLocator receives a stable coarse exploration
  *   family from an isolated SHA-256 branch of its own target seed:
  *     40% NEBULA, 40% STAR_CLUSTER, 20% EXTREME_OBJECT;
- * - result-family selection is weighted by family, not by raw object count:
+ * - every SystemLocator and GalacticObjectLocator already present in canonical
+ *   GalaxySectorContent is exposed as a static DETECTED target by point 9.5;
+ * - result-family selection remains weighted by family only to choose the
+ *   backwards-compatible highlighted result shown by the exploration UI:
  *     SYSTEM 5, NEBULA 2, STAR_CLUSTER 2, EXTREME_OBJECT 1,
  *     TRANSIENT_EVENT 1;
  * - empty static sectors still resolve to TRANSIENT_EVENT, preserving the
@@ -217,6 +221,49 @@ export class ExplorationSectorResultEngine {
             .coordinates,
         );
 
+    /*
+     * Multi-target exploration: GalaxySectorContent is already the canonical
+     * Ground Truth collection for this sector. Every static child locator is
+     * therefore revealed by one exploration while resultKind/subject retain a
+     * single deterministic highlighted result for compatibility.
+     */
+    const candidates:
+      LocatedCandidate[] =
+      [];
+
+    for (
+      const locator
+      of content.systemLocators
+    ) {
+      candidates.push({
+        kind:
+          ExplorationResultKind
+            .SYSTEM,
+
+        locator,
+      });
+    }
+
+    for (
+      const locator
+      of content.galacticObjectLocators
+    ) {
+      candidates.push({
+        kind:
+          this.resolveGalacticObjectKind(
+            generationKey,
+            locator,
+          ),
+
+        locator,
+      });
+    }
+
+    const locatedTargets =
+      toLocatedTargets(
+        candidates,
+      );
+
     if (
       isGalacticCenterCoordinates(
         canonicalScan
@@ -258,39 +305,8 @@ export class ExplorationSectorResultEngine {
           generationKey,
           nucleusLocator,
         ),
+        locatedTargets,
       );
-    }
-
-    const candidates:
-      LocatedCandidate[] =
-      [];
-
-    for (
-      const locator
-      of content.systemLocators
-    ) {
-      candidates.push({
-        kind:
-          ExplorationResultKind
-            .SYSTEM,
-
-        locator,
-      });
-    }
-
-    for (
-      const locator
-      of content.galacticObjectLocators
-    ) {
-      candidates.push({
-        kind:
-          this.resolveGalacticObjectKind(
-            generationKey,
-            locator,
-          ),
-
-        locator,
-      });
     }
 
     const sectorSeed =
@@ -338,6 +354,7 @@ export class ExplorationSectorResultEngine {
             ),
           ),
         ),
+        locatedTargets,
       );
     }
 
@@ -358,6 +375,7 @@ export class ExplorationSectorResultEngine {
         generationKey,
         candidate.locator,
       ),
+      locatedTargets,
     );
   }
 
@@ -453,6 +471,26 @@ function coarseGalacticObjectKindV1(
 
   return ExplorationResultKind
     .EXTREME_OBJECT;
+}
+
+function toLocatedTargets(
+  candidates:
+    readonly LocatedCandidate[],
+): readonly ExplorationLocatedTarget[] {
+
+  return Object.freeze(
+    candidates
+      .map(
+        candidate =>
+          Object.freeze({
+            kind:
+              candidate.kind,
+
+            locator:
+              candidate.locator,
+          }),
+      ),
+  );
 }
 
 function resultBucketsV1(

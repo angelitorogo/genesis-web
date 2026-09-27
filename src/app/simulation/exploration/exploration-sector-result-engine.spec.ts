@@ -434,6 +434,147 @@ describe(
     );
 
     it(
+      'should reveal every static Ground Truth locator in one explored sector without duplicates',
+      () => {
+        const galaxy =
+          GalaxyGenerator.generate(
+            generationKey,
+            0n,
+          );
+
+        let verified =
+          false;
+
+        for (
+          let x = -16;
+          x <= 16 && !verified;
+          x += 1
+        ) {
+          for (
+            let y = -16;
+            y <= 16 && !verified;
+            y += 1
+          ) {
+            const selection =
+              ExplorationSectorScanEngine
+                .prepareSector(
+                  generationKey,
+                  0n,
+                  x,
+                  y,
+                );
+
+            const content =
+              GalaxySectorContentGenerator
+                .generate(
+                  galaxy,
+                  selection.coordinates,
+                );
+
+            const expectedCount =
+              content.systemLocators.length +
+              content.galacticObjectLocators.length;
+
+            if (
+              expectedCount <
+              2
+            ) {
+              continue;
+            }
+
+            const result =
+              ExplorationSectorResultEngine
+                .resolve(
+                  ExplorationSectorScanEngine
+                    .scan(
+                      selection,
+                    ),
+                );
+
+            expect(
+              result.locatedTargetCount,
+            ).toBe(
+              expectedCount,
+            );
+
+            const identities =
+              result.locatedTargets.map(
+                target =>
+                  `${target.locator instanceof SystemLocator ? 'SYSTEM' : 'OBJECT'}:${target.locator.galacticObjectIndex.toString()}`,
+              );
+
+            expect(
+              new Set(
+                identities,
+              ).size,
+            ).toBe(
+              expectedCount,
+            );
+
+            for (
+              const locator
+              of content.systemLocators
+            ) {
+              expect(
+                result.locatedTargets.some(
+                  target =>
+                    target.kind === ExplorationResultKind.SYSTEM &&
+                    target.locator instanceof SystemLocator &&
+                    target.locator.galacticObjectIndex === locator.galacticObjectIndex,
+                ),
+              ).toBe(
+                true,
+              );
+            }
+
+            for (
+              const locator
+              of content.galacticObjectLocators
+            ) {
+              const expectedKind =
+                ExplorationSectorResultEngine
+                  .resolveGalacticObjectKind(
+                    generationKey,
+                    locator,
+                  );
+
+              expect(
+                result.locatedTargets.some(
+                  target =>
+                    target.kind === expectedKind &&
+                    target.locator instanceof GalacticObjectLocator &&
+                    target.locator.galacticObjectIndex === locator.galacticObjectIndex,
+                ),
+              ).toBe(
+                true,
+              );
+            }
+
+            expect(
+              ExplorationSectorResultEngine
+                .resolve(
+                  ExplorationSectorScanEngine.scan(selection),
+                )
+                .locatedTargets,
+            ).toEqual(
+              result.locatedTargets,
+            );
+
+            verified =
+              true;
+          }
+        }
+
+        expect(
+          verified,
+        ).toBe(
+          true,
+        );
+      },
+      30_000,
+    );
+
+    it(
       'should remain independent of interleaved result-resolution order',
       () => {
         const expected =
@@ -498,6 +639,12 @@ describe(
         expect(
           result.targetLocator,
         ).toBeNull();
+
+        expect(
+          result.locatedTargetCount,
+        ).toBe(
+          0,
+        );
       },
     );
 

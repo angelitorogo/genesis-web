@@ -6,6 +6,7 @@ import { UniverseSeed } from '../../domain/universe/universe-seed';
 import { InitialExplorationStateGenerator } from '../exploration/initial-exploration-state-generator';
 import { ProceduralTargetResolver } from '../regeneration/procedural-target-resolver';
 import { GalaxySectorContentGenerator } from '../sector/galaxy-sector-content-generator';
+import { V2GalaxySectorContentLimiter } from '../sector/v2-galaxy-sector-content-limiter';
 import { GalaxySectorGridGenerator } from '../sector/galaxy-sector-grid-generator';
 import { GalaxyGenerator } from './galaxy-generator';
 import { V2GalacticSourceBuilder } from './v2-galactic-source';
@@ -46,8 +47,11 @@ describe('Stage 12: read-only V2 galactic bridge', () => {
     expect(first.sector.locator.sectorKey).toBe(first.grid.locatorFor(coordinates).sectorKey);
     expect(first.sector.seed.normalizedValue).toBe(legacy.seed.normalizedValue);
     expect(first.sector.stellarDensity).toEqual(legacy.stellarDensity);
-    expect(first.sector.systemLocators).toEqual(legacy.systemLocators);
-    expect(first.sector.galacticObjectLocators).toEqual(legacy.galacticObjectLocators);
+    const limited = V2GalaxySectorContentLimiter.limit(
+      legacy.stellarDensity.region, legacy.systemLocators, legacy.galacticObjectLocators,
+    );
+    expect(first.sector.systemLocators).toEqual(limited.systemLocators);
+    expect(first.sector.galacticObjectLocators).toEqual(limited.galacticObjectLocators);
     expect(repeated.sector.seed.normalizedValue).toBe(first.sector.seed.normalizedValue);
     expect(repeated.sector.systemLocators).toEqual(first.sector.systemLocators);
     expect(legacy.generationKey).toBe(v1);

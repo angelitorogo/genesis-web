@@ -648,14 +648,25 @@ export class GalacticMapFacade {
         );
 
       /*
-       * Refresh coverage/markers while the existing scene stays mounted.
-       * GalacticMapScene re-renders the new model through the same runtime, so
-       * camera, zoom, orientation and galaxy spin remain where the player left
-       * them instead of forcing a round-trip through /exploration.
+       * Step 3 performance path: the successful point-9.5 commit already tells
+       * us exactly which sector and static targets became visible. Extend the
+       * current immutable map snapshots in memory instead of re-reading every
+       * KnownDiscovery from IndexedDB and rebuilding environmental metadata.
+       *
+       * A guarded full refresh remains as compatibility fallback for an
+       * incomplete/legacy model snapshot.
        */
-      await this.refresh(
-        true,
-      );
+      if (
+        !this.applyExplorationResultsIncrementally(
+          [
+            explorationResult,
+          ],
+        )
+      ) {
+        await this.refresh(
+          true,
+        );
+      }
     } catch (
       error
     ) {
@@ -689,8 +700,8 @@ export class GalacticMapFacade {
     }
   }
 
-  /** Sequentially commits canonical 9.3 → 9.4 → 9.5 scans; every sector is atomic.
-   * A failure leaves already committed sectors visible, with no false all-or-nothing claim.
+  /** Resolves canonical 9.3 → 9.4 scans in memory and commits the pending block
+   * through one point-9.5 Dexie transaction. A failed batch rolls back completely.
    */
   async exploreBlock(selection: GalacticMapSectorSelection, size: number): Promise<void> {
     if (size === 1) return this.exploreSector(selection);
@@ -714,6 +725,14 @@ export class GalacticMapFacade {
     this.inlineExplorationPendingSignal.set(true);
     let committed = 0;
     let awarded = 0;
+
+    /*
+     * Step 3: keep the successfully persisted results outside the try block so
+     * the finally clause can update the map incrementally without violating
+     * block scope. This list contains only results whose persistence completed.
+     */
+    const committedResults: ExplorationSectorResult[] = [];
+
     try {
       // A forged UI value never grants a non-redeemed upgrade.
       const unlocked = await this.codes.getMaxSectorBlockSize(model.generationKey);
@@ -725,37 +744,85 @@ export class GalacticMapFacade {
         coverage.grid, selection, size, coverage.exploredSectors,
       );
       this.blockProgressSignal.set({ size, total: plan.total, skipped: plan.skipped, processed: 0, awarded: 0 });
+
+      // Resolve the entire deterministic block in memory first. No IndexedDB
+      // transaction is opened per sector. The runtime then bulk-reads exactly
+      // the candidate locator keys and commits all new DETECTED rows together.
+      const resolvedResults: ExplorationSectorResult[] = [];
+
       for (const coordinates of plan.pending) {
-        // Prevent applying the remainder to an unrelated active galaxy/universe.
         const current = this.model();
         if (current === null || !current.generationKey.equals(model.generationKey) ||
             current.galaxyIndex !== model.galaxyIndex) {
           throw new Error('Ha cambiado el universo activo. El bloque se ha detenido.');
         }
+
         const prepared = ExplorationSectorScanEngine.prepareSector(
           model.generationKey, model.galaxyIndex, coordinates.x, coordinates.y,
         );
-        const result = ExplorationSectorResultEngine.resolve(
-          ExplorationSectorScanEngine.scan(prepared),
+
+        resolvedResults.push(
+          ExplorationSectorResultEngine.resolve(
+            ExplorationSectorScanEngine.scan(prepared),
+          ),
         );
-        // Existing runtime owns one transaction per sector and suppresses duplicate rewards.
-        const progress = await this.explorationProgressRuntime.commitResolvedResult(result);
-        committed++;
-        awarded += progress.awardedDiscoveryPoints;
-        this.blockProgressSignal.set({
-          size, total: plan.total, skipped: plan.skipped,
-          processed: committed, awarded,
-        });
       }
+
+      const commitResolvedResults =
+        this.explorationProgressRuntime.commitResolvedResults;
+
+      if (commitResolvedResults !== undefined) {
+        const batchProgress =
+          await commitResolvedResults.call(
+            this.explorationProgressRuntime,
+            resolvedResults,
+          );
+
+        committed = batchProgress.processedSectors;
+        awarded = batchProgress.awardedDiscoveryPoints;
+
+        committedResults.push(
+          ...resolvedResults.slice(
+            0,
+            batchProgress.processedSectors,
+          ),
+        );
+      } else {
+        // Compatibility fallback for legacy/test runtimes. The production
+        // Dexie runtime always exposes the optimized block path.
+        for (const result of resolvedResults) {
+          const progress =
+            await this.explorationProgressRuntime.commitResolvedResult(result);
+          committed += 1;
+          awarded += progress.awardedDiscoveryPoints;
+          committedResults.push(result);
+        }
+      }
+
+      this.blockProgressSignal.set({
+        size, total: plan.total, skipped: plan.skipped,
+        processed: committed, awarded,
+      });
     } catch (error) {
       this.inlineExplorationErrorSignal.set(
         `${error instanceof Error ? error.message : 'No se pudo explorar el bloque.'} ` +
-        `Sectores registrados antes del error: ${committed}.`,
+        `Sectores registrados: ${committed}.`,
       );
     } finally {
       if (committed > 0 && explorationId === this.inlineExplorationSequence) {
-        // One refresh only, after the serial batch: no repeated Three.js scene recreation.
-        await this.refresh(true);
+        /*
+         * Step 3: the batch has already resolved every new sector/target in
+         * memory, so extend coverage + markers directly. This avoids the one
+         * remaining global discovery snapshot that a post-batch refresh used
+         * to perform. Keep one guarded refresh only as compatibility fallback.
+         */
+        if (
+          !this.applyExplorationResultsIncrementally(
+            committedResults,
+          )
+        ) {
+          await this.refresh(true);
+        }
       }
       if (explorationId === this.inlineExplorationSequence) {
         this.inlineExplorationPendingSignal.set(false);
@@ -788,6 +855,228 @@ export class GalacticMapFacade {
     this
       .inlineExplorationErrorSignal
       .set('');
+  }
+
+  /**
+   * Step 3 map-refresh optimization.
+   *
+   * Exploration is append-only at this boundary: a previously unexplored
+   * sector becomes known and its newly materialized static targets enter at
+   * DETECTED. The current map model therefore already contains everything
+   * needed to build the next immutable coverage/marker snapshots without a
+   * repository round-trip.
+   *
+   * Returns false only when the active model is not a complete detailed-map
+   * snapshot, allowing callers to fall back to the canonical full refresh.
+   */
+  private applyExplorationResultsIncrementally(
+    results:
+      readonly ExplorationSectorResult[],
+  ): boolean {
+
+    if (
+      results.length ===
+        0
+    ) {
+      return true;
+    }
+
+    const model =
+      this.model();
+
+    if (
+      model ===
+        null ||
+      model.explorationCoverage ===
+        null ||
+      model.discoveryMarkers ===
+        null
+    ) {
+      return false;
+    }
+
+    const coverage =
+      model.explorationCoverage;
+
+    const markers =
+      model.discoveryMarkers;
+
+    const exploredIdentity =
+      new Set<string>(
+        coverage
+          .exploredSectors
+          .map(
+            coordinates =>
+              `${coordinates.x}:${coordinates.y}`,
+          ),
+      );
+
+    const nextExplored =
+      [
+        ...coverage
+          .exploredSectors,
+      ];
+
+    const markerIdentity =
+      new Set<string>(
+        markers
+          .markers
+          .map(
+            marker =>
+              this.discoveryMarkerIdentity(
+                marker.locator,
+              ),
+          ),
+      );
+
+    const nextMarkers:
+      GalacticMapDiscoveryMarker[] =
+      [
+        ...markers
+          .markers,
+      ];
+
+    for (
+      const result
+      of results
+    ) {
+      const selection =
+        result
+          .scanResult
+          .selection;
+
+      if (
+        !selection
+          .generationKey
+          .equals(
+            model.generationKey,
+          ) ||
+        selection
+          .galaxyIndex !==
+          model.galaxyIndex
+      ) {
+        return false;
+      }
+
+      const sectorCoordinates =
+        selection
+          .coordinates;
+
+      const sectorIdentity =
+        `${sectorCoordinates.x}:${sectorCoordinates.y}`;
+
+      if (
+        !exploredIdentity.has(
+          sectorIdentity,
+        )
+      ) {
+        exploredIdentity.add(
+          sectorIdentity,
+        );
+
+        nextExplored.push(
+          sectorCoordinates,
+        );
+      }
+
+      for (
+        const target
+        of result
+          .locatedTargets
+      ) {
+        const identity =
+          this.discoveryMarkerIdentity(
+            target.locator,
+          );
+
+        if (
+          markerIdentity.has(
+            identity,
+          )
+        ) {
+          continue;
+        }
+
+        const location =
+          GalaxySectorObjectLocationResolver
+            .resolve(
+              model.generationKey,
+              target.locator,
+            );
+
+        nextMarkers.push(
+          new GalacticMapDiscoveryMarker(
+            target.locator,
+            target.kind,
+            DiscoveryState.DETECTED,
+            location.sectorCoordinates,
+            location.normalizedX,
+            location.normalizedY,
+          ),
+        );
+
+        markerIdentity.add(
+          identity,
+        );
+      }
+    }
+
+    const nextCoverage =
+      new GalacticMapExplorationCoverage(
+        model.generationKey,
+        model.galaxyIndex,
+        coverage.grid,
+        nextExplored,
+      );
+
+    const nextDiscoveryMarkers =
+      new GalacticMapDiscoveryMarkers(
+        model.generationKey,
+        model.galaxyIndex,
+        markers.grid,
+        nextMarkers,
+      );
+
+    this
+      .stateSignal
+      .set({
+        kind:
+          'content',
+
+        model:
+          new GalacticMapModel(
+            model.generationKey,
+            model.galaxyIndex,
+            model.preliminaryInformation,
+            model.visualStructure,
+            model.galaxyType,
+            nextCoverage,
+            nextDiscoveryMarkers,
+            model.environmentalLayers,
+            model.knownName,
+          ),
+      });
+
+    return true;
+  }
+
+  private discoveryMarkerIdentity(
+    locator:
+      SystemLocator |
+      GalacticObjectLocator,
+  ): string {
+
+    return [
+      locator instanceof
+        SystemLocator
+        ? 'SYSTEM'
+        : 'GALACTIC_OBJECT',
+      locator.galaxyIndex,
+      locator.sectorKey,
+      locator.galacticObjectIndex,
+    ].join(
+      ':',
+    );
   }
 
   private prepareExplorationCoverage(

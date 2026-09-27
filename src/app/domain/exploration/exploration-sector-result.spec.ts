@@ -245,6 +245,7 @@ describe(
           'scanResult',
           'resultKind',
           'subject',
+          'locatedTargets',
         ]);
 
         for (
@@ -264,6 +265,81 @@ describe(
             forbidden,
           );
         }
+      },
+    );
+
+    it(
+      'should preserve a highlighted result while exposing multiple unique static targets from the same sector',
+      () => {
+        const result =
+          new ExplorationSectorResult(
+            scanResult(),
+            ExplorationResultKind.SYSTEM,
+            new LocatedObservationObject(
+              generationKey,
+              new SystemLocator(
+                0n,
+                0n,
+                1n,
+              ),
+            ),
+            [
+              {
+                kind: ExplorationResultKind.SYSTEM,
+                locator: new SystemLocator(0n, 0n, 0n),
+              },
+              {
+                kind: ExplorationResultKind.SYSTEM,
+                locator: new SystemLocator(0n, 0n, 1n),
+              },
+              {
+                kind: ExplorationResultKind.NEBULA,
+                locator: new GalacticObjectLocator(0n, 0n, 0n),
+              },
+            ],
+          );
+
+        expect(
+          result.locatedTargetCount,
+        ).toBe(
+          3,
+        );
+
+        expect(
+          result.targetLocators.length,
+        ).toBe(
+          3,
+        );
+
+        expect(
+          result.targetLocator,
+        ).toEqual(
+          new SystemLocator(0n, 0n, 1n),
+        );
+
+        expect(
+          () =>
+            new ExplorationSectorResult(
+              scanResult(),
+              ExplorationResultKind.SYSTEM,
+              new LocatedObservationObject(
+                generationKey,
+                new SystemLocator(0n, 0n, 1n),
+              ),
+              [
+                {
+                  kind: ExplorationResultKind.SYSTEM,
+                  locator: new SystemLocator(0n, 0n, 1n),
+                },
+                {
+                  kind: ExplorationResultKind.SYSTEM,
+                  locator: new SystemLocator(0n, 0n, 1n),
+                },
+              ],
+            ),
+        ).toThrow(
+          RangeError,
+        );
       },
     );
 

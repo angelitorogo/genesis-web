@@ -26,6 +26,7 @@ import { GalaxyArchiveEngine } from '../../simulation/exploration/galaxy-archive
 import { ExternalGalaxyPreliminaryInformationGenerator } from '../../simulation/observation/galaxy/external-galaxy-preliminary-information-generator';
 import { ProceduralTargetResolver } from '../../simulation/regeneration/procedural-target-resolver';
 import { GalaxySectorContentGenerator } from '../../simulation/sector/galaxy-sector-content-generator';
+import { V2GalaxySectorContentLimiter } from '../../simulation/sector/v2-galaxy-sector-content-limiter';
 import { GalaxyVisualStructureGenerator } from '../../simulation/universe/galaxy-visual-structure-generator';
 import { GalaxyGenerator } from '../../simulation/universe/galaxy-generator';
 
@@ -54,9 +55,26 @@ describe('Etapa 13.1 — integración de exploración y archivo V2', () => {
     expect(result(v2.copy(), 0, 2)).toEqual(selected);
     expect(selected.resultKind).toBe(result(v1, 0, 2).resultKind);
     const sector = GalaxySectorContentGenerator.generate(galaxy, selection.coordinates);
+    const physicalSector = GalaxySectorContentGenerator.generate(
+      GalaxyGenerator.generate(v1, 0n),
+      selection.coordinates,
+    );
+    const maxObjectCount = V2GalaxySectorContentLimiter.maxObjectCountForRegion(
+      physicalSector.stellarDensity.region,
+    );
     expect(sector.generationKey).toBe(v2);
-    expect(sector.systemLocators).toEqual(GalaxySectorContentGenerator.generate(
-      GalaxyGenerator.generate(v1, 0n), selection.coordinates).systemLocators);
+    expect(
+      sector.systemLocators.length + sector.galacticObjectLocators.length,
+    ).toBe(Math.min(
+      maxObjectCount,
+      physicalSector.systemLocators.length + physicalSector.galacticObjectLocators.length,
+    ));
+    expect(sector.systemLocators).toEqual(
+      physicalSector.systemLocators.slice(0, sector.systemLocators.length),
+    );
+    expect(sector.galacticObjectLocators).toEqual(
+      physicalSector.galacticObjectLocators.slice(0, sector.galacticObjectLocators.length),
+    );
   });
 
   it('conserva la identidad V2 para la detección del núcleo y el resultado sectorial', () => {

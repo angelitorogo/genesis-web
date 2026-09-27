@@ -22,8 +22,10 @@ import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V1,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
   GENESIS_INDEXED_DB_V1_STORES,
   GENESIS_INDEXED_DB_V2_STORES,
+  GENESIS_INDEXED_DB_V3_STORES,
   GENESIS_STORAGE_FORMAT_VERSION,
 } from './genesis-indexed-db-schema';
 
@@ -129,6 +131,23 @@ describe(
       return legacy;
     }
 
+    function createLegacyV3Database():
+      Dexie {
+
+      const legacy =
+        createLegacyV2Database();
+
+      legacy
+        .version(
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+        )
+        .stores(
+          GENESIS_INDEXED_DB_V3_STORES,
+        );
+
+      return legacy;
+    }
+
     function createCurrentDatabase():
         GenesisIndexedDb {
 
@@ -139,7 +158,7 @@ describe(
     }
 
     it(
-      'should expose the exact canonical migration chain through v3',
+      'should expose the exact canonical migration chain through v4',
       () => {
         expect(
           GENESIS_INDEXED_DB_MIGRATIONS,
@@ -173,6 +192,21 @@ describe(
               GeneratorVersionMigrationStrategy
                 .PRESERVE,
           },
+
+          {
+            id:
+              'v3-to-v4',
+
+            fromSchemaVersion:
+              3,
+
+            toSchemaVersion:
+              4,
+
+            generatorVersionStrategy:
+              GeneratorVersionMigrationStrategy
+                .PRESERVE,
+          },
         ]);
       },
     );
@@ -188,7 +222,7 @@ describe(
         expect(
           GENESIS_INDEXED_DB_SCHEMA_VERSION,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
         );
       },
     );
@@ -284,7 +318,7 @@ describe(
     );
 
     it(
-      'should migrate an empty v1 database through v3 without inventing metadata',
+      'should migrate an empty v1 database through v4 without inventing metadata',
       async () => {
         legacyDatabase =
           createLegacyV1Database();
@@ -304,7 +338,7 @@ describe(
         expect(
           database.verno,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
         );
 
         expect(
@@ -319,6 +353,7 @@ describe(
         ).toEqual([
           'discoveries',
           'galaxies',
+          'galaxyKnowledgeSnapshots',
           'metadata',
           'navigation',
           'observations',
@@ -341,7 +376,48 @@ describe(
     );
 
     it(
-      'should migrate v1 through v3 preserving data and GeneratorVersion',
+      'should migrate an existing v3 database to v4 with an empty derived snapshot store',
+      async () => {
+        const now = 1_786_291_200_000;
+
+        legacyDatabase =
+          createLegacyV3Database();
+
+        await legacyDatabase.open();
+
+        await legacyDatabase
+          .table('metadata')
+          .put({
+            key: 'storage',
+            schemaVersion: 3,
+            storageFormatVersion: GENESIS_STORAGE_FORMAT_VERSION,
+            updatedAtEpochMs: now,
+          });
+
+        legacyDatabase.close();
+
+        database =
+          createCurrentDatabase();
+
+        await database.openDatabase();
+
+        expect(database.verno).toBe(
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+        );
+
+        expect(
+          await database.galaxyKnowledgeSnapshots.count(),
+        ).toBe(0);
+
+        expect(
+          (await database.metadata.get('storage'))
+            ?.schemaVersion,
+        ).toBe(4);
+      },
+    );
+
+    it(
+      'should migrate v1 through v4 preserving data and GeneratorVersion',
       async () => {
         const universeSeed =
           '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
@@ -532,7 +608,7 @@ describe(
             'storage',
 
           schemaVersion:
-            3,
+            4,
 
           storageFormatVersion:
             1,
@@ -779,7 +855,7 @@ describe(
         expect(
           database.verno,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
         );
 
         expect(
@@ -790,7 +866,7 @@ describe(
             ),
         ).toMatchObject({
           schemaVersion:
-            3,
+            4,
         });
 
         expect(

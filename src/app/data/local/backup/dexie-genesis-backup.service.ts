@@ -374,6 +374,7 @@ export class DexieGenesisBackupService
           this.database.discoveries,
           this.database.observations,
           this.database.progress,
+          this.database.galaxyKnowledgeSnapshots,
         ],
 
         async () => {
@@ -396,6 +397,10 @@ export class DexieGenesisBackupService
 
             this.database
               .progress
+              .clear(),
+
+            this.database
+              .galaxyKnowledgeSnapshots
               .clear(),
 
             this.database

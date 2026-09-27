@@ -4,8 +4,10 @@ import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { type GalaxyKnownWaterWorldIndex } from '../../domain/exploration/galaxy-known-water-world-index';
 import { GalaxyLocator } from '../../domain/generation/procedural-locator';
 import { type UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
-import { GalaxyKnownWaterWorldIndexEngine } from '../../simulation/exploration/galaxy-known-water-world-index-engine';
 import { GalaxyGeneralProfileEngine } from '../../simulation/exploration/galaxy-general-profile-engine';
+import {
+  GALAXY_WATER_INDEX_SNAPSHOT_RUNTIME,
+} from '../runtime/galaxy-water-index-snapshot.runtime';
 import { GENESIS_LOCAL_REPOSITORIES } from '../runtime/genesis-local-repositories';
 import {
   isScientificRouteUniverseRef,
@@ -34,6 +36,7 @@ export type GalaxyWaterWorldIndexUiState =
 export class GalaxyWaterWorldIndexFacade {
   private readonly repositories = inject(GENESIS_LOCAL_REPOSITORIES);
   private readonly universeSeedFacade = inject(UniverseSeedFacade);
+  private readonly waterIndexSnapshotRuntime = inject(GALAXY_WATER_INDEX_SNAPSHOT_RUNTIME);
   private readonly stateSignal = signal<GalaxyWaterWorldIndexUiState>({ kind: 'loading' });
   private loadSequence = 0;
 
@@ -90,12 +93,13 @@ export class GalaxyWaterWorldIndexFacade {
       }
 
       const profile = GalaxyGeneralProfileEngine.build(generationKey, galaxyIndex, galaxyState);
-      const index = GalaxyKnownWaterWorldIndexEngine.build(
+      const index = await this.waterIndexSnapshotRuntime.resolveWorldIndex(
         generationKey,
         galaxyIndex,
         galaxyState,
         knownDiscoveries,
       );
+      if (loadId !== this.loadSequence) return;
 
       if (!this.universeSeedFacade.activeGenerationKey().equals(generationKey)) {
         this.universeSeedFacade.activatePersistedUniverse(generationKey);

@@ -46,6 +46,14 @@ import {
 } from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
 
 import {
+  GalaxyExplorationTelemetryEngine,
+} from '../../simulation/exploration/galaxy-exploration-telemetry-engine';
+
+import {
+  GalaxyKnowledgeStatisticsEngine,
+} from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
+
+import {
   GALAXY_FOCUS_RUNTIME,
   type GalaxyFocusRuntime,
 } from '../runtime/galaxy-focus.runtime';
@@ -61,6 +69,10 @@ import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
+
+import {
+  GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
+} from '../runtime/galaxy-knowledge-snapshot.runtime';
 
 import {
   DEFAULT_UNIVERSE_SEED,
@@ -343,6 +355,47 @@ describe(
 
             useValue:
               repositoryBundle,
+          },
+
+          {
+            provide:
+              GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
+
+            useValue: {
+              async resolve(
+                generationKey:
+                  UniverseGenerationKey,
+
+                resolvedGalaxyIndex:
+                  bigint,
+
+                galaxyState:
+                  DiscoveryStateValue,
+
+                knownDiscoveries:
+                  readonly KnownDiscovery[],
+              ) {
+                return {
+                  knowledgeRevision:
+                    'TEST',
+
+                  statistics:
+                    GalaxyKnowledgeStatisticsEngine.build(
+                      generationKey,
+                      resolvedGalaxyIndex,
+                      knownDiscoveries,
+                    ),
+
+                  explorationTelemetry:
+                    GalaxyExplorationTelemetryEngine.build(
+                      generationKey,
+                      resolvedGalaxyIndex,
+                      galaxyState,
+                      knownDiscoveries,
+                    ),
+                };
+              },
+            },
           },
 
           {

@@ -13,6 +13,7 @@ import { type GalaxySectorStellarPopulationProperties } from '../../domain/secto
 import { Galaxy } from '../../domain/universe/galaxy';
 import { InitialExplorationStateGenerator } from '../exploration/initial-exploration-state-generator';
 import { GalaxySectorContentGenerator } from '../sector/galaxy-sector-content-generator';
+import { V2GalaxySectorContentLimiter } from '../sector/v2-galaxy-sector-content-limiter';
 import { GalaxySectorGridGenerator } from '../sector/galaxy-sector-grid-generator';
 import { GalaxySectorObjectLocationResolver } from '../sector/galaxy-sector-object-location-resolver';
 import {
@@ -69,19 +70,20 @@ export class V2GalacticPhysicalCompatibility {
     const grid = new GalaxySectorGrid(
       key, galaxyIndex, physicalGrid.sectorSizeLightYears, physicalGrid.halfExtentInSectors,
     );
+    const limited = V2GalaxySectorContentLimiter.limit(
+      physicalContent.stellarDensity.region,
+      physicalContent.systemLocators,
+      physicalContent.galacticObjectLocators,
+    );
     const content = new GalaxySectorContent(
       key,
       grid.locatorFor(coordinates),
       coordinates,
       physicalContent.seed,
       physicalContent.stellarDensity,
-      physicalContent.systemLocators,
-      physicalContent.galacticObjectLocators,
+      limited.systemLocators,
+      limited.galacticObjectLocators,
     );
-    if (content.systemLocators.length !== physicalContent.systemLocators.length ||
-        content.galacticObjectLocators.length !== physicalContent.galacticObjectLocators.length) {
-      throw new Error('The V2 sector binding changed its physical content.');
-    }
     return Object.freeze({ galaxy, grid, content, stellarPopulation });
   }
 

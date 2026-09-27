@@ -23,9 +23,11 @@ import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V1,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
   GENESIS_INDEXED_DB_STORES,
   GENESIS_INDEXED_DB_V1_STORES,
   GENESIS_INDEXED_DB_V2_STORES,
+  GENESIS_INDEXED_DB_V3_STORES,
 } from './genesis-indexed-db-schema';
 
 export const GeneratorVersionMigrationStrategy =
@@ -87,6 +89,21 @@ export const GENESIS_INDEXED_DB_MIGRATIONS:
 
       toSchemaVersion:
         GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+
+      generatorVersionStrategy:
+        GeneratorVersionMigrationStrategy
+          .PRESERVE,
+    }),
+
+    Object.freeze({
+      id:
+        'v3-to-v4',
+
+      fromSchemaVersion:
+        GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+
+      toSchemaVersion:
+        GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
 
       generatorVersionStrategy:
         GeneratorVersionMigrationStrategy
@@ -275,6 +292,18 @@ export async function migrateGenesisIndexedDbV2ToV3(
   }
 }
 
+export async function migrateGenesisIndexedDbV3ToV4(
+  transaction:
+    Transaction,
+): Promise<void> {
+
+  await migrateMetadataSchemaVersion(
+    transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+  );
+}
+
 export function registerGenesisIndexedDbVersions(
   database:
     Dexie,
@@ -306,10 +335,21 @@ export function registerGenesisIndexedDbVersions(
       GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
     )
     .stores(
-      GENESIS_INDEXED_DB_STORES,
+      GENESIS_INDEXED_DB_V3_STORES,
     )
     .upgrade(
       migrateGenesisIndexedDbV2ToV3,
+    );
+
+  database
+    .version(
+      GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+    )
+    .stores(
+      GENESIS_INDEXED_DB_STORES,
+    )
+    .upgrade(
+      migrateGenesisIndexedDbV3ToV4,
     );
 }
 

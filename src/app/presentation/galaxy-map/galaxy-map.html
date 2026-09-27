@@ -298,7 +298,7 @@
                     <div class="galactic-map__inline-heading">
                       <div>
                         <p class="galactic-map__meta">
-                          05 / RESULTADO RESUELTO
+                          05 / SECTOR RESUELTO
                         </p>
 
                         <span class="galactic-map__inline-kind">
@@ -312,11 +312,11 @@
                     </div>
 
                     <h2 id="galactic-map-inline-title">
-                      {{ resultHeadline(explorationResult.resultKind) }}
+                      {{ sectorResultHeadline(explorationResult) }}
                     </h2>
 
                     <p>
-                      {{ resultDescription(explorationResult.resultKind) }}
+                      {{ sectorResultDescription(explorationResult) }}
                     </p>
 
                     <dl class="galactic-map__inline-facts">
@@ -347,6 +347,49 @@
                           Sin clasificar
                         </dd>
                       </div>
+
+                      <div>
+                        <dt>Objetos estáticos detectados</dt>
+                        <dd data-testid="galactic-map-inline-located-target-count">
+                          {{ explorationResult.locatedTargetCount }}
+                        </dd>
+                      </div>
+
+                      @if (locatedTargetCount(explorationResult, 'SYSTEM') > 0) {
+                        <div>
+                          <dt>Sistemas estelares</dt>
+                          <dd data-testid="galactic-map-inline-system-count">
+                            {{ locatedTargetCount(explorationResult, 'SYSTEM') }}
+                          </dd>
+                        </div>
+                      }
+
+                      @if (locatedTargetCount(explorationResult, 'NEBULA') > 0) {
+                        <div>
+                          <dt>Nebulosas</dt>
+                          <dd>
+                            {{ locatedTargetCount(explorationResult, 'NEBULA') }}
+                          </dd>
+                        </div>
+                      }
+
+                      @if (locatedTargetCount(explorationResult, 'STAR_CLUSTER') > 0) {
+                        <div>
+                          <dt>Cúmulos estelares</dt>
+                          <dd>
+                            {{ locatedTargetCount(explorationResult, 'STAR_CLUSTER') }}
+                          </dd>
+                        </div>
+                      }
+
+                      @if (locatedTargetCount(explorationResult, 'EXTREME_OBJECT') > 0) {
+                        <div>
+                          <dt>Objetos extremos</dt>
+                          <dd>
+                            {{ locatedTargetCount(explorationResult, 'EXTREME_OBJECT') }}
+                          </dd>
+                        </div>
+                      }
                     </dl>
                   </section>
                 }
@@ -408,7 +451,7 @@
                     </h3>
 
                     <p>
-                      Solo se registra el estado observado DETECTED. No se revelan propiedades físicas, clasificación científica definitiva ni contenido adicional del sector.
+                      Todos los objetos estáticos del sector se registran únicamente como DETECTED. No se revelan todavía propiedades físicas ni clasificación científica definitiva; cada objeto progresa después de forma independiente.
                     </p>
 
                     <dl class="galactic-map__inline-facts">
@@ -435,7 +478,7 @@
                       </div>
 
                       <div>
-                        <dt>Resultado estático</dt>
+                        <dt>Resultado destacado</dt>
                         <dd data-testid="galactic-map-inline-result-state">
                           {{ progress.resultState === null ? 'Evento no persistido' : discoveryStateLabel(progress.resultState) }}
                         </dd>

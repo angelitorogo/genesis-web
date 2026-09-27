@@ -7,6 +7,7 @@ import { GalaxySectorGrid } from '../../domain/sector/galaxy-sector-grid';
 import { Galaxy } from '../../domain/universe/galaxy';
 import { InitialExplorationStateGenerator } from '../exploration/initial-exploration-state-generator';
 import { GalaxySectorContentGenerator } from '../sector/galaxy-sector-content-generator';
+import { V2GalaxySectorContentLimiter } from '../sector/v2-galaxy-sector-content-limiter';
 import { GalaxySectorGridGenerator } from '../sector/galaxy-sector-grid-generator';
 import { multihostPhysicalSourceKey } from '../stellar/stellar-multihost-physical-source-key';
 import { GalaxyGenerator } from './galaxy-generator';
@@ -69,9 +70,14 @@ export class V2GalacticSourceBuilder {
         locator.sectorKey !== physicalSector.locator.sectorKey) {
       throw new Error('V2 and physical V1 sector addressing disagree.');
     }
+    const limited = V2GalaxySectorContentLimiter.limit(
+      physicalSector.stellarDensity.region,
+      physicalSector.systemLocators,
+      physicalSector.galacticObjectLocators,
+    );
     const sector = new GalaxySectorContent(key, locator, coordinates, physicalSector.seed,
-      physicalSector.stellarDensity, physicalSector.systemLocators,
-      physicalSector.galacticObjectLocators);
+      physicalSector.stellarDensity, limited.systemLocators,
+      limited.galacticObjectLocators);
     return Object.freeze({ ...source, sector });
   }
 }

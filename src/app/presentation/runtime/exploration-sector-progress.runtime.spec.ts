@@ -1,6 +1,10 @@
 import Dexie from 'dexie';
 
 import {
+  vi,
+} from 'vitest';
+
+import {
   IDBKeyRange,
   indexedDB,
 } from 'fake-indexeddb';
@@ -280,10 +284,18 @@ describe(
             );
 
         const expected =
-          result.resultKind ===
-          ExplorationResultKind.SYSTEM
-            ? 8
-            : 14;
+          2 +
+          result.locatedTargets.reduce(
+            (total, target) =>
+              total +
+              (
+                target.kind ===
+                  ExplorationResultKind.SYSTEM
+                  ? 6
+                  : 12
+              ),
+            0,
+          );
 
         expect(
           progress.awardedDiscoveryPoints,
@@ -316,8 +328,319 @@ describe(
 
         expect(
           progress.galaxyProgressUnitsAfter,
-        ).toBe(4n);
+        ).toBe(
+          3n +
+          BigInt(
+            result.locatedTargetCount,
+          ),
+        );
       },
+    );
+
+    it(
+      'should preserve exact absolute galaxy progress while deriving the post-write value by delta',
+      async () => {
+        const result =
+          resolveStatic();
+
+        let otherResult =
+          null as ReturnType<typeof resolve> | null;
+
+        for (
+          let x = -12;
+          x <= 12 && otherResult === null;
+          x += 1
+        ) {
+          for (
+            let y = -12;
+            y <= 12 && otherResult === null;
+            y += 1
+          ) {
+            const candidate =
+              resolve(
+                x,
+                y,
+              );
+
+            if (
+              candidate.targetLocator !==
+                null &&
+              candidate
+                .scanResult
+                .selection
+                .sectorLocator
+                .sectorKey !==
+              result
+                .scanResult
+                .selection
+                .sectorLocator
+                .sectorKey
+            ) {
+              otherResult =
+                candidate;
+            }
+          }
+        }
+
+        if (
+          otherResult?.targetLocator ===
+          null ||
+          otherResult ===
+          null
+        ) {
+          throw new Error(
+            'Frozen sample must contain a second static sector.',
+          );
+        }
+
+        await discoveryRepository
+          .setState(
+            generationKey,
+            otherResult.targetLocator,
+            DiscoveryState.DISCOVERED,
+          );
+
+        const progress =
+          await runtime
+            .commitResolvedResult(
+              result,
+            );
+
+        expect(
+          progress.galaxyProgressUnitsBefore,
+        ).toBe(
+          4n,
+        );
+
+        expect(
+          progress.galaxyProgressUnitsAfter,
+        ).toBe(
+          5n +
+          BigInt(
+            result.locatedTargetCount,
+          ),
+        );
+      },
+    );
+
+    it(
+      'should avoid whole-universe discovery snapshots and read the affected sector once',
+      async () => {
+        const result =
+          resolveStatic();
+
+        const globalSnapshotSpy =
+          vi.spyOn(
+            discoveryRepository,
+            'getKnownDiscoveries',
+          );
+
+        const sectorSnapshotSpy =
+          vi.spyOn(
+            discoveryRepository,
+            'getKnownDiscoveriesInSector',
+          );
+
+        const stateSpy =
+          vi.spyOn(
+            discoveryRepository,
+            'getState',
+          );
+
+        await runtime
+          .commitResolvedResult(
+            result,
+          );
+
+        expect(
+          globalSnapshotSpy,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          sectorSnapshotSpy,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          stateSpy,
+        ).toHaveBeenCalledTimes(
+          1,
+        );
+
+        expect(
+          sectorSnapshotSpy,
+        ).toHaveBeenCalledWith(
+          generationKey,
+          0n,
+          result
+            .scanResult
+            .selection
+            .coordinates,
+        );
+      },
+    );
+
+    it(
+      'should persist every static object present in a multi-object sector at DETECTED',
+      async () => {
+        let result =
+          null as ReturnType<typeof resolve> | null;
+
+        for (
+          let x = -16;
+          x <= 16 && result === null;
+          x += 1
+        ) {
+          for (
+            let y = -16;
+            y <= 16 && result === null;
+            y += 1
+          ) {
+            const candidate =
+              resolve(
+                x,
+                y,
+              );
+
+            if (
+              candidate.locatedTargetCount >=
+              3
+            ) {
+              result =
+                candidate;
+            }
+          }
+        }
+
+        if (
+          result ===
+          null
+        ) {
+          throw new Error(
+            'Frozen sample must contain a sector with at least three static Ground Truth targets.',
+          );
+        }
+
+        await runtime
+          .commitResolvedResult(
+            result,
+          );
+
+        for (
+          const target
+          of result.locatedTargets
+        ) {
+          expect(
+            await discoveryRepository
+              .getState(
+                generationKey,
+                target.locator,
+              ),
+          ).toBe(
+            DiscoveryState.DETECTED,
+          );
+        }
+
+        const repeated =
+          await runtime
+            .commitResolvedResult(
+              result,
+            );
+
+        expect(
+          repeated.awardedDiscoveryPoints,
+        ).toBe(
+          0,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should commit a sector block through one bulk read and one bulk write without per-sector snapshots',
+      async () => {
+        const results = [
+          resolve(0, 1),
+          resolve(1, 0),
+          resolve(1, 1),
+        ];
+
+        const globalSnapshotSpy = vi.spyOn(
+          discoveryRepository,
+          'getKnownDiscoveries',
+        );
+        const sectorSnapshotSpy = vi.spyOn(
+          discoveryRepository,
+          'getKnownDiscoveriesInSector',
+        );
+        const bulkGetSpy = vi.spyOn(
+          database.discoveries,
+          'bulkGet',
+        );
+        const bulkPutSpy = vi.spyOn(
+          database.discoveries,
+          'bulkPut',
+        );
+
+        const progress = await runtime.commitResolvedResults(results);
+
+        expect(progress.processedSectors).toBe(3);
+        expect(progress.awardedDiscoveryPoints).toBeGreaterThan(0);
+        expect(globalSnapshotSpy).not.toHaveBeenCalled();
+        expect(sectorSnapshotSpy).not.toHaveBeenCalled();
+        expect(bulkGetSpy).toHaveBeenCalledTimes(1);
+        expect(bulkPutSpy).toHaveBeenCalledTimes(1);
+
+        for (const result of results) {
+          expect(
+            await discoveryRepository.getState(
+              generationKey,
+              result.scanResult.selection.sectorLocator,
+            ),
+          ).toBe(DiscoveryState.DETECTED);
+
+          for (const target of result.locatedTargets) {
+            expect(
+              await discoveryRepository.getState(
+                generationKey,
+                target.locator,
+              ),
+            ).toBe(DiscoveryState.DETECTED);
+          }
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should make repeated block commits idempotent',
+      async () => {
+        const results = [
+          resolve(0, 1),
+          resolve(1, 0),
+          resolve(1, 1),
+        ];
+
+        const first = await runtime.commitResolvedResults(results);
+        const second = await runtime.commitResolvedResults(results);
+
+        expect(first.awardedDiscoveryPoints).toBeGreaterThan(0);
+        expect(second.awardedDiscoveryPoints).toBe(0);
+        expect(second.globalDiscoveryPointsBefore).toBe(
+          first.globalDiscoveryPointsAfter,
+        );
+        expect(second.globalDiscoveryPointsAfter).toBe(
+          first.globalDiscoveryPointsAfter,
+        );
+        expect(second.galaxyProgressUnitsBefore).toBe(
+          first.galaxyProgressUnitsAfter,
+        );
+        expect(second.galaxyProgressUnitsAfter).toBe(
+          first.galaxyProgressUnitsAfter,
+        );
+      },
+      30_000,
     );
 
     it(
@@ -507,12 +830,17 @@ describe(
           );
         }
 
-        await discoveryRepository
-          .setState(
-            generationKey,
-            result.targetLocator,
-            DiscoveryState.DISCOVERED,
-          );
+        for (
+          const target
+          of result.locatedTargets
+        ) {
+          await discoveryRepository
+            .setState(
+              generationKey,
+              target.locator,
+              DiscoveryState.DISCOVERED,
+            );
+        }
 
         const progress =
           await runtime
@@ -597,15 +925,15 @@ describe(
           DiscoveryState.UNKNOWN,
         );
 
-        if (
-          result.targetLocator !==
-          null
+        for (
+          const target
+          of result.locatedTargets
         ) {
           expect(
             await discoveryRepository
               .getState(
                 generationKey,
-                result.targetLocator,
+                target.locator,
               ),
           ).toBe(
             DiscoveryState.UNKNOWN,

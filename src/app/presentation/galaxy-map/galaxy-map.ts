@@ -171,6 +171,67 @@ export class GalacticMapPage
     return 'EVENTO TRANSITORIO';
   }
 
+  locatedTargetCount(
+    result:
+      ExplorationSectorResult,
+
+    kind:
+      ExplorationResultKind,
+  ): number {
+
+    if (
+      kind ===
+        ExplorationResultKind
+          .TRANSIENT_EVENT
+    ) {
+      return result.isTransient
+        ? 1
+        : 0;
+    }
+
+    return result
+      .locatedTargets
+      .filter(
+        target =>
+          target.kind ===
+          kind,
+      )
+      .length;
+  }
+
+  sectorResultHeadline(
+    result:
+      ExplorationSectorResult,
+  ): string {
+
+    if (
+      result.locatedTargetCount ===
+      0
+    ) {
+      return 'Evento transitorio aislado';
+    }
+
+    return result.locatedTargetCount ===
+      1
+      ? '1 objeto localizado en el sector'
+      : `${result.locatedTargetCount} objetos localizados en el sector`;
+  }
+
+  sectorResultDescription(
+    result:
+      ExplorationSectorResult,
+  ): string {
+
+    if (
+      result.locatedTargetCount ===
+      0
+    ) {
+      return 'El sector no contiene objetos estáticos persistentes detectables en esta exploración; la firma resuelta corresponde a un evento transitorio.';
+    }
+
+    return 'La exploración revela todos los objetos estáticos que existen en el Ground Truth procedural del sector y los registra como Detectados. La firma destacada conserva la clasificación operativa del resultado principal, sin adelantar todavía su clasificación científica formal.';
+  }
+
   resultHeadline(
     kind:
       ExplorationResultKind,

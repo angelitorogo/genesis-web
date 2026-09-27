@@ -32,6 +32,10 @@ import {
 } from '../entity/universe.entity';
 
 import {
+  GalaxyKnowledgeSnapshotEntity,
+} from '../entity/galaxy-knowledge-snapshot.entity';
+
+import {
   registerGenesisIndexedDbVersions,
 } from './genesis-indexed-db-migrations';
 
@@ -69,6 +73,14 @@ export type ProgressEntityKey =
 
 export type UniverseNavigationEntityKey =
   readonly [
+    string,
+    number,
+  ];
+
+export type GalaxyKnowledgeSnapshotEntityKey =
+  readonly [
+    string,
+    number,
     string,
     number,
   ];
@@ -116,6 +128,12 @@ export class GenesisIndexedDb
     Table<
       UniverseNavigationEntity,
       UniverseNavigationEntityKey
+    >;
+
+  readonly galaxyKnowledgeSnapshots!:
+    Table<
+      GalaxyKnowledgeSnapshotEntity,
+      GalaxyKnowledgeSnapshotEntityKey
     >;
 
   constructor(

@@ -15,12 +15,12 @@ const GENERATION_KEY = new UniverseGenerationKey(
 );
 
 function systemLocatorAt(x: number, y: number, systemName: string) {
-  const galaxy = GalaxyGenerator.generate(GENERATION_KEY, 0n);
+  const physicalKey = multihostPhysicalSourceKey(GENERATION_KEY);
+  const physicalGalaxy = GalaxyGenerator.generate(physicalKey, 0n);
   const content = GalaxySectorContentGenerator.generate(
-    galaxy,
+    physicalGalaxy,
     new GalaxySectorCoordinates(x, y),
   );
-  const physicalKey = multihostPhysicalSourceKey(GENERATION_KEY);
   const locator = content.systemLocators.find(candidate =>
     StellarDesignationGenerator.generate(physicalKey, candidate).name === systemName,
   );

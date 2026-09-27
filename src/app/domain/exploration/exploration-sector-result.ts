@@ -46,22 +46,40 @@ export type ExplorationResultSubject =
   LocatedObservationObject |
   ObservationTransientCandidate;
 
+export type ExplorationLocatedTargetLocator =
+  SystemLocator |
+  GalacticObjectLocator;
+
+/**
+ * One real static Ground Truth object revealed by a sector exploration.
+ *
+ * The kind is deliberately still the coarse exploration family. Formal
+ * scientific classification remains a later discovery/observation concern.
+ */
+export interface ExplorationLocatedTarget {
+  readonly kind:
+    ExplorationLocatedResultKind;
+
+  readonly locator:
+    ExplorationLocatedTargetLocator;
+}
+
 /**
  * Point-9.4 resolved exploration result.
  *
- * This model deliberately separates a coarse gameplay result family from the
- * formal point-8.9 scientific classification. A result can therefore be
- * presented as SYSTEM / NEBULA / STAR_CLUSTER / EXTREME_OBJECT /
- * TRANSIENT_EVENT while the scan remains scientifically Unclassified.
+ * Since the multi-target exploration update, one sector scan reveals every
+ * static Ground Truth locator that already exists in GalaxySectorContent.
+ * `resultKind` + `subject` remain as the deterministic highlighted result so
+ * existing observation/UI contracts do not need a parallel result model.
  *
- * Static results are backed by existing Ground Truth locators:
- * - SYSTEM -> SystemLocator
- * - NEBULA / STAR_CLUSTER / EXTREME_OBJECT -> GalacticObjectLocator
- *
- * Event results reuse the existing point-8.9 transient subject contract and
- * never invent a TransientLocator.
+ * `locatedTargets` is the authoritative collection that point 9.5 persists to
+ * DETECTED. A transient can therefore be the highlighted signal while the same
+ * scan still reveals static objects present in the sector.
  */
 export class ExplorationSectorResult {
+
+  readonly locatedTargets:
+    readonly ExplorationLocatedTarget[];
 
   constructor(
     readonly scanResult:
@@ -72,6 +90,9 @@ export class ExplorationSectorResult {
 
     readonly subject:
       ExplorationResultSubject,
+
+    locatedTargets?:
+      readonly ExplorationLocatedTarget[],
   ) {
     if (
       !Object.values(
@@ -112,62 +133,127 @@ export class ExplorationSectorResult {
           'TRANSIENT_EVENT must use an ObservationTransientCandidate.',
         );
       }
-
-      return;
-    }
-
-    if (
-      !(subject instanceof
-        LocatedObservationObject)
-    ) {
-      throw new TypeError(
-        'Static point-9.4 results must use a LocatedObservationObject.',
-      );
-    }
-
-    const locator =
-      subject
-        .targetLocator;
-
-    if (
-      resultKind ===
-        ExplorationResultKind
-          .SYSTEM
-    ) {
+    } else {
       if (
-        !(locator instanceof
-          SystemLocator)
+        !(subject instanceof
+          LocatedObservationObject)
       ) {
         throw new TypeError(
-          'SYSTEM result must be backed by a SystemLocator.',
+          'Static point-9.4 results must use a LocatedObservationObject.',
         );
       }
-    } else if (
-      !(locator instanceof
-        GalacticObjectLocator)
+
+      assertKindMatchesLocator(
+        resultKind,
+        assertSupportedLocatedLocator(
+          subject.targetLocator,
+        ),
+      );
+
+      assertLocatorBelongsToScan(
+        assertSupportedLocatedLocator(
+          subject.targetLocator,
+        ),
+        scanResult,
+      );
+    }
+
+    const canonicalTargets =
+      locatedTargets ===
+      undefined
+        ? defaultLocatedTargets(
+            resultKind,
+            subject,
+          )
+        : locatedTargets;
+
+    const unique =
+      new Set<string>();
+
+    for (
+      const target
+      of canonicalTargets
     ) {
-      throw new TypeError(
-        'Galactic point-9.4 result must be backed by a GalacticObjectLocator.',
+      assertKindMatchesLocator(
+        target.kind,
+        target.locator,
+      );
+
+      assertLocatorBelongsToScan(
+        target.locator,
+        scanResult,
+      );
+
+      const identity =
+        locatedTargetIdentity(
+          target.locator,
+        );
+
+      if (
+        unique.has(
+          identity,
+        )
+      ) {
+        throw new RangeError(
+          `ExplorationSectorResult cannot contain duplicate located target ${identity}.`,
+        );
+      }
+
+      unique.add(
+        identity,
       );
     }
 
     if (
-      locator
-        .galaxyIndex !==
-        scanResult
-          .selection
-          .galaxyIndex ||
-      locator
-        .sectorKey !==
-        scanResult
-          .selection
-          .sectorLocator
-          .sectorKey
+      subject instanceof
+        LocatedObservationObject
     ) {
-      throw new RangeError(
-        'Located result must belong to the scanned sector.',
-      );
+      const primaryLocator =
+        assertSupportedLocatedLocator(
+          subject.targetLocator,
+        );
+
+      const primaryIdentity =
+        locatedTargetIdentity(
+          primaryLocator,
+        );
+
+      const primaryEntry =
+        canonicalTargets
+          .find(
+            target =>
+              locatedTargetIdentity(
+                target.locator,
+              ) ===
+              primaryIdentity,
+          );
+
+      if (
+        primaryEntry ===
+        undefined ||
+        primaryEntry.kind !==
+          resultKind
+      ) {
+        throw new RangeError(
+          'The highlighted static result must be included in locatedTargets with the same result kind.',
+        );
+      }
     }
+
+    this.locatedTargets =
+      Object.freeze(
+        canonicalTargets
+          .map(
+            target =>
+              Object.freeze({
+                kind:
+                  target.kind,
+
+                locator:
+                  target.locator,
+              }),
+          ),
+      );
   }
 
   get isLocated():
@@ -187,8 +273,7 @@ export class ExplorationSectorResult {
   }
 
   get targetLocator():
-    SystemLocator |
-    GalacticObjectLocator |
+    ExplorationLocatedTargetLocator |
     null {
 
     if (
@@ -198,23 +283,31 @@ export class ExplorationSectorResult {
       return null;
     }
 
-    const locator =
-      this
-        .subject
-        .targetLocator;
-
-    if (
-      locator instanceof
-        SystemLocator ||
-      locator instanceof
-        GalacticObjectLocator
-    ) {
-      return locator;
-    }
-
-    throw new TypeError(
-      'Point-9.4 located subject has an unsupported locator.',
+    return assertSupportedLocatedLocator(
+      this.subject
+        .targetLocator,
     );
+  }
+
+  get targetLocators():
+    readonly ExplorationLocatedTargetLocator[] {
+
+    return Object.freeze(
+      this
+        .locatedTargets
+        .map(
+          target =>
+            target.locator,
+        ),
+    );
+  }
+
+  get locatedTargetCount():
+    number {
+
+    return this
+      .locatedTargets
+      .length;
   }
 
   get transientCandidateId():
@@ -229,6 +322,143 @@ export class ExplorationSectorResult {
           .candidateId
       : null;
   }
+}
+
+function defaultLocatedTargets(
+  resultKind:
+    ExplorationResultKind,
+
+  subject:
+    ExplorationResultSubject,
+): readonly ExplorationLocatedTarget[] {
+
+  if (
+    !(subject instanceof
+      LocatedObservationObject)
+  ) {
+    return Object.freeze([]);
+  }
+
+  if (
+    resultKind ===
+      ExplorationResultKind
+        .TRANSIENT_EVENT
+  ) {
+    throw new TypeError(
+      'TRANSIENT_EVENT cannot use a located observation subject.',
+    );
+  }
+
+  return Object.freeze([
+    Object.freeze({
+      kind:
+        resultKind,
+
+      locator:
+        assertSupportedLocatedLocator(
+          subject.targetLocator,
+        ),
+    }),
+  ]);
+}
+
+function assertSupportedLocatedLocator(
+  locator:
+    LocatedObservationObject[
+      'targetLocator'
+    ],
+): ExplorationLocatedTargetLocator {
+
+  if (
+    locator instanceof
+      SystemLocator ||
+    locator instanceof
+      GalacticObjectLocator
+  ) {
+    return locator;
+  }
+
+  throw new TypeError(
+    'Point-9.4 located subject has an unsupported locator.',
+  );
+}
+
+function assertKindMatchesLocator(
+  kind:
+    ExplorationLocatedResultKind,
+
+  locator:
+    ExplorationLocatedTargetLocator,
+): void {
+
+  if (
+    kind ===
+      ExplorationResultKind
+        .SYSTEM
+  ) {
+    if (
+      !(locator instanceof
+        SystemLocator)
+    ) {
+      throw new TypeError(
+        'SYSTEM result must be backed by a SystemLocator.',
+      );
+    }
+
+    return;
+  }
+
+  if (
+    !(locator instanceof
+      GalacticObjectLocator)
+  ) {
+    throw new TypeError(
+      'Galactic point-9.4 result must be backed by a GalacticObjectLocator.',
+    );
+  }
+}
+
+function assertLocatorBelongsToScan(
+  locator:
+    ExplorationLocatedTargetLocator,
+
+  scanResult:
+    ExplorationSectorScanResult,
+): void {
+
+  if (
+    locator
+      .galaxyIndex !==
+      scanResult
+        .selection
+        .galaxyIndex ||
+    locator
+      .sectorKey !==
+      scanResult
+        .selection
+        .sectorLocator
+        .sectorKey
+  ) {
+    throw new RangeError(
+      'Located result must belong to the scanned sector.',
+    );
+  }
+}
+
+function locatedTargetIdentity(
+  locator:
+    ExplorationLocatedTargetLocator,
+): string {
+
+  return [
+    locator instanceof
+      SystemLocator
+      ? 'SYSTEM'
+      : 'GALACTIC_OBJECT',
+    locator.galaxyIndex.toString(),
+    locator.sectorKey.toString(),
+    locator.galacticObjectIndex.toString(),
+  ].join(':');
 }
 
 function sameGenerationKey(

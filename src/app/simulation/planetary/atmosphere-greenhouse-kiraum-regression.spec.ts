@@ -65,24 +65,24 @@ describe(
     it(
       'keeps its real CO2 column strongly greenhouse while recomputing climate and water from the revised radiative state',
       () => {
-        const galaxy =
-          GalaxyGenerator.generate(
+        const physicalKey =
+          multihostPhysicalSourceKey(
             GENERATION_KEY,
+          );
+
+        const physicalGalaxy =
+          GalaxyGenerator.generate(
+            physicalKey,
             0n,
           );
 
         const content =
           GalaxySectorContentGenerator.generate(
-            galaxy,
+            physicalGalaxy,
             new GalaxySectorCoordinates(
               22,
               12,
             ),
-          );
-
-        const physicalKey =
-          multihostPhysicalSourceKey(
-            GENERATION_KEY,
           );
 
         const locator =

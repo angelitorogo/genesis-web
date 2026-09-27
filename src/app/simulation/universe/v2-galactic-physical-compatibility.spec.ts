@@ -7,6 +7,7 @@ import { UniverseSeed } from '../../domain/universe/universe-seed';
 import { InitialExplorationStateGenerator } from '../exploration/initial-exploration-state-generator';
 import { ProceduralTargetResolver } from '../regeneration/procedural-target-resolver';
 import { GalaxySectorContentGenerator } from '../sector/galaxy-sector-content-generator';
+import { V2GalaxySectorContentLimiter } from '../sector/v2-galaxy-sector-content-limiter';
 import { GalaxySectorObjectLocationResolver } from '../sector/galaxy-sector-object-location-resolver';
 import { GalaxySectorStellarPopulationPropertiesGenerator } from '../sector/galaxy-sector-stellar-population-properties-generator';
 import { StellarMultihostFormation } from '../stellar/stellar-multihost-formation';
@@ -44,8 +45,12 @@ describe('Stage 12.2: V2 galaxy/sector physical continuity after bootstrap relea
     expect(result.content.locator).toEqual(physicalSector.locator);
     expect(result.content.seed.normalizedValue).toBe(physicalSector.seed.normalizedValue);
     expect(result.content.stellarDensity).toEqual(physicalSector.stellarDensity);
-    expect(result.content.systemLocators).toEqual(physicalSector.systemLocators);
-    expect(result.content.galacticObjectLocators).toEqual(physicalSector.galacticObjectLocators);
+    const limited = V2GalaxySectorContentLimiter.limit(
+      physicalSector.stellarDensity.region, physicalSector.systemLocators,
+      physicalSector.galacticObjectLocators,
+    );
+    expect(result.content.systemLocators).toEqual(limited.systemLocators);
+    expect(result.content.galacticObjectLocators).toEqual(limited.galacticObjectLocators);
     expect(result.stellarPopulation).toEqual(
       GalaxySectorStellarPopulationPropertiesGenerator.generate(
         physicalGalaxy, physicalSector.stellarDensity,

@@ -8,6 +8,7 @@ import { GalaxySectorCoordinates } from '../../domain/sector/galaxy-sector-coord
 import { UniverseSeed } from '../../domain/universe/universe-seed';
 import { GalaxyGenerator } from '../universe/galaxy-generator';
 import { GalaxySectorContentGenerator } from '../sector/galaxy-sector-content-generator';
+import { V2GalaxySectorContentLimiter } from '../sector/v2-galaxy-sector-content-limiter';
 import { GalaxySectorObjectLocationResolver } from '../sector/galaxy-sector-object-location-resolver';
 import { ProceduralTargetResolver } from './procedural-target-resolver';
 
@@ -54,8 +55,11 @@ describe('12.2: V2 public bootstrap and immutable galactic resolution', () => {
     expect(result.locator).toEqual(legacy.locator);
     expect(result.seed.normalizedValue).toBe(legacy.seed.normalizedValue);
     expect(result.stellarDensity).toEqual(legacy.stellarDensity);
-    expect(result.systemLocators).toEqual(legacy.systemLocators);
-    expect(result.galacticObjectLocators).toEqual(legacy.galacticObjectLocators);
+    const limited = V2GalaxySectorContentLimiter.limit(
+      legacy.stellarDensity.region, legacy.systemLocators, legacy.galacticObjectLocators,
+    );
+    expect(result.systemLocators).toEqual(limited.systemLocators);
+    expect(result.galacticObjectLocators).toEqual(limited.galacticObjectLocators);
     expect(GalaxySectorContentGenerator.generate(galaxy2, coordinates)).toEqual(result);
     const system = result.systemLocators[0] ?? new SystemLocator(0n, 0n, 0n);
     expect(GalaxySectorObjectLocationResolver.resolve(v2, system)).toEqual(

@@ -34,16 +34,8 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
-  GalaxyExplorationTelemetryEngine,
-} from '../../simulation/exploration/galaxy-exploration-telemetry-engine';
-
-import {
   GalaxyGeneralProfileEngine,
 } from '../../simulation/exploration/galaxy-general-profile-engine';
-
-import {
-  GalaxyKnowledgeStatisticsEngine,
-} from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
 
 import {
   GalaxyOperationalAccessPolicy,
@@ -74,6 +66,10 @@ import {
 import {
   GALAXY_SCIENTIFIC_KNOWLEDGE_RUNTIME,
 } from '../runtime/galaxy-scientific-knowledge.runtime';
+
+import {
+  GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
+} from '../runtime/galaxy-knowledge-snapshot.runtime';
 
 import {
   GENESIS_LOCAL_REPOSITORIES,
@@ -213,6 +209,11 @@ export class GalaxyDetailFacade {
   private readonly repositories =
     inject(
       GENESIS_LOCAL_REPOSITORIES,
+    );
+
+  private readonly galaxyKnowledgeSnapshotRuntime =
+    inject(
+      GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
     );
 
   private readonly focusRuntime =
@@ -577,22 +578,28 @@ export class GalaxyDetailFacade {
             discoveryState,
           );
 
-      const statistics =
-        GalaxyKnowledgeStatisticsEngine
-          .build(
-            generationKey,
-            galaxyIndex,
-            knownDiscoveries,
-          );
-
-      const explorationTelemetry =
-        GalaxyExplorationTelemetryEngine
-          .build(
+      const knowledgeSnapshot =
+        await this
+          .galaxyKnowledgeSnapshotRuntime
+          .resolve(
             generationKey,
             galaxyIndex,
             discoveryState,
             knownDiscoveries,
           );
+
+      if (
+        loadId !==
+        this.loadSequence
+      ) {
+        return;
+      }
+
+      const statistics =
+        knowledgeSnapshot.statistics;
+
+      const explorationTelemetry =
+        knowledgeSnapshot.explorationTelemetry;
 
       const scientificProfile =
         GalaxyScientificProfileEngine

@@ -10,6 +10,7 @@ import {
 
 import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
   GENESIS_STORAGE_FORMAT_VERSION,
 } from './genesis-indexed-db-schema';
 
@@ -146,7 +147,7 @@ describe(
     );
 
     it(
-      'should use schema version 3',
+      'should use schema version 4',
       async () => {
         await database
           .openDatabase();
@@ -159,7 +160,13 @@ describe(
 
         expect(
           database.verno,
-        ).toBe(3);
+        ).toBe(4);
+
+        expect(
+          GENESIS_INDEXED_DB_SCHEMA_VERSION,
+        ).toBe(
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+        );
       },
     );
 
@@ -173,7 +180,7 @@ describe(
     );
 
     it(
-      'should define the exact point 3.3 stores',
+      'should define the exact schema-v4 stores',
       async () => {
         await database
           .openDatabase();
@@ -192,6 +199,7 @@ describe(
         ).toEqual([
           'discoveries',
           'galaxies',
+          'galaxyKnowledgeSnapshots',
           'metadata',
           'navigation',
           'observations',
@@ -307,6 +315,26 @@ describe(
         ).toEqual([
           'universeSeed',
           'generatorVersionCode',
+        ]);
+      },
+    );
+
+    it(
+      'should key galaxy knowledge snapshots by universe, galaxy and scientific model version',
+      async () => {
+        await database.openDatabase();
+
+        expect(
+          database
+            .galaxyKnowledgeSnapshots
+            .schema
+            .primKey
+            .keyPath,
+        ).toEqual([
+          'universeSeed',
+          'generatorVersionCode',
+          'galaxyIndex',
+          'scientificModelVersion',
         ]);
       },
     );

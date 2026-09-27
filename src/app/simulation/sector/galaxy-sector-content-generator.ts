@@ -63,6 +63,10 @@ import {
   SectorSeedResolver,
 } from './sector-seed-resolver';
 
+import {
+  V2GalaxySectorContentLimiter,
+} from './v2-galaxy-sector-content-limiter';
+
 interface V1Draws {
 
   readonly occupancy:
@@ -154,9 +158,50 @@ export class GalaxySectorContentGenerator {
         throw new RangeError('V2 galaxy does not match its frozen physical source.');
       }
       const physical = this.generate(physicalGalaxy, coordinates);
+
+      /*
+       * V2 public-centre contract.
+       *
+       * Sector (0, 0) is not an ordinary multi-object sector. It is the unique
+       * address of the galactic nucleus, so exposing ordinary stellar-system
+       * candidates here would make the new multi-target exploration reveal
+       * systems alongside the nucleus. Before multi-target exploration those
+       * candidates were never persisted because the centre result always
+       * highlighted the reserved nucleus.
+       *
+       * Keep frozen V1 physical generation untouched, but project V2 (0, 0)
+       * to exactly one public static target: GalacticObject index 0.
+       */
+      if (
+        isGalacticCenterCoordinates(
+          coordinates,
+        )
+      ) {
+        return new GalaxySectorContent(
+          galaxy.generationKey,
+          locator,
+          coordinates,
+          physical.seed,
+          physical.stellarDensity,
+          Object.freeze([]),
+          Object.freeze([
+            new GalacticObjectLocator(
+              locator.galaxyIndex,
+              locator.sectorKey,
+              GALACTIC_NUCLEUS_OBJECT_INDEX,
+            ),
+          ]),
+        );
+      }
+
+      const limited = V2GalaxySectorContentLimiter.limit(
+        physical.stellarDensity.region,
+        physical.systemLocators,
+        physical.galacticObjectLocators,
+      );
       return new GalaxySectorContent(galaxy.generationKey, locator, coordinates,
-        physical.seed, physical.stellarDensity, physical.systemLocators,
-        physical.galacticObjectLocators);
+        physical.seed, physical.stellarDensity, limited.systemLocators,
+        limited.galacticObjectLocators);
     }
 
     throw new RangeError(
