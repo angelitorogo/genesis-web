@@ -46,14 +46,6 @@ import {
 } from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
 
 import {
-  GalaxyExplorationTelemetryEngine,
-} from '../../simulation/exploration/galaxy-exploration-telemetry-engine';
-
-import {
-  GalaxyKnowledgeStatisticsEngine,
-} from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
-
-import {
   GALAXY_FOCUS_RUNTIME,
   type GalaxyFocusRuntime,
 } from '../runtime/galaxy-focus.runtime';
@@ -66,13 +58,21 @@ import {
 } from '../runtime/galaxy-scientific-knowledge.runtime';
 
 import {
+  GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
+} from '../runtime/galaxy-knowledge-snapshot.runtime';
+
+import {
+  GalaxyExplorationTelemetryEngine,
+} from '../../simulation/exploration/galaxy-exploration-telemetry-engine';
+
+import {
+  GalaxyKnowledgeStatisticsEngine,
+} from '../../simulation/exploration/galaxy-knowledge-statistics-engine';
+
+import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
-
-import {
-  GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
-} from '../runtime/galaxy-knowledge-snapshot.runtime';
 
 import {
   DEFAULT_UNIVERSE_SEED,
@@ -359,47 +359,6 @@ describe(
 
           {
             provide:
-              GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
-
-            useValue: {
-              async resolve(
-                generationKey:
-                  UniverseGenerationKey,
-
-                resolvedGalaxyIndex:
-                  bigint,
-
-                galaxyState:
-                  DiscoveryStateValue,
-
-                knownDiscoveries:
-                  readonly KnownDiscovery[],
-              ) {
-                return {
-                  knowledgeRevision:
-                    'TEST',
-
-                  statistics:
-                    GalaxyKnowledgeStatisticsEngine.build(
-                      generationKey,
-                      resolvedGalaxyIndex,
-                      knownDiscoveries,
-                    ),
-
-                  explorationTelemetry:
-                    GalaxyExplorationTelemetryEngine.build(
-                      generationKey,
-                      resolvedGalaxyIndex,
-                      galaxyState,
-                      knownDiscoveries,
-                    ),
-                };
-              },
-            },
-          },
-
-          {
-            provide:
               GALAXY_FOCUS_RUNTIME,
 
             useValue:
@@ -413,6 +372,49 @@ describe(
             useValue:
               scientificRuntime,
           },
+          {
+            provide:
+              GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME,
+
+            useValue: {
+              async resolve(
+                snapshotGenerationKey:
+                  UniverseGenerationKey,
+
+                snapshotGalaxyIndex:
+                  bigint,
+
+                snapshotGalaxyState:
+                  DiscoveryStateValue,
+
+                snapshotKnownDiscoveries:
+                  readonly KnownDiscovery[],
+              ) {
+                return Object.freeze({
+                  knowledgeRevision:
+                    'TEST-IN-MEMORY-SNAPSHOT',
+
+                  statistics:
+                    GalaxyKnowledgeStatisticsEngine
+                      .build(
+                        snapshotGenerationKey,
+                        snapshotGalaxyIndex,
+                        snapshotKnownDiscoveries,
+                      ),
+
+                  explorationTelemetry:
+                    GalaxyExplorationTelemetryEngine
+                      .build(
+                        snapshotGenerationKey,
+                        snapshotGalaxyIndex,
+                        snapshotGalaxyState,
+                        snapshotKnownDiscoveries,
+                      ),
+                });
+              },
+            },
+          },
+
           { provide: ACCRETION_DISK_OBSERVATION_RUNTIME, useValue: { async inspect() { return null; }, async observe() { throw new Error('No observation expected in legacy galaxy tests.'); } } },
         ],
       });
@@ -770,6 +772,54 @@ describe(
             ),
           ).toBeTruthy();
         }
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-extreme-reserved"]',
+          )?.textContent,
+        ).toContain(
+          'SIN ESPECIALIZACIÓN FÍSICA',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-moons-unmaterialized"]',
+          )?.textContent,
+        ).toContain(
+          'MENORES NO CARACTERIZADAS FÍSICAMENTE',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-moons-unmaterialized-regular"]',
+          )?.textContent,
+        ).toContain(
+          'REGULARES ESTIMADAS',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-moons-unmaterialized-irregular"]',
+          )?.textContent,
+        ).toContain(
+          'IRREGULARES ESTIMADAS',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-moons-unmaterialized-other"]',
+          )?.textContent,
+        ).toContain(
+          'OTRAS NO MATERIALIZADAS',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-moons-unclassified"]',
+          )?.textContent,
+        ).toContain(
+          'SIN CLASIFICAR',
+        );
 
         expect(
           element.querySelector(

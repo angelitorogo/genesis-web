@@ -693,6 +693,20 @@ function classifyKnownExtremeObject(
     return;
   }
 
+  /*
+   * Point 12.6/12.7 deliberately preserves a residual EXTREME_OBJECT
+   * complement for future physical specializations. At DISCOVERED or above,
+   * resolver === null is therefore not a failed classification: the coarse
+   * extreme family is known, while the specific physical subject is
+   * intentionally absent from the current model.
+   */
+  if (
+    subject === null
+  ) {
+    breakdown.extremeObjects.reservedUnspecialized += 1n;
+    return;
+  }
+
   breakdown.extremeObjects.unclassified += 1n;
 }
 
@@ -912,14 +926,47 @@ function projectMoonSystem(
 
   inventory.moons += moonCount;
 
-  const relevantCount =
+  const unmaterializedMinor =
     BigInt(
-      moonSystem.relevantMoons.length,
+      moonSystem.unmaterializedMinorMoonCount,
     );
 
-  breakdown.moons.uncharacterized +=
-    moonCount -
-    relevantCount;
+  const unmaterializedRegular =
+    BigInt(
+      moonSystem.giantMoonProfile
+        .estimatedRegularMinorMoonCount,
+    );
+
+  const unmaterializedIrregular =
+    BigInt(
+      moonSystem.giantMoonProfile
+        .estimatedIrregularMinorMoonCount,
+    );
+
+  const unmaterializedOther =
+    unmaterializedMinor -
+    unmaterializedRegular -
+    unmaterializedIrregular;
+
+  if (
+    unmaterializedOther < 0n
+  ) {
+    throw new RangeError(
+      'Minor-moon telemetry cannot classify more regular/irregular identities than exist.',
+    );
+  }
+
+  breakdown.moons.unmaterializedMinor +=
+    unmaterializedMinor;
+
+  breakdown.moons.unmaterializedMinorRegular +=
+    unmaterializedRegular;
+
+  breakdown.moons.unmaterializedMinorIrregular +=
+    unmaterializedIrregular;
+
+  breakdown.moons.unmaterializedMinorOther +=
+    unmaterializedOther;
 
   for (
     const moon
@@ -927,6 +974,15 @@ function projectMoonSystem(
   ) {
     const ice =
       moon.environmentState.inferredIceRichnessIndex01;
+
+    if (
+      !Number.isFinite(ice) ||
+      ice < 0 ||
+      ice > 1
+    ) {
+      breakdown.moons.unclassified += 1n;
+      continue;
+    }
 
     if (
       ice < ROCKY_MOON_MAX_ICE_01
@@ -1046,6 +1102,7 @@ type MutableBreakdown = {
     intermediateMassBlackHoles: bigint;
     activeGalacticNuclei: bigint;
     quasars: bigint;
+    reservedUnspecialized: bigint;
     unclassified: bigint;
   };
   planets: {
@@ -1066,7 +1123,11 @@ type MutableBreakdown = {
     rocky: bigint;
     mixedRockIce: bigint;
     icy: bigint;
-    uncharacterized: bigint;
+    unmaterializedMinor: bigint;
+    unmaterializedMinorRegular: bigint;
+    unmaterializedMinorIrregular: bigint;
+    unmaterializedMinorOther: bigint;
+    unclassified: bigint;
     surfaceLiquidPotentialAtLeast40Percent: bigint;
     subsurfaceOceanEvidence: bigint;
   };
@@ -1120,6 +1181,7 @@ function emptyBreakdownCounts():
       intermediateMassBlackHoles: 0n,
       activeGalacticNuclei: 0n,
       quasars: 0n,
+      reservedUnspecialized: 0n,
       unclassified: 0n,
     },
     planets: {
@@ -1140,7 +1202,11 @@ function emptyBreakdownCounts():
       rocky: 0n,
       mixedRockIce: 0n,
       icy: 0n,
-      uncharacterized: 0n,
+      unmaterializedMinor: 0n,
+      unmaterializedMinorRegular: 0n,
+      unmaterializedMinorIrregular: 0n,
+      unmaterializedMinorOther: 0n,
+      unclassified: 0n,
       surfaceLiquidPotentialAtLeast40Percent: 0n,
       subsurfaceOceanEvidence: 0n,
     },

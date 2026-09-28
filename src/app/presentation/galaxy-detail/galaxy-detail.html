@@ -987,6 +987,7 @@
                   <div><dt>AN DE MASA INTERMEDIA</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.intermediateMassBlackHoles) }}</dd></div>
                   <div><dt>AGN</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.activeGalacticNuclei) }}</dd></div>
                   <div><dt>QUÁSARES</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.quasars) }}</dd></div>
+                  <div data-testid="galaxy-detail-extreme-reserved"><dt>SIN ESPECIALIZACIÓN FÍSICA</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.reservedUnspecialized) }}</dd></div>
                   <div><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.unclassified) }}</dd></div>
                 </dl>
               </details>
@@ -1067,7 +1068,11 @@
                     <div><dt>ROCOSAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.rocky) }}</dd></div>
                     <div><dt>MIXTAS ROCA-HIELO</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.mixedRockIce) }}</dd></div>
                     <div><dt>HELADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.icy) }}</dd></div>
-                    <div><dt>SIN CARACTERIZAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.uncharacterized) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized"><dt>MENORES NO CARACTERIZADAS FÍSICAMENTE</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinor) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized-regular"><dt>↳ REGULARES ESTIMADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinorRegular) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized-irregular"><dt>↳ IRREGULARES ESTIMADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinorIrregular) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized-other"><dt>↳ OTRAS NO MATERIALIZADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinorOther) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unclassified"><dt>SIN CLASIFICAR</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unclassified) }}</dd></div>
                     <div><dt>POTENCIAL DE AGUA LÍQUIDA SUPERFICIAL ≥ 40 %</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.surfaceLiquidPotentialAtLeast40Percent) }}</dd></div>
                     <div><dt>INDICIOS DE OCÉANO SUBSUPERFICIAL</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.subsurfaceOceanEvidence) }}</dd></div>
                   </dl>

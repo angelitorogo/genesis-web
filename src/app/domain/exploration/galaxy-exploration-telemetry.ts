@@ -40,6 +40,18 @@ export interface GalaxyExtremeObjectKnowledgeCounts {
   readonly intermediateMassBlackHoles: bigint;
   readonly activeGalacticNuclei: bigint;
   readonly quasars: bigint;
+
+  /**
+   * Known EXTREME_OBJECT locators that deliberately belong to the model's
+   * reserved complement: the coarse family is known, but no more specific
+   * physical subject exists yet by design.
+   */
+  readonly reservedUnspecialized: bigint;
+
+  /**
+   * Genuine unresolved/incoherent cases. This must not absorb the intentional
+   * reserved complement.
+   */
   readonly unclassified: bigint;
 }
 
@@ -62,7 +74,23 @@ export interface GalaxyMoonKnowledgeCounts {
   readonly rocky: bigint;
   readonly mixedRockIce: bigint;
   readonly icy: bigint;
-  readonly uncharacterized: bigint;
+
+  /**
+   * Moon identities deliberately not materialized as full Moon physical
+   * objects. They must not be assigned a rock/ice composition without a
+   * physical basis.
+   */
+  readonly unmaterializedMinor: bigint;
+  readonly unmaterializedMinorRegular: bigint;
+  readonly unmaterializedMinorIrregular: bigint;
+  readonly unmaterializedMinorOther: bigint;
+
+  /**
+   * Genuine classification failures among physically materialized moons.
+   * Under the current moon model this is expected to remain zero.
+   */
+  readonly unclassified: bigint;
+
   readonly surfaceLiquidPotentialAtLeast40Percent: bigint;
   readonly subsurfaceOceanEvidence: bigint;
 }
@@ -155,6 +183,7 @@ export class GalaxyExplorationTelemetry {
         breakdown.extremeObjects.intermediateMassBlackHoles +
         breakdown.extremeObjects.activeGalacticNuclei +
         breakdown.extremeObjects.quasars +
+        breakdown.extremeObjects.reservedUnspecialized +
         breakdown.extremeObjects.unclassified !==
       inventory.extremeObjects
     ) {
@@ -186,11 +215,23 @@ export class GalaxyExplorationTelemetry {
       breakdown.moons.rocky +
       breakdown.moons.mixedRockIce +
       breakdown.moons.icy +
-      breakdown.moons.uncharacterized;
+      breakdown.moons.unmaterializedMinor +
+      breakdown.moons.unclassified;
 
     if (typedMoons !== inventory.moons) {
       throw new RangeError(
         'Moon knowledge breakdown must partition the known-moon inventory.',
+      );
+    }
+
+    if (
+      breakdown.moons.unmaterializedMinorRegular +
+        breakdown.moons.unmaterializedMinorIrregular +
+        breakdown.moons.unmaterializedMinorOther !==
+      breakdown.moons.unmaterializedMinor
+    ) {
+      throw new RangeError(
+        'Unmaterialized minor-moon subtypes must partition the unmaterialized moon inventory.',
       );
     }
 

@@ -63,7 +63,7 @@ import {
 } from '../../data/local/entity/galaxy-knowledge-snapshot.entity';
 
 export const GALAXY_SCIENTIFIC_MODEL_VERSION =
-  7;
+  9;
 
 export interface GalaxyKnowledgeSnapshot {
   readonly knowledgeRevision: string;

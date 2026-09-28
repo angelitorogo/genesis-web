@@ -68,6 +68,10 @@ import {
 } from '../universe/galaxy-generator';
 
 import {
+  GalacticObjectScientificSubjectResolver,
+} from '../galactic-object/galactic-object-scientific-subject-resolver';
+
+import {
   ExplorationSectorResultEngine,
 } from './exploration-sector-result-engine';
 
@@ -85,6 +89,97 @@ describe(
         ),
         GeneratorVersion.V1,
       );
+
+    it(
+      'should count the intentional EXTREME_OBJECT complement as reserved rather than unclassified once DISCOVERED',
+      () => {
+        let reserved:
+          GalacticObjectLocator | null =
+          null;
+
+        for (
+          let index = 0n;
+          index < 8_192n;
+          index += 1n
+        ) {
+          const locator =
+            new GalacticObjectLocator(
+              0n,
+              0n,
+              index,
+            );
+
+          if (
+            ExplorationSectorResultEngine
+              .resolveGalacticObjectKind(
+                generationKey,
+                locator,
+              ) !==
+              ExplorationResultKind
+                .EXTREME_OBJECT
+          ) {
+            continue;
+          }
+
+          const subject =
+            GalacticObjectScientificSubjectResolver
+              .resolve(
+                generationKey,
+                locator,
+                DiscoveryState.DISCOVERED,
+              );
+
+          if (
+            subject === null
+          ) {
+            reserved = locator;
+            break;
+          }
+        }
+
+        if (
+          reserved === null
+        ) {
+          throw new RangeError(
+            'Missing deterministic reserved EXTREME_OBJECT complement fixture.',
+          );
+        }
+
+        const telemetry =
+          GalaxyExplorationTelemetryEngine
+            .build(
+              generationKey,
+              0n,
+              DiscoveryState.DISCOVERED,
+              [
+                new KnownDiscovery(
+                  generationKey,
+                  new GalaxyLocator(0n),
+                  DiscoveryState.DISCOVERED,
+                ),
+                new KnownDiscovery(
+                  generationKey,
+                  reserved,
+                  DiscoveryState.DISCOVERED,
+                ),
+              ],
+            );
+
+        expect(
+          telemetry.inventory.extremeObjects,
+        ).toBe(1n);
+
+        expect(
+          telemetry.breakdown.extremeObjects
+            .reservedUnspecialized,
+        ).toBe(1n);
+
+        expect(
+          telemetry.breakdown.extremeObjects
+            .unclassified,
+        ).toBe(0n);
+      },
+    );
 
     it(
       'should expose the existing B5 addressable sector denominator and a sector-only exploration percentage',
@@ -551,11 +646,87 @@ describe(
           telemetry.inventory.planets,
         );
 
+        const expectedUnmaterializedMinor =
+          source.moonSystems.reduce(
+            (
+              total,
+              moons,
+            ) =>
+              total +
+              BigInt(
+                moons.unmaterializedMinorMoonCount,
+              ),
+            0n,
+          );
+
+        const expectedUnmaterializedRegular =
+          source.moonSystems.reduce(
+            (
+              total,
+              moons,
+            ) =>
+              total +
+              BigInt(
+                moons.giantMoonProfile
+                  .estimatedRegularMinorMoonCount,
+              ),
+            0n,
+          );
+
+        const expectedUnmaterializedIrregular =
+          source.moonSystems.reduce(
+            (
+              total,
+              moons,
+            ) =>
+              total +
+              BigInt(
+                moons.giantMoonProfile
+                  .estimatedIrregularMinorMoonCount,
+              ),
+            0n,
+          );
+
+        expect(
+          telemetry.breakdown.moons
+            .unmaterializedMinor,
+        ).toBe(
+          expectedUnmaterializedMinor,
+        );
+
+        expect(
+          telemetry.breakdown.moons
+            .unmaterializedMinorRegular,
+        ).toBe(
+          expectedUnmaterializedRegular,
+        );
+
+        expect(
+          telemetry.breakdown.moons
+            .unmaterializedMinorIrregular,
+        ).toBe(
+          expectedUnmaterializedIrregular,
+        );
+
+        expect(
+          telemetry.breakdown.moons
+            .unmaterializedMinorOther,
+        ).toBe(
+          expectedUnmaterializedMinor -
+            expectedUnmaterializedRegular -
+            expectedUnmaterializedIrregular,
+        );
+
+        expect(
+          telemetry.breakdown.moons.unclassified,
+        ).toBe(0n);
+
         expect(
           telemetry.breakdown.moons.rocky +
             telemetry.breakdown.moons.mixedRockIce +
             telemetry.breakdown.moons.icy +
-            telemetry.breakdown.moons.uncharacterized,
+            telemetry.breakdown.moons.unmaterializedMinor +
+            telemetry.breakdown.moons.unclassified,
         ).toBe(
           telemetry.inventory.moons,
         );
