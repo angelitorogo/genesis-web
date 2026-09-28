@@ -214,6 +214,155 @@ describe(
       },
     );
 
+
+    it(
+      'should smoothly favour a mature critical core over ordinary mini-Neptune competitors under one finite gas budget',
+      () => {
+        const fixture =
+          systemFixture(
+            [
+              slotInput(
+                8,
+                0.68,
+                0.75,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.55,
+                  0.35,
+                  0.10,
+                ),
+              ),
+              slotInput(
+                3,
+                0.45,
+                0.65,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.70,
+                  0.20,
+                  0.10,
+                ),
+              ),
+              slotInput(
+                2,
+                0.35,
+                0.55,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.75,
+                  0.15,
+                  0.10,
+                ),
+              ),
+            ],
+            80,
+          );
+
+        const properties =
+          PlanetPhysicalPropertiesGenerator
+            .generateAll(
+              generationKey,
+              fixture,
+            );
+
+        expect(
+          properties[0].accretedEnvelopeMassEarth,
+        ).toBeGreaterThan(
+          properties[1].accretedEnvelopeMassEarth +
+            properties[2].accretedEnvelopeMassEarth,
+        );
+
+        expect(
+          properties[0].massEarth,
+        ).toBeGreaterThanOrEqual(30);
+
+        expect(
+          properties[0].envelopeMassFraction01,
+        ).toBeGreaterThanOrEqual(0.20);
+
+        expect(
+          properties.reduce(
+            (sum, value) =>
+              sum + value.accretedEnvelopeMassEarth,
+            0,
+          ),
+        ).toBeLessThanOrEqual(80 + 1e-9);
+      },
+    );
+
+    it(
+      'should reserve more of a scarce finite system budget for a materially runaway-ready core without exceeding the frozen budget',
+      () => {
+        const fixture =
+          systemFixture(
+            [
+              slotInput(
+                12,
+                0.55,
+                0.90,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.45,
+                  0.45,
+                  0.10,
+                ),
+              ),
+              slotInput(
+                5,
+                0.30,
+                0.80,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.65,
+                  0.25,
+                  0.10,
+                ),
+              ),
+              slotInput(
+                4,
+                0.25,
+                0.75,
+                new ProtoplanetCompositionMixture(
+                  0,
+                  0.70,
+                  0.20,
+                  0.10,
+                ),
+              ),
+            ],
+            20,
+          );
+
+        const properties =
+          PlanetPhysicalPropertiesGenerator
+            .generateAll(
+              generationKey,
+              fixture,
+            );
+
+        expect(
+          properties[0]
+            .accretedEnvelopeMassEarth,
+        ).toBeGreaterThan(
+          properties[1]
+            .accretedEnvelopeMassEarth +
+          properties[2]
+            .accretedEnvelopeMassEarth,
+        );
+
+        expect(
+          properties.reduce(
+            (sum, value) =>
+              sum +
+              value.accretedEnvelopeMassEarth,
+            0,
+          ),
+        ).toBeLessThanOrEqual(
+          20 + 1e-9,
+        );
+      },
+    );
+
     it(
       'should leave a zero-envelope-potential body at its inherited solid-core mass',
       () => {

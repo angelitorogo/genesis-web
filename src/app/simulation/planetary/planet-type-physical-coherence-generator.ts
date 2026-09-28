@@ -421,21 +421,18 @@ function classifyExpectedTypeV1(
     physicalProperties
       .envelopeMassFraction01;
 
-  if (
-    physicalProperties.massEarth >=
-      V1_ICE_GIANT_MIN_MASS_EARTH &&
-    physicalProperties.massEarth <=
-      V1_ICE_GIANT_MAX_MASS_EARTH &&
-    physicalProperties.radiusEarth >=
-      V1_ICE_GIANT_MIN_RADIUS_EARTH &&
-    envelopeMassFraction01 >=
-      V1_ICE_GIANT_MIN_ENVELOPE_FRACTION &&
-    iceBearingSolidFraction01 >=
-      V1_ICE_GIANT_MIN_ICE_BEARING_SOLID_FRACTION
-  ) {
-    return PlanetType.ICE_GIANT;
-  }
-
+  /*
+   * C2 mirror contract.
+   *
+   * Point 19.7 must evaluate giant-family precedence exactly like
+   * PlanetTypeGenerator. Otherwise a valid C2 GAS_GIANT that also satisfies
+   * the old ICE_GIANT predicate is immediately marked TYPE_RULE_MISMATCH and
+   * downstream atmosphere generation rejects the Planet as physically
+   * incoherent.
+   *
+   * Thresholds are unchanged; only precedence is synchronized:
+   * GAS_GIANT first, ICE_GIANT second.
+   */
   if (
     (
       physicalProperties.massEarth >=
@@ -451,6 +448,21 @@ function classifyExpectedTypeV1(
     )
   ) {
     return PlanetType.GAS_GIANT;
+  }
+
+  if (
+    physicalProperties.massEarth >=
+      V1_ICE_GIANT_MIN_MASS_EARTH &&
+    physicalProperties.massEarth <=
+      V1_ICE_GIANT_MAX_MASS_EARTH &&
+    physicalProperties.radiusEarth >=
+      V1_ICE_GIANT_MIN_RADIUS_EARTH &&
+    envelopeMassFraction01 >=
+      V1_ICE_GIANT_MIN_ENVELOPE_FRACTION &&
+    iceBearingSolidFraction01 >=
+      V1_ICE_GIANT_MIN_ICE_BEARING_SOLID_FRACTION
+  ) {
+    return PlanetType.ICE_GIANT;
   }
 
   if (

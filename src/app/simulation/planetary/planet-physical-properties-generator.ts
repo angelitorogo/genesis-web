@@ -48,7 +48,12 @@ import {
 
 import {
   gasEnvelopeAccretionCapacityEarthV1,
+  gasEnvelopeRunawayReadinessV1,
 } from './gas-envelope-accretion-capacity';
+
+import {
+  allocateGasEnvelopeBudgetV1,
+} from './gas-envelope-budget-allocation';
 
 const V1_PLANET_MASS_BRANCH =
   utf8ToBytes(
@@ -98,6 +103,9 @@ interface EnvelopeTargetV1 {
     PlanetaryArchitectureSlot;
 
   readonly targetEnvelopeMassEarth:
+    number;
+
+  readonly runawayReadiness01:
     number;
 }
 
@@ -247,30 +255,28 @@ function generateAllPhysicalPropertiesV1(
           ),
       );
 
-  const targetEnvelopeMassEarth =
-    sum(
+  const allocatedEnvelopeMassEarth =
+    allocateGasEnvelopeBudgetV1(
       targets.map(
-        target =>
-          target.targetEnvelopeMassEarth,
+        target => ({
+          targetEnvelopeMassEarth:
+            target.targetEnvelopeMassEarth,
+
+          runawayReadiness01:
+            target.runawayReadiness01,
+        }),
       ),
+      availableEnvelopeMassEarth,
     );
 
-  const budgetScale =
-    targetEnvelopeMassEarth <=
-      0
-      ? 0
-      : Math.min(
-          1,
-          availableEnvelopeMassEarth /
-            targetEnvelopeMassEarth,
-        );
-
   return targets.map(
-    target =>
+    (
+      target,
+      index,
+    ) =>
       materializePropertiesV1(
         target.slot,
-        target.targetEnvelopeMassEarth *
-          budgetScale,
+        allocatedEnvelopeMassEarth[index],
       ),
   );
 }
@@ -297,6 +303,9 @@ function envelopeTargetV1(
       slot,
       targetEnvelopeMassEarth:
         0,
+
+      runawayReadiness01:
+        0,
     };
   }
 
@@ -321,14 +330,37 @@ function envelopeTargetV1(
       ),
     );
 
-  const stochasticCaptureEfficiency =
+  const runawayReadiness01 =
+    gasEnvelopeRunawayReadinessV1(
+      slot.inheritedSolidCoreMassEarth,
+      potential,
+    );
+
+  const runawayStrength01 =
+    runawayReadiness01 *
+    runawayReadiness01;
+
+  const baselineCaptureEfficiency =
     lerp(
       0.55,
       0.95,
       massRandom.nextDouble(),
     );
 
-  const retentionEfficiency =
+  /*
+   * Once a core is physically in runaway, retained gas mass should no longer be
+   * throttled as strongly by the same stochastic efficiency used for ordinary
+   * sub-Neptune envelopes. Blend smoothly toward near-complete capture instead
+   * of introducing a discrete giant-planet branch.
+   */
+  const stochasticCaptureEfficiency =
+    lerp(
+      baselineCaptureEfficiency,
+      0.98,
+      runawayStrength01,
+    );
+
+  const baselineRetentionEfficiency =
     lerp(
       0.65,
       1,
@@ -336,12 +368,23 @@ function envelopeTargetV1(
         .inheritedVolatileRetentionPotential01,
     );
 
+  const retentionEfficiency =
+    lerp(
+      baselineRetentionEfficiency,
+      1,
+      0.70 *
+        runawayStrength01,
+    );
+
   return {
     slot,
+
     targetEnvelopeMassEarth:
       coreLimitedEnvelopeCapacityEarth *
       stochasticCaptureEfficiency *
       retentionEfficiency,
+
+    runawayReadiness01,
   };
 }
 

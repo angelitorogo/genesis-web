@@ -426,6 +426,24 @@ function classifyPlanetTypeV1(
     physicalProperties
       .envelopeMassFraction01;
 
+  /*
+   * C2 — giant-family precedence.
+   *
+   * GAS_GIANT is evaluated before ICE_GIANT while preserving every frozen
+   * threshold. This prevents an ice-rich solid core from masking a planet whose
+   * *whole-planet* bulk state is already envelope-dominated enough to satisfy
+   * the gas-giant contract. ICE_GIANT remains the fallback for Neptune-scale
+   * worlds that do not meet either gas-giant mass/envelope route.
+   */
+  if (
+    isGasGiantV1(
+      physicalProperties,
+      envelopeMassFraction01,
+    )
+  ) {
+    return PlanetType.GAS_GIANT;
+  }
+
   if (
     isIceGiantV1(
       physicalProperties,
@@ -434,15 +452,6 @@ function classifyPlanetTypeV1(
     )
   ) {
     return PlanetType.ICE_GIANT;
-  }
-
-  if (
-    isGasGiantV1(
-      physicalProperties,
-      envelopeMassFraction01,
-    )
-  ) {
-    return PlanetType.GAS_GIANT;
   }
 
   if (

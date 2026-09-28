@@ -353,7 +353,7 @@ describe(
     );
 
     it(
-      'should prefer an ice giant over a gas giant when a Neptune-scale envelope-rich world inherits an ice-rich solid reservoir',
+      'should prefer GAS_GIANT when an ice-rich Neptune-scale world also satisfies the frozen gas-giant envelope route',
       () => {
         const fixture =
           singlePlanetFixture({
@@ -361,6 +361,37 @@ describe(
             envelopeFraction01: 0.50,
             densityGramsPerCubicCentimeter: 1.5,
             iceBearingSolidFraction01: 0.75,
+            semiMajorAxisAu: 10,
+            eccentricity: 0.03,
+            radiativeRelation:
+              PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE,
+            expectedType:
+              PlanetType.GAS_GIANT,
+          });
+
+        expect(
+          PlanetTypeGenerator
+            .generate(
+              generationKey,
+              fixture.system,
+              fixture.physicalProperties,
+            )
+            .planetType,
+        ).toBe(
+          PlanetType.GAS_GIANT,
+        );
+      },
+    );
+
+    it(
+      'should keep an ice-rich Neptune-scale world as ICE_GIANT when it does not satisfy either frozen gas-giant route',
+      () => {
+        const fixture =
+          singlePlanetFixture({
+            massEarth: 15.575,
+            envelopeFraction01: 0.2482,
+            densityGramsPerCubicCentimeter: 1.453,
+            iceBearingSolidFraction01: 1,
             semiMajorAxisAu: 10,
             eccentricity: 0.03,
             radiativeRelation:

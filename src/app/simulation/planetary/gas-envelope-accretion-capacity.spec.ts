@@ -1,5 +1,6 @@
 import {
   gasEnvelopeAccretionCapacityEarthV1,
+  gasEnvelopeDiskCaptureFractionV1,
   gasEnvelopeRunawayReadinessV1,
 } from './gas-envelope-accretion-capacity';
 
@@ -18,7 +19,7 @@ describe(
         const lowOpportunityCore =
           gasEnvelopeAccretionCapacityEarthV1(
             8,
-            0.4,
+            0.30,
           );
 
         expect(
@@ -31,7 +32,7 @@ describe(
         expect(
           gasEnvelopeRunawayReadinessV1(
             8,
-            0.4,
+            0.30,
           ),
         ).toBe(0);
 
@@ -45,7 +46,7 @@ describe(
         expect(
           lowOpportunityCore,
         ).toBeCloseTo(
-          8 * 0.4 * (4 + 45 * 0.4),
+          8 * 0.30 * (4 + 45 * 0.30),
           12,
         );
       },
@@ -98,7 +99,148 @@ describe(
         expect(
           runawayCapacity,
         ).toBeLessThanOrEqual(
-          baseline * 6 + 1e-9,
+          baseline * 8 + 1e-9,
+        );
+      },
+    );
+
+
+    it(
+      'unlocks a larger but finite disk gas budget only when a critical core is runaway-ready',
+      () => {
+        const ordinary =
+          gasEnvelopeDiskCaptureFractionV1(
+            0.75,
+            0.30,
+            0,
+            0.80,
+          );
+
+        const runaway =
+          gasEnvelopeDiskCaptureFractionV1(
+            0.75,
+            0.30,
+            0.85,
+            0.80,
+          );
+
+        expect(
+          runaway,
+        ).toBeGreaterThan(
+          ordinary,
+        );
+
+        expect(
+          ordinary,
+        ).toBeLessThan(0.03);
+
+        expect(
+          runaway,
+        ).toBeLessThanOrEqual(0.10);
+      },
+    );
+
+    it(
+      'preserves the ordinary disk-capture branch exactly when runaway readiness is zero',
+      () => {
+        const giantPropensity =
+          0.7385;
+
+        const meanPotential =
+          0.1114;
+
+        const availability =
+          0.52;
+
+        const actual =
+          gasEnvelopeDiskCaptureFractionV1(
+            giantPropensity,
+            meanPotential,
+            0,
+            availability,
+          );
+
+        const historicalOrdinary =
+          0.0002 +
+          0.030 *
+            giantPropensity *
+            meanPotential *
+            availability;
+
+        expect(actual).toBeCloseTo(
+          historicalOrdinary,
+          14,
+        );
+      },
+    );
+
+    it(
+      'does not privilege threshold noise but gives materially runaway-ready cores several-percent disk access',
+      () => {
+        const ordinary =
+          gasEnvelopeDiskCaptureFractionV1(
+            0.7385,
+            0.1114,
+            0,
+            0.52,
+          );
+
+        const noise =
+          gasEnvelopeDiskCaptureFractionV1(
+            0.7385,
+            0.1114,
+            0.0141,
+            0.52,
+          );
+
+        const moderate =
+          gasEnvelopeDiskCaptureFractionV1(
+            0.8366,
+            0.1447,
+            0.1169,
+            0.52,
+          );
+
+        const strong =
+          gasEnvelopeDiskCaptureFractionV1(
+            0.7385,
+            0.1114,
+            0.3909,
+            0.52,
+          );
+
+        expect(noise).toBeCloseTo(
+          ordinary,
+          14,
+        );
+
+        expect(moderate).toBeGreaterThan(
+          noise,
+        );
+
+        expect(strong).toBeGreaterThan(
+          0.025,
+        );
+
+        expect(strong).toBeLessThanOrEqual(
+          0.10,
+        );
+      },
+    );
+
+    it(
+      'keeps the absolute disk-capture cap at ten percent even for extreme runaway inputs',
+      () => {
+        const captured =
+          gasEnvelopeDiskCaptureFractionV1(
+            1,
+            1,
+            1,
+            1,
+          );
+
+        expect(captured).toBe(
+          0.10,
         );
       },
     );

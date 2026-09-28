@@ -57,8 +57,13 @@ import {
 
 import {
   gasEnvelopeAccretionCapacityEarthV1,
+  gasEnvelopeDiskCaptureFractionV1,
   gasEnvelopeRunawayReadinessV1,
 } from './gas-envelope-accretion-capacity';
+
+import {
+  matureEnvelopeAcquisitionPotentialV1,
+} from './gas-envelope-acquisition-potential';
 
 const V1_MATURATION_BRANCH =
   utf8ToBytes(
@@ -344,20 +349,21 @@ function formationAnchorV1(
         `anchor-envelope:${lineageLabelV1(body)}`,
       );
 
+  /*
+   * The body carries a candidate-era gas opportunity frozen before point 17.6
+   * mergers. Reconcile it with the FINAL surviving solid core here; otherwise
+   * a 10+ Mearth post-merger core inherits the weak opportunity of its smaller
+   * embryos and can never enter the runaway consumer range.
+   */
   const envelopeAcquisitionPotential01 =
-    clamp01(
+    matureEnvelopeAcquisitionPotentialV1(
       body
-        .gasAccretionPotential01 *
-      (
-        0.50 +
-        0.50 *
-          gasAvailability01
-      ) *
-      (
-        0.65 +
-        0.35 *
-          massIndex01
-      ) *
+        .gasAccretionPotential01,
+      body
+        .solidMassEarth,
+      gasAvailability01,
+      body
+        .growthPotential01,
       envelopeJitter,
     );
 
@@ -477,21 +483,21 @@ function gasCaptureBudgetV1(
     0.60 *
       remainingDiskFraction01;
 
+  /*
+   * A disk-wide budget used to be dominated by mean envelope potential, so a
+   * single critical core could become ready for runaway while the total gas
+   * budget still remained sub-Neptune-sized. Give the strongest physically
+   * ready core an explicit, still bounded share of the finite source reservoir.
+   * This changes formation capacity only; final type classification remains an
+   * independent consequence of the realized mass/envelope fraction.
+   */
   const diskCaptureFraction01 =
-    clamp(
-      0.0002 +
-      0.030 *
-        planetFormationProfile
-          .giantPlanetFormationPropensity *
-        meanEnvelopePotential01 *
-        diskAvailability01 +
-      0.020 *
-        planetFormationProfile
-          .giantPlanetFormationPropensity *
-        strongestRunawayReadiness01 *
-        diskAvailability01,
-      0,
-      0.05,
+    gasEnvelopeDiskCaptureFractionV1(
+      planetFormationProfile
+        .giantPlanetFormationPropensity,
+      meanEnvelopePotential01,
+      strongestRunawayReadiness01,
+      diskAvailability01,
     );
 
   const diskLimitedBudgetEarth =

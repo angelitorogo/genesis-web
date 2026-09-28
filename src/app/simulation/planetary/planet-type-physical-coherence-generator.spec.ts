@@ -348,6 +348,48 @@ describe(
     );
 
     it(
+      'should keep an ice-rich envelope-dominated overlapping world coherent as GAS_GIANT under C2 precedence',
+      () => {
+        const fixture =
+          physicalFixture({
+            type: PlanetType.GAS_GIANT,
+            massEarth: 26.588,
+            envelopeFraction01: 0.7026,
+            density: 0.809,
+            iceBearingSolidFraction01: 1,
+            relation: PlanetaryOrbitHabitableZoneRelation.WHOLLY_EXTERIOR_TO_ZONE,
+            insolation: 0.05,
+            tidalHeating: 0,
+          });
+
+        const assessment =
+          PlanetTypePhysicalCoherenceGenerator
+            .generate(
+              generationKey,
+              fixture.physical,
+              fixture.classification,
+              fixture.composition,
+            );
+
+        expect(
+          assessment.expectedPlanetType,
+        ).toBe(
+          PlanetType.GAS_GIANT,
+        );
+
+        expect(
+          assessment.issues,
+        ).not.toContain(
+          PlanetTypePhysicalCoherenceIssue.TYPE_RULE_MISMATCH,
+        );
+
+        expect(
+          assessment.isCoherent,
+        ).toBe(true);
+      },
+    );
+
+    it(
       'should keep the V1 ice-giant upper mass boundary explicit so an ice-rich 50-Earth-mass world resolves as a gas giant',
       () => {
         const fixture =
