@@ -137,6 +137,19 @@ import {
 } from './archive-galactic-object-card';
 
 import {
+  ArchiveEventHorizonApproachAssembler,
+  type ArchiveEventHorizonApproachModel,
+} from './archive-event-horizon-approach';
+
+import {
+  type EventHorizonExternalApproachSimulationState,
+} from '../../domain/observation/event-horizon-external-approach-simulation-state';
+
+import {
+  EventHorizonExternalApproachSimulationEngine,
+} from '../../simulation/observation/event-horizon-external-approach-simulation-engine';
+
+import {
   ArchiveStellarSystemCardAssembler,
   type ArchiveStellarSystemCardModel,
 } from './archive-stellar-system-card';
@@ -343,6 +356,9 @@ export interface ArchiveDiscoveryDetailModel {
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
 
+  readonly eventHorizonApproach?:
+    ArchiveEventHorizonApproachModel | null;
+
   /**
    * Shared point-26.A.9 scientific campaign. Optional only for compatibility
    * with pre-A9 presentation fixtures; production stellar-system surfaces load it.
@@ -454,6 +470,16 @@ export class ArchiveDiscoveryDetailFacade {
       .actionErrorSignal
       .asReadonly();
 
+  private readonly eventHorizonApproachSimulationSignal =
+    signal<EventHorizonExternalApproachSimulationState | null>(
+      null,
+    );
+
+  readonly eventHorizonApproachSimulation =
+    this
+      .eventHorizonApproachSimulationSignal
+      .asReadonly();
+
   private readonly stateSignal =
     signal<ArchiveDiscoveryDetailUiState>({
       kind:
@@ -508,9 +534,172 @@ export class ArchiveDiscoveryDetailFacade {
         null,
       );
 
+    this
+      .eventHorizonApproachSimulationSignal
+      .set(
+        null,
+      );
+
     await this
       .resolveDetails(
         request,
+      );
+  }
+
+  startEventHorizonApproach():
+    void {
+
+    const configuration =
+      this
+        .model()
+        ?.eventHorizonApproach ??
+      null;
+
+    if (
+      configuration ===
+        null
+    ) {
+      return;
+    }
+
+    const current =
+      this
+        .eventHorizonApproachSimulationSignal();
+
+    if (
+      current !==
+        null
+    ) {
+      this
+        .eventHorizonApproachSimulationSignal
+        .set(
+          EventHorizonExternalApproachSimulationEngine
+            .start(
+              current,
+            ),
+        );
+
+      return;
+    }
+
+    const initial =
+      EventHorizonExternalApproachSimulationEngine
+        .createFromSchwarzschildRadius(
+          configuration
+            .schwarzschildRadiusKm,
+        );
+
+    this
+      .eventHorizonApproachSimulationSignal
+      .set(
+        EventHorizonExternalApproachSimulationEngine
+          .start(
+            initial,
+          ),
+      );
+  }
+
+  pauseOrResumeEventHorizonApproach():
+    void {
+
+    const current =
+      this
+        .eventHorizonApproachSimulationSignal();
+
+    if (
+      current ===
+        null
+    ) {
+      this
+        .startEventHorizonApproach();
+
+      return;
+    }
+
+    this
+      .eventHorizonApproachSimulationSignal
+      .set(
+        current.isRunning
+          ? EventHorizonExternalApproachSimulationEngine
+              .pause(
+                current,
+              )
+          : EventHorizonExternalApproachSimulationEngine
+              .start(
+                current,
+              ),
+      );
+  }
+
+  approachEventHorizon():
+    void {
+
+    const current =
+      this
+        .eventHorizonApproachSimulationSignal();
+
+    if (
+      current ===
+        null
+    ) {
+      return;
+    }
+
+    this
+      .eventHorizonApproachSimulationSignal
+      .set(
+        EventHorizonExternalApproachSimulationEngine
+          .approach(
+            current,
+          ),
+      );
+  }
+
+  retreatFromEventHorizon():
+    void {
+
+    const current =
+      this
+        .eventHorizonApproachSimulationSignal();
+
+    if (
+      current ===
+        null
+    ) {
+      return;
+    }
+
+    this
+      .eventHorizonApproachSimulationSignal
+      .set(
+        EventHorizonExternalApproachSimulationEngine
+          .retreat(
+            current,
+          ),
+      );
+  }
+
+  resetEventHorizonApproach():
+    void {
+
+    const current =
+      this
+        .eventHorizonApproachSimulationSignal();
+
+    if (
+      current ===
+        null
+    ) {
+      return;
+    }
+
+    this
+      .eventHorizonApproachSimulationSignal
+      .set(
+        EventHorizonExternalApproachSimulationEngine
+          .reset(
+            current,
+          ),
       );
   }
 
@@ -1131,6 +1320,17 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+      const eventHorizonApproach =
+        locator instanceof
+          GalacticObjectLocator
+          ? ArchiveEventHorizonApproachAssembler
+              .build(
+                generationKey,
+                locator,
+                galacticObjectCard,
+              )
+          : null;
+
       const protoplanetaryDiskAnalysis =
         locator instanceof
           SystemLocator &&
@@ -1243,6 +1443,8 @@ export class ArchiveDiscoveryDetailFacade {
               stellarSystemCard,
 
               scientificAction,
+
+              eventHorizonApproach,
 
               stellarSystemScientificCampaign,
 

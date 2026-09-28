@@ -130,6 +130,11 @@ function fakeSingle(): GeneratedSingleHost {
   const moonSystem = {
     hostPlanet: planet,
     moonCount: definitions.length,
+    unmaterializedMinorMoonCount: 0,
+    giantMoonProfile: {
+      estimatedRegularMinorMoonCount: 0,
+      estimatedIrregularMinorMoonCount: 0,
+    },
     relevantMoons: Object.freeze(relevantMoons),
   };
 

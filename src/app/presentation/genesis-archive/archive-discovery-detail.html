@@ -650,7 +650,10 @@
                   <app-compact-object-scientific-render [visual]="nucleusVisual" />
                 }
 
-                <div class="archive-discovery-detail__science-copy">
+                <div
+                  class="archive-discovery-detail__science-copy"
+                  style="grid-column: 1 / -1"
+                >
                   <div>
                     <small class="archive-discovery-detail__eyebrow">
                       FICHA CIENTÍFICA · OBJETO GALÁCTICO
@@ -792,6 +795,119 @@
                         >
                           {{ actionError }}
                         </p>
+                      }
+                    </section>
+                  }
+
+                  @if (model.eventHorizonApproach; as horizon) {
+                    <section
+                      class="archive-discovery-detail__scientific-action"
+                      data-testid="archive-event-horizon-approach"
+                      [attr.data-knowledge-level]="horizon.knowledgeLevel"
+                    >
+                      <div class="archive-discovery-detail__scientific-action-header">
+                        <div>
+                          <small class="archive-discovery-detail__eyebrow">
+                            SIMULACIÓN EXTERIOR
+                          </small>
+                          <strong data-testid="archive-event-horizon-title">
+                            {{ horizon.title }}
+                          </strong>
+                        </div>
+
+                        <span>r &gt; Rs</span>
+                      </div>
+
+                      <p data-testid="archive-event-horizon-disclosure">
+                        {{ horizon.knowledgeDisclosure }}
+                      </p>
+
+                      <p data-testid="archive-event-horizon-scope">
+                        {{ horizon.scientificScope }}
+                      </p>
+
+                      @if (facade.eventHorizonApproachSimulation(); as simulation) {
+                        <app-event-horizon-external-render
+                          [simulation]="simulation"
+                          [descriptor]="card.render"
+                          [hasAccretionDisk]="horizon.hasAccretionDisk"
+                        />
+
+                        <div class="archive-discovery-detail__actions">
+                          <button
+                            genesis-primary-button
+                            type="button"
+                            data-testid="archive-event-horizon-approach-button"
+                            [disabled]="!simulation.isRunning || simulation.atMinimumExteriorRadius"
+                            (click)="approachEventHorizon()"
+                          >
+                            APROXIMAR
+                          </button>
+
+                          <button
+                            genesis-primary-button
+                            type="button"
+                            data-testid="archive-event-horizon-retreat-button"
+                            [disabled]="!simulation.isRunning || simulation.atMaximumExteriorRadius"
+                            (click)="retreatFromEventHorizon()"
+                          >
+                            ALEJAR
+                          </button>
+
+                          <button
+                            genesis-primary-button
+                            type="button"
+                            data-testid="archive-event-horizon-pause-button"
+                            (click)="pauseOrResumeEventHorizonApproach()"
+                          >
+                            {{ simulation.isRunning ? 'PAUSAR' : 'REANUDAR' }}
+                          </button>
+
+                          <button
+                            genesis-primary-button
+                            type="button"
+                            data-testid="archive-event-horizon-reset-button"
+                            (click)="resetEventHorizonApproach()"
+                          >
+                            RESTABLECER
+                          </button>
+                        </div>
+
+                        <dl
+                          class="archive-discovery-detail__science-status"
+                          data-testid="archive-event-horizon-numerical-state"
+                        >
+                          <div>
+                            <dt>ESTADO</dt>
+                            <dd>{{ simulation.phase }}</dd>
+                          </div>
+                          <div>
+                            <dt>DISTANCIA RADIAL</dt>
+                            <dd>{{ formatHorizonRatio(simulation.radiusRatioToSchwarzschild) }} Rs</dd>
+                          </div>
+                          <div>
+                            <dt>RITMO DE RELOJ REMOTO</dt>
+                            <dd>{{ formatHorizonFactor(simulation.sample.distantClockRateRatio) }}</dd>
+                          </div>
+                          <div>
+                            <dt>CORRIMIENTO GRAVITACIONAL z</dt>
+                            <dd>{{ formatHorizonFactor(simulation.sample.gravitationalRedshiftZ) }}</dd>
+                          </div>
+                          <div>
+                            <dt>ESTIRAMIENTO ENTRE SEÑALES</dt>
+                            <dd>×{{ formatHorizonFactor(simulation.sample.signalIntervalStretchFactor) }}</dd>
+                          </div>
+                        </dl>
+
+                      } @else {
+                        <button
+                          genesis-primary-button
+                          type="button"
+                          data-testid="archive-event-horizon-start-button"
+                          (click)="startEventHorizonApproach()"
+                        >
+                          {{ horizon.buttonLabel }}
+                        </button>
                       }
                     </section>
                   }

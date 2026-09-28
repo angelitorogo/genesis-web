@@ -1,0 +1,103 @@
+<figure
+  class="ehr"
+  data-testid="event-horizon-external-render"
+  [attr.data-phase]="view().phaseLabel"
+  [attr.data-accretion-disk]="hasAccretionDisk"
+  [attr.data-radius-rs]="simulation.radiusRatioToSchwarzschild"
+>
+  <header class="ehr__header">
+    <div>
+      <small>THREE.JS / WEBGL / REPRESENTACIÓN PROCEDURAL REAL</small>
+      <strong>Aproximación externa al horizonte</strong>
+    </div>
+
+    <span>{{ view().distanceLabel }}</span>
+  </header>
+
+  <div class="ehr__stage">
+    <div
+      class="ehr__render-host"
+      data-testid="event-horizon-real-procedural-host"
+    >
+      <div
+        class="ehr__real-render"
+        [style.transform]="'translateZ(0) scale(' + view().visualScale + ')'"
+        [style.filter]="'brightness(' + view().visualBrightness + ') saturate(' + view().visualSaturation + ') contrast(' + view().visualContrast + ')'"
+      >
+        <app-galactic-object-procedural-render
+          [descriptor]="descriptor"
+        />
+      </div>
+
+      <div
+        class="ehr__strong-field-overlay"
+        data-testid="event-horizon-strong-field-overlay"
+        [style.opacity]="view().lensOverlayOpacity"
+      ></div>
+
+      <div
+        class="ehr__boundary-note"
+        data-testid="event-horizon-interior-disclosure"
+      >
+        <strong>r &gt; Rs</strong>
+        <span>INTERIOR NO MODELADO</span>
+      </div>
+
+      <div class="ehr__distance-track">
+        <span>1.001 Rs</span>
+
+        <div class="ehr__distance-track-line">
+          <i
+            [style.left.%]="100 - view().approachProgress01 * 100"
+          ></i>
+        </div>
+
+        <span>100 Rs</span>
+      </div>
+    </div>
+
+    <aside class="ehr__readout">
+      <dl>
+        <div>
+          <dt>FRECUENCIA RECIBIDA</dt>
+          <dd data-testid="event-horizon-frequency-readout">
+            {{ view().frequencyPercent }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>RITMO DE RELOJ REMOTO</dt>
+          <dd data-testid="event-horizon-clock-readout">
+            {{ view().clockPercent }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>REDSHIFT z</dt>
+          <dd data-testid="event-horizon-redshift-readout">
+            {{ view().redshiftLabel }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>INTERVALO ENTRE SEÑALES</dt>
+          <dd data-testid="event-horizon-stretch-readout">
+            {{ view().signalStretchLabel }}
+          </dd>
+        </div>
+      </dl>
+
+      <p data-testid="event-horizon-real-render-disclosure">
+        Esta simulación reutiliza exactamente el descriptor procedural de la
+        representación científica superior. La aproximación amplía y enfatiza
+        esa misma escena; no sustituye el objeto por un AGN genérico.
+      </p>
+    </aside>
+  </div>
+
+  <figcaption>
+    28.2a conserva la autoridad física. La transformación visual representa un
+    acercamiento exterior a la fuente procedural existente y nunca crea estado
+    ni imagen del interior de r = Rs.
+  </figcaption>
+</figure>

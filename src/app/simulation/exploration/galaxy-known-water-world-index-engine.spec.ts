@@ -101,6 +101,11 @@ function fakeSingle(coverages: readonly number[]): GeneratedSingleHost {
   const moonSystems = planets.map(planet => ({
     hostPlanet: planet,
     moonCount: 0,
+    unmaterializedMinorMoonCount: 0,
+    giantMoonProfile: {
+      estimatedRegularMinorMoonCount: 0,
+      estimatedIrregularMinorMoonCount: 0,
+    },
     relevantMoons: Object.freeze([]),
   }));
 

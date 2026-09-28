@@ -1,6 +1,7 @@
 import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
+import { AtmosphereRetentionRegime } from '../../domain/planetary/atmosphere-retention-regime';
 import { GalaxySectorCoordinates } from '../../domain/sector/galaxy-sector-coordinates';
 import { UniverseSeed } from '../../domain/universe/universe-seed';
 import { GalaxySectorContentGenerator } from '../sector/galaxy-sector-content-generator';
@@ -102,22 +103,39 @@ describe('real generated worlds thermodynamic H2O regression', () => {
     expect(atmosphere.surfaceLiquidWaterCoverageFraction01).toBeGreaterThan(0);
   });
 
-  it('removes the impossible ~13 percent vapor from temperate Stinaion e without deleting its water inventory', () => {
+  it('does not invent solid-surface H2O closure for the current deep-envelope Stinaion e', () => {
     const locator = systemLocatorAt(0, 16, 'Stinaion');
     const single = StellarMultihostFormation.generateV2SingleOrNull(GENERATION_KEY, locator)!;
     const index = single.planets.findIndex(planet => planet.designation.name === 'Stinaion e');
     const atmosphere = single.atmospheres[index];
 
-    assertThermodynamicWaterClosure(atmosphere);
-    expect(initialWaterMixingRatio(atmosphere)).toBeGreaterThan(0.10);
-    expect(effectiveWaterMixingRatio(atmosphere)).toBeLessThan(0.02);
+    expect(atmosphere.retentionState.retentionRegime)
+      .toBe(AtmosphereRetentionRegime.DEEP_ENVELOPE);
 
-    const waterVaporFraction01 = atmosphere.waterVaporFraction01;
-    expect(waterVaporFraction01).not.toBeNull();
-    if (waterVaporFraction01 === null) {
-      throw new Error('Expected Stinaion e to expose a resolved surface-water vapor fraction.');
-    }
-    expect(atmosphere.waterLiquidFraction01).toBeGreaterThan(waterVaporFraction01);
+    const retainedWaterMixingRatio =
+      initialWaterMixingRatio(
+        atmosphere,
+      );
+
+    expect(
+      retainedWaterMixingRatio,
+    ).toBeGreaterThan(
+      0,
+    );
+
+    expect(
+      atmosphere
+        .waterInventory
+        .sourceRetainedAtmosphericWaterVaporMoleFraction01,
+    ).toBeCloseTo(
+      retainedWaterMixingRatio,
+      12,
+    );
+
+    // Deep-envelope worlds deliberately have no solid-surface thermodynamic
+    // closure. Keeping this null prevents the phase-20 presentation layer from
+    // inventing a surface pressure/temperature for a non-surface atmosphere.
+    expect(atmosphere.greenhouseEffect.waterVaporEquilibriumState).toBeNull();
   });
 
   it('leaves Chuthoria A-2 overwhelmingly icy with only trace atmospheric H2O', () => {

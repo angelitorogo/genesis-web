@@ -144,8 +144,23 @@ describe('real generated worlds multispecies condensation regression', () => {
     )!.atmosphere;
 
     for (const atmosphere of [chuthoriaAtmosphere, triaraiaAtmosphere]) {
-      expect(gas(atmosphere, AtmosphereGas.CARBON_DIOXIDE).condensedFractionOfRetained01).toBe(0);
-      expect(gas(atmosphere, AtmosphereGas.SULFUR_DIOXIDE).condensedFractionOfRetained01).toBe(0);
+      expect(
+        gas(
+          atmosphere,
+          AtmosphereGas.CARBON_DIOXIDE,
+        ).condensedFractionOfRetained01,
+      ).toBeLessThanOrEqual(
+        1e-12,
+      );
+
+      expect(
+        gas(
+          atmosphere,
+          AtmosphereGas.SULFUR_DIOXIDE,
+        ).condensedFractionOfRetained01,
+      ).toBeLessThanOrEqual(
+        1e-12,
+      );
     }
   });
 

@@ -3067,6 +3067,59 @@ function projectSceneGeometry(
     );
   }
 
+  /*
+   * 28.2e regression guard — renderer-only body hierarchy.
+   *
+   * V5 is allowed to shrink stellar photospheres to preserve the real
+   * planetary-orbit clearance. Planet presentation radii, however, were
+   * computed before that V5 pass. In a very narrow multistellar case this can
+   * leave a large planet microscopically larger than the final smallest
+   * photosphere even though the orbital clearance itself is correct.
+   *
+   * Keep AU/orbits/physics untouched. Only cap the already-presentation-only
+   * planet proxy after the final stellar photospheres are known.
+   */
+  const smallestRenderedStarRadiusScene =
+    stellarOrbitClearance.stars.reduce(
+      (
+        minimum,
+        star,
+      ) =>
+        Math.min(
+          minimum,
+          star.radiusScene,
+        ),
+      Number.POSITIVE_INFINITY,
+    );
+
+  if (
+    Number.isFinite(
+      smallestRenderedStarRadiusScene,
+    ) &&
+    smallestRenderedStarRadiusScene >
+      0
+  ) {
+    const maximumPlanetRadiusScene =
+      smallestRenderedStarRadiusScene *
+      0.96;
+
+    for (
+      const [
+        ordinal,
+        radiusScene,
+      ]
+      of planetRadiusSceneByOrdinal
+    ) {
+      planetRadiusSceneByOrdinal.set(
+        ordinal,
+        Math.min(
+          radiusScene,
+          maximumPlanetRadiusScene,
+        ),
+      );
+    }
+  }
+
   const triplePlanetaryLayout =
     world.multiplicityName ===
       'TRIPLE'
