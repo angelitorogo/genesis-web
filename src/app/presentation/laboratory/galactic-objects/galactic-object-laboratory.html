@@ -20,14 +20,14 @@
       </h1>
 
       <p>
-        El laboratorio expone toda la variedad física y visual existente hasta
-        la Fase 13: 14 variantes persistentes con progresión de conocimiento y
-        3 estados de núcleo galáctico. No persiste nada ni altera la partida.
+        El laboratorio expone toda la variedad física y visual existente: 14 variantes
+        persistentes con progresión de conocimiento, 3 estados de núcleo galáctico y
+        4 clases compactas de estrellas de neutrones de 28.2F.2. No persiste nada ni altera la partida.
       </p>
     </div>
 
     <span class="object-lab__badge">
-      17 CASOS · READ ONLY
+      17 CASOS PERSISTENTES · 4 COMPACTOS LAB · READ ONLY
     </span>
   </header>
 
@@ -1026,6 +1026,189 @@
       </aside>
     }
   }
+  <section class="object-lab__neutron-lab" data-testid="neutron-star-laboratory" aria-labelledby="neutron-star-laboratory-title">
+    <header>
+      <p class="object-lab__eyebrow">28.2F.2 · ESTRELLAS DE NEUTRONES</p>
+      <h2 id="neutron-star-laboratory-title">Representaciones compactas de laboratorio</h2>
+      <p>
+        Banco visual independiente de la partida. Las ocho muestras A–H de cada clase
+        usan parámetros físicos dentro de los límites ya establecidos en 27.4–27.6,
+        pero no son descubrimientos, no consumen semillas del juego y no alteran la generación.
+      </p>
+    </header>
+
+    <div class="object-lab__neutron-type-buttons" aria-label="Clases de estrellas de neutrones">
+      @for (type of neutronStarLaboratoryTypes; track type) {
+        <button
+          type="button"
+          data-testid="neutron-star-laboratory-type-button"
+          [attr.data-extreme-type]="type"
+          [attr.aria-pressed]="selectedNeutronStarType() === type"
+          [class.object-lab__button--active]="selectedNeutronStarType() === type"
+          (click)="selectNeutronStarLaboratoryType(type)"
+        >
+          <strong>{{ neutronStarTypeLabel(type) }}</strong>
+          <small>{{ type }}</small>
+        </button>
+      }
+    </div>
+
+    <div class="object-lab__neutron-samples" aria-label="Diversidad procedural A-H">
+      <span>DIVERSIDAD PROCEDURAL</span>
+      <div>
+        @for (sample of neutronStarLaboratorySamples(); track sample.sampleLabel; let index = $index) {
+          <button
+            type="button"
+            data-testid="neutron-star-laboratory-sample-button"
+            [attr.data-sample]="sample.sampleLabel"
+            [attr.aria-pressed]="selectedNeutronStarSampleIndex() === index"
+            [class.object-lab__button--active]="selectedNeutronStarSampleIndex() === index"
+            (click)="selectNeutronStarLaboratorySample(index)"
+          >{{ sample.sampleLabel }}</button>
+        }
+      </div>
+    </div>
+
+    @if (selectedNeutronStarLaboratoryModel(); as compact) {
+      <div class="object-lab__neutron-stage">
+        <app-neutron-star-laboratory-render [model]="compact" />
+
+        <aside class="object-lab__neutron-data">
+          <div>
+            <p class="object-lab__eyebrow">PERFIL FÍSICO ILUSTRATIVO</p>
+            <h3>{{ compact.label }} · {{ compact.sampleLabel }}</h3>
+          </div>
+          <dl>
+            <div><dt>Masa</dt><dd>{{ compact.massSolar }} M☉</dd></div>
+            <div><dt>Radio de referencia</dt><dd>{{ compact.radiusKm }} km</dd></div>
+            <div><dt>Periodo de giro</dt><dd>{{ compact.spinPeriodSeconds === null ? 'NO ASIGNADO' : compact.spinPeriodSeconds + ' s' }}</dd></div>
+            <div><dt>Campo dipolar</dt><dd>{{ compact.magneticFieldTesla === null ? 'NO ASIGNADO' : compact.magneticFieldTesla.toExponential(2) + ' T' }}</dd></div>
+            <div><dt>Inclinación magnética</dt><dd>{{ compact.magneticInclinationDegrees === null ? 'NO ASIGNADA' : compact.magneticInclinationDegrees + '°' }}</dd></div>
+            <div><dt>Semicono de emisión</dt><dd>{{ compact.beamHalfOpeningAngleDegrees === null ? 'NO APLICA' : compact.beamHalfOpeningAngleDegrees + '°' }}</dd></div>
+          </dl>
+          <p class="object-lab__neutron-caveat">{{ compact.caveat }}</p>
+          <p class="object-lab__neutron-scale">
+            Escala visual adaptativa: el radio aparente, el campo y los haces se exageran
+            deliberadamente para inspección. No existe equivalencia de escala entre ellos.
+          </p>
+        </aside>
+      </div>
+    }
+  </section>
+
+  <section class="object-lab__black-hole-lab" data-testid="black-hole-laboratory" aria-labelledby="black-hole-laboratory-title">
+    <header>
+      <p class="object-lab__eyebrow">28.2F.3 · AGUJEROS NEGROS</p>
+      <h2 id="black-hole-laboratory-title">Escalas, acreción, lente y spin visual</h2>
+      <p>
+        Banco visual independiente de la partida. Las muestras A–H exploran tres regímenes de masa con
+        disco de acreción, sombra, anillo fotónico y lente gravitatoria aproximada. No crean objetos ni alteran semillas.
+      </p>
+    </header>
+
+    <div class="object-lab__black-hole-type-buttons" aria-label="Clases de agujeros negros">
+      @for (type of blackHoleLaboratoryTypes; track type) {
+        <button type="button" data-testid="black-hole-laboratory-type-button" [attr.data-extreme-type]="type"
+          [attr.aria-pressed]="selectedBlackHoleType() === type"
+          [class.object-lab__button--active]="selectedBlackHoleType() === type"
+          (click)="selectBlackHoleLaboratoryType(type)">
+          <strong>{{ blackHoleTypeLabel(type) }}</strong><small>{{ type }}</small>
+        </button>
+      }
+    </div>
+
+    <div class="object-lab__black-hole-samples" aria-label="Diversidad procedural A-H">
+      <span>DIVERSIDAD PROCEDURAL</span><div>
+        @for (sample of blackHoleLaboratorySamples(); track sample.sampleLabel; let index = $index) {
+          <button type="button" data-testid="black-hole-laboratory-sample-button" [attr.data-sample]="sample.sampleLabel"
+            [attr.aria-pressed]="selectedBlackHoleSampleIndex() === index"
+            [class.object-lab__button--active]="selectedBlackHoleSampleIndex() === index"
+            (click)="selectBlackHoleLaboratorySample(index)">{{ sample.sampleLabel }}</button>
+        }
+      </div>
+    </div>
+
+    @if (selectedBlackHoleLaboratoryModel(); as blackHole) {
+      <div class="object-lab__black-hole-stage">
+        <app-black-hole-laboratory-render [model]="blackHole" />
+        <aside class="object-lab__black-hole-data">
+          <div><p class="object-lab__eyebrow">PERFIL FÍSICO ILUSTRATIVO</p><h3>{{ blackHole.label }} · {{ blackHole.sampleLabel }}</h3></div>
+          <dl>
+            <div><dt>Masa</dt><dd>{{ blackHole.massSolar.toExponential(3) }} M☉</dd></div>
+            <div><dt>Radio de Schwarzschild</dt><dd>{{ blackHole.schwarzschildRadiusKm.toExponential(3) }} km</dd></div>
+            <div><dt>Spin a*</dt><dd>{{ blackHole.spinDimensionless }}</dd></div>
+            <div><dt>Inclinación</dt><dd>{{ blackHole.inclinationDegrees }}°</dd></div>
+            <div><dt>Acreción</dt><dd>{{ (blackHole.accretionRateEddington * 100).toFixed(1) }} % Eddington</dd></div>
+            <div><dt>T disco máx. ilustrativa</dt><dd>{{ blackHole.diskTemperatureK.toExponential(2) }} K</dd></div>
+            <div><dt>Disco interior</dt><dd>{{ blackHole.diskInnerRadiusRg }} r_g</dd></div>
+            <div><dt>Disco exterior</dt><dd>{{ blackHole.diskOuterRadiusRg }} r_g</dd></div>
+          </dl>
+          <p class="object-lab__black-hole-caveat">{{ blackHole.caveat }}</p>
+          <p class="object-lab__black-hole-scale">Escala visual adaptativa: BH estelar, IMBH y SMBH se normalizan para inspección. Sus tamaños aparentes no son comparables entre sí.</p>
+        </aside>
+      </div>
+    }
+  </section>
+
+  <section
+    class="object-lab__taxonomy"
+    data-testid="extreme-taxonomy-catalogue"
+    aria-labelledby="extreme-taxonomy-title"
+  >
+    <header>
+      <p class="object-lab__eyebrow">28.2F.1 · TAXONOMÍA CANÓNICA</p>
+      <h2 id="extreme-taxonomy-title">Catálogo de extremos objetivo</h2>
+      <p>
+        Contrato de clasificación previo a las representaciones 3D. Las capacidades
+        indican qué física podrá soportar cada modelo; no afirman que un disco, jet,
+        pulso o actividad magnética esté presente en una instancia concreta.
+      </p>
+    </header>
+
+    <div class="object-lab__taxonomy-grid">
+      @for (definition of extremeTaxonomy; track definition.type) {
+        <article
+          class="object-lab__taxonomy-card"
+          data-testid="extreme-taxonomy-entry"
+          [attr.data-extreme-type]="definition.type"
+        >
+          <div>
+            <span>{{ definition.shortLabel }}</span>
+            <strong>{{ definition.label }}</strong>
+          </div>
+
+          <dl>
+            <div>
+              <dt>Familia</dt>
+              <dd>{{ definition.family }}</dd>
+            </div>
+            <div>
+              <dt>Semántica</dt>
+              <dd>{{ definition.semanticKind }}</dd>
+            </div>
+            <div>
+              <dt>Contexto</dt>
+              <dd>{{ definition.galacticNucleusOnly ? 'NÚCLEO GALÁCTICO' : 'POBLACIÓN DISTRIBUIDA' }}</dd>
+            </div>
+          </dl>
+
+          <div class="object-lab__taxonomy-capabilities" aria-label="Capacidades físicas soportadas">
+            @if (definition.capabilities.accretion) { <span>ACRECIÓN</span> }
+            @if (definition.capabilities.relativisticJets) { <span>JETS</span> }
+            @if (definition.capabilities.pulseTiming) { <span>PULSOS</span> }
+            @if (definition.capabilities.magneticActivity) { <span>CAMPO EXTREMO</span> }
+            @if (!definition.capabilities.accretion &&
+                 !definition.capabilities.relativisticJets &&
+                 !definition.capabilities.pulseTiming &&
+                 !definition.capabilities.magneticActivity) {
+              <span>BASE FÍSICA</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
   <section class="object-lab__compact-gallery" data-testid="compact-science-laboratory-gallery"
     aria-labelledby="compact-science-gallery-title">
     <header>

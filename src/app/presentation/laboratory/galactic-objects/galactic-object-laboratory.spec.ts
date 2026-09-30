@@ -95,6 +95,73 @@ describe(
       30_000,
     );
 
+
+    it(
+      'should expose the complete 28.2F.1 taxonomy without turning entries into generated laboratory cases',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="extreme-taxonomy-entry"]',
+          ),
+        ).toHaveLength(
+          15,
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="extreme-taxonomy-entry"][data-extreme-type="PULSAR"]',
+          )?.textContent,
+        ).toContain(
+          'Púlsar',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="extreme-taxonomy-entry"][data-extreme-type="MAGNETAR"]',
+          )?.textContent,
+        ).toContain(
+          'CAMPO EXTREMO',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="extreme-taxonomy-entry"][data-extreme-type="MICROQUASAR"]',
+          )?.textContent,
+        ).toContain(
+          'JETS',
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-object-laboratory-case-button"]',
+          ),
+        ).toHaveLength(
+          14,
+        );
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="galactic-nucleus-laboratory-case-button"]',
+          ),
+        ).toHaveLength(
+          3,
+        );
+      },
+      30_000,
+    );
+
     it(
       'should render QUIESCENT through its dedicated A-H procedural nucleus view and print state names',
       () => {
@@ -2043,6 +2110,55 @@ describe(
         ).toHaveLength(
           4,
         );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose three 28.2F.3 black-hole classes with A-H samples without changing persistent case counts',
+      () => {
+        const fixture = TestBed.createComponent(GalacticObjectLaboratoryPage);
+        fixture.detectChanges();
+        const element = fixture.nativeElement as HTMLElement;
+        expect(element.querySelectorAll('[data-testid="black-hole-laboratory-type-button"]')).toHaveLength(3);
+        expect(element.querySelectorAll('[data-testid="black-hole-laboratory-sample-button"]')).toHaveLength(8);
+        expect(element.querySelector('[data-testid="black-hole-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('STELLAR_MASS_BLACK_HOLE');
+        (element.querySelector('[data-extreme-type="INTERMEDIATE_MASS_BLACK_HOLE"][data-testid="black-hole-laboratory-type-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="black-hole-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('INTERMEDIATE_MASS_BLACK_HOLE');
+        (element.querySelector('[data-extreme-type="SMBH"][data-testid="black-hole-laboratory-type-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="black-hole-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('SMBH');
+        expect(element.textContent).toContain('LENTE GRAVITATORIA APROXIMADA');
+        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(14);
+        expect(element.querySelectorAll('[data-testid="galactic-nucleus-laboratory-case-button"]')).toHaveLength(3);
+      },
+      30_000,
+    );
+
+    it(
+      'should expose four 28.2F.2 neutron-star classes with A-H visual samples without changing persistent case counts',
+      () => {
+        const fixture = TestBed.createComponent(GalacticObjectLaboratoryPage);
+        fixture.detectChanges();
+        const element = fixture.nativeElement as HTMLElement;
+
+        expect(element.querySelectorAll('[data-testid="neutron-star-laboratory-type-button"]')).toHaveLength(4);
+        expect(element.querySelectorAll('[data-testid="neutron-star-laboratory-sample-button"]')).toHaveLength(8);
+        expect(element.querySelector('[data-testid="neutron-star-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('NEUTRON_STAR');
+
+        (element.querySelector('[data-extreme-type="PULSAR"][data-testid="neutron-star-laboratory-type-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="neutron-star-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('PULSAR');
+        expect(element.textContent).toContain('HAZ POLAR ESTRUCTURADO');
+
+        (element.querySelector('[data-extreme-type="MAGNETAR"][data-testid="neutron-star-laboratory-type-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="neutron-star-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('MAGNETAR');
+        expect(element.textContent).toContain('CAMPO DIPOLAR ESQUEMÁTICO');
+
+        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(14);
+        expect(element.querySelectorAll('[data-testid="galactic-nucleus-laboratory-case-button"]')).toHaveLength(3);
       },
       30_000,
     );

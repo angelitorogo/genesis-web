@@ -10,6 +10,10 @@ import {
 } from '@angular/router';
 
 import {
+  EXTREME_TYPE_CATALOGUE,
+} from '../../../domain/galactic-object/extreme-object-type';
+
+import {
   GalacticMapScene,
 } from '../../galaxy-map/galactic-map-scene';
 
@@ -24,6 +28,25 @@ import {
 import {
   QuasarNucleusRender,
 } from './quasar-nucleus-render';
+
+import {
+  NeutronStarLaboratoryRender,
+} from './neutron-star-laboratory-render';
+
+import { BlackHoleLaboratoryRender } from './black-hole-laboratory-render';
+import {
+  BLACK_HOLE_LABORATORY_TYPES,
+  blackHoleLaboratoryModel,
+  blackHoleLaboratorySamples,
+  type BlackHoleLaboratoryKind,
+} from './black-hole-laboratory-render-model';
+
+import {
+  NEUTRON_STAR_LABORATORY_TYPES,
+  neutronStarLaboratoryModel,
+  neutronStarLaboratorySamples,
+  type NeutronStarLaboratoryKind,
+} from './neutron-star-laboratory-render-model';
 
 import {
   GalacticObjectProceduralRender,
@@ -70,6 +93,8 @@ type LaboratoryView =
     AgnNucleusRender,
     QuasarNucleusRender,
     QuiescentNucleusRender,
+    NeutronStarLaboratoryRender,
+    BlackHoleLaboratoryRender,
     GalacticObjectProceduralRender,
     CompactObjectScientificRender,
     RouterLink,
@@ -85,6 +110,10 @@ type LaboratoryView =
     ChangeDetectionStrategy.OnPush,
 })
 export class GalacticObjectLaboratoryPage {
+  /** 28.2F.1 taxonomy only: no generation, persistence or Ground Truth assignment. */
+  readonly extremeTaxonomy =
+    EXTREME_TYPE_CATALOGUE;
+
   /** Presentation-only exemplars: NEVER generated celestial objects or discoveries. */
   readonly compactDiagramExamples = Object.freeze([
     compactObjectScientificVisual('BLACK_HOLE'),
@@ -92,6 +121,59 @@ export class GalacticObjectLaboratoryPage {
     compactObjectScientificVisual('PULSAR'),
     compactObjectScientificVisual('MAGNETAR'),
   ]);
+
+  /** 28.2F.2 read-only laboratory classes. These are not generated discoveries. */
+  readonly neutronStarLaboratoryTypes = NEUTRON_STAR_LABORATORY_TYPES;
+
+  readonly selectedNeutronStarType = signal<NeutronStarLaboratoryKind>('NEUTRON_STAR');
+  readonly selectedNeutronStarSampleIndex = signal(0);
+
+  readonly neutronStarLaboratorySamples = computed(() =>
+    neutronStarLaboratorySamples(this.selectedNeutronStarType()),
+  );
+
+  readonly selectedNeutronStarLaboratoryModel = computed(() =>
+    neutronStarLaboratoryModel(
+      this.selectedNeutronStarType(),
+      this.selectedNeutronStarSampleIndex(),
+    ),
+  );
+
+  selectNeutronStarLaboratoryType(type: NeutronStarLaboratoryKind): void {
+    if (!NEUTRON_STAR_LABORATORY_TYPES.includes(type)) {
+      throw new RangeError(`Unsupported neutron-star laboratory type: ${type}.`);
+    }
+    this.selectedNeutronStarType.set(type);
+    this.selectedNeutronStarSampleIndex.set(0);
+  }
+
+  selectNeutronStarLaboratorySample(sampleIndex: number): void {
+    if (!Number.isInteger(sampleIndex) || sampleIndex < 0 || sampleIndex >= 8) {
+      throw new RangeError(`Unsupported neutron-star laboratory sample index: ${sampleIndex}.`);
+    }
+    this.selectedNeutronStarSampleIndex.set(sampleIndex);
+  }
+
+  neutronStarTypeLabel(type: NeutronStarLaboratoryKind): string {
+    return neutronStarLaboratoryModel(type, 0).label;
+  }
+
+  /** 28.2F.3 read-only black-hole laboratory classes. */
+  readonly blackHoleLaboratoryTypes = BLACK_HOLE_LABORATORY_TYPES;
+  readonly selectedBlackHoleType = signal<BlackHoleLaboratoryKind>('STELLAR_MASS_BLACK_HOLE');
+  readonly selectedBlackHoleSampleIndex = signal(0);
+  readonly blackHoleLaboratorySamples = computed(() => blackHoleLaboratorySamples(this.selectedBlackHoleType()));
+  readonly selectedBlackHoleLaboratoryModel = computed(() => blackHoleLaboratoryModel(this.selectedBlackHoleType(), this.selectedBlackHoleSampleIndex()));
+
+  selectBlackHoleLaboratoryType(type: BlackHoleLaboratoryKind): void {
+    if (!BLACK_HOLE_LABORATORY_TYPES.includes(type)) throw new RangeError(`Unsupported black-hole laboratory type: ${type}.`);
+    this.selectedBlackHoleType.set(type); this.selectedBlackHoleSampleIndex.set(0);
+  }
+  selectBlackHoleLaboratorySample(sampleIndex: number): void {
+    if (!Number.isInteger(sampleIndex) || sampleIndex < 0 || sampleIndex >= 8) throw new RangeError(`Unsupported black-hole laboratory sample index: ${sampleIndex}.`);
+    this.selectedBlackHoleSampleIndex.set(sampleIndex);
+  }
+  blackHoleTypeLabel(type: BlackHoleLaboratoryKind): string { return blackHoleLaboratoryModel(type, 0).label; }
 
 
   readonly objectGroups =

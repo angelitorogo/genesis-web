@@ -1,0 +1,37 @@
+<section #renderHost class="neutron-render" data-testid="neutron-star-laboratory-render" [attr.data-extreme-type]="model.type">
+  <canvas #renderCanvas class="neutron-render__canvas"
+    [attr.aria-label]="'Representación procedural de laboratorio: ' + model.label"></canvas>
+
+  <div class="neutron-render__hud">
+    <div>
+      <span>{{ model.type }}</span>
+      <strong>{{ model.label }} · muestra {{ model.sampleLabel }}</strong>
+    </div>
+    <button type="button" data-testid="neutron-star-animation-toggle" (click)="togglePaused()">
+      {{ paused() ? 'REANUDAR' : 'PAUSAR' }}
+    </button>
+  </div>
+
+  <div class="neutron-render__legend" aria-label="Elementos visuales">
+    <span>SUPERFICIE COMPACTA</span>
+    @if (model.type === 'PULSAR' || model.type === 'MILLISECOND_PULSAR') {
+      <span>EJE MAGNÉTICO INCLINADO</span>
+      <span>{{ model.type === 'MILLISECOND_PULSAR' ? 'HAZ POLAR COLIMADO' : 'HAZ POLAR ESTRUCTURADO' }}</span>
+      <span>{{ model.type === 'MILLISECOND_PULSAR' ? 'CAMPO DIPOLAR COMPACTO' : 'CAMPO DIPOLAR' }}</span>
+      @if (model.type === 'MILLISECOND_PULSAR') { <span>EMISIÓN DE ALTA CADENCIA</span> }
+    } @else if (model.type === 'MAGNETAR') {
+      <span>EJE DE ROTACIÓN</span>
+      <span>CAMPO DIPOLAR ESQUEMÁTICO</span>
+      <span>MAGNETOSFERA EXTREMA</span>
+      <span>ARCOS DE RECONEXIÓN ILUSTRATIVOS</span>
+    } @else {
+      <span>EJE DE ROTACIÓN</span>
+      @if (model.showBeams) { <span>CONOS DE EMISIÓN</span> }
+      @if (model.showMagneticField) { <span>CAMPO DIPOLAR ESQUEMÁTICO</span> }
+    }
+  </div>
+
+  @if (renderUnavailable()) {
+    <div class="neutron-render__fallback">WebGL no está disponible en este entorno.</div>
+  }
+</section>
