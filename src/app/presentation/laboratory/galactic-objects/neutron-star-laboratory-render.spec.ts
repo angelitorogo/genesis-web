@@ -35,4 +35,38 @@ describe('28.2F.2 — NeutronStarLaboratoryRender', () => {
     fixture.detectChanges();
     expect(button.textContent).toContain('REANUDAR');
   });
+
+
+  it('supports an explicit static frame for intermediate discovery stages', () => {
+    const fixture = TestBed.createComponent(NeutronStarLaboratoryRender);
+    fixture.componentRef.setInput('model', neutronStarLaboratoryModel(ExtremeType.PULSAR, 0));
+    fixture.componentRef.setInput('embedded', true);
+    fixture.componentRef.setInput('animationEnabled', false);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(
+      element.querySelector('[data-testid="neutron-star-laboratory-render"]')
+        ?.getAttribute('data-animated'),
+    ).toBe('false');
+    expect(
+      element.querySelector('[data-testid="neutron-star-animation-toggle"]'),
+    ).toBeNull();
+  });
+
+  it('supports an embedded progression mode without duplicating the pause control', () => {
+    const fixture = TestBed.createComponent(NeutronStarLaboratoryRender);
+    fixture.componentRef.setInput('model', neutronStarLaboratoryModel(ExtremeType.NEUTRON_STAR, 0));
+    fixture.componentRef.setInput('embedded', true);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(
+      element.querySelector('[data-testid="neutron-star-laboratory-render"]')
+        ?.classList.contains('neutron-render--embedded'),
+    ).toBe(true);
+    expect(
+      element.querySelector('[data-testid="neutron-star-animation-toggle"]'),
+    ).toBeNull();
+  });
 });

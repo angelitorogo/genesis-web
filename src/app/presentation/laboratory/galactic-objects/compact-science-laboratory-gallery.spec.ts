@@ -18,7 +18,7 @@ describe('27.10 — accessible laboratory-only compact visual check', () => {
     expect(gallery?.querySelectorAll('[data-testid="compact-object-scientific-render"]')).toHaveLength(4);
     expect(gallery?.querySelector('[data-testid="compact-science-disk"]')).toBeNull();
     expect(gallery?.querySelector('[data-testid="compact-science-jets"]')).toBeNull();
-    expect(root.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(14);
+    expect(root.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(21);
     expect(root.querySelectorAll('[data-testid="galactic-nucleus-laboratory-case-button"]')).toHaveLength(3);
     expect(gallery?.textContent).toContain('No son objetos descubiertos');
   });

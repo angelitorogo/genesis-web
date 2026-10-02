@@ -60,6 +60,10 @@ import {
 } from './quiescent-nucleus-render-model';
 
 import {
+  createGalacticNucleusBlackHoleCoreModel,
+} from './galactic-nucleus-black-hole-core-model';
+
+import {
   createQuasarNucleusRenderModel,
   QUASAR_NUCLEUS_VISUAL_FAMILIES,
   resolveQuasarNucleusVisualFamily,
@@ -162,6 +166,9 @@ export interface GalacticNucleusLaboratoryFrame {
   readonly quasarRenderModel:
     QuasarNucleusRenderModel | null;
 
+  readonly blackHoleCoreRenderModel:
+    import('./black-hole-laboratory-render-model').BlackHoleLaboratoryRenderModel | null;
+
   readonly activity:
     ReturnType<
       typeof GalacticNuclearActivityProfileGenerator.generate
@@ -176,14 +183,14 @@ export const GALACTIC_NUCLEUS_LABORATORY_CASES:
         GalacticNucleusLaboratoryCaseId
           .QUIESCENT,
       label:
-        'Núcleo quiescente',
+        'SMBH quiescente',
       galaxyIndex:
         0n,
       expectedState:
         GalacticNucleusState
           .QUIESCENT,
       description:
-        'Núcleo galáctico V1 sin episodio AGN/QUASAR activo.',
+        'SMBH real en régimen nuclear quiescente: sin episodio AGN/QUASAR activo.',
     }),
     Object.freeze({
       id:
@@ -236,7 +243,7 @@ const QUIESCENT_SAMPLE_LABELS =
   ] as const);
 
 const QUIESCENT_SAMPLE_SCAN_LIMIT =
-  4096n;
+  16384n;
 
 const AGN_SAMPLE_LABELS =
   QUIESCENT_SAMPLE_LABELS;
@@ -307,7 +314,10 @@ export class GalacticNucleusLaboratoryFixtures {
         galaxy.nucleus
           ?.state !==
         GalacticNucleusState
-          .QUIESCENT
+          .QUIESCENT ||
+        galaxy.nucleus
+          .supermassiveBlackHole ===
+        null
       ) {
         continue;
       }
@@ -731,37 +741,57 @@ export class GalacticNucleusLaboratoryFixtures {
         galaxy.type,
       );
 
+    const quiescentRenderModel =
+      galaxy.nucleus
+        ?.state ===
+      GalacticNucleusState
+        .QUIESCENT
+        ? createQuiescentNucleusRenderModel(
+            galaxy,
+          )
+        : null;
+
+    const agnRenderModel =
+      galaxy.nucleus
+        ?.state ===
+      GalacticNucleusState
+        .AGN
+        ? createAgnNucleusRenderModel(
+            galaxy,
+          )
+        : null;
+
+    const quasarRenderModel =
+      galaxy.nucleus
+        ?.state ===
+      GalacticNucleusState
+        .QUASAR
+        ? createQuasarNucleusRenderModel(
+            galaxy,
+          )
+        : null;
+
+    const familyIndex =
+      quiescentRenderModel
+        ?.familyIndex ??
+      agnRenderModel
+        ?.familyIndex ??
+      quasarRenderModel
+        ?.familyIndex ??
+      0;
+
     return Object.freeze({
       caseDefinition,
       galaxy,
       model,
-      quiescentRenderModel:
-        galaxy.nucleus
-          ?.state ===
-        GalacticNucleusState
-          .QUIESCENT
-          ? createQuiescentNucleusRenderModel(
-              galaxy,
-            )
-          : null,
-      agnRenderModel:
-        galaxy.nucleus
-          ?.state ===
-        GalacticNucleusState
-          .AGN
-          ? createAgnNucleusRenderModel(
-              galaxy,
-            )
-          : null,
-      quasarRenderModel:
-        galaxy.nucleus
-          ?.state ===
-        GalacticNucleusState
-          .QUASAR
-          ? createQuasarNucleusRenderModel(
-              galaxy,
-            )
-          : null,
+      quiescentRenderModel,
+      agnRenderModel,
+      quasarRenderModel,
+      blackHoleCoreRenderModel:
+        createGalacticNucleusBlackHoleCoreModel(
+          galaxy,
+          familyIndex,
+        ),
       activity:
         GalacticNuclearActivityProfileGenerator
           .generate(

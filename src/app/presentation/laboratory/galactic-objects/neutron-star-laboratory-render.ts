@@ -30,6 +30,11 @@ export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, On
   @ViewChild('renderHost') private renderHost?: ElementRef<HTMLElement>;
 
   @Input({ required: true }) model!: NeutronStarLaboratoryRenderModel;
+  @Input() embedded = false;
+  @Input() animationEnabled = true;
+  @Input() viewportScale = 1;
+  @Input() viewportOffsetX = 0;
+  @Input() viewportOffsetY = 0;
 
   readonly renderUnavailable = signal(false);
   readonly paused = signal(false);
@@ -50,7 +55,7 @@ export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, On
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['model'] && this.renderer !== null) {
+    if ((changes['model'] || changes['viewportScale'] || changes['viewportOffsetX'] || changes['viewportOffsetY']) && this.renderer !== null) {
       this.rebuildScene();
     }
   }
@@ -115,28 +120,27 @@ export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, On
     this.scene.clear();
     this.scene.add(new THREE.AmbientLight(0x8fb8d8, this.model.type === 'NEUTRON_STAR' ? 0.5 : 1.0));
     if (this.camera !== null) {
-      this.camera.position.set(
-        0,
-        this.model.type === 'NEUTRON_STAR'
-          ? 0.15
-          : this.model.type === 'PULSAR'
-            ? 0.22
-            : this.model.type === 'MILLISECOND_PULSAR'
-              ? 0.18
-              : this.model.type === 'MAGNETAR'
-                ? 0.30
-                : 0.55,
-        this.model.type === 'NEUTRON_STAR'
-          ? 5.25
-          : this.model.type === 'PULSAR'
-            ? 5.65
-            : this.model.type === 'MILLISECOND_PULSAR'
-              ? 5.10
-              : this.model.type === 'MAGNETAR'
-                ? 5.55
-                : 6.6,
-      );
-      this.camera.lookAt(0, 0, 0);
+      const baseCameraY = this.model.type === 'NEUTRON_STAR'
+        ? 0.15
+        : this.model.type === 'PULSAR'
+          ? 0.22
+          : this.model.type === 'MILLISECOND_PULSAR'
+            ? 0.18
+            : this.model.type === 'MAGNETAR'
+              ? 0.30
+              : 0.55;
+      const baseCameraZ = this.model.type === 'NEUTRON_STAR'
+        ? 5.25
+        : this.model.type === 'PULSAR'
+          ? 5.65
+          : this.model.type === 'MILLISECOND_PULSAR'
+            ? 5.10
+            : this.model.type === 'MAGNETAR'
+              ? 5.55
+              : 6.6;
+      const viewportScale = Math.max(0.25, this.viewportScale || 1);
+      this.camera.position.set(0, baseCameraY + this.viewportOffsetY, baseCameraZ * viewportScale);
+      this.camera.lookAt(0, this.viewportOffsetY, 0);
     }
 
     const key = new THREE.PointLight(
@@ -160,6 +164,8 @@ export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, On
     this.scene.add(fill);
 
     const spinGroup = new THREE.Group();
+    spinGroup.position.x = this.viewportOffsetX;
+    spinGroup.position.y = this.viewportOffsetY;
     spinGroup.rotation.z = THREE.MathUtils.degToRad(9);
     this.scene.add(spinGroup);
     this.spinGroup = spinGroup;
@@ -1223,7 +1229,7 @@ export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, On
     if (this.renderer === null || this.scene === null || this.camera === null) return;
     const delta = this.lastFrameMs === 0 ? 0 : Math.min(0.05, (timeMs - this.lastFrameMs) / 1000);
     this.lastFrameMs = timeMs;
-    if (!this.paused() && this.spinGroup !== null) {
+    if (this.animationEnabled && !this.paused() && this.spinGroup !== null) {
       this.spinGroup.rotation.y += delta * Math.PI * 2 / Math.max(1, this.model.visualRotationSeconds);
       for (const material of this.surfaceShaderMaterials) {
         material.uniforms['uTime'].value += delta;

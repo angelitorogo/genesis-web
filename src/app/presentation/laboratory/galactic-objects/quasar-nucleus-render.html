@@ -1,43 +1,92 @@
 <div
-  #renderHost
   class="quasar-nucleus-render"
   data-testid="quasar-nucleus-render"
+  [attr.data-family]="model.family"
 >
-  <canvas
-    #renderCanvas
-    class="quasar-nucleus-render__canvas"
-    aria-label="Representación procedural de un quasar con agujero negro supermasivo, disco de acreción, viento polar y posibles jets relativistas"
-  ></canvas>
+  <div
+    class="quasar-nucleus-render__starfield"
+    data-testid="quasar-nucleus-render-starfield"
+    aria-hidden="true"
+  ></div>
 
-  <div class="quasar-nucleus-render__badge">
-    THREE.JS / WEBGL / PROCEDURAL / QUASAR
+  <div
+    class="quasar-nucleus-render__corona"
+    data-testid="quasar-nucleus-render-corona"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="quasar-nucleus-render__extended-disk"
+    data-testid="quasar-nucleus-render-extended-disk"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="quasar-nucleus-render__disk-glow"
+    data-testid="quasar-nucleus-render-disk-glow"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="quasar-nucleus-render__wind quasar-nucleus-render__wind--north"
+    data-testid="quasar-nucleus-render-polar-wind-north"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="quasar-nucleus-render__wind quasar-nucleus-render__wind--south"
+    data-testid="quasar-nucleus-render-polar-wind-south"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="quasar-nucleus-render__jet-plume quasar-nucleus-render__jet-plume--north"
+    data-testid="quasar-nucleus-render-jet-plume-north"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="quasar-nucleus-render__jet-plume quasar-nucleus-render__jet-plume--south"
+    data-testid="quasar-nucleus-render-jet-plume-south"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="quasar-nucleus-render__jet quasar-nucleus-render__jet--north"
+    data-testid="quasar-nucleus-render-jet-north"
+    aria-hidden="true"
+  >
+    <span></span>
   </div>
+
+  <div
+    class="quasar-nucleus-render__jet quasar-nucleus-render__jet--south"
+    data-testid="quasar-nucleus-render-jet-south"
+    aria-hidden="true"
+  >
+    <span></span>
+  </div>
+
+  @if (blackHoleCoreModel) {
+    <app-black-hole-laboratory-render
+      class="quasar-nucleus-render__black-hole-core"
+      data-testid="quasar-nucleus-render-canonical-smbh-core"
+      [model]="blackHoleCoreModel"
+      [embedded]="true"
+    ></app-black-hole-laboratory-render>
+  }
+
+  <div
+    class="quasar-nucleus-render__central-glare"
+    data-testid="quasar-nucleus-render-central-glare"
+    aria-hidden="true"
+  ></div>
 
   <div class="quasar-nucleus-render__legend">
-    <span>
-      SMBH
-    </span>
-
-    <span>
-      DISCO HIPERLUMINOSO
-    </span>
-
-    <span>
-      CORONA
-    </span>
-
-    <span>
-      VIENTO POLAR
-    </span>
-
-    <span>
-      JET SEGÚN FAMILIA
-    </span>
+    <span>SMBH CANÓNICO</span>
+    <span>DISCO HIPERLUMINOSO</span>
+    <span>CORONA</span>
+    <span>VIENTO POLAR</span>
+    <span>JET BIPOLAR</span>
   </div>
-
-  @if (renderUnavailable()) {
-    <div class="quasar-nucleus-render__fallback">
-      WebGL no está disponible en este entorno.
-    </div>
-  }
 </div>

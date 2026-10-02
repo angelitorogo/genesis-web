@@ -11,6 +11,7 @@ import {
 
 import {
   EXTREME_TYPE_CATALOGUE,
+  ExtremeType,
 } from '../../../domain/galactic-object/extreme-object-type';
 
 import {
@@ -34,6 +35,13 @@ import {
 } from './neutron-star-laboratory-render';
 
 import { BlackHoleLaboratoryRender } from './black-hole-laboratory-render';
+import { XrayBinaryLaboratoryRender } from './xray-binary-laboratory-render';
+import {
+  XRAY_BINARY_LABORATORY_TYPES,
+  xrayBinaryLaboratoryModel,
+  xrayBinaryLaboratorySamples,
+  type XrayBinaryLaboratoryKind,
+} from './xray-binary-laboratory-render-model';
 import {
   BLACK_HOLE_LABORATORY_TYPES,
   blackHoleLaboratoryModel,
@@ -46,6 +54,7 @@ import {
   neutronStarLaboratoryModel,
   neutronStarLaboratorySamples,
   type NeutronStarLaboratoryKind,
+  type NeutronStarLaboratoryRenderModel,
 } from './neutron-star-laboratory-render-model';
 
 import {
@@ -95,6 +104,7 @@ type LaboratoryView =
     QuiescentNucleusRender,
     NeutronStarLaboratoryRender,
     BlackHoleLaboratoryRender,
+    XrayBinaryLaboratoryRender,
     GalacticObjectProceduralRender,
     CompactObjectScientificRender,
     RouterLink,
@@ -158,6 +168,490 @@ export class GalacticObjectLaboratoryPage {
     return neutronStarLaboratoryModel(type, 0).label;
   }
 
+  /**
+   * 28.2F extreme discovery progression — neutron-star A-H preview.
+   * This selector is laboratory-only and does not alter persisted discoveries.
+   */
+  readonly extremeNeutronStarDetectedVisual =
+    compactObjectScientificVisual(
+      'NEUTRON_STAR',
+    );
+
+  readonly extremeNeutronStarSamples =
+    neutronStarLaboratorySamples(
+      ExtremeType.NEUTRON_STAR,
+    );
+
+  readonly selectedExtremeNeutronStarSampleIndex =
+    signal(0);
+
+  readonly extremeNeutronStarDiscoveredModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.NEUTRON_STAR,
+            this.selectedExtremeNeutronStarSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeNeutronStarCataloguedModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.NEUTRON_STAR,
+            this.selectedExtremeNeutronStarSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeNeutronStarConfirmedModel =
+    computed(
+      () =>
+        neutronStarLaboratoryModel(
+          ExtremeType.NEUTRON_STAR,
+          this.selectedExtremeNeutronStarSampleIndex(),
+        ),
+    );
+
+  selectExtremeNeutronStarSample(
+    sampleIndex:
+      number,
+  ): void {
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex < 0 ||
+      sampleIndex >=
+        this.extremeNeutronStarSamples.length
+    ) {
+      throw new RangeError(
+        `Unsupported extreme neutron-star sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this.selectedExtremeNeutronStarSampleIndex.set(
+      sampleIndex,
+    );
+  }
+
+  readonly extremePulsarDetectedVisual =
+    compactObjectScientificVisual(
+      'PULSAR',
+    );
+
+  readonly extremePulsarSamples =
+    neutronStarLaboratorySamples(
+      ExtremeType.PULSAR,
+    );
+
+  readonly selectedExtremePulsarSampleIndex =
+    signal(0);
+
+  readonly extremePulsarDiscoveredModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.PULSAR,
+            this.selectedExtremePulsarSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremePulsarCataloguedModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.PULSAR,
+            this.selectedExtremePulsarSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremePulsarConfirmedModel =
+    computed(
+      () =>
+        neutronStarLaboratoryModel(
+          ExtremeType.PULSAR,
+          this.selectedExtremePulsarSampleIndex(),
+        ),
+    );
+
+  selectExtremePulsarSample(
+    sampleIndex:
+      number,
+  ): void {
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex < 0 ||
+      sampleIndex >=
+        this.extremePulsarSamples.length
+    ) {
+      throw new RangeError(
+        `Unsupported extreme pulsar sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this.selectedExtremePulsarSampleIndex.set(
+      sampleIndex,
+    );
+  }
+
+
+  readonly extremeMillisecondPulsarDetectedVisual =
+    compactObjectScientificVisual(
+      'MILLISECOND_PULSAR',
+    );
+
+  readonly extremeMillisecondPulsarSamples =
+    neutronStarLaboratorySamples(
+      ExtremeType.MILLISECOND_PULSAR,
+    );
+
+  readonly selectedExtremeMillisecondPulsarSampleIndex =
+    signal(0);
+
+  readonly extremeMillisecondPulsarDiscoveredModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.MILLISECOND_PULSAR,
+            this.selectedExtremeMillisecondPulsarSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeMillisecondPulsarCataloguedModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.MILLISECOND_PULSAR,
+            this.selectedExtremeMillisecondPulsarSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeMillisecondPulsarConfirmedModel =
+    computed(
+      () =>
+        neutronStarLaboratoryModel(
+          ExtremeType.MILLISECOND_PULSAR,
+          this.selectedExtremeMillisecondPulsarSampleIndex(),
+        ),
+    );
+
+  selectExtremeMillisecondPulsarSample(
+    sampleIndex:
+      number,
+  ): void {
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex < 0 ||
+      sampleIndex >=
+        this.extremeMillisecondPulsarSamples.length
+    ) {
+      throw new RangeError(
+        `Unsupported extreme millisecond-pulsar sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this.selectedExtremeMillisecondPulsarSampleIndex.set(
+      sampleIndex,
+    );
+  }
+
+
+  readonly extremeMagnetarDetectedVisual =
+    compactObjectScientificVisual(
+      'MAGNETAR',
+    );
+
+  readonly extremeMagnetarSamples =
+    neutronStarLaboratorySamples(
+      ExtremeType.MAGNETAR,
+    );
+
+  readonly selectedExtremeMagnetarSampleIndex =
+    signal(0);
+
+  readonly extremeMagnetarDiscoveredModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.MAGNETAR,
+            this.selectedExtremeMagnetarSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeMagnetarCataloguedModel =
+    computed(
+      () =>
+        neutronStarProgressionModel(
+          neutronStarLaboratoryModel(
+            ExtremeType.MAGNETAR,
+            this.selectedExtremeMagnetarSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeMagnetarConfirmedModel =
+    computed(
+      () =>
+        neutronStarLaboratoryModel(
+          ExtremeType.MAGNETAR,
+          this.selectedExtremeMagnetarSampleIndex(),
+        ),
+    );
+
+  selectExtremeMagnetarSample(
+    sampleIndex:
+      number,
+  ): void {
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex < 0 ||
+      sampleIndex >=
+        this.extremeMagnetarSamples.length
+    ) {
+      throw new RangeError(
+        `Unsupported extreme magnetar sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this.selectedExtremeMagnetarSampleIndex.set(
+      sampleIndex,
+    );
+  }
+
+  readonly extremeStellarBlackHoleDetectedVisual =
+    compactObjectScientificVisual(
+      'BLACK_HOLE',
+    );
+
+  readonly extremeStellarBlackHoleSamples =
+    blackHoleLaboratorySamples(
+      ExtremeType.STELLAR_MASS_BLACK_HOLE,
+    );
+
+  readonly selectedExtremeStellarBlackHoleSampleIndex =
+    signal(0);
+
+  readonly extremeStellarBlackHoleDiscoveredModel =
+    computed(
+      () =>
+        blackHoleProgressionModel(
+          blackHoleLaboratoryModel(
+            ExtremeType.STELLAR_MASS_BLACK_HOLE,
+            this.selectedExtremeStellarBlackHoleSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeStellarBlackHoleCataloguedModel =
+    computed(
+      () =>
+        blackHoleProgressionModel(
+          blackHoleLaboratoryModel(
+            ExtremeType.STELLAR_MASS_BLACK_HOLE,
+            this.selectedExtremeStellarBlackHoleSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeStellarBlackHoleConfirmedModel =
+    computed(
+      () =>
+        blackHoleLaboratoryModel(
+          ExtremeType.STELLAR_MASS_BLACK_HOLE,
+          this.selectedExtremeStellarBlackHoleSampleIndex(),
+        ),
+    );
+
+  selectExtremeStellarBlackHoleSample(
+    sampleIndex:
+      number,
+  ): void {
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex < 0 ||
+      sampleIndex >=
+        this.extremeStellarBlackHoleSamples.length
+    ) {
+      throw new RangeError(
+        `Unsupported extreme stellar-mass black-hole sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this.selectedExtremeStellarBlackHoleSampleIndex.set(
+      sampleIndex,
+    );
+  }
+
+
+  readonly extremeIntermediateBlackHoleDetectedVisual =
+    compactObjectScientificVisual(
+      'BLACK_HOLE',
+    );
+
+  readonly extremeIntermediateBlackHoleSamples =
+    blackHoleLaboratorySamples(
+      ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
+    );
+
+  readonly selectedExtremeIntermediateBlackHoleSampleIndex =
+    signal(0);
+
+  readonly extremeIntermediateBlackHoleDiscoveredModel =
+    computed(
+      () =>
+        blackHoleProgressionModel(
+          blackHoleLaboratoryModel(
+            ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
+            this.selectedExtremeIntermediateBlackHoleSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeIntermediateBlackHoleCataloguedModel =
+    computed(
+      () =>
+        blackHoleProgressionModel(
+          blackHoleLaboratoryModel(
+            ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
+            this.selectedExtremeIntermediateBlackHoleSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeIntermediateBlackHoleConfirmedModel =
+    computed(
+      () =>
+        blackHoleLaboratoryModel(
+          ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
+          this.selectedExtremeIntermediateBlackHoleSampleIndex(),
+        ),
+    );
+
+  selectExtremeIntermediateBlackHoleSample(
+    sampleIndex:
+      number,
+  ): void {
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex < 0 ||
+      sampleIndex >=
+        this.extremeIntermediateBlackHoleSamples.length
+    ) {
+      throw new RangeError(
+        `Unsupported extreme intermediate-mass black-hole sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this.selectedExtremeIntermediateBlackHoleSampleIndex.set(
+      sampleIndex,
+    );
+  }
+
+
+  readonly extremeSupermassiveBlackHoleDetectedVisual =
+    compactObjectScientificVisual(
+      'BLACK_HOLE',
+    );
+
+  readonly extremeSupermassiveBlackHoleSamples =
+    blackHoleLaboratorySamples(
+      ExtremeType.SMBH,
+    );
+
+  readonly selectedExtremeSupermassiveBlackHoleSampleIndex =
+    signal(0);
+
+  readonly extremeSupermassiveBlackHoleDiscoveredModel =
+    computed(
+      () =>
+        blackHoleProgressionModel(
+          blackHoleLaboratoryModel(
+            ExtremeType.SMBH,
+            this.selectedExtremeSupermassiveBlackHoleSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeSupermassiveBlackHoleCataloguedModel =
+    computed(
+      () =>
+        blackHoleProgressionModel(
+          blackHoleLaboratoryModel(
+            ExtremeType.SMBH,
+            this.selectedExtremeSupermassiveBlackHoleSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeSupermassiveBlackHoleConfirmedModel =
+    computed(
+      () =>
+        blackHoleLaboratoryModel(
+          ExtremeType.SMBH,
+          this.selectedExtremeSupermassiveBlackHoleSampleIndex(),
+        ),
+    );
+
+  selectExtremeSupermassiveBlackHoleSample(
+    sampleIndex:
+      number,
+  ): void {
+    if (
+      !Number.isInteger(
+        sampleIndex,
+      ) ||
+      sampleIndex < 0 ||
+      sampleIndex >=
+        this.extremeSupermassiveBlackHoleSamples.length
+    ) {
+      throw new RangeError(
+        `Unsupported extreme supermassive black-hole sample index: ${sampleIndex}.`,
+      );
+    }
+
+    this.selectedExtremeSupermassiveBlackHoleSampleIndex.set(
+      sampleIndex,
+    );
+  }
+
   /** 28.2F.3 read-only black-hole laboratory classes. */
   readonly blackHoleLaboratoryTypes = BLACK_HOLE_LABORATORY_TYPES;
   readonly selectedBlackHoleType = signal<BlackHoleLaboratoryKind>('STELLAR_MASS_BLACK_HOLE');
@@ -175,6 +669,30 @@ export class GalacticObjectLaboratoryPage {
   }
   blackHoleTypeLabel(type: BlackHoleLaboratoryKind): string { return blackHoleLaboratoryModel(type, 0).label; }
 
+
+  /** 28.2F.5 read-only X-ray compact binary classes. */
+  readonly xrayBinaryLaboratoryTypes = XRAY_BINARY_LABORATORY_TYPES;
+  readonly selectedXrayBinaryType = signal<XrayBinaryLaboratoryKind>('X_RAY_BINARY_NS');
+  readonly selectedXrayBinarySampleIndex = signal(0);
+  readonly xrayBinaryLaboratorySamples = computed(() => xrayBinaryLaboratorySamples(this.selectedXrayBinaryType()));
+  readonly selectedXrayBinaryLaboratoryModel = computed(() => xrayBinaryLaboratoryModel(this.selectedXrayBinaryType(), this.selectedXrayBinarySampleIndex()));
+
+  selectXrayBinaryLaboratoryType(type: XrayBinaryLaboratoryKind): void {
+    if (!XRAY_BINARY_LABORATORY_TYPES.includes(type)) throw new RangeError(`Unsupported X-ray binary laboratory type: ${type}.`);
+    this.selectedXrayBinaryType.set(type);
+    this.selectedXrayBinarySampleIndex.set(0);
+  }
+
+  selectXrayBinaryLaboratorySample(sampleIndex: number): void {
+    if (!Number.isInteger(sampleIndex) || sampleIndex < 0 || sampleIndex >= 8) {
+      throw new RangeError(`Unsupported X-ray binary laboratory sample index: ${sampleIndex}.`);
+    }
+    this.selectedXrayBinarySampleIndex.set(sampleIndex);
+  }
+
+  xrayBinaryTypeLabel(type: XrayBinaryLaboratoryKind): string {
+    return xrayBinaryLaboratoryModel(type, 0).label;
+  }
 
   readonly objectGroups =
     Object.freeze([
@@ -216,7 +734,7 @@ export class GalacticObjectLaboratoryPage {
       }),
       Object.freeze({
         title:
-          'Extremos sin especializar',
+          'Extremos',
         cases:
           casesFor(
             GalacticObjectLaboratoryGroup
@@ -687,6 +1205,80 @@ export class GalacticObjectLaboratoryPage {
           .selectedObjectCaseId() ===
           GalacticObjectLaboratoryCaseId
             .SNR_COMPOSITE,
+    );
+
+  readonly isExtremeNeutronStarSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .EXTREME_NEUTRON_STAR,
+    );
+
+  readonly isExtremePulsarSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .EXTREME_PULSAR,
+    );
+
+
+  readonly isExtremeMillisecondPulsarSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .EXTREME_MILLISECOND_PULSAR,
+    );
+
+
+  readonly isExtremeMagnetarSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .EXTREME_MAGNETAR,
+    );
+
+  readonly isExtremeStellarBlackHoleSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .EXTREME_STELLAR_MASS_BLACK_HOLE,
+    );
+
+
+  readonly isExtremeIntermediateBlackHoleSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .EXTREME_INTERMEDIATE_MASS_BLACK_HOLE,
+    );
+
+
+  readonly isExtremeSupermassiveBlackHoleSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          GalacticObjectLaboratoryCaseId
+            .EXTREME_SUPERMASSIVE_BLACK_HOLE,
     );
 
   readonly selectedObjectCase =
@@ -1527,6 +2119,100 @@ export class GalacticObjectLaboratoryPage {
           .NUCLEUS,
       );
   }
+}
+
+type BlackHoleDiscoveryProgressionStage =
+  'DISCOVERED' |
+  'CATALOGUED';
+
+function blackHoleProgressionModel(
+  base:
+    ReturnType<typeof blackHoleLaboratoryModel>,
+
+  stage:
+    BlackHoleDiscoveryProgressionStage,
+): ReturnType<typeof blackHoleLaboratoryModel> {
+  if (
+    stage ===
+      'CATALOGUED'
+  ) {
+    return Object.freeze({
+      ...base,
+      caveat:
+        'Vista CATALOGUED: geometría relativista completa del laboratorio, detenida para inspección científica estática.',
+    });
+  }
+
+  return Object.freeze({
+    ...base,
+    diskBrightness:
+      base.diskBrightness *
+      0.76,
+    lensingStrength:
+      base.lensingStrength *
+      0.74,
+    turbulenceScale:
+      base.turbulenceScale *
+      0.72,
+    turbulenceStrength:
+      base.turbulenceStrength *
+      0.42,
+    diskThickness:
+      base.diskThickness *
+      0.90,
+    caveat:
+      'Vista DISCOVERED: firma de agujero negro ya reconocible, pero con acreción, turbulencia y lente deliberadamente simplificadas.',
+  });
+}
+
+type NeutronStarDiscoveryProgressionStage =
+  'DISCOVERED' |
+  'CATALOGUED';
+
+function neutronStarProgressionModel(
+  base:
+    NeutronStarLaboratoryRenderModel,
+
+  stage:
+    NeutronStarDiscoveryProgressionStage,
+): NeutronStarLaboratoryRenderModel {
+  const isDiscovered =
+    stage ===
+      'DISCOVERED';
+
+  if (!isDiscovered) {
+    return Object.freeze({
+      ...base,
+      caveat:
+        'Vista CATALOGUED: morfología compacta completamente caracterizada y estática; la animación final se reserva para CONFIRMED.',
+    });
+  }
+
+  return Object.freeze({
+    ...base,
+    surfaceDetailScale:
+      base.surfaceDetailScale * 0.58,
+    surfaceFineScale:
+      base.surfaceFineScale * 0.42,
+    surfaceHotIntensity:
+      base.surfaceHotIntensity * 0.62,
+    surfaceContrast:
+      base.surfaceContrast * 0.84,
+    surfaceBrightness:
+      base.surfaceBrightness * 0.86,
+    surfaceFresnelStrength:
+      base.surfaceFresnelStrength * 0.68,
+    coronaOpacity:
+      base.coronaOpacity * 0.38,
+    wispCount:
+      Math.min(base.wispCount, 2),
+    wispOpacity:
+      base.wispOpacity * 0.28,
+    activityRate:
+      base.activityRate * 0.58,
+    caveat:
+      'Vista DISCOVERED: representación estática con superficie compacta, corona y actividad deliberadamente simplificadas.',
+  });
 }
 
 function casesFor(

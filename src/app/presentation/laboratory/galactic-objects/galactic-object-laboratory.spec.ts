@@ -55,14 +55,14 @@ describe(
         expect(
           element.textContent,
         ).toContain(
-          '17 CASOS',
+          '24 CASOS',
         );
       },
       30_000,
     );
 
     it(
-      'should expose fourteen persistent-object selectors and three nucleus selectors',
+      'should expose twenty-one persistent-object selectors and three nucleus selectors',
       () => {
         const fixture =
           TestBed
@@ -81,7 +81,7 @@ describe(
             '[data-testid="galactic-object-laboratory-case-button"]',
           ),
         ).toHaveLength(
-          14,
+          21,
         );
 
         expect(
@@ -97,7 +97,7 @@ describe(
 
 
     it(
-      'should expose the complete 28.2F.1 taxonomy without turning entries into generated laboratory cases',
+      'should expose the complete 28.2F.1 taxonomy alongside the implemented extreme-object progression cases',
       () => {
         const fixture =
           TestBed
@@ -148,7 +148,7 @@ describe(
             '[data-testid="galactic-object-laboratory-case-button"]',
           ),
         ).toHaveLength(
-          14,
+          21,
         );
 
         expect(
@@ -157,6 +157,223 @@ describe(
           ),
         ).toHaveLength(
           3,
+        );
+      },
+      30_000,
+    );
+
+    it(
+      'should expose the seven implemented compact extreme specializations in the top GALACTIC OBJECT grid',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const expectedCases = [
+          'EXTREME_NEUTRON_STAR',
+          'EXTREME_PULSAR',
+          'EXTREME_MILLISECOND_PULSAR',
+          'EXTREME_MAGNETAR',
+          'EXTREME_STELLAR_MASS_BLACK_HOLE',
+          'EXTREME_INTERMEDIATE_MASS_BLACK_HOLE',
+          'EXTREME_SUPERMASSIVE_BLACK_HOLE',
+        ] as const;
+
+        for (
+          const caseId
+          of expectedCases
+        ) {
+          expect(
+            element.querySelector(
+              `[data-testid=\"galactic-object-laboratory-case-button\"][data-case=\"${caseId}\"]`,
+            ),
+          ).toBeTruthy();
+        }
+
+        const pulsarButton =
+          element.querySelector(
+            '[data-case=\"EXTREME_PULSAR\"]',
+          ) as HTMLButtonElement | null;
+
+        pulsarButton?.click();
+        fixture.detectChanges();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid=\"galactic-object-laboratory-state\"]',
+          ),
+        ).toHaveLength(
+          4,
+        );
+
+        const titles =
+          Array.from(
+            element.querySelectorAll(
+              '[data-testid=\"galactic-object-laboratory-card-title\"]',
+            ),
+          ).map(
+            node =>
+              node.textContent?.trim(),
+          );
+
+        expect(
+          titles,
+        ).toEqual([
+          'Fuente extrema sin clasificar',
+          'Objeto compacto',
+          'Púlsar',
+          'Púlsar',
+        ]);
+      },
+      30_000,
+    );
+
+    it(
+      'should keep DISCOVERED and CATALOGUED static while CONFIRMED uses the full animated A-H neutron-star renderer',
+      () => {
+        const fixture =
+          TestBed
+            .createComponent(
+              GalacticObjectLaboratoryPage,
+            );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as
+            HTMLElement;
+
+        const neutronStarButton =
+          element.querySelector(
+            '[data-testid="galactic-object-laboratory-case-button"][data-case="EXTREME_NEUTRON_STAR"]',
+          ) as HTMLButtonElement | null;
+
+        expect(
+          neutronStarButton,
+        ).toBeTruthy();
+
+        neutronStarButton?.click();
+        fixture.detectChanges();
+
+        expect(
+          element.querySelectorAll(
+            '[data-testid="extreme-neutron-star-diversity-button"]',
+          ),
+        ).toHaveLength(
+          8,
+        );
+
+        const stages =
+          Array.from(
+            element.querySelectorAll(
+              '[data-testid="extreme-neutron-star-progression-render"]',
+            ),
+          ).map(
+            node =>
+              node.getAttribute(
+                'data-detail-stage',
+              ),
+          );
+
+        expect(
+          stages,
+        ).toEqual([
+          'DISCOVERED',
+          'CATALOGUED',
+          'CONFIRMED',
+        ]);
+
+        const progression =
+          element.querySelector(
+            '[data-testid="galactic-object-laboratory-progression"]',
+          );
+
+        expect(
+          progression,
+        ).toBeTruthy();
+
+        expect(
+          progression?.querySelectorAll(
+            '[data-testid="neutron-star-laboratory-render"]',
+          ),
+        ).toHaveLength(
+          3,
+        );
+
+        const discoveredRender =
+          element.querySelector(
+            '[data-detail-stage="DISCOVERED"] [data-testid="neutron-star-laboratory-render"]',
+          );
+        const cataloguedRender =
+          element.querySelector(
+            '[data-detail-stage="CATALOGUED"] [data-testid="neutron-star-laboratory-render"]',
+          );
+        const confirmedRender =
+          element.querySelector(
+            '[data-detail-stage="CONFIRMED"] [data-testid="neutron-star-laboratory-render"]',
+          );
+
+        expect(
+          discoveredRender?.getAttribute(
+            'data-animation-state',
+          ),
+        ).toBe(
+          'STATIC',
+        );
+
+        expect(
+          cataloguedRender?.getAttribute(
+            'data-animation-state',
+          ),
+        ).toBe(
+          'STATIC',
+        );
+
+        expect(
+          confirmedRender?.getAttribute(
+            'data-animation-state',
+          ),
+        ).toBe(
+          'ANIMATED',
+        );
+
+        const detectedState =
+          element.querySelector(
+            '[data-testid="galactic-object-laboratory-state"][data-state="DETECTED"]',
+          );
+
+        expect(
+          detectedState?.querySelector(
+            '[data-testid="neutron-star-laboratory-render"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          detectedState?.querySelector(
+            '[data-testid="compact-object-scientific-render"]',
+          ),
+        ).toBeTruthy();
+
+        const hButton =
+          element.querySelector(
+            '[data-testid="extreme-neutron-star-diversity-button"][data-sample="H"]',
+          ) as HTMLButtonElement | null;
+
+        hButton?.click();
+        fixture.detectChanges();
+
+        expect(
+          element.textContent,
+        ).toContain(
+          'muestra H',
         );
       },
       30_000,
@@ -2130,8 +2347,27 @@ describe(
         fixture.detectChanges();
         expect(element.querySelector('[data-testid="black-hole-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('SMBH');
         expect(element.textContent).toContain('LENTE GRAVITATORIA APROXIMADA');
-        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(14);
+        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(21);
         expect(element.querySelectorAll('[data-testid="galactic-nucleus-laboratory-case-button"]')).toHaveLength(3);
+      },
+      30_000,
+    );
+
+    it(
+      'should expose the first 28.2F.5 compact-system laboratory section for neutron-star X-ray binaries',
+      () => {
+        const fixture = TestBed.createComponent(GalacticObjectLaboratoryPage);
+        fixture.detectChanges();
+        const element = fixture.nativeElement as HTMLElement;
+        expect(element.querySelectorAll('[data-testid="xray-binary-laboratory-type-button"]')).toHaveLength(1);
+        expect(element.querySelectorAll('[data-testid="xray-binary-laboratory-sample-button"]')).toHaveLength(8);
+        expect(element.querySelector('[data-testid="xray-binary-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('X_RAY_BINARY_NS');
+        expect(element.textContent).toContain('Binarias X: acreción, transferencia de masa y emisión en rayos X');
+        expect(element.textContent).toContain('disco de acreción muy caliente');
+        expect(element.textContent).toContain('Luminosidad X ilustrativa');
+        (element.querySelector('[data-sample="H"][data-testid="xray-binary-laboratory-sample-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="xray-binary-laboratory-render"]')?.getAttribute('data-sample')).toBe('H');
       },
       30_000,
     );
@@ -2157,7 +2393,7 @@ describe(
         expect(element.querySelector('[data-testid="neutron-star-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('MAGNETAR');
         expect(element.textContent).toContain('CAMPO DIPOLAR ESQUEMÁTICO');
 
-        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(14);
+        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(21);
         expect(element.querySelectorAll('[data-testid="galactic-nucleus-laboratory-case-button"]')).toHaveLength(3);
       },
       30_000,

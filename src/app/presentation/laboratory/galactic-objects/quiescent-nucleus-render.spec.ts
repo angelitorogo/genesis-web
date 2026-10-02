@@ -7,12 +7,30 @@ import {
 } from '@angular/core/testing';
 
 import {
+  By,
+} from '@angular/platform-browser';
+
+import {
+  ExtremeType,
+} from '../../../domain/galactic-object/extreme-object-type';
+
+import {
   QuiescentNucleusVisualFamily,
   type QuiescentNucleusRenderModel,
 } from './quiescent-nucleus-render-model';
 
 import {
+  blackHoleLaboratoryModel,
+} from './black-hole-laboratory-render-model';
+
+import {
+  BlackHoleLaboratoryRender,
+} from './black-hole-laboratory-render';
+
+import {
   QuiescentNucleusRender,
+  quiescentNucleusAnimationTime,
+  quiescentNucleusVisibleMotionPhase,
 } from './quiescent-nucleus-render';
 
 const MODEL:
@@ -129,6 +147,96 @@ describe(
         ).toContain(
           'SIN JETS',
         );
+      },
+    );
+
+
+    it(
+      'should derive deterministic elapsed animation time in seconds',
+      () => {
+        expect(
+          quiescentNucleusAnimationTime(
+            1_000,
+            3_500,
+          ),
+        ).toBeCloseTo(
+          2.5,
+        );
+
+        expect(
+          quiescentNucleusAnimationTime(
+            3_500,
+            1_000,
+          ),
+        ).toBe(
+          0,
+        );
+      },
+    );
+
+    it(
+      'should keep the quiescent gas-ring and dust animation visibly time-driven',
+      () => {
+        const phase =
+          quiescentNucleusVisibleMotionPhase(
+            10,
+          );
+
+        expect(
+          phase.dustRadians,
+        ).toBeCloseTo(
+          1.45,
+        );
+
+        expect(
+          phase.orbitalRadians,
+        ).toBeCloseTo(
+          9.20,
+        );
+      },
+    );
+
+    it(
+      'should drive the embedded canonical SMBH core in quiescent mode rather than as an active accretion scene',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            QuiescentNucleusRender,
+          );
+
+        fixture.componentRef.setInput(
+          'model',
+          MODEL,
+        );
+        fixture.componentRef.setInput(
+          'blackHoleCoreModel',
+          blackHoleLaboratoryModel(
+            ExtremeType.SMBH,
+            0,
+          ),
+        );
+
+        fixture.detectChanges();
+
+        const embeddedCore =
+          fixture.debugElement.query(
+            By.directive(
+              BlackHoleLaboratoryRender,
+            ),
+          )?.componentInstance as
+            BlackHoleLaboratoryRender | undefined;
+
+        expect(
+          embeddedCore,
+        ).toBeTruthy();
+
+        expect(
+          embeddedCore?.embedded,
+        ).toBeTrue();
+
+        expect(
+          embeddedCore?.quiescentMode,
+        ).toBeTrue();
       },
     );
   },

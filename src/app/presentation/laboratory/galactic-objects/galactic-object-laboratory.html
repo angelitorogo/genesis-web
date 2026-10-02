@@ -20,14 +20,14 @@
       </h1>
 
       <p>
-        El laboratorio expone toda la variedad física y visual existente: 14 variantes
-        persistentes con progresión de conocimiento, 3 estados de núcleo galáctico y
-        4 clases compactas de estrellas de neutrones de 28.2F.2. No persiste nada ni altera la partida.
+        El laboratorio expone toda la variedad física y visual existente: 21 variantes
+        persistentes con progresión de conocimiento, incluidos 7 extremos compactos ya
+        especializados, además de 3 estados de núcleo galáctico. No persiste nada ni altera la partida.
       </p>
     </div>
 
     <span class="object-lab__badge">
-      17 CASOS PERSISTENTES · 4 COMPACTOS LAB · READ ONLY
+      24 CASOS · 21 OBJETOS PERSISTENTES · 3 NÚCLEOS · READ ONLY
     </span>
   </header>
 
@@ -672,6 +672,250 @@
               </div>
             </div>
           }
+          @if (isExtremeNeutronStarSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-neutron-star-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 estrellas de neutrones A-H</strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras A-H de estrella de neutrones"
+              >
+                @for (
+                  sample of extremeNeutronStarSamples;
+                  track sample.sampleLabel;
+                  let index = $index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="extreme-neutron-star-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar estrella de neutrones ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeNeutronStarSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeNeutronStarSampleIndex() === index"
+                    (click)="selectExtremeNeutronStarSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (isExtremePulsarSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-pulsar-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 púlsares A-H</strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras A-H de púlsar"
+              >
+                @for (
+                  sample of extremePulsarSamples;
+                  track sample.sampleLabel;
+                  let index = $index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="extreme-pulsar-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar púlsar ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremePulsarSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremePulsarSampleIndex() === index"
+                    (click)="selectExtremePulsarSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isExtremeMillisecondPulsarSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-millisecond-pulsar-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 púlsares de milisegundos A-H</strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras A-H de púlsar de milisegundos"
+              >
+                @for (
+                  sample of extremeMillisecondPulsarSamples;
+                  track sample.sampleLabel;
+                  let index = $index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="extreme-millisecond-pulsar-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar púlsar de milisegundos ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeMillisecondPulsarSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeMillisecondPulsarSampleIndex() === index"
+                    (click)="selectExtremeMillisecondPulsarSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isExtremeMagnetarSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-magnetar-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 magnetares A-H</strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras A-H de magnetar"
+              >
+                @for (
+                  sample of extremeMagnetarSamples;
+                  track sample.sampleLabel;
+                  let index = $index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="extreme-magnetar-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar magnetar ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeMagnetarSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeMagnetarSampleIndex() === index"
+                    (click)="selectExtremeMagnetarSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          @if (isExtremeStellarBlackHoleSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-stellar-black-hole-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 agujeros negros de masa estelar A-H</strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras A-H de agujero negro de masa estelar"
+              >
+                @for (
+                  sample of extremeStellarBlackHoleSamples;
+                  track sample.sampleLabel;
+                  let index = $index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="extreme-stellar-black-hole-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar agujero negro de masa estelar ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeStellarBlackHoleSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeStellarBlackHoleSampleIndex() === index"
+                    (click)="selectExtremeStellarBlackHoleSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isExtremeIntermediateBlackHoleSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-intermediate-black-hole-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 agujeros negros de masa intermedia A-H</strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras A-H de agujero negro de masa intermedia"
+              >
+                @for (
+                  sample of extremeIntermediateBlackHoleSamples;
+                  track sample.sampleLabel;
+                  let index = $index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="extreme-intermediate-black-hole-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar agujero negro de masa intermedia ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeIntermediateBlackHoleSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeIntermediateBlackHoleSampleIndex() === index"
+                    (click)="selectExtremeIntermediateBlackHoleSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isExtremeSupermassiveBlackHoleSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-supermassive-black-hole-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 agujeros negros supermasivos A-H</strong>
+              </div>
+
+              <div
+                class="object-lab__buttons object-lab__diversity-buttons"
+                aria-label="Muestras A-H de agujero negro supermasivo"
+              >
+                @for (
+                  sample of extremeSupermassiveBlackHoleSamples;
+                  track sample.sampleLabel;
+                  let index = $index
+                ) {
+                  <button
+                    type="button"
+                    data-testid="extreme-supermassive-black-hole-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar agujero negro supermasivo ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeSupermassiveBlackHoleSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeSupermassiveBlackHoleSampleIndex() === index"
+                    (click)="selectExtremeSupermassiveBlackHoleSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+
 
         </div>
       </section>
@@ -707,9 +951,368 @@
             </code>
           </header>
 
-          <app-galactic-object-procedural-render
-            [descriptor]="frame.card.render"
-          ></app-galactic-object-procedural-render>
+          @if (
+            isExtremeNeutronStarSelected() &&
+            frame.state.shortLabel === 'DETECTED'
+          ) {
+            <app-compact-object-scientific-render
+              [visual]="extremeNeutronStarDetectedVisual"
+            />
+          } @else if (
+            isExtremeNeutronStarSelected() &&
+            frame.state.shortLabel === 'DISCOVERED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-neutron-star-progression-render"
+              data-detail-stage="DISCOVERED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeNeutronStarDiscoveredModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeNeutronStarSelected() &&
+            frame.state.shortLabel === 'CATALOGUED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-neutron-star-progression-render"
+              data-detail-stage="CATALOGUED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeNeutronStarCataloguedModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeNeutronStarSelected() &&
+            frame.state.shortLabel === 'CONFIRMED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-neutron-star-progression-render"
+              data-detail-stage="CONFIRMED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeNeutronStarConfirmedModel()"
+                [embedded]="true"
+              />
+            </div>
+          } @else if (
+            isExtremePulsarSelected() &&
+            frame.state.shortLabel === 'DETECTED'
+          ) {
+            <app-compact-object-scientific-render
+              [visual]="extremePulsarDetectedVisual"
+            />
+          } @else if (
+            isExtremePulsarSelected() &&
+            frame.state.shortLabel === 'DISCOVERED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-pulsar-progression-render"
+              data-detail-stage="DISCOVERED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremePulsarDiscoveredModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremePulsarSelected() &&
+            frame.state.shortLabel === 'CATALOGUED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-pulsar-progression-render"
+              data-detail-stage="CATALOGUED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremePulsarCataloguedModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremePulsarSelected() &&
+            frame.state.shortLabel === 'CONFIRMED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-pulsar-progression-render"
+              data-detail-stage="CONFIRMED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremePulsarConfirmedModel()"
+                [embedded]="true"
+              />
+            </div>
+          } @else if (
+            isExtremeMillisecondPulsarSelected() &&
+            frame.state.shortLabel === 'DETECTED'
+          ) {
+            <app-compact-object-scientific-render
+              [visual]="extremeMillisecondPulsarDetectedVisual"
+            />
+          } @else if (
+            isExtremeMillisecondPulsarSelected() &&
+            frame.state.shortLabel === 'DISCOVERED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-millisecond-pulsar-progression-render"
+              data-detail-stage="DISCOVERED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeMillisecondPulsarDiscoveredModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeMillisecondPulsarSelected() &&
+            frame.state.shortLabel === 'CATALOGUED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-millisecond-pulsar-progression-render"
+              data-detail-stage="CATALOGUED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeMillisecondPulsarCataloguedModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeMillisecondPulsarSelected() &&
+            frame.state.shortLabel === 'CONFIRMED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-millisecond-pulsar-progression-render"
+              data-detail-stage="CONFIRMED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeMillisecondPulsarConfirmedModel()"
+                [embedded]="true"
+              />
+            </div>
+          } @else if (
+            isExtremeMagnetarSelected() &&
+            frame.state.shortLabel === 'DETECTED'
+          ) {
+            <app-compact-object-scientific-render
+              [visual]="extremeMagnetarDetectedVisual"
+            />
+          } @else if (
+            isExtremeMagnetarSelected() &&
+            frame.state.shortLabel === 'DISCOVERED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-magnetar-progression-render"
+              data-detail-stage="DISCOVERED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeMagnetarDiscoveredModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeMagnetarSelected() &&
+            frame.state.shortLabel === 'CATALOGUED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-magnetar-progression-render"
+              data-detail-stage="CATALOGUED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeMagnetarCataloguedModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeMagnetarSelected() &&
+            frame.state.shortLabel === 'CONFIRMED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-magnetar-progression-render"
+              data-detail-stage="CONFIRMED"
+            >
+              <app-neutron-star-laboratory-render
+                [model]="extremeMagnetarConfirmedModel()"
+                [embedded]="true"
+              />
+            </div>
+          } @else if (
+            isExtremeStellarBlackHoleSelected() &&
+            frame.state.shortLabel === 'DETECTED'
+          ) {
+            <app-compact-object-scientific-render
+              [visual]="extremeStellarBlackHoleDetectedVisual"
+            />
+          } @else if (
+            isExtremeStellarBlackHoleSelected() &&
+            frame.state.shortLabel === 'DISCOVERED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-stellar-black-hole-progression-render"
+              data-detail-stage="DISCOVERED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeStellarBlackHoleDiscoveredModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeStellarBlackHoleSelected() &&
+            frame.state.shortLabel === 'CATALOGUED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-stellar-black-hole-progression-render"
+              data-detail-stage="CATALOGUED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeStellarBlackHoleCataloguedModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeStellarBlackHoleSelected() &&
+            frame.state.shortLabel === 'CONFIRMED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-stellar-black-hole-progression-render"
+              data-detail-stage="CONFIRMED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeStellarBlackHoleConfirmedModel()"
+                [embedded]="true"
+              />
+            </div>
+          } @else if (
+            isExtremeIntermediateBlackHoleSelected() &&
+            frame.state.shortLabel === 'DETECTED'
+          ) {
+            <app-compact-object-scientific-render
+              [visual]="extremeIntermediateBlackHoleDetectedVisual"
+            />
+          } @else if (
+            isExtremeIntermediateBlackHoleSelected() &&
+            frame.state.shortLabel === 'DISCOVERED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-intermediate-black-hole-progression-render"
+              data-detail-stage="DISCOVERED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeIntermediateBlackHoleDiscoveredModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeIntermediateBlackHoleSelected() &&
+            frame.state.shortLabel === 'CATALOGUED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-intermediate-black-hole-progression-render"
+              data-detail-stage="CATALOGUED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeIntermediateBlackHoleCataloguedModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeIntermediateBlackHoleSelected() &&
+            frame.state.shortLabel === 'CONFIRMED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-intermediate-black-hole-progression-render"
+              data-detail-stage="CONFIRMED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeIntermediateBlackHoleConfirmedModel()"
+                [embedded]="true"
+              />
+            </div>
+          } @else if (
+            isExtremeSupermassiveBlackHoleSelected() &&
+            frame.state.shortLabel === 'DETECTED'
+          ) {
+            <app-compact-object-scientific-render
+              [visual]="extremeSupermassiveBlackHoleDetectedVisual"
+            />
+          } @else if (
+            isExtremeSupermassiveBlackHoleSelected() &&
+            frame.state.shortLabel === 'DISCOVERED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-supermassive-black-hole-progression-render"
+              data-detail-stage="DISCOVERED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeSupermassiveBlackHoleDiscoveredModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeSupermassiveBlackHoleSelected() &&
+            frame.state.shortLabel === 'CATALOGUED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-supermassive-black-hole-progression-render"
+              data-detail-stage="CATALOGUED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeSupermassiveBlackHoleCataloguedModel()"
+                [embedded]="true"
+                [animationEnabled]="false"
+              />
+            </div>
+          } @else if (
+            isExtremeSupermassiveBlackHoleSelected() &&
+            frame.state.shortLabel === 'CONFIRMED'
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-supermassive-black-hole-progression-render"
+              data-detail-stage="CONFIRMED"
+            >
+              <app-black-hole-laboratory-render
+                [model]="extremeSupermassiveBlackHoleConfirmedModel()"
+                [embedded]="true"
+              />
+            </div>
+          } @else {
+            <app-galactic-object-procedural-render
+              [descriptor]="frame.card.render"
+            ></app-galactic-object-procedural-render>
+          }
 
           <div class="object-lab__knowledge">
             <div>
@@ -988,16 +1591,19 @@
           <app-quiescent-nucleus-render
             data-testid="galactic-nucleus-laboratory-quiescent-render"
             [model]="quiescentRenderModel"
+            [blackHoleCoreModel]="frame.blackHoleCoreRenderModel"
           ></app-quiescent-nucleus-render>
         } @else if (frame.agnRenderModel; as agnRenderModel) {
           <app-agn-nucleus-render
             data-testid="galactic-nucleus-laboratory-agn-render"
             [model]="agnRenderModel"
+            [blackHoleCoreModel]="frame.blackHoleCoreRenderModel"
           ></app-agn-nucleus-render>
         } @else if (frame.quasarRenderModel; as quasarRenderModel) {
           <app-quasar-nucleus-render
             data-testid="galactic-nucleus-laboratory-quasar-render"
             [model]="quasarRenderModel"
+            [blackHoleCoreModel]="frame.blackHoleCoreRenderModel"
           ></app-quasar-nucleus-render>
         } @else {
           <app-galactic-map-scene
@@ -1009,19 +1615,17 @@
 
       <aside class="object-lab__note">
         @if (isQuiescentNucleusSelected()) {
-          El núcleo quiescente usa un <strong>renderer nuclear dedicado</strong>:
-          muestra la concentración de población estelar vieja y la absorción
-          tenue por polvo sin fingir disco de acreción, jets ni actividad AGN.
+          El SMBH quiescente reutiliza el <strong>núcleo visual canónico de 28.2F.3</strong>
+          cuando el Ground Truth contiene un agujero negro supermasivo real; la capa
+          nuclear conserva la población estelar y el polvo, con acreción visual mínima y sin jets.
         } @else if (isAgnNucleusSelected()) {
-          El AGN usa un <strong>renderer nuclear dedicado</strong> centrado en el
-          agujero negro supermasivo real del Ground Truth: sombra central, disco
-          de acreción, asimetría relativista y lente gravitatoria aparente sin
-          convertirlo todavía en un episodio QUASAR extremo.
+          El AGN reutiliza el <strong>SMBH canónico de 28.2F.3</strong> como núcleo compacto
+          real del Ground Truth y mantiene encima la capa de actividad nuclear: acreción,
+          corona, asimetría relativista y lente aparente sin convertirlo en un objeto distinto.
         } @else {
-          El QUASAR usa un <strong>renderer nuclear extremo dedicado</strong>:
-          mantiene el SMBH real y añade un disco de acreción hiperluminoso,
-          corona intensa, viento polar y jets relativistas cuando la familia
-          procedural los requiere, sin reutilizar el renderer de galaxia.
+          El QUASAR reutiliza el <strong>SMBH canónico de 28.2F.3</strong> y eleva el régimen
+          de actividad: disco hiperluminoso, corona intensa, viento polar y jets cuando
+          la familia procedural los requiere. Sigue siendo un AGN extremo, no otra «bola».
         }
       </aside>
     }
@@ -1145,6 +1749,80 @@
           </dl>
           <p class="object-lab__black-hole-caveat">{{ blackHole.caveat }}</p>
           <p class="object-lab__black-hole-scale">Escala visual adaptativa: BH estelar, IMBH y SMBH se normalizan para inspección. Sus tamaños aparentes no son comparables entre sí.</p>
+        </aside>
+      </div>
+    }
+  </section>
+
+  <section class="object-lab__xray-binary-lab" data-testid="xray-binary-laboratory" aria-labelledby="xray-binary-laboratory-title">
+    <header>
+      <p class="object-lab__eyebrow">28.2F.5 · SISTEMAS COMPACTOS</p>
+      <h2 id="xray-binary-laboratory-title">Binarias X: acreción, transferencia de masa y emisión en rayos X</h2>
+      <p>
+        Primera familia de 28.2F.5 para ajustar la representación visual antes de subirla al grid superior.
+        Esta sección reutiliza la lógica compacta de la estrella de neutrones y añade una estrella compañera,
+        pérdida de materia por transferencia, un disco de acreción muy caliente y una fuerte emisión en rayos X.
+        Es un banco visual de laboratorio: no crea descubrimientos ni altera semillas.
+      </p>
+    </header>
+
+    <div class="object-lab__xray-binary-type-buttons" aria-label="Clases de binarias X">
+      @for (type of xrayBinaryLaboratoryTypes; track type) {
+        <button
+          type="button"
+          data-testid="xray-binary-laboratory-type-button"
+          [attr.data-extreme-type]="type"
+          [attr.aria-pressed]="selectedXrayBinaryType() === type"
+          [class.object-lab__button--active]="selectedXrayBinaryType() === type"
+          (click)="selectXrayBinaryLaboratoryType(type)"
+        >
+          <strong>{{ xrayBinaryTypeLabel(type) }}</strong>
+          <small>{{ type }}</small>
+        </button>
+      }
+    </div>
+
+    <div class="object-lab__xray-binary-samples" aria-label="Diversidad procedural A-H">
+      <span>DIVERSIDAD PROCEDURAL</span>
+      <div>
+        @for (sample of xrayBinaryLaboratorySamples(); track sample.sampleLabel; let index = $index) {
+          <button
+            type="button"
+            data-testid="xray-binary-laboratory-sample-button"
+            [attr.data-sample]="sample.sampleLabel"
+            [attr.aria-pressed]="selectedXrayBinarySampleIndex() === index"
+            [class.object-lab__button--active]="selectedXrayBinarySampleIndex() === index"
+            (click)="selectXrayBinaryLaboratorySample(index)"
+          >{{ sample.sampleLabel }}</button>
+        }
+      </div>
+    </div>
+
+    @if (selectedXrayBinaryLaboratoryModel(); as compactBinary) {
+      <div class="object-lab__xray-binary-stage">
+        <app-xray-binary-laboratory-render [model]="compactBinary" />
+
+        <aside class="object-lab__xray-binary-data">
+          <div>
+            <p class="object-lab__eyebrow">PERFIL FÍSICO ILUSTRATIVO</p>
+            <h3>{{ compactBinary.label }} · {{ compactBinary.sampleLabel }}</h3>
+          </div>
+          <dl>
+            <div><dt>Compañera</dt><dd>{{ compactBinary.donorLabel }}</dd></div>
+            <div><dt>Masa compañera</dt><dd>{{ compactBinary.donorMassSolar }} M☉</dd></div>
+            <div><dt>Radio compañera</dt><dd>{{ compactBinary.donorRadiusSolar }} R☉</dd></div>
+            <div><dt>Masa NS</dt><dd>{{ compactBinary.compactMassSolar }} M☉</dd></div>
+            <div><dt>Periodo orbital</dt><dd>{{ compactBinary.orbitalPeriodHours }} h</dd></div>
+            <div><dt>Separación</dt><dd>{{ compactBinary.separationSolarRadii }} R☉</dd></div>
+            <div><dt>Tasa de transferencia</dt><dd>{{ compactBinary.transferRateSolarMassPerYear.toExponential(2) }} M☉/año</dd></div>
+            <div><dt>Temperatura máxima del disco</dt><dd>{{ compactBinary.diskTemperatureK.toExponential(2) }} K</dd></div>
+            <div><dt>Luminosidad X ilustrativa</dt><dd>{{ compactBinary.xrayLuminosityErgS.toExponential(2) }} erg/s</dd></div>
+          </dl>
+          <p class="object-lab__xray-binary-caveat">{{ compactBinary.caveat }}</p>
+          <p class="object-lab__xray-binary-scale">
+            Escala visual adaptativa: el tamaño de la compañera, la geometría del chorro de materia, el grosor del disco
+            y el halo X se exageran para lectura visual. La intención aquí es fijar la firma morfológica de una binaria X con NS.
+          </p>
         </aside>
       </div>
     }

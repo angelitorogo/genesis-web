@@ -30,6 +30,9 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
   @ViewChild('renderHost') private renderHost?: ElementRef<HTMLElement>;
 
   @Input({ required: true }) model!: BlackHoleLaboratoryRenderModel;
+  @Input() embedded = false;
+  @Input() quiescentMode = false;
+  @Input() animationEnabled = true;
 
   readonly renderUnavailable = signal(false);
   readonly paused = signal(false);
@@ -48,7 +51,18 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['model'] && this.renderer) this.rebuildScene();
+    if (changes['animationEnabled']) {
+      this.paused.set(!this.animationEnabled);
+    }
+
+    if (!this.renderer) return;
+    if (changes['embedded']) {
+      this.renderer.setClearColor(0x010204, this.embedded ? 0 : 1);
+      this.resize();
+    }
+    if (changes['model'] || changes['embedded'] || changes['quiescentMode'] || changes['animationEnabled']) {
+      this.rebuildScene();
+    }
   }
 
   ngOnDestroy(): void {
@@ -91,10 +105,11 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
       });
       this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-      this.renderer.setClearColor(0x010204, 1);
+      this.renderer.setClearColor(0x010204, this.embedded ? 0 : 1);
 
       this.scene = new THREE.Scene();
       this.camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+      this.paused.set(!this.animationEnabled);
       this.rebuildScene();
       this.resize();
 
@@ -132,19 +147,45 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
     this.scene.add(canonicalGroup);
     this.diskGroup = inclinedDiskGroup;
 
-    // Invariant geometry: the sphere, upper lensed disk and lateral bands
-    // stay canonical across all black-hole families. Only the main accretion
-    // disk keeps the family-dependent inclination.
-    this.addAccretionDisk(inclinedDiskGroup);
-    this.addShadow(canonicalGroup);
-    this.addPhotonRing(canonicalGroup);
-    this.addLensedDiskImages(canonicalGroup);
-    this.addUpperShadowHemisphere(canonicalGroup);
-    this.addContourWrap(canonicalGroup);
-    this.scene.add(this.createBackgroundStars());
+    if (this.quiescentMode) {
+      // 28.2F.4 — the quiescent nucleus reuses the canonical SMBH silhouette
+      // from 28.2F.3, but it must not read like an actively accreting black
+      // hole pasted over the stellar nucleus. In this regime we keep only a
+      // compact shadow/lensing signature and a very faint, clean equatorial
+      // structure so the SMBH feels physically present without becoming an
+      // AGN-like accretion scene.
+      this.addQuiescentLensingHalo(canonicalGroup);
+      this.addQuiescentResidualDisk(inclinedDiskGroup);
+      this.addShadow(canonicalGroup, 0.70);
+      this.addQuiescentContourArc(canonicalGroup);
+      this.addContourWrap(canonicalGroup, {
+        brightnessScale: 1.18,
+        opacityScale: 0.86,
+        flowRateScale: 0.86,
+        verticalScale: 1.01,
+        renderOrder: 19.15,
+        orbitMotionStrength: 0.88,
+        orbitMotionRate: 1.26,
+      });
+    } else {
+      // Invariant geometry: the sphere, upper lensed disk and lateral bands
+      // stay canonical across all black-hole families. Only the main accretion
+      // disk keeps the family-dependent inclination.
+      this.addAccretionDisk(inclinedDiskGroup);
+      this.addShadow(canonicalGroup);
+      this.addPhotonRing(canonicalGroup);
+      this.addLensedDiskImages(canonicalGroup);
+      this.addUpperShadowHemisphere(canonicalGroup);
+      this.addContourWrap(canonicalGroup);
+    }
+
+    if (!this.embedded) this.scene.add(this.createBackgroundStars());
   }
 
-  private addShadow(group: THREE.Group): void {
+  private addShadow(
+    group: THREE.Group,
+    radius = 0.82,
+  ): void {
     // Element 5: the black-hole body itself.
     // Important layering for the 3D read:
     // - back disk and upper lensed image must stay behind the hole,
@@ -153,7 +194,7 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
     // full opacity, and render between the rear layers (<= 3) and the front
     // disk/rim (5 and 6).
     const shadow = new THREE.Mesh(
-      new THREE.SphereGeometry(0.82, 96, 64),
+      new THREE.SphereGeometry(radius, 96, 64),
       new THREE.MeshBasicMaterial({
         color: 0x000000,
         transparent: true,
@@ -260,50 +301,233 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
     group.add(foregroundRim);
   }
 
-  private addPhotonRing(group: THREE.Group): void {
+  private addPhotonRing(
+    group: THREE.Group,
+    options?: {
+      brightnessScale?: number;
+      opacityBase?: number;
+      opacityLensingScale?: number;
+      innerGlowBoost?: number;
+      verticalScale?: number;
+      renderOrder?: number;
+      zOffset?: number;
+    },
+  ): void {
     const photonRing = new THREE.Mesh(
       new THREE.RingGeometry(0.93, 1.03, 224, 1),
       this.createDiskFlowMaterial({
-        brightness: this.model.diskBrightness * 1.18,
-        opacity: 0.42 + 0.16 * this.model.lensingStrength,
+        brightness:
+          this.model.diskBrightness *
+          1.18 *
+          (options?.brightnessScale ?? 1),
+        opacity:
+          (options?.opacityBase ?? 0.42) +
+          (options?.opacityLensingScale ?? 0.16) * this.model.lensingStrength,
         innerCut: 0.0,
         outerCut: 1.0,
         bandScale: 72.0,
         flowRate: 1.25,
         frontMask: false,
-        innerGlowBoost: 1.38,
+        innerGlowBoost: options?.innerGlowBoost ?? 1.38,
       }),
     );
-    photonRing.scale.y = 0.22;
-    photonRing.position.z = 0.010;
-    photonRing.renderOrder = 2;
+    photonRing.scale.y = options?.verticalScale ?? 0.22;
+    photonRing.position.z = options?.zOffset ?? 0.010;
+    photonRing.renderOrder = options?.renderOrder ?? 2;
     group.add(photonRing);
   }
 
+  private addQuiescentLensingHalo(group: THREE.Group): void {
+    // Broad low-luminosity lensing envelope. This remains much dimmer than
+    // the active 28.2F.3 photon ring but is strong enough to make the SMBH read
+    // as a real central gravitational engine inside the stellar nucleus.
+    const halo = new THREE.Mesh(
+      new THREE.RingGeometry(0.96, 1.36, 256, 1),
+      this.createDiskFlowMaterial({
+        brightness: Math.max(0.22, this.model.diskBrightness * 1.52),
+        opacity: 0.20 + 0.09 * this.model.lensingStrength,
+        innerCut: 0.0,
+        outerCut: 1.0,
+        bandScale: 42.0,
+        flowRate: 0.44,
+        frontMask: false,
+        innerGlowBoost: 1.34,
+        orbitMotionStrength: 0.92,
+        orbitMotionRate: 1.34,
+      }),
+    );
+    halo.scale.y = 1.08;
+    halo.position.z = -0.020;
+    halo.renderOrder = 1.5;
+    group.add(halo);
+  }
 
-  private addContourWrap(group: THREE.Group): void {
+  private addQuiescentResidualDisk(group: THREE.Group): void {
+    // True residual disk/flow: dim, dusty and continuous, with the same
+    // occlusion logic as the canonical black-hole renderer. Rendering the rear
+    // layer before the shadow and the near-side layer after it prevents the
+    // artificial straight line through the black sphere.
+    const rearMaterial = this.createDiskFlowMaterial({
+      brightness: Math.max(0.26, this.model.diskBrightness * 1.85),
+      opacity: 0.16,
+      innerCut: 0.0,
+      outerCut: 1.0,
+      bandScale: 34.0,
+      flowRate: 0.42,
+      frontMask: false,
+      innerGlowBoost: 1.86,
+      orbitMotionStrength: 0.74,
+      orbitMotionRate: 1.12,
+    });
+
+    const frontMaterial = this.createDiskFlowMaterial({
+      brightness: Math.max(0.34, this.model.diskBrightness * 2.35),
+      opacity: 0.22,
+      innerCut: 0.0,
+      outerCut: 1.0,
+      bandScale: 40.0,
+      flowRate: 0.46,
+      frontMask: true,
+      innerGlowBoost: 2.24,
+      orbitMotionStrength: 0.78,
+      orbitMotionRate: 1.18,
+    });
+
+    rearMaterial.depthTest = false;
+    frontMaterial.depthTest = false;
+
+    const rear = new THREE.Mesh(
+      new THREE.RingGeometry(0.80, 2.95, 224, 1),
+      rearMaterial,
+    );
+    const front = new THREE.Mesh(
+      new THREE.RingGeometry(0.80, 2.95, 224, 1),
+      frontMaterial,
+    );
+
+    const verticalScale = 0.115;
+    rear.scale.y = verticalScale;
+    front.scale.y = verticalScale;
+
+    rear.position.z = -0.040;
+    front.position.z = 0.042;
+
+    rear.renderOrder = 1.9;
+    front.renderOrder = 5.1;
+
+    group.add(rear);
+    group.add(front);
+  }
+
+  private addQuiescentContourArc(group: THREE.Group): void {
+    // A faint lensed arc hugging the upper/lower silhouette. It is intentionally
+    // broad and soft rather than a bright active disk.
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uInner: { value: new THREE.Color(this.model.diskColorInner) },
+        uMid: { value: new THREE.Color(this.model.diskColorMid) },
+        uBrightness: { value: Math.max(0.24, this.model.diskBrightness * 1.78) },
+        uOpacity: { value: 0.18 },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        precision highp float;
+        uniform vec3 uInner;
+        uniform vec3 uMid;
+        uniform float uBrightness;
+        uniform float uOpacity;
+        varying vec2 vUv;
+
+        void main() {
+          vec2 p = (vUv - 0.5) * 2.0;
+          float r = length(p);
+
+          float ring = 1.0 - smoothstep(0.90, 1.05, abs(r - 0.93) + 0.93);
+          // cleaner ring mask around the shadow
+          float innerEdge = smoothstep(0.80, 0.86, r);
+          float outerEdge = 1.0 - smoothstep(1.02, 1.16, r);
+          float contour = innerEdge * outerEdge;
+
+          float upper = smoothstep(-0.18, 0.20, p.y);
+          float lower = 1.0 - smoothstep(-0.22, 0.16, p.y);
+          float verticalWeight = max(upper * 0.92, lower * 0.62);
+
+          float sideFade = 1.0 - smoothstep(0.70, 1.02, abs(p.x));
+          float alpha = contour * (0.46 + 0.54 * verticalWeight) * (0.70 + 0.30 * sideFade);
+
+          if (alpha <= 0.002) discard;
+
+          vec3 color = mix(uMid, uInner, 0.66 + verticalWeight * 0.18);
+          gl_FragColor = vec4(color * uBrightness, alpha * uOpacity);
+        }
+      `,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+    });
+
+    this.shaderMaterials.push(material);
+
+    const arc = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.20, 2.20, 1, 1),
+      material,
+    );
+    arc.position.z = 0.024;
+    arc.renderOrder = 8.4;
+    group.add(arc);
+  }
+
+  private addContourWrap(
+    group: THREE.Group,
+    options?: {
+      brightnessScale?: number;
+      opacityScale?: number;
+      flowRateScale?: number;
+      verticalScale?: number;
+      renderOrder?: number;
+      orbitMotionStrength?: number;
+      orbitMotionRate?: number;
+    },
+  ): void {
     // New full-contour lensed wrap: unlike the top band, this is allowed to
     // stay visible around the whole shadow silhouette, including the lower
     // half, so the upper lensed disk reads as surrounding the entire hole.
     const contourWrap = new THREE.Mesh(
       new THREE.RingGeometry(0.84, 0.96, 256, 1),
       this.createDiskFlowMaterial({
-        brightness: this.model.diskBrightness * 1.42,
-        opacity: 0.60 + 0.20 * this.model.lensingStrength,
+        brightness:
+          this.model.diskBrightness *
+          1.42 *
+          (options?.brightnessScale ?? 1),
+        opacity:
+          (0.60 + 0.20 * this.model.lensingStrength) *
+          (options?.opacityScale ?? 1),
         innerCut: 0.0,
         outerCut: 1.0,
         bandScale: 68.0,
-        flowRate: 1.08,
+        flowRate:
+          1.08 *
+          (options?.flowRateScale ?? 1),
         frontMask: false,
         innerGlowBoost: 1.18,
+        orbitMotionStrength: options?.orbitMotionStrength ?? 0.0,
+        orbitMotionRate: options?.orbitMotionRate ?? 1.0,
       }),
     );
-    contourWrap.scale.y = 0.95;
+    contourWrap.scale.y = options?.verticalScale ?? 0.95;
     contourWrap.position.z = 0.018;
     // Render just before the upper shadow cap: this keeps the wrap visible
     // around the contour and lower half, but prevents it from painting over
     // the top black silhouette.
-    contourWrap.renderOrder = 19.2;
+    contourWrap.renderOrder = options?.renderOrder ?? 19.2;
     group.add(contourWrap);
   }
 
@@ -383,6 +607,8 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
     flowRate: number;
     frontMask: boolean;
     innerGlowBoost: number;
+    orbitMotionStrength?: number;
+    orbitMotionRate?: number;
   }): THREE.ShaderMaterial {
     const material = new THREE.ShaderMaterial({
       uniforms: {
@@ -398,6 +624,8 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
         uFlowRate: { value: config.flowRate },
         uFrontMask: { value: config.frontMask ? 1.0 : 0.0 },
         uInnerGlowBoost: { value: config.innerGlowBoost },
+        uOrbitMotionStrength: { value: config.orbitMotionStrength ?? 0.0 },
+        uOrbitMotionRate: { value: config.orbitMotionRate ?? 1.0 },
         uTurbulenceScale: { value: this.model.turbulenceScale },
         uTurbulenceStrength: { value: this.model.turbulenceStrength },
         uSpin: { value: this.model.spinDimensionless },
@@ -428,6 +656,8 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
         uniform float uSpin;
         uniform float uFrontMask;
         uniform float uInnerGlowBoost;
+        uniform float uOrbitMotionStrength;
+        uniform float uOrbitMotionRate;
         varying vec2 vUv;
         varying vec3 vPosition;
 
@@ -457,6 +687,20 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
           float bands = 0.5 + 0.5 * sin(r * uBandScale + angle * 10.0 + flow * 5.0 - timePhase * 2.8);
           float streaks = 0.5 + 0.5 * sin(angle * 18.0 - timePhase * 4.6 + r * 20.0);
           float shear = 0.5 + 0.5 * sin(angle * 2.6 - timePhase * 1.8 + r * 14.0);
+
+          float orbitPhase =
+            angle * 5.4 -
+            uTime * uOrbitMotionRate * 2.8 +
+            r * 8.0 +
+            flow * 2.2;
+
+          float orbitingClumps =
+            0.5 +
+            0.5 * sin(orbitPhase);
+
+          float orbitingArc =
+            smoothstep(0.34, 0.82, orbitingClumps);
+
           float heat = pow(clamp(1.0 - smoothstep(uInnerCut, uOuterCut, r), 0.0, 1.0), 0.46);
           vec3 color = mix(uOuter, uMid, smoothstep(0.06, 0.76, heat));
           color = mix(color, uInner, pow(heat, 1.95) * (0.78 + 0.22 * streaks));
@@ -467,10 +711,12 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
             + (flow - 0.5) * uTurbulenceStrength * 1.45
             + (bands - 0.5) * 0.34
             + (streaks - 0.5) * 0.18
-            + (shear - 0.5) * 0.12;
+            + (shear - 0.5) * 0.12
+            + (orbitingArc - 0.5) * uOrbitMotionStrength * 0.82;
           float alpha = smoothstep(uInnerCut, min(uInnerCut + 0.05, uOuterCut), r)
             * (1.0 - smoothstep(max(uOuterCut - 0.08, uInnerCut), uOuterCut, r));
           alpha *= 0.90 + (bands - 0.5) * 0.16;
+          alpha *= 1.0 + (orbitingArc - 0.5) * uOrbitMotionStrength * 0.30;
           if (uFrontMask > 0.5) {
             float frontBand = 1.0 - smoothstep(-0.22, 0.02, p.y);
             frontBand *= smoothstep(0.12, 0.28, r);
@@ -897,7 +1143,7 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
     const delta = this.lastFrameMs === 0 ? 0 : Math.min(0.05, (timeMs - this.lastFrameMs) / 1000);
     this.lastFrameMs = timeMs;
 
-    if (!this.paused()) {
+    if (this.animationEnabled && !this.paused()) {
       for (const material of this.shaderMaterials) {
         const timeUniform = material.uniforms['uTime'];
         if (timeUniform !== undefined) timeUniform.value += delta;
@@ -912,7 +1158,10 @@ export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDe
     const host = this.renderHost?.nativeElement;
     if (!host || !this.renderer || !this.camera) return;
     const width = Math.max(1, host.clientWidth);
-    const height = Math.max(320, Math.min(660, Math.round(width * 0.56)));
+    const embeddedHeight = Math.max(1, host.clientHeight);
+    const height = this.embedded
+      ? Math.max(320, embeddedHeight)
+      : Math.max(320, Math.min(660, Math.round(width * 0.56)));
     this.renderer.setSize(width, height, false);
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();

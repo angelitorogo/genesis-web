@@ -1,0 +1,16 @@
+<section
+  class="stellar-render"
+  data-testid="stellar-laboratory-render"
+  [class.stellar-render--embedded]="embedded"
+>
+  <div #renderHost class="stellar-render__host">
+    <canvas #renderCanvas class="stellar-render__canvas" aria-hidden="true"></canvas>
+
+    @if (renderUnavailable()) {
+      <div class="stellar-render__fallback" aria-hidden="true">
+        <span class="stellar-render__fallback-core"></span>
+        <span class="stellar-render__fallback-halo"></span>
+      </div>
+    }
+  </div>
+</section>

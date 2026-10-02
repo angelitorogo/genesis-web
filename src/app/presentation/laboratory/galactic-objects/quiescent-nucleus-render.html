@@ -9,6 +9,16 @@
     aria-label="Representación procedural de un núcleo galáctico quiescente"
   ></canvas>
 
+  @if (blackHoleCoreModel) {
+    <app-black-hole-laboratory-render
+      class="quiescent-nucleus-render__black-hole-core"
+      data-testid="quiescent-nucleus-render-canonical-smbh-core"
+      [model]="blackHoleCoreModel"
+      [embedded]="true"
+      [quiescentMode]="true"
+    ></app-black-hole-laboratory-render>
+  }
+
   <div class="quiescent-nucleus-render__badge">
     THREE.JS / WEBGL / PROCEDURAL / QUIESCENT
   </div>

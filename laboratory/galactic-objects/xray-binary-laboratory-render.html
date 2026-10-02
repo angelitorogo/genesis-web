@@ -1,0 +1,104 @@
+<section
+  class="xrb-render"
+  data-testid="xray-binary-laboratory-render"
+  [attr.data-extreme-type]="model.type"
+  [attr.data-sample]="model.sampleLabel"
+  [class.xrb-render--static]="!animationEnabled"
+  [class.xrb-render--delegated]="isNeutronOnlyPreview()"
+  [style.--xrb-donor-color]="model.donorColor"
+  [style.--xrb-donor-halo-color]="model.donorHaloColor"
+  [style.--xrb-donor-rim-color]="model.donorRimColor"
+  [style.--xrb-compact-surface-color]="model.compactSurfaceColor"
+  [style.--xrb-compact-glow-color]="model.compactGlowColor"
+  [style.--xrb-disk-inner-color]="model.diskInnerColor"
+  [style.--xrb-disk-outer-color]="model.diskOuterColor"
+  [style.--xrb-stream-color]="model.streamColor"
+  [style.--xrb-xray-color]="model.xrayColor"
+  [style.--xrb-donor-scale]="model.donorScale"
+  [style.--xrb-donor-offset-x]="model.donorOffsetXRem + 'rem'"
+  [style.--xrb-compact-offset-x]="model.compactOffsetXRem + 'rem'"
+  [style.--xrb-stream-height]="model.streamHeightRem + 'rem'"
+  [style.--xrb-stream-width]="model.streamWidthRem + 'rem'"
+  [style.--xrb-disk-radius]="model.diskRadiusRem + 'rem'"
+  [style.--xrb-disk-tilt]="model.diskTiltDegrees + 'deg'"
+  [style.--xrb-corona-scale]="model.coronaScale"
+  [style.--xrb-xray-opacity]="model.xrayOpacity"
+  [style.--xrb-orbit-seconds]="model.visualOrbitSeconds + 's'"
+  [attr.aria-label]="sampleTitle()"
+>
+  @if (isNeutronOnlyPreview()) {
+    <div class="xrb-render__delegated-stage" aria-hidden="true">
+      <app-neutron-star-laboratory-render
+        class="xrb-render__delegated-preview"
+        [model]="compactModel()"
+        [embedded]="true"
+        [animationEnabled]="animationEnabled"
+        [viewportScale]="3"
+        [viewportOffsetX]="3"
+      />
+    </div>
+
+    <div class="xrb-render__legend">
+      <span>estrella compañera</span>
+      <span>pérdida de materia</span>
+      <span>emisión X</span>
+    </div>
+  } @else {
+    <div class="xrb-render__label">
+      <strong>{{ model.type }}</strong>
+      <span>{{ model.label }} · muestra {{ model.sampleLabel }}</span>
+    </div>
+
+    <div class="xrb-render__scene" aria-hidden="true">
+      <div class="xrb-render__ambient-glow"></div>
+      <div class="xrb-render__orbit xrb-render__orbit--primary"></div>
+      <div class="xrb-render__orbit xrb-render__orbit--secondary"></div>
+
+      <div class="xrb-render__donor-group">
+        <div class="xrb-render__donor-halo"></div>
+        <div class="xrb-render__donor-star">
+          <div class="xrb-render__donor-photosphere"></div>
+          <div class="xrb-render__donor-granulation"></div>
+          <div class="xrb-render__donor-rim"></div>
+        </div>
+      </div>
+
+      <div class="xrb-render__stream-envelope"></div>
+      <svg class="xrb-render__stream-svg" viewBox="0 0 600 320" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="xrb-stream-gradient" x1="0%" y1="50%" x2="100%" y2="50%">
+            <stop offset="0%" stop-color="rgba(255,255,255,0.05)" />
+            <stop offset="28%" [attr.stop-color]="model.streamColor" stop-opacity="0.38" />
+            <stop offset="68%" [attr.stop-color]="model.streamColor" stop-opacity="0.82" />
+            <stop offset="100%" stop-color="rgba(255,255,255,0.95)" stop-opacity="0.96" />
+          </linearGradient>
+        </defs>
+        <path class="xrb-render__stream-lane" d="M 94 160 C 190 112, 250 100, 308 120 S 398 168, 455 164" />
+        <path class="xrb-render__stream-lane xrb-render__stream-lane--core" d="M 98 161 C 198 120, 254 112, 312 129 S 400 172, 452 166" />
+      </svg>
+
+      <div class="xrb-render__compact-group">
+        <div class="xrb-render__compact-corona"></div>
+        <div class="xrb-render__xray-halo"></div>
+        <div class="xrb-render__xray-fan xrb-render__xray-fan--north"></div>
+        <div class="xrb-render__xray-fan xrb-render__xray-fan--south"></div>
+        <div class="xrb-render__xray-spike xrb-render__xray-spike--a"></div>
+        <div class="xrb-render__xray-spike xrb-render__xray-spike--b"></div>
+
+        <div class="xrb-render__compact-preview">
+          <app-neutron-star-laboratory-render
+            [model]="compactModel()"
+            [embedded]="true"
+            [animationEnabled]="animationEnabled"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="xrb-render__legend">
+      <span>estrella compañera</span>
+      <span>pérdida de materia</span>
+      <span>emisión X</span>
+    </div>
+  }
+</section>

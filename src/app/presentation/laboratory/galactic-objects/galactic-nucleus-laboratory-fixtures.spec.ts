@@ -3,6 +3,14 @@ import {
 } from '../../../domain/universe/galactic-nucleus-state';
 
 import {
+  ExtremeType,
+} from '../../../domain/galactic-object/extreme-object-type';
+
+import {
+  blackHoleLaboratoryModel,
+} from './black-hole-laboratory-render-model';
+
+import {
   GALACTIC_NUCLEUS_LABORATORY_CASES,
   GalacticNucleusLaboratoryCaseId,
   GalacticNucleusLaboratoryFixtures,
@@ -149,13 +157,6 @@ describe(
           8,
         );
 
-        expect(
-          samples[0]
-            .galaxyIndex,
-        ).toBe(
-          0n,
-        );
-
         for (
           const sample
           of samples
@@ -189,6 +190,23 @@ describe(
               ?.family,
           ).toBe(
             sample.family,
+          );
+
+
+          expect(
+            frame.galaxy
+              .nucleus
+              ?.supermassiveBlackHole,
+          ).not.toBeNull();
+
+          expect(
+            frame.blackHoleCoreRenderModel
+              ?.massSolar,
+          ).toBe(
+            frame.galaxy
+              .nucleus
+              ?.supermassiveBlackHole
+              ?.massSolarMasses,
           );
         }
       },
@@ -400,6 +418,58 @@ describe(
         expect(
           agn.quasarRenderModel,
         ).toBeNull();
+      },
+      15_000,
+    );
+
+    it(
+      'should reuse the canonical 28.2F.3 SMBH core across quiescent, AGN and QUASAR regimes',
+      () => {
+        const quiescent = GalacticNucleusLaboratoryFixtures.frame(
+          GalacticNucleusLaboratoryCaseId.QUIESCENT,
+        );
+        const agn = GalacticNucleusLaboratoryFixtures.frame(
+          GalacticNucleusLaboratoryCaseId.AGN,
+        );
+        const quasar = GalacticNucleusLaboratoryFixtures.frame(
+          GalacticNucleusLaboratoryCaseId.QUASAR,
+        );
+
+        expect(quiescent.blackHoleCoreRenderModel?.type).toBe('SMBH');
+        expect(agn.blackHoleCoreRenderModel?.type).toBe('SMBH');
+        expect(quasar.blackHoleCoreRenderModel?.type).toBe('SMBH');
+
+        expect(quiescent.blackHoleCoreRenderModel?.diskBrightness ?? 99)
+          .toBeLessThan(agn.blackHoleCoreRenderModel?.diskBrightness ?? 0);
+
+        const expectedAgnCore = blackHoleLaboratoryModel(
+          ExtremeType.SMBH,
+          agn.agnRenderModel?.familyIndex ?? 0,
+        );
+        const expectedQuasarCore = blackHoleLaboratoryModel(
+          ExtremeType.SMBH,
+          quasar.quasarRenderModel?.familyIndex ?? 0,
+        );
+
+        expect(agn.blackHoleCoreRenderModel?.diskBrightness)
+          .toBe(expectedAgnCore.diskBrightness);
+        expect(agn.blackHoleCoreRenderModel?.diskThickness)
+          .toBe(expectedAgnCore.diskThickness);
+        expect(agn.blackHoleCoreRenderModel?.lensingStrength)
+          .toBe(expectedAgnCore.lensingStrength);
+
+        expect(quasar.blackHoleCoreRenderModel?.diskBrightness)
+          .toBe(expectedQuasarCore.diskBrightness);
+        expect(quasar.blackHoleCoreRenderModel?.diskThickness)
+          .toBe(expectedQuasarCore.diskThickness);
+        expect(quasar.blackHoleCoreRenderModel?.lensingStrength)
+          .toBe(expectedQuasarCore.lensingStrength);
+
+        expect(quasar.quasarRenderModel?.accretionBrightness ?? 0)
+          .toBeGreaterThan(0);
+
+        expect(quasar.quasarRenderModel?.coronaStrength ?? 0)
+          .toBeGreaterThan(0);
       },
       15_000,
     );

@@ -139,6 +139,77 @@ describe('28.2F.3 — BlackHoleLaboratoryRender', () => {
     const button=root.querySelector('[data-testid="black-hole-animation-toggle"]') as HTMLButtonElement; button.click(); fixture.detectChanges(); expect(button.textContent).toContain('REANUDAR');
   });
 
+  it('supports a quiescent embedded mode that suppresses the active accretion disk geometry', () => {
+    const fixture = TestBed.createComponent(BlackHoleLaboratoryRender);
+    const component = fixture.componentInstance as any;
+
+    fixture.componentRef.setInput('model', blackHoleLaboratoryModel(ExtremeType.SMBH, 0));
+    fixture.componentRef.setInput('embedded', true);
+    fixture.componentRef.setInput('quiescentMode', true);
+    fixture.detectChanges();
+
+    expect(component.diskGroup?.children.length ?? -1).toBe(0);
+
+    const sceneChildren = component.scene?.children ?? [];
+    const canonicalGroup = sceneChildren.find((child: any) => child.type === 'Group' && child !== component.diskGroup);
+    expect(canonicalGroup?.children.length ?? 0).toBeGreaterThanOrEqual(4);
+
+    const planeChildren = (canonicalGroup?.children ?? []).filter(
+      (child: any) => child.geometry?.type === 'PlaneGeometry',
+    );
+    expect(planeChildren.length).toBeGreaterThanOrEqual(1);
+
+    const flattenedPhotonRings = (canonicalGroup?.children ?? []).filter(
+      (child: any) =>
+        child.geometry?.type === 'RingGeometry' &&
+        Math.abs((child.scale?.y ?? 1) - 0.24) < 0.001,
+    );
+    expect(flattenedPhotonRings.length).toBe(0);
+  });
+
+  it('gives quiescent gas rings an explicit moving azimuthal texture without changing active defaults', () => {
+    const fixture = TestBed.createComponent(BlackHoleLaboratoryRender);
+    const component = fixture.componentInstance as any;
+
+    fixture.componentRef.setInput('model', blackHoleLaboratoryModel(ExtremeType.SMBH, 0));
+    fixture.detectChanges();
+
+    const material = component.createDiskFlowMaterial({
+      brightness: 1,
+      opacity: 0.5,
+      innerCut: 0,
+      outerCut: 1,
+      bandScale: 40,
+      flowRate: 0.5,
+      frontMask: false,
+      innerGlowBoost: 1,
+      orbitMotionStrength: 0.9,
+      orbitMotionRate: 1.3,
+    }) as THREE.ShaderMaterial;
+
+    expect(material.uniforms['uOrbitMotionStrength'].value).toBeCloseTo(0.9);
+    expect(material.uniforms['uOrbitMotionRate'].value).toBeCloseTo(1.3);
+    expect(material.fragmentShader).toContain('float orbitingClumps');
+    expect(material.fragmentShader).toContain('uOrbitMotionStrength');
+  });
+
+  it('shrinks only the central black shadow in quiescent mode while keeping the canonical active radius', () => {
+    const fixture = TestBed.createComponent(BlackHoleLaboratoryRender);
+    const component = fixture.componentInstance as any;
+    fixture.componentRef.setInput('model', blackHoleLaboratoryModel(ExtremeType.SMBH, 0));
+    fixture.detectChanges();
+
+    const canonicalGroup = new THREE.Group();
+    component.addShadow(canonicalGroup);
+    const canonicalShadow = canonicalGroup.children[0] as THREE.Mesh;
+    expect((canonicalShadow.geometry as THREE.SphereGeometry).parameters.radius).toBeCloseTo(0.82);
+
+    const quiescentGroup = new THREE.Group();
+    component.addShadow(quiescentGroup, 0.70);
+    const quiescentShadow = quiescentGroup.children[0] as THREE.Mesh;
+    expect((quiescentShadow.geometry as THREE.SphereGeometry).parameters.radius).toBeCloseTo(0.70);
+  });
+
   it('keeps the central black body between the rear layers and the near-side disk', () => {
     const fixture = TestBed.createComponent(BlackHoleLaboratoryRender);
     const component = fixture.componentInstance as any;

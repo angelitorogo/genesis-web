@@ -1,7 +1,8 @@
-<section #renderHost class="neutron-render" data-testid="neutron-star-laboratory-render" [attr.data-extreme-type]="model.type">
+<section #renderHost class="neutron-render" [class.neutron-render--embedded]="embedded" data-testid="neutron-star-laboratory-render" [attr.data-extreme-type]="model.type">
   <canvas #renderCanvas class="neutron-render__canvas"
     [attr.aria-label]="'Representación procedural de laboratorio: ' + model.label"></canvas>
 
+  @if (!embedded) {
   <div class="neutron-render__hud">
     <div>
       <span>{{ model.type }}</span>
@@ -30,6 +31,7 @@
       @if (model.showMagneticField) { <span>CAMPO DIPOLAR ESQUEMÁTICO</span> }
     }
   </div>
+  }
 
   @if (renderUnavailable()) {
     <div class="neutron-render__fallback">WebGL no está disponible en este entorno.</div>

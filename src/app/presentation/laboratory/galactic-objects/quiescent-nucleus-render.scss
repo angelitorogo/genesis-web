@@ -79,3 +79,13 @@
     }
   }
 }
+
+.quiescent-nucleus-render__black-hole-core {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 1;
+  transform: scale(1.20);
+  transform-origin: center;
+}

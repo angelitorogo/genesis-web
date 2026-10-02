@@ -10,7 +10,14 @@ import {
 
 import {
   GalacticObjectScientificSubject,
+  GalacticObjectScientificSurveyFamily,
 } from '../../../domain/galactic-object/galactic-object-scientific-subject';
+
+import {
+  ExtremeType,
+  extremeTypeDefinition,
+  type ExtremeType as ExtremeTypeValue,
+} from '../../../domain/galactic-object/extreme-object-type';
 
 import {
   NebulaType,
@@ -65,8 +72,26 @@ import {
 
 import {
   ArchiveGalacticObjectCardAssembler,
+  ArchiveGalacticObjectKnowledgeLevel,
+  ArchiveGalacticObjectRenderKind,
   type ArchiveGalacticObjectCardModel,
+  type ArchiveGalacticObjectFact,
 } from '../../genesis-archive/archive-galactic-object-card';
+
+import {
+  compactObjectScientificVisual,
+  type CompactObjectVisualKind,
+} from '../../genesis-archive/compact-object-scientific-visual';
+
+import {
+  neutronStarLaboratoryModel,
+  type NeutronStarLaboratoryKind,
+} from './neutron-star-laboratory-render-model';
+
+import {
+  blackHoleLaboratoryModel,
+  type BlackHoleLaboratoryKind,
+} from './black-hole-laboratory-render-model';
 
 import {
   OpenClusterRenderModelBuilder,
@@ -169,6 +194,27 @@ export const GalacticObjectLaboratoryCaseId =
     SNR_COMPOSITE:
       'SNR_COMPOSITE',
 
+    EXTREME_NEUTRON_STAR:
+      'EXTREME_NEUTRON_STAR',
+
+    EXTREME_PULSAR:
+      'EXTREME_PULSAR',
+
+    EXTREME_MILLISECOND_PULSAR:
+      'EXTREME_MILLISECOND_PULSAR',
+
+    EXTREME_MAGNETAR:
+      'EXTREME_MAGNETAR',
+
+    EXTREME_STELLAR_MASS_BLACK_HOLE:
+      'EXTREME_STELLAR_MASS_BLACK_HOLE',
+
+    EXTREME_INTERMEDIATE_MASS_BLACK_HOLE:
+      'EXTREME_INTERMEDIATE_MASS_BLACK_HOLE',
+
+    EXTREME_SUPERMASSIVE_BLACK_HOLE:
+      'EXTREME_SUPERMASSIVE_BLACK_HOLE',
+
     RESERVED_EXTREME:
       'RESERVED_EXTREME',
   } as const);
@@ -208,6 +254,10 @@ export interface GalacticObjectLaboratoryCase {
 
   readonly expectedRemnantMorphology:
     SupernovaRemnantMorphologyValue | null;
+
+  /** Lab-only physical specialization for distributed EXTREME_OBJECT cases. */
+  readonly extremeType:
+    ExtremeTypeValue | null;
 
   readonly description:
     string;
@@ -1356,6 +1406,15 @@ export class GalacticObjectLaboratoryFixtures {
         supernovaRemnantCompositeSampleIndex,
       );
 
+    if (
+      caseDefinition.extremeType !==
+        null
+    ) {
+      return buildExtremeLaboratoryFrames(
+        caseDefinition,
+      );
+    }
+
     return Object.freeze(
       GALACTIC_OBJECT_LABORATORY_STATES
         .map(
@@ -1376,6 +1435,387 @@ export class GalacticObjectLaboratoryFixtures {
         ),
     );
   }
+}
+
+function buildExtremeLaboratoryFrames(
+  caseDefinition:
+    GalacticObjectLaboratoryCase,
+): readonly GalacticObjectLaboratoryFrame[] {
+
+  if (
+    caseDefinition.extremeType ===
+      null
+  ) {
+    throw new RangeError(
+      'Extreme laboratory frames require a physical specialization.',
+    );
+  }
+
+  return Object.freeze(
+    GALACTIC_OBJECT_LABORATORY_STATES
+      .map(
+        state =>
+          Object.freeze({
+            state,
+            card:
+              buildExtremeLaboratoryCard(
+                caseDefinition,
+                state.state,
+              ),
+          }),
+      ),
+  );
+}
+
+function buildExtremeLaboratoryCard(
+  caseDefinition:
+    GalacticObjectLaboratoryCase,
+
+  discoveryState:
+    DiscoveryStateValue,
+): ArchiveGalacticObjectCardModel {
+
+  const extremeType =
+    caseDefinition.extremeType;
+
+  if (
+    extremeType ===
+      null
+  ) {
+    throw new RangeError(
+      'Extreme laboratory card requires a physical specialization.',
+    );
+  }
+
+  const definition =
+    extremeTypeDefinition(
+      extremeType,
+    );
+
+  const knowledgeLevel =
+    knowledgeLevelForLaboratoryState(
+      discoveryState,
+    );
+
+  const classified =
+    knowledgeLevel ===
+      ArchiveGalacticObjectKnowledgeLevel.CATALOGUED ||
+    knowledgeLevel ===
+      ArchiveGalacticObjectKnowledgeLevel.CONFIRMED;
+
+  const confirmed =
+    knowledgeLevel ===
+      ArchiveGalacticObjectKnowledgeLevel.CONFIRMED;
+
+  const hasSpecializedPreview =
+    classified;
+
+  const compactVisual =
+    hasSpecializedPreview
+      ? compactVisualForExtreme(
+          extremeType,
+        )
+      : null;
+
+  const title =
+    knowledgeLevel ===
+      ArchiveGalacticObjectKnowledgeLevel.SIGNAL
+      ? 'Fuente extrema sin clasificar'
+      : knowledgeLevel ===
+          ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED
+        ? 'Objeto compacto'
+        : definition.label;
+
+  const summary =
+    knowledgeLevel ===
+      ArchiveGalacticObjectKnowledgeLevel.SIGNAL
+      ? 'La señal extrema está localizada, pero su naturaleza física permanece restringida hasta completar el reconocimiento científico.'
+      : knowledgeLevel ===
+          ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED
+        ? 'La fuente extrema ya está reconocida como objeto compacto; la especialización física permanece restringida hasta su catalogación.'
+        : confirmed
+          ? `${definition.label}: la especialización física está confirmada y su caracterización científica principal está disponible.`
+          : `${definition.label}: la clasificación física ya está catalogada; quedan pendientes las magnitudes de confirmación.`;
+
+  return Object.freeze({
+    coarseFamily:
+      GalacticObjectScientificSurveyFamily.EXTREME_OBJECT,
+    scientificSubject:
+      classified
+        ? caseDefinition.expectedSubject
+        : null,
+    knowledgeLevel,
+    knowledgeLevelLabel:
+      laboratoryKnowledgeLabel(
+        knowledgeLevel,
+      ),
+    title,
+    summary,
+    nextScientificStep:
+      laboratoryNextStep(
+        knowledgeLevel,
+      ),
+    facts:
+      classified
+        ? extremeFacts(
+            extremeType,
+            confirmed,
+          )
+        : Object.freeze([]),
+    scientificSections:
+      Object.freeze([]),
+    render:
+      Object.freeze({
+        kind:
+          ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+        knowledgeLevel,
+        seed:
+          `LAB-EXTREME-${extremeType}`,
+        accessibleLabel:
+          hasSpecializedPreview
+            ? `${definition.label} · representación científica de laboratorio`
+            : 'Fuente extrema aún no especializada',
+        variant:
+          hasSpecializedPreview
+            ? extremeType
+            : null,
+        compactVisual,
+        scale:
+          hasSpecializedPreview
+            ? 0.72
+            : 0.48,
+        density:
+          hasSpecializedPreview
+            ? 0.62
+            : 0.36,
+        energy:
+          hasSpecializedPreview
+            ? 0.76
+            : 0.42,
+        concentration:
+          hasSpecializedPreview
+            ? 0.82
+            : 0.54,
+      }),
+  });
+}
+
+function knowledgeLevelForLaboratoryState(
+  state:
+    DiscoveryStateValue,
+): ArchiveGalacticObjectKnowledgeLevel {
+
+  switch (
+    state.name
+  ) {
+    case 'DETECTED':
+      return ArchiveGalacticObjectKnowledgeLevel.SIGNAL;
+
+    case 'DISCOVERED':
+    case 'VISITED':
+      return ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED;
+
+    case 'CATALOGUED':
+      return ArchiveGalacticObjectKnowledgeLevel.CATALOGUED;
+
+    case 'CONFIRMED':
+      return ArchiveGalacticObjectKnowledgeLevel.CONFIRMED;
+
+    default:
+      throw new RangeError(
+        `Unsupported extreme laboratory discovery state: ${state.name}.`,
+      );
+  }
+}
+
+function laboratoryKnowledgeLabel(
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+): string {
+
+  switch (
+    knowledgeLevel
+  ) {
+    case ArchiveGalacticObjectKnowledgeLevel.SIGNAL:
+      return 'Señal';
+
+    case ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED:
+      return 'Identificado';
+
+    case ArchiveGalacticObjectKnowledgeLevel.CATALOGUED:
+      return 'Catalogado';
+
+    case ArchiveGalacticObjectKnowledgeLevel.CONFIRMED:
+      return 'Confirmado';
+
+    default:
+      throw new RangeError(
+        `Unsupported laboratory knowledge level: ${String(knowledgeLevel)}.`,
+      );
+  }
+}
+
+function laboratoryNextStep(
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+): string {
+
+  switch (
+    knowledgeLevel
+  ) {
+    case ArchiveGalacticObjectKnowledgeLevel.SIGNAL:
+      return 'Reconocimiento de fuente extrema';
+
+    case ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED:
+      return 'Clasificación física del objeto compacto';
+
+    case ArchiveGalacticObjectKnowledgeLevel.CATALOGUED:
+      return 'Confirmación física de la especialización';
+
+    case ArchiveGalacticObjectKnowledgeLevel.CONFIRMED:
+      return 'Ciclo científico completado';
+
+    default:
+      throw new RangeError(
+        `Unsupported laboratory knowledge level: ${String(knowledgeLevel)}.`,
+      );
+  }
+}
+
+function compactVisualForExtreme(
+  extremeType:
+    ExtremeTypeValue,
+) {
+
+  const visualKind:
+    CompactObjectVisualKind =
+    extremeType ===
+        ExtremeType.NEUTRON_STAR
+      ? 'NEUTRON_STAR'
+      : extremeType ===
+          ExtremeType.PULSAR
+        ? 'PULSAR'
+        : extremeType ===
+            ExtremeType.MILLISECOND_PULSAR
+          ? 'MILLISECOND_PULSAR'
+          : extremeType ===
+              ExtremeType.MAGNETAR
+            ? 'MAGNETAR'
+            : 'BLACK_HOLE';
+
+  return compactObjectScientificVisual(
+    visualKind,
+    visualKind ===
+      'BLACK_HOLE',
+    false,
+  );
+}
+
+function extremeFacts(
+  extremeType:
+    ExtremeTypeValue,
+
+  confirmed:
+    boolean,
+) {
+
+  if (
+    extremeType ===
+      ExtremeType.NEUTRON_STAR ||
+    extremeType ===
+      ExtremeType.PULSAR ||
+    extremeType ===
+      ExtremeType.MILLISECOND_PULSAR ||
+    extremeType ===
+      ExtremeType.MAGNETAR
+  ) {
+    const model =
+      neutronStarLaboratoryModel(
+        extremeType as
+          NeutronStarLaboratoryKind,
+        0,
+      );
+
+    const facts:
+      ArchiveGalacticObjectFact[] = [
+      Object.freeze({
+        label: 'Masa',
+        value: `${model.massSolar} M☉`,
+      }),
+      Object.freeze({
+        label: 'Radio',
+        value: `${model.radiusKm} km`,
+      }),
+    ];
+
+    if (
+      confirmed &&
+      model.spinPeriodSeconds !==
+        null
+    ) {
+      facts.push(
+        Object.freeze({
+          label: 'Periodo de giro',
+          value: `${model.spinPeriodSeconds} s`,
+        }),
+      );
+    }
+
+    if (
+      confirmed &&
+      model.magneticFieldTesla !==
+        null
+    ) {
+      facts.push(
+        Object.freeze({
+          label: 'Campo magnético',
+          value: `${model.magneticFieldTesla.toExponential(2)} T`,
+        }),
+      );
+    }
+
+    return Object.freeze(
+      facts,
+    );
+  }
+
+  const model =
+    blackHoleLaboratoryModel(
+      extremeType as
+        BlackHoleLaboratoryKind,
+      0,
+    );
+
+  const facts:
+    ArchiveGalacticObjectFact[] = [
+    Object.freeze({
+      label: 'Masa',
+      value: `${model.massSolar.toExponential(3)} M☉`,
+    }),
+    Object.freeze({
+      label: 'Radio de Schwarzschild',
+      value: `${model.schwarzschildRadiusKm.toExponential(3)} km`,
+    }),
+  ];
+
+  if (
+    confirmed
+  ) {
+    facts.push(
+      Object.freeze({
+        label: 'Spin a*',
+        value: model.spinDimensionless.toString(),
+      }),
+      Object.freeze({
+        label: 'Acreción',
+        value: `${(model.accretionRateEddington * 100).toFixed(1)} % Eddington`,
+      }),
+    );
+  }
+
+  return Object.freeze(
+    facts,
+  );
 }
 
 function buildHiiModerateSamplesV1():
@@ -4025,6 +4465,48 @@ function buildCasesV1():
       SupernovaRemnantMorphology.COMPOSITE,
       remnants,
     ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_NEUTRON_STAR,
+      ExtremeType.NEUTRON_STAR,
+      18n,
+      'Extremo compacto distribuido · estrella de neutrones.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_PULSAR,
+      ExtremeType.PULSAR,
+      19n,
+      'Extremo compacto distribuido · púlsar.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_MILLISECOND_PULSAR,
+      ExtremeType.MILLISECOND_PULSAR,
+      20n,
+      'Extremo compacto distribuido · púlsar de milisegundos.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_MAGNETAR,
+      ExtremeType.MAGNETAR,
+      21n,
+      'Extremo compacto distribuido · magnetar.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_STELLAR_MASS_BLACK_HOLE,
+      ExtremeType.STELLAR_MASS_BLACK_HOLE,
+      22n,
+      'Extremo compacto distribuido · agujero negro de masa estelar.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_INTERMEDIATE_MASS_BLACK_HOLE,
+      ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
+      23n,
+      'Extremo compacto distribuido · agujero negro de masa intermedia.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_SUPERMASSIVE_BLACK_HOLE,
+      ExtremeType.SMBH,
+      24n,
+      'Extremo compacto SMBH mostrado fuera del bloque de estados nucleares del laboratorio.',
+    ),
     caseOf(
       GalacticObjectLaboratoryCaseId.RESERVED_EXTREME,
       GalacticObjectLaboratoryGroup.EXTREME,
@@ -4033,7 +4515,7 @@ function buildCasesV1():
       new GalacticObjectLocator(
         0n,
         0n,
-        18n,
+        25n,
       ),
       ExplorationResultKind.EXTREME_OBJECT,
       null,
@@ -4078,6 +4560,10 @@ function caseOf(
 
   description:
     string,
+
+  extremeType:
+    ExtremeTypeValue | null =
+      null,
 ): GalacticObjectLaboratoryCase {
 
   return Object.freeze({
@@ -4091,6 +4577,7 @@ function caseOf(
     expectedNebulaType,
     expectedHiiActivity,
     expectedRemnantMorphology,
+    extremeType,
     description,
   });
 }
@@ -4138,6 +4625,48 @@ function hiiCase(
     activity,
     null,
     `Región H II V1 con actividad de formación estelar ${activity}.`,
+  );
+}
+
+function extremeCase(
+  id:
+    GalacticObjectLaboratoryCaseId,
+
+  extremeType:
+    ExtremeTypeValue,
+
+  objectIndex:
+    bigint,
+
+  description:
+    string,
+): GalacticObjectLaboratoryCase {
+
+  const definition =
+    extremeTypeDefinition(
+      extremeType,
+    );
+
+  return caseOf(
+    id,
+    GalacticObjectLaboratoryGroup.EXTREME,
+    definition.label,
+    'Fuente extrema',
+    new GalacticObjectLocator(
+      0n,
+      0n,
+      objectIndex,
+    ),
+    ExplorationResultKind.EXTREME_OBJECT,
+    extremeType ===
+        ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE
+      ? GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE
+      : null,
+    null,
+    null,
+    null,
+    description,
+    extremeType,
   );
 }
 

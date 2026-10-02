@@ -1,106 +1,171 @@
 import {
-  ComponentFixture,
   TestBed,
 } from '@angular/core/testing';
 
 import {
-  GeneratorVersion,
-} from '../../../domain/generation/generator-version';
+  By,
+} from '@angular/platform-browser';
 
 import {
-  UniverseGenerationKey,
-} from '../../../domain/generation/universe-generation-key';
+  ExtremeType,
+} from '../../../domain/galactic-object/extreme-object-type';
 
 import {
-  UniverseSeed,
-} from '../../../domain/universe/universe-seed';
-
-import {
-  GalaxyGenerator,
-} from '../../../simulation/universe/galaxy-generator';
-
-import {
-  createQuasarNucleusRenderModel,
+  QuasarNucleusVisualFamily,
+  type QuasarNucleusRenderModel,
 } from './quasar-nucleus-render-model';
 
 import {
   QuasarNucleusRender,
 } from './quasar-nucleus-render';
 
-const GENERATION_KEY =
-  new UniverseGenerationKey(
-    UniverseSeed.parse(
-      '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1',
-    ),
-    GeneratorVersion.V1,
-  );
+import {
+  BlackHoleLaboratoryRender,
+} from './black-hole-laboratory-render';
 
-describe(
-  'QuasarNucleusRender',
-  () => {
-    let fixture:
-      ComponentFixture<QuasarNucleusRender>;
+import {
+  blackHoleLaboratoryModel,
+} from './black-hole-laboratory-render-model';
 
-    beforeEach(
-      async () => {
-        await TestBed
-          .configureTestingModule({
-            imports: [
-              QuasarNucleusRender,
-            ],
-          })
-          .compileComponents();
+const MODEL: QuasarNucleusRenderModel = Object.freeze({
+  seed: '00112233445566778899AABBCCDDEEFF',
+  family: QuasarNucleusVisualFamily.TWIN_RELATIVISTIC_JETS,
+  familyIndex: 2,
+  blackHoleMassSolarMasses: 1.0e9,
+  normalizedMass: 0.7,
+  orientationRadians: 0.2,
+  inclination: 0.5,
+  shadowRadius: 0.08,
+  diskInnerRadius: 0.11,
+  diskOuterRadius: 0.65,
+  diskThickness: 0.05,
+  accretionBrightness: 1.1,
+  photonRingStrength: 0.9,
+  lensingStrength: 0.9,
+  dopplerAsymmetry: 0.5,
+  turbulence: 0.4,
+  clumpiness: 0.2,
+  warp: 0.03,
+  coronaStrength: 1.0,
+  dustTorusOpacity: 0.1,
+  jetStrength: 1.0,
+  jetLength: 1.0,
+  jetOpening: 0.035,
+  jetCollimation: 0.9,
+  counterJetRatio: 0.8,
+  jetKnotStrength: 0.5,
+  jetPrecession: 0.0,
+  windStrength: 0.4,
+  windOpening: 0.3,
+  scatteringHaloStrength: 0.8,
+  backgroundStarDensity: 0.04,
+  palette: Object.freeze({
+    innerDisk: Object.freeze([1, 0.95, 0.8] as const),
+    midDisk: Object.freeze([1, 0.6, 0.2] as const),
+    outerDisk: Object.freeze([0.5, 0.15, 0.05] as const),
+    photonRing: Object.freeze([1, 0.95, 0.8] as const),
+    corona: Object.freeze([0.6, 0.8, 1] as const),
+    jetCore: Object.freeze([0.8, 0.95, 1] as const),
+    jetSheath: Object.freeze([0.2, 0.5, 1] as const),
+    wind: Object.freeze([0.4, 0.7, 1] as const),
+  }),
+});
 
-        fixture =
-          TestBed.createComponent(
-            QuasarNucleusRender,
-          );
+describe('QuasarNucleusRender', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        QuasarNucleusRender,
+      ],
+    }).compileComponents();
+  });
 
-        fixture.componentRef.setInput(
-          'model',
-          createQuasarNucleusRenderModel(
-            GalaxyGenerator.generate(
-              GENERATION_KEY,
-              331n,
-            ),
-          ),
-        );
+  it('renders a quasar as activity layers around the canonical 28.2F.3 SMBH', () => {
+    const fixture = TestBed.createComponent(QuasarNucleusRender);
 
-        fixture.detectChanges();
-      },
+    fixture.componentRef.setInput('model', MODEL);
+    fixture.componentRef.setInput(
+      'blackHoleCoreModel',
+      blackHoleLaboratoryModel(ExtremeType.SMBH, MODEL.familyIndex),
     );
 
-    it(
-      'should expose a dedicated procedural QUASAR canvas',
-      () => {
-        const element =
-          fixture.nativeElement as
-            HTMLElement;
+    fixture.detectChanges();
 
-        expect(
-          element.querySelector(
-            '[data-testid="quasar-nucleus-render"] canvas',
-          ),
-        ).toBeTruthy();
+    const element = fixture.nativeElement as HTMLElement;
 
-        expect(
-          element.textContent,
-        ).toContain(
-          'DISCO HIPERLUMINOSO',
-        );
+    expect(element.querySelector('[data-testid="quasar-nucleus-render"]'))
+      .toBeTruthy();
 
-        expect(
-          element.textContent,
-        ).toContain(
-          'VIENTO POLAR',
-        );
+    expect(element.querySelector('canvas.quasar-nucleus-render__canvas'))
+      .toBeNull();
 
-        expect(
-          element.textContent,
-        ).toContain(
-          'JET SEGÚN FAMILIA',
-        );
-      },
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-starfield"]'))
+      .toBeTruthy();
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-corona"]'))
+      .toBeTruthy();
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-extended-disk"]'))
+      .toBeTruthy();
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-disk-glow"]'))
+      .toBeTruthy();
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-jet-plume-north"]'))
+      .toBeTruthy();
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-jet-plume-south"]'))
+      .toBeTruthy();
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-jet-north"]'))
+      .toBeTruthy();
+    expect(element.querySelector('[data-testid="quasar-nucleus-render-jet-south"]'))
+      .toBeTruthy();
+
+    expect(
+      element.querySelector('[data-testid="quasar-nucleus-render"]')
+        ?.getAttribute('data-family'),
+    ).toBe(QuasarNucleusVisualFamily.TWIN_RELATIVISTIC_JETS);
+
+    const embeddedCore = fixture.debugElement.query(
+      By.directive(BlackHoleLaboratoryRender),
+    )?.componentInstance as BlackHoleLaboratoryRender | undefined;
+
+    expect(embeddedCore).toBeTruthy();
+    expect(embeddedCore?.embedded).toBeTrue();
+    expect(embeddedCore?.quiescentMode).toBeFalse();
+    expect(embeddedCore?.model.type).toBe(ExtremeType.SMBH);
+
+    expect(element.textContent).toContain('DISCO HIPERLUMINOSO');
+    expect(element.textContent).toContain('CORONA');
+    expect(element.textContent).toContain('JET BIPOLAR');
+  });
+
+  it('keeps both polar jet halves behind the canonical SMBH so they emerge from its contour', () => {
+    const fixture = TestBed.createComponent(QuasarNucleusRender);
+
+    fixture.componentRef.setInput('model', MODEL);
+    fixture.componentRef.setInput(
+      'blackHoleCoreModel',
+      blackHoleLaboratoryModel(ExtremeType.SMBH, MODEL.familyIndex),
     );
-  },
-);
+
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const northJet = element.querySelector(
+      '[data-testid="quasar-nucleus-render-jet-north"]',
+    );
+    const southJet = element.querySelector(
+      '[data-testid="quasar-nucleus-render-jet-south"]',
+    );
+    const core = element.querySelector(
+      '[data-testid="quasar-nucleus-render-canonical-smbh-core"]',
+    );
+
+    expect(northJet).toBeTruthy();
+    expect(southJet).toBeTruthy();
+    expect(core).toBeTruthy();
+
+    expect(
+      Boolean(northJet?.compareDocumentPosition(core!) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBeTrue();
+    expect(
+      Boolean(southJet?.compareDocumentPosition(core!) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBeTrue();
+  });
+});

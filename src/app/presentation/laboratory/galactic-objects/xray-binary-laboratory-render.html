@@ -1,0 +1,33 @@
+<section
+  #renderHost
+  class="xrb-render"
+  data-testid="xray-binary-laboratory-render"
+  [attr.data-extreme-type]="model.type"
+  [attr.data-sample]="model.sampleLabel"
+  [class.xrb-render--static]="!animationEnabled"
+  [attr.aria-label]="sampleTitle()"
+>
+  <canvas
+    #renderCanvas
+    class="xrb-render__canvas"
+    [attr.aria-label]="'Representación procedural de laboratorio: ' + sampleTitle()"
+  ></canvas>
+
+  <div class="xrb-render__hud">
+    <div>
+      <span>{{ model.type }}</span>
+      <strong>{{ model.label }} · muestra {{ model.sampleLabel }}</strong>
+    </div>
+  </div>
+
+  <div class="xrb-render__legend">
+    <span>estrella compañera</span>
+    <span>pérdida de materia</span>
+    <span>disco de acreción caliente</span>
+    <span>emisión X</span>
+  </div>
+
+  @if (renderUnavailable()) {
+    <div class="xrb-render__fallback">WebGL no está disponible en este entorno.</div>
+  }
+</section>

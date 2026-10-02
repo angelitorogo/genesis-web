@@ -23,6 +23,14 @@ import {
   type QuiescentNucleusRenderModel,
 } from './quiescent-nucleus-render-model';
 
+import {
+  BlackHoleLaboratoryRender,
+} from './black-hole-laboratory-render';
+
+import {
+  type BlackHoleLaboratoryRenderModel,
+} from './black-hole-laboratory-render-model';
+
 const VERTEX_SHADER = /* glsl */ `
   varying vec2 vUv;
 
@@ -38,6 +46,7 @@ const FRAGMENT_SHADER = /* glsl */ `
   varying vec2 vUv;
 
   uniform float uAspect;
+  uniform float uTime;
   uniform float uSeed;
   uniform float uOrientation;
   uniform float uAxisRatio;
@@ -144,14 +153,21 @@ const FRAGMENT_SHADER = /* glsl */ `
 
     vec2 nucleus = rotation(uOrientation) * p;
 
+    vec2 slowDrift = vec2(
+      cos(uTime * 0.031 + uSeed * 0.017),
+      sin(uTime * 0.027 - uSeed * 0.013)
+    );
+
     float coarse = fbm(
       nucleus * 2.4 +
-      vec2(uSeed * 0.013, -uSeed * 0.009)
+      vec2(uSeed * 0.013, -uSeed * 0.009) +
+      slowDrift * 0.055
     );
 
     float fine = fbm(
       nucleus * 8.5 +
-      vec2(-uSeed * 0.017, uSeed * 0.011)
+      vec2(-uSeed * 0.017, uSeed * 0.011) -
+      slowDrift * 0.085
     );
 
     vec2 asymmetricOffset = vec2(
@@ -205,7 +221,7 @@ const FRAGMENT_SHADER = /* glsl */ `
       );
 
     vec2 dustP =
-      rotation(uDustAngle) *
+      rotation(uDustAngle + uTime * 0.060) *
       nucleus;
 
     float dustNoise =
@@ -237,7 +253,7 @@ const FRAGMENT_SHADER = /* glsl */ `
     );
 
     vec2 secondDustP =
-      rotation(uDustAngle + 1.03) *
+      rotation(uDustAngle + 1.03 - uTime * 0.036) *
       nucleus;
 
     float secondaryLane = exp(
@@ -317,11 +333,208 @@ const FRAGMENT_SHADER = /* glsl */ `
       1.18 *
       attenuation;
 
+    // Dense old-stellar nuclear glow and dusty orbital structure surrounding
+    // the SMBH. This remains diffuse and low-energy: it adds the sense of a
+    // real galactic nucleus without introducing an AGN-like luminous core.
+    float nuclearGlow = exp(
+      -pow(
+        ellipticalRadius /
+        max(uEnvelopeRadius * 0.58, 0.04),
+        1.20
+      )
+    );
+
+    float polarAngle = atan(q.y, q.x);
+    float dustySwirlNoise = fbm(
+      vec2(
+        (polarAngle - uTime * 0.090) * 1.35 +
+          ellipticalRadius * 5.8,
+        ellipticalRadius * 4.2 +
+          uSeed * 0.007 +
+          sin(uTime * 0.019) * 0.16
+      )
+    );
+
+    float dustySwirl =
+      nuclearGlow *
+      smoothstep(0.30, 0.82, dustySwirlNoise) *
+      (1.0 - nuclearCusp * 0.34);
+
+    float orbitalPhase =
+      polarAngle * 3.0 -
+      uTime * 0.32 +
+      ellipticalRadius * 12.0;
+
+    float orbitalTexture =
+      0.50 +
+      0.50 *
+      sin(
+        orbitalPhase +
+        fbm(
+          q * 5.2 +
+          vec2(
+            uTime * 0.042,
+            -uTime * 0.030
+          )
+        ) *
+        2.1
+      );
+
+    float orbitalMask =
+      nuclearGlow *
+      (1.0 - nuclearCusp * 0.72) *
+      smoothstep(
+        uCoreRadius * 0.72,
+        uCoreRadius * 2.9,
+        ellipticalRadius
+      );
+
+    // Concentric gaseous or dusty circles around the SMBH: make their motion
+    // visibly orbit around the center without turning the nucleus into an AGN.
+    float gasRingMask =
+      smoothstep(
+        uCoreRadius * 0.82,
+        uCoreRadius * 1.90,
+        ellipticalRadius
+      ) *
+      (1.0 - smoothstep(
+        uEnvelopeRadius * 0.60,
+        uEnvelopeRadius * 1.12,
+        ellipticalRadius
+      )) *
+      (1.0 - nuclearCusp * 0.80);
+
+    float normalizedRingRadius =
+      clamp(
+        ellipticalRadius /
+        max(uEnvelopeRadius, 0.001),
+        0.0,
+        1.0
+      );
+
+    float differentialRotation =
+      mix(
+        0.95,
+        2.20,
+        1.0 - normalizedRingRadius
+      );
+
+    float gasRingPhase =
+      polarAngle * 4.1 -
+      uTime * 0.92 * differentialRotation +
+      ellipticalRadius * 30.0;
+
+    float gasRingBands =
+      0.50 +
+      0.50 *
+      sin(
+        gasRingPhase +
+        fbm(
+          q * 7.8 +
+          vec2(
+            uTime * 0.072,
+            -uTime * 0.046
+          )
+        ) *
+        2.6
+      );
+
+    float gasRingArcs = smoothstep(
+      0.38,
+      0.76,
+      gasRingBands
+    );
+
+    float gasRingRipple =
+      0.50 +
+      0.50 *
+      sin(
+        ellipticalRadius * 58.0 -
+        uTime * 0.72 +
+        polarAngle * 1.6
+      );
+
+    float movingGasSector =
+      0.50 +
+      0.50 *
+      sin(
+        polarAngle * 2.6 -
+        uTime * 1.12 * differentialRotation +
+        ellipticalRadius * 7.4 +
+        uSeed * 0.013
+      );
+
+    float gasRingTexture =
+      gasRingArcs *
+      mix(0.70, 1.28, gasRingRipple) *
+      mix(0.74, 1.34, movingGasSector);
+
+    color +=
+      mix(
+        uEnvelopeColor,
+        uOldStarColor,
+        0.34
+      ) *
+      dustySwirl *
+      0.48 *
+      attenuation;
+
+    color +=
+      mix(
+        uEnvelopeColor,
+        uOldStarColor,
+        0.52
+      ) *
+      orbitalMask *
+      orbitalTexture *
+      0.28 *
+      attenuation;
+
+    color +=
+      mix(
+        uEnvelopeColor,
+        uOldStarColor,
+        0.58
+      ) *
+      gasRingMask *
+      gasRingTexture *
+      0.42 *
+      attenuation;
+
+    float nuclearStars = sparseStar(
+      q + vec2(2.7, -1.4),
+      72.0,
+      0.115 + 0.125 * uStellarDensity,
+      0.082,
+      149.0
+    );
+
+    color +=
+      mix(
+        uOldStarColor,
+        uCoreColor,
+        0.26
+      ) *
+      nuclearStars *
+      nuclearGlow *
+      attenuation *
+      0.92;
+
+    float stellarShimmer =
+      0.965 +
+      0.035 *
+      sin(
+        uTime * 1.35 +
+        ellipticalRadius * 17.0 +
+        uSeed * 0.031
+      );
+
     color +=
       uOldStarColor *
       starsFine *
       stellarWeight *
-      0.86;
+      0.86 *
+      stellarShimmer;
 
     color +=
       mix(
@@ -331,13 +544,15 @@ const FRAGMENT_SHADER = /* glsl */ `
       ) *
       starsMid *
       stellarWeight *
-      0.68;
+      0.68 *
+      (1.0 + (stellarShimmer - 1.0) * 0.72);
 
     color +=
       uRedGiantColor *
       redGiants *
       stellarWeight *
-      0.78;
+      0.78 *
+      (1.0 + (stellarShimmer - 1.0) * 0.46);
 
     float outerField = sparseStar(
       p + vec2(7.0, -3.0),
@@ -356,6 +571,92 @@ const FRAGMENT_SHADER = /* glsl */ `
       outerField *
       0.28;
 
+    // Wide nuclear bulge: gives the quiescent nucleus a dense old-stellar
+    // environment instead of leaving most of the frame black.
+    float broadBulge = exp(
+      -pow(
+        ellipticalRadius /
+        max(uEnvelopeRadius * 1.42, 0.10),
+        1.12
+      )
+    );
+
+    float bulgeTexture = mix(
+      0.58,
+      1.36,
+      fbm(
+        q * 3.6 +
+        vec2(uSeed * 0.004, -uSeed * 0.006) +
+        slowDrift * 0.12
+      )
+    );
+
+    color +=
+      mix(
+        uEnvelopeColor,
+        uOldStarColor,
+        0.42
+      ) *
+      broadBulge *
+      bulgeTexture *
+      0.34;
+
+    // Dust filaments with a weak orbital twist around the SMBH.
+    float theta = atan(q.y, q.x);
+    float swirlCoord =
+      (theta - uTime * 0.100) * 1.55 -
+      ellipticalRadius * 8.6;
+    float swirlNoise = fbm(
+      vec2(
+        swirlCoord * 0.46 + uSeed * 0.003,
+        ellipticalRadius * 5.5 - uSeed * 0.004
+      )
+    );
+
+    float dustFilaments =
+      broadBulge *
+      smoothstep(0.48, 0.78, swirlNoise) *
+      (1.0 - nuclearCusp * 0.36);
+
+    color +=
+      mix(
+        uEnvelopeColor,
+        uRedGiantColor,
+        0.26
+      ) *
+      dustFilaments *
+      0.38;
+
+    // Extra old stars near and through the bulge, but not a blue young-star
+    // population: keep the nucleus recognisably quiescent.
+    float denseNuclearStars = sparseStar(
+      q + vec2(3.7, -2.1),
+      88.0,
+      0.12 + 0.16 * uStellarDensity,
+      0.072,
+      181.0
+    );
+
+    float intermediateStars = sparseStar(
+      q + vec2(-4.1, 1.8),
+      46.0,
+      0.08 + 0.11 * uStellarDensity,
+      0.070,
+      223.0
+    );
+
+    color +=
+      mix(uOldStarColor, uCoreColor, 0.18) *
+      denseNuclearStars *
+      broadBulge *
+      0.86;
+
+    color +=
+      uOldStarColor *
+      intermediateStars *
+      broadBulge *
+      0.52;
+
     float edgeVignette = 1.0 - smoothstep(
       0.64,
       1.40,
@@ -363,12 +664,12 @@ const FRAGMENT_SHADER = /* glsl */ `
     );
 
     color *= mix(
-      0.56,
+      0.72,
       1.0,
       edgeVignette
     );
 
-    color = 1.0 - exp(-color * 1.28);
+    color = 1.0 - exp(-color * 1.92);
     color = pow(color, vec3(0.90));
 
     gl_FragColor = vec4(color, 1.0);
@@ -381,6 +682,10 @@ const FRAGMENT_SHADER = /* glsl */ `
 
   standalone:
     true,
+
+  imports: [
+    BlackHoleLaboratoryRender,
+  ],
 
   templateUrl:
     './quiescent-nucleus-render.html',
@@ -403,6 +708,11 @@ export class QuiescentNucleusRender
   })
   model!:
     QuiescentNucleusRenderModel;
+
+  @Input()
+  blackHoleCoreModel:
+    BlackHoleLaboratoryRenderModel | null =
+    null;
 
   @ViewChild(
     'renderHost',
@@ -456,6 +766,53 @@ export class QuiescentNucleusRender
   private listeningToWindowResize =
     false;
 
+  private animationFrameId:
+    number | null =
+    null;
+
+  private animationStartMs:
+    number | null =
+    null;
+
+  private readonly animateFrame =
+    (
+      timestamp:
+        number,
+    ) => {
+      const material =
+        this.material;
+
+      if (
+        material ===
+          null
+      ) {
+        this.animationFrameId =
+          null;
+        return;
+      }
+
+      if (
+        this.animationStartMs ===
+          null
+      ) {
+        this.animationStartMs =
+          timestamp;
+      }
+
+      material.uniforms['uTime'].value =
+        quiescentNucleusAnimationTime(
+          this.animationStartMs,
+          timestamp,
+        );
+
+      this.render();
+
+      this.animationFrameId =
+        window.requestAnimationFrame(
+          this.animateFrame,
+        );
+    };
+
   private readonly renderUnavailableSignal =
     signal(
       false,
@@ -490,6 +847,7 @@ export class QuiescentNucleusRender
       this.observeSize();
       this.resize();
       this.applyModel();
+      this.startAnimation();
     } catch {
       this.disposeThree();
       this
@@ -515,6 +873,8 @@ export class QuiescentNucleusRender
   }
 
   ngOnDestroy(): void {
+    this.stopAnimation();
+
     this
       .resizeObserver
       ?.disconnect();
@@ -604,6 +964,47 @@ export class QuiescentNucleusRender
       camera;
     this.material =
       material;
+  }
+
+  private startAnimation(): void {
+    if (
+      !isPlatformBrowser(
+        this.platformId,
+      ) ||
+      this.animationFrameId !==
+        null
+    ) {
+      return;
+    }
+
+    this.animationStartMs =
+      null;
+
+    this.animationFrameId =
+      window.requestAnimationFrame(
+        this.animateFrame,
+      );
+  }
+
+  private stopAnimation(): void {
+    if (
+      this.animationFrameId ===
+        null ||
+      !isPlatformBrowser(
+        this.platformId,
+      )
+    ) {
+      return;
+    }
+
+    window.cancelAnimationFrame(
+      this.animationFrameId,
+    );
+
+    this.animationFrameId =
+      null;
+    this.animationStartMs =
+      null;
   }
 
   private observeSize(): void {
@@ -801,6 +1202,8 @@ function createInitialUniforms():
   return {
     uAspect:
       { value: 1 },
+    uTime:
+      { value: 0 },
     uSeed:
       { value: 0 },
     uOrientation:
@@ -865,4 +1268,43 @@ function seedFloat(
     ? parsed /
       65536
     : 0;
+}
+
+
+export function quiescentNucleusAnimationTime(
+  startMs:
+    number,
+  frameMs:
+    number,
+): number {
+  return Math.max(
+    0,
+    frameMs -
+      startMs,
+  ) /
+    1000;
+}
+
+
+export function quiescentNucleusVisibleMotionPhase(
+  elapsedSeconds:
+    number,
+): Readonly<{
+  dustRadians:
+    number;
+  orbitalRadians:
+    number;
+}> {
+  const time =
+    Math.max(
+      0,
+      elapsedSeconds,
+    );
+
+  return Object.freeze({
+    dustRadians:
+      time * 0.060,
+    orbitalRadians:
+      time * 0.22,
+  });
 }

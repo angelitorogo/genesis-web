@@ -11,6 +11,10 @@ import {
 } from '../../../domain/galactic-object/galactic-object-scientific-subject';
 
 import {
+  ExtremeType,
+} from '../../../domain/galactic-object/extreme-object-type';
+
+import {
   NebulaType,
 } from '../../../domain/galactic-object/nebula-type';
 
@@ -100,12 +104,12 @@ describe(
       );
 
     it(
-      'should expose all fourteen currently implemented persistent-object visual variants',
+      'should expose all twenty-one currently implemented persistent-object visual variants',
       () => {
         expect(
           GALACTIC_OBJECT_LABORATORY_CASES,
         ).toHaveLength(
-          14,
+          21,
         );
 
         expect(
@@ -117,14 +121,14 @@ describe(
               ),
           ).size,
         ).toBe(
-          14,
+          21,
         );
       },
       30_000,
     );
 
     it(
-      'should expose the complete 4 nebula + 4 HII + 2 cluster + 3 remnant + 1 reserved-extreme inventory',
+      'should expose 4 nebula + 4 HII + 2 cluster + 3 remnant + 7 specialized extremes + 1 reserved complement',
       () => {
         const count =
           (
@@ -181,7 +185,7 @@ describe(
               .EXTREME,
           ),
         ).toBe(
-          1,
+          8,
         );
       },
       30_000,
@@ -524,6 +528,32 @@ describe(
     );
 
     it(
+      'should keep neutron-star DETECTED fixture physically unspecialized',
+      () => {
+        const detected =
+          GalacticObjectLaboratoryFixtures
+            .frames(
+              GalacticObjectLaboratoryCaseId
+                .EXTREME_NEUTRON_STAR,
+            )[0];
+
+        expect(
+          detected.card.scientificSubject,
+        ).toBeNull();
+
+        expect(
+          detected.card.render.variant,
+        ).toBeNull();
+
+        expect(
+          detected.card.facts,
+        ).toHaveLength(
+          0,
+        );
+      },
+    );
+
+    it(
       'should never leak a physical subject or numeric facts while any case is only DETECTED',
       () => {
         for (
@@ -624,6 +654,91 @@ describe(
           ArchiveGalacticObjectRenderKind
             .GLOBULAR_CLUSTER,
         );
+      },
+    );
+
+    it(
+      'should give every implemented compact extreme four knowledge states without leaking specialization before CATALOGUED',
+      () => {
+        const expected = [
+          [GalacticObjectLaboratoryCaseId.EXTREME_NEUTRON_STAR, ExtremeType.NEUTRON_STAR],
+          [GalacticObjectLaboratoryCaseId.EXTREME_PULSAR, ExtremeType.PULSAR],
+          [GalacticObjectLaboratoryCaseId.EXTREME_MILLISECOND_PULSAR, ExtremeType.MILLISECOND_PULSAR],
+          [GalacticObjectLaboratoryCaseId.EXTREME_MAGNETAR, ExtremeType.MAGNETAR],
+          [GalacticObjectLaboratoryCaseId.EXTREME_STELLAR_MASS_BLACK_HOLE, ExtremeType.STELLAR_MASS_BLACK_HOLE],
+          [GalacticObjectLaboratoryCaseId.EXTREME_INTERMEDIATE_MASS_BLACK_HOLE, ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE],
+          [GalacticObjectLaboratoryCaseId.EXTREME_SUPERMASSIVE_BLACK_HOLE, ExtremeType.SMBH],
+        ] as const;
+
+        for (
+          const [caseId, extremeType]
+          of expected
+        ) {
+          const frames =
+            GalacticObjectLaboratoryFixtures
+              .frames(
+                caseId,
+              );
+
+          expect(
+            frames,
+          ).toHaveLength(
+            4,
+          );
+
+          expect(
+            frames[0].card.render.variant,
+          ).toBeNull();
+          expect(
+            frames[0].card.render.compactVisual,
+          ).toBeNull();
+
+          expect(
+            frames[1].card.render.variant,
+          ).toBeNull();
+          expect(
+            frames[1].card.render.compactVisual,
+          ).toBeNull();
+
+          expect(
+            frames[2].card.render.variant,
+          ).toBe(
+            extremeType,
+          );
+          expect(
+            frames[3].card.render.variant,
+          ).toBe(
+            extremeType,
+          );
+
+          expect(
+            frames[2].card.render.compactVisual,
+          ).toBeTruthy();
+          expect(
+            frames[3].card.render.compactVisual,
+          ).toBeTruthy();
+
+          expect(
+            frames[0].card.facts,
+          ).toHaveLength(
+            0,
+          );
+          expect(
+            frames[1].card.facts,
+          ).toHaveLength(
+            0,
+          );
+          expect(
+            frames[2].card.facts.length,
+          ).toBeGreaterThanOrEqual(
+            2,
+          );
+          expect(
+            frames[3].card.facts.length,
+          ).toBeGreaterThanOrEqual(
+            2,
+          );
+        }
       },
     );
 
