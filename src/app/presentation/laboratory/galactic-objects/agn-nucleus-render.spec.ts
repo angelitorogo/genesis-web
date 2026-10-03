@@ -98,8 +98,8 @@ describe('AgnNucleusRender', () => {
     )?.componentInstance as BlackHoleLaboratoryRender | undefined;
 
     expect(embeddedCore).toBeTruthy();
-    expect(embeddedCore?.embedded).toBeTrue();
-    expect(embeddedCore?.quiescentMode).toBeFalse();
+    expect(embeddedCore?.embedded).toBe(true);
+    expect(embeddedCore?.quiescentMode).toBe(false);
     expect(embeddedCore?.model.type).toBe(ExtremeType.SMBH);
   });
 });

@@ -126,8 +126,8 @@ describe('QuasarNucleusRender', () => {
     )?.componentInstance as BlackHoleLaboratoryRender | undefined;
 
     expect(embeddedCore).toBeTruthy();
-    expect(embeddedCore?.embedded).toBeTrue();
-    expect(embeddedCore?.quiescentMode).toBeFalse();
+    expect(embeddedCore?.embedded).toBe(true);
+    expect(embeddedCore?.quiescentMode).toBe(false);
     expect(embeddedCore?.model.type).toBe(ExtremeType.SMBH);
 
     expect(element.textContent).toContain('DISCO HIPERLUMINOSO');
@@ -161,11 +161,25 @@ describe('QuasarNucleusRender', () => {
     expect(southJet).toBeTruthy();
     expect(core).toBeTruthy();
 
+    if (
+      northJet === null ||
+      southJet === null ||
+      core === null
+    ) {
+      throw new Error('QUASAR polar jet DOM contract is incomplete.');
+    }
+
     expect(
-      Boolean(northJet?.compareDocumentPosition(core!) & Node.DOCUMENT_POSITION_FOLLOWING),
-    ).toBeTrue();
+      Boolean(
+        northJet.compareDocumentPosition(core) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
     expect(
-      Boolean(southJet?.compareDocumentPosition(core!) & Node.DOCUMENT_POSITION_FOLLOWING),
-    ).toBeTrue();
+      Boolean(
+        southJet.compareDocumentPosition(core) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
   });
 });

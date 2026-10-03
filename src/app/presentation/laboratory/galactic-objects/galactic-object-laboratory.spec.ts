@@ -55,14 +55,14 @@ describe(
         expect(
           element.textContent,
         ).toContain(
-          '24 CASOS',
+          '27 CASOS',
         );
       },
       30_000,
     );
 
     it(
-      'should expose twenty-one persistent-object selectors and three nucleus selectors',
+      'should expose twenty-four persistent-object selectors and three nucleus selectors',
       () => {
         const fixture =
           TestBed
@@ -81,7 +81,7 @@ describe(
             '[data-testid="galactic-object-laboratory-case-button"]',
           ),
         ).toHaveLength(
-          21,
+          24,
         );
 
         expect(
@@ -148,7 +148,7 @@ describe(
             '[data-testid="galactic-object-laboratory-case-button"]',
           ),
         ).toHaveLength(
-          21,
+          24,
         );
 
         expect(
@@ -371,9 +371,18 @@ describe(
         fixture.detectChanges();
 
         expect(
-          element.textContent,
-        ).toContain(
-          'muestra H',
+          fixture.componentInstance
+            .selectedExtremeNeutronStarSampleIndex(),
+        ).toBe(
+          7,
+        );
+
+        expect(
+          fixture.componentInstance
+            .extremeNeutronStarConfirmedModel()
+            .sampleLabel,
+        ).toBe(
+          'H',
         );
       },
       30_000,
@@ -840,48 +849,6 @@ describe(
       30_000,
     );
 
-    it(
-      'should preserve the reserved extreme-object case as unresolved even at CONFIRMED',
-      () => {
-        const fixture =
-          TestBed
-            .createComponent(
-              GalacticObjectLaboratoryPage,
-            );
-
-        fixture.detectChanges();
-
-        const element =
-          fixture.nativeElement as
-            HTMLElement;
-
-        element
-          .querySelector<HTMLButtonElement>(
-            '[data-case="RESERVED_EXTREME"]',
-          )
-          ?.click();
-
-        fixture.detectChanges();
-
-        const confirmed =
-          element.querySelector(
-            '[data-state="CONFIRMED"]',
-          );
-
-        expect(
-          confirmed?.textContent,
-        ).toContain(
-          'Objeto extremo sin clasificación física',
-        );
-
-        expect(
-          confirmed?.querySelector(
-            '[data-testid="galactic-object-laboratory-facts"]',
-          ),
-        ).toBeNull();
-      },
-      30_000,
-    );
     it(
       'should show eight emission-nebula diversity controls only for the emission-nebula case',
       () => {
@@ -2347,23 +2314,33 @@ describe(
         fixture.detectChanges();
         expect(element.querySelector('[data-testid="black-hole-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('SMBH');
         expect(element.textContent).toContain('LENTE GRAVITATORIA APROXIMADA');
-        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(21);
+        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(24);
         expect(element.querySelectorAll('[data-testid="galactic-nucleus-laboratory-case-button"]')).toHaveLength(3);
       },
       30_000,
     );
 
     it(
-      'should expose the first 28.2F.5 compact-system laboratory section for neutron-star X-ray binaries',
+      'should expose the 28.2F.5 compact-system laboratory section for NS/BH X-ray binaries, microquasars and ULXs',
       () => {
         const fixture = TestBed.createComponent(GalacticObjectLaboratoryPage);
         fixture.detectChanges();
         const element = fixture.nativeElement as HTMLElement;
-        expect(element.querySelectorAll('[data-testid="xray-binary-laboratory-type-button"]')).toHaveLength(1);
+        expect(element.querySelectorAll('[data-testid="xray-binary-laboratory-type-button"]')).toHaveLength(4);
         expect(element.querySelectorAll('[data-testid="xray-binary-laboratory-sample-button"]')).toHaveLength(8);
         expect(element.querySelector('[data-testid="xray-binary-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('X_RAY_BINARY_NS');
         expect(element.textContent).toContain('Binarias X: acreción, transferencia de masa y emisión en rayos X');
-        expect(element.textContent).toContain('disco de acreción muy caliente');
+        (element.querySelector('[data-extreme-type="X_RAY_BINARY_BH"][data-testid="xray-binary-laboratory-type-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="xray-binary-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('X_RAY_BINARY_BH');
+        (element.querySelector('[data-extreme-type="MICROQUASAR"][data-testid="xray-binary-laboratory-type-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="xray-binary-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('MICROQUASAR');
+        (element.querySelector('[data-extreme-type="ULX"][data-testid="xray-binary-laboratory-type-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(element.querySelector('[data-testid="xray-binary-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('ULX');
+        expect(element.textContent).toContain('super-Eddington');
+        expect(element.textContent).toContain('disco de acreción caliente');
         expect(element.textContent).toContain('Luminosidad X ilustrativa');
         (element.querySelector('[data-sample="H"][data-testid="xray-binary-laboratory-sample-button"]') as HTMLButtonElement).click();
         fixture.detectChanges();
@@ -2393,8 +2370,73 @@ describe(
         expect(element.querySelector('[data-testid="neutron-star-laboratory-render"]')?.getAttribute('data-extreme-type')).toBe('MAGNETAR');
         expect(element.textContent).toContain('CAMPO DIPOLAR ESQUEMÁTICO');
 
-        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(21);
+        expect(element.querySelectorAll('[data-testid="galactic-object-laboratory-case-button"]')).toHaveLength(24);
         expect(element.querySelectorAll('[data-testid="galactic-nucleus-laboratory-case-button"]')).toHaveLength(3);
+      },
+      30_000,
+    );
+
+
+    it(
+      'should expose NS/BH X-ray binaries, microquasars and ULXs in Galactic Object · Extremos with four discovery stages',
+      () => {
+        const fixture = TestBed.createComponent(GalacticObjectLaboratoryPage);
+        fixture.detectChanges();
+
+        const element = fixture.nativeElement as HTMLElement;
+
+        const cases: ReadonlyArray<readonly [string, string, string]> = [
+          ['EXTREME_X_RAY_BINARY_NS', 'extreme-xray-binary-ns-diversity-button', 'X_RAY_BINARY_NS'],
+          ['EXTREME_X_RAY_BINARY_BH', 'extreme-xray-binary-bh-diversity-button', 'X_RAY_BINARY_BH'],
+          ['EXTREME_MICROQUASAR', 'extreme-microquasar-diversity-button', 'MICROQUASAR'],
+          ['EXTREME_ULX', 'extreme-ulx-diversity-button', 'ULX'],
+        ];
+
+        for (const [caseId, diversityTestId, expectedType] of cases) {
+          const button = element.querySelector(
+            `[data-testid="galactic-object-laboratory-case-button"][data-case="${caseId}"]`,
+          ) as HTMLButtonElement | null;
+
+          expect(button).toBeTruthy();
+          button?.click();
+          fixture.detectChanges();
+
+          const activeCase = element.querySelector(
+            '[data-testid="galactic-object-laboratory-active-case"]',
+          );
+          expect(activeCase?.getAttribute('data-case')).toBe(caseId);
+          expect(activeCase?.textContent).not.toContain('Agujero negro supermasivo');
+
+          expect(element.querySelectorAll(`[data-testid="${diversityTestId}"]`)).toHaveLength(8);
+
+          const stageRenders = Array.from(
+            element.querySelectorAll('[data-testid^="extreme-"][data-detail-stage]'),
+          ).filter(node => (node as HTMLElement).querySelector('[data-testid="xray-binary-laboratory-render"]'));
+
+          const stages = stageRenders.map(node => node.getAttribute('data-detail-stage'));
+          expect(stages).toEqual(['DETECTED', 'DISCOVERED', 'CATALOGUED', 'CONFIRMED']);
+
+          const renders = stageRenders
+            .map(node => node.querySelector('[data-testid="xray-binary-laboratory-render"]'))
+            .filter((node): node is Element => node !== null);
+          expect(renders).toHaveLength(4);
+          expect(renders.every(node => node.getAttribute('data-extreme-type') === expectedType)).toBe(true);
+          expect(renders.map(node => node.getAttribute('data-detail-stage'))).toEqual([
+            'DETECTED',
+            'DISCOVERED',
+            'CATALOGUED',
+            'CONFIRMED',
+          ]);
+
+          expect(renders[0]?.classList.contains('xrb-render--static')).toBe(true);
+          expect(renders[1]?.classList.contains('xrb-render--static')).toBe(true);
+          expect(renders[2]?.classList.contains('xrb-render--static')).toBe(true);
+          expect(renders[3]?.classList.contains('xrb-render--static')).toBe(false);
+
+          expect(renders[0]?.textContent).toContain('esquema de señal');
+          expect(renders[1]?.textContent).toContain('transferencia simplificada');
+          expect(renders[2]?.textContent).toContain('disco de acreción caliente');
+        }
       },
       30_000,
     );

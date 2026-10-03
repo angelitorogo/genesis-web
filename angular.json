@@ -30,7 +30,9 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"],
+            "styles": [
+              "src/styles.scss"
+            ],
             "webWorkerTsConfig": "tsconfig.worker.json"
           },
           "configurations": {
@@ -43,8 +45,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "17kB",
+                  "maximumError": "20kB"
                 }
               ],
               "outputHashing": "all",

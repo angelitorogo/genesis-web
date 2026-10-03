@@ -1,0 +1,10 @@
+GENESIS Web — restauración exacta de núcleos galácticos aprobados
+
+Fuente: snapshot completo del laboratorio posterior al cierre visual de 28.2F.4 y anterior a las regresiones de tests del 03-Oct.
+
+QUIESCENT: estado final acumulado de 28.2F.4.1 hasta 4.1o (real concentric gas motion).
+AGN: estado 28.2F.4.2b (canonical SMBH + subtle starfield).
+QUASAR: estado acumulado 28.2F.4.3 hasta 4.3e (extended hyperluminous disk + corona/wind/plumes + true bipolar perpendicular jets).
+
+Solo se restauran renderers/modelos de los tres núcleos y el modelo compartido del core SMBH.
+No se tocan otros objetos extremos ni el laboratorio general.

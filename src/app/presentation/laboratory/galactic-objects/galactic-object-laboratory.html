@@ -20,14 +20,14 @@
       </h1>
 
       <p>
-        El laboratorio expone toda la variedad física y visual existente: 21 variantes
-        persistentes con progresión de conocimiento, incluidos 7 extremos compactos ya
+        El laboratorio expone toda la variedad física y visual existente: 24 variantes
+        persistentes con progresión de conocimiento, incluidos 11 extremos compactos ya
         especializados, además de 3 estados de núcleo galáctico. No persiste nada ni altera la partida.
       </p>
     </div>
 
     <span class="object-lab__badge">
-      24 CASOS · 21 OBJETOS PERSISTENTES · 3 NÚCLEOS · READ ONLY
+      27 CASOS · 24 OBJETOS PERSISTENTES · 3 NÚCLEOS · READ ONLY
     </span>
   </header>
 
@@ -915,6 +915,114 @@
             </div>
           }
 
+          @if (isExtremeXrayBinaryNsSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-xray-binary-ns-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 binarias X con NS A-H</strong>
+              </div>
+              <div class="object-lab__buttons object-lab__diversity-buttons" aria-label="Muestras A-H de binarias X con estrella de neutrones">
+                @for (sample of extremeXrayBinaryNsSamples; track sample.sampleLabel; let index = $index) {
+                  <button
+                    type="button"
+                    data-testid="extreme-xray-binary-ns-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar binaria X con NS ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeXrayBinaryNsSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeXrayBinaryNsSampleIndex() === index"
+                    (click)="selectExtremeXrayBinaryNsSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isExtremeXrayBinaryBhSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-xray-binary-bh-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 binarias X con BH A-H</strong>
+              </div>
+              <div class="object-lab__buttons object-lab__diversity-buttons" aria-label="Muestras A-H de binarias X con agujero negro">
+                @for (sample of extremeXrayBinaryBhSamples; track sample.sampleLabel; let index = $index) {
+                  <button
+                    type="button"
+                    data-testid="extreme-xray-binary-bh-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar binaria X con BH ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeXrayBinaryBhSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeXrayBinaryBhSampleIndex() === index"
+                    (click)="selectExtremeXrayBinaryBhSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isExtremeMicroquasarSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-microquasar-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 microquásares A-H</strong>
+              </div>
+              <div class="object-lab__buttons object-lab__diversity-buttons" aria-label="Muestras A-H de microquásar">
+                @for (sample of extremeMicroquasarSamples; track sample.sampleLabel; let index = $index) {
+                  <button
+                    type="button"
+                    data-testid="extreme-microquasar-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar microquásar ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeMicroquasarSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeMicroquasarSampleIndex() === index"
+                    (click)="selectExtremeMicroquasarSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (isExtremeUlxSelected()) {
+            <div
+              class="object-lab__diversity"
+              data-testid="extreme-ulx-diversity-selector"
+            >
+              <div class="object-lab__diversity-heading">
+                <span>DIVERSIDAD PROCEDURAL</span>
+                <strong>8 ULX A-H</strong>
+              </div>
+              <div class="object-lab__buttons object-lab__diversity-buttons" aria-label="Muestras A-H de ULX">
+                @for (sample of extremeUlxSamples; track sample.sampleLabel; let index = $index) {
+                  <button
+                    type="button"
+                    data-testid="extreme-ulx-diversity-button"
+                    [attr.data-sample]="sample.sampleLabel"
+                    [attr.aria-label]="'Mostrar ULX ' + sample.sampleLabel"
+                    [attr.aria-pressed]="selectedExtremeUlxSampleIndex() === index"
+                    [class.object-lab__button--active]="selectedExtremeUlxSampleIndex() === index"
+                    (click)="selectExtremeUlxSample(index)"
+                  >
+                    {{ sample.sampleLabel }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
 
 
         </div>
@@ -1306,6 +1414,62 @@
               <app-black-hole-laboratory-render
                 [model]="extremeSupermassiveBlackHoleConfirmedModel()"
                 [embedded]="true"
+              />
+            </div>
+          } @else if (
+            isExtremeXrayBinaryNsSelected()
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-xray-binary-ns-progression-render"
+              [attr.data-detail-stage]="frame.state.shortLabel"
+            >
+              <app-xray-binary-laboratory-render
+                [model]="frame.state.shortLabel === 'DETECTED' ? extremeXrayBinaryNsDetectedModel() : (frame.state.shortLabel === 'DISCOVERED' ? extremeXrayBinaryNsDiscoveredModel() : (frame.state.shortLabel === 'CATALOGUED' ? extremeXrayBinaryNsCataloguedModel() : extremeXrayBinaryNsConfirmedModel()))"
+                [animationEnabled]="frame.state.shortLabel === 'CONFIRMED'"
+                [detailStage]="frame.state.shortLabel"
+              />
+            </div>
+          } @else if (
+            isExtremeXrayBinaryBhSelected()
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-xray-binary-bh-progression-render"
+              [attr.data-detail-stage]="frame.state.shortLabel"
+            >
+              <app-xray-binary-laboratory-render
+                [model]="frame.state.shortLabel === 'DETECTED' ? extremeXrayBinaryBhDetectedModel() : (frame.state.shortLabel === 'DISCOVERED' ? extremeXrayBinaryBhDiscoveredModel() : (frame.state.shortLabel === 'CATALOGUED' ? extremeXrayBinaryBhCataloguedModel() : extremeXrayBinaryBhConfirmedModel()))"
+                [animationEnabled]="frame.state.shortLabel === 'CONFIRMED'"
+                [detailStage]="frame.state.shortLabel"
+              />
+            </div>
+          } @else if (
+            isExtremeMicroquasarSelected()
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-microquasar-progression-render"
+              [attr.data-detail-stage]="frame.state.shortLabel"
+            >
+              <app-xray-binary-laboratory-render
+                [model]="frame.state.shortLabel === 'DETECTED' ? extremeMicroquasarDetectedModel() : (frame.state.shortLabel === 'DISCOVERED' ? extremeMicroquasarDiscoveredModel() : (frame.state.shortLabel === 'CATALOGUED' ? extremeMicroquasarCataloguedModel() : extremeMicroquasarConfirmedModel()))"
+                [animationEnabled]="frame.state.shortLabel === 'CONFIRMED'"
+                [detailStage]="frame.state.shortLabel"
+              />
+            </div>
+          } @else if (
+            isExtremeUlxSelected()
+          ) {
+            <div
+              class="object-lab__extreme-progressive-render"
+              data-testid="extreme-ulx-progression-render"
+              [attr.data-detail-stage]="frame.state.shortLabel"
+            >
+              <app-xray-binary-laboratory-render
+                [model]="frame.state.shortLabel === 'DETECTED' ? extremeUlxDetectedModel() : (frame.state.shortLabel === 'DISCOVERED' ? extremeUlxDiscoveredModel() : (frame.state.shortLabel === 'CATALOGUED' ? extremeUlxCataloguedModel() : extremeUlxConfirmedModel()))"
+                [animationEnabled]="frame.state.shortLabel === 'CONFIRMED'"
+                [detailStage]="frame.state.shortLabel"
               />
             </div>
           } @else {
@@ -1759,14 +1923,14 @@
       <p class="object-lab__eyebrow">28.2F.5 · SISTEMAS COMPACTOS</p>
       <h2 id="xray-binary-laboratory-title">Binarias X: acreción, transferencia de masa y emisión en rayos X</h2>
       <p>
-        Primera familia de 28.2F.5 para ajustar la representación visual antes de subirla al grid superior.
-        Esta sección reutiliza la lógica compacta de la estrella de neutrones y añade una estrella compañera,
-        pérdida de materia por transferencia, un disco de acreción muy caliente y una fuerte emisión en rayos X.
+        Familias visuales de 28.2F.5 para ajustar la representación antes de subirla al grid superior.
+        Esta sección cubre binarias X con estrella de neutrones, binarias X con agujero negro estelar, microquásares y ULX:
+        todos comparten transferencia de masa y acreción intensa; el microquásar añade jets relativistas bipolares y la ULX representa un régimen supercrítico con disco grueso y vientos radiativos de gran apertura.
         Es un banco visual de laboratorio: no crea descubrimientos ni altera semillas.
       </p>
     </header>
 
-    <div class="object-lab__xray-binary-type-buttons" aria-label="Clases de binarias X">
+    <div class="object-lab__xray-binary-type-buttons" aria-label="Sistemas compactos de acreción">
       @for (type of xrayBinaryLaboratoryTypes; track type) {
         <button
           type="button"
@@ -1811,17 +1975,25 @@
             <div><dt>Compañera</dt><dd>{{ compactBinary.donorLabel }}</dd></div>
             <div><dt>Masa compañera</dt><dd>{{ compactBinary.donorMassSolar }} M☉</dd></div>
             <div><dt>Radio compañera</dt><dd>{{ compactBinary.donorRadiusSolar }} R☉</dd></div>
-            <div><dt>Masa NS</dt><dd>{{ compactBinary.compactMassSolar }} M☉</dd></div>
+            <div><dt>{{ compactBinary.compactMassLabel }}</dt><dd>{{ compactBinary.compactMassSolar }} M☉</dd></div>
             <div><dt>Periodo orbital</dt><dd>{{ compactBinary.orbitalPeriodHours }} h</dd></div>
             <div><dt>Separación</dt><dd>{{ compactBinary.separationSolarRadii }} R☉</dd></div>
             <div><dt>Tasa de transferencia</dt><dd>{{ compactBinary.transferRateSolarMassPerYear.toExponential(2) }} M☉/año</dd></div>
             <div><dt>Temperatura máxima del disco</dt><dd>{{ compactBinary.diskTemperatureK.toExponential(2) }} K</dd></div>
             <div><dt>Luminosidad X ilustrativa</dt><dd>{{ compactBinary.xrayLuminosityErgS.toExponential(2) }} erg/s</dd></div>
+            @if (compactBinary.jetPowerErgS !== null) {
+              <div><dt>Potencia jet ilustrativa</dt><dd>{{ compactBinary.jetPowerErgS.toExponential(2) }} erg/s</dd></div>
+              <div><dt>Apertura jet</dt><dd>{{ compactBinary.jetOpeningDegrees }}°</dd></div>
+            }
+            @if (compactBinary.superEddingtonFactor !== null) {
+              <div><dt>Régimen super-Eddington</dt><dd>{{ compactBinary.superEddingtonFactor }} × Eddington</dd></div>
+              <div><dt>Velocidad viento ilustrativa</dt><dd>{{ compactBinary.windVelocityFractionC }} c</dd></div>
+            }
           </dl>
           <p class="object-lab__xray-binary-caveat">{{ compactBinary.caveat }}</p>
           <p class="object-lab__xray-binary-scale">
             Escala visual adaptativa: el tamaño de la compañera, la geometría del chorro de materia, el grosor del disco
-            y el halo X se exageran para lectura visual. La intención aquí es fijar la firma morfológica de una binaria X con NS.
+            y el halo X se exageran para lectura visual. La intención aquí es fijar la firma morfológica de {{ compactBinary.type === 'ULX' ? 'una ULX supercrítica con vientos radiativos' : (compactBinary.type === 'MICROQUASAR' ? 'un microquásar con jets relativistas' : (compactBinary.type === 'X_RAY_BINARY_BH' ? 'una binaria X con BH' : 'una binaria X con NS')) }}.
           </p>
         </aside>
       </div>

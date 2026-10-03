@@ -19,7 +19,51 @@ describe('28.2F.5 — XrayBinaryLaboratoryRender', () => {
     expect(render?.getAttribute('data-extreme-type')).toBe(ExtremeType.X_RAY_BINARY_NS);
     expect(element.textContent).toContain('disco de acreción caliente');
     expect(element.textContent).toContain('emisión X');
-    expect(element.querySelector('[data-testid="xray-binary-laboratory-donor-preview"]')).toBeTruthy();
+  });
+
+  it('renders an illustrative black-hole X-ray binary scene', () => {
+    TestBed.configureTestingModule({ imports: [XrayBinaryLaboratoryRender] });
+    const fixture = TestBed.createComponent(XrayBinaryLaboratoryRender);
+    fixture.componentRef.setInput('model', xrayBinaryLaboratoryModel(ExtremeType.X_RAY_BINARY_BH, 2));
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const render = element.querySelector('[data-testid="xray-binary-laboratory-render"]');
+
+    expect(render).toBeTruthy();
+    expect(render?.getAttribute('data-extreme-type')).toBe(ExtremeType.X_RAY_BINARY_BH);
+    expect(element.textContent).toContain('disco de acreción caliente');
+    expect(element.textContent).toContain('emisión X');
+  });
+
+
+  it('renders a microquasar as the black-hole X-ray binary architecture with relativistic jets', () => {
+    TestBed.configureTestingModule({ imports: [XrayBinaryLaboratoryRender] });
+    const fixture = TestBed.createComponent(XrayBinaryLaboratoryRender);
+    fixture.componentRef.setInput('model', xrayBinaryLaboratoryModel(ExtremeType.MICROQUASAR, 4));
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const render = element.querySelector('[data-testid="xray-binary-laboratory-render"]');
+
+    expect(render).toBeTruthy();
+    expect(render?.getAttribute('data-extreme-type')).toBe(ExtremeType.MICROQUASAR);
+  });
+
+
+  it('renders a ULX as a supercritical accretion system with radiative winds', () => {
+    TestBed.configureTestingModule({ imports: [XrayBinaryLaboratoryRender] });
+    const fixture = TestBed.createComponent(XrayBinaryLaboratoryRender);
+    fixture.componentRef.setInput('model', xrayBinaryLaboratoryModel(ExtremeType.ULX, 5));
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const render = element.querySelector('[data-testid="xray-binary-laboratory-render"]');
+
+    expect(render).toBeTruthy();
+    expect(render?.getAttribute('data-extreme-type')).toBe(ExtremeType.ULX);
+    expect(element.textContent).toContain('disco supercrítico');
+    expect(element.textContent).toContain('vientos radiativos');
   });
 
   it('supports a static inspection mode for later discovery-stage reuse', () => {
@@ -32,4 +76,36 @@ describe('28.2F.5 — XrayBinaryLaboratoryRender', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('.xrb-render--static')).toBeTruthy();
   });
+
+  it('exposes materially different DETECTED, DISCOVERED and CATALOGUED presentation contracts', () => {
+    TestBed.configureTestingModule({ imports: [XrayBinaryLaboratoryRender] });
+    const fixture = TestBed.createComponent(XrayBinaryLaboratoryRender);
+    fixture.componentRef.setInput('model', xrayBinaryLaboratoryModel(ExtremeType.MICROQUASAR, 0));
+
+    fixture.componentRef.setInput('detailStage', 'DETECTED');
+    fixture.componentRef.setInput('animationEnabled', false);
+    fixture.detectChanges();
+    let element = fixture.nativeElement as HTMLElement;
+    let render = element.querySelector('[data-testid="xray-binary-laboratory-render"]');
+    expect(render?.getAttribute('data-detail-stage')).toBe('DETECTED');
+    expect(element.textContent).toContain('esquema de señal');
+    expect(element.textContent).not.toContain('disco de acreción caliente');
+
+    fixture.componentRef.setInput('detailStage', 'DISCOVERED');
+    fixture.detectChanges();
+    element = fixture.nativeElement as HTMLElement;
+    render = element.querySelector('[data-testid="xray-binary-laboratory-render"]');
+    expect(render?.getAttribute('data-detail-stage')).toBe('DISCOVERED');
+    expect(element.textContent).toContain('transferencia simplificada');
+    expect(element.textContent).not.toContain('jets relativistas');
+
+    fixture.componentRef.setInput('detailStage', 'CATALOGUED');
+    fixture.detectChanges();
+    element = fixture.nativeElement as HTMLElement;
+    render = element.querySelector('[data-testid="xray-binary-laboratory-render"]');
+    expect(render?.getAttribute('data-detail-stage')).toBe('CATALOGUED');
+    expect(element.textContent).toContain('disco de acreción caliente');
+    expect(element.textContent).toContain('jets relativistas');
+  });
+
 });

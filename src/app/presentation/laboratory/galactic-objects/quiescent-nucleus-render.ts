@@ -1305,6 +1305,6 @@ export function quiescentNucleusVisibleMotionPhase(
     dustRadians:
       time * 0.060,
     orbitalRadians:
-      time * 0.22,
+      time * 0.92,
   });
 }

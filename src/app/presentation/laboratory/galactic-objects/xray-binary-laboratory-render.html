@@ -4,7 +4,11 @@
   data-testid="xray-binary-laboratory-render"
   [attr.data-extreme-type]="model.type"
   [attr.data-sample]="model.sampleLabel"
+  [attr.data-detail-stage]="detailStage"
   [class.xrb-render--static]="!animationEnabled"
+  [class.xrb-render--detected]="detailStage === 'DETECTED'"
+  [class.xrb-render--discovered]="detailStage === 'DISCOVERED'"
+  [class.xrb-render--catalogued]="detailStage === 'CATALOGUED'"
   [attr.aria-label]="sampleTitle()"
 >
   <canvas
@@ -15,16 +19,39 @@
 
   <div class="xrb-render__hud">
     <div>
-      <span>{{ model.type }}</span>
+      <span>{{ model.type }} · {{ detailStage }}</span>
       <strong>{{ model.label }} · muestra {{ model.sampleLabel }}</strong>
     </div>
   </div>
 
   <div class="xrb-render__legend">
-    <span>estrella compañera</span>
-    <span>pérdida de materia</span>
-    <span>disco de acreción caliente</span>
-    <span>emisión X</span>
+    @if (detailStage === 'DETECTED') {
+      <span>esquema de señal</span>
+      <span>donante</span>
+      <span>fuente compacta</span>
+    } @else if (detailStage === 'DISCOVERED') {
+      <span>donante identificada</span>
+      <span>transferencia simplificada</span>
+      <span>acreción básica</span>
+      @if (model.type === 'MICROQUASAR') {
+        <span>eje bipolar probable</span>
+      }
+      @if (model.type === 'ULX') {
+        <span>viento ancho probable</span>
+      }
+    } @else {
+      <span>estrella compañera</span>
+      <span>pérdida de materia</span>
+      <span>disco de acreción caliente</span>
+      <span>emisión X</span>
+      @if (model.type === 'MICROQUASAR') {
+        <span>jets relativistas</span>
+      }
+      @if (model.type === 'ULX') {
+        <span>disco supercrítico</span>
+        <span>vientos radiativos</span>
+      }
+    }
   </div>
 
   @if (renderUnavailable()) {

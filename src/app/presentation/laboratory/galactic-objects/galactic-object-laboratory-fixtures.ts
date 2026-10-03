@@ -94,6 +94,11 @@ import {
 } from './black-hole-laboratory-render-model';
 
 import {
+  xrayBinaryLaboratoryModel,
+  type XrayBinaryLaboratoryKind,
+} from './xray-binary-laboratory-render-model';
+
+import {
   OpenClusterRenderModelBuilder,
   type OpenClusterMorphologyFamily,
 } from '../../genesis-archive/open-cluster-render-model';
@@ -215,8 +220,18 @@ export const GalacticObjectLaboratoryCaseId =
     EXTREME_SUPERMASSIVE_BLACK_HOLE:
       'EXTREME_SUPERMASSIVE_BLACK_HOLE',
 
-    RESERVED_EXTREME:
-      'RESERVED_EXTREME',
+    EXTREME_X_RAY_BINARY_NS:
+      'EXTREME_X_RAY_BINARY_NS',
+
+    EXTREME_X_RAY_BINARY_BH:
+      'EXTREME_X_RAY_BINARY_BH',
+
+    EXTREME_MICROQUASAR:
+      'EXTREME_MICROQUASAR',
+
+    EXTREME_ULX:
+      'EXTREME_ULX',
+
   } as const);
 
 export type GalacticObjectLaboratoryCaseId =
@@ -1772,6 +1787,83 @@ function extremeFacts(
           value: `${model.magneticFieldTesla.toExponential(2)} T`,
         }),
       );
+    }
+
+    return Object.freeze(
+      facts,
+    );
+  }
+
+  if (
+    extremeType ===
+      ExtremeType.X_RAY_BINARY_NS ||
+    extremeType ===
+      ExtremeType.X_RAY_BINARY_BH ||
+    extremeType ===
+      ExtremeType.MICROQUASAR ||
+    extremeType ===
+      ExtremeType.ULX
+  ) {
+    const model =
+      xrayBinaryLaboratoryModel(
+        extremeType as
+          XrayBinaryLaboratoryKind,
+        0,
+      );
+
+    const facts:
+      ArchiveGalacticObjectFact[] = [
+      Object.freeze({
+        label: 'Donante',
+        value: model.donorLabel,
+      }),
+      Object.freeze({
+        label: model.compactMassLabel,
+        value: `${model.compactMassSolar} M☉`,
+      }),
+      Object.freeze({
+        label: 'Periodo orbital',
+        value: `${model.orbitalPeriodHours} h`,
+      }),
+    ];
+
+    if (
+      confirmed
+    ) {
+      facts.push(
+        Object.freeze({
+          label: 'Transferencia',
+          value: `${model.transferRateSolarMassPerYear.toExponential(2)} M☉/año`,
+        }),
+        Object.freeze({
+          label: 'Luminosidad X',
+          value: `${model.xrayLuminosityErgS.toExponential(2)} erg/s`,
+        }),
+      );
+
+      if (
+        model.jetPowerErgS !==
+          null
+      ) {
+        facts.push(
+          Object.freeze({
+            label: 'Potencia del jet',
+            value: `${model.jetPowerErgS.toExponential(2)} erg/s`,
+          }),
+        );
+      }
+
+      if (
+        model.superEddingtonFactor !==
+          null
+      ) {
+        facts.push(
+          Object.freeze({
+            label: 'Régimen super-Eddington',
+            value: `${model.superEddingtonFactor} × Eddington`,
+          }),
+        );
+      }
     }
 
     return Object.freeze(
@@ -4507,22 +4599,29 @@ function buildCasesV1():
       24n,
       'Extremo compacto SMBH mostrado fuera del bloque de estados nucleares del laboratorio.',
     ),
-    caseOf(
-      GalacticObjectLaboratoryCaseId.RESERVED_EXTREME,
-      GalacticObjectLaboratoryGroup.EXTREME,
-      'Objeto extremo reservado',
-      'Fuente extrema',
-      new GalacticObjectLocator(
-        0n,
-        0n,
-        25n,
-      ),
-      ExplorationResultKind.EXTREME_OBJECT,
-      null,
-      null,
-      null,
-      null,
-      'Complemento EXTREME_OBJECT deliberadamente sin especialización física V1.',
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_X_RAY_BINARY_NS,
+      ExtremeType.X_RAY_BINARY_NS,
+      25n,
+      'Sistema compacto distribuido · binaria X con estrella de neutrones.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_X_RAY_BINARY_BH,
+      ExtremeType.X_RAY_BINARY_BH,
+      26n,
+      'Sistema compacto distribuido · binaria X con agujero negro estelar.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_MICROQUASAR,
+      ExtremeType.MICROQUASAR,
+      27n,
+      'Sistema compacto distribuido · microquásar con jets relativistas.',
+    ),
+    extremeCase(
+      GalacticObjectLaboratoryCaseId.EXTREME_ULX,
+      ExtremeType.ULX,
+      28n,
+      'Sistema compacto distribuido · fuente ultraluminosa de rayos X (ULX).',
     ),
   ];
 }

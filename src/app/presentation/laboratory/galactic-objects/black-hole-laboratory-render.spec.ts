@@ -139,6 +139,53 @@ describe('28.2F.3 — BlackHoleLaboratoryRender', () => {
     const button=root.querySelector('[data-testid="black-hole-animation-toggle"]') as HTMLButtonElement; button.click(); fixture.detectChanges(); expect(button.textContent).toContain('REANUDAR');
   });
 
+  it('supports an explicit static embedded frame for discovery progression', () => {
+    const fixture = TestBed.createComponent(BlackHoleLaboratoryRender);
+
+    fixture.componentRef.setInput(
+      'model',
+      blackHoleLaboratoryModel(
+        ExtremeType.STELLAR_MASS_BLACK_HOLE,
+        0,
+      ),
+    );
+    fixture.componentRef.setInput(
+      'embedded',
+      true,
+    );
+    fixture.componentRef.setInput(
+      'animationEnabled',
+      false,
+    );
+    fixture.detectChanges();
+
+    const root =
+      fixture.nativeElement as
+        HTMLElement;
+
+    expect(
+      root.querySelector(
+        '[data-testid="black-hole-laboratory-render"]',
+      )?.getAttribute(
+        'data-animated',
+      ),
+    ).toBe(
+      'false',
+    );
+
+    expect(
+      root.querySelector(
+        '[data-testid="black-hole-animation-toggle"]',
+      ),
+    ).toBeNull();
+
+    expect(
+      fixture.componentInstance.paused(),
+    ).toBe(
+      true,
+    );
+  });
+
   it('supports a quiescent embedded mode that suppresses the active accretion disk geometry', () => {
     const fixture = TestBed.createComponent(BlackHoleLaboratoryRender);
     const component = fixture.componentInstance as any;
@@ -148,7 +195,30 @@ describe('28.2F.3 — BlackHoleLaboratoryRender', () => {
     fixture.componentRef.setInput('quiescentMode', true);
     fixture.detectChanges();
 
-    expect(component.diskGroup?.children.length ?? -1).toBe(0);
+    // jsdom does not guarantee that WebGLRenderer can be constructed. Build
+    // the Three.js scene directly so this test validates the quiescent branch
+    // instead of the availability of a browser WebGL context.
+    component.scene = new THREE.Scene();
+    component.camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+
+    let activeDiskCalls = 0;
+    let residualDiskCalls = 0;
+    const originalResidualDisk = component.addQuiescentResidualDisk.bind(component);
+
+    component.addAccretionDisk = () => {
+      activeDiskCalls += 1;
+    };
+    component.addQuiescentResidualDisk = (group: THREE.Group) => {
+      residualDiskCalls += 1;
+      originalResidualDisk(group);
+    };
+
+    component.rebuildScene();
+
+    expect(activeDiskCalls).toBe(0);
+    expect(residualDiskCalls).toBe(1);
+    expect(component.diskGroup).not.toBeNull();
+    expect(component.diskGroup.children.length).toBeGreaterThanOrEqual(1);
 
     const sceneChildren = component.scene?.children ?? [];
     const canonicalGroup = sceneChildren.find((child: any) => child.type === 'Group' && child !== component.diskGroup);

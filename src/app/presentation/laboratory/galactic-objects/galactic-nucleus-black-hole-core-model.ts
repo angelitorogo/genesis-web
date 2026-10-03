@@ -33,8 +33,38 @@ export function createGalacticNucleusBlackHoleCoreModel(
   const base = blackHoleLaboratoryModel(ExtremeType.SMBH, sampleIndex);
   const t = sampleIndex / 7;
 
-  const regime = regimeProfile(nucleus.state, t);
   const massSolar = source.massSolarMasses;
+
+  if (nucleus.state === GalacticNucleusState.AGN) {
+    // AGN laboratory baseline: use the 28.2F.3 SMBH visual EXACTLY as approved.
+    // Only the physical mass/Schwarzschild radius and explanatory label come
+    // from the real galactic nucleus. No additional AGN brightness/thickness
+    // remapping is applied at this stage.
+    return Object.freeze({
+      ...base,
+      type: ExtremeType.SMBH,
+      label: 'AGN · SMBH canónico',
+      massSolar,
+      schwarzschildRadiusKm: massSolar * 2.95325,
+      caveat: `${base.caveat} Núcleo AGN: representación visual canónica 28.2F.3 del SMBH real, sin capa AGN adicional.`,
+    });
+  }
+
+  if (nucleus.state === GalacticNucleusState.QUASAR) {
+    // QUASAR starts from the exact same canonical 28.2F.3 SMBH as AGN.
+    // The quasar-specific luminosity, corona and jets are presentation layers
+    // owned by QuasarNucleusRender; they are not baked into a second black hole.
+    return Object.freeze({
+      ...base,
+      type: ExtremeType.SMBH,
+      label: 'QUASAR · SMBH canónico',
+      massSolar,
+      schwarzschildRadiusKm: massSolar * 2.95325,
+      caveat: `${base.caveat} Núcleo QUASAR: SMBH canónico 28.2F.3 con capas de actividad quásar separadas.`,
+    });
+  }
+
+  const regime = regimeProfile(nucleus.state, t);
 
   return Object.freeze({
     ...base,
@@ -70,9 +100,9 @@ function regimeProfile(
     return Object.freeze({
       label: 'SMBH quiescente',
       accretionRateEddington: round(0.002 + 0.008 * t, 4),
-      diskBrightness: round(0.18 + 0.08 * t, 3),
-      diskThickness: round(0.014 + 0.010 * t, 3),
-      turbulenceStrength: round(0.05 + 0.04 * t, 3),
+      diskBrightness: round(0.10 + 0.05 * t, 3),
+      diskThickness: round(0.008 + 0.006 * t, 3),
+      turbulenceStrength: round(0.03 + 0.02 * t, 3),
       temperatureScale: 0.42,
       minimumLensingStrength: 0.92,
     });

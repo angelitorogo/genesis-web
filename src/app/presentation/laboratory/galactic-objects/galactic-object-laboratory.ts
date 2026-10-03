@@ -41,6 +41,7 @@ import {
   xrayBinaryLaboratoryModel,
   xrayBinaryLaboratorySamples,
   type XrayBinaryLaboratoryKind,
+  type XrayBinaryLaboratoryRenderModel,
 } from './xray-binary-laboratory-render-model';
 import {
   BLACK_HOLE_LABORATORY_TYPES,
@@ -694,6 +695,246 @@ export class GalacticObjectLaboratoryPage {
     return xrayBinaryLaboratoryModel(type, 0).label;
   }
 
+  readonly extremeXrayBinaryNsSamples =
+    xrayBinaryLaboratorySamples(
+      ExtremeType.X_RAY_BINARY_NS,
+    );
+
+  readonly selectedExtremeXrayBinaryNsSampleIndex =
+    signal(0);
+
+  readonly extremeXrayBinaryNsDetectedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.X_RAY_BINARY_NS,
+            this.selectedExtremeXrayBinaryNsSampleIndex(),
+          ),
+          'DETECTED',
+        ),
+    );
+
+  readonly extremeXrayBinaryNsDiscoveredModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.X_RAY_BINARY_NS,
+            this.selectedExtremeXrayBinaryNsSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeXrayBinaryNsCataloguedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.X_RAY_BINARY_NS,
+            this.selectedExtremeXrayBinaryNsSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeXrayBinaryNsConfirmedModel =
+    computed(
+      () =>
+        xrayBinaryLaboratoryModel(
+          ExtremeType.X_RAY_BINARY_NS,
+          this.selectedExtremeXrayBinaryNsSampleIndex(),
+        ),
+    );
+
+  selectExtremeXrayBinaryNsSample(sampleIndex: number): void {
+    if (!Number.isInteger(sampleIndex) || sampleIndex < 0 || sampleIndex >= this.extremeXrayBinaryNsSamples.length) {
+      throw new RangeError(`Unsupported extreme X-ray binary NS sample index: ${sampleIndex}.`);
+    }
+    this.selectedExtremeXrayBinaryNsSampleIndex.set(sampleIndex);
+  }
+
+  readonly extremeXrayBinaryBhSamples =
+    xrayBinaryLaboratorySamples(
+      ExtremeType.X_RAY_BINARY_BH,
+    );
+
+  readonly selectedExtremeXrayBinaryBhSampleIndex =
+    signal(0);
+
+  readonly extremeXrayBinaryBhDetectedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.X_RAY_BINARY_BH,
+            this.selectedExtremeXrayBinaryBhSampleIndex(),
+          ),
+          'DETECTED',
+        ),
+    );
+
+  readonly extremeXrayBinaryBhDiscoveredModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.X_RAY_BINARY_BH,
+            this.selectedExtremeXrayBinaryBhSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeXrayBinaryBhCataloguedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.X_RAY_BINARY_BH,
+            this.selectedExtremeXrayBinaryBhSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeXrayBinaryBhConfirmedModel =
+    computed(
+      () =>
+        xrayBinaryLaboratoryModel(
+          ExtremeType.X_RAY_BINARY_BH,
+          this.selectedExtremeXrayBinaryBhSampleIndex(),
+        ),
+    );
+
+  selectExtremeXrayBinaryBhSample(sampleIndex: number): void {
+    if (!Number.isInteger(sampleIndex) || sampleIndex < 0 || sampleIndex >= this.extremeXrayBinaryBhSamples.length) {
+      throw new RangeError(`Unsupported extreme X-ray binary BH sample index: ${sampleIndex}.`);
+    }
+    this.selectedExtremeXrayBinaryBhSampleIndex.set(sampleIndex);
+  }
+
+  readonly extremeMicroquasarSamples =
+    xrayBinaryLaboratorySamples(
+      ExtremeType.MICROQUASAR,
+    );
+
+  readonly selectedExtremeMicroquasarSampleIndex =
+    signal(0);
+
+  readonly extremeMicroquasarDetectedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.MICROQUASAR,
+            this.selectedExtremeMicroquasarSampleIndex(),
+          ),
+          'DETECTED',
+        ),
+    );
+
+  readonly extremeMicroquasarDiscoveredModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.MICROQUASAR,
+            this.selectedExtremeMicroquasarSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeMicroquasarCataloguedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.MICROQUASAR,
+            this.selectedExtremeMicroquasarSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeMicroquasarConfirmedModel =
+    computed(
+      () =>
+        xrayBinaryLaboratoryModel(
+          ExtremeType.MICROQUASAR,
+          this.selectedExtremeMicroquasarSampleIndex(),
+        ),
+    );
+
+  selectExtremeMicroquasarSample(sampleIndex: number): void {
+    if (!Number.isInteger(sampleIndex) || sampleIndex < 0 || sampleIndex >= this.extremeMicroquasarSamples.length) {
+      throw new RangeError(`Unsupported extreme microquasar sample index: ${sampleIndex}.`);
+    }
+    this.selectedExtremeMicroquasarSampleIndex.set(sampleIndex);
+  }
+
+  readonly extremeUlxSamples =
+    xrayBinaryLaboratorySamples(
+      ExtremeType.ULX,
+    );
+
+  readonly selectedExtremeUlxSampleIndex =
+    signal(0);
+
+  readonly extremeUlxDetectedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.ULX,
+            this.selectedExtremeUlxSampleIndex(),
+          ),
+          'DETECTED',
+        ),
+    );
+
+  readonly extremeUlxDiscoveredModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.ULX,
+            this.selectedExtremeUlxSampleIndex(),
+          ),
+          'DISCOVERED',
+        ),
+    );
+
+  readonly extremeUlxCataloguedModel =
+    computed(
+      () =>
+        xrayBinaryProgressionModel(
+          xrayBinaryLaboratoryModel(
+            ExtremeType.ULX,
+            this.selectedExtremeUlxSampleIndex(),
+          ),
+          'CATALOGUED',
+        ),
+    );
+
+  readonly extremeUlxConfirmedModel =
+    computed(
+      () =>
+        xrayBinaryLaboratoryModel(
+          ExtremeType.ULX,
+          this.selectedExtremeUlxSampleIndex(),
+        ),
+    );
+
+  selectExtremeUlxSample(sampleIndex: number): void {
+    if (!Number.isInteger(sampleIndex) || sampleIndex < 0 || sampleIndex >= this.extremeUlxSamples.length) {
+      throw new RangeError(`Unsupported extreme ULX sample index: ${sampleIndex}.`);
+    }
+    this.selectedExtremeUlxSampleIndex.set(sampleIndex);
+  }
+
   readonly objectGroups =
     Object.freeze([
       Object.freeze({
@@ -1281,13 +1522,55 @@ export class GalacticObjectLaboratoryPage {
             .EXTREME_SUPERMASSIVE_BLACK_HOLE,
     );
 
-  readonly selectedObjectCase =
+  readonly isExtremeXrayBinaryNsSelected =
     computed(
       () =>
-        GalacticObjectLaboratoryFixtures
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          'EXTREME_X_RAY_BINARY_NS',
+    );
+
+  readonly isExtremeXrayBinaryBhSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          'EXTREME_X_RAY_BINARY_BH',
+    );
+
+  readonly isExtremeMicroquasarSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          'EXTREME_MICROQUASAR',
+    );
+
+  readonly isExtremeUlxSelected =
+    computed(
+      () =>
+        this.view() ===
+          LaboratoryView.OBJECT &&
+        this.selectedObjectCaseId() ===
+          'EXTREME_ULX',
+    );
+
+  readonly selectedObjectCase =
+    computed(
+      () => {
+        const selectedId =
+          this.selectedObjectCaseId();
+
+        // Resolve through the sample-aware fixture factory. All current cases
+        // (including the 28.2F compact extremes) are now registered there, so
+        // bypassing it through the static selector-grid objects would freeze
+        // the active-case locator/description at sample A while A-H changes.
+        return GalacticObjectLaboratoryFixtures
           .caseDefinition(
-            this
-              .selectedObjectCaseId(),
+            selectedId,
             this
               .selectedEmissionNebulaSampleIndex(),
             this
@@ -1314,7 +1597,8 @@ export class GalacticObjectLaboratoryPage {
               .selectedSupernovaRemnantPlerionSampleIndex(),
             this
               .selectedSupernovaRemnantCompositeSampleIndex(),
-          ),
+          );
+      },
     );
 
   readonly objectFrames =
@@ -2212,6 +2496,58 @@ function neutronStarProgressionModel(
       base.activityRate * 0.58,
     caveat:
       'Vista DISCOVERED: representación estática con superficie compacta, corona y actividad deliberadamente simplificadas.',
+  });
+}
+
+type XrayBinaryDiscoveryProgressionStage =
+  'DETECTED' |
+  'DISCOVERED' |
+  'CATALOGUED';
+
+function xrayBinaryProgressionModel(
+  base: XrayBinaryLaboratoryRenderModel,
+  stage: XrayBinaryDiscoveryProgressionStage,
+): XrayBinaryLaboratoryRenderModel {
+  if (stage === 'CATALOGUED') {
+    return Object.freeze({
+      ...base,
+      caveat:
+        'Vista CATALOGUED: sistema compacto completamente caracterizado y estático; la animación final se reserva para CONFIRMED.',
+    });
+  }
+
+  if (stage === 'DISCOVERED') {
+    return Object.freeze({
+      ...base,
+      donorScale: base.donorScale * 0.96,
+      diskRadiusRem: base.diskRadiusRem * 0.94,
+      streamHeightRem: base.streamHeightRem * 0.92,
+      streamWidthRem: base.streamWidthRem * 0.88,
+      coronaScale: base.coronaScale * 0.84,
+      xrayOpacity: base.xrayOpacity * 0.74,
+      jetPowerErgS: base.jetPowerErgS === null ? null : Number((base.jetPowerErgS * 0.58).toPrecision(3)),
+      jetOpeningDegrees: base.jetOpeningDegrees === null ? null : Math.round((base.jetOpeningDegrees * 1.12) * 10) / 10,
+      superEddingtonFactor: base.superEddingtonFactor === null ? null : Math.round((base.superEddingtonFactor * 0.64) * 10) / 10,
+      windVelocityFractionC: base.windVelocityFractionC === null ? null : Math.round((base.windVelocityFractionC * 0.82) * 100) / 100,
+      caveat:
+        'Vista DISCOVERED: morfología compacta reconocible y estática, con transferencia de masa, acreción y emisión deliberadamente simplificadas.',
+    });
+  }
+
+  return Object.freeze({
+    ...base,
+    donorScale: base.donorScale * 0.92,
+    diskRadiusRem: base.diskRadiusRem * 0.86,
+    streamHeightRem: base.streamHeightRem * 0.84,
+    streamWidthRem: base.streamWidthRem * 0.74,
+    coronaScale: base.coronaScale * 0.70,
+    xrayOpacity: base.xrayOpacity * 0.52,
+    jetPowerErgS: base.jetPowerErgS === null ? null : Number((base.jetPowerErgS * 0.34).toPrecision(3)),
+    jetOpeningDegrees: base.jetOpeningDegrees === null ? null : Math.round((base.jetOpeningDegrees * 1.28) * 10) / 10,
+    superEddingtonFactor: base.superEddingtonFactor === null ? null : Math.round((base.superEddingtonFactor * 0.44) * 10) / 10,
+    windVelocityFractionC: base.windVelocityFractionC === null ? null : Math.round((base.windVelocityFractionC * 0.66) * 100) / 100,
+    caveat:
+      'Vista DETECTED: esquema compacto estático de alto nivel para identificar donante, objeto compacto, transferencia de masa y firma energética dominante.',
   });
 }
 

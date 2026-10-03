@@ -104,12 +104,12 @@ describe(
       );
 
     it(
-      'should expose all twenty-one currently implemented persistent-object visual variants',
+      'should expose all twenty-four currently implemented persistent-object visual variants',
       () => {
         expect(
           GALACTIC_OBJECT_LABORATORY_CASES,
         ).toHaveLength(
-          21,
+          24,
         );
 
         expect(
@@ -121,14 +121,14 @@ describe(
               ),
           ).size,
         ).toBe(
-          21,
+          24,
         );
       },
       30_000,
     );
 
     it(
-      'should expose 4 nebula + 4 HII + 2 cluster + 3 remnant + 7 specialized extremes + 1 reserved complement',
+      'should expose 4 nebula + 4 HII + 2 cluster + 3 remnant + 11 physically specialized extremes',
       () => {
         const count =
           (
@@ -185,7 +185,24 @@ describe(
               .EXTREME,
           ),
         ).toBe(
-          8,
+          11,
+        );
+
+        expect(
+          GALACTIC_OBJECT_LABORATORY_CASES
+            .filter(
+              candidate =>
+                candidate.group ===
+                GalacticObjectLaboratoryGroup
+                  .EXTREME,
+            )
+            .every(
+              candidate =>
+                candidate.extremeType !==
+                  null,
+            ),
+        ).toBe(
+          true,
         );
       },
       30_000,
@@ -742,46 +759,6 @@ describe(
       },
     );
 
-    it(
-      'should preserve the reserved EXTREME_OBJECT complement as unresolved at every displayed state',
-      () => {
-        const frames =
-          GalacticObjectLaboratoryFixtures
-            .frames(
-              GalacticObjectLaboratoryCaseId
-                .RESERVED_EXTREME,
-            );
-
-        for (
-          const frame
-          of frames
-        ) {
-          expect(
-            frame
-              .card
-              .scientificSubject,
-          ).toBeNull();
-
-          expect(
-            frame
-              .card
-              .facts,
-          ).toHaveLength(
-            0,
-          );
-
-          expect(
-            frame
-              .card
-              .render
-              .kind,
-          ).toBe(
-            ArchiveGalacticObjectRenderKind
-              .EXTREME_OBJECT,
-          );
-        }
-      },
-    );
 
     it(
       'should keep one identical render seed for the same emission nebula across all four knowledge projections',

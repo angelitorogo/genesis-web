@@ -1,6 +1,6 @@
-<section #renderHost class="black-hole-render" [class.black-hole-render--embedded]="embedded" data-testid="black-hole-laboratory-render" [attr.data-extreme-type]="model.type">
+<section #renderHost class="black-hole-render" [class.black-hole-render--embedded]="embedded" data-testid="black-hole-laboratory-render" [attr.data-extreme-type]="model.type" [attr.data-animated]="animationEnabled ? 'true' : 'false'">
   <canvas #renderCanvas class="black-hole-render__canvas" [attr.aria-label]="'Representación procedural de laboratorio: ' + model.label"></canvas>
-  <div class="black-hole-render__hud"><div><span>{{ model.type }}</span><strong>{{ model.label }} · muestra {{ model.sampleLabel }}</strong></div><button type="button" data-testid="black-hole-animation-toggle" (click)="togglePaused()">{{ paused() ? 'REANUDAR' : 'PAUSAR' }}</button></div>
+  <div class="black-hole-render__hud"><div><span>{{ model.type }}</span><strong>{{ model.label }} · muestra {{ model.sampleLabel }}</strong></div>@if (!embedded && animationEnabled) { <button type="button" data-testid="black-hole-animation-toggle" (click)="togglePaused()">{{ paused() ? 'REANUDAR' : 'PAUSAR' }}</button> }</div>
   <div class="black-hole-render__legend"><span>SOMBRA / HORIZONTE VISUAL</span><span>DISCO DE ACRECIÓN</span><span>ANILLO FOTÓNICO</span><span>LENTE GRAVITATORIA APROXIMADA</span><span>SPIN VISUAL</span></div>
   @if (renderUnavailable()) { <div class="black-hole-render__fallback">WebGL no está disponible en este entorno.</div> }
 </section>

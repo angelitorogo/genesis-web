@@ -1,4 +1,6 @@
-<section #renderHost class="neutron-render" [class.neutron-render--embedded]="embedded" data-testid="neutron-star-laboratory-render" [attr.data-extreme-type]="model.type">
+<section #renderHost class="neutron-render" [class.neutron-render--embedded]="embedded" data-testid="neutron-star-laboratory-render" [attr.data-extreme-type]="model.type"
+  [attr.data-animated]="animationEnabled ? 'true' : 'false'"
+  [attr.data-animation-state]="animationEnabled ? 'ANIMATED' : 'STATIC'">
   <canvas #renderCanvas class="neutron-render__canvas"
     [attr.aria-label]="'Representación procedural de laboratorio: ' + model.label"></canvas>
 

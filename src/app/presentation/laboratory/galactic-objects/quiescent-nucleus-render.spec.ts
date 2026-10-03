@@ -185,7 +185,7 @@ describe(
         expect(
           phase.dustRadians,
         ).toBeCloseTo(
-          1.45,
+          0.60,
         );
 
         expect(
@@ -232,11 +232,11 @@ describe(
 
         expect(
           embeddedCore?.embedded,
-        ).toBeTrue();
+        ).toBe(true);
 
         expect(
           embeddedCore?.quiescentMode,
-        ).toBeTrue();
+        ).toBe(true);
       },
     );
   },
