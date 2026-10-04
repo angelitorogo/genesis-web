@@ -8,6 +8,10 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
 import {
+  ExtremeType,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   type GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -36,6 +40,10 @@ import {
 import {
   GalaxyGenerator,
 } from '../universe/galaxy-generator';
+
+import {
+  ExtremeObjectTypeResolver,
+} from './extreme-object-type-resolver';
 
 import {
   GlobularClusterGenerator,
@@ -174,6 +182,65 @@ export class GalacticObjectScientificSubjectResolver {
         .GLOBULAR_CLUSTER;
     }
 
+    /*
+     * 28.2G.1/28.2G.3: V2 has one canonical Ground-Truth resolver for the
+     * complete distributed EXTREME_OBJECT population. Exact ExtremeType stays
+     * hidden at DISCOVERED. The action layer receives only a broad scientific
+     * subject so every real extreme can advance to CATALOGUED/CONFIRMED
+     * without leaking whether it is a pulsar, magnetar, stellar BH, XRB, etc.
+     */
+    if (
+      generationKey.generatorVersion ===
+      GeneratorVersion.V2
+    ) {
+      const extremeType =
+        ExtremeObjectTypeResolver.resolve(
+          generationKey,
+          locator,
+        );
+
+      if (
+        extremeType ===
+          ExtremeType.SUPERNOVA_REMNANT ||
+        extremeType ===
+          ExtremeType.PULSAR_WIND_NEBULA
+      ) {
+        return GalacticObjectScientificSubject
+          .SUPERNOVA_REMNANT;
+      }
+
+      if (
+        extremeType ===
+        ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE
+      ) {
+        return GalacticObjectScientificSubject
+          .INTERMEDIATE_MASS_BLACK_HOLE;
+      }
+
+      switch (extremeType) {
+        case ExtremeType.NEUTRON_STAR:
+        case ExtremeType.PULSAR:
+        case ExtremeType.MILLISECOND_PULSAR:
+        case ExtremeType.MAGNETAR:
+        case ExtremeType.STELLAR_MASS_BLACK_HOLE:
+        case ExtremeType.X_RAY_BINARY_NS:
+        case ExtremeType.X_RAY_BINARY_BH:
+        case ExtremeType.MICROQUASAR:
+        case ExtremeType.ULX:
+          return GalacticObjectScientificSubject
+            .DISTRIBUTED_EXTREME_OBJECT;
+
+        case ExtremeType.SMBH:
+        case ExtremeType.AGN:
+        case ExtremeType.QUASAR:
+          // Nuclear-only ExtremeTypes never belong to a distributed locator.
+          return null;
+      }
+
+      return null;
+    }
+
+    /* Frozen V1 routing remains byte-for-byte equivalent in behavior. */
     if (
       SupernovaRemnantGenerator
         .isSupernovaRemnantLocator(
@@ -191,8 +258,6 @@ export class GalacticObjectScientificSubjectResolver {
       return GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE;
     }
 
-    // Point 12.6 intentionally preserves a reserved EXTREME_OBJECT complement.
-    // 12.7 does not invent a physical classification for those locators.
     return null;
   }
 }

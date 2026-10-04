@@ -8,6 +8,14 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-action';
 
 import {
+  GalacticObjectScientificSubject,
+} from '../../domain/galactic-object/galactic-object-scientific-subject';
+
+import {
+  ExtremeType,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   GalacticObjectLocator,
   type ProceduralLocator,
   SystemLocator,
@@ -47,6 +55,26 @@ import {
 import {
   ObservationInstrumentCatalogV1,
 } from '../observation/observation-instrument-catalog';
+
+import {
+  GalaxySectorContentGenerator,
+} from '../sector/galaxy-sector-content-generator';
+
+import {
+  GalaxySectorGridGenerator,
+} from '../sector/galaxy-sector-grid-generator';
+
+import {
+  GalaxyGenerator,
+} from '../universe/galaxy-generator';
+
+import {
+  ExtremeObjectTypeResolver,
+} from './extreme-object-type-resolver';
+
+import {
+  GalacticObjectScientificSubjectResolver,
+} from './galactic-object-scientific-subject-resolver';
 
 import {
   SupernovaRemnantGenerator,
@@ -793,7 +821,65 @@ describe(
     );
 
     it(
-      'should expose all seventeen V1 + V2 availability rows without filtering the catalog',
+      'should characterize and confirm a real V2 distributed extreme without using a type-specific 28.3+ action',
+      () => {
+        const v2 =
+          new UniverseGenerationKey(
+            generationKey.universeSeed.copy(),
+            GeneratorVersion.V2,
+          );
+
+        const locator =
+          findV2DistributedExtremeLocator(
+            v2,
+          );
+
+        expect(
+          GalacticObjectScientificSubjectResolver.resolve(
+            v2,
+            locator,
+            DiscoveryState.DISCOVERED,
+          ),
+        ).toBe(
+          GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT,
+        );
+
+        const characterize =
+          GalacticObjectScientificActionEngine.evaluate(
+            v2,
+            session(
+              locator,
+              DiscoveryState.DISCOVERED,
+              ObservationInstrumentType.X_RAY,
+              ObservationInstrumentLevel.LEVEL_3,
+              v2,
+            ),
+            GalacticObjectScientificActionType.DISTRIBUTED_EXTREME_CHARACTERIZATION,
+          );
+
+        expect(characterize.newDiscoveryState).toBe(DiscoveryState.CATALOGUED);
+        expect(characterize.awardedDiscoveryPoints).toBe(96);
+
+        const confirm =
+          GalacticObjectScientificActionEngine.evaluate(
+            v2,
+            session(
+              locator,
+              DiscoveryState.CATALOGUED,
+              ObservationInstrumentType.RADIO,
+              ObservationInstrumentLevel.LEVEL_4,
+              v2,
+            ),
+            GalacticObjectScientificActionType.DISTRIBUTED_EXTREME_INDEPENDENT_CONFIRMATION,
+          );
+
+        expect(confirm.newDiscoveryState).toBe(DiscoveryState.CONFIRMED);
+        expect(confirm.awardedDiscoveryPoints).toBe(96);
+      },
+    );
+
+    it(
+      'should expose all nineteen V1 + V2 availability rows without filtering the catalog',
       () => {
         expect(
           GalacticObjectScientificActionEngine
@@ -806,7 +892,7 @@ describe(
                 ObservationInstrumentLevel.LEVEL_2,
               ),
             ),
-        ).toHaveLength(17);
+        ).toHaveLength(19);
       },
     );
 
@@ -866,6 +952,94 @@ describe(
     );
   },
 );
+
+function findV2DistributedExtremeLocator(
+  generationKey:
+    UniverseGenerationKey,
+): GalacticObjectLocator {
+
+  const galaxy =
+    GalaxyGenerator.generate(
+      generationKey,
+      0n,
+    );
+
+  const grid =
+    GalaxySectorGridGenerator.generate(
+      galaxy,
+    );
+
+  for (
+    let radius = 1;
+    radius <= 40;
+    radius += 1
+  ) {
+    const coordinates:
+      { readonly x: number; readonly y: number }[] =
+      [];
+
+    for (
+      let x = -radius;
+      x <= radius;
+      x += 1
+    ) {
+      coordinates.push(
+        { x, y: -radius },
+        { x, y: radius },
+      );
+    }
+
+    for (
+      let y = -radius + 1;
+      y <= radius - 1;
+      y += 1
+    ) {
+      coordinates.push(
+        { x: -radius, y },
+        { x: radius, y },
+      );
+    }
+
+    for (
+      const coordinate
+      of coordinates
+    ) {
+      const content =
+        GalaxySectorContentGenerator.generate(
+          galaxy,
+          grid.coordinatesFor(
+            grid.sectorKeyFor(
+              coordinate,
+            ),
+          ),
+        );
+
+      for (
+        const locator
+        of content.galacticObjectLocators
+      ) {
+        const type =
+          ExtremeObjectTypeResolver.resolve(
+            generationKey,
+            locator,
+          );
+
+        if (
+          type !== null &&
+          type !== ExtremeType.SUPERNOVA_REMNANT &&
+          type !== ExtremeType.PULSAR_WIND_NEBULA &&
+          type !== ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE
+        ) {
+          return locator;
+        }
+      }
+    }
+  }
+
+  throw new RangeError(
+    'Missing deterministic V2 distributed extreme fixture for 28.2G.3.',
+  );
+}
 
 function findPersistentSupernovaRemnantLocator(
   generationKey:

@@ -14,6 +14,18 @@ import {
 } from '../laboratory/galactic-objects/quasar-nucleus-render';
 
 import {
+  NeutronStarLaboratoryRender,
+} from '../laboratory/galactic-objects/neutron-star-laboratory-render';
+
+import {
+  BlackHoleLaboratoryRender,
+} from '../laboratory/galactic-objects/black-hole-laboratory-render';
+
+import {
+  XrayBinaryLaboratoryRender,
+} from '../laboratory/galactic-objects/xray-binary-laboratory-render';
+
+import {
   EmissionNebulaRender,
 } from './emission-nebula-render';
 
@@ -82,6 +94,9 @@ import {
   imports: [
     AgnNucleusRender,
     QuasarNucleusRender,
+    NeutronStarLaboratoryRender,
+    BlackHoleLaboratoryRender,
+    XrayBinaryLaboratoryRender,
     EmissionNebulaRender,
     ReflectionNebulaRender,
     DarkNebulaRender,
@@ -125,6 +140,49 @@ export class GalacticObjectProceduralRender {
         this.descriptor()
           .quasarNucleusRenderModel ??
         null,
+    );
+
+  readonly extremeRender =
+    computed(
+      () =>
+        this.descriptor()
+          .extremeRender ??
+        null,
+    );
+
+  readonly extremeAnimationEnabled =
+    computed(
+      () =>
+        this.descriptor().knowledgeLevel ===
+        ArchiveGalacticObjectKnowledgeLevel.CONFIRMED,
+    );
+
+  readonly extremeDetailStage =
+    computed<
+      'DETECTED' |
+      'DISCOVERED' |
+      'CATALOGUED' |
+      'CONFIRMED'
+    >(
+      () => {
+        switch (
+          this.descriptor().knowledgeLevel
+        ) {
+          case ArchiveGalacticObjectKnowledgeLevel.SIGNAL:
+            return 'DETECTED';
+
+          case ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED:
+            return 'DISCOVERED';
+
+          case ArchiveGalacticObjectKnowledgeLevel.CATALOGUED:
+            return 'CATALOGUED';
+
+          case ArchiveGalacticObjectKnowledgeLevel.CONFIRMED:
+            return 'CONFIRMED';
+        }
+
+        return 'DETECTED';
+      },
     );
 
   readonly renderModel =

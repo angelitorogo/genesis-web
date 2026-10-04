@@ -66,6 +66,26 @@ describe('28.2F.5 — XrayBinaryLaboratoryRender', () => {
     expect(element.textContent).toContain('vientos radiativos');
   });
 
+  it('can reuse the approved early-stage geometry in game without publishing the exact identity', () => {
+    TestBed.configureTestingModule({ imports: [XrayBinaryLaboratoryRender] });
+    const fixture = TestBed.createComponent(XrayBinaryLaboratoryRender);
+    fixture.componentRef.setInput('model', xrayBinaryLaboratoryModel(ExtremeType.X_RAY_BINARY_BH, 3));
+    fixture.componentRef.setInput('detailStage', 'DETECTED');
+    fixture.componentRef.setInput('animationEnabled', false);
+    fixture.componentRef.setInput('publishIdentity', false);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const render = element.querySelector('[data-testid="xray-binary-laboratory-render"]');
+
+    expect(render?.getAttribute('data-detail-stage')).toBe('DETECTED');
+    expect(render?.getAttribute('data-extreme-type')).toBeNull();
+    expect(element.textContent).toContain('EXTREME_SOURCE');
+    expect(element.textContent).toContain('Fuente extrema');
+    expect(element.textContent).not.toContain(ExtremeType.X_RAY_BINARY_BH);
+    expect(element.textContent).not.toContain('Binaria X con agujero negro');
+  });
+
   it('supports a static inspection mode for later discovery-stage reuse', () => {
     TestBed.configureTestingModule({ imports: [XrayBinaryLaboratoryRender] });
     const fixture = TestBed.createComponent(XrayBinaryLaboratoryRender);

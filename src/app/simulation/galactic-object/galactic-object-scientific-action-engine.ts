@@ -21,7 +21,7 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-action';
 
 import {
-  type GalacticObjectScientificSubject,
+  GalacticObjectScientificSubject,
   GalacticObjectScientificSurveyFamily,
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
@@ -121,16 +121,21 @@ export class GalacticObjectScientificActionEngine {
       GalacticObjectLocator;
 
     /*
-     * Ordinary V2 galactic objects keep their frozen V1 physical routing.
-     * The reserved nucleus is the deliberate exception: V2 owns its nuclear
-     * Ground Truth, so downgrading this locator would compare an active V2
-     * centre with the unrelated V1 QUIESCENT/active state.
+     * Ordinary V2 nebula/cluster/remnant routes keep their frozen V1 physical
+     * source. Two additive V2 routes must remain version-owned instead:
+     * - the reserved galactic nucleus;
+     * - 28.2G.3 distributed extremes, whose canonical ExtremeType assignment
+     *   exists only in V2 and must never be downgraded to the frozen V1 key.
      */
     const scientificRoutingKey =
       targetLocator instanceof
         GalacticObjectLocator &&
-      isGalacticNucleusLocator(
-        targetLocator,
+      (
+        isGalacticNucleusLocator(
+          targetLocator,
+        ) ||
+        rule.scientificSubject ===
+          GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT
       )
         ? generationKey
         : physicalKey;

@@ -15,6 +15,10 @@ import {
 } from '../../domain/exploration/exploration-sector-result';
 
 import {
+  ExtremeType,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   BodyLocator,
   CivilizationLocator,
   GalacticObjectLocator,
@@ -56,6 +60,14 @@ import {
 } from '../regeneration/procedural-target-resolver';
 
 import {
+  GalaxySectorContentGenerator,
+} from '../sector/galaxy-sector-content-generator';
+
+import {
+  GalaxySectorGridGenerator,
+} from '../sector/galaxy-sector-grid-generator';
+
+import {
   StellarMultihostFormation,
 } from '../stellar/stellar-multihost-formation';
 
@@ -70,6 +82,10 @@ import {
 import {
   GalacticObjectScientificSubjectResolver,
 } from '../galactic-object/galactic-object-scientific-subject-resolver';
+
+import {
+  ExtremeObjectTypeResolver,
+} from '../galactic-object/extreme-object-type-resolver';
 
 import {
   ExplorationSectorResultEngine,
@@ -179,6 +195,183 @@ describe(
             .unclassified,
         ).toBe(0n);
       },
+    );
+
+    it(
+      'should classify every CATALOGUED V2 distributed extreme into the canonical 28.2G.1 ExtremeType counters',
+      () => {
+        const key =
+          v2GenerationKey();
+
+        const locator =
+          findFirstPopulatedV2ExtremeLocator(
+            key,
+          );
+
+        const cases =
+          [
+            {
+              type: ExtremeType.NEUTRON_STAR,
+              counter: 'neutronStars',
+            },
+            {
+              type: ExtremeType.PULSAR,
+              counter: 'pulsars',
+            },
+            {
+              type: ExtremeType.MILLISECOND_PULSAR,
+              counter: 'millisecondPulsars',
+            },
+            {
+              type: ExtremeType.MAGNETAR,
+              counter: 'magnetars',
+            },
+            {
+              type: ExtremeType.STELLAR_MASS_BLACK_HOLE,
+              counter: 'stellarMassBlackHoles',
+            },
+            {
+              type: ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
+              counter: 'intermediateMassBlackHoles',
+            },
+            {
+              type: ExtremeType.SUPERNOVA_REMNANT,
+              counter: 'supernovaRemnants',
+            },
+            {
+              type: ExtremeType.PULSAR_WIND_NEBULA,
+              counter: 'pulsarWindNebulae',
+            },
+            {
+              type: ExtremeType.X_RAY_BINARY_NS,
+              counter: 'xRayBinariesNeutronStar',
+            },
+            {
+              type: ExtremeType.X_RAY_BINARY_BH,
+              counter: 'xRayBinariesBlackHole',
+            },
+            {
+              type: ExtremeType.MICROQUASAR,
+              counter: 'microquasars',
+            },
+            {
+              type: ExtremeType.ULX,
+              counter: 'ultraluminousXRaySources',
+            },
+          ] as const;
+
+        for (
+          const candidate
+          of cases
+        ) {
+          const resolveSpy =
+            vi.spyOn(
+              ExtremeObjectTypeResolver,
+              'resolve',
+            )
+              .mockReturnValue(
+                candidate.type,
+              );
+
+          const telemetry =
+            GalaxyExplorationTelemetryEngine
+              .build(
+                key,
+                0n,
+                DiscoveryState.CATALOGUED,
+                [
+                  new KnownDiscovery(
+                    key,
+                    new GalaxyLocator(0n),
+                    DiscoveryState.CATALOGUED,
+                  ),
+                  new KnownDiscovery(
+                    key,
+                    locator,
+                    DiscoveryState.CATALOGUED,
+                  ),
+                ],
+              );
+
+          expect(
+            telemetry.inventory.extremeObjects,
+          ).toBe(1n);
+
+          expect(
+            telemetry.breakdown.extremeObjects[
+              candidate.counter
+            ],
+          ).toBe(1n);
+
+          expect(
+            telemetry.breakdown.extremeObjects
+              .reservedUnspecialized,
+          ).toBe(0n);
+
+          expect(
+            telemetry.breakdown.extremeObjects
+              .unclassified,
+          ).toBe(0n);
+
+          resolveSpy.mockRestore();
+        }
+      },
+      30_000,
+    );
+
+    it(
+      'should keep a DISCOVERED V2 compact ExtremeType unclassified until CATALOGUED instead of reviving the reserved bucket',
+      () => {
+        const key =
+          v2GenerationKey();
+
+        const locator =
+          findFirstPopulatedV2ExtremeLocator(
+            key,
+          );
+
+        const resolveSpy =
+          vi.spyOn(
+            ExtremeObjectTypeResolver,
+            'resolve',
+          )
+            .mockReturnValue(
+              ExtremeType.MAGNETAR,
+            );
+
+        const telemetry =
+          GalaxyExplorationTelemetryEngine
+            .build(
+              key,
+              0n,
+              DiscoveryState.DISCOVERED,
+              [
+                new KnownDiscovery(
+                  key,
+                  new GalaxyLocator(0n),
+                  DiscoveryState.DISCOVERED,
+                ),
+                new KnownDiscovery(
+                  key,
+                  locator,
+                  DiscoveryState.DISCOVERED,
+                ),
+              ],
+            );
+
+        expect(
+          telemetry.breakdown.extremeObjects.magnetars,
+        ).toBe(0n);
+        expect(
+          telemetry.breakdown.extremeObjects.unclassified,
+        ).toBe(1n);
+        expect(
+          telemetry.breakdown.extremeObjects.reservedUnspecialized,
+        ).toBe(0n);
+
+        resolveSpy.mockRestore();
+      },
+      30_000,
     );
 
     it(
@@ -915,6 +1108,93 @@ describe(
 
       throw new Error(
         'Missing deterministic V2 SINGLE fixture with planets in first 256 objects.',
+      );
+    }
+
+    function findFirstPopulatedV2ExtremeLocator(
+      key:
+        UniverseGenerationKey,
+    ): GalacticObjectLocator {
+
+      const galaxy =
+        GalaxyGenerator.generate(
+          key,
+          0n,
+        );
+
+      const grid =
+        GalaxySectorGridGenerator.generate(
+          galaxy,
+        );
+
+      for (
+        let radius = 1;
+        radius <= 40;
+        radius += 1
+      ) {
+        const coordinates:
+          {
+            readonly x: number;
+            readonly y: number;
+          }[] =
+          [];
+
+        for (
+          let x = -radius;
+          x <= radius;
+          x += 1
+        ) {
+          coordinates.push(
+            { x, y: -radius },
+            { x, y: radius },
+          );
+        }
+
+        for (
+          let y = -radius + 1;
+          y <= radius - 1;
+          y += 1
+        ) {
+          coordinates.push(
+            { x: -radius, y },
+            { x: radius, y },
+          );
+        }
+
+        for (
+          const coordinate
+          of coordinates
+        ) {
+          const content =
+            GalaxySectorContentGenerator.generate(
+              galaxy,
+              grid.coordinatesFor(
+                grid.sectorKeyFor(
+                  coordinate,
+                ),
+              ),
+            );
+
+          for (
+            const locator
+            of content.galacticObjectLocators
+          ) {
+            if (
+              ExplorationSectorResultEngine
+                .resolveGalacticObjectKind(
+                  key,
+                  locator,
+                ) ===
+              ExplorationResultKind.EXTREME_OBJECT
+            ) {
+              return locator;
+            }
+          }
+        }
+      }
+
+      throw new RangeError(
+        'Missing populated V2 EXTREME_OBJECT fixture in first 40 sector rings.',
       );
     }
 

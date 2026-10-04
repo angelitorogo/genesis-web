@@ -101,7 +101,8 @@ describe(
             GalacticObjectScientificSubject,
           ).filter(subject =>
             subject !== GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE &&
-            subject !== GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS)
+            subject !== GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS &&
+            subject !== GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT)
         ) {
           const rules =
             GalacticObjectScientificActionCatalogV1

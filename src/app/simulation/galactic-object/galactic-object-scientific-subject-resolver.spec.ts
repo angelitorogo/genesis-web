@@ -7,6 +7,10 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
 import {
+  ExtremeType,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -21,6 +25,22 @@ import {
 import {
   UniverseSeed,
 } from '../../domain/universe/universe-seed';
+
+import {
+  GalaxySectorContentGenerator,
+} from '../sector/galaxy-sector-content-generator';
+
+import {
+  GalaxySectorGridGenerator,
+} from '../sector/galaxy-sector-grid-generator';
+
+import {
+  GalaxyGenerator,
+} from '../universe/galaxy-generator';
+
+import {
+  ExtremeObjectTypeResolver,
+} from './extreme-object-type-resolver';
 
 import {
   GalacticObjectScientificSubjectResolver,
@@ -174,6 +194,43 @@ describe(
     );
 
     it(
+      'should route V2 distributed extremes through one broad scientific subject without leaking the exact ExtremeType',
+      () => {
+        const v2 =
+          new UniverseGenerationKey(
+            generationKey.universeSeed.copy(),
+            GeneratorVersion.V2,
+          );
+
+        const candidate =
+          findPopulatedV2UnroutedExtremeLocator(
+            v2,
+          );
+
+        expect(candidate).not.toBeNull();
+
+        expect(
+          ExtremeObjectTypeResolver.resolve(
+            v2,
+            candidate!,
+          ),
+        ).not.toBeNull();
+
+        // 28.2G.3 exposes only a broad action-routing subject at DISCOVERED;
+        // the exact ExtremeType remains a CATALOGUED-level disclosure.
+        expect(
+          GalacticObjectScientificSubjectResolver.resolve(
+            v2,
+            candidate!,
+            DiscoveryState.DISCOVERED,
+          ),
+        ).toBe(
+          GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT,
+        );
+      },
+    );
+
+    it(
       'should resolve the reserved centre from V2 nuclear Ground Truth instead of inheriting the V1 subject',
       () => {
         const seed =
@@ -302,3 +359,95 @@ function findPersistentSupernovaRemnantLocator(
     'Missing deterministic persistent supernova-remnant test locator outside the reserved galactic nucleus object.',
   );
 }
+
+function findPopulatedV2UnroutedExtremeLocator(
+  generationKey:
+    UniverseGenerationKey,
+): GalacticObjectLocator | null {
+
+  const galaxy =
+    GalaxyGenerator.generate(
+      generationKey,
+      0n,
+    );
+
+  const grid =
+    GalaxySectorGridGenerator
+      .generate(
+        galaxy,
+      );
+
+  for (
+    let radius = 1;
+    radius <= 40;
+    radius += 1
+  ) {
+    const coordinates:
+      {
+        readonly x: number;
+        readonly y: number;
+      }[] =
+      [];
+
+    for (
+      let x = -radius;
+      x <= radius;
+      x += 1
+    ) {
+      coordinates.push(
+        { x, y: -radius },
+        { x, y: radius },
+      );
+    }
+
+    for (
+      let y = -radius + 1;
+      y <= radius - 1;
+      y += 1
+    ) {
+      coordinates.push(
+        { x: -radius, y },
+        { x: radius, y },
+      );
+    }
+
+    for (
+      const coordinate
+      of coordinates
+    ) {
+      const content =
+        GalaxySectorContentGenerator
+          .generate(
+            galaxy,
+            grid.coordinatesFor(
+              grid.sectorKeyFor(
+                coordinate,
+              ),
+            ),
+          );
+
+      for (
+        const locator
+        of content.galacticObjectLocators
+      ) {
+        const type =
+          ExtremeObjectTypeResolver.resolve(
+            generationKey,
+            locator,
+          );
+
+        if (
+          type !== null &&
+          type !== ExtremeType.SUPERNOVA_REMNANT &&
+          type !== ExtremeType.PULSAR_WIND_NEBULA &&
+          type !== ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE
+        ) {
+          return locator;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+

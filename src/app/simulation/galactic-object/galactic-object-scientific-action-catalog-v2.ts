@@ -128,13 +128,52 @@ const ACTIVE_NUCLEUS_EVIDENCE_RULES: ReadonlyMap<GalacticObjectScientificActionT
       })],
   ]);
 
+/**
+ * 28.2G.3 shared progression for the distributed extreme types introduced by
+ * 28.2G.1. These campaigns intentionally identify only the broad scientific
+ * route; the exact ExtremeType remains a CATALOGUED-level disclosure handled
+ * by Archive Genesis. Type-specific pulse/magnetic/jet actions stay reserved
+ * for phases 28.3-28.6.
+ */
+const DISTRIBUTED_EXTREME_RULES: readonly GalacticObjectScientificActionRule[] = Object.freeze([
+  new GalacticObjectScientificActionRule(
+    GalacticObjectScientificActionType.DISTRIBUTED_EXTREME_CHARACTERIZATION,
+    ObservationActionType.REOBSERVE,
+    [
+      ObservationInstrumentType.RADIO,
+      ObservationInstrumentType.X_RAY,
+      ObservationInstrumentType.GAMMA_RAY,
+    ],
+    ObservationInstrumentLevel.LEVEL_3,
+    DiscoveryState.DISCOVERED,
+    DiscoveryState.CATALOGUED,
+    null,
+    GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT,
+  ),
+  new GalacticObjectScientificActionRule(
+    GalacticObjectScientificActionType.DISTRIBUTED_EXTREME_INDEPENDENT_CONFIRMATION,
+    ObservationActionType.TEMPORAL_MONITORING,
+    [
+      ObservationInstrumentType.RADIO,
+      ObservationInstrumentType.X_RAY,
+      ObservationInstrumentType.GAMMA_RAY,
+    ],
+    ObservationInstrumentLevel.LEVEL_4,
+    DiscoveryState.CATALOGUED,
+    DiscoveryState.CONFIRMED,
+    null,
+    GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT,
+  ),
+]);
+
 const RULES: readonly GalacticObjectScientificActionRule[] = Object.freeze([
   ...GalacticObjectScientificActionCatalogV1.rules,
   ...IMBH_RULES,
   ...ACTIVE_NUCLEUS_RULES,
+  ...DISTRIBUTED_EXTREME_RULES,
 ]);
 
-if (RULES.length !== 17 ||
+if (RULES.length !== 19 ||
     new Set(RULES.map(rule => rule.actionType)).size !== RULES.length ||
     IMBH_RULES.some(rule => rule.surveyFamily !== null ||
       rule.scientificSubject !== GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE ||
@@ -145,8 +184,13 @@ if (RULES.length !== 17 ||
       rule.scientificSubject !== GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS ||
       rule.compatibleInstrumentTypes.some(type =>
         !ObservationActionCatalogV1.rule(rule.observationActionType)
+          .compatibleInstrumentTypes.includes(type))) ||
+    DISTRIBUTED_EXTREME_RULES.some(rule => rule.surveyFamily !== null ||
+      rule.scientificSubject !== GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT ||
+      rule.compatibleInstrumentTypes.some(type =>
+        !ObservationActionCatalogV1.rule(rule.observationActionType)
           .compatibleInstrumentTypes.includes(type)))) {
-  throw new Error('V2 requires thirteen frozen V1 rules plus two compatible IMBH and two active-nucleus rules.');
+  throw new Error('V2 requires thirteen frozen V1 rules plus two IMBH, two active-nucleus and two distributed-extreme rules.');
 }
 
 export class GalacticObjectScientificActionCatalogV2 {

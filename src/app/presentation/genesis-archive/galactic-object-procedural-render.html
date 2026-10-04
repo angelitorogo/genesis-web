@@ -3,8 +3,28 @@
   data-testid="galactic-object-procedural-render"
   [attr.data-render-kind]="descriptor().kind"
   [attr.data-knowledge-level]="descriptor().knowledgeLevel"
+  [attr.data-extreme-type]="descriptor().extremeType ?? null"
 >
-  @if (descriptor().kind === 'EXTREME_OBJECT' && descriptor().compactVisual; as visual) {
+  @if (extremeRender()?.neutronStarModel; as model) {
+    <app-neutron-star-laboratory-render
+      [model]="model"
+      [embedded]="true"
+      [animationEnabled]="extremeAnimationEnabled()"
+    />
+  } @else if (extremeRender()?.blackHoleModel; as model) {
+    <app-black-hole-laboratory-render
+      [model]="model"
+      [embedded]="true"
+      [animationEnabled]="extremeAnimationEnabled()"
+    />
+  } @else if (extremeRender()?.xrayBinaryModel; as model) {
+    <app-xray-binary-laboratory-render
+      [model]="model"
+      [detailStage]="extremeDetailStage()"
+      [animationEnabled]="extremeAnimationEnabled()"
+      [publishIdentity]="descriptor().extremeType !== null && descriptor().extremeType !== undefined"
+    />
+  } @else if (descriptor().kind === 'EXTREME_OBJECT' && descriptor().compactVisual; as visual) {
     <app-compact-object-scientific-render [visual]="visual" />
   } @else if (agnNucleusRenderModel(); as model) {
     <app-agn-nucleus-render

@@ -2,25 +2,25 @@
   #renderHost
   class="xrb-render"
   data-testid="xray-binary-laboratory-render"
-  [attr.data-extreme-type]="model.type"
+  [attr.data-extreme-type]="publishIdentity ? model.type : null"
   [attr.data-sample]="model.sampleLabel"
   [attr.data-detail-stage]="detailStage"
   [class.xrb-render--static]="!animationEnabled"
   [class.xrb-render--detected]="detailStage === 'DETECTED'"
   [class.xrb-render--discovered]="detailStage === 'DISCOVERED'"
   [class.xrb-render--catalogued]="detailStage === 'CATALOGUED'"
-  [attr.aria-label]="sampleTitle()"
+  [attr.aria-label]="presentationTitle()"
 >
   <canvas
     #renderCanvas
     class="xrb-render__canvas"
-    [attr.aria-label]="'Representación procedural de laboratorio: ' + sampleTitle()"
+    [attr.aria-label]="'Representación procedural: ' + presentationTitle()"
   ></canvas>
 
   <div class="xrb-render__hud">
     <div>
-      <span>{{ model.type }} · {{ detailStage }}</span>
-      <strong>{{ model.label }} · muestra {{ model.sampleLabel }}</strong>
+      <span>{{ presentationCode() }} · {{ detailStage }}</span>
+      <strong>{{ presentationTitle() }}</strong>
     </div>
   </div>
 

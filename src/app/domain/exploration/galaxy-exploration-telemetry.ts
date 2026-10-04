@@ -36,21 +36,32 @@ export interface GalaxyNebulaKnowledgeCounts {
 }
 
 export interface GalaxyExtremeObjectKnowledgeCounts {
-  readonly supernovaRemnants: bigint;
+  readonly neutronStars: bigint;
+  readonly pulsars: bigint;
+  readonly millisecondPulsars: bigint;
+  readonly magnetars: bigint;
+  readonly stellarMassBlackHoles: bigint;
   readonly intermediateMassBlackHoles: bigint;
+  readonly supernovaRemnants: bigint;
+  readonly pulsarWindNebulae: bigint;
+  readonly xRayBinariesNeutronStar: bigint;
+  readonly xRayBinariesBlackHole: bigint;
+  readonly microquasars: bigint;
+  readonly ultraluminousXRaySources: bigint;
   readonly activeGalacticNuclei: bigint;
   readonly quasars: bigint;
 
   /**
-   * Known EXTREME_OBJECT locators that deliberately belong to the model's
-   * reserved complement: the coarse family is known, but no more specific
-   * physical subject exists yet by design.
+   * Frozen V1 compatibility bucket. V2 must keep this at zero because 28.2G.1
+   * assigns a canonical ExtremeType to every populated distributed
+   * EXTREME_OBJECT locator. It remains in the domain contract so old V1
+   * universes stay reproducible, but the V2 galaxy fiche no longer renders it.
    */
   readonly reservedUnspecialized: bigint;
 
   /**
-   * Genuine unresolved/incoherent cases. This must not absorb the intentional
-   * reserved complement.
+   * Known extremes whose persisted discovery state does not yet permit the
+   * exact physical subtype (or a genuinely incoherent legacy record).
    */
   readonly unclassified: bigint;
 }
@@ -179,8 +190,18 @@ export class GalaxyExplorationTelemetry {
     }
 
     if (
-      breakdown.extremeObjects.supernovaRemnants +
+      breakdown.extremeObjects.neutronStars +
+        breakdown.extremeObjects.pulsars +
+        breakdown.extremeObjects.millisecondPulsars +
+        breakdown.extremeObjects.magnetars +
+        breakdown.extremeObjects.stellarMassBlackHoles +
         breakdown.extremeObjects.intermediateMassBlackHoles +
+        breakdown.extremeObjects.supernovaRemnants +
+        breakdown.extremeObjects.pulsarWindNebulae +
+        breakdown.extremeObjects.xRayBinariesNeutronStar +
+        breakdown.extremeObjects.xRayBinariesBlackHole +
+        breakdown.extremeObjects.microquasars +
+        breakdown.extremeObjects.ultraluminousXRaySources +
         breakdown.extremeObjects.activeGalacticNuclei +
         breakdown.extremeObjects.quasars +
         breakdown.extremeObjects.reservedUnspecialized +

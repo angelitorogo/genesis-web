@@ -61,6 +61,7 @@ export class XrayBinaryLaboratoryRender implements AfterViewInit, OnChanges, OnD
   @Input({ required: true }) model!: XrayBinaryLaboratoryRenderModel;
   @Input() animationEnabled = true;
   @Input() detailStage: XrayBinaryRenderDetailStage | string = 'CONFIRMED';
+  @Input() publishIdentity = true;
 
   readonly renderUnavailable = signal(false);
 
@@ -119,6 +120,22 @@ export class XrayBinaryLaboratoryRender implements AfterViewInit, OnChanges, OnD
 
   sampleTitle(): string {
     return `${this.model.label} · muestra ${this.model.sampleLabel}`;
+  }
+
+  presentationTitle(): string {
+    if (this.publishIdentity) {
+      return this.sampleTitle();
+    }
+
+    return this.detailStage === 'DETECTED'
+      ? `Fuente extrema · muestra ${this.model.sampleLabel}`
+      : `Sistema compacto en caracterización · muestra ${this.model.sampleLabel}`;
+  }
+
+  presentationCode(): string {
+    return this.publishIdentity
+      ? this.model.type
+      : 'EXTREME_SOURCE';
   }
 
   private initializeThree(): void {

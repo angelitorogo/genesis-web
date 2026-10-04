@@ -7,7 +7,7 @@ describe(
   'point-12.7 GalacticObject scientific subject contracts',
   () => {
     it(
-      'should preserve the five point-12 physical subjects and append the two V2 subjects',
+      'should preserve the five point-12 physical subjects and append the three V2 subjects',
       () => {
         expect(
           Object.values(
@@ -21,6 +21,7 @@ describe(
           GalacticObjectScientificSubject.SUPERNOVA_REMNANT,
           GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE,
           GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS,
+          GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT,
         ]);
       },
     );

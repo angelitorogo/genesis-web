@@ -31,6 +31,11 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
 import {
+  ExtremeType,
+  type ExtremeType as ExtremeTypeValue,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   NebulaType,
 } from '../../domain/galactic-object/nebula-type';
 
@@ -46,6 +51,10 @@ import {
 import {
   frozenPhysicalSourceKey,
 } from '../../domain/generation/frozen-physical-source-key';
+
+import {
+  GeneratorVersion,
+} from '../../domain/generation/generator-version';
 
 import {
   type UniverseGenerationKey,
@@ -120,6 +129,10 @@ import {
   GalacticObjectScientificSubjectResolver,
 } from '../galactic-object/galactic-object-scientific-subject-resolver';
 
+import {
+  ExtremeObjectTypeResolver,
+} from '../galactic-object/extreme-object-type-resolver';
+
 const SIGNED_LONG_MAX =
   (1n << 63n) -
   1n;
@@ -142,7 +155,9 @@ const ICY_MOON_MIN_ICE_01 =
  * The 26.1b detail projection is deliberately stricter:
  * - system multiplicity is resolved only from DISCOVERED onward, matching 26.2;
  * - nebular physical subtype is resolved only from CATALOGUED onward;
- * - IMBH identity is counted only from CATALOGUED onward, matching its archive card;
+ * - V2 distributed ExtremeType identity is counted only from CATALOGUED onward;
+ * - DISCOVERED V2 extremes stay knowledge-safe (the existing broad SNR route may
+ *   still be known, but exact PWN/compact-object subtype is not leaked);
  * - planetary/moon/minor-body populations are materialized only for persisted
  *   CONFIRMED systems, where those scientific body routes/layers are already open.
  *
@@ -644,6 +659,35 @@ function classifyKnownExtremeObject(
     return;
   }
 
+  /*
+   * 28.2G.2b: V2 distributed EXTREME_OBJECT Ground Truth is now complete.
+   * The exact ExtremeType is nevertheless a CATALOGUED-level disclosure. At
+   * DISCOVERED we deliberately fall through to the older scientific-subject
+   * route so the player cannot infer a compact subtype from telemetry.
+   */
+  if (
+    generationKey.generatorVersion ===
+      GeneratorVersion.V2 &&
+    state.code >=
+      DiscoveryState.CATALOGUED.code
+  ) {
+    const extremeType =
+      ExtremeObjectTypeResolver.resolve(
+        generationKey,
+        locator,
+      );
+
+    if (
+      extremeType !== null
+    ) {
+      classifyKnownV2ExtremeType(
+        extremeType,
+        breakdown,
+      );
+      return;
+    }
+  }
+
   const subject =
     GalacticObjectScientificSubjectResolver.resolve(
       generationKey,
@@ -654,6 +698,10 @@ function classifyKnownExtremeObject(
   if (
     subject === GalacticObjectScientificSubject.SUPERNOVA_REMNANT
   ) {
+    /*
+     * At DISCOVERED, a PWN is still only disclosed through the broad remnant
+     * scientific route. CATALOGUED V2 records were already split above.
+     */
     breakdown.extremeObjects.supernovaRemnants += 1n;
     return;
   }
@@ -693,21 +741,101 @@ function classifyKnownExtremeObject(
     return;
   }
 
-  /*
-   * Point 12.6/12.7 deliberately preserves a residual EXTREME_OBJECT
-   * complement for future physical specializations. At DISCOVERED or above,
-   * resolver === null is therefore not a failed classification: the coarse
-   * extreme family is known, while the specific physical subject is
-   * intentionally absent from the current model.
-   */
   if (
     subject === null
   ) {
-    breakdown.extremeObjects.reservedUnspecialized += 1n;
+    if (
+      generationKey.generatorVersion ===
+      GeneratorVersion.V2
+    ) {
+      /*
+       * V2 null here means "not yet disclosable" (DISCOVERED) or an invalid
+       * legacy locator. Ground Truth itself is no longer unspecialized.
+       */
+      breakdown.extremeObjects.unclassified += 1n;
+    } else {
+      /* Frozen V1 keeps its historical intentionally-reserved complement. */
+      breakdown.extremeObjects.reservedUnspecialized += 1n;
+    }
     return;
   }
 
   breakdown.extremeObjects.unclassified += 1n;
+}
+
+function classifyKnownV2ExtremeType(
+  extremeType:
+    ExtremeTypeValue,
+
+  breakdown:
+    MutableBreakdown,
+): void {
+
+  switch (
+    extremeType
+  ) {
+    case ExtremeType.NEUTRON_STAR:
+      breakdown.extremeObjects.neutronStars += 1n;
+      return;
+
+    case ExtremeType.PULSAR:
+      breakdown.extremeObjects.pulsars += 1n;
+      return;
+
+    case ExtremeType.MILLISECOND_PULSAR:
+      breakdown.extremeObjects.millisecondPulsars += 1n;
+      return;
+
+    case ExtremeType.MAGNETAR:
+      breakdown.extremeObjects.magnetars += 1n;
+      return;
+
+    case ExtremeType.STELLAR_MASS_BLACK_HOLE:
+      breakdown.extremeObjects.stellarMassBlackHoles += 1n;
+      return;
+
+    case ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE:
+      breakdown.extremeObjects.intermediateMassBlackHoles += 1n;
+      return;
+
+    case ExtremeType.SUPERNOVA_REMNANT:
+      breakdown.extremeObjects.supernovaRemnants += 1n;
+      return;
+
+    case ExtremeType.PULSAR_WIND_NEBULA:
+      breakdown.extremeObjects.pulsarWindNebulae += 1n;
+      return;
+
+    case ExtremeType.X_RAY_BINARY_NS:
+      breakdown.extremeObjects.xRayBinariesNeutronStar += 1n;
+      return;
+
+    case ExtremeType.X_RAY_BINARY_BH:
+      breakdown.extremeObjects.xRayBinariesBlackHole += 1n;
+      return;
+
+    case ExtremeType.MICROQUASAR:
+      breakdown.extremeObjects.microquasars += 1n;
+      return;
+
+    case ExtremeType.ULX:
+      breakdown.extremeObjects.ultraluminousXRaySources += 1n;
+      return;
+
+    case ExtremeType.SMBH:
+    case ExtremeType.AGN:
+    case ExtremeType.QUASAR:
+      throw new RangeError(
+        `Distributed EXTREME_OBJECT resolver returned nuclear-only type ${extremeType}.`,
+      );
+  }
+
+  const exhaustive: never =
+    extremeType;
+
+  throw new RangeError(
+    `Unsupported ExtremeType in galaxy telemetry: ${String(exhaustive)}.`,
+  );
 }
 
 function projectConfirmedSystemInventory(
@@ -1098,8 +1226,18 @@ type MutableBreakdown = {
     unclassified: bigint;
   };
   extremeObjects: {
-    supernovaRemnants: bigint;
+    neutronStars: bigint;
+    pulsars: bigint;
+    millisecondPulsars: bigint;
+    magnetars: bigint;
+    stellarMassBlackHoles: bigint;
     intermediateMassBlackHoles: bigint;
+    supernovaRemnants: bigint;
+    pulsarWindNebulae: bigint;
+    xRayBinariesNeutronStar: bigint;
+    xRayBinariesBlackHole: bigint;
+    microquasars: bigint;
+    ultraluminousXRaySources: bigint;
     activeGalacticNuclei: bigint;
     quasars: bigint;
     reservedUnspecialized: bigint;
@@ -1177,8 +1315,18 @@ function emptyBreakdownCounts():
       unclassified: 0n,
     },
     extremeObjects: {
-      supernovaRemnants: 0n,
+      neutronStars: 0n,
+      pulsars: 0n,
+      millisecondPulsars: 0n,
+      magnetars: 0n,
+      stellarMassBlackHoles: 0n,
       intermediateMassBlackHoles: 0n,
+      supernovaRemnants: 0n,
+      pulsarWindNebulae: 0n,
+      xRayBinariesNeutronStar: 0n,
+      xRayBinariesBlackHole: 0n,
+      microquasars: 0n,
+      ultraluminousXRaySources: 0n,
       activeGalacticNuclei: 0n,
       quasars: 0n,
       reservedUnspecialized: 0n,

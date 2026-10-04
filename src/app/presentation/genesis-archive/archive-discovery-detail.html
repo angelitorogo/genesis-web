@@ -642,6 +642,7 @@
                 data-testid="archive-galactic-object-card"
                 [attr.data-knowledge-level]="card.knowledgeLevel"
                 [attr.data-scientific-subject]="card.scientificSubject"
+                [attr.data-extreme-type]="card.extremeType ?? null"
               >
                 <app-galactic-object-procedural-render
                   [descriptor]="card.render"

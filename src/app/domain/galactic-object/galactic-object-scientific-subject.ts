@@ -30,6 +30,14 @@ export enum GalacticObjectScientificSubject {
   /** V2 reserved centre with existing AGN or QUASAR nuclear Ground Truth. */
   ACTIVE_GALACTIC_NUCLEUS =
     'ACTIVE_GALACTIC_NUCLEUS',
+
+  /**
+   * 28.2G.3 generic post-DISCOVERED route for distributed V2 extremes whose
+   * exact ExtremeType remains hidden until CATALOGUED. This is an action
+   * routing subject, not a replacement for the canonical ExtremeType.
+   */
+  DISTRIBUTED_EXTREME_OBJECT =
+    'DISTRIBUTED_EXTREME_OBJECT',
 }
 
 /**

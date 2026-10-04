@@ -776,8 +776,41 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-extreme-reserved"]',
+          ),
+        ).toBeNull();
+
+        for (
+          const testId
+          of [
+            'galaxy-detail-extreme-neutron-stars',
+            'galaxy-detail-extreme-pulsars',
+            'galaxy-detail-extreme-millisecond-pulsars',
+            'galaxy-detail-extreme-magnetars',
+            'galaxy-detail-extreme-stellar-black-holes',
+            'galaxy-detail-extreme-intermediate-black-holes',
+            'galaxy-detail-extreme-supernova-remnants',
+            'galaxy-detail-extreme-pwn',
+            'galaxy-detail-extreme-xrb-ns',
+            'galaxy-detail-extreme-xrb-bh',
+            'galaxy-detail-extreme-microquasars',
+            'galaxy-detail-extreme-ulx',
+            'galaxy-detail-extreme-agn',
+            'galaxy-detail-extreme-quasars',
+            'galaxy-detail-extreme-unclassified',
+          ]
+        ) {
+          expect(
+            element.querySelector(
+              `[data-testid="${testId}"]`,
+            ),
+          ).toBeTruthy();
+        }
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-extreme-objects-breakdown"]',
           )?.textContent,
-        ).toContain(
+        ).not.toContain(
           'SIN ESPECIALIZACIÓN FÍSICA',
         );
 

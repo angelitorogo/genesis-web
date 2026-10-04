@@ -11,6 +11,10 @@ import {
 } from '../../domain/exploration/exploration-sector-result';
 
 import {
+  ExtremeType,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   GalacticObjectLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -33,6 +37,10 @@ import {
   ArchiveGalacticObjectRenderProfile,
   type ArchiveGalacticObjectRenderDescriptor,
 } from './archive-galactic-object-card';
+
+import {
+  archiveExtremeObjectRenderModel,
+} from './archive-extreme-object-render-model';
 
 import {
   GalacticObjectProceduralRender,
@@ -1399,6 +1407,184 @@ describe(
             '.galactic-object-render__svg',
           ),
         ).toBeNull();
+      },
+    );
+
+
+    it(
+      'should route a catalogued magnetar through the canonical neutron-star renderer as a static game representation',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        const type =
+          ExtremeType.MAGNETAR;
+        const seed =
+          'GENESIS-28.2G.2-MAGNETAR';
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+            knowledgeLevel: ArchiveGalacticObjectKnowledgeLevel.CATALOGUED,
+            seed,
+            variant: type,
+            extremeType: type,
+            extremeRender: archiveExtremeObjectRenderModel(type, seed),
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+        const renderer =
+          element.querySelector(
+            '[data-testid="neutron-star-laboratory-render"]',
+          );
+
+        expect(renderer).toBeTruthy();
+        expect(renderer?.getAttribute('data-extreme-type')).toBe(type);
+        expect(renderer?.getAttribute('data-animated')).toBe('false');
+        expect(element.querySelector('.galactic-object-render__svg')).toBeNull();
+      },
+    );
+
+    it(
+      'should route a confirmed stellar-mass black hole through the approved animated black-hole renderer',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        const type =
+          ExtremeType.STELLAR_MASS_BLACK_HOLE;
+        const seed =
+          'GENESIS-28.2G.2-STELLAR-BH';
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+            knowledgeLevel: ArchiveGalacticObjectKnowledgeLevel.CONFIRMED,
+            seed,
+            variant: type,
+            extremeType: type,
+            extremeRender: archiveExtremeObjectRenderModel(type, seed),
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+        const renderer =
+          element.querySelector(
+            '[data-testid="black-hole-laboratory-render"]',
+          );
+
+        expect(renderer).toBeTruthy();
+        expect(renderer?.getAttribute('data-extreme-type')).toBe(type);
+        expect(renderer?.getAttribute('data-animated')).toBe('true');
+        expect(element.querySelector('.galactic-object-render__svg')).toBeNull();
+      },
+    );
+
+    it(
+      'should route a DETECTED X-ray binary through the approved early-stage renderer without publishing its exact identity',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        const type =
+          ExtremeType.X_RAY_BINARY_BH;
+        const seed =
+          'GENESIS-28.2G.3-XRB-DETECTED';
+        const extremeRender =
+          archiveExtremeObjectRenderModel(
+            type,
+            seed,
+            'DETECTED',
+          );
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+            knowledgeLevel: ArchiveGalacticObjectKnowledgeLevel.SIGNAL,
+            seed,
+            variant: null,
+            extremeType: null,
+            extremeRender,
+            compactVisual: extremeRender.detectedCompactVisual,
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+        const renderer =
+          element.querySelector(
+            '[data-testid="xray-binary-laboratory-render"]',
+          );
+
+        expect(renderer).toBeTruthy();
+        expect(renderer?.getAttribute('data-detail-stage')).toBe('DETECTED');
+        expect(renderer?.getAttribute('data-extreme-type')).toBeNull();
+        expect(element.textContent).toContain('esquema de señal');
+        expect(element.textContent).not.toContain(ExtremeType.X_RAY_BINARY_BH);
+        expect(element.querySelector('.galactic-object-render__svg')).toBeNull();
+      },
+    );
+
+    it(
+      'should route a confirmed microquasar through the canonical X-ray-binary renderer at CONFIRMED detail',
+      () => {
+        const fixture =
+          TestBed.createComponent(
+            GalacticObjectProceduralRender,
+          );
+
+        const type =
+          ExtremeType.MICROQUASAR;
+        const seed =
+          'GENESIS-28.2G.2-MICROQUASAR';
+
+        fixture.componentRef.setInput(
+          'descriptor',
+          Object.freeze({
+            ...descriptor,
+            kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+            knowledgeLevel: ArchiveGalacticObjectKnowledgeLevel.CONFIRMED,
+            seed,
+            variant: type,
+            extremeType: type,
+            extremeRender: archiveExtremeObjectRenderModel(type, seed),
+          }),
+        );
+
+        fixture.detectChanges();
+
+        const element =
+          fixture.nativeElement as HTMLElement;
+        const renderer =
+          element.querySelector(
+            '[data-testid="xray-binary-laboratory-render"]',
+          );
+
+        expect(renderer).toBeTruthy();
+        expect(renderer?.getAttribute('data-extreme-type')).toBe(type);
+        expect(renderer?.getAttribute('data-detail-stage')).toBe('CONFIRMED');
+        expect(element.querySelector('.galactic-object-render__svg')).toBeNull();
       },
     );
 

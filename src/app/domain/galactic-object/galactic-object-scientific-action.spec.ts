@@ -76,13 +76,13 @@ describe(
     }
 
     it(
-      'should preserve thirteen V1 action types and append four V2 actions',
+      'should preserve thirteen V1 action types and append six V2 actions',
       () => {
         expect(
           Object.values(
             GalacticObjectScientificActionType,
           ),
-        ).toHaveLength(17);
+        ).toHaveLength(19);
       },
     );
 

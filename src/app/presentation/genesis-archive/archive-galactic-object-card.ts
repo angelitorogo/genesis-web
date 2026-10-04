@@ -14,6 +14,15 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
 import {
+  ExtremeFamily,
+  ExtremeSemanticKind,
+  ExtremeType,
+  extremeTypeDefinition,
+  isGalacticNucleusExtremeType,
+  type ExtremeType as ExtremeTypeValue,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   NebulaType,
   type NebulaType as NebulaTypeValue,
 } from '../../domain/galactic-object/nebula-type';
@@ -52,6 +61,10 @@ import {
 import {
   GalacticObjectScientificSubjectResolver,
 } from '../../simulation/galactic-object/galactic-object-scientific-subject-resolver';
+
+import {
+  ExtremeObjectTypeResolver,
+} from '../../simulation/galactic-object/extreme-object-type-resolver';
 
 import {
   GlobularClusterGenerator,
@@ -104,6 +117,11 @@ import {
   compactObjectScientificVisual,
   type CompactObjectScientificVisual,
 } from './compact-object-scientific-visual';
+
+import {
+  archiveExtremeObjectRenderModel,
+  type ArchiveExtremeObjectRenderModel,
+} from './archive-extreme-object-render-model';
 
 
 export const ArchiveGalacticObjectKnowledgeLevel =
@@ -249,10 +267,9 @@ export interface ArchiveGalacticObjectRenderDescriptor {
     ArchiveGalacticObjectRenderProfile | null;
 
   /**
-   * Central active nuclei are the only point-12.8 descriptors that carry an
-   * already-built galaxy-level visual model. The fields stay absent for every
-   * ordinary GalacticObject so the existing scientific reveal contract is
-   * unchanged outside reserved galactic coordinates (0, 0).
+   * Central active nuclei keep their already-built galaxy-level visual models.
+   * Distributed 28.2G extremes use the separate `extremeRender` bridge below,
+   * so nuclear and non-nuclear renderer contracts stay explicitly separated.
    */
   readonly agnNucleusRenderModel?:
     AgnNucleusRenderModel | null;
@@ -270,6 +287,19 @@ export interface ArchiveGalacticObjectRenderDescriptor {
     BlackHoleLaboratoryRenderModel | null;
 
   readonly compactVisual?: CompactObjectScientificVisual | null;
+
+  /**
+   * 28.2G.2 distributed extreme classification. It remains absent/null while
+   * the knowledge level does not authorize publishing the exact ExtremeType.
+   */
+  readonly extremeType?: ExtremeTypeValue | null;
+
+  /**
+   * Presentation-only bridge to the approved 28.2F renderers. The A-H preset
+   * is deterministic from the stable Archive render seed and never becomes
+   * scientific Ground Truth.
+   */
+  readonly extremeRender?: ArchiveExtremeObjectRenderModel | null;
 
   readonly scale:
     number;
@@ -290,6 +320,10 @@ export interface ArchiveGalacticObjectCardModel {
 
   readonly scientificSubject:
     GalacticObjectScientificSubject | null;
+
+  /** Exact distributed 28.2G ExtremeType only when the fiche may disclose it. */
+  readonly extremeType?:
+    ExtremeTypeValue | null;
 
   readonly knowledgeLevel:
     ArchiveGalacticObjectKnowledgeLevel;
@@ -387,6 +421,18 @@ export class ArchiveGalacticObjectCardAssembler {
         coarseFamily,
       );
 
+    const distributedExtremeType =
+      generationKey.generatorVersion ===
+        GeneratorVersion.V2 &&
+      coarseFamily ===
+        GalacticObjectScientificSurveyFamily.EXTREME_OBJECT &&
+      !isGalacticNucleusLocator(locator)
+        ? ExtremeObjectTypeResolver.resolve(
+            generationKey,
+            locator,
+          )
+        : null;
+
     if (
       state.code <
       DiscoveryState.DISCOVERED.code
@@ -417,12 +463,22 @@ export class ArchiveGalacticObjectCardAssembler {
         scientificSections:
           Object.freeze([]),
         render:
-          createSignalRenderDescriptor(
-            coarseFamily,
-            renderSeed,
-            title,
-            earlyRenderProfile,
-          ),
+          distributedExtremeType !== null &&
+          supportsApprovedExtremeProgression(
+            distributedExtremeType,
+          )
+            ? createHiddenExtremeProgressionRenderDescriptor(
+                distributedExtremeType,
+                knowledgeLevel,
+                renderSeed,
+                title,
+              )
+            : createSignalRenderDescriptor(
+                coarseFamily,
+                renderSeed,
+                title,
+                earlyRenderProfile,
+              ),
       });
     }
 
@@ -435,26 +491,44 @@ export class ArchiveGalacticObjectCardAssembler {
         );
 
     if (scientificSubject === GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE) {
+      const isV2ExtremeIntegration =
+        generationKey.generatorVersion ===
+          GeneratorVersion.V2;
+
       // DISCOVERED unlocks scientific investigation, NOT the IMBH mass,
       // identity or compact diagram. CATALOGUED is the first public disclosure.
       if (state.code < DiscoveryState.CATALOGUED.code) {
-        const title = 'Objeto extremo sin clasificación física';
+        const title = isV2ExtremeIntegration
+          ? 'Fuente extrema en caracterización'
+          : 'Objeto extremo sin clasificación física';
+
         return Object.freeze({
           coarseFamily,
           scientificSubject: null,
+          ...(isV2ExtremeIntegration ? { extremeType: null } : {}),
           knowledgeLevel,
           knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
           title,
-          summary: 'La señal descubierta necesita una campaña multibanda adicional. Su naturaleza física y sus magnitudes no se muestran hasta completar la caracterización.',
+          summary: isV2ExtremeIntegration
+            ? 'La señal extrema ya está reconocida como objetivo físico real, pero su clasificación compacta exacta permanece restringida hasta completar la caracterización.'
+            : 'La señal descubierta necesita una campaña multibanda adicional. Su naturaleza física y sus magnitudes no se muestran hasta completar la caracterización.',
           nextScientificStep: 'Caracterización multibanda de fuente extrema',
           facts: Object.freeze([]),
           scientificSections: Object.freeze([]),
-          render: createIdentifiedRenderDescriptor(
-            ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
-            knowledgeLevel,
-            renderSeed,
-            title,
-          ),
+          render:
+            isV2ExtremeIntegration
+              ? createHiddenExtremeProgressionRenderDescriptor(
+                  ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
+                  knowledgeLevel,
+                  renderSeed,
+                  title,
+                )
+              : createIdentifiedRenderDescriptor(
+                  ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+                  knowledgeLevel,
+                  renderSeed,
+                  title,
+                ),
         });
       }
 
@@ -468,18 +542,51 @@ export class ArchiveGalacticObjectCardAssembler {
         fact('Radio de Schwarzschild (referencia)',
           formatQuantity(intermediate.physicalProperties.schwarzschildRadiusKm, 'km', 1)),
       ]);
-      const title = 'Agujero negro de masa intermedia';
+      const exactType = ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE;
+      const title = extremeTypeDefinition(exactType).label;
+
+      if (!isV2ExtremeIntegration) {
+        return Object.freeze({
+          coarseFamily,
+          scientificSubject,
+          knowledgeLevel,
+          knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
+          title,
+          summary: state.code >= DiscoveryState.CONFIRMED.code
+            ? 'Clasificación compacta confirmada mediante una segunda campaña del modelo. No se presupone acreción ni emisión en jets.'
+            : 'Fuente extrema catalogada mediante caracterización compacta. La clasificación requiere confirmación independiente; no se presuponen discos ni jets.',
+          nextScientificStep: state.code >= DiscoveryState.CONFIRMED.code
+            ? 'Caracterización compacta completada; acreción no determinada'
+            : 'Confirmación independiente mediante seguimiento temporal',
+          facts: massFacts,
+          scientificSections: Object.freeze([Object.freeze({
+            id: 'intermediate-black-hole', title: 'Estructura compacta',
+            summary: 'Magnitudes estimadas del modelo; no equivalen a una observación directa del horizonte.',
+            facts: massFacts,
+          })]),
+          render: Object.freeze({
+            kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+            knowledgeLevel, seed: renderSeed,
+            accessibleLabel: 'Diagrama científico de agujero negro de masa intermedia, sin disco observado',
+            variant: 'INTERMEDIATE_MASS_BLACK_HOLE', renderProfile: null,
+            compactVisual: compactObjectScientificVisual('BLACK_HOLE'),
+            scale: .5, density: .5, energy: .5, concentration: .5,
+          }),
+        });
+      }
+
       return Object.freeze({
         coarseFamily,
         scientificSubject,
+        extremeType: exactType,
         knowledgeLevel,
         knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
         title,
         summary: state.code >= DiscoveryState.CONFIRMED.code
-          ? 'Clasificación compacta confirmada mediante una segunda campaña del modelo. No se presupone acreción ni emisión en jets.'
-          : 'Fuente extrema catalogada mediante caracterización compacta. La clasificación requiere confirmación independiente; no se presuponen discos ni jets.',
+          ? 'Clasificación compacta confirmada mediante una segunda campaña del modelo. La representación procedural canónica no presupone que el disco visual sea acreción observada.'
+          : 'Fuente extrema catalogada mediante caracterización compacta. La clasificación requiere confirmación independiente; la representación procedural no añade acreción observada.',
         nextScientificStep: state.code >= DiscoveryState.CONFIRMED.code
-          ? 'Caracterización compacta completada; acreción no determinada'
+          ? 'Caracterización compacta completada; acreción observacional no determinada'
           : 'Confirmación independiente mediante seguimiento temporal',
         facts: massFacts,
         scientificSections: Object.freeze([Object.freeze({
@@ -490,16 +597,101 @@ export class ArchiveGalacticObjectCardAssembler {
         render: Object.freeze({
           kind: ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
           knowledgeLevel, seed: renderSeed,
-          accessibleLabel: 'Diagrama científico de agujero negro de masa intermedia, sin disco observado',
-          variant: 'INTERMEDIATE_MASS_BLACK_HOLE', renderProfile: null,
+          accessibleLabel: 'Representación procedural canónica de agujero negro de masa intermedia',
+          variant: exactType, renderProfile: null,
+          extremeType: exactType,
+          extremeRender: archiveExtremeObjectRenderModel(
+            exactType,
+            renderSeed,
+            detailStageForKnowledgeLevel(
+              knowledgeLevel,
+            ),
+          ),
           compactVisual: compactObjectScientificVisual('BLACK_HOLE'),
           scale: .5, density: .5, energy: .5, concentration: .5,
         }),
       });
     }
 
+    if (
+      scientificSubject ===
+        GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT
+    ) {
+      if (distributedExtremeType === null) {
+        throw new Error(
+          '28.2G.3 distributed scientific route requires a canonical ExtremeType.',
+        );
+      }
+
+      if (state.code < DiscoveryState.CATALOGUED.code) {
+        const title = 'Fuente extrema en caracterización';
+
+        return Object.freeze({
+          coarseFamily,
+          scientificSubject: null,
+          extremeType: null,
+          knowledgeLevel,
+          knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
+          title,
+          summary: 'La fuente extrema está reconocida como objetivo físico real. Su ExtremeType exacto permanece restringido hasta completar la caracterización multibanda.',
+          nextScientificStep: 'Caracterización multibanda de fuente extrema',
+          facts: Object.freeze([]),
+          scientificSections: Object.freeze([]),
+          render:
+            createHiddenExtremeProgressionRenderDescriptor(
+              distributedExtremeType,
+              knowledgeLevel,
+              renderSeed,
+              title,
+            ),
+        });
+      }
+
+      return buildDistributedExtremeCard(
+        coarseFamily,
+        distributedExtremeType,
+        knowledgeLevel,
+        renderSeed,
+        state,
+      );
+    }
+
     if (scientificSubject === null) {
-      // The rest of the reserved complement stays scientifically unresolved.
+      if (distributedExtremeType !== null) {
+        if (state.code < DiscoveryState.CATALOGUED.code) {
+          const title = 'Fuente extrema en caracterización';
+
+          return Object.freeze({
+            coarseFamily,
+            scientificSubject: null,
+            extremeType: null,
+            knowledgeLevel,
+            knowledgeLevelLabel: knowledgeLevelLabel(knowledgeLevel),
+            title,
+            summary: 'La fuente extrema es físicamente reproducible en Ground Truth. Su ExtremeType exacto permanece restringido hasta completar la caracterización científica.',
+            nextScientificStep: 'Caracterización multibanda de fuente extrema',
+            facts: Object.freeze([]),
+            scientificSections: Object.freeze([]),
+            render:
+              createHiddenExtremeProgressionRenderDescriptor(
+                distributedExtremeType,
+                knowledgeLevel,
+                renderSeed,
+                title,
+              ),
+          });
+        }
+
+        return buildDistributedExtremeCard(
+          coarseFamily,
+          distributedExtremeType,
+          knowledgeLevel,
+          renderSeed,
+          state,
+        );
+      }
+
+      // Frozen V1 keeps its historical reserved complement untouched.
       const title =
         'Objeto extremo sin clasificación física';
 
@@ -582,6 +774,7 @@ export class ArchiveGalacticObjectCardAssembler {
       knowledgeLevel,
       renderSeed,
       state,
+      distributedExtremeType,
     );
   }
 }
@@ -821,6 +1014,134 @@ function activeNucleusNextScientificStep(
   return 'Confirmar la galaxia y observar el disco de acreción desde su ficha';
 }
 
+function buildDistributedExtremeCard(
+  coarseFamily:
+    GalacticObjectScientificSurveyFamily,
+
+  extremeType:
+    ExtremeTypeValue,
+
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+
+  renderSeed:
+    string,
+
+  state:
+    DiscoveryStateValue,
+): ArchiveGalacticObjectCardModel {
+
+  const definition =
+    extremeTypeDefinition(
+      extremeType,
+    );
+
+  if (definition.galacticNucleusOnly) {
+    throw new RangeError(
+      `28.2G.2 distributed Archive card cannot render galactic-nucleus type ${extremeType}.`,
+    );
+  }
+
+  const confirmed =
+    state.code >=
+      DiscoveryState.CONFIRMED.code;
+
+  const facts:
+    readonly ArchiveGalacticObjectFact[] =
+    Object.freeze([
+      fact(
+        'Clasificación extrema',
+        definition.label,
+      ),
+      fact(
+        'Código científico',
+        definition.shortLabel,
+      ),
+      fact(
+        'Familia física',
+        extremeFamilyLabel(
+          definition.family,
+        ),
+      ),
+      fact(
+        'Régimen físico',
+        extremeSemanticKindLabel(
+          definition.semanticKind,
+        ),
+      ),
+    ]);
+
+  const renderModel =
+    archiveExtremeObjectRenderModel(
+      extremeType,
+      renderSeed,
+      detailStageForKnowledgeLevel(
+        knowledgeLevel,
+      ),
+    );
+
+  return Object.freeze({
+    coarseFamily,
+    scientificSubject: null,
+    extremeType,
+    knowledgeLevel,
+    knowledgeLevelLabel:
+      knowledgeLevelLabel(
+        knowledgeLevel,
+      ),
+    title:
+      definition.label,
+    summary:
+      confirmed
+        ? `La clasificación ${definition.label.toLocaleLowerCase('es-ES')} está confirmada. La representación procedural reutiliza el renderer canónico y no convierte parámetros visuales en magnitudes científicas observadas.`
+        : `La clasificación ${definition.label.toLocaleLowerCase('es-ES')} está catalogada. La representación procedural es canónica y no publica magnitudes físicas que todavía no tengan un generador científico propio.`,
+    nextScientificStep:
+      confirmed
+        ? 'Clasificación extrema confirmada; acciones especializadas pendientes de la siguiente etapa científica'
+        : 'Confirmación independiente de la clasificación extrema',
+    facts,
+    scientificSections:
+      Object.freeze([
+        Object.freeze({
+          id:
+            'extreme-classification',
+          title:
+            'Clasificación extrema',
+          summary:
+            'Taxonomía física confirmable del objeto. Los parámetros A-H pertenecen exclusivamente a la representación procedural y no se publican como Ground Truth.',
+          facts,
+        }),
+      ]),
+    render:
+      Object.freeze({
+        kind:
+          ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+        knowledgeLevel,
+        seed:
+          renderSeed,
+        accessibleLabel:
+          `Representación procedural canónica de ${definition.label}`,
+        variant:
+          extremeType,
+        renderProfile:
+          null,
+        extremeType,
+        extremeRender:
+          renderModel,
+        compactVisual:
+          renderModel.detectedCompactVisual,
+        scale:
+          0.5,
+        density:
+          0.5,
+        energy:
+          0.5,
+        concentration:
+          0.5,
+      }),
+  });
+}
+
 function buildPhysicalCard(
   generationKey:
     UniverseGenerationKey,
@@ -842,6 +1163,9 @@ function buildPhysicalCard(
 
   state:
     DiscoveryStateValue,
+
+  distributedExtremeType:
+    ExtremeTypeValue | null = null,
 ): ArchiveGalacticObjectCardModel {
 
   const physicalKey = frozenPhysicalSourceKey(generationKey);
@@ -1402,6 +1726,22 @@ function buildPhysicalCard(
     }
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT: {
+      const exactExtremeType =
+        generationKey.generatorVersion ===
+          GeneratorVersion.V2
+          ? distributedExtremeType ===
+              ExtremeType.PULSAR_WIND_NEBULA
+            ? ExtremeType.PULSAR_WIND_NEBULA
+            : ExtremeType.SUPERNOVA_REMNANT
+          : null;
+
+      const remnantTitle =
+        exactExtremeType === null
+          ? title
+          : extremeTypeDefinition(
+              exactExtremeType,
+            ).label;
+
       const remnant =
         SupernovaRemnantGenerator
           .generate(
@@ -1493,7 +1833,7 @@ function buildPhysicalCard(
         coarseFamily,
         scientificSubject,
         knowledgeLevel,
-        title,
+        remnantTitle,
         confirmed
           ? 'La evolución física del remanente está confirmada y su caracterización científica está completa.'
           : 'La onda de choque está caracterizada; la reconstrucción evolutiva completa permanece pendiente de confirmación.',
@@ -1510,9 +1850,18 @@ function buildPhysicalCard(
           seed:
             renderSeed,
           accessibleLabel:
-            `Representación científica de ${title}`,
+            `Representación científica de ${remnantTitle}`,
           variant:
             remnant.morphology,
+          ...(exactExtremeType === null
+            ? {}
+            : {
+                extremeType: exactExtremeType,
+                extremeRender: archiveExtremeObjectRenderModel(
+                  exactExtremeType,
+                  renderSeed,
+                ),
+              }),
           renderProfile:
             remnant.morphology ===
               SupernovaRemnantMorphology.SHELL
@@ -1554,6 +1903,7 @@ function buildPhysicalCard(
                 )
               : 0.5,
         }),
+        exactExtremeType,
       );
     }
   }
@@ -1587,11 +1937,15 @@ function physicalCard(
 
   render:
     ArchiveGalacticObjectRenderDescriptor,
+
+  extremeType:
+    ExtremeTypeValue | null = null,
 ): ArchiveGalacticObjectCardModel {
 
   return Object.freeze({
     coarseFamily,
     scientificSubject,
+    ...(extremeType === null ? {} : { extremeType }),
     knowledgeLevel,
     knowledgeLevelLabel:
       knowledgeLevelLabel(
@@ -1934,6 +2288,96 @@ function renderProfileForObservedMorphology(
     : null;
 }
 
+function supportsApprovedExtremeProgression(
+  type:
+    ExtremeTypeValue,
+): boolean {
+
+  return (
+    type !==
+      ExtremeType.SUPERNOVA_REMNANT &&
+    type !==
+      ExtremeType.PULSAR_WIND_NEBULA &&
+    !isGalacticNucleusExtremeType(
+      type,
+    )
+  );
+}
+
+function createHiddenExtremeProgressionRenderDescriptor(
+  type:
+    ExtremeTypeValue,
+
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+
+  seed:
+    string,
+
+  title:
+    string,
+): ArchiveGalacticObjectRenderDescriptor {
+
+  const renderModel =
+    archiveExtremeObjectRenderModel(
+      type,
+      seed,
+      detailStageForKnowledgeLevel(
+        knowledgeLevel,
+      ),
+    );
+
+  return Object.freeze({
+    kind:
+      ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+    knowledgeLevel,
+    seed,
+    accessibleLabel:
+      `Representación científica progresiva de fuente extrema: ${title}`,
+    variant:
+      null,
+    renderProfile:
+      null,
+    // The exact type remains presentation-internal until CATALOGUED.
+    extremeRender:
+      renderModel,
+    compactVisual:
+      renderModel.detectedCompactVisual,
+    scale:
+      0.5,
+    density:
+      0.5,
+    energy:
+      0.5,
+    concentration:
+      0.5,
+  });
+}
+
+function detailStageForKnowledgeLevel(
+  knowledgeLevel:
+    ArchiveGalacticObjectKnowledgeLevel,
+): 'DETECTED' | 'DISCOVERED' | 'CATALOGUED' | 'CONFIRMED' {
+
+  switch (
+    knowledgeLevel
+  ) {
+    case ArchiveGalacticObjectKnowledgeLevel.SIGNAL:
+      return 'DETECTED';
+
+    case ArchiveGalacticObjectKnowledgeLevel.IDENTIFIED:
+      return 'DISCOVERED';
+
+    case ArchiveGalacticObjectKnowledgeLevel.CATALOGUED:
+      return 'CATALOGUED';
+
+    case ArchiveGalacticObjectKnowledgeLevel.CONFIRMED:
+      return 'CONFIRMED';
+  }
+
+  return 'DETECTED';
+}
+
 function createSignalRenderDescriptor(
   coarseFamily:
     GalacticObjectScientificSurveyFamily,
@@ -2146,6 +2590,9 @@ function scientificSubjectLabel(
 
     case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
       return 'Núcleo galáctico activo';
+
+    case GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT:
+      return 'Objeto extremo';
   }
 }
 
@@ -2177,6 +2624,9 @@ function identifiedSummary(
 
     case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
       return 'El núcleo activo requiere caracterización multibanda antes de la confirmación independiente.';
+
+    case GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT:
+      return 'La fuente extrema requiere caracterización multibanda antes de publicar su ExtremeType exacto.';
   }
 }
 
@@ -2227,6 +2677,9 @@ function characterizationActionLabel(
 
     case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
       return 'Caracterización multibanda del núcleo galáctico activo';
+
+    case GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT:
+      return 'Caracterización multibanda de fuente extrema';
   }
 }
 
@@ -2258,6 +2711,9 @@ function confirmationActionLabel(
 
     case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
       return 'Confirmación independiente de la actividad nuclear';
+
+    case GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT:
+      return 'Confirmación independiente de la clasificación extrema';
   }
 }
 
@@ -2290,6 +2746,58 @@ function renderKindForSubject(
     case GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS:
       // Dedicated central cards intercept this subject before generic routing.
       return ArchiveGalacticObjectRenderKind.EXTREME_OBJECT;
+
+    case GalacticObjectScientificSubject.DISTRIBUTED_EXTREME_OBJECT:
+      return ArchiveGalacticObjectRenderKind.EXTREME_OBJECT;
+  }
+}
+
+function extremeFamilyLabel(
+  family:
+    (typeof ExtremeFamily)[keyof typeof ExtremeFamily],
+): string {
+
+  switch (family) {
+    case ExtremeFamily.NEUTRON_STAR:
+      return 'Estrellas compactas de neutrones';
+
+    case ExtremeFamily.BLACK_HOLE:
+      return 'Agujeros negros';
+
+    case ExtremeFamily.SUPERNOVA_REMNANT:
+      return 'Remanentes y nebulosas de viento de púlsar';
+
+    case ExtremeFamily.COMPACT_BINARY:
+      return 'Binarias compactas de alta energía';
+
+    case ExtremeFamily.HIGH_ENERGY_SOURCE:
+      return 'Fuentes de alta energía';
+
+    case ExtremeFamily.GALACTIC_NUCLEUS:
+      return 'Núcleos galácticos';
+  }
+}
+
+function extremeSemanticKindLabel(
+  semanticKind:
+    (typeof ExtremeSemanticKind)[keyof typeof ExtremeSemanticKind],
+): string {
+
+  switch (semanticKind) {
+    case ExtremeSemanticKind.COMPACT_OBJECT:
+      return 'Objeto compacto';
+
+    case ExtremeSemanticKind.ACTIVITY_REGIME:
+      return 'Régimen de actividad';
+
+    case ExtremeSemanticKind.REMNANT_STRUCTURE:
+      return 'Estructura remanente';
+
+    case ExtremeSemanticKind.BINARY_SYSTEM:
+      return 'Sistema binario compacto';
+
+    case ExtremeSemanticKind.OBSERVATIONAL_SOURCE:
+      return 'Fuente observacional de alta energía';
   }
 }
 
