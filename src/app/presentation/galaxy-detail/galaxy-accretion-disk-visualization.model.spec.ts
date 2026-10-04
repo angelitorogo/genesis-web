@@ -24,10 +24,23 @@ describe('galaxy-accretion-disk-visualization.model', () => {
   it('should build a deterministic AGN visualization from the generated galaxy nucleus', () => {
     const galaxyIndex = findGalaxyIndexByState(GalacticNucleusState.AGN);
 
-    expect(
+    const visual = createGalaxyAccretionDiskVisualization(GENERATION_KEY, galaxyIndex);
+
+    expect(visual).toEqual(
       createGalaxyAccretionDiskVisualization(GENERATION_KEY, galaxyIndex),
-    ).toEqual(
-      createGalaxyAccretionDiskVisualization(GENERATION_KEY, galaxyIndex),
+    );
+    expect(visual.kind).toBe('AGN');
+
+    if (visual.kind !== 'AGN') {
+      throw new Error('Expected AGN visual contract.');
+    }
+
+    expect(visual.blackHoleCoreModel.type).toBe('SMBH');
+    expect(visual.blackHoleCoreModel.massSolar).toBe(
+      GalaxyGenerator.generate(GENERATION_KEY, galaxyIndex)
+        .nucleus
+        ?.supermassiveBlackHole
+        ?.massSolarMasses,
     );
   });
 
@@ -43,6 +56,13 @@ describe('galaxy-accretion-disk-visualization.model', () => {
 
     expect(visual.quasarModel.diskOuterRadius).toBeGreaterThan(
       visual.quasarModel.diskInnerRadius,
+    );
+    expect(visual.blackHoleCoreModel.type).toBe('SMBH');
+    expect(visual.blackHoleCoreModel.massSolar).toBe(
+      GalaxyGenerator.generate(GENERATION_KEY, galaxyIndex)
+        .nucleus
+        ?.supermassiveBlackHole
+        ?.massSolarMasses,
     );
   });
 });

@@ -182,6 +182,17 @@
                       {{ isOriginGalaxy(entry.galaxyIndex) ? 'Galaxia natal' : 'Galaxia externa' }}
                     </strong>
                   </div>
+
+                  <div>
+                    <small>TIPO</small>
+                    <strong data-testid="discovered-galaxy-type">
+                      @if (facade.galaxyType(entry.galaxyIndex); as galaxyType) {
+                        {{ galaxyTypeLabel(galaxyType) }}
+                      } @else {
+                        Pendiente
+                      }
+                    </strong>
+                  </div>
                 </div>
 
                 <div class="dg__actions">

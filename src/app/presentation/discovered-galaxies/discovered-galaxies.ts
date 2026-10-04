@@ -21,6 +21,10 @@ import {
 } from '../../domain/observation/galaxy/external-galaxy-preliminary-information';
 
 import {
+  GalaxyType,
+} from '../../domain/universe/galaxy-type';
+
+import {
   GenesisScreen,
 } from '../../ui/layout/genesis-screen/genesis-screen';
 
@@ -169,6 +173,49 @@ export class DiscoveredGalaxiesPage
     }
 
     return 'El foco de exploración ha alcanzado esta galaxia al menos una vez.';
+  }
+
+  galaxyTypeLabel(
+    galaxyType:
+      GalaxyType,
+  ): string {
+
+    if (
+      galaxyType ===
+      GalaxyType.BARRED_SPIRAL
+    ) {
+      return 'Espiral barrada';
+    }
+
+    if (
+      galaxyType ===
+      GalaxyType.SPIRAL
+    ) {
+      return 'Espiral';
+    }
+
+    if (
+      galaxyType ===
+      GalaxyType.ELLIPTICAL
+    ) {
+      return 'Elíptica';
+    }
+
+    if (
+      galaxyType ===
+      GalaxyType.DWARF
+    ) {
+      return 'Enana';
+    }
+
+    if (
+      galaxyType ===
+      GalaxyType.IRREGULAR
+    ) {
+      return 'Irregular';
+    }
+
+    return 'No determinado';
   }
 
   morphologyLabel(

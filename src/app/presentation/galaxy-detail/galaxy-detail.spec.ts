@@ -1597,6 +1597,32 @@ describe(
           'M☉',
         );
 
+        const nucleusVisual =
+          element.querySelector(
+            '[data-testid="galaxy-detail-nucleus-visualization"]',
+          );
+
+        expect(
+          nucleusVisual,
+        ).toBeTruthy();
+        expect(
+          nucleusVisual?.getAttribute(
+            'data-nucleus-kind',
+          ),
+        ).toBe(
+          'QUIESCENT',
+        );
+        expect(
+          nucleusVisual?.querySelector(
+            '[data-testid="quiescent-nucleus-render"]',
+          ),
+        ).toBeTruthy();
+        expect(
+          nucleusVisual?.querySelector(
+            '[data-testid="quiescent-nucleus-render-canonical-smbh-core"]',
+          ),
+        ).toBeTruthy();
+
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-confirmation-lock"]',
@@ -2649,6 +2675,10 @@ describe(
       await facade.load('40');
       fixture.detectChanges();
       expect(facade.model()?.accretionDiskObservation?.observed).toBe(false);
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-nucleus"]'))
+        .toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-observation"]'))
+        .not.toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-observe-action"]'))
         .not.toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-model-facts"]'))
@@ -2658,6 +2688,8 @@ describe(
       fixture.detectChanges();
       expect(commits).toBe(1);
       expect(facade.model()?.accretionDiskObservation?.observed).toBe(true);
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-nucleus"]'))
+        .toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-evidence"]'))
         .not.toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-model-facts"]'))

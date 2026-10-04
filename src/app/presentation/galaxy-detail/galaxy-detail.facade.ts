@@ -51,6 +51,11 @@ import {
 } from './galaxy-accretion-disk-visualization.model';
 
 import {
+  createGalaxyNucleusVisualization,
+  type GalaxyNucleusVisualization,
+} from './galaxy-nucleus-visualization.model';
+
+import {
   GalaxyScientificStateTransitionAction,
   type GalaxyScientificStateTransitionActionValue,
 } from '../../simulation/exploration/galaxy-scientific-state-transition-engine';
@@ -115,6 +120,9 @@ export interface GalaxyDetailModel {
 
   readonly accretionDiskVisualization:
     GalaxyAccretionDiskVisualization | null;
+
+  readonly nucleusVisualization:
+    GalaxyNucleusVisualization | null;
 
   readonly isCurrentFocus:
     boolean;
@@ -609,6 +617,15 @@ export class GalaxyDetailFacade {
             discoveryState,
           );
 
+      const nucleusVisualization =
+        scientificProfile.nucleus?.present ===
+          true
+          ? createGalaxyNucleusVisualization(
+              generationKey,
+              galaxyIndex,
+            )
+          : null;
+
       const accretionDiskObservation = scientificProfile.nucleus?.stateName === 'AGN' ||
         scientificProfile.nucleus?.stateName === 'QUASAR'
         ? await this.accretionDiskRuntime.inspect(generationKey, galaxyIndex)
@@ -674,6 +691,7 @@ export class GalaxyDetailFacade {
               globalDiscoveryPoints,
               accretionDiskObservation,
               accretionDiskVisualization,
+              nucleusVisualization,
               isCurrentFocus,
 
               isVisitable:

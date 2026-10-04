@@ -90,6 +90,13 @@ import {
   createQuasarNucleusRenderModel,
   type QuasarNucleusRenderModel,
 } from '../laboratory/galactic-objects/quasar-nucleus-render-model';
+import {
+  createGalacticNucleusBlackHoleCoreModel,
+} from '../laboratory/galactic-objects/galactic-nucleus-black-hole-core-model';
+
+import {
+  type BlackHoleLaboratoryRenderModel,
+} from '../laboratory/galactic-objects/black-hole-laboratory-render-model';
 import { GalacticSupermassiveBlackHoleGenerator } from '../../simulation/nuclear/galactic-supermassive-black-hole-generator';
 import { IntermediateMassBlackHoleGenerator } from '../../simulation/galactic-object/intermediate-mass-black-hole-generator';
 import { CompactAccretionEngine } from '../../simulation/stellar/compact-accretion-engine';
@@ -252,6 +259,15 @@ export interface ArchiveGalacticObjectRenderDescriptor {
 
   readonly quasarNucleusRenderModel?:
     QuasarNucleusRenderModel | null;
+
+  /**
+   * Canonical 28.2F.3 SMBH core reused by real AGN/QUASAR archive scenes.
+   * It is only populated once compact physics is publicly available
+   * (CATALOGUED/CONFIRMED), so earlier knowledge levels cannot leak the
+   * black-hole mass/geometry through presentation.
+   */
+  readonly blackHoleCoreModel?:
+    BlackHoleLaboratoryRenderModel | null;
 
   readonly compactVisual?: CompactObjectScientificVisual | null;
 
@@ -650,6 +666,34 @@ function activeGalacticNucleusCardOrNull(
     ? CompactAccretionEngine.fromExistingGalaxy(galaxy)
     : null;
 
+  const agnNucleusRenderModel =
+    isQuasar
+      ? null
+      : createAgnNucleusRenderModel(
+          galaxy,
+        );
+
+  const quasarNucleusRenderModel =
+    isQuasar
+      ? createQuasarNucleusRenderModel(
+          galaxy,
+        )
+      : null;
+
+  const nucleusFamilyIndex =
+    quasarNucleusRenderModel?.familyIndex ??
+    agnNucleusRenderModel?.familyIndex ??
+    null;
+
+  const blackHoleCoreModel =
+    canShowCompactPhysics &&
+    nucleusFamilyIndex !== null
+      ? createGalacticNucleusBlackHoleCoreModel(
+          galaxy,
+          nucleusFamilyIndex,
+        )
+      : null;
+
   const render:
     ArchiveGalacticObjectRenderDescriptor =
     Object.freeze({
@@ -668,18 +712,9 @@ function activeGalacticNucleusCardOrNull(
         nucleusState.name,
       renderProfile:
         null,
-      agnNucleusRenderModel:
-        isQuasar
-          ? null
-          : createAgnNucleusRenderModel(
-              galaxy,
-            ),
-      quasarNucleusRenderModel:
-        isQuasar
-          ? createQuasarNucleusRenderModel(
-              galaxy,
-            )
-          : null,
+      agnNucleusRenderModel,
+      quasarNucleusRenderModel,
+      blackHoleCoreModel,
       compactVisual: compactHole === null ? null : compactObjectScientificVisual('BLACK_HOLE', accretion !== null, accretion?.jet !== null && accretion?.jet !== undefined),
       scale:
         1,

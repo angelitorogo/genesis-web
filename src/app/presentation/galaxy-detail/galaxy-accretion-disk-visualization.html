@@ -27,11 +27,17 @@
   <div class="gadv__stage">
     <div class="gadv__render-frame">
       @if (agnModel(); as agnModel) {
-        <app-agn-nucleus-render [model]="agnModel" />
+        <app-agn-nucleus-render
+          [model]="agnModel"
+          [blackHoleCoreModel]="blackHoleCoreModel()"
+        />
       }
 
       @if (quasarModel(); as quasarModel) {
-        <app-quasar-nucleus-render [model]="quasarModel" />
+        <app-quasar-nucleus-render
+          [model]="quasarModel"
+          [blackHoleCoreModel]="blackHoleCoreModel()"
+        />
       }
     </div>
 

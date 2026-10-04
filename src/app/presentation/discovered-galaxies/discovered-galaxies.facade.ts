@@ -14,8 +14,16 @@ import {
 } from '../../domain/generation/universe-generation-key';
 
 import {
+  type GalaxyType,
+} from '../../domain/universe/galaxy-type';
+
+import {
   GalaxyArchiveEngine,
 } from '../../simulation/exploration/galaxy-archive-engine';
+
+import {
+  GalaxyGeneralProfileEngine,
+} from '../../simulation/exploration/galaxy-general-profile-engine';
 
 import {
   GALAXY_FOCUS_RUNTIME,
@@ -116,6 +124,11 @@ export class DiscoveredGalaxiesFacade {
   private readonly stateSignal =
     signal<DiscoveredGalaxiesUiState>(
       INITIAL_STATE,
+    );
+
+  private readonly galaxyTypesByIndexSignal =
+    signal<ReadonlyMap<bigint, GalaxyType>>(
+      new Map<bigint, GalaxyType>(),
     );
 
   private readonly focusPendingGalaxyIndexSignal =
@@ -233,6 +246,19 @@ export class DiscoveredGalaxiesFacade {
       },
     );
 
+  galaxyType(
+    galaxyIndex:
+      bigint,
+  ): GalaxyType | null {
+
+    return this
+      .galaxyTypesByIndexSignal()
+      .get(
+        galaxyIndex,
+      ) ??
+      null;
+  }
+
   async refresh():
     Promise<void> {
 
@@ -269,6 +295,12 @@ export class DiscoveredGalaxiesFacade {
         kind:
           'loading',
       });
+
+    this
+      .galaxyTypesByIndexSignal
+      .set(
+        new Map<bigint, GalaxyType>(),
+      );
 
     try {
       const universes =
@@ -354,6 +386,34 @@ export class DiscoveredGalaxiesFacade {
             knownDiscoveries,
           );
 
+      const galaxyTypesByIndex =
+        new Map<bigint, GalaxyType>();
+
+      for (
+        const entry
+        of snapshot.entries
+      ) {
+        const galaxyType =
+          GalaxyGeneralProfileEngine
+            .build(
+              generationKey,
+              entry.galaxyIndex,
+              entry.knowledgeState,
+            )
+            .galaxyType;
+
+        if (
+          galaxyType !==
+          null
+        ) {
+          galaxyTypesByIndex
+            .set(
+              entry.galaxyIndex,
+              galaxyType,
+            );
+        }
+      }
+
       const recentEntries =
         projectRecentEntries(
           navigation
@@ -364,6 +424,12 @@ export class DiscoveredGalaxiesFacade {
       if (!this.universeSeedFacade.activeGenerationKey().equals(generationKey)) {
         this.universeSeedFacade.activatePersistedUniverse(generationKey);
       }
+
+      this
+        .galaxyTypesByIndexSignal
+        .set(
+          galaxyTypesByIndex,
+        );
 
       this
         .stateSignal

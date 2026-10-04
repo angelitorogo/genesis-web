@@ -9,10 +9,12 @@
   } @else if (agnNucleusRenderModel(); as model) {
     <app-agn-nucleus-render
       [model]="model"
+      [blackHoleCoreModel]="descriptor().blackHoleCoreModel ?? null"
     ></app-agn-nucleus-render>
   } @else if (quasarNucleusRenderModel(); as model) {
     <app-quasar-nucleus-render
       [model]="model"
+      [blackHoleCoreModel]="descriptor().blackHoleCoreModel ?? null"
     ></app-quasar-nucleus-render>
   } @else if (usesHiiRegionLowRenderer()) {
     <app-hii-region-low-render

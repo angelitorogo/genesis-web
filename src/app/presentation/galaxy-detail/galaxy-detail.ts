@@ -46,6 +46,7 @@ import {
 
 
 import { GalaxyAccretionDiskVisualizationComponent } from './galaxy-accretion-disk-visualization';
+import { GalaxyNucleusVisualizationComponent } from './galaxy-nucleus-visualization';
 
 import {
   GenesisScreen,
@@ -66,6 +67,7 @@ import {
     GenesisScreen,
     RouterLink,
     GalaxyAccretionDiskVisualizationComponent,
+    GalaxyNucleusVisualizationComponent,
   ],
 
   templateUrl:

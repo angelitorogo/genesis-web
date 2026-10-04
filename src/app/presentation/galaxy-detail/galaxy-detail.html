@@ -481,6 +481,7 @@
                   >
                     <section
                       class="gd__section gd__section--deep"
+                      [class.gd__section--wide]="model.accretionDiskObservation !== null"
                       data-testid="galaxy-detail-structure"
                       aria-labelledby="gd-structure-title"
                     >
@@ -530,7 +531,8 @@
                     </section>
 
                     @if (model.scientificProfile.nucleus; as nucleus) {
-                      <section
+                      @if (!model.accretionDiskObservation) {
+                        <section
                         class="gd__section gd__section--deep gd__section--nucleus"
                         data-testid="galaxy-detail-nucleus"
                         aria-labelledby="gd-nucleus-title"
@@ -570,7 +572,14 @@
                             </dd>
                           </div>
                         </dl>
-                      </section>
+
+                        @if (model.nucleusVisualization; as nucleusVisual) {
+                          <app-galaxy-nucleus-visualization
+                            [visual]="nucleusVisual"
+                          />
+                        }
+                        </section>
+                      }
                     }
 
                     @if (model.accretionDiskObservation; as disk) {

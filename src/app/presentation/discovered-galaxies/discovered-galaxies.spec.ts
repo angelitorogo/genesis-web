@@ -501,6 +501,69 @@ describe(
           'Galaxia externa',
         );
 
+        const galaxyTypes =
+          element.querySelectorAll(
+            '[data-testid="discovered-galaxy-type"]',
+          );
+
+        expect(
+          galaxyTypes.length,
+        ).toBe(
+          2,
+        );
+
+        const discoveredGalaxyType =
+          fixture
+            .componentInstance
+            .facade
+            .galaxyType(
+              0n,
+            );
+
+        expect(
+          discoveredGalaxyType,
+        ).not.toBeNull();
+
+        if (
+          discoveredGalaxyType ===
+          null
+        ) {
+          throw new Error(
+            'The DISCOVERED catalogue galaxy must expose its exact generated GalaxyType.',
+          );
+        }
+
+        expect(
+          galaxyTypes[
+            0
+          ]
+            ?.textContent,
+        ).toContain(
+          fixture
+            .componentInstance
+            .galaxyTypeLabel(
+              discoveredGalaxyType,
+            ),
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .facade
+            .galaxyType(
+              1n,
+            ),
+        ).toBeNull();
+
+        expect(
+          galaxyTypes[
+            1
+          ]
+            ?.textContent,
+        ).toContain(
+          'Pendiente',
+        );
+
         const detailLinks =
           element.querySelectorAll(
             '[data-testid="discovered-galaxy-detail-link"]',

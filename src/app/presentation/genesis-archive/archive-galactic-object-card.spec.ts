@@ -171,6 +171,19 @@ describe(
             card.render.quasarNucleusRenderModel ?? null,
           ).toBeNull();
 
+          if (
+            state.code >=
+              DiscoveryState.CATALOGUED.code
+          ) {
+            expect(
+              card.render.blackHoleCoreModel ?? null,
+            ).not.toBeNull();
+          } else {
+            expect(
+              card.render.blackHoleCoreModel ?? null,
+            ).toBeNull();
+          }
+
           expect(
             card.scientificSections.map(
               section =>
@@ -223,6 +236,19 @@ describe(
           expect(
             card.render.agnNucleusRenderModel ?? null,
           ).toBeNull();
+
+          if (
+            state.code >=
+              DiscoveryState.CATALOGUED.code
+          ) {
+            expect(
+              card.render.blackHoleCoreModel ?? null,
+            ).not.toBeNull();
+          } else {
+            expect(
+              card.render.blackHoleCoreModel ?? null,
+            ).toBeNull();
+          }
 
           expect(
             card.scientificSections.map(

@@ -1,0 +1,49 @@
+<figure
+  class="gnv"
+  data-testid="galaxy-detail-nucleus-visualization"
+  [attr.data-nucleus-kind]="visual().kind"
+>
+  <div class="gnv__header">
+    <div>
+      <small>28.2G.1 / NÚCLEO GALÁCTICO REAL</small>
+      <h4>{{ visual().stateLabel }}</h4>
+    </div>
+
+    <div class="gnv__meta">
+      <span>FAMILIA VISUAL</span>
+      <strong data-testid="galaxy-detail-nucleus-visual-family">
+        {{ visual().familyLabel }}
+      </strong>
+    </div>
+  </div>
+
+  <div
+    class="gnv__stage"
+    data-testid="galaxy-detail-nucleus-canonical-render"
+  >
+    @if (quiescentVisual(); as frame) {
+      <app-quiescent-nucleus-render
+        [model]="frame.quiescentModel"
+        [blackHoleCoreModel]="frame.blackHoleCoreModel"
+      />
+    }
+
+    @if (agnVisual(); as frame) {
+      <app-agn-nucleus-render
+        [model]="frame.agnModel"
+        [blackHoleCoreModel]="frame.blackHoleCoreModel"
+      />
+    }
+
+    @if (quasarVisual(); as frame) {
+      <app-quasar-nucleus-render
+        [model]="frame.quasarModel"
+        [blackHoleCoreModel]="frame.blackHoleCoreModel"
+      />
+    }
+  </div>
+
+  <figcaption class="gnv__caption">
+    {{ visual().caption }}
+  </figcaption>
+</figure>

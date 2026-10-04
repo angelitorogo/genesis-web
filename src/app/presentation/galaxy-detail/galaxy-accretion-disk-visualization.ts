@@ -74,6 +74,12 @@ export class GalaxyAccretionDiskVisualizationComponent {
       },
     );
 
+  readonly blackHoleCoreModel =
+    computed(
+      () =>
+        this.visual().blackHoleCoreModel,
+    );
+
   readonly strictInterpretation =
     computed(
       () => {
