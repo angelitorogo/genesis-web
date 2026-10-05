@@ -14,6 +14,8 @@ export interface GalaxyKnowledgeSnapshotEntity {
   readonly explorationTelemetryJson?: string;
   readonly waterWorldIndexJson?: string;
   readonly waterMoonIndexJson?: string;
+  readonly planetMoonCatalogJson?: string;
+  readonly minorBodyCatalogJson?: string;
 
   readonly updatedAtEpochMs: number;
 }

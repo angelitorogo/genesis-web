@@ -73,6 +73,16 @@ export const genesisRoutes: Routes = [
     title: 'Sistema estelar | GENESIS',
   },
   {
+    path: 'galaxies/:galaxyIndex/knowledge/:category',
+    loadComponent: () =>
+      import(
+        './presentation/galaxy-knowledge-catalog/galaxy-knowledge-catalog'
+      ).then(
+        (module) => module.GalaxyKnowledgeCatalogPage,
+      ),
+    title: 'Explorador de conocimiento galáctico | GENESIS',
+  },
+  {
     path: 'galaxies/:galaxyIndex/water-worlds',
     loadComponent: () =>
       import(

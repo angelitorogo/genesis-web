@@ -990,6 +990,84 @@
                     </section>
                   }
 
+                  @if (model.magnetarActivity; as activity) {
+                    <section
+                      class="archive-discovery-detail__scientific-action"
+                      data-testid="archive-magnetar-activity"
+                    >
+                      <div class="archive-discovery-detail__scientific-action-header">
+                        <div>
+                          <small class="archive-discovery-detail__eyebrow">
+                            28.4 · ACTIVIDAD MAGNÉTICA
+                          </small>
+                          <strong>Medir campo magnético / monitorizar estallidos</strong>
+                        </div>
+
+                        <span>{{ activity.measured ? 'CARACTERIZADO' : 'PENDIENTE' }}</span>
+                      </div>
+
+                      <p>
+                        Campaña de alta energía sobre un magnetar confirmado. El campo publicado
+                        es una estimación dipolar exterior ligada a la temporización 28.3; no modela
+                        el campo interno de la corteza ni inventa una fulguración gigante.
+                      </p>
+
+                      <p data-testid="archive-magnetar-activity-requirement">
+                        {{ activity.requirementLabel }}
+                      </p>
+
+                      @if (activity.measured) {
+                        <p data-testid="archive-magnetar-activity-instrument">
+                          Instrumento empleado: {{ activity.measuredInstrumentLabel }}.
+                        </p>
+
+                        <dl
+                          class="archive-discovery-detail__science-status"
+                          data-testid="archive-magnetar-activity-facts"
+                        >
+                          @for (fact of activity.facts; track fact.label) {
+                            <div>
+                              <dt>{{ fact.label }}</dt>
+                              <dd>{{ fact.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      } @else if (activity.canMeasure) {
+                        <button
+                          genesis-primary-button
+                          type="button"
+                          data-testid="archive-magnetar-activity-button"
+                          [disabled]="facade.actionPending()"
+                          (click)="performMagnetarActivityObservation()"
+                        >
+                          @if (facade.actionPending()) {
+                            MONITORIZANDO…
+                          } @else {
+                            MEDIR CAMPO / MONITORIZAR ESTALLIDOS
+                          }
+                        </button>
+                      }
+
+                      @if (facade.magnetarActivityFeedback(); as feedback) {
+                        <p
+                          class="archive-discovery-detail__action-feedback"
+                          data-testid="archive-magnetar-activity-feedback"
+                        >
+                          {{ feedback }}
+                        </p>
+                      }
+
+                      @if (facade.magnetarActivityError(); as actionError) {
+                        <p
+                          class="archive-discovery-detail__action-error"
+                          data-testid="archive-magnetar-activity-error"
+                        >
+                          {{ actionError }}
+                        </p>
+                      }
+                    </section>
+                  }
+
                   @if (
                     card.scientificSubject === 'ACTIVE_GALACTIC_NUCLEUS' &&
                     card.knowledgeLevel === 'CONFIRMED'

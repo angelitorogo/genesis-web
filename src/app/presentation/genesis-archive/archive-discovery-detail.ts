@@ -209,6 +209,20 @@ export class ArchiveDiscoveryDetail
       .performPulsarTimingObservation();
   }
 
+  performMagnetarActivityObservation():
+    void {
+
+    if (
+      this.facade.actionPending()
+    ) {
+      return;
+    }
+
+    void this
+      .facade
+      .performMagnetarActivityObservation();
+  }
+
   performStellarSystemStageObservation():
     void {
 

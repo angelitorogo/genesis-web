@@ -756,6 +756,110 @@ describe(
         );
 
         for (
+          const [
+            testId,
+            category,
+          ]
+          of [
+            [
+              'galaxy-detail-systems-catalog-link',
+              'systems',
+            ],
+            [
+              'galaxy-detail-clusters-catalog-link',
+              'clusters',
+            ],
+            [
+              'galaxy-detail-nebulae-catalog-link',
+              'nebulae',
+            ],
+            [
+              'galaxy-detail-extremes-catalog-link',
+              'extremes',
+            ],
+            [
+              'galaxy-detail-planets-catalog-link',
+              'planets',
+            ],
+            [
+              'galaxy-detail-moons-catalog-link',
+              'moons',
+            ],
+            [
+              'galaxy-detail-asteroids-catalog-link',
+              'asteroids',
+            ],
+            [
+              'galaxy-detail-comets-catalog-link',
+              'comets',
+            ],
+            [
+              'galaxy-detail-tno-catalog-link',
+              'tno',
+            ],
+            [
+              'galaxy-detail-captured-catalog-link',
+              'captured',
+            ],
+          ] as const
+        ) {
+          const link =
+            element.querySelector(
+              `[data-testid="${testId}"]`,
+            ) as HTMLAnchorElement | null;
+
+          expect(link).toBeTruthy();
+          expect(link?.getAttribute('href')).toContain(
+            `/galaxies/0/knowledge/${category}`,
+          );
+          expect(link?.getAttribute('href')).toContain(
+            'u=',
+          );
+        }
+
+        expect(
+          (
+            element.querySelector(
+              '[data-testid="galaxy-detail-systems-single-catalog-link"]',
+            ) as HTMLAnchorElement | null
+          )?.getAttribute('href'),
+        ).toContain(
+          'type=SINGLE',
+        );
+
+        expect(
+          (
+            element.querySelector(
+              '[data-testid="galaxy-detail-systems-unclassified-catalog-link"]',
+            ) as HTMLAnchorElement | null
+          )?.getAttribute('href'),
+        ).toContain(
+          'type=UNCLASSIFIED',
+        );
+
+        expect(
+          (
+            element.querySelector(
+              '[data-testid="galaxy-detail-extremes-magnetar-catalog-link"]',
+            ) as HTMLAnchorElement | null
+          )?.getAttribute('href'),
+        ).toContain(
+          'type=MAGNETAR',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-known-sectors"] a',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-known-civilizations"] a',
+          ),
+        ).toBeNull();
+
+        for (
           const testId
           of [
             'galaxy-detail-systems-breakdown',
@@ -846,6 +950,22 @@ describe(
           'OTRAS NO MATERIALIZADAS',
         );
 
+        for (
+          const testId
+          of [
+            'galaxy-detail-moons-unmaterialized',
+            'galaxy-detail-moons-unmaterialized-regular',
+            'galaxy-detail-moons-unmaterialized-irregular',
+            'galaxy-detail-moons-unmaterialized-other',
+          ]
+        ) {
+          expect(
+            element.querySelector(
+              `[data-testid="${testId}"] a`,
+            ),
+          ).toBeNull();
+        }
+
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-moons-unclassified"]',
@@ -853,6 +973,18 @@ describe(
         ).toContain(
           'SIN CLASIFICAR',
         );
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-water-world-index-link"]',
+          ),
+        ).toBeNull();
+
+        expect(
+          element.querySelector(
+            '[data-testid="galaxy-detail-water-moon-index-link"]',
+          ),
+        ).toBeNull();
 
         expect(
           element.querySelector(

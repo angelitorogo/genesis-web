@@ -128,6 +128,11 @@ import {
 } from '../runtime/pulsar-timing-observation.runtime';
 
 import {
+  MAGNETAR_ACTIVITY_OBSERVATION_RUNTIME,
+  type MagnetarActivityObservationStatus,
+} from '../runtime/magnetar-activity-observation.runtime';
+
+import {
   StellarSystemScientificCampaignAssembler,
   type StellarSystemScientificCampaignModel,
 } from '../runtime/stellar-system-scientific-campaign';
@@ -373,6 +378,10 @@ export interface ArchiveDiscoveryDetailModel {
   readonly pulsarTiming?:
     PulsarTimingObservationStatus | null;
 
+  /** 28.4 post-confirmation magnetar field / short-burst monitoring. */
+  readonly magnetarActivity?:
+    MagnetarActivityObservationStatus | null;
+
   /**
    * Shared point-26.A.9 scientific campaign. Optional only for compatibility
    * with pre-A9 presentation fixtures; production stellar-system surfaces load it.
@@ -447,6 +456,11 @@ export class ArchiveDiscoveryDetailFacade {
       PULSAR_TIMING_OBSERVATION_RUNTIME,
     );
 
+  private readonly magnetarActivityObservationRuntime =
+    inject(
+      MAGNETAR_ACTIVITY_OBSERVATION_RUNTIME,
+    );
+
   private currentRequest:
     ArchiveDiscoveryDetailRequest | null =
     null;
@@ -487,6 +501,26 @@ export class ArchiveDiscoveryDetailFacade {
   readonly actionError =
     this
       .actionErrorSignal
+      .asReadonly();
+
+  private readonly magnetarActivityFeedbackSignal =
+    signal<string | null>(
+      null,
+    );
+
+  readonly magnetarActivityFeedback =
+    this
+      .magnetarActivityFeedbackSignal
+      .asReadonly();
+
+  private readonly magnetarActivityErrorSignal =
+    signal<string | null>(
+      null,
+    );
+
+  readonly magnetarActivityError =
+    this
+      .magnetarActivityErrorSignal
       .asReadonly();
 
   private readonly eventHorizonApproachSimulationSignal =
@@ -549,6 +583,18 @@ export class ArchiveDiscoveryDetailFacade {
 
     this
       .actionErrorSignal
+      .set(
+        null,
+      );
+
+    this
+      .magnetarActivityFeedbackSignal
+      .set(
+        null,
+      );
+
+    this
+      .magnetarActivityErrorSignal
       .set(
         null,
       );
@@ -894,6 +940,66 @@ export class ArchiveDiscoveryDetailFacade {
         error instanceof Error
           ? error.message
           : 'No se pudo completar la sincronización de pulsos.',
+      );
+    } finally {
+      this.actionPendingSignal.set(false);
+    }
+  }
+
+  async performMagnetarActivityObservation():
+    Promise<void> {
+
+    const request =
+      this.currentRequest;
+
+    const generationKey =
+      this.currentGenerationKey;
+
+    const locator =
+      this.currentLocator;
+
+    const activity =
+      this.model()
+        ?.magnetarActivity ??
+      null;
+
+    if (
+      request === null ||
+      generationKey === null ||
+      !(locator instanceof GalacticObjectLocator) ||
+      activity === null ||
+      !activity.canMeasure
+    ) {
+      this.magnetarActivityErrorSignal.set(
+        'La medición magnética del magnetar no está disponible con el estado, temporización e instrumentación actuales.',
+      );
+      return;
+    }
+
+    if (this.actionPending()) return;
+
+    this.actionPendingSignal.set(true);
+    this.actionErrorSignal.set(null);
+    this.actionFeedbackSignal.set(null);
+    this.magnetarActivityErrorSignal.set(null);
+    this.magnetarActivityFeedbackSignal.set(null);
+
+    try {
+      await this.magnetarActivityObservationRuntime.measure(
+        generationKey,
+        locator,
+      );
+
+      await this.resolveDetails(request);
+
+      this.magnetarActivityFeedbackSignal.set(
+        'Monitorización completada · campo dipolar inferido y actividad de estallidos persistida · sin coste ni recompensa de PD.',
+      );
+    } catch (error) {
+      this.magnetarActivityErrorSignal.set(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo completar la monitorización magnética del magnetar.',
       );
     } finally {
       this.actionPendingSignal.set(false);
@@ -1443,6 +1549,20 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+      const magnetarActivity =
+        locator instanceof GalacticObjectLocator &&
+        galacticObjectCard?.extremeType !== null &&
+        galacticObjectCard?.extremeType !== undefined &&
+        galacticObjectCard.knowledgeLevel === 'CONFIRMED' &&
+        extremeTypeDefinition(galacticObjectCard.extremeType).capabilities.magneticActivity
+          ? await this
+              .magnetarActivityObservationRuntime
+              .inspect(
+                generationKey,
+                locator,
+              )
+          : null;
+
       const protoplanetaryDiskAnalysis =
         locator instanceof
           SystemLocator &&
@@ -1559,6 +1679,8 @@ export class ArchiveDiscoveryDetailFacade {
               eventHorizonApproach,
 
               pulsarTiming,
+
+              magnetarActivity,
 
               stellarSystemScientificCampaign,
 

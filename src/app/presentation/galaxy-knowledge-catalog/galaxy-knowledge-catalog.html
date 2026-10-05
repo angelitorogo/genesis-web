@@ -1,0 +1,226 @@
+<genesis-screen>
+  <main
+    class="gkc"
+    data-testid="galaxy-knowledge-catalog-page"
+    aria-labelledby="gkc-title"
+  >
+    <header class="gkc__header">
+      <div>
+        <p class="gkc__eyebrow">ARCHIVO CIENTÍFICO / 26.1c</p>
+        <h1 id="gkc-title">Explorador de conocimiento persistido</h1>
+        <p>
+          Catálogo paginado y ordenable de aquello que la galaxia conoce científicamente.
+          Nunca consulta Ground Truth oculto para completar la lista.
+        </p>
+      </div>
+
+      @if (facade.model(); as model) {
+        <div class="gkc__nav">
+          <a
+            [routerLink]="['/galaxies', model.galaxyIndex.toString()]"
+            [queryParams]="{ u: model.routeUniverseRef }"
+            data-testid="gkc-back-galaxy"
+          >
+            ← Volver a la galaxia
+          </a>
+          <a
+            [routerLink]="['/galaxies']"
+            [queryParams]="{ u: model.routeUniverseRef }"
+            data-testid="gkc-back-galaxies"
+          >
+            Galaxias descubiertas
+          </a>
+        </div>
+      }
+    </header>
+
+    @switch (facade.state().kind) {
+      @case ('loading') {
+        <section class="gkc__state" data-testid="gkc-loading">
+          Preparando catálogo científico…
+        </section>
+      }
+
+      @case ('empty') {
+        <section class="gkc__state" data-testid="gkc-empty-universe">
+          No existe todavía un universo persistido disponible.
+        </section>
+      }
+
+      @case ('not-found') {
+        <section class="gkc__state" data-testid="gkc-not-found">
+          La galaxia indicada no forma parte del conocimiento persistido.
+        </section>
+      }
+
+      @case ('error') {
+        <section class="gkc__state gkc__state--error" data-testid="gkc-error" role="alert">
+          {{ facade.errorMessage() }}
+        </section>
+      }
+
+      @case ('content') {
+        @if (facade.model(); as model) {
+          <section class="gkc__summary" data-testid="gkc-summary">
+            <div>
+              <small>GALAXIA</small>
+              <strong>{{ model.galaxyName ?? model.galaxyDesignationCode }}</strong>
+            </div>
+            <div>
+              <small>CATÁLOGO</small>
+              <strong>{{ model.descriptor.title }}</strong>
+            </div>
+            <div>
+              <small>FILTRO</small>
+              <strong>{{ model.descriptor.filterLabel ?? model.query.subtype ?? 'TODOS' }}</strong>
+            </div>
+          </section>
+
+          <p class="gkc__catalog-description" data-testid="gkc-catalog-description">
+            {{ model.descriptor.description }}
+          </p>
+
+          <section class="gkc__toolbar" aria-label="Ordenación y paginación del catálogo">
+            <label>
+              <span>ORDENAR POR</span>
+              <select
+                [value]="model.query.sortKey"
+                (change)="changeSort($event)"
+                data-testid="gkc-sort"
+              >
+                @for (option of model.descriptor.sortOptions; track option.key) {
+                  <option [value]="option.key">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              <span>DIRECCIÓN</span>
+              <select
+                [value]="model.query.direction"
+                (change)="changeDirection($event)"
+                data-testid="gkc-direction"
+              >
+                <option value="asc">Ascendente</option>
+                <option value="desc">Descendente</option>
+              </select>
+            </label>
+
+            <label>
+              <span>POR PÁGINA</span>
+              <select
+                [value]="model.query.pageSize"
+                (change)="changePageSize($event)"
+                data-testid="gkc-page-size"
+              >
+                @for (size of pageSizes; track size) {
+                  <option [value]="size">{{ size }}</option>
+                }
+              </select>
+            </label>
+          </section>
+
+          @if (model.data.kind === 'not-connected') {
+            <section class="gkc__state" data-testid="gkc-category-pending">
+              <strong>Infraestructura preparada.</strong>
+              <p>
+                Esta familia todavía no tiene conectado su adaptador de conocimiento persistido.
+                Las siguientes etapas 26.1c reutilizarán esta misma ruta, paginador y sistema de ordenación.
+              </p>
+            </section>
+          } @else {
+            <section class="gkc__page-meta" data-testid="gkc-page-meta">
+              <span>
+                {{ formatCount(model.data.page.totalItems) }} objetos conocidos
+              </span>
+              <span>
+                Página {{ model.data.page.page }} / {{ model.data.page.totalPages }}
+              </span>
+            </section>
+
+            @if (model.data.page.items.length === 0) {
+              <section class="gkc__state" data-testid="gkc-no-items">
+                No existen objetos conocidos que cumplan este filtro.
+              </section>
+            } @else {
+              <section class="gkc__table-wrap" aria-label="Resultados del catálogo científico">
+                <table class="gkc__table">
+                  <thead>
+                    <tr>
+                      <th>{{ model.descriptor.identityLabel }}</th>
+                      @for (column of model.descriptor.columns; track column.key) {
+                        <th [class.gkc__right]="column.align === 'end'">{{ column.label }}</th>
+                      }
+                      <th>ACCIONES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of model.data.page.items; track rowTrackKey(row.id)) {
+                      <tr data-testid="gkc-row">
+                        <td>
+                          <strong>{{ row.title }}</strong>
+                          @if (row.subtitle) {
+                            <small>{{ row.subtitle }}</small>
+                          }
+                        </td>
+                        @for (column of model.descriptor.columns; track column.key) {
+                          <td
+                            class="gkc__value-cell"
+                            [class.gkc__right]="column.align === 'end'"
+                          >
+                            {{ row.cells[column.key] ?? '—' }}
+                          </td>
+                        }
+                        <td>
+                          <div class="gkc__actions">
+                            @for (action of row.actions; track action.label) {
+                              <a
+                                [class.gkc__action--primary]="action.emphasis === 'primary'"
+                                [routerLink]="action.route"
+                                [queryParams]="actionQueryParams(action)"
+                              >
+                                {{ action.label }}
+                              </a>
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </section>
+            }
+
+            <nav class="gkc__pager" aria-label="Páginas del catálogo" data-testid="gkc-pager">
+              @if (model.data.page.page > 1) {
+                <a
+                  [routerLink]="[]"
+                  [queryParams]="pageQueryParams(model.data.page.page - 1)"
+                  data-testid="gkc-prev-page"
+                >
+                  ← Anterior
+                </a>
+              } @else {
+                <span aria-disabled="true">← Anterior</span>
+              }
+
+              <strong>{{ model.data.page.page }} / {{ model.data.page.totalPages }}</strong>
+
+              @if (model.data.page.page < model.data.page.totalPages) {
+                <a
+                  [routerLink]="[]"
+                  [queryParams]="pageQueryParams(model.data.page.page + 1)"
+                  data-testid="gkc-next-page"
+                >
+                  Siguiente →
+                </a>
+              } @else {
+                <span aria-disabled="true">Siguiente →</span>
+              }
+            </nav>
+          }
+        }
+      }
+    }
+  </main>
+</genesis-screen>

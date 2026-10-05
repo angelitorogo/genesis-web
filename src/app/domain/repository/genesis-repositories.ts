@@ -164,6 +164,25 @@ export interface DiscoveryRepository {
   >;
 
   /**
+   * Optional point-26.1c catalog fast path. Returns only discoveries persisted
+   * inside one galaxy and may additionally restrict them to one target type.
+   * Implementations should use their galaxy-scoped persistence index rather
+   * than materializing the whole universe catalogue.
+   */
+  getKnownDiscoveriesInGalaxy?(
+    generationKey:
+      UniverseGenerationKey,
+
+    galaxyIndex:
+      bigint,
+
+    targetTypeCode?:
+      number,
+  ): Promise<
+    readonly KnownDiscovery[]
+  >;
+
+  /**
    * Optional point-28.2G.3f fast path for instrument unlock evaluation.
    * Implementations may derive these six booleans directly from persisted
    * discovery indexes without materializing/sorting every KnownDiscovery.

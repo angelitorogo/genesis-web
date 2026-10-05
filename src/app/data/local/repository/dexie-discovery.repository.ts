@@ -348,6 +348,76 @@ export class DexieDiscoveryRepository
     );
   }
 
+  /**
+   * Point 26.1c — galaxy-scoped catalogue read path.
+   *
+   * This deliberately reuses the existing compound galaxy index, so catalogue
+   * pages never need to load discoveries belonging to the rest of the universe.
+   * The optional target-type filter is applied while the indexed collection is
+   * traversed and the returned rows still pass the normal integrity/identity
+   * checks through toKnownDiscovery().
+   */
+  async getKnownDiscoveriesInGalaxy(
+    generationKey:
+      UniverseGenerationKey,
+
+    galaxyIndex:
+      bigint,
+
+    targetTypeCode?:
+      number,
+  ): Promise<
+    readonly KnownDiscovery[]
+  > {
+
+    await ensureUniverseExists(
+      this.database,
+      generationKey,
+    );
+
+    const {
+      universeSeed,
+      generatorVersionCode,
+    } =
+      generationKeyStorageParts(
+        generationKey,
+      );
+
+    const collection =
+      this.database
+        .discoveries
+        .where(
+          '[universeSeed+generatorVersionCode+galaxyIndex]',
+        )
+        .equals([
+          universeSeed,
+          generatorVersionCode,
+          galaxyIndex.toString(10),
+        ]);
+
+    const entities =
+      targetTypeCode === undefined
+        ? await collection.toArray()
+        : await collection
+            .filter(
+              entity =>
+                entity.targetTypeCode === targetTypeCode,
+            )
+            .toArray();
+
+    sortDiscoveryEntities(
+      entities,
+    );
+
+    return entities.map(
+      entity =>
+        this.toKnownDiscovery(
+          generationKey,
+          entity,
+        ),
+    );
+  }
+
   async getKnownDiscoveriesInSector(
     generationKey:
       UniverseGenerationKey,
