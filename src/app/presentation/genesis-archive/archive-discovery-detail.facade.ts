@@ -25,10 +25,12 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-action';
 
 import {
+  ExtremeType,
   extremeTypeDefinition,
 } from '../../domain/galactic-object/extreme-object-type';
 
 import {
+  GalacticObjectScientificSubject,
   GalacticObjectScientificSurveyFamily,
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
@@ -131,6 +133,11 @@ import {
   MAGNETAR_ACTIVITY_OBSERVATION_RUNTIME,
   type MagnetarActivityObservationStatus,
 } from '../runtime/magnetar-activity-observation.runtime';
+
+import {
+  RELATIVISTIC_JET_ANALYSIS_OBSERVATION_RUNTIME,
+  type RelativisticJetAnalysisObservationStatus,
+} from '../runtime/relativistic-jet-analysis-observation.runtime';
 
 import {
   StellarSystemScientificCampaignAssembler,
@@ -382,6 +389,11 @@ export interface ArchiveDiscoveryDetailModel {
   readonly magnetarActivity?:
     MagnetarActivityObservationStatus | null;
 
+
+  /** 28.5 post-confirmation relativistic-jet analysis. */
+  readonly relativisticJetAnalysis?:
+    RelativisticJetAnalysisObservationStatus | null;
+
   /**
    * Shared point-26.A.9 scientific campaign. Optional only for compatibility
    * with pre-A9 presentation fixtures; production stellar-system surfaces load it.
@@ -461,6 +473,12 @@ export class ArchiveDiscoveryDetailFacade {
       MAGNETAR_ACTIVITY_OBSERVATION_RUNTIME,
     );
 
+
+  private readonly relativisticJetAnalysisObservationRuntime =
+    inject(
+      RELATIVISTIC_JET_ANALYSIS_OBSERVATION_RUNTIME,
+    );
+
   private currentRequest:
     ArchiveDiscoveryDetailRequest | null =
     null;
@@ -521,6 +539,27 @@ export class ArchiveDiscoveryDetailFacade {
   readonly magnetarActivityError =
     this
       .magnetarActivityErrorSignal
+      .asReadonly();
+
+
+  private readonly relativisticJetAnalysisFeedbackSignal =
+    signal<string | null>(
+      null,
+    );
+
+  readonly relativisticJetAnalysisFeedback =
+    this
+      .relativisticJetAnalysisFeedbackSignal
+      .asReadonly();
+
+  private readonly relativisticJetAnalysisErrorSignal =
+    signal<string | null>(
+      null,
+    );
+
+  readonly relativisticJetAnalysisError =
+    this
+      .relativisticJetAnalysisErrorSignal
       .asReadonly();
 
   private readonly eventHorizonApproachSimulationSignal =
@@ -595,6 +634,18 @@ export class ArchiveDiscoveryDetailFacade {
 
     this
       .magnetarActivityErrorSignal
+      .set(
+        null,
+      );
+
+    this
+      .relativisticJetAnalysisFeedbackSignal
+      .set(
+        null,
+      );
+
+    this
+      .relativisticJetAnalysisErrorSignal
       .set(
         null,
       );
@@ -1000,6 +1051,81 @@ export class ArchiveDiscoveryDetailFacade {
         error instanceof Error
           ? error.message
           : 'No se pudo completar la monitorización magnética del magnetar.',
+      );
+    } finally {
+      this.actionPendingSignal.set(false);
+    }
+  }
+
+  async performRelativisticJetAnalysis():
+    Promise<void> {
+
+    const request =
+      this.currentRequest;
+
+    const generationKey =
+      this.currentGenerationKey;
+
+    const locator =
+      this.currentLocator;
+
+    const jetAnalysis =
+      this.model()
+        ?.relativisticJetAnalysis ??
+      null;
+
+    if (
+      request === null ||
+      generationKey === null ||
+      !(locator instanceof GalacticObjectLocator) ||
+      jetAnalysis === null ||
+      !jetAnalysis.canAnalyze
+    ) {
+      this.relativisticJetAnalysisErrorSignal.set(
+        'El análisis de jets relativistas no está disponible con el estado e instrumentación actuales.',
+      );
+      return;
+    }
+
+    if (this.actionPending()) return;
+
+    this.actionPendingSignal.set(true);
+    this.actionErrorSignal.set(null);
+    this.actionFeedbackSignal.set(null);
+    this.relativisticJetAnalysisErrorSignal.set(null);
+    this.relativisticJetAnalysisFeedbackSignal.set(null);
+
+    try {
+      await this.relativisticJetAnalysisObservationRuntime.analyze(
+        generationKey,
+        locator,
+      );
+
+      await this.resolveDetails(request);
+
+      const detected =
+        this.model()
+          ?.relativisticJetAnalysis
+          ?.facts
+          .some(
+            fact =>
+              fact.label ===
+                'Resultado de la campaña' &&
+              fact.value ===
+                'Firma de jet relativista colimado detectada',
+          ) ??
+        false;
+
+      this.relativisticJetAnalysisFeedbackSignal.set(
+        detected
+          ? 'Análisis completado · firma relativista y cinemática caracterizadas y persistidas como evidencia científica · sin coste ni recompensa de PD.'
+          : 'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa de PD.',
+      );
+    } catch (error) {
+      this.relativisticJetAnalysisErrorSignal.set(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo completar el análisis de jets relativistas.',
       );
     } finally {
       this.actionPendingSignal.set(false);
@@ -1563,6 +1689,22 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+      const relativisticJetAnalysis =
+        locator instanceof GalacticObjectLocator &&
+        galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
+        (
+          galacticObjectCard.extremeType === ExtremeType.MICROQUASAR ||
+          galacticObjectCard.scientificSubject ===
+            GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
+        )
+          ? await this
+              .relativisticJetAnalysisObservationRuntime
+              .inspect(
+                generationKey,
+                locator,
+              )
+          : null;
+
       const protoplanetaryDiskAnalysis =
         locator instanceof
           SystemLocator &&
@@ -1681,6 +1823,8 @@ export class ArchiveDiscoveryDetailFacade {
               pulsarTiming,
 
               magnetarActivity,
+
+              relativisticJetAnalysis,
 
               stellarSystemScientificCampaign,
 

@@ -1096,7 +1096,9 @@ function buildDistributedExtremeCard(
         : `La clasificación ${definition.label.toLocaleLowerCase('es-ES')} está catalogada. La representación procedural es canónica y no publica magnitudes físicas que todavía no tengan un generador científico propio.`,
     nextScientificStep:
       confirmed
-        ? 'Clasificación extrema confirmada; acciones especializadas pendientes de la siguiente etapa científica'
+        ? extremeType === ExtremeType.MICROQUASAR
+          ? 'Analizar jets relativistas'
+          : 'Clasificación extrema confirmada; acciones especializadas pendientes de la siguiente etapa científica'
         : 'Confirmación independiente de la clasificación extrema',
     facts,
     scientificSections:

@@ -83,6 +83,11 @@ import {
 } from '../runtime/galactic-object-scientific-action.runtime';
 
 import {
+  RELATIVISTIC_JET_ANALYSIS_OBSERVATION_RUNTIME,
+  type RelativisticJetAnalysisObservationStatus,
+} from '../runtime/relativistic-jet-analysis-observation.runtime';
+
+import {
   DEFAULT_UNIVERSE_SEED,
 } from '../universe/universe-seed.facade';
 import { ProceduralTargetResolver } from '../../simulation/regeneration/procedural-target-resolver';
@@ -118,6 +123,13 @@ describe(
         /** Provide read-only scientific prerequisites for one real archive route. */
         readonly scientificActionsEnabled?:
           boolean;
+
+
+        readonly relativisticJetAnalysisStatus?:
+          RelativisticJetAnalysisObservationStatus | null;
+
+        readonly relativisticJetAnalysisAnalyzedStatus?:
+          RelativisticJetAnalysisObservationStatus | null;
       } = {},
     ): {
       readonly facade:
@@ -235,6 +247,9 @@ describe(
           },
         };
 
+      let relativisticJetAnalysisPerformed =
+        false;
+
       TestBed.configureTestingModule({
         providers: [
           {
@@ -243,6 +258,38 @@ describe(
 
             useValue:
               repositories,
+          },
+          {
+            provide:
+              RELATIVISTIC_JET_ANALYSIS_OBSERVATION_RUNTIME,
+
+            useValue: {
+              async inspect() {
+                if (
+                  relativisticJetAnalysisPerformed &&
+                  options.relativisticJetAnalysisAnalyzedStatus !==
+                    undefined
+                ) {
+                  return options.relativisticJetAnalysisAnalyzedStatus;
+                }
+
+                return options.relativisticJetAnalysisStatus ?? null;
+              },
+
+              async analyze() {
+                if (
+                  options.relativisticJetAnalysisAnalyzedStatus ===
+                    undefined
+                ) {
+                  throw new Error(
+                    'ArchiveDiscoveryDetailFacade unit fixtures do not execute 28.5 persistence.',
+                  );
+                }
+
+                relativisticJetAnalysisPerformed =
+                  true;
+              },
+            },
           },
         ],
       });
@@ -505,11 +552,128 @@ describe(
           universes: [v2],
           discoveryState: DiscoveryState.CONFIRMED,
           scientificActionsEnabled: true,
+          relativisticJetAnalysisStatus: {
+            analyzed: false,
+            canAnalyze: true,
+            instrumentLabel: 'Radio · nivel 4',
+            requirementLabel: 'Disponible · análisis radiointerferométrico sin coste ni recompensa de PD.',
+            analyzedInstrumentLabel: null,
+            facts: Object.freeze([]),
+          },
         }).facade;
         await confirmed.load(params);
         expect(confirmed.model()?.scientificAction).toBeNull();
         expect(confirmed.model()?.galacticObjectCard?.nextScientificStep)
           .toBe('Confirmar la galaxia y observar el disco de acreción desde su ficha');
+        expect(confirmed.model()?.relativisticJetAnalysis?.canAnalyze)
+          .toBe(true);
+      },
+    );
+
+    it(
+      'should report a 28.5 completion message that matches detection versus non-detection',
+      async () => {
+        const v2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              DEFAULT_UNIVERSE_SEED,
+            ),
+            GeneratorVersion.V2,
+          );
+
+        const params = {
+          locatorKind:
+            ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex:
+            '0',
+          sectorKey:
+            '0',
+          galacticObjectIndex:
+            '0',
+          universeSeed:
+            v2.universeSeed.serialize(),
+          generatorVersionCode:
+            '2',
+        } as const;
+
+        const availableStatus:
+          RelativisticJetAnalysisObservationStatus =
+          {
+            analyzed: false,
+            canAnalyze: true,
+            instrumentLabel: 'Radio · nivel 4',
+            requirementLabel: 'Disponible · análisis radiointerferométrico sin coste ni recompensa de PD.',
+            analyzedInstrumentLabel: null,
+            facts: Object.freeze([]),
+          };
+
+        const detected =
+          configure({
+            universes: [v2],
+            discoveryState: DiscoveryState.CONFIRMED,
+            scientificActionsEnabled: true,
+            relativisticJetAnalysisStatus: availableStatus,
+            relativisticJetAnalysisAnalyzedStatus: {
+              analyzed: true,
+              canAnalyze: false,
+              instrumentLabel: 'Radio · nivel 4',
+              requirementLabel: 'Análisis radiointerferométrico persistido como evidencia científica.',
+              analyzedInstrumentLabel: 'Radio',
+              facts: Object.freeze([
+                Object.freeze({
+                  label: 'Resultado de la campaña',
+                  value: 'Firma de jet relativista colimado detectada',
+                }),
+              ]),
+            },
+          })
+            .facade;
+
+        await detected.load(params);
+        await detected.performRelativisticJetAnalysis();
+
+        expect(
+          detected.relativisticJetAnalysisFeedback(),
+        ).toBe(
+          'Análisis completado · firma relativista y cinemática caracterizadas y persistidas como evidencia científica · sin coste ni recompensa de PD.',
+        );
+
+        TestBed.resetTestingModule();
+
+        const notDetected =
+          configure({
+            universes: [v2],
+            discoveryState: DiscoveryState.CONFIRMED,
+            scientificActionsEnabled: true,
+            relativisticJetAnalysisStatus: availableStatus,
+            relativisticJetAnalysisAnalyzedStatus: {
+              analyzed: true,
+              canAnalyze: false,
+              instrumentLabel: 'Radio · nivel 4',
+              requirementLabel: 'Análisis radiointerferométrico persistido como evidencia científica.',
+              analyzedInstrumentLabel: 'Radio',
+              facts: Object.freeze([
+                Object.freeze({
+                  label: 'Resultado de la campaña',
+                  value: 'Sin firma de jet relativista colimado en esta campaña',
+                }),
+                Object.freeze({
+                  label: 'Interpretación',
+                  value: 'No detección observacional; no demuestra ausencia física absoluta del flujo',
+                }),
+              ]),
+            },
+          })
+            .facade;
+
+        await notDetected.load(params);
+        await notDetected.performRelativisticJetAnalysis();
+
+        expect(
+          notDetected.relativisticJetAnalysisFeedback(),
+        ).toBe(
+          'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa de PD.',
+        );
       },
     );
 

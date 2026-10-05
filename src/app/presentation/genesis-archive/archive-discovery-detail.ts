@@ -223,6 +223,20 @@ export class ArchiveDiscoveryDetail
       .performMagnetarActivityObservation();
   }
 
+  performRelativisticJetAnalysis():
+    void {
+
+    if (
+      this.facade.actionPending()
+    ) {
+      return;
+    }
+
+    void this
+      .facade
+      .performRelativisticJetAnalysis();
+  }
+
   performStellarSystemStageObservation():
     void {
 
