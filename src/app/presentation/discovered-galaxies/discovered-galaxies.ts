@@ -175,6 +175,36 @@ export class DiscoveredGalaxiesPage
     return 'El foco de exploración ha alcanzado esta galaxia al menos una vez.';
   }
 
+  formatExplorationPercentage(
+    basisPoints:
+      bigint | null,
+  ): string {
+
+    if (
+      basisPoints ===
+      null
+    ) {
+      return 'Pendiente';
+    }
+
+    const integerPart =
+      basisPoints /
+      100n;
+
+    const decimalPart =
+      (
+        basisPoints %
+        100n
+      )
+        .toString()
+        .padStart(
+          2,
+          '0',
+        );
+
+    return `${integerPart.toString()},${decimalPart} %`;
+  }
+
   galaxyTypeLabel(
     galaxyType:
       GalaxyType,

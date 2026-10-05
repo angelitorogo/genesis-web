@@ -193,6 +193,15 @@
                       }
                     </strong>
                   </div>
+
+                  <div>
+                    <small>EXPLORADA</small>
+                    <strong data-testid="discovered-galaxy-explored-percentage">
+                      {{ formatExplorationPercentage(
+                        facade.exploredPercentageBasisPoints(entry.galaxyIndex)
+                      ) }}
+                    </strong>
+                  </div>
                 </div>
 
                 <div class="dg__actions">

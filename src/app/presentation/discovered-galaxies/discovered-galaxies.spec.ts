@@ -20,6 +20,7 @@ import {
 
 import {
   GalaxyLocator,
+  SectorLocator,
   SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -94,6 +95,26 @@ describe(
               ),
               DiscoveryState
                 .DETECTED,
+            ),
+
+            new KnownDiscovery(
+              generationKey,
+              new SectorLocator(
+                0n,
+                0n,
+              ),
+              DiscoveryState
+                .DISCOVERED,
+            ),
+
+            new KnownDiscovery(
+              generationKey,
+              new SectorLocator(
+                0n,
+                1n,
+              ),
+              DiscoveryState
+                .DISCOVERED,
             ),
 
             new KnownDiscovery(
@@ -557,6 +578,66 @@ describe(
 
         expect(
           galaxyTypes[
+            1
+          ]
+            ?.textContent,
+        ).toContain(
+          'Pendiente',
+        );
+
+        const exploredPercentages =
+          element.querySelectorAll(
+            '[data-testid="discovered-galaxy-explored-percentage"]',
+          );
+
+        expect(
+          exploredPercentages.length,
+        ).toBe(
+          2,
+        );
+
+        const discoveredExploredPercentage =
+          fixture
+            .componentInstance
+            .facade
+            .exploredPercentageBasisPoints(
+              0n,
+            );
+
+        expect(
+          discoveredExploredPercentage,
+        ).not.toBeNull();
+
+        expect(
+          discoveredExploredPercentage,
+        ).toBeGreaterThan(
+          0n,
+        );
+
+        expect(
+          exploredPercentages[
+            0
+          ]
+            ?.textContent,
+        ).toContain(
+          fixture
+            .componentInstance
+            .formatExplorationPercentage(
+              discoveredExploredPercentage,
+            ),
+        );
+
+        expect(
+          fixture
+            .componentInstance
+            .facade
+            .exploredPercentageBasisPoints(
+              1n,
+            ),
+        ).toBeNull();
+
+        expect(
+          exploredPercentages[
             1
           ]
             ?.textContent,

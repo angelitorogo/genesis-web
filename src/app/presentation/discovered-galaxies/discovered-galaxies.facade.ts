@@ -6,8 +6,20 @@ import {
 } from '@angular/core';
 
 import {
+  DiscoveryState,
+} from '../../domain/discovery/discovery-state';
+
+import {
+  type KnownDiscovery,
+} from '../../domain/discovery/known-discovery';
+
+import {
   type GalaxyArchiveSnapshot,
 } from '../../domain/exploration/galaxy-archive';
+
+import {
+  SectorLocator,
+} from '../../domain/generation/procedural-locator';
 
 import {
   type UniverseGenerationKey,
@@ -22,8 +34,12 @@ import {
 } from '../../simulation/exploration/galaxy-archive-engine';
 
 import {
-  GalaxyGeneralProfileEngine,
-} from '../../simulation/exploration/galaxy-general-profile-engine';
+  GalaxySectorGridGenerator,
+} from '../../simulation/sector/galaxy-sector-grid-generator';
+
+import {
+  GalaxyGenerator,
+} from '../../simulation/universe/galaxy-generator';
 
 import {
   GALAXY_FOCUS_RUNTIME,
@@ -129,6 +145,11 @@ export class DiscoveredGalaxiesFacade {
   private readonly galaxyTypesByIndexSignal =
     signal<ReadonlyMap<bigint, GalaxyType>>(
       new Map<bigint, GalaxyType>(),
+    );
+
+  private readonly exploredPercentageByIndexSignal =
+    signal<ReadonlyMap<bigint, bigint>>(
+      new Map<bigint, bigint>(),
     );
 
   private readonly focusPendingGalaxyIndexSignal =
@@ -259,6 +280,19 @@ export class DiscoveredGalaxiesFacade {
       null;
   }
 
+  exploredPercentageBasisPoints(
+    galaxyIndex:
+      bigint,
+  ): bigint | null {
+
+    return this
+      .exploredPercentageByIndexSignal()
+      .get(
+        galaxyIndex,
+      ) ??
+      null;
+  }
+
   async refresh():
     Promise<void> {
 
@@ -300,6 +334,12 @@ export class DiscoveredGalaxiesFacade {
       .galaxyTypesByIndexSignal
       .set(
         new Map<bigint, GalaxyType>(),
+      );
+
+    this
+      .exploredPercentageByIndexSignal
+      .set(
+        new Map<bigint, bigint>(),
       );
 
     try {
@@ -389,29 +429,52 @@ export class DiscoveredGalaxiesFacade {
       const galaxyTypesByIndex =
         new Map<bigint, GalaxyType>();
 
+      const exploredPercentageByIndex =
+        new Map<bigint, bigint>();
+
+      const exploredSectorCountsByGalaxy =
+        countExploredSectorsByGalaxy(
+          knownDiscoveries,
+        );
+
       for (
         const entry
         of snapshot.entries
       ) {
-        const galaxyType =
-          GalaxyGeneralProfileEngine
-            .build(
-              generationKey,
-              entry.galaxyIndex,
-              entry.knowledgeState,
-            )
-            .galaxyType;
-
         if (
-          galaxyType !==
-          null
+          entry.knowledgeState.code <
+          DiscoveryState.DISCOVERED.code
         ) {
-          galaxyTypesByIndex
-            .set(
-              entry.galaxyIndex,
-              galaxyType,
-            );
+          continue;
         }
+
+        const galaxy =
+          GalaxyGenerator.generate(
+            generationKey,
+            entry.galaxyIndex,
+          );
+
+        galaxyTypesByIndex.set(
+          entry.galaxyIndex,
+          galaxy.type,
+        );
+
+        const grid =
+          GalaxySectorGridGenerator.generate(
+            galaxy,
+          );
+
+        const totalSectors =
+          grid.sideLengthInSectors *
+          grid.sideLengthInSectors;
+
+        exploredPercentageByIndex.set(
+          entry.galaxyIndex,
+          roundedExploredPercentageBasisPoints(
+            exploredSectorCountsByGalaxy.get(entry.galaxyIndex) ?? 0n,
+            totalSectors,
+          ),
+        );
       }
 
       const recentEntries =
@@ -429,6 +492,12 @@ export class DiscoveredGalaxiesFacade {
         .galaxyTypesByIndexSignal
         .set(
           galaxyTypesByIndex,
+        );
+
+      this
+        .exploredPercentageByIndexSignal
+        .set(
+          exploredPercentageByIndex,
         );
 
       this
@@ -886,4 +955,61 @@ function projectRecentEntries(
   return Object.freeze(
     projected,
   );
+}
+
+
+function countExploredSectorsByGalaxy(
+  knownDiscoveries:
+    readonly KnownDiscovery[],
+): ReadonlyMap<bigint, bigint> {
+
+  const counts =
+    new Map<bigint, bigint>();
+
+  for (
+    const discovery
+    of knownDiscoveries
+  ) {
+    if (
+      !(discovery.locator instanceof SectorLocator)
+    ) {
+      continue;
+    }
+
+    const galaxyIndex =
+      discovery.locator.galaxyIndex;
+
+    counts.set(
+      galaxyIndex,
+      (counts.get(galaxyIndex) ?? 0n) + 1n,
+    );
+  }
+
+  return counts;
+}
+
+function roundedExploredPercentageBasisPoints(
+  exploredSectors:
+    bigint,
+
+  totalSectors:
+    bigint,
+): bigint {
+
+  const basisPoints =
+    10_000n;
+
+  const rounded =
+    (
+      exploredSectors *
+        basisPoints +
+      totalSectors /
+        2n
+    ) /
+    totalSectors;
+
+  return rounded >
+    basisPoints
+    ? basisPoints
+    : rounded;
 }
