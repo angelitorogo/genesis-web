@@ -195,6 +195,20 @@ export class ArchiveDiscoveryDetail
   }
 
 
+  performPulsarTimingObservation():
+    void {
+
+    if (
+      this.facade.actionPending()
+    ) {
+      return;
+    }
+
+    void this
+      .facade
+      .performPulsarTimingObservation();
+  }
+
   performStellarSystemStageObservation():
     void {
 

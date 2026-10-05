@@ -25,6 +25,10 @@ import {
 } from '../../domain/galactic-object/galactic-object-scientific-action';
 
 import {
+  extremeTypeDefinition,
+} from '../../domain/galactic-object/extreme-object-type';
+
+import {
   GalacticObjectScientificSurveyFamily,
 } from '../../domain/galactic-object/galactic-object-scientific-subject';
 
@@ -117,6 +121,11 @@ import {
   STELLAR_SYSTEM_SCIENTIFIC_PROGRESSION_RUNTIME,
   type StellarSystemScientificProgressionSnapshot,
 } from '../runtime/stellar-system-scientific-progression.runtime';
+
+import {
+  PULSAR_TIMING_OBSERVATION_RUNTIME,
+  type PulsarTimingObservationStatus,
+} from '../runtime/pulsar-timing-observation.runtime';
 
 import {
   StellarSystemScientificCampaignAssembler,
@@ -360,6 +369,10 @@ export interface ArchiveDiscoveryDetailModel {
   readonly eventHorizonApproach?:
     ArchiveEventHorizonApproachModel | null;
 
+  /** 28.3 post-confirmation pulse synchronization/period measurement. */
+  readonly pulsarTiming?:
+    PulsarTimingObservationStatus | null;
+
   /**
    * Shared point-26.A.9 scientific campaign. Optional only for compatibility
    * with pre-A9 presentation fixtures; production stellar-system surfaces load it.
@@ -427,6 +440,11 @@ export class ArchiveDiscoveryDetailFacade {
   private readonly stellarSystemScientificProgressionRuntime =
     inject(
       STELLAR_SYSTEM_SCIENTIFIC_PROGRESSION_RUNTIME,
+    );
+
+  private readonly pulsarTimingObservationRuntime =
+    inject(
+      PULSAR_TIMING_OBSERVATION_RUNTIME,
     );
 
   private currentRequest:
@@ -821,6 +839,64 @@ export class ArchiveDiscoveryDetailFacade {
         .set(
           false,
         );
+    }
+  }
+
+  async performPulsarTimingObservation():
+    Promise<void> {
+
+    const request =
+      this.currentRequest;
+
+    const generationKey =
+      this.currentGenerationKey;
+
+    const locator =
+      this.currentLocator;
+
+    const timing =
+      this.model()
+        ?.pulsarTiming ??
+      null;
+
+    if (
+      request === null ||
+      generationKey === null ||
+      !(locator instanceof GalacticObjectLocator) ||
+      timing === null ||
+      !timing.canMeasure
+    ) {
+      this.actionErrorSignal.set(
+        'La sincronización de pulsos no está disponible con el estado e instrumentación actuales.',
+      );
+      return;
+    }
+
+    if (this.actionPending()) return;
+
+    this.actionPendingSignal.set(true);
+    this.actionErrorSignal.set(null);
+    this.actionFeedbackSignal.set(null);
+
+    try {
+      await this.pulsarTimingObservationRuntime.measure(
+        generationKey,
+        locator,
+      );
+
+      await this.resolveDetails(request);
+
+      this.actionFeedbackSignal.set(
+        'Sincronización completada · período de pulsos medido y evidencia temporal persistida · sin coste ni recompensa de PD.',
+      );
+    } catch (error) {
+      this.actionErrorSignal.set(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo completar la sincronización de pulsos.',
+      );
+    } finally {
+      this.actionPendingSignal.set(false);
     }
   }
 
@@ -1353,6 +1429,20 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+      const pulsarTiming =
+        locator instanceof GalacticObjectLocator &&
+        galacticObjectCard?.extremeType !== null &&
+        galacticObjectCard?.extremeType !== undefined &&
+        galacticObjectCard.knowledgeLevel === 'CONFIRMED' &&
+        extremeTypeDefinition(galacticObjectCard.extremeType).capabilities.pulseTiming
+          ? await this
+              .pulsarTimingObservationRuntime
+              .inspect(
+                generationKey,
+                locator,
+              )
+          : null;
+
       const protoplanetaryDiskAnalysis =
         locator instanceof
           SystemLocator &&
@@ -1467,6 +1557,8 @@ export class ArchiveDiscoveryDetailFacade {
               scientificAction,
 
               eventHorizonApproach,
+
+              pulsarTiming,
 
               stellarSystemScientificCampaign,
 

@@ -913,6 +913,83 @@
                     </section>
                   }
 
+                  @if (model.pulsarTiming; as timing) {
+                    <section
+                      class="archive-discovery-detail__scientific-action"
+                      data-testid="archive-pulsar-timing"
+                    >
+                      <div class="archive-discovery-detail__scientific-action-header">
+                        <div>
+                          <small class="archive-discovery-detail__eyebrow">
+                            28.3 · TEMPORIZACIÓN DE PULSOS
+                          </small>
+                          <strong>Sincronizar / medir pulsos</strong>
+                        </div>
+
+                        <span>{{ timing.measured ? 'SINCRONIZADO' : 'PENDIENTE' }}</span>
+                      </div>
+
+                      <p>
+                        Campaña temporal sobre una fuente confirmada con capacidad de pulsos.
+                        La cadencia visual del renderer permanece desacoplada del período físico medido.
+                      </p>
+
+                      <p data-testid="archive-pulsar-timing-requirement">
+                        {{ timing.requirementLabel }}
+                      </p>
+
+                      @if (timing.measured) {
+                        <p data-testid="archive-pulsar-timing-instrument">
+                          Instrumento empleado: {{ timing.measuredInstrumentLabel }}.
+                        </p>
+
+                        <dl
+                          class="archive-discovery-detail__science-status"
+                          data-testid="archive-pulsar-timing-facts"
+                        >
+                          @for (fact of timing.facts; track fact.label) {
+                            <div>
+                              <dt>{{ fact.label }}</dt>
+                              <dd>{{ fact.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      } @else if (timing.canMeasure) {
+                        <button
+                          genesis-primary-button
+                          type="button"
+                          data-testid="archive-pulsar-timing-button"
+                          [disabled]="facade.actionPending()"
+                          (click)="performPulsarTimingObservation()"
+                        >
+                          @if (facade.actionPending()) {
+                            SINCRONIZANDO…
+                          } @else {
+                            SINCRONIZAR / MEDIR PULSOS
+                          }
+                        </button>
+                      }
+
+                      @if (facade.actionFeedback(); as feedback) {
+                        <p
+                          class="archive-discovery-detail__action-feedback"
+                          data-testid="archive-pulsar-timing-feedback"
+                        >
+                          {{ feedback }}
+                        </p>
+                      }
+
+                      @if (facade.actionError(); as actionError) {
+                        <p
+                          class="archive-discovery-detail__action-error"
+                          data-testid="archive-pulsar-timing-error"
+                        >
+                          {{ actionError }}
+                        </p>
+                      }
+                    </section>
+                  }
+
                   @if (
                     card.scientificSubject === 'ACTIVE_GALACTIC_NUCLEUS' &&
                     card.knowledgeLevel === 'CONFIRMED'
