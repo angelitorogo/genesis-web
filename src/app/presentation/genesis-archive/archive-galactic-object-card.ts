@@ -556,7 +556,7 @@ export class ArchiveGalacticObjectCardAssembler {
             ? 'Clasificación compacta confirmada mediante una segunda campaña del modelo. No se presupone acreción ni emisión en jets.'
             : 'Fuente extrema catalogada mediante caracterización compacta. La clasificación requiere confirmación independiente; no se presuponen discos ni jets.',
           nextScientificStep: state.code >= DiscoveryState.CONFIRMED.code
-            ? 'Caracterización compacta completada; acreción no determinada'
+            ? 'Analizar lente gravitacional y reconstruir fuente'
             : 'Confirmación independiente mediante seguimiento temporal',
           facts: massFacts,
           scientificSections: Object.freeze([Object.freeze({
@@ -586,7 +586,7 @@ export class ArchiveGalacticObjectCardAssembler {
           ? 'Clasificación compacta confirmada mediante una segunda campaña del modelo. La representación procedural canónica no presupone que el disco visual sea acreción observada.'
           : 'Fuente extrema catalogada mediante caracterización compacta. La clasificación requiere confirmación independiente; la representación procedural no añade acreción observada.',
         nextScientificStep: state.code >= DiscoveryState.CONFIRMED.code
-          ? 'Caracterización compacta completada; acreción observacional no determinada'
+          ? 'Analizar lente gravitacional y reconstruir fuente'
           : 'Confirmación independiente mediante seguimiento temporal',
         facts: massFacts,
         scientificSections: Object.freeze([Object.freeze({

@@ -22,6 +22,10 @@ import {
 } from '../../../domain/generation/procedural-locator';
 
 import {
+  GeneratorVersion,
+} from '../../../domain/generation/generator-version';
+
+import {
   type UniverseGenerationKey,
 } from '../../../domain/generation/universe-generation-key';
 
@@ -490,11 +494,13 @@ export class DexieDiscoveryRepository
   /**
    * Point 28.2G.3f — compact instrument-progression read model.
    *
-   * Instrument unlocks need only six existence facts. Reading every discovery,
-   * sorting it and rehydrating every procedural locator made one scientific
-   * campaign scale with the size of the whole universe. These indexed existence
-   * queries stay authoritative because they read the same persisted discovery
-   * rows, but they never materialize the global KnownDiscovery collection.
+   * Instrument unlocks use indexed existence facts instead of materializing the
+   * global discovery catalogue. Point 28.6a adds one V2 compatibility bridge:
+   * V2 does not persist one BODY discovery per canonical planet, so a CONFIRMED
+   * V2 system is accepted as the legacy FIRST_BODY_DISCOVERED milestone. At that
+   * state the system's canonical planetary inventory is already part of the
+   * scientific read model; no synthetic BODY row is written and V1 semantics are
+   * left unchanged.
    */
   async getObservationProgressMilestones(
     generationKey:
@@ -544,7 +550,8 @@ export class DexieDiscoveryRepository
     const [
       firstSystemDiscovered,
       firstSystemCatalogued,
-      firstBodyDiscovered,
+      firstExplicitBodyDiscovered,
+      firstSystemConfirmed,
       firstGalacticObjectCatalogued,
       firstTargetConfirmed,
       firstExternalGalaxyDetected,
@@ -561,6 +568,10 @@ export class DexieDiscoveryRepository
         firstOfTypeAtLeast(
           DiscoveryTargetType.BODY.code,
           DiscoveryState.DISCOVERED.code,
+        ),
+        firstOfTypeAtLeast(
+          DiscoveryTargetType.SYSTEM.code,
+          DiscoveryState.CONFIRMED.code,
         ),
         firstOfTypeAtLeast(
           DiscoveryTargetType.GALACTIC_OBJECT.code,
@@ -584,6 +595,14 @@ export class DexieDiscoveryRepository
           entity => entity.galaxyIndex !== '0',
         ),
       ]);
+
+    const firstBodyDiscovered =
+      firstExplicitBodyDiscovered ||
+      (
+        generationKey.generatorVersion.code ===
+          GeneratorVersion.V2.code &&
+        firstSystemConfirmed
+      );
 
     const achieved:
       ObservationProgressMilestone[] =

@@ -88,6 +88,11 @@ import {
 } from '../runtime/relativistic-jet-analysis-observation.runtime';
 
 import {
+  GRAVITATIONAL_LENSING_RECONSTRUCTION_OBSERVATION_RUNTIME,
+  type GravitationalLensingReconstructionObservationStatus,
+} from '../runtime/gravitational-lensing-reconstruction-observation.runtime';
+
+import {
   DEFAULT_UNIVERSE_SEED,
 } from '../universe/universe-seed.facade';
 import { ProceduralTargetResolver } from '../../simulation/regeneration/procedural-target-resolver';
@@ -130,6 +135,12 @@ describe(
 
         readonly relativisticJetAnalysisAnalyzedStatus?:
           RelativisticJetAnalysisObservationStatus | null;
+
+        readonly gravitationalLensingReconstructionStatus?:
+          GravitationalLensingReconstructionObservationStatus | null;
+
+        readonly gravitationalLensingReconstructionAnalyzedStatus?:
+          GravitationalLensingReconstructionObservationStatus | null;
       } = {},
     ): {
       readonly facade:
@@ -250,6 +261,9 @@ describe(
       let relativisticJetAnalysisPerformed =
         false;
 
+      let gravitationalLensingReconstructionPerformed =
+        false;
+
       TestBed.configureTestingModule({
         providers: [
           {
@@ -287,6 +301,38 @@ describe(
                 }
 
                 relativisticJetAnalysisPerformed =
+                  true;
+              },
+            },
+          },
+          {
+            provide:
+              GRAVITATIONAL_LENSING_RECONSTRUCTION_OBSERVATION_RUNTIME,
+
+            useValue: {
+              async inspect() {
+                if (
+                  gravitationalLensingReconstructionPerformed &&
+                  options.gravitationalLensingReconstructionAnalyzedStatus !==
+                    undefined
+                ) {
+                  return options.gravitationalLensingReconstructionAnalyzedStatus;
+                }
+
+                return options.gravitationalLensingReconstructionStatus ?? null;
+              },
+
+              async analyze() {
+                if (
+                  options.gravitationalLensingReconstructionAnalyzedStatus ===
+                    undefined
+                ) {
+                  throw new Error(
+                    'ArchiveDiscoveryDetailFacade unit fixtures do not execute 28.6 persistence.',
+                  );
+                }
+
+                gravitationalLensingReconstructionPerformed =
                   true;
               },
             },
@@ -673,6 +719,114 @@ describe(
           notDetected.relativisticJetAnalysisFeedback(),
         ).toBe(
           'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa de PD.',
+        );
+      },
+    );
+
+    it(
+      'should expose 28.6 on a confirmed active nucleus and report detection-aware completion feedback',
+      async () => {
+        const v2 =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              DEFAULT_UNIVERSE_SEED,
+            ),
+            GeneratorVersion.V2,
+          );
+
+        const params = {
+          locatorKind:
+            ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex:
+            '0',
+          sectorKey:
+            '0',
+          galacticObjectIndex:
+            '0',
+          universeSeed:
+            v2.universeSeed.serialize(),
+          generatorVersionCode:
+            '2',
+        } as const;
+
+        const availableStatus:
+          GravitationalLensingReconstructionObservationStatus =
+          {
+            analyzed: false,
+            canAnalyze: true,
+            instrumentLabel: 'Óptica · nivel 5',
+            requirementLabel: 'Disponible · imagen astrométrica de alta resolución sin coste ni recompensa de PD.',
+            analyzedInstrumentLabel: null,
+            facts: Object.freeze([]),
+          };
+
+        const detected =
+          configure({
+            universes: [v2],
+            discoveryState: DiscoveryState.CONFIRMED,
+            scientificActionsEnabled: true,
+            gravitationalLensingReconstructionStatus: availableStatus,
+            gravitationalLensingReconstructionAnalyzedStatus: {
+              analyzed: true,
+              canAnalyze: false,
+              instrumentLabel: 'Óptica · nivel 5',
+              requirementLabel: 'Reconstrucción de lente persistida como evidencia científica.',
+              analyzedInstrumentLabel: 'Óptica',
+              facts: Object.freeze([
+                Object.freeze({
+                  label: 'Resultado de la campaña',
+                  value: 'Configuración de lente gravitacional reconstruible detectada',
+                }),
+              ]),
+            },
+          })
+            .facade;
+
+        await detected.load(params);
+
+        expect(
+          detected.model()?.gravitationalLensingReconstruction?.canAnalyze,
+        ).toBe(true);
+
+        await detected.performGravitationalLensingReconstruction();
+
+        expect(
+          detected.gravitationalLensingReconstructionFeedback(),
+        ).toBe(
+          'Análisis completado · geometría de lente y reconstrucción de fuente persistidas como evidencia científica · sin coste ni recompensa de PD.',
+        );
+
+        TestBed.resetTestingModule();
+
+        const notDetected =
+          configure({
+            universes: [v2],
+            discoveryState: DiscoveryState.CONFIRMED,
+            scientificActionsEnabled: true,
+            gravitationalLensingReconstructionStatus: availableStatus,
+            gravitationalLensingReconstructionAnalyzedStatus: {
+              analyzed: true,
+              canAnalyze: false,
+              instrumentLabel: 'Óptica · nivel 5',
+              requirementLabel: 'Reconstrucción de lente persistida como evidencia científica.',
+              analyzedInstrumentLabel: 'Óptica',
+              facts: Object.freeze([
+                Object.freeze({
+                  label: 'Resultado de la campaña',
+                  value: 'Sin configuración de lente fuerte reconstruible en esta campaña',
+                }),
+              ]),
+            },
+          })
+            .facade;
+
+        await notDetected.load(params);
+        await notDetected.performGravitationalLensingReconstruction();
+
+        expect(
+          notDetected.gravitationalLensingReconstructionFeedback(),
+        ).toBe(
+          'Análisis completado · no detección de una configuración fuerte reconstruible persistida como evidencia científica · sin coste ni recompensa de PD.',
         );
       },
     );

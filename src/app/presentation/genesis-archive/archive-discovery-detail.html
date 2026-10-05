@@ -1146,6 +1146,89 @@
                     </section>
                   }
 
+                  @if (model.gravitationalLensingReconstruction; as lensing) {
+                    <section
+                      class="archive-discovery-detail__scientific-action"
+                      data-testid="archive-gravitational-lensing-reconstruction"
+                    >
+                      <div class="archive-discovery-detail__scientific-action-header">
+                        <div>
+                          <small class="archive-discovery-detail__eyebrow">
+                            28.6 · LENTE GRAVITACIONAL
+                          </small>
+                          <strong>Lentes gravitacionales y reconstrucción de fuente</strong>
+                        </div>
+
+                        <span>{{ lensing.analyzed ? 'ANALIZADO' : 'PENDIENTE' }}</span>
+                      </div>
+
+                      <p>
+                        Imagen astrométrica de alta resolución sobre una lente compacta confirmada.
+                        La reconstrucción usa exclusivamente la masa científica canónica del objeto y
+                        coordenadas normalizadas por el radio de Einstein; el renderer no aporta física.
+                      </p>
+
+                      <p>
+                        El modelo es una lente puntual Schwarzschild. No se inventan distancias absolutas,
+                        giro de Kerr, cizalla de la galaxia anfitriona ni morfología extendida de la fuente.
+                      </p>
+
+                      <p data-testid="archive-gravitational-lensing-reconstruction-requirement">
+                        {{ lensing.requirementLabel }}
+                      </p>
+
+                      @if (lensing.analyzed) {
+                        <p data-testid="archive-gravitational-lensing-reconstruction-instrument">
+                          Instrumento empleado: {{ lensing.analyzedInstrumentLabel }}.
+                        </p>
+
+                        <dl
+                          class="archive-discovery-detail__science-status"
+                          data-testid="archive-gravitational-lensing-reconstruction-facts"
+                        >
+                          @for (fact of lensing.facts; track fact.label) {
+                            <div>
+                              <dt>{{ fact.label }}</dt>
+                              <dd>{{ fact.value }}</dd>
+                            </div>
+                          }
+                        </dl>
+                      } @else if (lensing.canAnalyze) {
+                        <button
+                          genesis-primary-button
+                          type="button"
+                          data-testid="archive-gravitational-lensing-reconstruction-button"
+                          [disabled]="facade.actionPending()"
+                          (click)="performGravitationalLensingReconstruction()"
+                        >
+                          @if (facade.actionPending()) {
+                            RECONSTRUYENDO…
+                          } @else {
+                            ANALIZAR LENTE / RECONSTRUIR FUENTE
+                          }
+                        </button>
+                      }
+
+                      @if (facade.gravitationalLensingReconstructionFeedback(); as feedback) {
+                        <p
+                          class="archive-discovery-detail__action-feedback"
+                          data-testid="archive-gravitational-lensing-reconstruction-feedback"
+                        >
+                          {{ feedback }}
+                        </p>
+                      }
+
+                      @if (facade.gravitationalLensingReconstructionError(); as actionError) {
+                        <p
+                          class="archive-discovery-detail__action-error"
+                          data-testid="archive-gravitational-lensing-reconstruction-error"
+                        >
+                          {{ actionError }}
+                        </p>
+                      }
+                    </section>
+                  }
+
                   @if (
                     card.scientificSubject === 'ACTIVE_GALACTIC_NUCLEUS' &&
                     card.knowledgeLevel === 'CONFIRMED'

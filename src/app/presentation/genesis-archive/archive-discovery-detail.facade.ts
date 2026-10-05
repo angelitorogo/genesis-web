@@ -140,6 +140,11 @@ import {
 } from '../runtime/relativistic-jet-analysis-observation.runtime';
 
 import {
+  GRAVITATIONAL_LENSING_RECONSTRUCTION_OBSERVATION_RUNTIME,
+  type GravitationalLensingReconstructionObservationStatus,
+} from '../runtime/gravitational-lensing-reconstruction-observation.runtime';
+
+import {
   StellarSystemScientificCampaignAssembler,
   type StellarSystemScientificCampaignModel,
 } from '../runtime/stellar-system-scientific-campaign';
@@ -394,6 +399,10 @@ export interface ArchiveDiscoveryDetailModel {
   readonly relativisticJetAnalysis?:
     RelativisticJetAnalysisObservationStatus | null;
 
+  /** 28.6 post-confirmation gravitational-lensing/source reconstruction. */
+  readonly gravitationalLensingReconstruction?:
+    GravitationalLensingReconstructionObservationStatus | null;
+
   /**
    * Shared point-26.A.9 scientific campaign. Optional only for compatibility
    * with pre-A9 presentation fixtures; production stellar-system surfaces load it.
@@ -479,6 +488,11 @@ export class ArchiveDiscoveryDetailFacade {
       RELATIVISTIC_JET_ANALYSIS_OBSERVATION_RUNTIME,
     );
 
+  private readonly gravitationalLensingReconstructionObservationRuntime =
+    inject(
+      GRAVITATIONAL_LENSING_RECONSTRUCTION_OBSERVATION_RUNTIME,
+    );
+
   private currentRequest:
     ArchiveDiscoveryDetailRequest | null =
     null;
@@ -560,6 +574,26 @@ export class ArchiveDiscoveryDetailFacade {
   readonly relativisticJetAnalysisError =
     this
       .relativisticJetAnalysisErrorSignal
+      .asReadonly();
+
+  private readonly gravitationalLensingReconstructionFeedbackSignal =
+    signal<string | null>(
+      null,
+    );
+
+  readonly gravitationalLensingReconstructionFeedback =
+    this
+      .gravitationalLensingReconstructionFeedbackSignal
+      .asReadonly();
+
+  private readonly gravitationalLensingReconstructionErrorSignal =
+    signal<string | null>(
+      null,
+    );
+
+  readonly gravitationalLensingReconstructionError =
+    this
+      .gravitationalLensingReconstructionErrorSignal
       .asReadonly();
 
   private readonly eventHorizonApproachSimulationSignal =
@@ -646,6 +680,18 @@ export class ArchiveDiscoveryDetailFacade {
 
     this
       .relativisticJetAnalysisErrorSignal
+      .set(
+        null,
+      );
+
+    this
+      .gravitationalLensingReconstructionFeedbackSignal
+      .set(
+        null,
+      );
+
+    this
+      .gravitationalLensingReconstructionErrorSignal
       .set(
         null,
       );
@@ -1126,6 +1172,81 @@ export class ArchiveDiscoveryDetailFacade {
         error instanceof Error
           ? error.message
           : 'No se pudo completar el análisis de jets relativistas.',
+      );
+    } finally {
+      this.actionPendingSignal.set(false);
+    }
+  }
+
+  async performGravitationalLensingReconstruction():
+    Promise<void> {
+
+    const request =
+      this.currentRequest;
+
+    const generationKey =
+      this.currentGenerationKey;
+
+    const locator =
+      this.currentLocator;
+
+    const lensing =
+      this.model()
+        ?.gravitationalLensingReconstruction ??
+      null;
+
+    if (
+      request === null ||
+      generationKey === null ||
+      !(locator instanceof GalacticObjectLocator) ||
+      lensing === null ||
+      !lensing.canAnalyze
+    ) {
+      this.gravitationalLensingReconstructionErrorSignal.set(
+        'La reconstrucción de lente gravitacional no está disponible con el estado e instrumentación actuales.',
+      );
+      return;
+    }
+
+    if (this.actionPending()) return;
+
+    this.actionPendingSignal.set(true);
+    this.actionErrorSignal.set(null);
+    this.actionFeedbackSignal.set(null);
+    this.gravitationalLensingReconstructionErrorSignal.set(null);
+    this.gravitationalLensingReconstructionFeedbackSignal.set(null);
+
+    try {
+      await this.gravitationalLensingReconstructionObservationRuntime.analyze(
+        generationKey,
+        locator,
+      );
+
+      await this.resolveDetails(request);
+
+      const detected =
+        this.model()
+          ?.gravitationalLensingReconstruction
+          ?.facts
+          .some(
+            fact =>
+              fact.label ===
+                'Resultado de la campaña' &&
+              fact.value ===
+                'Configuración de lente gravitacional reconstruible detectada',
+          ) ??
+        false;
+
+      this.gravitationalLensingReconstructionFeedbackSignal.set(
+        detected
+          ? 'Análisis completado · geometría de lente y reconstrucción de fuente persistidas como evidencia científica · sin coste ni recompensa de PD.'
+          : 'Análisis completado · no detección de una configuración fuerte reconstruible persistida como evidencia científica · sin coste ni recompensa de PD.',
+      );
+    } catch (error) {
+      this.gravitationalLensingReconstructionErrorSignal.set(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo completar la reconstrucción de lente gravitacional.',
       );
     } finally {
       this.actionPendingSignal.set(false);
@@ -1705,6 +1826,23 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+      const gravitationalLensingReconstruction =
+        locator instanceof GalacticObjectLocator &&
+        galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
+        (
+          galacticObjectCard.extremeType ===
+            ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE ||
+          galacticObjectCard.scientificSubject ===
+            GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
+        )
+          ? await this
+              .gravitationalLensingReconstructionObservationRuntime
+              .inspect(
+                generationKey,
+                locator,
+              )
+          : null;
+
       const protoplanetaryDiskAnalysis =
         locator instanceof
           SystemLocator &&
@@ -1825,6 +1963,8 @@ export class ArchiveDiscoveryDetailFacade {
               magnetarActivity,
 
               relativisticJetAnalysis,
+
+              gravitationalLensingReconstruction,
 
               stellarSystemScientificCampaign,
 

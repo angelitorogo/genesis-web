@@ -391,6 +391,101 @@ describe(
     );
 
     it(
+      'should treat a confirmed V2 system as the legacy first-body milestone without persisting synthetic BODY discoveries',
+      async () => {
+        const v2Key =
+          new UniverseGenerationKey(
+            generationKey.universeSeed.copy(),
+            GeneratorVersion.V2,
+          );
+
+        const v2System =
+          new SystemLocator(
+            0n,
+            11n,
+            3n,
+          );
+
+        await universeRepository
+          .createIfAbsent(
+            v2Key,
+          );
+
+        await discoveryRepository
+          .setState(
+            v2Key,
+            v2System,
+            DiscoveryState.CONFIRMED,
+          );
+
+        const milestones =
+          await discoveryRepository
+            .getObservationProgressMilestones(
+              v2Key,
+            );
+
+        expect(milestones).toContain(
+          ObservationProgressMilestone.FIRST_BODY_DISCOVERED,
+        );
+
+        const discoveries =
+          await discoveryRepository
+            .getKnownDiscoveries(
+              v2Key,
+            );
+
+        expect(discoveries).toHaveLength(1);
+        expect(discoveries[0]?.locator).toBeInstanceOf(
+          SystemLocator,
+        );
+        expect(
+          discoveries.some(
+            discovery =>
+              discovery.locator instanceof BodyLocator,
+          ),
+        ).toBe(false);
+      },
+    );
+
+    it(
+      'should preserve V1 first-body semantics when a confirmed system has no persisted BODY discovery',
+      async () => {
+        const isolatedV1Key =
+          new UniverseGenerationKey(
+            UniverseSeed.parse(
+              '8A32-B9E5-29DF-5C81-A3F2-7B1D-7F46-E9C2',
+            ),
+            GeneratorVersion.V1,
+          );
+
+        await universeRepository
+          .createIfAbsent(
+            isolatedV1Key,
+          );
+
+        await discoveryRepository
+          .setState(
+            isolatedV1Key,
+            new SystemLocator(
+              0n,
+              11n,
+              4n,
+            ),
+            DiscoveryState.CONFIRMED,
+          );
+
+        await expect(
+          discoveryRepository
+            .getObservationProgressMilestones(
+              isolatedV1Key,
+            ),
+        ).resolves.not.toContain(
+          ObservationProgressMilestone.FIRST_BODY_DISCOVERED,
+        );
+      },
+    );
+
+    it(
       'should drive DETECTED -> DISCOVERED -> VISITED -> CATALOGUED -> CONFIRMED from one persisted state/evidence boundary',
       async () => {
         for (

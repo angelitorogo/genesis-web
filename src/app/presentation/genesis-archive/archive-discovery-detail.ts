@@ -237,6 +237,20 @@ export class ArchiveDiscoveryDetail
       .performRelativisticJetAnalysis();
   }
 
+  performGravitationalLensingReconstruction():
+    void {
+
+    if (
+      this.facade.actionPending()
+    ) {
+      return;
+    }
+
+    void this
+      .facade
+      .performGravitationalLensingReconstruction();
+  }
+
   performStellarSystemStageObservation():
     void {
 
