@@ -115,6 +115,7 @@ import {
 
 import {
   STELLAR_SYSTEM_SCIENTIFIC_PROGRESSION_RUNTIME,
+  type StellarSystemScientificProgressionSnapshot,
 } from '../runtime/stellar-system-scientific-progression.runtime';
 
 import {
@@ -1065,45 +1066,59 @@ export class ArchiveDiscoveryDetailFacade {
       );
 
     try {
-      let totalAwardedDiscoveryPoints =
-        0;
+      const committed =
+        await this
+          .stellarSystemScientificProgressionRuntime
+          .performObservations(
+            generationKey,
+            locator,
+            pendingActions.map(
+              action =>
+                action.ruleCode,
+            ),
+          );
 
-      const stageStateCode =
-        campaign.discoveryState.code;
+      let progressionSnapshot =
+        committed.snapshot;
 
-      for (
-        const action
-        of pendingActions
+      // The Archive detailed card is itself the canonical DISCOVERED -> VISITED
+      // entry milestone. Before the performance hotfix, resolveDetails(request)
+      // re-applied this entry after a DETECTED -> DISCOVERED campaign. Passing
+      // the preloaded DISCOVERED snapshot bypassed recordEntry(), leaving the
+      // system stuck at DISCOVERED with no catalogue campaign. Preserve the
+      // single-snapshot fast path for every other transition, but commit the
+      // detailed-entry milestone exactly once when this stage has just reached
+      // DISCOVERED.
+      if (
+        committed.stateAfter.code ===
+          DiscoveryState.DISCOVERED.code &&
+        request.stellarSystemEntryKind !==
+          undefined &&
+        request.stellarSystemEntryKind !==
+          null
       ) {
-        const committed =
-          await this
-            .stellarSystemScientificProgressionRuntime
-            .performObservation(
-              generationKey,
-              locator,
-              action.ruleCode,
-            );
-
-        totalAwardedDiscoveryPoints +=
-          committed.awardedDiscoveryPoints;
-
-        if (
-          committed.stateAfter.code !==
-          stageStateCode
-        ) {
-          break;
-        }
+        progressionSnapshot =
+          (
+            await this
+              .stellarSystemScientificProgressionRuntime
+              .recordEntry(
+                generationKey,
+                locator,
+                request.stellarSystemEntryKind,
+              )
+          ).snapshot;
       }
 
       await this
         .resolveDetails(
           request,
+          progressionSnapshot,
         );
 
       const rewardSuffix =
-        totalAwardedDiscoveryPoints >
+        committed.awardedDiscoveryPoints >
           0
-          ? ` · +${totalAwardedDiscoveryPoints} PD`
+          ? ` · +${committed.awardedDiscoveryPoints} PD`
           : '';
 
       const visibleState =
@@ -1140,6 +1155,10 @@ export class ArchiveDiscoveryDetailFacade {
   private async resolveDetails(
     request:
       ArchiveDiscoveryDetailRequest,
+
+    preloadedStellarSystemProgression:
+      StellarSystemScientificProgressionSnapshot | null =
+      null,
   ): Promise<void> {
 
     this
@@ -1240,7 +1259,10 @@ export class ArchiveDiscoveryDetailFacade {
         shouldLoadStellarSystemProgression &&
         locator instanceof
           SystemLocator
-          ? request.stellarSystemEntryKind ===
+          ? preloadedStellarSystemProgression !==
+              null
+            ? preloadedStellarSystemProgression
+            : request.stellarSystemEntryKind ===
               undefined ||
             request.stellarSystemEntryKind ===
               null

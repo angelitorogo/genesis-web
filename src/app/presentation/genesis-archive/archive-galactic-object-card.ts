@@ -515,20 +515,20 @@ export class ArchiveGalacticObjectCardAssembler {
           nextScientificStep: 'Caracterización multibanda de fuente extrema',
           facts: Object.freeze([]),
           scientificSections: Object.freeze([]),
+          /*
+           * 27.10 compatibility contract: IMBH existed before 28.2G and its
+           * compact/black-hole identity stays completely hidden until
+           * CATALOGUED. The approved early 28.2G visual progression applies
+           * to the newly-specialized complement, not to this frozen legacy
+           * scientific route.
+           */
           render:
-            isV2ExtremeIntegration
-              ? createHiddenExtremeProgressionRenderDescriptor(
-                  ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE,
-                  knowledgeLevel,
-                  renderSeed,
-                  title,
-                )
-              : createIdentifiedRenderDescriptor(
-                  ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
-                  knowledgeLevel,
-                  renderSeed,
-                  title,
-                ),
+            createIdentifiedRenderDescriptor(
+              ArchiveGalacticObjectRenderKind.EXTREME_OBJECT,
+              knowledgeLevel,
+              renderSeed,
+              title,
+            ),
         });
       }
 
@@ -600,13 +600,12 @@ export class ArchiveGalacticObjectCardAssembler {
           accessibleLabel: 'Representación procedural canónica de agujero negro de masa intermedia',
           variant: exactType, renderProfile: null,
           extremeType: exactType,
-          extremeRender: archiveExtremeObjectRenderModel(
-            exactType,
-            renderSeed,
-            detailStageForKnowledgeLevel(
-              knowledgeLevel,
-            ),
-          ),
+          /*
+           * Frozen 27.10 IMBH presentation contract: once catalogued,
+           * expose the scientific compact silhouette, not the later
+           * laboratory black-hole renderer. Stellar-mass BHs introduced
+           * by 28.2G keep the canonical laboratory progression.
+           */
           compactVisual: compactObjectScientificVisual('BLACK_HOLE'),
           scale: .5, density: .5, energy: .5, concentration: .5,
         }),
@@ -2298,6 +2297,8 @@ function supportsApprovedExtremeProgression(
       ExtremeType.SUPERNOVA_REMNANT &&
     type !==
       ExtremeType.PULSAR_WIND_NEBULA &&
+    type !==
+      ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE &&
     !isGalacticNucleusExtremeType(
       type,
     )

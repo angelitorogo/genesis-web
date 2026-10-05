@@ -15,6 +15,10 @@ import {
 } from '../generation/universe-generation-key';
 
 import {
+  type ObservationProgressMilestone,
+} from '../observation/observation-instrument-progression';
+
+import {
   type GalaxySectorCoordinates,
 } from '../sector/galaxy-sector-coordinates';
 
@@ -157,5 +161,18 @@ export interface DiscoveryRepository {
       GalaxySectorCoordinates,
   ): Promise<
     readonly KnownDiscovery[]
+  >;
+
+  /**
+   * Optional point-28.2G.3f fast path for instrument unlock evaluation.
+   * Implementations may derive these six booleans directly from persisted
+   * discovery indexes without materializing/sorting every KnownDiscovery.
+   * Callers must fall back to getKnownDiscoveries() when absent.
+   */
+  getObservationProgressMilestones?(
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<
+    readonly ObservationProgressMilestone[]
   >;
 }

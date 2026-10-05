@@ -16,10 +16,6 @@ import {
 } from '../../domain/discovery/discovered-to-visited-entry';
 
 import {
-  type KnownDiscovery,
-} from '../../domain/discovery/known-discovery';
-
-import {
   type ScientificCompleteness,
   evaluateScientificCompleteness,
 } from '../../domain/discovery/scientific-completeness';
@@ -51,7 +47,7 @@ import {
 } from '../../domain/observation/observation-instrument-capability';
 
 import {
-  type ObservationProgressMilestone,
+  ObservationProgressMilestone,
 } from '../../domain/observation/observation-instrument-progression';
 
 import {
@@ -111,6 +107,10 @@ import {
 import {
   ObservationInstrumentCapabilityCatalogV1,
 } from '../../simulation/observation/observation-instrument-capability-catalog';
+
+import {
+  ObservationInstrumentProgressionEngine,
+} from '../../simulation/observation/observation-instrument-progression-engine';
 
 import {
   ScientificEvidenceAcquisitionEngine,
@@ -288,6 +288,20 @@ export interface StellarSystemScientificProgressionRuntime {
     observedAtEpochMs?:
       number,
   ): Promise<CommittedStellarSystemScientificProgression>;
+
+  performObservations(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    ruleCodes:
+      readonly StellarSystemScientificObservationRuleCodeValue[],
+
+    observedAtEpochMs?:
+      number,
+  ): Promise<CommittedStellarSystemScientificProgression>;
 }
 
 /**
@@ -417,6 +431,49 @@ export class DexieStellarSystemScientificProgressionRuntime
         this.clock(),
   ): Promise<CommittedStellarSystemScientificProgression> {
 
+    return this.performObservations(
+      generationKey,
+      locator,
+      Object.freeze([
+        ruleCode,
+      ]),
+      observedAtEpochMs,
+    );
+  }
+
+  /**
+   * Executes one complete player-facing campaign stage using the compact
+   * point-28.2G.3f instrument milestone snapshot. A mature universe can hold
+   * hundreds of thousands of persisted discoveries; instrument unlocking needs
+   * only six existence facts, so no global KnownDiscovery list is materialized.
+   *
+   * Scientific semantics are unchanged: every rule still passes through the
+   * same instrument gate, evidence acquisition, progression engine and reward
+   * policy.
+   */
+  async performObservations(
+    generationKey:
+      UniverseGenerationKey,
+
+    locator:
+      SystemLocator,
+
+    ruleCodes:
+      readonly StellarSystemScientificObservationRuleCodeValue[],
+
+    observedAtEpochMs?:
+      number,
+  ): Promise<CommittedStellarSystemScientificProgression> {
+
+    if (
+      ruleCodes.length ===
+      0
+    ) {
+      throw new RangeError(
+        'Point 26.A.9 batch observation requires at least one scientific rule.',
+      );
+    }
+
     await this.database
       .openDatabase();
 
@@ -428,14 +485,14 @@ export class DexieStellarSystemScientificProgressionRuntime
         this.database.observations,
         this.database.progress,
         async () => {
-          const stateBefore =
+          const initialState =
             await this.currentState(
               generationKey,
               locator,
             );
 
           if (
-            stateBefore ===
+            initialState ===
             DiscoveryState.DISCOVERED
           ) {
             throw new RangeError(
@@ -444,7 +501,7 @@ export class DexieStellarSystemScientificProgressionRuntime
           }
 
           if (
-            stateBefore.code <
+            initialState.code <
             DiscoveryState.DETECTED.code
           ) {
             throw new RangeError(
@@ -452,129 +509,182 @@ export class DexieStellarSystemScientificProgressionRuntime
             );
           }
 
-          const rule =
-            StellarSystemScientificObservationCatalogV1
-              .rule(
-                ruleCode,
-              );
+          let currentState =
+            initialState;
 
-          if (
-            !ruleAllowedForState(
-              ruleCode,
-              rule.dimensionCode,
-              stateBefore,
-            )
-          ) {
-            throw new RangeError(
-              `Scientific observation ${ruleCode} is outside the current DiscoveryState code ${stateBefore.code} campaign stage.`,
-            );
-          }
+          let awardedDiscoveryPoints =
+            0;
 
-          const [
+          let persistedEvidence:
+            ScientificEvidence | null =
+            null;
+
+          let [
             globalDiscoveryPoints,
-            knownDiscoveries,
+            achievedMilestones,
           ] =
             await Promise.all([
               this.pointsRepository
                 .getGlobalDiscoveryPoints(
                   generationKey,
                 ),
-              this.discoveryRepository
-                .getKnownDiscoveries(
-                  generationKey,
-                ),
+              this.instrumentProgressMilestones(
+                generationKey,
+              ),
             ]);
 
-          const selection =
-            bestRuleAvailability(
-              generationKey,
-              globalDiscoveryPoints,
-              knownDiscoveries,
-              ruleCode,
-              stateBefore,
-            );
-
-          if (
-            !selection.isAvailable
+          for (
+            let index =
+              0;
+            index <
+              ruleCodes.length;
+            index +=
+              1
           ) {
-            throw new RangeError(
-              `Scientific observation ${ruleCode} is blocked by the current PD/milestone instrument progression.`,
-            );
-          }
+            const ruleCode =
+              ruleCodes[index];
 
-          const observatory =
-            new Observatory(
-              generationKey,
-            );
+            if (
+              ruleCode ===
+              undefined
+            ) {
+              continue;
+            }
 
-          // Real point-8 ObservationEngine gate. This is intentionally not
-          // replaced by a hand-built ObservationSession in 26.A.9.
-          ObservationEngine
-            .prepareUnlockedInstrumentObservationAtLevel(
-              observatory,
-              locator,
-              knownDiscoveries,
-              globalDiscoveryPoints,
-              selection.instrumentType,
-              selection.selectedLevel,
-            );
+            const rule =
+              StellarSystemScientificObservationCatalogV1
+                .rule(
+                  ruleCode,
+                );
 
-          const acquired =
-            ScientificEvidenceAcquisitionEngine
-              .acquire(
+            if (
+              !ruleAllowedForState(
+                ruleCode,
+                rule.dimensionCode,
+                currentState,
+              )
+            ) {
+              throw new RangeError(
+                `Scientific observation ${ruleCode} is outside the current DiscoveryState code ${currentState.code} campaign stage.`,
+              );
+            }
+
+            const selection =
+              bestRuleAvailability(
                 generationKey,
                 globalDiscoveryPoints,
-                knownDiscoveries,
-                rule,
+                achievedMilestones,
+                ruleCode,
+                currentState,
+              );
+
+            if (
+              !selection.isAvailable
+            ) {
+              throw new RangeError(
+                `Scientific observation ${ruleCode} is blocked by the current PD/milestone instrument progression.`,
+              );
+            }
+
+            const observatory =
+              new Observatory(
+                generationKey,
+              );
+
+            ObservationEngine
+              .prepareUnlockedInstrumentObservationAtLevelFromMilestones(
+                observatory,
+                locator,
+                currentState,
+                globalDiscoveryPoints,
+                achievedMilestones,
                 selection.instrumentType,
                 selection.selectedLevel,
-                observedAtEpochMs,
               );
 
-          const persistedEvidence =
-            await this.evidenceRepository
-              .recordEvidence(
-                generationKey,
-                locator,
-                acquired.evidence,
+            const observationTimestamp =
+              observedAtEpochMs ===
+                undefined
+                ? this.clock()
+                : observedAtEpochMs +
+                  index;
+
+            const acquired =
+              ScientificEvidenceAcquisitionEngine
+                .acquireFromMilestones(
+                  generationKey,
+                  globalDiscoveryPoints,
+                  achievedMilestones,
+                  rule,
+                  selection.instrumentType,
+                  selection.selectedLevel,
+                  observationTimestamp,
+                );
+
+            persistedEvidence =
+              await this.evidenceRepository
+                .recordEvidence(
+                  generationKey,
+                  locator,
+                  acquired.evidence,
+                );
+
+            const allEvidence =
+              await this.evidenceRepository
+                .getEvidence(
+                  generationKey,
+                  locator,
+                );
+
+            const stateAfter =
+              progressionStateAfter(
+                currentState,
+                allEvidence,
               );
 
-          const allEvidence =
-            await this.evidenceRepository
-              .getEvidence(
-                generationKey,
-                locator,
-              );
+            if (
+              stateAfter.code !==
+              currentState.code
+            ) {
+              const awarded =
+                await this.persistTransitionAndReward(
+                  generationKey,
+                  locator,
+                  currentState,
+                  stateAfter,
+                );
 
-          const stateAfter =
-            progressionStateAfter(
-              stateBefore,
-              allEvidence,
-            );
+              awardedDiscoveryPoints +=
+                awarded;
 
-          let awardedDiscoveryPoints =
-            0;
+              globalDiscoveryPoints +=
+                BigInt(
+                  awarded,
+                );
 
-          if (
-            stateAfter.code !==
-            stateBefore.code
-          ) {
-            awardedDiscoveryPoints =
-              await this.persistTransitionAndReward(
-                generationKey,
-                locator,
-                stateBefore,
-                stateAfter,
-              );
+              achievedMilestones =
+                milestonesWithSystemState(
+                  achievedMilestones,
+                  stateAfter,
+                );
+
+              currentState =
+                stateAfter;
+
+              // A player-facing stage never spills observations into the next
+              // scientific state. This preserves the previous facade loop.
+              break;
+            }
           }
 
           return new CommittedStellarSystemScientificProgression(
             await this.buildSnapshot(
               generationKey,
               locator,
+              achievedMilestones,
             ),
-            stateBefore,
-            stateAfter,
+            initialState,
+            currentState,
             awardedDiscoveryPoints,
             persistedEvidence,
           );
@@ -588,6 +698,9 @@ export class DexieStellarSystemScientificProgressionRuntime
 
     locator:
       SystemLocator,
+
+    achievedMilestonesOverride?:
+      readonly ObservationProgressMilestone[],
   ): Promise<StellarSystemScientificProgressionSnapshot> {
 
     const [
@@ -595,7 +708,7 @@ export class DexieStellarSystemScientificProgressionRuntime
       evidence,
       globalDiscoveryPoints,
       galaxyDiscoveryPoints,
-      knownDiscoveries,
+      achievedMilestones,
     ] =
       await Promise.all([
         this.currentState(
@@ -616,10 +729,14 @@ export class DexieStellarSystemScientificProgressionRuntime
             generationKey,
             locator.galaxyIndex,
           ),
-        this.discoveryRepository
-          .getKnownDiscoveries(
-            generationKey,
-          ),
+        achievedMilestonesOverride ===
+          undefined
+          ? this.instrumentProgressMilestones(
+              generationKey,
+            )
+          : Promise.resolve(
+              achievedMilestonesOverride,
+            ),
       ]);
 
     if (
@@ -653,7 +770,7 @@ export class DexieStellarSystemScientificProgressionRuntime
             bestRuleAvailability(
               generationKey,
               globalDiscoveryPoints,
-              knownDiscoveries,
+              achievedMilestones,
               rule.ruleCode as StellarSystemScientificObservationRuleCodeValue,
               discoveryState,
             ),
@@ -667,6 +784,40 @@ export class DexieStellarSystemScientificProgressionRuntime
       galaxyDiscoveryPoints,
       rules,
     );
+  }
+
+  private async instrumentProgressMilestones(
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<
+    readonly ObservationProgressMilestone[]
+  > {
+
+    const fastSnapshot =
+      this.discoveryRepository
+        .getObservationProgressMilestones;
+
+    if (fastSnapshot !== undefined) {
+      return fastSnapshot.call(
+        this.discoveryRepository,
+        generationKey,
+      );
+    }
+
+    // Compatibility path for test doubles and alternate repositories.
+    const knownDiscoveries =
+      await this.discoveryRepository
+        .getKnownDiscoveries(
+          generationKey,
+        );
+
+    return ObservationInstrumentProgressionEngine
+      .evaluate(
+        generationKey,
+        0n,
+        knownDiscoveries,
+      )
+      .achievedMilestones;
   }
 
   private async currentState(
@@ -781,6 +932,51 @@ export class DexieStellarSystemScientificProgressionRuntime
 
     return awarded;
   }
+}
+
+function milestonesWithSystemState(
+  achievedMilestones:
+    readonly ObservationProgressMilestone[],
+
+  state:
+    DiscoveryStateValue,
+): readonly ObservationProgressMilestone[] {
+
+  const updated =
+    new Set<ObservationProgressMilestone>(
+      achievedMilestones,
+    );
+
+  if (
+    state.code >=
+      DiscoveryState.DISCOVERED.code
+  ) {
+    updated.add(
+      ObservationProgressMilestone.FIRST_SYSTEM_DISCOVERED,
+    );
+  }
+
+  if (
+    state.code >=
+      DiscoveryState.CATALOGUED.code
+  ) {
+    updated.add(
+      ObservationProgressMilestone.FIRST_SYSTEM_CATALOGUED,
+    );
+  }
+
+  if (
+    state.code >=
+      DiscoveryState.CONFIRMED.code
+  ) {
+    updated.add(
+      ObservationProgressMilestone.FIRST_TARGET_CONFIRMED,
+    );
+  }
+
+  return Object.freeze([
+    ...updated,
+  ]);
 }
 
 function progressionStateAfter(
@@ -932,8 +1128,8 @@ function bestRuleAvailability(
   globalDiscoveryPoints:
     bigint,
 
-  knownDiscoveries:
-    readonly KnownDiscovery[],
+  achievedMilestones:
+    readonly ObservationProgressMilestone[],
 
   ruleCode:
     StellarSystemScientificObservationRuleCodeValue,
@@ -997,10 +1193,10 @@ function bestRuleAvailability(
 
     const availability =
       ScientificEvidenceAcquisitionEngine
-        .availability(
+        .availabilityFromMilestones(
           generationKey,
           globalDiscoveryPoints,
-          knownDiscoveries,
+          achievedMilestones,
           rule,
           instrumentType,
           level,
@@ -1021,10 +1217,10 @@ function bestRuleAvailability(
   ) {
     selectedAvailability =
       ScientificEvidenceAcquisitionEngine
-        .availability(
+        .availabilityFromMilestones(
           generationKey,
           globalDiscoveryPoints,
-          knownDiscoveries,
+          achievedMilestones,
           rule,
           instrumentType,
           minimumLevel,

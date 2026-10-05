@@ -1,6 +1,10 @@
 import Dexie from 'dexie';
 
 import {
+  vi,
+} from 'vitest';
+
+import {
   IDBKeyRange,
   indexedDB,
 } from 'fake-indexeddb';
@@ -28,6 +32,10 @@ import {
 import {
   UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
+
+import {
+  ObservationProgressMilestone,
+} from '../../domain/observation/observation-instrument-progression';
 
 import {
   UniverseSeed,
@@ -301,6 +309,84 @@ describe(
               state: DiscoveryState.DETECTED,
             }),
           ]);
+      },
+    );
+
+    it(
+      'should use one fast instrument-milestone snapshot for a whole player-facing stage',
+      async () => {
+        const knownDiscoveriesSpy =
+          vi.spyOn(
+            discoveryRepository,
+            'getKnownDiscoveries',
+          );
+
+        const fastSnapshotSpy =
+          vi.spyOn(
+            discoveryRepository,
+            'getObservationProgressMilestones',
+          );
+
+        const committed =
+          await runtime
+            .performObservations(
+              generationKey,
+              locator,
+              DISCOVERY_RULES,
+            );
+
+        expect(
+          committed.stateBefore,
+        ).toBe(
+          DiscoveryState.DETECTED,
+        );
+
+        expect(
+          committed.stateAfter,
+        ).toBe(
+          DiscoveryState.DISCOVERED,
+        );
+
+        expect(
+          committed.snapshot.evidence,
+        ).toHaveLength(3);
+
+        expect(
+          knownDiscoveriesSpy,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          fastSnapshotSpy,
+        ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      'should derive the six instrument milestones without materializing the global discovery catalogue',
+      async () => {
+        const knownDiscoveriesSpy =
+          vi.spyOn(
+            discoveryRepository,
+            'getKnownDiscoveries',
+          );
+
+        await expect(
+          discoveryRepository
+            .getObservationProgressMilestones(
+              generationKey,
+            ),
+        ).resolves.toEqual([
+          ObservationProgressMilestone.FIRST_SYSTEM_DISCOVERED,
+          ObservationProgressMilestone.FIRST_SYSTEM_CATALOGUED,
+          ObservationProgressMilestone.FIRST_BODY_DISCOVERED,
+          ObservationProgressMilestone.FIRST_GALACTIC_OBJECT_CATALOGUED,
+          ObservationProgressMilestone.FIRST_TARGET_CONFIRMED,
+          ObservationProgressMilestone.FIRST_EXTERNAL_GALAXY_DETECTED,
+        ]);
+
+        expect(
+          knownDiscoveriesSpy,
+        ).not.toHaveBeenCalled();
       },
     );
 

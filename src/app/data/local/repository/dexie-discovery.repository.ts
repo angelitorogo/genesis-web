@@ -34,6 +34,10 @@ import {
 } from '../../../domain/sector/galaxy-sector-coordinates';
 
 import {
+  ObservationProgressMilestone,
+} from '../../../domain/observation/observation-instrument-progression';
+
+import {
   GalaxySectorKeyCodec,
 } from '../../../domain/sector/galaxy-sector-key-codec';
 
@@ -411,6 +415,147 @@ export class DexieDiscoveryRepository
           entity,
         ),
     );
+  }
+
+  /**
+   * Point 28.2G.3f — compact instrument-progression read model.
+   *
+   * Instrument unlocks need only six existence facts. Reading every discovery,
+   * sorting it and rehydrating every procedural locator made one scientific
+   * campaign scale with the size of the whole universe. These indexed existence
+   * queries stay authoritative because they read the same persisted discovery
+   * rows, but they never materialize the global KnownDiscovery collection.
+   */
+  async getObservationProgressMilestones(
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<
+    readonly ObservationProgressMilestone[]
+  > {
+
+    await ensureUniverseExists(
+      this.database,
+      generationKey,
+    );
+
+    const {
+      universeSeed,
+      generatorVersionCode,
+    } =
+      generationKeyStorageParts(
+        generationKey,
+      );
+
+    const belongsToUniverse =
+      (entity: DiscoveryEntity): boolean =>
+        entity.universeSeed === universeSeed &&
+        entity.generatorVersionCode === generatorVersionCode;
+
+    const firstOfTypeAtLeast =
+      async (
+        targetTypeCode: number,
+        minimumStateCode: number,
+        extra?: (entity: DiscoveryEntity) => boolean,
+      ): Promise<boolean> =>
+        (
+          await this.database
+            .discoveries
+            .where('targetTypeCode')
+            .equals(targetTypeCode)
+            .filter(
+              entity =>
+                belongsToUniverse(entity) &&
+                entity.discoveryStateCode >= minimumStateCode &&
+                (extra === undefined || extra(entity)),
+            )
+            .first()
+        ) !== undefined;
+
+    const [
+      firstSystemDiscovered,
+      firstSystemCatalogued,
+      firstBodyDiscovered,
+      firstGalacticObjectCatalogued,
+      firstTargetConfirmed,
+      firstExternalGalaxyDetected,
+    ] =
+      await Promise.all([
+        firstOfTypeAtLeast(
+          DiscoveryTargetType.SYSTEM.code,
+          DiscoveryState.DISCOVERED.code,
+        ),
+        firstOfTypeAtLeast(
+          DiscoveryTargetType.SYSTEM.code,
+          DiscoveryState.CATALOGUED.code,
+        ),
+        firstOfTypeAtLeast(
+          DiscoveryTargetType.BODY.code,
+          DiscoveryState.DISCOVERED.code,
+        ),
+        firstOfTypeAtLeast(
+          DiscoveryTargetType.GALACTIC_OBJECT.code,
+          DiscoveryState.CATALOGUED.code,
+        ),
+        (
+          await this.database
+            .discoveries
+            .where('discoveryStateCode')
+            .aboveOrEqual(
+              DiscoveryState.CONFIRMED.code,
+            )
+            .filter(
+              belongsToUniverse,
+            )
+            .first()
+        ) !== undefined,
+        firstOfTypeAtLeast(
+          DiscoveryTargetType.GALAXY.code,
+          DiscoveryState.DETECTED.code,
+          entity => entity.galaxyIndex !== '0',
+        ),
+      ]);
+
+    const achieved:
+      ObservationProgressMilestone[] =
+      [];
+
+    if (firstSystemDiscovered) {
+      achieved.push(
+        ObservationProgressMilestone.FIRST_SYSTEM_DISCOVERED,
+      );
+    }
+
+    if (firstSystemCatalogued) {
+      achieved.push(
+        ObservationProgressMilestone.FIRST_SYSTEM_CATALOGUED,
+      );
+    }
+
+    if (firstBodyDiscovered) {
+      achieved.push(
+        ObservationProgressMilestone.FIRST_BODY_DISCOVERED,
+      );
+    }
+
+    if (firstGalacticObjectCatalogued) {
+      achieved.push(
+        ObservationProgressMilestone.FIRST_GALACTIC_OBJECT_CATALOGUED,
+      );
+    }
+
+    if (firstTargetConfirmed) {
+      achieved.push(
+        ObservationProgressMilestone.FIRST_TARGET_CONFIRMED,
+      );
+    }
+
+    if (firstExternalGalaxyDetected) {
+      achieved.push(
+        ObservationProgressMilestone.FIRST_EXTERNAL_GALAXY_DETECTED,
+      );
+    }
+
+    return Object.freeze(achieved);
   }
 
   private toKnownDiscovery(

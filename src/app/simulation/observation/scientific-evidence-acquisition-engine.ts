@@ -161,35 +161,47 @@ export class ScientificEvidenceAcquisitionEngine {
           knownDiscoveries,
         );
 
-    const unlockStatus =
-      progression.status(
-        instrumentType,
-        level,
-      );
-
-    const actionRule =
-      ObservationActionCatalogV1
-        .rule(
-          rule.observationActionType,
-        );
-
-    return new ScientificEvidenceAcquisitionAvailability(
+    return availabilityFromProgression(
+      progression,
       rule,
       instrumentType,
       level,
-      rule.compatibleInstrumentTypes
-        .includes(
-          instrumentType,
-        ),
-      actionRule.compatibleInstrumentTypes
-        .includes(
-          instrumentType,
-        ),
-      level.rank >=
-        rule.minimumInstrumentLevel.rank,
-      unlockStatus.isUnlocked,
-      unlockStatus.missingGlobalDiscoveryPoints,
-      unlockStatus.missingMilestones,
+    );
+  }
+
+  static availabilityFromMilestones(
+    generationKey:
+      UniverseGenerationKey,
+
+    globalDiscoveryPoints:
+      bigint,
+
+    achievedMilestones:
+      readonly ObservationProgressMilestone[],
+
+    rule:
+      ScientificObservationEvidenceRule,
+
+    instrumentType:
+      ObservationInstrumentType,
+
+    level:
+      ObservationInstrumentLevel,
+  ): ScientificEvidenceAcquisitionAvailability {
+
+    const progression =
+      ObservationInstrumentProgressionEngine
+        .evaluateFromMilestones(
+          generationKey,
+          globalDiscoveryPoints,
+          achievedMilestones,
+        );
+
+    return availabilityFromProgression(
+      progression,
+      rule,
+      instrumentType,
+      level,
     );
   }
 
@@ -289,6 +301,127 @@ export class ScientificEvidenceAcquisitionEngine {
       }),
     );
   }
+
+  static acquireFromMilestones(
+    generationKey:
+      UniverseGenerationKey,
+
+    globalDiscoveryPoints:
+      bigint,
+
+    achievedMilestones:
+      readonly ObservationProgressMilestone[],
+
+    rule:
+      ScientificObservationEvidenceRule,
+
+    instrumentType:
+      ObservationInstrumentType,
+
+    level:
+      ObservationInstrumentLevel,
+
+    observedAtEpochMs:
+      number,
+  ): AcquiredScientificEvidence {
+
+    if (
+      !Number.isSafeInteger(observedAtEpochMs) ||
+      observedAtEpochMs < 0
+    ) {
+      throw new RangeError(
+        'observedAtEpochMs must be a non-negative safe integer.',
+      );
+    }
+
+    const availability =
+      this.availabilityFromMilestones(
+        generationKey,
+        globalDiscoveryPoints,
+        achievedMilestones,
+        rule,
+        instrumentType,
+        level,
+      );
+
+    if (!availability.isAvailable) {
+      throw new RangeError(
+        `Scientific observation ${rule.ruleCode} is not available with ${instrumentType} L${level.rank}.`,
+      );
+    }
+
+    const capability =
+      ObservationInstrumentCapabilityCatalogV1
+        .profile(
+          instrumentType,
+          level,
+        );
+
+    const quality01 =
+      round01(
+        Math.min(
+          1,
+          0.55 + 0.60 * capability.normalizedPrecision,
+        ),
+      );
+
+    const uncertainty01 =
+      round01(
+        0.40 * (1 - capability.normalizedPrecision),
+      );
+
+    return new AcquiredScientificEvidence(
+      availability,
+      new ScientificEvidence({
+        dimensionCode: rule.dimensionCode,
+        evidenceCode: rule.evidenceCode,
+        sourceKey: `${rule.sourceKey}:${instrumentType}`,
+        independenceKey: rule.independenceKey,
+        quality01,
+        uncertainty01,
+        observedAtEpochMs,
+      }),
+    );
+  }
+}
+
+function availabilityFromProgression(
+  progression:
+    ReturnType<typeof ObservationInstrumentProgressionEngine.evaluate>,
+
+  rule:
+    ScientificObservationEvidenceRule,
+
+  instrumentType:
+    ObservationInstrumentType,
+
+  level:
+    ObservationInstrumentLevel,
+): ScientificEvidenceAcquisitionAvailability {
+
+  const unlockStatus =
+    progression.status(
+      instrumentType,
+      level,
+    );
+
+  const actionRule =
+    ObservationActionCatalogV1
+      .rule(
+        rule.observationActionType,
+      );
+
+  return new ScientificEvidenceAcquisitionAvailability(
+    rule,
+    instrumentType,
+    level,
+    rule.compatibleInstrumentTypes.includes(instrumentType),
+    actionRule.compatibleInstrumentTypes.includes(instrumentType),
+    level.rank >= rule.minimumInstrumentLevel.rank,
+    unlockStatus.isUnlocked,
+    unlockStatus.missingGlobalDiscoveryPoints,
+    unlockStatus.missingMilestones,
+  );
 }
 
 function round01(

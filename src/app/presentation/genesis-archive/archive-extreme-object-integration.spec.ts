@@ -89,7 +89,8 @@ describe(
                 return (
                   type !== null &&
                   type !== ExtremeType.SUPERNOVA_REMNANT &&
-                  type !== ExtremeType.PULSAR_WIND_NEBULA
+                  type !== ExtremeType.PULSAR_WIND_NEBULA &&
+                  type !== ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE
                 );
               },
             )

@@ -181,6 +181,34 @@ describe(
     }
 
     it(
+      'should keep the fast milestone snapshot bit-for-bit equivalent to the legacy known-discovery evaluation',
+      () => {
+        const discoveries =
+          milestoneDiscoveries(
+            true,
+          );
+
+        const legacy =
+          ObservationInstrumentProgressionEngine
+            .evaluate(
+              canonicalGenerationKey,
+              12_000n,
+              discoveries,
+            );
+
+        const fast =
+          ObservationInstrumentProgressionEngine
+            .evaluateFromMilestones(
+              canonicalGenerationKey,
+              12_000n,
+              legacy.achievedMilestones,
+            );
+
+        expect(fast).toEqual(legacy);
+      },
+    );
+
+    it(
       'should preserve the complete frozen V1 family and level unlock tables and max-plus-union combination rule',
       () => {
         expect(

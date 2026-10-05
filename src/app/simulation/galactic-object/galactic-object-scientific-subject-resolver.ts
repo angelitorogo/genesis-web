@@ -183,6 +183,36 @@ export class GalacticObjectScientificSubjectResolver {
     }
 
     /*
+     * Frozen pre-28.2G scientific routes stay authoritative for the physical
+     * families that already existed in gameplay. In particular, SNR and IMBH
+     * must resolve identically in V1 and V2 even for golden compatibility
+     * locators that are queried directly rather than reached through the
+     * current sector-content enumerator. The new V2 resolver below owns only
+     * the formerly anonymous distributed EXTREME_OBJECT complement.
+     */
+    if (
+      SupernovaRemnantGenerator
+        .isSupernovaRemnantLocator(
+          physicalKey,
+          locator,
+        )
+    ) {
+      return GalacticObjectScientificSubject
+        .SUPERNOVA_REMNANT;
+    }
+
+    if (
+      IntermediateMassBlackHoleGenerator
+        .isIntermediateMassBlackHoleLocator(
+          generationKey,
+          locator,
+        )
+    ) {
+      return GalacticObjectScientificSubject
+        .INTERMEDIATE_MASS_BLACK_HOLE;
+    }
+
+    /*
      * 28.2G.1/28.2G.3: V2 has one canonical Ground-Truth resolver for the
      * complete distributed EXTREME_OBJECT population. Exact ExtremeType stays
      * hidden at DISCOVERED. The action layer receives only a broad scientific

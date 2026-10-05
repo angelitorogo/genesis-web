@@ -1,9 +1,10 @@
 import {
-  type KnownDiscovery,
+  KnownDiscovery,
 } from '../../domain/discovery/known-discovery';
 
 import {
   DiscoveryState,
+  type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
 
 import {
@@ -61,6 +62,7 @@ import {
 
 import {
   ObservationInstrumentProgressionOverview,
+  type ObservationProgressMilestone,
 } from '../../domain/observation/observation-instrument-progression';
 
 import {
@@ -463,6 +465,78 @@ export class ObservationEngine {
         instrumentType,
         level,
       );
+  }
+
+  /**
+   * Point 28.2G.3f fast path: global instrument unlocks use the compact
+   * milestone snapshot while the local target still passes through the
+   * canonical observation-session validation.
+   */
+  static prepareUnlockedInstrumentObservationAtLevelFromMilestones(
+    observatory:
+      Observatory,
+
+    targetLocator:
+      ProceduralLocator,
+
+    targetState:
+      DiscoveryStateValue,
+
+    globalDiscoveryPoints:
+      bigint,
+
+    achievedMilestones:
+      readonly ObservationProgressMilestone[],
+
+    instrumentType:
+      ObservationInstrumentType,
+
+    level:
+      ObservationInstrumentLevel,
+  ): LeveledInstrumentObservationSession {
+
+    const progression =
+      ObservationInstrumentProgressionEngine
+        .evaluateFromMilestones(
+          observatory.generationKey,
+          globalDiscoveryPoints,
+          achievedMilestones,
+        );
+
+    const status =
+      progression.status(
+        instrumentType,
+        level,
+      );
+
+    if (!status.isUnlocked) {
+      const missingMilestones =
+        status.missingMilestones.length === 0
+          ? 'none'
+          : status.missingMilestones.join(', ');
+
+      throw new RangeError(
+        [
+          `${instrumentType} ${level.name} is locked.`,
+          `Missing global Discovery Points: ${status.missingGlobalDiscoveryPoints}.`,
+          `Missing milestones: ${missingMilestones}.`,
+        ].join(' '),
+      );
+    }
+
+    return this.prepareInstrumentObservationAtLevel(
+      observatory,
+      targetLocator,
+      Object.freeze([
+        new KnownDiscovery(
+          observatory.generationKey,
+          targetLocator,
+          targetState,
+        ),
+      ]),
+      instrumentType,
+      level,
+    );
   }
 
   static initialObservationCertainty(

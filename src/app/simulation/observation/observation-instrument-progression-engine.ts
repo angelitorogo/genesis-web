@@ -110,6 +110,37 @@ export class ObservationInstrumentProgressionEngine {
     );
   }
 
+  /**
+   * Point 28.2G.3f fast path. The caller supplies the six already-derived
+   * progression milestones, avoiding materialization of the whole discovery
+   * catalogue. Unlock thresholds and the canonical V1/V2 rules stay identical.
+   */
+  static evaluateFromMilestones(
+    generationKey:
+      UniverseGenerationKey,
+
+    globalDiscoveryPoints:
+      bigint,
+
+    achievedMilestones:
+      readonly ObservationProgressMilestone[],
+  ): ObservationInstrumentProgressionOverview {
+
+    if (
+      generationKey.generatorVersion !== GeneratorVersion.V1 &&
+      generationKey.generatorVersion !== GeneratorVersion.V2
+    ) {
+      throw new RangeError(
+        `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+      );
+    }
+
+    return this.evaluateV1FromMilestones(
+      globalDiscoveryPoints,
+      achievedMilestones,
+    );
+  }
+
   private static evaluateV1(
     globalDiscoveryPoints:
       bigint,
@@ -146,18 +177,55 @@ export class ObservationInstrumentProgressionEngine {
       ObservationInstrumentProgressionCatalogV1
         .milestonesInCanonicalOrder
         .filter(
-          (
-            milestone,
-          ) =>
+          milestone =>
             isMilestoneAchieved(
               milestone,
               knownDiscoveries,
             ),
         );
 
+    return this.evaluateV1FromMilestones(
+      globalDiscoveryPoints,
+      achievedMilestones,
+    );
+  }
+
+  private static evaluateV1FromMilestones(
+    globalDiscoveryPoints:
+      bigint,
+
+    achievedMilestones:
+      readonly ObservationProgressMilestone[],
+  ): ObservationInstrumentProgressionOverview {
+
+    assertNonNegativeSignedLong(
+      globalDiscoveryPoints,
+    );
+
+    const canonicalMilestones =
+      ObservationInstrumentProgressionCatalogV1
+        .milestonesInCanonicalOrder;
+
+    if (
+      achievedMilestones.some(
+        milestone =>
+          !canonicalMilestones.includes(milestone),
+      )
+    ) {
+      throw new RangeError(
+        'achievedMilestones contains an unsupported observation milestone.',
+      );
+    }
+
+    const canonicalAchieved =
+      canonicalMilestones.filter(
+        milestone =>
+          achievedMilestones.includes(milestone),
+      );
+
     const achievedSet =
       new Set(
-        achievedMilestones,
+        canonicalAchieved,
       );
 
     const statuses:
@@ -216,7 +284,7 @@ export class ObservationInstrumentProgressionEngine {
 
     return new ObservationInstrumentProgressionOverview(
       globalDiscoveryPoints,
-      achievedMilestones,
+      canonicalAchieved,
       statuses,
     );
   }
