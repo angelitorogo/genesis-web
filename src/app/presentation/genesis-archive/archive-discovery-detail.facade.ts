@@ -91,6 +91,11 @@ import {
 } from '../../simulation/galactic-object/galactic-object-scientific-subject-resolver';
 
 import {
+  ExtremeScientificEpistemicBoundaryEngine,
+  type ExtremeScientificEpistemicBoundaryModel,
+} from '../../simulation/galactic-object/extreme-scientific-epistemic-boundary-engine';
+
+import {
   ProtoplanetaryDiskAnalysisEngine,
 } from '../../simulation/planetary/protoplanetary-disk-analysis-engine';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
@@ -413,6 +418,10 @@ export interface ArchiveDiscoveryDetailModel {
   /** 28.7 evidence-driven scientific dossier completion and one-shot reward. */
   readonly extremeScientificCompletion?:
     ExtremeScientificCompletionStatus | null;
+
+  /** 28.8 explicit separation between evidence, verifiable models and speculation. */
+  readonly extremeScientificEpistemicBoundary?:
+    ExtremeScientificEpistemicBoundaryModel | null;
 
   /**
    * Shared point-26.A.9 scientific campaign. Optional only for compatibility
@@ -1935,6 +1944,17 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+      const extremeScientificEpistemicBoundary =
+        locator instanceof GalacticObjectLocator &&
+        galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
+        completionExtremeType !== null
+          ? ExtremeScientificEpistemicBoundaryEngine
+              .build(
+                completionExtremeType,
+                galacticObjectCard.scientificSubject,
+              )
+          : null;
+
       const protoplanetaryDiskAnalysis =
         locator instanceof
           SystemLocator &&
@@ -2059,6 +2079,8 @@ export class ArchiveDiscoveryDetailFacade {
               gravitationalLensingReconstruction,
 
               extremeScientificCompletion,
+
+              extremeScientificEpistemicBoundary,
 
               stellarSystemScientificCampaign,
 

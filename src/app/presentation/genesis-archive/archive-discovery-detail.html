@@ -1307,6 +1307,90 @@
                     </section>
                   }
 
+                  @if (model.extremeScientificEpistemicBoundary; as boundary) {
+                    <section
+                      class="archive-discovery-detail__scientific-action archive-discovery-detail__scientific-boundary"
+                      data-testid="archive-extreme-scientific-boundary"
+                    >
+                      <div class="archive-discovery-detail__scientific-action-header">
+                        <div>
+                          <small class="archive-discovery-detail__eyebrow">
+                            28.8 · LÍMITES CIENTÍFICOS
+                          </small>
+                          <strong>Simulación verificable frente a especulación</strong>
+                        </div>
+
+                        <span>LÍMITES EXPLÍCITOS</span>
+                      </div>
+
+                      <p>
+                        Esta ficha separa de forma deliberada lo observado, lo calculado mediante
+                        un modelo físico declarado y lo que GENESIS se niega a inferir. Ningún
+                        elemento visual sustituye una observación científica.
+                      </p>
+
+                      <div class="archive-discovery-detail__scientific-boundary-grid">
+                        <article
+                          class="archive-discovery-detail__scientific-boundary-card"
+                          data-epistemic-kind="evidence"
+                        >
+                          <small>EVIDENCIA OBSERVACIONAL</small>
+                          <strong>Datos y resultados persistidos</strong>
+
+                          <ul data-testid="archive-extreme-scientific-boundary-evidence">
+                            @for (item of boundary.evidence; track item.code) {
+                              <li>
+                                <strong>{{ item.label }}</strong>
+                                <span>{{ item.detail }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </article>
+
+                        <article
+                          class="archive-discovery-detail__scientific-boundary-card"
+                          data-epistemic-kind="model"
+                        >
+                          <small>MODELO / SIMULACIÓN VERIFICABLE</small>
+                          <strong>Cálculos con hipótesis declaradas</strong>
+
+                          <ul data-testid="archive-extreme-scientific-boundary-models">
+                            @for (item of boundary.verifiableModels; track item.code) {
+                              <li>
+                                <strong>{{ item.label }}</strong>
+                                <span>{{ item.detail }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </article>
+
+                        <article
+                          class="archive-discovery-detail__scientific-boundary-card archive-discovery-detail__scientific-boundary-card--excluded"
+                          data-epistemic-kind="excluded"
+                        >
+                          <small>ESPECULACIÓN EXCLUIDA</small>
+                          <strong>Lo que no afirmamos</strong>
+
+                          <ul data-testid="archive-extreme-scientific-boundary-excluded">
+                            @for (item of boundary.excludedSpeculation; track item.code) {
+                              <li>
+                                <strong>{{ item.label }}</strong>
+                                <span>{{ item.detail }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </article>
+                      </div>
+
+                      <p
+                        class="archive-discovery-detail__scientific-boundary-policy"
+                        data-testid="archive-extreme-scientific-boundary-completion-policy"
+                      >
+                        {{ boundary.completionPolicy }}
+                      </p>
+                    </section>
+                  }
+
                   @if (
                     card.scientificSubject === 'ACTIVE_GALACTIC_NUCLEUS' &&
                     card.knowledgeLevel === 'CONFIRMED'

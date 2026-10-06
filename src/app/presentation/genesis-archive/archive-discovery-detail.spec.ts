@@ -1240,6 +1240,40 @@ describe(
                 rewardGranted: false,
                 rewardGrantedNow: false,
               }),
+            extremeScientificEpistemicBoundary:
+              Object.freeze({
+                evidence:
+                  Object.freeze([
+                    Object.freeze({
+                      code: 'ACCRETION_DISK_28_1',
+                      label: '28.1 · Observación del disco de acreción',
+                      detail: 'Solo una campaña persistida cuenta como evidencia.',
+                    }),
+                  ]),
+                verifiableModels:
+                  Object.freeze([
+                    Object.freeze({
+                      code: 'SCHWARZSCHILD_EXTERIOR_28_2',
+                      label: '28.2 · Aproximación exterior verificable',
+                      detail: 'Solo se simula el dominio exterior.',
+                    }),
+                  ]),
+                excludedSpeculation:
+                  Object.freeze([
+                    Object.freeze({
+                      code: 'RENDERER_IS_NOT_EVIDENCE',
+                      label: 'El renderer no es evidencia',
+                      detail: 'La escena visual no aporta observaciones científicas.',
+                    }),
+                    Object.freeze({
+                      code: 'NO_EVENT_HORIZON_INTERIOR',
+                      label: 'Interior del horizonte excluido',
+                      detail: 'No se simula el interior causalmente inaccesible.',
+                    }),
+                  ]),
+                completionPolicy:
+                  'La especulación nunca concede completitud ni PD.',
+              }),
           }),
         );
 
@@ -1259,6 +1293,31 @@ describe(
           )?.textContent,
         ).toContain(
           '+750 PD',
+        );
+
+        const scientificBoundary =
+          element.querySelector(
+            '[data-testid="archive-extreme-scientific-boundary"]',
+          );
+
+        expect(scientificBoundary?.textContent).toContain(
+          '28.8 · LÍMITES CIENTÍFICOS',
+        );
+        expect(scientificBoundary?.textContent).toContain(
+          'EVIDENCIA OBSERVACIONAL',
+        );
+        expect(scientificBoundary?.textContent).toContain(
+          'MODELO / SIMULACIÓN VERIFICABLE',
+        );
+        expect(scientificBoundary?.textContent).toContain(
+          'ESPECULACIÓN EXCLUIDA',
+        );
+        expect(
+          element.querySelector(
+            '[data-testid="archive-extreme-scientific-boundary-completion-policy"]',
+          )?.textContent,
+        ).toContain(
+          'nunca concede completitud ni PD',
         );
 
         const galaxyLink =
