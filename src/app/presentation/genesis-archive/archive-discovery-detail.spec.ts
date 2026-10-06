@@ -1211,10 +1211,55 @@ describe(
               }),
             scientificAction:
               null,
+            extremeScientificCompletion:
+              Object.freeze({
+                studies:
+                  Object.freeze([
+                    Object.freeze({
+                      code: 'ACCRETION_DISK_28_1',
+                      phaseLabel: '28.1',
+                      label: 'Observar disco de acreción',
+                      completed: true,
+                      completedLabel: 'Evidencia científica registrada',
+                      pendingLabel: 'Pendiente',
+                    }),
+                    Object.freeze({
+                      code: 'EVENT_HORIZON_28_2',
+                      phaseLabel: '28.2',
+                      label: 'Aproximación externa al horizonte',
+                      completed: false,
+                      completedLabel: 'Simulación exterior completada y registrada',
+                      pendingLabel: 'Pendiente · completar la aproximación exterior al límite seguro',
+                    }),
+                  ]),
+                completedStudies: 1,
+                totalStudies: 2,
+                completionPercent: 50,
+                complete: false,
+                rewardDiscoveryPoints: 750n,
+                rewardGranted: false,
+                rewardGrantedNow: false,
+              }),
           }),
         );
 
         fixture.detectChanges();
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-extreme-scientific-completion"]',
+          )?.textContent,
+        ).toContain(
+          '1 / 2 estudios completados',
+        );
+
+        expect(
+          element.querySelector(
+            '[data-testid="archive-extreme-scientific-completion-reward-pending"]',
+          )?.textContent,
+        ).toContain(
+          '+750 PD',
+        );
 
         const galaxyLink =
           element.querySelector<HTMLAnchorElement>(

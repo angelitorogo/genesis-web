@@ -1229,6 +1229,84 @@
                     </section>
                   }
 
+                  @if (model.extremeScientificCompletion; as completion) {
+                    <section
+                      class="archive-discovery-detail__scientific-completion"
+                      data-testid="archive-extreme-scientific-completion"
+                    >
+                      <div class="archive-discovery-detail__scientific-action-header">
+                        <div>
+                          <small class="archive-discovery-detail__eyebrow">
+                            28.7 · COMPLETITUD CIENTÍFICA
+                          </small>
+                          <strong>Expediente científico del objeto</strong>
+                        </div>
+
+                        <span data-testid="archive-extreme-scientific-completion-state">
+                          {{ completion.complete ? 'COMPLETO' : 'EN PROGRESO' }}
+                        </span>
+                      </div>
+
+                      <div class="archive-discovery-detail__completion-summary">
+                        <strong data-testid="archive-extreme-scientific-completion-count">
+                          {{ completion.completedStudies }} / {{ completion.totalStudies }} estudios completados
+                        </strong>
+                        <span>{{ completion.completionPercent }} %</span>
+                      </div>
+
+                      <div
+                        class="archive-discovery-detail__completion-track"
+                        role="progressbar"
+                        aria-label="Completitud científica"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        [attr.aria-valuenow]="completion.completionPercent"
+                      >
+                        <span [style.width.%]="completion.completionPercent"></span>
+                      </div>
+
+                      <ul
+                        class="archive-discovery-detail__completion-studies"
+                        data-testid="archive-extreme-scientific-completion-studies"
+                      >
+                        @for (study of completion.studies; track study.code) {
+                          <li [class.archive-discovery-detail__completion-study--done]="study.completed">
+                            <span aria-hidden="true">{{ study.completed ? '✓' : '○' }}</span>
+                            <div>
+                              <strong>{{ study.phaseLabel }} · {{ study.label }}</strong>
+                              <small>
+                                {{ study.completed ? study.completedLabel : study.pendingLabel }}
+                              </small>
+                            </div>
+                          </li>
+                        }
+                      </ul>
+
+                      @if (completion.rewardGranted) {
+                        <div
+                          class="archive-discovery-detail__completion-reward archive-discovery-detail__completion-reward--granted"
+                          data-testid="archive-extreme-scientific-completion-reward"
+                        >
+                          <small>RECOMPENSA EXCEPCIONAL REGISTRADA</small>
+                          <strong>+{{ completion.rewardDiscoveryPoints }} PD</strong>
+                          <span>
+                            Concedida una sola vez. Si el modelo científico incorpora nuevos estudios,
+                            el premio histórico no se retira ni se duplica.
+                          </span>
+                        </div>
+                      } @else {
+                        <div
+                          class="archive-discovery-detail__completion-reward"
+                          data-testid="archive-extreme-scientific-completion-reward-pending"
+                        >
+                          <small>RECOMPENSA AL COMPLETAR</small>
+                          <strong>+{{ completion.rewardDiscoveryPoints }} PD</strong>
+                          <span>Se concederá automáticamente al registrar el último estudio aplicable.</span>
+                        </div>
+                      }
+                    </section>
+                  }
+
                   @if (
                     card.scientificSubject === 'ACTIVE_GALACTIC_NUCLEUS' &&
                     card.knowledgeLevel === 'CONFIRMED'

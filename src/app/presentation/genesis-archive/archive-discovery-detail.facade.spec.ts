@@ -93,6 +93,10 @@ import {
 } from '../runtime/gravitational-lensing-reconstruction-observation.runtime';
 
 import {
+  EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+} from '../runtime/extreme-scientific-completion.runtime';
+
+import {
   DEFAULT_UNIVERSE_SEED,
 } from '../universe/universe-seed.facade';
 import { ProceduralTargetResolver } from '../../simulation/regeneration/procedural-target-resolver';
@@ -266,6 +270,20 @@ describe(
 
       TestBed.configureTestingModule({
         providers: [
+          {
+            provide:
+              EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+
+            useValue: {
+              async settle() {
+                return null;
+              },
+
+              async recordEventHorizonSimulationCompletion() {
+                return;
+              },
+            },
+          },
           {
             provide:
               GENESIS_LOCAL_REPOSITORIES,
@@ -681,7 +699,7 @@ describe(
         expect(
           detected.relativisticJetAnalysisFeedback(),
         ).toBe(
-          'Análisis completado · firma relativista y cinemática caracterizadas y persistidas como evidencia científica · sin coste ni recompensa de PD.',
+          'Análisis completado · firma relativista y cinemática caracterizadas y persistidas como evidencia científica · sin coste ni recompensa directa de PD.',
         );
 
         TestBed.resetTestingModule();
@@ -718,7 +736,7 @@ describe(
         expect(
           notDetected.relativisticJetAnalysisFeedback(),
         ).toBe(
-          'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa de PD.',
+          'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa directa de PD.',
         );
       },
     );
@@ -793,7 +811,7 @@ describe(
         expect(
           detected.gravitationalLensingReconstructionFeedback(),
         ).toBe(
-          'Análisis completado · geometría de lente y reconstrucción de fuente persistidas como evidencia científica · sin coste ni recompensa de PD.',
+          'Análisis completado · geometría de lente y reconstrucción de fuente persistidas como evidencia científica · sin coste ni recompensa directa de PD.',
         );
 
         TestBed.resetTestingModule();
@@ -826,7 +844,7 @@ describe(
         expect(
           notDetected.gravitationalLensingReconstructionFeedback(),
         ).toBe(
-          'Análisis completado · no detección de una configuración fuerte reconstruible persistida como evidencia científica · sin coste ni recompensa de PD.',
+          'Análisis completado · no detección de una configuración fuerte reconstruible persistida como evidencia científica · sin coste ni recompensa directa de PD.',
         );
       },
     );
@@ -1219,6 +1237,20 @@ describe(
           providers: [
             {
               provide:
+                EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+
+              useValue: {
+                async settle() {
+                  return null;
+                },
+
+                async recordEventHorizonSimulationCompletion() {
+                  return;
+                },
+              },
+            },
+            {
+              provide:
                 GENESIS_LOCAL_REPOSITORIES,
 
               useValue:
@@ -1395,6 +1427,20 @@ describe(
 
         TestBed.configureTestingModule({
           providers: [
+            {
+              provide:
+                EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+
+              useValue: {
+                async settle() {
+                  return null;
+                },
+
+                async recordEventHorizonSimulationCompletion() {
+                  return;
+                },
+              },
+            },
             {
               provide:
                 GENESIS_LOCAL_REPOSITORIES,
@@ -1624,6 +1670,20 @@ describe(
 
         TestBed.configureTestingModule({
           providers: [
+            {
+              provide:
+                EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+
+              useValue: {
+                async settle() {
+                  return null;
+                },
+
+                async recordEventHorizonSimulationCompletion() {
+                  return;
+                },
+              },
+            },
             {
               provide:
                 GENESIS_LOCAL_REPOSITORIES,
@@ -1882,6 +1942,20 @@ describe(
           providers: [
             {
               provide:
+                EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+
+              useValue: {
+                async settle() {
+                  return null;
+                },
+
+                async recordEventHorizonSimulationCompletion() {
+                  return;
+                },
+              },
+            },
+            {
+              provide:
                 GENESIS_LOCAL_REPOSITORIES,
               useValue:
                 repositories,
@@ -2038,6 +2112,20 @@ describe(
 
         TestBed.configureTestingModule({
           providers: [
+            {
+              provide:
+                EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+
+              useValue: {
+                async settle() {
+                  return null;
+                },
+
+                async recordEventHorizonSimulationCompletion() {
+                  return;
+                },
+              },
+            },
             {
               provide:
                 GENESIS_LOCAL_REPOSITORIES,

@@ -145,6 +145,11 @@ import {
 } from '../runtime/gravitational-lensing-reconstruction-observation.runtime';
 
 import {
+  EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
+  type ExtremeScientificCompletionStatus,
+} from '../runtime/extreme-scientific-completion.runtime';
+
+import {
   StellarSystemScientificCampaignAssembler,
   type StellarSystemScientificCampaignModel,
 } from '../runtime/stellar-system-scientific-campaign';
@@ -160,6 +165,7 @@ import {
 
 import {
   ArchiveGalacticObjectCardAssembler,
+  ArchiveGalacticObjectRenderKind,
   type ArchiveGalacticObjectCardModel,
 } from './archive-galactic-object-card';
 
@@ -403,6 +409,11 @@ export interface ArchiveDiscoveryDetailModel {
   readonly gravitationalLensingReconstruction?:
     GravitationalLensingReconstructionObservationStatus | null;
 
+
+  /** 28.7 evidence-driven scientific dossier completion and one-shot reward. */
+  readonly extremeScientificCompletion?:
+    ExtremeScientificCompletionStatus | null;
+
   /**
    * Shared point-26.A.9 scientific campaign. Optional only for compatibility
    * with pre-A9 presentation fixtures; production stellar-system surfaces load it.
@@ -491,6 +502,12 @@ export class ArchiveDiscoveryDetailFacade {
   private readonly gravitationalLensingReconstructionObservationRuntime =
     inject(
       GRAVITATIONAL_LENSING_RECONSTRUCTION_OBSERVATION_RUNTIME,
+    );
+
+
+  private readonly extremeScientificCompletionRuntime =
+    inject(
+      EXTREME_SCIENTIFIC_COMPLETION_RUNTIME,
     );
 
   private currentRequest:
@@ -807,14 +824,24 @@ export class ArchiveDiscoveryDetailFacade {
       return;
     }
 
+    const next =
+      EventHorizonExternalApproachSimulationEngine
+        .approach(
+          current,
+        );
+
     this
       .eventHorizonApproachSimulationSignal
       .set(
-        EventHorizonExternalApproachSimulationEngine
-          .approach(
-            current,
-          ),
+        next,
       );
+
+    if (
+      next.atMinimumExteriorRadius
+    ) {
+      void this
+        .persistEventHorizonCompletion();
+    }
   }
 
   retreatFromEventHorizon():
@@ -863,6 +890,44 @@ export class ArchiveDiscoveryDetailFacade {
             current,
           ),
       );
+  }
+
+  private async persistEventHorizonCompletion():
+    Promise<void> {
+
+    const request =
+      this.currentRequest;
+
+    const generationKey =
+      this.currentGenerationKey;
+
+    const locator =
+      this.currentLocator;
+
+    if (
+      request === null ||
+      generationKey === null ||
+      !(locator instanceof GalacticObjectLocator)
+    ) {
+      return;
+    }
+
+    try {
+      await this
+        .extremeScientificCompletionRuntime
+        .recordEventHorizonSimulationCompletion(
+          generationKey,
+          locator,
+        );
+
+      await this
+        .resolveDetails(
+          request,
+        );
+    } catch {
+      // 28.2 remains a usable simulation even if local persistence fails.
+      // The next archive load can retry completion without changing physics.
+    }
   }
 
   async performScientificAction():
@@ -1030,7 +1095,7 @@ export class ArchiveDiscoveryDetailFacade {
       await this.resolveDetails(request);
 
       this.actionFeedbackSignal.set(
-        'Sincronización completada · período de pulsos medido y evidencia temporal persistida · sin coste ni recompensa de PD.',
+        'Sincronización completada · período de pulsos medido y evidencia temporal persistida · sin coste ni recompensa directa de PD.',
       );
     } catch (error) {
       this.actionErrorSignal.set(
@@ -1090,7 +1155,7 @@ export class ArchiveDiscoveryDetailFacade {
       await this.resolveDetails(request);
 
       this.magnetarActivityFeedbackSignal.set(
-        'Monitorización completada · campo dipolar inferido y actividad de estallidos persistida · sin coste ni recompensa de PD.',
+        'Monitorización completada · campo dipolar inferido y actividad de estallidos persistida · sin coste ni recompensa directa de PD.',
       );
     } catch (error) {
       this.magnetarActivityErrorSignal.set(
@@ -1164,8 +1229,8 @@ export class ArchiveDiscoveryDetailFacade {
 
       this.relativisticJetAnalysisFeedbackSignal.set(
         detected
-          ? 'Análisis completado · firma relativista y cinemática caracterizadas y persistidas como evidencia científica · sin coste ni recompensa de PD.'
-          : 'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa de PD.',
+          ? 'Análisis completado · firma relativista y cinemática caracterizadas y persistidas como evidencia científica · sin coste ni recompensa directa de PD.'
+          : 'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa directa de PD.',
       );
     } catch (error) {
       this.relativisticJetAnalysisErrorSignal.set(
@@ -1239,8 +1304,8 @@ export class ArchiveDiscoveryDetailFacade {
 
       this.gravitationalLensingReconstructionFeedbackSignal.set(
         detected
-          ? 'Análisis completado · geometría de lente y reconstrucción de fuente persistidas como evidencia científica · sin coste ni recompensa de PD.'
-          : 'Análisis completado · no detección de una configuración fuerte reconstruible persistida como evidencia científica · sin coste ni recompensa de PD.',
+          ? 'Análisis completado · geometría de lente y reconstrucción de fuente persistidas como evidencia científica · sin coste ni recompensa directa de PD.'
+          : 'Análisis completado · no detección de una configuración fuerte reconstruible persistida como evidencia científica · sin coste ni recompensa directa de PD.',
       );
     } catch (error) {
       this.gravitationalLensingReconstructionErrorSignal.set(
@@ -1843,6 +1908,33 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
+
+      const completionExtremeType =
+        galacticObjectCard?.extremeType ??
+        (
+          galacticObjectCard?.scientificSubject ===
+            GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
+            ? galacticObjectCard.render.kind ===
+                ArchiveGalacticObjectRenderKind.QUASAR_NUCLEUS
+              ? ExtremeType.QUASAR
+              : ExtremeType.AGN
+            : null
+        );
+
+      const extremeScientificCompletion =
+        locator instanceof GalacticObjectLocator &&
+        galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
+        completionExtremeType !== null
+          ? await this
+              .extremeScientificCompletionRuntime
+              .settle(
+                generationKey,
+                locator,
+                completionExtremeType,
+                galacticObjectCard.scientificSubject,
+              )
+          : null;
+
       const protoplanetaryDiskAnalysis =
         locator instanceof
           SystemLocator &&
@@ -1965,6 +2057,8 @@ export class ArchiveDiscoveryDetailFacade {
               relativisticJetAnalysis,
 
               gravitationalLensingReconstruction,
+
+              extremeScientificCompletion,
 
               stellarSystemScientificCampaign,
 
