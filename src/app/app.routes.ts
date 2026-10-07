@@ -73,16 +73,6 @@ export const genesisRoutes: Routes = [
     title: 'Sistema estelar | GENESIS',
   },
   {
-    path: 'galaxies/:galaxyIndex/knowledge/:category',
-    loadComponent: () =>
-      import(
-        './presentation/galaxy-knowledge-catalog/galaxy-knowledge-catalog'
-      ).then(
-        (module) => module.GalaxyKnowledgeCatalogPage,
-      ),
-    title: 'Explorador de conocimiento galáctico | GENESIS',
-  },
-  {
     path: 'galaxies/:galaxyIndex/water-worlds',
     loadComponent: () =>
       import(
@@ -223,6 +213,16 @@ export const genesisRoutes: Routes = [
         (module) => module.StellarSystemFicheQaPage,
       ),
     title: 'Ficha estrella/sistema 26.2 | QA GENESIS',
+  },
+  {
+    path: 'laboratory/stellar-systems/post-supernova-audit',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/stellar-systems/post-supernova-audit/post-supernova-audit'
+      ).then(
+        (module) => module.PostSupernovaAuditPage,
+      ),
+    title: 'Auditoría post-supernova | Laboratorios GENESIS',
   },
   {
     path: 'laboratory/stellar-systems',

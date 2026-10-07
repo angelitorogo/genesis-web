@@ -1,0 +1,208 @@
+<main
+  class="post-sn-audit"
+  data-testid="post-supernova-audit-page"
+>
+  <nav class="post-sn-audit__nav" aria-label="Navegación del laboratorio">
+    <a routerLink="/laboratory">← Laboratorios</a>
+    <span>/</span>
+    <a routerLink="/laboratory/stellar-systems">Sistemas estelares</a>
+    <span>/</span>
+    <strong>29.1E-g.1</strong>
+  </nav>
+
+  <header class="post-sn-audit__hero">
+    <div>
+      <p class="post-sn-audit__eyebrow">FASE 29.1E-g.1 · READ ONLY / QA</p>
+      <h1>Auditoría post-supernova determinista</h1>
+      <p>
+        Cuatro escenarios controlados que leen directamente los resolutores de
+        29.1E-g. No modifican partida, persistencia ni Ground Truth de formación.
+        La columna <strong>ANTES</strong> conserva la arquitectura de referencia;
+        <strong>DESPUÉS</strong> muestra la proyección dinámica actual.
+      </p>
+    </div>
+    <span class="post-sn-audit__badge">4 CASOS FIJOS</span>
+  </header>
+
+  <section class="post-sn-audit__legend" aria-label="Leyenda">
+    <span><i class="post-sn-audit__dot post-sn-audit__dot--before"></i> Formación / antes</span>
+    <span><i class="post-sn-audit__dot post-sn-audit__dot--after"></i> Estado actual / después</span>
+    <span><i class="post-sn-audit__dot post-sn-audit__dot--broken"></i> Órbita o jerarquía disuelta</span>
+  </section>
+
+  <section class="post-sn-audit__cases" aria-label="Casos de auditoría post-supernova">
+    @for (scenario of cases; track scenario.id) {
+      <article
+        class="post-sn-case"
+        [attr.data-testid]="'post-supernova-audit-case-' + scenario.id"
+        [attr.data-status]="scenario.statusCode"
+      >
+        <header class="post-sn-case__header">
+          <div>
+            <p class="post-sn-audit__eyebrow">{{ scenario.eyebrow }}</p>
+            <h2>{{ scenario.title }}</h2>
+            <p>{{ scenario.description }}</p>
+          </div>
+          <span
+            class="post-sn-case__status"
+            [attr.data-status]="scenario.statusCode"
+            data-testid="post-supernova-audit-status"
+          >
+            {{ scenario.status }}
+          </span>
+        </header>
+
+        <div class="post-sn-case__visual" [attr.data-kind]="scenario.kind">
+          @if (scenario.kind === 'ORBIT_BOUND' || scenario.kind === 'CONTROL') {
+            <div class="post-sn-orbit-panel">
+              <span class="post-sn-orbit-panel__label">ANTES</span>
+              <svg viewBox="0 0 220 150" role="img" aria-label="Órbita antes del evento">
+                <line x1="14" y1="75" x2="206" y2="75" class="post-sn-orbit-panel__axis" />
+                <ellipse
+                  [attr.cx]="scenario.beforeOrbit!.cx"
+                  cy="75"
+                  [attr.rx]="scenario.beforeOrbit!.rx"
+                  [attr.ry]="scenario.beforeOrbit!.ry"
+                  class="post-sn-orbit-panel__orbit post-sn-orbit-panel__orbit--before"
+                />
+                <circle cx="110" cy="75" r="7" class="post-sn-orbit-panel__star" />
+                <circle
+                  [attr.cx]="scenario.beforeOrbit!.cx + scenario.beforeOrbit!.rx"
+                  cy="75"
+                  r="4"
+                  class="post-sn-orbit-panel__planet post-sn-orbit-panel__planet--before"
+                />
+              </svg>
+              <small>
+                a={{ scenario.beforeOrbit!.semiMajorAxisAu.toFixed(3) }} UA ·
+                e={{ scenario.beforeOrbit!.eccentricity.toFixed(3) }}
+              </small>
+            </div>
+
+            <div class="post-sn-case__arrow" aria-hidden="true">→</div>
+
+            <div class="post-sn-orbit-panel">
+              <span class="post-sn-orbit-panel__label">DESPUÉS</span>
+              <svg viewBox="0 0 220 150" role="img" aria-label="Órbita después del evento">
+                <line x1="14" y1="75" x2="206" y2="75" class="post-sn-orbit-panel__axis" />
+                <ellipse
+                  [attr.cx]="scenario.afterOrbit!.cx"
+                  cy="75"
+                  [attr.rx]="scenario.afterOrbit!.rx"
+                  [attr.ry]="scenario.afterOrbit!.ry"
+                  class="post-sn-orbit-panel__orbit post-sn-orbit-panel__orbit--after"
+                />
+                <circle cx="110" cy="75" r="7" class="post-sn-orbit-panel__remnant" />
+                <circle
+                  [attr.cx]="scenario.afterOrbit!.cx + scenario.afterOrbit!.rx"
+                  cy="75"
+                  r="4"
+                  class="post-sn-orbit-panel__planet post-sn-orbit-panel__planet--after"
+                />
+              </svg>
+              <small>
+                a={{ scenario.afterOrbit!.semiMajorAxisAu.toFixed(3) }} UA ·
+                e={{ scenario.afterOrbit!.eccentricity.toFixed(3) }}
+              </small>
+            </div>
+          } @else if (scenario.kind === 'ORBIT_EJECTED') {
+            <div class="post-sn-orbit-panel">
+              <span class="post-sn-orbit-panel__label">ANTES</span>
+              <svg viewBox="0 0 220 150" role="img" aria-label="Órbita ligada antes de la expulsión">
+                <line x1="14" y1="75" x2="206" y2="75" class="post-sn-orbit-panel__axis" />
+                <ellipse
+                  [attr.cx]="scenario.beforeOrbit!.cx"
+                  cy="75"
+                  [attr.rx]="scenario.beforeOrbit!.rx"
+                  [attr.ry]="scenario.beforeOrbit!.ry"
+                  class="post-sn-orbit-panel__orbit post-sn-orbit-panel__orbit--before"
+                />
+                <circle cx="110" cy="75" r="7" class="post-sn-orbit-panel__star" />
+                <circle cx="172" cy="75" r="4" class="post-sn-orbit-panel__planet post-sn-orbit-panel__planet--before" />
+              </svg>
+              <small>Órbita cerrada de formación</small>
+            </div>
+
+            <div class="post-sn-case__arrow" aria-hidden="true">→</div>
+
+            <div class="post-sn-orbit-panel post-sn-orbit-panel--ejected">
+              <span class="post-sn-orbit-panel__label">DESPUÉS</span>
+              <svg viewBox="0 0 220 150" role="img" aria-label="Trayectoria no ligada después de la expulsión">
+                <circle cx="72" cy="82" r="7" class="post-sn-orbit-panel__remnant" />
+                <path d="M 87 88 C 119 91, 153 75, 199 25" class="post-sn-orbit-panel__escape" />
+                <path d="M 191 27 L 200 24 L 197 34" class="post-sn-orbit-panel__escape-arrow" />
+                <circle cx="145" cy="72" r="4" class="post-sn-orbit-panel__planet post-sn-orbit-panel__planet--ejected" />
+              </svg>
+              <small>Sin órbita kepleriana cerrada</small>
+            </div>
+          } @else if (scenario.kind === 'TRIPLE_DISRUPTED') {
+            <div class="post-sn-orbit-panel post-sn-orbit-panel--hierarchy">
+              <span class="post-sn-orbit-panel__label">ANTES</span>
+              <svg viewBox="0 0 220 150" role="img" aria-label="Jerarquía triple antes de la supernova">
+                <ellipse cx="86" cy="76" rx="37" ry="24" class="post-sn-orbit-panel__orbit post-sn-orbit-panel__orbit--before" />
+                <ellipse cx="111" cy="76" rx="91" ry="57" class="post-sn-orbit-panel__outer" />
+                <circle cx="70" cy="76" r="7" class="post-sn-orbit-panel__star" />
+                <circle cx="102" cy="76" r="6" class="post-sn-orbit-panel__companion" />
+                <circle cx="190" cy="76" r="6" class="post-sn-orbit-panel__tertiary" />
+                <text x="65" y="61">A</text><text x="99" y="61">B</text><text x="187" y="61">C</text>
+              </svg>
+              <small>A–B interior + (A+B)–C exterior</small>
+            </div>
+
+            <div class="post-sn-case__arrow" aria-hidden="true">→</div>
+
+            <div class="post-sn-orbit-panel post-sn-orbit-panel--hierarchy">
+              <span class="post-sn-orbit-panel__label">DESPUÉS</span>
+              <svg viewBox="0 0 220 150" role="img" aria-label="Jerarquía triple disuelta después de la supernova">
+                <path d="M 53 88 C 31 103, 22 118, 13 137" class="post-sn-orbit-panel__escape" />
+                <path d="M 105 78 C 135 63, 162 45, 203 18" class="post-sn-orbit-panel__escape" />
+                <ellipse cx="111" cy="76" rx="91" ry="57" class="post-sn-orbit-panel__outer post-sn-orbit-panel__outer--broken" />
+                <circle cx="56" cy="86" r="7" class="post-sn-orbit-panel__remnant" />
+                <circle cx="106" cy="78" r="6" class="post-sn-orbit-panel__companion" />
+                <circle cx="188" cy="34" r="6" class="post-sn-orbit-panel__tertiary" />
+                <line x1="102" y1="48" x2="120" y2="102" class="post-sn-orbit-panel__break" />
+                <line x1="120" y1="48" x2="102" y2="102" class="post-sn-orbit-panel__break" />
+              </svg>
+              <small>A–B EJECTED · exterior HIERARCHY_DISRUPTED</small>
+            </div>
+          }
+        </div>
+
+        <p class="post-sn-case__note">{{ scenario.note }}</p>
+
+        <div class="post-sn-case__table-wrap">
+          <table class="post-sn-case__table">
+            <thead>
+              <tr>
+                <th>Magnitud</th>
+                <th>Antes</th>
+                <th>Después</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (metric of scenario.metrics; track metric.label) {
+                <tr [class.post-sn-case__metric-changed]="metric.changed">
+                  <th>{{ metric.label }}</th>
+                  <td>{{ metric.before }}</td>
+                  <td>{{ metric.after }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <ul class="post-sn-case__proof">
+          @for (item of scenario.proof; track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </article>
+    }
+  </section>
+
+  <footer class="post-sn-audit__footer">
+    <strong>Criterio de cierre visual:</strong>
+    A debe mostrar una órbita cerrada distinta; B debe perder su órbita cerrada;
+    C debe invalidar ambas capas jerárquicas; D debe permanecer sin cambios.
+  </footer>
+</main>

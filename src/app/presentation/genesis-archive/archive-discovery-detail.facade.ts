@@ -160,6 +160,15 @@ import {
 } from '../runtime/stellar-system-scientific-campaign';
 
 import {
+  StellarSupernovaScientificIntegration,
+} from '../runtime/stellar-supernova-scientific-integration';
+
+import {
+  StellarSupernovaScientificPresentationAssembler,
+  type StellarSupernovaScientificPresentationModel,
+} from '../runtime/stellar-supernova-scientific-presentation';
+
+import {
   isScientificRouteUniverseRef,
   scientificRouteUniverseRef,
 } from '../scientific/scientific-route-identity';
@@ -390,6 +399,10 @@ export interface ArchiveDiscoveryDetailModel {
 
   readonly stellarSystemCard:
     ArchiveStellarSystemCardModel | null;
+
+  /** 29.1E. Optional preserves legacy/test facade fixtures without the new repository. */
+  readonly stellarSupernovaScience?:
+    StellarSupernovaScientificPresentationModel | null;
 
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
@@ -1832,6 +1845,24 @@ export class ArchiveDiscoveryDetailFacade {
             : ArchiveStellarSystemCardAssembler.build(generationKey, locator, discoveryState)
           : null;
 
+      const supernovaRepository =
+        this.repositories.supernovaCanonicalEventRepository;
+
+      const stellarSupernovaScience =
+        locator instanceof SystemLocator &&
+        supernovaRepository !== undefined
+          ? discoveryState.code >= DiscoveryState.CATALOGUED.code
+            ? StellarSupernovaScientificPresentationAssembler.build(
+                await StellarSupernovaScientificIntegration.synchronize(
+                  supernovaRepository,
+                  generationKey,
+                  locator,
+                ),
+                stellarSystemCard,
+              )
+            : null
+          : undefined;
+
       const scientificAction =
         locator instanceof
           GalacticObjectLocator
@@ -2065,6 +2096,10 @@ export class ArchiveDiscoveryDetailFacade {
               galacticObjectCard,
 
               stellarSystemCard,
+
+              ...(stellarSupernovaScience === undefined
+                ? {}
+                : { stellarSupernovaScience }),
 
               scientificAction,
 

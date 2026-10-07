@@ -320,6 +320,12 @@ import {
   type SystemSceneBodySpinSnapshot,
 } from './system-scene-body-render-state';
 
+import {
+  systemSceneHabitableFramingEdges,
+  systemSceneStellarPresentation,
+  type SystemSceneStellarPresentationKind,
+} from './system-scene-remnant-presentation';
+
 export type {
   SystemSceneBodySpinSnapshot,
 } from './system-scene-body-render-state';
@@ -434,6 +440,10 @@ export interface SystemSceneBodySnapshot {
   readonly opticalRadiusScene?:
     number;
 
+  /** 29.1E-d renderer semantic: compact remnants never reuse a stellar photosphere. */
+  readonly stellarPresentationKind?:
+    SystemSceneStellarPresentationKind;
+
   readonly position:
     SystemSceneVector3;
 
@@ -454,7 +464,7 @@ export interface SystemSceneBodySnapshot {
   readonly lightIntensity:
     number;
 
-  /** Direct domain luminosity for stars; null for non-stellar spherical bodies. */
+  /** Current emissive source for renderer lighting; null for planets and non-emissive compact remnants. */
   readonly sourceLuminositySolar:
     number | null;
 
@@ -957,6 +967,9 @@ interface ResolvedStarSceneSource {
     string;
 
   readonly title:
+    string;
+
+  readonly evolutionStateName:
     string;
 
   readonly colorHex:
@@ -1863,6 +1876,8 @@ function resolveStarSources(
         'A',
       title:
         `${system.designation.name} A`,
+      evolutionStateName:
+        system.primaryStar.evolutionState.name,
       colorHex:
         primarySpectralAppearance.color.hex,
       radiusSolar:
@@ -1981,6 +1996,8 @@ function companionSource(
       companion.componentLabel.name,
     title:
       `${systemName} ${companion.componentLabel.name}`,
+    evolutionStateName:
+      companion.lifetimeProfile.evolutionAssessment.evolutionState.name,
     colorHex:
       companion.spectralAppearance.color.hex,
     radiusSolar:
@@ -2472,15 +2489,33 @@ function projectSceneGeometry(
       ? resolvedOuterRadiusAu
       : DEFAULT_OUTER_RADIUS_AU;
 
+  const starPresentationById =
+    new Map(
+      world.stars.map(
+        star => {
+          const ordinaryRadiusScene =
+            adaptiveSystemStarRadiusScene(
+              star.radiusSolar,
+            );
+
+          return [
+            star.id,
+            systemSceneStellarPresentation(
+              star.evolutionStateName,
+              ordinaryRadiusScene,
+            ),
+          ] as const;
+        },
+      ),
+    );
+
   const starRadiusSceneById =
     new Map(
       world.stars.map(
         star =>
           [
             star.id,
-            adaptiveSystemStarRadiusScene(
-              star.radiusSolar,
-            ),
+            starPresentationById.get(star.id)!.radiusScene,
           ] as const,
       ),
     );
@@ -2562,6 +2597,16 @@ function projectSceneGeometry(
         ) ??
         0.24;
 
+  const framingHabitableZone =
+    systemSceneHabitableFramingEdges({
+      stellarEvolutionRegime:
+        world.habitableZone.stellarEvolutionRegime,
+      radiativeInnerEdgeAu:
+        world.habitableZone.radiativeInnerEdgeAu,
+      radiativeOuterEdgeAu:
+        world.habitableZone.radiativeOuterEdgeAu,
+    });
+
   const initialSceneScale =
     world.multiplicityName ===
       'SINGLE'
@@ -2575,9 +2620,9 @@ function projectSceneGeometry(
             primaryStarRadiusScene,
           maxPlanetRadiusScene,
           habitableZoneInnerAu:
-            world.habitableZone.radiativeInnerEdgeAu,
+            framingHabitableZone.innerAu,
           habitableZoneOuterAu:
-            world.habitableZone.radiativeOuterEdgeAu,
+            framingHabitableZone.outerAu,
         })
       : world.multiplicityName ===
           'TRIPLE' &&
@@ -2608,9 +2653,9 @@ function projectSceneGeometry(
             innerPairOuterScale,
             tertiaryOuterScale,
             habitableZoneInnerAu:
-              world.habitableZone.radiativeInnerEdgeAu,
+              framingHabitableZone.innerAu,
             habitableZoneOuterAu:
-              world.habitableZone.radiativeOuterEdgeAu,
+              framingHabitableZone.outerAu,
           })
         : buildMultipleAdaptiveSystemScaleV3({
             architecture:
@@ -2628,9 +2673,9 @@ function projectSceneGeometry(
             primaryStarRadiusScene,
             secondaryStarRadiusScene,
             habitableZoneInnerAu:
-              world.habitableZone.radiativeInnerEdgeAu,
+              framingHabitableZone.innerAu,
             habitableZoneOuterAu:
-              world.habitableZone.radiativeOuterEdgeAu,
+              framingHabitableZone.outerAu,
           });
 
   const pTypeProjectionSpace =
@@ -3405,6 +3450,11 @@ function projectSceneGeometry(
             contributions,
           );
 
+        const stellarPresentation =
+          starPresentationById.get(
+            star.id,
+          )!;
+
         return Object.freeze({
           id:
             star.id,
@@ -3424,6 +3474,8 @@ function projectSceneGeometry(
             starOpticalRadiusSceneById.get(
               star.id,
             )!,
+          stellarPresentationKind:
+            stellarPresentation.kind,
           position:
             orbitalContributionPositionScene(
               frozenContributions,
@@ -3437,12 +3489,17 @@ function projectSceneGeometry(
           surfaceStyle:
             'emissive' as const,
           lightIntensity:
-            systemSceneStellarLightIntensity(
-              star.luminositySolar,
-            ),
+            stellarPresentation.sourceEmissionAllowed
+              ? systemSceneStellarLightIntensity(
+                  star.luminositySolar,
+                )
+              : 0,
           sourceLuminositySolar:
-            star.luminositySolar,
-          ...(generatorVersionCode === 2 ? {
+            stellarPresentation.sourceEmissionAllowed
+              ? star.luminositySolar
+              : null,
+          ...(generatorVersionCode === 2 &&
+          stellarPresentation.sourceEmissionAllowed ? {
             sourceRadiusSolar: star.radiusSolar,
             sourceEffectiveTemperatureKelvin: star.effectiveTemperatureKelvin,
           } : {}),

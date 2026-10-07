@@ -13,6 +13,28 @@ interface PhaseCurve {
 }
 
 const PHASE_CURVES: Readonly<Partial<Record<AtmosphereGas, PhaseCurve>>> = Object.freeze({
+  /* 29.1E-e.2 extends the existing phase closure into the cryogenic regime.
+   * Hydrogen uses its ordinary triple/boiling/critical anchors. Helium has no
+   * ordinary solid-liquid-vapor triple point at low pressure, so the lambda
+   * transition on the saturated-vapor curve is used only as a low-temperature
+   * vapor-pressure anchor; this is a conservative gas/liquid closure, not a
+   * claim of solid helium at planetary-atmosphere pressures. */
+  [AtmosphereGas.HYDROGEN]: Object.freeze({
+    tripleTemperatureKelvin: 13.8033,
+    triplePressurePascal: 7_041,
+    normalBoilingTemperatureKelvin: 20.271,
+    criticalTemperatureKelvin: 33.145,
+    criticalPressurePascal: 1_296_400,
+    sublimationSlopeMultiplier: 1.12,
+  }),
+  [AtmosphereGas.HELIUM]: Object.freeze({
+    tripleTemperatureKelvin: 2.1768,
+    triplePressurePascal: 5_042,
+    normalBoilingTemperatureKelvin: 4.222,
+    criticalTemperatureKelvin: 5.1953,
+    criticalPressurePascal: 227_000,
+    sublimationSlopeMultiplier: 1.00,
+  }),
   [AtmosphereGas.CARBON_DIOXIDE]: Object.freeze({
     tripleTemperatureKelvin: 216.592,
     triplePressurePascal: 518_500,
@@ -80,6 +102,8 @@ const PHASE_CURVES: Readonly<Partial<Record<AtmosphereGas, PhaseCurve>>> = Objec
 });
 
 export const NON_WATER_CONDENSABLE_GASES: readonly AtmosphereGas[] = Object.freeze([
+  AtmosphereGas.HYDROGEN,
+  AtmosphereGas.HELIUM,
   AtmosphereGas.CARBON_DIOXIDE,
   AtmosphereGas.AMMONIA,
   AtmosphereGas.METHANE,

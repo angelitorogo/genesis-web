@@ -228,12 +228,16 @@ function orbitSection(
 
   const orbit =
     target.detail.orbit;
+  const postSupernovaMoon = target.hostEvolution?.postSupernovaMoonStates
+    ?.find(current => current.moonOrdinal === target.identity.moonOrdinal) ?? null;
 
   return section(
     'orbit',
     'SECCIÓN 02',
     'Órbita',
-    'Geometría y periodo de la órbita planetocéntrica estable.',
+    postSupernovaMoon === null || postSupernovaMoon.survival === 'UNCHANGED'
+      ? 'Geometría y periodo de la órbita planetocéntrica estable.'
+      : 'Órbita planetocéntrica de formación y supervivencia dinámica reevaluada tras la evolución explosiva del host estelar.',
     [
       field(
         'Semieje mayor',
@@ -261,10 +265,48 @@ function orbitSection(
       field(
         'Radio de esfera de Hill',
         `${DECIMAL_2.format(orbit.hillSphereRadiusPlanetRadii)} Rplanet`,
-        'Referencia dinámica del dominio gravitatorio del planeta anfitrión.',
+        postSupernovaMoon === null || postSupernovaMoon.survival === 'UNCHANGED'
+          ? 'Referencia dinámica del dominio gravitatorio del planeta anfitrión.'
+          : 'Valor de formación; la esfera de Hill actual aparece debajo cuando sigue existiendo una órbita estelar ligada.',
       ),
+      ...(postSupernovaMoon === null || postSupernovaMoon.survival === 'UNCHANGED' ? [] : [
+        field(
+          'Supervivencia post-supernova',
+          postSupernovaMoonSurvivalLabel(postSupernovaMoon.survival),
+          postSupernovaMoon.survival === 'LOST_FROM_HILL_SPHERE'
+            ? 'La nueva órbita planetaria reduce el dominio estable por debajo del semieje lunar de formación.'
+            : postSupernovaMoon.survival === 'BOUND_TO_EJECTED_PLANET'
+              ? 'La expulsión estelar se trata como impulso común del sistema planeta-luna; no se inventa una separación lunar adicional.'
+              : null,
+        ),
+        ...(postSupernovaMoon.currentHillSphereRadiusPlanetRadii === null ? [] : [
+          field(
+            'Esfera de Hill actual',
+            `${DECIMAL_2.format(postSupernovaMoon.currentHillSphereRadiusPlanetRadii)} Rplanet`,
+          ),
+        ]),
+        ...(postSupernovaMoon.progradeStableLimitPlanetRadii === null ? [] : [
+          field(
+            'Límite prógrado estable actual',
+            `${DECIMAL_2.format(postSupernovaMoon.progradeStableLimitPlanetRadii)} Rplanet`,
+            'Límite dinámico conservador aplicado a la órbita lunar actual tras la reconfiguración planetaria.',
+          ),
+        ]),
+      ]),
     ],
   );
+}
+
+function postSupernovaMoonSurvivalLabel(
+  survival: NonNullable<NonNullable<MoonScientificResolvedTarget['hostEvolution']>['postSupernovaMoonStates']>[number]['survival'],
+): string {
+  switch (survival) {
+    case 'BOUND': return 'Ligada al planeta';
+    case 'LOST_FROM_HILL_SPHERE': return 'Inestable · perdida de la esfera de Hill';
+    case 'BOUND_TO_EJECTED_PLANET': return 'Ligada al planeta expulsado';
+    case 'UNRESOLVED_HOST_DISRUPTION': return 'No resuelta tras disrupción del host';
+    case 'UNCHANGED': return 'Sin cambio dinámico post-supernova';
+  }
 }
 
 function tidesSection(
@@ -330,12 +372,32 @@ function environmentSection(
   const environment =
     target.detail.environment;
 
+  if (target.hostEvolution?.requiresPostStellarEvolutionReassessment &&
+      target.hostEvolution.conditionalEnvironmentReassessmentApplied !== true) {
+    const currentFlux = target.hostEvolution.currentMeanInsolationEarth === null
+      ? 'No modelada'
+      : formatScientificInsolationEarth(target.hostEvolution.currentMeanInsolationEarth);
+    return section(
+      'environment', 'SECCIÓN 04', 'Entorno',
+      'El entorno actual de la luna debe reevaluarse tras la evolución del host estelar de su planeta.',
+      [
+        field('Irradiación actual del host planetario', currentFlux),
+        field('Temperatura actual', 'No resuelta'),
+        field('Atmósfera y agua actuales', 'No reevaluadas',
+          'No se reutilizan como estado actual los resultados calculados con la antigua irradiación del progenitor.'),
+        field('Geología intrínseca', labelGeology(environment.geologyRegime)),
+        field('Retención de calor interno', formatIndex(environment.internalHeatRetentionIndex01)),
+      ],
+    );
+  }
+
   return section(
     'environment',
     'SECCIÓN 04',
     'Entorno',
-    'Balance térmico, atmósfera, agua y actividad geológica estimada.',
+    conditionalSectionSummary(target, 'Balance térmico, atmósfera, agua y actividad geológica estimada.'),
     [
+      ...conditionalStatusFields(target),
       field(
         'Insolación media de referencia',
         formatScientificInsolationEarth(
@@ -435,12 +497,26 @@ function habitabilitySection(
   const habitability =
     target.detail.habitability;
 
+  if (target.hostEvolution?.requiresPostStellarEvolutionReassessment &&
+      target.hostEvolution.conditionalEnvironmentReassessmentApplied !== true) {
+    return section(
+      'habitability', 'SECCIÓN 05', 'Habitabilidad',
+      'La habitabilidad no se afirma hasta recalcular el entorno post-remanente.',
+      [
+        field('Clasificación actual', 'No reevaluada'),
+        field('Ruta superficial', 'Pendiente de evolución post-remanente'),
+        field('Ruta subsuperficial', 'Pendiente de evolución post-remanente'),
+      ],
+    );
+  }
+
   return section(
     'habitability',
     'SECCIÓN 05',
     'Habitabilidad',
-    'Evaluación comparativa de condiciones potenciales de superficie y subsuelo.',
+    conditionalSectionSummary(target, 'Evaluación comparativa de condiciones potenciales de superficie y subsuelo.'),
     [
+      ...conditionalStatusFields(target),
       field(
         'Clasificación',
         labelHabitability(
@@ -585,6 +661,36 @@ function badges(
   }
 
   return result;
+}
+
+
+function conditionalEnvironmentApplied(
+  target: MoonScientificResolvedTarget,
+): boolean {
+  return target.hostEvolution?.requiresPostStellarEvolutionReassessment === true &&
+    target.hostEvolution.conditionalEnvironmentReassessmentApplied === true;
+}
+
+function conditionalStatusFields(
+  target: MoonScientificResolvedTarget,
+): readonly MoonScientificFieldModel[] {
+  if (!conditionalEnvironmentApplied(target)) return Object.freeze([]);
+  const currentHostFlux = target.hostEvolution?.currentMeanInsolationEarth ?? null;
+  const floorNote = currentHostFlux === 0
+    ? 'El host compacto aporta 0 S⊕ en el modelo actual; el entorno lunar usa el fondo radiativo mínimo más sus propios términos térmicos/mareales ya modelados. No representa acreción.'
+    : 'Entorno recalculado con la irradiación actual modelada del host planetario y los términos térmicos propios de la luna.';
+  return Object.freeze([
+    field('Estado científico', 'Estado actual condicionado a supervivencia orbital', floorNote),
+  ]);
+}
+
+function conditionalSectionSummary(
+  target: MoonScientificResolvedTarget,
+  ordinarySummary: string,
+): string {
+  return conditionalEnvironmentApplied(target)
+    ? `${ordinarySummary} Reevaluación 29.1E-e.2 con cierre criogénico, condicionada a la supervivencia provisional del planeta y de esta luna.`
+    : ordinarySummary;
 }
 
 function section(

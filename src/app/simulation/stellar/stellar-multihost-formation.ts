@@ -180,11 +180,59 @@ export class StellarMultihostFormation {
     if (multiplicity === StellarSystemMultiplicity.SINGLE) return null;
 
     const requireV2Coverage = key.generatorVersion === GeneratorVersion.V2;
-    const components = Object.freeze((multiplicity === StellarSystemMultiplicity.BINARY
-      ? (['A', 'B'] as const) : (['A', 'B', 'C'] as const))
-      .map(label => generateSingleHost(label, label === 'A' ? physicalKey :
-        childKey(physicalKey, parentSeed.normalizedValue, label, locator, requireV2Coverage), locator)));
-    const [a, b] = components;
+
+    // 29.1E-f: A's already-frozen point-15.3 age draw becomes the chronological
+    // age of the bound system. B/C keep their independent masses, metallicity
+    // contexts and private seeds, but no longer keep independent present-day
+    // clocks. No new entropy branch is introduced.
+    const a =
+      generateSingleHost(
+        'A',
+        physicalKey,
+        locator,
+      );
+
+    const chronologicalAgeBillionYears =
+      a.lifetime.ageBillionYears;
+
+    const b =
+      generateSingleHost(
+        'B',
+        childKey(
+          physicalKey,
+          parentSeed.normalizedValue,
+          'B',
+          locator,
+          requireV2Coverage,
+        ),
+        locator,
+        chronologicalAgeBillionYears,
+      );
+
+    const c =
+      multiplicity ===
+        StellarSystemMultiplicity.TRIPLE
+        ? generateSingleHost(
+            'C',
+            childKey(
+              physicalKey,
+              parentSeed.normalizedValue,
+              'C',
+              locator,
+              requireV2Coverage,
+            ),
+            locator,
+            chronologicalAgeBillionYears,
+          )
+        : undefined;
+
+    const components =
+      Object.freeze(
+        c === undefined
+          ? [a, b]
+          : [a, b, c],
+      );
+
     if (a === undefined || b === undefined) throw new Error('Missing A/B sources.');
     const profileIndex = Number.parseInt(parentSeed.normalizedValue.slice(0, 2), 16) % FACTORS.length;
     const factor = FACTORS[profileIndex]!;
@@ -194,7 +242,6 @@ export class StellarMultihostFormation {
       massA, massB, INNER_ECCENTRICITY, factor);
     const innerOrbit = new StellarRelativeOrbit(innerAxis, INNER_ECCENTRICITY,
       Math.sqrt(innerAxis ** 3 / (massA + massB)));
-    const c = components[2];
     const outerOrbit = c === undefined ? null : (() => {
       const massC = c.physical.initialMassSolar;
       const outerAxis = Math.max(
@@ -242,17 +289,29 @@ function childKey(parent: UniverseGenerationKey, parentSystemSeedHex: string, la
   throw new RangeError('No deterministic V2 private stellar source covers the valid parent sector.');
 }
 
-function generateSingleHost(label: MultihostLabel, key: UniverseGenerationKey, locator: SystemLocator): GeneratedSingleHost {
+function generateSingleHost(
+  label: MultihostLabel,
+  key: UniverseGenerationKey,
+  locator: SystemLocator,
+  chronologicalAgeBillionYears: number | null = null,
+): GeneratedSingleHost {
   const galaxy = GalaxyGenerator.generate(key, locator.galaxyIndex);
   const grid = GalaxySectorGridGenerator.generate(galaxy);
   const density = GalaxySectorStellarDensityGenerator.generate(galaxy, grid,
     GalaxySectorKeyCodec.decode(locator.sectorKey));
   const population = GalaxySectorStellarPopulationPropertiesGenerator.generate(galaxy, density);
   const profile = StellarPopulationProfileGenerator.generate(key, galaxy.physicalProperties, population);
-  const stellarSystem = StellarSystemGenerator.generateSingle(key, locator, population, profile);
+  const generatedStellarSystem = StellarSystemGenerator.generateSingle(key, locator, population, profile);
   const physical = StellarGenerator.generatePhysicalProperties(key, locator, population, profile);
   const spectral = StellarGenerator.generateSpectralAppearance(key, physical, population);
-  const lifetime = StellarGenerator.generateLifetimeProfile(key, locator, physical, population, profile);
+  const lifetime = chronologicalAgeBillionYears === null
+    ? StellarGenerator.generateLifetimeProfile(key, locator, physical, population, profile)
+    : StellarGenerator.generateLifetimeProfileAtAge(
+        key, physical, population, chronologicalAgeBillionYears,
+      );
+  const stellarSystem = chronologicalAgeBillionYears === null
+    ? generatedStellarSystem
+    : singleSystemAtLifetime(generatedStellarSystem, lifetime);
   const reference = ProtoplanetaryFormationSnapshotGenerator.generateMaturationReferenceOrNull(key, locator);
   const blueprint = reference === null ? null : PlanetaryFormationMaturationGenerator.generate(key,
     reference.systemSeed, reference.diskProfile, reference.diskStructure, reference.planetFormationProfile,
@@ -271,6 +330,47 @@ function generateSingleHost(label: MultihostLabel, key: UniverseGenerationKey, l
   return Object.freeze({ label, internalGenerationKey: key, stellarSystem,
     physical, spectral, lifetime, planetarySystem, planets, atmospheres, moonSystems,
     asteroidBelts, protectedExtentAu });
+}
+
+/**
+ * Rebinds only the current evolutionary classification of a private SINGLE
+ * source to the canonical multihost age. Identity, mass draw, reference
+ * luminosity, designation and orbit hierarchy remain untouched.
+ */
+function singleSystemAtLifetime(
+  source: StellarSystem,
+  lifetime: ReturnType<typeof StellarGenerator.generateLifetimeProfile>,
+): StellarSystem {
+  const assessment =
+    lifetime.evolutionAssessment;
+
+  const star =
+    new Star(
+      source.generationKey,
+      source.locator,
+      assessment.evolutionState,
+      assessment.mainSequenceClass,
+      assessment.brownDwarfClass,
+      assessment.postMainSequenceStage,
+      assessment.whiteDwarfComposition,
+      assessment.neutronStarFormationChannel,
+      assessment.blackHoleFormationChannel,
+    );
+
+  return new StellarSystem(
+    source.generationKey,
+    source.locator,
+    source.seed,
+    source.designation,
+    StellarSystemMultiplicity.SINGLE,
+    star,
+    source.orbitHierarchy,
+    null,
+    null,
+    null,
+    null,
+    source.primaryReferenceLuminositySolar,
+  );
 }
 
 function companion(source: GeneratedSingleHost, primary: GeneratedSingleHost,

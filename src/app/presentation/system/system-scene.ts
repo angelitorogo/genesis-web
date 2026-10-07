@@ -198,6 +198,10 @@ import {
   type SystemSceneScaleSnapshot,
 } from './system-scene-scale-projection';
 
+import {
+  systemSceneBlackHoleMarkerPresentation,
+} from './system-scene-remnant-presentation';
+
 
 const MAX_DEVICE_PIXEL_RATIO =
   2;
@@ -4194,6 +4198,26 @@ class ThreeSystemSceneRuntime
   ):
     void {
 
+    if (
+      star.stellarPresentationKind ===
+        'STELLAR_BLACK_HOLE'
+    ) {
+      this.addStellarBlackHole(
+        star,
+      );
+      return;
+    }
+
+    if (
+      star.stellarPresentationKind ===
+        'BROWN_DWARF'
+    ) {
+      this.addBrownDwarf(
+        star,
+      );
+      return;
+    }
+
     const group =
       new THREE.Group();
 
@@ -4394,6 +4418,202 @@ class ThreeSystemSceneRuntime
       .add(
         group,
       );
+  }
+
+  private addBrownDwarf(
+    star:
+      SystemSceneBodySnapshot,
+  ):
+    void {
+    const group = new THREE.Group();
+    group.name = `Brown dwarf ${star.label}`;
+    group.position.set(star.position.x, star.position.y, star.position.z);
+
+    const initialLod: SystemSceneBodyLodLevelV1 = 'MEDIUM';
+    const sphereGeometry = this.sphereGeometryPool.get('star', initialLod);
+    const surfaceMaterial = new THREE.MeshBasicMaterial({
+      color: 0x4b1715,
+      toneMapped: false,
+    });
+    const body = new THREE.Mesh(sphereGeometry, surfaceMaterial);
+    body.scale.setScalar(star.radiusScene);
+    body.name = `${star.label} brown-dwarf body`;
+
+    this.bodyLodBindings.set(star.id, {
+      mesh: body, kind: 'star', radiusScene: star.radiusScene, level: initialLod,
+    });
+
+    // 29.1E-e.1: visible-location cue only. Brown dwarfs are extremely faint in
+    // visible light; do not reuse ordinary stellar bloom/glare/corona.
+    const hazeMaterial = new THREE.SpriteMaterial({
+      map: this.starHaloTexture,
+      color: 0x7a2c25,
+      transparent: true,
+      opacity: 0.16,
+      depthWrite: false,
+      depthTest: true,
+      blending: THREE.NormalBlending,
+      toneMapped: false,
+    });
+    const haze = new THREE.Sprite(hazeMaterial);
+    const diameter = Math.max(0.28, star.radiusScene * 3.2);
+    haze.scale.set(diameter, diameter, 1);
+    haze.name = `${star.label} brown-dwarf faint infrared cue`;
+
+    group.add(haze, body);
+    this.frameDisposables.push(surfaceMaterial, hazeMaterial);
+    this.animatedBodies.set(star.id, group);
+    this.registerSelectableBody(star, group);
+    this.presentationRoot.add(group);
+  }
+
+  private addStellarBlackHole(
+    star:
+      SystemSceneBodySnapshot,
+  ):
+    void {
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Compact remnant ${star.label}`;
+    group.position.set(
+      star.position.x,
+      star.position.y,
+      star.position.z,
+    );
+
+    const initialLod:
+      SystemSceneBodyLodLevelV1 =
+      'MEDIUM';
+
+    const sphereGeometry =
+      this.sphereGeometryPool.get(
+        'star',
+        initialLod,
+      );
+
+    const silhouetteMaterial =
+      new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        toneMapped: false,
+      });
+
+    const silhouette =
+      new THREE.Mesh(
+        sphereGeometry,
+        silhouetteMaterial,
+      );
+
+    silhouette.scale.setScalar(
+      star.radiusScene,
+    );
+    silhouette.name =
+      `${star.label} black-hole silhouette`;
+    silhouette.renderOrder =
+      44;
+
+    this.bodyLodBindings.set(
+      star.id,
+      {
+        mesh: silhouette,
+        kind: 'star',
+        radiusScene: star.radiusScene,
+        level: initialLod,
+      },
+    );
+
+    const marker =
+      systemSceneBlackHoleMarkerPresentation(
+        star.radiusScene,
+      );
+
+    // A quiescent stellar-mass BH has no stellar photosphere or point-light
+    // emission. The two cues below represent a weak lensing/identification
+    // signature only; they do not add luminosity or an accretion disk.
+    const haloMaterial =
+      new THREE.SpriteMaterial({
+        map: this.starHaloTexture,
+        color: 0x7691a3,
+        transparent: true,
+        opacity: marker.haloOpacity,
+        depthWrite: false,
+        depthTest: true,
+        blending: THREE.NormalBlending,
+        toneMapped: false,
+      });
+
+    const haloCue =
+      new THREE.Sprite(
+        haloMaterial,
+      );
+
+    haloCue.scale.set(
+      marker.haloDiameterScene,
+      marker.haloDiameterScene,
+      1,
+    );
+    haloCue.name =
+      `${star.label} compact-remnant lensing halo`;
+    haloCue.renderOrder =
+      41;
+
+    const ringTexture =
+      createSystemSceneBlackHoleLensingRingTexture();
+
+    const ringMaterial =
+      new THREE.SpriteMaterial({
+        map: ringTexture,
+        color: 0xb7d7e8,
+        transparent: true,
+        opacity: marker.ringOpacity,
+        depthWrite: false,
+        depthTest: true,
+        blending: THREE.NormalBlending,
+        toneMapped: false,
+      });
+
+    const ringCue =
+      new THREE.Sprite(
+        ringMaterial,
+      );
+
+    ringCue.scale.set(
+      marker.ringDiameterScene,
+      marker.ringDiameterScene,
+      1,
+    );
+    ringCue.name =
+      `${star.label} compact-remnant lensing ring`;
+    ringCue.renderOrder =
+      43;
+
+    group.add(
+      haloCue,
+      ringCue,
+      silhouette,
+    );
+
+    this.frameDisposables.push(
+      silhouetteMaterial,
+      haloMaterial,
+      ringMaterial,
+      ringTexture,
+    );
+
+    this.animatedBodies.set(
+      star.id,
+      group,
+    );
+
+    this.registerSelectableBody(
+      star,
+      group,
+    );
+
+    this.presentationRoot.add(
+      group,
+    );
   }
 
   private addPlanet(
@@ -8283,3 +8503,42 @@ function disposeResources(
       ?.dispose();
   }
 }
+
+function createSystemSceneBlackHoleLensingRingTexture(): THREE.DataTexture {
+  const size = 64;
+  const data = new Uint8Array(size * size * 4);
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const nx = ((x + 0.5) / size) * 2 - 1;
+      const ny = ((y + 0.5) / size) * 2 - 1;
+      const radius = Math.sqrt(nx * nx + ny * ny);
+      const ringDistance = Math.abs(radius - 0.66);
+      const sharpRing = Math.exp(-((ringDistance / 0.045) ** 2));
+      const softLensing = Math.exp(-((ringDistance / 0.13) ** 2)) * 0.34;
+      const edgeFade = Math.max(0, Math.min(1, (0.96 - radius) / 0.08));
+      const alpha = Math.max(0, Math.min(1, (sharpRing + softLensing) * edgeFade));
+      const offset = (y * size + x) * 4;
+
+      data[offset] = 255;
+      data[offset + 1] = 255;
+      data[offset + 2] = 255;
+      data[offset + 3] = Math.round(alpha * 255);
+    }
+  }
+
+  const texture = new THREE.DataTexture(
+    data,
+    size,
+    size,
+    THREE.RGBAFormat,
+    THREE.UnsignedByteType,
+  );
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearFilter;
+  texture.generateMipmaps = false;
+  texture.needsUpdate = true;
+  texture.name = 'GENESIS/stellar-black-hole-lensing-ring';
+  return texture;
+}
+

@@ -164,17 +164,11 @@
 }
 
 .gkc__table td:first-child {
-  min-width: 220px;
+  min-width: 140px;
 }
 
-.gkc__table td:first-child strong,
-.gkc__table td:first-child small {
+.gkc__table td:first-child strong {
   display: block;
-}
-
-.gkc__table td:first-child small {
-  margin-top: .25rem;
-  color: #91a6bd;
 }
 
 .gkc__value-cell {

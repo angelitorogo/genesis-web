@@ -199,6 +199,78 @@ describe(
       },
     );
 
+
+
+    it(
+      '29.1E-c should never present progenitor photospheric facts or a normal spectral class as current compact-remnant properties',
+      () => {
+        let remnantComponent:
+          ReturnType<typeof ArchiveStellarSystemCardAssembler.build>['components'][number] |
+          null =
+          null;
+
+        for (
+          let index = 0;
+          index < 128 &&
+          remnantComponent === null;
+          index += 1
+        ) {
+          const card =
+            ArchiveStellarSystemCardAssembler
+              .build(
+                generationKey,
+                new SystemLocator(
+                  0n,
+                  0n,
+                  BigInt(index),
+                ),
+                DiscoveryState.CATALOGUED,
+              );
+
+          remnantComponent =
+            card.components.find(
+              component =>
+                component.evolutionStateLabel === 'Enana blanca' ||
+                component.evolutionStateLabel === 'Estrella de neutrones' ||
+                component.evolutionStateLabel === 'Agujero negro estelar',
+            ) ??
+            null;
+        }
+
+        expect(remnantComponent).not.toBeNull();
+        expect(remnantComponent?.spectralType).toBeNull();
+
+        const labels =
+          remnantComponent?.facts.map(
+            current =>
+              current.label,
+          ) ??
+          [];
+
+        expect(labels).toContain(
+          'Masa inicial del progenitor',
+        );
+        expect(labels).not.toContain(
+          'Radio de referencia',
+        );
+        expect(labels).not.toContain(
+          'Luminosidad de referencia',
+        );
+        expect(labels).not.toContain(
+          'Temperatura efectiva',
+        );
+
+        const formationChannel =
+          remnantComponent?.facts.find(
+            fact => fact.label === 'Canal de formación',
+          )?.value;
+
+        expect(formationChannel).not.toBe('DIRECT_COLLAPSE');
+        expect(formationChannel).not.toBe('FALLBACK_CORE_COLLAPSE');
+      },
+      120_000,
+    );
+
     it(
       'should materialize component and orbit fiches for one catalogued BINARY while keeping point-16.6 habitability hidden until CONFIRMED',
       () => {

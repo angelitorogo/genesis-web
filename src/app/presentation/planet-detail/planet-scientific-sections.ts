@@ -1,6 +1,7 @@
 import {
   type PlanetScientificDetailSource,
   type PlanetScientificResolvedTarget,
+  type PlanetScientificHostEvolutionContext,
 } from '../../simulation/planetary/planet-scientific-target-resolver';
 
 import {
@@ -134,6 +135,9 @@ export class PlanetScientificSectionsAssembler {
     const detail =
       target.detail;
 
+    const hostEvolution =
+      target.hostEvolution ?? null;
+
     const comparison =
       WorldEarthComparisonAssembler
         .build({
@@ -157,21 +161,27 @@ export class PlanetScientificSectionsAssembler {
           ),
           orbitSection(
             detail,
+            hostEvolution,
           ),
           surfaceSection(
             detail,
+            hostEvolution,
           ),
           atmosphereSection(
             detail,
+            hostEvolution,
           ),
           climateSection(
             detail,
+            hostEvolution,
           ),
           geologySection(
             detail,
+            hostEvolution,
           ),
           moonsSection(
             detail,
+            hostEvolution,
           ),
           comparisonSection(
             comparison,
@@ -194,56 +204,28 @@ export class PlanetScientificSectionsAssembler {
                     `Luna ${moon.moonOrdinal}`,
                   fields:
                     Object.freeze([
-                      field(
-                        'Masa',
-                        `${formatAdaptive(moon.massEarth)} M⊕`,
-                      ),
-                      field(
-                        'Radio',
-                        `${formatAdaptive(moon.radiusEarth)} R⊕`,
-                      ),
-                      field(
-                        'Densidad media',
-                        `${DECIMAL_2.format(moon.meanDensityGramsPerCubicCentimeter)} g/cm³`,
-                      ),
-                      field(
-                        'Gravedad superficial',
-                        `${DECIMAL_2.format(moon.surfaceGravityEarth)} g⊕`,
-                      ),
-                      field(
-                        'Órbita',
-                        `${DECIMAL_2.format(moon.semiMajorAxisPlanetRadii)} Rplanet · ${DECIMAL_2.format(moon.orbitalPeriodDays)} días`,
-                      ),
-                      field(
-                        'Rotación',
-                        `${DECIMAL_2.format(moon.rotationPeriodHours)} h`,
-                        moon.isTidallyLocked
-                          ? 'Acoplamiento de marea'
-                          : 'Rotación no sincronizada',
-                      ),
-                      field(
-                        'Temperatura estimada',
-                        formatTemperature(
-                          moon.estimatedSurfaceTemperatureKelvin,
-                        ),
-                      ),
-                      field(
-                        'Entorno',
-                        `${labelMoonAtmosphere(moon.atmosphereRegime)} · ${labelMoonWater(moon.waterRegime)}`,
-                      ),
-                      field(
-                        'Geología',
-                        labelMoonGeology(
-                          moon.geologyRegime,
-                        ),
-                      ),
-                      field(
-                        'Habitabilidad potencial',
-                        labelMoonHabitability(
-                          moon.habitabilityRegime,
-                        ),
-                        `Índice ${formatNormalizedIndex(moon.overallHabitabilityIndex01)}`,
-                      ),
+                      field('Masa', `${formatAdaptive(moon.massEarth)} M⊕`),
+                      field('Radio', `${formatAdaptive(moon.radiusEarth)} R⊕`),
+                      field('Densidad media', `${DECIMAL_2.format(moon.meanDensityGramsPerCubicCentimeter)} g/cm³`),
+                      field('Gravedad superficial', `${DECIMAL_2.format(moon.surfaceGravityEarth)} g⊕`),
+                      field('Órbita', `${DECIMAL_2.format(moon.semiMajorAxisPlanetRadii)} Rplanet · ${DECIMAL_2.format(moon.orbitalPeriodDays)} días`),
+                      field('Rotación', `${DECIMAL_2.format(moon.rotationPeriodHours)} h`,
+                        moon.isTidallyLocked ? 'Acoplamiento de marea' : 'Rotación no sincronizada'),
+                      ...(hostEvolution?.requiresPostStellarEvolutionReassessment &&
+                          hostEvolution.conditionalEnvironmentReassessmentApplied !== true
+                        ? [
+                            field('Entorno post-remanente', 'No resuelto',
+                              '29.1E-e no reutiliza la temperatura, atmósfera, agua ni habitabilidad calculadas con la antigua estrella progenitora.'),
+                            field('Geología intrínseca', labelMoonGeology(moon.geologyRegime)),
+                          ]
+                        : [
+                            ...conditionalStatusFields(hostEvolution),
+                            field('Temperatura estimada', formatTemperature(moon.estimatedSurfaceTemperatureKelvin)),
+                            field('Entorno', `${labelMoonAtmosphere(moon.atmosphereRegime)} · ${labelMoonWater(moon.waterRegime)}`),
+                            field('Geología', labelMoonGeology(moon.geologyRegime)),
+                            field('Habitabilidad potencial', labelMoonHabitability(moon.habitabilityRegime),
+                              `Índice ${formatNormalizedIndex(moon.overallHabitabilityIndex01)}`),
+                          ]),
                     ]),
                   badges:
                     Object.freeze([
@@ -352,10 +334,74 @@ function generalSection(
 function orbitSection(
   detail:
     PlanetScientificDetailSource,
+
+  hostEvolution:
+    PlanetScientificHostEvolutionContext | null,
 ): PlanetScientificSectionModel {
 
   const orbit =
     detail.orbit;
+
+  if (hostEvolution?.requiresPostStellarEvolutionReassessment) {
+    const disposition = hostEvolution.postSupernovaOrbitDisposition ?? 'UNCHANGED';
+    const currentOrbitResolved = disposition === 'BOUND_RECONFIGURED';
+    const noCurrentHostOrbit = disposition === 'EJECTED' || disposition === 'HOST_DISRUPTED';
+    const period = hostEvolution.currentOrbitalPeriodDays === null ||
+      hostEvolution.currentOrbitalPeriodYears === null
+      ? noCurrentHostOrbit ? 'No existe órbita anfitriona ligada' : 'No resuelto con la masa actual disponible'
+      : `${DECIMAL_2.format(hostEvolution.currentOrbitalPeriodDays)} días · ${DECIMAL_3.format(hostEvolution.currentOrbitalPeriodYears)} años`;
+    const insolation = hostEvolution.currentMeanInsolationEarth === null
+      ? noCurrentHostOrbit ? 'No resoluble tras disrupción del host' : 'No modelada para el host compacto actual'
+      : formatScientificInsolationEarth(hostEvolution.currentMeanInsolationEarth);
+    const radiative = disposition === 'EJECTED'
+      ? 'Sin zona habitable ligada al antiguo host'
+      : disposition === 'HOST_DISRUPTED'
+        ? 'No resoluble con la arquitectura anfitriona disuelta'
+        : hostEvolution.radiativeRegime === 'QUIESCENT_BLACK_HOLE'
+          ? 'Sin zona habitable radiativa del agujero negro quiescente'
+          : hostEvolution.currentHostLuminositySolar === null
+            ? 'No resuelta: luminosidad actual del remanente no modelada'
+            : 'Reevaluada con el host actual';
+    const geometryLabel = currentOrbitResolved ? 'actual post-supernova' : 'de formación';
+    return section(
+      'orbit', 'SECCIÓN 02', 'Órbita',
+      postSupernovaOrbitSummary(disposition),
+      [
+        ...conditionalStatusFields(hostEvolution),
+        field('Estado dinámico post-supernova', postSupernovaDispositionLabel(disposition),
+          disposition === 'UNCHANGED'
+            ? 'No existe una supernova histórica resuelta que reconfigure esta órbita.'
+            : `Resolución determinista 29.1E-g · régimen ${postSupernovaMassLossLabel(hostEvolution.postSupernovaMassLossRegime)}.`),
+        field(`Semieje mayor ${geometryLabel}`, `${DECIMAL_3.format(orbit.semiMajorAxisAu)} UA`),
+        field(`Excentricidad ${geometryLabel}`, DECIMAL_3.format(orbit.eccentricity)),
+        field('Inclinación de formación', `${DECIMAL_2.format(orbit.inclinationDegrees)}°`,
+          currentOrbitResolved && hostEvolution.postSupernovaInclinationChangeDegrees !== null &&
+              hostEvolution.postSupernovaInclinationChangeDegrees !== undefined
+            ? `El kick introduce un cambio de plano de ${DECIMAL_2.format(hostEvolution.postSupernovaInclinationChangeDegrees)}° respecto al plano pre-evento.`
+            : null),
+        field(`Periastro ${geometryLabel}`, `${DECIMAL_3.format(orbit.periastronAu)} UA`),
+        field(`Apoastro ${geometryLabel}`, `${DECIMAL_3.format(orbit.apoastronAu)} UA`),
+        field('Periodo orbital actual', period,
+          hostEvolution.currentHostMassSolar === null
+            ? noCurrentHostOrbit
+              ? 'No se asigna un periodo Kepleriano a un planeta expulsado o con host disuelto.'
+              : 'No se reutiliza la masa del progenitor como masa actual.'
+            : `Calculado con ${formatAdaptive(hostEvolution.currentHostMassSolar)} M☉ de masa anfitriona actual.`),
+        ...(disposition === 'UNCHANGED' ? [] : [
+          field('Kick natal efectivo máximo',
+            `${DECIMAL_2.format(hostEvolution.postSupernovaMaximumEffectiveKickKmS ?? 0)} km/s`,
+            'Impulso efectivo aplicado a esta arquitectura; no es una velocidad inventada del planeta.'),
+        ]),
+        field('Zona habitable radiativa actual', radiative),
+        field('Insolación media actual del host', insolation,
+          disposition === 'EJECTED'
+            ? 'Tras la expulsión se anula la irradiación ligada al antiguo anfitrión; el balance intrínseco puede seguir reevaluándose.'
+            : hostEvolution.radiativeRegime === 'QUIESCENT_BLACK_HOLE'
+              ? 'Sin disco de acreción modelado: el agujero negro no aporta irradiación estelar.'
+              : 'No se reutiliza la luminosidad del progenitor como luminosidad actual.'),
+      ],
+    );
+  }
 
   return section(
     'orbit',
@@ -421,20 +467,79 @@ function orbitSection(
   );
 }
 
+function postSupernovaDispositionLabel(
+  disposition: NonNullable<PlanetScientificHostEvolutionContext['postSupernovaOrbitDisposition']>,
+): string {
+  switch (disposition) {
+    case 'BOUND_RECONFIGURED': return 'Ligado · órbita reconfigurada';
+    case 'EJECTED': return 'Expulsado del antiguo host';
+    case 'HOST_DISRUPTED': return 'Arquitectura anfitriona disuelta';
+    case 'UNCHANGED': return 'Sin reconfiguración supernova';
+  }
+}
+
+function postSupernovaOrbitSummary(
+  disposition: NonNullable<PlanetScientificHostEvolutionContext['postSupernovaOrbitDisposition']>,
+): string {
+  switch (disposition) {
+    case 'BOUND_RECONFIGURED':
+      return 'Órbita actual derivada de la pérdida de masa y del kick del evento canónico, sin modificar el cuerpo congelado de formación.';
+    case 'EJECTED':
+      return 'El planeta ya no permanece ligado al antiguo anfitrión. Se conserva debajo la geometría de formación como referencia histórica.';
+    case 'HOST_DISRUPTED':
+      return 'La arquitectura anfitriona que sustentaba esta órbita quedó disuelta; no se inventa una captura posterior sin resolver.';
+    case 'UNCHANGED':
+      return 'Geometría orbital actualizada con el host compacto cuando existe masa actual autoritativa.';
+  }
+}
+
+function postSupernovaMassLossLabel(
+  regime: PlanetScientificHostEvolutionContext['postSupernovaMassLossRegime'],
+): string {
+  switch (regime) {
+    case 'IMPULSIVE': return 'impulsivo';
+    case 'TRANSITIONAL': return 'transicional';
+    case 'ADIABATIC': return 'adiabático';
+    default: return 'sin pérdida explosiva resuelta';
+  }
+}
+
 function surfaceSection(
   detail:
     PlanetScientificDetailSource,
+
+  hostEvolution:
+    PlanetScientificHostEvolutionContext | null,
 ): PlanetScientificSectionModel {
 
   const surface =
     detail.surface;
 
+  if (hostEvolution?.requiresPostStellarEvolutionReassessment &&
+      hostEvolution.conditionalEnvironmentReassessmentApplied !== true) {
+    return section(
+      'surface', 'SECCIÓN 03', 'Superficie',
+      'Propiedades intrínsecas conservadas; el estado térmico, el agua superficial y la exposición radiativa deben reevaluarse tras la evolución del host.',
+      [
+        field('Base superficial', labelSurfaceRegime(surface.surfaceBaseRegime),
+          surface.hasDefinedSolidSurfaceBase ? 'Superficie sólida definida' : 'Sin superficie sólida definida'),
+        field('Índice de rugosidad', formatNullableNormalizedIndex(surface.baseSolidSurfaceRoughness01)),
+        field('Estado térmico superficial actual', 'No resuelto tras evolución del host compacto'),
+        field('Agua superficial actual', 'No reevaluada',
+          'No se reutilizan las fases hielo/líquido/vapor calculadas con la irradiación del progenitor.'),
+        field('Radiación superficial actual', 'No reevaluada',
+          'Requiere un modelo actual de emisión del remanente y del entorno múltiple.'),
+      ],
+    );
+  }
+
   return section(
     'surface',
     'SECCIÓN 03',
     'Superficie',
-    'Régimen superficial, inventario de agua y exposición radiativa del entorno accesible.',
+    conditionalSectionSummary(hostEvolution, 'Régimen superficial, inventario de agua y exposición radiativa del entorno accesible.'),
     [
+      ...conditionalStatusFields(hostEvolution),
       field(
         'Base superficial',
         labelSurfaceRegime(
@@ -519,17 +624,36 @@ function surfaceSection(
 function atmosphereSection(
   detail:
     PlanetScientificDetailSource,
+
+  hostEvolution:
+    PlanetScientificHostEvolutionContext | null,
 ): PlanetScientificSectionModel {
 
   const atmosphere =
     detail.atmosphere;
 
+  if (hostEvolution?.requiresPostStellarEvolutionReassessment &&
+      hostEvolution.conditionalEnvironmentReassessmentApplied !== true) {
+    return section(
+      'atmosphere', 'SECCIÓN 04', 'Atmósfera',
+      'La atmósfera actual no se deriva de la antigua irradiación del progenitor.',
+      [
+        field('Estado atmosférico post-remanente', 'No resuelto'),
+        field('Retención y composición actuales', 'Pendientes de reevaluación',
+          'Escape, condensación y química deben recalcularse con el entorno radiativo actual y con la historia post-SN.'),
+        field('Modelo heredado del progenitor', 'No mostrado como estado actual',
+          '29.1E-e evita presentar presión, composición o efecto invernadero calculados con una estrella que ya no existe.'),
+      ],
+    );
+  }
+
   return section(
     'atmosphere',
     'SECCIÓN 04',
     'Atmósfera',
-    'Presión gaseosa, composición, retención de volátiles y efecto invernadero.',
+    conditionalSectionSummary(hostEvolution, 'Presión gaseosa, composición, retención de volátiles y efecto invernadero.'),
     [
+      ...conditionalStatusFields(hostEvolution),
       field(
         'Régimen potencial inicial',
         labelPressureRegime(
@@ -561,8 +685,23 @@ function atmosphereSection(
         ),
       ),
       field(
-        'Densidad de referencia',
-        `${DECIMAL_3.format(atmosphere.retainedReferenceDensityKilogramsPerCubicMeter)} kg/m³`,
+        conditionalEnvironmentApplied(hostEvolution) &&
+          atmosphere.currentDensityKilogramsPerCubicMeter !== undefined &&
+          atmosphere.currentDensityKilogramsPerCubicMeter !== null
+          ? 'Densidad gaseosa actual'
+          : 'Densidad de referencia',
+        `${DECIMAL_3.format(
+          conditionalEnvironmentApplied(hostEvolution) &&
+            atmosphere.currentDensityKilogramsPerCubicMeter !== undefined &&
+            atmosphere.currentDensityKilogramsPerCubicMeter !== null
+            ? atmosphere.currentDensityKilogramsPerCubicMeter
+            : atmosphere.retainedReferenceDensityKilogramsPerCubicMeter,
+        )} kg/m³`,
+        conditionalEnvironmentApplied(hostEvolution) &&
+          atmosphere.currentDensityKilogramsPerCubicMeter !== undefined &&
+          atmosphere.currentDensityKilogramsPerCubicMeter !== null
+          ? 'Calculada con la presión gaseosa, composición y temperatura finales de la reevaluación criogénica.'
+          : null,
       ),
       field(
         'Masa molar media',
@@ -599,19 +738,60 @@ function atmosphereSection(
 function climateSection(
   detail:
     PlanetScientificDetailSource,
+
+  hostEvolution:
+    PlanetScientificHostEvolutionContext | null,
 ): PlanetScientificSectionModel {
 
   const climate =
     detail.climate;
 
+  if (hostEvolution?.requiresPostStellarEvolutionReassessment &&
+      hostEvolution.conditionalEnvironmentReassessmentApplied !== true) {
+    const currentFlux = hostEvolution.currentMeanInsolationEarth === null
+      ? 'No modelada'
+      : formatScientificInsolationEarth(hostEvolution.currentMeanInsolationEarth);
+    return section(
+      'climate', 'SECCIÓN 05', 'Clima',
+      'El clima actual requiere una nueva evolución térmica y atmosférica posterior a la formación del remanente.',
+      [
+        field('Irradiación actual del host', currentFlux,
+          hostEvolution.radiativeRegime === 'QUIESCENT_BLACK_HOLE'
+            ? 'Agujero negro quiescente sin acreción modelada.'
+            : 'La luminosidad actual del remanente no está modelada.'),
+        field('Temperatura de equilibrio actual', 'No resuelta'),
+        field('Temperatura superficial actual', 'No resuelta'),
+        field('Efecto invernadero actual', 'No reevaluado'),
+        field('Estado climático', 'Pendiente de evolución post-remanente'),
+      ],
+    );
+  }
+
   return section(
     'climate',
     'SECCIÓN 05',
     'Clima',
-    'Balance térmico global, efecto invernadero, variabilidad y redistribución de calor.',
+    conditionalSectionSummary(hostEvolution, 'Balance térmico global, efecto invernadero, variabilidad y redistribución de calor.'),
     [
+      ...conditionalStatusFields(hostEvolution),
+      ...(conditionalEnvironmentApplied(hostEvolution)
+        ? [
+            field(
+              'Flujo geotérmico condicionado',
+              `${formatAdaptive(hostEvolution?.conditionalGeothermalHeatFluxWattsPerSquareMeter ?? 0)} W/m²`,
+              'Aporte radiogénico/secular aproximado derivado de la masa, radio y retención interna ya generados.',
+            ),
+            field(
+              'Flujo térmico de marea condicionado',
+              `${formatAdaptive(hostEvolution?.conditionalTidalHeatFluxWattsPerSquareMeter ?? 0)} W/m²`,
+              'Aporte térmico ligado al índice de marea ya existente; no es irradiación estelar.',
+            ),
+          ]
+        : []),
       field(
-        'Temperatura de equilibrio',
+        conditionalEnvironmentApplied(hostEvolution)
+          ? 'Temperatura efectiva de equilibrio'
+          : 'Temperatura de equilibrio',
         formatTemperature(
           climate.equilibriumTemperatureKelvin,
         ),
@@ -667,17 +847,41 @@ function climateSection(
 function geologySection(
   detail:
     PlanetScientificDetailSource,
+
+  hostEvolution:
+    PlanetScientificHostEvolutionContext | null,
 ): PlanetScientificSectionModel {
 
   const geology =
     detail.geology;
 
+  if (hostEvolution?.requiresPostStellarEvolutionReassessment &&
+      hostEvolution.conditionalEnvironmentReassessmentApplied !== true) {
+    return section(
+      'geology', 'SECCIÓN 06', 'Geología',
+      'La actividad interna permanece como caracterización intrínseca; el entorno magnetosférico externo debe reevaluarse para el host compacto actual.',
+      [
+        field('Régimen geológico', labelGeology(geology.geologyRegime)),
+        field('Vulcanismo', labelVolcanism(geology.volcanismRegime),
+          `Índice ${formatNullableNormalizedIndex(geology.volcanismIndex01)}`),
+        field('Tectónica', labelTectonics(geology.tectonicRegime),
+          `Movilidad ${formatNullableNormalizedIndex(geology.tectonicMobilityIndex01)}`),
+        field('Índice de retención de calor interno', formatNullableNormalizedIndex(geology.internalHeatRetentionIndex01)),
+        field('Índice de actividad geológica', formatNullableNormalizedIndex(geology.geologicalActivityIndex01)),
+        field('Campo magnético intrínseco', labelMagneticField(geology.magneticFieldRegime)),
+        field('Magnetosfera actual', 'No resuelta para el host compacto actual',
+          'No se reutiliza la compresión/protección calculada con el viento y la radiación del progenitor.'),
+      ],
+    );
+  }
+
   return section(
     'geology',
     'SECCIÓN 06',
     'Geología',
-    'Actividad interna, vulcanismo, tectónica y protección magnetosférica.',
+    conditionalSectionSummary(hostEvolution, 'Actividad interna, vulcanismo, tectónica y protección magnetosférica.'),
     [
+      ...conditionalStatusFields(hostEvolution),
       field(
         'Régimen geológico',
         labelGeology(
@@ -770,17 +974,35 @@ function geologySection(
 function moonsSection(
   detail:
     PlanetScientificDetailSource,
+
+  hostEvolution:
+    PlanetScientificHostEvolutionContext | null,
 ): PlanetScientificSectionModel {
 
   const moons =
     detail.moons;
 
+  if (hostEvolution?.requiresPostStellarEvolutionReassessment &&
+      hostEvolution.conditionalEnvironmentReassessmentApplied !== true) {
+    return section(
+      'moons', 'SECCIÓN 07', 'Lunas',
+      'Población orbital conservada; su entorno térmico y su habitabilidad deben reevaluarse tras la evolución del host.',
+      [
+        field('Satélites naturales', String(moons.moonCount)),
+        field('Lunas con caracterización individual', String(moons.relevantMoonCount)),
+        field('Lunas menores', String(moons.unmaterializedMinorMoonCount)),
+        field('Habitabilidad post-remanente', 'No reevaluada'),
+      ],
+    );
+  }
+
   return section(
     'moons',
     'SECCIÓN 07',
     'Lunas',
-    'Población de satélites naturales asociados al planeta y caracterización de los cuerpos más relevantes.',
+    conditionalSectionSummary(hostEvolution, 'Población de satélites naturales asociados al planeta y caracterización de los cuerpos más relevantes.'),
     [
+      ...conditionalStatusFields(hostEvolution),
       field(
         'Satélites naturales',
         String(
@@ -819,6 +1041,43 @@ function moonsSection(
       ),
     ],
   );
+}
+
+
+function conditionalEnvironmentApplied(
+  hostEvolution: PlanetScientificHostEvolutionContext | null,
+): boolean {
+  return hostEvolution?.requiresPostStellarEvolutionReassessment === true &&
+    hostEvolution.conditionalEnvironmentReassessmentApplied === true;
+}
+
+function conditionalStatusFields(
+  hostEvolution: PlanetScientificHostEvolutionContext | null,
+): readonly PlanetScientificFieldModel[] {
+  if (!conditionalEnvironmentApplied(hostEvolution)) return Object.freeze([]);
+  const intrinsicHeatFlux =
+    hostEvolution?.conditionalTotalIntrinsicHeatFluxWattsPerSquareMeter ?? 0;
+  const floorNote = hostEvolution?.conditionalEnvironmentUsesMinimumRadiativeFloor === true
+    ? 'El host y el calor intrínseco resuelto son prácticamente nulos; el solver conserva únicamente el suelo numérico de fondo 29.1E-e.2. No representa acreción ni luminosidad del agujero negro.'
+    : intrinsicHeatFlux > 0
+      ? `Recalculado con la irradiación actual del host y ${formatAdaptive(intrinsicHeatFlux)} W/m² de calor intrínseco planetario. Ese calor no se contabiliza como luminosidad estelar ni acreción.`
+      : 'Recalculado con la irradiación actual modelada del host, sin reutilizar la luminosidad del progenitor.';
+  return Object.freeze([
+    field(
+      'Estado científico',
+      'Estado actual condicionado a supervivencia orbital',
+      floorNote,
+    ),
+  ]);
+}
+
+function conditionalSectionSummary(
+  hostEvolution: PlanetScientificHostEvolutionContext | null,
+  ordinarySummary: string,
+): string {
+  return conditionalEnvironmentApplied(hostEvolution)
+    ? `${ordinarySummary} Reevaluación 29.1E-e.2 con cierre térmico/criogénico, condicionada a que el planeta conserve provisionalmente su órbita tras la evolución del host.`
+    : ordinarySummary;
 }
 
 

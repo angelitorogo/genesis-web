@@ -532,6 +532,62 @@
                 </section>
               }
 
+              @if (model.stellarSupernovaScience; as supernovaScience) {
+                <section
+                  class="archive-discovery-detail__physical-section"
+                  data-testid="archive-stellar-system-supernova-science"
+                >
+                  <header>
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">
+                        29.1E · EVOLUCIÓN TRANSITORIA
+                      </small>
+
+                      <h3>Supernovas y linaje estelar</h3>
+                    </div>
+
+                    <p>{{ supernovaScience.summary }}</p>
+                  </header>
+
+                  @if (supernovaScience.entries.length > 0) {
+                    <div class="archive-discovery-detail__stellar-component-grid">
+                      @for (entry of supernovaScience.entries; track entry.componentLabel) {
+                        <article
+                          class="archive-discovery-detail__stellar-component"
+                          [attr.data-component]="entry.componentLabel"
+                          [attr.data-testid]="'archive-supernova-' + entry.componentLabel"
+                        >
+                          <header>
+                            <div>
+                              <small>COMPONENTE {{ entry.componentLabel }}</small>
+                              <h4>{{ entry.stellarDesignation }}</h4>
+                            </div>
+                          </header>
+
+                          <p class="archive-discovery-detail__stellar-classification">
+                            {{ entry.eventTypeLabel }} · {{ entry.temporalLabel }}
+                          </p>
+
+                          <p>{{ entry.consequenceLabel }}</p>
+
+                          <dl class="archive-discovery-detail__physical-facts">
+                            <div><dt>Linaje físico</dt><dd>{{ entry.lineageLabel }}</dd></div>
+                            <div><dt>{{ entry.eventAgeFieldLabel }}</dt><dd>{{ entry.eventAgeLabel }}</dd></div>
+                            <div><dt>Masa eyectada</dt><dd>{{ entry.ejectaMassLabel }}</dd></div>
+                            <div><dt>Remanente</dt><dd>{{ entry.remnantMassLabel }}</dd></div>
+                            <div><dt>Energía de explosión</dt><dd>{{ entry.explosionEnergyLabel }}</dd></div>
+                          </dl>
+                        </article>
+                      }
+                    </div>
+                  } @else {
+                    <p class="archive-discovery-detail__boundary">
+                      No existe un canal de supernova canónico en las componentes actuales.
+                    </p>
+                  }
+                </section>
+              }
+
               @if (systemCard.compactBinaryFacts?.length) {
                 <section class="archive-discovery-detail__physical-section"
                   data-testid="archive-compact-binary-fiche">

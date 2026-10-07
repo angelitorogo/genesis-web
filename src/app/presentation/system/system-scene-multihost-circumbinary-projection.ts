@@ -1,6 +1,10 @@
+import {
+  CircumbinaryStellarEvolutionRegime,
+} from '../../domain/habitability/circumbinary-habitability-assessment';
 import { PlanetType } from '../../domain/planetary/planet-type';
 import { v2PlanetTimeScale } from './system-scene-v2-planet-cadence';
 import { type GeneratedMultipleHost } from '../../simulation/stellar/stellar-multihost-formation';
+import { StellarCompactHostPlanetaryCoherence } from '../../simulation/stellar/stellar-compact-host-planetary-coherence';
 import {
   stellarMultihostPublicMoonDesignation,
   stellarMultihostPublicPlanetDesignation,
@@ -10,6 +14,7 @@ import { adaptiveSystemPlanetRadiusScene, buildLinearFitSystemScale } from './sy
 import { buildSystemScenePlanetSpecialPresentationV1 } from './system-scene-planet-special-presentation';
 import { buildSystemSceneMoonPresentationV1 } from './system-scene-moon-presentation';
 import { limitSystemSceneMoonPresentationToHostV1 } from './system-scene-moon-host-size-limit';
+import { systemSceneClipMultihostPTypeHabitableZone } from './system-scene-multihost-p-type-hz-coherence';
 import { type SystemSceneSnapshot, type SystemSceneOrbitalMotionSnapshot,
   type SystemSceneMotionContributionSnapshot, type SystemSceneBodySnapshot,
   type SystemSceneHabitableZoneSnapshot } from './system-scene-snapshot';
@@ -34,6 +39,7 @@ export function appendSystemSceneMultihostCircumbinary(
   publicSystemDesignation: string,
 ): SystemSceneSnapshot {
   const source = formation.circumbinary;
+  const compactHostCoherence = new StellarCompactHostPlanetaryCoherence(formation);
   if (!source.planets.length && source.habitability === null) return base;
   const motions: SystemSceneOrbitalMotionSnapshot[] = [...base.motions];
   const orbits: SystemSceneSnapshot['orbits'][number][] = [...base.orbits];
@@ -57,9 +63,13 @@ export function appendSystemSceneMultihostCircumbinary(
     const id = `mh-p-planet-${ordinal}`;
     const motionId = `mh-p-motion-${ordinal}`;
     const orbitId = `mh-p-orbit-${ordinal}`;
+    const correctedPeriodDays = compactHostCoherence.correctedPeriodDays(
+      'AB', planet.orbit.semiMajorAxisAu,
+    );
     const motion: SystemSceneOrbitalMotionSnapshot = Object.freeze({
       id: motionId, semiMajorAxisAu: planet.orbit.semiMajorAxisAu,
-      eccentricity: planet.orbit.eccentricity, periodDays: planet.orbitalPeriod.periodDays,
+      eccentricity: planet.orbit.eccentricity,
+      periodDays: correctedPeriodDays ?? planet.orbitalPeriod.periodDays,
       rotationDegrees: planet.orbit.argumentOfPeriapsisDegrees,
       inclinationDegrees: planet.orbit.inclinationDegrees,
       longitudeAscendingNodeDegrees: planet.orbit.longitudeOfAscendingNodeDegrees,
@@ -196,10 +206,17 @@ export function appendSystemSceneMultihostCircumbinary(
   ];
   const assessment = source.habitability;
   const compatibility = source.compatibility;
-  if (assessment?.isRadiativeReferenceApplicable && assessment.hasStableHabitableZone &&
+  if (assessment?.isRadiativeReferenceApplicable &&
       compatibility !== null && compatibility.hostMultiplicity === formation.multiplicity) {
-    const inner = assessment.stableHabitableInnerEdgeAu;
-    const outer = assessment.stableHabitableOuterEdgeAu;
+    const clipped = systemSceneClipMultihostPTypeHabitableZone(
+      assessment,
+      source.stableInnerAu,
+      source.stableOuterAu,
+    );
+    const inner = clipped.dynamicallyHabitableInnerEdgeAu;
+    const outer = clipped.dynamicallyHabitableOuterEdgeAu;
+    const stabilityInner = source.stableInnerAu ?? compatibility.minimumStableSemiMajorAxisAu;
+    const stabilityOuter = source.stableOuterAu ?? compatibility.maximumStableSemiMajorAxisAu;
     zones.push(Object.freeze({
       topology: 'CIRCUMBINARY', radiativeReferenceApplicable: true,
       radiativeReferenceRegime: assessment.radiativeReferenceRegime,
@@ -212,16 +229,19 @@ export function appendSystemSceneMultihostCircumbinary(
       dynamicallyHabitableInnerRadiusScene: inner === null ? null : inner * scenePerAu,
       dynamicallyHabitableOuterRadiusScene: outer === null ? null : outer * scenePerAu,
       presentationAdjusted: false,
-      dynamicalOverlapFraction01: assessment.stableHabitableZoneFraction,
-      circumbinaryStabilityInnerEdgeAu: compatibility.minimumStableSemiMajorAxisAu,
-      circumbinaryStabilityOuterEdgeAu: compatibility.maximumStableSemiMajorAxisAu,
-      circumbinaryStabilityInnerRadiusScene: compatibility.minimumStableSemiMajorAxisAu * scenePerAu,
-      circumbinaryStabilityOuterRadiusScene: compatibility.maximumStableSemiMajorAxisAu === null
-        ? null : compatibility.maximumStableSemiMajorAxisAu * scenePerAu,
+      dynamicalOverlapFraction01: clipped.dynamicalOverlapFraction01,
+      circumbinaryStabilityInnerEdgeAu: stabilityInner,
+      circumbinaryStabilityOuterEdgeAu: stabilityOuter,
+      circumbinaryStabilityInnerRadiusScene: stabilityInner * scenePerAu,
+      circumbinaryStabilityOuterRadiusScene: stabilityOuter === null
+        ? null : stabilityOuter * scenePerAu,
       anchorMotionContributions: abParent,
     }));
-    visualOuterRadius = Math.max(visualOuterRadius,
-      assessment.radiativeHabitableOuterEdgeAu * scenePerAu + 0.5);
+    visualOuterRadius = systemSceneCircumbinaryFramingOuterRadius(
+      visualOuterRadius,
+      assessment.radiativeHabitableOuterEdgeAu * scenePerAu + 0.5,
+      assessment.stellarEvolutionRegime,
+    );
   }
   const scale = visualOuterRadius > base.scale.targetOuterRadiusScene
     ? buildLinearFitSystemScale(Math.max(base.scale.outerRadiusAu, visualOuterRadius / scenePerAu),
@@ -234,3 +254,33 @@ export function appendSystemSceneMultihostCircumbinary(
     accessibleLabel: `${base.accessibleLabel} ${source.planets.length} planetas circumbinarios generados alrededor de A–B.`,
   });
 }
+
+/**
+ * 29.1E-f.1: scientific overlays are not camera-framing authority.
+ *
+ * A valid radiative HZ can legitimately sit hundreds of AU away from a compact
+ * physical architecture (Jiovara is the canonical regression: an O3 component
+ * yields a ~500-900 AU reference HZ while the A-B/planetary architecture spans
+ * only a few/tens of AU). Keeping that geometry is scientifically useful, but
+ * using it for HOME makes the actual system microscopic on entry.
+ *
+ * Therefore every circumbinary HZ remains in the immutable snapshot and may be
+ * rendered/inspected, regardless of evolution regime, while HOME framing is
+ * determined exclusively by bodies and physical orbit guides already composed
+ * into currentVisualOuterRadius.
+ */
+export function systemSceneCircumbinaryFramingOuterRadius(
+  currentVisualOuterRadius: number,
+  candidateHabitableOuterRadius: number,
+  _stellarEvolutionRegime: CircumbinaryStellarEvolutionRegime,
+): number {
+  if (!Number.isFinite(currentVisualOuterRadius) || currentVisualOuterRadius <= 0) {
+    throw new RangeError('currentVisualOuterRadius must be finite and greater than 0.');
+  }
+  if (!Number.isFinite(candidateHabitableOuterRadius) || candidateHabitableOuterRadius <= 0) {
+    throw new RangeError('candidateHabitableOuterRadius must be finite and greater than 0.');
+  }
+
+  return currentVisualOuterRadius;
+}
+

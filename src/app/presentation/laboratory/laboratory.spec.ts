@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the five laboratories already implemented',
+      'should expose exactly the six laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          5,
+          6,
         );
       },
     );
 
     it(
-      'should link only to the five canonical permanent laboratory routes',
+      'should link only to the six canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -168,6 +168,19 @@ describe(
             ),
         ).toBe(
           '/laboratory/planetary-formation',
+        );
+
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-post-supernova-audit-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toBe(
+          '/laboratory/stellar-systems/post-supernova-audit',
         );
       },
     );

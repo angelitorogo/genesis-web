@@ -113,19 +113,6 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
-  it('should expose the point-26.1c.1 generic knowledge catalogue route before the Galaxy detail route', () => {
-    const knowledgeCatalog = genesisRoutes.findIndex(route =>
-      route.path === 'galaxies/:galaxyIndex/knowledge/:category');
-    const galaxyDetail = genesisRoutes.findIndex(route =>
-      route.path === 'galaxies/:galaxyIndex');
-
-    expect(knowledgeCatalog).toBeGreaterThanOrEqual(0);
-    expect(knowledgeCatalog).toBeLessThan(galaxyDetail);
-    expect(genesisRoutes[knowledgeCatalog]?.title).toBe(
-      'Explorador de conocimiento galáctico | GENESIS',
-    );
-  });
-
   it('should expose the point-26.1c water-world index route before the generic Galaxy detail route', () => {
     const waterIndex = genesisRoutes.findIndex(route =>
       route.path === 'galaxies/:galaxyIndex/water-worlds');
@@ -342,6 +329,19 @@ describe('GENESIS routes', () => {
       ),
     ).toBeTruthy();
   }, 30_000);
+
+  it('should navigate to the deterministic 29.1E-g.1 post-supernova audit laboratory', async () => {
+    const harness =
+      await RouterTestingHarness.create(
+        '/laboratory/stellar-systems/post-supernova-audit',
+      );
+
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="post-supernova-audit-page"]',
+      ),
+    ).toBeTruthy();
+  }, 120_000);
 
   it('should navigate to the phase-17 protoplanetary-formation laboratory', async () => {
     const harness =

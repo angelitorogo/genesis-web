@@ -15,7 +15,9 @@ describe('27.10 — accessible compact diagram', () => {
     expect(root.querySelector('[data-testid="compact-science-shadow"]')).toBeTruthy();
     expect(root.querySelector('[data-testid="compact-science-disk"]')).toBeNull();
     expect(root.querySelector('[data-testid="compact-science-jets"]')).toBeNull();
-    expect(root.querySelector('svg')?.getAttribute('aria-label')).toContain('no imagen observada');
+    expect(root.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(root.querySelector('figcaption')?.textContent).toContain('Agujero negro · sombra esquemática');
+    expect((root.textContent?.match(/Agujero negro · sombra esquemática/g) ?? [])).toHaveLength(1);
   });
 
   it('draws the disk only for a supported accreting hole', () => {

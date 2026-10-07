@@ -16,6 +16,8 @@ import {
   GENESIS_LOCAL_REPOSITORIES,
   type GenesisLocalRepositories,
 } from '../runtime/genesis-local-repositories';
+import { StellarSupernovaScientificIntegration } from '../runtime/stellar-supernova-scientific-integration';
+import { StellarSupernovaScientificPresentationAssembler } from '../runtime/stellar-supernova-scientific-presentation';
 import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-systems-catalog.data-source';
 
 const generationKey = new UniverseGenerationKey(
@@ -70,9 +72,11 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
       'state',
       'multiplicity',
       'components',
+      'supernova',
       'sector',
     ]);
     expect(descriptor.sortOptions.map(option => option.key)).toContain('components');
+    expect(descriptor.sortOptions.map(option => option.key)).toContain('supernova');
     expect(() => source.describe('QUADRUPLE')).toThrowError(RangeError);
   });
 
@@ -300,6 +304,176 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
 
     expect(designationSpy).toHaveBeenCalledTimes(4);
     expect(multiplicitySpy).toHaveBeenCalledTimes(4);
+  });
+
+
+  it('materializes 29.1E supernova science only for the visible catalogue page', async () => {
+    const discoveries = Object.freeze(
+      Array.from(
+        { length: 26 },
+        (_, index) =>
+          new KnownDiscovery(
+            generationKey,
+            new SystemLocator(0n, 0n, BigInt(index)),
+            DiscoveryState.CATALOGUED,
+          ),
+      ),
+    );
+    const synchronize = vi
+      .spyOn(StellarSupernovaScientificIntegration, 'synchronize')
+      .mockResolvedValue(Object.freeze({
+        lineages: Object.freeze([]),
+        events: Object.freeze([]),
+        consequences: Object.freeze([]),
+      }));
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        {
+          provide: GENESIS_LOCAL_REPOSITORIES,
+          useValue: {
+            discoveryRepository: {
+              async getKnownDiscoveriesInGalaxy() { return discoveries; },
+            },
+            supernovaCanonicalEventRepository: {},
+          } as unknown as GenesisLocalRepositories,
+        },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const firstPage = await source.query({
+      generationKey,
+      galaxyIndex: 0n,
+      galaxyState: DiscoveryState.CONFIRMED,
+      query: {
+        category: 'systems',
+        subtype: null,
+        page: 1,
+        pageSize: 25,
+        sortKey: 'locator',
+        direction: 'asc',
+      },
+    });
+
+    expect(firstPage.kind).toBe('page');
+    if (firstPage.kind !== 'page') throw new Error('Expected systems page.');
+    expect(firstPage.page.items).toHaveLength(25);
+    expect(firstPage.page.items[0]?.cells['supernova']).toBe('Sin canal SN');
+    expect(synchronize).toHaveBeenCalledTimes(25);
+
+    await source.query({
+      generationKey,
+      galaxyIndex: 0n,
+      galaxyState: DiscoveryState.CONFIRMED,
+      query: {
+        category: 'systems',
+        subtype: null,
+        page: 1,
+        pageSize: 25,
+        sortKey: 'locator',
+        direction: 'asc',
+      },
+    });
+    expect(synchronize).toHaveBeenCalledTimes(25);
+
+    const secondPage = await source.query({
+      generationKey,
+      galaxyIndex: 0n,
+      galaxyState: DiscoveryState.CONFIRMED,
+      query: {
+        category: 'systems',
+        subtype: null,
+        page: 2,
+        pageSize: 25,
+        sortKey: 'locator',
+        direction: 'asc',
+      },
+    });
+
+    expect(secondPage.kind).toBe('page');
+    if (secondPage.kind !== 'page') throw new Error('Expected systems page.');
+    expect(secondPage.page.items).toHaveLength(1);
+    expect(synchronize).toHaveBeenCalledTimes(26);
+
+    synchronize.mockRestore();
+  });
+
+  it('sorts by 29.1E supernova/lineage only when that sort is explicitly selected', async () => {
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 10n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 11n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 12n), DiscoveryState.CATALOGUED),
+    ]);
+
+    const synchronize = vi
+      .spyOn(StellarSupernovaScientificIntegration, 'synchronize')
+      .mockImplementation(async (_repository, _generationKey, locator) =>
+        Object.freeze({
+          marker: Number(locator.galacticObjectIndex),
+          lineages: Object.freeze([]),
+          events: Object.freeze([]),
+          consequences: Object.freeze([]),
+        }) as never,
+      );
+    const presentation = vi
+      .spyOn(StellarSupernovaScientificPresentationAssembler, 'build')
+      .mockImplementation((snapshot) => {
+        const marker = (snapshot as unknown as { readonly marker: number }).marker;
+        const labels: Readonly<Record<number, string>> = Object.freeze({
+          10: 'Sin canal SN',
+          11: 'Ic · futura',
+          12: 'Ia · retardo binario',
+        });
+        return Object.freeze({
+          summary: '',
+          catalogLabel: labels[marker] ?? 'Sin canal SN',
+          canonicalEventCount: 0,
+          directCollapseCount: 0,
+          entries: Object.freeze([]),
+        });
+      });
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        {
+          provide: GENESIS_LOCAL_REPOSITORIES,
+          useValue: {
+            discoveryRepository: {
+              async getKnownDiscoveriesInGalaxy() { return discoveries; },
+            },
+            supernovaCanonicalEventRepository: {},
+          } as unknown as GenesisLocalRepositories,
+        },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const result = await source.query({
+      generationKey,
+      galaxyIndex: 0n,
+      galaxyState: DiscoveryState.CONFIRMED,
+      query: {
+        category: 'systems',
+        subtype: null,
+        page: 1,
+        pageSize: 25,
+        sortKey: 'supernova',
+        direction: 'asc',
+      },
+    });
+
+    expect(result.kind).toBe('page');
+    if (result.kind !== 'page') throw new Error('Expected systems page.');
+    expect(result.page.items.map(row => row.cells['supernova'])).toEqual([
+      'Ia · retardo binario',
+      'Ic · futura',
+      'Sin canal SN',
+    ]);
+    expect(synchronize).toHaveBeenCalledTimes(3);
+    expect(presentation).toHaveBeenCalledTimes(3);
   });
 
 });

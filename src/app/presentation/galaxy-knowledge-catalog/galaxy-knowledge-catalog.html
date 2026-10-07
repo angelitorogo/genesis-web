@@ -159,9 +159,6 @@
                       <tr data-testid="gkc-row">
                         <td>
                           <strong>{{ row.title }}</strong>
-                          @if (row.subtitle) {
-                            <small>{{ row.subtitle }}</small>
-                          }
                         </td>
                         @for (column of model.descriptor.columns; track column.key) {
                           <td

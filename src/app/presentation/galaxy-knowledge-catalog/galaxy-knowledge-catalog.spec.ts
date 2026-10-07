@@ -90,7 +90,8 @@ describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     expect(root.querySelector('[data-testid="galaxy-knowledge-catalog-page"]')).toBeTruthy();
-    expect(root.querySelector('[data-testid="gkc-row"]')?.textContent).toContain('Magnetar');
+    expect(root.querySelector('[data-testid="gkc-row"]')?.textContent).toContain('G0 / S12 / O7');
+    expect(root.querySelector('[data-testid="gkc-row"]')?.textContent).not.toContain('Magnetar');
     expect(root.querySelector('[data-testid="gkc-page-meta"]')?.textContent).toContain('63');
     expect(root.querySelector('[data-testid="gkc-prev-page"]')).toBeTruthy();
     expect(root.querySelector('[data-testid="gkc-next-page"]')).toBeTruthy();

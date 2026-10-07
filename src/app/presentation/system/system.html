@@ -248,7 +248,17 @@
                           <dl class="system-page__star-meta">
                             <div>
                               <dt>Tipo espectral</dt>
-                              <dd>{{ component.spectralType ?? 'Pendiente de catalogación' }}</dd>
+                              <dd>
+                                @if (
+                                  component.evolutionStateLabel === 'Enana blanca' ||
+                                  component.evolutionStateLabel === 'Estrella de neutrones' ||
+                                  component.evolutionStateLabel === 'Agujero negro estelar'
+                                ) {
+                                  No aplicable a remanente compacto
+                                } @else {
+                                  {{ component.spectralType ?? 'Pendiente de catalogación' }}
+                                }
+                              </dd>
                             </div>
                             <div>
                               <dt>Estado evolutivo</dt>
@@ -283,6 +293,55 @@
                     </div>
                   }
                 </article>
+
+                @if (model.stellarSupernovaScience; as supernovaScience) {
+                  <article
+                    class="system-page__science-card system-page__science-card--wide"
+                    data-testid="system-page-supernova-science"
+                  >
+                    <header class="system-page__section-header">
+                      <div>
+                        <small>29.1E · EVOLUCIÓN TRANSITORIA</small>
+                        <h2>Supernovas y linaje estelar</h2>
+                      </div>
+                      <span>{{ supernovaScience.summary }}</span>
+                    </header>
+
+                    @if (supernovaScience.entries.length > 0) {
+                      <div class="system-page__star-grid">
+                        @for (entry of supernovaScience.entries; track entry.componentLabel) {
+                          <section
+                            class="system-page__star-card"
+                            [attr.data-component]="entry.componentLabel"
+                            [attr.data-testid]="'system-page-supernova-' + entry.componentLabel"
+                          >
+                            <header>
+                              <div>
+                                <small>COMPONENTE {{ entry.componentLabel }}</small>
+                                <h3>{{ entry.stellarDesignation }}</h3>
+                              </div>
+                            </header>
+
+                            <p>{{ entry.eventTypeLabel }} · {{ entry.temporalLabel }}</p>
+                            <p><strong>{{ entry.consequenceLabel }}</strong></p>
+
+                            <dl class="system-page__fact-grid system-page__fact-grid--star">
+                              <div><dt>Linaje físico</dt><dd>{{ entry.lineageLabel }}</dd></div>
+                              <div><dt>{{ entry.eventAgeFieldLabel }}</dt><dd>{{ entry.eventAgeLabel }}</dd></div>
+                              <div><dt>Masa eyectada</dt><dd>{{ entry.ejectaMassLabel }}</dd></div>
+                              <div><dt>Remanente</dt><dd>{{ entry.remnantMassLabel }}</dd></div>
+                              <div><dt>Energía de explosión</dt><dd>{{ entry.explosionEnergyLabel }}</dd></div>
+                            </dl>
+                          </section>
+                        }
+                      </div>
+                    } @else {
+                      <p class="system-page__empty-note">
+                        No existe un canal de supernova canónico en las componentes actuales.
+                      </p>
+                    }
+                  </article>
+                }
 
                 <article
                   class="system-page__science-card"

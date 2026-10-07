@@ -6,12 +6,16 @@ import {
   type PlanetScientificResolvedTarget,
 } from '../planetary/planet-scientific-target-resolver';
 import {
+  PostRemnantConditionalEnvironmentReassessmentEngine,
+} from '../planetary/post-remnant-conditional-environment-reassessment';
+import {
   MoonScientificTargetResolver,
   type MoonScientificResolvedTarget,
 } from '../planetary/moon-scientific-target-resolver';
 import { StellarDesignationGenerator } from './stellar-designation-generator';
 import { multihostPhysicalSourceKey } from './stellar-multihost-physical-source-key';
 import { type GeneratedMultipleHost, type GeneratedPublicPlanet } from './stellar-multihost-formation';
+import { StellarCompactHostPlanetaryCoherence } from './stellar-compact-host-planetary-coherence';
 import { StellarMultihostPublicTargetIndex } from './stellar-multihost-public-target-index';
 import {
   stellarMultihostPublicMoonDesignation,
@@ -30,6 +34,7 @@ import {
 export class StellarMultihostScientificTargetResolver {
   private readonly index: StellarMultihostPublicTargetIndex;
   private readonly parentDesignation: string;
+  private readonly hostCoherence: StellarCompactHostPlanetaryCoherence;
 
   /** Adapter for MoonScientificCardAssembler's pre-existing injection seam. */
   readonly moonCardResolver: Readonly<{
@@ -39,6 +44,7 @@ export class StellarMultihostScientificTargetResolver {
 
   constructor(private readonly source: GeneratedMultipleHost) {
     this.index = StellarMultihostPublicTargetIndex.build(source);
+    this.hostCoherence = new StellarCompactHostPlanetaryCoherence(source);
     this.parentDesignation = StellarDesignationGenerator.generate(
       multihostPhysicalSourceKey(source.parentGenerationKey), source.parentLocator,
     ).name;
@@ -62,7 +68,8 @@ export class StellarMultihostScientificTargetResolver {
     const projected = PlanetScientificTargetResolver.projectGenerated(
       this.identity(entry), entry.planet, entry.atmosphere, entry.moonSystem,
     );
-    return this.withPublicMoonDesignations(projected, entry);
+    const withHost = this.withCurrentHostEvolution(projected, entry);
+    return this.withPublicMoonDesignations(withHost, entry);
   }
 
   /** Matches the existing moon card's optional host-planet resolver contract. */
@@ -98,6 +105,105 @@ export class StellarMultihostScientificTargetResolver {
 
   private matchesKey(key: UniverseGenerationKey): boolean {
     return key.equals(this.source.parentGenerationKey);
+  }
+
+  private withCurrentHostEvolution(
+    target: PlanetScientificResolvedTarget,
+    entry: GeneratedPublicPlanet,
+  ): PlanetScientificResolvedTarget {
+    const state = this.hostCoherence.stateFor(entry.host);
+    if (!state.requiresPostStellarEvolutionReassessment) return target;
+
+    const dynamics = this.hostCoherence.planetaryDynamics(entry);
+    const hasResolvedCurrentOrbit =
+      dynamics.disposition === 'BOUND_RECONFIGURED' &&
+      dynamics.semiMajorAxisAu !== null &&
+      dynamics.eccentricity !== null;
+    const periodYears = dynamics.disposition === 'EJECTED' || dynamics.disposition === 'HOST_DISRUPTED'
+      ? null
+      : hasResolvedCurrentOrbit
+        ? dynamics.periodYears
+        : this.hostCoherence.correctedPeriodYears(
+            entry.host, entry.planet.orbit.semiMajorAxisAu,
+          );
+    const periodDays = periodYears === null ? null : periodYears * 365.25;
+    const insolation = dynamics.disposition === 'EJECTED'
+      ? 0
+      : dynamics.disposition === 'HOST_DISRUPTED'
+        ? null
+        : this.hostCoherence.currentMeanInsolationEarth(
+            entry.host,
+            hasResolvedCurrentOrbit ? dynamics.semiMajorAxisAu! : entry.planet.orbit.semiMajorAxisAu,
+            hasResolvedCurrentOrbit ? dynamics.eccentricity! : entry.planet.orbit.eccentricity,
+          );
+
+    const reassessment = insolation === null
+      ? null
+      : PostRemnantConditionalEnvironmentReassessmentEngine.generate(
+          entry.planet,
+          entry.moonSystem,
+          insolation,
+          entry.atmosphere,
+        );
+    const environmentallyReassessed = reassessment === null
+      ? target
+      : PlanetScientificTargetResolver.applyConditionalEnvironmentReassessment(
+          target,
+          reassessment,
+        );
+
+    return Object.freeze({
+      ...environmentallyReassessed,
+      detail: Object.freeze({
+        ...environmentallyReassessed.detail,
+        orbit: Object.freeze({
+          ...environmentallyReassessed.detail.orbit,
+          ...(hasResolvedCurrentOrbit ? {
+            semiMajorAxisAu: dynamics.semiMajorAxisAu!,
+            eccentricity: dynamics.eccentricity!,
+            periastronAu: dynamics.periastronAu!,
+            apoastronAu: dynamics.apoastronAu!,
+          } : {}),
+          ...(periodDays === null ? {} : { periodDays, periodYears: periodYears! }),
+          ...(insolation === null ? {} : { referenceMeanInsolationEarth: insolation }),
+        }),
+      }),
+      hostEvolution: Object.freeze({
+        hostLabel: entry.host,
+        evolutionStateNames: state.componentEvolutionStates,
+        containsCompactRemnant: state.containsCompactRemnant,
+        requiresPostStellarEvolutionReassessment: state.requiresPostStellarEvolutionReassessment,
+        currentHostMassSolar: state.currentGravitatingMassSolar,
+        currentHostLuminositySolar: state.currentLuminositySolar,
+        currentOrbitalPeriodDays: periodDays,
+        currentOrbitalPeriodYears: periodYears,
+        currentMeanInsolationEarth: insolation,
+        radiativeRegime: state.radiativeRegime,
+        conditionalEnvironmentReassessmentApplied: reassessment !== null,
+        conditionalEnvironmentEffectiveInsolationEarth:
+          reassessment?.effectiveRadiativeForcingEarth ?? null,
+        conditionalEnvironmentUsesMinimumRadiativeFloor:
+          reassessment?.usesMinimumRadiativeFloor ?? false,
+        conditionalGeothermalHeatFluxWattsPerSquareMeter:
+          reassessment?.intrinsicThermalState.geothermalHeatFluxWattsPerSquareMeter ?? null,
+        conditionalTidalHeatFluxWattsPerSquareMeter:
+          reassessment?.intrinsicThermalState.tidalHeatFluxWattsPerSquareMeter ?? null,
+        conditionalTotalIntrinsicHeatFluxWattsPerSquareMeter:
+          reassessment?.intrinsicThermalState.totalIntrinsicHeatFluxWattsPerSquareMeter ?? null,
+        conditionalIntrinsicEquivalentInsolationEarth:
+          reassessment?.intrinsicThermalState.intrinsicEquivalentInsolationEarth ?? null,
+        postSupernovaOrbitDisposition: dynamics.disposition,
+        postSupernovaSourceEventKeys: dynamics.sourceEventKeys,
+        postSupernovaSemiMajorAxisAu: dynamics.semiMajorAxisAu,
+        postSupernovaEccentricity: dynamics.eccentricity,
+        postSupernovaPeriastronAu: dynamics.periastronAu,
+        postSupernovaApoastronAu: dynamics.apoastronAu,
+        postSupernovaInclinationChangeDegrees: dynamics.inclinationChangeDegrees,
+        postSupernovaMassLossRegime: dynamics.massLossRegime,
+        postSupernovaMaximumEffectiveKickKmS: dynamics.maximumEffectiveKickKmS,
+        postSupernovaMoonStates: dynamics.moonStates,
+      }),
+    });
   }
 
   private withPublicMoonDesignations(

@@ -120,6 +120,15 @@ import { StellarMagnetarEngine } from '../../simulation/stellar/stellar-magnetar
 import { CompactBinaryEngine } from '../../simulation/stellar/compact-binary-engine';
 import { type Star } from '../../domain/stellar/star';
 import {
+  type SupernovaStellarConsequence,
+} from '../../domain/transient/supernova-stellar-consequence';
+import {
+  StellarSupernovaCanonicalEventResolver,
+} from '../../simulation/transient/stellar-supernova-canonical-event-resolver';
+import {
+  StellarSupernovaConsequenceResolver,
+} from '../../simulation/transient/stellar-supernova-consequence-resolver';
+import {
   compactObjectScientificVisual,
   type CompactObjectScientificVisual,
 } from './compact-object-scientific-visual';
@@ -275,6 +284,9 @@ const NEUTRAL_STELLAR_COLOR =
 
 const UNRESOLVED_STELLAR_COLOR =
   '#68808D';
+
+const REMNANT_NEUTRAL_STELLAR_COLOR =
+  '#9DB9C8';
 
 /**
  * Point 16.7 presentation-only system card assembler.
@@ -682,6 +694,21 @@ function physicalCard(
   } =
     materialized;
 
+  // 29.1E-c.1: component fiches consume the SAME 29.1D consequence
+  // used by the transient section. This prevents a second remnant-mass model.
+  const consequences =
+    StellarSupernovaConsequenceResolver.resolveEvents(
+      StellarSupernovaCanonicalEventResolver.resolveSystem(
+        system,
+        primaryPhysicalProperties,
+        primaryLifetimeProfile,
+      ),
+    );
+  const consequenceByComponent =
+    new Map<number, SupernovaStellarConsequence>(
+      consequences.map(current => [current.componentLabel.code, current] as const),
+    );
+
   const components:
     ArchiveStellarSystemComponentCardModel[] =
     [
@@ -690,6 +717,7 @@ function physicalCard(
         primaryPhysicalProperties,
         primarySpectralAppearance,
         primaryLifetimeProfile,
+        consequenceByComponent.get(StellarSystemComponentLabel.A.code) ?? null,
       ),
     ];
 
@@ -700,6 +728,7 @@ function physicalCard(
     components.push(
       companionCard(
         system.secondaryCompanion,
+        consequenceByComponent.get(system.secondaryCompanion.componentLabel.code) ?? null,
       ),
     );
   }
@@ -711,6 +740,7 @@ function physicalCard(
     components.push(
       companionCard(
         system.tertiaryCompanion,
+        consequenceByComponent.get(system.tertiaryCompanion.componentLabel.code) ?? null,
       ),
     );
   }
@@ -923,11 +953,26 @@ function primaryComponentCard(
 
   lifetime:
     StellarLifetimeProfile,
+
+  consequence:
+    SupernovaStellarConsequence | null,
 ): ArchiveStellarSystemComponentCardModel {
 
   const designation =
     system.primaryComponentDesignation;
-  const compact = compactPrimaryDetails(system.primaryStar, physical, lifetime);
+  const state =
+    system.primaryStar.evolutionState;
+  const isRemnant =
+    isCompactRemnantStateName(
+      state.name,
+    );
+  const compact =
+    compactPrimaryDetails(
+      system.primaryStar,
+      physical,
+      lifetime,
+      consequence,
+    );
 
   return Object.freeze({
     componentLabel:
@@ -936,26 +981,53 @@ function primaryComponentCard(
       designation.name,
     proceduralCode:
       designation.proceduralCode,
+    // Point 29.1E-c: the point-15.2 O/B/A/F/G/K/M appearance is a
+    // progenitor/reference spectrum. It must never be presented as the current
+    // spectral class of a compact remnant.
     spectralType:
-      spectral.spectralType.designation,
+      isRemnant
+        ? null
+        : spectral.spectralType.designation,
     evolutionStateLabel:
       evolutionStateLabel(
-        system.primaryStar.evolutionState,
+        state,
       ),
     colorHex:
-      spectral.color.hex,
-    facts: Object.freeze([
-      ...stellarPhysicalFacts(physical, lifetime),
-      ...compact.facts,
-    ]),
-    compactVisual: compact.visual,
+      isRemnant
+        ? REMNANT_NEUTRAL_STELLAR_COLOR
+        : spectral.color.hex,
+    facts:
+      isRemnant
+        ? Object.freeze([
+            ...remnantProgenitorFacts(
+              physical,
+              lifetime,
+            ),
+            ...compact.facts,
+          ])
+        : stellarPhysicalFacts(
+            physical,
+            lifetime,
+          ),
+    compactVisual:
+      compact.visual,
   });
 }
 
 function companionCard(
   companion:
     StellarCompanion,
+
+  consequence:
+    SupernovaStellarConsequence | null,
 ): ArchiveStellarSystemComponentCardModel {
+
+  const state =
+    companion.currentEvolutionState;
+  const isRemnant =
+    isCompactRemnantStateName(
+      state.name,
+    );
 
   return Object.freeze({
     componentLabel:
@@ -965,31 +1037,68 @@ function companionCard(
     proceduralCode:
       companion.designation.proceduralCode,
     spectralType:
-      companion
-        .spectralAppearance
-        .spectralType
-        .designation,
+      isRemnant
+        ? null
+        : companion
+            .spectralAppearance
+            .spectralType
+            .designation,
     evolutionStateLabel:
       evolutionStateLabel(
-        companion.currentEvolutionState,
+        state,
       ),
     colorHex:
-      companion
-        .spectralAppearance
-        .color
-        .hex,
-    facts: stellarPhysicalFacts(companion.physicalProperties, companion.lifetimeProfile),
-    // A companion has no canonical Star entity in the phase-16 model. Do NOT
-    // fabricate an A-style 27.1/27.4 physical profile for a B/C remnant.
-    compactVisual: compactVisualForState(companion.currentEvolutionState.name),
+      isRemnant
+        ? REMNANT_NEUTRAL_STELLAR_COLOR
+        : companion
+            .spectralAppearance
+            .color
+            .hex,
+    facts:
+      isRemnant
+        ? companionRemnantFacts(
+            companion.physicalProperties,
+            companion.lifetimeProfile,
+            consequence,
+          )
+        : stellarPhysicalFacts(
+            companion.physicalProperties,
+            companion.lifetimeProfile,
+          ),
+    // A legacy V1 companion has no canonical Star entity in the phase-16
+    // model. 29.1E-c therefore removes false photospheric quantities but does
+    // not fabricate an A-style 27.1/27.4 remnant mass/radius for B/C.
+    compactVisual:
+      compactVisualForState(
+        state.name,
+      ),
   });
 }
 
-function compactVisualForState(state: string): CompactObjectScientificVisual | null {
+function compactVisualForState(
+  state:
+    string,
+): CompactObjectScientificVisual | null {
   // No disk or jet without an explicit 27.7 accretion supply. Pulsar and
   // magnetar specialties require their OWN observational evidence (phase 28).
-  if (state === 'STELLAR_BLACK_HOLE') return compactObjectScientificVisual('BLACK_HOLE');
-  if (state === 'NEUTRON_STAR') return compactObjectScientificVisual('NEUTRON_STAR');
+  if (
+    state ===
+    'STELLAR_BLACK_HOLE'
+  ) {
+    return compactObjectScientificVisual(
+      'BLACK_HOLE',
+    );
+  }
+
+  if (
+    state ===
+    'NEUTRON_STAR'
+  ) {
+    return compactObjectScientificVisual(
+      'NEUTRON_STAR',
+    );
+  }
+
   return null;
 }
 
@@ -999,62 +1108,479 @@ function compactVisualForState(state: string): CompactObjectScientificVisual | n
  * CATALOGUED gate and must explicitly label them as model candidates.
  */
 function compactPrimaryDetails(
-  star: Star,
-  physical: StellarPhysicalProperties,
-  lifetime: StellarLifetimeProfile,
-): { readonly facts: readonly ArchiveStellarSystemFactModel[];
-     readonly visual: CompactObjectScientificVisual | null } {
-  if (star.evolutionState.name === 'STELLAR_BLACK_HOLE') {
-    const blackHole = StellarBlackHoleEngine.fromExistingStar(star, physical, lifetime);
+  star:
+    Star,
+
+  physical:
+    StellarPhysicalProperties,
+
+  lifetime:
+    StellarLifetimeProfile,
+
+  consequence:
+    SupernovaStellarConsequence | null,
+): {
+  readonly facts:
+    readonly ArchiveStellarSystemFactModel[];
+
+  readonly visual:
+    CompactObjectScientificVisual | null;
+} {
+  if (
+    star.evolutionState.name ===
+    'WHITE_DWARF'
+  ) {
     return {
-      facts: blackHole === null ? Object.freeze([]) : Object.freeze([
-        fact('Remanente compacto', 'Agujero negro estelar'),
-        fact('Masa del remanente (estimada)', `${formatNumber(blackHole.massSolar)} M☉`),
-        fact('Radio de Schwarzschild (referencia)', `${formatNumber(blackHole.schwarzschildRadiusKm)} km`),
-        fact('Canal de formación', blackHole.formationChannel.name),
-        fact('Edad del remanente (estimada)', formatStellarAge(blackHole.ageSinceFormationBillionYears)),
-      ]),
-      visual: blackHole === null ? null : compactObjectScientificVisual('BLACK_HOLE'),
+      facts:
+        Object.freeze([
+          fact(
+            'Remanente compacto',
+            'Enana blanca',
+          ),
+          fact(
+            'Masa actual del remanente',
+            'No modelada por el Ground Truth estelar actual',
+          ),
+          fact(
+            'Composición interna',
+            whiteDwarfCompositionLabel(
+              lifetime
+                .evolutionAssessment
+                .whiteDwarfComposition
+                ?.name ??
+              null,
+            ),
+          ),
+          ...remnantAgeFacts(
+            lifetime,
+          ),
+        ]),
+      visual:
+        null,
     };
   }
-  if (star.evolutionState.name === 'NEUTRON_STAR') {
-    const neutron = StellarNeutronStarEngine.fromExistingStar(star, physical, lifetime);
-    if (neutron === null) return { facts: Object.freeze([]), visual: null };
-    const magnetar = StellarMagnetarEngine.fromExistingNeutronStar(neutron);
-    const pulsar = magnetar === null
-      ? StellarPulsarEngine.fromExistingNeutronStar(neutron)
-      : null;
-    const subtypeFacts: readonly ArchiveStellarSystemFactModel[] = magnetar !== null
-      ? [
-          fact('Subtipo intrínseco (modelo, NO observado)', 'Magnetar candidato'),
-          fact('Campo magnético dipolar (modelo)', `${formatNumber(magnetar.dipolarMagneticFieldTesla)} T`),
-          fact('Periodo de giro (modelo)', `${formatNumber(magnetar.spinPeriodSeconds)} s`),
-          fact('Estallidos magnéticos', 'No simulados ni observados'),
-        ]
-      : pulsar !== null
+
+  if (
+    star.evolutionState.name ===
+    'STELLAR_BLACK_HOLE'
+  ) {
+    const blackHole =
+      StellarBlackHoleEngine
+        .fromExistingStar(
+          star,
+          physical,
+          lifetime,
+        );
+
+    const directCollapse =
+      blackHole?.formationChannel.name ===
+      'DIRECT_COLLAPSE';
+
+    return {
+      facts:
+        blackHole ===
+          null
+          ? Object.freeze([])
+          : Object.freeze([
+              fact(
+                'Remanente compacto',
+                'Agujero negro estelar',
+              ),
+              ...(directCollapse
+                ? [
+                    fact(
+                      'Masa actual del remanente (estimada)',
+                      `${formatNumber(blackHole.massSolar)} M☉`,
+                    ),
+                    fact(
+                      'Radio de Schwarzschild (referencia)',
+                      `${formatNumber(blackHole.schwarzschildRadiusKm)} km`,
+                    ),
+                  ]
+                : [
+                    fact(
+                      'Masa actual del remanente',
+                      consequence === null
+                        ? 'Determinada por la consecuencia de supernova 29.1D'
+                        : `${formatNumber(consequence.postEventStellarMassSolar)} M☉`,
+                    ),
+                  ]),
+              fact(
+                'Canal de formación',
+                blackHoleFormationChannelLabel(blackHole.formationChannel.name),
+              ),
+              fact(
+                'Edad del remanente (estimada)',
+                formatStellarAge(
+                  blackHole.ageSinceFormationBillionYears,
+                ),
+              ),
+            ]),
+      visual:
+        blackHole ===
+          null
+          ? null
+          : compactObjectScientificVisual(
+              'BLACK_HOLE',
+            ),
+    };
+  }
+
+  if (
+    star.evolutionState.name ===
+    'NEUTRON_STAR'
+  ) {
+    const neutron =
+      StellarNeutronStarEngine
+        .fromExistingStar(
+          star,
+          physical,
+          lifetime,
+        );
+
+    if (
+      neutron ===
+      null
+    ) {
+      return {
+        facts:
+          Object.freeze([]),
+        visual:
+          null,
+      };
+    }
+
+    const magnetar =
+      StellarMagnetarEngine
+        .fromExistingNeutronStar(
+          neutron,
+        );
+
+    const pulsar =
+      magnetar ===
+        null
+        ? StellarPulsarEngine
+            .fromExistingNeutronStar(
+              neutron,
+            )
+        : null;
+
+    const subtypeFacts:
+      readonly ArchiveStellarSystemFactModel[] =
+      magnetar !==
+        null
         ? [
-            fact('Subtipo intrínseco (modelo, NO observado)', 'Púlsar ordinario candidato'),
-            fact('Periodo de giro (modelo)', `${formatNumber(pulsar.spinPeriodSeconds)} s`),
-            fact('Geometría del haz (modelo, NO detección)',
-              pulsar.beamCrossesLineOfSight ? 'Interseca la línea de visión' : 'No interseca la línea de visión'),
-            fact('Señal de radio', 'No observada; pendiente de instrumentación'),
+            fact(
+              'Subtipo intrínseco (modelo, NO observado)',
+              'Magnetar candidato',
+            ),
+            fact(
+              'Campo magnético dipolar (modelo)',
+              `${formatNumber(magnetar.dipolarMagneticFieldTesla)} T`,
+            ),
+            fact(
+              'Periodo de giro (modelo)',
+              `${formatNumber(magnetar.spinPeriodSeconds)} s`,
+            ),
+            fact(
+              'Estallidos magnéticos',
+              'No simulados ni observados',
+            ),
           ]
-        : [];
+        : pulsar !==
+            null
+          ? [
+              fact(
+                'Subtipo intrínseco (modelo, NO observado)',
+                'Púlsar ordinario candidato',
+              ),
+              fact(
+                'Periodo de giro (modelo)',
+                `${formatNumber(pulsar.spinPeriodSeconds)} s`,
+              ),
+              fact(
+                'Geometría del haz (modelo, NO detección)',
+                pulsar.beamCrossesLineOfSight
+                  ? 'Interseca la línea de visión'
+                  : 'No interseca la línea de visión',
+              ),
+              fact(
+                'Señal de radio',
+                'No observada; pendiente de instrumentación',
+              ),
+            ]
+          : [];
+
     return {
-      facts: Object.freeze([
-        fact('Remanente compacto', 'Estrella de neutrones'),
-        fact('Masa del remanente (estimada)', `${formatNumber(neutron.massSolar)} M☉`),
-        fact('Radio material (estimado)', `${formatNumber(neutron.radiusKm)} km`),
-        fact('Compacidad GM/Rc² (aproximada)', formatNumber(neutron.compactness)),
-        fact('Canal de formación', neutron.formationChannel.name),
-        fact('Edad del remanente (estimada)', formatStellarAge(neutron.ageSinceFormationBillionYears)),
-        ...subtypeFacts,
-      ]),
-      visual: compactObjectScientificVisual(magnetar !== null ? 'MAGNETAR' :
-        pulsar !== null ? 'PULSAR' : 'NEUTRON_STAR'),
+      facts:
+        Object.freeze([
+          fact(
+            'Remanente compacto',
+            'Estrella de neutrones',
+          ),
+          fact(
+            'Masa actual del remanente',
+            consequence === null
+              ? 'Determinada por la consecuencia de supernova 29.1D'
+              : `${formatNumber(consequence.postEventStellarMassSolar)} M☉`,
+          ),
+          fact(
+            'Canal de formación',
+            neutron.formationChannel.name,
+          ),
+          fact(
+            'Edad del remanente (estimada)',
+            formatStellarAge(
+              neutron.ageSinceFormationBillionYears,
+            ),
+          ),
+          ...subtypeFacts,
+        ]),
+      visual:
+        compactObjectScientificVisual(
+          magnetar !==
+            null
+            ? 'MAGNETAR'
+            : pulsar !==
+                null
+              ? 'PULSAR'
+              : 'NEUTRON_STAR',
+        ),
     };
   }
-  return { facts: Object.freeze([]), visual: null };
+
+  return {
+    facts:
+      Object.freeze([]),
+    visual:
+      null,
+  };
+}
+
+function isCompactRemnantStateName(
+  stateName:
+    string,
+): boolean {
+
+  return (
+    stateName ===
+      'WHITE_DWARF' ||
+    stateName ===
+      'NEUTRON_STAR' ||
+    stateName ===
+      'STELLAR_BLACK_HOLE'
+  );
+}
+
+function remnantProgenitorFacts(
+  physical:
+    StellarPhysicalProperties,
+
+  lifetime:
+    StellarLifetimeProfile,
+): readonly ArchiveStellarSystemFactModel[] {
+
+  return Object.freeze([
+    fact(
+      'Masa inicial del progenitor',
+      `${formatNumber(physical.initialMassSolar)} M☉`,
+    ),
+    fact(
+      'Edad actual del objeto',
+      formatStellarAge(
+        lifetime.ageBillionYears,
+      ),
+    ),
+  ]);
+}
+
+function companionRemnantFacts(
+  physical:
+    StellarPhysicalProperties,
+
+  lifetime:
+    StellarLifetimeProfile,
+
+  consequence:
+    SupernovaStellarConsequence | null,
+): readonly ArchiveStellarSystemFactModel[] {
+
+  const assessment =
+    lifetime.evolutionAssessment;
+
+  const stateFacts:
+    ArchiveStellarSystemFactModel[] =
+    [];
+
+  if (
+    assessment.evolutionState.name ===
+    'WHITE_DWARF'
+  ) {
+    stateFacts.push(
+      fact(
+        'Remanente compacto',
+        'Enana blanca',
+      ),
+      fact(
+        'Masa actual del remanente',
+        'No modelada por el Ground Truth estelar actual',
+      ),
+      fact(
+        'Composición interna',
+        whiteDwarfCompositionLabel(
+          assessment
+            .whiteDwarfComposition
+            ?.name ??
+          null,
+        ),
+      ),
+    );
+  } else if (
+    assessment.evolutionState.name ===
+    'NEUTRON_STAR'
+  ) {
+    stateFacts.push(
+      fact(
+        'Remanente compacto',
+        'Estrella de neutrones',
+      ),
+      ...(consequence === null
+        ? []
+        : [fact(
+            'Masa actual del remanente',
+            `${formatNumber(consequence.postEventStellarMassSolar)} M☉`,
+          )]),
+    );
+
+    if (
+      assessment.neutronStarFormationChannel !==
+      null
+    ) {
+      stateFacts.push(
+        fact(
+          'Canal de formación',
+          assessment
+            .neutronStarFormationChannel
+            .name,
+        ),
+      );
+    }
+  } else if (
+    assessment.evolutionState.name ===
+    'STELLAR_BLACK_HOLE'
+  ) {
+    stateFacts.push(
+      fact(
+        'Remanente compacto',
+        'Agujero negro estelar',
+      ),
+      ...(consequence === null
+        ? []
+        : [fact(
+            'Masa actual del remanente',
+            `${formatNumber(consequence.postEventStellarMassSolar)} M☉`,
+          )]),
+    );
+
+    if (
+      assessment.blackHoleFormationChannel !==
+      null
+    ) {
+      stateFacts.push(
+        fact(
+          'Canal de formación',
+          blackHoleFormationChannelLabel(
+            assessment
+              .blackHoleFormationChannel
+              .name,
+          ),
+        ),
+      );
+    }
+  }
+
+  return Object.freeze([
+    ...remnantProgenitorFacts(
+      physical,
+      lifetime,
+    ),
+    ...stateFacts,
+    ...remnantAgeFacts(
+      lifetime,
+    ),
+  ]);
+}
+
+function remnantAgeFacts(
+  lifetime:
+    StellarLifetimeProfile,
+): readonly ArchiveStellarSystemFactModel[] {
+
+  const formedAt =
+    lifetime.terminalAgeBillionYears;
+
+  if (
+    formedAt ===
+    null
+  ) {
+    return Object.freeze([]);
+  }
+
+  return Object.freeze([
+    fact(
+      'Formación del remanente',
+      `${formatNumber(formedAt)} Ga de edad estelar`,
+    ),
+    fact(
+      'Edad desde formación',
+      formatStellarAge(
+        Math.max(
+          0,
+          lifetime.ageBillionYears -
+            formedAt,
+        ),
+      ),
+    ),
+  ]);
+}
+
+function whiteDwarfCompositionLabel(
+  name:
+    string | null,
+): string {
+
+  switch (
+    name
+  ) {
+    case 'HELIUM_CORE':
+      return 'Núcleo de helio';
+
+    case 'CARBON_OXYGEN_CORE':
+      return 'Núcleo de carbono-oxígeno';
+
+    case 'OXYGEN_NEON_CORE':
+      return 'Núcleo de oxígeno-neón';
+
+    default:
+      return 'Composición no resuelta';
+  }
+}
+
+function blackHoleFormationChannelLabel(
+  name:
+    string,
+): string {
+
+  switch (name) {
+    case 'DIRECT_COLLAPSE':
+      return 'Colapso directo';
+
+    case 'FALLBACK_CORE_COLLAPSE':
+      return 'Colapso de núcleo con fallback';
+
+    default:
+      return name;
+  }
 }
 
 function stellarPhysicalFacts(

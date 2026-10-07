@@ -59,8 +59,14 @@ describe('Stage 9: canonical multihost stellar fiche is physically coherent and 
         const component = card.components.find(item => item.componentLabel === host.label)!;
         const render = card.render.components.find(item => item.label === host.label)!;
         const star = session.scene.stars.find(item => item.label === host.label)!;
-        expect(component.colorHex).toBe(host.spectral.color.hex);
-        expect(component.spectralType).toBe(host.spectral.spectralType.designation);
+        const isRemnant = ['WHITE_DWARF', 'NEUTRON_STAR', 'STELLAR_BLACK_HOLE']
+          .includes(host.stellarSystem.primaryStar.evolutionState.name);
+        if (isRemnant) {
+          expect(component.spectralType).toBeNull();
+        } else {
+          expect(component.colorHex).toBe(host.spectral.color.hex);
+          expect(component.spectralType).toBe(host.spectral.spectralType.designation);
+        }
         expect(render.massSolar).toBe(host.physical.initialMassSolar);
         expect(render.colorHex).toBe(star.colorHex);
         // Scene and scientific fiche must consume the same canonical public component name.
@@ -85,6 +91,43 @@ describe('Stage 9: canonical multihost stellar fiche is physically coherent and 
       expect(JSON.stringify(card)).not.toContain(source.parentSystemSeedHex);
     }, 120_000,
   );
+
+
+
+  it('29.1E-c keeps real multihost remnants free of progenitor spectral/radius/luminosity/temperature leakage', () => {
+    let checked = false;
+
+    for (let index = 0n; index < 128n && !checked; index++) {
+      const locator = new SystemLocator(0n, 0n, index);
+      const source = StellarMultihostFormation.generateOrNull(key, locator);
+      if (source === null) continue;
+
+      const remnantHost = source.components.find(host =>
+        ['WHITE_DWARF', 'NEUTRON_STAR', 'STELLAR_BLACK_HOLE']
+          .includes(host.stellarSystem.primaryStar.evolutionState.name));
+      if (remnantHost === undefined) continue;
+
+      const card = SystemMultihostStellarCardAssembler.build(
+        model(locator).stellarSystemCard!,
+        source,
+      );
+      const component = card.components.find(item => item.componentLabel === remnantHost.label)!;
+      const labels = component.facts.map(current => current.label);
+
+      expect(component.spectralType).toBeNull();
+      expect(labels).toContain('Masa inicial del progenitor');
+      expect(labels).not.toContain('Radio de referencia');
+      expect(labels).not.toContain('Luminosidad de referencia');
+      expect(labels).not.toContain('Temperatura efectiva');
+      expect(component.evolutionStateLabel).not.toMatch(/^(O|B|A|F|G|K|M)\d/);
+      const channel = component.facts.find(fact => fact.label === 'Canal de formación')?.value;
+      expect(channel).not.toBe('DIRECT_COLLAPSE');
+      expect(channel).not.toBe('FALLBACK_CORE_COLLAPSE');
+      checked = true;
+    }
+
+    expect(checked).toBe(true);
+  }, 120_000);
 
   it('refuses a mismatched multiplicity and does not silently use the old stellar card', () => {
     const binary = fixture(StellarSystemMultiplicity.BINARY);

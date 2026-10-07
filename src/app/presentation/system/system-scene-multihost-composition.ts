@@ -3,12 +3,17 @@ import { buildV2CometVisualOrbit, type V2CometVisualOrbit,
 import { type BodyLocator } from '../../domain/generation/procedural-locator';
 import { StellarMultihostPublicTargetIndex } from '../../simulation/stellar/stellar-multihost-public-target-index';
 import { type GeneratedMultipleHost, type MultihostLabel } from '../../simulation/stellar/stellar-multihost-formation';
+import { StellarCompactHostPlanetaryCoherence } from '../../simulation/stellar/stellar-compact-host-planetary-coherence';
 import {
   stellarMultihostPublicMoonDesignation,
   stellarMultihostPublicPlanetDesignation,
 } from '../../simulation/stellar/stellar-multihost-public-designation';
 import { projectSystemSceneMotionContributions } from './system-scene-motion-projection';
-import { buildLinearFitSystemScale } from './system-scene-scale-projection';
+import {
+  SystemSceneProjectionSpace,
+  buildLinearFitSystemScale,
+  systemSceneProjectedOverlayRadiusAuInSpace,
+} from './system-scene-scale-projection';
 import { systemSceneMoonPresentationTimeScale } from './system-scene-secondary-motion';
 import { v2PlanetTimeScale } from './system-scene-v2-planet-cadence';
 import { assertSystemSceneProjectionSnapshot } from './system-scene-projection-contract';
@@ -19,6 +24,10 @@ import {
   type SystemSceneHabitableZoneSnapshot,
 } from './system-scene-snapshot';
 import { appendSystemSceneMultihostCircumbinary } from './system-scene-multihost-circumbinary-projection';
+import {
+  systemSceneClipMultihostSTypeHabitableZone,
+  systemSceneMultihostSTypeStableOuterAu,
+} from './system-scene-multihost-s-type-hz-coherence';
 
 /** Stage 7: pure opt-in composition of already generated sources. No generation,
  * route switch, writes, private child scopes, or reassignment of planets. */
@@ -117,6 +126,7 @@ export class SystemSceneMultihostComposition {
     const zones: SystemSceneHabitableZoneSnapshot[] = [];
     const risks: SystemSceneSnapshot['orbitalRiskTargets'][number][] = [];
     const publicTargets = StellarMultihostPublicTargetIndex.build(formation);
+    const compactHostCoherence = new StellarCompactHostPlanetaryCoherence(formation);
     const resolveMotion = (id: string) => motions.find(m => m.id === id);
     const position = (parts: readonly SystemSceneMotionContributionSnapshot[]) =>
       Object.freeze(projectSystemSceneMotionContributions(parts, resolveMotion, 0, scale));
@@ -168,18 +178,31 @@ export class SystemSceneMultihostComposition {
         publicMoonNames.set(moon.id, designation);
         publicOrbitNames.set(moon.orbitId, designation);
       }
+      // 29.1E-f.2: scientific HZ overlays never define the local-system
+      // presentation envelope. A very luminous component can legitimately
+      // have a radiative reference hundreds of AU away while its physical
+      // planets/orbits occupy only a few AU. Including that overlay here would
+      // shrink the actual host system before the camera even frames it.
       const localRadius = Math.max(0.6, ...local.stars.map(star => star.radiusScene * 3.1),
         ...local.planets.map(planet => {
           const orbit = local.orbits.find(o => o.id === planet.orbitId);
           const motion = local.motions.find(m => m.id === orbit?.motionId);
           return (orbit?.semiMajorScene ?? 0) * (1 + (motion?.eccentricity ?? 0)) + planet.radiusScene;
-        }), ...(local.asteroidBelts ?? []).map(belt => belt.outerRadiusScene),
-        local.habitableZone?.radiativeOuterRadiusScene ?? 0);
+        }), ...(local.asteroidBelts ?? []).map(belt => belt.outerRadiusScene));
       const factor = LOCAL_RADIUS / localRadius;
       const hostAnchor = anchors[source.label];
       const namespaced = (id: string) => prefix + id;
-      const motionIndex = new Map(local.motions.map(m => [m.id, m]));
       const orbitByMotion = new Map(local.orbits.filter(o => o.motionId !== null).map(o => [o.motionId!, o]));
+      const motionIndex = new Map(local.motions.map(motion => {
+        const guideForMotion = orbitByMotion.get(motion.id);
+        if (guideForMotion?.kind !== 'planetary') return [motion.id, motion] as const;
+        const correctedPeriodDays = compactHostCoherence.correctedPeriodDays(
+          source.label, motion.semiMajorAxisAu,
+        );
+        return [motion.id, correctedPeriodDays === null ? motion : Object.freeze({
+          ...motion, periodDays: correctedPeriodDays,
+        })] as const;
+      }));
       const rankedPlanetMotions = local.planets.map(planet => {
         const motionId = planet.motionContributions.at(-1)?.motionId;
         const motion = motionId === undefined ? undefined : motionIndex.get(motionId);
@@ -198,7 +221,8 @@ export class SystemSceneMultihostComposition {
       const localStarOpticalRadius = Math.max(localStarRadius,
         Math.min(base.generatorVersionCode === 2 ? 0.235 : 0.3,
           (ownStar.opticalRadiusScene ?? ownStar.radiusScene) * factor));
-      for (const motion of local.motions) {
+      for (const sourceMotion of local.motions) {
+        const motion = motionIndex.get(sourceMotion.id)!;
         const guideForMotion = orbitByMotion.get(motion.id);
         const rawAxis = (guideForMotion?.semiMajorScene ??
           motion.semiMajorAxisAu * local.scale.orbitScaleScenePerAu) * factor;
@@ -317,14 +341,31 @@ export class SystemSceneMultihostComposition {
               { presentationCometPhaseWarp: parts.at(-1)!.presentationCometPhaseWarp }),
           }), }));
       }
+      const stableSTypeOuterAu = systemSceneMultihostSTypeStableOuterAu({
+        hostId: source.label,
+        massA,
+        massB,
+        massC: c?.physical.initialMassSolar ?? null,
+        innerBinaryAxisAu: innerPhysical.semiMajorAxisAu,
+        innerBinaryEccentricity: innerPhysical.eccentricity,
+        outerBinaryAxisAu: outerPhysical?.semiMajorAxisAu ?? null,
+        outerBinaryEccentricity: outerPhysical?.eccentricity ?? null,
+      });
       for (const zone of local.habitableZones ?? (local.habitableZone ? [local.habitableZone] : [])) {
+        const clipped = systemSceneClipMultihostSTypeHabitableZone(zone, stableSTypeOuterAu);
+        const projectionSpace = zone.projectionSpace ?? SystemSceneProjectionSpace.GLOBAL;
+        const projectOverlay = (radiusAu: number) =>
+          systemSceneProjectedOverlayRadiusAuInSpace(radiusAu, local.scale, projectionSpace) * factor;
         zones.push(Object.freeze({ ...zone,
           radiativeInnerRadiusScene: zone.radiativeInnerRadiusScene * factor,
           radiativeOuterRadiusScene: zone.radiativeOuterRadiusScene * factor,
-          dynamicallyHabitableInnerRadiusScene: zone.dynamicallyHabitableInnerRadiusScene === null ? null :
-            zone.dynamicallyHabitableInnerRadiusScene * factor,
-          dynamicallyHabitableOuterRadiusScene: zone.dynamicallyHabitableOuterRadiusScene === null ? null :
-            zone.dynamicallyHabitableOuterRadiusScene * factor,
+          dynamicallyHabitableInnerEdgeAu: clipped.dynamicallyHabitableInnerEdgeAu,
+          dynamicallyHabitableOuterEdgeAu: clipped.dynamicallyHabitableOuterEdgeAu,
+          dynamicallyHabitableInnerRadiusScene: clipped.dynamicallyHabitableInnerEdgeAu === null ? null :
+            projectOverlay(clipped.dynamicallyHabitableInnerEdgeAu),
+          dynamicallyHabitableOuterRadiusScene: clipped.dynamicallyHabitableOuterEdgeAu === null ? null :
+            projectOverlay(clipped.dynamicallyHabitableOuterEdgeAu),
+          dynamicalOverlapFraction01: clipped.dynamicalOverlapFraction01,
           anchorMotionContributions: hostAnchor }));
       }
       for (const belt of local.asteroidBelts ?? []) {

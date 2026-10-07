@@ -63,6 +63,10 @@ import {
   ProtoplanetaryFormationSnapshotGenerator,
 } from './protoplanetary-formation-snapshot-generator';
 
+import {
+  type PostRemnantConditionalEnvironmentReassessment,
+} from './post-remnant-conditional-environment-reassessment';
+
 export interface PlanetScientificIdentitySource {
   readonly locator:
     BodyLocator;
@@ -340,6 +344,8 @@ export interface PlanetScientificDetailSource {
       retentionRegime: string;
       atmosphericInventoryRetentionFraction01: number;
       retainedReferenceDensityKilogramsPerCubicMeter: number;
+      /** 29.1E-e.2 optional density recomputed from final P/T/composition after cryogenic closure. */
+      currentDensityKilogramsPerCubicMeter?: number | null;
       retainedMeanMolarMassGramsPerMole: number | null;
       greenhouseRegime: string;
       longwaveTrappingFraction01: number;
@@ -395,12 +401,65 @@ export interface PlanetScientificDetailSource {
     }>;
 }
 
+export interface PlanetScientificHostEvolutionContext {
+  readonly hostLabel: string;
+  readonly evolutionStateNames: readonly string[];
+  readonly containsCompactRemnant: boolean;
+  readonly requiresPostStellarEvolutionReassessment: boolean;
+  readonly currentHostMassSolar: number | null;
+  readonly currentHostLuminositySolar: number | null;
+  readonly currentOrbitalPeriodDays: number | null;
+  readonly currentOrbitalPeriodYears: number | null;
+  readonly currentMeanInsolationEarth: number | null;
+  readonly radiativeRegime:
+    'CURRENT_STELLAR_SOURCE' |
+    'QUIESCENT_BLACK_HOLE' |
+    'COMPACT_LUMINOSITY_UNMODELED';
+
+  /** 29.1E-e.1: current environment was recomputed while preserving orbital geometry provisionally. */
+  readonly conditionalEnvironmentReassessmentApplied?: boolean;
+
+  /** Thermal-equivalent forcing supplied to phase 20. It is not host luminosity. */
+  readonly conditionalEnvironmentEffectiveInsolationEarth?: number | null;
+
+  readonly conditionalEnvironmentUsesMinimumRadiativeFloor?: boolean;
+
+  /** 29.1E-e.2 present-day intrinsic heat terms used only by the conditional thermal closure. */
+  readonly conditionalGeothermalHeatFluxWattsPerSquareMeter?: number | null;
+  readonly conditionalTidalHeatFluxWattsPerSquareMeter?: number | null;
+  readonly conditionalTotalIntrinsicHeatFluxWattsPerSquareMeter?: number | null;
+  readonly conditionalIntrinsicEquivalentInsolationEarth?: number | null;
+
+  /** 29.1E-g — deterministic current orbital state after realized stellar mass loss/SN events. */
+  readonly postSupernovaOrbitDisposition?:
+    'UNCHANGED' | 'BOUND_RECONFIGURED' | 'EJECTED' | 'HOST_DISRUPTED';
+  readonly postSupernovaSourceEventKeys?: readonly string[];
+  readonly postSupernovaSemiMajorAxisAu?: number | null;
+  readonly postSupernovaEccentricity?: number | null;
+  readonly postSupernovaPeriastronAu?: number | null;
+  readonly postSupernovaApoastronAu?: number | null;
+  readonly postSupernovaInclinationChangeDegrees?: number | null;
+  readonly postSupernovaMassLossRegime?: 'NONE' | 'ADIABATIC' | 'TRANSITIONAL' | 'IMPULSIVE';
+  readonly postSupernovaMaximumEffectiveKickKmS?: number;
+  readonly postSupernovaMoonStates?: readonly Readonly<{
+    moonOrdinal: number;
+    survival: 'UNCHANGED' | 'BOUND' | 'LOST_FROM_HILL_SPHERE' | 'BOUND_TO_EJECTED_PLANET' | 'UNRESOLVED_HOST_DISRUPTION';
+    survives: boolean | null;
+    currentHillSphereRadiusPlanetRadii: number | null;
+    progradeStableLimitPlanetRadii: number | null;
+  }>[];
+}
+
 export interface PlanetScientificResolvedTarget {
   readonly identity:
     PlanetScientificIdentitySource;
 
   readonly detail:
     PlanetScientificDetailSource;
+
+  /** 29.1E-e optional current-host correction for evolved V2 multihost systems. */
+  readonly hostEvolution?:
+    PlanetScientificHostEvolutionContext;
 }
 
 interface Phase18PlanetTarget {
@@ -853,6 +912,149 @@ export class PlanetScientificTargetResolver {
                 ),
             }),
         }),
+    });
+  }
+
+  /**
+   * 29.1E-e.2 replaces only environment-dependent projections with a conditional
+   * present-day reassessment. Identity, bulk planet physics, orbit geometry,
+   * moon population/orbits and intrinsic tidal/geological source terms remain
+   * the already-generated values.
+   */
+  static applyConditionalEnvironmentReassessment(
+    target: PlanetScientificResolvedTarget,
+    reassessment: PostRemnantConditionalEnvironmentReassessment,
+  ): PlanetScientificResolvedTarget {
+    const atmosphere = reassessment.atmosphere;
+    const moonByOrdinal = new Map(
+      reassessment.moonEnvironments.map(moon => [moon.moonOrdinal, moon] as const),
+    );
+    const relevantMoons = Object.freeze(
+      target.detail.moons.relevantMoons.map(moon => {
+        const current = moonByOrdinal.get(moon.moonOrdinal);
+        if (current === undefined) return moon;
+        const environment = current.environmentState;
+        const habitability = current.habitabilityState;
+        return Object.freeze({
+          ...moon,
+          referenceMeanInsolationEarth: environment.sourceReferenceMeanInsolationEarth,
+          inferredIceRichnessIndex01: environment.inferredIceRichnessIndex01,
+          inferredBondAlbedo01: environment.inferredBondAlbedo01,
+          equilibriumTemperatureKelvin: environment.equilibriumTemperatureKelvin,
+          estimatedSurfaceTemperatureKelvin: environment.estimatedSurfaceTemperatureKelvin,
+          atmosphereRetentionIndex01: environment.atmosphereRetentionIndex01,
+          atmosphereRegime: environment.atmosphereRegime,
+          waterInventoryIndex01: environment.waterInventoryIndex01,
+          subsurfaceOceanPotentialIndex01: environment.subsurfaceOceanPotentialIndex01,
+          surfaceLiquidWaterPotentialIndex01: environment.surfaceLiquidWaterPotentialIndex01,
+          waterRegime: environment.waterRegime,
+          internalHeatRetentionIndex01: environment.internalHeatRetentionIndex01,
+          geologicalActivityIndex01: environment.geologicalActivityIndex01,
+          geologyRegime: environment.geologyRegime,
+          hasAtmosphere: environment.hasAtmosphere,
+          hasWater: environment.hasWater,
+          hasSubsurfaceOcean: environment.hasSubsurfaceOcean,
+          hasSurfaceLiquidWater: environment.hasSurfaceLiquidWater,
+          isGeologicallyActive: environment.isGeologicallyActive,
+          surfaceTemperatureSupportIndex01: habitability.surfaceTemperatureSupportIndex01,
+          surfaceAtmosphereSupportIndex01: habitability.surfaceAtmosphereSupportIndex01,
+          surfaceGravitySupportIndex01: habitability.surfaceGravitySupportIndex01,
+          tidalModerationIndex01: habitability.tidalModerationIndex01,
+          subsurfaceEnergySupportIndex01: habitability.subsurfaceEnergySupportIndex01,
+          surfaceHabitabilityIndex01: habitability.surfaceHabitabilityIndex01,
+          subsurfaceHabitabilityIndex01: habitability.subsurfaceHabitabilityIndex01,
+          overallHabitabilityIndex01: habitability.overallHabitabilityIndex01,
+          surfaceHabitabilityCandidate: habitability.supportsPotentialSurfaceHabitability,
+          subsurfaceHabitabilityCandidate: habitability.supportsPotentialSubsurfaceHabitability,
+          habitabilityRegime: habitability.habitabilityRegime,
+          isPotentiallyHabitable: habitability.isPotentiallyHabitable,
+        });
+      }),
+    );
+    const potentiallyHabitableMoonCount = relevantMoons.filter(m => m.isPotentiallyHabitable).length;
+    const surfaceHabitabilityCandidateCount = relevantMoons.filter(m => m.surfaceHabitabilityCandidate).length;
+    const subsurfaceHabitabilityCandidateCount = relevantMoons.filter(m => m.subsurfaceHabitabilityCandidate).length;
+
+    return Object.freeze({
+      ...target,
+      detail: Object.freeze({
+        ...target.detail,
+        surface: Object.freeze({
+          ...target.detail.surface,
+          waterInventoryIndex01: atmosphere.waterInventoryIndex01,
+          waterPhaseRegime: atmosphere.waterPhaseRegime,
+          surfaceWaterRegime: atmosphere.surfaceWaterRegime,
+          waterIceFraction01: atmosphere.waterIceFraction01,
+          waterLiquidFraction01: atmosphere.waterLiquidFraction01,
+          waterVaporFraction01: atmosphere.waterVaporFraction01,
+          surfaceIceCoverageFraction01: atmosphere.surfaceIceCoverageFraction01,
+          surfaceLiquidWaterCoverageFraction01: atmosphere.surfaceLiquidWaterCoverageFraction01,
+          hasPersistentSurfaceLiquidWater: atmosphere.hasPersistentSurfaceLiquidWater,
+          surfaceRadiationRegime: atmosphere.surfaceRadiationRegime,
+          surfaceRadiationProtectionRegime: atmosphere.surfaceRadiationProtectionRegime,
+          surfaceRadiationExposureIndex01: atmosphere.surfaceRadiationExposureIndex01,
+          surfaceRadiationProtectionIndex01: atmosphere.surfaceRadiationProtectionIndex01,
+          hasEffectiveSurfaceRadiationProtection: atmosphere.hasEffectiveSurfaceRadiationProtection,
+        }),
+        atmosphere: Object.freeze({
+          pressureRegime: atmosphere.pressureRegime,
+          retainedPressureRegime: atmosphere.retainedPressureRegime,
+          retainedSurfacePressurePascal: atmosphere.retainedSurfacePressurePascal,
+          retentionRegime: atmosphere.retentionRegime,
+          atmosphericInventoryRetentionFraction01: atmosphere.atmosphericInventoryRetentionFraction01,
+          retainedReferenceDensityKilogramsPerCubicMeter: atmosphere.retainedReferenceDensityKilogramsPerCubicMeter,
+          currentDensityKilogramsPerCubicMeter:
+            reassessment.currentAtmosphericDensityKilogramsPerCubicMeter,
+          retainedMeanMolarMassGramsPerMole: atmosphere.retainedMeanMolarMassGramsPerMole,
+          greenhouseRegime: atmosphere.greenhouseRegime,
+          longwaveTrappingFraction01: atmosphere.longwaveTrappingFraction01,
+          isVacuum: atmosphere.isVacuum,
+          isDeepEnvelope: atmosphere.isDeepEnvelope,
+          retainedGasComposition: Object.freeze(atmosphere.retainedGasComposition.map(component => Object.freeze({
+            gas: component.gas,
+            moleFraction01: component.moleFraction01,
+          }))),
+        }),
+        climate: Object.freeze({
+          equilibriumTemperatureKelvin: atmosphere.equilibriumTemperatureKelvin,
+          meanSurfaceTemperatureKelvin: atmosphere.meanSurfaceTemperatureKelvin,
+          greenhouseSurfaceWarmingKelvin: atmosphere.greenhouseSurfaceWarmingKelvin,
+          climateStabilityRegime: atmosphere.climateStabilityRegime,
+          climateStabilityIndex01: atmosphere.climateStabilityIndex01,
+          seasonalTemperatureAmplitudeKelvin: atmosphere.seasonalTemperatureAmplitudeKelvin,
+          diurnalTemperatureRangeKelvin: atmosphere.diurnalTemperatureRangeKelvin,
+          minimumSurfaceTemperatureKelvin: atmosphere.minimumSurfaceTemperatureKelvin,
+          maximumSurfaceTemperatureKelvin: atmosphere.maximumSurfaceTemperatureKelvin,
+          heatRedistributionEfficiency01: atmosphere.heatRedistributionEfficiency01,
+        }),
+        geology: Object.freeze({
+          ...target.detail.geology,
+          geologyRegime: atmosphere.geologyRegime,
+          volcanismRegime: atmosphere.volcanismRegime,
+          tectonicRegime: atmosphere.tectonicRegime,
+          internalHeatRetentionIndex01: atmosphere.internalHeatRetentionIndex01,
+          tidalHeatingIndex01: atmosphere.tidalHeatingIndex01,
+          geologicalActivityIndex01: atmosphere.geologicalActivityIndex01,
+          volcanismIndex01: atmosphere.volcanismIndex01,
+          tectonicMobilityIndex01: atmosphere.tectonicMobilityIndex01,
+          volatileOutgassingPotential01: atmosphere.volatileOutgassingPotential01,
+          surfaceRenewalPotential01: atmosphere.surfaceRenewalPotential01,
+          isGeologicallyActive: atmosphere.isGeologicallyActive,
+          magneticFieldRegime: atmosphere.magneticFieldRegime,
+          magnetosphereRegime: atmosphere.magnetosphereRegime,
+          dynamoPotentialIndex01: atmosphere.dynamoPotentialIndex01,
+          intrinsicMagneticFieldIndex01: atmosphere.intrinsicMagneticFieldIndex01,
+          magnetosphericProtectionIndex01: atmosphere.magnetosphericProtectionIndex01,
+          hasSustainedDynamo: atmosphere.hasSustainedDynamo,
+        }),
+        moons: Object.freeze({
+          ...target.detail.moons,
+          potentiallyHabitableMoonCount,
+          surfaceHabitabilityCandidateCount,
+          subsurfaceHabitabilityCandidateCount,
+          relevantMoons,
+        }),
+      }),
     });
   }
 }

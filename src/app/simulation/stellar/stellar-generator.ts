@@ -323,6 +323,46 @@ export class StellarGenerator {
   }
 
   /**
+   * 29.1E-f coeval-system projection. Re-evaluates the frozen phase-14
+   * evolution model at an explicit chronological age without consuming a new
+   * age draw. This is intentionally separate from generateLifetimeProfile():
+   * the latter remains the canonical point-15.3 age sampler for a standalone
+   * SINGLE source, while multihost assembly can promote one parent-system age
+   * to every A/B/C component.
+   */
+  static generateLifetimeProfileAtAge(
+    generationKey:
+      UniverseGenerationKey,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    ageBillionYears:
+      number,
+  ): StellarLifetimeProfile {
+
+    if (
+      generationKey
+        .generatorVersion ===
+      GeneratorVersion.V1
+    ) {
+      return this.evaluateLifetimeProfileAtAgeV1(
+        generationKey,
+        physicalProperties,
+        sectorStellarPopulation,
+        ageBillionYears,
+      );
+    }
+
+    throw new RangeError(
+      `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
+    );
+  }
+
+  /**
    * Generates point-15.4 ordinary stellar magnetic activity and flare
    * statistics for the current point-15.3 evolutionary state.
    *
@@ -665,6 +705,42 @@ export class StellarGenerator {
         draws,
         stellarPopulationProfile,
       );
+
+    return this.evaluateLifetimeProfileAtAgeV1(
+      generationKey,
+      physicalProperties,
+      sectorStellarPopulation,
+      ageBillionYears,
+    );
+  }
+
+  private static evaluateLifetimeProfileAtAgeV1(
+    generationKey:
+      UniverseGenerationKey,
+
+    physicalProperties:
+      StellarPhysicalProperties,
+
+    sectorStellarPopulation:
+      GalaxySectorStellarPopulationProperties,
+
+    ageBillionYears:
+      number,
+  ): StellarLifetimeProfile {
+
+    if (
+      !Number.isFinite(
+        ageBillionYears,
+      ) ||
+      ageBillionYears <
+        0 ||
+      ageBillionYears >
+        STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS
+    ) {
+      throw new RangeError(
+        `ageBillionYears must be finite and in [0, ${STELLAR_LIFETIME_V1_MAX_AGE_BILLION_YEARS}].`,
+      );
+    }
 
     const evolutionAssessment =
       StellarEvolutionEngine

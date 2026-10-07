@@ -1,0 +1,153 @@
+<main class="snlab" data-testid="supernova-laboratory-page">
+  <header class="snlab__hero">
+    <div>
+      <p class="snlab__eyebrow">29.1A · EVENTOS TRANSITORIOS / SUPERNOVAS</p>
+      <h1>Supernovas</h1>
+      <p>
+        Laboratorio científico de Ia, II, Ib e Ic. El tiempo es relativo al
+        instante de explosión y se controla manualmente; no usa el reloj real
+        del navegador ni modifica una partida.
+      </p>
+    </div>
+
+    <a class="snlab__back" routerLink="/laboratory">← Laboratorios</a>
+  </header>
+
+  <section class="snlab__selectors" aria-label="Familias de supernova">
+    @for (caseItem of cases; track caseItem.id) {
+      <button
+        type="button"
+        data-testid="supernova-laboratory-type-button"
+        [attr.data-type]="caseItem.id"
+        [attr.aria-pressed]="selectedType() === caseItem.id"
+        (click)="selectType(caseItem.id)"
+      >
+        <span>{{ caseItem.shortLabel }}</span>
+        <strong>{{ caseItem.title }}</strong>
+      </button>
+    }
+  </section>
+
+  <section
+    class="snlab__workspace"
+    data-testid="supernova-laboratory-active-case"
+    [attr.data-supernova-type]="selectedCase().profile.type"
+    [attr.data-phase]="snapshot().phase"
+  >
+    <div class="snlab__scene-panel">
+      <div
+        class="snlab__scene"
+        aria-label="Representación procedural del estado relativo de la supernova"
+        [attr.data-supernova-type]="selectedCase().profile.type"
+        [attr.data-phase]="snapshot().phase"
+      >
+        <app-young-supernova-render
+          class="snlab__shader-scene"
+          data-testid="supernova-laboratory-young-render"
+          [profile]="selectedCase().profile"
+          [elapsedDays]="elapsedDays()"
+          [accessibleLabel]="'Supernova joven ' + selectedCase().shortLabel + ' · ' + phaseLabel(snapshot().phase)"
+        ></app-young-supernova-render>
+
+        <div class="snlab__scene-readout">
+          <span>{{ selectedCase().shortLabel }}</span>
+          <strong>{{ phaseLabel(snapshot().phase) }}</strong>
+          <small>t = {{ format(snapshot().elapsedDays, 1) }} días</small>
+        </div>
+      </div>
+
+      <div class="snlab__timeline">
+        <div class="snlab__timeline-head">
+          <span>TIEMPO RELATIVO AL EVENTO</span>
+          <strong>{{ format(elapsedDays(), 1) }} d</strong>
+        </div>
+
+        <input
+          data-testid="supernova-laboratory-time-slider"
+          type="range"
+          min="-20"
+          max="1200"
+          step="1"
+          [value]="elapsedDays()"
+          (input)="setElapsedDays($any($event.target).value)"
+        />
+
+        <div class="snlab__jumps">
+          <button type="button" (click)="setElapsedDays(-10)">PRECURSOR</button>
+          <button type="button" (click)="setElapsedDays(0)">EXPLOSIÓN</button>
+          <button type="button" (click)="jumpToPeak()">PICO</button>
+          <button type="button" (click)="setElapsedDays(100)">+100 D</button>
+          <button type="button" (click)="jumpToRemnant()">REMANENTE</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="snlab__science">
+      <p class="snlab__eyebrow">PROGENITOR CANÓNICO DE LABORATORIO</p>
+      <h2>{{ selectedCase().title }}</h2>
+      <p>{{ selectedCase().description }}</p>
+
+      <dl>
+        <div><dt>CANAL</dt><dd>{{ selectedCase().progenitorLabel }}</dd></div>
+        <div><dt>ENVOLTURA</dt><dd>{{ selectedCase().envelopeLabel }}</dd></div>
+        <div><dt>MASA INICIAL</dt><dd>{{ format(selectedCase().profile.progenitor.initialMassSolar) }} M☉</dd></div>
+        <div><dt>MASA PREEXPLOSIÓN</dt><dd>{{ format(selectedCase().profile.progenitor.preExplosionMassSolar) }} M☉</dd></div>
+        <div><dt>ENERGÍA CINÉTICA</dt><dd>{{ formatScientific(selectedCase().profile.explosionEnergyJoules) }} J</dd></div>
+        <div><dt>MASA EJECTADA</dt><dd>{{ format(selectedCase().profile.ejectaMassSolar) }} M☉</dd></div>
+        <div><dt>Ni-56</dt><dd>{{ format(selectedCase().profile.nickel56MassSolar, 3) }} M☉</dd></div>
+        <div><dt>VELOCIDAD CARACTERÍSTICA</dt><dd>{{ format(selectedCase().profile.characteristicEjectaVelocityKmS, 0) }} km/s</dd></div>
+        <div><dt>PICO BOLOMÉTRICO</dt><dd>{{ formatScientific(selectedCase().profile.peakBolometricLuminosityWatts) }} W</dd></div>
+        <div><dt>MAGNITUD BOLOMÉTRICA PICO</dt><dd>{{ format(selectedCase().profile.peakAbsoluteBolometricMagnitude, 2) }}</dd></div>
+        <div><dt>REMANENTE COMPACTO</dt><dd>{{ remnantLabel(selectedCase().profile.compactRemnantKind) }}</dd></div>
+        @if (selectedCase().profile.compactRemnantMassSolar !== null) {
+          <div><dt>MASA DEL REMANENTE</dt><dd>{{ format(selectedCase().profile.compactRemnantMassSolar!) }} M☉</dd></div>
+        }
+      </dl>
+    </aside>
+  </section>
+
+  <section class="snlab__curve" aria-labelledby="snlab-curve-title">
+    <div class="snlab__section-head">
+      <div>
+        <p class="snlab__eyebrow">EVOLUCIÓN TEMPORAL RELATIVA</p>
+        <h2 id="snlab-curve-title">Curva bolométrica del modelo</h2>
+      </div>
+      <div class="snlab__current">
+        <span>ESTADO ACTUAL</span>
+        <strong>{{ phaseLabel(snapshot().phase) }}</strong>
+      </div>
+    </div>
+
+    <svg viewBox="0 0 980 240" role="img" aria-label="Curva de luz bolométrica normalizada">
+      <line x1="40" y1="210" x2="940" y2="210" class="snlab__axis" />
+      <line x1="40" y1="28" x2="40" y2="210" class="snlab__axis" />
+      <path [attr.d]="lightCurvePath()" class="snlab__curve-line" />
+      <line [attr.x1]="currentCurveX()" y1="28" [attr.x2]="currentCurveX()" y2="210" class="snlab__cursor" />
+      <text x="42" y="232">0 d</text>
+      <text x="468" y="232">225 d</text>
+      <text x="902" y="232">450 d</text>
+      <text x="50" y="42">−20,5 mag</text>
+      <text x="50" y="203">−9,5 mag</text>
+    </svg>
+
+    <div class="snlab__snapshot-grid">
+      <div><span>LUMINOSIDAD</span><strong>{{ formatScientific(snapshot().bolometricLuminosityWatts) }} W</strong></div>
+      <div><span>MAGNITUD BOLOMÉTRICA</span><strong>{{ format(snapshot().absoluteBolometricMagnitude, 2) }}</strong></div>
+      <div><span>TEMPERATURA FOTOSFÉRICA</span><strong>{{ format(snapshot().photosphericTemperatureKelvin, 0) }} K</strong></div>
+      <div><span>RADIO DE EYECCIÓN</span><strong>{{ format(snapshot().ejectaRadiusAu, 2) }} UA</strong></div>
+    </div>
+  </section>
+
+  <section class="snlab__boundaries">
+    <div>
+      <p class="snlab__eyebrow">LÍMITE 29.1A</p>
+      <h2>Modelo científico, todavía no cronología de partida</h2>
+    </div>
+    <p>
+      Esta vista usa tiempo relativo desde la explosión. No agenda eventos en
+      sistemas guardados, no sustituye estrellas existentes, no crea remanentes
+      persistentes y no usa Date.now(). La conexión con la cronología global se
+      hará después de validar este modelo y antes de 29.10–29.12.
+    </p>
+  </section>
+</main>

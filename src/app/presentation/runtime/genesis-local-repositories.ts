@@ -10,6 +10,10 @@ import {
 } from '../../domain/repository/genesis-repositories';
 
 import {
+  type SupernovaCanonicalEventRepository,
+} from '../../domain/repository/supernova-canonical-event-repository';
+
+import {
   type ProceduralLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -29,6 +33,10 @@ import {
   DexieDiscoveryRepository,
   type ProceduralTargetSeedResolver,
 } from '../../data/local/repository/dexie-discovery.repository';
+
+import {
+  DexieSupernovaCanonicalEventRepository,
+} from '../../data/local/repository/dexie-supernova-canonical-event.repository';
 
 import {
   DexieUniverseNavigationRepository,
@@ -54,6 +62,13 @@ export interface GenesisLocalRepositories {
 
   readonly discoveryRepository:
     DiscoveryRepository;
+
+  /**
+   * 29.1E optional only for legacy/test repository bundles. Production always
+   * supplies it from the same GenesisIndexedDb instance as the other stores.
+   */
+  readonly supernovaCanonicalEventRepository?:
+    SupernovaCanonicalEventRepository;
 }
 
 const TARGET_SEED_RESOLVER:
@@ -112,6 +127,12 @@ function createGenesisLocalRepositories():
 
     discoveryRepository:
       new DexieDiscoveryRepository(
+        database,
+        TARGET_SEED_RESOLVER,
+      ),
+
+    supernovaCanonicalEventRepository:
+      new DexieSupernovaCanonicalEventRepository(
         database,
         TARGET_SEED_RESOLVER,
       ),

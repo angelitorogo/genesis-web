@@ -10,6 +10,7 @@ import {
   PlanetScientificTargetResolver,
   type PlanetScientificRelevantMoonSource,
   type PlanetScientificResolvedTarget,
+  type PlanetScientificHostEvolutionContext,
 } from './planet-scientific-target-resolver';
 
 export interface MoonScientificIdentitySource {
@@ -126,6 +127,9 @@ export interface MoonScientificResolvedTarget {
 
   readonly detail:
     MoonScientificDetailSource;
+
+  readonly hostEvolution?:
+    PlanetScientificHostEvolutionContext;
 }
 
 export interface MoonScientificPlanetResolver {
@@ -247,6 +251,9 @@ export class MoonScientificTargetResolver {
         detailProjection(
           moon,
         ),
+      ...(planetTarget.hostEvolution === undefined
+        ? {}
+        : { hostEvolution: planetTarget.hostEvolution }),
     });
   }
 }

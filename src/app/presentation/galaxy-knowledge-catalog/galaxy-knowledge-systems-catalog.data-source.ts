@@ -15,6 +15,8 @@ import { StellarDesignationGenerator } from '../../simulation/stellar/stellar-de
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
 import { StellarSystemMultiplicitySelector } from '../../simulation/stellar/stellar-system-multiplicity-selector';
 import { GENESIS_LOCAL_REPOSITORIES } from '../runtime/genesis-local-repositories';
+import { StellarSupernovaScientificIntegration } from '../runtime/stellar-supernova-scientific-integration';
+import { StellarSupernovaScientificPresentationAssembler } from '../runtime/stellar-supernova-scientific-presentation';
 import { galaxyKnowledgeRevision } from '../runtime/galaxy-knowledge-snapshot.runtime';
 import {
   type GalaxyKnowledgeCatalogDataRequest,
@@ -56,6 +58,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
   private readonly repositories = inject(GENESIS_LOCAL_REPOSITORIES);
   private hotRecords: KnownSystemCatalogHotRecords | null = null;
   private readonly viewCache = new GalaxyKnowledgeCatalogViewCache<KnownSystemCatalogRecord>();
+  private readonly supernovaLabelCache = new Map<string, Promise<string>>();
 
   describe(subtype: string | null): GalaxyKnowledgeCatalogDescriptor {
     const normalizedSubtype = normalizeSystemSubtype(subtype);
@@ -69,7 +72,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
       category: 'systems' as const,
       title,
       description:
-        'Sistemas estelares presentes en el conocimiento persistido de la galaxia. La multiplicidad solo se revela desde Descubierto, igual que en la ficha científica.',
+        'Sistemas estelares presentes en el conocimiento persistido de la galaxia. La multiplicidad se revela desde Descubierto y el linaje de supernova desde Catalogado, igual que en la ficha científica.',
       identityLabel: 'SISTEMA',
       filterLabel: normalizedSubtype === null
         ? 'TODOS'
@@ -81,6 +84,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         Object.freeze({ key: 'state', label: 'Estado científico' }),
         Object.freeze({ key: 'multiplicity', label: 'Tipo de sistema' }),
         Object.freeze({ key: 'components', label: 'Número de estrellas' }),
+        Object.freeze({ key: 'supernova', label: 'Supernova / linaje' }),
         Object.freeze({ key: 'sector', label: 'Sector' }),
         Object.freeze({ key: 'locator', label: 'Localización procedural' }),
       ]),
@@ -89,6 +93,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         Object.freeze({ key: 'state', label: 'ESTADO' }),
         Object.freeze({ key: 'multiplicity', label: 'TIPO' }),
         Object.freeze({ key: 'components', label: 'ESTRELLAS', align: 'end' as const }),
+        Object.freeze({ key: 'supernova', label: 'SUPERNOVA / LINAJE' }),
         Object.freeze({ key: 'sector', label: 'SECTOR', align: 'end' as const }),
       ]),
     });
@@ -107,31 +112,84 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
       request.galaxyIndex,
     );
 
-    const records = this.viewCache.resolve(
-      this.recordsFor(
-        request.generationKey,
-        request.galaxyIndex,
-        discoveries,
-      ),
-      galaxyKnowledgeCatalogViewKey(
-        subtype,
-        request.query.sortKey,
-        request.query.direction,
-      ),
-      record =>
-        subtype === null
-        || (subtype === 'UNCLASSIFIED'
-          ? record.multiplicity === null
-          : record.multiplicity?.name === subtype),
-      (left, right) =>
-        compareRecords(left, right, request.query.sortKey, request.query.direction),
+    const sourceRecords = this.recordsFor(
+      request.generationKey,
+      request.galaxyIndex,
+      discoveries,
     );
+    const matchesRequestedSubtype = (record: KnownSystemCatalogRecord): boolean =>
+      subtype === null
+      || (subtype === 'UNCLASSIFIED'
+        ? record.multiplicity === null
+        : record.multiplicity?.name === subtype);
 
-    const totalItems = records.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / request.query.pageSize));
-    const page = Math.min(Math.max(1, request.query.page), totalPages);
-    const start = (page - 1) * request.query.pageSize;
-    const selected = records.slice(start, start + request.query.pageSize);
+    let totalItems: number;
+    let page: number;
+    let totalPages: number;
+    let rows: readonly GalaxyKnowledgeCatalogRow[];
+
+    if (request.query.sortKey === 'supernova') {
+      // Supernova/lineage is intentionally an opt-in expensive sort. Correct
+      // ordering requires a scientific label for every filtered system, so the
+      // full filtered set is materialized only when the user selects this key.
+      // Labels are cached per system; normal catalogue sorts retain the 26.1c.7
+      // page-first performance boundary.
+      const labelledRecords = await Promise.all(
+        sourceRecords
+          .filter(matchesRequestedSubtype)
+          .map(async (record) => Object.freeze({
+            record,
+            label: await this.supernovaCatalogLabel(request.generationKey, record),
+          })),
+      );
+
+      labelledRecords.sort((left, right) =>
+        compareSupernovaRecords(
+          left,
+          right,
+          request.query.direction,
+        ),
+      );
+
+      totalItems = labelledRecords.length;
+      totalPages = Math.max(1, Math.ceil(totalItems / request.query.pageSize));
+      page = Math.min(Math.max(1, request.query.page), totalPages);
+      const start = (page - 1) * request.query.pageSize;
+      rows = Object.freeze(
+        labelledRecords
+          .slice(start, start + request.query.pageSize)
+          .map(({ record, label }) => toRow(record, label)),
+      );
+    } else {
+      const records = this.viewCache.resolve(
+        sourceRecords,
+        galaxyKnowledgeCatalogViewKey(
+          subtype,
+          request.query.sortKey,
+          request.query.direction,
+        ),
+        matchesRequestedSubtype,
+        (left, right) =>
+          compareRecords(left, right, request.query.sortKey, request.query.direction),
+      );
+
+      totalItems = records.length;
+      totalPages = Math.max(1, Math.ceil(totalItems / request.query.pageSize));
+      page = Math.min(Math.max(1, request.query.page), totalPages);
+      const start = (page - 1) * request.query.pageSize;
+      const selected = records.slice(start, start + request.query.pageSize);
+
+      // For every non-supernova sort we preserve the page-first materialization
+      // boundary: transient science is resolved only for visible rows.
+      rows = Object.freeze(await Promise.all(
+        selected.map(async (record) =>
+          toRow(
+            record,
+            await this.supernovaCatalogLabel(request.generationKey, record),
+          ),
+        ),
+      ));
+    }
 
     return Object.freeze({
       kind: 'page' as const,
@@ -140,9 +198,47 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         page,
         pageSize: request.query.pageSize,
         totalPages,
-        items: Object.freeze(selected.map(record => toRow(record))),
+        items: Object.freeze(rows),
       }),
     });
+  }
+
+  private async supernovaCatalogLabel(
+    generationKey: UniverseGenerationKey,
+    record: KnownSystemCatalogRecord,
+  ): Promise<string | undefined> {
+    const repository = this.repositories.supernovaCanonicalEventRepository;
+
+    // Legacy/test repository bundles may not expose the 29.1C store. Production
+    // does; keeping this optional prevents unrelated catalogue fixtures breaking.
+    if (repository === undefined) {
+      return undefined;
+    }
+
+    if (record.discovery.state.code < DiscoveryState.CATALOGUED.code) {
+      return 'Restringido hasta Catalogado';
+    }
+
+    const cacheKey = supernovaLabelCacheKey(generationKey, record.locator);
+    const cached = this.supernovaLabelCache.get(cacheKey);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    const pending = StellarSupernovaScientificIntegration
+      .synchronize(repository, generationKey, record.locator)
+      .then((snapshot) =>
+        StellarSupernovaScientificPresentationAssembler.build(snapshot).catalogLabel,
+      );
+
+    this.supernovaLabelCache.set(cacheKey, pending);
+
+    try {
+      return await pending;
+    } catch (error) {
+      this.supernovaLabelCache.delete(cacheKey);
+      throw error;
+    }
   }
 
   private recordsFor(
@@ -235,7 +331,10 @@ function systemRecord(
   });
 }
 
-function toRow(record: KnownSystemCatalogRecord): GalaxyKnowledgeCatalogRow {
+function toRow(
+  record: KnownSystemCatalogRecord,
+  supernovaCatalogLabel?: string,
+): GalaxyKnowledgeCatalogRow {
   const locatorLabel = systemLocatorLabel(record.locator);
   const title = record.designation ?? 'Sistema detectado';
   const multiplicity = record.multiplicity;
@@ -248,6 +347,7 @@ function toRow(record: KnownSystemCatalogRecord): GalaxyKnowledgeCatalogRow {
       state: discoveryStateLabel(record.discovery.state.name),
       multiplicity: multiplicity === null ? 'Sin clasificar' : multiplicityLabel(multiplicity),
       components: multiplicity === null ? undefined : multiplicity.stellarComponentCount.toLocaleString('es-ES'),
+      supernova: supernovaCatalogLabel,
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
     }),
     actions: Object.freeze([
@@ -272,6 +372,22 @@ function toRow(record: KnownSystemCatalogRecord): GalaxyKnowledgeCatalogRow {
       }),
     ]),
   });
+}
+
+function compareSupernovaRecords(
+  left: Readonly<{ readonly record: KnownSystemCatalogRecord; readonly label: string | undefined }>,
+  right: Readonly<{ readonly record: KnownSystemCatalogRecord; readonly label: string | undefined }>,
+  direction: GalaxyKnowledgeCatalogDirection,
+): number {
+  const factor = direction === 'desc' ? -1 : 1;
+  const difference = (left.label ?? '')
+    .localeCompare(right.label ?? '', 'es', { sensitivity: 'base' });
+
+  if (difference !== 0) {
+    return difference * factor;
+  }
+
+  return compareLocator(left.record.locator, right.record.locator);
 }
 
 function compareRecords(
@@ -348,6 +464,19 @@ function discoveryStateLabel(name: string): string {
     case 'CONFIRMED': return 'Confirmado';
     default: return name;
   }
+}
+
+function supernovaLabelCacheKey(
+  generationKey: UniverseGenerationKey,
+  locator: SystemLocator,
+): string {
+  return [
+    generationKey.universeSeed.normalizedValue,
+    generationKey.generatorVersion.code.toString(10),
+    locator.galaxyIndex.toString(10),
+    locator.sectorKey.toString(10),
+    locator.galacticObjectIndex.toString(10),
+  ].join(':');
 }
 
 function systemLocatorLabel(locator: SystemLocator): string {
