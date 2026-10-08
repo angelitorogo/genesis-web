@@ -20,6 +20,10 @@ import {
   SupernovaCanonicalEventTemporalStatus,
 } from '../../../domain/transient/supernova-canonical-event';
 import {
+  SupernovaCompactRemnantKind,
+  SupernovaEventProfile,
+} from '../../../domain/transient/supernova-event-profile';
+import {
   SupernovaProgenitorChannel,
   SupernovaProgenitorCompactRemnantHint,
   SupernovaProgenitorProfile,
@@ -28,11 +32,11 @@ import {
   SupernovaStellarLineageStage,
 } from '../../../domain/transient/supernova-stellar-lineage';
 import {
+  SupernovaType,
+} from '../../../domain/transient/supernova-type';
+import {
   UniverseSeed,
 } from '../../../domain/universe/universe-seed';
-import {
-  SupernovaEventEngine,
-} from '../../../simulation/transient/supernova-event-engine';
 import {
   GenesisIndexedDb,
 } from '../indexed-db/genesis-indexed-db';
@@ -96,7 +100,27 @@ describe('29.1C — DexieSupernovaCanonicalEventRepository', () => {
       null,
       SupernovaProgenitorCompactRemnantHint.NEUTRON_STAR,
     );
-    const profile = SupernovaEventEngine.deriveProfile(progenitor);
+    // Repository tests own a domain fixture instead of invoking simulation.
+    // This preserves the architecture boundary data/local -> domain and keeps
+    // physical-profile derivation covered by SupernovaEventEngine's own specs.
+    const compactRemnantMassSolar = 1.5;
+    const profile = new SupernovaEventProfile(
+      SupernovaType.TYPE_II,
+      progenitor,
+      progenitor.preExplosionMassSolar - compactRemnantMassSolar,
+      0.07,
+      1e44,
+      5_000,
+      1e35,
+      -17,
+      10_000,
+      10,
+      90,
+      150,
+      3_000,
+      SupernovaCompactRemnantKind.NEUTRON_STAR,
+      compactRemnantMassSolar,
+    );
 
     return new SupernovaCanonicalEvent(
       componentLabel,

@@ -92,8 +92,10 @@ describe('TRIPLE laboratory: (complete SINGLE A + complete SINGLE B) + complete 
         b.stars[0]!.colorHex,
         c.stars[0]!.colorHex,
       ]);
+      // 29.1E-c: scene stars retain the source optical color, but the scientific
+      // card inherits each SINGLE source card's current remnant presentation.
       expect(frame.stages[2]!.card.components.map(component => component.colorHex))
-        .toEqual(triple.stars.map(star => star.colorHex));
+        .toEqual(frame.sourceSystems!.map(source => source.stages[2]!.card.components[0]!.colorHex));
       for (const kind of ['planets', 'moons', 'minorBodies'] as const) {
         expect(triple[kind].map(body => body.id)).toEqual([
           ...a[kind].map(body => `lab-a-${body.id}`),

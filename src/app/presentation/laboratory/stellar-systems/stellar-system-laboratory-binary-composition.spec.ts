@@ -80,8 +80,11 @@ describe('Binary laboratory: two FULLY generated SINGLE systems with identical s
       expect(binary.multiplicityName).toBe('BINARY');
       expect(binary.stars.map(star => star.label)).toEqual(['A', 'B']);
       expect(binary.stars.map(star => star.colorHex)).toEqual([a.stars[0]!.colorHex, b.stars[0]!.colorHex]);
+      // 29.1E-c: the scene preserves each SINGLE source's optical formation color,
+      // while a scientific card must present an evolved compact remnant with its
+      // current remnant treatment instead of leaking the progenitor photosphere.
       expect(frame.stages[2]!.card.components.map(component => component.colorHex))
-        .toEqual(binary.stars.map(star => star.colorHex));
+        .toEqual(frame.sourceSystems!.map(source => source.stages[2]!.card.components[0]!.colorHex));
       for (const kind of ['planets', 'moons', 'minorBodies'] as const) {
         expect(binary[kind].map(body => body.id)).toEqual([
           ...a[kind].map(body => `lab-a-${body.id}`),

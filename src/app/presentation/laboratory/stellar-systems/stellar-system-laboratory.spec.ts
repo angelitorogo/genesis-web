@@ -309,8 +309,10 @@ describe(
         expect(binary.stars.map(star => star.label)).toEqual(['A', 'B']);
         expect(binary.stars.map(star => star.id)).toEqual(['lab-a-' + a.stars[0]!.id, 'lab-b-' + b.stars[0]!.id]);
         expect(binary.stars.map(star => star.colorHex)).toEqual([a.stars[0]!.colorHex, b.stars[0]!.colorHex]);
+        // 29.1E-c: scientific cards follow the current presentation of each SINGLE
+        // source, so compact remnants no longer reuse the progenitor optical color.
         expect(frame.stages[2]?.card.components.map(component => component.colorHex))
-          .toEqual(binary.stars.map(star => star.colorHex));
+          .toEqual(frame.sourceSystems?.map(source => source.stages[2]!.card.components[0]!.colorHex));
         for (const group of ['planets', 'moons', 'minorBodies'] as const) {
           expect(binary[group].slice(0, binaryBase[group].length).map(body => body.id)).toEqual([
             ...a[group].map(body => `lab-a-${body.id}`),
