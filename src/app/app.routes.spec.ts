@@ -113,6 +113,34 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
+
+  it('should keep the point-26.1c generic knowledge catalogue route reachable before the Galaxy detail wildcard-shaped route', () => {
+    const knowledgeCatalog = genesisRoutes.findIndex(route =>
+      route.path === 'galaxies/:galaxyIndex/knowledge/:category');
+    const galaxyDetail = genesisRoutes.findIndex(route =>
+      route.path === 'galaxies/:galaxyIndex');
+
+    expect(knowledgeCatalog).toBeGreaterThanOrEqual(0);
+    expect(knowledgeCatalog).toBeLessThan(galaxyDetail);
+    expect(genesisRoutes[knowledgeCatalog]?.title).toBe(
+      'Explorador de conocimiento galáctico | GENESIS',
+    );
+  });
+
+  it('should navigate to the point-26.1c generic knowledge catalogue instead of falling back to Home', async () => {
+    const harness = await RouterTestingHarness.create(
+      '/galaxies/0/knowledge/systems',
+    );
+    const router = TestBed.inject(Router);
+
+    expect(router.url).toBe('/galaxies/0/knowledge/systems');
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="galaxy-knowledge-catalog-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
   it('should expose the point-26.1c water-world index route before the generic Galaxy detail route', () => {
     const waterIndex = genesisRoutes.findIndex(route =>
       route.path === 'galaxies/:galaxyIndex/water-worlds');
@@ -326,6 +354,31 @@ describe('GENESIS routes', () => {
     expect(
       harness.routeNativeElement?.querySelector(
         '[data-testid="stellar-system-laboratory-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
+
+  it('should keep both 29.1 supernova laboratories reachable after adding the post-supernova audit route', () => {
+    const supernova = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/supernovae');
+    const postSupernova = genesisRoutes.find(route =>
+      route.path === 'laboratory/stellar-systems/post-supernova-audit');
+
+    expect(supernova?.title).toBe('Supernovas | Laboratorios GENESIS');
+    expect(postSupernova?.title).toBe('Auditoría post-supernova | Laboratorios GENESIS');
+  });
+
+  it('should navigate to the 29.1A supernova laboratory instead of falling back to Home', async () => {
+    const harness = await RouterTestingHarness.create(
+      '/laboratory/transient-events/supernovae',
+    );
+    const router = TestBed.inject(Router);
+
+    expect(router.url).toBe('/laboratory/transient-events/supernovae');
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="supernova-laboratory-page"]',
       ),
     ).toBeTruthy();
   }, 30_000);

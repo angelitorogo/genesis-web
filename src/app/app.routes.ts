@@ -73,6 +73,16 @@ export const genesisRoutes: Routes = [
     title: 'Sistema estelar | GENESIS',
   },
   {
+    path: 'galaxies/:galaxyIndex/knowledge/:category',
+    loadComponent: () =>
+      import(
+        './presentation/galaxy-knowledge-catalog/galaxy-knowledge-catalog'
+      ).then(
+        (module) => module.GalaxyKnowledgeCatalogPage,
+      ),
+    title: 'Explorador de conocimiento galáctico | GENESIS',
+  },
+  {
     path: 'galaxies/:galaxyIndex/water-worlds',
     loadComponent: () =>
       import(
@@ -243,6 +253,16 @@ export const genesisRoutes: Routes = [
         (module) => module.PlanetaryFormationLaboratoryPage,
       ),
     title: 'Formación planetaria | Laboratorios GENESIS',
+  },
+  {
+    path: 'laboratory/transient-events/supernovae',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/supernovae/supernova-laboratory'
+      ).then(
+        (module) => module.SupernovaLaboratoryPage,
+      ),
+    title: 'Supernovas | Laboratorios GENESIS',
   },
   {
     path: 'laboratory',
