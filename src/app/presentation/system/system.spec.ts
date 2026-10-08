@@ -382,6 +382,54 @@ describe(
     );
 
     it(
+      'should keep a CONFIRMED system campaign visibly pending when its own evidence requirements are incomplete',
+      () => {
+        const confirmedModel =
+          systemModel(
+            ArchiveStellarSystemKnowledgeLevel.CONFIRMED,
+          );
+        const campaign =
+          confirmedModel.stellarSystemScientificCampaign!;
+
+        currentModel = {
+          ...confirmedModel,
+          stellarSystemScientificCampaign:
+            Object.freeze({
+              ...campaign,
+              stageLabel:
+                'Campaña científica pendiente',
+              completionPercent:
+                0,
+              satisfiedRequirementCount:
+                0,
+              evidenceCount:
+                0,
+            }),
+        } as ArchiveDiscoveryDetailModel;
+
+        const fixture =
+          TestBed.createComponent(
+            SystemPage,
+          );
+
+        fixture.detectChanges();
+
+        const text =
+          (fixture.nativeElement as HTMLElement)
+            .querySelector(
+              '[data-testid="system-page-scientific-campaign"]',
+            )
+            ?.textContent ?? '';
+
+        expect(text).toContain('Estado · Confirmado');
+        expect(text).toContain('Etapa · Campaña científica pendiente');
+        expect(text).toContain('0 evidencias');
+        expect(text).toContain('El sistema está confirmado, pero su campaña observacional sigue pendiente.');
+        expect(text).not.toContain('Campaña completada.');
+      },
+    );
+
+    it(
       'should expose the shared A9 scientific campaign and route observations to Observatory without a direct state-promotion action',
       () => {
 

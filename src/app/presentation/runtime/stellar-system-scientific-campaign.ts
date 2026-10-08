@@ -208,6 +208,7 @@ export class StellarSystemScientificCampaignAssembler {
       stageLabel:
         campaignStageLabel(
           snapshot.discoveryState,
+          completeness.isComplete,
         ),
 
       completionPercent,
@@ -588,6 +589,8 @@ export function discoveryStateLabel(
 function campaignStageLabel(
   state:
     DiscoveryStateValue,
+  isComplete:
+    boolean,
 ): string {
 
   const canonical =
@@ -623,7 +626,16 @@ function campaignStageLabel(
     return 'Confirmación independiente';
   }
 
-  return 'Campaña científica completada';
+  if (
+    canonical ===
+      DiscoveryState.CONFIRMED
+  ) {
+    return isComplete
+      ? 'Campaña científica completada'
+      : 'Campaña científica pendiente';
+  }
+
+  return 'Campaña científica pendiente';
 }
 
 function dimensionLabel(

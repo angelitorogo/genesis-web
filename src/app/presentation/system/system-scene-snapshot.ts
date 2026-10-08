@@ -3493,11 +3493,15 @@ function projectSceneGeometry(
               ? systemSceneStellarLightIntensity(
                   star.luminositySolar,
                 )
-              : 0,
+              : (stellarPresentation.rendererLuminositySolar === null
+                  ? 0
+                  : systemSceneStellarLightIntensity(
+                      stellarPresentation.rendererLuminositySolar,
+                    )),
           sourceLuminositySolar:
             stellarPresentation.sourceEmissionAllowed
               ? star.luminositySolar
-              : null,
+              : stellarPresentation.rendererLuminositySolar,
           ...(generatorVersionCode === 2 &&
           stellarPresentation.sourceEmissionAllowed ? {
             sourceRadiusSolar: star.radiusSolar,

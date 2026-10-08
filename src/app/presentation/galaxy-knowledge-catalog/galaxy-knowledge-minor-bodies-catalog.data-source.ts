@@ -18,6 +18,10 @@ import {
   type GalaxyKnowledgeMinorBodyCatalogSnapshot,
 } from '../runtime/galaxy-minor-body-catalog-snapshot.runtime';
 import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogField,
+  galaxyKnowledgeCatalogIdentityField,
+  type GalaxyKnowledgeCatalogField,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -123,137 +127,105 @@ export class GalaxyKnowledgeMinorBodiesCatalogDataSource {
 }
 
 function asteroidDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'asteroids' as const,
     title: subtype === null ? 'Asteroides conocidos' : `Asteroides · ${subtypeLabel(subtype)}`,
     description:
       'Asteroides relevantes individualmente materializados en sistemas confirmados. El catálogo no convierte la población estadística completa de los cinturones en objetos ficticios.',
-    identityLabel: 'ASTEROIDE',
     filterLabel: subtype === null ? 'TODOS' : subtypeLabel(subtype),
-    sortOptions: commonSortOptions([
-      ['subtype', 'Composición / clase'],
-      ['diameter', 'Diámetro'],
-      ['semi-major-axis', 'Semieje mayor'],
-      ['eccentricity', 'Excentricidad'],
-      ['inclination', 'Inclinación'],
-      ['periapsis', 'Periapsis'],
-      ['density', 'Densidad'],
-      ['albedo', 'Albedo'],
-      ['ice', 'Fracción de hielo'],
+    fields: minorBodyFields('ASTEROIDE', [
+      galaxyKnowledgeCatalogField('subtype', 'Composición / clase', { columnLabel: 'CLASE', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('diameter', 'Diámetro', { columnLabel: 'DIÁMETRO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('semi-major-axis', 'Semieje mayor', { columnLabel: 'ÓRBITA', defaultVisible: true, cellKey: 'orbit', align: 'end' }),
+      galaxyKnowledgeCatalogField('eccentricity', 'Excentricidad', { columnLabel: 'EXCENTRICIDAD', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('inclination', 'Inclinación'),
+      galaxyKnowledgeCatalogField('periapsis', 'Periapsis'),
+      galaxyKnowledgeCatalogField('density', 'Densidad'),
+      galaxyKnowledgeCatalogField('albedo', 'Albedo'),
+      galaxyKnowledgeCatalogField('ice', 'Fracción de hielo'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'system', label: 'SISTEMA' }),
-      Object.freeze({ key: 'host', label: 'HOST' }),
-      Object.freeze({ key: 'subtype', label: 'CLASE' }),
-      Object.freeze({ key: 'diameter', label: 'DIÁMETRO', align: 'end' as const }),
-      Object.freeze({ key: 'orbit', label: 'ÓRBITA', align: 'end' as const }),
-      Object.freeze({ key: 'eccentricity', label: 'EXCENTRICIDAD', align: 'end' as const }),
-    ]),
   });
 }
 
 function cometDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'comets' as const,
     title: subtype === null ? 'Cometas conocidos' : `Cometas · ${subtypeLabel(subtype)}`,
     description:
       'Núcleos cometarios relevantes de sistemas confirmados, con su órbita física congelada y clasificación por período.',
-    identityLabel: 'COMETA',
     filterLabel: subtype === null ? 'TODOS' : subtypeLabel(subtype),
-    sortOptions: commonSortOptions([
-      ['subtype', 'Régimen de período'],
-      ['diameter', 'Diámetro'],
-      ['period', 'Período orbital'],
-      ['semi-major-axis', 'Semieje mayor'],
-      ['eccentricity', 'Excentricidad'],
-      ['inclination', 'Inclinación'],
-      ['periapsis', 'Perihelio'],
-      ['apoapsis', 'Afelio'],
-      ['volatile', 'Riqueza volátil'],
+    fields: minorBodyFields('COMETA', [
+      galaxyKnowledgeCatalogField('subtype', 'Régimen de período', { columnLabel: 'PERÍODO', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('diameter', 'Diámetro', { columnLabel: 'DIÁMETRO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('period', 'Período orbital'),
+      galaxyKnowledgeCatalogField('semi-major-axis', 'Semieje mayor', { cellKey: 'orbit' }),
+      galaxyKnowledgeCatalogField('eccentricity', 'Excentricidad', { columnLabel: 'EXCENTRICIDAD', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('inclination', 'Inclinación'),
+      galaxyKnowledgeCatalogField('periapsis', 'Perihelio', { columnLabel: 'PERIHELIO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('apoapsis', 'Afelio'),
+      galaxyKnowledgeCatalogField('volatile', 'Riqueza volátil'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'system', label: 'SISTEMA' }),
-      Object.freeze({ key: 'host', label: 'HOST' }),
-      Object.freeze({ key: 'subtype', label: 'PERÍODO' }),
-      Object.freeze({ key: 'diameter', label: 'DIÁMETRO', align: 'end' as const }),
-      Object.freeze({ key: 'periapsis', label: 'PERIHELIO', align: 'end' as const }),
-      Object.freeze({ key: 'eccentricity', label: 'EXCENTRICIDAD', align: 'end' as const }),
-    ]),
   });
 }
 
 function tnoDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'tno' as const,
     title: subtype === null ? 'Objetos transneptunianos conocidos' : `TNO · ${subtypeLabel(subtype)}`,
     description:
       'Objetos transneptunianos relevantes de sistemas confirmados. Solo se listan identidades físicas individualmente materializadas.',
-    identityLabel: 'TNO',
     filterLabel: subtype === null ? 'TODOS' : subtypeLabel(subtype),
-    sortOptions: commonSortOptions([
-      ['subtype', 'Régimen dinámico'],
-      ['diameter', 'Diámetro'],
-      ['period', 'Período orbital'],
-      ['semi-major-axis', 'Semieje mayor'],
-      ['eccentricity', 'Excentricidad'],
-      ['inclination', 'Inclinación'],
-      ['periapsis', 'Perihelio'],
-      ['ice', 'Fracción de hielo'],
-      ['density', 'Densidad'],
+    fields: minorBodyFields('TNO', [
+      galaxyKnowledgeCatalogField('subtype', 'Régimen dinámico', { columnLabel: 'RÉGIMEN', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('diameter', 'Diámetro', { columnLabel: 'DIÁMETRO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('period', 'Período orbital'),
+      galaxyKnowledgeCatalogField('semi-major-axis', 'Semieje mayor', { columnLabel: 'ÓRBITA', defaultVisible: true, cellKey: 'orbit', align: 'end' }),
+      galaxyKnowledgeCatalogField('eccentricity', 'Excentricidad'),
+      galaxyKnowledgeCatalogField('inclination', 'Inclinación'),
+      galaxyKnowledgeCatalogField('periapsis', 'Perihelio'),
+      galaxyKnowledgeCatalogField('ice', 'Fracción de hielo', { columnLabel: 'HIELO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('density', 'Densidad'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'system', label: 'SISTEMA' }),
-      Object.freeze({ key: 'host', label: 'HOST' }),
-      Object.freeze({ key: 'subtype', label: 'RÉGIMEN' }),
-      Object.freeze({ key: 'diameter', label: 'DIÁMETRO', align: 'end' as const }),
-      Object.freeze({ key: 'orbit', label: 'ÓRBITA', align: 'end' as const }),
-      Object.freeze({ key: 'ice', label: 'HIELO', align: 'end' as const }),
-    ]),
   });
 }
 
 function capturedDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'captured' as const,
     title: subtype === null ? 'Objetos capturados conocidos' : `Capturados · ${subtypeLabel(subtype)}`,
     description:
       'Objetos de origen extrasolar capturados de forma permanente y materializados individualmente en sistemas confirmados.',
-    identityLabel: 'CAPTURADO',
     filterLabel: subtype === null ? 'TODOS' : subtypeLabel(subtype),
-    sortOptions: commonSortOptions([
-      ['subtype', 'Composición / captura'],
-      ['diameter', 'Diámetro'],
-      ['period', 'Período orbital'],
-      ['semi-major-axis', 'Semieje mayor'],
-      ['eccentricity', 'Excentricidad'],
-      ['inclination', 'Inclinación'],
-      ['periapsis', 'Periapsis'],
-      ['incoming-velocity', 'Velocidad hiperbólica de llegada'],
-      ['volatile', 'Fracción volátil'],
+    fields: minorBodyFields('CAPTURADO', [
+      galaxyKnowledgeCatalogField('subtype', 'Composición / captura', { columnLabel: 'COMPOSICIÓN', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('capture', 'Régimen de captura', { columnLabel: 'CAPTURA', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('diameter', 'Diámetro', { columnLabel: 'DIÁMETRO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('period', 'Período orbital'),
+      galaxyKnowledgeCatalogField('semi-major-axis', 'Semieje mayor', { columnLabel: 'ÓRBITA', defaultVisible: true, cellKey: 'orbit', align: 'end' }),
+      galaxyKnowledgeCatalogField('eccentricity', 'Excentricidad'),
+      galaxyKnowledgeCatalogField('inclination', 'Inclinación'),
+      galaxyKnowledgeCatalogField('periapsis', 'Periapsis'),
+      galaxyKnowledgeCatalogField('incoming-velocity', 'Velocidad hiperbólica de llegada'),
+      galaxyKnowledgeCatalogField('volatile', 'Fracción volátil'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'system', label: 'SISTEMA' }),
-      Object.freeze({ key: 'host', label: 'HOST' }),
-      Object.freeze({ key: 'subtype', label: 'COMPOSICIÓN' }),
-      Object.freeze({ key: 'capture', label: 'CAPTURA' }),
-      Object.freeze({ key: 'diameter', label: 'DIÁMETRO', align: 'end' as const }),
-      Object.freeze({ key: 'orbit', label: 'ÓRBITA', align: 'end' as const }),
-    ]),
   });
 }
 
-function commonSortOptions(extra: readonly (readonly [string, string])[]) {
+function minorBodyFields(
+  identityLabel: string,
+  extra: readonly GalaxyKnowledgeCatalogField[],
+): readonly GalaxyKnowledgeCatalogField[] {
   return Object.freeze([
-    Object.freeze({ key: 'designation', label: 'Nombre / designación' }),
-    Object.freeze({ key: 'system', label: 'Sistema anfitrión' }),
-    Object.freeze({ key: 'host', label: 'Componente anfitrión' }),
-    ...extra.map(([key, label]) => Object.freeze({ key, label })),
-    Object.freeze({ key: 'sector', label: 'Sector' }),
-    Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+    galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', identityLabel),
+    galaxyKnowledgeCatalogField('system', 'Sistema anfitrión', { columnLabel: 'SISTEMA', defaultVisible: true }),
+    galaxyKnowledgeCatalogField('host', 'Componente anfitrión', { columnLabel: 'HOST', defaultVisible: true }),
+    ...extra,
+    galaxyKnowledgeCatalogField('sector', 'Sector'),
+    galaxyKnowledgeCatalogField('locator', 'Localización procedural'),
   ]);
 }
 
@@ -331,10 +303,19 @@ function toRow(
       subtype: subtypeLabel(record.subtype),
       capture: record.secondarySubtype === null ? undefined : subtypeLabel(record.secondarySubtype),
       diameter: formatNumber(record.diameterKilometers, 'km'),
+      period: formatNumber(record.orbitalPeriodYears, 'a'),
       orbit: formatNumber(record.semiMajorAxisAu, 'UA'),
       eccentricity: formatPlain(record.eccentricity, 4),
+      inclination: formatNumber(record.inclinationDegrees, '°'),
       periapsis: formatNumber(record.periapsisAu, 'UA'),
+      apoapsis: formatNumber(record.apoapsisAu, 'UA'),
+      density: formatNumber(record.densityGramsPerCubicCentimeter, 'g/cm³'),
+      albedo: formatPercent(record.albedo01),
       ice: formatPercent(record.volatileOrIceFraction01),
+      volatile: formatPercent(record.volatileOrIceFraction01),
+      'incoming-velocity': formatNumber(record.incomingVelocityKmPerSecond, 'km/s'),
+      sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
+      locator: `${systemLocatorLabel(record.parentSystemLocator)} / ${record.proceduralId}`,
     }),
     actions: Object.freeze([
       Object.freeze({
@@ -376,6 +357,7 @@ function compareRecords(
       case 'system': return left.systemDesignation.localeCompare(right.systemDesignation, 'es', { sensitivity: 'base' });
       case 'host': return left.hostLabel.localeCompare(right.hostLabel, 'en');
       case 'subtype': return left.subtype.localeCompare(right.subtype, 'en');
+      case 'capture': return subtypeLabel(left.secondarySubtype ?? '').localeCompare(subtypeLabel(right.secondarySubtype ?? ''), 'es', { sensitivity: 'base' });
       case 'diameter': return left.diameterKilometers - right.diameterKilometers;
       case 'period': return compareNullableNumber(left.orbitalPeriodYears, right.orbitalPeriodYears);
       case 'semi-major-axis': return left.semiMajorAxisAu - right.semiMajorAxisAu;

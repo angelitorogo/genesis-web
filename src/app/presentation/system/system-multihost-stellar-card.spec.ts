@@ -85,6 +85,20 @@ describe('Stage 9: canonical multihost stellar fiche is physically coherent and 
       }
       expect(card.circumbinaryFacts.find(f => f.label === 'Planetas circumbinarios reales (AB)')?.value)
         .toBe(String(source.circumbinary.planets.length));
+      if (source.circumbinary.stableInnerAu !== null) {
+        expect(card.circumbinaryFacts.some(f => f.label === 'Límite interior de estabilidad P')).toBe(true);
+        expect(card.circumbinaryFacts.some(f => f.label === 'Límite interior P calculado')).toBe(false);
+      }
+      if (source.circumbinary.stableOuterAu !== null) {
+        expect(card.circumbinaryFacts.some(f => f.label === 'Límite exterior de generación P')).toBe(true);
+        expect(card.circumbinaryFacts.some(f => f.label === 'Límite exterior P calculado')).toBe(false);
+      }
+      const radiativeValidity = card.habitabilityFacts.find(f => f.label === 'Validez radiativa')?.value;
+      if (radiativeValidity !== undefined) {
+        expect(radiativeValidity).not.toBe('APPLICABLE_COMPACT_SOURCE');
+        expect(radiativeValidity).not.toBe('INNER_PAIR_NOT_COMPACT');
+        expect(radiativeValidity).not.toBe('TERTIARY_IRRADIATION_SIGNIFICANT');
+      }
       expect(card.systemFacts.find(f => f.label === 'Planetas generados')?.value)
         .toBe(String(session.planetCount));
       expect(card.systemFacts.some(f => f.label === 'SystemSeed')).toBe(false);

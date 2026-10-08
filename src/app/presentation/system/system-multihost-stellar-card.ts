@@ -249,6 +249,19 @@ function postSupernovaArchitectureLabel(architecture: StellarPostSupernovaPlanet
   }
 }
 
+function circumbinaryRadiativeReferenceRegimeLabel(
+  regime: CircumbinaryRadiativeReferenceRegime,
+): string {
+  switch (regime) {
+    case CircumbinaryRadiativeReferenceRegime.APPLICABLE_COMPACT_SOURCE:
+      return 'Aproximación radiativa A+B aplicable';
+    case CircumbinaryRadiativeReferenceRegime.INNER_PAIR_NOT_COMPACT:
+      return 'Separación A+B demasiado grande para aproximación puntual';
+    case CircumbinaryRadiativeReferenceRegime.TERTIARY_IRRADIATION_SIGNIFICANT:
+      return 'Irradiación de la tercera estrella significativa';
+  }
+}
+
 /**
  * Stage 9: system fiche from the EXACT physical aggregate used by the scene
  * and planet/moon fiches. The old V1 multi-star fiche is a disclosure/identity
@@ -314,8 +327,8 @@ export class SystemMultihostStellarCardAssembler {
     const pFacts = Object.freeze([
       fact('Planetas circumbinarios reales (AB)', String(p.planets.length)),
       fact('Estado de generación P', p.status),
-      ...(p.stableInnerAu === null ? [] : [fact('Límite interior P calculado', `${format(p.stableInnerAu)} UA`)]),
-      ...(p.stableOuterAu === null ? [] : [fact('Límite exterior P calculado', `${format(p.stableOuterAu)} UA`)]),
+      ...(p.stableInnerAu === null ? [] : [fact('Límite interior de estabilidad P', `${format(p.stableInnerAu)} UA`)]),
+      ...(p.stableOuterAu === null ? [] : [fact('Límite exterior de generación P', `${format(p.stableOuterAu)} UA`)]),
     ]);
     const zoneIsUsable = confirmed && habitability !== null && effectivePTypeHabitableZone !== null &&
       effectivePTypeHabitableZone.dynamicalOverlapFraction01 > 0 &&
@@ -350,7 +363,7 @@ export class SystemMultihostStellarCardAssembler {
       circumbinaryFacts: pFacts,
       habitabilityFacts: confirmed && habitability !== null ? Object.freeze([
         fact('Fracción estable de la zona radiativa de referencia', format(effectivePTypeHabitableZone?.dynamicalOverlapFraction01 ?? 0)),
-        fact('Validez radiativa', habitability.radiativeReferenceRegime),
+        fact('Validez radiativa', circumbinaryRadiativeReferenceRegimeLabel(habitability.radiativeReferenceRegime)),
         fact('Evolución estelar', habitability.stellarEvolutionRegime),
       ]) : Object.freeze([]),
       render: Object.freeze({

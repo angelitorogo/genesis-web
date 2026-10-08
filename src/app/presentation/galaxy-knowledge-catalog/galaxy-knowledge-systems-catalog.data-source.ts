@@ -19,6 +19,9 @@ import { StellarSupernovaScientificIntegration } from '../runtime/stellar-supern
 import { StellarSupernovaScientificPresentationAssembler } from '../runtime/stellar-supernova-scientific-presentation';
 import { galaxyKnowledgeRevision } from '../runtime/galaxy-knowledge-snapshot.runtime';
 import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogField,
+  galaxyKnowledgeCatalogIdentityField,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -68,34 +71,36 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         ? 'Sistemas sin clasificar'
         : `Sistemas ${multiplicityLabelFromName(normalizedSubtype).toLowerCase()}s`;
 
-    return Object.freeze({
+    return defineGalaxyKnowledgeCatalogDescriptor({
       category: 'systems' as const,
       title,
       description:
         'Sistemas estelares presentes en el conocimiento persistido de la galaxia. La multiplicidad se revela desde Descubierto y el linaje de supernova desde Catalogado, igual que en la ficha científica.',
-      identityLabel: 'SISTEMA',
       filterLabel: normalizedSubtype === null
         ? 'TODOS'
         : normalizedSubtype === 'UNCLASSIFIED'
           ? 'Sin clasificar'
           : multiplicityLabelFromName(normalizedSubtype),
-      sortOptions: Object.freeze([
-        Object.freeze({ key: 'designation', label: 'Nombre / designación' }),
-        Object.freeze({ key: 'state', label: 'Estado científico' }),
-        Object.freeze({ key: 'multiplicity', label: 'Tipo de sistema' }),
-        Object.freeze({ key: 'components', label: 'Número de estrellas' }),
-        Object.freeze({ key: 'supernova', label: 'Supernova / linaje' }),
-        Object.freeze({ key: 'sector', label: 'Sector' }),
-        Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+      fields: Object.freeze([
+        galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', 'SISTEMA'),
+        galaxyKnowledgeCatalogField('state', 'Estado científico', {
+          columnLabel: 'ESTADO', defaultVisible: true,
+        }),
+        galaxyKnowledgeCatalogField('multiplicity', 'Tipo de sistema', {
+          columnLabel: 'TIPO', defaultVisible: true,
+        }),
+        galaxyKnowledgeCatalogField('components', 'Número de estrellas', {
+          columnLabel: 'ESTRELLAS', defaultVisible: true, align: 'end',
+        }),
+        galaxyKnowledgeCatalogField('supernova', 'Supernova / linaje', {
+          columnLabel: 'SUPERNOVA / LINAJE', defaultVisible: true,
+        }),
+        galaxyKnowledgeCatalogField('sector', 'Sector', {
+          columnLabel: 'SECTOR', defaultVisible: true, align: 'end',
+        }),
+        galaxyKnowledgeCatalogField('locator', 'Localización procedural'),
       ]),
       defaultSortKey: 'designation',
-      columns: Object.freeze([
-        Object.freeze({ key: 'state', label: 'ESTADO' }),
-        Object.freeze({ key: 'multiplicity', label: 'TIPO' }),
-        Object.freeze({ key: 'components', label: 'ESTRELLAS', align: 'end' as const }),
-        Object.freeze({ key: 'supernova', label: 'SUPERNOVA / LINAJE' }),
-        Object.freeze({ key: 'sector', label: 'SECTOR', align: 'end' as const }),
-      ]),
     });
   }
 
@@ -129,11 +134,11 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
     let rows: readonly GalaxyKnowledgeCatalogRow[];
 
     if (request.query.sortKey === 'supernova') {
-      // Supernova/lineage is intentionally an opt-in expensive sort. Correct
-      // ordering requires a scientific label for every filtered system, so the
-      // full filtered set is materialized only when the user selects this key.
-      // Labels are cached per system; normal catalogue sorts retain the 26.1c.7
-      // page-first performance boundary.
+      // 29.1E-b: supernova/lineage is an intentionally opt-in expensive sort.
+      // Correct ordering requires the scientific label for every filtered
+      // system, so the full filtered set is materialized only for this key.
+      // Labels remain cached per system; every other sort preserves the
+      // 26.1c.7 page-first performance boundary.
       const labelledRecords = await Promise.all(
         sourceRecords
           .filter(matchesRequestedSubtype)
@@ -179,8 +184,6 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
       const start = (page - 1) * request.query.pageSize;
       const selected = records.slice(start, start + request.query.pageSize);
 
-      // For every non-supernova sort we preserve the page-first materialization
-      // boundary: transient science is resolved only for visible rows.
       rows = Object.freeze(await Promise.all(
         selected.map(async (record) =>
           toRow(
@@ -349,6 +352,7 @@ function toRow(
       components: multiplicity === null ? undefined : multiplicity.stellarComponentCount.toLocaleString('es-ES'),
       supernova: supernovaCatalogLabel,
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
+      locator: locatorLabel,
     }),
     actions: Object.freeze([
       Object.freeze({

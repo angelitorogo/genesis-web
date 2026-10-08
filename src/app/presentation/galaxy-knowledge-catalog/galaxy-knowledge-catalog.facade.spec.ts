@@ -14,6 +14,11 @@ import {
   type GalaxyKnowledgeCatalogDataSource,
 } from './galaxy-knowledge-catalog.data-source';
 import { GalaxyKnowledgeCatalogFacade } from './galaxy-knowledge-catalog.facade';
+import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogField,
+  galaxyKnowledgeCatalogIdentityField,
+} from './galaxy-knowledge-catalog.model';
 
 const generationKey = new UniverseGenerationKey(
   UniverseSeed.parse(DEFAULT_UNIVERSE_SEED),
@@ -49,17 +54,15 @@ describe('26.1c.1 GalaxyKnowledgeCatalogFacade', () => {
       describe(category, subtype) {
         expect(category).toBe('extremes');
         expect(subtype).toBe('MAGNETAR');
-        return Object.freeze({
+        return defineGalaxyKnowledgeCatalogDescriptor({
           category,
           title: 'Magnetares',
           description: 'test',
-          identityLabel: 'OBJETO',
-          sortOptions: Object.freeze([
-            Object.freeze({ key: 'designation', label: 'Nombre' }),
-            Object.freeze({ key: 'state', label: 'Estado' }),
+          fields: Object.freeze([
+            galaxyKnowledgeCatalogIdentityField('designation', 'Nombre', 'OBJETO'),
+            galaxyKnowledgeCatalogField('state', 'Estado'),
           ]),
           defaultSortKey: 'designation',
-          columns: Object.freeze([]),
         });
       },
       query,
@@ -112,14 +115,14 @@ describe('26.1c.1 GalaxyKnowledgeCatalogFacade', () => {
     } as unknown as GenesisLocalRepositories;
     const dataSource: GalaxyKnowledgeCatalogDataSource = {
       describe() {
-        return Object.freeze({
+        return defineGalaxyKnowledgeCatalogDescriptor({
           category: 'systems',
           title: 'Sistemas',
           description: 'test',
-          identityLabel: 'OBJETO',
-          sortOptions: Object.freeze([Object.freeze({ key: 'designation', label: 'Nombre' })]),
+          fields: Object.freeze([
+            galaxyKnowledgeCatalogIdentityField('designation', 'Nombre', 'OBJETO'),
+          ]),
           defaultSortKey: 'designation',
-          columns: Object.freeze([]),
         });
       },
       query,

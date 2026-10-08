@@ -234,13 +234,22 @@
                   } @else if (campaign.discoveryStateLabel === 'Confirmado') {
                     <div
                       class="observatory__transition-note"
-                      data-testid="observatory-campaign-complete"
+                      [attr.data-testid]="campaign.completionPercent === 100 ? 'observatory-campaign-complete' : 'observatory-campaign-pending'"
                     >
-                      <strong>Campaña científica completada.</strong>
-                      <p>
-                        La confirmación procede de evidencia adicional e independiente.
-                        No existe un botón alternativo para promocionar el estado.
-                      </p>
+                      @if (campaign.completionPercent === 100) {
+                        <strong>Campaña científica completada.</strong>
+                        <p>
+                          Las evidencias de esta campaña satisfacen todos sus requisitos.
+                          No existe una promoción científica posterior al estado confirmado.
+                        </p>
+                      } @else {
+                        <strong>Sistema confirmado · campaña observacional pendiente.</strong>
+                        <p>
+                          El estado confirmado no completa ni fabrica evidencias de campaña.
+                          No existe una promoción científica posterior y las evidencias ausentes
+                          permanecen registradas como no obtenidas.
+                        </p>
+                      }
                     </div>
                   } @else {
                     <div class="observatory__transition-note">

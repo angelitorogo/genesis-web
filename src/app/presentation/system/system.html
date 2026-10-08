@@ -431,7 +431,7 @@
                   <header class="system-page__section-header">
                     <div>
                       <small>CAPA 05</small>
-                      <h2>Habitabilidad del sistema</h2>
+                      <h2>Caracterización de habitabilidad</h2>
                     </div>
                     <span>{{ isConfirmed(systemCard.knowledgeLevel) ? 'CONFIRMADA' : 'BLOQUEADA' }}</span>
                   </header>
@@ -556,7 +556,12 @@
                       </p>
                     } @else if (campaign.discoveryStateLabel === 'Confirmado') {
                       <p class="system-page__campaign-note">
-                        Campaña completada. El estado confirmado no tiene una promoción científica posterior.
+                        @if (campaign.completionPercent === 100) {
+                          Campaña completada. El estado confirmado no tiene una promoción científica posterior.
+                        } @else {
+                          El sistema está confirmado, pero su campaña observacional sigue pendiente.
+                          El estado confirmado no implica que existan las evidencias requeridas por esta campaña.
+                        }
                       </p>
                     }
 

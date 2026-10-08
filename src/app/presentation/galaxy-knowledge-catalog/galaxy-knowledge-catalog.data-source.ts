@@ -1,6 +1,9 @@
 import { inject, Injectable, InjectionToken } from '@angular/core';
 
 import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogField,
+  galaxyKnowledgeCatalogIdentityField,
   type GalaxyKnowledgeCatalogCategory,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
@@ -53,19 +56,17 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
       ? categoryTitle(category)
       : `${categoryTitle(category)} · ${subtype.replaceAll('_', ' ')}`;
 
-    return Object.freeze({
+    return defineGalaxyKnowledgeCatalogDescriptor({
       category,
       title,
       description:
         'Catálogo knowledge-safe preparado para consultar únicamente conocimiento persistido de esta galaxia.',
-      identityLabel: 'OBJETO',
-      sortOptions: Object.freeze([
-        Object.freeze({ key: 'designation', label: 'Nombre / designación' }),
-        Object.freeze({ key: 'state', label: 'Estado científico' }),
-        Object.freeze({ key: 'locator', label: 'Localización' }),
+      fields: Object.freeze([
+        galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', 'OBJETO'),
+        galaxyKnowledgeCatalogField('state', 'Estado científico'),
+        galaxyKnowledgeCatalogField('locator', 'Localización'),
       ]),
       defaultSortKey: 'designation',
-      columns: Object.freeze([]),
     });
   }
 

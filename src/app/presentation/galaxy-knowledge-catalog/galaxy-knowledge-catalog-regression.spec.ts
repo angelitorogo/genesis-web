@@ -8,6 +8,8 @@ import {
   PendingGalaxyKnowledgeCatalogDataSource,
 } from './galaxy-knowledge-catalog.data-source';
 import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogIdentityField,
   type GalaxyKnowledgeCatalogCategory,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -36,16 +38,14 @@ const categories: readonly GalaxyKnowledgeCatalogCategory[] = Object.freeze([
 ]);
 
 function descriptor(category: GalaxyKnowledgeCatalogCategory): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category,
     title: category,
     description: '26.1c.7 regression descriptor',
-    identityLabel: 'OBJETO',
-    sortOptions: Object.freeze([
-      Object.freeze({ key: 'designation', label: 'Nombre / designación' }),
+    fields: Object.freeze([
+      galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', 'OBJETO'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([]),
   });
 }
 

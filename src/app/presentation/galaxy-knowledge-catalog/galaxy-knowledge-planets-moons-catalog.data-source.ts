@@ -16,6 +16,9 @@ import {
   type GalaxyKnowledgePlanetMoonCatalogSnapshot,
 } from '../runtime/galaxy-planet-moon-catalog-snapshot.runtime';
 import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogField,
+  galaxyKnowledgeCatalogIdentityField,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -111,74 +114,82 @@ export class GalaxyKnowledgePlanetsMoonsCatalogDataSource {
 function describePlanets(
   subtype: PlanetCatalogFilter | null,
 ): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'planets' as const,
     title: subtype === null ? 'Planetas conocidos' : planetFilterTitle(subtype),
     description:
       'Planetas pertenecientes al conocimiento persistido de la galaxia. Los sistemas confirmados proyectan su inventario público completo; los BodyLocator históricos sin padre confirmado permanecen físicamente sin clasificar.',
-    identityLabel: 'PLANETA',
     filterLabel: subtype === null ? 'TODOS' : planetFilterLabel(subtype),
-    sortOptions: Object.freeze([
-      Object.freeze({ key: 'designation', label: 'Nombre / designación' }),
-      Object.freeze({ key: 'state', label: 'Estado científico' }),
-      Object.freeze({ key: 'type', label: 'Tipo planetario' }),
-      Object.freeze({ key: 'system', label: 'Sistema anfitrión' }),
-      Object.freeze({ key: 'mass', label: 'Masa' }),
-      Object.freeze({ key: 'radius', label: 'Radio' }),
-      Object.freeze({ key: 'orbit', label: 'Semieje mayor' }),
-      Object.freeze({ key: 'period', label: 'Período orbital' }),
-      Object.freeze({ key: 'water', label: 'Agua líquida superficial' }),
-      Object.freeze({ key: 'temperature', label: 'Temperatura superficial media' }),
-      Object.freeze({ key: 'sector', label: 'Sector' }),
-      Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+    fields: Object.freeze([
+      galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', 'PLANETA'),
+      galaxyKnowledgeCatalogField('state', 'Estado científico', {
+        columnLabel: 'ESTADO', defaultVisible: true,
+      }),
+      galaxyKnowledgeCatalogField('type', 'Tipo planetario', {
+        columnLabel: 'TIPO', defaultVisible: true,
+      }),
+      galaxyKnowledgeCatalogField('system', 'Sistema anfitrión', {
+        columnLabel: 'SISTEMA', defaultVisible: true,
+      }),
+      galaxyKnowledgeCatalogField('mass', 'Masa', {
+        columnLabel: 'MASA', defaultVisible: true, align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('radius', 'Radio', {
+        columnLabel: 'RADIO', defaultVisible: true, align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('orbit', 'Semieje mayor', {
+        columnLabel: 'ÓRBITA', defaultVisible: true, align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('period', 'Período orbital'),
+      galaxyKnowledgeCatalogField('water', 'Agua líquida superficial', {
+        columnLabel: 'AGUA', defaultVisible: true, align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('temperature', 'Temperatura superficial media'),
+      galaxyKnowledgeCatalogField('sector', 'Sector'),
+      galaxyKnowledgeCatalogField('locator', 'Localización procedural'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'state', label: 'ESTADO' }),
-      Object.freeze({ key: 'type', label: 'TIPO' }),
-      Object.freeze({ key: 'system', label: 'SISTEMA' }),
-      Object.freeze({ key: 'mass', label: 'MASA', align: 'end' as const }),
-      Object.freeze({ key: 'radius', label: 'RADIO', align: 'end' as const }),
-      Object.freeze({ key: 'orbit', label: 'ÓRBITA', align: 'end' as const }),
-      Object.freeze({ key: 'water', label: 'AGUA', align: 'end' as const }),
-    ]),
   });
 }
 
 function describeMoons(
   subtype: MoonCatalogFilter | null,
 ): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'moons' as const,
     title: subtype === null ? 'Lunas conocidas' : moonFilterTitle(subtype),
     description:
       'Lunas con identidad científica individual materializada en sistemas confirmados. Las poblaciones de lunas menores no materializadas permanecen como agregados estadísticos y no se convierten en fichas individuales inventadas.',
-    identityLabel: 'LUNA',
     filterLabel: subtype === null ? 'TODAS' : moonFilterLabel(subtype),
-    sortOptions: Object.freeze([
-      Object.freeze({ key: 'designation', label: 'Nombre / designación' }),
-      Object.freeze({ key: 'composition', label: 'Composición roca / hielo' }),
-      Object.freeze({ key: 'planet', label: 'Planeta anfitrión' }),
-      Object.freeze({ key: 'system', label: 'Sistema anfitrión' }),
-      Object.freeze({ key: 'mass', label: 'Masa' }),
-      Object.freeze({ key: 'radius', label: 'Radio' }),
-      Object.freeze({ key: 'period', label: 'Período orbital' }),
-      Object.freeze({ key: 'ice', label: 'Riqueza de hielo' }),
-      Object.freeze({ key: 'surface-water', label: 'Potencial de agua superficial' }),
-      Object.freeze({ key: 'subsurface-ocean', label: 'Potencial de océano subsuperficial' }),
-      Object.freeze({ key: 'sector', label: 'Sector' }),
-      Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+    fields: Object.freeze([
+      galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', 'LUNA'),
+      galaxyKnowledgeCatalogField('composition', 'Composición roca / hielo', {
+        columnLabel: 'COMPOSICIÓN', defaultVisible: true,
+      }),
+      galaxyKnowledgeCatalogField('planet', 'Planeta anfitrión', {
+        columnLabel: 'PLANETA', defaultVisible: true,
+      }),
+      galaxyKnowledgeCatalogField('system', 'Sistema anfitrión', {
+        columnLabel: 'SISTEMA', defaultVisible: true,
+      }),
+      galaxyKnowledgeCatalogField('mass', 'Masa', {
+        columnLabel: 'MASA', defaultVisible: true, align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('radius', 'Radio', {
+        columnLabel: 'RADIO', defaultVisible: true, align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('period', 'Período orbital'),
+      galaxyKnowledgeCatalogField('ice', 'Riqueza de hielo', {
+        columnLabel: 'HIELO', defaultVisible: true, align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('surface-water', 'Potencial de agua superficial', {
+        columnLabel: 'AGUA', defaultVisible: true, cellKey: 'water', align: 'end',
+      }),
+      galaxyKnowledgeCatalogField('subsurface-ocean', 'Potencial de océano subsuperficial'),
+      galaxyKnowledgeCatalogField('sector', 'Sector'),
+      galaxyKnowledgeCatalogField('locator', 'Localización procedural'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'composition', label: 'COMPOSICIÓN' }),
-      Object.freeze({ key: 'planet', label: 'PLANETA' }),
-      Object.freeze({ key: 'system', label: 'SISTEMA' }),
-      Object.freeze({ key: 'mass', label: 'MASA', align: 'end' as const }),
-      Object.freeze({ key: 'radius', label: 'RADIO', align: 'end' as const }),
-      Object.freeze({ key: 'ice', label: 'HIELO', align: 'end' as const }),
-      Object.freeze({ key: 'water', label: 'AGUA', align: 'end' as const }),
-    ]),
   });
 }
 
@@ -293,7 +304,11 @@ function toPlanetRow(record: GalaxyKnowledgePlanetCatalogEntry): GalaxyKnowledge
       mass: formatEarth(record.massEarth, 'M⊕'),
       radius: formatEarth(record.radiusEarth, 'R⊕'),
       orbit: formatNumber(record.semiMajorAxisAu, 'UA'),
+      period: formatNumber(record.orbitalPeriodDays, 'd'),
       water: formatPercent(record.surfaceLiquidWaterCoverageFraction01),
+      temperature: formatNumber(record.meanSurfaceTemperatureKelvin, 'K'),
+      sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
+      locator: record.id,
     }),
     actions: Object.freeze(actions),
   });
@@ -310,8 +325,12 @@ function toMoonRow(record: GalaxyKnowledgeMoonCatalogEntry): GalaxyKnowledgeCata
       system: record.systemDesignation,
       mass: formatEarth(record.massEarth, 'M⊕'),
       radius: formatEarth(record.radiusEarth, 'R⊕'),
+      period: formatNumber(record.orbitalPeriodDays, 'd'),
       ice: formatPercent(record.inferredIceRichnessIndex01),
       water: formatPercent(record.surfaceLiquidWaterPotentialIndex01),
+      'subsurface-ocean': formatPercent(record.subsurfaceOceanPotentialIndex01),
+      sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
+      locator: record.id,
     }),
     actions: Object.freeze([
       Object.freeze({

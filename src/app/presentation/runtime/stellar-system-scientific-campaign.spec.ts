@@ -318,6 +318,37 @@ describe(
     );
 
     it(
+      'should not equate CONFIRMED with a completed campaign when confirmation evidence is still missing',
+      () => {
+        const completeness =
+          evaluateScientificCompleteness(
+            STELLAR_SYSTEM_SCIENTIFIC_PROFILE_V1
+              .confirmationProfile
+              .confirmationRequirements,
+            [],
+          );
+
+        const model =
+          StellarSystemScientificCampaignAssembler.build(
+            new StellarSystemScientificProgressionSnapshot(
+              DiscoveryState.CONFIRMED,
+              [],
+              completeness,
+              0n,
+              0n,
+              [],
+            ),
+          );
+
+        expect(model.discoveryStateLabel).toBe('Confirmado');
+        expect(model.completionPercent).toBe(0);
+        expect(model.satisfiedRequirementCount).toBe(0);
+        expect(model.totalRequirementCount).toBeGreaterThan(0);
+        expect(model.stageLabel).toBe('Campaña científica pendiente');
+      },
+    );
+
+    it(
       'should expose no Ground Truth fields in the campaign projection',
       () => {
         const snapshot =

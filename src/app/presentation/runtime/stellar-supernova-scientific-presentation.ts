@@ -73,12 +73,13 @@ export class StellarSupernovaScientificPresentationAssembler {
       ),
     );
 
-    const directCollapseCount = snapshot.lineages.filter((lineage) =>
+    const directCollapseLineages = snapshot.lineages.filter((lineage) =>
       lineage.stage === SupernovaStellarLineageStage.DIRECT_COLLAPSE_NO_SUPERNOVA,
-    ).length;
+    );
+    const directCollapseCount = directCollapseLineages.length;
 
     return Object.freeze({
-      summary: summaryLabel(snapshot.events.length, directCollapseCount),
+      summary: summaryLabel(snapshot.events.length, directCollapseLineages),
       catalogLabel: catalogLabel(snapshot.events, directCollapseCount),
       canonicalEventCount: snapshot.events.length,
       directCollapseCount,
@@ -224,8 +225,11 @@ function remnantMassLabel(consequence: SupernovaStellarConsequence): string {
   return `${formatNumber(consequence.postEventStellarMassSolar)} M☉`;
 }
 
-function summaryLabel(eventCount: number, directCollapseCount: number): string {
-  if (eventCount === 0 && directCollapseCount === 0) {
+function summaryLabel(
+  eventCount: number,
+  directCollapseLineages: readonly SupernovaStellarLineage[],
+): string {
+  if (eventCount === 0 && directCollapseLineages.length === 0) {
     return 'No existe un canal de supernova canónico en las componentes actuales.';
   }
 
@@ -233,8 +237,25 @@ function summaryLabel(eventCount: number, directCollapseCount: number): string {
   if (eventCount > 0) {
     pieces.push(`${eventCount} supernova${eventCount === 1 ? '' : 's'} canónica${eventCount === 1 ? '' : 's'}`);
   }
-  if (directCollapseCount > 0) {
-    pieces.push(`${directCollapseCount} colapso${directCollapseCount === 1 ? '' : 's'} directo${directCollapseCount === 1 ? '' : 's'} sin supernova`);
+
+  const historicalDirectCollapseCount = directCollapseLineages.filter(
+    lineage => lineage.currentEvolutionState.name === 'STELLAR_BLACK_HOLE',
+  ).length;
+  const futureDirectCollapseCount =
+    directCollapseLineages.length - historicalDirectCollapseCount;
+
+  if (historicalDirectCollapseCount > 0) {
+    pieces.push(
+      `${historicalDirectCollapseCount} colapso${historicalDirectCollapseCount === 1 ? '' : 's'} ` +
+      `directo${historicalDirectCollapseCount === 1 ? '' : 's'} histórico${historicalDirectCollapseCount === 1 ? '' : 's'}`,
+    );
+  }
+  if (futureDirectCollapseCount > 0) {
+    pieces.push(
+      `${futureDirectCollapseCount} colapso${futureDirectCollapseCount === 1 ? '' : 's'} ` +
+      `directo${futureDirectCollapseCount === 1 ? '' : 's'} futuro${futureDirectCollapseCount === 1 ? '' : 's'} ` +
+      `previsto${futureDirectCollapseCount === 1 ? '' : 's'}`,
+    );
   }
   return pieces.join(' · ');
 }

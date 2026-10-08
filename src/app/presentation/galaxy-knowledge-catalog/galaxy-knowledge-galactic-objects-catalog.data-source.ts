@@ -29,6 +29,9 @@ import { GalaxyGenerator } from '../../simulation/universe/galaxy-generator';
 import { GENESIS_LOCAL_REPOSITORIES } from '../runtime/genesis-local-repositories';
 import { galaxyKnowledgeRevision } from '../runtime/galaxy-knowledge-snapshot.runtime';
 import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogField,
+  galaxyKnowledgeCatalogIdentityField,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -270,91 +273,63 @@ function hotRecords<T extends BaseRecord>(
 }
 
 function clusterDescriptor(subtype: ClusterSubtype | null): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'clusters' as const,
     title: subtype === null ? 'Cúmulos conocidos' : clusterCatalogueTitle(subtype),
     description: 'Cúmulos estelares presentes en el conocimiento persistido. La clase se conoce desde Descubierto; las propiedades agregadas solo se publican desde Catalogado.',
-    identityLabel: 'CÚMULO',
     filterLabel: subtype === null ? 'TODOS' : clusterSubtypeLabel(subtype),
-    sortOptions: Object.freeze([
-      Object.freeze({ key: 'designation', label: 'Tipo / designación' }),
-      Object.freeze({ key: 'state', label: 'Estado científico' }),
-      Object.freeze({ key: 'type', label: 'Tipo de cúmulo' }),
-      Object.freeze({ key: 'stars', label: 'Número de estrellas' }),
-      Object.freeze({ key: 'mass', label: 'Masa total' }),
-      Object.freeze({ key: 'age', label: 'Edad' }),
-      Object.freeze({ key: 'radius', label: 'Radio característico' }),
-      Object.freeze({ key: 'sector', label: 'Sector' }),
-      Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+    fields: Object.freeze([
+      galaxyKnowledgeCatalogIdentityField('designation', 'Tipo / designación', 'CÚMULO'),
+      galaxyKnowledgeCatalogField('state', 'Estado científico', { columnLabel: 'ESTADO', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('type', 'Tipo de cúmulo', { columnLabel: 'TIPO', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('stars', 'Número de estrellas', { columnLabel: 'ESTRELLAS', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('mass', 'Masa total', { columnLabel: 'MASA', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('age', 'Edad', { columnLabel: 'EDAD', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('radius', 'Radio característico', { columnLabel: 'RADIO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('sector', 'Sector', { columnLabel: 'SECTOR', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('locator', 'Localización procedural'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'state', label: 'ESTADO' }),
-      Object.freeze({ key: 'type', label: 'TIPO' }),
-      Object.freeze({ key: 'stars', label: 'ESTRELLAS', align: 'end' as const }),
-      Object.freeze({ key: 'mass', label: 'MASA', align: 'end' as const }),
-      Object.freeze({ key: 'age', label: 'EDAD', align: 'end' as const }),
-      Object.freeze({ key: 'radius', label: 'RADIO', align: 'end' as const }),
-      Object.freeze({ key: 'sector', label: 'SECTOR', align: 'end' as const }),
-    ]),
   });
 }
 
 function nebulaDescriptor(subtype: NebulaSubtype | null): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'nebulae' as const,
     title: subtype === null ? 'Nebulosas conocidas' : nebulaCatalogueTitle(subtype),
     description: 'Nebulosas presentes en el conocimiento persistido. Las regiones H II se reconocen desde Descubierto; los demás subtipos y magnitudes físicas requieren Catalogado.',
-    identityLabel: 'NEBULOSA',
     filterLabel: subtype === null ? 'TODAS' : nebulaSubtypeLabel(subtype),
-    sortOptions: Object.freeze([
-      Object.freeze({ key: 'designation', label: 'Tipo / designación' }),
-      Object.freeze({ key: 'state', label: 'Estado científico' }),
-      Object.freeze({ key: 'type', label: 'Tipo de nebulosa' }),
-      Object.freeze({ key: 'radius', label: 'Radio' }),
-      Object.freeze({ key: 'mass', label: 'Masa' }),
-      Object.freeze({ key: 'temperature', label: 'Temperatura del gas' }),
-      Object.freeze({ key: 'density', label: 'Densidad de hidrógeno' }),
-      Object.freeze({ key: 'sector', label: 'Sector' }),
-      Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+    fields: Object.freeze([
+      galaxyKnowledgeCatalogIdentityField('designation', 'Tipo / designación', 'NEBULOSA'),
+      galaxyKnowledgeCatalogField('state', 'Estado científico', { columnLabel: 'ESTADO', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('type', 'Tipo de nebulosa', { columnLabel: 'TIPO', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('radius', 'Radio', { columnLabel: 'RADIO', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('mass', 'Masa', { columnLabel: 'MASA', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('temperature', 'Temperatura del gas', { columnLabel: 'TEMP.', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('density', 'Densidad de hidrógeno', { columnLabel: 'DENSIDAD', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('sector', 'Sector', { columnLabel: 'SECTOR', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('locator', 'Localización procedural'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'state', label: 'ESTADO' }),
-      Object.freeze({ key: 'type', label: 'TIPO' }),
-      Object.freeze({ key: 'radius', label: 'RADIO', align: 'end' as const }),
-      Object.freeze({ key: 'mass', label: 'MASA', align: 'end' as const }),
-      Object.freeze({ key: 'temperature', label: 'TEMP.', align: 'end' as const }),
-      Object.freeze({ key: 'density', label: 'DENSIDAD', align: 'end' as const }),
-      Object.freeze({ key: 'sector', label: 'SECTOR', align: 'end' as const }),
-    ]),
   });
 }
 
 function extremeDescriptor(subtype: ExtremeSubtype | null): GalaxyKnowledgeCatalogDescriptor {
-  return Object.freeze({
+  return defineGalaxyKnowledgeCatalogDescriptor({
     category: 'extremes' as const,
     title: subtype === null ? 'Objetos extremos conocidos' : extremeCatalogueTitle(subtype),
     description: 'Fuentes extremas presentes en el conocimiento persistido. El tipo exacto de los extremos distribuidos solo se publica desde Catalogado, igual que en Archive Genesis.',
-    identityLabel: 'OBJETO EXTREMO',
     filterLabel: subtype === null ? 'TODOS' : extremeSubtypeLabel(subtype),
-    sortOptions: Object.freeze([
-      Object.freeze({ key: 'designation', label: 'Tipo / designación' }),
-      Object.freeze({ key: 'state', label: 'Estado científico' }),
-      Object.freeze({ key: 'type', label: 'Tipo extremo' }),
-      Object.freeze({ key: 'family', label: 'Familia física' }),
-      Object.freeze({ key: 'semantic', label: 'Régimen físico' }),
-      Object.freeze({ key: 'sector', label: 'Sector' }),
-      Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+    fields: Object.freeze([
+      galaxyKnowledgeCatalogIdentityField('designation', 'Tipo / designación', 'OBJETO EXTREMO'),
+      galaxyKnowledgeCatalogField('state', 'Estado científico', { columnLabel: 'ESTADO', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('type', 'Tipo extremo', { columnLabel: 'TIPO', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('family', 'Familia física', { columnLabel: 'FAMILIA', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('semantic', 'Régimen físico', { columnLabel: 'RÉGIMEN', defaultVisible: true }),
+      galaxyKnowledgeCatalogField('sector', 'Sector', { columnLabel: 'SECTOR', defaultVisible: true, align: 'end' }),
+      galaxyKnowledgeCatalogField('locator', 'Localización procedural'),
     ]),
     defaultSortKey: 'designation',
-    columns: Object.freeze([
-      Object.freeze({ key: 'state', label: 'ESTADO' }),
-      Object.freeze({ key: 'type', label: 'TIPO' }),
-      Object.freeze({ key: 'family', label: 'FAMILIA' }),
-      Object.freeze({ key: 'semantic', label: 'RÉGIMEN' }),
-      Object.freeze({ key: 'sector', label: 'SECTOR', align: 'end' as const }),
-    ]),
   });
 }
 
@@ -524,6 +499,7 @@ function clusterRow(record: ClusterRecord): GalaxyKnowledgeCatalogRow {
       age: formatNumber(record.ageGyr, 'Ga'),
       radius: formatNumber(record.radiusPc, 'pc'),
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
+      locator: locatorLabel(record.locator),
     }),
     actions: objectActions(record.locator),
   });
@@ -542,6 +518,7 @@ function nebulaRow(record: NebulaRecord): GalaxyKnowledgeCatalogRow {
       temperature: formatNumber(record.temperatureK, 'K', 0),
       density: formatNumber(record.densityCm3, 'cm⁻³'),
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
+      locator: locatorLabel(record.locator),
     }),
     actions: objectActions(record.locator),
   });
@@ -558,6 +535,7 @@ function extremeRow(record: ExtremeRecord): GalaxyKnowledgeCatalogRow {
       family: record.family ?? undefined,
       semantic: record.semanticKind ?? undefined,
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
+      locator: locatorLabel(record.locator),
     }),
     actions: objectActions(record.locator),
   });

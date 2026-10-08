@@ -1,20 +1,26 @@
 import {
+  defineGalaxyKnowledgeCatalogDescriptor,
+  galaxyKnowledgeCatalogColumnsForLayout,
+  galaxyKnowledgeCatalogDefaultColumnLayout,
+  galaxyKnowledgeCatalogField,
+  galaxyKnowledgeCatalogHiddenFields,
+  galaxyKnowledgeCatalogIdentityField,
+  galaxyKnowledgeCatalogVisibleFields,
+  normalizeGalaxyKnowledgeCatalogColumnLayout,
   galaxyKnowledgeCatalogCategoryDefinition,
   normalizeGalaxyKnowledgeCatalogQuery,
   type GalaxyKnowledgeCatalogDescriptor,
 } from './galaxy-knowledge-catalog.model';
 
-const descriptor: GalaxyKnowledgeCatalogDescriptor = Object.freeze({
+const descriptor: GalaxyKnowledgeCatalogDescriptor = defineGalaxyKnowledgeCatalogDescriptor({
   category: 'extremes',
   title: 'Objetos extremos conocidos',
   description: 'test',
-  identityLabel: 'OBJETO',
-  sortOptions: Object.freeze([
-    Object.freeze({ key: 'designation', label: 'Nombre' }),
-    Object.freeze({ key: 'state', label: 'Estado' }),
+  fields: Object.freeze([
+    galaxyKnowledgeCatalogIdentityField('designation', 'Nombre', 'OBJETO'),
+    galaxyKnowledgeCatalogField('state', 'Estado'),
   ]),
   defaultSortKey: 'designation',
-  columns: Object.freeze([]),
 });
 
 describe('26.1c.1 galaxy knowledge catalogue query contract', () => {
@@ -46,6 +52,83 @@ describe('26.1c.1 galaxy knowledge catalogue query contract', () => {
       sortKey: 'state',
       direction: 'desc',
     });
+  });
+
+  it('derives sorting and default columns from one field registry', () => {
+    const unified = defineGalaxyKnowledgeCatalogDescriptor({
+      category: 'planets',
+      title: 'Planetas',
+      description: 'test',
+      fields: Object.freeze([
+        galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', 'PLANETA'),
+        galaxyKnowledgeCatalogField('mass', 'Masa', {
+          columnLabel: 'MASA', defaultVisible: true, align: 'end',
+        }),
+        galaxyKnowledgeCatalogField('temperature', 'Temperatura'),
+        galaxyKnowledgeCatalogField('diagnostic', 'Diagnóstico', {
+          columnLabel: 'DIAGNÓSTICO', defaultVisible: true,
+        }),
+      ]),
+      defaultSortKey: 'designation',
+    });
+
+    expect(unified.sortOptions).toEqual([
+      { key: 'designation', label: 'Nombre / designación' },
+      { key: 'mass', label: 'Masa' },
+      { key: 'temperature', label: 'Temperatura' },
+      { key: 'diagnostic', label: 'Diagnóstico' },
+    ]);
+    expect(unified.columns).toEqual([
+      { key: 'mass', label: 'MASA', align: 'end' },
+      { key: 'diagnostic', label: 'DIAGNÓSTICO' },
+    ]);
+    expect(unified.identityLabel).toBe('PLANETA');
+  });
+
+  it('requires every configurable data field to be a real sorting option', () => {
+    expect(() => defineGalaxyKnowledgeCatalogDescriptor({
+      category: 'planets',
+      title: 'Planetas',
+      description: 'test',
+      fields: Object.freeze([
+        galaxyKnowledgeCatalogIdentityField('designation', 'Nombre', 'PLANETA'),
+        galaxyKnowledgeCatalogField('mass', 'Masa', {
+          columnLabel: 'MASA', defaultVisible: true, sortable: false,
+        }),
+      ]),
+      defaultSortKey: 'designation',
+    })).toThrowError(/Todo campo configurable debe ser ordenable/);
+  });
+
+  it('builds an ordered configurable column layout from the same field registry', () => {
+    const configurable = defineGalaxyKnowledgeCatalogDescriptor({
+      category: 'planets',
+      title: 'Planetas',
+      description: 'test',
+      fields: Object.freeze([
+        galaxyKnowledgeCatalogIdentityField('designation', 'Nombre / designación', 'PLANETA'),
+        galaxyKnowledgeCatalogField('state', 'Estado', { columnLabel: 'ESTADO', defaultVisible: true }),
+        galaxyKnowledgeCatalogField('mass', 'Masa', { columnLabel: 'MASA', defaultVisible: true, align: 'end' }),
+        galaxyKnowledgeCatalogField('temperature', 'Temperatura', { columnLabel: 'TEMP.' }),
+      ]),
+      defaultSortKey: 'designation',
+    });
+
+    const defaults = galaxyKnowledgeCatalogDefaultColumnLayout(configurable);
+    expect(defaults.visibleFieldKeys).toEqual(['state', 'mass']);
+    expect(galaxyKnowledgeCatalogVisibleFields(configurable, defaults).map(field => field.key))
+      .toEqual(['state', 'mass']);
+    expect(galaxyKnowledgeCatalogHiddenFields(configurable, defaults).map(field => field.key))
+      .toEqual(['temperature']);
+
+    const customized = normalizeGalaxyKnowledgeCatalogColumnLayout(configurable, {
+      visibleFieldKeys: ['temperature', 'mass', 'temperature', 'designation', 'unknown'],
+    });
+    expect(customized.visibleFieldKeys).toEqual(['temperature', 'mass']);
+    expect(galaxyKnowledgeCatalogColumnsForLayout(configurable, customized)).toEqual([
+      { key: 'temperature', label: 'TEMP.' },
+      { key: 'mass', label: 'MASA', align: 'end' },
+    ]);
   });
 
   it('falls back to safe defaults for unsupported sort/page-size values', () => {

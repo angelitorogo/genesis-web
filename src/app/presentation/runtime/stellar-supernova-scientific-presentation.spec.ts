@@ -112,6 +112,7 @@ describe('29.1E — StellarSupernovaScientificPresentationAssembler', () => {
 
     expect(model.canonicalEventCount).toBe(0);
     expect(model.directCollapseCount).toBe(1);
+    expect(model.summary).toBe('1 colapso directo histórico');
     expect(model.catalogLabel).toBe('Colapso directo · sin SN');
     expect(model.entries[0]?.hasCanonicalEvent).toBe(false);
     expect(model.entries[0]?.eventTypeLabel).toBe('Sin supernova canónica');
@@ -145,6 +146,7 @@ describe('29.1E — StellarSupernovaScientificPresentationAssembler', () => {
       consequences: [],
     });
 
+    expect(model.summary).toBe('1 colapso directo futuro previsto');
     expect(model.entries[0]?.temporalLabel).toBe('Colapso directo futuro previsto');
     expect(model.entries[0]?.consequenceLabel).toBe('Remanente previsto: agujero negro estelar');
     expect(model.entries[0]?.eventAgeFieldLabel).toBe('Edad del colapso');

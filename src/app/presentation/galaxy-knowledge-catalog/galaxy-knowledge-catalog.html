@@ -80,7 +80,7 @@
             {{ model.descriptor.description }}
           </p>
 
-          <section class="gkc__toolbar" aria-label="Ordenación y paginación del catálogo">
+          <section class="gkc__toolbar" aria-label="Ordenación, paginación y columnas del catálogo">
             <label>
               <span>ORDENAR POR</span>
               <select
@@ -89,7 +89,10 @@
                 data-testid="gkc-sort"
               >
                 @for (option of model.descriptor.sortOptions; track option.key) {
-                  <option [value]="option.key">{{ option.label }}</option>
+                  <option
+                    [value]="option.key"
+                    [selected]="option.key === model.query.sortKey"
+                  >{{ option.label }}</option>
                 }
               </select>
             </label>
@@ -101,8 +104,8 @@
                 (change)="changeDirection($event)"
                 data-testid="gkc-direction"
               >
-                <option value="asc">Ascendente</option>
-                <option value="desc">Descendente</option>
+                <option value="asc" [selected]="model.query.direction === 'asc'">Ascendente</option>
+                <option value="desc" [selected]="model.query.direction === 'desc'">Descendente</option>
               </select>
             </label>
 
@@ -114,11 +117,116 @@
                 data-testid="gkc-page-size"
               >
                 @for (size of pageSizes; track size) {
-                  <option [value]="size">{{ size }}</option>
+                  <option [value]="size" [selected]="size === model.query.pageSize">{{ size }}</option>
                 }
               </select>
             </label>
+
+            <div class="gkc__columns-trigger">
+              <span>COLUMNAS</span>
+              <button
+                type="button"
+                class="gkc__columns-button"
+                [attr.aria-expanded]="columnsPanelOpen()"
+                aria-controls="gkc-column-panel"
+                (click)="toggleColumnsPanel()"
+                data-testid="gkc-columns-toggle"
+              >
+                Configurar · {{ visibleColumnCount(model.descriptor) }}
+              </button>
+            </div>
           </section>
+
+          @if (columnsPanelOpen()) {
+            <section
+              id="gkc-column-panel"
+              class="gkc__column-panel"
+              aria-label="Configuración de columnas"
+              data-testid="gkc-columns-panel"
+            >
+              <header class="gkc__column-panel-header">
+                <div>
+                  <strong>Columnas visibles</strong>
+                  <p>
+                    La identidad permanece fija al principio y Acciones al final.
+                    El resto puede mostrarse, ocultarse y reordenarse; esta configuración
+                    se conserva localmente por categoría de catálogo.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="gkc__reset-columns"
+                  (click)="resetColumns(model.descriptor)"
+                  data-testid="gkc-columns-reset"
+                >
+                  Restaurar valores por defecto
+                </button>
+              </header>
+
+              <div class="gkc__column-lists">
+                <div class="gkc__column-group">
+                  <small>VISIBLES</small>
+                  <div class="gkc__column-item gkc__column-item--fixed">
+                    <span aria-hidden="true">✓</span>
+                    <strong>{{ model.descriptor.identityLabel }}</strong>
+                    <em>Primera</em>
+                  </div>
+
+                  @for (field of visibleColumnFields(model.descriptor); track field.key) {
+                    <div class="gkc__column-item" data-testid="gkc-visible-column">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked
+                          (change)="changeColumnVisibility(model.descriptor, field.key, $event)"
+                          [attr.data-field-key]="field.key"
+                        />
+                        <span>{{ field.label }}</span>
+                      </label>
+                      <div class="gkc__column-order">
+                        <button
+                          type="button"
+                          [disabled]="!canMoveVisibleColumn(model.descriptor, field.key, -1)"
+                          (click)="moveVisibleColumn(model.descriptor, field.key, -1)"
+                          [attr.aria-label]="'Mover ' + field.label + ' a la izquierda'"
+                        >←</button>
+                        <button
+                          type="button"
+                          [disabled]="!canMoveVisibleColumn(model.descriptor, field.key, 1)"
+                          (click)="moveVisibleColumn(model.descriptor, field.key, 1)"
+                          [attr.aria-label]="'Mover ' + field.label + ' a la derecha'"
+                        >→</button>
+                      </div>
+                    </div>
+                  }
+
+                  <div class="gkc__column-item gkc__column-item--fixed">
+                    <span aria-hidden="true">✓</span>
+                    <strong>Acciones</strong>
+                    <em>Última</em>
+                  </div>
+                </div>
+
+                <div class="gkc__column-group">
+                  <small>DISPONIBLES</small>
+                  @if (hiddenColumnFields(model.descriptor).length === 0) {
+                    <p class="gkc__no-columns">Todos los campos disponibles están visibles.</p>
+                  } @else {
+                    @for (field of hiddenColumnFields(model.descriptor); track field.key) {
+                      <label class="gkc__column-item gkc__column-item--available" data-testid="gkc-hidden-column">
+                        <input
+                          type="checkbox"
+                          (change)="changeColumnVisibility(model.descriptor, field.key, $event)"
+                          [attr.data-field-key]="field.key"
+                        />
+                        <span>{{ field.label }}</span>
+                      </label>
+                    }
+                  }
+                </div>
+              </div>
+            </section>
+          }
 
           @if (model.data.kind === 'not-connected') {
             <section class="gkc__state" data-testid="gkc-category-pending">
@@ -148,7 +256,7 @@
                   <thead>
                     <tr>
                       <th>{{ model.descriptor.identityLabel }}</th>
-                      @for (column of model.descriptor.columns; track column.key) {
+                      @for (column of visibleColumns(model.descriptor); track column.key) {
                         <th [class.gkc__right]="column.align === 'end'">{{ column.label }}</th>
                       }
                       <th>ACCIONES</th>
@@ -159,8 +267,11 @@
                       <tr data-testid="gkc-row">
                         <td>
                           <strong>{{ row.title }}</strong>
+                          @if (row.subtitle) {
+                            <small>{{ row.subtitle }}</small>
+                          }
                         </td>
-                        @for (column of model.descriptor.columns; track column.key) {
+                        @for (column of visibleColumns(model.descriptor); track column.key) {
                           <td
                             class="gkc__value-cell"
                             [class.gkc__right]="column.align === 'end'"
