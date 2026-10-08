@@ -54,6 +54,10 @@ import {
   StellarGenerator,
 } from '../stellar/stellar-generator';
 import {
+  estimateWhiteDwarfCurrentMassSolar,
+} from '../stellar/stellar-white-dwarf-current-mass';
+
+import {
   SupernovaEventEngine,
 } from './supernova-event-engine';
 
@@ -543,7 +547,7 @@ function estimatedWhiteDwarfMass(
     component.lifetimeProfile.evolutionAssessment.input.initialMassSolar;
 
   return clamp(
-    0.109 * initialMassSolar + 0.394,
+    estimateWhiteDwarfCurrentMassSolar(initialMassSolar),
     IA_MIN_BASE_WHITE_DWARF_MASS_SOLAR,
     IA_MAX_BASE_CO_WHITE_DWARF_MASS_SOLAR,
   );

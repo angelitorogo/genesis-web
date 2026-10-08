@@ -12,6 +12,9 @@ import {
 import {
   type SupernovaCanonicalEventRepository,
 } from '../../domain/repository/supernova-canonical-event-repository';
+import {
+  type NovaCanonicalEventRepository,
+} from '../../domain/repository/nova-canonical-event-repository';
 
 import {
   type ProceduralLocator,
@@ -37,6 +40,9 @@ import {
 import {
   DexieSupernovaCanonicalEventRepository,
 } from '../../data/local/repository/dexie-supernova-canonical-event.repository';
+import {
+  DexieNovaCanonicalEventRepository,
+} from '../../data/local/repository/dexie-nova-canonical-event.repository';
 
 import {
   DexieUniverseNavigationRepository,
@@ -69,6 +75,10 @@ export interface GenesisLocalRepositories {
    */
   readonly supernovaCanonicalEventRepository?:
     SupernovaCanonicalEventRepository;
+
+  /** 29.2 optional only for legacy/test bundles. Production always supplies it. */
+  readonly novaCanonicalEventRepository?:
+    NovaCanonicalEventRepository;
 }
 
 const TARGET_SEED_RESOLVER:
@@ -133,6 +143,12 @@ function createGenesisLocalRepositories():
 
     supernovaCanonicalEventRepository:
       new DexieSupernovaCanonicalEventRepository(
+        database,
+        TARGET_SEED_RESOLVER,
+      ),
+
+    novaCanonicalEventRepository:
+      new DexieNovaCanonicalEventRepository(
         database,
         TARGET_SEED_RESOLVER,
       ),

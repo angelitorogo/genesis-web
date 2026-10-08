@@ -383,6 +383,23 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
+  it('should expose and navigate to the complete 29.2 nova laboratory', async () => {
+    const nova = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/novae');
+    expect(nova?.title).toBe('Novas | Laboratorios GENESIS');
+
+    const harness = await RouterTestingHarness.create(
+      '/laboratory/transient-events/novae',
+    );
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/novae');
+    expect(
+      harness.routeNativeElement?.querySelector(
+        '[data-testid="nova-laboratory-page"]',
+      ),
+    ).toBeTruthy();
+  }, 30_000);
+
   it('should navigate to the deterministic 29.1E-g.1 post-supernova audit laboratory', async () => {
     const harness =
       await RouterTestingHarness.create(

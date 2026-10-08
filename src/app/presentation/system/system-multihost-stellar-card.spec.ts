@@ -67,7 +67,14 @@ describe('Stage 9: canonical multihost stellar fiche is physically coherent and 
           expect(component.colorHex).toBe(host.spectral.color.hex);
           expect(component.spectralType).toBe(host.spectral.spectralType.designation);
         }
-        expect(render.massSolar).toBe(host.physical.initialMassSolar);
+        if (host.stellarSystem.primaryStar.evolutionState.name === 'WHITE_DWARF') {
+          expect(render.massSolar).not.toBe(host.physical.initialMassSolar);
+          expect(render.massSolar).toBeGreaterThanOrEqual(0.46);
+          expect(render.massSolar).toBeLessThanOrEqual(1.35);
+          expect(component.facts.some(f => f.label === 'Masa actual estimada del remanente')).toBe(true);
+        } else {
+          expect(render.massSolar).toBe(host.physical.initialMassSolar);
+        }
         expect(render.colorHex).toBe(star.colorHex);
         // Scene and scientific fiche must consume the same canonical public component name.
         expect(star.title).toBe(component.designation);

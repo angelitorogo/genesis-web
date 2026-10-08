@@ -265,6 +265,16 @@ export const genesisRoutes: Routes = [
     title: 'Supernovas | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/novae',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/novae/nova-laboratory'
+      ).then(
+        (module) => module.NovaLaboratoryPage,
+      ),
+    title: 'Novas | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(

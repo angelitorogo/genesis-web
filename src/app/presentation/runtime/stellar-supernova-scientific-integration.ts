@@ -36,7 +36,7 @@ export interface StellarSupernovaScientificSnapshot {
   readonly consequences: readonly SupernovaStellarConsequence[];
 }
 
-interface StellarSupernovaMaterializedGroundTruth {
+export interface StellarSupernovaMaterializedGroundTruth {
   readonly context: StellarSupernovaInteractionContext;
   readonly components: readonly StellarSupernovaGroundTruthComponent[];
 }
@@ -102,6 +102,13 @@ export class StellarSupernovaScientificIntegration {
       consequences,
     });
   }
+}
+
+export function materializeStellarTransientGroundTruth(
+  generationKey: UniverseGenerationKey,
+  locator: SystemLocator,
+): StellarSupernovaMaterializedGroundTruth {
+  return materializeGroundTruth(generationKey, locator);
 }
 
 function materializeGroundTruth(

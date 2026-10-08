@@ -6,6 +6,7 @@ import { StellarSystem } from '../../domain/stellar/stellar-system';
 import { type GeneratedMultipleHost } from './stellar-multihost-formation';
 import { StellarBlackHoleEngine } from './stellar-black-hole-engine';
 import { StellarNeutronStarEngine } from './stellar-neutron-star-engine';
+import { estimateWhiteDwarfCurrentMassSolar } from './stellar-white-dwarf-current-mass';
 
 /** 27.8: non-authoritative mass model only when the legacy B has no Star entity. */
 function legacyCompanionMass(physical: StellarPhysicalProperties, lifetime: StellarLifetimeProfile): number {
@@ -24,7 +25,7 @@ function legacyCompanionMass(physical: StellarPhysicalProperties, lifetime: Stel
       return Math.max(3.05, Math.min(initialMass * 0.95, initialMass * wind * retention));
     }
     case 'WHITE_DWARF':
-      return Math.max(0.46, Math.min(1.35, 0.109 * initialMass + 0.394));
+      return estimateWhiteDwarfCurrentMassSolar(initialMass);
     default:
       throw new RangeError('A non-compact component cannot be assigned compact remnant mass.');
   }

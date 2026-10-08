@@ -10,6 +10,7 @@ import { MoonGenerator } from '../../simulation/planetary/moon-generator';
 import { AtmosphereGenerator } from '../../simulation/planetary/atmosphere-generator';
 import { ProceduralTargetResolver } from '../../simulation/regeneration/procedural-target-resolver';
 import { StellarMultihostFormation } from '../../simulation/stellar/stellar-multihost-formation';
+import { stellarWhiteDwarfCurrentMassSolar } from '../../simulation/stellar/stellar-white-dwarf-current-mass';
 import { StellarSystemMultiplicitySelector } from '../../simulation/stellar/stellar-system-multiplicity-selector';
 import { ArchiveStellarSystemCardAssembler } from '../genesis-archive/archive-stellar-system-card';
 import { assertSystemSceneProjectionSnapshot } from './system-scene-projection-contract';
@@ -76,8 +77,18 @@ describe('Stage 7: opt-in physically sourced hierarchical scene, no global route
         }
         expect(snapshot.motions.find(m => m.id === 'multihost-ab-relative')?.semiMajorAxisAu)
           .toBe(formation.innerOrbit.semiMajorAxisAu);
+        const [hostA, hostB] = formation.components;
+        const innerHasWhiteDwarf = [hostA, hostB].some(host =>
+          host?.lifetime.evolutionAssessment.evolutionState.name === 'WHITE_DWARF');
+        const expectedInnerPeriodDays = innerHasWhiteDwarf && hostA && hostB
+          ? Math.sqrt(
+              formation.innerOrbit.semiMajorAxisAu ** 3 /
+              ((stellarWhiteDwarfCurrentMassSolar(hostA.physical, hostA.lifetime) ?? hostA.physical.initialMassSolar) +
+               (stellarWhiteDwarfCurrentMassSolar(hostB.physical, hostB.lifetime) ?? hostB.physical.initialMassSolar)),
+            ) * 365.25
+          : formation.innerOrbit.periodDays;
         expect(snapshot.motions.find(m => m.id === 'multihost-ab-relative')?.periodDays)
-          .toBe(formation.innerOrbit.periodDays);
+          .toBe(expectedInnerPeriodDays);
         expect(snapshot.motions.find(m => m.id === 'multihost-abc-relative')?.semiMajorAxisAu ?? null)
           .toBe(formation.outerOrbit?.semiMajorAxisAu ?? null);
         for (const [index, binding] of planetBindings.entries()) {

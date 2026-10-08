@@ -2,8 +2,15 @@ import { buildV2CometVisualOrbit, type V2CometVisualOrbit,
   V2_COMET_MAX_LOCAL_APOAPSIS_SCENE } from './system-scene-v2-comet-orbit-presentation';
 import { type BodyLocator } from '../../domain/generation/procedural-locator';
 import { StellarMultihostPublicTargetIndex } from '../../simulation/stellar/stellar-multihost-public-target-index';
-import { type GeneratedMultipleHost, type MultihostLabel } from '../../simulation/stellar/stellar-multihost-formation';
-import { StellarCompactHostPlanetaryCoherence } from '../../simulation/stellar/stellar-compact-host-planetary-coherence';
+import {
+  type GeneratedMultipleHost,
+  type GeneratedSingleHost,
+  type MultihostLabel,
+} from '../../simulation/stellar/stellar-multihost-formation';
+import {
+  StellarCompactHostPlanetaryCoherence,
+  stellarPlanetaryPeriodYearsFromCurrentMass,
+} from '../../simulation/stellar/stellar-compact-host-planetary-coherence';
 import {
   stellarMultihostPublicMoonDesignation,
   stellarMultihostPublicPlanetDesignation,
@@ -70,16 +77,30 @@ export class SystemSceneMultihostComposition {
         base.generatorVersionCode !== formation.parentGenerationKey.generatorVersionCode) {
       throw new RangeError('Multihost scene parent universe identity does not match the generated aggregate.');
     }
-    const massA = a.physical.initialMassSolar;
-    const massB = b.physical.initialMassSolar;
+    const compactHostCoherence = new StellarCompactHostPlanetaryCoherence(formation);
+    const currentMassForDynamics = (host: GeneratedSingleHost, label: 'A' | 'B' | 'C'): number => {
+      if (host.lifetime.evolutionAssessment.evolutionState.name !== 'WHITE_DWARF') {
+        return host.physical.currentMassSolar;
+      }
+      return compactHostCoherence.stateFor(label).currentGravitatingMassSolar ?? host.physical.currentMassSolar;
+    };
+    const massA = currentMassForDynamics(a, 'A');
+    const massB = currentMassForDynamics(b, 'B');
     const massAB = massA + massB;
-    const massC = c?.physical.initialMassSolar ?? 0;
+    const massC = c === undefined ? 0 : currentMassForDynamics(c, 'C');
+    const innerHasWhiteDwarf = [a, b].some(host =>
+      host.lifetime.evolutionAssessment.evolutionState.name === 'WHITE_DWARF');
+    const outerHasWhiteDwarf = c !== undefined && [a, b, c].some(host =>
+      host.lifetime.evolutionAssessment.evolutionState.name === 'WHITE_DWARF');
     const playback = base.simulation.playbackDaysPerRealSecond;
     const innerPhysical = formation.innerOrbit;
     const innerScale = 6 / innerPhysical.periastronAu;
+    const innerPeriodDays = innerHasWhiteDwarf
+      ? stellarPlanetaryPeriodYearsFromCurrentMass(innerPhysical.semiMajorAxisAu, massAB) * 365.25
+      : innerPhysical.periodDays;
     const inner: SystemSceneOrbitalMotionSnapshot = Object.freeze({
       id: 'multihost-ab-relative', semiMajorAxisAu: innerPhysical.semiMajorAxisAu,
-      eccentricity: innerPhysical.eccentricity, periodDays: innerPhysical.periodDays,
+      eccentricity: innerPhysical.eccentricity, periodDays: innerPeriodDays,
       rotationDegrees: 24, inclinationDegrees: 18, epochMeanAnomalyDegrees: 0,
     });
     const outerPhysical = formation.outerOrbit;
@@ -90,7 +111,10 @@ export class SystemSceneMultihostComposition {
       Math.max(18, innerDisplayEnvelope + LOCAL_RADIUS + 3) / outerPhysical.periastronAu;
     const outer: SystemSceneOrbitalMotionSnapshot | null = outerPhysical === null ? null : Object.freeze({
       id: 'multihost-abc-relative', semiMajorAxisAu: outerPhysical.semiMajorAxisAu,
-      eccentricity: outerPhysical.eccentricity, periodDays: outerPhysical.periodDays,
+      eccentricity: outerPhysical.eccentricity,
+      periodDays: outerHasWhiteDwarf
+        ? stellarPlanetaryPeriodYearsFromCurrentMass(outerPhysical.semiMajorAxisAu, massAB + massC) * 365.25
+        : outerPhysical.periodDays,
       rotationDegrees: 151, inclinationDegrees: 31, epochMeanAnomalyDegrees: 128,
     });
     const innerTime = inner.periodDays / (playback * INNER_VISUAL_SECONDS);
@@ -126,7 +150,6 @@ export class SystemSceneMultihostComposition {
     const zones: SystemSceneHabitableZoneSnapshot[] = [];
     const risks: SystemSceneSnapshot['orbitalRiskTargets'][number][] = [];
     const publicTargets = StellarMultihostPublicTargetIndex.build(formation);
-    const compactHostCoherence = new StellarCompactHostPlanetaryCoherence(formation);
     const resolveMotion = (id: string) => motions.find(m => m.id === id);
     const position = (parts: readonly SystemSceneMotionContributionSnapshot[]) =>
       Object.freeze(projectSystemSceneMotionContributions(parts, resolveMotion, 0, scale));

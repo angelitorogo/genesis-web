@@ -114,6 +114,7 @@ import {
 } from '../../simulation/universe/galaxy-generator';
 
 import { StellarBlackHoleEngine } from '../../simulation/stellar/stellar-black-hole-engine';
+import { stellarWhiteDwarfCurrentMassSolar } from '../../simulation/stellar/stellar-white-dwarf-current-mass';
 import { StellarNeutronStarEngine } from '../../simulation/stellar/stellar-neutron-star-engine';
 import { StellarPulsarEngine } from '../../simulation/stellar/stellar-pulsar-engine';
 import { StellarMagnetarEngine } from '../../simulation/stellar/stellar-magnetar-engine';
@@ -904,6 +905,13 @@ function physicalCard(
                           .physicalProperties
                       : system.tertiaryCompanion!
                           .physicalProperties;
+                const lifetime =
+                  component.componentLabel === 'A'
+                    ? primaryLifetimeProfile
+                    : component.componentLabel === 'B'
+                      ? system.secondaryCompanion!.lifetimeProfile
+                      : system.tertiaryCompanion!.lifetimeProfile;
+                const whiteDwarfMassSolar = stellarWhiteDwarfCurrentMassSolar(physical, lifetime);
 
                 return Object.freeze({
                   label:
@@ -915,7 +923,7 @@ function physicalCard(
                       physical.radiusSolar,
                     ),
                   massSolar:
-                    physical.initialMassSolar,
+                    whiteDwarfMassSolar ?? physical.initialMassSolar,
                   compactVisual: component.compactVisual ?? null,
                 });
               },
@@ -1138,8 +1146,8 @@ function compactPrimaryDetails(
             'Enana blanca',
           ),
           fact(
-            'Masa actual del remanente',
-            'No modelada por el Ground Truth estelar actual',
+            'Masa actual estimada del remanente',
+            `${formatNumber(stellarWhiteDwarfCurrentMassSolar(physical, lifetime)!)} M☉`,
           ),
           fact(
             'Composición interna',
@@ -1422,8 +1430,8 @@ function companionRemnantFacts(
         'Enana blanca',
       ),
       fact(
-        'Masa actual del remanente',
-        'No modelada por el Ground Truth estelar actual',
+        'Masa actual estimada del remanente',
+        `${formatNumber(stellarWhiteDwarfCurrentMassSolar(physical, lifetime)!)} M☉`,
       ),
       fact(
         'Composición interna',

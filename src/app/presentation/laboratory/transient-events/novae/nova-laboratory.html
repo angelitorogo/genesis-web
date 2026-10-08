@@ -1,0 +1,97 @@
+<main class="nvlab" data-testid="nova-laboratory-page">
+  <header class="nvlab__hero">
+    <div>
+      <p class="nvlab__eyebrow">29.2 · EVENTOS TRANSITORIOS / NOVAS</p>
+      <h1>Novas</h1>
+      <p>
+        Laboratorio científico de novas clásicas y recurrentes. Modela una ignición
+        termonuclear superficial sobre una enana blanca acretante: la estrella compacta
+        sobrevive y puede volver a acumular materia para ciclos posteriores.
+      </p>
+    </div>
+    <a class="nvlab__back" routerLink="/laboratory">← Laboratorios</a>
+  </header>
+
+  <section class="nvlab__selectors" aria-label="Familias de nova">
+    @for (caseItem of cases; track caseItem.id) {
+      <button type="button" data-testid="nova-laboratory-type-button"
+        [attr.data-type]="caseItem.id" [attr.aria-pressed]="selectedType() === caseItem.id"
+        (click)="selectType(caseItem.id)">
+        <span>{{ caseItem.shortLabel }}</span><strong>{{ caseItem.title }}</strong>
+      </button>
+    }
+  </section>
+
+  <section class="nvlab__workspace" [attr.data-nova-type]="selectedCase().profile.type" [attr.data-phase]="snapshot().phase">
+    <div class="nvlab__scene-panel">
+      <div class="nvlab__scene">
+        <div class="nvlab__stars" aria-hidden="true"></div>
+        <div class="nvlab__donor" aria-hidden="true"></div>
+        <div class="nvlab__stream" aria-hidden="true"></div>
+        <div class="nvlab__accretion-disk" aria-hidden="true"></div>
+        <div class="nvlab__shell"
+          [style.transform]="'translate(-50%, -50%) scale(' + visualScale() + ')'"
+          [style.opacity]="shellOpacity()"
+          aria-hidden="true"></div>
+        <div class="nvlab__flash" [style.opacity]="flashOpacity()" aria-hidden="true"></div>
+        <div class="nvlab__wd" aria-hidden="true"></div>
+        <div class="nvlab__scene-readout">
+          <span>{{ selectedCase().shortLabel }}</span>
+          <strong>{{ phaseLabel(snapshot().phase) }}</strong>
+          <small>t = {{ format(snapshot().elapsedDays, 1) }} días</small>
+        </div>
+      </div>
+      <div class="nvlab__timeline">
+        <div><span>TIEMPO RELATIVO A LA ERUPCIÓN</span><strong>{{ format(elapsedDays(), 1) }} d</strong></div>
+        <input data-testid="nova-laboratory-time-slider" type="range" min="-10" [max]="timelineMaxDays()" step="1"
+          [value]="elapsedDays()" (input)="setElapsedDays($any($event.target).value)" />
+        <div class="nvlab__jumps">
+          <button type="button" (click)="setElapsedDays(-5)">QUIESCENCIA</button>
+          <button type="button" (click)="setElapsedDays(0)">ERUPCIÓN</button>
+          <button type="button" (click)="jumpToPeak()">PICO</button>
+          <button type="button" (click)="jumpToNebular()">NEBULAR</button>
+          <button type="button" (click)="setElapsedDays(selectedCase().profile.returnToQuiescenceDays)">QUIESCENCIA FINAL</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="nvlab__science">
+      <p class="nvlab__eyebrow">PROGENITOR CANÓNICO DE LABORATORIO</p>
+      <h2>{{ selectedCase().title }}</h2>
+      <p>{{ selectedCase().description }}</p>
+      <dl>
+        <div><dt>MASA WD</dt><dd>{{ format(selectedCase().profile.progenitor.whiteDwarfMassSolar, 3) }} M☉</dd></div>
+        <div><dt>DONANTE</dt><dd>{{ format(selectedCase().profile.progenitor.donorMassSolar, 3) }} M☉</dd></div>
+        <div><dt>PERIASTRO</dt><dd>{{ format(selectedCase().profile.progenitor.orbitalPeriastronAu, 3) }} UA</dd></div>
+        <div><dt>ACRECIÓN EFECTIVA</dt><dd>{{ scientific(selectedCase().profile.progenitor.effectiveAccretionRateSolarPerYear) }} M☉/año</dd></div>
+        <div><dt>ENVOLTURA DE IGNICIÓN</dt><dd>{{ scientific(selectedCase().profile.progenitor.ignitionEnvelopeMassSolar) }} M☉</dd></div>
+        <div><dt>RECURRENCIA</dt><dd>{{ format(selectedCase().profile.recurrenceIntervalYears, 1) }} años</dd></div>
+        <div><dt>MASA EJECTADA</dt><dd>{{ scientific(selectedCase().profile.ejectaMassSolar) }} M☉</dd></div>
+        <div><dt>RETENIDA</dt><dd>{{ scientific(selectedCase().profile.retainedEnvelopeMassSolar) }} M☉</dd></div>
+        <div><dt>ENERGÍA CINÉTICA</dt><dd>{{ scientific(selectedCase().profile.kineticEnergyJoules) }} J</dd></div>
+        <div><dt>VELOCIDAD</dt><dd>{{ format(selectedCase().profile.characteristicEjectaVelocityKmS, 0) }} km/s</dd></div>
+        <div><dt>PICO BOLOMÉTRICO</dt><dd>{{ scientific(selectedCase().profile.peakBolometricLuminosityWatts) }} W</dd></div>
+        <div><dt>SUPERVIVENCIA WD</dt><dd>Sí · no es una supernova Ia</dd></div>
+      </dl>
+    </aside>
+  </section>
+
+  <section class="nvlab__curve">
+    <div class="nvlab__section-head"><div><p class="nvlab__eyebrow">EVOLUCIÓN TEMPORAL</p><h2>Curva bolométrica</h2></div></div>
+    <svg viewBox="0 0 980 240" role="img" aria-label="Curva de luz de nova">
+      <line x1="40" y1="210" x2="940" y2="210" class="nvlab__axis" />
+      <line x1="40" y1="28" x2="40" y2="210" class="nvlab__axis" />
+      <path [attr.d]="lightCurvePath()" class="nvlab__curve-line" />
+    </svg>
+    <div class="nvlab__snapshot-grid">
+      <div><span>LUMINOSIDAD</span><strong>{{ scientific(snapshot().bolometricLuminosityWatts) }} W</strong></div>
+      <div><span>MAGNITUD BOLOMÉTRICA</span><strong>{{ format(snapshot().absoluteBolometricMagnitude, 2) }}</strong></div>
+      <div><span>TEMPERATURA</span><strong>{{ format(snapshot().photosphericTemperatureKelvin, 0) }} K</strong></div>
+      <div><span>RADIO DE EYECCIÓN</span><strong>{{ format(snapshot().ejectaRadiusAu, 3) }} UA</strong></div>
+    </div>
+  </section>
+
+  <section class="nvlab__boundary">
+    <p><strong>Límite científico:</strong> 29.2 modela novas termonucleares H-rich sobre enanas blancas C/O u O/Ne. No confunde novas con supernovas Ia ni con novas enanas por inestabilidad del disco.</p>
+  </section>
+</main>

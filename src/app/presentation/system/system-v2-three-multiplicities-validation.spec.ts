@@ -6,6 +6,7 @@ import { StellarSystemMultiplicity } from '../../domain/stellar/stellar-system-m
 import { UniverseSeed } from '../../domain/universe/universe-seed';
 import { ProceduralTargetResolver } from '../../simulation/regeneration/procedural-target-resolver';
 import { StellarMultihostFormation } from '../../simulation/stellar/stellar-multihost-formation';
+import { stellarWhiteDwarfCurrentMassSolar } from '../../simulation/stellar/stellar-white-dwarf-current-mass';
 import { StellarSystemMultiplicitySelector } from '../../simulation/stellar/stellar-system-multiplicity-selector';
 import { ArchiveDiscoveryLocatorKind, type ArchiveDiscoveryDetailModel } from '../genesis-archive/archive-discovery-detail.facade';
 import { ArchiveV2StellarSystemCardAssembler } from '../genesis-archive/archive-v2-stellar-system-card';
@@ -133,8 +134,18 @@ describe('14.2 — comprobación científica de SINGLE/BINARY/TRIPLE V2', () => 
       expect(source.innerOrbit.semiMajorAxisAu).toBeGreaterThan(0);
       expect(scene.motions.find(motion => motion.id === 'multihost-ab-relative')?.semiMajorAxisAu)
         .toBe(source.innerOrbit.semiMajorAxisAu);
+      const [hostA, hostB] = source.components;
+      const innerHasWhiteDwarf = [hostA, hostB].some(host =>
+        host?.lifetime.evolutionAssessment.evolutionState.name === 'WHITE_DWARF');
+      const expectedInnerPeriodDays = innerHasWhiteDwarf && hostA && hostB
+        ? Math.sqrt(
+            source.innerOrbit.semiMajorAxisAu ** 3 /
+            ((stellarWhiteDwarfCurrentMassSolar(hostA.physical, hostA.lifetime) ?? hostA.physical.initialMassSolar) +
+             (stellarWhiteDwarfCurrentMassSolar(hostB.physical, hostB.lifetime) ?? hostB.physical.initialMassSolar)),
+          ) * 365.25
+        : source.innerOrbit.periodDays;
       expect(scene.motions.find(motion => motion.id === 'multihost-ab-relative')?.periodDays)
-        .toBe(source.innerOrbit.periodDays);
+        .toBe(expectedInnerPeriodDays);
       if (kind === 'TRIPLE') {
         expect(source.outerOrbit).not.toBeNull();
         expect(source.outerOrbit!.periastronAu).toBeGreaterThan(source.innerOrbit.apoastronAu);

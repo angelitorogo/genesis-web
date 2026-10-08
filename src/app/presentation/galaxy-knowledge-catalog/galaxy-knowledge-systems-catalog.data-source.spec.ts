@@ -18,6 +18,8 @@ import {
 } from '../runtime/genesis-local-repositories';
 import { StellarSupernovaScientificIntegration } from '../runtime/stellar-supernova-scientific-integration';
 import { StellarSupernovaScientificPresentationAssembler } from '../runtime/stellar-supernova-scientific-presentation';
+import { StellarNovaScientificIntegration } from '../runtime/stellar-nova-scientific-integration';
+import { StellarNovaScientificPresentationAssembler } from '../runtime/stellar-nova-scientific-presentation';
 import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-systems-catalog.data-source';
 
 const generationKey = new UniverseGenerationKey(
@@ -73,10 +75,12 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
       'multiplicity',
       'components',
       'supernova',
+      'nova',
       'sector',
     ]);
     expect(descriptor.sortOptions.map(option => option.key)).toContain('components');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('supernova');
+    expect(descriptor.sortOptions.map(option => option.key)).toContain('nova');
     expect(() => source.describe('QUADRUPLE')).toThrowError(RangeError);
   });
 
@@ -474,6 +478,148 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
     ]);
     expect(synchronize).toHaveBeenCalledTimes(3);
     expect(presentation).toHaveBeenCalledTimes(3);
+  });
+
+  it('materializes 29.2 nova science only when the nova repository is available', async () => {
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 21n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 22n), DiscoveryState.CATALOGUED),
+    ]);
+    const synchronize = vi.spyOn(StellarNovaScientificIntegration, 'synchronize')
+      .mockImplementation(async (_repository, _generationKey, locator) => Object.freeze({
+        marker: Number(locator.galacticObjectIndex),
+        lineages: Object.freeze([]), events: Object.freeze([]), consequences: Object.freeze([]),
+      }) as never);
+    const presentation = vi.spyOn(StellarNovaScientificPresentationAssembler, 'build')
+      .mockImplementation(snapshot => Object.freeze({
+        summary: '',
+        catalogLabel: (snapshot as unknown as { readonly marker: number }).marker === 21
+          ? 'Nova Recurrente · 1 WD'
+          : 'Sin canal de nova',
+        canonicalEventCount: 0,
+        entries: Object.freeze([]),
+      }));
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        { provide: GENESIS_LOCAL_REPOSITORIES, useValue: {
+          discoveryRepository: { async getKnownDiscoveriesInGalaxy() { return discoveries; } },
+          novaCanonicalEventRepository: {},
+        } as unknown as GenesisLocalRepositories },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const result = await source.query({
+      generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+      query: { category: 'systems', subtype: null, page: 1, pageSize: 25, sortKey: 'nova', direction: 'asc' },
+    });
+    expect(result.kind).toBe('page');
+    if (result.kind !== 'page') throw new Error('Expected systems page.');
+    expect(result.page.items.map(row => row.cells['nova'])).toEqual([
+      'Nova Recurrente · 1 WD',
+      'Sin canal de nova',
+    ]);
+    expect(synchronize).toHaveBeenCalledTimes(2);
+    expect(presentation).toHaveBeenCalledTimes(2);
+  });
+
+
+  it('reverses the locator tie-break when changing generic sort direction', async () => {
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 7n, 101n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 7n, 102n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 7n, 103n), DiscoveryState.CATALOGUED),
+    ]);
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        {
+          provide: GENESIS_LOCAL_REPOSITORIES,
+          useValue: {
+            discoveryRepository: {
+              async getKnownDiscoveriesInGalaxy() { return discoveries; },
+            },
+          } as unknown as GenesisLocalRepositories,
+        },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const query = async (direction: 'asc' | 'desc') => source.query({
+      generationKey,
+      galaxyIndex: 0n,
+      galaxyState: DiscoveryState.CONFIRMED,
+      query: {
+        category: 'systems',
+        subtype: null,
+        page: 1,
+        pageSize: 25,
+        sortKey: 'state',
+        direction,
+      },
+    });
+
+    const asc = await query('asc');
+    const desc = await query('desc');
+    if (asc.kind !== 'page' || desc.kind !== 'page') throw new Error('Expected systems page.');
+
+    expect(asc.page.items.map(row => row.actions[0]?.route[3])).toEqual(['101', '102', '103']);
+    expect(desc.page.items.map(row => row.actions[0]?.route[3])).toEqual(['103', '102', '101']);
+  });
+
+  it('reverses nova tie-break ordering when all systems share the same catalogue label', async () => {
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 9n, 201n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 9n, 202n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 9n, 203n), DiscoveryState.CATALOGUED),
+    ]);
+    const synchronize = vi.spyOn(StellarNovaScientificIntegration, 'synchronize')
+      .mockImplementation(async (_repository, _generationKey, locator) => Object.freeze({
+        marker: Number(locator.galacticObjectIndex),
+        lineages: Object.freeze([]), events: Object.freeze([]), consequences: Object.freeze([]),
+      }) as never);
+    const presentation = vi.spyOn(StellarNovaScientificPresentationAssembler, 'build')
+      .mockImplementation(() => Object.freeze({
+        summary: '', catalogLabel: 'Sin canal de nova', canonicalEventCount: 0, entries: Object.freeze([]),
+      }));
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        { provide: GENESIS_LOCAL_REPOSITORIES, useValue: {
+          discoveryRepository: { async getKnownDiscoveriesInGalaxy() { return discoveries; } },
+          novaCanonicalEventRepository: {},
+        } as unknown as GenesisLocalRepositories },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const query = async (direction: 'asc' | 'desc') => source.query({
+      generationKey,
+      galaxyIndex: 0n,
+      galaxyState: DiscoveryState.CONFIRMED,
+      query: {
+        category: 'systems',
+        subtype: null,
+        page: 1,
+        pageSize: 25,
+        sortKey: 'nova',
+        direction,
+      },
+    });
+
+    const asc = await query('asc');
+    const desc = await query('desc');
+    if (asc.kind !== 'page' || desc.kind !== 'page') throw new Error('Expected systems page.');
+
+    expect(asc.page.items.map(row => row.actions[0]?.route[3])).toEqual(['201', '202', '203']);
+    expect(desc.page.items.map(row => row.actions[0]?.route[3])).toEqual(['203', '202', '201']);
+
+    synchronize.mockRestore();
+    presentation.mockRestore();
   });
 
 });

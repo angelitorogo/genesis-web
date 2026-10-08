@@ -161,6 +161,35 @@
                   </div>
                 </article>
 
+                @if (model.stellarNovaScience; as novaScience) {
+                  <article
+                    class="observatory__panel observatory__progress"
+                    data-testid="observatory-nova-science"
+                  >
+                    <header>
+                      <div>
+                        <small>29.2 · NOVAS</small>
+                        <h2>Acreción termonuclear en enanas blancas</h2>
+                      </div>
+                      <strong>{{ novaScience.catalogLabel }}</strong>
+                    </header>
+
+                    <p>{{ novaScience.summary }}</p>
+                    @if (novaScience.entries.length > 0) {
+                      <div class="observatory__dimension-grid">
+                        @for (entry of novaScience.entries; track entry.componentLabel) {
+                          <section class="observatory__dimension">
+                            <small>WD {{ entry.componentLabel }} · DONANTE {{ entry.donorComponentLabel }}</small>
+                            <strong>{{ entry.typeLabel }}</strong>
+                            <span>{{ entry.recurrenceLabel }}</span>
+                            <span>{{ entry.consequenceLabel }}</span>
+                          </section>
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+
                 <article
                   class="observatory__panel observatory__actions"
                   data-testid="observatory-scientific-actions"

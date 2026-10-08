@@ -15,6 +15,10 @@ import { CircumbinaryRadiativeReferenceRegime, CircumbinaryStellarEvolutionRegim
 import { systemSceneClipMultihostPTypeHabitableZone } from './system-scene-multihost-p-type-hz-coherence';
 import { systemMultihostPublicStellarComponentDesignation } from './system-multihost-public-stellar-designation';
 import { StellarBlackHoleEngine } from '../../simulation/stellar/stellar-black-hole-engine';
+import { stellarWhiteDwarfCurrentMassSolar } from '../../simulation/stellar/stellar-white-dwarf-current-mass';
+import {
+  stellarPlanetaryPeriodYearsFromCurrentMass,
+} from '../../simulation/stellar/stellar-compact-host-planetary-coherence';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
 import { StellarSystemComponentLabel } from '../../domain/stellar/stellar-system-component-label';
 import { type SupernovaStellarConsequence } from '../../domain/transient/supernova-stellar-consequence';
@@ -145,11 +149,15 @@ function currentRemnantProjection(
   }
 
   const composition = host.lifetime.evolutionAssessment.whiteDwarfComposition?.name ?? null;
+  const whiteDwarfMassSolar = stellarWhiteDwarfCurrentMassSolar(host.physical, host.lifetime);
+  if (whiteDwarfMassSolar === null) {
+    throw new RangeError('A WHITE_DWARF host requires the canonical current WD mass projection.');
+  }
   return Object.freeze({
     facts: Object.freeze([
       ...base,
       fact('Remanente compacto', 'Enana blanca'),
-      fact('Masa actual del remanente', 'No modelada por el Ground Truth estelar actual'),
+      fact('Masa actual estimada del remanente', `${format(whiteDwarfMassSolar)} M☉`),
       fact('Composición interna', whiteDwarfCompositionLabel(composition)),
       ...remnantAgeFacts(host),
     ]),
@@ -199,6 +207,7 @@ function orbitCard(
   orbit: StellarRelativeOrbit,
   outer: boolean,
   current: StellarPostSupernovaHierarchyOrbitState | null,
+  currentMassPeriodYears: number | null = null,
 ): ArchiveStellarSystemOrbitCardModel {
   const reconfigured = current !== null && current.disposition !== 'UNCHANGED';
   const currentBound = current !== null && current.disposition === 'BOUND_RECONFIGURED' &&
@@ -212,7 +221,10 @@ function orbitCard(
       fact(reconfigured ? 'Excentricidad de formación' : 'Excentricidad', format(orbit.eccentricity)),
       fact(reconfigured ? 'Periastro de formación' : 'Periastro', `${format(orbit.periastronAu)} UA`),
       fact(reconfigured ? 'Apoastro de formación' : 'Apoastro', `${format(orbit.apoastronAu)} UA`),
-      fact(reconfigured ? 'Período de formación' : 'Período', `${format(orbit.periodYears)} años`),
+      fact(
+        reconfigured ? 'Período de formación' : currentMassPeriodYears === null ? 'Período' : 'Período actual',
+        `${format(reconfigured || currentMassPeriodYears === null ? orbit.periodYears : currentMassPeriodYears)} años`,
+      ),
       ...(reconfigured ? [
         fact('Estado post-supernova', hierarchyOrbitDispositionLabel(current!.disposition)),
         ...(currentBound ? [
@@ -306,6 +318,22 @@ export class SystemMultihostStellarCardAssembler {
 
     const postSupernovaDynamics = new StellarPostSupernovaPlanetaryDynamics(formation);
     const hierarchy = postSupernovaDynamics.hierarchy;
+    const [innerHostA, innerHostB] = formation.components;
+    const innerHasWhiteDwarf = [innerHostA, innerHostB].some(host =>
+      host?.lifetime.evolutionAssessment.evolutionState.name === 'WHITE_DWARF');
+    const currentInnerMassSolar = innerHostA !== undefined && innerHostB !== undefined
+      ? [innerHostA, innerHostB].reduce((sum, host) => sum + (
+          stellarWhiteDwarfCurrentMassSolar(host.physical, host.lifetime) ?? host.physical.currentMassSolar
+        ), 0)
+      : null;
+    const currentInnerPeriodYears = innerHasWhiteDwarf &&
+      currentInnerMassSolar !== null &&
+      !hierarchy.hasPostSupernovaEvolution
+        ? stellarPlanetaryPeriodYearsFromCurrentMass(
+            formation.innerOrbit.semiMajorAxisAu,
+            currentInnerMassSolar,
+          )
+        : null;
     const planetaryDynamics = formation.publicPlanets.map(planet => postSupernovaDynamics.resolvePlanet(planet));
     const components = Object.freeze(formation.components.map(host => componentCard(
       host,
@@ -313,7 +341,7 @@ export class SystemMultihostStellarCardAssembler {
       consequenceByComponent.get(stellarComponentLabel(host.label).code) ?? null,
     )));
     const orbits = Object.freeze([
-      orbitCard(formation.innerOrbit, false, hierarchy.innerOrbit),
+      orbitCard(formation.innerOrbit, false, hierarchy.innerOrbit, currentInnerPeriodYears),
       ...(formation.outerOrbit === null ? [] : [orbitCard(formation.outerOrbit, true, hierarchy.outerOrbit)]),
     ]);
     const p = formation.circumbinary;
@@ -374,7 +402,9 @@ export class SystemMultihostStellarCardAssembler {
           label: host.label,
           colorHex: host.spectral.color.hex,
           radiusScale: stellarVisualRadiusScale(host.physical.radiusSolar),
-          massSolar: host.physical.initialMassSolar,
+          massSolar: host.lifetime.evolutionAssessment.evolutionState.name === 'WHITE_DWARF'
+            ? stellarWhiteDwarfCurrentMassSolar(host.physical, host.lifetime)!
+            : host.physical.initialMassSolar,
         }))),
         innerOrbitEccentricity: formation.innerOrbit.eccentricity,
         outerOrbitEccentricity: formation.outerOrbit?.eccentricity ?? null,

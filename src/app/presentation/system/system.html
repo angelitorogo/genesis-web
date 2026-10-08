@@ -335,9 +335,56 @@
                           </section>
                         }
                       </div>
+                    }
+                  </article>
+                }
+
+                @if (model.stellarNovaScience; as novaScience) {
+                  <article
+                    class="system-page__science-card system-page__science-card--wide"
+                    data-testid="system-page-nova-science"
+                  >
+                    <header class="system-page__section-header">
+                      <div>
+                        <small>29.2 · EVOLUCIÓN TRANSITORIA</small>
+                        <h2>Novas y acreción en enanas blancas</h2>
+                      </div>
+                      <span>{{ novaScience.summary }}</span>
+                    </header>
+
+                    @if (novaScience.entries.length > 0) {
+                      <div class="system-page__star-grid">
+                        @for (entry of novaScience.entries; track entry.componentLabel) {
+                          <section
+                            class="system-page__star-card"
+                            [attr.data-component]="entry.componentLabel"
+                            [attr.data-testid]="'system-page-nova-' + entry.componentLabel"
+                          >
+                            <header>
+                              <div>
+                                <small>ENANA BLANCA {{ entry.componentLabel }} · DONANTE {{ entry.donorComponentLabel }}</small>
+                                <h3>{{ entry.stellarDesignation }}</h3>
+                              </div>
+                            </header>
+
+                            <p>{{ entry.typeLabel }} · {{ entry.lineageLabel }}</p>
+                            <p><strong>{{ entry.consequenceLabel }}</strong></p>
+
+                            <dl class="system-page__fact-grid system-page__fact-grid--star">
+                              <div><dt>Masa de la enana blanca</dt><dd>{{ entry.whiteDwarfMassLabel }}</dd></div>
+                              <div><dt>Tasa efectiva de acreción</dt><dd>{{ entry.accretionRateLabel }}</dd></div>
+                              <div><dt>Recurrencia modelada</dt><dd>{{ entry.recurrenceLabel }}</dd></div>
+                              <div><dt>Erupción anterior</dt><dd>{{ entry.previousEruptionLabel }}</dd></div>
+                              <div><dt>Próxima erupción</dt><dd>{{ entry.nextEruptionLabel }}</dd></div>
+                              <div><dt>Masa eyectada por ciclo</dt><dd>{{ entry.ejectaMassLabel }}</dd></div>
+                              <div><dt>Velocidad de eyección</dt><dd>{{ entry.velocityLabel }}</dd></div>
+                            </dl>
+                          </section>
+                        }
+                      </div>
                     } @else {
                       <p class="system-page__empty-note">
-                        No existe un canal de supernova canónico en las componentes actuales.
+                        No existe un canal de nova termonuclear en las componentes actuales.
                       </p>
                     }
                   </article>

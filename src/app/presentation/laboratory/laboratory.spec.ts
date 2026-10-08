@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the seven laboratories already implemented',
+      'should expose exactly the eight laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          7,
+          8,
         );
       },
     );
 
     it(
-      'should link only to the seven canonical permanent laboratory routes',
+      'should link only to the eight canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -183,6 +183,18 @@ describe(
           '/laboratory/transient-events/supernovae',
         );
 
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-novae-link"]',
+            )
+            ?.getAttribute(
+              'href',
+            ),
+        ).toBe(
+          '/laboratory/transient-events/novae',
+        );
 
         expect(
           element

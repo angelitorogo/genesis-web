@@ -169,6 +169,15 @@ import {
 } from '../runtime/stellar-supernova-scientific-presentation';
 
 import {
+  StellarNovaScientificIntegration,
+} from '../runtime/stellar-nova-scientific-integration';
+
+import {
+  StellarNovaScientificPresentationAssembler,
+  type StellarNovaScientificPresentationModel,
+} from '../runtime/stellar-nova-scientific-presentation';
+
+import {
   isScientificRouteUniverseRef,
   scientificRouteUniverseRef,
 } from '../scientific/scientific-route-identity';
@@ -403,6 +412,10 @@ export interface ArchiveDiscoveryDetailModel {
   /** 29.1E. Optional preserves legacy/test facade fixtures without the new repository. */
   readonly stellarSupernovaScience?:
     StellarSupernovaScientificPresentationModel | null;
+
+  /** 29.2. Nova science is independent from the supernova channel. */
+  readonly stellarNovaScience?:
+    StellarNovaScientificPresentationModel | null;
 
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
@@ -1863,6 +1876,23 @@ export class ArchiveDiscoveryDetailFacade {
             : null
           : undefined;
 
+      const novaRepository =
+        this.repositories.novaCanonicalEventRepository;
+
+      const stellarNovaScience =
+        locator instanceof SystemLocator &&
+        novaRepository !== undefined
+          ? discoveryState.code >= DiscoveryState.CATALOGUED.code
+            ? StellarNovaScientificPresentationAssembler.build(
+                await StellarNovaScientificIntegration.synchronize(
+                  novaRepository,
+                  generationKey,
+                  locator,
+                ),
+              )
+            : null
+          : undefined;
+
       const scientificAction =
         locator instanceof
           GalacticObjectLocator
@@ -2100,6 +2130,10 @@ export class ArchiveDiscoveryDetailFacade {
               ...(stellarSupernovaScience === undefined
                 ? {}
                 : { stellarSupernovaScience }),
+
+              ...(stellarNovaScience === undefined
+                ? {}
+                : { stellarNovaScience }),
 
               scientificAction,
 

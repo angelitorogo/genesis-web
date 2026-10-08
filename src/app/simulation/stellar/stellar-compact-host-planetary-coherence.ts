@@ -6,6 +6,7 @@ import { StellarBlackHoleEngine } from './stellar-black-hole-engine';
 import { type GeneratedMultipleHost, type GeneratedPublicPlanet, type GeneratedSingleHost, type MultihostLabel } from './stellar-multihost-formation';
 import { multihostPhysicalSourceKey } from './stellar-multihost-physical-source-key';
 import { StellarNeutronStarEngine } from './stellar-neutron-star-engine';
+import { stellarWhiteDwarfCurrentMassSolar } from './stellar-white-dwarf-current-mass';
 import {
   StellarPostSupernovaPlanetaryDynamics,
   type StellarPostSupernovaPlanetaryState,
@@ -129,12 +130,13 @@ export class StellarCompactHostPlanetaryCoherence {
     }
 
     if (state === 'WHITE_DWARF') {
+      const mass = stellarWhiteDwarfCurrentMassSolar(host.physical, host.lifetime);
       return Object.freeze({
         hostLabel: host.label,
         componentEvolutionStates: Object.freeze([state]),
         containsCompactRemnant: true,
         requiresPostStellarEvolutionReassessment: true,
-        currentGravitatingMassSolar: null,
+        currentGravitatingMassSolar: positiveOrNull(mass),
         currentLuminositySolar: null,
         radiativeRegime: 'COMPACT_LUMINOSITY_UNMODELED' as const,
       });
