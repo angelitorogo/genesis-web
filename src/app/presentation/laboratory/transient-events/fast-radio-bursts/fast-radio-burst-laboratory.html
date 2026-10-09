@@ -1,0 +1,150 @@
+<main class="frb-lab" data-testid="fast-radio-burst-laboratory-page">
+  <header class="frb-lab__hero">
+    <div>
+      <p class="frb-lab__eyebrow">FASE 29.8 · FAST RADIO BURSTS</p>
+      <h1>Fast Radio Bursts (FRB)</h1>
+      <p>
+        Laboratorio intrínseco de bursts de radio coherente. GENESIS separa el motor compacto,
+        el burst, la repetición y la propagación: un magnetar o una fusión no producen por sí solos
+        un FRB. DM tampoco se transforma en distancia sin un modelo electrónico del trayecto.
+      </p>
+    </div>
+    <span class="frb-lab__badge">SOURCE FRAME / READ ONLY</span>
+  </header>
+
+  <nav class="frb-lab__selector" aria-label="Casos FRB 29.8">
+    @for (item of cases; track item.id) {
+      <button
+        type="button"
+        [class.is-active]="selectedId() === item.id"
+        (click)="selectCase(item.id)"
+      >
+        {{ item.buttonLabel }}
+      </button>
+    }
+  </nav>
+
+  @let current = selectedCase();
+  @let profile = current.profile;
+  @let source = profile.source;
+
+  <section class="frb-lab__panel">
+    <article class="frb-lab__visual-card">
+      <div class="frb-lab__visual-header">
+        <div>
+          <p class="frb-lab__eyebrow">RADIO COHERENTE · MARCO DE LA FUENTE</p>
+          <h2>Burst intrínseco y propagación</h2>
+        </div>
+        <span>esquema científico · no curva de luz observada</span>
+      </div>
+
+      @if (profile.outcome === outcome.INTRINSIC_COHERENT_RADIO_BURST) {
+        <svg
+          class="frb-lab__burst-scene"
+          viewBox="0 0 720 290"
+          role="img"
+          aria-label="Esquema de burst de radio coherente"
+          data-testid="fast-radio-burst-intrinsic-diagram"
+        >
+          <line class="frb-lab__radio-axis" x1="125" y1="145" x2="640" y2="145" />
+          @if (source.sourceKind === 'MAGNETAR') {
+            <circle class="frb-lab__magnetosphere frb-lab__magnetosphere--outer" cx="150" cy="145" r="70" />
+            <circle class="frb-lab__magnetosphere" cx="150" cy="145" r="47" />
+          }
+          <circle class="frb-lab__source" cx="150" cy="145" r="25" />
+          <circle class="frb-lab__source-core" cx="150" cy="145" r="8" />
+          <text class="frb-lab__diagram-label" x="117" y="205">motor compacto</text>
+
+          <path class="frb-lab__pulse" d="M 205 145 L 250 145 L 260 104 L 270 186 L 280 118 L 292 168 L 304 145 L 355 145" />
+          <path class="frb-lab__pulse frb-lab__pulse--faint" d="M 365 145 L 405 145 L 413 120 L 422 171 L 432 130 L 442 160 L 454 145 L 492 145" />
+          <text class="frb-lab__diagram-label" x="252" y="92">burst coherente</text>
+
+          @if (source.repetitionState === repetitionState.REPEATING_CONFIRMED) {
+            <path class="frb-lab__pulse frb-lab__pulse--repeat" d="M 505 145 L 535 145 L 542 113 L 550 178 L 558 126 L 568 162 L 578 145 L 615 145" />
+            <text class="frb-lab__diagram-label" x="505" y="102">repetición confirmada</text>
+          }
+        </svg>
+      } @else {
+        <div class="frb-lab__unresolved" data-testid="fast-radio-burst-engine-unresolved">
+          <div class="frb-lab__unresolved-source">?</div>
+          <strong>Motor de radio coherente sin resolver</strong>
+          <p>El progenitor candidato no proporciona por sí solo duración, espectro ni un burst FRB.</p>
+        </div>
+      }
+
+      <section class="frb-lab__propagation">
+        <div class="frb-lab__propagation-header">
+          <div>
+            <p class="frb-lab__eyebrow">PROPAGACIÓN</p>
+            <strong>Dispersión en plasma frío</strong>
+          </div>
+          @if (source.dispersionMeasurePcCm3 !== null) {
+            <span>{{ dm(source.dispersionMeasurePcCm3) }}</span>
+          } @else {
+            <span>DM no resuelta</span>
+          }
+        </div>
+
+        @if (profile.coldPlasmaDispersionDelaySeconds !== null) {
+          <svg
+            class="frb-lab__dispersion-plot"
+            viewBox="0 0 720 155"
+            role="img"
+            aria-label="Barrido de dispersión en plasma frío"
+            data-testid="fast-radio-burst-dispersion-sweep"
+          >
+            <line class="frb-lab__plot-axis" x1="65" y1="18" x2="65" y2="125" />
+            <line class="frb-lab__plot-axis" x1="65" y1="125" x2="665" y2="125" />
+            <path class="frb-lab__dispersion-curve" d="M 105 35 C 220 42, 345 61, 455 82 C 540 98, 600 112, 645 121" />
+            <text class="frb-lab__plot-label" x="8" y="28">ν alta</text>
+            <text class="frb-lab__plot-label" x="8" y="122">ν baja</text>
+            <text class="frb-lab__plot-label" x="598" y="147">tiempo →</text>
+          </svg>
+          <p class="frb-lab__plot-note">
+            Retraso calculado entre {{ frequency(source.observerBandHighHz) }} y
+            {{ frequency(source.observerBandLowHz) }}:
+            <strong>{{ duration(profile.coldPlasmaDispersionDelaySeconds) }}</strong>.
+            Es dispersión, no distancia.
+          </p>
+        } @else {
+          <p class="frb-lab__propagation-boundary">
+            Sin DM y banda de observación explícitas no se inventa un barrido temporal observado.
+          </p>
+        }
+      </section>
+    </article>
+
+    <section class="frb-lab__science">
+      <p class="frb-lab__eyebrow">{{ current.eyebrow }}</p>
+      <h2>{{ current.title }}</h2>
+      <p>{{ current.description }}</p>
+
+      <dl class="frb-lab__metrics">
+        <div><dt>Fuente / progenitor</dt><dd>{{ sourceLabel(source.sourceKind) }}</dd></div>
+        <div><dt>Estado del burst</dt><dd>{{ profile.outcome === outcome.INTRINSIC_COHERENT_RADIO_BURST ? 'Burst coherente intrínseco resuelto' : 'Motor FRB sin resolver' }}</dd></div>
+        <div><dt>Duración intrínseca</dt><dd>{{ duration(source.sourceFrameDurationSeconds) }}</dd></div>
+        <div><dt>Frecuencia central</dt><dd>{{ frequency(source.centerFrequencyHz) }}</dd></div>
+        <div><dt>Ancho de banda</dt><dd>{{ bandwidth(source.bandwidthHz) }}</dd></div>
+        <div><dt>Longitud de onda ref.</dt><dd>{{ wavelength(profile.wavelengthMeters) }}</dd></div>
+        <div><dt>Cota causal c·Δt</dt><dd>{{ scale(profile.lightCrossingUpperScaleMeters) }}</dd></div>
+        <div><dt>Repetición</dt><dd>{{ repetitionLabel(source.repetitionState, profile.outcome) }}</dd></div>
+        <div><dt>DM</dt><dd>{{ dm(source.dispersionMeasurePcCm3) }}</dd></div>
+        <div><dt>Retraso dispersivo</dt><dd>{{ duration(profile.coldPlasmaDispersionDelaySeconds) }}</dd></div>
+        <div><dt>Distancia / redshift</dt><dd>No resueltos</dd></div>
+        <div><dt>Fluencia / flujo pico</dt><dd>No resueltos</dd></div>
+        <div><dt>Eiso radio</dt><dd>No resuelta</dd></div>
+        <div><dt>RM / scattering / polarización</dt><dd>No resueltos</dd></div>
+      </dl>
+
+      <p class="frb-lab__boundary">
+        Una duración y un espectro intrínsecos no equivalen a una detección. Sin distancia,
+        beaming, transferencia radiativa y propagación completa no se calculan energía isotrópica,
+        fluencia, flujo pico ni anchura observada.
+      </p>
+      <p class="frb-lab__boundary frb-lab__boundary--secondary" data-testid="fast-radio-burst-channel-boundary">
+        29.8 no reescribe 27.6, 29.4 ni 29.5: un magnetar o una fusión compacta son motores candidatos,
+        no eventos FRB automáticos. Un único burst tampoco demuestra que una fuente sea no repetidora.
+      </p>
+    </section>
+  </section>
+</main>

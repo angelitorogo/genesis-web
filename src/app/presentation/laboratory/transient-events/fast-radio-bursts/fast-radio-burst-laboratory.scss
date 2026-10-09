@@ -1,0 +1,47 @@
+:host { display: block; }
+.frb-lab { padding: 1.5rem 2rem 2rem; color: var(--color-text-primary, #f5f7fb); }
+.frb-lab__hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; }
+.frb-lab__hero h1 { margin: 0 0 1rem; font-size: clamp(1.9rem, 3vw, 2.7rem); }
+.frb-lab__hero p { max-width: 78rem; line-height: 1.55; }
+.frb-lab__eyebrow { margin: 0 0 .65rem; text-transform: uppercase; letter-spacing: .12em; font-size: .74rem; opacity: .68; }
+.frb-lab__badge { border: 1px solid rgba(210,220,235,.45); border-radius: 999px; padding: .55rem .8rem; font-size: .72rem; white-space: nowrap; opacity: .8; }
+.frb-lab__selector { display: flex; flex-wrap: wrap; gap: .7rem; margin: 2rem 0 2.4rem; }
+.frb-lab__selector button { border: 1px solid rgba(220,228,240,.55); background: transparent; color: inherit; border-radius: 999px; padding: .8rem 1.15rem; cursor: pointer; opacity: .62; }
+.frb-lab__selector button.is-active { opacity: 1; border-color: currentColor; font-weight: 700; }
+.frb-lab__panel { display: grid; grid-template-columns: minmax(32rem, .92fr) minmax(39rem, 1.08fr); gap: 1.5rem; align-items: stretch; }
+.frb-lab__visual-card, .frb-lab__science { min-width: 0; }
+.frb-lab__visual-card { border: 1px solid rgba(210,220,235,.24); border-radius: 1rem; padding: 1.35rem; background: rgba(5,9,16,.32); }
+.frb-lab__visual-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.frb-lab__visual-header h2 { margin: 0; font-size: 1.25rem; }
+.frb-lab__visual-header > span { font-size: .8rem; opacity: .68; white-space: nowrap; }
+.frb-lab__burst-scene { width: 100%; height: 20rem; display: block; margin-top: .5rem; }
+.frb-lab__radio-axis { stroke: rgba(220,228,240,.2); stroke-width: 1; stroke-dasharray: 4 6; }
+.frb-lab__magnetosphere { fill: none; stroke: rgba(220,228,240,.32); stroke-width: 1.1; stroke-dasharray: 5 5; }
+.frb-lab__magnetosphere--outer { opacity: .45; }
+.frb-lab__source { fill: #03060b; stroke: currentColor; stroke-width: 1.5; }
+.frb-lab__source-core { fill: currentColor; opacity: .9; }
+.frb-lab__pulse { fill: none; stroke: currentColor; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.frb-lab__pulse--faint { opacity: .5; }
+.frb-lab__pulse--repeat { opacity: .78; }
+.frb-lab__diagram-label { fill: currentColor; font-size: 11px; opacity: .68; }
+.frb-lab__unresolved { height: 20rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .65rem; text-align: center; }
+.frb-lab__unresolved p { max-width: 31rem; margin: 0; opacity: .72; }
+.frb-lab__unresolved-source { width: 4.5rem; height: 4.5rem; border: 1px solid rgba(220,228,240,.6); border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; }
+.frb-lab__propagation { border-top: 1px solid rgba(210,220,235,.15); padding-top: 1rem; min-height: 12rem; }
+.frb-lab__propagation-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.frb-lab__propagation-header > span { font-size: .82rem; opacity: .72; }
+.frb-lab__dispersion-plot { width: 100%; height: 8rem; display: block; margin-top: .4rem; }
+.frb-lab__plot-axis { stroke: rgba(220,228,240,.42); stroke-width: 1; }
+.frb-lab__dispersion-curve { fill: none; stroke: currentColor; stroke-width: 2; }
+.frb-lab__plot-label { fill: currentColor; font-size: 10px; opacity: .62; }
+.frb-lab__plot-note, .frb-lab__propagation-boundary { margin: .45rem 0 0; font-size: .82rem; line-height: 1.45; opacity: .76; }
+.frb-lab__science { padding: .2rem .1rem; }
+.frb-lab__science h2 { margin: 0 0 .8rem; font-size: 1.55rem; }
+.frb-lab__science > p { line-height: 1.5; }
+.frb-lab__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+.frb-lab__metrics > div { min-width: 0; border: 1px solid rgba(210,220,235,.22); border-radius: .8rem; padding: .9rem 1rem; }
+.frb-lab__metrics dt { margin-bottom: .55rem; text-transform: uppercase; letter-spacing: .055em; font-size: .72rem; opacity: .62; }
+.frb-lab__metrics dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.frb-lab__boundary { border-left: 3px solid currentColor; padding: .8rem 0 .8rem 1rem; margin-top: 1rem; }
+.frb-lab__boundary--secondary { opacity: .78; }
+@media (max-width: 1100px) { .frb-lab__panel { grid-template-columns: 1fr; } }

@@ -482,6 +482,17 @@ describe('GENESIS routes', () => {
     expect(harness.routeNativeElement?.querySelector('[data-testid="gamma-ray-burst-laboratory-page"]')).toBeTruthy();
   });
 
+  it('should expose and navigate to the complete 29.8 fast-radio-burst laboratory', async () => {
+    const frb = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/fast-radio-bursts');
+    expect(frb?.title).toBe('Fast Radio Bursts | Laboratorios GENESIS');
+
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/fast-radio-bursts');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/fast-radio-bursts');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="fast-radio-burst-laboratory-page"]')).toBeTruthy();
+  });
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

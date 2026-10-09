@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the thirteen laboratories already implemented',
+      'should expose exactly the fourteen laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          13,
+          14,
         );
       },
     );
 
     it(
-      'should link only to the thirteen canonical permanent laboratory routes',
+      'should link only to the fourteen canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -249,6 +249,15 @@ describe(
             )
             ?.getAttribute('href'),
         ).toBe('/laboratory/transient-events/gamma-ray-bursts');
+
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-fast-radio-bursts-link"]',
+            )
+            ?.getAttribute('href'),
+        ).toBe('/laboratory/transient-events/fast-radio-bursts');
       },
     );
   },

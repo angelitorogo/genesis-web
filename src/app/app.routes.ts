@@ -325,6 +325,16 @@ export const genesisRoutes: Routes = [
     title: 'Estallidos de rayos gamma | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/fast-radio-bursts',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/fast-radio-bursts/fast-radio-burst-laboratory'
+      ).then(
+        (module) => module.FastRadioBurstLaboratoryPage,
+      ),
+    title: 'Fast Radio Bursts | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(
