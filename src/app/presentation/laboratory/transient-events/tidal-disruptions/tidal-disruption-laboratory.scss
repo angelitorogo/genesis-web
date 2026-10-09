@@ -1,0 +1,45 @@
+:host { display: block; }
+.td-lab { padding: 1.5rem 2rem 2rem; color: var(--color-text-primary, #f5f7fb); }
+.td-lab__hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; }
+.td-lab__hero h1 { margin: 0 0 1rem; font-size: clamp(1.9rem, 3vw, 2.7rem); }
+.td-lab__hero p { max-width: 76rem; line-height: 1.55; }
+.td-lab__eyebrow { margin: 0 0 .65rem; text-transform: uppercase; letter-spacing: .12em; font-size: .74rem; opacity: .68; }
+.td-lab__badge { border: 1px solid rgba(210,220,235,.45); border-radius: 999px; padding: .55rem .8rem; font-size: .72rem; white-space: nowrap; opacity: .8; }
+.td-lab__selector { display: flex; flex-wrap: wrap; gap: .7rem; margin: 2rem 0 2.4rem; }
+.td-lab__selector button { border: 1px solid rgba(220,228,240,.55); background: transparent; color: inherit; border-radius: 999px; padding: .8rem 1.15rem; cursor: pointer; opacity: .62; }
+.td-lab__selector button.is-active { opacity: 1; border-color: currentColor; font-weight: 700; }
+.td-lab__panel { display: grid; grid-template-columns: minmax(31rem, .9fr) minmax(38rem, 1.1fr); gap: 1.5rem; align-items: stretch; }
+.td-lab__visual-card, .td-lab__science { min-width: 0; }
+.td-lab__visual-card { border: 1px solid rgba(210,220,235,.24); border-radius: 1rem; padding: 1.35rem; background: rgba(5,9,16,.32); }
+.td-lab__visual-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.td-lab__visual-header h2 { margin: 0; font-size: 1.25rem; }
+.td-lab__visual-header > span { font-size: .8rem; opacity: .68; white-space: nowrap; }
+.td-lab__encounter { width: 100%; height: 21rem; display: block; margin-top: .5rem; }
+.td-lab__trajectory { fill: none; stroke: rgba(220,228,240,.32); stroke-width: 1.2; stroke-dasharray: 5 6; }
+.td-lab__ring { fill: none; vector-effect: non-scaling-stroke; }
+.td-lab__ring--tidal { stroke: rgba(220,228,240,.78); stroke-width: 1.4; stroke-dasharray: 3 5; }
+.td-lab__ring--capture { stroke: rgba(220,228,240,.44); stroke-width: 1.2; stroke-dasharray: 8 5; }
+.td-lab__horizon { fill: #020409; stroke: currentColor; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.td-lab__bh-label { fill: currentColor; font-size: 12px; font-weight: 700; }
+.td-lab__pericenter-line { stroke: rgba(220,228,240,.5); stroke-width: 1; }
+.td-lab__star { fill: currentColor; stroke: rgba(2,4,9,.8); stroke-width: 2; }
+.td-lab__diagram-label { fill: currentColor; font-size: 11px; opacity: .7; }
+.td-lab__fallback { border-top: 1px solid rgba(210,220,235,.15); padding-top: 1rem; }
+.td-lab__fallback-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.td-lab__fallback-header > span { font-size: .75rem; opacity: .68; }
+.td-lab__fallback svg { width: 100%; height: 8rem; margin-top: .5rem; }
+.td-lab__fallback-axis { stroke: rgba(210,220,235,.18); stroke-width: 1; }
+.td-lab__fallback-trace { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.td-lab__fallback p { margin: .4rem 0 0; font-size: .8rem; line-height: 1.45; opacity: .72; }
+.td-lab__fallback--unresolved { min-height: 9rem; display: flex; flex-direction: column; justify-content: center; }
+.td-lab__science { padding: .2rem .1rem; }
+.td-lab__science h2 { margin: 0 0 .8rem; font-size: 1.55rem; }
+.td-lab__science > p { line-height: 1.5; }
+.td-lab__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+.td-lab__metrics > div { min-width: 0; border: 1px solid rgba(210,220,235,.22); border-radius: .8rem; padding: .9rem 1rem; }
+.td-lab__metrics dt { margin-bottom: .55rem; text-transform: uppercase; letter-spacing: .055em; font-size: .72rem; opacity: .62; }
+.td-lab__metrics dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.td-lab__metric--wide { grid-column: 1 / -1; }
+.td-lab__unresolved, .td-lab__separation { border-left: 3px solid currentColor; padding: .8rem 0 .8rem 1rem; margin-top: 1rem; }
+.td-lab__separation { opacity: .78; }
+@media (max-width: 1100px) { .td-lab__panel { grid-template-columns: 1fr; } }

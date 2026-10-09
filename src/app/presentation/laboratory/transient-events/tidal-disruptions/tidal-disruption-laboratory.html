@@ -1,0 +1,149 @@
+<main class="td-lab" data-testid="tidal-disruption-laboratory-page">
+  <header class="td-lab__hero">
+    <div>
+      <p class="td-lab__eyebrow">FASE 29.6 · DISRUPCIONES DE MAREA</p>
+      <h1>Disrupciones de marea estrella–agujero negro</h1>
+      <p>
+        Laboratorio intrínseco para encuentros estrella–IMBH/SMBH. GENESIS deriva radios de marea,
+        pericentro, referencia de captura relativista y fallback cuando la geometría lo permite,
+        pero no inventa spin Kerr, eficiencia radiativa, luminosidad real ni flujo observado.
+      </p>
+    </div>
+    <span class="td-lab__badge">SOURCE FRAME / READ ONLY</span>
+  </header>
+
+  <nav class="td-lab__selector" aria-label="Casos de disrupción de marea">
+    @for (item of cases; track item.id) {
+      <button
+        type="button"
+        [class.is-active]="selectedId() === item.id"
+        (click)="selectCase(item.id)"
+      >
+        {{ item.shortLabel }}
+      </button>
+    }
+  </nav>
+
+  @if (selectedCase(); as current) {
+    <section class="td-lab__panel">
+      <div class="td-lab__visual-card">
+        <div class="td-lab__visual-header">
+          <div>
+            <p class="td-lab__eyebrow">GEOMETRÍA DEL ENCUENTRO</p>
+            <h2>rₛ · r<sub>cap</sub> · rₜ · r<sub>p</sub></h2>
+          </div>
+          <span>escala radial logarítmica</span>
+        </div>
+
+        <svg
+          class="td-lab__encounter"
+          viewBox="0 0 520 350"
+          role="img"
+          aria-label="Geometría radial del encuentro de disrupción de marea"
+          data-testid="tidal-disruption-geometry"
+        >
+          <path
+            d="M 18 62 C 128 72, 230 88, 302 160 C 338 196, 390 220, 505 228"
+            class="td-lab__trajectory"
+          />
+
+          <circle
+            cx="180" cy="175"
+            [attr.r]="current.tidalDisplayRadius"
+            class="td-lab__ring td-lab__ring--tidal"
+          />
+          <circle
+            cx="180" cy="175"
+            [attr.r]="current.captureDisplayRadius"
+            class="td-lab__ring td-lab__ring--capture"
+          />
+          <circle
+            cx="180" cy="175"
+            [attr.r]="current.horizonDisplayRadius"
+            class="td-lab__horizon"
+          />
+
+          <line
+            x1="180" y1="175"
+            [attr.x2]="180 + current.pericenterDisplayRadius"
+            y2="175"
+            class="td-lab__pericenter-line"
+          />
+          <circle
+            [attr.cx]="180 + current.pericenterDisplayRadius"
+            cy="175"
+            r="10"
+            class="td-lab__star"
+            data-testid="tidal-disruption-pericenter-marker"
+          />
+
+          <text x="180" y="180" text-anchor="middle" class="td-lab__bh-label">BH</text>
+          <text x="318" y="80" class="td-lab__diagram-label">rₜ · radio de marea</text>
+          <text x="318" y="108" class="td-lab__diagram-label">r₍cap₎ · 4GM/c²</text>
+          <text x="318" y="136" class="td-lab__diagram-label">rₛ · horizonte Schwarzschild</text>
+          <text x="318" y="164" class="td-lab__diagram-label">rₚ · pericentro del encuentro</text>
+        </svg>
+
+        @if (current.fallbackCurve) {
+          <section class="td-lab__fallback" data-testid="tidal-disruption-fallback-curve">
+            <div class="td-lab__fallback-header">
+              <div>
+                <p class="td-lab__eyebrow">FALLBACK DE REFERENCIA</p>
+                <strong>Ṁ ∝ t<sup>−5/3</sup> · normalizado</strong>
+              </div>
+              <span>t/t<sub>min</sub> = 1 → 30</span>
+            </div>
+            <svg viewBox="0 0 460 128" role="img" aria-label="Curva de fallback normalizada">
+              <line x1="0" y1="120" x2="460" y2="120" class="td-lab__fallback-axis" />
+              <polyline [attr.points]="current.fallbackPoints" class="td-lab__fallback-trace" />
+            </svg>
+            <p>
+              Es retorno de masa ligado bajo la aproximación frozen-in; no es luminosidad,
+              tasa de acreción en el horizonte ni curva de luz observada.
+            </p>
+          </section>
+        } @else {
+          <section class="td-lab__fallback td-lab__fallback--unresolved" data-testid="tidal-disruption-fallback-unresolved">
+            <p class="td-lab__eyebrow">FALLBACK</p>
+            <strong>{{ fallbackLabel(current.profile.fallbackResolution) }}</strong>
+            <p>No se dibuja una curva que requiera una fracción de masa ligada no resuelta.</p>
+          </section>
+        }
+      </div>
+
+      <div class="td-lab__science">
+        <p class="td-lab__eyebrow">{{ current.shortLabel }}</p>
+        <h2>{{ current.title }}</h2>
+        <p>{{ current.description }}</p>
+
+        <dl class="td-lab__metrics">
+          <div><dt>Víctima</dt><dd>{{ victimLabel(current.profile.victimKind) }}</dd></div>
+          <div><dt>Masa del BH</dt><dd>{{ mass(current.profile.blackHoleMassSolar) }}</dd></div>
+          <div><dt>Estrella</dt><dd>{{ format(current.profile.stellarMassSolar) }} M☉ · {{ format(current.profile.stellarRadiusSolar, 4) }} R☉</dd></div>
+          <div><dt>Penetración</dt><dd>β = {{ format(current.profile.penetrationFactorBeta, 3) }}</dd></div>
+          <div><dt>Radio de marea rₜ</dt><dd>{{ distance(current.profile.tidalRadiusMeters) }}</dd></div>
+          <div><dt>Pericentro rₚ</dt><dd>{{ distance(current.profile.pericenterMeters) }}</dd></div>
+          <div><dt>Schwarzschild rₛ</dt><dd>{{ distance(current.profile.schwarzschildRadiusMeters) }}</dd></div>
+          <div><dt>Captura parabólica ref.</dt><dd>{{ distance(current.profile.nonSpinningParabolicCaptureRadiusMeters) }}</dd></div>
+          <div><dt>rₜ / rₛ</dt><dd>{{ format(current.profile.tidalToSchwarzschildRatio, 4) }}</dd></div>
+          <div><dt>rₚ / r₍cap₎</dt><dd>{{ format(current.profile.pericenterToCaptureRatio, 4) }}</dd></div>
+          <div><dt>Masa límite captura ref.</dt><dd>{{ mass(current.profile.nonSpinningCaptureMassLimitSolar) }}</dd></div>
+          <div><dt>t<sub>min</sub> fallback</dt><dd>{{ duration(current.profile.mostBoundFallbackTimeSeconds) }}</dd></div>
+          <div><dt>Pico fallback ref.</dt><dd>{{ fallbackRate(current.profile.peakFallbackRateSolarPerYear) }}</dd></div>
+          <div><dt>Límite Eddington ref.</dt><dd>{{ scientific(current.profile.eddingtonLuminosityReferenceWatts) }} W</dd></div>
+          <div class="td-lab__metric--wide"><dt>Resultado físico</dt><dd>{{ outcomeLabel(current.profile.outcome) }}</dd></div>
+        </dl>
+
+        <p class="td-lab__unresolved" data-testid="tidal-disruption-observer-boundary">
+          Spin Kerr, orientación, eficiencia de circularización/radiación y luminosidad/flujo observados permanecen sin resolver.
+          La frontera r<sub>cap</sub> es una referencia parabólica Schwarzschild, no una solución Kerr inventada.
+        </p>
+
+        <p class="td-lab__separation" data-testid="tidal-disruption-channel-boundary">
+          29.6 modela TDE clásicos de estrellas frente a IMBH/SMBH. La disrupción de una estrella de neutrones en un NS–BH
+          sigue perteneciendo a 29.3/29.4 y no se duplica aquí.
+        </p>
+      </div>
+    </section>
+  }
+</main>

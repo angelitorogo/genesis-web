@@ -305,6 +305,16 @@ export const genesisRoutes: Routes = [
     title: 'Ondas gravitacionales | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/tidal-disruptions',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/tidal-disruptions/tidal-disruption-laboratory'
+      ).then(
+        (module) => module.TidalDisruptionLaboratoryPage,
+      ),
+    title: 'Disrupciones de marea | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(
