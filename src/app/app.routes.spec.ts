@@ -471,6 +471,17 @@ describe('GENESIS routes', () => {
     expect(harness.routeNativeElement?.querySelector('[data-testid="tidal-disruption-laboratory-page"]')).toBeTruthy();
   });
 
+  it('should expose and navigate to the complete 29.7 gamma-ray-burst laboratory', async () => {
+    const grb = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/gamma-ray-bursts');
+    expect(grb?.title).toBe('Estallidos de rayos gamma | Laboratorios GENESIS');
+
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/gamma-ray-bursts');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/gamma-ray-bursts');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="gamma-ray-burst-laboratory-page"]')).toBeTruthy();
+  });
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

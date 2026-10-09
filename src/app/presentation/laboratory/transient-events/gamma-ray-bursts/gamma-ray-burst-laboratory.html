@@ -1,0 +1,152 @@
+<main class="grb-lab" data-testid="gamma-ray-burst-laboratory-page">
+  <header class="grb-lab__hero">
+    <div>
+      <p class="grb-lab__eyebrow">FASE 29.7 · ESTALLIDOS DE RAYOS GAMMA</p>
+      <h1>Estallidos de rayos gamma</h1>
+      <p>
+        Laboratorio intrínseco de jets relativistas. GENESIS separa el progenitor del GRB:
+        una fusión compacta o un colapso no garantizan por sí solos un jet, un breakout ni
+        una detección prompt. Distancia, redshift, energía isotrópica, fluencia y flujo
+        permanecen sin inventar.
+      </p>
+    </div>
+    <span class="grb-lab__badge">SOURCE FRAME / READ ONLY</span>
+  </header>
+
+  <nav class="grb-lab__selector" aria-label="Casos de estallidos de rayos gamma">
+    @for (item of cases; track item.id) {
+      <button
+        type="button"
+        [class.is-active]="selectedId() === item.id"
+        (click)="selectCase(item.id)"
+      >
+        {{ item.shortLabel }}
+      </button>
+    }
+  </nav>
+
+  @if (selectedCase(); as current) {
+    <section class="grb-lab__panel">
+      <div class="grb-lab__visual-card">
+        <div class="grb-lab__visual-header">
+          <div>
+            <p class="grb-lab__eyebrow">GEOMETRÍA INTRÍNSECA</p>
+            <h2>Motor central · jet · línea de visión</h2>
+          </div>
+          <span>esquema angular · no a escala</span>
+        </div>
+
+        <svg
+          class="grb-lab__jet-scene"
+          viewBox="0 0 520 350"
+          role="img"
+          aria-label="Geometría del motor y jet del estallido de rayos gamma"
+          data-testid="gamma-ray-burst-jet-geometry"
+        >
+          @if (current.isCollapsar) {
+            <circle cx="260" cy="175" r="112" class="grb-lab__stellar-envelope" />
+            <circle cx="260" cy="175" r="96" class="grb-lab__stellar-core-guide" />
+            <text x="260" y="62" text-anchor="middle" class="grb-lab__diagram-label">envoltura estelar</text>
+          }
+
+          @if (current.rightJetPoints) {
+            <polygon [attr.points]="current.rightJetPoints" class="grb-lab__jet grb-lab__jet--right" />
+            <polygon [attr.points]="current.leftJetPoints" class="grb-lab__jet grb-lab__jet--left" />
+            <line x1="260" y1="175" x2="476" y2="175" class="grb-lab__jet-axis" />
+            <line x1="260" y1="175" x2="44" y2="175" class="grb-lab__jet-axis" />
+          } @else {
+            <line x1="120" y1="175" x2="400" y2="175" class="grb-lab__jet-axis grb-lab__jet-axis--unresolved" />
+            <text x="365" y="158" class="grb-lab__question">jet ?</text>
+          }
+
+          <circle cx="260" cy="175" r="27" class="grb-lab__engine" />
+          <circle cx="260" cy="175" r="10" class="grb-lab__engine-core" />
+          <text x="260" y="219" text-anchor="middle" class="grb-lab__diagram-label">motor central</text>
+
+          @if (current.observerLine) {
+            <path [attr.d]="current.observerLine" class="grb-lab__observer-line" />
+            <circle cx="0" cy="0" r="0" />
+            <text x="421" y="67" class="grb-lab__observer-label">observador explícito</text>
+          } @else {
+            <text x="386" y="78" class="grb-lab__observer-label">orientación ?</text>
+          }
+        </svg>
+
+        @if (current.profile.engineActivityDurationSeconds !== null) {
+          <section class="grb-lab__timeline" data-testid="gamma-ray-burst-engine-timeline">
+            <div class="grb-lab__timeline-header">
+              <div>
+                <p class="grb-lab__eyebrow">TIEMPO EN EL MARCO DE LA FUENTE</p>
+                <strong>Actividad del motor ≠ T<sub>90</sub> observado</strong>
+              </div>
+              <span>{{ duration(current.profile.engineActivityDurationSeconds) }}</span>
+            </div>
+            <svg viewBox="0 0 520 92" role="img" aria-label="Cronología del motor central y breakout">
+              <line x1="42" y1="46" x2="472" y2="46" class="grb-lab__timeline-track" />
+              <circle cx="42" cy="46" r="5" class="grb-lab__timeline-dot" />
+              <circle cx="472" cy="46" r="5" class="grb-lab__timeline-dot" />
+              <text x="42" y="76" text-anchor="middle" class="grb-lab__diagram-label">motor on</text>
+              <text x="472" y="76" text-anchor="middle" class="grb-lab__diagram-label">motor off</text>
+              @if (current.timelineBreakoutX !== null) {
+                <line
+                  [attr.x1]="current.timelineBreakoutX"
+                  y1="18"
+                  [attr.x2]="current.timelineBreakoutX"
+                  y2="66"
+                  class="grb-lab__breakout-marker"
+                />
+                <text
+                  [attr.x]="current.timelineBreakoutX"
+                  y="14"
+                  text-anchor="middle"
+                  class="grb-lab__diagram-label"
+                >breakout ref.</text>
+              }
+            </svg>
+          </section>
+        } @else {
+          <section class="grb-lab__timeline grb-lab__timeline--unresolved" data-testid="gamma-ray-burst-engine-unresolved">
+            <p class="grb-lab__eyebrow">MOTOR / JET</p>
+            <strong>Sin resolver</strong>
+            <p>La fusión progenitora no proporciona por sí sola un jet GRB ni una duración del motor.</p>
+          </section>
+        }
+      </div>
+
+      <div class="grb-lab__science">
+        <p class="grb-lab__eyebrow">{{ current.shortLabel }}</p>
+        <h2>{{ current.title }}</h2>
+        <p>{{ current.description }}</p>
+
+        <dl class="grb-lab__metrics">
+          <div><dt>Progenitor</dt><dd>{{ progenitorLabel(current.profile.progenitorKind) }}</dd></div>
+          <div><dt>Familia intrínseca</dt><dd>{{ familyLabel(current.profile.family) }}</dd></div>
+          <div><dt>Actividad del motor</dt><dd>{{ duration(current.profile.engineActivityDurationSeconds) }}</dd></div>
+          <div><dt>Semicono del jet</dt><dd>{{ angle(current.profile.jetHalfOpeningAngleDegrees) }}</dd></div>
+          <div><dt>Factor de Lorentz</dt><dd>{{ lorentz(current.profile.bulkLorentzFactor) }}</dd></div>
+          <div><dt>Cono relativista 1/Γ</dt><dd>{{ angle(current.profile.relativisticBeamingHalfAngleDegrees) }}</dd></div>
+          <div><dt>Fracción geométrica bipolar</dt><dd>{{ fraction(current.profile.twoSidedJetSkyFraction) }}</dd></div>
+          <div><dt>Ángulo al eje más próximo</dt><dd>{{ angle(current.profile.observerAngleToNearestJetAxisDegrees) }}</dd></div>
+          <div><dt>Breakout estelar</dt><dd>{{ stellarBreakoutLabel(current.profile.progenitorKind, current.profile.stellarBreakoutTimeSeconds) }}</dd></div>
+          <div><dt>Jet externo disponible</dt><dd>{{ externalJetAvailabilityLabel(current.profile.outcome, current.profile.sourceFrameExternalJetActivitySeconds) }}</dd></div>
+          <div><dt>Geometría prompt</dt><dd>{{ promptLabel(current.profile.observerPromptStatus) }}</dd></div>
+          <div><dt>T<sub>90</sub> observado</dt><dd>No resuelto</dd></div>
+          <div><dt>E<sub>iso</sub> γ</dt><dd>No resuelta</dd></div>
+          <div><dt>Fluencia / flujo observado</dt><dd>No resueltos</dd></div>
+          <div class="grb-lab__metric--wide"><dt>Resultado físico</dt><dd>{{ outcomeLabel(current.profile.outcome) }}</dd></div>
+        </dl>
+
+        <p class="grb-lab__boundary" data-testid="gamma-ray-burst-observer-boundary">
+          Un jet intrínseco no equivale a un GRB observado. Sin distancia luminosidad, redshift,
+          eficiencia radiativa y orientación no se calculan T<sub>90</sub>, E<sub>iso</sub>, fluencia ni flujo.
+        </p>
+
+        <p class="grb-lab__boundary grb-lab__boundary--secondary" data-testid="gamma-ray-burst-channel-boundary">
+          29.7 no reescribe 29.1, 29.3, 29.4 ni 29.5: una supernova o una fusión son progenitores posibles,
+          mientras que el lanzamiento, breakout y orientación del jet constituyen información adicional.
+          BH–BH no se trata como canal GRB prompt.
+        </p>
+      </div>
+    </section>
+  }
+</main>

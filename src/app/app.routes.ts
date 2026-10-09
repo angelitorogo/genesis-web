@@ -315,6 +315,16 @@ export const genesisRoutes: Routes = [
     title: 'Disrupciones de marea | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/gamma-ray-bursts',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/gamma-ray-bursts/gamma-ray-burst-laboratory'
+      ).then(
+        (module) => module.GammaRayBurstLaboratoryPage,
+      ),
+    title: 'Estallidos de rayos gamma | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(
