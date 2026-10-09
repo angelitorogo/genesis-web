@@ -1,0 +1,138 @@
+<main class="follow-lab" data-testid="transient-follow-up-laboratory">
+  <header class="follow-lab__header">
+    <div>
+      <p class="follow-lab__eyebrow">FASE 29.10 · SEGUIMIENTO TEMPORAL Y CLASIFICACIÓN</p>
+      <h1>Seguimiento de eventos transitorios</h1>
+      <p>
+        GENESIS separa la cronología física de la fuente, las observaciones explícitas y las
+        compatibilidades de clasificación. Una predicción futura, una tasa estadística y una
+        señal compatible no se convierten automáticamente en eventos observados.
+      </p>
+    </div>
+    <span class="follow-lab__badge">SOURCE / OBSERVER · READ ONLY</span>
+  </header>
+
+  <nav class="follow-lab__cases" aria-label="Casos de seguimiento transitorio">
+    @for (item of cases; track item.id) {
+      <button type="button" [class.is-active]="selectedId() === item.id"
+        [attr.aria-pressed]="selectedId() === item.id" [attr.data-testid]="'follow-up-case-' + item.id"
+        (click)="selectCase(item.id)">{{ item.buttonLabel }}</button>
+    }
+  </nav>
+
+  <div class="follow-lab__columns">
+    <section class="follow-lab__card" aria-label="Seguimiento temporal">
+      <p class="follow-lab__eyebrow">MARCO DE LA FUENTE · MODELO FÍSICO</p>
+      <h2>Cronología intrínseca</h2>
+      <p class="follow-lab__hint">Cada hito procede de un perfil ya resuelto; no se interpola una curva de luz ni se calcula una época terrestre.</p>
+      <div data-testid="transient-follow-up-model-track" class="follow-lab__track">
+        @if (track().modelMilestones.length) {
+          <div class="follow-lab__timeline">
+            <div class="follow-lab__timeline-line"></div>
+            @for (item of track().modelMilestones; track item.id) {
+              <button type="button" class="follow-lab__timeline-dot"
+                [class.is-active]="activeModelMilestone()?.id === item.id"
+                [style.left.%]="modelPercent(item.timeAfterOnsetSeconds)"
+                [attr.aria-label]="item.label" (click)="selectSourceTime(item.timeAfterOnsetSeconds)"></button>
+            }
+          </div>
+          <div class="follow-lab__phase" data-testid="transient-follow-up-active-source-phase">
+            <span>Fase seleccionada · {{ formatTime(modelTimeSeconds()) }}</span>
+            <strong>{{ activeModelMilestone()?.label ?? 'Sin hito previo' }}</strong>
+          </div>
+          <ol class="follow-lab__events">
+            @for (item of track().modelMilestones; track item.id) {
+              <li>
+                <button type="button" [class.is-active]="activeModelMilestone()?.id === item.id"
+                  (click)="selectSourceTime(item.timeAfterOnsetSeconds)">
+                  <span class="follow-lab__event-time">{{ formatTime(item.timeAfterOnsetSeconds) }}</span>
+                  <span>{{ item.label }}</span>
+                  <small>{{ item.phase }}</small>
+                </button>
+              </li>
+            }
+          </ol>
+        } @else {
+          <div class="follow-lab__empty" data-testid="transient-follow-up-no-model">
+            <span class="follow-lab__empty-icon">∅</span>
+            @if (track().classification === 'CANONICAL_FUTURE') {
+              <strong>Predicción futura · todavía sin fases observadas</strong>
+              <p>No se genera un inspiral detectado ni una fecha terrestre del evento.</p>
+            } @else if (track().classification === 'STATISTICAL_ONLY') {
+              <strong>Sin evento individual</strong>
+              <p>Una tasa media no permite programar una llamarada futura.</p>
+            } @else if (track().classification === 'OBSERVATION_COMPATIBLE' || track().classification === 'OBSERVATION_AMBIGUOUS') {
+              <strong>Origen físico sin resolver</strong>
+              <p>Solo existen los datos instrumentales ilustrativos del panel observador.</p>
+            } @else {
+              <strong>Modelo temporal no aplicable o sin resolver</strong>
+              <p>No se inventan hitos físicos ausentes del perfil.</p>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="follow-lab__divider"></div>
+      <p class="follow-lab__eyebrow">MARCO DEL OBSERVADOR · EVIDENCIA EXPLÍCITA</p>
+      <h2>Seguimiento instrumental</h2>
+      <p class="follow-lab__hint">Otra escala de tiempo: segundos relativos a una referencia observacional. No se superpone al reloj de la fuente.</p>
+      <div data-testid="transient-follow-up-observation-track">
+        @if (track().observations.length) {
+          <div class="follow-lab__timeline follow-lab__timeline--observation">
+            <div class="follow-lab__timeline-line"></div>
+            @for (item of track().observations; track item.id) {
+              <span class="follow-lab__timeline-dot follow-lab__timeline-dot--observer"
+                [style.left.%]="observerPercent(item.timeAfterObserverReferenceSeconds)"></span>
+            }
+          </div>
+          <ol class="follow-lab__observations">
+            @for (item of track().observations; track item.id) {
+              <li><strong>{{ formatTime(item.timeAfterObserverReferenceSeconds) }}</strong><span>{{ item.label }}</span></li>
+            }
+          </ol>
+          <p class="follow-lab__disclaimer">Datos explícitos e ilustrativos del laboratorio; no observaciones de la partida ni detección real.</p>
+        } @else {
+          <div class="follow-lab__empty follow-lab__empty--short" data-testid="transient-follow-up-no-observations">
+            <strong>Sin observaciones suministradas</strong>
+            <p>No significa ausencia del fenómeno ni que sea indetectable.</p>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="follow-lab__science" aria-label="Clasificación científica">
+      <p class="follow-lab__eyebrow">{{ selectedCase().id }} · 29.10</p>
+      <h2>{{ selectedCase().title }}</h2>
+      <p>{{ selectedCase().description }}</p>
+      <dl class="follow-lab__metrics">
+        <div><dt>Clasificación 29.10</dt><dd data-testid="transient-follow-up-classification">{{ classificationLabel(track().classification) }}</dd></div>
+        <div><dt>Familia física declarada</dt><dd>{{ familyLabel(track().family) }}</dd></div>
+        <div><dt>Hitos intrínsecos</dt><dd>{{ track().modelMilestones.length }}</dd></div>
+        <div><dt>Observaciones explícitas</dt><dd>{{ track().observations.length }}</dd></div>
+        <div><dt>Tiempo hasta evento canónico</dt><dd>{{ forecastYears() }}</dd></div>
+        <div><dt>Época observada UTC / terrestre</dt><dd>No resuelta</dd></div>
+        <div><dt>Distancia y conversión fuente/observador</dt><dd>No resueltas</dd></div>
+        <div><dt>Eventos nuevos persistidos</dt><dd>0 · solo lectura</dd></div>
+      </dl>
+      <div class="follow-lab__classification">
+        <h3>Familias compatibles con señales explícitas</h3>
+        @if (track().compatibleFamilies.length) {
+          <p data-testid="transient-follow-up-candidates">
+            @for (family of track().compatibleFamilies; track family; let last = $last) {
+              {{ familyLabel(family) }}{{ last ? '' : ' · ' }}
+            }
+          </p>
+          <small>Compatibilidad de señales, no confirmación del evento/progenitor. Nunca se sintetiza una contraparte no proporcionada.</small>
+        } @else {
+          <p data-testid="transient-follow-up-no-candidates">No hay evidencias observacionales para clasificar.</p>
+        }
+      </div>
+      <blockquote data-testid="transient-follow-up-scientific-note">{{ selectedCase().explanation }}</blockquote>
+      <blockquote class="follow-lab__boundary" data-testid="transient-follow-up-boundary">
+        29.10 no modifica 29.1–29.9, Dexie, semillas, Ground Truth ni niveles DETECTED→CONFIRMED.
+        Las fases fuente no son puntos observados; una señal compatible no crea progenitores,
+        kilonovas, GRB, FRB, ondas medidas ni efectos planetarios de 29.11.
+      </blockquote>
+    </section>
+  </div>
+</main>

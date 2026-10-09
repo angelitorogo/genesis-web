@@ -345,6 +345,16 @@ export const genesisRoutes: Routes = [
     title: 'Grandes llamaradas estelares | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/follow-up',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/follow-up/transient-follow-up-laboratory'
+      ).then(
+        (module) => module.TransientFollowUpLaboratoryPage,
+      ),
+    title: 'Seguimiento de transitorios | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(

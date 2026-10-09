@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the fifteen laboratories already implemented',
+      'should expose exactly the sixteen laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          15,
+          16,
         );
       },
     );
 
     it(
-      'should link only to the fifteen canonical permanent laboratory routes',
+      'should link only to the sixteen canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -267,6 +267,12 @@ describe(
             )
             ?.getAttribute('href'),
         ).toBe('/laboratory/transient-events/great-stellar-flares');
+
+        expect(
+          element.querySelector<HTMLAnchorElement>(
+            '[data-testid="laboratory-transient-follow-up-link"]',
+          )?.getAttribute('href'),
+        ).toBe('/laboratory/transient-events/follow-up');
       },
     );
   },

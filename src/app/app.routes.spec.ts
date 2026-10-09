@@ -18,6 +18,16 @@ describe('GENESIS routes', () => {
     });
   });
 
+
+  it('29.10 navigates to the follow-up laboratory without Home wildcard fallback', async () => {
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/follow-up');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/follow-up');
+    expect(harness.routeNativeElement?.querySelector(
+      '[data-testid="transient-follow-up-laboratory"]',
+    )).toBeTruthy();
+  }, 30_000);
+
   it('should navigate to Home from the root route', async () => {
     const harness =
       await RouterTestingHarness.create('/');
