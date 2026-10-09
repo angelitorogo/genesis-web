@@ -18,6 +18,9 @@ import {
 import {
   type KilonovaCanonicalEventRepository,
 } from '../../domain/repository/kilonova-canonical-event-repository';
+import {
+  type CompactMergerCanonicalEventRepository,
+} from '../../domain/repository/compact-merger-canonical-event-repository';
 
 import {
   type ProceduralLocator,
@@ -49,6 +52,9 @@ import {
 import {
   DexieKilonovaCanonicalEventRepository,
 } from '../../data/local/repository/dexie-kilonova-canonical-event.repository';
+import {
+  DexieCompactMergerCanonicalEventRepository,
+} from '../../data/local/repository/dexie-compact-merger-canonical-event.repository';
 
 import {
   DexieUniverseNavigationRepository,
@@ -89,6 +95,10 @@ export interface GenesisLocalRepositories {
   /** 29.3 optional only for legacy/test bundles. Production always supplies it. */
   readonly kilonovaCanonicalEventRepository?:
     KilonovaCanonicalEventRepository;
+
+  /** 29.4 optional only for legacy/test bundles. Production always supplies it. */
+  readonly compactMergerCanonicalEventRepository?:
+    CompactMergerCanonicalEventRepository;
 }
 
 const TARGET_SEED_RESOLVER:
@@ -165,6 +175,12 @@ function createGenesisLocalRepositories():
 
     kilonovaCanonicalEventRepository:
       new DexieKilonovaCanonicalEventRepository(
+        database,
+        TARGET_SEED_RESOLVER,
+      ),
+
+    compactMergerCanonicalEventRepository:
+      new DexieCompactMergerCanonicalEventRepository(
         database,
         TARGET_SEED_RESOLVER,
       ),

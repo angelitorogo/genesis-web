@@ -218,6 +218,35 @@
                   </article>
                 }
 
+                @if (model.stellarCompactMergerScience; as mergerScience) {
+                  <article
+                    class="observatory__panel observatory__progress"
+                    data-testid="observatory-compact-merger-science"
+                  >
+                    <header>
+                      <div>
+                        <small>29.4 · FUSIONES COMPACTAS</small>
+                        <h2>Canal de fusión binaria compacta</h2>
+                      </div>
+                      <strong>{{ mergerScience.catalogLabel }}</strong>
+                    </header>
+                    <p>{{ mergerScience.summary }}</p>
+                    @if (mergerScience.entries.length > 0) {
+                      <div class="observatory__dimension-grid">
+                        @for (entry of mergerScience.entries; track entry.pairLabel) {
+                          <section class="observatory__dimension">
+                            <small>{{ entry.pairLabel }}</small>
+                            <strong>{{ entry.typeLabel }}</strong>
+                            <span>Fusión {{ entry.mergerDelayLabel }}</span>
+                            <span>{{ entry.chirpMassLabel }} de masa chirp</span>
+                            <span>{{ entry.counterpartLabel }}</span>
+                          </section>
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+
                 <article
                   class="observatory__panel observatory__actions"
                   data-testid="observatory-scientific-actions"

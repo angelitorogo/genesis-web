@@ -436,6 +436,51 @@
                   </article>
                 }
 
+                @if (model.stellarCompactMergerScience; as mergerScience) {
+                  <article
+                    class="system-page__science-card system-page__science-card--wide"
+                    data-testid="system-page-compact-merger-science"
+                  >
+                    <header class="system-page__section-header">
+                      <div>
+                        <small>29.4 · EVOLUCIÓN TRANSITORIA</small>
+                        <h2>Fusiones compactas</h2>
+                      </div>
+                      <span>{{ mergerScience.summary }}</span>
+                    </header>
+
+                    @if (mergerScience.entries.length > 0) {
+                      <div class="system-page__star-grid">
+                        @for (entry of mergerScience.entries; track entry.pairLabel) {
+                          <section class="system-page__star-card" data-testid="system-page-compact-merger-event">
+                            <header>
+                              <div>
+                                <small>PAR COMPACTO {{ entry.pairLabel }}</small>
+                                <h3>{{ entry.typeLabel }}</h3>
+                              </div>
+                            </header>
+                            <p>{{ entry.designationLabel }}</p>
+                            <dl class="system-page__fact-grid system-page__fact-grid--star">
+                              <div><dt>Fusión prevista</dt><dd>{{ entry.mergerDelayLabel }}</dd></div>
+                              <div><dt>Masas componentes</dt><dd>{{ entry.componentMassesLabel }}</dd></div>
+                              <div><dt>Masa total</dt><dd>{{ entry.totalMassLabel }}</dd></div>
+                              <div><dt>Masa chirp</dt><dd>{{ entry.chirpMassLabel }}</dd></div>
+                              <div><dt>Razones de masa</dt><dd>{{ entry.massRatioLabel }}</dd></div>
+                              <div><dt>Remanente</dt><dd>{{ entry.remnantLabel }}</dd></div>
+                              <div><dt>Contraparte EM</dt><dd>{{ entry.counterpartLabel }}</dd></div>
+                              <div><dt>Presupuesto final</dt><dd>{{ entry.massBudgetLabel }}</dd></div>
+                            </dl>
+                          </section>
+                        }
+                      </div>
+                    } @else {
+                      <p class="system-page__empty-note">
+                        Sin fusión NS–NS, NS–BH o BH–BH dentro del horizonte temporal modelado.
+                      </p>
+                    }
+                  </article>
+                }
+
                 <article
                   class="system-page__science-card"
                   data-testid="system-page-orbital-architecture"

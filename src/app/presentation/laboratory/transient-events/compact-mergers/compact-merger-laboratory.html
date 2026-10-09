@@ -1,0 +1,94 @@
+<main class="compact-merger-lab" data-testid="compact-merger-laboratory-page">
+  <header class="compact-merger-lab__hero">
+    <div>
+      <p class="compact-merger-lab__eyebrow">FASE 29.4 · FUSIONES COMPACTAS</p>
+      <h1>Fusiones NS–NS, NS–BH y BH–BH</h1>
+      <p>
+        Laboratorio read-only. La fusión compacta se modela como evento físico independiente de su posible contraparte
+        electromagnética. No se generan forma de onda, strain ni frecuencia: esos observables pertenecen a 29.5.
+      </p>
+    </div>
+    <span class="compact-merger-lab__badge">READ ONLY / QA</span>
+  </header>
+
+  <nav class="compact-merger-lab__selector" aria-label="Canal de fusión compacta">
+    @for (item of cases; track item.id) {
+      <button type="button" [class.is-active]="selectedType() === item.id" (click)="selectType(item.id)">
+        {{ item.shortLabel }}
+      </button>
+    }
+  </nav>
+
+  @if (selectedCase(); as current) {
+    <section class="compact-merger-lab__panel">
+      <div
+        class="compact-merger-lab__scene"
+        [attr.data-channel]="current.id"
+        aria-label="Secuencia física desde los progenitores hasta el remanente"
+      >
+        <div
+          class="compact-merger-lab__stage compact-merger-lab__stage--progenitors"
+          data-testid="compact-merger-progenitors"
+        >
+          <p class="compact-merger-lab__stage-label">Progenitores</p>
+          <div class="compact-merger-lab__orbit" aria-hidden="true"></div>
+
+          <div class="compact-merger-lab__body compact-merger-lab__body--a">
+            <span class="compact-merger-lab__body-kind">{{ progenitorPrimaryLabel(current.id) }}</span>
+            <span class="compact-merger-lab__body-id">A</span>
+          </div>
+
+          <div class="compact-merger-lab__body compact-merger-lab__body--b">
+            <span class="compact-merger-lab__body-kind">{{ progenitorSecondaryLabel(current.id) }}</span>
+            <span class="compact-merger-lab__body-id">B</span>
+          </div>
+        </div>
+
+        <div class="compact-merger-lab__transition" data-testid="compact-merger-transition" aria-hidden="true">
+          <span>→</span>
+        </div>
+
+        <div
+          class="compact-merger-lab__stage compact-merger-lab__stage--remnant"
+          data-testid="compact-merger-remnant-stage"
+        >
+          <p class="compact-merger-lab__stage-label">Remanente</p>
+          <div class="compact-merger-lab__remnant">
+            <span>{{ remnantShortLabel(current.profile.remnantKind) }}</span>
+          </div>
+          <p class="compact-merger-lab__remnant-caption">{{ remnantLabel(current.profile.remnantKind) }}</p>
+        </div>
+      </div>
+
+      <div class="compact-merger-lab__science">
+        <p class="compact-merger-lab__eyebrow">{{ current.shortLabel }}</p>
+        <h2>{{ current.title }}</h2>
+        <p>{{ current.description }}</p>
+
+        <dl class="compact-merger-lab__metrics">
+          <div><dt>Masas</dt><dd>{{ format(current.profile.progenitor.primaryMassSolar) }} + {{ format(current.profile.progenitor.secondaryMassSolar) }} M☉</dd></div>
+          <div><dt>Masa total</dt><dd>{{ format(current.profile.totalMassSolar) }} M☉</dd></div>
+          <div><dt>Masa chirp</dt><dd>{{ format(current.profile.chirpMassSolar) }} M☉</dd></div>
+          <div><dt>Razones de masa</dt><dd>q {{ format(current.profile.massRatio) }} · η {{ format(current.profile.symmetricMassRatio, 4) }}</dd></div>
+          <div><dt>Tiempo de inspiral</dt><dd>{{ scientific(current.profile.progenitor.referenceInspiralYears) }} años</dd></div>
+          <div><dt>Remanente</dt><dd>{{ remnantLabel(current.profile.remnantKind) }}</dd></div>
+          <div><dt>Contraparte</dt><dd>{{ counterpartLabel(current.profile.counterpartKind) }}</dd></div>
+          <div><dt>Presupuesto de masa</dt><dd>{{ massBudgetLabel(current.profile.massBudgetResolution) }}</dd></div>
+        </dl>
+
+        @if (current.profile.remnantMassSolar !== null) {
+          <p class="compact-merger-lab__resolved">
+            NS–NS coherente con 29.3: remanente {{ format(current.profile.remnantMassSolar) }} M☉,
+            ejecta {{ scientificNullable(current.profile.resolvedMatterEjectaMassSolar) }} M☉ y masa-equivalente radiada
+            {{ scientificNullable(current.profile.resolvedRadiatedMassSolar) }} M☉.
+          </p>
+        } @else {
+          <p class="compact-merger-lab__unresolved">
+            La fusión es canónica, pero no se inventa una masa final: con un agujero negro presente faltan spin y
+            orientación Kerr para cerrar ese presupuesto con el rigor exigido por GENESIS.
+          </p>
+        }
+      </div>
+    </section>
+  }
+</main>

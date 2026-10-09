@@ -214,6 +214,37 @@
                 </section>
               }
 
+              @if (model.stellarCompactMergerScience; as mergerScience) {
+                <section
+                  class="archive-discovery-detail__physical-section"
+                  data-testid="archive-stellar-compact-merger-science"
+                >
+                  <header class="archive-discovery-detail__campaign-header">
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">29.4 · FUSIONES COMPACTAS</small>
+                      <h3>Fusión canónica NS–NS / NS–BH / BH–BH</h3>
+                      <p>{{ mergerScience.summary }}</p>
+                    </div>
+                    <div class="archive-discovery-detail__campaign-score">
+                      <strong>{{ mergerScience.catalogLabel }}</strong>
+                    </div>
+                  </header>
+
+                  @if (mergerScience.entries.length > 0) {
+                    <div class="archive-discovery-detail__campaign-grid">
+                      @for (entry of mergerScience.entries; track entry.pairLabel) {
+                        <article class="archive-discovery-detail__campaign-dimension">
+                          <span>{{ entry.pairLabel }} · {{ entry.typeLabel }}</span>
+                          <strong>{{ entry.mergerDelayLabel }}</strong>
+                          <small>{{ entry.componentMassesLabel }} · Mchirp {{ entry.chirpMassLabel }}</small>
+                          <small>{{ entry.counterpartLabel }}</small>
+                        </article>
+                      }
+                    </div>
+                  }
+                </section>
+              }
+
               @if (model.stellarSystemScientificCampaign; as campaign) {
                 <section
                   class="archive-discovery-detail__physical-section archive-discovery-detail__scientific-campaign"

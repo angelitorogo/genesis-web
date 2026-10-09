@@ -437,6 +437,17 @@ describe('GENESIS routes', () => {
     expect(harness.routeNativeElement?.querySelector('[data-testid="kilonova-laboratory-page"]')).toBeTruthy();
   });
 
+  it('should expose and navigate to the complete 29.4 compact-merger laboratory', async () => {
+    const merger = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/compact-mergers');
+    expect(merger?.title).toBe('Fusiones compactas | Laboratorios GENESIS');
+
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/compact-mergers');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/compact-mergers');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="compact-merger-laboratory-page"]')).toBeTruthy();
+  });
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

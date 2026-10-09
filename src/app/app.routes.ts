@@ -285,6 +285,16 @@ export const genesisRoutes: Routes = [
     title: 'Kilonovas | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/compact-mergers',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/compact-mergers/compact-merger-laboratory'
+      ).then(
+        (module) => module.CompactMergerLaboratoryPage,
+      ),
+    title: 'Fusiones compactas | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(

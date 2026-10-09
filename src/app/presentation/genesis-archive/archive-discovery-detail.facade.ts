@@ -187,6 +187,15 @@ import {
 } from '../runtime/stellar-kilonova-scientific-presentation';
 
 import {
+  StellarCompactMergerScientificIntegration,
+} from '../runtime/stellar-compact-merger-scientific-integration';
+
+import {
+  StellarCompactMergerScientificPresentationAssembler,
+  type StellarCompactMergerScientificPresentationModel,
+} from '../runtime/stellar-compact-merger-scientific-presentation';
+
+import {
   isScientificRouteUniverseRef,
   scientificRouteUniverseRef,
 } from '../scientific/scientific-route-identity';
@@ -429,6 +438,10 @@ export interface ArchiveDiscoveryDetailModel {
   /** 29.3. Compact-merger kilonova science is independent from 29.1/29.2. */
   readonly stellarKilonovaScience?:
     StellarKilonovaScientificPresentationModel | null;
+
+  /** 29.4. Canonical NS-NS / NS-BH / BH-BH merger science, independent from EM counterparts. */
+  readonly stellarCompactMergerScience?:
+    StellarCompactMergerScientificPresentationModel | null;
 
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
@@ -1923,6 +1936,23 @@ export class ArchiveDiscoveryDetailFacade {
             : null
           : undefined;
 
+      const compactMergerRepository =
+        this.repositories.compactMergerCanonicalEventRepository;
+
+      const stellarCompactMergerScience =
+        locator instanceof SystemLocator &&
+        compactMergerRepository !== undefined
+          ? discoveryState.code >= DiscoveryState.CATALOGUED.code
+            ? StellarCompactMergerScientificPresentationAssembler.build(
+                await StellarCompactMergerScientificIntegration.synchronize(
+                  compactMergerRepository,
+                  generationKey,
+                  locator,
+                ),
+              )
+            : null
+          : undefined;
+
       const scientificAction =
         locator instanceof
           GalacticObjectLocator
@@ -2168,6 +2198,10 @@ export class ArchiveDiscoveryDetailFacade {
               ...(stellarKilonovaScience === undefined
                 ? {}
                 : { stellarKilonovaScience }),
+
+              ...(stellarCompactMergerScience === undefined
+                ? {}
+                : { stellarCompactMergerScience }),
 
               scientificAction,
 

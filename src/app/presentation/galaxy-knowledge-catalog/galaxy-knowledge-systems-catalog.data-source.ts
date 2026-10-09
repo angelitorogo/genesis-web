@@ -21,6 +21,8 @@ import { StellarNovaScientificIntegration } from '../runtime/stellar-nova-scient
 import { StellarNovaScientificPresentationAssembler } from '../runtime/stellar-nova-scientific-presentation';
 import { StellarKilonovaScientificIntegration } from '../runtime/stellar-kilonova-scientific-integration';
 import { StellarKilonovaScientificPresentationAssembler } from '../runtime/stellar-kilonova-scientific-presentation';
+import { StellarCompactMergerScientificIntegration } from '../runtime/stellar-compact-merger-scientific-integration';
+import { StellarCompactMergerScientificPresentationAssembler } from '../runtime/stellar-compact-merger-scientific-presentation';
 import { galaxyKnowledgeRevision } from '../runtime/galaxy-knowledge-snapshot.runtime';
 import {
   defineGalaxyKnowledgeCatalogDescriptor,
@@ -68,6 +70,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
   private readonly supernovaLabelCache = new Map<string, Promise<string>>();
   private readonly novaLabelCache = new Map<string, Promise<string>>();
   private readonly kilonovaLabelCache = new Map<string, Promise<string>>();
+  private readonly compactMergerLabelCache = new Map<string, Promise<string>>();
 
   describe(subtype: string | null): GalaxyKnowledgeCatalogDescriptor {
     const normalizedSubtype = normalizeSystemSubtype(subtype);
@@ -81,7 +84,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
       category: 'systems' as const,
       title,
       description:
-        'Sistemas estelares presentes en el conocimiento persistido de la galaxia. La multiplicidad se revela desde Descubierto y el linaje de supernova, canales de nova y fusiones compactas con kilonova desde Catalogado, igual que en la ficha científica.',
+        'Sistemas estelares presentes en el conocimiento persistido de la galaxia. La multiplicidad se revela desde Descubierto y los canales transitorios de supernova, nova, kilonova y fusión compacta desde Catalogado, igual que en la ficha científica.',
       filterLabel: normalizedSubtype === null
         ? 'TODOS'
         : normalizedSubtype === 'UNCLASSIFIED'
@@ -104,8 +107,11 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         galaxyKnowledgeCatalogField('nova', 'Nova / acreción WD', {
           columnLabel: 'NOVA / ACRECIÓN WD', defaultVisible: true,
         }),
-        galaxyKnowledgeCatalogField('kilonova', 'Kilonova / fusión compacta', {
-          columnLabel: 'KILONOVA / FUSIÓN', defaultVisible: true,
+        galaxyKnowledgeCatalogField('kilonova', 'Kilonova / contraparte EM', {
+          columnLabel: 'KILONOVA', defaultVisible: true,
+        }),
+        galaxyKnowledgeCatalogField('compactMerger', 'Fusión compacta', {
+          columnLabel: 'FUSIÓN COMPACTA', defaultVisible: true,
         }),
         galaxyKnowledgeCatalogField('sector', 'Sector', {
           columnLabel: 'SECTOR', defaultVisible: true, align: 'end',
@@ -145,7 +151,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
     let totalPages: number;
     let rows: readonly GalaxyKnowledgeCatalogRow[];
 
-    if (request.query.sortKey === 'supernova' || request.query.sortKey === 'nova' || request.query.sortKey === 'kilonova') {
+    if (request.query.sortKey === 'supernova' || request.query.sortKey === 'nova' || request.query.sortKey === 'kilonova' || request.query.sortKey === 'compactMerger') {
       // 29.1E/29.2: transient lineage sorts are intentionally opt-in expensive sorts.
       // Correct ordering requires the scientific label for every filtered
       // system, so the full filtered set is materialized only for this key.
@@ -160,7 +166,9 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
               ? await this.supernovaCatalogLabel(request.generationKey, record)
               : request.query.sortKey === 'nova'
                 ? await this.novaCatalogLabel(request.generationKey, record)
-                : await this.kilonovaCatalogLabel(request.generationKey, record),
+                : request.query.sortKey === 'kilonova'
+                  ? await this.kilonovaCatalogLabel(request.generationKey, record)
+                  : await this.compactMergerCatalogLabel(request.generationKey, record),
           })),
       );
 
@@ -184,6 +192,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
             request.query.sortKey === 'supernova' ? label : await this.supernovaCatalogLabel(request.generationKey, record),
             request.query.sortKey === 'nova' ? label : await this.novaCatalogLabel(request.generationKey, record),
             request.query.sortKey === 'kilonova' ? label : await this.kilonovaCatalogLabel(request.generationKey, record),
+            request.query.sortKey === 'compactMerger' ? label : await this.compactMergerCatalogLabel(request.generationKey, record),
           )),
       ));
     } else {
@@ -212,6 +221,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
             await this.supernovaCatalogLabel(request.generationKey, record),
             await this.novaCatalogLabel(request.generationKey, record),
             await this.kilonovaCatalogLabel(request.generationKey, record),
+            await this.compactMergerCatalogLabel(request.generationKey, record),
           ),
         ),
       ));
@@ -305,6 +315,24 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
     this.kilonovaLabelCache.set(cacheKey, pending);
     try { return await pending; }
     catch (error) { this.kilonovaLabelCache.delete(cacheKey); throw error; }
+  }
+
+  private async compactMergerCatalogLabel(
+    generationKey: UniverseGenerationKey,
+    record: KnownSystemCatalogRecord,
+  ): Promise<string | undefined> {
+    const repository = this.repositories.compactMergerCanonicalEventRepository;
+    if (repository === undefined) return undefined;
+    if (record.discovery.state.code < DiscoveryState.CATALOGUED.code) return 'Restringido hasta Catalogado';
+    const cacheKey = transientLabelCacheKey(generationKey, record.locator);
+    const cached = this.compactMergerLabelCache.get(cacheKey);
+    if (cached !== undefined) return cached;
+    const pending = StellarCompactMergerScientificIntegration
+      .synchronize(repository, generationKey, record.locator)
+      .then(snapshot => StellarCompactMergerScientificPresentationAssembler.build(snapshot).catalogLabel);
+    this.compactMergerLabelCache.set(cacheKey, pending);
+    try { return await pending; }
+    catch (error) { this.compactMergerLabelCache.delete(cacheKey); throw error; }
   }
 
   private recordsFor(
@@ -402,6 +430,7 @@ function toRow(
   supernovaCatalogLabel?: string,
   novaCatalogLabel?: string,
   kilonovaCatalogLabel?: string,
+  compactMergerCatalogLabel?: string,
 ): GalaxyKnowledgeCatalogRow {
   const locatorLabel = systemLocatorLabel(record.locator);
   const title = record.designation ?? 'Sistema detectado';
@@ -418,6 +447,7 @@ function toRow(
       supernova: supernovaCatalogLabel,
       nova: novaCatalogLabel,
       kilonova: kilonovaCatalogLabel,
+      compactMerger: compactMergerCatalogLabel,
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
       locator: locatorLabel,
     }),

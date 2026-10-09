@@ -22,6 +22,8 @@ import { StellarNovaScientificIntegration } from '../runtime/stellar-nova-scient
 import { StellarNovaScientificPresentationAssembler } from '../runtime/stellar-nova-scientific-presentation';
 import { StellarKilonovaScientificIntegration } from '../runtime/stellar-kilonova-scientific-integration';
 import { StellarKilonovaScientificPresentationAssembler } from '../runtime/stellar-kilonova-scientific-presentation';
+import { StellarCompactMergerScientificIntegration } from '../runtime/stellar-compact-merger-scientific-integration';
+import { StellarCompactMergerScientificPresentationAssembler } from '../runtime/stellar-compact-merger-scientific-presentation';
 import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-systems-catalog.data-source';
 
 const generationKey = new UniverseGenerationKey(
@@ -79,12 +81,14 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
       'supernova',
       'nova',
       'kilonova',
+      'compactMerger',
       'sector',
     ]);
     expect(descriptor.sortOptions.map(option => option.key)).toContain('components');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('supernova');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('nova');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('kilonova');
+    expect(descriptor.sortOptions.map(option => option.key)).toContain('compactMerger');
     expect(() => source.describe('QUADRUPLE')).toThrowError(RangeError);
   });
 
@@ -576,6 +580,59 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
       'Candidato NS–BH · spin no resuelto',
       'Kilonova NS–NS · 12,5 Ma',
       'Sin canal de kilonova',
+    ]);
+    expect(synchronize).toHaveBeenCalledTimes(3);
+    expect(presentation).toHaveBeenCalledTimes(3);
+  });
+
+
+
+  it('materializes and sorts 29.4 compact-merger science independently from the kilonova channel', async () => {
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 41n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 42n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 43n), DiscoveryState.CATALOGUED),
+    ]);
+    const synchronize = vi.spyOn(StellarCompactMergerScientificIntegration, 'synchronize')
+      .mockImplementation(async (_repository, _generationKey, locator) => Object.freeze({
+        marker: Number(locator.galacticObjectIndex),
+        lineage: null, events: Object.freeze([]), consequences: Object.freeze([]),
+      }) as never);
+    const presentation = vi.spyOn(StellarCompactMergerScientificPresentationAssembler, 'build')
+      .mockImplementation(snapshot => {
+        const marker = (snapshot as unknown as { readonly marker: number }).marker;
+        const labels: Readonly<Record<number, string>> = Object.freeze({
+          41: 'Sin fusión compacta',
+          42: 'Fusión NS–BH · 42 Ma',
+          43: 'Fusión BH–BH · 680 Ma',
+        });
+        return Object.freeze({
+          summary: '', catalogLabel: labels[marker] ?? 'Sin fusión compacta',
+          canonicalEventCount: 0, entries: Object.freeze([]),
+        });
+      });
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        { provide: GENESIS_LOCAL_REPOSITORIES, useValue: {
+          discoveryRepository: { async getKnownDiscoveriesInGalaxy() { return discoveries; } },
+          compactMergerCanonicalEventRepository: {},
+        } as unknown as GenesisLocalRepositories },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const result = await source.query({
+      generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+      query: { category: 'systems', subtype: null, page: 1, pageSize: 25, sortKey: 'compactMerger', direction: 'asc' },
+    });
+    expect(result.kind).toBe('page');
+    if (result.kind !== 'page') throw new Error('Expected systems page.');
+    expect(result.page.items.map(row => row.cells['compactMerger'])).toEqual([
+      'Fusión BH–BH · 680 Ma',
+      'Fusión NS–BH · 42 Ma',
+      'Sin fusión compacta',
     ]);
     expect(synchronize).toHaveBeenCalledTimes(3);
     expect(presentation).toHaveBeenCalledTimes(3);

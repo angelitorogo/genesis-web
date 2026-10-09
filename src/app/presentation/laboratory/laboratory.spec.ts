@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the nine laboratories already implemented',
+      'should expose exactly the ten laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          9,
+          10,
         );
       },
     );
 
     it(
-      'should link only to the nine canonical permanent laboratory routes',
+      'should link only to the ten canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -215,6 +215,14 @@ describe(
             )
             ?.getAttribute('href'),
         ).toBe('/laboratory/transient-events/kilonovae');
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-compact-mergers-link"]',
+            )
+            ?.getAttribute('href'),
+        ).toBe('/laboratory/transient-events/compact-mergers');
       },
     );
   },
