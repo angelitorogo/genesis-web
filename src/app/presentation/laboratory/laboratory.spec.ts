@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the fourteen laboratories already implemented',
+      'should expose exactly the fifteen laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          14,
+          15,
         );
       },
     );
 
     it(
-      'should link only to the fourteen canonical permanent laboratory routes',
+      'should link only to the fifteen canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -258,6 +258,15 @@ describe(
             )
             ?.getAttribute('href'),
         ).toBe('/laboratory/transient-events/fast-radio-bursts');
+
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-great-stellar-flares-link"]',
+            )
+            ?.getAttribute('href'),
+        ).toBe('/laboratory/transient-events/great-stellar-flares');
       },
     );
   },

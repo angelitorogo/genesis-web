@@ -1,0 +1,162 @@
+<main class="flare-lab" data-testid="great-stellar-flare-laboratory-page">
+  <header class="flare-lab__hero">
+    <div>
+      <p class="flare-lab__eyebrow">FASE 29.9 · GRANDES LLAMARADAS ESTELARES</p>
+      <h1>Grandes llamaradas estelares</h1>
+      <p>
+        Laboratorio intrínseco de eventos magnéticos estelares ordinarios. GENESIS usa 15.4 como
+        contexto estadístico, pero una tasa de flares no crea por sí sola un evento, una curva de luz,
+        una CME ni una dosis planetaria.
+      </p>
+    </div>
+    <span class="flare-lab__badge">SOURCE FRAME / READ ONLY</span>
+  </header>
+
+  <nav class="flare-lab__selector" aria-label="Casos de grandes llamaradas 29.9">
+    @for (item of cases; track item.id) {
+      <button
+        type="button"
+        [class.is-active]="selectedId() === item.id"
+        (click)="selectCase(item.id)"
+      >
+        {{ item.buttonLabel }}
+      </button>
+    }
+  </nav>
+
+  @let current = selectedCase();
+  @let profile = current.profile;
+  @let source = profile.source;
+
+  <section class="flare-lab__panel">
+    <article class="flare-lab__visual-card">
+      <div class="flare-lab__visual-header">
+        <div>
+          <p class="flare-lab__eyebrow">MAGNETISMO ESTELAR · MARCO DE LA FUENTE</p>
+          <h2>Evento explícito frente a estadística 15.4</h2>
+        </div>
+        <span>esquema científico · no curva de luz observada</span>
+      </div>
+
+      @if (profile.outcome === outcome.EXPLICIT_LARGE_STELLAR_FLARE) {
+        <svg
+          class="flare-lab__scene"
+          viewBox="0 0 720 300"
+          role="img"
+          aria-label="Esquema de gran llamarada estelar"
+          data-testid="great-stellar-flare-event-diagram"
+        >
+          <circle class="flare-lab__star-halo" cx="205" cy="150" r="86" />
+          <circle class="flare-lab__star" cx="205" cy="150" r="58" />
+          <path class="flare-lab__loop flare-lab__loop--outer" d="M 176 105 C 188 48 268 48 283 119" />
+          <path class="flare-lab__loop" d="M 191 112 C 202 74 253 74 266 123" />
+          <path class="flare-lab__flare" d="M 257 111 L 299 71 L 286 119 L 333 103 L 284 144 L 296 190 L 254 151 Z" />
+          <line class="flare-lab__axis" x1="325" y1="150" x2="640" y2="150" />
+          <text class="flare-lab__label" x="153" y="239">{{ current.spectralHint }}</text>
+          <text class="flare-lab__label" x="345" y="128">energía total explícita</text>
+          <text class="flare-lab__value" x="345" y="154">{{ scientific(source.flareEnergyJoules, 'J') }}</text>
+          <text class="flare-lab__label" x="345" y="184">duración fuente</text>
+          <text class="flare-lab__value" x="345" y="208">{{ duration(source.sourceFrameDurationSeconds) }}</text>
+        </svg>
+
+        <section class="flare-lab__baseline" data-testid="great-stellar-flare-energy-baseline">
+          <div class="flare-lab__baseline-header">
+            <div>
+              <p class="flare-lab__eyebrow">CONTEXTO ESTADÍSTICO 15.4</p>
+              <strong>Energía típica → evento → máximo del perfil</strong>
+            </div>
+            <span>posición logarítmica</span>
+          </div>
+          <div class="flare-lab__energy-track">
+            <span class="flare-lab__track-line"></span>
+            <span class="flare-lab__track-dot flare-lab__track-dot--start"></span>
+            <span
+              class="flare-lab__track-dot flare-lab__track-dot--event"
+              [style.left.%]="energyMarkerPercent()"
+            ></span>
+            <span class="flare-lab__track-dot flare-lab__track-dot--end"></span>
+          </div>
+          <div class="flare-lab__track-labels">
+            <span>{{ scientific(source.activityProfile.typicalFlareEnergyJoules, 'J') }}</span>
+            <strong>evento</strong>
+            <span>{{ scientific(source.activityProfile.maximumFlareEnergyJoules, 'J') }}</span>
+          </div>
+          <p>
+            La forma temporal, el pico y el espectro de la emisión no se derivan de la energía total.
+          </p>
+        </section>
+      } @else if (profile.outcome === outcome.STATISTICAL_ACTIVITY_WITHOUT_EVENT) {
+        <div class="flare-lab__boundary-visual" data-testid="great-stellar-flare-statistical-only">
+          <div class="flare-lab__boundary-star">★</div>
+          <strong>Actividad magnética estadística · sin llamarada individual</strong>
+          <p>
+            15.4 describe una tasa media y un intervalo energético. No existe energía, duración ni
+            instante de una llamarada 29.9 hasta que un evento sea explícitamente resuelto.
+          </p>
+        </div>
+      } @else {
+        <div class="flare-lab__boundary-visual" data-testid="great-stellar-flare-not-applicable">
+          <div class="flare-lab__boundary-star">∅</div>
+          <strong>Modelo ordinario de llamaradas: no aplica</strong>
+          <p>
+            Los remanentes compactos conservan sus canales especializados; un burst de magnetar no
+            se reetiqueta como flare fotosférico de 29.9.
+          </p>
+        </div>
+      }
+    </article>
+
+    <section class="flare-lab__science">
+      <p class="flare-lab__eyebrow">{{ current.eyebrow }}</p>
+      <h2>{{ current.title }}</h2>
+      <p>{{ current.description }}</p>
+
+      <dl class="flare-lab__metrics">
+        <div><dt>Fuente</dt><dd>{{ source.sourceLabel }}</dd></div>
+        <div><dt>Radio / luminosidad</dt><dd>{{ stellarScale(source.stellarRadiusSolar, source.stellarLuminositySolar) }}</dd></div>
+        <div><dt>Régimen de actividad</dt><dd>{{ regime() }}</dd></div>
+        <div><dt>Índice magnético 15.4</dt><dd>{{ source.activityProfile.magneticActivityIndex === null ? 'No aplica' : format(source.activityProfile.magneticActivityIndex, 4) }}</dd></div>
+        <div><dt>Tasa de flares</dt><dd>{{ rate(source.activityProfile.flareRatePerDay) }}</dd></div>
+        <div><dt>Energía típica 15.4</dt><dd>{{ statisticalEnergy(source.activityProfile.typicalFlareEnergyJoules) }}</dd></div>
+        <div><dt>Energía máxima 15.4</dt><dd>{{ statisticalEnergy(source.activityProfile.maximumFlareEnergyJoules) }}</dd></div>
+        <div><dt>Estado 29.9</dt><dd>
+          @if (profile.outcome === outcome.EXPLICIT_LARGE_STELLAR_FLARE) { Llamarada individual resuelta }
+          @else if (profile.outcome === outcome.STATISTICAL_ACTIVITY_WITHOUT_EVENT) { Solo contexto estadístico · sin evento }
+          @else { No aplica a remanente compacto }
+        </dd></div>
+        <div><dt>Energía del evento</dt><dd>{{ eventMetric(scientific(source.flareEnergyJoules, 'J')) }}</dd></div>
+        <div><dt>Duración fuente</dt><dd>{{ eventMetric(duration(source.sourceFrameDurationSeconds)) }}</dd></div>
+        <div><dt>Potencia media</dt><dd>{{ eventMetric(scientific(profile.meanFlarePowerWatts, 'W')) }}</dd></div>
+        <div><dt>Duración equivalente E/L★</dt><dd>{{ eventMetric(duration(profile.equivalentDurationSeconds)) }}</dd></div>
+        <div><dt>E / típica</dt><dd>{{ eventMetric(ratio(profile.energyToTypicalRatio)) }}</dd></div>
+        <div><dt>E / máximo 15.4</dt><dd>{{ eventMetric(percent(profile.energyToMaximumFraction)) }}</dd></div>
+        <div><dt>Pmedia / L★</dt><dd>{{ eventMetric(percent(profile.meanPowerToStellarLuminosityRatio)) }}</dd></div>
+        <div><dt>Próxima llamarada</dt><dd>{{ nextFlare() }}</dd></div>
+        <div><dt>Pico / curva de luz</dt><dd>{{ eventMetric('No resueltos') }}</dd></div>
+        <div><dt>CME / partículas</dt><dd>{{ eventMetric('No resueltos') }}</dd></div>
+        <div><dt>Fluencia / flujo observado</dt><dd>{{ eventMetric('No resueltos') }}</dd></div>
+        <div><dt>Dosis / impacto planetario</dt><dd>{{ eventMetric('No resuelto en 29.9') }}</dd></div>
+      </dl>
+
+      <p class="flare-lab__boundary" data-testid="great-stellar-flare-scientific-note">
+        @if (profile.outcome === outcome.EXPLICIT_LARGE_STELLAR_FLARE) {
+          La energía bolométrica de esta llamarada explícita y su duración fuente permiten derivar
+          potencia media y duración equivalente, pero no determinan el pico, el espectro, una CME,
+          la emisión de partículas ni lo que recibiría un planeta sin geometría y transferencia radiativa adicionales.
+        } @else if (profile.outcome === outcome.STATISTICAL_ACTIVITY_WITHOUT_EVENT) {
+          Solo existe un perfil estadístico de actividad 15.4, no una llamarada individual 29.9.
+          La tasa y las energías típica/máxima no fijan un instante, una energía de evento, una duración,
+          una curva de luz ni una dosis planetaria. Tampoco permiten programar la próxima llamarada.
+        } @else {
+          El modelo de llamaradas fotosféricas ordinarias de 15.4 y 29.9 no aplica a este remanente
+          compacto. Sus posibles bursts magnéticos pertenecen a canales especializados; no se le
+          asignan estadísticas, energía de flare, cronología ni consecuencias planetarias de este modelo.
+        }
+      </p>
+      <p class="flare-lab__boundary flare-lab__boundary--secondary" data-testid="great-stellar-flare-channel-boundary">
+        29.9 reutiliza la estadística de 15.4 sin generar una cronología. Tampoco reinterpreta 27.6/29.8
+        como flares ordinarios ni anticipa los efectos históricos sobre sistemas o biosferas de 29.11.
+      </p>
+    </section>
+  </section>
+</main>

@@ -1,0 +1,50 @@
+:host { display: block; }
+.flare-lab { padding: 1.5rem 2rem 2rem; color: var(--color-text-primary, #f5f7fb); }
+.flare-lab__hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; }
+.flare-lab__hero h1 { margin: 0 0 1rem; font-size: clamp(1.9rem, 3vw, 2.7rem); }
+.flare-lab__hero p { max-width: 80rem; line-height: 1.55; }
+.flare-lab__eyebrow { margin: 0 0 .65rem; text-transform: uppercase; letter-spacing: .12em; font-size: .74rem; opacity: .68; }
+.flare-lab__badge { border: 1px solid rgba(210,220,235,.45); border-radius: 999px; padding: .55rem .8rem; font-size: .72rem; white-space: nowrap; opacity: .8; }
+.flare-lab__selector { display: flex; flex-wrap: wrap; gap: .7rem; margin: 2rem 0 2.4rem; }
+.flare-lab__selector button { border: 1px solid rgba(220,228,240,.55); background: transparent; color: inherit; border-radius: 999px; padding: .8rem 1.15rem; cursor: pointer; opacity: .62; }
+.flare-lab__selector button.is-active { opacity: 1; border-color: currentColor; font-weight: 700; }
+.flare-lab__panel { display: grid; grid-template-columns: minmax(32rem, .92fr) minmax(39rem, 1.08fr); gap: 1.5rem; align-items: stretch; }
+.flare-lab__visual-card, .flare-lab__science { min-width: 0; }
+.flare-lab__visual-card { border: 1px solid rgba(210,220,235,.24); border-radius: 1rem; padding: 1.35rem; background: rgba(5,9,16,.32); }
+.flare-lab__visual-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.flare-lab__visual-header h2 { margin: 0; font-size: 1.25rem; }
+.flare-lab__visual-header > span { font-size: .8rem; opacity: .68; white-space: nowrap; }
+.flare-lab__scene { width: 100%; height: 20rem; display: block; margin-top: .5rem; }
+.flare-lab__star-halo { fill: none; stroke: currentColor; stroke-width: 1; opacity: .13; stroke-dasharray: 5 6; }
+.flare-lab__star { fill: rgba(240,244,251,.08); stroke: currentColor; stroke-width: 1.5; }
+.flare-lab__loop { fill: none; stroke: currentColor; stroke-width: 1.5; opacity: .55; }
+.flare-lab__loop--outer { opacity: .28; stroke-dasharray: 4 5; }
+.flare-lab__flare { fill: rgba(245,247,251,.16); stroke: currentColor; stroke-width: 1.6; }
+.flare-lab__axis { stroke: rgba(220,228,240,.2); stroke-width: 1; stroke-dasharray: 4 6; }
+.flare-lab__label { fill: currentColor; font-size: 11px; opacity: .66; }
+.flare-lab__value { fill: currentColor; font-size: 15px; font-weight: 700; }
+.flare-lab__baseline { border-top: 1px solid rgba(210,220,235,.15); padding-top: 1rem; }
+.flare-lab__baseline-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.flare-lab__baseline-header > span { font-size: .8rem; opacity: .65; }
+.flare-lab__energy-track { position: relative; height: 2rem; margin: 1.1rem .5rem .2rem; }
+.flare-lab__track-line { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(220,228,240,.48); }
+.flare-lab__track-dot { position: absolute; top: 50%; width: .7rem; height: .7rem; border-radius: 50%; background: currentColor; transform: translate(-50%, -50%); }
+.flare-lab__track-dot--start { left: 0; }
+.flare-lab__track-dot--end { left: 100%; }
+.flare-lab__track-dot--event { width: 1rem; height: 1rem; box-shadow: 0 0 0 .35rem rgba(235,240,248,.08); }
+.flare-lab__track-labels { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem; font-size: .78rem; opacity: .76; }
+.flare-lab__track-labels span:last-child { text-align: right; }
+.flare-lab__baseline > p { margin: .8rem 0 0; font-size: .82rem; line-height: 1.45; opacity: .72; }
+.flare-lab__boundary-visual { min-height: 31rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .85rem; text-align: center; }
+.flare-lab__boundary-visual p { max-width: 35rem; margin: 0; line-height: 1.5; opacity: .74; }
+.flare-lab__boundary-star { width: 5rem; height: 5rem; border: 1px solid rgba(220,228,240,.55); border-radius: 50%; display: grid; place-items: center; font-size: 1.65rem; }
+.flare-lab__science { padding: .2rem .1rem; }
+.flare-lab__science h2 { margin: 0 0 .8rem; font-size: 1.55rem; }
+.flare-lab__science > p { line-height: 1.5; }
+.flare-lab__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+.flare-lab__metrics > div { min-width: 0; border: 1px solid rgba(210,220,235,.22); border-radius: .8rem; padding: .9rem 1rem; }
+.flare-lab__metrics dt { margin-bottom: .55rem; text-transform: uppercase; letter-spacing: .055em; font-size: .72rem; opacity: .62; }
+.flare-lab__metrics dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.flare-lab__boundary { border-left: 3px solid currentColor; padding: .8rem 0 .8rem 1rem; margin-top: 1rem; }
+.flare-lab__boundary--secondary { opacity: .78; }
+@media (max-width: 1100px) { .flare-lab__panel { grid-template-columns: 1fr; } }

@@ -493,6 +493,17 @@ describe('GENESIS routes', () => {
     expect(harness.routeNativeElement?.querySelector('[data-testid="fast-radio-burst-laboratory-page"]')).toBeTruthy();
   });
 
+  it('should expose and navigate to the complete 29.9 great-stellar-flare laboratory', async () => {
+    const flare = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/great-stellar-flares');
+    expect(flare?.title).toBe('Grandes llamaradas estelares | Laboratorios GENESIS');
+
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/great-stellar-flares');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/great-stellar-flares');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="great-stellar-flare-laboratory-page"]')).toBeTruthy();
+  });
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

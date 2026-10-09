@@ -335,6 +335,16 @@ export const genesisRoutes: Routes = [
     title: 'Fast Radio Bursts | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/great-stellar-flares',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/great-stellar-flares/great-stellar-flare-laboratory'
+      ).then(
+        (module) => module.GreatStellarFlareLaboratoryPage,
+      ),
+    title: 'Grandes llamaradas estelares | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(
