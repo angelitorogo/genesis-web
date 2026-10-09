@@ -481,6 +481,44 @@
                   </article>
                 }
 
+
+                @if (model.stellarGravitationalWaveScience; as gwScience) {
+                  <article
+                    class="system-page__science-card system-page__science-card--wide"
+                    data-testid="system-page-gravitational-wave-science"
+                  >
+                    <header class="system-page__section-header">
+                      <div>
+                        <small>29.5 · ONDAS GRAVITACIONALES</small>
+                        <h2>Señal gravitacional intrínseca</h2>
+                      </div>
+                      <span>{{ gwScience.summary }}</span>
+                    </header>
+                    @if (gwScience.entries.length > 0) {
+                      <div class="system-page__star-grid">
+                        @for (entry of gwScience.entries; track entry.pairLabel) {
+                          <section class="system-page__star-card" data-testid="system-page-gravitational-wave-event">
+                            <header><div><small>PAR {{ entry.pairLabel }}</small><h3>{{ entry.typeLabel }}</h3></div></header>
+                            <p>{{ entry.designationLabel }}</p>
+                            <dl class="system-page__fact-grid system-page__fact-grid--star">
+                              <div><dt>Fusión prevista</dt><dd>{{ entry.mergerDelayLabel }}</dd></div>
+                              <div><dt>Masa chirp</dt><dd>{{ entry.chirpMassLabel }}</dd></div>
+                              <div><dt>fGW referencia</dt><dd>{{ entry.referenceFrequencyLabel }}</dd></div>
+                              <div><dt>ISCO no-spinning</dt><dd>{{ entry.iscoFrequencyLabel }}</dd></div>
+                              <div><dt>Potencia GW</dt><dd>{{ entry.luminosityLabel }}</dd></div>
+                              <div><dt>Chirp</dt><dd>{{ entry.chirpRateLabel }}</dd></div>
+                              <div><dt>Strain observado</dt><dd>{{ entry.observerStrainLabel }}</dd></div>
+                              <div><dt>Post-merger</dt><dd>{{ entry.postMergerLabel }}</dd></div>
+                            </dl>
+                          </section>
+                        }
+                      </div>
+                    } @else {
+                      <p class="system-page__empty-note">Sin señal GW compacta derivable del sistema.</p>
+                    }
+                  </article>
+                }
+
                 <article
                   class="system-page__science-card"
                   data-testid="system-page-orbital-architecture"

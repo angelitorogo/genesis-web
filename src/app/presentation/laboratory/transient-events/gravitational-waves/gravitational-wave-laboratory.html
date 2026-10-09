@@ -1,0 +1,73 @@
+<main class="gw-lab" data-testid="gravitational-wave-laboratory-page">
+  <header class="gw-lab__hero">
+    <div>
+      <p class="gw-lab__eyebrow">FASE 29.5 · ONDAS GRAVITACIONALES</p>
+      <h1>Ondas gravitacionales de fusiones compactas</h1>
+      <p>
+        Caracterización intrínseca en el marco de la fuente. GENESIS deriva frecuencia, chirp y potencia a partir de 29.4,
+        pero no inventa distancia luminosidad, redshift, inclinación ni polarización; por ello el strain observado permanece sin resolver.
+      </p>
+    </div>
+    <span class="gw-lab__badge">SOURCE FRAME / QA</span>
+  </header>
+
+  <nav class="gw-lab__selector" aria-label="Canal de ondas gravitacionales">
+    @for (item of cases; track item.id) {
+      <button type="button" [class.is-active]="selectedType() === item.id" (click)="selectType(item.id)">
+        {{ item.shortLabel }}
+      </button>
+    }
+  </nav>
+
+  @if (selectedCase(); as current) {
+    <section class="gw-lab__panel">
+      <div class="gw-lab__wave-card">
+        <div class="gw-lab__wave-header">
+          <div>
+            <p class="gw-lab__eyebrow">INSPIRAL FINAL NORMALIZADO</p>
+            <h2>Forma de onda de fase · amplitud relativa</h2>
+          </div>
+          <span>{{ frequency(current.waveform.startFrequencyHz) }} → {{ frequency(current.waveform.endFrequencyHz) }}</span>
+        </div>
+
+        <svg class="gw-lab__wave" viewBox="0 0 960 300" role="img" aria-label="Forma de onda normalizada del inspiral final">
+          <line x1="0" y1="150" x2="960" y2="150" class="gw-lab__axis" />
+          <polyline [attr.points]="current.waveformPoints" class="gw-lab__trace" data-testid="gw-normalized-waveform" />
+        </svg>
+
+        <div class="gw-lab__wave-scale">
+          <span>−{{ format(current.waveform.durationSeconds, 4) }} s</span>
+          <strong>amplitud normalizada ≠ strain observado</strong>
+          <span>ISCO ref. · 0 s</span>
+        </div>
+        <p class="gw-lab__boundary">
+          El trazado usa el inspiral cuadrupolar circularizado de orden líder entre fISCO/4 y la referencia ISCO Schwarzschild.
+          No representa merger/ringdown ni respuesta de un detector.
+        </p>
+      </div>
+
+      <div class="gw-lab__science">
+        <p class="gw-lab__eyebrow">{{ current.shortLabel }}</p>
+        <h2>{{ current.title }}</h2>
+        <p>{{ current.description }}</p>
+
+        <dl class="gw-lab__metrics">
+          <div><dt>Masa chirp</dt><dd>{{ format(current.profile.chirpMassSolar) }} M☉</dd></div>
+          <div><dt>Frecuencia cuadrupolar de referencia</dt><dd>{{ frequency(current.profile.referenceQuadrupoleFrequencyHz) }}</dd></div>
+          <div><dt>Longitud de onda</dt><dd>{{ wavelength(current.profile.referenceWavelengthMeters) }}</dd></div>
+          <div><dt>ISCO no-spinning</dt><dd>{{ frequency(current.profile.nonSpinningIscoFrequencyHz) }}</dd></div>
+          <div><dt>Potencia GW de referencia</dt><dd>{{ scientific(current.profile.referenceLuminosityWatts) }} W</dd></div>
+          <div><dt>Chirp circular equivalente</dt><dd>{{ scientific(current.profile.circularEquivalentChirpRateHzPerSecond) }} Hz/s</dd></div>
+          <div><dt>Eccentricidad / potencia</dt><dd>e {{ format(current.profile.referenceEccentricity, 4) }} · ×{{ format(current.profile.eccentricPowerEnhancementFactor, 4) }}</dd></div>
+          <div><dt>Strain observado</dt><dd>No resuelto</dd></div>
+          <div class="gw-lab__metric--wide"><dt>Post-merger</dt><dd>{{ postMergerLabel(current.profile.postMergerResolution) }}</dd></div>
+        </dl>
+
+        <p class="gw-lab__unresolved" data-testid="gw-observer-boundary">
+          El strain h y la frecuencia en el marco del observador no se calculan: faltan distancia luminosidad, redshift,
+          inclinación y polarización. La señal mostrada es intrínseca y normalizada, no una detección simulada.
+        </p>
+      </div>
+    </section>
+  }
+</main>

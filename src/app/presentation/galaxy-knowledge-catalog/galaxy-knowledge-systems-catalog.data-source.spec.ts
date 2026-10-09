@@ -24,6 +24,8 @@ import { StellarKilonovaScientificIntegration } from '../runtime/stellar-kilonov
 import { StellarKilonovaScientificPresentationAssembler } from '../runtime/stellar-kilonova-scientific-presentation';
 import { StellarCompactMergerScientificIntegration } from '../runtime/stellar-compact-merger-scientific-integration';
 import { StellarCompactMergerScientificPresentationAssembler } from '../runtime/stellar-compact-merger-scientific-presentation';
+import { StellarGravitationalWaveScientificIntegration } from '../runtime/stellar-gravitational-wave-scientific-integration';
+import { StellarGravitationalWaveScientificPresentationAssembler } from '../runtime/stellar-gravitational-wave-scientific-presentation';
 import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-systems-catalog.data-source';
 
 const generationKey = new UniverseGenerationKey(
@@ -82,6 +84,7 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
       'nova',
       'kilonova',
       'compactMerger',
+      'gravitationalWave',
       'sector',
     ]);
     expect(descriptor.sortOptions.map(option => option.key)).toContain('components');
@@ -89,6 +92,7 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
     expect(descriptor.sortOptions.map(option => option.key)).toContain('nova');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('kilonova');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('compactMerger');
+    expect(descriptor.sortOptions.map(option => option.key)).toContain('gravitationalWave');
     expect(() => source.describe('QUADRUPLE')).toThrowError(RangeError);
   });
 
@@ -633,6 +637,60 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
       'Fusión BH–BH · 680 Ma',
       'Fusión NS–BH · 42 Ma',
       'Sin fusión compacta',
+    ]);
+    expect(synchronize).toHaveBeenCalledTimes(3);
+    expect(presentation).toHaveBeenCalledTimes(3);
+  });
+
+
+  it('materializes and sorts 29.5 gravitational-wave science from the shared 29.4 canonical merger snapshot', async () => {
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 51n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 52n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 53n), DiscoveryState.CATALOGUED),
+    ]);
+    const synchronize = vi.spyOn(StellarCompactMergerScientificIntegration, 'synchronize')
+      .mockImplementation(async (_repository, _generationKey, locator) => Object.freeze({
+        marker: Number(locator.galacticObjectIndex),
+        lineage: null, events: Object.freeze([]), consequences: Object.freeze([]),
+      }) as never);
+    vi.spyOn(StellarGravitationalWaveScientificIntegration, 'derive')
+      .mockImplementation(snapshot => Object.freeze({ events: Object.freeze([]), marker: (snapshot as unknown as { marker: number }).marker }) as never);
+    const presentation = vi.spyOn(StellarGravitationalWaveScientificPresentationAssembler, 'build')
+      .mockImplementation(snapshot => {
+        const marker = (snapshot as unknown as { readonly marker: number }).marker;
+        const labels: Readonly<Record<number, string>> = Object.freeze({
+          51: 'Sin señal GW compacta',
+          52: 'GW NS–NS · 185 µHz → ISCO 1,659 kHz',
+          53: 'GW BH–BH · 294 µHz → ISCO 74,526 Hz',
+        });
+        return Object.freeze({
+          summary: '', catalogLabel: labels[marker] ?? 'Sin señal GW compacta',
+          signalCount: 0, entries: Object.freeze([]),
+        });
+      });
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        { provide: GENESIS_LOCAL_REPOSITORIES, useValue: {
+          discoveryRepository: { async getKnownDiscoveriesInGalaxy() { return discoveries; } },
+          compactMergerCanonicalEventRepository: {},
+        } as unknown as GenesisLocalRepositories },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const result = await source.query({
+      generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+      query: { category: 'systems', subtype: null, page: 1, pageSize: 25, sortKey: 'gravitationalWave', direction: 'asc' },
+    });
+    expect(result.kind).toBe('page');
+    if (result.kind !== 'page') throw new Error('Expected systems page.');
+    expect(result.page.items.map(row => row.cells['gravitationalWave'])).toEqual([
+      'GW BH–BH · 294 µHz → ISCO 74,526 Hz',
+      'GW NS–NS · 185 µHz → ISCO 1,659 kHz',
+      'Sin señal GW compacta',
     ]);
     expect(synchronize).toHaveBeenCalledTimes(3);
     expect(presentation).toHaveBeenCalledTimes(3);

@@ -1,0 +1,33 @@
+:host { display: block; }
+.gw-lab { padding: 1.5rem 2rem 2rem; color: var(--color-text-primary, #f5f7fb); }
+.gw-lab__hero { display: flex; justify-content: space-between; gap: 2rem; align-items: flex-start; }
+.gw-lab__hero h1 { margin: 0 0 1rem; font-size: clamp(1.9rem, 3vw, 2.7rem); }
+.gw-lab__hero p { max-width: 74rem; line-height: 1.55; }
+.gw-lab__eyebrow { margin: 0 0 .65rem; text-transform: uppercase; letter-spacing: .12em; font-size: .74rem; opacity: .68; }
+.gw-lab__badge { border: 1px solid rgba(210,220,235,.45); border-radius: 999px; padding: .55rem .8rem; font-size: .72rem; white-space: nowrap; opacity: .8; }
+.gw-lab__selector { display: flex; gap: .7rem; margin: 2rem 0 2.4rem; }
+.gw-lab__selector button { border: 1px solid rgba(220,228,240,.55); background: transparent; color: inherit; border-radius: 999px; padding: .8rem 1.15rem; cursor: pointer; opacity: .62; }
+.gw-lab__selector button.is-active { opacity: 1; border-color: currentColor; font-weight: 700; }
+.gw-lab__panel { display: grid; grid-template-columns: minmax(30rem, .88fr) minmax(36rem, 1.12fr); gap: 1.5rem; align-items: stretch; }
+.gw-lab__wave-card, .gw-lab__science { min-width: 0; }
+.gw-lab__wave-card { border: 1px solid rgba(210,220,235,.24); border-radius: 1rem; padding: 1.35rem; background: rgba(5,9,16,.32); }
+.gw-lab__wave-header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; }
+.gw-lab__wave-header h2 { margin: 0; font-size: 1.25rem; }
+.gw-lab__wave-header > span { font-size: .83rem; opacity: .76; white-space: nowrap; }
+.gw-lab__wave { width: 100%; height: 19rem; margin: 1rem 0 .35rem; overflow: visible; }
+.gw-lab__axis { stroke: rgba(210,220,235,.18); stroke-width: 1; }
+.gw-lab__trace { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.gw-lab__wave-scale { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .75rem; font-size: .72rem; opacity: .72; }
+.gw-lab__wave-scale span:last-child { text-align: right; }
+.gw-lab__wave-scale strong { font-weight: 600; text-transform: uppercase; letter-spacing: .07em; }
+.gw-lab__boundary { margin: 1rem 0 0; padding-top: 1rem; border-top: 1px solid rgba(210,220,235,.15); font-size: .83rem; line-height: 1.5; opacity: .75; }
+.gw-lab__science { padding: .2rem .1rem; }
+.gw-lab__science h2 { margin: 0 0 .8rem; font-size: 1.55rem; }
+.gw-lab__science > p { line-height: 1.5; }
+.gw-lab__metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1.25rem 0; }
+.gw-lab__metrics > div { min-width: 0; border: 1px solid rgba(210,220,235,.22); border-radius: .8rem; padding: .9rem 1rem; }
+.gw-lab__metrics dt { margin-bottom: .55rem; text-transform: uppercase; letter-spacing: .055em; font-size: .72rem; opacity: .62; }
+.gw-lab__metrics dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.gw-lab__metric--wide { grid-column: 1 / -1; }
+.gw-lab__unresolved { border-left: 3px solid currentColor; padding: .8rem 0 .8rem 1rem; margin-top: 1rem; }
+@media (max-width: 1050px) { .gw-lab__panel { grid-template-columns: 1fr; } }

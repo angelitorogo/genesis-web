@@ -247,6 +247,33 @@
                   </article>
                 }
 
+
+                @if (model.stellarGravitationalWaveScience; as gwScience) {
+                  <article
+                    class="observatory__panel observatory__progress"
+                    data-testid="observatory-gravitational-wave-science"
+                  >
+                    <header>
+                      <div><small>29.5 · ONDAS GRAVITACIONALES</small><h2>Señal intrínseca de la fuente</h2></div>
+                      <strong>{{ gwScience.catalogLabel }}</strong>
+                    </header>
+                    <p>{{ gwScience.summary }}</p>
+                    @if (gwScience.entries.length > 0) {
+                      <div class="observatory__dimension-grid">
+                        @for (entry of gwScience.entries; track entry.pairLabel) {
+                          <section class="observatory__dimension">
+                            <small>{{ entry.pairLabel }}</small>
+                            <strong>{{ entry.typeLabel }}</strong>
+                            <span>{{ entry.referenceFrequencyLabel }} → ISCO {{ entry.iscoFrequencyLabel }}</span>
+                            <span>Potencia {{ entry.luminosityLabel }}</span>
+                            <span>{{ entry.observerStrainLabel }}</span>
+                          </section>
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+
                 <article
                   class="observatory__panel observatory__actions"
                   data-testid="observatory-scientific-actions"

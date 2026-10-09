@@ -448,6 +448,18 @@ describe('GENESIS routes', () => {
     expect(harness.routeNativeElement?.querySelector('[data-testid="compact-merger-laboratory-page"]')).toBeTruthy();
   });
 
+
+  it('should expose and navigate to the complete 29.5 gravitational-wave laboratory', async () => {
+    const waves = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/gravitational-waves');
+    expect(waves?.title).toBe('Ondas gravitacionales | Laboratorios GENESIS');
+
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/gravitational-waves');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/gravitational-waves');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="gravitational-wave-laboratory-page"]')).toBeTruthy();
+  });
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

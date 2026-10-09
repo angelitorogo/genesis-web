@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the ten laboratories already implemented',
+      'should expose exactly the eleven laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          10,
+          11,
         );
       },
     );
 
     it(
-      'should link only to the ten canonical permanent laboratory routes',
+      'should link only to the eleven canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -223,6 +223,15 @@ describe(
             )
             ?.getAttribute('href'),
         ).toBe('/laboratory/transient-events/compact-mergers');
+
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-gravitational-waves-link"]',
+            )
+            ?.getAttribute('href'),
+        ).toBe('/laboratory/transient-events/gravitational-waves');
       },
     );
   },

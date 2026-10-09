@@ -196,6 +196,15 @@ import {
 } from '../runtime/stellar-compact-merger-scientific-presentation';
 
 import {
+  StellarGravitationalWaveScientificIntegration,
+} from '../runtime/stellar-gravitational-wave-scientific-integration';
+
+import {
+  StellarGravitationalWaveScientificPresentationAssembler,
+  type StellarGravitationalWaveScientificPresentationModel,
+} from '../runtime/stellar-gravitational-wave-scientific-presentation';
+
+import {
   isScientificRouteUniverseRef,
   scientificRouteUniverseRef,
 } from '../scientific/scientific-route-identity';
@@ -442,6 +451,11 @@ export interface ArchiveDiscoveryDetailModel {
   /** 29.4. Canonical NS-NS / NS-BH / BH-BH merger science, independent from EM counterparts. */
   readonly stellarCompactMergerScience?:
     StellarCompactMergerScientificPresentationModel | null;
+
+
+  /** 29.5. Intrinsic source-frame GW projection of the canonical 29.4 merger. */
+  readonly stellarGravitationalWaveScience?:
+    StellarGravitationalWaveScientificPresentationModel | null;
 
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
@@ -1939,19 +1953,37 @@ export class ArchiveDiscoveryDetailFacade {
       const compactMergerRepository =
         this.repositories.compactMergerCanonicalEventRepository;
 
-      const stellarCompactMergerScience =
+      const stellarCompactMergerSnapshot =
         locator instanceof SystemLocator &&
         compactMergerRepository !== undefined
           ? discoveryState.code >= DiscoveryState.CATALOGUED.code
-            ? StellarCompactMergerScientificPresentationAssembler.build(
-                await StellarCompactMergerScientificIntegration.synchronize(
-                  compactMergerRepository,
-                  generationKey,
-                  locator,
-                ),
+            ? await StellarCompactMergerScientificIntegration.synchronize(
+                compactMergerRepository,
+                generationKey,
+                locator,
               )
             : null
           : undefined;
+
+      const stellarCompactMergerScience =
+        stellarCompactMergerSnapshot === undefined
+          ? undefined
+          : stellarCompactMergerSnapshot === null
+            ? null
+            : StellarCompactMergerScientificPresentationAssembler.build(
+                stellarCompactMergerSnapshot,
+              );
+
+      const stellarGravitationalWaveScience =
+        stellarCompactMergerSnapshot === undefined
+          ? undefined
+          : stellarCompactMergerSnapshot === null
+            ? null
+            : StellarGravitationalWaveScientificPresentationAssembler.build(
+                StellarGravitationalWaveScientificIntegration.derive(
+                  stellarCompactMergerSnapshot,
+                ),
+              );
 
       const scientificAction =
         locator instanceof
@@ -2202,6 +2234,11 @@ export class ArchiveDiscoveryDetailFacade {
               ...(stellarCompactMergerScience === undefined
                 ? {}
                 : { stellarCompactMergerScience }),
+
+
+              ...(stellarGravitationalWaveScience === undefined
+                ? {}
+                : { stellarGravitationalWaveScience }),
 
               scientificAction,
 

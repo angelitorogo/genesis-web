@@ -295,6 +295,16 @@ export const genesisRoutes: Routes = [
     title: 'Fusiones compactas | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/gravitational-waves',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/gravitational-waves/gravitational-wave-laboratory'
+      ).then(
+        (module) => module.GravitationalWaveLaboratoryPage,
+      ),
+    title: 'Ondas gravitacionales | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(

@@ -245,6 +245,35 @@
                 </section>
               }
 
+
+              @if (model.stellarGravitationalWaveScience; as gwScience) {
+                <section
+                  class="archive-discovery-detail__physical-section"
+                  data-testid="archive-stellar-gravitational-wave-science"
+                >
+                  <header class="archive-discovery-detail__campaign-header">
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">29.5 · ONDAS GRAVITACIONALES</small>
+                      <h3>Caracterización intrínseca de la señal GW</h3>
+                      <p>{{ gwScience.summary }}</p>
+                    </div>
+                    <div class="archive-discovery-detail__campaign-score"><strong>{{ gwScience.catalogLabel }}</strong></div>
+                  </header>
+                  @if (gwScience.entries.length > 0) {
+                    <div class="archive-discovery-detail__campaign-grid">
+                      @for (entry of gwScience.entries; track entry.pairLabel) {
+                        <article class="archive-discovery-detail__campaign-dimension">
+                          <span>{{ entry.pairLabel }} · {{ entry.typeLabel }}</span>
+                          <strong>{{ entry.referenceFrequencyLabel }} → {{ entry.iscoFrequencyLabel }}</strong>
+                          <small>Mchirp {{ entry.chirpMassLabel }} · potencia {{ entry.luminosityLabel }}</small>
+                          <small>{{ entry.observerStrainLabel }}</small>
+                        </article>
+                      }
+                    </div>
+                  }
+                </section>
+              }
+
               @if (model.stellarSystemScientificCampaign; as campaign) {
                 <section
                   class="archive-discovery-detail__physical-section archive-discovery-detail__scientific-campaign"
