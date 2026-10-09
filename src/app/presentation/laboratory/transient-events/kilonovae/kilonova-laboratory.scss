@@ -1,0 +1,17 @@
+:host { display:block; min-height:100%; background:#050a12; color:#f3f7ff; }
+.kilonova-lab { padding:1rem; font-family:inherit; }
+.kilonova-lab__hero, .kilonova-lab__body, .kilonova-lab__timeline { border:1px solid #173148; background:#0a111d; }
+.kilonova-lab__hero { padding:1.4rem; } .kilonova-lab__hero h1 { font-size:2.7rem; margin:.2rem 0 .6rem; }
+.kilonova-lab__hero small, .kilonova-lab__facts>small { color:#45d7ff; letter-spacing:.12em; }
+.kilonova-lab__tabs { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; margin:1rem 0; }
+.kilonova-lab__tabs button { text-align:left; padding:.9rem; border:1px solid #1d4664; border-radius:.7rem; background:#0a111d; color:inherit; }
+.kilonova-lab__tabs button.is-active { border-color:#45d7ff; } .kilonova-lab__tabs small,.kilonova-lab__tabs strong{display:block}
+.kilonova-lab__body { display:grid; grid-template-columns:2fr 1fr; min-height:32rem; overflow:hidden; }
+.kilonova-lab__scene { position:relative; min-height:32rem; overflow:hidden; background:radial-gradient(circle at center,#0f1728 0,#03070d 70%); }
+.kilonova-lab__scene>span { position:absolute; left:1rem; bottom:1rem; color:#8edfff; }
+.kilonova-lab__core { position:absolute; left:50%; top:50%; width:1rem; height:1rem; transform:translate(-50%,-50%); border-radius:50%; background:white; box-shadow:0 0 18px 6px #fff; }
+.kilonova-lab__blue,.kilonova-lab__red { position:absolute; left:50%; top:50%; width:11rem; height:11rem; border-radius:50%; opacity:.36; transform-origin:center; }
+.kilonova-lab__blue { background:radial-gradient(circle,rgba(196,232,255,.65),rgba(74,151,255,.16) 48%,transparent 72%); }
+.kilonova-lab__red { width:14rem; height:14rem; background:radial-gradient(circle,rgba(255,196,116,.28),rgba(167,64,39,.18) 50%,transparent 74%); }
+.kilonova-lab__facts { padding:1.2rem; border-left:1px solid #173148; } .kilonova-lab__facts dl{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}.kilonova-lab__facts dl div{border:1px solid #173148;border-radius:.6rem;padding:.65rem}.kilonova-lab__facts dt{font-size:.72rem;color:#7f9ab3}.kilonova-lab__facts dd{margin:.3rem 0 0;font-weight:700}
+.kilonova-lab__timeline { margin-top:1rem; padding:1rem; } .kilonova-lab__timeline label{display:block;margin-bottom:.6rem}.kilonova-lab__timeline input{width:100%}

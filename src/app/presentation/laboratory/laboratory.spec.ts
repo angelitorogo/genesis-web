@@ -68,7 +68,7 @@ describe(
     );
 
     it(
-      'should expose exactly the eight laboratories already implemented',
+      'should expose exactly the nine laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +88,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          8,
+          9,
         );
       },
     );
 
     it(
-      'should link only to the eight canonical permanent laboratory routes',
+      'should link only to the nine canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
@@ -207,6 +207,14 @@ describe(
         ).toBe(
           '/laboratory/stellar-systems/post-supernova-audit',
         );
+
+        expect(
+          element
+            .querySelector<HTMLAnchorElement>(
+              '[data-testid="laboratory-kilonovae-link"]',
+            )
+            ?.getAttribute('href'),
+        ).toBe('/laboratory/transient-events/kilonovae');
       },
     );
   },

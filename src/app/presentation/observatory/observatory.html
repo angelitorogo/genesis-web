@@ -190,6 +190,34 @@
                   </article>
                 }
 
+                @if (model.stellarKilonovaScience; as kilonovaScience) {
+                  <article
+                    class="observatory__panel observatory__progress"
+                    data-testid="observatory-kilonova-science"
+                  >
+                    <header>
+                      <div>
+                        <small>29.3 · KILONOVAS</small>
+                        <h2>Fusión compacta y ejecta r-proceso</h2>
+                      </div>
+                      <strong>{{ kilonovaScience.catalogLabel }}</strong>
+                    </header>
+                    <p>{{ kilonovaScience.summary }}</p>
+                    @if (kilonovaScience.entries.length > 0) {
+                      <div class="observatory__dimension-grid">
+                        @for (entry of kilonovaScience.entries; track entry.pairLabel) {
+                          <section class="observatory__dimension">
+                            <small>{{ entry.pairLabel }}</small>
+                            <strong>{{ entry.typeLabel }}</strong>
+                            <span>Fusión {{ entry.mergerDelayLabel }}</span>
+                            <span>{{ entry.remnantLabel }}</span>
+                          </section>
+                        }
+                      </div>
+                    }
+                  </article>
+                }
+
                 <article
                   class="observatory__panel observatory__actions"
                   data-testid="observatory-scientific-actions"

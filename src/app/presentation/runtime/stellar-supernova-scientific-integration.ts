@@ -4,6 +4,8 @@ import { type UniverseGenerationKey } from '../../domain/generation/universe-gen
 import { type SupernovaCanonicalEventRepository } from '../../domain/repository/supernova-canonical-event-repository';
 import { GalaxySectorKeyCodec } from '../../domain/sector/galaxy-sector-key-codec';
 import { StellarSystemComponentLabel } from '../../domain/stellar/stellar-system-component-label';
+import { CompactBinarySystem } from '../../domain/stellar/compact-binary-system';
+import { StellarRelativeOrbit } from '../../domain/stellar/stellar-relative-orbit';
 import { type SupernovaCanonicalEvent } from '../../domain/transient/supernova-canonical-event';
 import { type SupernovaStellarLineage } from '../../domain/transient/supernova-stellar-lineage';
 import { type SupernovaStellarConsequence } from '../../domain/transient/supernova-stellar-consequence';
@@ -11,12 +13,14 @@ import { GalaxySectorGridGenerator } from '../../simulation/sector/galaxy-sector
 import { GalaxySectorStellarDensityGenerator } from '../../simulation/sector/galaxy-sector-stellar-density-generator';
 import { GalaxySectorStellarPopulationPropertiesGenerator } from '../../simulation/sector/galaxy-sector-stellar-population-properties-generator';
 import { StellarDesignationGenerator } from '../../simulation/stellar/stellar-designation-generator';
+import { CompactBinaryEngine } from '../../simulation/stellar/compact-binary-engine';
 import { StellarGenerator } from '../../simulation/stellar/stellar-generator';
-import { StellarMultihostFormation } from '../../simulation/stellar/stellar-multihost-formation';
+import { StellarMultihostFormation, type GeneratedMultipleHost } from '../../simulation/stellar/stellar-multihost-formation';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
 import { stellarMultihostPublicComponentDesignation } from '../../simulation/stellar/stellar-multihost-public-designation';
 import { StellarPopulationProfileGenerator } from '../../simulation/stellar/stellar-population-profile-generator';
 import { StellarSystemGenerator } from '../../simulation/stellar/stellar-system-generator';
+import { StellarPostSupernovaPlanetaryDynamics } from '../../simulation/stellar/stellar-post-supernova-planetary-dynamics';
 import {
   StellarSupernovaCanonicalEventResolver,
 } from '../../simulation/transient/stellar-supernova-canonical-event-resolver';
@@ -39,6 +43,8 @@ export interface StellarSupernovaScientificSnapshot {
 export interface StellarSupernovaMaterializedGroundTruth {
   readonly context: StellarSupernovaInteractionContext;
   readonly components: readonly StellarSupernovaGroundTruthComponent[];
+  /** 29.3 read-only projection of the same generated inner A-B compact pair. */
+  readonly compactBinary: CompactBinarySystem | null;
 }
 
 /**
@@ -200,6 +206,9 @@ function materializeLegacyGroundTruth(
       outerPeriastronAu: system.orbitHierarchy.outerOrbit?.periastronAu ?? null,
     }),
     components: Object.freeze(components),
+    // 29.3 does not claim a merger time from the legacy pre-remnant orbit.
+    // V1 has no shared post-supernova hierarchy resolver equivalent to 29.1E-g.
+    compactBinary: null,
   });
 }
 
@@ -235,6 +244,7 @@ function materializeV2GroundTruth(
         outerPeriastronAu: multiple.outerOrbit?.periastronAu ?? null,
       }),
       components: Object.freeze(components),
+      compactBinary: currentKilonovaCompactBinary(multiple),
     });
   }
 
@@ -261,7 +271,45 @@ function materializeV2GroundTruth(
         lifetimeProfile: single.lifetime,
       }),
     ]),
+    compactBinary: null,
   });
+}
+
+
+/**
+ * 29.3 must use the CURRENT bound A-B compact orbit after 29.1E-g mass loss
+ * and natal kicks. The frozen phase-16 orbit is only a formation reference and
+ * can no longer be used to predict a GW merger once one or both hosts collapsed.
+ */
+function currentKilonovaCompactBinary(
+  multiple: GeneratedMultipleHost,
+): CompactBinarySystem | null {
+  const compact = CompactBinaryEngine.fromExistingMultihost(multiple);
+  if (compact === null) return null;
+
+  const hierarchy = new StellarPostSupernovaPlanetaryDynamics(multiple).hierarchy;
+  const current = hierarchy.innerOrbit;
+  if (
+    current.semiMajorAxisAu === null ||
+    current.eccentricity === null ||
+    current.periodYears === null ||
+    current.disposition === 'EJECTED' ||
+    current.disposition === 'HIERARCHY_DISRUPTED'
+  ) {
+    return null;
+  }
+
+  const currentOrbit = new StellarRelativeOrbit(
+    current.semiMajorAxisAu,
+    current.eccentricity,
+    current.periodYears,
+  );
+  return new CompactBinarySystem(
+    compact.parentSystemSeedHex,
+    compact.primary,
+    compact.secondary,
+    currentOrbit,
+  );
 }
 
 function componentLabel(

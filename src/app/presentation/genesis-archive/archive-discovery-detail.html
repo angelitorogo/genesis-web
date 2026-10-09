@@ -184,6 +184,36 @@
                 </section>
               }
 
+              @if (model.stellarKilonovaScience; as kilonovaScience) {
+                <section
+                  class="archive-discovery-detail__physical-section"
+                  data-testid="archive-stellar-kilonova-science"
+                >
+                  <header class="archive-discovery-detail__campaign-header">
+                    <div>
+                      <small class="archive-discovery-detail__eyebrow">29.3 · KILONOVAS</small>
+                      <h3>Fusiones compactas y nucleosíntesis r</h3>
+                      <p>{{ kilonovaScience.summary }}</p>
+                    </div>
+                    <div class="archive-discovery-detail__campaign-score">
+                      <strong>{{ kilonovaScience.catalogLabel }}</strong>
+                    </div>
+                  </header>
+
+                  @if (kilonovaScience.entries.length > 0) {
+                    <div class="archive-discovery-detail__campaign-grid">
+                      @for (entry of kilonovaScience.entries; track entry.pairLabel) {
+                        <article class="archive-discovery-detail__campaign-dimension">
+                          <span>{{ entry.pairLabel }} · {{ entry.typeLabel }}</span>
+                          <strong>{{ entry.mergerDelayLabel }}</strong>
+                          <small>{{ entry.ejectaMassLabel }} eyectados · r-proceso {{ entry.rProcessMassLabel }}</small>
+                        </article>
+                      }
+                    </div>
+                  }
+                </section>
+              }
+
               @if (model.stellarSystemScientificCampaign; as campaign) {
                 <section
                   class="archive-discovery-detail__physical-section archive-discovery-detail__scientific-campaign"

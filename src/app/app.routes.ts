@@ -275,6 +275,16 @@ export const genesisRoutes: Routes = [
     title: 'Novas | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/kilonovae',
+    loadComponent: () =>
+      import(
+        './presentation/laboratory/transient-events/kilonovae/kilonova-laboratory'
+      ).then(
+        (module) => module.KilonovaLaboratoryPage,
+      ),
+    title: 'Kilonovas | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory',
     loadComponent: () =>
       import(

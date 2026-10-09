@@ -390,6 +390,52 @@
                   </article>
                 }
 
+                @if (model.stellarKilonovaScience; as kilonovaScience) {
+                  <article
+                    class="system-page__science-card system-page__science-card--wide"
+                    data-testid="system-page-kilonova-science"
+                  >
+                    <header class="system-page__section-header">
+                      <div>
+                        <small>29.3 · EVOLUCIÓN TRANSITORIA</small>
+                        <h2>Kilonovas y fusiones compactas</h2>
+                      </div>
+                      <span>{{ kilonovaScience.summary }}</span>
+                    </header>
+
+                    @if (kilonovaScience.entries.length > 0) {
+                      <div class="system-page__star-grid">
+                        @for (entry of kilonovaScience.entries; track entry.pairLabel) {
+                          <section class="system-page__star-card" data-testid="system-page-kilonova-event">
+                            <header>
+                              <div>
+                                <small>PAR COMPACTO {{ entry.pairLabel }}</small>
+                                <h3>{{ entry.typeLabel }}</h3>
+                              </div>
+                            </header>
+                            <p>{{ entry.designationLabel }}</p>
+                            <dl class="system-page__fact-grid system-page__fact-grid--star">
+                              <div><dt>Fusión prevista</dt><dd>{{ entry.mergerDelayLabel }}</dd></div>
+                              <div><dt>Masa eyectada</dt><dd>{{ entry.ejectaMassLabel }}</dd></div>
+                              <div><dt>Material r-proceso</dt><dd>{{ entry.rProcessMassLabel }}</dd></div>
+                              <div><dt>Componente azul</dt><dd>{{ entry.blueComponentLabel }}</dd></div>
+                              <div><dt>Componente roja</dt><dd>{{ entry.redComponentLabel }}</dd></div>
+                              <div><dt>Remanente previsto</dt><dd>{{ entry.remnantLabel }}</dd></div>
+                              @if (entry.disruptionLabel) {
+                                <div><dt>Disrupción NS–BH</dt><dd>{{ entry.disruptionLabel }}</dd></div>
+                              }
+                            </dl>
+                          </section>
+                        }
+                      </div>
+                    } @else {
+                      <p class="system-page__empty-note">
+                        Sin evento canónico de kilonova persistible con los datos físicos actualmente resueltos.
+                      </p>
+                    }
+                  </article>
+                }
+
                 <article
                   class="system-page__science-card"
                   data-testid="system-page-orbital-architecture"

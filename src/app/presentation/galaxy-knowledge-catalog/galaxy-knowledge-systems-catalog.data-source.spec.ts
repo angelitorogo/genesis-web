@@ -20,6 +20,8 @@ import { StellarSupernovaScientificIntegration } from '../runtime/stellar-supern
 import { StellarSupernovaScientificPresentationAssembler } from '../runtime/stellar-supernova-scientific-presentation';
 import { StellarNovaScientificIntegration } from '../runtime/stellar-nova-scientific-integration';
 import { StellarNovaScientificPresentationAssembler } from '../runtime/stellar-nova-scientific-presentation';
+import { StellarKilonovaScientificIntegration } from '../runtime/stellar-kilonova-scientific-integration';
+import { StellarKilonovaScientificPresentationAssembler } from '../runtime/stellar-kilonova-scientific-presentation';
 import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-systems-catalog.data-source';
 
 const generationKey = new UniverseGenerationKey(
@@ -76,11 +78,13 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
       'components',
       'supernova',
       'nova',
+      'kilonova',
       'sector',
     ]);
     expect(descriptor.sortOptions.map(option => option.key)).toContain('components');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('supernova');
     expect(descriptor.sortOptions.map(option => option.key)).toContain('nova');
+    expect(descriptor.sortOptions.map(option => option.key)).toContain('kilonova');
     expect(() => source.describe('QUADRUPLE')).toThrowError(RangeError);
   });
 
@@ -523,6 +527,58 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
     ]);
     expect(synchronize).toHaveBeenCalledTimes(2);
     expect(presentation).toHaveBeenCalledTimes(2);
+  });
+
+
+  it('materializes and sorts 29.3 kilonova science only through the dedicated repository', async () => {
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 31n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 32n), DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, new SystemLocator(0n, 0n, 33n), DiscoveryState.CATALOGUED),
+    ]);
+    const synchronize = vi.spyOn(StellarKilonovaScientificIntegration, 'synchronize')
+      .mockImplementation(async (_repository, _generationKey, locator) => Object.freeze({
+        marker: Number(locator.galacticObjectIndex),
+        lineage: null, events: Object.freeze([]), consequences: Object.freeze([]),
+      }) as never);
+    const presentation = vi.spyOn(StellarKilonovaScientificPresentationAssembler, 'build')
+      .mockImplementation(snapshot => {
+        const marker = (snapshot as unknown as { readonly marker: number }).marker;
+        const labels: Readonly<Record<number, string>> = Object.freeze({
+          31: 'Sin canal de kilonova',
+          32: 'Kilonova NS–NS · 12,5 Ma',
+          33: 'Candidato NS–BH · spin no resuelto',
+        });
+        return Object.freeze({
+          summary: '', catalogLabel: labels[marker] ?? 'Sin canal de kilonova',
+          canonicalEventCount: 0, entries: Object.freeze([]),
+        });
+      });
+
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        { provide: GENESIS_LOCAL_REPOSITORIES, useValue: {
+          discoveryRepository: { async getKnownDiscoveriesInGalaxy() { return discoveries; } },
+          kilonovaCanonicalEventRepository: {},
+        } as unknown as GenesisLocalRepositories },
+      ],
+    });
+
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const result = await source.query({
+      generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+      query: { category: 'systems', subtype: null, page: 1, pageSize: 25, sortKey: 'kilonova', direction: 'asc' },
+    });
+    expect(result.kind).toBe('page');
+    if (result.kind !== 'page') throw new Error('Expected systems page.');
+    expect(result.page.items.map(row => row.cells['kilonova'])).toEqual([
+      'Candidato NS–BH · spin no resuelto',
+      'Kilonova NS–NS · 12,5 Ma',
+      'Sin canal de kilonova',
+    ]);
+    expect(synchronize).toHaveBeenCalledTimes(3);
+    expect(presentation).toHaveBeenCalledTimes(3);
   });
 
 

@@ -426,6 +426,17 @@ describe('GENESIS routes', () => {
     ).toBeTruthy();
   }, 30_000);
 
+  it('should expose and navigate to the complete 29.3 kilonova laboratory', async () => {
+    const kilonova = genesisRoutes.find(route =>
+      route.path === 'laboratory/transient-events/kilonovae');
+    expect(kilonova?.title).toBe('Kilonovas | Laboratorios GENESIS');
+
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/kilonovae');
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/laboratory/transient-events/kilonovae');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="kilonova-laboratory-page"]')).toBeTruthy();
+  });
+
   it('should keep the legacy spectroscopy-validation URL as a compatible redirect', async () => {
     const harness =
       await RouterTestingHarness.create(

@@ -1,0 +1,46 @@
+<main class="kilonova-lab" data-testid="kilonova-laboratory-page">
+  <header class="kilonova-lab__hero">
+    <small>29.3 · TRANSITORIOS COMPACTOS</small>
+    <h1>Kilonovas</h1>
+    <p>Laboratorio determinista de fusiones NS–NS y NS–BH con disrupción tidal. La curva térmica separa componentes azul y roja del ejecta rico en r-proceso.</p>
+  </header>
+
+  <nav class="kilonova-lab__tabs" aria-label="Familias de kilonova">
+    @for (item of cases; track item.id) {
+      <button type="button" [class.is-active]="selectedType() === item.id" (click)="selectType(item.id)">
+        <small>{{ item.shortLabel }}</small><strong>{{ item.title }}</strong>
+      </button>
+    }
+  </nav>
+
+  <section class="kilonova-lab__body">
+    <div class="kilonova-lab__scene">
+      <div class="kilonova-lab__stars"></div>
+      <div class="kilonova-lab__red" [style.transform]="'translate(-50%, -50%) scale(' + redScale() + ')' "></div>
+      <div class="kilonova-lab__blue" [style.transform]="'translate(-50%, -50%) scale(' + blueScale() + ')' "></div>
+      <div class="kilonova-lab__core"></div>
+      <span>{{ snapshot().phase }}</span>
+    </div>
+
+    <aside class="kilonova-lab__facts">
+      <small>PROGENITOR CANÓNICO DE LABORATORIO</small>
+      <h2>{{ selectedCase().title }}</h2>
+      <p>{{ selectedCase().description }}</p>
+      <dl>
+        <div><dt>Masas compactas</dt><dd>{{ format(selectedCase().profile.progenitor.primaryMassSolar) }} + {{ format(selectedCase().profile.progenitor.secondaryMassSolar) }} M☉</dd></div>
+        <div><dt>Inspiral de referencia</dt><dd>{{ format(selectedCase().profile.progenitor.referenceInspiralYears / 1e6, 2) }} Ma</dd></div>
+        <div><dt>Ejecta total</dt><dd>{{ scientific(selectedCase().profile.totalEjectaMassSolar) }} M☉</dd></div>
+        <div><dt>r-proceso</dt><dd>{{ scientific(selectedCase().profile.rProcessMassSolar) }} M☉</dd></div>
+        <div><dt>Componente azul</dt><dd>{{ scientific(selectedCase().profile.blueEjectaMassSolar) }} M☉</dd></div>
+        <div><dt>Componente roja</dt><dd>{{ scientific(selectedCase().profile.redEjectaMassSolar) }} M☉</dd></div>
+        <div><dt>Remanente</dt><dd>{{ selectedCase().profile.remnantKind }}</dd></div>
+        <div><dt>Masa remanente</dt><dd>{{ format(selectedCase().profile.remnantMassSolar) }} M☉</dd></div>
+      </dl>
+    </aside>
+  </section>
+
+  <section class="kilonova-lab__timeline">
+    <label>TIEMPO RELATIVO A LA FUSIÓN <strong>{{ format(elapsedDays(), 2) }} d</strong></label>
+    <input type="range" min="-1" max="60" step="0.1" [value]="elapsedDays()" (input)="setElapsedDays($any($event.target).value)" />
+  </section>
+</main>

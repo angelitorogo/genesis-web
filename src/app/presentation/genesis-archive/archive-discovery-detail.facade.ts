@@ -178,6 +178,15 @@ import {
 } from '../runtime/stellar-nova-scientific-presentation';
 
 import {
+  StellarKilonovaScientificIntegration,
+} from '../runtime/stellar-kilonova-scientific-integration';
+
+import {
+  StellarKilonovaScientificPresentationAssembler,
+  type StellarKilonovaScientificPresentationModel,
+} from '../runtime/stellar-kilonova-scientific-presentation';
+
+import {
   isScientificRouteUniverseRef,
   scientificRouteUniverseRef,
 } from '../scientific/scientific-route-identity';
@@ -416,6 +425,10 @@ export interface ArchiveDiscoveryDetailModel {
   /** 29.2. Nova science is independent from the supernova channel. */
   readonly stellarNovaScience?:
     StellarNovaScientificPresentationModel | null;
+
+  /** 29.3. Compact-merger kilonova science is independent from 29.1/29.2. */
+  readonly stellarKilonovaScience?:
+    StellarKilonovaScientificPresentationModel | null;
 
   readonly scientificAction:
     ArchiveGalacticObjectScientificActionModel | null;
@@ -1893,6 +1906,23 @@ export class ArchiveDiscoveryDetailFacade {
             : null
           : undefined;
 
+      const kilonovaRepository =
+        this.repositories.kilonovaCanonicalEventRepository;
+
+      const stellarKilonovaScience =
+        locator instanceof SystemLocator &&
+        kilonovaRepository !== undefined
+          ? discoveryState.code >= DiscoveryState.CATALOGUED.code
+            ? StellarKilonovaScientificPresentationAssembler.build(
+                await StellarKilonovaScientificIntegration.synchronize(
+                  kilonovaRepository,
+                  generationKey,
+                  locator,
+                ),
+              )
+            : null
+          : undefined;
+
       const scientificAction =
         locator instanceof
           GalacticObjectLocator
@@ -2134,6 +2164,10 @@ export class ArchiveDiscoveryDetailFacade {
               ...(stellarNovaScience === undefined
                 ? {}
                 : { stellarNovaScience }),
+
+              ...(stellarKilonovaScience === undefined
+                ? {}
+                : { stellarKilonovaScience }),
 
               scientificAction,
 
