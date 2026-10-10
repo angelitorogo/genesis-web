@@ -39,6 +39,15 @@ describe(
       )?.getAttribute('href')).toBe('/laboratory/transient-events/historical-effects');
     });
 
+    it('should expose the exact 29.12 time-control laboratory URL', () => {
+      const fixture = TestBed.createComponent(LaboratoryPage);
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector<HTMLAnchorElement>(
+        '[data-testid="laboratory-transient-time-control-link"]'
+      )?.getAttribute('href')).toBe('/laboratory/transient-events/time-control');
+    });
+
     it(
       'should render the permanent read-only GENESIS visual laboratory index',
       () => {
@@ -76,7 +85,7 @@ describe(
     );
 
     it(
-      'should expose exactly the seventeen laboratories already implemented',
+      'should expose exactly the eighteen laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -96,7 +105,7 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          17,
+          18,
         );
       },
     );

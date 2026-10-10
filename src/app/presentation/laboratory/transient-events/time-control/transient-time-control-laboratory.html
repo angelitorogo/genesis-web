@@ -1,0 +1,75 @@
+<main class="time-lab" data-testid="transient-time-control-laboratory">
+  <header class="time-lab__header">
+    <p class="time-lab__eyebrow">FASE 29.12 · ACTUALIZACIÓN TEMPORAL</p>
+    <h1>Reloj científico de eventos transitorios</h1>
+    <p>GENESIS actualiza proyecciones con un tiempo de simulación declarado, no con la hora del navegador.
+      La hora real solo interviene después de una autorización expresa y una muestra manual.
+      No se crean sucesos, observaciones ni alteraciones en la partida.</p>
+    <span>SIMULACIÓN EXPLÍCITA · READ ONLY</span>
+  </header>
+  <nav class="time-lab__cases" aria-label="Casos de tiempo de simulación">
+    @for (item of cases; track item.id) {
+      <button type="button" [class.is-active]="selectedId() === item.id"
+        [attr.data-testid]="'time-control-case-' + item.id" (click)="selectCase(item.id)">{{ item.label }}</button>
+    }
+  </nav>
+  <div class="time-lab__columns">
+    <section class="time-lab__panel">
+      <p class="time-lab__eyebrow">CONTROL DE TIEMPO · MARCO SIMULADO</p>
+      <h2>Instante científico: {{ formatSeconds(report().simulationSeconds) }}</h2>
+      <p data-testid="time-control-mode">Modo: {{ realClockIsEnabled() ? 'muestra real expresamente autorizada' : 'simulación manual' }}</p>
+      <div class="time-lab__controls">
+        <button type="button" data-testid="time-control-reset" (click)="reset()">Volver a t = 0</button>
+        <button type="button" data-testid="time-control-step" (click)="advance(60)">+ 60 segundos</button>
+        <button type="button" (click)="advance(86400)">+ 1 día</button>
+        <button type="button" data-testid="time-control-next" [disabled]="!hasNextMilestone()"
+          (click)="nextMilestone()">Siguiente hito</button>
+      </div>
+      <p class="time-lab__hint">Los pasos son explícitos; cambiar de pestaña, esperar o recargar no adelanta ningún evento.</p>
+      <div class="time-lab__wall">
+        <h3>Reloj del navegador — opcional</h3>
+        <p>Por defecto está desconectado. Sin intervalos automáticos. Cada muestra requiere una pulsación.</p>
+        @if (!realClockIsEnabled()) {
+          <button type="button" data-testid="time-control-authorize-wall"
+            (click)="authorizeBrowserClock()">Autorizar y vincular ahora</button>
+        } @else {
+          <button type="button" data-testid="time-control-sample-wall"
+            (click)="sampleBrowserClock()">Tomar muestra expresamente</button>
+          <button type="button" data-testid="time-control-unlink-wall"
+            (click)="unlinkBrowserClock()">Desvincular</button>
+        }
+      </div>
+      <h3>Proyecciones a este instante</h3>
+      <ol class="time-lab__events" data-testid="time-control-entries">
+        @for (item of report().entries; track item.id) {
+          <li>
+            <strong>{{ item.id }}</strong>
+            <span data-testid="time-control-projected-state">{{ stateLabel(item.state) }}</span>
+            <small>Hitos alcanzados: {{ item.crossedMilestoneIds.length }} · Observaciones originales: {{ item.observationCount }}</small>
+            @if (item.activeMilestone) { <p>{{ item.activeMilestone.label }}</p> }
+          </li>
+        }
+      </ol>
+    </section>
+    <section class="time-lab__panel time-lab__science">
+      <p class="time-lab__eyebrow">CONTRATO 29.12</p>
+      <h2>{{ selectedCase().label }}</h2>
+      <p>{{ selectedCase().explanation }}</p>
+      <dl class="time-lab__metrics">
+        <div><dt>Tiempo de simulación</dt><dd>{{ formatSeconds(report().simulationSeconds) }}</dd></div>
+        <div><dt>Proyecciones</dt><dd>{{ report().entries.length }}</dd></div>
+        <div><dt>Eventos persistidos</dt><dd data-testid="time-control-persisted">{{ report().persistedEvents }}</dd></div>
+        <div><dt>Cuerpos / biosferas modificados</dt><dd>{{ report().mutatedBodies }}</dd></div>
+        <div><dt>Observaciones creadas</dt><dd>{{ report().newObservations }}</dd></div>
+        <div><dt>Fecha real atribuida al evento</dt><dd>No se infiere</dd></div>
+      </dl>
+      <blockquote>
+        Un hito físico no es una observación. Una predicción vencida no demuestra que
+        la fusión haya ocurrido. Los tiempos observacionales de 29.10 no se alinean
+        con la fuente sin un modelo explícito. La exposición de 29.11 y las biosferas
+        no se alteran con el avance del reloj. No se usa el reloj del navegador
+        salvo cuando se autoriza y se solicita una muestra concreta.
+      </blockquote>
+    </section>
+  </div>
+</main>

@@ -345,6 +345,13 @@ export const genesisRoutes: Routes = [
     title: 'Grandes llamaradas estelares | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/time-control',
+    loadComponent: () =>
+      import('./presentation/laboratory/transient-events/time-control/transient-time-control-laboratory')
+        .then(module => module.TransientTimeControlLaboratoryPage),
+    title: 'Reloj científico de transitorios | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory/transient-events/historical-effects',
     loadComponent: () =>
       import('./presentation/laboratory/transient-events/historical-effects/transient-historical-effects-laboratory')

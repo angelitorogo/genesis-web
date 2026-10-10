@@ -19,6 +19,13 @@ describe('GENESIS routes', () => {
   });
 
 
+  it('29.12 navigates to time control without Home wildcard fallback', async () => {
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/time-control');
+    expect(TestBed.inject(Router).url).toBe('/laboratory/transient-events/time-control');
+    expect(harness.routeNativeElement?.querySelector(
+      '[data-testid="transient-time-control-laboratory"]')).toBeTruthy();
+  }, 30_000);
+
   it('29.11 navigates to historical effects without the Home wildcard', async () => {
     const harness = await RouterTestingHarness.create('/laboratory/transient-events/historical-effects');
     expect(TestBed.inject(Router).url).toBe('/laboratory/transient-events/historical-effects');
