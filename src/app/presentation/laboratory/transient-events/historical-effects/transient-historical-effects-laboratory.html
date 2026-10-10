@@ -1,0 +1,85 @@
+<main class="historical" data-testid="transient-historical-effects-laboratory">
+  <header class="historical__header">
+    <div>
+      <p class="historical__eyebrow">FASE 29.11 · EFECTOS HISTÓRICOS</p>
+      <h1>Efectos históricos sobre sistemas y biosferas</h1>
+      <p>El evento, su geometría y la exposición energética son hechos distintos. Una fluencia calculada
+        NO demuestra daño atmosférico ni efectos sobre una biosfera. Solo lectura · ningún planeta o luna se modifica.</p>
+    </div>
+    <span class="historical__badge">EXPOSURE · READ ONLY</span>
+  </header>
+
+  <nav class="historical__cases" aria-label="Casos de exposición histórica">
+    @for (item of cases; track item.id) {
+      <button type="button" [class.is-active]="selectedId() === item.id"
+        [attr.aria-pressed]="selectedId() === item.id"
+        [attr.data-testid]="'historical-effects-case-' + item.id"
+        (click)="selectCase(item.id)">{{ item.button }}</button>
+    }
+  </nav>
+
+  <div class="historical__columns">
+    <section class="historical__panel" aria-label="Huella de exposición">
+      <p class="historical__eyebrow">SISTEMA / CUERPO OBJETIVO</p>
+      <h2>{{ selectedCase().target.label }}</h2>
+      <p class="historical__hint">{{ selectedCase().provenance }}</p>
+      <div class="historical__scene" role="img" aria-label="Esquema de fuente, distancia declarada y cuerpo objetivo; no está a escala">
+        <div class="historical__source"><span>FUENTE</span><strong>✦</strong></div>
+        <div class="historical__distance">
+          <div class="historical__trace"></div>
+          <small>{{ selectedCase().target.separationAu === null ? 'Distancia ?' : formatScientific(selectedCase().target.separationAu, 'UA') }}</small>
+        </div>
+        <div class="historical__body"><div class="historical__sphere"></div><strong>{{ selectedCase().target.kind === 'MOON' ? 'LUNA' : 'PLANETA' }}</strong></div>
+      </div>
+      <p class="historical__hint">La geometría, la banda radiativa y la atenuación deben estar explícitas. No se infiere radiación desde una tasa de actividad, un jet no orientado o una fusión futura.</p>
+      <div class="historical__divider"></div>
+      <p class="historical__eyebrow">CRONOLOGÍA DE EVIDENCIAS · NO ES LA PARTIDA</p>
+      @for (entry of report().events; track entry.eventId) {
+        <article class="historical__event" [attr.data-testid]="'historical-event-' + entry.eventId">
+          <div><strong>{{ entry.label }}</strong><span>{{ timeLabel(entry.yearsBeforeReference, entry.eventState) }}</span></div>
+          <p>{{ statusLabel(entry.state) }}</p>
+          <dl class="historical__event-metrics">
+            <div><dt>Banda</dt><dd>{{ bandLabel(entry.band) }}</dd></div>
+            <div><dt>Fluencia en TOA</dt><dd>{{ exposureLabel(entry.topOfAtmosphereFluenceJoulesPerSquareMeter, 'J/m²', entry.state) }}</dd></div>
+            <div><dt>Flujo medio TOA</dt><dd>{{ exposureLabel(entry.meanTopOfAtmosphereFluxWattsPerSquareMeter, 'W/m²', entry.state) }}</dd></div>
+            <div><dt>Transmitida en banda</dt><dd>{{ exposureLabel(entry.transmittedFluenceJoulesPerSquareMeter, 'J/m²', entry.state, true) }}</dd></div>
+          </dl>
+        </article>
+      }
+      <div class="historical__subtotals">
+        <h3>Subtotales conocidos · no equivalen a exposición histórica total</h3>
+        @if (report().knownBandSubtotals.length === 0) {
+          <p data-testid="historical-effects-no-subtotal">No evaluables: faltan eventos históricos con exposición calculable.</p>
+        } @else {
+          @for (item of report().knownBandSubtotals; track item.band) {
+            <p><strong>{{ bandLabel(item.band) }}</strong> · {{ formatScientific(item.knownTopOfAtmosphereFluenceJoulesPerSquareMeter, 'J/m²') }} ({{ item.contributingEventCount }} eventos conocidos)</p>
+          }
+        }
+      </div>
+    </section>
+
+    <section class="historical__science" aria-label="Interpretación científica">
+      <p class="historical__eyebrow">{{ selectedCase().id }} · 29.11</p>
+      <h2>{{ selectedCase().title }}</h2>
+      <p>{{ selectedCase().description }}</p>
+      <dl class="historical__metrics">
+        <div><dt>Objetivo</dt><dd>{{ selectedCase().target.kind === 'MOON' ? 'Luna' : 'Planeta' }}</dd></div>
+        <div><dt>Distancia declarada</dt><dd>{{ formatScientific(selectedCase().target.separationAu, 'UA') }}</dd></div>
+        <div><dt>Profundidad óptica de banda</dt><dd>{{ selectedCase().target.effectiveOpticalDepth === null ? 'No resuelta' : formatScientific(selectedCase().target.effectiveOpticalDepth, 'τ') }}</dd></div>
+        <div><dt>Episodios históricos sin fluencia</dt><dd>{{ report().unresolvedPastEventCount }}</dd></div>
+        <div><dt>Estado de la biosfera</dt><dd>{{ selectedCase().target.biosphereCharacterized ? 'Caracterizada · respuesta no derivada' : 'No caracterizada' }}</dd></div>
+        <div><dt>Daño / extinción / recuperación</dt><dd data-testid="historical-effects-biosphere-result">No derivados · falta modelo específico</dd></div>
+        <div><dt>Evolución de atmósfera y clima</dt><dd>No derivada · no hay mutación</dd></div>
+        <div><dt>Completitud del historial</dt><dd>Parcial · solo evidencia explícita</dd></div>
+        <div><dt>Eventos nuevos persistidos</dt><dd>{{ report().eventCountPersisted }} · solo lectura</dd></div>
+        <div><dt>Atmósferas / biosferas alteradas</dt><dd>{{ report().alteredAtmospheres }} / {{ report().alteredBiospheres }}</dd></div>
+      </dl>
+      <blockquote class="historical__boundary" data-testid="historical-effects-scientific-boundary">
+        Las magnitudes TOA no son dosis absorbidas. Una atenuación de banda explícita no demuestra química atmosférica,
+        pérdidas de gas, esterilización ni extinciones. La habitabilidad tampoco equivale a biología terrestre:
+        los posibles efectos futuros deberán evaluarse según los organismos y nichos propios del objetivo.
+        29.11 no escribe en Dexie, ni altera 29.1–29.10, los planetas, sus lunas o su historia canónica.
+      </blockquote>
+    </section>
+  </div>
+</main>

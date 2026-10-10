@@ -345,6 +345,13 @@ export const genesisRoutes: Routes = [
     title: 'Grandes llamaradas estelares | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/transient-events/historical-effects',
+    loadComponent: () =>
+      import('./presentation/laboratory/transient-events/historical-effects/transient-historical-effects-laboratory')
+        .then((module) => module.TransientHistoricalEffectsLaboratoryPage),
+    title: 'Efectos históricos sobre sistemas y biosferas | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory/transient-events/follow-up',
     loadComponent: () =>
       import(

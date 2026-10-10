@@ -31,6 +31,14 @@ describe(
       },
     );
 
+    it('should expose the 29.11 permanent historical-effects route', () => {
+      const fixture = TestBed.createComponent(LaboratoryPage);
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+        '[data-testid="laboratory-transient-historical-effects-link"]',
+      )?.getAttribute('href')).toBe('/laboratory/transient-events/historical-effects');
+    });
+
     it(
       'should render the permanent read-only GENESIS visual laboratory index',
       () => {
@@ -68,7 +76,7 @@ describe(
     );
 
     it(
-      'should expose exactly the sixteen laboratories already implemented',
+      'should expose exactly the seventeen laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -88,13 +96,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          16,
+          17,
         );
       },
     );
 
     it(
-      'should link only to the sixteen canonical permanent laboratory routes',
+      'should link only to the seventeen canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed

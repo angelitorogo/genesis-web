@@ -19,6 +19,12 @@ describe('GENESIS routes', () => {
   });
 
 
+  it('29.11 navigates to historical effects without the Home wildcard', async () => {
+    const harness = await RouterTestingHarness.create('/laboratory/transient-events/historical-effects');
+    expect(TestBed.inject(Router).url).toBe('/laboratory/transient-events/historical-effects');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="transient-historical-effects-laboratory"]')).toBeTruthy();
+  }, 30_000);
+
   it('29.10 navigates to the follow-up laboratory without Home wildcard fallback', async () => {
     const harness = await RouterTestingHarness.create('/laboratory/transient-events/follow-up');
     const router = TestBed.inject(Router);
