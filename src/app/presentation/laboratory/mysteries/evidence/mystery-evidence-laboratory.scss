@@ -1,0 +1,26 @@
+:host{display:block;color:#e9f0ff}
+.mystery{padding:24px 24px 40px;background:#070b15;min-height:100vh;font:14px/1.55 system-ui,sans-serif}
+.mystery__header{display:flex;justify-content:space-between;align-items:start;gap:24px;margin-bottom:28px}
+.mystery__header h1{font-size:clamp(22px,2.4vw,30px);line-height:1.2;margin:4px 0 12px}
+.mystery__header p{max-width:850px;color:#b6c8e4;margin:0}
+.mystery__eyebrow{font-size:10px!important;letter-spacing:1.2px;color:#8ca8d6!important;font-weight:700}
+.mystery__readonly{border:1px solid #38516f;border-radius:999px;font-size:10px;padding:6px 10px;white-space:nowrap;color:#bdd0ec}
+.mystery__tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px}
+.mystery__tabs button{border:1px solid #4a5a70;color:#dee7f8;border-radius:999px;background:transparent;padding:9px 13px;cursor:pointer}
+.mystery__tabs button.mystery__active{border-color:#e7efff;color:#fff;background:#1a2944;font-weight:700}
+.mystery__tabs button:focus-visible{outline:2px solid #a5d7ff;outline-offset:2px}
+.mystery__layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:16px}
+.mystery__panel{border:1px solid #31445f;border-radius:12px;padding:20px;min-width:0}
+.mystery__panel h2{font-size:20px;margin:8px 0}.mystery__panel h3{font-size:14px;margin:24px 0 12px}
+.mystery__panel>p{color:#bed0eb}
+.mystery__facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0}
+.mystery__facts div,.mystery__record,.mystery__tension{border:1px solid #34465f;border-radius:8px;padding:12px;min-width:0}
+.mystery__facts dt{font-size:10px;text-transform:uppercase;color:#94adce}
+.mystery__facts dd{margin:5px 0 0;font-weight:650;overflow-wrap:anywhere}
+.mystery__records{display:grid;gap:8px}
+.mystery__record-header{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mystery__record-header span{color:#a6bbdb;font-size:12px}
+.mystery__record p,.mystery__tension p{margin:5px 0}
+.mystery__tension{margin:12px 0}.mystery__tension small{color:#bed0eb}
+.mystery__note{border-left:2px solid #7295c1;padding:8px 12px;margin:18px 0;color:#bed0eb}
+@media(max-width:900px){.mystery__layout{grid-template-columns:1fr}.mystery__header{flex-direction:column}}

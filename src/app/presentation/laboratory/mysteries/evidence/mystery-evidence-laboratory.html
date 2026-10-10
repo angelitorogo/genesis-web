@@ -1,0 +1,72 @@
+<main class="mystery" data-testid="mystery-evidence-laboratory">
+  <header class="mystery__header">
+    <div>
+      <p class="mystery__eyebrow">FASE 30.2 · OBSERVACIÓN INCOMPLETA</p>
+      <h1>Misterios científicos · evidencias parciales</h1>
+      <p>Las mediciones no revelan identidades físicas. Las discrepancias son tensiones aparentes,
+        y la ausencia de datos no significa que una señal no exista.</p>
+    </div>
+    <span class="mystery__readonly">READ ONLY · SIN GROUND TRUTH</span>
+  </header>
+  <nav class="mystery__tabs" aria-label="Escenarios científicos de 30.2">
+    @for (item of cases; track item.id) {
+      <button type="button" [attr.aria-pressed]="selectedId() === item.id"
+        [class.mystery__active]="selectedId() === item.id" (click)="selectCase(item.id)">{{item.label}}</button>
+    }
+  </nav>
+  <div class="mystery__layout">
+    <section class="mystery__panel">
+      <p class="mystery__eyebrow">ÁMBITO OBSERVACIONAL · IDENTIDAD 30.1</p>
+      <h2>{{selected().title}}</h2>
+      <p>{{selected().description}}</p>
+      <dl class="mystery__facts">
+        <div><dt>Identidad opaca</dt><dd>{{selected().assessment.subject.id}}</dd></div>
+        <div><dt>Ámbito</dt><dd>{{selected().assessment.subject.scope.kind}}</dd></div>
+        <div><dt>Clasificación</dt><dd>Sin clasificar</dd></div>
+        <div><dt>Medidas / límites / ausencias</dt><dd>{{selected().assessment.summary.detections}} / {{selected().assessment.summary.upperLimits}} / {{selected().assessment.summary.missing}}</dd></div>
+      </dl>
+      <h3>Registros observacionales explícitos</h3>
+      <div class="mystery__records">
+        @for (ev of selected().assessment.evidence; track ev.id) {
+          <article class="mystery__record">
+            <div class="mystery__record-header"><strong>{{kindLabel(ev)}}</strong><span>{{ev.band}} · {{ev.epochKey}}</span></div>
+            <p>{{observableLabel(ev.observable)}} · {{ev.componentKey}}</p>
+            @if (ev.kind === 'DETECTION') {
+              <p><strong>{{ev.value}}</strong> (−{{ev.sigmaMinus}} / +{{ev.sigmaPlus}} a 1σ)</p>
+            } @else if (ev.kind === 'UPPER_LIMIT') {
+              <p><strong>≤ {{ev.limit}}</strong> (umbral {{ev.thresholdSigma}}σ, no una detección)</p>
+            } @else {
+              <p><strong>No resuelto</strong> · {{ev.reason}}</p>
+            }
+          </article>
+        }
+      </div>
+    </section>
+    <aside class="mystery__panel">
+      <p class="mystery__eyebrow">INTERVALOS · MISMA BANDA, MAGNITUD Y ÉPOCA</p>
+      <h2>Compatibilidad observacional</h2>
+      @if (selected().assessment.tensions.length === 0) {
+        <p>No se identifican tensiones entre detecciones comparables. Esto <strong>no confirma</strong> un origen físico.</p>
+      } @else {
+        <p>Hay {{selected().assessment.tensions.length}} tensión(es) aparente(s) entre intervalos 2σ no solapados.</p>
+        @for (tension of selected().assessment.tensions; track tension.evidenceIds[0] + tension.evidenceIds[1]) {
+          <div class="mystery__tension" data-testid="mystery-apparent-tension">
+            <strong>Tensión aparente · {{tension.band}}</strong>
+            <p>{{observableLabel(tension.observable)}} · {{tension.epochKey}}</p>
+            <small>No es una contradicción física probada. Requiere nuevas observaciones.</small>
+          </div>
+        }
+      }
+      <div class="mystery__note">
+        La comparación exige magnitud, banda, componente y época comunes.
+        Una fuente variable puede tener valores muy diferentes en momentos distintos.
+        Las medidas sin observación, los límites y la falta de cobertura no se convierten en ceros.
+      </div>
+      <div class="mystery__note">
+        No se crea ninguna clasificación, evento canónico, PD ni registro persistente.
+        La procedencia instrumental detallada y fiabilidad se amplían en 30.7;
+        las puertas DETECTED–CONFIRMED se integrarán en 30.8.
+      </div>
+    </aside>
+  </div>
+</main>

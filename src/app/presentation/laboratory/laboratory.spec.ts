@@ -31,6 +31,14 @@ describe(
       },
     );
 
+    it('30.2 exposes the permanent evidence laboratory card', () => {
+      const fixture = TestBed.createComponent(LaboratoryPage);
+      fixture.detectChanges();
+      const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+        '[data-testid="laboratory-mystery-evidence-link"]');
+      expect(link?.getAttribute('href')).toBe('/laboratory/mysteries/evidence');
+    });
+
     it('should expose the 29.11 permanent historical-effects route', () => {
       const fixture = TestBed.createComponent(LaboratoryPage);
       fixture.detectChanges();
@@ -85,7 +93,7 @@ describe(
     );
 
     it(
-      'should expose exactly the eighteen laboratories already implemented',
+      'should expose exactly the nineteen laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -105,13 +113,13 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          18,
+          19,
         );
       },
     );
 
     it(
-      'should link only to the seventeen canonical permanent laboratory routes',
+      'should link to the canonical permanent laboratory routes',
       () => {
         const fixture =
           TestBed
