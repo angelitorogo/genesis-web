@@ -1,0 +1,80 @@
+<main class="mystery-actions" data-testid="mystery-actions-laboratory">
+  <header class="mystery-actions__header">
+    <div>
+      <p class="eyebrow">FASE 30.3 · CAMPAÑAS CIENTÍFICAS</p>
+      <h1>Misterios · acciones de observación</h1>
+      <p>Solo se ofrecen mediciones compatibles con las capacidades instrumentales.
+        Las evidencias nuevas proceden de adquisiciones explícitas; observar no revela Ground Truth.</p>
+    </div>
+    <span class="pill">LABORATORIO · SIN PERSISTENCIA</span>
+  </header>
+  <nav class="tabs" aria-label="Escenarios de observación 30.3">
+    @for (item of cases; track item.id) {
+      <button type="button" [attr.aria-pressed]="selectedId() === item.id"
+        [class.active]="selectedId() === item.id" (click)="selectCase(item.id)">{{item.label}}</button>
+    }
+  </nav>
+  <div class="layout">
+    <section class="panel">
+      <p class="eyebrow">CAPACIDADES / ACCIONES DISPONIBLES</p>
+      <h2>{{selected().title}}</h2>
+      <p>{{selected().description}}</p>
+      <dl class="facts">
+        <div><dt>Identificador observado</dt><dd>{{selected().subject.id}}</dd></div>
+        <div><dt>Ámbito inicial</dt><dd>{{selected().subject.scope.kind}}</dd></div>
+        <div><dt>Clasificación</dt><dd>Sin clasificar</dd></div>
+        <div><dt>Acciones ejecutadas</dt><dd>{{evaluated().completedActionIds.length}}</dd></div>
+      </dl>
+      <div class="section-header">
+        <h3>Acciones científicas</h3>
+        <button class="reset" type="button" data-testid="mystery-actions-reset" (click)="resetObservations()">Restablecer evidencias</button>
+      </div>
+      <div class="action-list">
+        @for (action of selected().actions; track action.request.id) {
+          <article class="action">
+            <div class="action__top">
+              <strong>{{action.label}}</strong>
+              <span>{{action.request.kind}} · {{action.request.instrumentId}}</span>
+            </div>
+            <p>{{action.explanation}}</p>
+            <small>{{action.request.bands.join(' + ')}} · {{action.request.exposureSeconds}} s · {{action.request.epochKey}}</small>
+            @if (planFor(action.request.id).status === 'BLOCKED') {
+              <p class="reason" data-testid="mystery-action-blocked">No disponible: {{actionReason(planFor(action.request.id).reason)}}</p>
+            } @else if (evaluated().completedActionIds.includes(action.request.id)) {
+              <p class="result" data-testid="mystery-action-completed">Adquisición registrada · puede seguir sin clasificar</p>
+            }
+            <button type="button" [attr.data-testid]="'mystery-action-' + action.request.id"
+              [disabled]="planFor(action.request.id).status !== 'AVAILABLE' || evaluated().completedActionIds.includes(action.request.id)"
+              (click)="takeObservation(action.request.id)">Realizar observación</button>
+          </article>
+        }
+      </div>
+      <p class="note">El conjunto instrumental está declarado por el escenario. 30.3 no fabrica señales a partir de una fuente canónica;
+        las adquisiciones de este laboratorio son datos ilustrativos previamente proporcionados.</p>
+    </section>
+    <aside class="panel">
+      <p class="eyebrow">EVIDENCIAS 30.2 · ACTUALIZACIÓN EXPLÍCITA</p>
+      <h2>Resultados observacionales</h2>
+      <dl class="facts">
+        <div><dt>Detecciones</dt><dd>{{evaluated().assessment.summary.detections}}</dd></div>
+        <div><dt>Límites superiores</dt><dd>{{evaluated().assessment.summary.upperLimits}}</dd></div>
+        <div><dt>Ausencias de datos</dt><dd>{{evaluated().assessment.summary.missing}}</dd></div>
+        <div><dt>Tensiones aparentes</dt><dd>{{evaluated().assessment.summary.apparentTensions}}</dd></div>
+      </dl>
+      <h3>Registros conservados</h3>
+      <div class="record-list">
+        @for (record of evaluated().assessment.evidence; track record.id) {
+          <div class="record" data-testid="mystery-action-evidence">
+            <div class="record__head"><strong>{{record.kind}}</strong><span>{{record.band}} · {{record.epochKey}}</span></div>
+            <p>{{record.observable}} · {{record.componentKey}}</p>
+            <p><strong>{{evidenceLabel(record)}}</strong></p>
+          </div>
+        }
+      </div>
+      <div class="note">
+        <strong>Sin clasificar.</strong> Nuevas observaciones pueden reducir lagunas, pero no garantizan resolver una tensión o identificar
+        la fuente. No se otorgan PD, no se crean eventos y no se escribe en Dexie. Clasificación: 30.4; procedencia y fiabilidad: 30.7.
+      </div>
+    </aside>
+  </div>
+</main>

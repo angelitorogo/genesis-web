@@ -19,6 +19,13 @@ describe('GENESIS routes', () => {
   });
 
 
+  it('30.3 navigates to scientific actions without Home wildcard fallback', async () => {
+    const harness = await RouterTestingHarness.create('/laboratory/mysteries/actions');
+    expect(TestBed.inject(Router).url).toBe('/laboratory/mysteries/actions');
+    expect(harness.routeNativeElement?.querySelector(
+      '[data-testid="mystery-actions-laboratory"]')).toBeTruthy();
+  }, 30_000);
+
   it('30.2 navigates to evidence without Home wildcard fallback', async () => {
     const harness = await RouterTestingHarness.create('/laboratory/mysteries/evidence');
     expect(TestBed.inject(Router).url).toBe('/laboratory/mysteries/evidence');
