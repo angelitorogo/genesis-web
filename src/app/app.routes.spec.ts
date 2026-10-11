@@ -19,6 +19,13 @@ describe('GENESIS routes', () => {
   });
 
 
+  it('30.4 navigates directly to classification without Home wildcard', async () => {
+    const harness = await RouterTestingHarness.create('/laboratory/mysteries/classification');
+    expect(TestBed.inject(Router).url).toBe('/laboratory/mysteries/classification');
+    expect(harness.routeNativeElement?.querySelector(
+      '[data-testid="mystery-classification-laboratory"]')).toBeTruthy();
+  }, 30_000);
+
   it('30.3 navigates to scientific actions without Home wildcard fallback', async () => {
     const harness = await RouterTestingHarness.create('/laboratory/mysteries/actions');
     expect(TestBed.inject(Router).url).toBe('/laboratory/mysteries/actions');

@@ -31,6 +31,15 @@ describe(
       },
     );
 
+    it('30.4 exposes classification laboratory card 21', () => {
+      const fixture = TestBed.createComponent(LaboratoryPage);
+      fixture.detectChanges();
+      const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+        '[data-testid="laboratory-mystery-classification-link"]');
+      expect(link?.getAttribute('href')).toBe('/laboratory/mysteries/classification');
+      expect(link?.textContent).toContain('21');
+    });
+
     it('30.3 exposes the scientific action laboratory card 20', () => {
       const fixture = TestBed.createComponent(LaboratoryPage);
       fixture.detectChanges();
@@ -102,7 +111,7 @@ describe(
     );
 
     it(
-      'should expose exactly the twenty laboratories already implemented',
+      'should expose exactly the twenty-one laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -122,7 +131,7 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          20,
+          21,
         );
       },
     );

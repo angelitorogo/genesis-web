@@ -1,0 +1,76 @@
+<main class="mystery-class" data-testid="mystery-classification-laboratory">
+  <header class="mystery-class__header">
+    <div>
+      <p class="eyebrow">FASE 30.4 · REVISIÓN DE CLASIFICACIONES</p>
+      <h1>Misterios · clasificación con evidencias</h1>
+      <p>Se clasifican firmas observacionales con umbrales explícitos; un patrón de radio no demuestra un púlsar, un magnetar ni otra fuente canónica.</p>
+    </div>
+    <span class="pill">READ ONLY · SIN GROUND TRUTH</span>
+  </header>
+  <nav class="tabs" aria-label="Escenarios de clasificación 30.4">
+    @for (entry of cases; track entry.id) {
+      <button type="button" [class.active]="selectedId() === entry.id" [attr.aria-pressed]="selectedId() === entry.id"
+        (click)="selectCase(entry.id)">{{entry.label}}</button>
+    }
+  </nav>
+  <div class="layout">
+    <section class="panel">
+      <p class="eyebrow">EVIDENCIAS · IDENTIDAD 30.1</p>
+      <h2>{{selected().title}}</h2>
+      <p>{{selected().description}}</p>
+      <dl class="facts">
+        <div><dt>Identidad opaca</dt><dd>{{selected().subject.id}}</dd></div>
+        <div><dt>Ámbito de origen</dt><dd>{{selected().subject.scope.kind}}</dd></div>
+        <div><dt>Observaciones conservadas</dt><dd>{{evaluation().assessment.summary.total}}</dd></div>
+        <div><dt>Tensiones aparentes</dt><dd>{{evaluation().assessment.summary.apparentTensions}}</dd></div>
+      </dl>
+      <div class="toolbar">
+        @if (completedSteps() < selected().steps.length) {
+          <button type="button" data-testid="mystery-classification-next" (click)="nextEvidence()">{{selected().steps[completedSteps()].label}}</button>
+        }
+        <button type="button" data-testid="mystery-classification-reset" (click)="reset()">Restablecer evidencia</button>
+      </div>
+      <h3>Mediciones disponibles</h3>
+      <div class="records">
+        @for (record of evaluation().assessment.evidence; track record.id) {
+          <article class="record" data-testid="mystery-classification-evidence">
+            <div class="record-header"><strong>{{record.kind}}</strong><span>{{record.band}} · {{record.epochKey}}</span></div>
+            <p>{{record.observable}} · {{record.campaignKey}}</p>
+            @if (record.kind === 'DETECTION') {
+              <strong>{{record.value}} (−{{record.sigmaMinus}} / +{{record.sigmaPlus}} · 1σ)</strong>
+            } @else if (record.kind === 'UPPER_LIMIT') {
+              <strong>≤ {{record.limit}} · umbral {{record.thresholdSigma}}σ</strong>
+            } @else { <strong>Sin medida · {{record.reason}}</strong> }
+          </article>
+        }
+      </div>
+    </section>
+    <aside class="panel">
+      <p class="eyebrow">REGLAS 30.4 · SIN RESOLVER ORIGEN FÍSICO</p>
+      <h2 data-testid="mystery-classification-status">{{statusLabel(evaluation().history.current.status)}}</h2>
+      <p class="class-name" data-testid="mystery-classification-class">{{classLabel(evaluation().history.current.classCode)}}</p>
+      <p>{{reasonLabel(evaluation().history.current.reason)}}</p>
+      <h3>Condiciones y umbrales</h3>
+      <div class="rules">
+        @for (rule of evaluation().history.current.rules; track rule.classCode) {
+          <article class="record" data-testid="mystery-classification-rule">
+            <div class="record-header"><strong>{{classLabel(rule.classCode)}}</strong><span>{{rule.status}}</span></div>
+            <p>{{rule.threshold}}</p>
+            <small>{{rule.qualifyingEpochs}} épocas · {{rule.independentCampaigns}} campañas · {{rule.candidateEvidenceIds.length}} medidas candidatas</small>
+          </article>
+        }
+      </div>
+      <h3>Historial de revisiones</h3>
+      <div class="records">
+        @for (revision of evaluation().history.revisions; track revision.revisionId) {
+          <article class="record" data-testid="mystery-classification-revision">
+            <div class="record-header"><strong>Revisión {{revision.sequence}}</strong><span>{{revision.change}}</span></div>
+            <p>{{statusLabel(revision.decision.status)}} · {{classLabel(revision.decision.classCode)}}</p>
+            <small>{{revision.revisionId}} · {{revision.evidenceSnapshot.length}} evidencias</small>
+          </article>
+        }
+      </div>
+      <p class="note">El historial es reproducible por conjunto de observaciones. Una discrepancia nueva puede reabrir una clasificación. No hay clasificación canónica ni consulta de Ground Truth; sin PD ni escritura en Dexie. 30.7 ampliará procedencia y fiabilidad; 30.8 conectará las puertas de conocimiento.</p>
+    </aside>
+  </div>
+</main>

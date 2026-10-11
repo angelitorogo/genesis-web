@@ -369,6 +369,13 @@ export const genesisRoutes: Routes = [
     title: 'Seguimiento de transitorios | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/mysteries/classification',
+    loadComponent: () =>
+      import('./presentation/laboratory/mysteries/classification/mystery-classification-laboratory')
+        .then(module => module.MysteryClassificationLaboratoryPage),
+    title: 'Clasificación por evidencias 30.4 | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory/mysteries/actions',
     loadComponent: () =>
       import('./presentation/laboratory/mysteries/actions/mystery-actions-laboratory')
