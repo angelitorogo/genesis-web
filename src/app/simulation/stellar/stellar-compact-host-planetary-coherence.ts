@@ -7,6 +7,9 @@ import { type GeneratedMultipleHost, type GeneratedPublicPlanet, type GeneratedS
 import { multihostPhysicalSourceKey } from './stellar-multihost-physical-source-key';
 import { StellarNeutronStarEngine } from './stellar-neutron-star-engine';
 import { stellarWhiteDwarfCurrentMassSolar } from './stellar-white-dwarf-current-mass';
+import { projectWhiteDwarfCoolingLuminosity } from './white-dwarf-cooling-luminosity';
+import { boundCompanionBolometricInsolationEarth, sumRadiativeBounds, type RadiativeBound } from '../planetary/white-dwarf-conditional-thermal-envelope';
+import { PLANETARY_HABITABLE_ZONE_V1_INNER_EFFECTIVE_FLUX_SOLAR, PLANETARY_HABITABLE_ZONE_V1_OUTER_EFFECTIVE_FLUX_SOLAR } from '../planetary/planetary-system-habitable-zone-generator';
 import {
   StellarPostSupernovaPlanetaryDynamics,
   type StellarPostSupernovaPlanetaryState,
@@ -20,7 +23,8 @@ export type StellarPlanetaryHostLabel = MultihostLabel | 'AB';
 export type StellarPlanetaryHostRadiativeRegime =
   | 'CURRENT_STELLAR_SOURCE'
   | 'QUIESCENT_BLACK_HOLE'
-  | 'COMPACT_LUMINOSITY_UNMODELED';
+  | 'COMPACT_LUMINOSITY_UNMODELED'
+  | 'WHITE_DWARF_COOLING_ESTIMATE';
 
 export interface StellarPlanetaryHostCurrentState {
   readonly hostLabel: StellarPlanetaryHostLabel;
@@ -30,6 +34,7 @@ export interface StellarPlanetaryHostCurrentState {
   readonly currentGravitatingMassSolar: number | null;
   readonly currentLuminositySolar: number | null;
   readonly radiativeRegime: StellarPlanetaryHostRadiativeRegime;
+  readonly whiteDwarfCoolingAgeBillionYears?: number | null;
 }
 
 /**
@@ -114,6 +119,62 @@ export class StellarCompactHostPlanetaryCoherence {
     return stellarPlanetaryMeanInsolationEarth(semiMajorAxisAu, eccentricity, luminosity);
   }
 
+  /**
+   * H2: conservative bolometric companion flux range for a SINGLE circumstellar
+   * host. It is not a phase-resolved solution and never assumes that unknown
+   * luminosities are zero. Do not apply to P-type planets: their geometry
+   * requires an independent barycentric phase model.
+   */
+  companionRadiativeBoundEarth(
+    hostLabel: MultihostLabel,
+    planetarySemiMajorAxisAu: number,
+    planetaryEccentricity: number,
+  ): RadiativeBound {
+    if (!Number.isFinite(planetarySemiMajorAxisAu) || planetarySemiMajorAxisAu <= 0 ||
+        !Number.isFinite(planetaryEccentricity) ||
+        planetaryEccentricity < 0 || planetaryEccentricity >= 1) {
+      throw new RangeError('H2 requires a valid circumstellar planetary orbit.');
+    }
+    const apo = planetarySemiMajorAxisAu * (1 + planetaryEccentricity);
+    const result: RadiativeBound[] = [];
+    if (hostLabel === 'A' || hostLabel === 'B') {
+      const other = hostLabel === 'A' ? 'B' : 'A';
+      result.push(boundCompanionBolometricInsolationEarth({
+        luminositySolar: this.stateFor(other).currentLuminositySolar,
+        relativePeriastronAu: this.formation.innerOrbit.periastronAu,
+        relativeApoastronAu: this.formation.innerOrbit.apoastronAu,
+        planetaryApoastronAu: apo,
+      }));
+      if (this.formation.components.some(component => component.label === 'C') &&
+          this.formation.outerOrbit !== null) {
+        result.push(boundCompanionBolometricInsolationEarth({
+          luminositySolar: this.stateFor('C').currentLuminositySolar,
+          relativePeriastronAu: this.formation.outerOrbit.periastronAu,
+          relativeApoastronAu: this.formation.outerOrbit.apoastronAu,
+          planetaryApoastronAu: apo,
+          offsetBoundAu: this.formation.innerOrbit.apoastronAu,
+        }));
+      }
+    } else {
+      if (this.formation.outerOrbit === null) {
+        return Object.freeze({lowerEarth: 0, upperEarth: null,
+          unresolvedSource: true, includesCompanion: false});
+      }
+      // Triple C is separated from the AB barycenter. The unknown A/B
+      // barycentric offsets are conservatively bounded by inner apoastron.
+      for (const other of ['A', 'B'] as const) {
+        result.push(boundCompanionBolometricInsolationEarth({
+          luminositySolar: this.stateFor(other).currentLuminositySolar,
+          relativePeriastronAu: this.formation.outerOrbit.periastronAu,
+          relativeApoastronAu: this.formation.outerOrbit.apoastronAu,
+          planetaryApoastronAu: apo,
+          offsetBoundAu: this.formation.innerOrbit.apoastronAu,
+        }));
+      }
+    }
+    return sumRadiativeBounds(result);
+  }
+
   private componentState(host: GeneratedSingleHost): StellarPlanetaryHostCurrentState {
     const state = host.stellarSystem.primaryStar.evolutionState.name;
     const compact = state === 'WHITE_DWARF' || state === 'NEUTRON_STAR' || state === 'STELLAR_BLACK_HOLE';
@@ -130,15 +191,25 @@ export class StellarCompactHostPlanetaryCoherence {
     }
 
     if (state === 'WHITE_DWARF') {
+      // Single authoritative remnant mass from phase 29.2; no second IFMR.
       const mass = stellarWhiteDwarfCurrentMassSolar(host.physical, host.lifetime);
+      const cooling = projectWhiteDwarfCoolingLuminosity({
+        evolutionStateName: state,
+        currentRemnantMassSolar: mass,
+        stellarAgeBillionYears: host.lifetime.ageBillionYears,
+        progenitorTerminalAgeBillionYears: host.lifetime.terminalAgeBillionYears,
+      });
       return Object.freeze({
         hostLabel: host.label,
         componentEvolutionStates: Object.freeze([state]),
         containsCompactRemnant: true,
         requiresPostStellarEvolutionReassessment: true,
         currentGravitatingMassSolar: positiveOrNull(mass),
-        currentLuminositySolar: null,
-        radiativeRegime: 'COMPACT_LUMINOSITY_UNMODELED' as const,
+        currentLuminositySolar: cooling?.presentLuminositySolar ?? null,
+        whiteDwarfCoolingAgeBillionYears: cooling?.coolingAgeBillionYears ?? null,
+        radiativeRegime: cooling === null
+          ? 'COMPACT_LUMINOSITY_UNMODELED' as const
+          : 'WHITE_DWARF_COOLING_ESTIMATE' as const,
       });
     }
 
@@ -208,6 +279,19 @@ export function stellarPlanetaryMeanInsolationEarth(
     (semiMajorAxisAu ** 2 * Math.sqrt(1 - eccentricity ** 2));
 }
 
+
+/** Solar-spectrum reference flux boundaries ONLY; WD SED and dynamical
+ * stability still require separate assessment. Not a habitability verdict. */
+export function currentHostRadiativeReferenceZoneAu(
+  luminositySolar: number | null,
+): Readonly<{ innerAu: number; outerAu: number }> | null {
+  if (luminositySolar === null || !Number.isFinite(luminositySolar) || luminositySolar <= 0) return null;
+  return Object.freeze({
+    innerAu: Math.sqrt(luminositySolar / PLANETARY_HABITABLE_ZONE_V1_INNER_EFFECTIVE_FLUX_SOLAR),
+    outerAu: Math.sqrt(luminositySolar / PLANETARY_HABITABLE_ZONE_V1_OUTER_EFFECTIVE_FLUX_SOLAR),
+  });
+}
+
 function combineAB(
   a: StellarPlanetaryHostCurrentState,
   b: StellarPlanetaryHostCurrentState,
@@ -225,11 +309,16 @@ function combineAB(
       a.requiresPostStellarEvolutionReassessment || b.requiresPostStellarEvolutionReassessment,
     currentGravitatingMassSolar: positiveOrNull(mass),
     currentLuminositySolar: luminosity,
+    // AB combines luminosities but does not assign one WD cooling age.
+    whiteDwarfCoolingAgeBillionYears: null,
     radiativeRegime: luminosity === null
       ? 'COMPACT_LUMINOSITY_UNMODELED' as const
       : luminosity === 0 && compact
         ? 'QUIESCENT_BLACK_HOLE' as const
-        : 'CURRENT_STELLAR_SOURCE' as const,
+        : a.radiativeRegime === 'WHITE_DWARF_COOLING_ESTIMATE' ||
+          b.radiativeRegime === 'WHITE_DWARF_COOLING_ESTIMATE'
+          ? 'WHITE_DWARF_COOLING_ESTIMATE' as const
+          : 'CURRENT_STELLAR_SOURCE' as const,
   });
 }
 

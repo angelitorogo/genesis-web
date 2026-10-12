@@ -1,0 +1,78 @@
+<main class="mystery-unresolved" data-testid="mystery-unresolved-laboratory">
+  <header class="mystery-unresolved__header">
+    <div>
+      <p class="eyebrow">FASE 30.5 · DESCONOCIDO ES UN RESULTADO LEGÍTIMO</p>
+      <h1>Misterios · expedientes sin resolver</h1>
+      <p>No se inventan clases físicas para completar un catálogo. Un caso puede permanecer abierto o cerrarse dentro de un ámbito científico explícito.</p>
+    </div>
+    <span class="pill">SOLO LECTURA · SIN GROUND TRUTH</span>
+  </header>
+  <nav class="tabs" aria-label="Escenarios 30.5">
+    @for (entry of cases; track entry.id) {
+      <button type="button" [class.active]="selectedId() === entry.id" [attr.aria-pressed]="selectedId() === entry.id"
+        (click)="selectCase(entry.id)">{{entry.label}}</button>
+    }
+  </nav>
+  <div class="layout">
+    <section class="panel">
+      <p class="eyebrow">EXPEDIENTE · IDENTIDAD 30.1</p>
+      <h2>{{selected().title}}</h2>
+      <p>{{selected().description}}</p>
+      <dl class="facts">
+        <div><dt>Identificador observado</dt><dd>{{selected().subject.id}}</dd></div>
+        <div><dt>Ámbito</dt><dd>{{selected().subject.scope.kind}}</dd></div>
+        <div><dt>Evidencias conservadas</dt><dd>{{state().assessment.summary.total}}</dd></div>
+        <div><dt>Revisiones 30.4</dt><dd>{{state().history.revisions.length}}</dd></div>
+      </dl>
+      <div class="toolbar">
+        <button type="button" data-testid="mystery-unresolved-close" (click)="closeInvestigation()"
+          [disabled]="state().result.status === 'OBSERVATIONALLY_CLASSIFIED' || closure() !== null">
+          Cerrar sin resolver · ámbito declarado
+        </button>
+        @if (selected().later.length && !additionalEvidence()) {
+          <button type="button" data-testid="mystery-unresolved-followup" (click)="addEvidence()">Incorporar evidencia posterior</button>
+        }
+        <button type="button" data-testid="mystery-unresolved-reset" (click)="reset()">Restablecer</button>
+      </div>
+      <h3>Evidencias observacionales</h3>
+      <div class="records">
+        @for (e of state().assessment.evidence; track e.id) {
+          <article class="record" data-testid="mystery-unresolved-evidence">
+            <div class="record-header"><strong>{{e.kind}}</strong><span>{{e.band}} · {{e.epochKey}}</span></div>
+            <p>{{e.observable}} · {{e.campaignKey}}</p>
+            @if (e.kind === 'DETECTION') { <strong>{{e.value}} (−{{e.sigmaMinus}} / +{{e.sigmaPlus}} · 1σ)</strong> }
+            @else if (e.kind === 'UPPER_LIMIT') { <strong>≤ {{e.limit}} · {{e.thresholdSigma}}σ</strong> }
+            @else { <strong>Sin medición · {{e.reason}}</strong> }
+          </article>
+        }
+      </div>
+    </section>
+    <aside class="panel">
+      <p class="eyebrow">DIAGNÓSTICO 30.5 · TAXONOMÍA OBSERVACIONAL ACTUAL</p>
+      <h2 data-testid="mystery-unresolved-status">{{stateLabel(state().result.status)}}</h2>
+      <p data-testid="mystery-unresolved-reason" class="class-name">{{reasonLabel(state().result.reason)}}</p>
+      <dl class="facts">
+        <div><dt>Firmas 30.4 compatibles</dt><dd>{{state().result.supportedRuleCodes.length}}</dd></div>
+        <div><dt>Detecciones fuera de reglas</dt><dd>{{state().result.unmatchedDetectionEvidenceIds.length}}</dd></div>
+        <div><dt>Tensiones aparentes</dt><dd>{{state().assessment.tensions.length}}</dd></div>
+        <div><dt>Origen físico</dt><dd>No identificado</dd></div>
+      </dl>
+      @if (state().result.closure; as closed) {
+        <h3>Cierre científico · conservar historial</h3>
+        <article class="record" data-testid="mystery-unresolved-closure">
+          <strong>{{closed.scope}}</strong>
+          <p>Motivo al cerrar: {{reasonLabel(closed.reasonAtClosure)}}</p>
+          <small>{{closed.id}} · Revisión {{closed.classificationRevisionId}}</small>
+        </article>
+      }
+      <h3>Revisiones observacionales previas</h3>
+      <div class="records">
+        @for (r of state().history.revisions; track r.revisionId) {
+          <article class="record"><div class="record-header"><strong>Revisión {{r.sequence}}</strong><span>{{r.change}}</span></div>
+            <p>{{r.decision.status}} · {{r.decision.classCode ?? 'Sin clase única'}}</p></article>
+        }
+      </div>
+      <p class="note">«Fuera de reglas» solo indica un límite de la taxonomía 30.4, NO prueba una nueva física. «Cerrado» significa sin resolver dentro de la campaña, capacidad o catálogo declarados, NO eternamente incognoscible. Nueva evidencia permite reabrir. Ninguna decisión revela Ground Truth, otorga PD, escribe en Dexie ni crea eventos.</p>
+    </aside>
+  </div>
+</main>

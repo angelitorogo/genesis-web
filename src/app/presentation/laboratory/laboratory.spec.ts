@@ -31,6 +31,15 @@ describe(
       },
     );
 
+    it('30.5 exposes unresolved laboratory card 22', () => {
+      const fixture = TestBed.createComponent(LaboratoryPage);
+      fixture.detectChanges();
+      const link = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+        '[data-testid="laboratory-mystery-unresolved-link"]');
+      expect(link?.getAttribute('href')).toBe('/laboratory/mysteries/unresolved');
+      expect(link?.textContent).toContain('22');
+    });
+
     it('30.4 exposes classification laboratory card 21', () => {
       const fixture = TestBed.createComponent(LaboratoryPage);
       fixture.detectChanges();
@@ -111,7 +120,7 @@ describe(
     );
 
     it(
-      'should expose exactly the twenty-one laboratories already implemented',
+      'should expose exactly the twenty-two laboratories already implemented',
       () => {
         const fixture =
           TestBed
@@ -131,7 +140,7 @@ describe(
             '.laboratory__card',
           ),
         ).toHaveLength(
-          21,
+          22,
         );
       },
     );

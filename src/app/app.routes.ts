@@ -369,6 +369,13 @@ export const genesisRoutes: Routes = [
     title: 'Seguimiento de transitorios | Laboratorios GENESIS',
   },
   {
+    path: 'laboratory/mysteries/unresolved',
+    loadComponent: () =>
+      import('./presentation/laboratory/mysteries/unresolved/mystery-unresolved-laboratory')
+        .then(module => module.MysteryUnresolvedLaboratoryPage),
+    title: 'Misterios sin resolver 30.5 | Laboratorios GENESIS',
+  },
+  {
     path: 'laboratory/mysteries/classification',
     loadComponent: () =>
       import('./presentation/laboratory/mysteries/classification/mystery-classification-laboratory')

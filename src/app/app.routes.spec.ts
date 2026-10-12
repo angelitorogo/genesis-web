@@ -19,6 +19,13 @@ describe('GENESIS routes', () => {
   });
 
 
+  it('30.5 navigates to unresolved mysteries without Home wildcard', async () => {
+    const harness = await RouterTestingHarness.create('/laboratory/mysteries/unresolved');
+    expect(TestBed.inject(Router).url).toBe('/laboratory/mysteries/unresolved');
+    expect(harness.routeNativeElement?.querySelector(
+      '[data-testid="mystery-unresolved-laboratory"]')).toBeTruthy();
+  }, 30_000);
+
   it('30.4 navigates directly to classification without Home wildcard', async () => {
     const harness = await RouterTestingHarness.create('/laboratory/mysteries/classification');
     expect(TestBed.inject(Router).url).toBe('/laboratory/mysteries/classification');

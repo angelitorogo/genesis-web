@@ -66,6 +66,11 @@ import {
 import {
   type PostRemnantConditionalEnvironmentReassessment,
 } from './post-remnant-conditional-environment-reassessment';
+import {type PostAgbAtmosphereScenario} from './white-dwarf-post-agb-atmosphere-projection';
+import {type WhiteDwarfPostAgbAtmosphereHistory} from './white-dwarf-post-agb-atmosphere-history';
+import {type PostAgbPlanetarySurvivalAssessment} from './white-dwarf-post-agb-planetary-survival';
+import {type WhiteDwarfPostAgbEnvironmentalResolution} from './white-dwarf-post-agb-environment-resolution';
+import type { WhiteDwarfEvolvedEnvironment } from './white-dwarf-post-agb-evolved-environment';
 
 export interface PlanetScientificIdentitySource {
   readonly locator:
@@ -414,7 +419,46 @@ export interface PlanetScientificHostEvolutionContext {
   readonly radiativeRegime:
     'CURRENT_STELLAR_SOURCE' |
     'QUIESCENT_BLACK_HOLE' |
-    'COMPACT_LUMINOSITY_UNMODELED';
+    'COMPACT_LUMINOSITY_UNMODELED' |
+    'WHITE_DWARF_COOLING_ESTIMATE';
+
+  /** 29.1E-H1: estimated WD cooling age; AB hosts have no single WD age. */
+  readonly whiteDwarfCoolingAgeBillionYears?: number | null;
+  /** Solar-spectrum HZ reference only: not WD spectral or dynamical habitability. */
+  readonly currentRadiativeReferenceZoneInnerAu?: number | null;
+  readonly currentRadiativeReferenceZoneOuterAu?: number | null;
+
+  /** H3: hypothetical adiabatic WD orbit, NOT a resolved current orbit or
+   * guarantee of planetary survival/stability. Formation/canonical unchanged. */
+  readonly whiteDwarfPostAgbOrbitalHypothesisApplied?: boolean;
+  /** H5-B: AB barycentric scenario, never a WD-only S-type orbital claim. */
+  readonly whiteDwarfPostAgbPTypeHypothesisApplied?: boolean;
+  readonly whiteDwarfPostAgbSemiMajorAxisAu?: number | null;
+  readonly whiteDwarfPostAgbPeriodYears?: number | null;
+  readonly whiteDwarfPostAgbHostInsolationEarth?: number | null;
+  readonly whiteDwarfPostAgbMassExpansionFactor?: number | null;
+
+  /** H2: no atmosphere is inferred; these are conditional bolometric/airless
+   * equilibrium bounds using the original (possibly changed) Bond albedo. */
+  readonly whiteDwarfThermalEnvelopeApplied?: boolean;
+  readonly whiteDwarfExternalFluxLowerEarth?: number | null;
+  readonly whiteDwarfExternalFluxUpperEarth?: number | null;
+  readonly whiteDwarfEquilibriumLowerKelvin?: number | null;
+  readonly whiteDwarfEquilibriumUpperKelvin?: number | null;
+  readonly whiteDwarfCompanionEnvelopeIncluded?: boolean;
+  readonly whiteDwarfHasUnresolvedCompanion?: boolean;
+
+  /** H4: WD-only/no-replenishment scenario, NOT a present-day atmosphere. */
+  readonly whiteDwarfPostAgbAtmosphereScenario?: PostAgbAtmosphereScenario | null;
+  /** H4b: parametric RGB/AGB/WD sensitivity, never an actual atmosphere. */
+  readonly whiteDwarfPostAgbAtmosphereHistory?: WhiteDwarfPostAgbAtmosphereHistory | null;
+  /** H4c: direct-envelope/escape/outgassing sensitivity, not present Ground Truth. */
+  readonly whiteDwarfPostAgbSurvivalAssessment?: PostAgbPlanetarySurvivalAssessment | null;
+  /** H4d: read-only distinction between canonical existence and historical hypotheses. */
+  readonly whiteDwarfPostAgbEnvironmentalResolution?: WhiteDwarfPostAgbEnvironmentalResolution | null;
+  /** H5: generated model state, NOT an observed/current-confirmed atmosphere. */
+  readonly whiteDwarfPostAgbEvolvedEnvironment?: WhiteDwarfEvolvedEnvironment | null;
+  readonly whiteDwarfPostAgbModeledCompanionFluxEarth?: number | null;
 
   /** 29.1E-e.1: current environment was recomputed while preserving orbital geometry provisionally. */
   readonly conditionalEnvironmentReassessmentApplied?: boolean;
@@ -429,6 +473,12 @@ export interface PlanetScientificHostEvolutionContext {
   readonly conditionalTidalHeatFluxWattsPerSquareMeter?: number | null;
   readonly conditionalTotalIntrinsicHeatFluxWattsPerSquareMeter?: number | null;
   readonly conditionalIntrinsicEquivalentInsolationEarth?: number | null;
+
+  /** Intrinsic-only estimate when compact-host irradiation is NOT modeled.
+   * NOT a present-day climate or atmosphere reassessment. */
+  readonly intrinsicOnlyThermalProjectionApplied?: boolean;
+  readonly intrinsicOnlyBlackbodyEquivalentKelvin?: number | null;
+
 
   /** 29.1E-g — deterministic current orbital state after realized stellar mass loss/SN events. */
   readonly postSupernovaOrbitDisposition?:

@@ -7,6 +7,10 @@ import { UniverseSeed } from '../../domain/universe/universe-seed';
 import { MoonScientificTargetResolver, type MoonScientificResolvedTarget } from '../../simulation/planetary/moon-scientific-target-resolver';
 import { PlanetScientificTargetResolver, type PlanetScientificResolvedTarget } from '../../simulation/planetary/planet-scientific-target-resolver';
 import { StellarMultihostFormation, type GeneratedSingleHost } from '../../simulation/stellar/stellar-multihost-formation';
+import { stellarWhiteDwarfCurrentMassSolar } from '../../simulation/stellar/stellar-white-dwarf-current-mass';
+import { projectWhiteDwarfCoolingLuminosity } from '../../simulation/stellar/white-dwarf-cooling-luminosity';
+import { projectWhiteDwarfPostAgbOrbit } from '../../simulation/stellar/white-dwarf-post-agb-orbit-projection';
+import { projectH5WhiteDwarfScientificTarget } from '../../simulation/stellar/white-dwarf-post-agb-h5-scientific-bridge';
 import { ArchiveDiscoveryLocatorKind, type ArchiveDiscoveryDetailModel } from '../genesis-archive/archive-discovery-detail.facade';
 import { PlanetScientificCardAssembler, type PlanetScientificFicheResolution } from '../planet-detail/planet-scientific-card';
 import { MoonScientificCardAssembler, type MoonScientificFicheResolution } from '../moon-detail/moon-scientific-card';
@@ -115,12 +119,69 @@ export class SystemV2SingleScientificSession {
         this.host.planetarySystem === null) {
       throw new Error('V2 SINGLE planet identity is not backed by a single physical source.');
     }
-    return PlanetScientificTargetResolver.projectGenerated(Object.freeze({
+    const target = PlanetScientificTargetResolver.projectGenerated(Object.freeze({
       locator, planetOrdinal: index + 1, designation: name,
       hostSystemDesignation: this.model.stellarSystemCard!.title,
       orbitTopology: this.host.planetarySystem.architecture.orbitTopology,
       hostPlanetCount: this.planetCount,
     }), planet, atmosphere, moons);
+    // V2 SINGLE has a single, once-materialized A source; no re-generation
+    // with a public V2 key and no fabricated multihost aggregate.
+    if (this.host.stellarSystem.primaryStar.evolutionState.name !== 'WHITE_DWARF') return target;
+    const wdMass = stellarWhiteDwarfCurrentMassSolar(this.host.physical, this.host.lifetime);
+    if (wdMass === null) return this.unresolvedWhiteDwarfTarget(target, null, null);
+    const cooling = projectWhiteDwarfCoolingLuminosity({
+      evolutionStateName: 'WHITE_DWARF',
+      currentRemnantMassSolar: wdMass,
+      stellarAgeBillionYears: this.host.lifetime.ageBillionYears,
+      progenitorTerminalAgeBillionYears: this.host.lifetime.terminalAgeBillionYears,
+    });
+    if (cooling === null) return this.unresolvedWhiteDwarfTarget(target, wdMass, null);
+    const projected = projectWhiteDwarfPostAgbOrbit({
+      evolutionStateName: 'WHITE_DWARF', context: 'SINGLE',
+      initialHostMassSolar: this.host.physical.initialMassSolar,
+      currentHostMassSolar: wdMass,
+      formationSemiMajorAxisAu: planet.orbit.semiMajorAxisAu,
+      formationEccentricity: planet.orbit.eccentricity,
+      currentWhiteDwarfLuminositySolar: cooling.presentLuminositySolar,
+      explosiveReconfiguration: false,
+    });
+    if (projected === null) return this.unresolvedWhiteDwarfTarget(target, wdMass, cooling.presentLuminositySolar);
+    const evolved = projectH5WhiteDwarfScientificTarget(target, {
+      architecture: 'SINGLE',
+      initialWhiteDwarfMassSolar: this.host.physical.initialMassSolar,
+      currentWhiteDwarfMassSolar: wdMass,
+      presentWhiteDwarfLuminositySolar: cooling.presentLuminositySolar,
+      coolingAgeBillionYears: cooling.coolingAgeBillionYears,
+      terminalAgeBillionYears: this.host.lifetime.terminalAgeBillionYears,
+      postMainSequenceDurationBillionYears:
+        this.host.lifetime.evolutionAssessment.postMainSequenceDurationBillionYears,
+      totalCurrentHostMassSolar: wdMass,
+      orbit: projected,
+      otherStarsFluxEarth: null,
+      initialFormationAxisAu: planet.orbit.semiMajorAxisAu,
+      formationEccentricity: planet.orbit.eccentricity,
+    });
+    return evolved === target
+      ? this.unresolvedWhiteDwarfTarget(target, wdMass, cooling.presentLuminositySolar)
+      : evolved;
+  }
+
+  /** Prevent fallback to a pre-AGB atmosphere when WD inputs are incomplete. */
+  private unresolvedWhiteDwarfTarget(
+    target: PlanetScientificResolvedTarget, massSolar: number | null, lumSolar: number | null,
+  ): PlanetScientificResolvedTarget {
+    return Object.freeze({...target, hostEvolution: Object.freeze({
+      hostLabel: 'A', evolutionStateNames: Object.freeze(['WHITE_DWARF']),
+      containsCompactRemnant: true, requiresPostStellarEvolutionReassessment: true,
+      currentHostMassSolar: massSolar, currentHostLuminositySolar: lumSolar,
+      currentOrbitalPeriodDays: null, currentOrbitalPeriodYears: null,
+      currentMeanInsolationEarth: null,
+      radiativeRegime: lumSolar === null
+        ? 'COMPACT_LUMINOSITY_UNMODELED' as const : 'WHITE_DWARF_COOLING_ESTIMATE' as const,
+      conditionalEnvironmentReassessmentApplied: false,
+      postSupernovaOrbitDisposition: 'UNCHANGED' as const,
+    })});
   }
 
   private resolveMoon(key: UniverseGenerationKey, locator: BodyLocator,
