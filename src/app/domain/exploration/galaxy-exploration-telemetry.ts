@@ -1,3 +1,8 @@
+import {
+  EMPTY_GALAXY_COMPACT_HOST_KNOWLEDGE,
+  type GalaxyCompactHostKnowledgeCounts,
+} from './galaxy-compact-host-knowledge';
+
 export interface GalaxyExplorationInventoryCounts {
   readonly sectors: bigint;
   readonly systems: bigint;
@@ -136,12 +141,18 @@ export class GalaxyExplorationTelemetry {
 
   readonly inventory: GalaxyExplorationInventoryCounts;
   readonly breakdown: GalaxyExplorationKnowledgeBreakdown;
+  /** 31.1: overlap with inventory.systems, not an additional target family. */
+  readonly compactHostSystems: GalaxyCompactHostKnowledgeCounts;
+  /** 31.4: planets of confirmed compact-host systems, already included in inventory.planets. */
+  readonly compactHostPlanets: bigint;
 
   constructor(
     readonly totalSectors: bigint | null,
     readonly exploredPercentageBasisPoints: bigint | null,
     inventory: GalaxyExplorationInventoryCounts,
     breakdown: GalaxyExplorationKnowledgeBreakdown,
+    compactHostSystems: GalaxyCompactHostKnowledgeCounts = EMPTY_GALAXY_COMPACT_HOST_KNOWLEDGE,
+    compactHostPlanets: bigint = 0n,
   ) {
     assertNonNegativeBigIntRecord(
       inventory as unknown as Readonly<Record<string, unknown>>,
@@ -267,6 +278,21 @@ export class GalaxyExplorationTelemetry {
       );
     }
 
+    assertNonNegativeBigIntRecord(
+      compactHostSystems as unknown as Readonly<Record<string, unknown>>,
+      'compactHostSystems',
+    );
+    if (
+      compactHostSystems.neutronStars +
+      compactHostSystems.pulsars +
+      compactHostSystems.millisecondPulsars +
+      compactHostSystems.magnetars +
+      compactHostSystems.stellarMassBlackHoles !== compactHostSystems.total ||
+      compactHostSystems.total > inventory.systems
+    ) {
+      throw new RangeError('Compact hosts must be an exclusive subset of known systems.');
+    }
+
     if (totalSectors === null) {
       if (exploredPercentageBasisPoints !== null) {
         throw new RangeError(
@@ -294,8 +320,14 @@ export class GalaxyExplorationTelemetry {
       }
     }
 
+    if (compactHostPlanets < 0n || compactHostPlanets > inventory.planets) {
+      throw new RangeError('Compact host planets must be a known-planet subset.');
+    }
+
     this.inventory = Object.freeze({ ...inventory });
     this.breakdown = deepFreezeBreakdown(breakdown);
+    this.compactHostSystems = Object.freeze({ ...compactHostSystems });
+    this.compactHostPlanets = compactHostPlanets;
 
     Object.freeze(this);
   }

@@ -1,3 +1,5 @@
+import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
+import { compactHostStellarCard } from './archive-compact-host-card';
 import { DiscoveryState, type DiscoveryStateValue } from '../../domain/discovery/discovery-state';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { type SystemLocator } from '../../domain/generation/procedural-locator';
@@ -37,8 +39,10 @@ export class ArchiveV2StellarSystemCardAssembler {
       }))),
       nextScientificStep: baseline.nextScientificStep.replace('Sistema múltiple V1 confirmado; ', ''),
     });
-    if (state.code < DiscoveryState.CATALOGUED.code ||
-        baseline.render.multiplicity?.name === 'SINGLE') return safeBase;
+    if (state.code < DiscoveryState.CATALOGUED.code) return safeBase;
+    const compact = CompactHostPlanetarySystemGenerator.generateOrNull(key, locator);
+    if (compact !== null) return compactHostStellarCard(safeBase, compact, state);
+    if (baseline.render.multiplicity?.name === 'SINGLE') return safeBase;
 
     const formation = StellarMultihostFormation.generateOrNull(key, locator);
     if (formation === null || formation.multiplicity !== baseline.render.multiplicity) {

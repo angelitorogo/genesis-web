@@ -147,7 +147,7 @@ function asteroidDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescr
       Object.freeze({ key: 'host', label: 'HOST' }),
       Object.freeze({ key: 'subtype', label: 'CLASE' }),
       Object.freeze({ key: 'diameter', label: 'DIÁMETRO', align: 'end' as const }),
-      Object.freeze({ key: 'orbit', label: 'ÓRBITA', align: 'end' as const }),
+      Object.freeze({ key: 'semi-major-axis', label: 'ÓRBITA', align: 'end' as const }),
       Object.freeze({ key: 'eccentricity', label: 'EXCENTRICIDAD', align: 'end' as const }),
     ]),
   });
@@ -209,7 +209,7 @@ function tnoDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescriptor
       Object.freeze({ key: 'host', label: 'HOST' }),
       Object.freeze({ key: 'subtype', label: 'RÉGIMEN' }),
       Object.freeze({ key: 'diameter', label: 'DIÁMETRO', align: 'end' as const }),
-      Object.freeze({ key: 'orbit', label: 'ÓRBITA', align: 'end' as const }),
+      Object.freeze({ key: 'semi-major-axis', label: 'ÓRBITA', align: 'end' as const }),
       Object.freeze({ key: 'ice', label: 'HIELO', align: 'end' as const }),
     ]),
   });
@@ -225,6 +225,7 @@ function capturedDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescr
     filterLabel: subtype === null ? 'TODOS' : subtypeLabel(subtype),
     sortOptions: commonSortOptions([
       ['subtype', 'Composición / captura'],
+      ['capture', 'Mecanismo de captura'],
       ['diameter', 'Diámetro'],
       ['period', 'Período orbital'],
       ['semi-major-axis', 'Semieje mayor'],
@@ -241,7 +242,7 @@ function capturedDescriptor(subtype: string | null): GalaxyKnowledgeCatalogDescr
       Object.freeze({ key: 'subtype', label: 'COMPOSICIÓN' }),
       Object.freeze({ key: 'capture', label: 'CAPTURA' }),
       Object.freeze({ key: 'diameter', label: 'DIÁMETRO', align: 'end' as const }),
-      Object.freeze({ key: 'orbit', label: 'ÓRBITA', align: 'end' as const }),
+      Object.freeze({ key: 'semi-major-axis', label: 'ÓRBITA', align: 'end' as const }),
     ]),
   });
 }
@@ -332,6 +333,16 @@ function toRow(
       capture: record.secondarySubtype === null ? undefined : subtypeLabel(record.secondarySubtype),
       diameter: formatNumber(record.diameterKilometers, 'km'),
       orbit: formatNumber(record.semiMajorAxisAu, 'UA'),
+      'semi-major-axis': formatNumber(record.semiMajorAxisAu, 'UA'),
+      period: formatNumber(record.orbitalPeriodYears, 'años'),
+      inclination: formatNumber(record.inclinationDegrees, '°'),
+      apoapsis: formatNumber(record.apoapsisAu, 'UA'),
+      density: formatNumber(record.densityGramsPerCubicCentimeter, 'g/cm³'),
+      albedo: formatPercent(record.albedo01),
+      volatile: formatPercent(record.volatileOrIceFraction01),
+      'incoming-velocity': formatNumber(record.incomingVelocityKmPerSecond, 'km/s'),
+      sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
+      locator: systemLocatorLabel(record.parentSystemLocator),
       eccentricity: formatPlain(record.eccentricity, 4),
       periapsis: formatNumber(record.periapsisAu, 'UA'),
       ice: formatPercent(record.volatileOrIceFraction01),
@@ -376,6 +387,7 @@ function compareRecords(
       case 'system': return left.systemDesignation.localeCompare(right.systemDesignation, 'es', { sensitivity: 'base' });
       case 'host': return left.hostLabel.localeCompare(right.hostLabel, 'en');
       case 'subtype': return left.subtype.localeCompare(right.subtype, 'en');
+      case 'capture': return (left.secondarySubtype ?? '').localeCompare(right.secondarySubtype ?? '', 'en');
       case 'diameter': return left.diameterKilometers - right.diameterKilometers;
       case 'period': return compareNullableNumber(left.orbitalPeriodYears, right.orbitalPeriodYears);
       case 'semi-major-axis': return left.semiMajorAxisAu - right.semiMajorAxisAu;

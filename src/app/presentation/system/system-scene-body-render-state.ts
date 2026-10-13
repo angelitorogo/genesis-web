@@ -6,6 +6,7 @@ export type SystemSceneSphereBodyKind =
 export type SystemSceneBodySpinSource =
   | 'UNAVAILABLE'
   | 'PLANET_19_3'
+  | 'COMPACT_31_4F'
   | 'MOON_21_4';
 
 export interface SystemSceneBodySpinSnapshot {
@@ -193,8 +194,7 @@ export function systemSceneBodyDisplaySpinRadians(
   );
 
   if (
-    spin.source !==
-      'PLANET_19_3' ||
+    (spin.source !== 'PLANET_19_3' && spin.source !== 'COMPACT_31_4F') ||
     spin.isSynchronized ||
     spin.rotationPeriodHours ===
       null

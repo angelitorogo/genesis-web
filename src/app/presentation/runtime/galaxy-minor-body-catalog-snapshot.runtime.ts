@@ -1,4 +1,7 @@
+import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
 import { InjectionToken } from '@angular/core';
+import { MinorBodyKind } from '../../domain/planetary/minor-body-kind';
+import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
 
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { type KnownDiscovery } from '../../domain/discovery/known-discovery';
@@ -178,7 +181,7 @@ export function buildGalaxyMinorBodyCatalogSnapshot(
   const transNeptunianObjects: GalaxyKnowledgeMinorBodyCatalogEntry[] = [];
   const capturedObjects: GalaxyKnowledgeMinorBodyCatalogEntry[] = [];
 
-  for (const discovery of knownDiscoveries) {
+  for (const discovery of canonicalGalaxyKnownDiscoveries(generationKey, galaxyIndex, knownDiscoveries)) {
     if (
       !(discovery.locator instanceof SystemLocator) ||
       discovery.locator.galaxyIndex !== galaxyIndex ||
@@ -189,6 +192,34 @@ export function buildGalaxyMinorBodyCatalogSnapshot(
 
     const locator = discovery.locator;
     const systemDesignation = safeSystemDesignation(generationKey, locator);
+    const compact=CompactHostPlanetarySystemGenerator.generateOrNull(generationKey,locator);
+    if (compact!==null) {
+      for (const body of compact.secondaries.minorBodies) {
+        const kind:GalaxyKnowledgeMinorBodyKind=body.kind===MinorBodyKind.ASTEROID?'ASTEROID':
+          body.kind===MinorBodyKind.COMET?'COMET':
+            body.kind===MinorBodyKind.TRANS_NEPTUNIAN_OBJECT?'TNO':'CAPTURED';
+        const entry:GalaxyKnowledgeMinorBodyCatalogEntry=Object.freeze({
+          id:minorBodyId(locator,kind,body.proceduralId),kind,proceduralId:body.proceduralId,
+          designation:`${systemDesignation} ${kind} ${body.ordinal}`,
+          parentSystemLocator:locator,systemDesignation,hostLabel:'A',
+          subtype:kind==='ASTEROID'?'SILICACEOUS':kind==='COMET'?(body.orbitalPeriodDays<200*365.25?'SHORT_PERIOD':'LONG_PERIOD'):
+            kind==='TNO'?'COLD_CLASSICAL':'ROCK_DOMINATED',
+          secondarySubtype:null,tertiarySubtype:null,
+          diameterKilometers:body.diameterKilometers,semiMajorAxisAu:body.semiMajorAxisAu,
+          eccentricity:body.eccentricity,inclinationDegrees:body.inclinationDegrees,
+          periapsisAu:body.periapsisAu,apoapsisAu:body.apoapsisAu,
+          orbitalPeriodYears:body.orbitalPeriodDays/365.25,
+          densityGramsPerCubicCentimeter:body.bulkDensityGramsCm3,
+          albedo01:body.geometricAlbedo01,volatileOrIceFraction01:body.iceFraction01,
+          incomingVelocityKmPerSecond:null,
+        });
+        switch(kind) {case 'ASTEROID':asteroids.push(entry);break;
+          case 'COMET':comets.push(entry);break;
+          case 'TNO':transNeptunianObjects.push(entry);break;
+          case 'CAPTURED':capturedObjects.push(entry);break;}
+      }
+      continue; // Never classify the same host through its conventional V2 single.
+    }
     const multiple = StellarMultihostFormation.generateOrNull(generationKey, locator);
     const hosts = multiple?.components ?? [StellarMultihostFormation.generateSingleOrNull(generationKey, locator)];
 

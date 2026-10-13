@@ -1,4 +1,7 @@
 import { inject, Injectable } from '@angular/core';
+import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
+import { type CompactPlanetaryHostType } from '../../domain/stellar/compact-planetary-host';
+import { compactHostTypeLabel } from '../genesis-archive/archive-compact-host-card';
 
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { DiscoveryTargetType } from '../../domain/discovery/discovery-target-type';
@@ -33,6 +36,8 @@ const SYSTEM_SUBTYPES = Object.freeze([
   'BINARY',
   'TRIPLE',
   'UNCLASSIFIED',
+  'COMPACT', 'NEUTRON_STAR', 'PULSAR', 'MILLISECOND_PULSAR',
+  'MAGNETAR', 'STELLAR_MASS_BLACK_HOLE',
 ] as const);
 
 type SystemSubtype = typeof SYSTEM_SUBTYPES[number];
@@ -42,6 +47,7 @@ interface KnownSystemCatalogRecord {
   readonly discovery: KnownDiscovery;
   readonly designation: string | null;
   readonly multiplicity: StellarSystemMultiplicity | null;
+  readonly compactType: CompactPlanetaryHostType | null;
 }
 
 interface KnownSystemCatalogHotRecords {
@@ -63,7 +69,9 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
       ? 'Sistemas conocidos'
       : normalizedSubtype === 'UNCLASSIFIED'
         ? 'Sistemas sin clasificar'
-        : `Sistemas ${multiplicityLabelFromName(normalizedSubtype).toLowerCase()}s`;
+        : normalizedSubtype === 'COMPACT' ? 'Sistemas con anfitrión compacto'
+        : compactSubtypeLabel(normalizedSubtype) !== null ? `Sistemas · ${compactSubtypeLabel(normalizedSubtype)}`
+        : `Sistemas ${multiplicityLabelFromName(normalizedSubtype as StellarSystemMultiplicityName).toLowerCase()}s`;
 
     return Object.freeze({
       category: 'systems' as const,
@@ -75,11 +83,13 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         ? 'TODOS'
         : normalizedSubtype === 'UNCLASSIFIED'
           ? 'Sin clasificar'
-          : multiplicityLabelFromName(normalizedSubtype),
+          : normalizedSubtype === 'COMPACT' ? 'Anfitrión compacto'
+          : compactSubtypeLabel(normalizedSubtype) ?? multiplicityLabelFromName(normalizedSubtype as StellarSystemMultiplicityName),
       sortOptions: Object.freeze([
         Object.freeze({ key: 'designation', label: 'Nombre / designación' }),
         Object.freeze({ key: 'state', label: 'Estado científico' }),
         Object.freeze({ key: 'multiplicity', label: 'Tipo de sistema' }),
+        Object.freeze({ key: 'compact', label: 'Anfitrión compacto' }),
         Object.freeze({ key: 'components', label: 'Número de estrellas' }),
         Object.freeze({ key: 'sector', label: 'Sector' }),
         Object.freeze({ key: 'locator', label: 'Localización procedural' }),
@@ -122,6 +132,8 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         subtype === null
         || (subtype === 'UNCLASSIFIED'
           ? record.multiplicity === null
+          : subtype === 'COMPACT' ? record.compactType !== null
+          : compactSubtypeLabel(subtype) !== null ? record.compactType === subtype
           : record.multiplicity?.name === subtype),
       (left, right) =>
         compareRecords(left, right, request.query.sortKey, request.query.direction),
@@ -210,6 +222,7 @@ function systemRecord(
       discovery,
       designation: null,
       multiplicity: null,
+      compactType: null,
     });
   }
 
@@ -232,6 +245,14 @@ function systemRecord(
     discovery,
     designation: designation.name,
     multiplicity,
+    // Multiplicity is already known from this same physical key and seed.
+    // BINARY/TRIPLE cannot be compact; SINGLE must not select a second time.
+    compactType: discovery.state.code >= DiscoveryState.CATALOGUED.code &&
+        multiplicity === StellarSystemMultiplicity.SINGLE
+      ? CompactHostPlanetarySystemGenerator.generateOrNull(
+          generationKey, discovery.locator, multiplicity,
+        )?.host.type ?? null
+      : null,
   });
 }
 
@@ -246,7 +267,10 @@ function toRow(record: KnownSystemCatalogRecord): GalaxyKnowledgeCatalogRow {
     subtitle: locatorLabel,
     cells: Object.freeze({
       state: discoveryStateLabel(record.discovery.state.name),
-      multiplicity: multiplicity === null ? 'Sin clasificar' : multiplicityLabel(multiplicity),
+      compact: record.compactType === null ? undefined : compactHostTypeLabel(record.compactType),
+      locator: locatorLabel,
+      multiplicity: record.compactType !== null ? compactHostTypeLabel(record.compactType)
+        : multiplicity === null ? 'Sin clasificar' : multiplicityLabel(multiplicity),
       components: multiplicity === null ? undefined : multiplicity.stellarComponentCount.toLocaleString('es-ES'),
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
     }),
@@ -296,6 +320,8 @@ function compareByKey(
       return (left.designation ?? '').localeCompare(right.designation ?? '', 'es', { sensitivity: 'base' });
     case 'state':
       return left.discovery.state.code - right.discovery.state.code;
+    case 'compact':
+      return (left.compactType ?? '').localeCompare(right.compactType ?? '');
     case 'multiplicity':
     case 'components':
       return (left.multiplicity?.stellarComponentCount ?? 0) -
@@ -324,7 +350,7 @@ function normalizeSystemSubtype(value: string | null): SystemSubtype | null {
   if ((SYSTEM_SUBTYPES as readonly string[]).includes(value)) {
     return value as SystemSubtype;
   }
-  throw new RangeError('El subtipo de sistemas debe ser SINGLE, BINARY, TRIPLE o UNCLASSIFIED.');
+  throw new RangeError('Subtipo de sistema no admitido.');
 }
 
 function multiplicityLabel(multiplicity: StellarSystemMultiplicity): string {
@@ -356,4 +382,10 @@ function systemLocatorLabel(locator: SystemLocator): string {
     `S${locator.sectorKey.toString(10)}`,
     `O${locator.galacticObjectIndex.toString(10)}`,
   ].join(' / ');
+}
+
+function compactSubtypeLabel(subtype: string): string | null {
+  return subtype === 'NEUTRON_STAR' || subtype === 'PULSAR' ||
+    subtype === 'MILLISECOND_PULSAR' || subtype === 'MAGNETAR' ||
+    subtype === 'STELLAR_MASS_BLACK_HOLE' ? compactHostTypeLabel(subtype) : null;
 }

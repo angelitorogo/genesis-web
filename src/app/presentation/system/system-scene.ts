@@ -27,6 +27,10 @@ import {
 } from '@angular/core';
 
 import * as THREE from 'three';
+import { createCompactHostLaboratoryVisual, orientCompactBlackHoleToCamera } from './system-compact-host-laboratory-visual';
+import { prepareCompactBlackHoleBodyOcclusion, updateCompactBlackHoleBodyOcclusion, type CompactBlackHoleBodyOcclusionBinding } from './system-compact-black-hole-occlusion';
+import { ExtremeType } from '../../domain/galactic-object/extreme-object-type';
+import { type LaboratoryCompactSceneGraph } from '../laboratory/galactic-objects/laboratory-compact-scene-graph';
 
 import {
   type MinorBodyKindValue,
@@ -1919,6 +1923,13 @@ class ThreeSystemSceneRuntime
       32,
       6 * 1024 * 1024,
     );
+
+  /** Shared laboratory visuals driven by this runtime's simulation clock. */
+  private readonly compactVisualBindings = new Map<string, LaboratoryCompactSceneGraph>();
+  /** Only BH graphs are screen-facing: NS beams and fields keep genuine 3D rotation. */
+  private readonly compactBlackHoleBillboards: THREE.Group[] = [];
+  /** 31.4i.1: planets, moons and minor bodies share BH foreground/background ordering. */
+  private readonly compactBlackHoleBodyOcclusion: CompactBlackHoleBodyOcclusionBinding[] = [];
 
   private readonly bodyLodBindings =
     new Map<string, SystemSceneBodyLodBindingV1>();
@@ -4205,6 +4216,41 @@ class ThreeSystemSceneRuntime
       star.position.z,
     );
 
+    // 31.4c: the host is NOT a luminous conventional star. Reuse the EXACT
+    // validated laboratory Three.js graph and keep the system's one renderer.
+    if (star.compactHostKind !== undefined) {
+      const graph = createCompactHostLaboratoryVisual(
+        star.compactHostKind,
+        this.currentSnapshot?.proceduralIdentity ?? star.id,
+        star.radiusScene,
+        star.compactHostAccretionLuminositySolar ?? null,
+      );
+      group.add(graph.root);
+      this.compactVisualBindings.set(star.id, graph);
+      if (star.compactHostKind === ExtremeType.STELLAR_MASS_BLACK_HOLE) {
+        this.compactBlackHoleBillboards.push(graph.root);
+      }
+      this.frameDisposables.push(graph);
+      const referenceVisualFlux = Math.max(
+        star.compactHostPresentationFlux ?? 0,
+        star.compactHostInspectionLightFlux ?? 0,
+      );
+      if (referenceVisualFlux > 0) {
+        // A presentation light only: scene-space compression of a *conditional*
+        // radiation scenario, never a physical or optical luminosity claim.
+        const visualLight = new THREE.PointLight(
+          star.compactHostKind === ExtremeType.STELLAR_MASS_BLACK_HOLE ? 0xffd6ab : 0xbadfff,
+          12 * referenceVisualFlux, 0, 1.35,
+        );
+        visualLight.name = `${star.label} conditional presentation irradiance`;
+        group.add(visualLight);
+      }
+      this.animatedBodies.set(star.id, group);
+      this.registerSelectableBody(star, group);
+      this.presentationRoot.add(group);
+      return;
+    }
+
     const initialLod:
       SystemSceneBodyLodLevelV1 =
       'MEDIUM';
@@ -4431,6 +4477,9 @@ class ThreeSystemSceneRuntime
         planet,
         systemIdentity,
         this.planetTextureCache,
+        null,
+        planet.compactPlanetPresentationFill01 ??
+          (this.currentSnapshot?.stars.some(star => star.compactHostKind !== undefined) ? 0.08 : false),
       );
 
     this.bodyLightBindings.set(
@@ -4534,6 +4583,10 @@ class ThreeSystemSceneRuntime
       axialPivot,
     );
 
+    // The lab BH has intentionally depth-independent layers; all orbital
+    // surfaces need consistent front/back compositing, not only planets.
+    this.registerCompactBlackHoleBodyOcclusion(group);
+
     this.spinningBodies.set(
       planet.id,
       spinPivot,
@@ -4627,6 +4680,12 @@ class ThreeSystemSceneRuntime
     group.add(
       axialPivot,
     );
+
+    // Visible moons already have their meshes. Hidden moons are prepared when
+    // their geometry is materialized (never bind an empty deferred group).
+    if (!this.pendingMoonVisuals.has(moon.id)) {
+      this.registerCompactBlackHoleBodyOcclusion(group);
+    }
 
     this.spinningBodies.set(
       moon.id,
@@ -4740,6 +4799,13 @@ class ThreeSystemSceneRuntime
     this.pendingMoonVisuals.delete(
       moon.id,
     );
+
+    // On initial construction the parent hierarchy does not exist yet; addMoon
+    // registers afterwards. On deferred reveal the hierarchy already exists.
+    const moonGroup = spinPivot.parent?.parent;
+    if (moonGroup instanceof THREE.Group) {
+      this.registerCompactBlackHoleBodyOcclusion(moonGroup);
+    }
   }
 
   private initializeMinorBodyInstanceBatches(
@@ -4991,6 +5057,10 @@ class ThreeSystemSceneRuntime
       installV2BodyLightingOnSurfaces(group, minorLight);
     }
 
+    // Includes asteroid lobes, comet nucleus/coma/tails, TNO and captured
+    // object meshes. Physics and selection objects remain untouched.
+    this.registerCompactBlackHoleBodyOcclusion(group);
+
     this.animatedBodies.set(
       body.id,
       group,
@@ -5010,6 +5080,15 @@ class ThreeSystemSceneRuntime
     this.presentationRoot.add(
       group,
     );
+  }
+
+  /** 31.4i.1 — Bind only materialized meshes in BH host scenes. */
+  private registerCompactBlackHoleBodyOcclusion(group: THREE.Group): void {
+    if (this.compactBlackHoleBillboards.length === 0) return;
+    const binding = prepareCompactBlackHoleBodyOcclusion(group);
+    if (binding.drawables.length > 0) {
+      this.compactBlackHoleBodyOcclusion.push(binding);
+    }
   }
 
   private registerSelectableBody(
@@ -5583,6 +5662,11 @@ class ThreeSystemSceneRuntime
       }
     }
 
+    for (const visual of this.compactVisualBindings.values()) {
+      // One simulated day advances one visual second, not physical compact spin.
+      visual.update(simulationDay);
+    }
+
     this.updateCometActivityPresentation(
       simulationDay,
     );
@@ -5690,7 +5774,7 @@ class ThreeSystemSceneRuntime
             0.0025,
           );
         const fluxWeight = stellarFluxes === null
-          ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01) / distanceSquared
+          ? (star.compactHostKind === undefined ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01) : 0) / distanceSquared
           : (stellarFluxes.find(source => source.starId === star.id)?.fluxEarth ?? 0);
 
         if (
@@ -5879,6 +5963,9 @@ class ThreeSystemSceneRuntime
     this.animatedBodies.clear();
     this.spinningBodies.clear();
     this.bodyLightBindings.clear();
+    this.compactVisualBindings.clear();
+    this.compactBlackHoleBillboards.length = 0;
+    this.compactBlackHoleBodyOcclusion.length = 0;
     this.animatedOrbits.clear();
     this.orbitLocalSamplesAu.clear();
 
@@ -5915,7 +6002,8 @@ class ThreeSystemSceneRuntime
       .setAnimationLoop(
         systemSceneAnimationLoopRequired(
           this.pageVisible,
-          motionCount,
+          // Compact stars can pulse/rotate even when they have no planets.
+          motionCount + this.compactVisualBindings.size,
           this.trackedBodyId !==
             null,
         )
@@ -6033,7 +6121,9 @@ class ThreeSystemSceneRuntime
         }
 
         const flux = tripleFluxes === null
-          ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01) / distanceSquared
+          ? (star.compactHostKind === undefined
+              ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01)
+              : Math.max(star.compactHostPresentationFlux ?? 0, star.compactHostInspectionLightFlux ?? 0)) / distanceSquared
           : (tripleFluxes.find(source => source.starId === star.id)?.flux ?? 0);
 
         this.planetLightDirectionScratch
@@ -6073,8 +6163,11 @@ class ThreeSystemSceneRuntime
           0,
           0,
         );
+        // If no directional emission or separate disk-inspection lighting is
+        // available, only the bounded albedo-following fill remains.
         binding.lightWeightsView.set(
-          1,
+          snapshot.stars.some(star => star.compactHostKind !== undefined)
+            ? 0 : 1,
           0,
           0,
         );
@@ -6165,7 +6258,19 @@ class ThreeSystemSceneRuntime
     this.updateBodyLod();
     this.updateMinorBodyInstanceBatches();
     this.updateSelectionProxyBatch();
+    for (const blackHole of this.compactBlackHoleBillboards) {
+      orientCompactBlackHoleToCamera(blackHole, this.camera);
+    }
     this.updateBodyLightDirections();
+    if (this.compactBlackHoleBodyOcclusion.length > 0) {
+      // Camera and orbital motion can both reverse near/far order at any time.
+      this.scene.updateMatrixWorld(true);
+      this.camera.updateMatrixWorld(true);
+      const blackHole = this.compactBlackHoleBillboards[0]!;
+      for (const body of this.compactBlackHoleBodyOcclusion) {
+        updateCompactBlackHoleBodyOcclusion(body, blackHole, this.camera);
+      }
+    }
 
     this
       .renderer
@@ -6246,7 +6351,13 @@ export function createSystemScenePlanetAppearanceV1(
   visualSeeds:
     SystemScenePlanetVisualSeedPackV1 | null =
       null,
+  /** Optical fill for bodies around compact hosts, not a physical heating term. */
+  compactVisualFill: boolean | number = false,
 ): PlanetAppearance {
+  const compactFillStrength = typeof compactVisualFill === 'number'
+    ? Math.max(0, Math.min(1, compactVisualFill))
+    : compactVisualFill ? 0.20 : 0;
+  const isCompactVisual = compactVisualFill !== false;
 
   const textureLease =
     textureCache === null
@@ -6471,6 +6582,15 @@ export function createSystemScenePlanetAppearanceV1(
     }
   }
 
+  if (isCompactVisual) {
+    // A bounded albedo-following visual fill, not endogenous planet emission.
+    // Stronger reference irradiation raises legibility while the actual
+    // PointLight + day/night shader preserve a directional day side.
+    materialOptions.emissive = new THREE.Color(0xb7dfff);
+    materialOptions.emissiveMap = surfaceTexture;
+    materialOptions.emissiveIntensity = 0.12 + 0.32 * compactFillStrength;
+  }
+
   const material =
     new THREE.MeshStandardMaterial(
       materialOptions,
@@ -6537,9 +6657,13 @@ export function createSystemScenePlanetAppearanceV1(
 
   installSystemSceneDayNightMaterialV1(
     material,
-    buildSystemSceneDayNightMaterialProfileV1(
-      atmosphereOptics,
-    ),
+    isCompactVisual
+      ? {
+          ...buildSystemSceneDayNightMaterialProfileV1(atmosphereOptics),
+          // Preserve a contrasting night side while making the planet visible.
+          nightFloor01: 0.07 + 0.12 * compactFillStrength,
+        }
+      : buildSystemSceneDayNightMaterialProfileV1(atmosphereOptics),
     lightBinding,
   );
 

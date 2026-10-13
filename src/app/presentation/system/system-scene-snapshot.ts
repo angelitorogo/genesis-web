@@ -1,3 +1,4 @@
+import { type CompactPlanetaryHostType } from '../../domain/stellar/compact-planetary-host';
 import { buildV2CometVisualOrbit } from './system-scene-v2-comet-orbit-presentation';
 import { projectPulsarSecondGenerationPlanets } from './system-scene-pulsar-planets';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
@@ -417,6 +418,21 @@ export interface SystemSceneBodySnapshot {
   readonly kind:
     'star' |
     'planet';
+
+  /** 31.4: no conventional photosphere or invented stellar lighting. */
+  readonly compactHostKind?: CompactPlanetaryHostType;
+  /** 31.4c visual-only illumination, derived from the 31.3 reference channels.
+   * NOT a measured luminosity, heating source or new scientific fact. Zero for
+   * quiescent black holes with no accredited accretion. */
+  readonly compactHostPresentationFlux?: number;
+  /** Purely visual disk-inspection light, independent of radiative source.
+   * A quiescent BH can have this value while physical luminosity stays null. */
+  readonly compactHostInspectionLightFlux?: number;
+  /** Real, explicitly resolved accretion channel, if any. Null is quiescent/unknown. */
+  readonly compactHostAccretionLuminositySolar?: number | null;
+  /** 31.4d visual-only per-planet brightness from scenario irradiance, or
+   * presentation fill for unknown host radiation; not emitted luminosity. */
+  readonly compactPlanetPresentationFill01?: number;
 
   readonly label:
     string;

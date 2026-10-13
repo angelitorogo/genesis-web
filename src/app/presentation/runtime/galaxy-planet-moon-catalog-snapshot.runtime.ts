@@ -1,4 +1,6 @@
+import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
 import { InjectionToken } from '@angular/core';
+import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
 
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { type KnownDiscovery } from '../../domain/discovery/known-discovery';
@@ -9,8 +11,8 @@ import {
 } from '../../domain/generation/procedural-locator';
 import { type UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import { moonRomanNumeralV1 } from '../../domain/planetary/moon-designation';
-import { type MoonWaterRegime } from '../../domain/planetary/moon-water-regime';
-import { type PlanetType } from '../../domain/planetary/planet-type';
+import { MoonWaterRegime } from '../../domain/planetary/moon-water-regime';
+import { PlanetType } from '../../domain/planetary/planet-type';
 import { GenesisIndexedDb } from '../../data/local/indexed-db/genesis-indexed-db';
 import { type GalaxyKnowledgeSnapshotEntity } from '../../data/local/entity/galaxy-knowledge-snapshot.entity';
 import {
@@ -57,13 +59,16 @@ export interface GalaxyKnowledgePlanetCatalogEntry {
   readonly stateName: string;
   readonly subtype: GalaxyKnowledgePlanetCatalogSubtype;
   readonly hostLabel: string | null;
-  readonly orbitClass: 'SINGLE_HOST' | 'S_TYPE' | 'P_TYPE' | 'POST_COLLAPSE_MODEL' | null;
+  readonly orbitClass: 'SINGLE_HOST' | 'COMPACT_HOST' | 'S_TYPE' | 'P_TYPE' | 'POST_COLLAPSE_MODEL' | null;
   readonly massEarth: number | null;
   readonly radiusEarth: number | null;
   readonly semiMajorAxisAu: number | null;
   readonly orbitalPeriodDays: number | null;
   readonly meanSurfaceTemperatureKelvin: number | null;
   readonly surfaceLiquidWaterCoverageFraction01: number | null;
+  /** 31.4f conditional projections: never part of known-water evidence. */
+  readonly compactConditionalTemperatureKelvin?: number | null;
+  readonly compactConditionalLiquidCoverage01?: number | null;
   readonly postCollapseIdentityHex: string | null;
 }
 
@@ -77,7 +82,7 @@ export interface GalaxyKnowledgeMoonCatalogEntry {
   readonly stateName: string;
   readonly composition: GalaxyKnowledgeMoonComposition;
   readonly hostLabel: string;
-  readonly orbitClass: 'SINGLE_HOST' | 'S_TYPE' | 'P_TYPE';
+  readonly orbitClass: 'SINGLE_HOST' | 'COMPACT_HOST' | 'S_TYPE' | 'P_TYPE';
   readonly massEarth: number;
   readonly radiusEarth: number;
   readonly orbitalPeriodDays: number;
@@ -213,7 +218,7 @@ export function buildGalaxyPlanetMoonCatalogSnapshot(
   const systemDiscoveries = new Map<string, KnownDiscovery & { readonly locator: SystemLocator }>();
   const bodyDiscoveries: Array<KnownDiscovery & { readonly locator: BodyLocator }> = [];
 
-  for (const discovery of knownDiscoveries) {
+  for (const discovery of canonicalGalaxyKnownDiscoveries(generationKey, galaxyIndex, knownDiscoveries)) {
     if (!DiscoveryState.isKnown(discovery.state) || discovery.locator.galaxyIndex !== galaxyIndex) {
       continue;
     }
@@ -296,6 +301,44 @@ function projectConfirmedSystem(
   locator: SystemLocator,
 ): ProjectedSystemCatalog {
   const systemDesignation = safeSystemDesignation(generationKey, locator);
+  const compact = CompactHostPlanetarySystemGenerator.generateOrNull(generationKey, locator);
+  if (compact !== null) {
+    return Object.freeze({
+      planets: Object.freeze(compact.planets.map(planet => Object.freeze({
+        id: bodyLocatorLabel(planet.locator),
+        locator: planet.locator,
+        parentSystemLocator: locator,
+        designation: `${systemDesignation} ${planet.ordinal}`,
+        systemDesignation, stateName: DiscoveryState.CONFIRMED.name,
+        subtype: planet.bulkKind === 'ROCKY' ? PlanetType.ROCKY : PlanetType.SUPER_EARTH, hostLabel:'A', orbitClass:'COMPACT_HOST' as const,
+        massEarth:planet.massEarth, radiusEarth:planet.radiusEarth,
+        semiMajorAxisAu:planet.semiMajorAxisAu, orbitalPeriodDays:planet.orbitalPeriodDays,
+        // Conditional compact scenarios are NOT observational known-water evidence.
+        meanSurfaceTemperatureKelvin:null, surfaceLiquidWaterCoverageFraction01:null,
+        compactConditionalTemperatureKelvin:compact.characterizations[planet.ordinal-1]!.surfaceTemperatureScenarioK,
+        compactConditionalLiquidCoverage01:compact.characterizations[planet.ordinal-1]!.surfaceLiquidWaterCoverageFraction01,
+        postCollapseIdentityHex:null,
+      }))),
+      moons:Object.freeze(compact.secondaries.moons.map(moon=>{
+        const planet=compact.planets[moon.parentPlanetOrdinal-1]!;
+        const planetTitle=`${systemDesignation} ${planet.ordinal}`;
+        const locatorMoon=new MoonLocator(locator.galaxyIndex,locator.sectorKey,
+          locator.galacticObjectIndex,BigInt(planet.ordinal-1),BigInt(moon.ordinal-1));
+        return Object.freeze({id:moonLocatorLabel(locatorMoon),locator:locatorMoon,
+          parentSystemLocator:locator,designation:`${planetTitle} ${moonRomanNumeralV1(moon.ordinal)}`,
+          hostPlanetDesignation:planetTitle,systemDesignation,stateName:DiscoveryState.CONFIRMED.name,
+          composition:moon.iceRichnessIndex01<0.32?'ROCKY' as const:
+            moon.iceRichnessIndex01>0.72?'ICY' as const:'MIXED_ROCK_ICE' as const,
+          hostLabel:'A',orbitClass:'COMPACT_HOST' as const,
+          massEarth:moon.massEarth,radiusEarth:moon.radiusEarth,
+          orbitalPeriodDays:moon.orbitalPeriodDays,
+          inferredIceRichnessIndex01:moon.iceRichnessIndex01,
+          surfaceLiquidWaterPotentialIndex01:0,subsurfaceOceanPotentialIndex01:0,
+          waterRegime:MoonWaterRegime.NONE,
+        });
+      })),unmaterializedMinorMoonCount:0n,
+    });
+  }
   const multiple = StellarMultihostFormation.generateOrNull(generationKey, locator);
 
   if (multiple !== null) {

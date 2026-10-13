@@ -3,6 +3,10 @@ import {
   type PlanetScientificResolvedTarget,
 } from '../../simulation/planetary/planet-scientific-target-resolver';
 
+import { planetRadiusKilometers, planetOrbitAuAndKilometers, planetRotationHoursAndDays,
+  planetPressurePaBarEarth, planetTemperatureKelvinCelsius, planetTemperatureDifference, planetNormalizedPercent } from './planet-scientific-display-units';
+import { unifyPlanetFicheSections } from './planet-scientific-fiche-layout';
+
 import {
   WorldEarthComparisonAssembler,
   type WorldEarthComparisonModel,
@@ -151,7 +155,7 @@ export class PlanetScientificSectionsAssembler {
 
     return Object.freeze({
       sections:
-        Object.freeze([
+        unifyPlanetFicheSections(Object.freeze([
           generalSection(
             detail,
           ),
@@ -176,7 +180,7 @@ export class PlanetScientificSectionsAssembler {
           comparisonSection(
             comparison,
           ),
-        ]),
+        ])),
       comparison,
       relevantMoons:
         Object.freeze(
@@ -296,7 +300,7 @@ function generalSection(
       ),
       field(
         'Radio',
-        `${formatAdaptive(general.radiusEarth)} R⊕`,
+        planetRadiusKilometers(general.radiusEarth),
       ),
       field(
         'Densidad media',
@@ -308,7 +312,7 @@ function generalSection(
       ),
       field(
         'Periodo de rotación',
-        `${DECIMAL_2.format(general.rotationPeriodHours)} h`,
+        planetRotationHoursAndDays(general.rotationPeriodHours),
         general.isRetrogradeRotation
           ? 'Rotación retrógrada'
           : 'Rotación prógrada',
@@ -365,7 +369,7 @@ function orbitSection(
     [
       field(
         'Semieje mayor',
-        `${DECIMAL_3.format(orbit.semiMajorAxisAu)} UA`,
+        planetOrbitAuAndKilometers(orbit.semiMajorAxisAu),
       ),
       field(
         'Excentricidad',
@@ -379,11 +383,11 @@ function orbitSection(
       ),
       field(
         'Periastro',
-        `${DECIMAL_3.format(orbit.periastronAu)} UA`,
+        planetOrbitAuAndKilometers(orbit.periastronAu),
       ),
       field(
         'Apoastro',
-        `${DECIMAL_3.format(orbit.apoastronAu)} UA`,
+        planetOrbitAuAndKilometers(orbit.apoastronAu),
       ),
       field(
         'Periodo orbital',
@@ -415,7 +419,7 @@ function orbitSection(
         formatNullableNormalizedIndex(
           detail.geology.tidalHeatingIndex01,
         ),
-        `Índice normalizado 0–1 derivado del proxy orbital bruto ${formatAdaptive(orbit.tidalHeatingProxy)}.`,
+        null,
       ),
     ],
   );
@@ -546,7 +550,7 @@ function atmosphereSection(
       ),
       field(
         'Presión superficial gaseosa',
-        formatPressure(
+        planetPressurePaBarEarth(
           atmosphere.retainedSurfacePressurePascal,
         ),
         'Estado final tras escape atmosférico y equilibrio de condensación multiespecie.',
@@ -626,8 +630,8 @@ function climateSection(
         'Calentamiento invernadero',
         climate.greenhouseSurfaceWarmingKelvin ===
           null
-          ? 'No definido'
-          : `+${DECIMAL_1.format(climate.greenhouseSurfaceWarmingKelvin)} K`,
+          ? 'No determinado'
+          : planetTemperatureDifference(climate.greenhouseSurfaceWarmingKelvin),
       ),
       field(
         'Estabilidad climática',
@@ -643,9 +647,7 @@ function climateSection(
         ),
       ),
       field(
-        detail.general.isTidallySynchronized
-          ? 'Contraste térmico día/noche'
-          : 'Rango térmico diurno',
+        'Contraste térmico día/noche',
         formatNullableKelvinDelta(
           climate.diurnalTemperatureRangeKelvin,
         ),
@@ -1002,7 +1004,7 @@ function formatNormalizedIndex(
     number,
 ): string {
 
-  return `${formatIndex(value)} / 1`;
+  return planetNormalizedPercent(value);
 }
 
 function formatNullableNormalizedIndex(
@@ -1044,7 +1046,7 @@ function formatTemperature(
     number,
 ): string {
 
-  return `${DECIMAL_1.format(kelvin)} K · ${DECIMAL_1.format(kelvin - 273.15)} °C`;
+  return planetTemperatureKelvinCelsius(kelvin);
 }
 
 function formatNullableTemperature(
@@ -1067,8 +1069,8 @@ function formatNullableKelvinDelta(
 
   return kelvin ===
     null
-    ? 'No definida'
-    : `${DECIMAL_1.format(kelvin)} K`;
+    ? 'No determinado'
+    : planetTemperatureDifference(kelvin);
 }
 
 function formatNullableHours(

@@ -35,6 +35,7 @@ import {
   type GalaxyKnowledgeCatalogDirection,
   type GalaxyKnowledgeCatalogRow,
 } from './galaxy-knowledge-catalog.model';
+import { formatCatalogRadiusKm, formatCatalogTemperatureCelsius } from './galaxy-knowledge-catalog-units';
 import {
   GalaxyKnowledgeCatalogViewCache,
   galaxyKnowledgeCatalogViewKey,
@@ -522,8 +523,9 @@ function clusterRow(record: ClusterRecord): GalaxyKnowledgeCatalogRow {
       stars: record.stellarCount === null ? undefined : record.stellarCount.toLocaleString('es-ES'),
       mass: formatNumber(record.massSolar, 'M☉'),
       age: formatNumber(record.ageGyr, 'Ga'),
-      radius: formatNumber(record.radiusPc, 'pc'),
+      radius: formatCatalogRadiusKm(record.radiusPc, 'parsecs'),
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
+      locator: locatorLabel(record.locator),
     }),
     actions: objectActions(record.locator),
   });
@@ -537,11 +539,12 @@ function nebulaRow(record: NebulaRecord): GalaxyKnowledgeCatalogRow {
     cells: Object.freeze({
       state: discoveryStateLabel(record.discovery.state.name),
       type: record.subtype === null ? 'Sin clasificar' : nebulaSubtypeLabel(record.subtype),
-      radius: formatNumber(record.radiusPc, 'pc'),
+      radius: formatCatalogRadiusKm(record.radiusPc, 'parsecs'),
       mass: formatNumber(record.massSolar, 'M☉'),
-      temperature: formatNumber(record.temperatureK, 'K', 0),
+      temperature: formatCatalogTemperatureCelsius(record.temperatureK, 0),
       density: formatNumber(record.densityCm3, 'cm⁻³'),
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
+      locator: locatorLabel(record.locator),
     }),
     actions: objectActions(record.locator),
   });
@@ -558,6 +561,7 @@ function extremeRow(record: ExtremeRecord): GalaxyKnowledgeCatalogRow {
       family: record.family ?? undefined,
       semantic: record.semanticKind ?? undefined,
       sector: record.locator.sectorKey.toLocaleString('es-ES'),
+      locator: locatorLabel(record.locator),
     }),
     actions: objectActions(record.locator),
   });

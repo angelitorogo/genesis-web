@@ -16,6 +16,7 @@ import {
   type GalaxyKnowledgePlanetMoonCatalogSnapshot,
   type GalaxyPlanetMoonCatalogSnapshotRuntime,
 } from '../runtime/galaxy-planet-moon-catalog-snapshot.runtime';
+import { catalogFields } from './galaxy-knowledge-catalog-columns';
 import { GalaxyKnowledgePlanetsMoonsCatalogDataSource } from './galaxy-knowledge-planets-moons-catalog.data-source';
 
 const generationKey = new UniverseGenerationKey(
@@ -152,6 +153,9 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     expect(planets.filterLabel).toBe('Oceánico');
     expect(planets.columns.map(column => column.key)).toContain('water');
     expect(planets.sortOptions.map(option => option.key)).toContain('mass');
+    // The short label is shared by the sort picker, column picker and table header.
+    expect(planets.sortOptions.find(option => option.key === 'temperature')?.label).toBe('Tª superficial');
+    expect(catalogFields(planets).find(column => column.key === 'temperature')?.label).toBe('Tª SUPERFICIAL');
 
     expect(moons.title).toBe('Lunas heladas');
     expect(moons.filterLabel).toBe('Helada');
@@ -184,6 +188,8 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     expect(row.title).toBe('Asterion c');
     expect(row.cells['type']).toBe('Oceánico');
     expect(row.cells['water']).toBe('72 %');
+    expect(row.cells['radius']).toBe('8.919,4 km');
+    expect(row.cells['temperature']).toBe('7,85 °C');
     expect(row.actions[0]?.route).toEqual([
       '/system', '0', '12', '7', 'planet', '1',
     ]);
@@ -191,6 +197,47 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     expect(getKnownDiscoveriesInGalaxy).toHaveBeenCalledWith(generationKey, 0n);
     expect(getKnownDiscoveries).not.toHaveBeenCalled();
     expect(resolve).toHaveBeenCalled();
+  });
+
+  it('displays Celsius while temperature ordering still follows scientific Kelvin values', async () => {
+    const result = await source.query({
+      generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+      query: {
+        category: 'planets', subtype: null, page: 1, pageSize: 25,
+        sortKey: 'temperature', direction: 'asc',
+      },
+    });
+    if (result.kind !== 'page') throw new Error('Expected planet page.');
+    expect(result.page.items.map(row => row.title)).toEqual([
+      'Asterion d', 'Asterion c', 'Asterion b',
+    ]);
+    expect(result.page.items.map(row => row.cells['temperature'])).toEqual([
+      '-23,15 °C', '7,85 °C', '15,85 °C',
+    ]);
+  });
+
+  it('31.4f labels compact water as conditional, never as a known water world', async () => {
+    const compact = Object.freeze({
+      ...snapshot.planets[0]!, orbitClass: 'COMPACT_HOST' as const,
+      designation: 'Escenario compacto b',
+      meanSurfaceTemperatureKelvin: null, surfaceLiquidWaterCoverageFraction01: null,
+      compactConditionalTemperatureKelvin: 294,
+      compactConditionalLiquidCoverage01: 0.25,
+    });
+    resolve.mockResolvedValue(Object.freeze({
+      ...snapshot, planets: Object.freeze([compact]),
+    }));
+    const query = async (subtype: string | null) => source.query({
+      generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+      query: {category: 'planets' as const, subtype, page: 1, pageSize: 25,
+        sortKey:'designation', direction:'asc' as const},
+    });
+    const all = await query(null);
+    if (all.kind !== 'page') throw new Error('Expected compact planet row.');
+    expect(all.page.items[0]!.cells['water']).toBe('25 % (esc.)');
+    const knownWater = await query('WATER_20_PLUS');
+    if (knownWater.kind !== 'page') throw new Error('Expected known-water page.');
+    expect(knownWater.page.totalItems).toBe(0);
   });
 
   it('supports knowledge-safe water subsets and moon composition/water filters with direct moon navigation', async () => {
@@ -209,6 +256,7 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     });
     if (waterPlanets.kind !== 'page') throw new Error('Expected water planet page.');
     expect(waterPlanets.page.items.map(row => row.title)).toEqual(['Asterion c']);
+    expect(waterPlanets.page.items[0]?.cells['radius']).toBe('8.919,4 km');
 
     const icyMoons = await source.query({
       generationKey,
@@ -226,6 +274,7 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     if (icyMoons.kind !== 'page') throw new Error('Expected moon page.');
     expect(icyMoons.page.totalItems).toBe(1);
     expect(icyMoons.page.items[0]?.cells['composition']).toBe('Helada');
+    expect(icyMoons.page.items[0]?.cells['radius']).toBe('1.720,17 km');
     expect(icyMoons.page.items[0]?.actions[0]?.route).toEqual([
       '/system', '0', '12', '7', 'planet', '1', 'moon', '0',
     ]);

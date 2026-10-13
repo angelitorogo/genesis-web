@@ -33,6 +33,8 @@ import {
   ScientificBodyPreview,
 } from '../scientific-body-preview/scientific-body-preview';
 
+import { SystemCompactHostScientificSession } from '../system/system-compact-host-scientific-session';
+
 import {
   MinorBodyScientificCardAssembler,
   MinorBodyScientificFicheResolutionKind,
@@ -95,6 +97,11 @@ export class MinorBodyDetailPage
         ),
     );
 
+  readonly compactSession = computed(() => {
+    const model=this.facade.model();
+    return model===null?null:SystemCompactHostScientificSession.buildOrNull(model);
+  });
+
   readonly resolution =
     computed(
       () => {
@@ -125,7 +132,8 @@ export class MinorBodyDetailPage
         }
 
         try {
-          return MinorBodyScientificCardAssembler.build(
+          return this.compactSession()?.minorFiche(this.requestedTargetKind,this.requestedProceduralId) ??
+            MinorBodyScientificCardAssembler.build(
             model, this.requestedTargetKind, this.requestedProceduralId,
           );
         } catch (error) {

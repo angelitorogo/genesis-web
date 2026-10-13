@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import * as THREE from 'three';
 import { type NeutronStarLaboratoryRenderModel } from './neutron-star-laboratory-render-model';
+import { constructLaboratoryGeometryBuilder, disposeLaboratoryCompactGraph, type LaboratoryCompactSceneGraph } from './laboratory-compact-scene-graph';
 
 @Component({
   selector: 'app-neutron-star-laboratory-render',
@@ -25,6 +26,34 @@ import { type NeutronStarLaboratoryRenderModel } from './neutron-star-laboratory
 })
 export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
+
+  /** The gameplay graph is the laboratory's real procedural geometry. */
+  static createSceneGraph(model: NeutronStarLaboratoryRenderModel): LaboratoryCompactSceneGraph {
+    const builder = constructLaboratoryGeometryBuilder(() => new NeutronStarLaboratoryRender());
+    builder.model = model;
+    builder.suppressStandaloneBackdrop = true;
+    builder.scene = new THREE.Scene();
+    builder.camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+    builder.rebuildScene();
+    const root = new THREE.Group();
+    root.name = `Laboratory compact neutron object ${model.type} ${model.sampleLabel}`;
+    if (builder.spinGroup !== null) root.add(builder.spinGroup);
+    const shaders = [...builder.surfaceShaderMaterials];
+    const spinning = builder.spinGroup;
+    const initialRotation = spinning?.rotation.y ?? 0;
+    return {
+      root,
+      update: visualTimeSeconds => {
+        for (const material of shaders) {
+          const time = material.uniforms['uTime'];
+          if (time) time.value = visualTimeSeconds;
+        }
+        if (spinning) spinning.rotation.y = initialRotation + visualTimeSeconds *
+          Math.PI * 2 / Math.max(1, model.visualRotationSeconds);
+      },
+      dispose: () => disposeLaboratoryCompactGraph(root),
+    };
+  }
 
   @ViewChild('renderCanvas') private renderCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('renderHost') private renderHost?: ElementRef<HTMLElement>;
@@ -48,6 +77,7 @@ export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, On
   private animationFrame: number | null = null;
   private lastFrameMs = 0;
   private surfaceShaderMaterials: THREE.ShaderMaterial[] = [];
+  private suppressStandaloneBackdrop = false;
 
   ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -230,8 +260,10 @@ export class NeutronStarLaboratoryRender implements AfterViewInit, OnChanges, On
       if (this.model.showBeams) this.addPulsarBeams(magneticGroup);
     }
 
-    const stars = this.createBackgroundStars();
-    this.scene.add(stars);
+    if (!this.suppressStandaloneBackdrop) {
+      const stars = this.createBackgroundStars();
+      this.scene.add(stars);
+    }
   }
 
   private addDetailedNeutronStar(group: THREE.Group): void {

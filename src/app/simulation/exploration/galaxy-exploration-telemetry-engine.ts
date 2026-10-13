@@ -1,3 +1,8 @@
+import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
+import { projectGalaxyCompactHostKnowledge } from '../../domain/exploration/galaxy-compact-host-knowledge';
+import { CompactHostPlanetarySystemGenerator } from '../planetary/compact-host-planetary-system-generator';
+import { type CompactPlanetaryHost } from '../../domain/stellar/compact-planetary-host';
+
 import {
   DiscoveryState,
   type DiscoveryStateValue,
@@ -179,6 +184,7 @@ export class GalaxyExplorationTelemetryEngine {
 
     knownDiscoveries:
       readonly KnownDiscovery[],
+    compactHosts: readonly CompactPlanetaryHost[] = [],
   ): GalaxyExplorationTelemetry {
 
     if (
@@ -223,8 +229,16 @@ export class GalaxyExplorationTelemetryEngine {
       );
     }
 
+    const canonicalKnownDiscoveries = canonicalGalaxyKnownDiscoveries(
+      generationKey,
+      galaxyIndex,
+      knownDiscoveries,
+    );
+
     const confirmedProjectedPlanetCounts =
       new Map<string, bigint>();
+
+    const compactPlanetCount = { value: 0n };
 
     /*
      * Pre-project CONFIRMED systems before consuming historical child rows.
@@ -234,7 +248,7 @@ export class GalaxyExplorationTelemetryEngine {
      */
     for (
       const discovery
-      of knownDiscoveries
+      of canonicalKnownDiscoveries
     ) {
       if (
         !DiscoveryState.isKnown(discovery.state) ||
@@ -261,6 +275,7 @@ export class GalaxyExplorationTelemetryEngine {
           discovery.locator,
           mutable,
           breakdown,
+          compactPlanetCount,
         ),
       );
 
@@ -269,7 +284,7 @@ export class GalaxyExplorationTelemetryEngine {
 
     for (
       const discovery
-      of knownDiscoveries
+      of canonicalKnownDiscoveries
     ) {
       if (
         !DiscoveryState.isKnown(
@@ -382,6 +397,13 @@ export class GalaxyExplorationTelemetryEngine {
       exploredPercentageBasisPoints,
       Object.freeze({ ...mutable }),
       freezeBreakdown(breakdown),
+      projectGalaxyCompactHostKnowledge(
+        generationKey,
+        galaxyIndex,
+        canonicalKnownDiscoveries,
+        compactHosts,
+      ),
+      compactPlanetCount.value,
     );
   }
 }
@@ -850,7 +872,38 @@ function projectConfirmedSystemInventory(
 
   breakdown:
     MutableBreakdown,
+
+  compactPlanetCount: { value: bigint },
 ): bigint {
+
+  // 31.4: one authoritative V2 SINGLE selection, before the conventional
+  // multihost generator can materialize an unrelated photosphere or planets.
+  const compact = CompactHostPlanetarySystemGenerator.generateOrNull(generationKey, locator);
+  if (compact !== null) {
+    compactPlanetCount.value += BigInt(compact.planets.length);
+    inventory.moons += BigInt(compact.secondaries.moons.length);
+    for (const moon of compact.secondaries.moons) {
+      if (moon.iceRichnessIndex01<0.32) breakdown.moons.rocky += 1n;
+      else if (moon.iceRichnessIndex01>0.72) breakdown.moons.icy += 1n;
+      else breakdown.moons.mixedRockIce += 1n;
+      // No modeled moon has sufficient evidence for a known-water index.
+    }
+    for (const minor of compact.secondaries.minorBodies) {
+      switch (minor.kind.name) {
+        case 'ASTEROID': inventory.asteroids += 1n; break;
+        case 'COMET': inventory.comets += 1n; break;
+        case 'TRANS_NEPTUNIAN_OBJECT': inventory.transNeptunianObjects += 1n; break;
+        case 'CAPTURED_EXTRASOLAR_OBJECT': inventory.capturedObjects += 1n; break;
+      }
+    }
+    for (const planet of compact.planets) {
+      inventory.planets += 1n;
+      if (planet.bulkKind === 'ROCKY') breakdown.planets.rocky += 1n;
+      else breakdown.planets.superEarth += 1n;
+      // Liquid water is explicitly unresolved in 31.3, not zero/positive.
+    }
+    return BigInt(compact.planets.length);
+  }
 
   const multiple =
     StellarMultihostFormation.generateOrNull(

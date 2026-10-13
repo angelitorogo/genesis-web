@@ -178,6 +178,31 @@ describe('multispecies atmospheric condensation equilibrium', () => {
     )).toBeCloseTo(1, 10);
   });
 
+  it('31.4h: bounds N2/CO/Ar/CO2 partial pressures at 43–75 K, with conserved condensate', () => {
+    const composition: readonly Readonly<[AtmosphereGas, number]>[] = [
+      [AtmosphereGas.NITROGEN, 0.65],
+      [AtmosphereGas.CARBON_MONOXIDE, 0.20],
+      [AtmosphereGas.ARGON, 0.10],
+      [AtmosphereGas.CARBON_DIOXIDE, 0.05],
+    ];
+    for (const temperatureKelvin of [43.745, 50, 75]) {
+      const result=state(8200, 1.7, temperatureKelvin, composition);
+      expect(result.condensableEquilibriumState.converged).toBe(true);
+      const effectiveTemp=result.condensableEquilibriumState.effectiveCondensationTemperatureKelvin;
+      for (const gas of [AtmosphereGas.NITROGEN,AtmosphereGas.CARBON_MONOXIDE,
+        AtmosphereGas.ARGON,AtmosphereGas.CARBON_DIOXIDE]) {
+        const item=species(result,gas);
+        const pSat=condensableSaturationPressurePascal(gas,effectiveTemp)!;
+        expect(item.effectivePartialPressurePascal).toBeLessThanOrEqual(
+          pSat+Math.max(1e-8,pSat*1e-7));
+        expect(item.effectivePartialPressurePascal+item.condensedPartialPressurePascal)
+          .toBeCloseTo(item.sourcePartialPressurePascal,6);
+      }
+      expect(result.effectiveSurfacePressurePascal).toBeGreaterThan(0);
+      expect(result.effectiveSurfacePressurePascal).toBeLessThanOrEqual(8200);
+    }
+  });
+
   it('has finite monotonic saturation curves over representative valid ranges', () => {
     for (const gas of NON_WATER_CONDENSABLE_GASES) {
       const temperatures = [70, 90, 120, 160, 200, 250, 300, 400];

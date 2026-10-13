@@ -25,6 +25,7 @@ import {
 } from '../scientific/scientific-route-identity';
 import { SystemMultihostGameCutover } from '../system/system-multihost-game-cutover';
 import { SystemV2SingleScientificSession } from '../system/system-v2-single-scientific-session';
+import { SystemCompactHostScientificSession } from '../system/system-compact-host-scientific-session';
 
 import {
   ScientificBodyPreview,
@@ -97,9 +98,14 @@ export class MoonDetailPage
     return model === null ? null : SystemMultihostGameCutover.sessionOrNull(model);
   });
 
+  readonly compactSession = computed(() => {
+    const model=this.facade.model();
+    return model===null?null:SystemCompactHostScientificSession.buildOrNull(model);
+  });
+
   readonly v2SingleSession = computed(() => {
     const model = this.facade.model();
-    return model === null ? null : SystemV2SingleScientificSession.buildOrNull(model);
+    return model === null || this.compactSession() !== null ? null : SystemV2SingleScientificSession.buildOrNull(model);
   });
 
   readonly resolution =
@@ -131,7 +137,8 @@ export class MoonDetailPage
           } as const);
         }
 
-        return this.multihostSession()?.moonFiche(this.requestedBodyIndex, this.requestedMoonIndex) ??
+        return this.compactSession()?.moonFiche(this.requestedBodyIndex,this.requestedMoonIndex) ??
+          this.multihostSession()?.moonFiche(this.requestedBodyIndex, this.requestedMoonIndex) ??
           this.v2SingleSession()?.moonFiche(this.requestedBodyIndex, this.requestedMoonIndex) ??
           (model.generatorVersionCode === 2
             ? MoonScientificCardAssembler.build(model, this.requestedBodyIndex, this.requestedMoonIndex,

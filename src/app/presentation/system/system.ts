@@ -42,6 +42,7 @@ import {
 } from './system-scene-snapshot';
 import { SystemMultihostGameCutover } from './system-multihost-game-cutover';
 import { SystemV2SingleScientificSession } from './system-v2-single-scientific-session';
+import { SystemCompactHostScientificSession } from './system-compact-host-scientific-session';
 
 @Component({
   selector:
@@ -83,9 +84,14 @@ export class SystemPage
     return model === null ? null : SystemMultihostGameCutover.sessionOrNull(model);
   });
 
+  readonly compactSession = computed(() => {
+    const model = this.facade.model();
+    return model === null ? null : SystemCompactHostScientificSession.buildOrNull(model);
+  });
+
   readonly v2SingleSession = computed(() => {
     const model = this.facade.model();
-    return model === null ? null : SystemV2SingleScientificSession.buildOrNull(model);
+    return model === null || this.compactSession() !== null ? null : SystemV2SingleScientificSession.buildOrNull(model);
   });
 
   readonly pulsarPlanetPopulation = computed(() => this.v2SingleSession()?.pulsarPlanetPopulation ?? null);
@@ -113,7 +119,7 @@ export class SystemPage
           return null;
         }
 
-        return this.multihostSession()?.scene ?? this.v2SingleSession()?.scene ?? SystemSceneSnapshotBuilder.build(model);
+        return this.compactSession()?.scene ?? this.multihostSession()?.scene ?? this.v2SingleSession()?.scene ?? SystemSceneSnapshotBuilder.build(model);
       },
     );
 

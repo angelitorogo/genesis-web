@@ -5,11 +5,12 @@ import {
   Router,
 } from '@angular/router';
 
-import { GalaxyKnowledgeCatalogFacade } from './galaxy-knowledge-catalog.facade';
+import { GalaxyKnowledgeCatalogFacade, type GalaxyKnowledgeCatalogModel } from './galaxy-knowledge-catalog.facade';
 import { GalaxyKnowledgeCatalogPage } from './galaxy-knowledge-catalog';
+import { catalogColumnsStorageKey } from './galaxy-knowledge-catalog-columns';
 
 describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
-  const model = Object.freeze({
+  const model: GalaxyKnowledgeCatalogModel = Object.freeze({
     galaxyIndex: 0n,
     galaxyName: 'Elixisis',
     galaxyDesignationCode: 'G0',
@@ -71,6 +72,8 @@ describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
   };
 
   beforeEach(() => {
+    localStorage.removeItem(catalogColumnsStorageKey('extremes'));
+    facade.model.set(model);
     facade.load.mockClear();
     TestBed.configureTestingModule({
       imports: [GalaxyKnowledgeCatalogPage],
@@ -90,12 +93,23 @@ describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     expect(root.querySelector('[data-testid="galaxy-knowledge-catalog-page"]')).toBeTruthy();
-    expect(root.querySelector('[data-testid="gkc-row"]')?.textContent).toContain('Magnetar');
+    // The name is the only text in the identity cell; keep subtitle available in data, not rendered.
+    const identityCell = root.querySelector('[data-testid="gkc-row"] td:first-child');
+    expect(identityCell?.textContent?.trim()).toBe('G0 / S12 / O7');
+    expect(identityCell?.querySelector('small')).toBeNull();
+    expect(identityCell?.textContent).not.toContain('Magnetar');
     expect(root.querySelector('[data-testid="gkc-page-meta"]')?.textContent).toContain('63');
     expect(root.querySelector('[data-testid="gkc-prev-page"]')).toBeTruthy();
     expect(root.querySelector('[data-testid="gkc-next-page"]')).toBeTruthy();
     expect(root.querySelector('[data-testid="gkc-back-galaxy"]')).toBeTruthy();
     expect(root.querySelector('td.gkc__value-cell')).toBeTruthy();
+    // Actions remain the very last column, aligned above their own action buttons.
+    const actionsHeading = root.querySelector('thead th:last-child') as HTMLTableCellElement;
+    const actionsCell = root.querySelector('tbody tr td:last-child') as HTMLTableCellElement;
+    expect(actionsHeading.textContent?.trim()).toBe('ACCIONES');
+    expect(actionsHeading.classList.contains('gkc__actions-column')).toBe(true);
+    expect(actionsCell.classList.contains('gkc__actions-column')).toBe(true);
+    expect(actionsCell.querySelector('.gkc__actions a')?.textContent).toContain('ABRIR FICHA');
   });
 
   it('preserves the public universe ref and subtype while navigating to another page', () => {
@@ -111,6 +125,50 @@ describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
       direction: 'asc',
       type: 'MAGNETAR',
     });
+  });
+
+
+  it('lets the user configure columns and remembers the choice within the category', () => {
+    const fixture = TestBed.createComponent(GalaxyKnowledgeCatalogPage);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const checkbox = root.querySelector('[data-column-key="state"]') as HTMLInputElement;
+    expect(root.querySelectorAll('td.gkc__value-cell')).toHaveLength(1);
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(root.querySelectorAll('td.gkc__value-cell')).toHaveLength(0);
+    expect(root.querySelector('thead th:last-child')?.textContent?.trim()).toBe('ACCIONES');
+    expect(root.querySelector('tbody tr td:last-child .gkc__actions a')).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem(catalogColumnsStorageKey('extremes')) ?? '{}')).toEqual(
+      expect.objectContaining({ visibleFieldKeys: [] }),
+    );
+    const reset = root.querySelector('[data-testid="gkc-reset-columns"]') as HTMLButtonElement;
+    reset.click();
+    fixture.detectChanges();
+    expect(root.querySelectorAll('td.gkc__value-cell')).toHaveLength(1);
+  });
+
+  it('makes the selected sorting field visible even if it was hidden', async () => {
+    const fixture = TestBed.createComponent(GalaxyKnowledgeCatalogPage);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const checkbox = root.querySelector('[data-column-key="state"]') as HTMLInputElement;
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(checkbox.checked).toBe(false);
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const sort = root.querySelector('[data-testid="gkc-sort"]') as HTMLSelectElement;
+    sort.value = 'state';
+    sort.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    // Simulate the facade committing the new query once the URL navigation resolves.
+    facade.model.set({ ...model, query: { ...model.query, sortKey: 'state' } });
+    fixture.detectChanges();
+    expect(sort.value).toBe('state');
+    expect(root.querySelectorAll('td.gkc__value-cell')).toHaveLength(1);
   });
 
   it('moves sorting back to page one through URL state rather than local hidden state', async () => {

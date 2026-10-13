@@ -2,6 +2,8 @@ import {
   vi,
 } from 'vitest';
 
+import { PLANET_FICHE_FIELD_LAYOUT } from './planet-scientific-fiche-layout';
+
 import {
   DiscoveryState,
 } from '../../domain/discovery/discovery-state';
@@ -135,6 +137,12 @@ describe(
           'moons',
           'comparison',
         ]);
+        for (const section of result.card.sections.sections) {
+          if (Object.prototype.hasOwnProperty.call(PLANET_FICHE_FIELD_LAYOUT, section.id)) {
+            const expected = PLANET_FICHE_FIELD_LAYOUT[section.id as keyof typeof PLANET_FICHE_FIELD_LAYOUT];
+            expect(section.fields.map(f => f.label)).toEqual(expected);
+          }
+        }
         expect(
           result.card.sections.relevantMoons,
         ).toHaveLength(1);
@@ -222,7 +230,7 @@ describe(
                 'Índice de inventario de agua',
           )?.value,
         ).toBe(
-          '0,62 / 1',
+          '62 %',
         );
         expect(
           surfaceSection?.fields.find(
@@ -348,11 +356,9 @@ describe(
           surface?.fields.find(
             field =>
               field.label ===
-                'Fases dominantes del agua',
+                'Distribución hielo / líquido / vapor',
           )?.value,
-        ).toBe(
-          'Hielo',
-        );
+        ).toMatch(/% hielo/);
         expect(
           surface?.fields.find(
             field =>
@@ -375,7 +381,7 @@ describe(
     );
 
     it(
-      'should present orbital tidal forcing on the normalized 0 to 1 scale while retaining the raw proxy only as context',
+      'should show tidal forcing as a percent without leaking the raw proxy',
       () => {
         const source =
           detailedTarget();
@@ -447,19 +453,17 @@ describe(
           );
 
         expect(tidal?.value).toBe(
-          '1 / 1',
+          '100 %',
         );
         expect(tidal?.value).not.toContain(
           '1112',
         );
-        expect(tidal?.note).toContain(
-          'proxy orbital bruto',
-        );
+        expect(tidal?.note).toBeNull();
       },
     );
 
     it(
-      'should call synchronized thermal forcing a day/night contrast and retain diurnal wording for rotating worlds',
+      'should use the same day/night contrast field for synchronized and rotating worlds',
       () => {
         const source =
           detailedTarget();
@@ -558,7 +562,7 @@ describe(
           rotatingClimate?.fields.some(
             field =>
               field.label ===
-                'Rango térmico diurno',
+                'Contraste térmico día/noche',
           ),
         ).toBe(true);
       },

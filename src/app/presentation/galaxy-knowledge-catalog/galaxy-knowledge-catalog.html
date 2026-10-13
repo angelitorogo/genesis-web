@@ -89,7 +89,7 @@
                 data-testid="gkc-sort"
               >
                 @for (option of model.descriptor.sortOptions; track option.key) {
-                  <option [value]="option.key">{{ option.label }}</option>
+                  <option [value]="option.key" [selected]="option.key === model.query.sortKey">{{ option.label }}</option>
                 }
               </select>
             </label>
@@ -101,8 +101,8 @@
                 (change)="changeDirection($event)"
                 data-testid="gkc-direction"
               >
-                <option value="asc">Ascendente</option>
-                <option value="desc">Descendente</option>
+                <option value="asc" [selected]="model.query.direction === 'asc'">Ascendente</option>
+                <option value="desc" [selected]="model.query.direction === 'desc'">Descendente</option>
               </select>
             </label>
 
@@ -114,11 +114,39 @@
                 data-testid="gkc-page-size"
               >
                 @for (size of pageSizes; track size) {
-                  <option [value]="size">{{ size }}</option>
+                  <option [value]="size" [selected]="size === model.query.pageSize">{{ size }}</option>
                 }
               </select>
             </label>
           </section>
+
+          <details class="gkc__column-picker" data-testid="gkc-column-picker">
+            <summary>Personalizar columnas · {{ visibleColumns().length }} visibles</summary>
+            <div class="gkc__column-picker-content">
+              <p>Las columnas disponibles corresponden a «Ordenar por» en esta categoría. Nombre y acciones permanecen fijos.</p>
+              <div class="gkc__column-options">
+                @for (field of availableColumns(); track field.key) {
+                  <div class="gkc__column-option" data-testid="gkc-column-option">
+                    <label>
+                      <input
+                        type="checkbox"
+                        [checked]="visibleColumnKeys().has(field.key)"
+                        [disabled]="field.key === model.query.sortKey"
+                        (change)="toggleColumn(field.key, $event)"
+                        [attr.data-column-key]="field.key"
+                      />
+                      {{ field.label }}
+                    </label>
+                    <button type="button" [disabled]="!visibleColumnKeys().has(field.key) || visibleColumns()[0]?.key === field.key"
+                      (click)="moveColumn(field.key, -1)" [attr.aria-label]="'Subir ' + field.label">↑</button>
+                    <button type="button" [disabled]="!visibleColumnKeys().has(field.key) || visibleColumns()[visibleColumns().length - 1]?.key === field.key"
+                      (click)="moveColumn(field.key, 1)" [attr.aria-label]="'Bajar ' + field.label">↓</button>
+                  </div>
+                }
+              </div>
+              <button type="button" class="gkc__reset-columns" (click)="resetColumns()" data-testid="gkc-reset-columns">Restaurar columnas</button>
+            </div>
+          </details>
 
           @if (model.data.kind === 'not-connected') {
             <section class="gkc__state" data-testid="gkc-category-pending">
@@ -148,10 +176,10 @@
                   <thead>
                     <tr>
                       <th>{{ model.descriptor.identityLabel }}</th>
-                      @for (column of model.descriptor.columns; track column.key) {
+                      @for (column of visibleColumns(); track column.key) {
                         <th [class.gkc__right]="column.align === 'end'">{{ column.label }}</th>
                       }
-                      <th>ACCIONES</th>
+                      <th class="gkc__actions-column">ACCIONES</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -159,11 +187,8 @@
                       <tr data-testid="gkc-row">
                         <td>
                           <strong>{{ row.title }}</strong>
-                          @if (row.subtitle) {
-                            <small>{{ row.subtitle }}</small>
-                          }
                         </td>
-                        @for (column of model.descriptor.columns; track column.key) {
+                        @for (column of visibleColumns(); track column.key) {
                           <td
                             class="gkc__value-cell"
                             [class.gkc__right]="column.align === 'end'"
@@ -171,7 +196,7 @@
                             {{ row.cells[column.key] ?? '—' }}
                           </td>
                         }
-                        <td>
+                        <td class="gkc__actions-column">
                           <div class="gkc__actions">
                             @for (action of row.actions; track action.label) {
                               <a

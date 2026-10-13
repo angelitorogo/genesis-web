@@ -1,3 +1,4 @@
+import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
 import {
   InjectionToken,
 } from '@angular/core';
@@ -41,6 +42,8 @@ import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
 
+import { generateKnownCompactHostCatalog } from '../../simulation/exploration/galaxy-known-compact-host-catalog-generator';
+
 import {
   GalaxyExplorationTelemetryEngine,
 } from '../../simulation/exploration/galaxy-exploration-telemetry-engine';
@@ -63,7 +66,7 @@ import {
 } from '../../data/local/entity/galaxy-knowledge-snapshot.entity';
 
 export const GALAXY_SCIENTIFIC_MODEL_VERSION =
-  10;
+  15; // 31.5: canonical unique known-object views; invalidate derived counts/catalogues only.
 
 export interface GalaxyKnowledgeSnapshot {
   readonly knowledgeRevision: string;
@@ -109,10 +112,16 @@ export class DexieGalaxyKnowledgeSnapshotRuntime
     knownDiscoveries: readonly KnownDiscovery[],
   ): Promise<GalaxyKnowledgeSnapshot> {
 
+    const canonicalKnown = canonicalGalaxyKnownDiscoveries(
+      generationKey,
+      galaxyIndex,
+      knownDiscoveries,
+    );
+
     const knowledgeRevision =
       galaxyKnowledgeRevision(
         galaxyIndex,
-        knownDiscoveries,
+        canonicalKnown,
       );
 
     const existing =
@@ -135,15 +144,21 @@ export class DexieGalaxyKnowledgeSnapshotRuntime
       GalaxyKnowledgeStatisticsEngine.build(
         generationKey,
         galaxyIndex,
-        knownDiscoveries,
+        canonicalKnown,
       );
 
+    // Only persisted, already catalogued system identities may classify a
+    // compact host. Never enumerate hidden sector candidates for telemetry.
+    const compactHosts = generateKnownCompactHostCatalog(
+      generationKey, galaxyIndex, canonicalKnown,
+    ).map(entry => entry.host);
     const explorationTelemetry =
       GalaxyExplorationTelemetryEngine.build(
         generationKey,
         galaxyIndex,
         galaxyState,
-        knownDiscoveries,
+        canonicalKnown,
+        compactHosts,
       );
 
     const reusableExisting =
@@ -339,6 +354,8 @@ function restoreSnapshot(
       exploredPercentageBasisPoints: bigint | null;
       inventory: GalaxyExplorationTelemetry['inventory'];
       breakdown: GalaxyExplorationTelemetry['breakdown'];
+      compactHostSystems?: GalaxyExplorationTelemetry['compactHostSystems'];
+      compactHostPlanets?: bigint;
     };
 
   const statistics =
@@ -356,6 +373,8 @@ function restoreSnapshot(
       rawTelemetry.exploredPercentageBasisPoints,
       rawTelemetry.inventory,
       rawTelemetry.breakdown,
+      rawTelemetry.compactHostSystems,
+      rawTelemetry.compactHostPlanets ?? 0n,
     );
 
   return Object.freeze({

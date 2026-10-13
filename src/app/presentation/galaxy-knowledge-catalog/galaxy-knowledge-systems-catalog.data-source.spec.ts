@@ -169,6 +169,46 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
     expect(getKnownDiscoveries).not.toHaveBeenCalled();
   });
 
+  it('31.4 does not select multiplicity twice for catalogued SINGLE or BINARY systems', async () => {
+    const single = findSystem(StellarSystemMultiplicity.SINGLE);
+    const binary = findSystem(StellarSystemMultiplicity.BINARY);
+    const discoveries = Object.freeze([
+      new KnownDiscovery(generationKey, single, DiscoveryState.CATALOGUED),
+      new KnownDiscovery(generationKey, binary, DiscoveryState.CATALOGUED),
+    ]);
+    TestBed.configureTestingModule({
+      providers: [
+        GalaxyKnowledgeSystemsCatalogDataSource,
+        {
+          provide: GENESIS_LOCAL_REPOSITORIES,
+          useValue: { discoveryRepository: {
+            async getKnownDiscoveriesInGalaxy() { return discoveries; },
+          } } as unknown as GenesisLocalRepositories,
+        },
+      ],
+    });
+
+    const multiplicitySpy = vi.spyOn(StellarSystemMultiplicitySelector, 'select');
+    const source = TestBed.inject(GalaxyKnowledgeSystemsCatalogDataSource);
+    const base = { generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED } as const;
+    const result = await source.query({
+      ...base,
+      query: { category: 'systems', subtype: null, page: 1, pageSize: 25,
+        sortKey: 'designation', direction: 'asc' },
+    });
+    expect(result.kind).toBe('page');
+    if (result.kind !== 'page') throw new Error('Expected systems page.');
+    expect(result.page.totalItems).toBe(2);
+    expect(multiplicitySpy).toHaveBeenCalledTimes(2);
+
+    await source.query({
+      ...base,
+      query: { category: 'systems', subtype: null, page: 1, pageSize: 25,
+        sortKey: 'sector', direction: 'desc' },
+    });
+    expect(multiplicitySpy).toHaveBeenCalledTimes(2);
+  });
+
   it('paginates after stable locator sorting and keeps DETECTED systems unclassified in the unfiltered catalogue', async () => {
     const discoveries = Object.freeze(
       Array.from({ length: 30 }, (_, index) =>

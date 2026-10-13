@@ -1,3 +1,4 @@
+import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
 import {
   computed,
   inject,
@@ -1965,7 +1966,8 @@ export class ArchiveDiscoveryDetailFacade {
               // authoritative parent disk. Never display the V1 parent disk
               // as a physical property of the complete multihost system.
               generationKey.generatorVersion.code === 2 &&
-              stellarSystemCard?.render.multiplicity?.name !== 'SINGLE'
+              (stellarSystemCard?.render.multiplicity?.name !== 'SINGLE' ||
+                CompactHostPlanetarySystemGenerator.generateOrNull(generationKey, locator) !== null)
                 ? null
                 : ProtoplanetaryDiskAnalysisEngine.analyzeOrNull(
                     generationKey.generatorVersion.code === 2

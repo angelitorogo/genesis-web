@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 import * as THREE from 'three';
 import { BlackHoleLaboratoryRenderModel } from './black-hole-laboratory-render-model';
+import { constructLaboratoryGeometryBuilder, disposeLaboratoryCompactGraph, type LaboratoryCompactSceneGraph } from './laboratory-compact-scene-graph';
 
 @Component({
   selector: 'app-black-hole-laboratory-render',
@@ -25,6 +26,34 @@ import { BlackHoleLaboratoryRenderModel } from './black-hole-laboratory-render-m
 })
 export class BlackHoleLaboratoryRender implements AfterViewInit, OnChanges, OnDestroy {
   private readonly platformId = inject(PLATFORM_ID);
+
+  /** Reuse the exact approved laboratory geometry and GLSL shaders in SystemScene.
+   * The headless builder owns no WebGL renderer, canvas, DOM or animation loop. */
+  static createSceneGraph(model: BlackHoleLaboratoryRenderModel, quiescentMode: boolean): LaboratoryCompactSceneGraph {
+    const builder = constructLaboratoryGeometryBuilder(() => new BlackHoleLaboratoryRender());
+    builder.model = model;
+    builder.embedded = true;
+    builder.quiescentMode = quiescentMode;
+    builder.scene = new THREE.Scene();
+    builder.camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+    builder.rebuildScene();
+    const root = new THREE.Group();
+    root.name = `Laboratory black hole ${model.sampleLabel}${quiescentMode ? ' quiescent' : ''}`;
+    for (const child of [...builder.scene.children]) {
+      if (child instanceof THREE.Group) root.add(child);
+    }
+    const shaders = [...builder.shaderMaterials];
+    return {
+      root,
+      update: visualTimeSeconds => {
+        for (const material of shaders) {
+          const time = material.uniforms['uTime'];
+          if (time) time.value = visualTimeSeconds;
+        }
+      },
+      dispose: () => disposeLaboratoryCompactGraph(root),
+    };
+  }
 
   @ViewChild('renderCanvas') private renderCanvas?: ElementRef<HTMLCanvasElement>;
   @ViewChild('renderHost') private renderHost?: ElementRef<HTMLElement>;

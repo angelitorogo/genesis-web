@@ -1,5 +1,9 @@
 import {
   ChangeDetectionStrategy,
+  computed,
+  effect,
+  signal,
+  untracked,
   Component,
   DestroyRef,
   inject,
@@ -12,9 +16,21 @@ import { combineLatest } from 'rxjs';
 import { GenesisScreen } from '../../ui/layout/genesis-screen/genesis-screen';
 import { GalaxyKnowledgeCatalogFacade } from './galaxy-knowledge-catalog.facade';
 import {
+  catalogColumnsStorageKey,
+  catalogColumnsWithSort,
+  catalogFields,
+  catalogMoveColumn,
+  catalogToggleColumn,
+  catalogVisibleColumns,
+  initialCatalogColumns,
+  reconcileCatalogColumns,
+  type GalaxyKnowledgeCatalogColumnPreference,
+} from './galaxy-knowledge-catalog-columns';
+import {
   GALAXY_KNOWLEDGE_CATALOG_PAGE_SIZES,
   type GalaxyKnowledgeCatalogAction,
   type GalaxyKnowledgeCatalogPageSize,
+  type GalaxyKnowledgeCatalogCategory,
 } from './galaxy-knowledge-catalog.model';
 
 @Component({
@@ -28,6 +44,41 @@ import {
 export class GalaxyKnowledgeCatalogPage implements OnInit {
   readonly facade = inject(GalaxyKnowledgeCatalogFacade);
   readonly pageSizes = GALAXY_KNOWLEDGE_CATALOG_PAGE_SIZES;
+
+  private readonly columnSelection = signal<Readonly<{
+    category: string;
+    preferences: GalaxyKnowledgeCatalogColumnPreference;
+  }> | null>(null);
+  readonly availableColumns = computed(() => {
+    const model = this.facade.model();
+    return model === null ? [] : catalogFields(model.descriptor);
+  });
+  readonly visibleColumns = computed(() => {
+    const model = this.facade.model();
+    if (model === null) return [];
+    const fields = this.availableColumns();
+    const selected = this.columnSelection();
+    const preferences = selected?.category === model.descriptor.category
+      ? selected.preferences
+      : initialCatalogColumns(fields);
+    return catalogVisibleColumns(fields, catalogColumnsWithSort(preferences, model.query.sortKey));
+  });
+  readonly visibleColumnKeys = computed(() => new Set(this.visibleColumns().map(column => column.key)));
+
+  private readonly syncPreferences = effect(() => {
+    const model = this.facade.model();
+    if (model === null) return;
+    // Every new model is a URL/category update; never share settings across families.
+    untracked(() => {
+      const category = model.descriptor.category;
+      const preferences = catalogColumnsWithSort(
+        reconcileCatalogColumns(catalogFields(model.descriptor), this.readColumnPreferences(category)),
+        model.query.sortKey,
+      );
+      this.columnSelection.set({ category, preferences });
+      this.writeColumnPreferences(category, preferences);
+    });
+  });
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -58,6 +109,7 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
   async changeSort(event: Event): Promise<void> {
     const target = event.target as HTMLSelectElement | null;
     if (target === null) return;
+    this.showSortColumn(target.value);
     await this.navigateQuery({ sort: target.value, page: '1' });
   }
 
@@ -73,6 +125,63 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
     const size = Number(target.value) as GalaxyKnowledgeCatalogPageSize;
     if (!GALAXY_KNOWLEDGE_CATALOG_PAGE_SIZES.includes(size)) return;
     await this.navigateQuery({ size: size.toString(), page: '1' });
+  }
+
+  toggleColumn(key: string, event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    const model = this.facade.model();
+    if (target === null || model === null) return;
+    this.updateColumnSelection(catalogToggleColumn(
+      this.currentColumnPreferences(), key, target.checked, model.query.sortKey,
+    ));
+  }
+
+  moveColumn(key: string, direction: -1 | 1): void {
+    this.updateColumnSelection(catalogMoveColumn(this.currentColumnPreferences(), key, direction));
+  }
+
+  resetColumns(): void {
+    const model = this.facade.model();
+    if (model === null) return;
+    this.updateColumnSelection(catalogColumnsWithSort(
+      initialCatalogColumns(catalogFields(model.descriptor)), model.query.sortKey,
+    ));
+  }
+
+  private showSortColumn(key: string): void {
+    this.updateColumnSelection(catalogColumnsWithSort(this.currentColumnPreferences(), key));
+  }
+
+  private currentColumnPreferences(): GalaxyKnowledgeCatalogColumnPreference {
+    const model = this.facade.model();
+    const selected = this.columnSelection();
+    if (model === null) return initialCatalogColumns([]);
+    return selected?.category === model.descriptor.category
+      ? selected.preferences
+      : initialCatalogColumns(catalogFields(model.descriptor));
+  }
+
+  private updateColumnSelection(preferences: GalaxyKnowledgeCatalogColumnPreference): void {
+    const model = this.facade.model();
+    if (model === null) return;
+    this.columnSelection.set({ category: model.descriptor.category, preferences });
+    this.writeColumnPreferences(model.descriptor.category, preferences);
+  }
+
+  private readColumnPreferences(category: GalaxyKnowledgeCatalogCategory): unknown {
+    try {
+      return JSON.parse(localStorage.getItem(catalogColumnsStorageKey(category)) ?? 'null') as unknown;
+    } catch {
+      return null;
+    }
+  }
+
+  private writeColumnPreferences(category: GalaxyKnowledgeCatalogCategory, preferences: GalaxyKnowledgeCatalogColumnPreference): void {
+    try {
+      localStorage.setItem(catalogColumnsStorageKey(category), JSON.stringify(preferences));
+    } catch {
+      // Browser storage can be unavailable; the in-memory selection still works.
+    }
   }
 
   pageQueryParams(page: number): Readonly<Record<string, string>> | null {

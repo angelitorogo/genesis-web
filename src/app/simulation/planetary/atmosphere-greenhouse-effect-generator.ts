@@ -53,8 +53,8 @@ import {
 } from '../../domain/planetary/planetary-system';
 
 import {
-  atmosphereMultispeciesRadiativeColumnState,
-} from './atmosphere-multispecies-condensation-model';
+  resolvePlanetaryAtmosphericColumn,
+} from './planetary-shared-atmosphere-kernel';
 
 const V1_MAX_OPTICAL_DEPTH_PROXY =
   20;
@@ -383,16 +383,17 @@ function generateGreenhouseEffectV1(
     );
 
   const radiativeColumnState =
-    atmosphereMultispeciesRadiativeColumnState(
+    resolvePlanetaryAtmosphericColumn({
       retainedSurfacePressurePascal,
-      planet.physicalProperties.surfaceGravityMetersPerSecondSquared,
+      surfaceGravityMetersPerSecondSquared:
+        planet.physicalProperties.surfaceGravityMetersPerSecondSquared,
       equilibriumTemperatureKelvin,
-      retentionState.retainedGasComponents,
-      {
+      gasComponents: retentionState.retainedGasComponents,
+      climateContext: {
         isTidallySynchronized: planet.isTidallySynchronized,
         dayLengthHours: planet.dayLengthHours,
       },
-    );
+    });
 
   contributions =
     greenhouseContributionsV1(

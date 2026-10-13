@@ -22,6 +22,7 @@ import {
   type GalaxyKnowledgeCatalogDirection,
   type GalaxyKnowledgeCatalogRow,
 } from './galaxy-knowledge-catalog.model';
+import { formatCatalogRadiusKm, formatCatalogTemperatureCelsius } from './galaxy-knowledge-catalog-units';
 import {
   GalaxyKnowledgeCatalogViewCache,
   galaxyKnowledgeCatalogViewKey,
@@ -38,6 +39,7 @@ const PLANET_SUBTYPES = Object.freeze([
   PlanetType.GAS_GIANT,
   PlanetType.ICE_GIANT,
   'POST_COLLAPSE_MODEL',
+  'COMPACT_HOST',
   'WATER_20_PLUS',
   'UNCLASSIFIED',
 ] as const);
@@ -128,7 +130,7 @@ function describePlanets(
       Object.freeze({ key: 'orbit', label: 'Semieje mayor' }),
       Object.freeze({ key: 'period', label: 'Período orbital' }),
       Object.freeze({ key: 'water', label: 'Agua líquida superficial' }),
-      Object.freeze({ key: 'temperature', label: 'Temperatura superficial media' }),
+      Object.freeze({ key: 'temperature', label: 'Tª superficial' }),
       Object.freeze({ key: 'sector', label: 'Sector' }),
       Object.freeze({ key: 'locator', label: 'Localización procedural' }),
     ]),
@@ -177,7 +179,7 @@ function describeMoons(
       Object.freeze({ key: 'mass', label: 'MASA', align: 'end' as const }),
       Object.freeze({ key: 'radius', label: 'RADIO', align: 'end' as const }),
       Object.freeze({ key: 'ice', label: 'HIELO', align: 'end' as const }),
-      Object.freeze({ key: 'water', label: 'AGUA', align: 'end' as const }),
+      Object.freeze({ key: 'surface-water', label: 'AGUA', align: 'end' as const }),
     ]),
   });
 }
@@ -240,6 +242,7 @@ function matchesPlanetFilter(
   subtype: PlanetCatalogFilter | null,
 ): boolean {
   if (subtype === null) return true;
+  if (subtype === 'COMPACT_HOST') return record.orbitClass === 'COMPACT_HOST';
   if (subtype === 'WATER_20_PLUS') {
     return isGalaxyKnownWaterWorldCoverage(record.surfaceLiquidWaterCoverageFraction01);
   }
@@ -285,15 +288,22 @@ function toPlanetRow(record: GalaxyKnowledgePlanetCatalogEntry): GalaxyKnowledge
   return Object.freeze({
     id: record.id,
     title: record.designation,
-    subtitle: record.locator === null ? `Modelo post-colapso · ${record.id}` : record.id,
+    subtitle: record.orbitClass === 'COMPACT_HOST' ? `Anfitrión compacto · ${record.id}` : record.locator === null ? `Modelo post-colapso · ${record.id}` : record.id,
     cells: Object.freeze({
       state: discoveryStateLabel(record.stateName),
       type: planetSubtypeLabel(record.subtype),
       system: record.systemDesignation ?? 'Sistema sin caracterizar',
       mass: formatEarth(record.massEarth, 'M⊕'),
-      radius: formatEarth(record.radiusEarth, 'R⊕'),
+      radius: formatCatalogRadiusKm(record.radiusEarth, 'earth-radii'),
       orbit: formatNumber(record.semiMajorAxisAu, 'UA'),
-      water: formatPercent(record.surfaceLiquidWaterCoverageFraction01),
+      period: formatNumber(record.orbitalPeriodDays, 'días'),
+      temperature: formatCatalogTemperatureCelsius(record.meanSurfaceTemperatureKelvin),
+      sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
+      locator: record.id,
+      water: record.orbitClass==='COMPACT_HOST' && record.compactConditionalLiquidCoverage01!==undefined
+        ? (record.compactConditionalLiquidCoverage01===null?'No resuelto (esc.)':
+          `${formatPercent(record.compactConditionalLiquidCoverage01)} (esc.)`)
+        : formatPercent(record.surfaceLiquidWaterCoverageFraction01),
     }),
     actions: Object.freeze(actions),
   });
@@ -309,9 +319,14 @@ function toMoonRow(record: GalaxyKnowledgeMoonCatalogEntry): GalaxyKnowledgeCata
       planet: record.hostPlanetDesignation,
       system: record.systemDesignation,
       mass: formatEarth(record.massEarth, 'M⊕'),
-      radius: formatEarth(record.radiusEarth, 'R⊕'),
+      radius: formatCatalogRadiusKm(record.radiusEarth, 'earth-radii'),
       ice: formatPercent(record.inferredIceRichnessIndex01),
       water: formatPercent(record.surfaceLiquidWaterPotentialIndex01),
+      'surface-water': formatPercent(record.surfaceLiquidWaterPotentialIndex01),
+      'subsurface-ocean': formatPercent(record.subsurfaceOceanPotentialIndex01),
+      period: formatNumber(record.orbitalPeriodDays, 'días'),
+      sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
+      locator: record.id,
     }),
     actions: Object.freeze([
       Object.freeze({
@@ -462,6 +477,7 @@ function planetFilterTitle(subtype: PlanetCatalogFilter): string {
     case PlanetType.GAS_GIANT: return 'Gigantes gaseosos';
     case PlanetType.ICE_GIANT: return 'Gigantes helados';
     case 'POST_COLLAPSE_MODEL': return 'Planetas del modelo post-colapso';
+    case 'COMPACT_HOST': return 'Planetas de anfitriones compactos';
     case 'WATER_20_PLUS': return 'Planetas con ≥20 % de agua líquida superficial';
     case 'UNCLASSIFIED': return 'Planetas sin clasificación física disponible';
   }
@@ -469,6 +485,7 @@ function planetFilterTitle(subtype: PlanetCatalogFilter): string {
 
 function planetFilterLabel(subtype: PlanetCatalogFilter): string {
   if (subtype === 'WATER_20_PLUS') return 'Agua líquida ≥20 %';
+  if (subtype === 'COMPACT_HOST') return 'Anfitrión compacto';
   return planetSubtypeLabel(subtype);
 }
 

@@ -1,3 +1,4 @@
+import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { type PulsarSecondGenerationPopulation } from '../../domain/planetary/pulsar-second-generation-planet';
@@ -89,6 +90,8 @@ export class SystemV2SingleScientificSession {
         model.stellarSystemCard?.render.multiplicity?.name !== 'SINGLE') return null;
     const key = new UniverseGenerationKey(UniverseSeed.parse(model.universeSeed), GeneratorVersion.V2);
     const locator = new SystemLocator(model.galaxyIndex, model.sectorKey, model.galacticObjectIndex);
+    // The same public locator must never create a second conventional SINGLE inventory.
+    if (CompactHostPlanetarySystemGenerator.generateOrNull(key, locator) !== null) return null;
     const host = StellarMultihostFormation.generateV2SingleOrNull(key, locator);
     if (host === null) throw new Error('V2 SINGLE system has no corresponding physical A source.');
     return new SystemV2SingleScientificSession(model, host);

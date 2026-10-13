@@ -993,6 +993,17 @@
                       </a>
                     </dd>
                   </div>
+                  @if (model.explorationTelemetry.compactHostSystems.total > 0) {
+                    <div data-testid="galaxy-detail-compact-host-systems-total">
+                      <dt>CON ANFITRIÓN COMPACTO (SUBCONJUNTO)</dt>
+                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT' }" data-testid="galaxy-detail-compact-systems-catalog-link">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.total) }}</a></dd>
+                    </div>
+                    <div><dt>ESTRELLAS DE NEUTRONES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'NEUTRON_STAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.neutronStars) }}</a></dd></div>
+                    <div><dt>PÚLSARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'PULSAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.pulsars) }}</a></dd></div>
+                    <div><dt>PÚLSARES DE MILISEGUNDOS</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'MILLISECOND_PULSAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.millisecondPulsars) }}</a></dd></div>
+                    <div><dt>MAGNÉTARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'MAGNETAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.magnetars) }}</a></dd></div>
+                    <div><dt>AGUJEROS NEGROS ESTELARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'STELLAR_MASS_BLACK_HOLE' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.stellarMassBlackHoles) }}</a></dd></div>
+                  }
                   <div>
                     <dt>SIN CLASIFICAR</dt>
                     <dd>
@@ -1375,6 +1386,12 @@
                       </a>
                     </dd>
                   </div>
+                  @if (model.explorationTelemetry.compactHostSystems.total > 0) {
+                    <div data-testid="galaxy-detail-extremes-compact-system-cross-reference">
+                      <dt>ANFITRIONES COMPACTOS EN SISTEMAS · NO SUMADOS A EXTREMOS</dt>
+                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.total) }}</a></dd>
+                    </div>
+                  }
                 </dl>
               </details>
 
@@ -1551,6 +1568,10 @@
                           {{ formatBigInt(model.explorationTelemetry.breakdown.planets.unclassified) }}
                         </a>
                       </dd>
+                    </div>
+                    <div data-testid="galaxy-detail-compact-host-planets-total">
+                      <dt>EN ÓRBITA DE ANFITRIONES COMPACTOS (SUBCONJUNTO)</dt>
+                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'planets']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT_HOST' }" data-testid="galaxy-detail-compact-planets-catalog-link">{{ formatBigInt(model.explorationTelemetry.compactHostPlanets) }}</a></dd>
                     </div>
                     <div>
                       <dt>AGUA LÍQUIDA SUPERFICIAL ≥ 20 %</dt>
