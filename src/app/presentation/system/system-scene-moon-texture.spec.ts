@@ -19,6 +19,8 @@ describe(
       surfaceGravityEarth: 0.22,
       atmosphereRetentionIndex01: 0.55,
       atmosphereRegime: 'SUBSTANTIAL',
+      atmosphereScenarioPressurePascal: 40000,
+      atmosphereScenarioSpecies: [{ gas: 'WATER_VAPOR', moleFraction01: 0.04 }, { gas: 'NITROGEN', moleFraction01: 0.96 }],
       waterInventoryIndex01: 0.72,
       inferredIceRichnessIndex01: 0.36,
       subsurfaceOceanPotentialIndex01: 0.74,
@@ -44,8 +46,9 @@ describe(
         const first = buildSystemSceneMoonTextureV1(oceanic);
         const second = buildSystemSceneMoonTextureV1(oceanic);
 
-        expect(first.width).toBe(128);
-        expect(first.height).toBe(64);
+        expect(first.width).toBe(192);
+        expect(first.height).toBe(96);
+        expect(first.reliefRgba).toEqual(second.reliefRgba);
         expect(first.albedoRgba).toEqual(second.albedoRgba);
         expect(first.cloudRgba).not.toBeNull();
 
@@ -75,6 +78,10 @@ describe(
           geologyRegime: 'EXTREME',
           atmosphereRetentionIndex01: 0.02,
           atmosphereRegime: 'NONE',
+          // Do not accidentally inherit a resolved 40 kPa water-vapour
+          // atmosphere from the oceanic parent fixture.
+          atmosphereScenarioPressurePascal: null,
+          atmosphereScenarioSpecies: [],
           giantCompositionRegime: 'ROCK_RICH',
           isOceanBearingGiantMoonCandidate: false,
           isPotentiallyHabitable: false,
@@ -82,6 +89,9 @@ describe(
         });
 
         const texture = buildSystemSceneMoonTextureV1(volcanic);
+        expect(volcanic.surfaceStyle).toBe('VOLCANIC');
+        expect(volcanic.presentationAtmospherePresent).toBe(false);
+        expect(volcanic.presentationLiquidCoverage01).toBe(0);
         expect(texture.emissiveRgba).not.toBeNull();
         expect(texture.cloudRgba).toBeNull();
       },

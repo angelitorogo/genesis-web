@@ -28,6 +28,10 @@ import {
 } from './moon-identity-generator';
 
 import {
+  moonMassHierarchyWeightsL1,
+} from './moon-mass-hierarchy';
+
+import {
   type UniverseGenerationKey,
 } from '../../domain/generation/universe-generation-key';
 
@@ -548,35 +552,13 @@ function relevantMoonsV1(
         ),
     );
 
-  const rawMassWeights =
-    samples.map(
-      (
-        sample,
-        index,
-      ) =>
-        (
-          0.35 +
-          0.65 *
-            sample
-              .massWeight
-        ) /
-        (
-          index +
-          1
-        ) **
-          0.35,
-    );
-
-  const weightTotal =
-    rawMassWeights.reduce(
-      (
-        total,
-        weight,
-      ) =>
-        total +
-        weight,
-      0,
-    );
+  // L.1: host-specific hierarchical masses, while preserving the already
+  // sampled total mass budget and the complete V1 identity/orbital layout.
+  const massFractions = moonMassHierarchyWeightsL1(
+    planet.planetType,
+    uint32UnitV1(hostSamples, 8),
+    samples.map(sample => sample.massWeight),
+  );
 
   const physicalProperties =
     samples.map(
@@ -590,8 +572,7 @@ function relevantMoonsV1(
 
         const massEarth =
           relevantMassBudgetEarth *
-          rawMassWeights[index] /
-          weightTotal;
+          massFractions[index];
 
         const density =
           lerp(

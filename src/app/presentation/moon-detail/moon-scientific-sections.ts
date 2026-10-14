@@ -1,3 +1,5 @@
+import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
+import { type MoonAtmosphereAssessment } from '../../domain/planetary/moon-atmosphere-assessment';
 import {
   type MoonScientificResolvedTarget,
 } from '../../simulation/planetary/moon-scientific-target-resolver';
@@ -161,6 +163,140 @@ export class MoonScientificSectionsAssembler {
           ),
         ),
     });
+  }
+}
+
+export function lunarInternalWaterFields(
+  assessment: MoonInternalWaterAssessment | null,
+  moonRadiusEarth: number | null = null,
+): readonly MoonScientificFieldModel[] {
+  if (!assessment) { return []; }
+  const flux = (value: number): string => new Intl.NumberFormat('es-ES', {
+    maximumSignificantDigits: 3,
+    ...(value > 0 && (value < 0.001 || value >= 10000) ? { notation: 'scientific' as const } : {}),
+  }).format(value);
+  const shell = lunarConductiveShellPresentation(assessment, moonRadiusEarth);
+  return [
+    field(
+      'Flujo de calentamiento mareal (escenario)',
+      assessment.tidalHeatFluxMinimumWattsPerSquareMeter !== null &&
+        assessment.tidalHeatFluxMaximumWattsPerSquareMeter !== null
+        ? `${flux(assessment.tidalHeatFluxMinimumWattsPerSquareMeter)}–${flux(assessment.tidalHeatFluxMaximumWattsPerSquareMeter)} W/m²`
+        : 'No evaluable',
+      'Intervalo supuesto de k₂/Q = 10⁻⁶–10⁻³. No es un flujo medido; ignora resonancias y calor radiogénico.',
+    ),
+    field(
+      'Viabilidad térmica del hielo y océano',
+      labelIceShellThermalRegime(assessment.iceShellThermalRegime),
+      'Modelo conductivo condicional con conductividad 2,5 W/(m·K), fusión entre 240 y 273,15 K y espesor de corteza desconocido; no confirma océanos.',
+    ),
+    field(
+      'Espesor conductivo de hielo (escenario)',
+      shell.value,
+      shell.note,
+    ),
+    field(
+      'Criovulcanismo',
+      assessment.cryovolcanism === 'CONDITIONAL'
+        ? 'Posible (escenario)'
+        : assessment.cryovolcanism === 'NOT_SUPPORTED_BY_SCENARIO'
+          ? 'Sin soporte mareal suficiente en este escenario'
+          : 'No evaluable',
+      'Requiere volátiles, fracturación, conductos y presión interna; la energía mareal por sí sola no garantiza erupciones.',
+    ),
+    field(
+      'Calor radiogénico y propiedades del hielo',
+      'No resueltos',
+      'Sin radionúclidos, reología, salinidad, presión interior ni espesor conocido no puede confirmarse ni excluirse un océano.',
+    ),
+  ];
+}
+
+/** C.1: Geometrical INTERPRETATION only. The C engine's raw conductive
+ * solutions, tidal heat fluxes and inherited scientific indices do not change.
+ * Apply exactly the same exploratory shell interval used by C: 0.5 km to 35%
+ * of the satellite radius. Mathematical solutions outside it are NOT a crust.
+ */
+export function lunarConductiveShellPresentation(
+  assessment: MoonInternalWaterAssessment,
+  moonRadiusEarth: number | null,
+): Readonly<{ value: string; note: string }> {
+  const lower = assessment.conductiveShellThicknessMinimumKilometers;
+  const upper = assessment.conductiveShellThicknessMaximumKilometers;
+  const format = (value: number): string => new Intl.NumberFormat('es-ES', {
+    maximumSignificantDigits: 3,
+    ...(value > 0 && (value < 0.001 || value >= 10000)
+      ? { notation: 'scientific' as const } : {}),
+  }).format(value);
+  if (lower === null || upper === null) {
+    return {
+      value: 'No determinado',
+      note: 'El modelo no resuelve un intervalo de conducción para esta luna.',
+    };
+  }
+
+  const rawNote = `Solución matemática sin restricción geométrica: ${format(lower)}–${format(upper)} km; no representa un espesor observado ni predicho.`;
+  if (moonRadiusEarth === null || !Number.isFinite(moonRadiusEarth) || moonRadiusEarth <= 0) {
+    return { value: 'No evaluable sin radio lunar', note: rawNote };
+  }
+
+  // Matches the unchanged C thermal model: MIN_SHELL_KM=0.5, maxShellKm=0.35*R.
+  const minAdmissibleKm = 0.5;
+  const maxAdmissibleKm = 0.35 * moonRadiusEarth * 6371;
+  const boundsNote = `Intervalo geométrico exploratorio: ${format(minAdmissibleKm)}–${format(maxAdmissibleKm)} km (máximo 35 % del radio lunar). `;
+  const note = boundsNote + rawNote;
+  if (assessment.iceShellThermalRegime === 'NO_STABLE_SURFACE_ICE') {
+    return { value: 'No aplica: superficie sin hielo estable', note };
+  }
+  if (assessment.iceShellThermalRegime === 'ICE_INVENTORY_LIMITED') {
+    return { value: 'No evaluable: inventario de hielo limitado', note };
+  }
+  const clippedLower = Math.max(lower, minAdmissibleKm);
+  const clippedUpper = Math.min(upper, maxAdmissibleKm);
+  if (clippedLower > clippedUpper || maxAdmissibleKm < minAdmissibleKm) {
+    return {
+      value: 'Sin solución geométricamente admisible',
+      note: note + ' El intervalo matemático no intersecta una corteza admisible; no demuestra ausencia de otras fuentes de calor.',
+    };
+  }
+  return {
+    value: `${format(clippedLower)}–${format(clippedUpper)} km (intervalo admisible)`,
+    note: note + ' El recorte geométrico no demuestra la existencia de un océano ni predice el espesor real.',
+  };
+}
+
+function lunarThermalCaveat(assessment: MoonInternalWaterAssessment): string {
+  switch (assessment.iceShellThermalRegime) {
+    case 'TIDAL_HEAT_INSUFFICIENT_IN_SCENARIO':
+      return 'Balance C: las mareas modeladas no sostienen una corteza conductiva en el intervalo supuesto; faltan calor radiogénico y otros procesos. No confirma ni excluye un océano.';
+    case 'NO_STABLE_SURFACE_ICE':
+      return 'Balance C: sin corteza global de hielo de agua estable a la temperatura estimada.';
+    case 'ICE_INVENTORY_LIMITED':
+      return 'Balance C: inventario de hielo insuficiente en este escenario.';
+    case 'CONDITIONAL_ICE_OCEAN':
+      return 'Balance C: océano bajo hielo solo condicional, nunca confirmado.';
+    case 'HIGH_TIDAL_FLUX_SCENARIO':
+      return 'Balance C: calentamiento mareal elevado; estabilidad de la corteza no demostrada.';
+    default:
+      return 'Balance C: viabilidad térmica no evaluable con los supuestos disponibles.';
+  }
+}
+
+function unsupportedLegacyOcean(assessment: MoonInternalWaterAssessment): boolean {
+  return assessment.iceShellThermalRegime === 'TIDAL_HEAT_INSUFFICIENT_IN_SCENARIO' ||
+    assessment.iceShellThermalRegime === 'ICE_INVENTORY_LIMITED' ||
+    assessment.iceShellThermalRegime === 'NO_STABLE_SURFACE_ICE';
+}
+
+function labelIceShellThermalRegime(regime: MoonInternalWaterAssessment['iceShellThermalRegime']): string {
+  switch (regime) {
+    case 'NOT_EVALUABLE_HIGH_ECCENTRICITY': return 'No evaluable: excentricidad fuera del régimen de marea lineal';
+    case 'NOT_EVALUABLE_NON_SYNCHRONOUS': return 'No evaluable: rotación no sincronizada';
+    case 'NO_STABLE_SURFACE_ICE': return 'Sin corteza global de hielo estable a la temperatura estimada';
+    case 'ICE_INVENTORY_LIMITED': return 'Inventario de hielo insuficiente en el escenario';
+    case 'TIDAL_HEAT_INSUFFICIENT_IN_SCENARIO': return 'Calor mareal insuficiente en el intervalo supuesto';
+    case 'HIGH_TIDAL_FLUX_SCENARIO': return 'Posible disrupción térmica por mareas intensas';
+    case 'CONDITIONAL_ICE_OCEAN': return 'Océano bajo hielo termodinámicamente posible, no confirmado';
   }
 }
 
@@ -362,10 +498,16 @@ function environmentSection(
       ),
       field(
         'Atmósfera',
-        labelAtmosphere(
+        labelLunarAtmosphere(
           environment.atmosphereRegime,
+          environment.atmosphereAssessment ?? null,
         ),
-        `Soporte de columna ${formatIndex(environment.atmosphereRetentionIndex01)} · incluye escape y reposición volátil/mareal; no es presión superficial`,
+        `Soporte de columna heredado ${formatIndex(environment.atmosphereRetentionIndex01)} · indicador de escape y reposición, no es presión ni clasificación atmosférica confirmada`,
+      ),
+      ...lunarAtmosphereFields(environment.atmosphereAssessment ?? null),
+      ...lunarInternalWaterFields(
+        environment.internalWaterAssessment ?? null,
+        target.detail.general.radiusEarth,
       ),
       field(
         'Agua',
@@ -373,6 +515,7 @@ function environmentSection(
           environment.waterRegime,
           environment.waterInventoryIndex01,
           environment.estimatedSurfaceTemperatureKelvin,
+          environment.internalWaterAssessment ?? null,
         ),
         `Inventario ${formatIndex(environment.waterInventoryIndex01)}`,
       ),
@@ -388,7 +531,7 @@ function environmentSection(
           environment.subsurfaceOceanPotentialIndex01,
         ),
         environment.hasSubsurfaceOcean
-          ? 'Océano subsuperficial con soporte energético suficiente'
+          ? `Candidatura heredada por índices de inventario y mareas; no demuestra un océano actual. ${environment.internalWaterAssessment ? lunarThermalCaveat(environment.internalWaterAssessment) : 'Balance térmico no resuelto.'}`
           : environment.subsurfaceOceanPotentialIndex01 >= 0.35
             ? 'Potencial estructural elevado, pero sin soporte energético suficiente para afirmar un océano actual'
             : null,
@@ -399,7 +542,7 @@ function environmentSection(
           environment.surfaceLiquidWaterPotentialIndex01,
         ),
         environment.hasSurfaceLiquidWater
-          ? 'Potencial V1: soporte térmico/atmosférico; la presión lunar absoluta no está modelada'
+          ? 'Potencial V1 no confirmado: la presión atmosférica estimada en B es un escenario, no una condición líquida validada'
           : 'Sin evidencia suficiente de líquido superficial estable',
       ),
       field(
@@ -443,16 +586,19 @@ function habitabilitySection(
     [
       field(
         'Clasificación',
-        labelHabitability(
-          habitability.habitabilityRegime,
-        ),
-        'Una candidatura de habitabilidad no implica presencia de vida ni biosignaturas.',
+        `${labelHabitability(habitability.habitabilityRegime)}${target.detail.environment.internalWaterAssessment && habitability.subsurfaceCandidate ? ' (criterio heredado)' : ''}`,
+        target.detail.environment.internalWaterAssessment && habitability.subsurfaceCandidate
+          ? `Clasificación V1 no corroborada termodinámicamente. ${lunarThermalCaveat(target.detail.environment.internalWaterAssessment)} No implica vida ni biosignaturas.`
+          : 'Una candidatura de habitabilidad no implica presencia de vida ni biosignaturas.',
       ),
       field(
         'Índice global',
         formatIndex(
           habitability.overallHabitabilityIndex01,
         ),
+        target.detail.environment.internalWaterAssessment && habitability.subsurfaceCandidate
+          ? 'Índice V1 conservado sin recalcular: no valida por sí solo la viabilidad térmica de un océano.'
+          : null,
       ),
       field(
         'Ruta superficial',
@@ -464,9 +610,11 @@ function habitabilitySection(
       field(
         'Ruta subsuperficial',
         habitability.subsurfaceCandidate
-          ? 'Candidata'
+          ? target.detail.environment.internalWaterAssessment
+            ? 'Candidata por índice heredado (sin confirmar)'
+            : 'Candidata'
           : 'No candidata',
-        `Índice ${formatIndex(habitability.subsurfaceHabitabilityIndex01)}`,
+        `Índice ${formatIndex(habitability.subsurfaceHabitabilityIndex01)}${target.detail.environment.internalWaterAssessment ? ` · ${lunarThermalCaveat(target.detail.environment.internalWaterAssessment)}` : ''}`,
       ),
       field(
         'Soporte térmico superficial',
@@ -497,6 +645,9 @@ function habitabilitySection(
         formatIndex(
           habitability.subsurfaceEnergySupportIndex01,
         ),
+        target.detail.environment.internalWaterAssessment
+          ? 'Índice energético V1 heredado, no equivalente al flujo físico en W/m² del balance C.'
+          : null,
       ),
     ],
   );
@@ -563,16 +714,25 @@ function badges(
   if (
     target.detail.environment.hasSubsurfaceOcean
   ) {
+    const thermal = target.detail.environment.internalWaterAssessment;
     result.push(
-      'Océano subsuperficial',
+      !thermal
+        ? 'Océano subsuperficial'
+        : unsupportedLegacyOcean(thermal)
+          ? 'Potencial oceánico heredado (sin soporte térmico C)'
+          : thermal.iceShellThermalRegime === 'CONDITIONAL_ICE_OCEAN'
+            ? 'Posible océano subsuperficial (no confirmado)'
+            : 'Potencial oceánico heredado (balance no resuelto)',
     );
   }
 
   if (
     target.detail.environment.hasSurfaceLiquidWater
   ) {
+    // The legacy V1 flag marks a surface-water candidate, not confirmed
+    // stable liquid: atmospheric pressure and phase stability are unresolved.
     result.push(
-      'Agua líquida superficial',
+      'Potencial de agua líquida superficial (no confirmado)',
     );
   }
 
@@ -580,7 +740,10 @@ function badges(
     target.detail.habitability.isPotentiallyHabitable
   ) {
     result.push(
-      'Candidata potencialmente habitable',
+      target.detail.environment.internalWaterAssessment &&
+        target.detail.habitability.subsurfaceCandidate
+        ? 'Candidatura heredada (viabilidad térmica sin confirmar)'
+        : 'Candidata potencialmente habitable',
     );
   }
 
@@ -693,6 +856,94 @@ function formatTemperature(
   return `${DECIMAL_1.format(kelvin)} K · ${DECIMAL_1.format(kelvin - 273.15)} °C`;
 }
 
+/**
+ * B.1 — Presentation-only pressure/chemistry semantics.
+ * An unresolved hydrostatic column is not proof of a vacuum or of an exosphere.
+ * The phase-21 support index remains intact, but it cannot override B's
+ * explicit pressure/composition status.
+ */
+function resolvedLunarGasColumn(
+  assessment: MoonAtmosphereAssessment | null,
+): assessment is MoonAtmosphereAssessment & { readonly estimatedSurfacePressurePascal: number } {
+  return assessment !== null &&
+    assessment.pressureBasis === 'CONDITIONAL_SCENARIO' &&
+    assessment.estimatedSurfacePressurePascal !== null &&
+    Number.isFinite(assessment.estimatedSurfacePressurePascal) &&
+    assessment.estimatedSurfacePressurePascal > 0 &&
+    assessment.species.some(species =>
+      Number.isFinite(species.moleFraction01) && species.moleFraction01 > 0,
+    );
+}
+
+/**
+ * Qualitative bins are explicitly scenario-only (not observational classes).
+ * The 10–100 Pa bin describes traces, 100–10 000 Pa a tenuous atmosphere,
+ * and larger pressures a substantial candidate column. Do not relabel an
+ * uncharacterized column using the legacy retention proxy.
+ */
+export function labelLunarAtmosphere(
+  legacyRegime: string,
+  assessment: MoonAtmosphereAssessment | null,
+): string {
+  if (assessment === null) return labelAtmosphere(legacyRegime);
+  if (!resolvedLunarGasColumn(assessment)) return 'Columna atmosférica no resuelta';
+  const pressure = assessment.estimatedSurfacePressurePascal;
+  if (pressure < 100) return 'Trazas atmosféricas (escenario)';
+  if (pressure < 10_000) return 'Atmósfera tenue (escenario)';
+  return 'Atmósfera sustancial (escenario)';
+}
+
+/** B atmospheric scenario is informational only; V1 habitability stays unchanged. */
+export function lunarAtmosphereFields(
+  assessment: MoonAtmosphereAssessment | null,
+): readonly MoonScientificFieldModel[] {
+  if (assessment === null) return [];
+  const resolved = resolvedLunarGasColumn(assessment);
+  const pressure = resolved ? assessment.estimatedSurfacePressurePascal : null;
+  const atmosphereComposition = resolved
+    ? assessment.species.filter(species => species.moleFraction01 > 0)
+      .slice(0, 5).map(component =>
+        `${labelLunarGas(component.gas)} ${DECIMAL_1.format(component.moleFraction01 * 100)} %`,
+      ).join(' · ')
+    : 'No resuelta';
+  const condensation = !resolved
+    ? 'Condensación no evaluable'
+    : assessment.condensationRemovalIndex01 <= 0.0005
+      ? 'Sin condensación apreciable'
+      : formatIndex(assessment.condensationRemovalIndex01);
+  return [
+    field('Inventario volátil atmosférico (inferido)', formatIndex(assessment.volatileInventoryIndex01),
+      'Disponibilidad relativa inferida de la composición global, no un inventario gaseoso medido'),
+    field('Presión superficial atmosférica (escenario)', pressure === null
+      ? 'No determinada'
+      : `${formatAdaptive(pressure)} Pa · ${formatAdaptive(pressure / 100_000)} bar`,
+      'Estimación condicional de primer orden; faltan fotólisis, EUV, erosión por partículas y evolución atmosférica'),
+    field('Composición gaseosa candidata', atmosphereComposition,
+      'Fracciones molares estimadas tras escape térmico y condensación; no equivalen a detecciones espectroscópicas'),
+    field('Retención frente a escape térmico', formatIndex(assessment.thermalEscapeSupportIndex01)),
+    field('Condensación de gases candidatos', condensation,
+      resolved
+        ? 'Fracción aproximada removida de la columna candidata por equilibrio de saturación'
+        : 'Sin columna gaseosa hidrostática resuelta no puede interpretarse un índice de remoción como condensación de una atmósfera estable'),
+    field('Reposición por volátiles y mareas', formatIndex(assessment.replenishmentSupportIndex01)),
+    field('Entorno radiativo y magnetosférico', 'Partículas y blindaje: no evaluables',
+      `Insolación de referencia: ${formatScientificInsolationEarth(assessment.irradiationReferenceEarth)}. No hay flujo EUV/partículas ni geometría magnetosférica resueltos; orbitar un gigante no implica protección`),
+  ];
+}
+
+function labelLunarGas(gas: string): string {
+  switch (gas) {
+    case 'NITROGEN': return 'N₂';
+    case 'METHANE': return 'CH₄';
+    case 'CARBON_DIOXIDE': return 'CO₂';
+    case 'ARGON': return 'Ar';
+    case 'AMMONIA': return 'NH₃';
+    case 'WATER_VAPOR': return 'H₂O';
+    case 'SULFUR_DIOXIDE': return 'SO₂';
+    default: return gas;
+  }
+}
+
 function labelAtmosphere(
   regime:
     string,
@@ -723,7 +974,25 @@ function labelWater(
 
   estimatedSurfaceTemperatureKelvin:
     number,
+
+  internalWaterAssessment: MoonInternalWaterAssessment | null = null,
 ): string {
+
+  if (internalWaterAssessment &&
+      (regime === 'SUBSURFACE_OCEAN' || regime === 'ICE_AND_SUBSURFACE_OCEAN' || regime === 'MIXED')) {
+    if (internalWaterAssessment.iceShellThermalRegime === 'NO_STABLE_SURFACE_ICE') {
+      return 'Agua interior potencial; sin corteza global de hielo estable';
+    }
+    if (unsupportedLegacyOcean(internalWaterAssessment)) {
+      return 'Hielo con potencial oceánico heredado; sin soporte térmico en C';
+    }
+    if (internalWaterAssessment.iceShellThermalRegime !== 'CONDITIONAL_ICE_OCEAN') {
+      return 'Hielo con potencial oceánico heredado (balance no evaluable)';
+    }
+    return regime === 'SUBSURFACE_OCEAN'
+      ? 'Posible océano subsuperficial (sin confirmar)'
+      : 'Hielo y posible océano subsuperficial (sin confirmar)';
+  }
 
   switch (regime) {
     case 'NONE':

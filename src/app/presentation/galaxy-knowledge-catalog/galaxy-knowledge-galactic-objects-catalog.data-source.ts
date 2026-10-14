@@ -29,6 +29,7 @@ import { GalaxyGenerator } from '../../simulation/universe/galaxy-generator';
 import { GENESIS_LOCAL_REPOSITORIES } from '../runtime/genesis-local-repositories';
 import { galaxyKnowledgeRevision } from '../runtime/galaxy-knowledge-snapshot.runtime';
 import {
+  catalogNameMatches,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -135,8 +136,9 @@ export class GalaxyKnowledgeGalacticObjectsCatalogDataSource {
         const subtype = normalizeClusterSubtype(request.query.subtype);
         const records = this.clusterViewCache.resolve(
           this.clusterRecords(request.generationKey, request.galaxyIndex, known),
-          galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction),
-          record => matchesSubtype(record.subtype, subtype),
+          galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null),
+          record => matchesSubtype(record.subtype, subtype)
+            && catalogNameMatches(record.title, request.query.search),
           (left, right) => compareClusterRecords(left, right, request.query.sortKey, request.query.direction),
         );
         return page(records, request, clusterRow);
@@ -145,8 +147,9 @@ export class GalaxyKnowledgeGalacticObjectsCatalogDataSource {
         const subtype = normalizeNebulaSubtype(request.query.subtype);
         const records = this.nebulaViewCache.resolve(
           this.nebulaRecords(request.generationKey, request.galaxyIndex, known),
-          galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction),
-          record => matchesSubtype(record.subtype, subtype),
+          galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null),
+          record => matchesSubtype(record.subtype, subtype)
+            && catalogNameMatches(record.title, request.query.search),
           (left, right) => compareNebulaRecords(left, right, request.query.sortKey, request.query.direction),
         );
         return page(records, request, nebulaRow);
@@ -155,8 +158,9 @@ export class GalaxyKnowledgeGalacticObjectsCatalogDataSource {
         const subtype = normalizeExtremeSubtype(request.query.subtype);
         const records = this.extremeViewCache.resolve(
           this.extremeRecords(request.generationKey, request.galaxyIndex, known),
-          galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction),
-          record => matchesSubtype(record.subtype, subtype),
+          galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null),
+          record => matchesSubtype(record.subtype, subtype)
+            && catalogNameMatches(record.title, request.query.search),
           (left, right) => compareExtremeRecords(left, right, request.query.sortKey, request.query.direction),
         );
         return page(records, request, extremeRow);

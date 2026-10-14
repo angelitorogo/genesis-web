@@ -1,3 +1,5 @@
+import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
+import { type MoonAtmosphereAssessment } from '../../domain/planetary/moon-atmosphere-assessment';
 import {
   BodyLocator,
   SystemLocator,
@@ -181,6 +183,8 @@ export interface PlanetScientificRelevantMoonSource {
 
   readonly atmosphereRegime:
     string;
+  readonly atmosphereAssessment?: MoonAtmosphereAssessment | null;
+  readonly internalWaterAssessment?: MoonInternalWaterAssessment | null;
 
   readonly waterInventoryIndex01:
     number;
@@ -788,6 +792,10 @@ export class PlanetScientificTargetResolver {
                             moon.environmentState.atmosphereRetentionIndex01,
                           atmosphereRegime:
                             moon.atmosphereRegime,
+                          atmosphereAssessment:
+                            moon.environmentState.atmosphereAssessment,
+                          internalWaterAssessment:
+                            moon.environmentState.internalWaterAssessment,
                           waterInventoryIndex01:
                             moon.environmentState.waterInventoryIndex01,
                           subsurfaceOceanPotentialIndex01:

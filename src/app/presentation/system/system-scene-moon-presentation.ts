@@ -19,6 +19,13 @@ export interface SystemSceneMoonPresentationInputV1 {
   readonly surfaceGravityEarth: number;
   readonly atmosphereRetentionIndex01: number;
   readonly atmosphereRegime: string;
+  /** B pressure is a conditional scenario; null means no resolved gas column. */
+  readonly atmosphereScenarioPressurePascal?: number | null;
+  /** B's resolved scenario species, not detections. Absent on older fixtures. */
+  readonly atmosphereScenarioSpecies?: readonly { readonly gas: string; readonly moleFraction01: number }[];
+  /** C's conditional thermal diagnosis; never a confirmed ocean. */
+  readonly iceShellThermalRegime?: string | null;
+  readonly cryovolcanismScenario?: string | null;
   readonly waterInventoryIndex01: number;
   readonly inferredIceRichnessIndex01: number;
   readonly subsurfaceOceanPotentialIndex01: number;
@@ -47,6 +54,9 @@ export interface SystemSceneMoonPresentationV1 {
   readonly sourceSurfaceGravityEarth: number;
   readonly sourceAtmosphereRetentionIndex01: number;
   readonly sourceAtmosphereRegime: string;
+  readonly sourceAtmosphereScenarioSpecies?: readonly { readonly gas: string; readonly moleFraction01: number }[];
+  readonly sourceIceShellThermalRegime?: string | null;
+  readonly sourceCryovolcanismScenario?: string | null;
   readonly sourceWaterInventoryIndex01: number;
   readonly sourceInferredIceRichnessIndex01: number;
   readonly sourceSubsurfaceOceanPotentialIndex01: number;
@@ -73,6 +83,7 @@ export interface SystemSceneMoonPresentationV1 {
   readonly presentationCloudCoverage01: number;
   readonly presentationAtmospherePresent: boolean;
   readonly presentationAtmosphereStrength01: number;
+  readonly presentationAtmosphereHaze01?: number;
   readonly presentationAtmosphereShellScale: number;
   readonly presentationBaseColorHex: string;
   readonly presentationAccentColorHex: string;
@@ -136,15 +147,27 @@ export function buildSystemSceneMoonPresentationV1(
         ? 0.02 + 0.04 * variant01
         : 0.008 + 0.016 * variant01;
 
+  // D.3f — only a pressure-supported visual scenario may show persistent blue
+  // seas. An inherited water-potential index is NOT proof of liquid stability:
+  // Calos-like warm worlds with unresolved B pressure retain their wet/volatile
+  // surface identity, but not visible oceans. This is a presentation gate only.
+  const liquidScenarioSupported = supportsLiquidSurfaceVisual(input);
+  const candidateSurfaceWater = supportsCandidateSurfaceWaterVisual(input);
+  const surfaceWaterIndicator = input.waterRegime === 'SURFACE_LIQUID' ||
+    input.waterRegime === 'MIXED' ||
+    input.surfaceLiquidWaterPotentialIndex01 >= 0.60;
+  const liquidVisualEligible = liquidScenarioSupported && surfaceWaterIndicator &&
+    input.waterInventoryIndex01 >= 0.18;
   const liquidCoverage01 =
-    input.waterRegime === 'SURFACE_LIQUID' ||
-    input.waterRegime === 'MIXED'
+    liquidVisualEligible
       ? clamp(
-          0.16 +
-            0.58 * input.surfaceLiquidWaterPotentialIndex01 +
-            0.12 * input.waterInventoryIndex01,
-          0.12,
-          0.82,
+          0.22 +
+            0.66 * input.surfaceLiquidWaterPotentialIndex01 +
+            0.16 * input.waterInventoryIndex01 +
+            0.10 * input.tidalHeatingIndex01 +
+            0.06 * input.geologicalActivityIndex01,
+          0.16,
+          0.90,
         )
       : 0;
 
@@ -180,36 +203,58 @@ export function buildSystemSceneMoonPresentationV1(
           ? clamp(0.06 + 0.24 * input.geologicalActivityIndex01, 0.06, 0.30)
           : 0;
 
-  const atmospherePresent =
-    input.atmosphereRegime === 'THIN' ||
-    input.atmosphereRegime === 'SUBSTANTIAL';
+  // When B is available, never fabricate a visual atmosphere from the V1
+  // retention index if its conditional gas column is unresolved.
+  const pressure = input.atmosphereScenarioPressurePascal;
+  // No inferred visual atmosphere from a legacy regime/retention label alone.
+  // Unavailable B data (null OR absent) must not produce an optical shell.
+  const atmospherePresent = pressure !== null && pressure !== undefined && pressure >= 1;
   const atmosphereStrength01 = atmospherePresent
-    ? clamp(
-        0.08 +
-          0.86 * input.atmosphereRetentionIndex01,
-        0.08,
-        0.92,
-      )
+    ? clamp(0.20 + 1.06 * pressure / (pressure + 5200), 0.22, 1.00)
     : 0;
 
+  const atmosphereSpecies = input.atmosphereScenarioSpecies ?? [];
+  const methaneFraction = atmosphereSpecies.reduce(
+    (n, species) => n + (species.gas === 'CH4' || species.gas === 'METHANE' ? species.moleFraction01 : 0), 0);
+  const aerosolScenario = clamp01(methaneFraction * 1.8) *
+    (input.estimatedSurfaceTemperatureKelvin < 190 ? 1 : 0.4);
+  const atmosphereHaze01 =
+    !atmospherePresent
+      ? 0
+      : input.estimatedSurfaceTemperatureKelvin < 120
+        ? clamp(0.22 + 0.34 * atmosphereStrength01 + 0.74 * aerosolScenario, 0.22, 0.96)
+        : input.estimatedSurfaceTemperatureKelvin > 330
+          ? clamp(0.10 + 0.26 * atmosphereStrength01, 0.10, 0.56)
+          : clamp(0.16 + 0.30 * atmosphereStrength01 + 0.28 * aerosolScenario, 0.16, 0.68);
+
+  const waterVaporFraction = atmosphereSpecies.reduce(
+    (n, species) => n + (species.gas === 'H2O' || species.gas === 'WATER_VAPOR' ? species.moleFraction01 : 0), 0);
+  const cloudChemistryEligible = input.atmosphereScenarioSpecies === undefined ||
+    (waterVaporFraction >= 0.0003 && input.estimatedSurfaceTemperatureKelvin >= 240 &&
+      input.estimatedSurfaceTemperatureKelvin <= 350);
   const cloudCoverage01 =
-    input.atmosphereRegime === 'SUBSTANTIAL'
-      ? clamp(
-          0.16 +
-            0.38 * input.waterInventoryIndex01 +
-            0.30 * liquidCoverage01 +
-            0.12 * secondary01,
-          0.12,
-          0.78,
-        )
-      : input.atmosphereRegime === 'THIN'
-        ? clamp(
-            0.04 +
-              0.20 * input.waterInventoryIndex01 +
-              0.10 * secondary01,
-            0.02,
-            0.32,
-          )
+    (!cloudChemistryEligible || !atmospherePresent || input.estimatedSurfaceTemperatureKelvin < 170 ||
+      input.estimatedSurfaceTemperatureKelvin > 360)
+      ? 0
+      : pressure !== null && pressure !== undefined && pressure >= 1800
+        ? liquidCoverage01 > 0.02
+          ? clamp(
+              0.12 +
+                0.34 * input.waterInventoryIndex01 +
+                0.46 * liquidCoverage01 +
+                0.12 * secondary01,
+              0.10,
+              0.90,
+            )
+          : input.atmosphereRegime === 'SUBSTANTIAL' || atmosphereStrength01 >= 0.45
+            ? clamp(
+                0.06 +
+                  0.16 * input.waterInventoryIndex01 +
+                  0.10 * secondary01,
+                0.04,
+                0.36,
+              )
+            : 0
         : 0;
 
   const palette = moonPalette(
@@ -219,12 +264,12 @@ export function buildSystemSceneMoonPresentationV1(
     secondary01,
   );
 
-  const atmosphereColor =
-    input.estimatedSurfaceTemperatureKelvin < 220
-      ? mixRgb(palette.accent, { r: 176, g: 208, b: 232 }, 0.64)
-      : input.estimatedSurfaceTemperatureKelvin > 330
-        ? mixRgb(palette.accent, { r: 221, g: 181, b: 133 }, 0.38)
-        : mixRgb(palette.accent, { r: 164, g: 207, b: 231 }, 0.52);
+  const atmosphereColor = atmospherePalette(
+    palette.accent,
+    atmosphereSpecies,
+    input.estimatedSurfaceTemperatureKelvin,
+    aerosolScenario,
+  );
 
   return Object.freeze({
     version: 1 as const,
@@ -237,6 +282,13 @@ export function buildSystemSceneMoonPresentationV1(
     sourceSurfaceGravityEarth: input.surfaceGravityEarth,
     sourceAtmosphereRetentionIndex01: input.atmosphereRetentionIndex01,
     sourceAtmosphereRegime: input.atmosphereRegime,
+    sourceAtmosphereScenarioSpecies: input.atmosphereScenarioSpecies === undefined
+      ? undefined
+      : Object.freeze(input.atmosphereScenarioSpecies.map(species => Object.freeze({
+        gas: species.gas, moleFraction01: species.moleFraction01,
+      }))),
+    sourceIceShellThermalRegime: input.iceShellThermalRegime ?? null,
+    sourceCryovolcanismScenario: input.cryovolcanismScenario ?? null,
     sourceWaterInventoryIndex01: input.waterInventoryIndex01,
     sourceInferredIceRichnessIndex01: input.inferredIceRichnessIndex01,
     sourceSubsurfaceOceanPotentialIndex01:
@@ -267,15 +319,130 @@ export function buildSystemSceneMoonPresentationV1(
     presentationCloudCoverage01: cloudCoverage01,
     presentationAtmospherePresent: atmospherePresent,
     presentationAtmosphereStrength01: atmosphereStrength01,
+    presentationAtmosphereHaze01: atmosphereHaze01,
     presentationAtmosphereShellScale:
       atmospherePresent
-        ? 1.018 + 0.035 * atmosphereStrength01
+        ? atmosphereShellScale(atmosphereStrength01, atmosphereHaze01, input.atmosphereRegime, pressure)
         : 1,
     presentationBaseColorHex: rgbToHex(palette.base),
     presentationAccentColorHex: rgbToHex(palette.accent),
     presentationAtmosphereColorHex: rgbToHex(atmosphereColor),
     presentationSeedUint32: seed,
   });
+}
+
+
+function atmosphereShellScale(
+  atmosphereStrength01: number,
+  atmosphereHaze01: number,
+  regime: string,
+  pressurePascal: number | null | undefined,
+): number {
+  const denseResolvedBoost = pressurePascal !== null && pressurePascal !== undefined && pressurePascal >= 35000
+    ? 0.012
+    : 0;
+  const thinSuppression = regime === 'THIN' || regime === 'TRACE'
+    ? 0.002
+    : 0;
+  return clamp(
+    1.020 +
+      0.052 * atmosphereStrength01 +
+      0.026 * atmosphereHaze01 +
+      denseResolvedBoost -
+      thinSuppression,
+    1.018,
+    1.090,
+  );
+}
+
+function atmospherePalette(
+  accent: Rgb,
+  atmosphereSpecies: readonly { readonly gas: string; readonly moleFraction01: number }[],
+  temperatureKelvin: number,
+  aerosolScenario: number,
+): Rgb {
+  const neutralBase = temperatureKelvin < 220
+    ? { r: 173, g: 198, b: 211 }
+    : { r: 176, g: 197, b: 206 };
+  if (atmosphereSpecies.length === 0) {
+    return neutralBase;
+  }
+
+  const weighted = weightedAtmosphereColor(atmosphereSpecies, neutralBase);
+  let atmosphereColor = mixRgb(neutralBase, weighted, 0.56);
+  atmosphereColor = mixRgb(atmosphereColor, mixRgb(accent, weighted, 0.35), 0.22);
+
+  const co2Fraction = sumSpecies(atmosphereSpecies, ['CARBON_DIOXIDE', 'CO2']);
+  const sulfurFraction = sumSpecies(atmosphereSpecies, ['SULFUR_DIOXIDE', 'SO2', 'SULFUR_VAPOR']);
+  const ammoniaFraction = sumSpecies(atmosphereSpecies, ['AMMONIA', 'NH3']);
+  const waterFraction = sumSpecies(atmosphereSpecies, ['H2O', 'WATER_VAPOR']);
+
+  atmosphereColor = mixRgb(atmosphereColor, { r: 214, g: 174, b: 112 }, 0.40 * co2Fraction);
+  atmosphereColor = mixRgb(atmosphereColor, { r: 227, g: 190, b: 70 }, 0.46 * sulfurFraction);
+  atmosphereColor = mixRgb(atmosphereColor, { r: 198, g: 222, b: 170 }, 0.30 * ammoniaFraction);
+  atmosphereColor = mixRgb(atmosphereColor, { r: 214, g: 232, b: 246 }, 0.30 * waterFraction);
+  atmosphereColor = mixRgb(atmosphereColor, { r: 104, g: 202, b: 225 }, 0.42 * sumSpecies(atmosphereSpecies, ["METHANE", "CH4"]));
+  atmosphereColor = mixRgb(atmosphereColor, { r: 193, g: 150, b: 94 }, 0.46 * aerosolScenario);
+  return atmosphereColor;
+}
+
+function weightedAtmosphereColor(
+  atmosphereSpecies: readonly { readonly gas: string; readonly moleFraction01: number }[],
+  fallback: Rgb,
+): Rgb {
+  let total = 0;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  for (const species of atmosphereSpecies) {
+    const weight = clamp01(species.moleFraction01);
+    if (weight <= 0) {
+      continue;
+    }
+    const color = gasVisualColor(species.gas);
+    total += weight;
+    r += color.r * weight;
+    g += color.g * weight;
+    b += color.b * weight;
+  }
+  if (total <= 1e-6) {
+    return fallback;
+  }
+  return { r: r / total, g: g / total, b: b / total };
+}
+
+function gasVisualColor(gas: string): Rgb {
+  const normalized = gas.trim().toUpperCase();
+  if (['METHANE', 'CH4'].includes(normalized)) {
+    return { r: 98, g: 196, b: 220 };
+  }
+  if (['CARBON_DIOXIDE', 'CO2'].includes(normalized)) {
+    return { r: 214, g: 176, b: 112 };
+  }
+  if (['SULFUR_DIOXIDE', 'SO2', 'SULFUR_VAPOR'].includes(normalized)) {
+    return { r: 228, g: 191, b: 67 };
+  }
+  if (['AMMONIA', 'NH3'].includes(normalized)) {
+    return { r: 198, g: 223, b: 170 };
+  }
+  if (['H2O', 'WATER_VAPOR'].includes(normalized)) {
+    return { r: 217, g: 234, b: 247 };
+  }
+  if (['HYDROGEN', 'H2', 'HELIUM', 'HE'].includes(normalized)) {
+    return { r: 191, g: 208, b: 227 };
+  }
+  if (['NITROGEN', 'N2', 'OXYGEN', 'O2', 'ARGON', 'AR'].includes(normalized)) {
+    return { r: 178, g: 199, b: 210 };
+  }
+  return { r: 185, g: 194, b: 198 };
+}
+
+function sumSpecies(
+  atmosphereSpecies: readonly { readonly gas: string; readonly moleFraction01: number }[],
+  aliases: readonly string[],
+): number {
+  return atmosphereSpecies.reduce((sum, species) =>
+    sum + (aliases.includes(species.gas.trim().toUpperCase()) ? species.moleFraction01 : 0), 0);
 }
 
 function moonShapeClass(
@@ -315,25 +482,41 @@ function supportsGeneralizedSurfaceIceV1(
 function moonSurfaceStyle(
   input: SystemSceneMoonPresentationInputV1,
 ): SystemSceneMoonSurfaceStyleV1 {
+  const coldIceCrust = input.estimatedSurfaceTemperatureKelvin < 200 &&
+    input.inferredIceRichnessIndex01 >= 0.35;
+  const surfaceLiquidScenario = supportsLiquidSurfaceVisual(input);
+  const candidateSurfaceWater = supportsCandidateSurfaceWaterVisual(input);
   if (
-    input.geologyRegime === 'EXTREME' ||
+    !coldIceCrust &&
+    !(surfaceLiquidScenario || candidateSurfaceWater) &&
+    (input.geologyRegime === 'EXTREME' ||
     (
       input.geologyRegime === 'TIDALLY_ACTIVE' &&
       input.tidalHeatingIndex01 >= 0.66
-    )
+    ))
   ) {
     return 'VOLCANIC';
   }
 
   if (
-    input.waterRegime === 'SURFACE_LIQUID' ||
-    input.waterRegime === 'MIXED' ||
-    (
-      input.isOceanBearingGiantMoonCandidate &&
-      input.surfaceLiquidWaterPotentialIndex01 >= 0.35
+    (candidateSurfaceWater ||
+      (surfaceLiquidScenario && input.waterInventoryIndex01 >= 0.18)) && (
+      input.waterRegime === 'SURFACE_LIQUID' ||
+      input.waterRegime === 'MIXED' ||
+      input.surfaceLiquidWaterPotentialIndex01 >= 0.60 ||
+      (
+        input.isOceanBearingGiantMoonCandidate &&
+        input.surfaceLiquidWaterPotentialIndex01 >= 0.35
+      )
     )
   ) {
-    return 'OCEANIC';
+    // Candidate-only warm worlds may expose basins and volatile-altered rock,
+    // but the OCEANIC material implies persistent seas. Keep it MIXED until B
+    // resolves enough pressure. Scientific indices remain untouched.
+    if (!surfaceLiquidScenario) return 'MIXED';
+    return input.inferredIceRichnessIndex01 >= 0.45 || input.giantCompositionRegime === 'ICE_RICH'
+      ? 'MIXED'
+      : 'OCEANIC';
   }
 
   const supportsGeneralizedSurfaceIce =
@@ -359,6 +542,34 @@ function moonSurfaceStyle(
   }
 
   return 'ROCKY';
+}
+
+function supportsLiquidSurfaceVisual(input: SystemSceneMoonPresentationInputV1): boolean {
+  const kelvin = input.estimatedSurfaceTemperatureKelvin;
+  // Water ice/brines below the freezing point are not resolved by this visual
+  // projection; temperature and the equilibrium-pressure threshold must both
+  // be satisfied before painting persistent *liquid-water* seas.
+  if (kelvin < 273.15 || kelvin > 350) return false;
+  const pressure = input.atmosphereScenarioPressurePascal;
+  if (pressure === undefined || pressure === null) return false;
+  const saturationPa = 611.2 * Math.exp(17.62 * (kelvin - 273.15) / (kelvin - 30.03));
+  return pressure >= Math.max(611.657, saturationPa);
+}
+
+
+function supportsCandidateSurfaceWaterVisual(input: SystemSceneMoonPresentationInputV1): boolean {
+  if (input.atmosphereScenarioPressurePascal !== undefined && input.atmosphereScenarioPressurePascal !== null) {
+    return false;
+  }
+  const kelvin = input.estimatedSurfaceTemperatureKelvin;
+  if (kelvin < 268 || kelvin > 325) return false;
+  if (input.surfaceLiquidWaterPotentialIndex01 < 0.72) return false;
+  if (input.waterInventoryIndex01 < 0.42) return false;
+  return input.isOceanBearingGiantMoonCandidate ||
+    input.tidalHeatingIndex01 >= 0.42 ||
+    input.geologicalActivityIndex01 >= 0.52 ||
+    input.waterRegime === 'MIXED' ||
+    input.waterRegime === 'SURFACE_LIQUID';
 }
 
 function moonRadiusScene(

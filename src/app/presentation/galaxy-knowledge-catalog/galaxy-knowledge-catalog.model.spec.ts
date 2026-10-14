@@ -1,6 +1,8 @@
 import {
   galaxyKnowledgeCatalogCategoryDefinition,
   normalizeGalaxyKnowledgeCatalogQuery,
+  normalizeCatalogNameQuery,
+  catalogNameMatches,
   type GalaxyKnowledgeCatalogDescriptor,
 } from './galaxy-knowledge-catalog.model';
 
@@ -65,6 +67,19 @@ describe('26.1c.1 galaxy knowledge catalogue query contract', () => {
     expect(query.pageSize).toBe(25);
     expect(query.sortKey).toBe('designation');
     expect(query.direction).toBe('asc');
+  });
+
+  it('normalizes and matches a name across all catalogue pages, ignoring case and accents', () => {
+    const query = normalizeGalaxyKnowledgeCatalogQuery('extremes', descriptor, {
+      subtype: null, page: '7', pageSize: '25', sortKey: null,
+      direction: null, search: '  Áaeviar   B-6  I  ',
+    });
+    expect(query.search).toBe('Áaeviar B-6 I');
+    expect(query.page).toBe(7);
+    expect(catalogNameMatches('Aaeviar B-6 I', query.search)).toBe(true);
+    expect(catalogNameMatches('Otro cuerpo', query.search)).toBe(false);
+    expect(normalizeCatalogNameQuery('   ')).toBeNull();
+    expect(() => normalizeCatalogNameQuery('a'.repeat(121))).toThrowError(RangeError);
   });
 
   it('rejects malformed page and subtype route inputs', () => {

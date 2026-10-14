@@ -20,6 +20,7 @@ import { StellarSystemMultiplicitySelector } from '../../simulation/stellar/stel
 import { GENESIS_LOCAL_REPOSITORIES } from '../runtime/genesis-local-repositories';
 import { galaxyKnowledgeRevision } from '../runtime/galaxy-knowledge-snapshot.runtime';
 import {
+  catalogNameMatches,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -127,14 +128,16 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
         subtype,
         request.query.sortKey,
         request.query.direction,
+        request.query.search ?? null,
       ),
       record =>
-        subtype === null
+        catalogNameMatches(record.designation ?? 'Sistema detectado', request.query.search)
+        && (subtype === null
         || (subtype === 'UNCLASSIFIED'
           ? record.multiplicity === null
           : subtype === 'COMPACT' ? record.compactType !== null
           : compactSubtypeLabel(subtype) !== null ? record.compactType === subtype
-          : record.multiplicity?.name === subtype),
+          : record.multiplicity?.name === subtype)),
       (left, right) =>
         compareRecords(left, right, request.query.sortKey, request.query.direction),
     );

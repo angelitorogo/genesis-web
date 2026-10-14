@@ -242,6 +242,10 @@ export interface ScientificMoonPreviewVisual {
   readonly presentationAtmosphereStrength01:
     number;
 
+  /** Full frozen SystemScene presentation for visual parity with the fiche. */
+  readonly sourceMoonPresentation?:
+    import('../system/system-scene-moon-presentation').SystemSceneMoonPresentationV1;
+
   readonly presentationAtmosphereShellScale:
     number;
 
@@ -1087,6 +1091,8 @@ function moonVisual(
       visual.presentationAtmospherePresent,
     presentationAtmosphereStrength01:
       visual.presentationAtmosphereStrength01,
+    sourceMoonPresentation:
+      visual,
     presentationAtmosphereShellScale:
       visual.presentationAtmosphereShellScale,
     presentationBaseColorHex:

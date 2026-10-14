@@ -16,6 +16,7 @@ import {
   type GalaxyKnowledgePlanetMoonCatalogSnapshot,
 } from '../runtime/galaxy-planet-moon-catalog-snapshot.runtime';
 import {
+  catalogNameMatches,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -192,8 +193,9 @@ function planetPage(
   const subtype = normalizePlanetSubtype(request.query.subtype);
   const records = viewCache.resolve(
     snapshot.planets,
-    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction),
-    record => matchesPlanetFilter(record, subtype),
+    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null),
+    record => matchesPlanetFilter(record, subtype)
+      && catalogNameMatches(record.designation, request.query.search),
     (left, right) => comparePlanets(left, right, request.query.sortKey, request.query.direction),
   );
   return paginated(records, request, toPlanetRow);
@@ -207,8 +209,9 @@ function moonPage(
   const subtype = normalizeMoonSubtype(request.query.subtype);
   const records = viewCache.resolve(
     snapshot.moons,
-    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction),
-    record => matchesMoonFilter(record, subtype),
+    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null),
+    record => matchesMoonFilter(record, subtype)
+      && catalogNameMatches(record.designation, request.query.search),
     (left, right) => compareMoons(left, right, request.query.sortKey, request.query.direction),
   );
   return paginated(records, request, toMoonRow);

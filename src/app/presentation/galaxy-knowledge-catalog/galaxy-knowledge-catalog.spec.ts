@@ -128,6 +128,40 @@ describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
   });
 
 
+  it('submits a case-insensitive name filter and resets pagination while retaining sorting/subtype', async () => {
+    const fixture = TestBed.createComponent(GalaxyKnowledgeCatalogPage);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const input = root.querySelector('[data-testid="gkc-name-search"]') as HTMLInputElement;
+    input.value = '  Aaemoria  e  I ';
+    input.dispatchEvent(new Event('input'));
+    const form = root.querySelector('.gkc__search') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit', { cancelable: true }));
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({
+      queryParams: expect.objectContaining({
+        q: 'Aaemoria e I', page: '1', sort: 'designation', type: 'MAGNETAR',
+      }),
+    }));
+  });
+
+  it('preserves the name search on pagination and clears the filter explicitly', async () => {
+    facade.model.set({ ...model, query: { ...model.query, search: 'Aaeviar' } });
+    const fixture = TestBed.createComponent(GalaxyKnowledgeCatalogPage);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.pageQueryParams(3)).toEqual(expect.objectContaining({
+      q: 'Aaeviar', page: '3', type: 'MAGNETAR',
+    }));
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    (fixture.nativeElement.querySelector('[data-testid="gkc-search-clear"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({
+      queryParams: expect.objectContaining({ q: '', page: '1' }),
+    }));
+  });
+
+
   it('lets the user configure columns and remembers the choice within the category', () => {
     const fixture = TestBed.createComponent(GalaxyKnowledgeCatalogPage);
     fixture.detectChanges();

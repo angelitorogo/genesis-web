@@ -66,7 +66,7 @@ import {
 } from '../../data/local/entity/galaxy-knowledge-snapshot.entity';
 
 export const GALAXY_SCIENTIFIC_MODEL_VERSION =
-  15; // 31.5: canonical unique known-object views; invalidate derived counts/catalogues only.
+  16; // L.1: moon mass hierarchy changed; invalidate derived moon/census catalogues only.
 
 export interface GalaxyKnowledgeSnapshot {
   readonly knowledgeRevision: string;

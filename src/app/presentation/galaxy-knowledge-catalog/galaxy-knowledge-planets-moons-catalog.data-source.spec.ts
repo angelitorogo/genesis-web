@@ -199,6 +199,24 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     expect(resolve).toHaveBeenCalled();
   });
 
+  it('filters planet and moon names before pagination, keeping the known-only snapshot', async () => {
+    const base = { generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED } as const;
+    const query = { subtype: null, page: 5, pageSize: 25 as const, sortKey: 'designation', direction: 'asc' as const };
+    const planets = await source.query({ ...base, query: { ...query, category: 'planets', search: 'ASTERION C' } });
+    if (planets.kind !== 'page') throw new Error('Expected planet page.');
+    expect(planets.page.totalItems).toBe(1);
+    expect(planets.page.page).toBe(1);
+    expect(planets.page.items.map(item => item.title)).toEqual(['Asterion c']);
+    const moons = await source.query({ ...base, query: { ...query, category: 'moons', search: 'c i' } });
+    if (moons.kind !== 'page') throw new Error('Expected moon page.');
+    expect(moons.page.totalItems).toBe(1);
+    expect(moons.page.items[0]!.title).toBe('Asterion c I');
+    const noMatch = await source.query({ ...base, query: { ...query, category: 'moons', search: 'Aaemoria' } });
+    if (noMatch.kind !== 'page') throw new Error('Expected moon page.');
+    expect(noMatch.page.totalItems).toBe(0);
+    expect(getKnownDiscoveries).not.toHaveBeenCalled();
+  });
+
   it('displays Celsius while temperature ordering still follows scientific Kelvin values', async () => {
     const result = await source.query({
       generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,

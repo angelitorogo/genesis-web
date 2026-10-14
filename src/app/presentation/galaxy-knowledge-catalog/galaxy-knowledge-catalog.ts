@@ -44,6 +44,7 @@ import {
 export class GalaxyKnowledgeCatalogPage implements OnInit {
   readonly facade = inject(GalaxyKnowledgeCatalogFacade);
   readonly pageSizes = GALAXY_KNOWLEDGE_CATALOG_PAGE_SIZES;
+  searchDraft = '';
 
   private readonly columnSelection = signal<Readonly<{
     category: string;
@@ -80,6 +81,11 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
     });
   });
 
+  private readonly syncSearch = effect(() => {
+    const search = this.facade.model()?.query.search ?? '';
+    untracked(() => { this.searchDraft = search; });
+  });
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -101,9 +107,26 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
             pageSize: queryParams.get('size'),
             sortKey: queryParams.get('sort'),
             direction: queryParams.get('direction'),
+            search: queryParams.get('q'),
           },
         );
       });
+  }
+
+  updateSearchDraft(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    if (input !== null) this.searchDraft = input.value;
+  }
+
+  async submitSearch(event: Event): Promise<void> {
+    event.preventDefault();
+    const query = this.searchDraft.trim().replace(/\s+/gu, ' ').slice(0, 120);
+    await this.navigateQuery({ q: query, page: '1' });
+  }
+
+  async clearSearch(): Promise<void> {
+    this.searchDraft = '';
+    await this.navigateQuery({ q: '', page: '1' });
   }
 
   async changeSort(event: Event): Promise<void> {
@@ -230,6 +253,9 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
       sort: model.query.sortKey,
       direction: model.query.direction,
     };
+    if (model.query.search) {
+      params['q'] = model.query.search;
+    }
     if (model.query.subtype !== null) {
       params['type'] = model.query.subtype;
     }

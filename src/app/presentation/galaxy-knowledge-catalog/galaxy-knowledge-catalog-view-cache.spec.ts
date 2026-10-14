@@ -26,6 +26,20 @@ describe('26.1c.7 GalaxyKnowledgeCatalogViewCache', () => {
     expect(compare).toHaveBeenCalledTimes(compareCalls);
   });
 
+  it('separates name searches but reuses the same cached view during pagination', () => {
+    const source = Object.freeze(['Aaeviar I', 'Nuvus II', 'Aaeviar II']);
+    const cache = new GalaxyKnowledgeCatalogViewCache<string>();
+    const filter = vi.fn((title: string) => title.includes('Aaeviar'));
+    const compare = (a: string, b: string) => a.localeCompare(b);
+    const first = cache.resolve(source, galaxyKnowledgeCatalogViewKey(null, 'designation', 'asc', 'Aaeviar'), filter, compare);
+    const nextPage = cache.resolve(source, galaxyKnowledgeCatalogViewKey(null, 'designation', 'asc', 'Aaeviar'), filter, compare);
+    expect(nextPage).toBe(first);
+    expect(filter).toHaveBeenCalledTimes(3);
+    const otherSearch = cache.resolve(source, galaxyKnowledgeCatalogViewKey(null, 'designation', 'asc', 'Nuvus'), () => true, compare);
+    expect(otherSearch).not.toBe(first);
+    expect(otherSearch).toHaveLength(3);
+  });
+
   it('invalidates when source identity or filter/sort key changes', () => {
     const cache = new GalaxyKnowledgeCatalogViewCache<number>();
     const predicate = vi.fn((value: number) => value > 0);

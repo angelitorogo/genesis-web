@@ -80,6 +80,27 @@
             {{ model.descriptor.description }}
           </p>
 
+          <form class="gkc__search" (submit)="submitSearch($event)" role="search" aria-label="Buscar por nombre en el catálogo activo">
+            <label for="gkc-search-input">BUSCAR POR NOMBRE</label>
+            <div class="gkc__search-controls">
+              <input
+                id="gkc-search-input"
+                type="search"
+                maxlength="120"
+                autocomplete="off"
+                [value]="searchDraft"
+                (input)="updateSearchDraft($event)"
+                [placeholder]="'Nombre de ' + model.descriptor.title.toLocaleLowerCase('es')"
+                data-testid="gkc-name-search"
+              />
+              <button type="submit" data-testid="gkc-search-submit">Buscar</button>
+              @if (model.query.search) {
+                <button type="button" (click)="clearSearch()" data-testid="gkc-search-clear">Limpiar</button>
+              }
+            </div>
+            <small>Busca en todos los objetos conocidos de este catálogo, no solo en la página actual.</small>
+          </form>
+
           <section class="gkc__toolbar" aria-label="Ordenación y paginación del catálogo">
             <label>
               <span>ORDENAR POR</span>
@@ -159,7 +180,7 @@
           } @else {
             <section class="gkc__page-meta" data-testid="gkc-page-meta">
               <span>
-                {{ formatCount(model.data.page.totalItems) }} objetos conocidos
+                {{ formatCount(model.data.page.totalItems) }} {{ model.query.search ? 'resultados por nombre' : 'objetos conocidos' }}
               </span>
               <span>
                 Página {{ model.data.page.page }} / {{ model.data.page.totalPages }}

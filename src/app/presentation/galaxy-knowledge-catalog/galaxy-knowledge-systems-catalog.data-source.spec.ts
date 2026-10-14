@@ -159,6 +159,15 @@ describe('26.1c.2 GalaxyKnowledgeSystemsCatalogDataSource', () => {
     if (unclassifiedResult.kind !== 'page') throw new Error('Expected unclassified systems page.');
     expect(unclassifiedResult.page.totalItems).toBe(1);
     expect(unclassifiedResult.page.items[0]?.title).toBe('Sistema detectado');
+    const searched = await source.query({
+      generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+      query: { category: 'systems', subtype: 'UNCLASSIFIED', page: 4, pageSize: 25,
+        sortKey: 'designation', direction: 'asc', search: 'sistema detectado' },
+    });
+    if (searched.kind !== 'page') throw new Error('Expected search results.');
+    expect(searched.page.totalItems).toBe(1);
+    expect(searched.page.page).toBe(1);
+
     expect(unclassifiedResult.page.items[0]?.cells['multiplicity']).toBe('Sin clasificar');
 
     expect(getKnownDiscoveriesInGalaxy).toHaveBeenCalledWith(

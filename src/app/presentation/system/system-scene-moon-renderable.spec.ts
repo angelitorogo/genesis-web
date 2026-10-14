@@ -50,6 +50,7 @@ describe(
         expect(renderable.root.children).toHaveLength(1);
         const surface = renderable.root.children[0] as THREE.Mesh;
         expect(surface.geometry).toBeInstanceOf(THREE.SphereGeometry);
+        expect(renderable.surfaceMaterial.bumpMap).toBeInstanceOf(THREE.DataTexture);
 
         for (const resource of renderable.resources) {
           resource.dispose();
@@ -69,6 +70,8 @@ describe(
           surfaceGravityEarth: 0.28,
           atmosphereRetentionIndex01: 0.60,
           atmosphereRegime: 'SUBSTANTIAL',
+          atmosphereScenarioPressurePascal: 40000,
+          atmosphereScenarioSpecies: [{ gas: 'WATER_VAPOR', moleFraction01: 0.04 }, { gas: 'NITROGEN', moleFraction01: 0.96 }],
           waterInventoryIndex01: 0.76,
           inferredIceRichnessIndex01: 0.40,
           subsurfaceOceanPotentialIndex01: 0.80,
@@ -88,7 +91,7 @@ describe(
         });
 
         const renderable = createSystemSceneMoonRenderableV1(presentation);
-        expect(renderable.root.children.length).toBe(3);
+        expect(renderable.root.children.length).toBeGreaterThanOrEqual(3);
         const surface = renderable.root.children[0] as THREE.Mesh;
         expect(surface.geometry).toBeInstanceOf(THREE.SphereGeometry);
         expect(
@@ -101,6 +104,60 @@ describe(
             child => child.name.includes('atmosphere shell'),
           ),
         ).toBe(true);
+        // D.3a deliberately uses a single atmospheric shell, not two concentric rims.
+        expect(renderable.root.children.filter(child => child.name.includes('atmosphere shell'))).toHaveLength(1);
+        expect(renderable.root.children.some(child => child.name.includes('atmosphere haze'))).toBe(false);
+
+        for (const resource of renderable.resources) {
+          resource.dispose();
+        }
+      },
+    );
+
+
+
+    it(
+      'should render cold resolved haze in the same graded shell even when clouds are absent',
+      () => {
+        const presentation = buildSystemSceneMoonPresentationV1({
+          moonIdentity: 'MOON-RENDER-HAZE',
+          hostPlanetType: 'ICE_GIANT',
+          radiusEarth: 0.32,
+          massEarth: 0.024,
+          meanDensityGramsPerCubicCentimeter: 1.8,
+          surfaceGravityEarth: 0.16,
+          atmosphereRetentionIndex01: 0.72,
+          atmosphereRegime: 'SUBSTANTIAL',
+          atmosphereScenarioPressurePascal: 52000,
+          atmosphereScenarioSpecies: [{ gas: 'METHANE', moleFraction01: 0.5 }, { gas: 'NITROGEN', moleFraction01: 0.5 }],
+          waterInventoryIndex01: 0.82,
+          inferredIceRichnessIndex01: 0.90,
+          subsurfaceOceanPotentialIndex01: 0.68,
+          surfaceLiquidWaterPotentialIndex01: 0,
+          waterRegime: 'SURFACE_ICE',
+          estimatedSurfaceTemperatureKelvin: 92,
+          geologicalActivityIndex01: 0.16,
+          tidalHeatingIndex01: 0.08,
+          geologyRegime: 'LOW_ACTIVITY',
+          overallHabitabilityIndex01: 0.12,
+          isPotentiallyHabitable: false,
+          giantHostSpecialization: true,
+          giantCompositionRegime: 'ICE_RICH',
+          isLargeGiantMoon: true,
+          isTidallyActiveGiantMoon: false,
+          isOceanBearingGiantMoonCandidate: true,
+        });
+
+        const renderable = createSystemSceneMoonRenderableV1(presentation);
+        const shells = renderable.root.children.filter(child => child.name.includes('atmosphere shell'));
+        expect(shells).toHaveLength(1);
+        expect((shells[0] as THREE.Mesh).material).toBeInstanceOf(THREE.ShaderMaterial);
+        expect(((shells[0] as THREE.Mesh).material as THREE.ShaderMaterial).uniforms['uGenesisMoonAtmosphereHaze'].value).toBeGreaterThan(0);
+        expect(
+          renderable.root.children.some(
+            child => child.name.includes('clouds'),
+          ),
+        ).toBe(false);
 
         for (const resource of renderable.resources) {
           resource.dispose();
@@ -151,9 +208,38 @@ describe(
           resource.dispose();
         }
         expect(cache.stats().leasedEntryCount).toBe(0);
+        expect(first.surfaceMaterial.bumpMap).toBe(second.surfaceMaterial.bumpMap);
         cache.dispose();
       },
     );
+
+    it('should not reuse a D texture if the physical visual inputs change under the same identity', () => {
+      const moon = buildSystemSceneMoonPresentationV1({
+        moonIdentity: 'MOON-D-CACHE-CHANGED', hostPlanetType: 'ICE_GIANT',
+        radiusEarth: 0.25, massEarth: 0.013,
+        meanDensityGramsPerCubicCentimeter: 2.1, surfaceGravityEarth: 0.18,
+        atmosphereRetentionIndex01: 0.1, atmosphereRegime: 'NONE',
+        atmosphereScenarioPressurePascal: null,
+        waterInventoryIndex01: 0.58, inferredIceRichnessIndex01: 0.62,
+        subsurfaceOceanPotentialIndex01: 0.5, surfaceLiquidWaterPotentialIndex01: 0,
+        waterRegime: 'SURFACE_ICE', estimatedSurfaceTemperatureKelvin: 94,
+        geologicalActivityIndex01: 0.1, tidalHeatingIndex01: 0.2,
+        geologyRegime: 'LOW_ACTIVITY', overallHabitabilityIndex01: 0.1,
+        isPotentiallyHabitable: false, giantHostSpecialization: true,
+        giantCompositionRegime: 'ICE_RICH', isLargeGiantMoon: true,
+        isTidallyActiveGiantMoon: false, isOceanBearingGiantMoonCandidate: false,
+      });
+      const cache = new SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1>(4, 1024 * 1024);
+      const before = createSystemSceneMoonRenderableV1(moon, cache);
+      const after = createSystemSceneMoonRenderableV1(Object.freeze({
+        ...moon, presentationIceCoverage01: 0.12,
+      }), cache);
+      expect(cache.stats().cachedEntryCount).toBe(2);
+      expect(before.surfaceMaterial.map).not.toBe(after.surfaceMaterial.map);
+      for (const resource of before.resources) resource.dispose();
+      for (const resource of after.resources) resource.dispose();
+      cache.dispose();
+    });
 
     it(
       'should accept a shared unit sphere for regular moons so runtime LOD can swap pooled geometry without per-moon allocation',

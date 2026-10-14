@@ -59,6 +59,8 @@ describe(
           surfaceGravityEarth: 0.26,
           atmosphereRetentionIndex01: 0.58,
           atmosphereRegime: 'SUBSTANTIAL',
+          atmosphereScenarioPressurePascal: 40000,
+          atmosphereScenarioSpecies: [{ gas: 'WATER_VAPOR', moleFraction01: 0.04 }, { gas: 'NITROGEN', moleFraction01: 0.96 }],
           waterInventoryIndex01: 0.72,
           inferredIceRichnessIndex01: 0.42,
           subsurfaceOceanPotentialIndex01: 0.82,
@@ -82,6 +84,7 @@ describe(
         expect(moon.presentationLiquidCoverage01).toBeGreaterThan(0.3);
         expect(moon.presentationCloudCoverage01).toBeGreaterThan(0.1);
         expect(moon.presentationAtmospherePresent).toBe(true);
+        expect(moon.presentationAtmosphereHaze01 ?? 0).toBeGreaterThan(0.05);
         expect(moon.sourceIsPotentiallyHabitable).toBe(true);
         expect('life' in moon).toBe(false);
         expect('biosphere' in moon).toBe(false);
@@ -125,6 +128,39 @@ describe(
         expect(icy.presentationIceCoverage01).toBeGreaterThan(0.5);
         expect(volcanic.surfaceStyle).toBe('VOLCANIC');
         expect(volcanic.presentationVolcanicCoverage01).toBeGreaterThan(0.5);
+      },
+    );
+
+
+    it(
+      'should project a cold resolved gas column as a hazy atmospheric moon rather than a naked ice ball',
+      () => {
+        const moon = buildSystemSceneMoonPresentationV1({
+          ...base,
+          moonIdentity: 'MOON-25-10-HAZE',
+          hostPlanetType: 'ICE_GIANT',
+          radiusEarth: 0.31,
+          massEarth: 0.022,
+          atmosphereRetentionIndex01: 0.72,
+          atmosphereRegime: 'SUBSTANTIAL',
+          atmosphereScenarioPressurePascal: 56000,
+          atmosphereScenarioSpecies: [{ gas: 'METHANE', moleFraction01: 0.5 }, { gas: 'NITROGEN', moleFraction01: 0.5 }],
+          waterInventoryIndex01: 0.88,
+          inferredIceRichnessIndex01: 0.91,
+          subsurfaceOceanPotentialIndex01: 0.77,
+          waterRegime: 'SURFACE_ICE',
+          estimatedSurfaceTemperatureKelvin: 88,
+          geologicalActivityIndex01: 0.18,
+          giantHostSpecialization: true,
+          giantCompositionRegime: 'ICE_RICH',
+          isLargeGiantMoon: true,
+          isOceanBearingGiantMoonCandidate: true,
+        });
+
+        expect(moon.surfaceStyle).toBe('ICY');
+        expect(moon.presentationAtmospherePresent).toBe(true);
+        expect(moon.presentationAtmosphereHaze01 ?? 0).toBeGreaterThan(0.45);
+        expect(moon.presentationCloudCoverage01).toBe(0);
       },
     );
 

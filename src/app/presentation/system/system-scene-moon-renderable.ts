@@ -24,6 +24,7 @@ export interface SystemSceneMoonRenderableV1 {
 export interface SystemSceneMoonTextureResourceV1 {
   readonly textureData: ReturnType<typeof buildSystemSceneMoonTextureV1>;
   readonly albedo: THREE.DataTexture;
+  readonly relief: THREE.DataTexture;
   readonly emissive: THREE.DataTexture | null;
   readonly clouds: THREE.DataTexture | null;
   dispose(): void;
@@ -57,11 +58,47 @@ export function createSystemSceneMoonRenderableV1(
     resources.push(geometry);
   }
 
-  const materialOptions: THREE.MeshStandardMaterialParameters = {
+  // D.3f — a bare moon must not acquire an artificial limb from the physical
+  // material's Fresnel/clearcoat response. Resolved atmospheres keep D.3e's
+  // separate enclosing shell and icy/wet surfaces keep their specular relief.
+  const bareSurface = !moon.presentationAtmospherePresent &&
+    moon.presentationLiquidCoverage01 < 0.01;
+  const materialOptions: THREE.MeshPhysicalMaterialParameters = {
     color: 0xffffff,
     map: albedo,
-    roughness: moon.surfaceStyle === 'OCEANIC' ? 0.62 : moon.surfaceStyle === 'ICY' ? 0.72 : 0.91,
-    metalness: 0.005,
+    bumpMap: textureResource.relief,
+    roughnessMap: textureResource.relief,
+    bumpScale: moon.presentationRadiusScene * (
+      moon.shapeClass === 'MINOR_IRREGULAR'
+        ? 0.056
+        : moon.surfaceStyle === 'ICY'
+          ? 0.041
+          : moon.surfaceStyle === 'MIXED'
+            ? 0.038
+            : 0.033
+    ),
+    roughness: bareSurface ? 0.94 : moon.surfaceStyle === 'OCEANIC'
+      ? 0.28
+      : moon.surfaceStyle === 'ICY'
+        ? 0.64
+        : moon.surfaceStyle === 'VOLCANIC'
+          ? 0.88
+          : moon.surfaceStyle === 'MIXED'
+            ? 0.76
+            : 0.86,
+    metalness: bareSurface ? 0 : moon.surfaceStyle === 'OCEANIC' ? 0.03 : 0.005,
+    specularIntensity: bareSurface ? 0.16 : 1,
+    clearcoat: bareSurface ? 0 : moon.surfaceStyle === 'OCEANIC'
+      ? 0.34
+      : moon.presentationLiquidCoverage01 > 0.06 || moon.surfaceStyle === 'ICY'
+        ? 0.14
+        : 0.04,
+    clearcoatRoughness: moon.surfaceStyle === 'OCEANIC'
+      ? 0.18
+      : moon.surfaceStyle === 'ICY'
+        ? 0.42
+        : 0.58,
+    ior: moon.surfaceStyle === 'OCEANIC' ? 1.38 : 1.24,
   };
 
   if (textureData.emissiveRgba !== null) {
@@ -74,7 +111,7 @@ export function createSystemSceneMoonRenderableV1(
     }
   }
 
-  const surfaceMaterial = new THREE.MeshStandardMaterial(materialOptions);
+  const surfaceMaterial = new THREE.MeshPhysicalMaterial(materialOptions);
   resources.push(surfaceMaterial);
 
   const root = new THREE.Group();
@@ -111,10 +148,12 @@ export function createSystemSceneMoonRenderableV1(
   }
 
   if (moon.presentationAtmospherePresent) {
+    // One graded shell for both limb scattering and in-disc haze. The earlier
+    // front + back concentric shells produced a conspicuous double outline.
     const atmosphereGeometry = new THREE.SphereGeometry(
       moon.presentationRadiusScene * moon.presentationAtmosphereShellScale,
+      48,
       32,
-      22,
     );
     const atmosphereMaterial = new THREE.ShaderMaterial({
       uniforms: {
@@ -124,20 +163,23 @@ export function createSystemSceneMoonRenderableV1(
         uGenesisMoonAtmosphereStrength: {
           value: moon.presentationAtmosphereStrength01,
         },
+        uGenesisMoonAtmosphereHaze: {
+          value: moon.presentationAtmosphereHaze01 ?? 0,
+        },
       },
       vertexShader: MOON_ATMOSPHERE_VERTEX_SHADER_V1,
       fragmentShader: MOON_ATMOSPHERE_FRAGMENT_SHADER_V1,
       transparent: true,
       depthWrite: false,
       depthTest: true,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
+      side: THREE.FrontSide,
+      blending: THREE.NormalBlending,
       toneMapped: false,
     });
-    atmosphereMaterial.name = 'GENESIS moon atmosphere 25.10';
+    atmosphereMaterial.name = 'GENESIS moon atmosphere graded D3d';
     const atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-    atmosphereMesh.name = 'GENESIS moon atmosphere shell 25.10';
-    atmosphereMesh.renderOrder = 4;
+    atmosphereMesh.name = 'GENESIS moon atmosphere shell D3d';
+    atmosphereMesh.renderOrder = 3;
     root.add(atmosphereMesh);
     resources.push(atmosphereGeometry, atmosphereMaterial);
   }
@@ -166,6 +208,7 @@ void main() {
 export const MOON_ATMOSPHERE_FRAGMENT_SHADER_V1 = `
 uniform vec3 uGenesisMoonAtmosphereColor;
 uniform float uGenesisMoonAtmosphereStrength;
+uniform float uGenesisMoonAtmosphereHaze;
 
 varying vec3 vGenesisMoonNormalView;
 varying vec3 vGenesisMoonViewDirection;
@@ -173,22 +216,53 @@ varying vec3 vGenesisMoonViewDirection;
 void main() {
   vec3 genesisNormal = normalize(vGenesisMoonNormalView);
   vec3 genesisView = normalize(vGenesisMoonViewDirection);
-  float genesisFresnel = pow(clamp(1.0 - abs(dot(genesisNormal, genesisView)), 0.0, 1.0), 2.25);
-  float genesisAlpha = clamp(genesisFresnel * (0.10 + 0.48 * uGenesisMoonAtmosphereStrength), 0.0, 0.58);
+  float facing = clamp(dot(genesisNormal, genesisView), 0.0, 1.0);
+
+  // D.3e — the atmosphere must visibly wrap around the moon rather than read
+  // as a thin artificial ring. We combine a broad horizon halo, a soft mid-
+  // shell shoulder and a light frontal veil so the body stays readable.
+  float horizon = 1.0 - facing;
+  float discGate = smoothstep(0.02, 0.42, facing);
+  float interior = pow(facing, 0.56);
+  float wideHalo = pow(horizon, 1.10);
+  float tightHalo = pow(horizon, 2.45);
+  float hazeMix = clamp(0.20 + 0.80 * uGenesisMoonAtmosphereHaze, 0.0, 1.0);
+  float wrapHalo = mix(wideHalo, tightHalo, 0.18 + 0.24 * hazeMix);
+  float midShell = smoothstep(0.16, 0.88, horizon) * (1.0 - smoothstep(0.78, 1.0, horizon));
+  float edgeBoost = smoothstep(0.38, 1.0, horizon);
+  float halo = (0.18 + 0.74 * uGenesisMoonAtmosphereStrength) *
+    wrapHalo * (0.88 + 0.54 * uGenesisMoonAtmosphereHaze);
+  float shoulder = (0.04 + 0.24 * uGenesisMoonAtmosphereStrength +
+    0.20 * uGenesisMoonAtmosphereHaze) * midShell;
+  float veil = (0.016 + 0.072 * uGenesisMoonAtmosphereStrength +
+    0.082 * uGenesisMoonAtmosphereHaze) * (0.30 + 0.70 * interior);
+  // D.3f: trace-pressure gas must not inherit a bright D.3e limb from the
+  // base shader constants; scattering fades with available column strength.
+  float columnFade = smoothstep(0.0, 0.58, uGenesisMoonAtmosphereStrength);
+  float genesisAlpha = clamp((
+    halo * (0.70 + 0.30 * edgeBoost) +
+    shoulder +
+    veil * discGate
+  ) * columnFade, 0.0, 0.84);
   gl_FragColor = vec4(uGenesisMoonAtmosphereColor, genesisAlpha);
 }
 `;
-
-
 function moonTextureLease(
   moon: SystemSceneMoonPresentationV1,
   cache: SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1> | null,
 ): SystemSceneResourceLeaseV1<SystemSceneMoonTextureResourceV1> {
-  const key = `${moon.sourceMoonIdentity}|${moon.presentationSeedUint32}|25.11`;
+  const key = [moon.sourceMoonIdentity, moon.presentationSeedUint32, 'D3f',
+    moon.shapeClass, moon.surfaceStyle, moon.presentationBaseColorHex, moon.presentationAccentColorHex,
+    moon.presentationIceCoverage01, moon.presentationLiquidCoverage01,
+    moon.presentationVolcanicCoverage01, moon.presentationCloudCoverage01,
+    moon.sourceInferredIceRichnessIndex01, moon.sourceGeologicalActivityIndex01,
+    moon.sourceTidalHeatingIndex01, moon.sourceRadiusEarth,
+    moon.sourceSurfaceGravityEarth, moon.sourceIceShellThermalRegime,
+    moon.sourceCryovolcanismScenario].join('|');
   if (cache !== null) {
     return cache.acquire(
       key,
-      128 * 64 * 4 * 3,
+      (moon.shapeClass === 'MAJOR_PLANETARY' ? 192 * 96 : 128 * 64) * 4 * 4,
       () => createMoonTextureResource(moon),
     );
   }
@@ -218,6 +292,13 @@ function createMoonTextureResource(
     textureData.albedoRgba,
     'GENESIS cached moon albedo 25.11',
   );
+  const relief = dataTexture(
+    textureData.width,
+    textureData.height,
+    textureData.reliefRgba,
+    'GENESIS cached moon relief D',
+    false,
+  );
   const emissive = textureData.emissiveRgba === null
     ? null
     : dataTexture(
@@ -239,6 +320,7 @@ function createMoonTextureResource(
   return Object.freeze({
     textureData,
     albedo,
+    relief,
     emissive,
     clouds,
     dispose: () => {
@@ -247,6 +329,7 @@ function createMoonTextureResource(
       }
       disposed = true;
       albedo.dispose();
+      relief.dispose();
       emissive?.dispose();
       clouds?.dispose();
     },
@@ -330,6 +413,7 @@ function dataTexture(
   height: number,
   rgba: Uint8Array,
   name: string,
+  srgb = true,
 ): THREE.DataTexture {
   const texture = new THREE.DataTexture(
     rgba,
@@ -339,7 +423,7 @@ function dataTexture(
     THREE.UnsignedByteType,
   );
   texture.name = name;
-  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.ClampToEdgeWrapping;
   texture.magFilter = THREE.LinearFilter;

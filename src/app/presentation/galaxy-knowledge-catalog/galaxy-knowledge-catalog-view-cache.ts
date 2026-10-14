@@ -34,6 +34,7 @@ export function galaxyKnowledgeCatalogViewKey(
   subtype: string | null,
   sortKey: string,
   direction: string,
+  search: string | null = null,
 ): string {
-  return JSON.stringify([subtype, sortKey, direction]);
+  return JSON.stringify([subtype, sortKey, direction, search]);
 }

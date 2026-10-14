@@ -177,6 +177,24 @@ describe('26.1c.5 GalaxyKnowledgeMinorBodiesCatalogDataSource', () => {
     expect(getKnownDiscoveries).not.toHaveBeenCalled();
   });
 
+  it('searches the designation of each minor-body category before pagination', async () => {
+    const names = [
+      ['asteroids', 'ast-1', 'AST-1'], ['comets', 'com-1', 'COM-1'],
+      ['tno', 'tno-1', 'TNO-1'], ['captured', 'cap-1', 'CAP-1'],
+    ] as const;
+    for (const [category, search, expected] of names) {
+      const result = await source.query({
+        generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED,
+        query: { category, subtype: null, page: 9, pageSize: 25,
+          sortKey: 'designation', direction: 'asc', search },
+      });
+      if (result.kind !== 'page') throw new Error(`Expected ${category} page.`);
+      expect(result.page.totalItems).toBe(1);
+      expect(result.page.page).toBe(1);
+      expect(result.page.items[0]!.title).toBe(expected);
+    }
+  });
+
   it('supports TNO dwarf-scale and captured-origin filters', async () => {
     const tno = await source.query({
       generationKey,

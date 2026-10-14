@@ -1,3 +1,5 @@
+import { type MoonAtmosphereAssessment } from './moon-atmosphere-assessment';
+import { type MoonInternalWaterAssessment } from './moon-internal-water-assessment';
 import {
   MoonAtmosphereRegime,
   moonAtmosphereRegimeForRetentionIndex01,
@@ -90,6 +92,10 @@ export class MoonEnvironmentState {
 
     readonly geologyRegime:
       MoonGeologyRegime,
+
+    readonly atmosphereAssessment: MoonAtmosphereAssessment | null = null,
+
+    readonly internalWaterAssessment: MoonInternalWaterAssessment | null = null,
   ) {
     assertPositiveInteger(
       hostPlanetOrdinal,

@@ -2150,6 +2150,13 @@ export class ScientificBodyPreview
 function moonPresentation(
   moon: ScientificMoonPreviewVisual,
 ): SystemSceneMoonPresentationV1 {
+  // D.3: the scientific fiche must use the exact immutable SystemScene
+  // appearance. Reconstructing its scientific inputs with zero placeholders
+  // incorrectly erased morphology and atmospheric chemistry.
+  if (moon.sourceMoonPresentation !== undefined) {
+    return moon.sourceMoonPresentation;
+  }
+  // Backward-compatible older scientific-preview fixtures.
   return Object.freeze({
     version: 1 as const,
     sourceMoonIdentity: moon.title,

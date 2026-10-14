@@ -207,6 +207,17 @@ describe('26.1c.4 GalaxyKnowledgeGalacticObjectsCatalogDataSource', () => {
     if (unclassified.kind !== 'page') throw new Error('Expected extreme page.');
     expect(unclassified.page.totalItems).toBe(1);
     expect(unclassified.page.items[0]?.title).toBe('Fuente extrema en caracterización');
+
+    const byName = await source.query({
+      ...request('extremes', null),
+      query: { ...request('extremes', null).query, search: 'MAGNETAR', page: 8 },
+    });
+    if (byName.kind !== 'page') throw new Error('Expected searched extremes.');
+    expect(byName.page.totalItems).toBe(1);
+    expect(byName.page.page).toBe(1);
+    expect(byName.page.items[0]!.title).toBe('Magnetar');
+    // The DISCOVERED object cannot become a searchable magnetar solely from ground truth.
+
     expect(unclassified.page.items[0]?.cells['type']).toBe('Sin clasificar');
   });
 

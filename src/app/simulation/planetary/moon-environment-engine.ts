@@ -1,3 +1,5 @@
+import { MoonAtmosphereEngine } from './moon-atmosphere-engine';
+import { MoonInternalWaterEngine } from './moon-internal-water-engine';
 import {
   moonAtmosphereRegimeForRetentionIndex01,
 } from '../../domain/planetary/moon-atmosphere-regime';
@@ -299,6 +301,20 @@ export class MoonEnvironmentEngine {
         geologicalActivityIndex01,
         tidalState
           .tidalHeatingIndex01,
+      ),
+      MoonAtmosphereEngine.assess(
+        physical,
+        tidalState,
+        estimatedSurfaceTemperatureKelvin,
+        inferredIceRichnessIndex01,
+        sourceReferenceMeanInsolationEarth,
+      ),
+      MoonInternalWaterEngine.assess(
+        physical,
+        tidalState,
+        estimatedSurfaceTemperatureKelvin,
+        inferredIceRichnessIndex01,
+        waterInventoryIndex01,
       ),
     );
   }

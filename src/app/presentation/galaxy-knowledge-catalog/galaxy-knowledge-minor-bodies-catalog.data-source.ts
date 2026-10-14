@@ -18,6 +18,7 @@ import {
   type GalaxyKnowledgeMinorBodyCatalogSnapshot,
 } from '../runtime/galaxy-minor-body-catalog-snapshot.runtime';
 import {
+  catalogNameMatches,
   type GalaxyKnowledgeCatalogDataRequest,
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
@@ -89,8 +90,10 @@ export class GalaxyKnowledgeMinorBodiesCatalogDataSource {
         request.query.subtype,
         request.query.sortKey,
         request.query.direction,
+        request.query.search ?? null,
       ),
-      record => matchesSubtype(category, record, request.query.subtype),
+      record => matchesSubtype(category, record, request.query.subtype)
+        && catalogNameMatches(record.designation, request.query.search),
       (left, right) => compareRecords(
         left,
         right,

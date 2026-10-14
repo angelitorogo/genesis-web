@@ -128,6 +128,12 @@ export function appendSystemSceneMultihostCircumbinary(
         surfaceGravityEarth: moon.physicalProperties.surfaceGravityEarth,
         atmosphereRetentionIndex01: moon.environmentState.atmosphereRetentionIndex01,
         atmosphereRegime: String(moon.environmentState.atmosphereRegime),
+        atmosphereScenarioPressurePascal: moon.environmentState.atmosphereAssessment?.estimatedSurfacePressurePascal ?? null,
+          atmosphereScenarioSpecies: moon.environmentState.atmosphereAssessment?.species.map(s => ({
+            gas: String(s.gas), moleFraction01: s.moleFraction01,
+          })) ?? [],
+          iceShellThermalRegime: moon.environmentState.internalWaterAssessment?.iceShellThermalRegime ?? null,
+          cryovolcanismScenario: moon.environmentState.internalWaterAssessment?.cryovolcanism ?? null,
         waterInventoryIndex01: moon.environmentState.waterInventoryIndex01,
         inferredIceRichnessIndex01: moon.environmentState.inferredIceRichnessIndex01,
         subsurfaceOceanPotentialIndex01: moon.environmentState.subsurfaceOceanPotentialIndex01,

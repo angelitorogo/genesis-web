@@ -1,3 +1,5 @@
+import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
+import { type MoonAtmosphereAssessment } from '../../domain/planetary/moon-atmosphere-assessment';
 import {
   type BodyLocator,
 } from '../../domain/generation/procedural-locator';
@@ -88,6 +90,8 @@ export interface MoonScientificDetailSource {
       estimatedSurfaceTemperatureKelvin: number;
       atmosphereRetentionIndex01: number;
       atmosphereRegime: string;
+      atmosphereAssessment?: MoonAtmosphereAssessment | null;
+      internalWaterAssessment?: MoonInternalWaterAssessment | null;
       waterInventoryIndex01: number;
       subsurfaceOceanPotentialIndex01: number;
       surfaceLiquidWaterPotentialIndex01: number;
@@ -362,6 +366,10 @@ function detailProjection(
           moon.atmosphereRetentionIndex01,
         atmosphereRegime:
           moon.atmosphereRegime,
+        atmosphereAssessment:
+          moon.atmosphereAssessment ?? null,
+        internalWaterAssessment:
+          moon.internalWaterAssessment ?? null,
         waterInventoryIndex01:
           moon.waterInventoryIndex01,
         subsurfaceOceanPotentialIndex01:

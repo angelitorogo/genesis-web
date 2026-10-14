@@ -55,6 +55,8 @@ export interface GalaxyKnowledgeCatalogQuery {
   readonly pageSize: GalaxyKnowledgeCatalogPageSize;
   readonly sortKey: string;
   readonly direction: GalaxyKnowledgeCatalogDirection;
+  /** Optional name/designation search within the active known category. */
+  readonly search?: string | null;
 }
 
 export interface GalaxyKnowledgeCatalogAction {
@@ -92,6 +94,7 @@ export type GalaxyKnowledgeCatalogDataResult =
   | Readonly<{ kind: 'not-connected' }>;
 
 export interface GalaxyKnowledgeCatalogRawQuery {
+  readonly search?: string | null;
   readonly subtype: string | null;
   readonly page: string | null;
   readonly pageSize: string | null;
@@ -131,6 +134,7 @@ export function normalizeGalaxyKnowledgeCatalogQuery(
   const pageSize = parsePageSize(raw.pageSize);
   const direction: GalaxyKnowledgeCatalogDirection = raw.direction === 'desc' ? 'desc' : 'asc';
   const subtype = normalizeSubtype(raw.subtype);
+  const search = normalizeCatalogNameQuery(raw.search);
   const supportedSortKeys = new Set(descriptor.sortOptions.map(option => option.key));
   const sortKey = raw.sortKey !== null && supportedSortKeys.has(raw.sortKey)
     ? raw.sortKey
@@ -143,6 +147,7 @@ export function normalizeGalaxyKnowledgeCatalogQuery(
     pageSize,
     sortKey,
     direction,
+    ...(search === null ? {} : { search }),
   });
 }
 
@@ -196,4 +201,25 @@ function normalizeSubtype(value: string | null): string | null {
     throw new RangeError('El subtipo de catálogo indicado no es válido.');
   }
   return normalized;
+}
+
+/** Limit URL search length and normalize whitespace without exposing hidden catalogue fields. */
+export function normalizeCatalogNameQuery(value: string | null | undefined): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim().replace(/\s+/gu, ' ');
+  if (trimmed.length === 0) return null;
+  if (trimmed.length > 120 || /[\u0000-\u001f\u007f]/u.test(trimmed)) {
+    throw new RangeError('La búsqueda por nombre no es válida.');
+  }
+  return trimmed;
+}
+
+/** Matches public names only; accents/case are ignored, not the discovery boundary. */
+export function catalogNameMatches(name: string, search: string | null | undefined): boolean {
+  if (!search) return true;
+  const fold = (value: string): string => value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLocaleLowerCase('es');
+  return fold(name).includes(fold(search));
 }

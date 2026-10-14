@@ -1,3 +1,4 @@
+import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
 import {
   vi,
 } from 'vitest';
@@ -163,6 +164,19 @@ describe(
         ).toBe(
           'Comparación con la Tierra',
         );
+
+        const atmosphericFields = result.card.sections.sections
+          .find(section => section.id === 'environment')?.fields ?? [];
+        expect(atmosphericFields.find(item => item.label === 'Atmósfera')?.value)
+          .toBe('Atmósfera sustancial (escenario)');
+        expect(atmosphericFields.find(item => item.label === 'Atmósfera')?.note)
+          .toContain('Soporte de columna heredado');
+        expect(atmosphericFields.find(item => item.label === 'Presión superficial atmosférica (escenario)')?.value)
+          .toContain('bar');
+        expect(atmosphericFields.find(item => item.label === 'Composición gaseosa candidata')?.value)
+          .toContain('N₂');
+        expect(atmosphericFields.find(item => item.label === 'Entorno radiativo y magnetosférico')?.value)
+          .toContain('no evaluables');
 
         expect(result.card.sections.badges).toContain(
           'Océano subsuperficial',
@@ -349,6 +363,22 @@ function moonTarget():
               0.17,
             atmosphereRegime:
               'EXOSPHERE',
+            atmosphereAssessment: Object.freeze({
+              volatileInventoryIndex01: 0.65,
+              thermalEscapeSupportIndex01: 0.78,
+              replenishmentSupportIndex01: 0.20,
+              condensationRemovalIndex01: 0.12,
+              estimatedSurfacePressurePascal: 150_000,
+              pressureBasis: 'CONDITIONAL_SCENARIO' as const,
+              species: Object.freeze([{
+                gas: AtmosphereGas.NITROGEN,
+                moleFraction01: 1,
+                partialPressurePascal: 150_000,
+              }]),
+              irradiationReferenceEarth: 0.96,
+              chargedParticleEnvironment: 'UNRESOLVED' as const,
+              hostMagnetosphereShielding: 'UNRESOLVED' as const,
+            }),
             waterInventoryIndex01:
               0.78,
             subsurfaceOceanPotentialIndex01:

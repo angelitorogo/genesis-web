@@ -1545,3 +1545,66 @@ function planetFixture(
       true,
   } as unknown as Planet;
 }
+
+/** L.1: population regression; no per-seed exceptions or body hardcodes. */
+describe('MoonGenerator L.1 satellite mass/size diversity', () => {
+  const generationKey = new UniverseGenerationKey(
+    UniverseSeed.parse('7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'),
+    GeneratorVersion.V1,
+  );
+  const locator = new SystemLocator(7n, -42n, 3n);
+  const planetarySystem = planetarySystemFixture(generationKey, locator, 1);
+
+  it('permits Titan/Ganymede-scale satellite masses on some giants, not all', () => {
+    let hostsWithLargeMoons = 0;
+    let hostsWithoutLargeMoons = 0;
+    let hostsWithTieredMasses = 0;
+    for (let seedIndex = 1; seedIndex <= 64; seedIndex += 1) {
+      const planet = planetFixture(planetarySystem, 1, {
+        seedHex: seedIndex.toString(16).padStart(32, '0'),
+        planetType: PlanetType.GAS_GIANT,
+        massEarth: 318,
+        radiusEarth: 11.2,
+        semiMajorAxisAu: 5.2,
+        eccentricity: 0.05,
+      });
+      const moons = MoonGenerator.generate(generationKey, planet);
+      const physical = moons.relevantMoons;
+      const totalMass = physical.reduce((sum, moon) => sum + moon.massEarth, 0);
+      expect(totalMass).toBeLessThan(planet.massEarth * 0.00026);
+      expect(physical.every(moon => moon.massEarth > 0 && moon.radiusEarth > 0)).toBe(true);
+      expect(physical.every((moon, index) => moon.identity === moons.moonIdentities[index])).toBe(true);
+      const largest = physical.length ? Math.max(...physical.map(moon => moon.massEarth)) : 0;
+      if (largest >= 0.02) hostsWithLargeMoons += 1;
+      else hostsWithoutLargeMoons += 1;
+      if (physical.length > 1 && largest / Math.min(...physical.map(moon => moon.massEarth)) > 10) {
+        hostsWithTieredMasses += 1;
+      }
+    }
+    expect(hostsWithLargeMoons).toBeGreaterThan(0);
+    expect(hostsWithoutLargeMoons).toBeGreaterThan(0);
+    expect(hostsWithTieredMasses).toBeGreaterThan(0);
+  });
+
+  it('supports varied smaller populations around mini-Neptunes without exceeding host mass budgets', () => {
+    let richMoonSystems = 0;
+    let largeMiniNeptuneMoons = 0;
+    for (let seedIndex = 1; seedIndex <= 48; seedIndex += 1) {
+      const planet = planetFixture(planetarySystem, 1, {
+        seedHex: seedIndex.toString(16).padStart(32, '0'),
+        planetType: PlanetType.MINI_NEPTUNE,
+        massEarth: 15,
+        radiusEarth: 3.2,
+        semiMajorAxisAu: 7.3,
+      });
+      const moons = MoonGenerator.generate(generationKey, planet);
+      const mass = moons.relevantMoons.reduce((sum, moon) => sum + moon.massEarth, 0);
+      expect(mass).toBeLessThan(planet.massEarth * 0.00101);
+      if (moons.relevantMoonCount > 1) richMoonSystems += 1;
+      if (moons.relevantMoons.some(moon => moon.radiusEarth >= 0.28)) largeMiniNeptuneMoons += 1;
+      expect(MoonGenerator.generate(generationKey, planet)).toEqual(moons);
+    }
+    expect(richMoonSystems).toBeGreaterThan(0);
+    expect(largeMiniNeptuneMoons).toBeGreaterThan(0);
+  });
+});

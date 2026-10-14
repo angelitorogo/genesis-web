@@ -136,6 +136,11 @@ describe(
         expect(result.moons[0].visualVariantUint32).toBe(
           scene.moons[0].visualPresentation.presentationSeedUint32,
         );
+        // D.3: never reconstruct lunar scientific inputs as zero-valued
+        // placeholders when moving from SystemScene to the fiche renderer.
+        expect(result.moons[0].sourceMoonPresentation).toBe(
+          scene.moons[0].visualPresentation,
+        );
         expect(result.moons[0].spin).toBe(
           scene.moons[0].spin,
         );

@@ -48,6 +48,30 @@ const SECONDS_PER_DAY =
 describe(
   'MoonEnvironmentEngine point 21.5',
   () => {
+    it('C — attaches conditional cryosphere science to the existing lunar environment without changing its inherited water indices', () => {
+      const host = hostFixture(318, 11.2, 0.011);
+      const physical = new MoonPhysicalProperties(1, 1, 0.0225, 0.404, 1.88, 0.138);
+      const tidal = tidalFixture(host, physical, 20, 0.3);
+      const first = MoonEnvironmentEngine.generate(host, physical, tidal);
+      const second = MoonEnvironmentEngine.generate(host, physical, tidal);
+      expect(first.internalWaterAssessment?.basis).toBe('ECCENTRICITY_TIDES_BOUNDED_SCENARIO');
+      expect(first.internalWaterAssessment?.oceanConfirmed).toBe(false);
+      expect(first.internalWaterAssessment).toEqual(second.internalWaterAssessment);
+      expect(first.waterInventoryIndex01).toBe(second.waterInventoryIndex01);
+      expect(first.subsurfaceOceanPotentialIndex01).toBe(second.subsurfaceOceanPotentialIndex01);
+      expect(first.sourceTidalHeatingIndex01).toBe(tidal.tidalHeatingIndex01);
+    });
+
+    it('C — refuses to infer an ice shell for a hot, large satellite despite an inherited subsurface index', () => {
+      const host = hostFixture(10, 2, 15.762);
+      const physical = new MoonPhysicalProperties(1, 1, 0.055, 0.448, 3.38, 0.274);
+      const result = MoonEnvironmentEngine.generate(host, physical, tidalFixture(host, physical, 50, 0.413));
+      expect(result.estimatedSurfaceTemperatureKelvin).toBeGreaterThan(273.15);
+      expect(result.internalWaterAssessment?.iceShellThermalRegime).toBe('NO_STABLE_SURFACE_ICE');
+      expect(result.internalWaterAssessment?.cryovolcanism).toBe('NOT_EVALUABLE');
+      expect(result.internalWaterAssessment?.oceanConfirmed).toBe(false);
+    });
+
     it(
       'should keep an Earth-Moon-scale dense satellite nearly airless, dry and only weakly geological',
       () => {
@@ -89,6 +113,7 @@ describe(
         ).toBe(
           MoonAtmosphereRegime.EXOSPHERE,
         );
+        expect(environment.atmosphereAssessment?.estimatedSurfacePressurePascal).toBeNull();
         expect(
           environment.waterRegime,
         ).toBe(
@@ -148,6 +173,9 @@ describe(
         ).toBe(
           MoonAtmosphereRegime.SUBSTANTIAL,
         );
+        expect(environment.atmosphereAssessment?.pressureBasis).toBe('CONDITIONAL_SCENARIO');
+        expect(environment.atmosphereAssessment?.species[0]?.gas).toBe('NITROGEN');
+        expect(environment.atmosphereAssessment?.hostMagnetosphereShielding).toBe('UNRESOLVED');
         expect(
           environment.waterRegime,
         ).toBe(
