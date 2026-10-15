@@ -8,6 +8,7 @@ import {
 import { GalaxyKnowledgeCatalogFacade, type GalaxyKnowledgeCatalogModel } from './galaxy-knowledge-catalog.facade';
 import { GalaxyKnowledgeCatalogPage } from './galaxy-knowledge-catalog';
 import { catalogColumnsStorageKey } from './galaxy-knowledge-catalog-columns';
+import { parseCatalogAtmosphereFilter } from './galaxy-knowledge-atmosphere-filter';
 
 describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
   const model: GalaxyKnowledgeCatalogModel = Object.freeze({
@@ -85,6 +86,51 @@ describe('26.1c.1 GalaxyKnowledgeCatalogPage', () => {
         },
       ],
     });
+  });
+
+  it('propagates actual gas range filters and O₂ descending selection through query params', async () => {
+    const atmosphere=parseCatalogAtmosphereFilter({gasRanges:'NITROGEN:25:80',pressureMax:'2'},false);
+    facade.model.set({
+      ...model,
+      descriptor: {...model.descriptor,category:'planets',title:'Planetas conocidos',
+        sortOptions:[...model.descriptor.sortOptions,
+          {key:'gas-OXYGEN',label:'Oxígeno (O₂) %'},{key:'pressure-atm',label:'Presión (bar)'}]},
+      query: {...model.query,category:'planets',subtype:null,atmosphere},
+    });
+    const fixture=TestBed.createComponent(GalaxyKnowledgeCatalogPage);
+    fixture.detectChanges();
+    const root=fixture.nativeElement as HTMLElement;
+    const navigate=vi.spyOn(TestBed.inject(Router),'navigate').mockResolvedValue(true);
+    const sort=root.querySelector('[data-testid="gkc-sort"]') as HTMLSelectElement;
+    sort.value='gas-OXYGEN';sort.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenLastCalledWith([],expect.objectContaining({
+      queryParams:expect.objectContaining({sort:'gas-OXYGEN',atm:'NITROGEN:25:80',pmax:'2',page:'1'}),
+    }));
+    facade.model.set({...facade.model()!,query:{...facade.model()!.query,sortKey:'gas-OXYGEN'}});
+    fixture.detectChanges();
+    const direction=root.querySelector('[data-testid="gkc-direction"]') as HTMLSelectElement;
+    direction.value='desc';direction.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenLastCalledWith([],expect.objectContaining({
+      queryParams:expect.objectContaining({sort:'gas-OXYGEN',direction:'desc',atm:'NITROGEN:25:80',pmax:'2',page:'1'}),
+    }));
+    (root.querySelector('[data-testid="gkc-add-gas"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const gas=root.querySelector('[data-testid="gkc-gas-select-1"]') as HTMLSelectElement;
+    gas.value='OXYGEN';gas.dispatchEvent(new Event('change'));
+    const min=root.querySelector('[data-testid="gkc-gas-min-1"]') as HTMLInputElement;
+    min.value='10';min.dispatchEvent(new Event('input'));
+    const max=root.querySelector('[data-testid="gkc-gas-max-1"]') as HTMLInputElement;
+    max.value='30';max.dispatchEvent(new Event('input'));
+    const form=root.querySelector('[data-testid="gkc-atmosphere-filters"]') as HTMLFormElement;
+    form.dispatchEvent(new Event('submit',{cancelable:true}));
+    await fixture.whenStable();
+    expect(navigate).toHaveBeenLastCalledWith([],expect.objectContaining({
+      queryParams:expect.objectContaining({
+        atm:'NITROGEN:25:80;OXYGEN:10:30',sort:'gas-OXYGEN',page:'1',
+      }),
+    }));
   });
 
   it('renders one generic table, pagination and navigation independently of object family', () => {

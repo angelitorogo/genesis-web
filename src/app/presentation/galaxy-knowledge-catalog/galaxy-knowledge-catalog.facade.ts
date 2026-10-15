@@ -179,6 +179,8 @@ function normalizePage(
     pageSize: query.pageSize,
     totalPages,
     items: Object.freeze([...page.items]),
+    ...(page.atmosphericSortAvailability === undefined
+      ? {} : { atmosphericSortAvailability: page.atmosphericSortAvailability }),
   });
 }
 

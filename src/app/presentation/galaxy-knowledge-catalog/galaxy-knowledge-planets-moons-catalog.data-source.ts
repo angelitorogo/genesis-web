@@ -25,6 +25,11 @@ import {
 } from './galaxy-knowledge-catalog.model';
 import { formatCatalogRadiusKm, formatCatalogTemperatureCelsius } from './galaxy-knowledge-catalog-units';
 import {
+  catalogAtmosphereCell, catalogAtmosphereSortOptions,
+  compareCatalogAtmosphereByKey, catalogAtmosphereSortAvailability,
+  EMPTY_ATMOSPHERE_FILTER, matchesCatalogAtmosphere,
+} from './galaxy-knowledge-atmosphere-filter';
+import {
   GalaxyKnowledgeCatalogViewCache,
   galaxyKnowledgeCatalogViewKey,
 } from './galaxy-knowledge-catalog-view-cache';
@@ -134,6 +139,7 @@ function describePlanets(
       Object.freeze({ key: 'temperature', label: 'Tª superficial' }),
       Object.freeze({ key: 'sector', label: 'Sector' }),
       Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+      ...catalogAtmosphereSortOptions(false).map(option => Object.freeze(option)),
     ]),
     defaultSortKey: 'designation',
     columns: Object.freeze([
@@ -171,6 +177,7 @@ function describeMoons(
       Object.freeze({ key: 'subsurface-ocean', label: 'Potencial de océano subsuperficial' }),
       Object.freeze({ key: 'sector', label: 'Sector' }),
       Object.freeze({ key: 'locator', label: 'Localización procedural' }),
+      ...catalogAtmosphereSortOptions(true).map(option => Object.freeze(option)),
     ]),
     defaultSortKey: 'designation',
     columns: Object.freeze([
@@ -193,12 +200,18 @@ function planetPage(
   const subtype = normalizePlanetSubtype(request.query.subtype);
   const records = viewCache.resolve(
     snapshot.planets,
-    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null),
+    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null) + JSON.stringify(request.query.atmosphere ?? null),
     record => matchesPlanetFilter(record, subtype)
-      && catalogNameMatches(record.designation, request.query.search),
+      && catalogNameMatches(record.designation, request.query.search)
+      && matchesCatalogAtmosphere(record.atmosphere, request.query.atmosphere ?? EMPTY_ATMOSPHERE_FILTER),
     (left, right) => comparePlanets(left, right, request.query.sortKey, request.query.direction),
   );
-  return paginated(records, request, toPlanetRow);
+  return paginated(
+    records, request, toPlanetRow,
+    isAtmosphereSortKey(request.query.sortKey)
+      ? catalogAtmosphereSortAvailability(records.map(record => record.atmosphere), request.query.sortKey)
+      : undefined,
+  );
 }
 
 function moonPage(
@@ -209,18 +222,25 @@ function moonPage(
   const subtype = normalizeMoonSubtype(request.query.subtype);
   const records = viewCache.resolve(
     snapshot.moons,
-    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null),
+    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null) + JSON.stringify(request.query.atmosphere ?? null),
     record => matchesMoonFilter(record, subtype)
-      && catalogNameMatches(record.designation, request.query.search),
+      && catalogNameMatches(record.designation, request.query.search)
+      && matchesCatalogAtmosphere(record.atmosphere, request.query.atmosphere ?? EMPTY_ATMOSPHERE_FILTER),
     (left, right) => compareMoons(left, right, request.query.sortKey, request.query.direction),
   );
-  return paginated(records, request, toMoonRow);
+  return paginated(
+    records, request, toMoonRow,
+    isAtmosphereSortKey(request.query.sortKey)
+      ? catalogAtmosphereSortAvailability(records.map(record => record.atmosphere), request.query.sortKey)
+      : undefined,
+  );
 }
 
 function paginated<T>(
   records: readonly T[],
   request: GalaxyKnowledgeCatalogDataRequest,
   row: (record: T) => GalaxyKnowledgeCatalogRow,
+  atmosphericSortAvailability?: Readonly<{resolved: number; positive: number; unresolved: number}>,
 ): GalaxyKnowledgeCatalogDataResult {
   const totalItems = records.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / request.query.pageSize));
@@ -236,6 +256,7 @@ function paginated<T>(
       pageSize: request.query.pageSize,
       totalPages,
       items: Object.freeze(selected.map(row)),
+      ...(atmosphericSortAvailability === undefined ? {} : { atmosphericSortAvailability }),
     }),
   });
 }
@@ -307,6 +328,7 @@ function toPlanetRow(record: GalaxyKnowledgePlanetCatalogEntry): GalaxyKnowledge
         ? (record.compactConditionalLiquidCoverage01===null?'No resuelto (esc.)':
           `${formatPercent(record.compactConditionalLiquidCoverage01)} (esc.)`)
         : formatPercent(record.surfaceLiquidWaterCoverageFraction01),
+      ...Object.fromEntries(catalogAtmosphereSortOptions(false).map(option => [option.key,catalogAtmosphereCell(record.atmosphere,option.key)])),
     }),
     actions: Object.freeze(actions),
   });
@@ -330,6 +352,7 @@ function toMoonRow(record: GalaxyKnowledgeMoonCatalogEntry): GalaxyKnowledgeCata
       period: formatNumber(record.orbitalPeriodDays, 'días'),
       sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
       locator: record.id,
+      ...Object.fromEntries(catalogAtmosphereSortOptions(true).map(option => [option.key,catalogAtmosphereCell(record.atmosphere,option.key)])),
     }),
     actions: Object.freeze([
       Object.freeze({
@@ -374,15 +397,20 @@ function systemRoute(locator: GalaxyKnowledgePlanetCatalogEntry['parentSystemLoc
   ]);
 }
 
+function isAtmosphereSortKey(key: string): boolean {
+  return key.startsWith('gas-') || key === 'pressure-atm' || key === 'earth-similarity';
+}
+
 function comparePlanets(
   left: GalaxyKnowledgePlanetCatalogEntry,
   right: GalaxyKnowledgePlanetCatalogEntry,
   sortKey: string,
   direction: GalaxyKnowledgeCatalogDirection,
 ): number {
-  const factor = direction === 'desc' ? -1 : 1;
-  const difference = comparePlanetByKey(left, right, sortKey);
-  if (difference !== 0) return difference * factor;
+  const difference = isAtmosphereSortKey(sortKey)
+    ? compareCatalogAtmosphereByKey(left.atmosphere, right.atmosphere, sortKey, direction)
+    : comparePlanetByKey(left, right, sortKey) * (direction === 'desc' ? -1 : 1);
+  if (difference !== 0) return difference;
   return left.id.localeCompare(right.id, 'en');
 }
 
@@ -414,9 +442,10 @@ function compareMoons(
   sortKey: string,
   direction: GalaxyKnowledgeCatalogDirection,
 ): number {
-  const factor = direction === 'desc' ? -1 : 1;
-  const difference = compareMoonByKey(left, right, sortKey);
-  if (difference !== 0) return difference * factor;
+  const difference = isAtmosphereSortKey(sortKey)
+    ? compareCatalogAtmosphereByKey(left.atmosphere, right.atmosphere, sortKey, direction)
+    : compareMoonByKey(left, right, sortKey) * (direction === 'desc' ? -1 : 1);
+  if (difference !== 0) return difference;
   return left.id.localeCompare(right.id, 'en');
 }
 

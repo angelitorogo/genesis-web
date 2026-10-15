@@ -6,6 +6,8 @@ import { BodyLocator, MoonLocator, SystemLocator } from '../../domain/generation
 import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import { MoonWaterRegime } from '../../domain/planetary/moon-water-regime';
 import { PlanetType } from '../../domain/planetary/planet-type';
+import { AtmosphereGas as Gas } from '../../domain/planetary/atmosphere-gas';
+import { parseCatalogAtmosphereFilter } from './galaxy-knowledge-atmosphere-filter';
 import { UniverseSeed } from '../../domain/universe/universe-seed';
 import {
   GENESIS_LOCAL_REPOSITORIES,
@@ -49,6 +51,7 @@ const snapshot: GalaxyKnowledgePlanetMoonCatalogSnapshot = Object.freeze({
       meanSurfaceTemperatureKelvin: 289,
       surfaceLiquidWaterCoverageFraction01: 0,
       postCollapseIdentityHex: null,
+      atmosphere: {fractions:{[Gas.NITROGEN]:.78084,[Gas.OXYGEN]:.20946,[Gas.ARGON]:.00934,[Gas.CARBON_DIOXIDE]:.00042},pressureBar:1.01325,conditional:false},
     }),
     Object.freeze({
       id: 'G0/S12/O7/P1',
@@ -67,6 +70,7 @@ const snapshot: GalaxyKnowledgePlanetMoonCatalogSnapshot = Object.freeze({
       meanSurfaceTemperatureKelvin: 281,
       surfaceLiquidWaterCoverageFraction01: 0.72,
       postCollapseIdentityHex: null,
+      atmosphere: {fractions:{[Gas.NITROGEN]:.52,[Gas.CARBON_DIOXIDE]:.4,[Gas.ARGON]:.08},pressureBar:.3,conditional:false},
     }),
     Object.freeze({
       id: 'G0/S12/O7/P2',
@@ -85,6 +89,7 @@ const snapshot: GalaxyKnowledgePlanetMoonCatalogSnapshot = Object.freeze({
       meanSurfaceTemperatureKelvin: 250,
       surfaceLiquidWaterCoverageFraction01: null,
       postCollapseIdentityHex: null,
+      atmosphere: null,
     }),
   ]),
   moons: Object.freeze([
@@ -106,6 +111,7 @@ const snapshot: GalaxyKnowledgePlanetMoonCatalogSnapshot = Object.freeze({
       surfaceLiquidWaterPotentialIndex01: 0.44,
       subsurfaceOceanPotentialIndex01: 0.88,
       waterRegime: MoonWaterRegime.ICE_AND_SUBSURFACE_OCEAN,
+      atmosphere:{fractions:{[Gas.NITROGEN]:.4,[Gas.CARBON_DIOXIDE]:.6},pressureBar:.0003,conditional:true},
     }),
   ]),
   unmaterializedMinorMoonCount: 17n,
@@ -353,6 +359,99 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
       'Asterion b',
       'Asterion d',
     ]);
+  });
+
+  it('filters by complete final atmospheric fractions before pagination and sorts numeric gas values',async()=>{
+    const base={generationKey,galaxyIndex:0n,galaxyState:DiscoveryState.CONFIRMED} as const;
+    const common={category:'planets' as const,subtype:null,page:1,pageSize:25 as const,sortKey:'gas-NITROGEN',direction:'desc' as const};
+    const all=await source.query({...base,query:common});
+    expect(all.kind).toBe('page');
+    if(all.kind!=='page')return;
+    expect(all.page.items.map(row=>row.title)).toEqual(['Asterion b','Asterion c','Asterion d']);
+    expect(all.page.items[0]!.cells['gas-CARBON_DIOXIDE']).toBe('0,042 %');
+    expect(all.page.items[2]!.cells['gas-OXYGEN']).toBe('No determinado');
+    const filter=parseCatalogAtmosphereFilter({gasRanges:'NITROGEN:75:85;OXYGEN:19:22;CARBON_DIOXIDE::0.05',pressureMin:'0.9',earthMin:'95'},false);
+    const matching=await source.query({...base,query:{...common,atmosphere:filter}});
+    if(matching.kind!=='page')return;
+    expect(matching.page.totalItems).toBe(1);
+    expect(matching.page.items[0]!.title).toBe('Asterion b');
+    const co2=await source.query({...base,query:{...common,atmosphere:parseCatalogAtmosphereFilter({gasRanges:'CARBON_DIOXIDE:30:50'},false)}});
+    if(co2.kind!=='page')return;
+    expect(co2.page.items.map(row=>row.title)).toEqual(['Asterion c']);
+  });
+  it('changes O₂ ascending/descending order on the WHOLE catalogue, distinguishing zero from unresolved',async()=>{
+    const extra=Object.freeze({
+      ...snapshot.planets[1]!,
+      id:'G0/S12/O7/P3',
+      designation:'Asterion aa',
+      atmosphere: {fractions:{[Gas.OXYGEN]:.60,[Gas.NITROGEN]:.40},pressureBar:1.8,conditional:false},
+    });
+    // Deliberately out of order: an alphabetical fallback must not pass this test.
+    const newSnapshot=Object.freeze({
+      ...snapshot,
+      planets:Object.freeze([snapshot.planets[2]!,snapshot.planets[1]!,extra,snapshot.planets[0]!]),
+    });
+    resolve.mockResolvedValue(newSnapshot);
+    const base={generationKey,galaxyIndex:0n,galaxyState:DiscoveryState.CONFIRMED} as const;
+    const common={category:'planets' as const,subtype:null,page:1,pageSize:25 as const,sortKey:'gas-OXYGEN'};
+    const desc=await source.query({...base,query:{...common,direction:'desc'}});
+    const asc=await source.query({...base,query:{...common,direction:'asc'}});
+    expect(desc.kind).toBe('page');expect(asc.kind).toBe('page');
+    if(desc.kind!=='page'||asc.kind!=='page')return;
+    expect(desc.page.items.map(row=>row.title)).toEqual([
+      'Asterion aa','Asterion b','Asterion c','Asterion d',
+    ]);
+    expect(asc.page.items.map(row=>row.title)).toEqual([
+      'Asterion c','Asterion b','Asterion aa','Asterion d',
+    ]);
+    expect(desc.page.atmosphericSortAvailability).toEqual({resolved:3,positive:2,unresolved:1});
+    expect(desc.page.items.map(row=>row.cells['gas-OXYGEN'])).toEqual([
+      '60 %','20,946 %','0 %','No determinado',
+    ]);
+    const oxygenRange=parseCatalogAtmosphereFilter({gasRanges:'OXYGEN:10:50'},false);
+    const filtered=await source.query({...base,query:{...common,direction:'desc',atmosphere:oxygenRange}});
+    if(filtered.kind!=='page')return;
+    expect(filtered.page.totalItems).toBe(1);
+    expect(filtered.page.items[0]?.title).toBe('Asterion b');
+    expect(filtered.page.atmosphericSortAvailability).toEqual({resolved:1,positive:1,unresolved:0});
+    const zeroOnly=await source.query({...base,query:{...common,direction:'desc',
+      atmosphere:parseCatalogAtmosphereFilter({gasRanges:'OXYGEN::0'},false)}});
+    if(zeroOnly.kind!=='page')return;
+    expect(zeroOnly.page.items.map(row=>row.title)).toEqual(['Asterion c']);
+    expect(zeroOnly.page.totalItems).toBe(1);
+    // Same query cache and identity may be reused, but direction MUST invalidate its view.
+    const descAgain=await source.query({...base,query:{...common,direction:'desc'}});
+    if(descAgain.kind!=='page')return;
+    expect(descAgain.page.items[0]?.title).toBe('Asterion aa');
+  });
+
+  it('combines atmospheric pressure and gas Y/O filters before pagination',async()=>{
+    const base={generationKey,galaxyIndex:0n,galaxyState:DiscoveryState.CONFIRMED} as const;
+    const common={category:'planets' as const,subtype:null,page:1,pageSize:25 as const,sortKey:'gas-CARBON_DIOXIDE',direction:'desc' as const};
+    const orFilter=parseCatalogAtmosphereFilter({gasRanges:'OXYGEN:20:;CARBON_DIOXIDE:35:',gasCombine:'OR',pressureMin:'0.2'},false);
+    const result=await source.query({...base,query:{...common,atmosphere:orFilter}});
+    if(result.kind!=='page')throw new Error('Expected page');
+    expect(result.page.totalItems).toBe(2);
+    expect(result.page.items.map(row=>row.title)).toEqual(['Asterion c','Asterion b']);
+    const andFilter=parseCatalogAtmosphereFilter({gasRanges:'OXYGEN:20:;CARBON_DIOXIDE:35:',gasCombine:'AND'},false);
+    const empty=await source.query({...base,query:{...common,atmosphere:andFilter}});
+    if(empty.kind!=='page')throw new Error('Expected empty page');
+    expect(empty.page.totalItems).toBe(0);
+  });
+
+  it('offers correct gas columns and respects conditional lunar gas scenarios',async()=>{
+    const planetFields=catalogFields(source.describe('planets',null));
+    expect(planetFields.find(field=>field.key==='gas-CARBON_DIOXIDE')?.defaultVisible).toBe(false);
+    expect(planetFields.some(field=>field.key==='earth-similarity')).toBe(true);
+    const moonFields=catalogFields(source.describe('moons',null));
+    expect(moonFields.some(field=>field.key==='gas-OXYGEN')).toBe(false);
+    expect(moonFields.some(field=>field.key==='gas-NITROGEN')).toBe(true);
+    const result=await source.query({generationKey,galaxyIndex:0n,galaxyState:DiscoveryState.CONFIRMED,
+      query:{category:'moons',subtype:null,page:1,pageSize:25,sortKey:'gas-CARBON_DIOXIDE',direction:'desc',
+        atmosphere:parseCatalogAtmosphereFilter({gasRanges:'CARBON_DIOXIDE:55:70'},true)}});
+    if(result.kind!=='page')return;
+    expect(result.page.totalItems).toBe(1);
+    expect(result.page.items[0]!.cells['gas-CARBON_DIOXIDE']).toBe('60 % (esc.)');
   });
 
 });

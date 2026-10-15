@@ -13,6 +13,7 @@ import { type UniverseGenerationKey } from '../../domain/generation/universe-gen
 import { moonRomanNumeralV1 } from '../../domain/planetary/moon-designation';
 import { MoonWaterRegime } from '../../domain/planetary/moon-water-regime';
 import { PlanetType } from '../../domain/planetary/planet-type';
+import { type CatalogAtmosphereState } from '../galaxy-knowledge-catalog/galaxy-knowledge-atmosphere-filter';
 import { GenesisIndexedDb } from '../../data/local/indexed-db/genesis-indexed-db';
 import { type GalaxyKnowledgeSnapshotEntity } from '../../data/local/entity/galaxy-knowledge-snapshot.entity';
 import {
@@ -70,6 +71,7 @@ export interface GalaxyKnowledgePlanetCatalogEntry {
   readonly compactConditionalTemperatureKelvin?: number | null;
   readonly compactConditionalLiquidCoverage01?: number | null;
   readonly postCollapseIdentityHex: string | null;
+  readonly atmosphere?: CatalogAtmosphereState | null;
 }
 
 export interface GalaxyKnowledgeMoonCatalogEntry {
@@ -90,6 +92,7 @@ export interface GalaxyKnowledgeMoonCatalogEntry {
   readonly surfaceLiquidWaterPotentialIndex01: number;
   readonly subsurfaceOceanPotentialIndex01: number;
   readonly waterRegime: MoonWaterRegime;
+  readonly atmosphere?: CatalogAtmosphereState | null;
 }
 
 export interface GalaxyKnowledgePlanetMoonCatalogSnapshot {
@@ -97,6 +100,7 @@ export interface GalaxyKnowledgePlanetMoonCatalogSnapshot {
   readonly planets: readonly GalaxyKnowledgePlanetCatalogEntry[];
   readonly moons: readonly GalaxyKnowledgeMoonCatalogEntry[];
   readonly unmaterializedMinorMoonCount: bigint;
+  readonly atmosphereProjectionVersion?: 1;
 }
 
 export interface GalaxyPlanetMoonCatalogSnapshotRuntime {
@@ -172,6 +176,7 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
       existing !== undefined &&
       existing.knowledgeRevision === knowledgeRevision &&
       existing.planetMoonCatalogJson !== undefined
+      && JSON.parse(existing.planetMoonCatalogJson).atmosphereProjectionVersion === 1
     ) {
       const snapshot = restoreSnapshot(existing.planetMoonCatalogJson);
       this.hotSnapshot = Object.freeze({
@@ -287,6 +292,7 @@ export function buildGalaxyPlanetMoonCatalogSnapshot(
     planets: Object.freeze(planets),
     moons: Object.freeze(moons),
     unmaterializedMinorMoonCount,
+    atmosphereProjectionVersion: 1 as const,
   });
 }
 
@@ -318,6 +324,7 @@ function projectConfirmedSystem(
         compactConditionalTemperatureKelvin:compact.characterizations[planet.ordinal-1]!.surfaceTemperatureScenarioK,
         compactConditionalLiquidCoverage01:compact.characterizations[planet.ordinal-1]!.surfaceLiquidWaterCoverageFraction01,
         postCollapseIdentityHex:null,
+        atmosphere:null,
       }))),
       moons:Object.freeze(compact.secondaries.moons.map(moon=>{
         const planet=compact.planets[moon.parentPlanetOrdinal-1]!;
@@ -334,7 +341,7 @@ function projectConfirmedSystem(
           orbitalPeriodDays:moon.orbitalPeriodDays,
           inferredIceRichnessIndex01:moon.iceRichnessIndex01,
           surfaceLiquidWaterPotentialIndex01:0,subsurfaceOceanPotentialIndex01:0,
-          waterRegime:MoonWaterRegime.NONE,
+          waterRegime:MoonWaterRegime.NONE,atmosphere:null,
         });
       })),unmaterializedMinorMoonCount:0n,
     });
@@ -427,6 +434,7 @@ function projectSingleSystem(
         meanSurfaceTemperatureKelvin: null,
         surfaceLiquidWaterCoverageFraction01: null,
         postCollapseIdentityHex: planet.identityHex,
+        atmosphere: null,
       }));
     }
   }
@@ -537,6 +545,7 @@ function projectStandardPlanet(
     meanSurfaceTemperatureKelvin: atmosphere.meanSurfaceTemperatureKelvin,
     surfaceLiquidWaterCoverageFraction01: atmosphere.surfaceLiquidWaterCoverageFraction01,
     postCollapseIdentityHex: null,
+    atmosphere: projectPlanetAtmosphere(atmosphere),
   });
 }
 
@@ -568,6 +577,7 @@ function projectRelevantMoon(
     surfaceLiquidWaterPotentialIndex01: moon.environmentState.surfaceLiquidWaterPotentialIndex01,
     subsurfaceOceanPotentialIndex01: moon.environmentState.subsurfaceOceanPotentialIndex01,
     waterRegime: moon.environmentState.waterRegime,
+    atmosphere: projectMoonAtmosphere(moon.environmentState.atmosphereAssessment),
   });
 }
 
@@ -619,12 +629,45 @@ function moonLocatorLabel(locator: MoonLocator): string {
   return `G${locator.galaxyIndex}/S${locator.sectorKey}/O${locator.galacticObjectIndex}/P${locator.bodyIndex}/M${locator.moonIndex}`;
 }
 
+/** Use the final retained/condensed mixture shown by the scientific fiche, never the bulk template. */
+function projectPlanetAtmosphere(
+  atmosphere: GeneratedSingleHost['atmospheres'][number],
+): CatalogAtmosphereState {
+  const pressure=atmosphere.retainedSurfacePressurePascal;
+  const components=atmosphere.retainedGasComposition;
+  const fractions=atmosphere.isVacuum || components.length === 0
+    ? null
+    : Object.freeze(Object.fromEntries(components.map(component => [component.gas, component.moleFraction01])));
+  return Object.freeze({
+    fractions,
+    pressureBar: pressure === null || !Number.isFinite(pressure) ? null : pressure / 100_000,
+    conditional: false,
+  });
+}
+
+/** Lunar fractions are a conditional pressure scenario, not a confirmed atmosphere. */
+function projectMoonAtmosphere(
+  assessment: NonNullable<GeneratedSingleHost['moonSystems'][number]['relevantMoons'][number]['environmentState']['atmosphereAssessment']> | null,
+): CatalogAtmosphereState {
+  const resolved=assessment?.pressureBasis === 'CONDITIONAL_SCENARIO'
+    && assessment.estimatedSurfacePressurePascal !== null
+    && assessment.estimatedSurfacePressurePascal > 0 && assessment.species.length > 0;
+  return Object.freeze({
+    fractions: resolved
+      ? Object.freeze(Object.fromEntries(assessment!.species.map(item => [item.gas,item.moleFraction01])))
+      : null,
+    pressureBar: resolved ? assessment!.estimatedSurfacePressurePascal! / 100_000 : null,
+    conditional: true,
+  });
+}
+
 function restoreSnapshot(json: string): GalaxyKnowledgePlanetMoonCatalogSnapshot {
   const raw = parseBigIntTree(json) as {
     galaxyIndex: bigint;
     planets: readonly RawPlanet[];
     moons: readonly RawMoon[];
     unmaterializedMinorMoonCount: bigint;
+    atmosphereProjectionVersion?: 1;
   };
 
   return Object.freeze({
@@ -632,6 +675,7 @@ function restoreSnapshot(json: string): GalaxyKnowledgePlanetMoonCatalogSnapshot
     planets: Object.freeze(raw.planets.map(restorePlanet)),
     moons: Object.freeze(raw.moons.map(restoreMoon)),
     unmaterializedMinorMoonCount: raw.unmaterializedMinorMoonCount,
+    atmosphereProjectionVersion: raw.atmosphereProjectionVersion,
   });
 }
 

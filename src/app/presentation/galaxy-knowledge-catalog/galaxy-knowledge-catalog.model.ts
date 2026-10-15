@@ -1,5 +1,6 @@
 import { type KnownDiscoveryState } from '../../domain/discovery/discovery-state';
 import { type UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
+import { parseCatalogAtmosphereFilter, type CatalogAtmosphereFilter } from './galaxy-knowledge-atmosphere-filter';
 
 export const GALAXY_KNOWLEDGE_CATALOG_PAGE_SIZES = Object.freeze([25, 50, 100] as const);
 
@@ -57,6 +58,7 @@ export interface GalaxyKnowledgeCatalogQuery {
   readonly direction: GalaxyKnowledgeCatalogDirection;
   /** Optional name/designation search within the active known category. */
   readonly search?: string | null;
+  readonly atmosphere?: CatalogAtmosphereFilter;
 }
 
 export interface GalaxyKnowledgeCatalogAction {
@@ -80,6 +82,12 @@ export interface GalaxyKnowledgeCatalogPage {
   readonly pageSize: GalaxyKnowledgeCatalogPageSize;
   readonly totalPages: number;
   readonly items: readonly GalaxyKnowledgeCatalogRow[];
+  /** Whole filtered selection, before pagination; only when sorting by atmospheric data. */
+  readonly atmosphericSortAvailability?: Readonly<{
+    resolved: number;
+    positive: number;
+    unresolved: number;
+  }>;
 }
 
 export interface GalaxyKnowledgeCatalogDataRequest {
@@ -95,6 +103,11 @@ export type GalaxyKnowledgeCatalogDataResult =
 
 export interface GalaxyKnowledgeCatalogRawQuery {
   readonly search?: string | null;
+  readonly gasRanges?: string | null;
+  readonly gasCombine?: string | null;
+  readonly pressureMin?: string | null;
+  readonly pressureMax?: string | null;
+  readonly earthMin?: string | null;
   readonly subtype: string | null;
   readonly page: string | null;
   readonly pageSize: string | null;
@@ -148,6 +161,7 @@ export function normalizeGalaxyKnowledgeCatalogQuery(
     sortKey,
     direction,
     ...(search === null ? {} : { search }),
+    ...((category !== 'planets' && category !== 'moons') ? {} : {atmosphere: parseCatalogAtmosphereFilter(raw, category === 'moons')}),
   });
 }
 

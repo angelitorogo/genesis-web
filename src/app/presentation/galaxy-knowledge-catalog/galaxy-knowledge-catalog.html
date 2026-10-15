@@ -101,6 +101,57 @@
             <small>Busca en todos los objetos conocidos de este catálogo, no solo en la página actual.</small>
           </form>
 
+          @if (model.descriptor.category === 'planets' || model.descriptor.category === 'moons') {
+            <form class="gkc__atmosphere" (submit)="applyAtmosphereFilters($event)" aria-label="Filtros de composición atmosférica" data-testid="gkc-atmosphere-filters">
+              <div class="gkc__atmosphere-heading">
+                <div><strong>BUSCADOR ATMOSFÉRICO</strong><p>Fracciones molares finales · intervalos inclusivos · resultados del catálogo conocido.</p></div>
+                <button type="button" (click)="addGasRow()" data-testid="gkc-add-gas">+ Añadir gas</button>
+              </div>
+              @for (row of gasRows; track $index; let i = $index) {
+                <div class="gkc__atmosphere-row" data-testid="gkc-gas-row">
+                  <label>GAS
+                    <select [value]="row.gas" (change)="changeGasRow(i, 'gas', $event)" [attr.data-testid]="'gkc-gas-select-' + i">
+                      @for (item of availableGases(model.descriptor.category === 'moons'); track item.gas) {
+                        <option [value]="item.gas">{{ item.label }} ({{ item.symbol }})</option>
+                      }
+                    </select>
+                  </label>
+                  <label>MÍNIMO %
+                    <input type="number" min="0" max="100" step="any" [value]="row.min" (input)="changeGasRow(i, 'min', $event)" [attr.data-testid]="'gkc-gas-min-' + i" placeholder="0" />
+                  </label>
+                  <label>MÁXIMO %
+                    <input type="number" min="0" max="100" step="any" [value]="row.max" (input)="changeGasRow(i, 'max', $event)" [attr.data-testid]="'gkc-gas-max-' + i" placeholder="100" />
+                  </label>
+                  <button type="button" (click)="removeGasRow(i)" [attr.aria-label]="'Quitar filtro de gas ' + (i+1)">Quitar</button>
+                </div>
+              }
+              <div class="gkc__atmosphere-extra">
+                <label>COMBINAR GASES
+                  <select [value]="gasCombine" (change)="gasCombine = $any($event.target).value" data-testid="gkc-gas-mode">
+                    <option value="AND">Todos (Y)</option><option value="OR">Cualquiera (O)</option>
+                  </select>
+                </label>
+                <label>PRESIÓN MÍN. (bar)
+                  <input type="number" min="0" step="any" [value]="pressureMinDraft" (input)="pressureMinDraft = $any($event.target).value" data-testid="gkc-pressure-min" placeholder="Sin mínimo" />
+                </label>
+                <label>PRESIÓN MÁX. (bar)
+                  <input type="number" min="0" step="any" [value]="pressureMaxDraft" (input)="pressureMaxDraft = $any($event.target).value" data-testid="gkc-pressure-max" placeholder="Sin máximo" />
+                </label>
+                @if (model.descriptor.category === 'planets') {
+                  <label>SIMILITUD TIERRA ≥ (%)
+                    <input type="number" min="0" max="100" step="any" [value]="earthMinDraft" (input)="earthMinDraft = $any($event.target).value" data-testid="gkc-earth-min" placeholder="Sin filtro" />
+                  </label>
+                }
+              </div>
+              <div class="gkc__atmosphere-actions">
+                <button type="submit" data-testid="gkc-apply-atmosphere">Aplicar filtros</button>
+                <button type="button" (click)="clearAtmosphereFilters()" data-testid="gkc-clear-atmosphere">Limpiar filtros</button>
+              </div>
+              @if (atmosphereError) { <p class="gkc__atmosphere-error" role="alert">{{ atmosphereError }}</p> }
+              <small>«No determinado» no equivale a 0 %. En lunas, los porcentajes calculables son escenarios condicionales. La similitud terrestre compara N₂, O₂, Ar y CO₂ del aire seco; no acredita habitabilidad ni vida.</small>
+            </form>
+          }
+
           <section class="gkc__toolbar" aria-label="Ordenación y paginación del catálogo">
             <label>
               <span>ORDENAR POR</span>
@@ -180,12 +231,30 @@
           } @else {
             <section class="gkc__page-meta" data-testid="gkc-page-meta">
               <span>
-                {{ formatCount(model.data.page.totalItems) }} {{ model.query.search ? 'resultados por nombre' : 'objetos conocidos' }}
+                {{ formatCount(model.data.page.totalItems) }} {{ model.query.search || model.query.atmosphere?.ranges?.length || model.query.atmosphere?.minPressureBar != null || model.query.atmosphere?.maxPressureBar != null || model.query.atmosphere?.minEarthSimilarityPercent != null ? 'resultados filtrados' : 'objetos conocidos' }}
               </span>
               <span>
                 Página {{ model.data.page.page }} / {{ model.data.page.totalPages }}
               </span>
             </section>
+
+            @if (model.data.page.atmosphericSortAvailability; as values) {
+              <p class="gkc__atmosphere-sort-info" data-testid="gkc-atmosphere-sort-info">
+                @if (values.resolved === 0) {
+                  No hay valores atmosféricos resueltos para este criterio entre los resultados filtrados.
+                  Por eso la ordenación puede mantener el orden secundario por identidad.
+                } @else if (values.positive === 0) {
+                  Todos los {{ formatCount(values.resolved) }} valores atmosféricos resueltos de este criterio son cero;
+                  se aplica el desempate por identidad.
+                } @else {
+                  Ordenación atmosférica: {{ formatCount(values.resolved) }} valores resueltos
+                  ({{ formatCount(values.positive) }} superiores a cero).
+                }
+                @if (values.unresolved > 0) {
+                  {{ formatCount(values.unresolved) }} sin determinar, situados al final del orden.
+                }
+              </p>
+            }
 
             @if (model.data.page.items.length === 0) {
               <section class="gkc__state" data-testid="gkc-no-items">

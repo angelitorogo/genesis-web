@@ -15,6 +15,8 @@ import { combineLatest } from 'rxjs';
 
 import { GenesisScreen } from '../../ui/layout/genesis-screen/genesis-screen';
 import { GalaxyKnowledgeCatalogFacade } from './galaxy-knowledge-catalog.facade';
+import { CATALOG_ATMOSPHERE_GASES, parseCatalogAtmosphereFilter, type CatalogGasRange } from './galaxy-knowledge-atmosphere-filter';
+import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
 import {
   catalogColumnsStorageKey,
   catalogColumnsWithSort,
@@ -45,6 +47,45 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
   readonly facade = inject(GalaxyKnowledgeCatalogFacade);
   readonly pageSizes = GALAXY_KNOWLEDGE_CATALOG_PAGE_SIZES;
   searchDraft = '';
+  readonly atmosphericGases=CATALOG_ATMOSPHERE_GASES;
+  gasRows: Array<{gas:AtmosphereGas;min:string;max:string}> = [];
+  gasCombine: 'AND'|'OR' = 'AND';
+  pressureMinDraft = '';
+  pressureMaxDraft = '';
+  earthMinDraft = '';
+  atmosphereError = '';
+
+  availableGases(lunar: boolean) { return CATALOG_ATMOSPHERE_GASES.filter(item=>!lunar||item.lunar); }
+  addGasRow(): void {
+    const lunar=this.facade.model()?.query.category==='moons';
+    const gas=this.availableGases(lunar)[0]!.gas;
+    this.gasRows=[...this.gasRows,{gas,min:'',max:''}];
+  }
+  removeGasRow(index:number):void {this.gasRows=this.gasRows.filter((_,i)=>i!==index);}
+  changeGasRow(index:number, field:'gas'|'min'|'max', event:Event):void {
+    const value=(event.target as HTMLInputElement|HTMLSelectElement).value;
+    this.gasRows=this.gasRows.map((row,i)=>i===index?{
+      ...row,[field]:value,
+    }:row) as typeof this.gasRows;
+  }
+  async applyAtmosphereFilters(event:Event):Promise<void> {
+    event.preventDefault();
+    const lunar=this.facade.model()?.query.category==='moons';
+    const gasRanges=this.gasRows.map(row=>`${row.gas}:${row.min.trim().replace(',','.')}:${row.max.trim().replace(',','.')}`).join(';');
+    const raw={gasRanges,gasCombine:this.gasCombine,
+      pressureMin:this.pressureMinDraft.trim().replace(',','.'),pressureMax:this.pressureMaxDraft.trim().replace(',','.'),
+      earthMin:lunar?'':this.earthMinDraft.trim().replace(',','.')};
+    try { parseCatalogAtmosphereFilter(raw,lunar); this.atmosphereError=''; }
+    catch(error) {this.atmosphereError=error instanceof Error?error.message:'Filtro atmosférico incorrecto';return;}
+    await this.navigateQuery({atm:raw.gasRanges,amode:raw.gasCombine,pmin:raw.pressureMin,
+      pmax:raw.pressureMax,earth:raw.earthMin,page:'1'});
+  }
+  async clearAtmosphereFilters():Promise<void> {
+    this.gasRows=[];this.gasCombine='AND';this.pressureMinDraft='';this.pressureMaxDraft='';this.earthMinDraft='';
+    this.atmosphereError='';
+    await this.navigateQuery({atm:'',amode:'AND',pmin:'',pmax:'',earth:'',page:'1'});
+  }
+
 
   private readonly columnSelection = signal<Readonly<{
     category: string;
@@ -86,6 +127,22 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
     untracked(() => { this.searchDraft = search; });
   });
 
+  private readonly syncAtmosphereDraft = effect(() => {
+    const model=this.facade.model();
+    untracked(()=>{
+      const a=model?.query.atmosphere;
+      this.gasRows=(a?.ranges??[]).map((r:CatalogGasRange)=>({
+        gas:r.gas,min:r.minPercent===null?'':String(r.minPercent),
+        max:r.maxPercent===null?'':String(r.maxPercent),
+      }));
+      this.gasCombine=a?.combine??'AND';
+      this.pressureMinDraft=a?.minPressureBar===null||a===undefined?'':String(a.minPressureBar);
+      this.pressureMaxDraft=a?.maxPressureBar===null||a===undefined?'':String(a.maxPressureBar);
+      this.earthMinDraft=a?.minEarthSimilarityPercent===null||a===undefined?'':String(a.minEarthSimilarityPercent);
+      this.atmosphereError='';
+    });
+  });
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -108,6 +165,8 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
             sortKey: queryParams.get('sort'),
             direction: queryParams.get('direction'),
             search: queryParams.get('q'),
+            gasRanges: queryParams.get('atm'),gasCombine:queryParams.get('amode'),
+            pressureMin:queryParams.get('pmin'),pressureMax:queryParams.get('pmax'),earthMin:queryParams.get('earth'),
           },
         );
       });
@@ -255,6 +314,14 @@ export class GalaxyKnowledgeCatalogPage implements OnInit {
     };
     if (model.query.search) {
       params['q'] = model.query.search;
+    }
+    if(model.query.atmosphere) {
+      const a=model.query.atmosphere;
+      if(a.ranges.length)params['atm']=a.ranges.map(r=>`${r.gas}:${r.minPercent??''}:${r.maxPercent??''}`).join(';');
+      if(a.combine==='OR')params['amode']='OR';
+      if(a.minPressureBar!==null)params['pmin']=String(a.minPressureBar);
+      if(a.maxPressureBar!==null)params['pmax']=String(a.maxPressureBar);
+      if(a.minEarthSimilarityPercent!==null)params['earth']=String(a.minEarthSimilarityPercent);
     }
     if (model.query.subtype !== null) {
       params['type'] = model.query.subtype;

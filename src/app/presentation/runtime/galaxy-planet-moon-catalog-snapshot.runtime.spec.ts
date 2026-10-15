@@ -24,6 +24,7 @@ const moon = new MoonLocator(0n, 3n, 8n, 1n, 0n);
 function snapshot(): GalaxyKnowledgePlanetMoonCatalogSnapshot {
   return Object.freeze({
     galaxyIndex: 0n,
+    atmosphereProjectionVersion: 1,
     planets: Object.freeze([
       Object.freeze({
         id: 'planet-1',
@@ -118,4 +119,25 @@ describe('26.1c.3 galaxy planet/moon catalog snapshot runtime', () => {
 
     expect(builder).toHaveBeenCalledTimes(2);
   });
+  it('rebuilds old persisted catalogues without the atmosphere projection exactly once',async()=>{
+    let stored:GalaxyKnowledgeSnapshotEntity|undefined;
+    const repo:GalaxyKnowledgeSnapshotRepository={async get(){return stored;},async put(entity){stored=entity;}};
+    const builder=vi.fn(()=>snapshot());
+    const known=[new KnownDiscovery(key,system,DiscoveryState.CONFIRMED)];
+    const first=new DexieGalaxyPlanetMoonCatalogSnapshotRuntime(repo,Date.now,builder);
+    await first.resolve(key,0n,known);
+    expect(builder).toHaveBeenCalledTimes(1);
+    // Simulate the previously persisted, fully known but chemistry-free schema.
+    if(stored===undefined)return;
+    const old=JSON.parse(stored.planetMoonCatalogJson!) as Record<string,unknown>;
+    delete old['atmosphereProjectionVersion'];
+    stored={...stored,planetMoonCatalogJson:JSON.stringify(old)};
+    const second=new DexieGalaxyPlanetMoonCatalogSnapshotRuntime(repo,Date.now,builder);
+    await second.resolve(key,0n,known);
+    expect(builder).toHaveBeenCalledTimes(2);
+    const third=new DexieGalaxyPlanetMoonCatalogSnapshotRuntime(repo,Date.now,builder);
+    await third.resolve(key,0n,known);
+    expect(builder).toHaveBeenCalledTimes(2);
+  });
+
 });

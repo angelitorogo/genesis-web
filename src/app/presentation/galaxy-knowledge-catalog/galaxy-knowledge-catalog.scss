@@ -324,3 +324,27 @@
 .gkc__reset-columns { margin-top: .85rem; }
 .gkc__table th:first-child, .gkc__table td:first-child { min-width: 140px; }
 .gkc__table th, .gkc__table td { white-space: nowrap; }
+
+/* Advanced chemistry search stays separate from name search and column customization. */
+.gkc__atmosphere { display: grid; gap: .8rem; border: 1px solid #28465f; border-radius: .9rem; padding: 1rem; background: #0c131f; }
+.gkc__atmosphere-heading { display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.gkc__atmosphere-heading strong { color: #68d9ff; font: 700 .76rem monospace; letter-spacing: .08em; }
+.gkc__atmosphere p { margin: .35rem 0 0; color: #b6c5da; }
+.gkc__atmosphere-row { display: grid; grid-template-columns: minmax(170px,2fr) repeat(2,minmax(110px,1fr)) auto; gap: .65rem; align-items: end; }
+.gkc__atmosphere-extra { display: flex; flex-wrap: wrap; gap: .65rem; }
+.gkc__atmosphere-extra label { min-width: 155px; flex: 1; }
+.gkc__atmosphere label { display: grid; gap: .35rem; color: #68d9ff; font: .73rem monospace; }
+.gkc__atmosphere select,.gkc__atmosphere input { width: 100%; min-height: 2.6rem; box-sizing: border-box; border: 1px solid #2b465e; border-radius: .5rem; padding: .5rem .7rem; background: #080f18; color: #f5f7fa; }
+.gkc__atmosphere button { min-height: 2.6rem; border: 1px solid #3989aa; border-radius: .5rem; padding: .45rem .9rem; background: #102b3c; color: #e7faff; cursor: pointer; }
+.gkc__atmosphere-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.gkc__atmosphere small { font: .78rem/1.5 inherit; color: #9fb2c8; }
+.gkc__atmosphere .gkc__atmosphere-error { color: #ff9ea1; }
+@media(max-width:760px){ .gkc__atmosphere-row { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+
+/* ATM-CATALOG-R1a: explain homogeneous/unresolved chemical sort results. */
+.gkc__atmosphere-sort-info {
+  margin: 0 0 0.7rem;
+  color: var(--genesis-color-text-muted, #91aabd);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
