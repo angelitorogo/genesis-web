@@ -1262,6 +1262,10 @@ export class ScientificBodyPreview
       surfaceStyle: planet.surfaceStyle,
       lightIntensity: 0,
       sourceLuminositySolar: null,
+      opticalSurfaceGravityMetersPerSecondSquared:
+        planet.opticalSurfaceGravityMetersPerSecondSquared ?? null,
+      opticalReferenceInsolationEarth:
+        planet.opticalReferenceInsolationEarth ?? null,
       spin: planet.spin,
       surfaceEnvironment: planet.surface,
       giantAtmosphere: planet.giantAtmosphere,
@@ -1278,6 +1282,8 @@ export class ScientificBodyPreview
           surfaceTextureSeedUint32: planet.surfaceVisualVariantUint32,
           giantAtmosphereTextureSeedUint32: planet.giantAtmosphereVisualVariantUint32,
         },
+        false,
+        planet.opticalPhotosphereTemperatureKelvin ?? null,
       );
 
     const segments =

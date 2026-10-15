@@ -1,3 +1,6 @@
+import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
+import { buildAtmosphereOpticalScienceV1 } from './system-scene-atmosphere-optical-science';
+import { resolveSystemSceneAtmospherePhotosphereKelvinV4 } from './system-scene-atmosphere-photosphere-v4';
 import { systemSceneCometActivityVisualParityV1 } from './system-scene-comet-activity-parity';
 import { createSystemSceneTnoRenderableV1 } from './system-scene-tno-renderable';
 import { createSystemSceneCapturedRenderableV1 } from './system-scene-captured-renderable';
@@ -4481,6 +4484,9 @@ class ThreeSystemSceneRuntime
         null,
         planet.compactPlanetPresentationFill01 ??
           (this.currentSnapshot?.stars.some(star => star.compactHostKind !== undefined) ? 0.08 : false),
+        this.currentSnapshot === null
+          ? null
+          : resolveSystemSceneAtmospherePhotosphereKelvinV4(this.currentSnapshot.stars),
       );
 
     this.bodyLightBindings.set(
@@ -6363,6 +6369,8 @@ export function createSystemScenePlanetAppearanceV1(
       null,
   /** Optical fill for bodies around compact hosts, not a physical heating term. */
   compactVisualFill: boolean | number = false,
+  /** A physical stellar photosphere, never the shader's illustrative glow. */
+  photosphereTemperatureKelvin: number | null = null,
 ): PlanetAppearance {
   const compactFillStrength = typeof compactVisualFill === 'number'
     ? Math.max(0, Math.min(1, compactVisualFill))
@@ -6414,8 +6422,32 @@ export function createSystemScenePlanetAppearanceV1(
   const visualSeed =
     textureResource.visualSeed;
 
+  const opticalSurface = planet.surfaceEnvironment;
+  const composition = opticalSurface?.retainedGasComposition;
+  const knownGases = composition !== undefined && composition.every(gas =>
+    Object.values(AtmosphereGas).includes(gas.gas as AtmosphereGas));
+  const opticalScience = opticalSurface?.solidSurfaceAvailable === true
+    ? buildAtmosphereOpticalScienceV1({
+        columnKind: 'SOLID_SURFACE',
+        retainedGasComposition: composition === undefined || !knownGases
+          ? null
+          : composition.map(component => ({
+          gas: component.gas as AtmosphereGas,
+          moleFraction01: component.moleFraction01,
+        })),
+        retainedSurfacePressurePascal: opticalSurface.retainedSurfacePressurePascal,
+        meanSurfaceTemperatureKelvin: opticalSurface.meanSurfaceTemperatureKelvin,
+        surfaceGravityMetersPerSecondSquared:
+          planet.opticalSurfaceGravityMetersPerSecondSquared ?? null,
+        referenceBolometricFluxEarth:
+          planet.opticalReferenceInsolationEarth ?? null,
+        stellarEffectiveTemperatureKelvin: photosphereTemperatureKelvin,
+      })
+    : null;
+
   const atmosphereOptics =
     buildSystemSceneAtmosphereOpticsV1({
+      opticalScience,
       baseColorHex:
         planet.colorHex,
       surfaceStyle:

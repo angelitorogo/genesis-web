@@ -6,6 +6,7 @@ import {
 import { planetRadiusKilometers, planetOrbitAuAndKilometers, planetRotationHoursAndDays,
   planetPressurePaBarEarth, planetTemperatureKelvinCelsius, planetTemperatureDifference, planetNormalizedPercent } from './planet-scientific-display-units';
 import { unifyPlanetFicheSections } from './planet-scientific-fiche-layout';
+import { auditPlanetSurfaceWaterPersistenceV3 } from './planet-surface-water-persistence-audit-v3';
 
 import {
   WorldEarthComparisonAssembler,
@@ -433,6 +434,22 @@ function surfaceSection(
   const surface =
     detail.surface;
 
+  const waterAudit = auditPlanetSurfaceWaterPersistenceV3({
+    hasDefinedSolidSurfaceBase: surface.hasDefinedSolidSurfaceBase,
+    hasPersistentSurfaceLiquidWater: surface.hasPersistentSurfaceLiquidWater,
+    retainedSurfacePressurePascal: detail.atmosphere.retainedSurfacePressurePascal,
+    meanSurfaceTemperatureKelvin: detail.climate.meanSurfaceTemperatureKelvin,
+    retainedGasComposition: detail.atmosphere.retainedGasComposition,
+  });
+
+  const waterPersistenceNote = waterAudit.status === 'EVAPORATION_REPLENISHMENT_UNRESOLVED'
+    ? `Líquido permitido por presión total y temperatura; saturación de vapor ≈ ${DECIMAL_1.format(100 * waterAudit.relativeSaturation01!)} % (escenario). Sin ciclo hidrológico ni reposición modelados, la persistencia no está acreditada.`
+    : waterAudit.status === 'THERMAL_INCONSISTENCY'
+      ? 'Advertencia de coherencia: la etiqueta heredada de persistencia no concuerda con la ventana de agua líquida calculada.'
+      : surface.hasPersistentSurfaceLiquidWater
+        ? 'Presencia estable de agua líquida en la superficie (según criterios térmicos del modelo; ciclo hidrológico no resuelto)'
+        : 'No se mantiene agua líquida superficial de forma persistente';
+
   return section(
     'surface',
     'SECCIÓN 03',
@@ -473,9 +490,7 @@ function surfaceSection(
               surface.surfaceWaterRegime,
             )
           : 'No persistente',
-        surface.hasPersistentSurfaceLiquidWater
-          ? 'Presencia estable de agua líquida en la superficie'
-          : 'No se mantiene agua líquida superficial de forma persistente',
+        waterPersistenceNote,
       ),
       field(
         'Distribución hielo / líquido / vapor',

@@ -486,6 +486,10 @@ export interface SystemSceneBodySnapshot {
   readonly spin:
     SystemSceneBodySpinSnapshot;
 
+  /** ATM-VIS.2 physical optical inputs, copied from the already generated planet.
+   * Optional for older snapshots and conditional compact-host scenarios. */
+  readonly opticalSurfaceGravityMetersPerSecondSquared?: number | null;
+  readonly opticalReferenceInsolationEarth?: number | null;
   /** Point-25.3 solid-surface environment; null for stars. */
   readonly surfaceEnvironment:
     SystemScenePlanetSurfacePresentationSnapshot | null;
@@ -3694,6 +3698,10 @@ function projectSceneGeometry(
             0,
           sourceLuminositySolar:
             null,
+          opticalSurfaceGravityMetersPerSecondSquared:
+            planet.surfaceGravityMetersPerSecondSquared,
+          opticalReferenceInsolationEarth:
+            planet.typeClassification.referenceMeanInsolationEarth,
           spin:
             Object.freeze({
               source:

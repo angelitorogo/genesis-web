@@ -1,4 +1,5 @@
 import { isCometActivityUnresolvedInSceneV1, systemSceneCometActivityVisualParityV1 } from '../system/system-scene-comet-activity-parity';
+import { resolveSystemSceneAtmospherePhotosphereKelvinV4 } from '../system/system-scene-atmosphere-photosphere-v4';
 import {
   type PlanetScientificResolvedTarget,
 } from '../../simulation/planetary/planet-scientific-target-resolver';
@@ -137,6 +138,11 @@ export interface ScientificPlanetPreviewVisual {
 
   readonly surface:
     SystemScenePlanetSurfacePresentationSnapshot | null;
+
+  /** ATM-VIS.2: same physical atmospheric inputs as SystemScene. */
+  readonly opticalSurfaceGravityMetersPerSecondSquared?: number | null;
+  readonly opticalReferenceInsolationEarth?: number | null;
+  readonly opticalPhotosphereTemperatureKelvin?: number | null;
 
   readonly giantAtmosphere:
     SystemSceneGiantAtmospherePresentationSnapshot | null;
@@ -989,6 +995,12 @@ function planetVisual(
       source.spin,
     surface:
       source.surfaceEnvironment,
+    opticalSurfaceGravityMetersPerSecondSquared:
+      source.opticalSurfaceGravityMetersPerSecondSquared ?? null,
+    opticalReferenceInsolationEarth:
+      source.opticalReferenceInsolationEarth ?? null,
+    opticalPhotosphereTemperatureKelvin:
+      resolveSystemSceneAtmospherePhotosphereKelvinV4(scene.stars),
     giantAtmosphere:
       source.giantAtmosphere,
     ring:

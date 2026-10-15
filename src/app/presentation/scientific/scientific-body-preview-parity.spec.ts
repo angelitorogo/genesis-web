@@ -28,6 +28,8 @@ import {
   type SystemSceneSnapshot,
 } from '../system/system-scene-snapshot';
 
+import { resolveSystemSceneAtmospherePhotosphereKelvinV4 } from '../system/system-scene-atmosphere-photosphere-v4';
+
 import {
   ScientificBodyPreviewAssembler,
   ScientificBodyPreviewKind,
@@ -83,6 +85,9 @@ describe(
         expect(result.primary.surface).toBe(
           source.surfaceEnvironment,
         );
+        // ATM-VIS.2: a known, luminous single-star photosphere is passed
+        // through unchanged to the fiche's shared optical renderer.
+        expect(result.primary.opticalPhotosphereTemperatureKelvin).toBe(5570);
         expect(result.primary.giantAtmosphere).toBe(
           source.giantAtmosphere,
         );
@@ -196,6 +201,34 @@ describe(
         expect(serialized).not.toContain(
           'generationKey',
         );
+      },
+    );
+
+    it(
+      'should not invent a stellar optical spectrum for unavailable or compact photospheres',
+      () => {
+        const scene = systemSceneFixture();
+        const sourceStar = scene.stars[0]!;
+        for (const stars of [
+          [],
+          [{ ...sourceStar, sourceLuminositySolar: null }],
+          [{ ...sourceStar, compactHostKind: 'NEUTRON_STAR' as const }],
+          [sourceStar, { ...sourceStar, id: 'star-B' }],
+          [sourceStar, { ...sourceStar, id: 'star-B' }, { ...sourceStar, id: 'star-C' }],
+          [{ ...sourceStar, sourceEffectiveTemperatureKelvin: Number.NaN }],
+        ]) {
+          const result = ScientificBodyPreviewAssembler.planet(
+            planetTarget(),
+            { ...scene, stars },
+          );
+          expect(result.kind).toBe(ScientificBodyPreviewKind.PLANET);
+          if (result.kind !== ScientificBodyPreviewKind.PLANET) continue;
+          expect(result.primary.opticalPhotosphereTemperatureKelvin).toBeNull();
+          // The SAME pure resolver is called by SystemScene and the fiche.
+          expect(result.primary.opticalPhotosphereTemperatureKelvin).toBe(
+            resolveSystemSceneAtmospherePhotosphereKelvinV4(stars),
+          );
+        }
       },
     );
 
@@ -361,6 +394,17 @@ function systemSceneFixture():
       1,
     proceduralIdentity:
       'G0/S17179869160/O12',
+    // Every genuine SystemSceneSnapshot includes its stellar hosts.
+    // ATM-VIS.2 now reads this input when constructing optical parity.
+    stars: [
+      {
+        id: 'star-A',
+        kind: 'star',
+        compactHostKind: undefined,
+        sourceLuminositySolar: 0.92,
+        sourceEffectiveTemperatureKelvin: 5570,
+      },
+    ],
     planets: [
       {
         id:

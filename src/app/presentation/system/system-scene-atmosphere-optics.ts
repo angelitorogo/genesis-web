@@ -1,3 +1,5 @@
+import { type AtmosphereOpticalScienceV1 } from './system-scene-atmosphere-optical-science';
+import { buildSystemSceneMolecularAtmosphereVisualV2 } from './system-scene-atmosphere-optical-presentation-v2';
 export interface SystemSceneAtmosphereOpticsSurfaceInput {
   readonly solidSurfaceAvailable: boolean;
   readonly retainedGasComposition?: readonly { readonly gas: string; readonly moleFraction01: number }[];
@@ -28,6 +30,8 @@ export interface SystemSceneAtmosphereOpticsInput {
     SystemSceneAtmosphereOpticsSurfaceInput | null;
   readonly giantAtmosphere:
     SystemSceneAtmosphereOpticsGiantInput | null;
+  /** ATM-VIS.2 opt-in physical diagnostic. Missing data keeps D.4d baseline. */
+  readonly opticalScience?: AtmosphereOpticalScienceV1 | null;
 }
 
 /**
@@ -205,11 +209,31 @@ export function buildSystemSceneAtmosphereOpticsV1(
   airTint = mixRgb(airTint, rgb(113, 185, 141), 0.70 * ammoniaHaze01);
   airTint = mixRgb(airTint, rgb(170, 134, 194), 0.64 * violetHaze01);
 
+  const molecular = buildSystemSceneMolecularAtmosphereVisualV2(
+    input.opticalScience, surface?.presentationCloudCoverageFraction01 ?? null,
+  );
+  // The 25.x gas-specific illustrative palettes remain a strict compatibility
+  // fallback for fixtures/unknown columns. Fully resolved surface atmospheres
+  // use molecular scattering without inventing CO2/SO2 aerosol pigments.
+  const chosenAirTint = molecular !== null
+    ? parseHexColor(molecular.dayTintHex)
+    : input.opticalScience !== null && input.opticalScience !== undefined
+      // An unresolved chemical column cannot justify a gas-specific palette.
+      // Retain the frozen geometry, but use a subdued neutral presentation.
+      ? mixRgb(base, rgb(204, 211, 215), 0.72)
+      : airTint;
   const nightTint = mixRgb(
-    airTint,
+    chosenAirTint,
     rgb(27, 52, 78),
     0.72,
   );
+  // ATM-VIS.2a: reduce shell brightness without touching the independently
+  // rendered surface/water specular shader or the canonical D.4d geometry.
+  const molecularScatterScale = molecular === null ? 1 :
+    (0.92 + 0.10 * molecular.molecularVisibility01) *
+    molecular.shellRadianceScale01;
+  const molecularTerminatorScale = molecular === null ? 1 :
+    0.93 + 0.10 * molecular.molecularVisibility01;
 
   return Object.freeze({
     version: SYSTEM_SCENE_ATMOSPHERE_OPTICS_VERSION,
@@ -226,21 +250,21 @@ export function buildSystemSceneAtmosphereOpticsV1(
         : 1,
     presentationRimStrength01:
       atmospherePresent
-        ? clamp01(0.016 + 0.60 * envelopeStrength01 +
+        ? clamp01((0.016 + 0.60 * envelopeStrength01 +
           0.37 * envelopeStrength01 ** 2 +
-          0.07 * clouds * envelopeStrength01)
+          0.07 * clouds * envelopeStrength01) * molecularScatterScale)
         : 0,
     presentationFrontHaze01:
       atmospherePresent
-        ? clamp01(0.42 * envelopeStrength01 +
+        ? clamp01((0.42 * envelopeStrength01 +
           0.28 * envelopeStrength01 ** 2 +
-          0.055 * clouds * envelopeStrength01)
+          0.055 * clouds * envelopeStrength01) * molecularScatterScale)
         : 0,
     presentationTerminatorSoftness01:
       atmospherePresent
-        ? clamp01(0.035 + 0.16 * envelopeStrength01 +
+        ? clamp01((0.035 + 0.16 * envelopeStrength01 +
           0.18 * envelopeStrength01 ** 2 +
-          0.045 * clouds * envelopeStrength01)
+          0.045 * clouds * envelopeStrength01) * molecularTerminatorScale)
         : 0.022,
     presentationNightFloor01:
       atmospherePresent
@@ -248,9 +272,10 @@ export function buildSystemSceneAtmosphereOpticsV1(
         : 0.012,
     presentationTwilightGlow01:
       atmospherePresent
-        ? clamp01(0.08 + 0.50 * envelopeStrength01 + 0.12 * clouds * envelopeStrength01)
+        ? clamp01((0.08 + 0.50 * envelopeStrength01 + 0.12 * clouds * envelopeStrength01) *
+          (molecular?.twilightRadianceScale01 ?? 1))
         : 0,
-    presentationDayTintHex: rgbToHex(airTint),
+    presentationDayTintHex: rgbToHex(chosenAirTint),
     presentationNightTintHex: rgbToHex(nightTint),
   });
 }

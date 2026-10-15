@@ -3,6 +3,7 @@ import {
 } from 'vitest';
 
 import { PLANET_FICHE_FIELD_LAYOUT } from './planet-scientific-fiche-layout';
+import { PlanetScientificSectionsAssembler } from './planet-scientific-sections';
 
 import {
   DiscoveryState,
@@ -209,6 +210,11 @@ describe(
         ).toBe(
           1,
         );
+        // ATM-VIS.3a: una fixture sin anfitrión luminoso único
+        // no debe inventar temperatura fotosférica para el renderer.
+        if (result.card.preview.kind === 'PLANET') {
+          expect(result.card.preview.primary.opticalPhotosphereTemperatureKelvin).toBeNull();
+        }
         expect(
           result.card.summary,
         ).toContain(
@@ -1074,6 +1080,8 @@ function previewScene():
       1,
     proceduralIdentity:
       'G3/S-17/O8',
+    // Fixture sin fuente fotosférica resuelta: no inferir temperatura óptica.
+    stars: [],
     planets: [
       {
         id: 'planet-1',
@@ -1203,3 +1211,42 @@ function previewMoonSnapshot() {
     },
   };
 }
+
+
+describe('ATM-VIS.3 — fiche water-persistence diagnosis', () => {
+  it('qualifies hot low-humidity liquid as conditional without changing generated water flags', () => {
+    const original = detailedTarget();
+    const target: PlanetScientificResolvedTarget = {
+      ...original,
+      detail: {
+        ...original.detail,
+        surface: { ...original.detail.surface,
+          surfaceWaterRegime: 'LOCAL_LIQUID',
+          hasPersistentSurfaceLiquidWater: true,
+          surfaceLiquidWaterCoverageFraction01: 0.021,
+        },
+        atmosphere: { ...original.detail.atmosphere,
+          retainedSurfacePressurePascal: 938_068.03,
+          retainedGasComposition: [
+            {gas: 'CARBON_DIOXIDE', moleFraction01: .598},
+            {gas: 'NITROGEN', moleFraction01: .247},
+            {gas: 'ARGON', moleFraction01: .086},
+            {gas: 'CARBON_MONOXIDE', moleFraction01: .029},
+            {gas: 'SULFUR_DIOXIDE', moleFraction01: .025},
+            {gas: 'WATER_VAPOR', moleFraction01: .014},
+            {gas: 'OXYGEN', moleFraction01: .001},
+          ],
+        },
+        climate: { ...original.detail.climate, meanSurfaceTemperatureKelvin: 410.77 },
+      },
+    };
+    const sections = PlanetScientificSectionsAssembler.build(target).sections;
+    const fields = sections.find(section => section.id === 'surface')!.fields;
+    const water = fields.find(field => field.label === 'Agua líquida superficial')!;
+    expect(water.value).toBe('Líquido local');
+    expect(water.note).toContain('reposición');
+    expect(water.note).toContain('saturación de vapor');
+    expect(water.note).toContain('%');
+    expect(target.detail.surface.hasPersistentSurfaceLiquidWater).toBe(true);
+  });
+});
