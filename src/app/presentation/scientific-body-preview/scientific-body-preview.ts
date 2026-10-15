@@ -2258,19 +2258,22 @@ function scientificRingPresentation(
 function asteroidPresentation(
   asteroid: ScientificAsteroidPreviewVisual,
 ): SystemSceneAsteroidPresentationV1 {
+  // The exact visual seed stays inside the renderer; no raw procedural ID is
+  // exposed through the scientific card. The remaining parameters are the
+  // same physical snapshot attributes used in SystemScene (A.6 parity).
   return Object.freeze({
     ...asteroid,
     shapeSeedUint32: asteroid.visualVariantUint32,
     source: 'PHASE_22_4_ASTEROID_TAXONOMY' as const,
     proceduralId: 'SCIENTIFIC-PREVIEW',
-    sourceDiameterKilometers: 1,
-    carbonaceousFraction01: 0.25,
-    silicateFraction01: 0.25,
-    metalFraction01: 0.25,
-    iceFraction01: 0.25,
-    porosityIndex01: 0,
+    sourceDiameterKilometers: asteroid.diameterKilometers ?? 100,
+    carbonaceousFraction01: asteroid.carbonaceousFraction01 ?? 0.25,
+    silicateFraction01: asteroid.silicateFraction01 ?? 0.25,
+    metalFraction01: asteroid.metalFraction01 ?? 0.25,
+    iceFraction01: asteroid.iceFraction01 ?? 0.25,
+    porosityIndex01: asteroid.porosityIndex01 ?? 0,
+    geometricAlbedo01: asteroid.geometricAlbedo01 ?? 0.1,
     bulkDensityGramsPerCubicCentimeter: 1,
-    geometricAlbedo01: 0.1,
     binaryMassRatio01: null,
     binarySeparationPrimaryRadii: null,
   });

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import {
   type SystemSceneAsteroidPresentationV1,
 } from './system-scene-asteroid-presentation';
+import { asteroidMineralNoiseV1, buildAsteroidTerrainV1, sampleAsteroidTerrainV1 } from './system-scene-asteroid-terrain';
 
 export interface SystemSceneAsteroidRenderableV1 {
   readonly object: THREE.Group;
@@ -38,7 +39,7 @@ export function createSystemSceneAsteroidRenderableV1(
   }
 
   const object = new THREE.Group();
-  object.name = 'GENESIS irregular asteroid 25.7';
+  object.name = 'GENESIS asteroid A.1-A.6 procedural terrain';
   object.rotation.set(
     presentation.presentationOrientationXRadians,
     presentation.presentationOrientationYRadians,
@@ -54,7 +55,7 @@ export function createSystemSceneAsteroidRenderableV1(
     // Surface relief provides irregularity without exposing polygon facets.
     flatShading: false,
   });
-  material.name = `GENESIS asteroid material 25.7 ${presentation.compositionRegime}`;
+  material.name = `GENESIS asteroid A.4 regolith material ${presentation.compositionRegime}`;
 
   const resources: Array<{ dispose(): void }> = [material];
   const layout = buildSystemSceneAsteroidLobeLayoutV1(presentation);
@@ -78,6 +79,43 @@ export function createSystemSceneAsteroidRenderableV1(
     );
     object.add(mesh);
     resources.push(geometry);
+
+    // A.5: aggregate boulders belong only to an explicitly generated rubble
+    // pile. Do not invent companions or change the stored SINGLE/BINARY state.
+    if (presentation.structureRegime === 'RUBBLE_PILE') {
+      const count = presentation.sourceDiameterKilometers < 50 ? 9 : 6;
+      const baseBoulder = new THREE.Color(presentation.presentationColorHex);
+      for (let i = 0; i < count; i++) {
+        const salt = lobe.seedSalt + 1100 + i * 11;
+        const z = signedSeedUnit(presentation.shapeSeedUint32, salt);
+        const angle = seedUnit(presentation.shapeSeedUint32, salt + 1) * Math.PI * 2;
+        const xy = Math.sqrt(Math.max(0, 1 - z * z));
+        const dx = xy * Math.cos(angle);
+        const dy = xy * Math.sin(angle);
+        const scale = 0.065 + 0.065 * seedUnit(presentation.shapeSeedUint32, salt + 3);
+        const fragment = new THREE.IcosahedronGeometry(radiusScene * lobe.radiusScale * scale, 1);
+        const vertexCount = fragment.getAttribute('position').count;
+        const color = baseBoulder.clone().multiplyScalar(
+          0.68 + seedUnit(presentation.shapeSeedUint32, salt + 5) * 0.45,
+        );
+        const rgb = new Float32Array(vertexCount * 3);
+        for (let vertex = 0; vertex < vertexCount; vertex++) {
+          rgb[vertex * 3] = color.r;
+          rgb[vertex * 3 + 1] = color.g;
+          rgb[vertex * 3 + 2] = color.b;
+        }
+        fragment.setAttribute('color', new THREE.BufferAttribute(rgb, 3));
+        const boulder = new THREE.Mesh(fragment, material);
+        boulder.position.set(
+          radiusScene * lobe.offsetXScale + dx * radiusScene * lobe.radiusScale * 0.91,
+          radiusScene * lobe.offsetYScale + dy * radiusScene * lobe.radiusScale * 0.91,
+          radiusScene * lobe.offsetZScale + z * radiusScene * lobe.radiusScale * 0.91,
+        );
+        boulder.rotation.set(angle, z, angle * 0.55);
+        object.add(boulder);
+        resources.push(fragment);
+      }
+    }
   }
 
   return Object.freeze({
@@ -159,60 +197,70 @@ export function createIrregularAsteroidGeometryV1(
   presentation: SystemSceneAsteroidPresentationV1,
   seedSalt = 0,
 ): THREE.BufferGeometry {
-  // Start from a smooth sphere rather than a low-detail icosahedron. Asteroids
-  // remain non-perfect spheroids through deterministic axis scaling and radial
-  // relief, but their silhouette must never read as an obvious polyhedron.
+  // Same procedural terrain in SystemScene and scientific fiches; mesh
+  // resolution alone is reduced for tiny on-screen SystemScene bodies.
+  // No physical size or seeded feature is altered by this display-only LOD.
+  const closeInspection = radiusScene >= 0.06;
   const geometry = new THREE.SphereGeometry(
-    radiusScene,
-    32,
-    20,
+    radiusScene, closeInspection ? 80 : 48, closeInspection ? 56 : 32,
   );
-
   const positions = geometry.getAttribute('position') as THREE.BufferAttribute;
   const colors = new Float32Array(positions.count * 3);
-  const baseColor = new THREE.Color(presentation.presentationColorHex);
-  const irregularity = presentation.presentationIrregularity01;
-  const facetContrast = presentation.presentationFacetContrast01;
+  const base = new THREE.Color(presentation.presentationColorHex);
+  const terrain = buildAsteroidTerrainV1(presentation, seedSalt);
+  const roundness = terrain.sizeRoundness01;
+  const isRubble = presentation.structureRegime === 'RUBBLE_PILE';
+  const metallic = presentation.compositionRegime === 'METALLIC';
+  const carbonaceous = presentation.compositionRegime === 'CARBONACEOUS';
+  const rocky = presentation.compositionRegime === 'SILICACEOUS';
+  const weathered = new THREE.Color(
+    metallic ? '#645a52' : carbonaceous ? '#77706a' : rocky ? '#9c7960' : '#7f8586',
+  );
+  const paleMineral = new THREE.Color(
+    metallic ? '#b5aea0' : carbonaceous ? '#a5a19a' : rocky ? '#c2ac8e' : '#bbc0bf',
+  );
+  const pixelColor = new THREE.Color();
+  const axisCompression = 0.45 + 0.55 * (1 - roundness);
+  const reliefStrength = 0.92 - roundness * 0.20;
 
   for (let index = 0; index < positions.count; index += 1) {
     const x = positions.getX(index);
     const y = positions.getY(index);
     const z = positions.getZ(index);
-    const length = Math.max(Math.sqrt(x * x + y * y + z * z), Number.EPSILON);
+    const length = Math.max(Math.hypot(x, y, z), Number.EPSILON);
     const nx = x / length;
     const ny = y / length;
     const nz = z / length;
+    const low = asteroidMineralNoiseV1(nx * 0.52, ny * 0.52, nz * 0.52, presentation.shapeSeedUint32, seedSalt + 21);
+    const medium = asteroidMineralNoiseV1(nx * 1.7, ny * 1.7, nz * 1.7, presentation.shapeSeedUint32, seedSalt + 41);
+    const fine = asteroidMineralNoiseV1(nx * 4.1, ny * 4.1, nz * 4.1, presentation.shapeSeedUint32, seedSalt + 61);
+    const terrainSample = sampleAsteroidTerrainV1(nx, ny, nz, terrain);
+    const shape = asteroidDirectionalRadiusFactorV1(nx, ny, nz,
+      presentation.shapeSeedUint32, seedSalt, presentation.presentationIrregularity01);
+    const coarse = (shape - 1) * (0.56 + (1 - roundness) * 1.15);
+    const granular = (medium * 0.006 + fine * 0.004) * (isRubble ? 1.65 : 0.85);
+    const radial = clamp(1 + coarse + granular + terrainSample.radialOffset * reliefStrength,
+      roundness > 0.8 ? 0.86 : 0.75, roundness > 0.8 ? 1.11 : 1.22);
+    const axisX = 1 + (presentation.presentationAxisScaleX - 1) * axisCompression;
+    const axisY = 1 + (presentation.presentationAxisScaleY - 1) * axisCompression;
+    const axisZ = 1 + (presentation.presentationAxisScaleZ - 1) * axisCompression;
+    positions.setXYZ(index, nx * radiusScene * radial * axisX,
+      ny * radiusScene * radial * axisY, nz * radiusScene * radial * axisZ);
 
-    const radial = asteroidDirectionalRadiusFactorV1(
-      nx,
-      ny,
-      nz,
-      presentation.shapeSeedUint32,
-      seedSalt,
-      irregularity,
-    );
-
-    positions.setXYZ(
-      index,
-      nx * radiusScene * radial * presentation.presentationAxisScaleX,
-      ny * radiusScene * radial * presentation.presentationAxisScaleY,
-      nz * radiusScene * radial * presentation.presentationAxisScaleZ,
-    );
-
-    const tonalNoise =
-      directionalHarmonicNoise(
-        nx,
-        ny,
-        nz,
-        presentation.shapeSeedUint32,
-        seedSalt + 701,
-      );
-    const brightness =
-      0.86 +
-      (tonalNoise * 0.5 + 0.5) * facetContrast * 0.34;
-    colors[index * 3] = Math.min(1, baseColor.r * brightness);
-    colors[index * 3 + 1] = Math.min(1, baseColor.g * brightness);
-    colors[index * 3 + 2] = Math.min(1, baseColor.b * brightness);
+    // Muted mineral provinces, impact ejecta and shadowed crater floors.
+    // The compositional ice percentage is NOT interpreted as exposed ice.
+    const province = clamp(0.5 + low * 0.75 + medium * 0.30, 0, 1);
+    pixelColor.copy(base).lerp(weathered, clamp(0.15 + (1 - province) * 0.37, 0, 0.58));
+    pixelColor.lerp(paleMineral, clamp((province - 0.56) * 0.48, 0, 0.24));
+    const mineralGrain = 0.84 + 0.26 * (0.5 + 0.5 * fine);
+    const craterFloor = 1 - terrainSample.craterFloor01 * 0.35;
+    const fractureShadow = 1 - terrainSample.fracture01 * 0.31;
+    const impactApron = 1 + terrainSample.impactEjecta01 * (metallic ? 0.08 : 0.20);
+    const faceted = isRubble ? 1 + Math.round(medium * 6) * 0.019 : 1;
+    pixelColor.multiplyScalar(clamp(mineralGrain * craterFloor * fractureShadow * impactApron * faceted, 0.52, 1.32));
+    colors[index * 3] = Math.min(1, pixelColor.r);
+    colors[index * 3 + 1] = Math.min(1, pixelColor.g);
+    colors[index * 3 + 2] = Math.min(1, pixelColor.b);
   }
 
   positions.needsUpdate = true;
@@ -220,7 +268,7 @@ export function createIrregularAsteroidGeometryV1(
   geometry.computeVertexNormals();
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
-  geometry.name = `GENESIS asteroid spheroidal irregular geometry 25.11 ${presentation.structureRegime}`;
+  geometry.name = `GENESIS asteroid A.1-A.4 cratered terrain ${presentation.structureRegime}`;
   return geometry;
 }
 

@@ -265,6 +265,15 @@ export interface ScientificMoonPreviewVisual {
 }
 
 export interface ScientificAsteroidPreviewVisual {
+  /** Scientific inputs (not procedural seeds) needed for exact SystemScene terrain parity. */
+  readonly diameterKilometers?: number;
+  readonly carbonaceousFraction01?: number;
+  readonly silicateFraction01?: number;
+  readonly metalFraction01?: number;
+  readonly iceFraction01?: number;
+  readonly porosityIndex01?: number;
+  readonly geometricAlbedo01?: number;
+
   readonly version:
     1;
 
@@ -1208,6 +1217,13 @@ function safeAsteroidVisual(
   return Object.freeze({
     version:
       1 as const,
+    diameterKilometers: presentation.sourceDiameterKilometers,
+    carbonaceousFraction01: presentation.carbonaceousFraction01,
+    silicateFraction01: presentation.silicateFraction01,
+    metalFraction01: presentation.metalFraction01,
+    iceFraction01: presentation.iceFraction01,
+    porosityIndex01: presentation.porosityIndex01,
+    geometricAlbedo01: presentation.geometricAlbedo01,
     compositionRegime:
       presentation.compositionRegime,
     structureRegime:

@@ -112,6 +112,14 @@ describe(
         expect(result.card.preview.kind).toBe(
           'ASTEROID',
         );
+        // A.6: the fiche now carries genuine compositional appearance inputs,
+        // never invented placeholders or a raw procedural seed.
+        if (result.card.preview.kind === 'ASTEROID') {
+          expect(result.card.preview.primary.diameterKilometers).toBe(87.4);
+          expect(result.card.preview.primary.carbonaceousFraction01).toBe(0.6);
+          expect(result.card.preview.primary.iceFraction01).toBe(0.05);
+          expect(result.card.preview.primary.porosityIndex01).toBe(0.48);
+        }
         expect(
           result.card.sections.sections.map(
             section =>
