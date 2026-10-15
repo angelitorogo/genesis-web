@@ -1,5 +1,6 @@
 import { type CompactHostMoon, type CompactHostMinorBody } from '../../domain/planetary/compact-host-secondary-population';
 import { MinorBodyKind } from '../../domain/planetary/minor-body-kind';
+import { buildSystemSceneTnoPresentationV1 } from './system-scene-tno-presentation';
 import { moonRomanNumeralV1 } from '../../domain/planetary/moon-designation';
 import { type CompactHostPlanetarySystem } from '../../domain/planetary/compact-host-planetary-system';
 import { type SystemSceneSnapshot, type SystemSceneMoonSnapshot } from './system-scene-snapshot';
@@ -159,6 +160,13 @@ export function compactMinorFiche(model:ArchiveDiscoveryDetailModel,body:Compact
   const comet=source?.cometPresentation ?? (body.kind===MinorBodyKind.COMET
     ? fallbackCompactCometPresentation(body)
     : null);
+  const tno=body.kind===MinorBodyKind.TRANS_NEPTUNIAN_OBJECT
+    ? (source?.tnoPresentation ?? buildSystemSceneTnoPresentationV1({
+        proceduralId:body.proceduralId,diameterKilometers:body.diameterKilometers,
+        iceFraction01:body.iceFraction01,rockFraction01:1-body.iceFraction01,
+        geometricAlbedo01:body.geometricAlbedo01,
+        bulkDensityGramsPerCubicCentimeter:body.bulkDensityGramsCm3,
+      })) : null;
   // A neutral preview is used only where radiation-dependent presentation is
   // legitimately unavailable (notably an unilluminated BH comet).
   const preview:import('../scientific/scientific-body-preview').ScientificBodyPreviewModel =
@@ -241,7 +249,8 @@ export function compactMinorFiche(model:ArchiveDiscoveryDetailModel,body:Compact
     })() :
     Object.freeze({kind:scientificKind===ScientificBodyPreviewKind.ASTEROID?ScientificBodyPreviewKind.TRANS_NEPTUNIAN_OBJECT:scientificKind,title,
       accessibleLabel:`${title}: visualización de tamaño no comparativo`,
-      primary:Object.freeze({title,colorHex:'#A6A29C',sourceRadiusScene:0.30})});
+      primary:Object.freeze({title,colorHex:tno?.colorHex ?? '#A6A29C',sourceRadiusScene:0.30,
+        ...(tno === null ? {} : {presentation:tno})})});
   return Object.freeze({kind:MinorBodyScientificFicheResolutionKind.AVAILABLE,card:Object.freeze({
     title,kindLabel,summary:`${kindLabel} en sistema compacto. Modelo estadístico condicionado, sin historia de formación inferida.`,
     hostSystemTitle:systemName,accessLabel:'Consulta científica habilitada',

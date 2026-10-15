@@ -1,4 +1,6 @@
 import { type CompactPlanetaryHostType } from '../../domain/stellar/compact-planetary-host';
+import { buildSystemSceneTnoPresentationV1, type SystemSceneTnoPresentationV1 } from './system-scene-tno-presentation';
+import { type RelevantTransNeptunianObject } from '../../domain/planetary/relevant-trans-neptunian-object';
 import { buildV2CometVisualOrbit } from './system-scene-v2-comet-orbit-presentation';
 import { projectPulsarSecondGenerationPlanets } from './system-scene-pulsar-planets';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
@@ -572,6 +574,9 @@ export interface SystemSceneMinorBodySnapshot {
 
   readonly cometPresentation:
     SystemSceneCometPresentationV1 | null;
+
+  /** TNO-R1: visual-only deterministic terrain shared with individual fiches. */
+  readonly tnoPresentation?: SystemSceneTnoPresentationV1 | null;
 }
 
 export interface SystemSceneAsteroidBeltSnapshot {
@@ -5036,7 +5041,22 @@ function projectMinorBodyLayer(
           )
         : null;
 
+    const tnoPresentation = orbital.kind === MinorBodyKind.TRANS_NEPTUNIAN_OBJECT
+      ? (() => {
+          const tno = entry.body as RelevantTransNeptunianObject;
+          return buildSystemSceneTnoPresentationV1({
+            proceduralId: tno.proceduralId,
+            diameterKilometers: tno.properties.diameterKilometers,
+            iceFraction01: tno.properties.iceFraction01,
+            rockFraction01: tno.properties.rockFraction01,
+            geometricAlbedo01: tno.properties.geometricAlbedo,
+            bulkDensityGramsPerCubicCentimeter: tno.properties.bulkDensityGramsPerCubicCentimeter,
+          });
+        })()
+      : null;
+
     const bodyColorHex =
+      tnoPresentation?.colorHex ??
       asteroidPresentation
         ?.presentationColorHex ??
       cometPresentation
@@ -5138,6 +5158,7 @@ function projectMinorBodyLayer(
         motionContributions,
         asteroidPresentation,
         cometPresentation,
+        tnoPresentation,
       }),
     );
   }

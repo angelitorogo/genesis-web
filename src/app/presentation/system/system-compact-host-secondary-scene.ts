@@ -1,4 +1,5 @@
 import { MinorBodyKind } from '../../domain/planetary/minor-body-kind';
+import { buildSystemSceneTnoPresentationV1 } from './system-scene-tno-presentation';
 import { type CompactHostPlanetarySystem } from '../../domain/planetary/compact-host-planetary-system';
 import { type CompactHostMoon, type CompactHostMinorBody } from '../../domain/planetary/compact-host-secondary-population';
 import { buildSystemSceneMoonPresentationV1 } from './system-scene-moon-presentation';
@@ -151,6 +152,13 @@ export function projectCompactHostSecondaries(system: CompactHostPlanetarySystem
     const comet=body.kind===MinorBodyKind.COMET
       ? buildCompactHostCometPresentationV1(body, physicalLuminosity)
       : null;
+    const tno=body.kind===MinorBodyKind.TRANS_NEPTUNIAN_OBJECT
+      ? buildSystemSceneTnoPresentationV1({
+          proceduralId:body.proceduralId,diameterKilometers:body.diameterKilometers,
+          iceFraction01:body.iceFraction01,rockFraction01:1-body.iceFraction01,
+          geometricAlbedo01:body.geometricAlbedo01,
+          bulkDensityGramsPerCubicCentimeter:body.bulkDensityGramsCm3,
+        }) : null;
     motions.push(Object.freeze({id:motionId,semiMajorAxisAu:body.semiMajorAxisAu,
       eccentricity:body.eccentricity,periodDays:body.orbitalPeriodDays,
       rotationDegrees:body.longitudeNodeDegrees,inclinationDegrees:body.inclinationDegrees,
@@ -169,7 +177,7 @@ export function projectCompactHostSecondaries(system: CompactHostPlanetarySystem
       radiusScene:Math.min(0.034,0.009+0.014*Math.cbrt(body.diameterKilometers/100)),
       position:Object.freeze({x:0,y:0,z:0}),orbitId,
       motionContributions:Object.freeze([Object.freeze({motionId,scale:1,linearScenePerAu:minorScale})]),
-      asteroidPresentation:shape,cometPresentation:comet}));
+      asteroidPresentation:shape,cometPresentation:comet,tnoPresentation:tno}));
   }
   for (const belt of secondaries.debrisBelts) {
     belts.push(Object.freeze({id:`compact-belt-${belt.region}`,label:`Material residual ${belt.region}`,

@@ -82,6 +82,8 @@ import {
   createSystemSceneAsteroidRenderableV1,
 } from '../system/system-scene-asteroid-geometry';
 
+import { createSystemSceneTnoRenderableV1 } from '../system/system-scene-tno-renderable';
+
 import {
   applySystemSceneCometActivityVisualV1,
   createSystemSceneCometRenderableV1,
@@ -1619,52 +1621,22 @@ export class ScientificBodyPreview
     this.resources.push(...renderable.resources);
   }
 
-  private addTransNeptunianObject(
-    object:
-      ScientificTransNeptunianPreviewVisual,
-  ): void {
-
-    if (
-      this.root ===
-        null
-    ) {
+  private addTransNeptunianObject(object: ScientificTransNeptunianPreviewVisual): void {
+    if (this.root === null) return;
+    if (object.presentation !== undefined) {
+      const renderable = createSystemSceneTnoRenderableV1(1, object.presentation);
+      this.root.add(renderable.object);
+      this.resources.push(...renderable.resources);
       return;
     }
-
-    const geometry =
-      new THREE.IcosahedronGeometry(
-        1,
-        1,
-      );
-
-    const material =
-      new THREE.MeshStandardMaterial({
-        color:
-          object.colorHex,
-        roughness:
-          0.92,
-        metalness:
-          0.02,
-      });
-
-    const mesh =
-      new THREE.Mesh(
-        geometry,
-        material,
-      );
-    mesh.name =
-      `GENESIS scientific TNO ${object.title}`;
-    mesh.scale.setScalar(
-      0.90,
-    );
-
-    this.root.add(
-      mesh,
-    );
-    this.resources.push(
-      geometry,
-      material,
-    );
+    // Legacy synthetic fixtures without a physical TNO projection.
+    const geometry = new THREE.IcosahedronGeometry(1, 1);
+    const material = new THREE.MeshStandardMaterial({color:object.colorHex,roughness:0.92,metalness:0.02});
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = `GENESIS legacy scientific TNO ${object.title}`;
+    mesh.scale.setScalar(0.90);
+    this.root.add(mesh);
+    this.resources.push(geometry, material);
   }
 
   private addMinorBodyInspectionFill():

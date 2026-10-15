@@ -1,4 +1,5 @@
 import { systemSceneCometActivityVisualParityV1 } from './system-scene-comet-activity-parity';
+import { createSystemSceneTnoRenderableV1 } from './system-scene-tno-renderable';
 import { v2CometStellarIrradianceAtDay } from './system-scene-v2-comet-stellar-flux';
 import {
   isPlatformBrowser,
@@ -4813,15 +4814,12 @@ class ThreeSystemSceneRuntime
       readonly SystemSceneMinorBodySnapshot[],
   ): void {
     // V2 requires a separate multistellar terminator for every object.
-    // V1 retains its existing instancing/LOD resource behaviour.
+    // V1 retains captured-body instancing; TNO-R1 uses individual procedural surfaces.
     if (this.currentSnapshot?.generatorVersionCode === 2) return;
 
     for (
       const layerKey
-      of [
-        'transNeptunianObjects',
-        'capturedObjects',
-      ] as const
+      of ['capturedObjects'] as const
     ) {
       const candidates =
         bodies.filter(
@@ -4999,6 +4997,10 @@ class ThreeSystemSceneRuntime
       this.frameDisposables.push(
         ...cometRenderable.resources,
       );
+    } else if (body.minorBodyKind.name === 'TRANS_NEPTUNIAN_OBJECT' && body.tnoPresentation != null) {
+      const renderable = createSystemSceneTnoRenderableV1(body.radiusScene, body.tnoPresentation);
+      group.add(renderable.object);
+      this.frameDisposables.push(...renderable.resources);
     } else {
       const layerKey =
         minorBodyLayerKeyForKind(
