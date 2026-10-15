@@ -420,7 +420,9 @@ export interface ScientificTransNeptunianPreviewVisual {
 
   readonly sourceRadiusScene:
     number;
-  readonly presentation?: import('../system/system-scene-tno-presentation').SystemSceneTnoPresentationV1;
+  readonly presentation?:
+    import('../system/system-scene-tno-presentation').SystemSceneTnoPresentationV1 |
+    import('../system/system-scene-captured-presentation').SystemSceneCapturedPresentationV1;
 }
 
 export type ScientificBodyPreviewModel =

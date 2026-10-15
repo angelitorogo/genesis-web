@@ -1,6 +1,8 @@
 import { type CompactPlanetaryHostType } from '../../domain/stellar/compact-planetary-host';
 import { buildSystemSceneTnoPresentationV1, type SystemSceneTnoPresentationV1 } from './system-scene-tno-presentation';
+import { buildSystemSceneCapturedPresentationV1, type SystemSceneCapturedPresentationV1 } from './system-scene-captured-presentation';
 import { type RelevantTransNeptunianObject } from '../../domain/planetary/relevant-trans-neptunian-object';
+import { type RelevantCapturedExtrasolarObject } from '../../domain/planetary/relevant-captured-extrasolar-object';
 import { buildV2CometVisualOrbit } from './system-scene-v2-comet-orbit-presentation';
 import { projectPulsarSecondGenerationPlanets } from './system-scene-pulsar-planets';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
@@ -577,6 +579,9 @@ export interface SystemSceneMinorBodySnapshot {
 
   /** TNO-R1: visual-only deterministic terrain shared with individual fiches. */
   readonly tnoPresentation?: SystemSceneTnoPresentationV1 | null;
+
+  /** CAP-R1: visual-only deterministic terrain shared with individual fiches. */
+  readonly capturedPresentation?: SystemSceneCapturedPresentationV1 | null;
 }
 
 export interface SystemSceneAsteroidBeltSnapshot {
@@ -5055,7 +5060,24 @@ function projectMinorBodyLayer(
         })()
       : null;
 
+    const capturedPresentation = orbital.kind === MinorBodyKind.CAPTURED_EXTRASOLAR_OBJECT
+      ? (() => {
+          const captured = entry.body as RelevantCapturedExtrasolarObject;
+          return buildSystemSceneCapturedPresentationV1({
+            proceduralId: captured.proceduralId,
+            diameterKilometers: captured.properties.diameterKilometers,
+            volatileFraction01: captured.properties.volatileFraction01,
+            refractoryFraction01: captured.properties.refractoryFraction01,
+            geometricAlbedo01: captured.properties.geometricAlbedo,
+            bulkDensityGramsPerCubicCentimeter: captured.properties.bulkDensityGramsPerCubicCentimeter,
+            porosityIndex01: captured.properties.porosityIndex01,
+            compositionRegime: captured.properties.compositionRegime,
+          });
+        })()
+      : null;
+
     const bodyColorHex =
+      capturedPresentation?.colorHex ??
       tnoPresentation?.colorHex ??
       asteroidPresentation
         ?.presentationColorHex ??
@@ -5159,6 +5181,7 @@ function projectMinorBodyLayer(
         asteroidPresentation,
         cometPresentation,
         tnoPresentation,
+        capturedPresentation,
       }),
     );
   }

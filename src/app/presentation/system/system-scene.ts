@@ -1,5 +1,6 @@
 import { systemSceneCometActivityVisualParityV1 } from './system-scene-comet-activity-parity';
 import { createSystemSceneTnoRenderableV1 } from './system-scene-tno-renderable';
+import { createSystemSceneCapturedRenderableV1 } from './system-scene-captured-renderable';
 import { v2CometStellarIrradianceAtDay } from './system-scene-v2-comet-stellar-flux';
 import {
   isPlatformBrowser,
@@ -4999,6 +5000,10 @@ class ThreeSystemSceneRuntime
       );
     } else if (body.minorBodyKind.name === 'TRANS_NEPTUNIAN_OBJECT' && body.tnoPresentation != null) {
       const renderable = createSystemSceneTnoRenderableV1(body.radiusScene, body.tnoPresentation);
+      group.add(renderable.object);
+      this.frameDisposables.push(...renderable.resources);
+    } else if (body.minorBodyKind.name === 'CAPTURED_EXTRASOLAR_OBJECT' && body.capturedPresentation != null) {
+      const renderable = createSystemSceneCapturedRenderableV1(body.radiusScene, body.capturedPresentation);
       group.add(renderable.object);
       this.frameDisposables.push(...renderable.resources);
     } else {

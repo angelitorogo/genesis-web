@@ -639,6 +639,10 @@ function assertBodyProjection(
     assertFrozen(body.tnoPresentation, `${label}.tnoPresentation`);
   }
 
+  if (body.kind === 'minor-body' && body.capturedPresentation != null) {
+    assertFrozen(body.capturedPresentation, `${label}.capturedPresentation`);
+  }
+
   if (
     body.kind ===
       'moon'

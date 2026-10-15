@@ -83,6 +83,7 @@ import {
 } from '../system/system-scene-asteroid-geometry';
 
 import { createSystemSceneTnoRenderableV1 } from '../system/system-scene-tno-renderable';
+import { createSystemSceneCapturedRenderableV1 } from '../system/system-scene-captured-renderable';
 
 import {
   applySystemSceneCometActivityVisualV1,
@@ -1624,7 +1625,9 @@ export class ScientificBodyPreview
   private addTransNeptunianObject(object: ScientificTransNeptunianPreviewVisual): void {
     if (this.root === null) return;
     if (object.presentation !== undefined) {
-      const renderable = createSystemSceneTnoRenderableV1(1, object.presentation);
+      const renderable = object.presentation.source === 'CAP_R1_PROCEDURAL'
+        ? createSystemSceneCapturedRenderableV1(1, object.presentation)
+        : createSystemSceneTnoRenderableV1(1, object.presentation);
       this.root.add(renderable.object);
       this.resources.push(...renderable.resources);
       return;

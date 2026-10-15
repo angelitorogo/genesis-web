@@ -1,4 +1,5 @@
 import { resolveV2MinorBodySource, type V2MinorBodySource } from './minor-body-v2-source';
+import { buildSystemSceneCapturedPresentationV1 } from '../system/system-scene-captured-presentation';
 import { ScientificBodyPreviewKind } from '../scientific/scientific-body-preview';
 import { type RelevantCapturedExtrasolarObject } from '../../domain/planetary/relevant-captured-extrasolar-object';
 import {
@@ -405,6 +406,16 @@ function capturedCard(
           title: body.title,
           colorHex: body.colorHex,
           sourceRadiusScene: body.radiusScene,
+          ...(body.capturedPresentation == null ? { presentation: buildSystemSceneCapturedPresentationV1({
+            proceduralId: object.proceduralId,
+            diameterKilometers: p.diameterKilometers,
+            volatileFraction01: p.volatileFraction01,
+            refractoryFraction01: p.refractoryFraction01,
+            geometricAlbedo01: p.geometricAlbedo,
+            bulkDensityGramsPerCubicCentimeter: p.bulkDensityGramsPerCubicCentimeter,
+            porosityIndex01: p.porosityIndex01,
+            compositionRegime: p.compositionRegime,
+          }) } : { presentation: body.capturedPresentation }),
         }),
       }),
     }),
