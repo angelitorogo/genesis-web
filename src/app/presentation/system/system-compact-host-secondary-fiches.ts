@@ -9,12 +9,43 @@ import { ScientificBodyPreviewKind, type ScientificMoonPreviewVisual, type Scien
 import { MoonScientificFicheResolutionKind, type MoonScientificFicheResolution } from '../moon-detail/moon-scientific-card';
 import { MinorBodyScientificFicheResolutionKind, type MinorBodyScientificFicheResolution } from '../minor-body-detail/minor-body-scientific-card';
 import { type MinorBodyScientificTargetKind } from '../../simulation/planetary/minor-body-scientific-target-resolver';
-import { systemSceneCometActivityAtDistanceV1 } from './system-scene-comet-presentation';
+import {
+  buildSystemSceneCometPresentationV1,
+  systemSceneCometActivityAtDistanceV1,
+} from './system-scene-comet-presentation';
+import {
+  isCometActivityUnresolvedInSceneV1,
+  systemSceneCometActivityVisualParityV1,
+} from './system-scene-comet-activity-parity';
 
 const format=(n:number)=>n.toLocaleString('es-ES',{maximumSignificantDigits:5});
 const field=(label:string,value:string,note:string|null=null)=>Object.freeze({label,value,note});
 const section=<Id extends string>(id:Id,title:string,summary:string,fields:ReturnType<typeof field>[])=>
   Object.freeze({id,eyebrow:'SNAPSHOT · 31.4g',title,summary,fields:Object.freeze(fields)});
+
+const MIN_COMET_REFERENCE_LUMINOSITY_SOLAR = 1e-6;
+
+function fallbackCompactCometPresentation(body: CompactHostMinorBody) {
+  return buildSystemSceneCometPresentationV1({
+    proceduralId: body.proceduralId,
+    diameterKilometers: body.diameterKilometers,
+    iceFraction01: body.iceFraction01,
+    dustFraction01: 1 - body.iceFraction01,
+    porosityIndex01: 0.42,
+    bulkDensityGramsPerCubicCentimeter: body.bulkDensityGramsCm3,
+    geometricAlbedo01: body.geometricAlbedo01,
+    volatileRichnessIndex01: body.iceFraction01,
+    periodRegime: 'LONG_PERIOD',
+    referenceLuminositySolar: MIN_COMET_REFERENCE_LUMINOSITY_SOLAR,
+    semiMajorAxisAu: body.semiMajorAxisAu,
+    eccentricity: body.eccentricity,
+    periapsisAu: body.periapsisAu,
+    apoapsisAu: body.apoapsisAu,
+    orbitalPeriodYears: body.orbitalPeriodDays / 365.25,
+    epochMeanAnomalyDegrees: body.ordinal * 47,
+    presentationTimeScale: 1,
+  });
+}
 
 export function compactMoonPreview(moon:CompactHostMoon,sceneMoon:SystemSceneMoonSnapshot):ScientificMoonPreviewVisual {
   const visual=sceneMoon.visualPresentation;
@@ -125,7 +156,9 @@ export function compactMinorFiche(model:ArchiveDiscoveryDetailModel,body:Compact
       ScientificBodyPreviewKind.CAPTURED_EXTRASOLAR_OBJECT;
   const source=scene.minorBodies.find(b=>b.id.endsWith(body.proceduralId)&&b.minorBodyKind===body.kind);
   const a=source?.asteroidPresentation;
-  const comet=source?.cometPresentation;
+  const comet=source?.cometPresentation ?? (body.kind===MinorBodyKind.COMET
+    ? fallbackCompactCometPresentation(body)
+    : null);
   // A neutral preview is used only where radiation-dependent presentation is
   // legitimately unavailable (notably an unilluminated BH comet).
   const preview:import('../scientific/scientific-body-preview').ScientificBodyPreviewModel =
@@ -148,9 +181,17 @@ export function compactMinorFiche(model:ArchiveDiscoveryDetailModel,body:Compact
         presentationSeparationAdjusted:a.presentationSeparationAdjusted}),
     }) :
     scientificKind===ScientificBodyPreviewKind.COMET && comet ? (()=>{
-      const activity=systemSceneCometActivityAtDistanceV1(comet,comet.periapsisAu,0.42);
+      // COM-R3: this 31.4g fiche is a separate construction path from
+      // ScientificBodyPreviewAssembler. It MUST use exactly the same activity
+      // authority as SystemScene; the compact-host snapshot cannot infer a
+      // comet's outgassing from an illustrative host glow or a flux proxy.
+      const physical=systemSceneCometActivityAtDistanceV1(comet,comet.periapsisAu,0.42);
+      const activity=systemSceneCometActivityVisualParityV1(scene,comet,physical,0.42);
+      const unresolved=isCometActivityUnresolvedInSceneV1(scene.stars,scene.generatorVersionCode);
       return Object.freeze({kind:ScientificBodyPreviewKind.COMET,title,
-        accessibleLabel:`${title}: visualización procedural; actividad condicional en el periastro`,
+        accessibleLabel:unresolved
+          ? `${title}: núcleo procedural; actividad cometaria no resuelta en el anfitrión compacto. No se representa coma ni cola.`
+          : `${title}: visualización procedural; actividad evaluada en periastro`,
         primary:Object.freeze({version:1 as const,visualVariantUint32:comet.shapeSeedUint32,
           presentationNucleusColorHex:comet.presentationNucleusColorHex,
           presentationComaColorHex:comet.presentationComaColorHex,
@@ -174,9 +215,30 @@ export function compactMinorFiche(model:ArchiveDiscoveryDetailModel,body:Compact
           presentationIonTailWidthScene:activity.presentationIonTailWidthScene}),
       });
     })() :
-    scientificKind===ScientificBodyPreviewKind.COMET ? Object.freeze({kind:ScientificBodyPreviewKind.TRANS_NEPTUNIAN_OBJECT,
-      title,accessibleLabel:`${title}: núcleo frío; no hay emisión física acreditada para mostrar una cola`,
-      primary:Object.freeze({title,colorHex:'#9EBDC8',sourceRadiusScene:0.30})}) :
+    scientificKind===ScientificBodyPreviewKind.COMET ? (()=>{
+      const neutral = fallbackCompactCometPresentation(body);
+      return Object.freeze({kind:ScientificBodyPreviewKind.COMET,
+        title,
+        accessibleLabel:`${title}: núcleo procedural; actividad cometaria no resuelta en el anfitrión compacto. No se representa coma ni cola.`,
+        primary:Object.freeze({version:1 as const,visualVariantUint32:neutral.shapeSeedUint32,
+          presentationNucleusColorHex:neutral.presentationNucleusColorHex,
+          presentationComaColorHex:neutral.presentationComaColorHex,
+          presentationDustTailColorHex:neutral.presentationDustTailColorHex,
+          presentationIonTailColorHex:neutral.presentationIonTailColorHex,
+          presentationNucleusRoughness01:neutral.presentationNucleusRoughness01,
+          presentationNucleusAxisScaleX:neutral.presentationNucleusAxisScaleX,
+          presentationNucleusAxisScaleY:neutral.presentationNucleusAxisScaleY,
+          presentationNucleusAxisScaleZ:neutral.presentationNucleusAxisScaleZ,
+          presentationNucleusIrregularity01:neutral.presentationNucleusIrregularity01}),
+        activity:Object.freeze({activityRegime:'DORMANT' as const,
+          hasComa:false,hasDustTail:false,hasIonTail:false,
+          presentationComaRadiusScale:1,presentationComaOpacity01:0,
+          presentationDustTailOpacity01:0,presentationIonTailOpacity01:0,
+          presentationComaRadiusScene:0.42,presentationDustTailLengthScene:0,
+          presentationDustTailWidthScene:0,presentationIonTailLengthScene:0,
+          presentationIonTailWidthScene:0}),
+      });
+    })() :
     Object.freeze({kind:scientificKind===ScientificBodyPreviewKind.ASTEROID?ScientificBodyPreviewKind.TRANS_NEPTUNIAN_OBJECT:scientificKind,title,
       accessibleLabel:`${title}: visualización de tamaño no comparativo`,
       primary:Object.freeze({title,colorHex:'#A6A29C',sourceRadiusScene:0.30})});

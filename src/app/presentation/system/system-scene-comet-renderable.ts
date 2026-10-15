@@ -4,6 +4,11 @@ import {
   type SystemSceneCometActivityPresentationV1,
   type SystemSceneCometPresentationV1,
 } from './system-scene-comet-presentation';
+import {
+  buildCometNucleusTerrainV1,
+  cometNucleusMaterialNoiseV1,
+  sampleCometNucleusTerrainV1,
+} from './system-scene-comet-nucleus-terrain';
 
 export interface SystemSceneCometActivityBindingV1 {
   readonly comaInner: THREE.Mesh;
@@ -40,10 +45,12 @@ export function createSystemSceneCometRenderableV1(
     presentation,
   );
   const nucleusMaterial = new THREE.MeshStandardMaterial({
-    color: presentation.presentationNucleusColorHex,
+    // Vertex colors vary regolith and pits without implying exposed ice.
+    color: 0xffffff,
+    vertexColors: true,
     roughness: presentation.presentationNucleusRoughness01,
     metalness: 0.005,
-    flatShading: true,
+    flatShading: false,
   });
   nucleusMaterial.name = 'GENESIS comet nucleus material 25.8';
   const nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
@@ -185,42 +192,68 @@ export function createIrregularCometNucleusGeometryV1(
   radiusScene: number,
   presentation: SystemSceneCometPresentationV1,
 ): THREE.BufferGeometry {
-  const source = new THREE.IcosahedronGeometry(radiusScene, 2);
-  const geometry = source.index === null ? source : source.toNonIndexed();
-  if (geometry !== source) {
-    source.dispose();
-  }
-
+  // Close-up inspection uses a dense surface. Small SystemScene silhouettes
+  // sample exactly the same seeded relief with fewer display-only polygons.
+  const closeInspection = radiusScene >= 0.12;
+  const geometry = new THREE.SphereGeometry(
+    radiusScene,
+    closeInspection ? 104 : 48,
+    closeInspection ? 72 : 32,
+  );
   const positions = geometry.getAttribute('position') as THREE.BufferAttribute;
-  for (let index = 0; index < positions.count; index += 1) {
+  const vertexColors = new Float32Array(positions.count * 3);
+  const base = new THREE.Color(presentation.presentationNucleusColorHex);
+  const color = new THREE.Color();
+  const terrain = buildCometNucleusTerrainV1(
+    presentation.shapeSeedUint32,
+    presentation.presentationNucleusIrregularity01,
+  );
+
+  for (let index = 0; index < positions.count; index++) {
     const x = positions.getX(index);
     const y = positions.getY(index);
     const z = positions.getZ(index);
-    const length = Math.max(Math.sqrt(x * x + y * y + z * z), Number.EPSILON);
+    const length = Math.max(Math.hypot(x, y, z), Number.EPSILON);
     const nx = x / length;
     const ny = y / length;
     const nz = z / length;
-    const radial = cometDirectionalRadiusFactorV1(
-      nx,
-      ny,
-      nz,
-      presentation.shapeSeedUint32,
+    const coarse = cometDirectionalRadiusFactorV1(
+      nx, ny, nz, presentation.shapeSeedUint32,
       presentation.presentationNucleusIrregularity01,
     );
-
-    positions.setXYZ(
-      index,
+    const relief = sampleCometNucleusTerrainV1(nx, ny, nz, terrain);
+    const radial = clamp(coarse + relief.radialOffset, 0.69, 1.32);
+    positions.setXYZ(index,
       nx * radiusScene * radial * presentation.presentationNucleusAxisScaleX,
       ny * radiusScene * radial * presentation.presentationNucleusAxisScaleY,
       nz * radiusScene * radial * presentation.presentationNucleusAxisScaleZ,
     );
+
+    // Dry, low-albedo dust mantle, shadowed hollows and mineral provinces.
+    // Internal volatile inventory does not imply bright, exposed water ice.
+    const province = cometNucleusMaterialNoiseV1(
+      nx * 1.3, ny * 1.3, nz * 1.3,
+      presentation.shapeSeedUint32, 131,
+    );
+    const granular = relief.granularNoise;
+    const tone = clamp(
+      0.93 + province * 0.27 + granular * 0.16 +
+      (relief.smoothDust01 - 0.5) * 0.16 -
+      relief.hollow01 * 0.24 + relief.rim01 * 0.11,
+      0.57, 1.35,
+    );
+    color.copy(base).multiplyScalar(tone);
+    vertexColors[index * 3] = Math.min(1, color.r);
+    vertexColors[index * 3 + 1] = Math.min(1, color.g);
+    vertexColors[index * 3 + 2] = Math.min(1, color.b);
   }
 
   positions.needsUpdate = true;
+  geometry.setAttribute('color', new THREE.BufferAttribute(vertexColors, 3));
   geometry.computeVertexNormals();
   geometry.computeBoundingBox();
   geometry.computeBoundingSphere();
-  geometry.name = 'GENESIS irregular comet nucleus geometry 25.8';
+  geometry.name = 'GENESIS comet COM-R1 smooth irregular cratered nucleus';
   return geometry;
 }
 

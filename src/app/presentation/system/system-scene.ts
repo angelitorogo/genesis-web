@@ -1,4 +1,4 @@
-import { v2CometReadableActivity } from './system-scene-v2-comet-tail-presentation';
+import { systemSceneCometActivityVisualParityV1 } from './system-scene-comet-activity-parity';
 import { v2CometStellarIrradianceAtDay } from './system-scene-v2-comet-stellar-flux';
 import {
   isPlatformBrowser,
@@ -5810,9 +5810,9 @@ class ThreeSystemSceneRuntime
 
       applySystemSceneCometActivityVisualV1(
         binding,
-        snapshot.generatorVersionCode === 2
-          ? v2CometReadableActivity(presentation, activity, body.radiusScene, totalFlux)
-          : activity,
+        systemSceneCometActivityVisualParityV1(
+          snapshot, presentation, activity, body.radiusScene, totalFlux,
+        ),
         this.cometLightDirectionAccumulator,
       );
     }

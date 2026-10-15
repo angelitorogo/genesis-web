@@ -22,6 +22,40 @@ export interface CompactSecondarySceneProjection {
   readonly moonBindings: readonly Readonly<{sceneBodyId:string;bodyIndex:string;moonIndex:string}>[];
 }
 
+const MIN_COMET_REFERENCE_LUMINOSITY_SOLAR = 1e-6;
+
+function buildCompactHostCometPresentationV1(
+  body: CompactHostMinorBody,
+  referenceLuminositySolar: number,
+) {
+  return buildSystemSceneCometPresentationV1({
+    proceduralId: body.proceduralId,
+    diameterKilometers: body.diameterKilometers,
+    iceFraction01: body.iceFraction01,
+    dustFraction01: 1 - body.iceFraction01,
+    porosityIndex01: 0.42,
+    bulkDensityGramsPerCubicCentimeter: body.bulkDensityGramsCm3,
+    geometricAlbedo01: body.geometricAlbedo01,
+    volatileRichnessIndex01: body.iceFraction01,
+    periodRegime: 'LONG_PERIOD',
+    // 31.4g compact-host snapshots may lack an accredited luminous channel.
+    // The renderer still needs the canonical COM-R1 nucleus everywhere, so we
+    // floor the value to a tiny positive seed-only proxy. Activity parity and
+    // unresolved gates remain responsible for withholding coma/tails.
+    referenceLuminositySolar: Math.max(
+      referenceLuminositySolar,
+      MIN_COMET_REFERENCE_LUMINOSITY_SOLAR,
+    ),
+    semiMajorAxisAu: body.semiMajorAxisAu,
+    eccentricity: body.eccentricity,
+    periapsisAu: body.periapsisAu,
+    apoapsisAu: body.apoapsisAu,
+    orbitalPeriodYears: body.orbitalPeriodDays / 365.25,
+    epochMeanAnomalyDegrees: body.ordinal * 47,
+    presentationTimeScale: 1,
+  });
+}
+
 /** 31.4g bridge using canonical moon, asteroid and comet renderer inputs.
  * Different outer/inner presentation AU scales are visual only, preserving AU
  * dynamics, host–planet distances and fiche identity as immutable source facts. */
@@ -114,18 +148,9 @@ export function projectCompactHostSecondaries(system: CompactHostPlanetarySystem
       porosityIndex01:0.32,bulkDensityGramsPerCubicCentimeter:body.bulkDensityGramsCm3,
       geometricAlbedo01:body.geometricAlbedo01,binaryMassRatio01:null,binarySeparationPrimaryRadii:null,
     }) : null;
-    const comet=body.kind===MinorBodyKind.COMET && physicalLuminosity>0 ?
-      buildSystemSceneCometPresentationV1({proceduralId:body.proceduralId,
-        diameterKilometers:body.diameterKilometers,iceFraction01:body.iceFraction01,
-        dustFraction01:1-body.iceFraction01,porosityIndex01:0.42,
-        bulkDensityGramsPerCubicCentimeter:body.bulkDensityGramsCm3,
-        geometricAlbedo01:body.geometricAlbedo01,volatileRichnessIndex01:body.iceFraction01,
-        periodRegime:'LONG_PERIOD',referenceLuminositySolar:physicalLuminosity,
-        semiMajorAxisAu:body.semiMajorAxisAu,eccentricity:body.eccentricity,
-        periapsisAu:body.periapsisAu,apoapsisAu:body.apoapsisAu,
-        orbitalPeriodYears:body.orbitalPeriodDays/365.25,
-        epochMeanAnomalyDegrees:body.ordinal*47,presentationTimeScale:1,
-      }) : null;
+    const comet=body.kind===MinorBodyKind.COMET
+      ? buildCompactHostCometPresentationV1(body, physicalLuminosity)
+      : null;
     motions.push(Object.freeze({id:motionId,semiMajorAxisAu:body.semiMajorAxisAu,
       eccentricity:body.eccentricity,periodDays:body.orbitalPeriodDays,
       rotationDegrees:body.longitudeNodeDegrees,inclinationDegrees:body.inclinationDegrees,

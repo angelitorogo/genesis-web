@@ -50,6 +50,40 @@ describe(
       },
     );
 
+    it('builds a smoothly shaded high-detail nucleus with deterministic vertex colors', () => {
+      const a = createSystemSceneCometRenderableV1(0.42, presentation);
+      const b = createSystemSceneCometRenderableV1(0.42, presentation);
+      const nucleusA = a.object.children[0] as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+      const nucleusB = b.object.children[0] as THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
+      const posA = nucleusA.geometry.getAttribute('position') as THREE.BufferAttribute;
+      const posB = nucleusB.geometry.getAttribute('position') as THREE.BufferAttribute;
+      const colorsA = nucleusA.geometry.getAttribute('color') as THREE.BufferAttribute;
+      const colorsB = nucleusB.geometry.getAttribute('color') as THREE.BufferAttribute;
+      expect(nucleusA.material.flatShading).toBe(false);
+      expect(nucleusA.material.vertexColors).toBe(true);
+      expect(posA.count).toBeGreaterThan(6500);
+      expect(colorsA.count).toBe(posA.count);
+      expect(Array.from(posA.array)).toEqual(Array.from(posB.array));
+      expect(Array.from(colorsA.array)).toEqual(Array.from(colorsB.array));
+      expect(new Set(Array.from(colorsA.array).map(value => value.toFixed(4))).size).toBeGreaterThan(10);
+      a.resources.forEach(resource => resource.dispose());
+      b.resources.forEach(resource => resource.dispose());
+    });
+
+    it('keeps the exact seeded relief but reduces geometry cost for distant nuclei', () => {
+      const far = createSystemSceneCometRenderableV1(0.015, presentation);
+      const near = createSystemSceneCometRenderableV1(0.42, presentation);
+      const farMesh = far.object.children[0] as THREE.Mesh;
+      const nearMesh = near.object.children[0] as THREE.Mesh;
+      expect((farMesh.geometry as THREE.BufferGeometry).getAttribute('position').count).toBeLessThan(
+        (nearMesh.geometry as THREE.BufferGeometry).getAttribute('position').count,
+      );
+      expect(far.object.children.length).toBe(5);
+      expect(far.resources.length).toBe(10);
+      far.resources.forEach(resource => resource.dispose());
+      near.resources.forEach(resource => resource.dispose());
+    });
+
     it(
       'should deterministically deform the comet nucleus away from a perfect sphere',
       () => {

@@ -1,4 +1,4 @@
-import { v2CometReadableActivity } from '../system/system-scene-v2-comet-tail-presentation';
+import { isCometActivityUnresolvedInSceneV1, systemSceneCometActivityVisualParityV1 } from '../system/system-scene-comet-activity-parity';
 import {
   type PlanetScientificResolvedTarget,
 } from '../../simulation/planetary/planet-scientific-target-resolver';
@@ -822,16 +822,17 @@ export class ScientificBodyPreviewAssembler {
     const physicalActivity = systemSceneCometActivityAtDistanceV1(
       presentation, presentation.periapsisAu, SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE,
     );
-    const activity = scene.generatorVersionCode === 2
-      ? v2CometReadableActivity(presentation, physicalActivity,
-          SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE)
-      : physicalActivity;
+    const activity = systemSceneCometActivityVisualParityV1(
+      scene, presentation, physicalActivity, SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE,
+    );
 
     return Object.freeze({
       kind:
         ScientificBodyPreviewKind.COMET,
       accessibleLabel:
-        `${target.identity.designation}. Representación tridimensional con paridad visual SystemScene; la actividad se presenta en periastro.`,
+        isCometActivityUnresolvedInSceneV1(scene.stars, scene.generatorVersionCode)
+          ? `${target.identity.designation}. Núcleo procedural; la actividad cometaria no está resuelta en el snapshot del anfitrión compacto y no se representa coma ni cola.`
+          : `${target.identity.designation}. Representación tridimensional con paridad visual SystemScene; la actividad se presenta en periastro.`,
       title:
         target.identity.designation,
       primary:
