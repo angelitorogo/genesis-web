@@ -116,7 +116,7 @@ describe(
     );
 
     it(
-      'should create an additive back-side atmosphere shell only when atmosphere is present',
+      'should create a front-and-back atmospheric envelope only when gas is present',
       () => {
         const binding = {
           lightDirectionsView: [
@@ -132,7 +132,13 @@ describe(
         );
 
         expect(material).not.toBeNull();
-        expect(material!.side).toBe(THREE.BackSide);
+        expect(material!.side).toBe(THREE.DoubleSide);
+        expect(material!.blending).toBe(THREE.NormalBlending);
+        expect(material!.uniforms['uGenesisFrontHaze'].value).toBeGreaterThan(0);
+        expect(material!.fragmentShader).toContain('gl_FrontFacing');
+        expect(material!.fragmentShader).toContain('genesisFrontVeil');
+        expect(material!.fragmentShader).toContain('genesisEdgeFeather');
+        expect(material!.fragmentShader).toContain('genesisLimbScattering');
         expect(material!.transparent).toBe(true);
         expect(material!.depthWrite).toBe(false);
         expect(material!.fragmentShader).toBe(ATMOSPHERE_FRAGMENT_SHADER_V1);
@@ -162,6 +168,30 @@ describe(
         ).toBeNull();
       },
     );
+
+    it('D.4c traverses a translucent shell in depth instead of drawing a uniform silhouette ring', () => {
+      const binding = {
+        lightDirectionsView: [
+          new THREE.Vector3(1, 0, 0),
+          new THREE.Vector3(0, 0, 1),
+          new THREE.Vector3(0, 1, 0),
+        ] as const,
+        lightWeightsView: new THREE.Vector3(1, 0, 0),
+      };
+      const material = createSystemSceneAtmosphereShellMaterialV1(atmosphericOptics, binding)!;
+      expect(material.uniforms['uGenesisCoreRadiusRatio'].value).toBeCloseTo(
+        1 / atmosphericOptics.presentationShellScale, 10,
+      );
+      expect(material.fragmentShader).toContain('genesisOuterChord');
+      expect(material.fragmentShader).toContain('genesisInnerChord');
+      expect(material.fragmentShader).toContain('genesisRayDepth');
+      expect(material.fragmentShader).toContain('genesisOpticalDepth');
+      expect(material.fragmentShader).toContain('genesisEdgeFeather');
+      expect(material.fragmentShader).not.toContain('smoothstep(0.0, 0.19, genesisViewDot)');
+      expect(material.depthWrite).toBe(false);
+      expect(material.depthTest).toBe(true);
+      material.dispose();
+    });
 
     it(
       'should reject shader sources that do not expose the required standard chunks',

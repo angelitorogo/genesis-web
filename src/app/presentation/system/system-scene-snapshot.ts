@@ -5664,6 +5664,11 @@ function projectPlanetSurfaceEnvironment(
   }
 
   return buildSystemScenePlanetSurfacePresentationV1({
+    // Atmospheric fractions are a read-only optical handoff from phase 20.
+    retainedGasComposition: atmosphere.gasComposition.map(component => ({
+      gas: component.gas,
+      moleFraction01: component.moleFraction01,
+    })),
     waterInventoryIndex01:
       atmosphere.waterInventoryIndex01,
     surfaceLiquidWaterCoverageFraction01:
@@ -5684,6 +5689,8 @@ function projectPlanetSurfaceEnvironment(
       atmosphere.geologicalActivityIndex01,
     volcanismIndex01:
       atmosphere.volcanismIndex01,
+    hasPersistentSurfaceLiquidWater:
+      atmosphere.hasPersistentSurfaceLiquidWater,
     surfaceWaterRegime:
       atmosphere.surfaceWaterRegime,
     volcanismRegime:

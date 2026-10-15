@@ -6313,6 +6313,10 @@ export interface SystemScenePlanetTextureResourceV1 {
     THREE.DataTexture | null;
   readonly cloudTexture:
     THREE.DataTexture | null;
+  readonly roughnessTexture:
+    THREE.DataTexture | null;
+  readonly reliefTexture:
+    THREE.DataTexture | null;
   readonly visualSeed:
     number;
   dispose(): void;
@@ -6382,9 +6386,9 @@ export function createSystemScenePlanetAppearanceV1(
           });
         })()
       : textureCache.acquire(
-          `${systemIdentity}|${planet.id}|25.11`,
+          `${systemIdentity}|${planet.id}|D4c-25.11`,
           planet.giantAtmosphere === null
-            ? 768 * 1024
+            ? 1280 * 1024
             : 512 * 1024,
           () => createSystemScenePlanetTextureResourceV1(
             planet,
@@ -6432,6 +6436,9 @@ export function createSystemScenePlanetAppearanceV1(
               surfaceIceCoverageFraction01:
                 planet.surfaceEnvironment
                   .surfaceIceCoverageFraction01,
+              retainedGasComposition:
+                planet.surfaceEnvironment
+                  .retainedGasComposition,
             },
       giantAtmosphere:
         planet.giantAtmosphere ===
@@ -6486,11 +6493,6 @@ export function createSystemScenePlanetAppearanceV1(
       surfaceTexture,
   };
 
-  const liquidCoverage =
-    planet.surfaceEnvironment
-      ?.surfaceLiquidWaterCoverageFraction01 ??
-    0;
-
   if (
     planet.giantAtmosphere !==
       null
@@ -6511,16 +6513,18 @@ export function createSystemScenePlanetAppearanceV1(
       ?.solidSurfaceAvailable ===
       true
   ) {
-    materialOptions.roughness =
-      clampValue(
-        0.88 -
-          liquidCoverage *
-            0.48,
-        0.34,
-        0.92,
-      );
-    materialOptions.metalness =
-      0.015;
+    // Native Three.js per-pixel roughness/bump: water is glossy, ice has
+    // fine relief, rock and regolith scatter more broadly. The field is purely
+    // presentational and inherits the original fixed coverage masks.
+    materialOptions.roughness = 1;
+    if (textureResource.roughnessTexture !== null) {
+      materialOptions.roughnessMap = textureResource.roughnessTexture;
+    }
+    if (textureResource.reliefTexture !== null) {
+      materialOptions.bumpMap = textureResource.reliefTexture;
+      materialOptions.bumpScale = planet.radiusScene * 0.014;
+    }
+    materialOptions.metalness = 0.015;
   } else {
     switch (
       planet.surfaceStyle
@@ -6827,6 +6831,24 @@ function createSystemScenePlanetTextureResourceV1(
           )
         : null;
 
+  const roughnessTexture = semanticSurface?.roughnessRgba
+    ? createRgbaDataTexture(
+        semanticSurface.width, semanticSurface.height,
+        semanticSurface.roughnessRgba,
+        'GENESIS D.4c visual surface roughness',
+      )
+    : null;
+  const reliefTexture = semanticSurface?.reliefRgba
+    ? createRgbaDataTexture(
+        semanticSurface.width, semanticSurface.height,
+        semanticSurface.reliefRgba,
+        'GENESIS D.4c visual microrelief',
+      )
+    : null;
+  // Linear data maps must not be interpreted as sRGB albedo.
+  if (roughnessTexture !== null) roughnessTexture.colorSpace = THREE.NoColorSpace;
+  if (reliefTexture !== null) reliefTexture.colorSpace = THREE.NoColorSpace;
+
   let disposed = false;
   return Object.freeze({
     giantAtmosphereTexture,
@@ -6835,6 +6857,8 @@ function createSystemScenePlanetTextureResourceV1(
     surfaceTexture,
     emissiveTexture,
     cloudTexture,
+    roughnessTexture,
+    reliefTexture,
     visualSeed,
     dispose: () => {
       if (disposed) {
@@ -6844,6 +6868,8 @@ function createSystemScenePlanetTextureResourceV1(
       surfaceTexture.dispose();
       emissiveTexture?.dispose();
       cloudTexture?.dispose();
+      roughnessTexture?.dispose();
+      reliefTexture?.dispose();
     },
   });
 }

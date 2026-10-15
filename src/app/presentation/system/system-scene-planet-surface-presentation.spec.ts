@@ -32,6 +32,33 @@ describe('SystemScene planet surface presentation point 25.3', () => {
     expect(surface.presentationCloudCoverageFraction01!).toBeLessThanOrEqual(1);
   });
 
+  it('D.4 optical handoff: preserves final gas fractions without modifying physical indices', () => {
+    const gasComposition = [
+      { gas: 'NITROGEN', moleFraction01: 0.585 },
+      { gas: 'CARBON_DIOXIDE', moleFraction01: 0.27 },
+    ];
+    const surface = buildSystemScenePlanetSurfacePresentationV1({
+      waterInventoryIndex01: 0.5,
+      surfaceLiquidWaterCoverageFraction01: 0.3,
+      surfaceIceCoverageFraction01: 0.129,
+      waterVaporFraction01: 0.024,
+      retainedAtmosphericWaterVaporMoleFraction01: 0.01,
+      meanSurfaceTemperatureKelvin: 293.4,
+      climateStabilityIndex01: 0.6,
+      retainedSurfacePressurePascal: 241456.1,
+      geologicalActivityIndex01: 0.5,
+      volcanismIndex01: 0.58,
+      surfaceWaterRegime: 'OCEANS',
+      volcanismRegime: 'HIGH',
+      retainedGasComposition: gasComposition,
+    });
+    gasComposition[0]!.moleFraction01 = 0.1;
+    expect(surface.retainedGasComposition![0]!.moleFraction01).toBe(0.585);
+    expect(surface.retainedSurfacePressurePascal).toBe(241456.1);
+    expect(surface.surfaceLiquidWaterCoverageFraction01).toBe(0.3);
+    expect(Object.isFrozen(surface.retainedGasComposition)).toBe(true);
+  });
+
   it('should keep deep-envelope surface semantics unavailable instead of inventing continents', () => {
     const surface = buildSystemScenePlanetSurfacePresentationV1({
       waterInventoryIndex01: 0.55,

@@ -146,7 +146,7 @@ export function patchSystemSceneDayNightFragmentShaderV1(
 
   return withUniforms.replace(
     GLSL_OPAQUE_MARKER,
-    `float genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[2])));\nfloat genesisDayFactor = clamp(genesisDayFactor0 * genesisWeight0 + genesisDayFactor1 * genesisWeight1 + genesisDayFactor2 * genesisWeight2, 0.0, 1.0);\nfloat genesisNightVisibility = mix(uGenesisNightFloor, 1.0, genesisDayFactor);\nvec3 genesisNightTint = mix(vec3(1.0), uGenesisAtmosphereNightTint, 0.12 * (1.0 - genesisDayFactor));\noutgoingLight *= genesisNightVisibility * genesisNightTint;\nfloat genesisTwilight0 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.055;\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
+    `float genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[2])));\nfloat genesisDayFactor = clamp(genesisDayFactor0 * genesisWeight0 + genesisDayFactor1 * genesisWeight1 + genesisDayFactor2 * genesisWeight2, 0.0, 1.0);\nfloat genesisNightVisibility = mix(uGenesisNightFloor, 1.0, genesisDayFactor);\nvec3 genesisNightTint = mix(vec3(1.0), uGenesisAtmosphereNightTint, 0.12 * (1.0 - genesisDayFactor));\noutgoingLight *= genesisNightVisibility * genesisNightTint;\nfloat genesisTwilight0 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.070 * (0.40 + 0.60 * genesisDayFactor);\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
   );
 }
 
@@ -177,6 +177,14 @@ export function createSystemSceneAtmosphereShellMaterialV1(
         uGenesisRimStrength: {
           value: optics.presentationRimStrength01,
         },
+        uGenesisFrontHaze: {
+          value: optics.presentationFrontHaze01,
+        },
+        // The shell is an actual optical volume: ray length depends on the
+        // distance of a viewing ray from the solid surface/cloud tops.
+        uGenesisCoreRadiusRatio: {
+          value: 1 / optics.presentationShellScale,
+        },
         uGenesisTerminatorSoftness: {
           value: optics.presentationTerminatorSoftness01,
         },
@@ -189,8 +197,10 @@ export function createSystemSceneAtmosphereShellMaterialV1(
       transparent: true,
       depthWrite: false,
       depthTest: true,
-      side: THREE.BackSide,
-      blending: THREE.AdditiveBlending,
+      // Front hemisphere provides a translucent veil; back hemisphere supplies
+      // the extended scattering envelope outside the optical radius.
+      side: THREE.DoubleSide,
+      blending: THREE.NormalBlending,
       toneMapped: false,
     });
 
@@ -224,6 +234,8 @@ uniform vec3 uGenesisLightWeights;
 uniform vec3 uGenesisDayTint;
 uniform vec3 uGenesisNightTint;
 uniform float uGenesisRimStrength;
+uniform float uGenesisFrontHaze;
+uniform float uGenesisCoreRadiusRatio;
 uniform float uGenesisTerminatorSoftness;
 uniform float uGenesisTwilightGlow;
 
@@ -234,7 +246,6 @@ void main() {
   vec3 genesisNormal = normalize(vGenesisAtmosphereNormalView);
   vec3 genesisView = normalize(vGenesisAtmosphereViewDirection);
   float genesisViewDot = abs(dot(genesisNormal, genesisView));
-  float genesisFresnel = pow(clamp(1.0 - genesisViewDot, 0.0, 1.0), 2.15);
   float genesisWidth = max(0.015, uGenesisTerminatorSoftness);
   vec3 genesisLight0 = normalize(uGenesisLightDirectionsView[0]);
   vec3 genesisLight1 = normalize(uGenesisLightDirectionsView[1]);
@@ -255,9 +266,38 @@ void main() {
   float genesisTwilight = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);
 
   vec3 genesisTint = mix(uGenesisNightTint, uGenesisDayTint, genesisDay);
-  float genesisAlpha = genesisFresnel * uGenesisRimStrength * (0.15 + 0.85 * genesisDay);
-  genesisAlpha += genesisFresnel * genesisTwilight * uGenesisTwilightGlow * 0.22;
-  genesisAlpha = clamp(genesisAlpha, 0.0, 0.72);
+  // D.4c: shell traversal, not a painted Fresnel ring. The camera ray
+  // traverses more gas at the limb and near the apparent horizon of the
+  // surface. Beyond the surface silhouette the shell still scatters light.
+  float genesisImpact = sqrt(max(0.0, 1.0 - genesisViewDot * genesisViewDot));
+  float genesisCore = clamp(uGenesisCoreRadiusRatio, 0.70, 0.9999);
+  float genesisOuterChord = sqrt(max(0.0, 1.0 - genesisImpact * genesisImpact));
+  float genesisInnerChord = sqrt(max(0.0, genesisCore * genesisCore - genesisImpact * genesisImpact));
+  float genesisRayDepth = clamp(
+    (genesisOuterChord - genesisInnerChord) / max(0.0001, 1.0 - genesisCore),
+    0.0, 8.0
+  );
+  float genesisLimb = pow(clamp(1.0 - genesisViewDot, 0.0, 1.0), 1.35);
+  // A narrow *outer* fade avoids a hard geometric line; it does not erase
+  // the broader inner scattering envelope as the old 0.19 fade did.
+  float genesisEdgeFeather = smoothstep(0.0, 0.075, genesisViewDot);
+  float genesisIllumination = 0.08 + 0.92 * genesisDay;
+  // D.4d: depth across the illuminated hemisphere, not just a bright rim.
+  // The bounded pressure-derived uniforms keep trace-gas worlds transparent.
+  float genesisFrontVeil = uGenesisFrontHaze *
+    (0.18 + 0.25 * genesisLimb) * genesisIllumination;
+  float genesisOpticalDepth = 1.0 - exp(-genesisRayDepth *
+    (0.22 * uGenesisFrontHaze + 0.075 * uGenesisRimStrength));
+  float genesisLimbScattering = genesisLimb * uGenesisRimStrength *
+    genesisIllumination * 0.48;
+  float genesisTwilightScattering = genesisLimb * genesisTwilight *
+    uGenesisTwilightGlow * 0.20;
+  float genesisAlpha = gl_FrontFacing
+    ? genesisFrontVeil + genesisOpticalDepth * genesisIllumination +
+        genesisLimbScattering + genesisTwilightScattering
+    : (genesisOpticalDepth * 0.32 + genesisLimbScattering * 0.34 +
+        genesisTwilightScattering * 0.42);
+  genesisAlpha = clamp(genesisAlpha * genesisEdgeFeather, 0.0, 0.82);
 
   gl_FragColor = vec4(genesisTint, genesisAlpha);
 }

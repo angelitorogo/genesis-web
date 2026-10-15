@@ -21,6 +21,10 @@ export interface SystemScenePlanetSurfaceTextureData {
   readonly rgba: Uint8Array;
   readonly emissiveRgba: Uint8Array | null;
   readonly cloudRgba: Uint8Array | null;
+  /** D.4c: visual roughness in the Three.js green channel, not new geology. */
+  readonly roughnessRgba: Uint8Array | null;
+  /** D.4c: bounded grayscale bump proxy, not a physical elevation field. */
+  readonly reliefRgba: Uint8Array | null;
   readonly measuredLiquidCoverageFraction01: number | null;
   readonly measuredIceCoverageFraction01: number | null;
   readonly measuredDesertCoverageFraction01: number | null;
@@ -74,6 +78,8 @@ export function buildSystemScenePlanetSurfaceTextureV1(
       rgba: new Uint8Array(baseTexture.rgba),
       emissiveRgba: null,
       cloudRgba: null,
+      roughnessRgba: null,
+      reliefRgba: null,
       measuredLiquidCoverageFraction01: null,
       measuredIceCoverageFraction01: null,
       measuredDesertCoverageFraction01: null,
@@ -141,9 +147,17 @@ export function buildSystemScenePlanetSurfaceTextureV1(
   );
 
   const rgba = new Uint8Array(width * height * 4);
+  const roughnessRgba = new Uint8Array(width * height * 4);
+  const reliefRgba = new Uint8Array(width * height * 4);
   const emissiveRgba = volcanicSelected.size > 0
     ? new Uint8Array(width * height * 4)
     : null;
+  // Below this *visual* threshold, volcanic provinces are weathered basalt,
+  // oxides and regolith, never incandescent orange paint. The numerical
+  // volcanism index and the selected province coverage are not modified.
+  const incandescentActivity01 = clamp01(
+    ((surface.volcanismIndex01 ?? 0) - 0.58) / 0.42,
+  );
 
   for (const field of fields) {
     const baseOffset = (field.y * width + field.x) * 4;
@@ -154,12 +168,59 @@ export function buildSystemScenePlanetSurfaceTextureV1(
       baseTexture.rgba[baseOffset + 2]!,
     ];
 
-    const color = semanticColor(
+    // D.4d: the already-resolved water coverage now forms larger connected
+    // basins. A two-pixel coastal neighborhood modulates shallows without
+    // moving any pixel between semantic water, ice and land categories.
+    const coast = liquidBoundaryFraction(semantic, field.x, field.y, uniqueWidth, height);
+    let color = semanticColor(
       semanticKind,
       baseRgb,
       field,
       seed,
+      coast,
     );
+    // Transient/local phase-20 water remains visible at its exact measured
+    // snapshot coverage, but must not look like deep permanent blue oceans.
+    // No displacement of D.4d coastline, basins, categories or visual seed.
+    if (semanticKind === LIQUID && surface.hasPersistentSurfaceLiquidWater === false) {
+      color = mixRgb(color, [82, 103, 98], 0.58);
+    }
+    if (semanticKind !== LIQUID && coast > 0) {
+      color = mixRgb(color, semanticKind === ICE ? [145, 205, 219] : [116, 149, 139], coast * 0.19);
+    }
+
+    // D.4c: material separation follows the existing surface classes, with
+    // coherent relief inherited from the same deterministic field. Water is
+    // optically smoother than ice, rock or dry regolith; none of these pixels
+    // changes the semantic liquid/ice masks or the planetary science.
+    const fineRelief = smoothPixelNoise01(seed, field.x, field.y, 13);
+    const relief = semanticKind === LIQUID
+      ? 0.38 + 0.015 * field.elevation
+      : semanticKind === ICE
+        ? 0.56 + 0.09 * field.elevation + 0.045 * fineRelief
+        : semanticKind === DESERT
+          ? 0.40 + 0.35 * field.elevation + 0.13 * fineRelief
+          : 0.35 + 0.43 * field.elevation + 0.16 * fineRelief;
+    const roughness = semanticKind === LIQUID
+      ? (surface.hasPersistentSurfaceLiquidWater === false ? 0.46 : 0.18) +
+        0.11 * (1 - field.elevation) + 0.05 * coast
+      : semanticKind === ICE
+        ? 0.40 + 0.18 * fineRelief
+        : semanticKind === DESERT
+          ? 0.82 + 0.12 * fineRelief
+          : volcanicSelected.has(field.uniqueIndex)
+            ? 0.67 + 0.13 * fineRelief
+            : 0.69 + 0.20 * fineRelief;
+    const reliefByte = toByte(clamp01(relief) * 255);
+    const roughnessByte = toByte(clamp01(roughness) * 255);
+    roughnessRgba[baseOffset] = roughnessByte;
+    roughnessRgba[baseOffset + 1] = roughnessByte;
+    roughnessRgba[baseOffset + 2] = roughnessByte;
+    roughnessRgba[baseOffset + 3] = 255;
+    reliefRgba[baseOffset] = reliefByte;
+    reliefRgba[baseOffset + 1] = reliefByte;
+    reliefRgba[baseOffset + 2] = reliefByte;
+    reliefRgba[baseOffset + 3] = 255;
 
     rgba[baseOffset] = color[0];
     rgba[baseOffset + 1] = color[1];
@@ -169,7 +230,7 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     if (emissiveRgba !== null) {
       const volcanic = volcanicSelected.has(field.uniqueIndex);
       const heat = volcanic
-        ? clamp01(0.30 + field.volcanicScore * 0.70)
+        ? incandescentActivity01 * clamp01(0.22 + field.volcanicScore * 0.63)
         : 0;
       emissiveRgba[baseOffset] = toByte(255 * heat);
       emissiveRgba[baseOffset + 1] = toByte(74 * heat);
@@ -177,7 +238,11 @@ export function buildSystemScenePlanetSurfaceTextureV1(
       emissiveRgba[baseOffset + 3] = 255;
 
       if (volcanic) {
-        const darkened = mixRgb(color, [31, 25, 22], 0.42);
+        const weatheredRock = mixRgb(
+          [64, 58, 53], [111, 87, 70],
+          clamp01(field.elevation * 0.65 + 0.15),
+        );
+        const darkened = mixRgb(color, weatheredRock, 0.34);
         rgba[baseOffset] = darkened[0];
         rgba[baseOffset + 1] = darkened[1];
         rgba[baseOffset + 2] = darkened[2];
@@ -186,6 +251,8 @@ export function buildSystemScenePlanetSurfaceTextureV1(
   }
 
   copySeamColumn(rgba, width, height);
+  copySeamColumn(roughnessRgba, width, height);
+  copySeamColumn(reliefRgba, width, height);
   if (emissiveRgba !== null) {
     copySeamColumn(emissiveRgba, width, height);
   }
@@ -205,6 +272,8 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     rgba,
     emissiveRgba,
     cloudRgba,
+    roughnessRgba,
+    reliefRgba,
     measuredLiquidCoverageFraction01:
       countSemantic(semantic, LIQUID) / uniquePixelCount,
     measuredIceCoverageFraction01:
@@ -216,6 +285,26 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     measuredCloudCoverageFraction01:
       cloudRgba === null ? 0 : cloudTarget / uniquePixelCount,
   });
+}
+
+/** Relative coastline presence in the 8 adjacent cells, longitude-wrapped. */
+function liquidBoundaryFraction(
+  kinds: Uint8Array, x: number, y: number, width: number, height: number,
+): number {
+  const centerLiquid = kinds[y * width + x] === LIQUID;
+  let opposite = 0;
+  let samples = 0;
+  for (let dy = -2; dy <= 2; dy += 1) {
+    const sy = y + dy;
+    if (sy < 0 || sy >= height) continue;
+    for (let dx = -2; dx <= 2; dx += 1) {
+      if (dx === 0 && dy === 0) continue;
+      const sx = (x + dx + width) % width;
+      if ((kinds[sy * width + sx] === LIQUID) !== centerLiquid) opposite += 1;
+      samples += 1;
+    }
+  }
+  return samples === 0 ? 0 : opposite / samples;
 }
 
 function buildFields(
@@ -248,17 +337,20 @@ function buildFields(
       // Coherent spherical fields keep oceans/land/clouds as readable regions
       // rather than per-pixel speckle. They are still presentation-only masks:
       // exact physical coverages remain the frozen phase-20 inputs above.
+      // D.4d: planetary-scale basins and highlands dominate the geography.
+      // Fine relief is limited to material response, not water distribution;
+      // this eliminates the small disconnected tile-like coastal patches.
       const macro = surfaceFbm3(
-        sphereX * 2.15,
-        sphereY * 2.15,
-        sphereZ * 2.15,
+        sphereX * 1.20,
+        sphereY * 1.20,
+        sphereZ * 1.20,
         seed ^ 0x54a3b19d,
         4,
       );
       const detail = surfaceFbm3(
-        sphereX * 6.4 + 5.1,
-        sphereY * 6.4 - 2.9,
-        sphereZ * 6.4 + 7.7,
+        sphereX * 3.15 + 5.1,
+        sphereY * 3.15 - 2.9,
+        sphereZ * 3.15 + 7.7,
         seed ^ 0x8d12e4f3,
         3,
       );
@@ -270,9 +362,9 @@ function buildFields(
         4,
       );
       const elevation = clamp01(
-        0.54 * (luminance / 255) +
-          0.32 * macro +
-          0.14 * detail,
+        0.77 * macro +
+          0.20 * detail +
+          0.03 * (luminance / 255),
       );
 
       fields.push({
@@ -288,15 +380,15 @@ function buildFields(
             0.06 * macro,
         ),
         oceanScore: clamp01(
-          0.76 * (1 - elevation) +
-            0.18 * macro +
-            0.06 * equator01,
+          0.88 * (1 - elevation) +
+            0.10 * (1 - detail) +
+            0.02 * equator01,
         ),
         desertScore: clamp01(
-          0.46 * equator01 +
-            0.24 * elevation +
-            0.22 * detail +
-            0.08 * (1 - macro),
+          0.37 * equator01 +
+            0.38 * macro +
+            0.14 * detail +
+            0.11 * elevation,
         ),
         volcanicScore: clamp01(
           0.49 * storm +
@@ -320,14 +412,17 @@ function semanticColor(
   base: [number, number, number],
   field: PixelField,
   seed: number,
+  coast: number,
 ): [number, number, number] {
   const micro = smoothPixelNoise01(seed, field.x, field.y, 7);
 
   if (kind === LIQUID) {
-    const shallow = clamp01(0.28 + field.elevation * 0.48 + micro * 0.18);
+    const shallow = clamp01(
+      0.12 + field.elevation * 0.37 + micro * 0.08 + coast * 0.65,
+    );
     return mixRgb(
-      [5, 31, 78],
-      [29, 126, 174],
+      [4, 27, 78],
+      [43, 161, 197],
       shallow,
     );
   }

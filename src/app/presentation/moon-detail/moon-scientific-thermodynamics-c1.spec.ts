@@ -3,6 +3,7 @@ import { type MoonScientificResolvedTarget } from '../../simulation/planetary/mo
 import {
   lunarConductiveShellPresentation,
   lunarInternalWaterFields,
+  lunarSubsurfacePotentialNoteV1,
   MoonScientificSectionsAssembler,
 } from './moon-scientific-sections';
 
@@ -139,7 +140,9 @@ describe('C.1 — Lunar geometrical shell and legacy-science semantic closure', 
     expect(shell?.note).toContain('1510');
     expect(projected.badges).not.toContain('Candidata potencialmente habitable');
     expect(projected.badges.some(b => b.includes('heredada'))).toBe(true);
+    expect(findField(target, 'habitability', 'Clasificación')?.value).toBe('Sin candidatura potencial');
     expect(findField(target, 'habitability', 'Clasificación')?.note).toContain('no corroborada');
+    expect(findField(target, 'habitability', 'Ruta subsuperficial')?.value).toContain('No candidata');
     expect(findField(target, 'habitability', 'Índice global')?.value).toBe('0,859 / 1');
     expect(findField(target, 'habitability', 'Ruta subsuperficial')?.note).toContain('mareas modeladas');
     expect(findField(target, 'environment', 'Agua')?.value).toContain('sin soporte térmico');
@@ -216,5 +219,30 @@ describe('C.1a — lunar surface-liquid headline semantics', () => {
     expect(projected.badges).not.toContain('Agua líquida superficial');
     expect(projected.badges).not.toContain('Potencial de agua líquida superficial (no confirmado)');
     expect(findField(target, 'environment', 'Potencial de agua líquida superficial')?.value).toBe('0,943 / 1');
+  });
+});
+
+
+describe('Global lunar potential-label coherence (presentation only)', () => {
+  it('describes index 0.355 as limited, not elevated, while preserving the thermal exclusion', () => {
+    const assessment = thermal(0, 0, 'NO_STABLE_SURFACE_ICE', 0.000114, 0.114);
+    const target = moonTarget(assessment, 0.098, 0.355, false, 919.6, false);
+    const projected = findField(target, 'environment', 'Potencial de océano subsuperficial');
+    expect(projected?.value).toBe('0,355 / 1');
+    expect(projected?.note).toContain('estructural V1 limitado');
+    expect(projected?.note).toContain('sin corteza global de hielo');
+    expect(projected?.note).not.toContain('elevado');
+    expect(findField(target, 'habitability', 'Ruta subsuperficial')?.value).toBe('No candidata');
+  });
+
+  it('labels every index range consistently, independent of body, seed or thermal regime', () => {
+    const assessment = thermal(0, 0, 'TIDAL_HEAT_INSUFFICIENT_IN_SCENARIO', 0.0001, 0.01);
+    expect(lunarSubsurfacePotentialNoteV1(0.20, false, assessment)).toContain('V1 bajo');
+    expect(lunarSubsurfacePotentialNoteV1(0.35, false, assessment)).toContain('V1 limitado');
+    expect(lunarSubsurfacePotentialNoteV1(0.59, false, assessment)).toContain('V1 moderado');
+    expect(lunarSubsurfacePotentialNoteV1(0.90, false, assessment)).toContain('V1 alto');
+    expect(lunarSubsurfacePotentialNoteV1(0, false, assessment)).toBeNull();
+    expect(lunarSubsurfacePotentialNoteV1(1, true, assessment)).toContain('Candidatura oceánica condicionada');
+    expect(lunarSubsurfacePotentialNoteV1(0.59, false, null)).toContain('Balance térmico no resuelto');
   });
 });

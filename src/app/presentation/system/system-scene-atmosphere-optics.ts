@@ -1,5 +1,6 @@
 export interface SystemSceneAtmosphereOpticsSurfaceInput {
   readonly solidSurfaceAvailable: boolean;
+  readonly retainedGasComposition?: readonly { readonly gas: string; readonly moleFraction01: number }[];
   readonly retainedSurfacePressurePascal: number | null;
   readonly retainedAtmosphericWaterVaporMoleFraction01: number;
   readonly presentationCloudCoverageFraction01: number | null;
@@ -44,6 +45,8 @@ export interface SystemSceneAtmosphereOpticsV1 {
   readonly deepEnvelope: boolean;
   readonly presentationShellScale: number;
   readonly presentationRimStrength01: number;
+  /** Front-hemisphere scattering envelope, decoupled from science. */
+  readonly presentationFrontHaze01: number;
   readonly presentationTerminatorSoftness01: number;
   readonly presentationNightFloor01: number;
   readonly presentationTwilightGlow01: number;
@@ -79,19 +82,32 @@ export function buildSystemSceneAtmosphereOpticsV1(
         giant.waterVaporMoleFraction01,
     );
 
-    const blueTarget = rgb(89, 190, 226);
-    const warmTarget = rgb(238, 180, 116);
-    const neutralTarget = rgb(206, 224, 232);
-    const compositionTint =
-      mixRgb(
-        mixRgb(neutralTarget, blueTarget, clamp01(methane * 0.88)),
-        warmTarget,
-        clamp01(warm * (1 - methane * 0.42)),
-      );
+    // D.4b: tint comes from the existing cloud-top presentation proxies.
+    // The jade/violet branches are *illustrative hazes*, not detections of
+    // colour-producing aerosols or wavelength-resolved radiative transfer.
+    const neutralTarget = rgb(205, 219, 230);
+    const methaneTarget = rgb(78, 185, 226);
+    const warmTarget = rgb(236, 176, 119);
+    const jadeHaze01 = clamp01(methane * polar * (1 - warm) * 1.55);
+    const violetHaze01 = clamp01(
+      methane * warm * haze * polar * 2.45,
+    );
+    let compositionTint = mixRgb(
+      neutralTarget, methaneTarget, clamp01(methane * 0.94),
+    );
+    compositionTint = mixRgb(
+      compositionTint, warmTarget,
+      clamp01(warm * (1 - 0.35 * methane)),
+    );
+    compositionTint = mixRgb(
+      compositionTint, rgb(101, 181, 157), 0.60 * jadeHaze01,
+    );
+    compositionTint = mixRgb(
+      compositionTint, rgb(168, 143, 206), 0.65 * violetHaze01,
+    );
     const dayTint = mixRgb(
-      mixRgb(base, compositionTint, 0.62),
-      rgb(236, 246, 250),
-      haze * 0.18,
+      mixRgb(base, compositionTint, 0.78),
+      rgb(235, 242, 246), haze * 0.09,
     );
     const nightTint = mixRgb(
       dayTint,
@@ -104,15 +120,19 @@ export function buildSystemSceneAtmosphereOpticsV1(
       atmospherePresent: true,
       deepEnvelope: true,
       presentationShellScale:
-        1.028 + 0.020 * haze + 0.010 * polar,
+        1.055 + 0.028 * haze + 0.013 * polar,
       presentationRimStrength01:
-        clamp01(0.26 + 0.30 * haze + 0.12 * polar + 0.08 * condensable),
+        clamp01(0.68 + 0.22 * haze + 0.12 * polar + 0.07 * condensable),
+      presentationFrontHaze01:
+        clamp01(0.33 + 0.18 * haze + 0.09 * polar),
+      // D.4d: deep gas columns have a broad day/night transition;
+      // vacuum and rocky profiles keep their own, separate behavior.
       presentationTerminatorSoftness01:
-        clamp01(0.15 + 0.20 * haze + 0.08 * condensable),
+        clamp01(0.28 + 0.21 * haze + 0.08 * condensable),
       presentationNightFloor01:
         clamp(0.035 + 0.035 * haze, 0.03, 0.085),
       presentationTwilightGlow01:
-        clamp01(0.18 + 0.30 * haze + 0.10 * polar),
+        clamp01(0.30 + 0.32 * haze + 0.12 * polar),
       presentationDayTintHex: rgbToHex(dayTint),
       presentationNightTintHex: rgbToHex(nightTint),
     });
@@ -125,6 +145,12 @@ export function buildSystemSceneAtmosphereOpticsV1(
       : 0;
   const pressureSupport01 = atmosphericPressureSupport01(pressure);
   const atmospherePresent = pressureSupport01 > 0;
+  // D.4b: physically resolved pressure controls *visibility* separately from
+  // logarithmic terminator support. Traces remain almost transparent; a
+  // 0.46-bar or 2.4-bar atmosphere has an unmistakable optical envelope.
+  const envelopeStrength01 = clamp01(
+    (Math.sqrt(pressure / (pressure + 75_000)) - 0.055) * 1.18,
+  );
   const vapor = surface?.retainedAtmosphericWaterVaporMoleFraction01 ?? 0;
   const clouds = surface?.presentationCloudCoverageFraction01 ?? 0;
   const ice = surface?.surfaceIceCoverageFraction01 ?? 0;
@@ -134,29 +160,50 @@ export function buildSystemSceneAtmosphereOpticsV1(
   assertIndex01(ice, 'surfaceIceCoverageFraction01');
 
   const surfaceTint = surfaceAtmosphereTint(input.surfaceStyle);
-  const paleAir = rgb(143, 201, 232);
-  const humidAir = rgb(188, 220, 235);
-  const dryAir = rgb(214, 190, 153);
+  const gasFractions = surface?.retainedGasComposition ?? [];
+  for (const component of gasFractions) {
+    assertIndex01(component.moleFraction01, `retainedGasComposition[${component.gas}]`);
+  }
+  const fraction = (gas: string): number => clamp01(
+    gasFractions.reduce((sum, item) =>
+      sum + (item.gas === gas ? item.moleFraction01 : 0), 0),
+  );
+  const carbonDioxide01 = fraction('CARBON_DIOXIDE');
+  const sulfurDioxide01 = fraction('SULFUR_DIOXIDE');
+  const methane01 = fraction('METHANE');
+  const ammonia01 = fraction('AMMONIA');
+  const nitrogen01 = fraction('NITROGEN');
+  const oxygen01 = fraction('OXYGEN');
+  // Gases such as CO2 and SO2 are not intrinsically orange or purple.
+  // These tints represent possible aerosol/cloud optical appearances only;
+  // the model has no spectral transfer or resolved aerosol chemistry.
+  const warmHaze01 = clamp01(
+    (0.16 * carbonDioxide01 + 2.2 * sulfurDioxide01) *
+      (0.35 + 0.65 * clouds),
+  );
+  const blueRayleigh01 = clamp01((nitrogen01 + oxygen01) * 0.55);
+  const methaneHaze01 = clamp01(
+    (2.6 * methane01 + 0.55 * vapor) * (0.38 + 0.62 * clouds),
+  );
+  const ammoniaHaze01 = clamp01(
+    2.0 * ammonia01 * (0.38 + 0.62 * clouds),
+  );
+  const violetHaze01 = clamp01(
+    8.0 * methane01 * sulfurDioxide01 * (0.30 + 0.70 * clouds),
+  );
   let airTint = mixRgb(
-    surfaceTint,
-    paleAir,
-    0.55 + 0.25 * pressureSupport01,
+    surfaceTint, rgb(137, 188, 222),
+    0.68 + 0.18 * pressureSupport01,
   );
+  airTint = mixRgb(airTint, rgb(116, 178, 239), 0.34 * blueRayleigh01);
   airTint = mixRgb(
-    airTint,
-    humidAir,
-    clamp01(vapor * 2.4 + clouds * 0.25),
+    airTint, rgb(188, 217, 228), clamp01(vapor * 2 + clouds * 0.23),
   );
-  airTint = mixRgb(
-    airTint,
-    dryAir,
-    clamp01((1 - vapor) * pressureSupport01 * 0.10),
-  );
-  airTint = mixRgb(
-    airTint,
-    rgb(230, 240, 248),
-    ice * 0.10,
-  );
+  airTint = mixRgb(airTint, rgb(227, 237, 244), ice * 0.08);
+  airTint = mixRgb(airTint, rgb(226, 151, 104), 0.78 * warmHaze01);
+  airTint = mixRgb(airTint, rgb(83, 180, 215), 0.71 * methaneHaze01);
+  airTint = mixRgb(airTint, rgb(113, 185, 141), 0.70 * ammoniaHaze01);
+  airTint = mixRgb(airTint, rgb(170, 134, 194), 0.64 * violetHaze01);
 
   const nightTint = mixRgb(
     airTint,
@@ -168,17 +215,32 @@ export function buildSystemSceneAtmosphereOpticsV1(
     version: SYSTEM_SCENE_ATMOSPHERE_OPTICS_VERSION,
     atmospherePresent,
     deepEnvelope: false,
+    // D.4d: curvature in the *visual* optical profile makes a 2.4-bar
+    // atmosphere materially deeper than a 0.46-bar one. The near-vacuum
+    // branch stays effectively invisible. No pressure or gases are inferred.
     presentationShellScale:
       atmospherePresent
-        ? 1.020 + 0.018 * pressureSupport01 + 0.006 * clouds
+        ? 1.008 + 0.060 * envelopeStrength01 +
+          0.022 * envelopeStrength01 ** 2 +
+          0.010 * clouds * envelopeStrength01
         : 1,
     presentationRimStrength01:
       atmospherePresent
-        ? clamp01(0.12 + 0.34 * pressureSupport01 + 0.12 * clouds)
+        ? clamp01(0.016 + 0.60 * envelopeStrength01 +
+          0.37 * envelopeStrength01 ** 2 +
+          0.07 * clouds * envelopeStrength01)
+        : 0,
+    presentationFrontHaze01:
+      atmospherePresent
+        ? clamp01(0.42 * envelopeStrength01 +
+          0.28 * envelopeStrength01 ** 2 +
+          0.055 * clouds * envelopeStrength01)
         : 0,
     presentationTerminatorSoftness01:
       atmospherePresent
-        ? clamp01(0.055 + 0.18 * pressureSupport01 + 0.06 * clouds)
+        ? clamp01(0.035 + 0.16 * envelopeStrength01 +
+          0.18 * envelopeStrength01 ** 2 +
+          0.045 * clouds * envelopeStrength01)
         : 0.022,
     presentationNightFloor01:
       atmospherePresent
@@ -186,7 +248,7 @@ export function buildSystemSceneAtmosphereOpticsV1(
         : 0.012,
     presentationTwilightGlow01:
       atmospherePresent
-        ? clamp01(0.08 + 0.30 * pressureSupport01 + 0.10 * clouds)
+        ? clamp01(0.08 + 0.50 * envelopeStrength01 + 0.12 * clouds * envelopeStrength01)
         : 0,
     presentationDayTintHex: rgbToHex(airTint),
     presentationNightTintHex: rgbToHex(nightTint),

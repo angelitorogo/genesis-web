@@ -14,9 +14,59 @@ import {
 import {
   scientificBodyPreviewAnimationStepV1,
   scientificBodyPreviewMoonSelectionHaloV1,
+  scientificBodyPreviewTransientWaterNoteV1,
   scientificCometPreviewCameraDistanceV1,
   ScientificBodyPreview,
 } from './scientific-body-preview';
+
+describe('Global phase-20 transient liquid visual clarification', () => {
+  const withSurface = (
+    persistent: boolean | null,
+    coverage: number | null,
+    solid = true,
+  ): ScientificBodyPreviewModel => ({
+    ...planetPreviewModel(),
+    primary: {
+      surface: {
+        solidSurfaceAvailable: solid,
+        hasPersistentSurfaceLiquidWater: persistent,
+        surfaceLiquidWaterCoverageFraction01: coverage,
+      },
+    } as never,
+  } as ScientificBodyPreviewModel);
+
+  it('shows only for positive modeled liquid coverage explicitly marked non-persistent', () => {
+    expect(scientificBodyPreviewTransientWaterNoteV1(withSurface(false, 0.126)))
+      .toContain('Agua superficial transitoria');
+    expect(scientificBodyPreviewTransientWaterNoteV1(withSurface(true, 0.126))).toBeNull();
+    expect(scientificBodyPreviewTransientWaterNoteV1(withSurface(null, 0.126))).toBeNull();
+    expect(scientificBodyPreviewTransientWaterNoteV1(withSurface(false, 0))).toBeNull();
+    expect(scientificBodyPreviewTransientWaterNoteV1(withSurface(false, null))).toBeNull();
+    expect(scientificBodyPreviewTransientWaterNoteV1(withSurface(false, 0.126, false))).toBeNull();
+    expect(scientificBodyPreviewTransientWaterNoteV1(planetPreviewModel())).toBeNull();
+    expect(scientificBodyPreviewTransientWaterNoteV1(moonPreviewModel())).toBeNull();
+  });
+
+  it('exposes the caveat in the scientific 3D header without covering the canvas', async () => {
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+    try {
+      await TestBed.configureTestingModule({ imports: [ScientificBodyPreview] }).compileComponents();
+      const fixture = TestBed.createComponent(ScientificBodyPreview);
+      fixture.componentRef.setInput('model', withSurface(false, 0.126));
+      fixture.detectChanges();
+      const root = fixture.nativeElement as HTMLElement;
+      const note = root.querySelector('[data-testid="scientific-body-preview-transient-water-note"]');
+      expect(note?.textContent).toContain('no implican océanos permanentes');
+      expect(note?.closest('header')).not.toBeNull();
+      expect(root.querySelector('[data-testid="scientific-body-preview-canvas"]')).not.toBeNull();
+      fixture.componentRef.setInput('model', withSurface(true, 0.126));
+      fixture.detectChanges();
+      expect(root.querySelector('[data-testid="scientific-body-preview-transient-water-note"]')).toBeNull();
+    } finally {
+      getContext.mockRestore();
+    }
+  });
+});
 
 describe(
   'ScientificBodyPreview Phase 26 visual fiche extension',

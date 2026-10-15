@@ -35,6 +35,7 @@ import {
 import {
   MoonEnvironmentEngine,
 } from './moon-environment-engine';
+import { MoonHabitabilityEngine } from './moon-habitability-engine';
 
 const G =
   6.67430e-11;
@@ -133,7 +134,7 @@ describe(
     );
 
     it(
-      'should allow a cold volatile-rich Titan-scale moon to retain a substantial atmosphere and a subsurface ocean',
+      'should keep the Titan-scale atmosphere but not assert an unsupported tidal ocean',
       () => {
         const host =
           hostFixture(
@@ -179,11 +180,13 @@ describe(
         expect(
           environment.waterRegime,
         ).toBe(
-          MoonWaterRegime.ICE_AND_SUBSURFACE_OCEAN,
+          MoonWaterRegime.SURFACE_ICE,
         );
         expect(
           environment.hasSubsurfaceOcean,
-        ).toBe(true);
+        ).toBe(false);
+        expect(environment.internalWaterAssessment?.iceShellThermalRegime)
+          .toBe('TIDAL_HEAT_INSUFFICIENT_IN_SCENARIO');
         expect(
           environment.estimatedSurfaceTemperatureKelvin,
         ).toBeLessThan(100);
@@ -425,7 +428,7 @@ describe(
     );
 
     it(
-      'should allow retained internal heat to maintain an ocean even when tidal heating is low',
+      'should preserve unquantified heat retention without promoting it to an ocean',
       () => {
         const host = hostFixture(318, 11.2, 0.011);
         const physical = new MoonPhysicalProperties(
@@ -446,9 +449,38 @@ describe(
         expect(environment.internalHeatRetentionIndex01).toBeGreaterThan(0.30);
         expect(environment.sourceTidalHeatingIndex01).toBe(0);
         expect(environment.subsurfaceThermalSupportIndex01).toBeGreaterThanOrEqual(0.20);
-        expect(environment.hasSubsurfaceOcean).toBe(true);
+        expect(environment.hasSubsurfaceOcean).toBe(false);
+        expect(environment.internalWaterAssessment?.radiogenicHeatResolved).toBe(false);
+        expect(environment.internalWaterAssessment?.iceShellThermalRegime)
+          .toBe('TIDAL_HEAT_INSUFFICIENT_IN_SCENARIO');
       },
     );
+
+    it('global hot-moon regression: no ocean or subsurface candidate above water critical temperature', () => {
+      const host = hostFixture(318, 11.2, 150);
+      const physical = new MoonPhysicalProperties(1, 1, 0.0225, 0.404, 1.88, 0.138);
+      const tidal = tidalFixture(host, physical, 6.4, 0.75);
+      const environment = MoonEnvironmentEngine.generate(host, physical, tidal);
+      const habitability = MoonHabitabilityEngine.generate(environment);
+      expect(environment.estimatedSurfaceTemperatureKelvin).toBeGreaterThan(647.096);
+      expect(environment.waterInventoryIndex01).toBeGreaterThan(0.08);
+      expect(environment.subsurfaceOceanPotentialIndex01).toBeGreaterThan(0.35);
+      expect(environment.internalWaterAssessment?.iceShellThermalRegime).toBe('NO_STABLE_SURFACE_ICE');
+      expect(environment.hasSubsurfaceOcean).toBe(false);
+      expect(environment.waterRegime).toBe(MoonWaterRegime.NONE);
+      expect(habitability.subsurfaceCandidate).toBe(false);
+      expect(MoonEnvironmentEngine.generate(host, physical, tidal).waterRegime).toBe(environment.waterRegime);
+    });
+
+    it('global cold-moon regression: a physically supported cryosphere remains conditional, never confirmed', () => {
+      const host = hostFixture(318, 11.2, 0.01);
+      const physical = new MoonPhysicalProperties(1, 1, 0.003, 0.20, 1.70, 0.075);
+      const environment = MoonEnvironmentEngine.generate(host, physical, tidalFixture(host, physical, 6.4, 0.75));
+      expect(environment.internalWaterAssessment?.iceShellThermalRegime).toBe('CONDITIONAL_ICE_OCEAN');
+      expect(environment.internalWaterAssessment?.oceanConfirmed).toBe(false);
+      expect(environment.hasSubsurfaceOcean).toBe(true);
+      expect(MoonHabitabilityEngine.generate(environment).subsurfaceCandidate).toBe(true);
+    });
 
     it(
       'should not invent a subsurface ocean for a water-poor moon even under extreme tidal heating',

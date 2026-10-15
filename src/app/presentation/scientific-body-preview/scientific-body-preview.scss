@@ -49,6 +49,13 @@
   font-size: 0.78rem;
 }
 
+/* Read-only clarification for phase-20 non-persistent liquid; no WebGL changes. */
+.scientific-preview__header .scientific-preview__surface-caveat {
+  color: rgba(189, 210, 225, 0.92);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 .scientific-preview__actions {
   display: flex;
   flex-wrap: wrap;

@@ -138,9 +138,13 @@ describe(
         );
         // D.3: never reconstruct lunar scientific inputs as zero-valued
         // placeholders when moving from SystemScene to the fiche renderer.
-        expect(result.moons[0].sourceMoonPresentation).toBe(
-          scene.moons[0].visualPresentation,
+        expect(result.moons[0].sourceMoonPresentation).toEqual(
+          Object.fromEntries(
+            Object.entries(scene.moons[0].visualPresentation)
+              .filter(([key]) => key !== 'presentationSeedUint32'),
+          ),
         );
+        expect(JSON.stringify(result)).not.toContain('presentationSeedUint32');
         expect(result.moons[0].spin).toBe(
           scene.moons[0].spin,
         );

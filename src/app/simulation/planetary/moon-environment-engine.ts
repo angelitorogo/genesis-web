@@ -1,5 +1,6 @@
 import { MoonAtmosphereEngine } from './moon-atmosphere-engine';
 import { MoonInternalWaterEngine } from './moon-internal-water-engine';
+import { moonIceOceanScenarioAdmissible, type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
 import {
   moonAtmosphereRegimeForRetentionIndex01,
 } from '../../domain/planetary/moon-atmosphere-regime';
@@ -247,6 +248,16 @@ export class MoonEnvironmentEngine {
           massHeatRetention01,
       );
 
+    // First resolve bounded lunar thermodynamics. Legacy normalized proxies
+    // remain unchanged, but can no longer promote unsupported ice oceans.
+    const internalWaterAssessment = MoonInternalWaterEngine.assess(
+      physical,
+      tidalState,
+      estimatedSurfaceTemperatureKelvin,
+      inferredIceRichnessIndex01,
+      waterInventoryIndex01,
+    );
+
     const waterRegime =
       waterRegimeV1(
         waterInventoryIndex01,
@@ -256,6 +267,7 @@ export class MoonEnvironmentEngine {
         internalHeatRetentionIndex01,
         tidalState
           .tidalHeatingIndex01,
+        internalWaterAssessment,
       );
 
     const geologicalActivityIndex01 =
@@ -309,13 +321,7 @@ export class MoonEnvironmentEngine {
         inferredIceRichnessIndex01,
         sourceReferenceMeanInsolationEarth,
       ),
-      MoonInternalWaterEngine.assess(
-        physical,
-        tidalState,
-        estimatedSurfaceTemperatureKelvin,
-        inferredIceRichnessIndex01,
-        waterInventoryIndex01,
-      ),
+      internalWaterAssessment,
     );
   }
 }
@@ -338,6 +344,8 @@ function waterRegimeV1(
 
   tidalHeatingIndex01:
     number,
+
+  internalWaterAssessment: MoonInternalWaterAssessment,
 ): MoonWaterRegime {
   if (
     waterInventoryIndex01 <
@@ -352,7 +360,11 @@ function waterRegimeV1(
     moonSubsurfaceThermalSupportIndex01(
       internalHeatRetentionIndex01,
       tidalHeatingIndex01,
-    ) >= 0.20;
+    ) >= 0.20 &&
+    moonIceOceanScenarioAdmissible(
+      estimatedSurfaceTemperatureKelvin,
+      internalWaterAssessment,
+    );
 
   const hasSurfaceLiquidWater =
     surfaceLiquidWaterPotentialIndex01 >=

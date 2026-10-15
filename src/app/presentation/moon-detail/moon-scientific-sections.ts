@@ -265,6 +265,32 @@ export function lunarConductiveShellPresentation(
   };
 }
 
+/**
+ * Read-only V1 index annotation. Relative structural potential must not be
+ * mistaken for evidence of water or for the outcome of the independent C model.
+ * The same bands apply to every lunar system and seed.
+ */
+export function lunarSubsurfacePotentialNoteV1(
+  potentialIndex01: number,
+  hasSubsurfaceOcean: boolean,
+  assessment: MoonInternalWaterAssessment | null,
+): string | null {
+  if (hasSubsurfaceOcean) {
+    return `Candidatura oceánica condicionada por el balance térmico y los índices; no confirma un océano actual. ${assessment ? lunarThermalCaveat(assessment) : 'Balance térmico no resuelto.'}`;
+  }
+  if (!Number.isFinite(potentialIndex01) || potentialIndex01 <= 0) {
+    return null;
+  }
+  const strength = potentialIndex01 >= 0.75
+    ? 'alto'
+    : potentialIndex01 >= 0.5
+      ? 'moderado'
+      : potentialIndex01 >= 0.25
+        ? 'limitado'
+        : 'bajo';
+  return `Índice estructural V1 ${strength}; no demuestra un océano actual. ${assessment ? lunarThermalCaveat(assessment) : 'Balance térmico no resuelto.'}`;
+}
+
 function lunarThermalCaveat(assessment: MoonInternalWaterAssessment): string {
   switch (assessment.iceShellThermalRegime) {
     case 'TIDAL_HEAT_INSUFFICIENT_IN_SCENARIO':
@@ -530,11 +556,11 @@ function environmentSection(
         formatIndex(
           environment.subsurfaceOceanPotentialIndex01,
         ),
-        environment.hasSubsurfaceOcean
-          ? `Candidatura heredada por índices de inventario y mareas; no demuestra un océano actual. ${environment.internalWaterAssessment ? lunarThermalCaveat(environment.internalWaterAssessment) : 'Balance térmico no resuelto.'}`
-          : environment.subsurfaceOceanPotentialIndex01 >= 0.35
-            ? 'Potencial estructural elevado, pero sin soporte energético suficiente para afirmar un océano actual'
-            : null,
+        lunarSubsurfacePotentialNoteV1(
+          environment.subsurfaceOceanPotentialIndex01,
+          environment.hasSubsurfaceOcean,
+          environment.internalWaterAssessment ?? null,
+        ),
       ),
       field(
         'Potencial de agua líquida superficial',
@@ -577,6 +603,12 @@ function habitabilitySection(
 
   const habitability =
     target.detail.habitability;
+  // Older resolved targets may carry a V1 candidate flag even when the
+  // independent C assessment does not support a stable ice-covered ocean.
+  // Keep legacy scores visible without presenting the flag as a current claim.
+  const thermal = target.detail.environment.internalWaterAssessment ?? null;
+  const unsupportedLegacySubsurface = habitability.subsurfaceCandidate &&
+    thermal !== null && thermal.iceShellThermalRegime !== 'CONDITIONAL_ICE_OCEAN';
 
   return section(
     'habitability',
@@ -586,10 +618,14 @@ function habitabilitySection(
     [
       field(
         'Clasificación',
-        `${labelHabitability(habitability.habitabilityRegime)}${target.detail.environment.internalWaterAssessment && habitability.subsurfaceCandidate ? ' (criterio heredado)' : ''}`,
-        target.detail.environment.internalWaterAssessment && habitability.subsurfaceCandidate
-          ? `Clasificación V1 no corroborada termodinámicamente. ${lunarThermalCaveat(target.detail.environment.internalWaterAssessment)} No implica vida ni biosignaturas.`
-          : 'Una candidatura de habitabilidad no implica presencia de vida ni biosignaturas.',
+        unsupportedLegacySubsurface
+          ? habitability.surfaceCandidate ? 'Candidata superficial (subsuelo no corroborado)' : 'Sin candidatura potencial'
+          : `${labelHabitability(habitability.habitabilityRegime)}${thermal && habitability.subsurfaceCandidate ? ' (escenario térmico condicionado)' : ''}`,
+        unsupportedLegacySubsurface
+          ? `Candidatura subsuperficial V1 heredada no corroborada por el balance térmico C. ${lunarThermalCaveat(thermal)} No implica vida ni biosignaturas.`
+          : thermal && habitability.subsurfaceCandidate
+            ? `Candidatura termodinámicamente admisible en el escenario C, pero no observada ni confirmada. ${lunarThermalCaveat(thermal)} No implica vida ni biosignaturas.`
+            : 'Una candidatura de habitabilidad no implica presencia de vida ni biosignaturas.',
       ),
       field(
         'Índice global',
@@ -597,7 +633,7 @@ function habitabilitySection(
           habitability.overallHabitabilityIndex01,
         ),
         target.detail.environment.internalWaterAssessment && habitability.subsurfaceCandidate
-          ? 'Índice V1 conservado sin recalcular: no valida por sí solo la viabilidad térmica de un océano.'
+          ? 'Índice comparativo V1: no equivale a una probabilidad ni confirma la existencia de agua líquida interior.'
           : null,
       ),
       field(
@@ -609,11 +645,13 @@ function habitabilitySection(
       ),
       field(
         'Ruta subsuperficial',
-        habitability.subsurfaceCandidate
-          ? target.detail.environment.internalWaterAssessment
-            ? 'Candidata por índice heredado (sin confirmar)'
-            : 'Candidata'
-          : 'No candidata',
+        unsupportedLegacySubsurface
+          ? 'No candidata (índice heredado no corroborado)'
+          : habitability.subsurfaceCandidate
+            ? thermal
+              ? 'Candidata condicional (océano no confirmado)'
+              : 'Candidata'
+            : 'No candidata',
         `Índice ${formatIndex(habitability.subsurfaceHabitabilityIndex01)}${target.detail.environment.internalWaterAssessment ? ` · ${lunarThermalCaveat(target.detail.environment.internalWaterAssessment)}` : ''}`,
       ),
       field(
@@ -739,11 +777,14 @@ function badges(
   if (
     target.detail.habitability.isPotentiallyHabitable
   ) {
+    const thermal = target.detail.environment.internalWaterAssessment;
     result.push(
-      target.detail.environment.internalWaterAssessment &&
-        target.detail.habitability.subsurfaceCandidate
-        ? 'Candidatura heredada (viabilidad térmica sin confirmar)'
-        : 'Candidata potencialmente habitable',
+      target.detail.habitability.subsurfaceCandidate && thermal &&
+        thermal.iceShellThermalRegime !== 'CONDITIONAL_ICE_OCEAN'
+        ? 'Candidatura subsuperficial heredada (no corroborada)'
+        : thermal && target.detail.habitability.subsurfaceCandidate
+          ? 'Candidatura subsuperficial condicional (sin confirmar)'
+          : 'Candidata potencialmente habitable',
     );
   }
 

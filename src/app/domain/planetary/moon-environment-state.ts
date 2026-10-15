@@ -1,5 +1,5 @@
 import { type MoonAtmosphereAssessment } from './moon-atmosphere-assessment';
-import { type MoonInternalWaterAssessment } from './moon-internal-water-assessment';
+import { moonIceOceanScenarioAdmissible, type MoonInternalWaterAssessment } from './moon-internal-water-assessment';
 import {
   MoonAtmosphereRegime,
   moonAtmosphereRegimeForRetentionIndex01,
@@ -220,6 +220,7 @@ export class MoonEnvironmentState {
       estimatedSurfaceTemperatureKelvin,
       internalHeatRetentionIndex01,
       sourceTidalHeatingIndex01,
+      internalWaterAssessment,
     );
 
     assertUnitInterval(
@@ -335,6 +336,8 @@ function assertWaterRegimeConsistency(
 
   sourceTidalHeatingIndex01:
     number,
+
+  internalWaterAssessment: MoonInternalWaterAssessment | null,
 ): void {
   if (
     waterInventoryIndex01 <
@@ -358,7 +361,11 @@ function assertWaterRegimeConsistency(
     moonSubsurfaceThermalSupportIndex01(
       internalHeatRetentionIndex01,
       sourceTidalHeatingIndex01,
-    ) >= 0.20;
+    ) >= 0.20 &&
+    moonIceOceanScenarioAdmissible(
+      estimatedSurfaceTemperatureKelvin,
+      internalWaterAssessment,
+    );
 
   const hasSurfaceLiquid =
     surfaceLiquidWaterPotentialIndex01 >=

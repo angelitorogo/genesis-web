@@ -29,3 +29,20 @@ export interface MoonInternalWaterAssessment {
   readonly radiogenicHeatResolved: false;
   readonly oceanConfirmed: false;
 }
+
+/**
+ * Global classification gate for a *candidate* ocean beneath water ice.
+ * A hot surface cannot supply a stable water-ice lid; a normalized tidal or
+ * habitability index must not override the bounded conductive-shell result.
+ * Null preserves pre-C fixtures/persisted legacy projections only on the cold
+ * side; every newly generated moon carries a non-null C assessment.
+ * This does not assert that an ocean has been detected.
+ */
+export function moonIceOceanScenarioAdmissible(
+  surfaceTemperatureKelvin: number,
+  assessment: MoonInternalWaterAssessment | null,
+): boolean {
+  return Number.isFinite(surfaceTemperatureKelvin) &&
+    surfaceTemperatureKelvin < 273.15 &&
+    (assessment === null || assessment.iceShellThermalRegime === 'CONDITIONAL_ICE_OCEAN');
+}

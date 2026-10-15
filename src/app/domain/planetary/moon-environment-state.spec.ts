@@ -32,8 +32,8 @@ describe(
             0.60,
             0.70,
             0.42,
+            255,
             260,
-            281,
             0.55,
             MoonAtmosphereRegime.SUBSTANTIAL,
             0.70,
@@ -101,6 +101,17 @@ describe(
       },
     );
 
+    it('rejects legacy persisted ocean labels on hot moons even without a C assessment', () => {
+      expect(() => new MoonEnvironmentState(
+        1, 1, 0.02, 0.35, 2.2, 0.16, 100,
+        0.60, 0.70, 0.42, 900, 920,
+        0.55, MoonAtmosphereRegime.SUBSTANTIAL,
+        0.70, 0.80, 0,
+        MoonWaterRegime.SUBSURFACE_OCEAN,
+        0.60, 0.60, MoonGeologyRegime.TIDALLY_ACTIVE,
+      )).toThrow(RangeError);
+    });
+
     it(
       'should reject atmosphere, water or geology labels that disagree with their frozen indices',
       () => {
@@ -125,8 +136,8 @@ describe(
             0.60,
             0.40,
             0.30,
+            255,
             260,
-            281,
             0.55,
             atmosphereRegime,
             0.50,

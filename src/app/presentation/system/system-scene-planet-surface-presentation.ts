@@ -1,5 +1,7 @@
 export interface SystemScenePlanetSurfacePresentationInput {
   readonly source?: 'COMPACT_HOST_CONDITIONAL_31_4F';
+  /** Read-only final gas fractions for renderer tint; never changes atmosphere physics. */
+  readonly retainedGasComposition?: readonly { readonly gas: string; readonly moleFraction01: number }[];
   readonly waterInventoryIndex01: number;
   readonly surfaceLiquidWaterCoverageFraction01: number | null;
   readonly surfaceIceCoverageFraction01: number | null;
@@ -10,6 +12,8 @@ export interface SystemScenePlanetSurfacePresentationInput {
   readonly retainedSurfacePressurePascal: number | null;
   readonly geologicalActivityIndex01: number | null;
   readonly volcanismIndex01: number | null;
+  /** false means phase-20 local/transient liquid, not persistent seas. */
+  readonly hasPersistentSurfaceLiquidWater?: boolean | null;
   readonly surfaceWaterRegime: string;
   readonly volcanismRegime: string;
 }
@@ -26,6 +30,8 @@ export interface SystemScenePlanetSurfacePresentationSnapshot {
   readonly source: 'PHASE_20_SURFACE_ENVIRONMENT' | 'COMPACT_HOST_CONDITIONAL_31_4F';
   readonly solidSurfaceAvailable: boolean;
 
+  /** Read-only final gas fractions for renderer tint; never changes atmosphere physics. */
+  readonly retainedGasComposition?: readonly { readonly gas: string; readonly moleFraction01: number }[];
   readonly waterInventoryIndex01: number;
   readonly surfaceLiquidWaterCoverageFraction01: number | null;
   readonly surfaceIceCoverageFraction01: number | null;
@@ -36,6 +42,8 @@ export interface SystemScenePlanetSurfacePresentationSnapshot {
   readonly retainedSurfacePressurePascal: number | null;
   readonly geologicalActivityIndex01: number | null;
   readonly volcanismIndex01: number | null;
+  /** false means phase-20 local/transient liquid, not persistent seas. */
+  readonly hasPersistentSurfaceLiquidWater?: boolean | null;
   readonly surfaceWaterRegime: string;
   readonly volcanismRegime: string;
 
@@ -75,6 +83,10 @@ export function buildSystemScenePlanetSurfacePresentationV1(
   );
 
   const liquid = input.surfaceLiquidWaterCoverageFraction01;
+  if (input.hasPersistentSurfaceLiquidWater != null &&
+      typeof input.hasPersistentSurfaceLiquidWater !== 'boolean') {
+    throw new RangeError('Liquid persistence must be boolean or unknown.');
+  }
   const ice = input.surfaceIceCoverageFraction01;
   const solidSurfaceAvailable = liquid !== null && ice !== null;
 
@@ -88,6 +100,7 @@ export function buildSystemScenePlanetSurfacePresentationV1(
     return Object.freeze({
       source: input.source ?? 'PHASE_20_SURFACE_ENVIRONMENT' as const,
       solidSurfaceAvailable: false,
+      retainedGasComposition: input.retainedGasComposition === undefined ? undefined : Object.freeze(input.retainedGasComposition.map(component => Object.freeze({ ...component }))),
       waterInventoryIndex01: input.waterInventoryIndex01,
       surfaceLiquidWaterCoverageFraction01: liquid,
       surfaceIceCoverageFraction01: ice,
@@ -99,6 +112,7 @@ export function buildSystemScenePlanetSurfacePresentationV1(
       retainedSurfacePressurePascal: input.retainedSurfacePressurePascal,
       geologicalActivityIndex01: input.geologicalActivityIndex01,
       volcanismIndex01: input.volcanismIndex01,
+      hasPersistentSurfaceLiquidWater: input.hasPersistentSurfaceLiquidWater ?? null,
       surfaceWaterRegime: input.surfaceWaterRegime,
       volcanismRegime: input.volcanismRegime,
       exposedLandCoverageFraction01: null,
@@ -160,6 +174,7 @@ export function buildSystemScenePlanetSurfacePresentationV1(
   return Object.freeze({
     source: input.source ?? 'PHASE_20_SURFACE_ENVIRONMENT' as const,
     solidSurfaceAvailable: true,
+    retainedGasComposition: input.retainedGasComposition === undefined ? undefined : Object.freeze(input.retainedGasComposition.map(component => Object.freeze({ ...component }))),
     waterInventoryIndex01: input.waterInventoryIndex01,
     surfaceLiquidWaterCoverageFraction01: liquid,
     surfaceIceCoverageFraction01: ice,
@@ -171,7 +186,8 @@ export function buildSystemScenePlanetSurfacePresentationV1(
     retainedSurfacePressurePascal: input.retainedSurfacePressurePascal,
     geologicalActivityIndex01: input.geologicalActivityIndex01,
     volcanismIndex01: input.volcanismIndex01,
-    surfaceWaterRegime: input.surfaceWaterRegime,
+    hasPersistentSurfaceLiquidWater: input.hasPersistentSurfaceLiquidWater ?? null,
+      surfaceWaterRegime: input.surfaceWaterRegime,
     volcanismRegime: input.volcanismRegime,
     exposedLandCoverageFraction01,
     presentationDesertCoverageFraction01,

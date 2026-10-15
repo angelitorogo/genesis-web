@@ -121,6 +121,9 @@ export class MoonHabitabilityEngine {
         0.25;
 
     const subsurfaceCandidate =
+      // The structural index is not energy evidence. New C thermodynamics
+      // and the global water regime must permit an ice-covered reservoir.
+      environment.hasSubsurfaceOcean &&
       environment
         .subsurfaceOceanPotentialIndex01 >=
         0.35 &&

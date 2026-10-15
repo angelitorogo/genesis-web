@@ -162,7 +162,7 @@ describe(
                 gravityEarth:
                   0.45,
                 temperatureKelvin:
-                  288,
+                  265,
                 atmosphereRetentionIndex01:
                   0.70,
                 atmosphereRegime:
@@ -214,7 +214,7 @@ describe(
                 gravityEarth:
                   0.40,
                 temperatureKelvin:
-                  295,
+                  260,
                 atmosphereRetentionIndex01:
                   0.70,
                 atmosphereRegime:

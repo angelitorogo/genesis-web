@@ -117,6 +117,26 @@ const ISOLATED_NON_BODY_AUTOROTATE_CYCLE_SECONDS =
 const MINOR_BODY_INSPECTION_FILL_INTENSITY =
   0.90;
 
+/**
+ * Explain transient modeled liquid in an inspection preview without changing
+ * the D.4d texture, physical coverage or persistence state. Only the planet's
+ * own characterized surface qualifies (not a moon's host-planet context).
+ */
+export function scientificBodyPreviewTransientWaterNoteV1(
+  model: ScientificBodyPreviewModel,
+): string | null {
+  if (model.kind !== ScientificBodyPreviewKind.PLANET) {
+    return null;
+  }
+  const surface = model.primary.surface;
+  if (!surface || !surface.solidSurfaceAvailable ||
+      surface.hasPersistentSurfaceLiquidWater !== false ||
+      (surface.surfaceLiquidWaterCoverageFraction01 ?? 0) <= 0) {
+    return null;
+  }
+  return 'Agua superficial transitoria (escenario) · Las regiones azules no implican océanos permanentes.';
+}
+
 export function scientificBodyPreviewMoonSelectionHaloV1(
   selectedMoonOrdinal:
     number | null,
@@ -315,6 +335,10 @@ export class ScientificBodyPreview
   )
   private readonly canvasRef!:
     ElementRef<HTMLCanvasElement>;
+
+  transientSurfaceWaterNote(): string | null {
+    return scientificBodyPreviewTransientWaterNoteV1(this.model);
+  }
 
   readonly renderState =
     signal<ScientificBodyPreviewRenderState>(
@@ -2154,7 +2178,12 @@ function moonPresentation(
   // appearance. Reconstructing its scientific inputs with zero placeholders
   // incorrectly erased morphology and atmospheric chemistry.
   if (moon.sourceMoonPresentation !== undefined) {
-    return moon.sourceMoonPresentation;
+    // D.3 parity: reconstruct the exact original render contract only here.
+    // The fiche's serialized model exposes no procedural seed field name.
+    return Object.freeze({
+      ...moon.sourceMoonPresentation,
+      presentationSeedUint32: moon.visualVariantUint32,
+    });
   }
   // Backward-compatible older scientific-preview fixtures.
   return Object.freeze({

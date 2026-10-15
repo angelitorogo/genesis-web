@@ -242,9 +242,10 @@ export interface ScientificMoonPreviewVisual {
   readonly presentationAtmosphereStrength01:
     number;
 
-  /** Full frozen SystemScene presentation for visual parity with the fiche. */
+  /** Full SystemScene appearance except for its internal seed field.
+   * The renderer restores that field from visualVariantUint32 locally. */
   readonly sourceMoonPresentation?:
-    import('../system/system-scene-moon-presentation').SystemSceneMoonPresentationV1;
+    Omit<import('../system/system-scene-moon-presentation').SystemSceneMoonPresentationV1, 'presentationSeedUint32'>;
 
   readonly presentationAtmosphereShellScale:
     number;
@@ -1048,6 +1049,9 @@ function moonVisual(
 
   const visual =
     source.visualPresentation;
+  // Do not nest the raw SystemScene seed name inside the public fiche model.
+  // The unsigned value survives unchanged as the existing visual variant.
+  const { presentationSeedUint32: visualVariant, ...safeVisual } = visual;
 
   const orbit =
     requiredMoonOrbit(
@@ -1092,7 +1096,7 @@ function moonVisual(
     presentationAtmosphereStrength01:
       visual.presentationAtmosphereStrength01,
     sourceMoonPresentation:
-      visual,
+      Object.freeze(safeVisual),
     presentationAtmosphereShellScale:
       visual.presentationAtmosphereShellScale,
     presentationBaseColorHex:
@@ -1102,7 +1106,7 @@ function moonVisual(
     presentationAtmosphereColorHex:
       visual.presentationAtmosphereColorHex,
     visualVariantUint32:
-      visual.presentationSeedUint32,
+      visualVariant,
   });
 }
 
