@@ -352,6 +352,7 @@ export class SystemSceneMultihostComposition {
       hostVisualEnvelope: null, multistellarPresentation: null, multistellarPTypeClearance: null,
       multistellarCoreCompaction: null, stellarOrbitClearance: null, firstOrbitAnchor: null,
       orbitalRiskTargets: Object.freeze(risks),
+      orbitalRiskEvaluated: sources.some(source => source.snapshot.orbitalRiskEvaluated === true),
       layers: Object.freeze({ moonCount: moons.length, minorBodyCount: minorBodies.length,
         habitableZoneAvailable: zones.length > 0, orbitalRiskTargetCount: available.length,
         orbitalCrossingTargetCount: crossing.length,

@@ -865,6 +865,11 @@ export class SystemScene
     return this.snapshot.orbitalRiskTargets.length;
   }
 
+  orbitalRiskLayerAvailable(): boolean {
+    return this.snapshot.orbitalRiskEvaluated === true ||
+      this.snapshot.orbitalRiskTargets.length > 0;
+  }
+
   orbitalCrossingTargetCount():
     number {
     return this.snapshot.layers.orbitalCrossingTargetCount;
@@ -998,10 +1003,7 @@ export class SystemScene
   toggleOrbitalRisk():
     void {
 
-    if (
-      this.snapshot.orbitalRiskTargets.length ===
-        0
-    ) {
+    if (!this.orbitalRiskLayerAvailable()) {
       return;
     }
 
@@ -1630,10 +1632,7 @@ export class SystemScene
         );
       }
 
-      if (
-        this.snapshot.orbitalRiskTargets.length ===
-          0
-      ) {
+      if (!this.orbitalRiskLayerAvailable()) {
         this.orbitalRiskVisibleSignal.set(
           false,
         );

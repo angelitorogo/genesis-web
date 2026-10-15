@@ -82,7 +82,7 @@
       type="button"
       data-testid="system-scene-layer-orbital-risk"
       [attr.aria-pressed]="orbitalRiskVisible()"
-      [disabled]="orbitalRiskRelevantTargetCount() === 0"
+      [disabled]="!orbitalRiskLayerAvailable()"
       [class.system-scene__layer-button--active]="orbitalRiskVisible()"
       (click)="toggleOrbitalRisk()"
     >
@@ -371,6 +371,11 @@
           <small>
             RIESGO · {{ orbitalRiskTargetCount() }} cuenta objetivos con corredor de aproximación o colisión; un cruce amarillo no implica peligro inmediato y rojo tampoco afirma impacto temporal.
           </small>
+          @if (orbitalRiskRelevantTargetCount() === 0) {
+            <small data-testid="system-scene-risk-evaluated-clear">
+              Matriz orbital evaluada para los cuerpos con datos físicos disponibles: no se han identificado cruces radiales ni corredores de aproximación o colisión. No equivale a riesgo futuro nulo ni cubre trayectorias sin evaluación, como posibles órbitas P-type.
+            </small>
+          }
 
           @if (selectedOrbitalRiskTarget(); as selectedRisk) {
             <div class="system-scene__risk-detail" data-testid="system-scene-risk-detail">

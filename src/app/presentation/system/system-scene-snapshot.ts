@@ -7,6 +7,7 @@ import { buildV2CometVisualOrbit } from './system-scene-v2-comet-orbit-presentat
 import { projectPulsarSecondGenerationPlanets } from './system-scene-pulsar-planets';
 import { multihostPhysicalSourceKey } from '../../simulation/stellar/stellar-multihost-physical-source-key';
 import { v2HostMinorBodyOrbitalCatalog } from './system-scene-v2-minor-body-source';
+import { v2HostMinorBodyImpactRiskCatalog } from './system-scene-v2-orbital-risk-source';
 import { v2MinorBodyTimeScale, V2_COMET_PHASE_WARP } from './system-scene-v2-minor-cadence';
 import { withV2SinglePlanetCadence } from './system-scene-v2-planet-cadence';
 import {
@@ -881,6 +882,9 @@ export interface SystemSceneSnapshot {
   readonly orbitalRiskTargets:
     readonly SystemSceneOrbitalRiskTargetSnapshot[];
 
+  /** RISK-R1: evaluated phase-23 matrix; false when risk physics is unavailable. */
+  readonly orbitalRiskEvaluated?: boolean;
+
   readonly layers:
     SystemSceneLayerAvailabilitySnapshot;
 
@@ -1165,6 +1169,11 @@ export class SystemSceneSnapshotBuilder {
         throw new Error('Generated SINGLE scene contains an unrelated planet, atmosphere or moon system.');
       }
     }
+    const v2MinorBodyCatalog = source.discoveryState.code >= DiscoveryState.CONFIRMED.code &&
+      key.generatorVersion === GeneratorVersion.V2
+      ? v2HostMinorBodyOrbitalCatalog(host)
+      : null;
+    const v2ImpactRiskCatalog = v2HostMinorBodyImpactRiskCatalog(host, v2MinorBodyCatalog);
     const world: MaterializedStellarSceneWorld = Object.freeze({
       stellarSystem: host.stellarSystem,
       generationKey: host.internalGenerationKey,
@@ -1177,14 +1186,12 @@ export class SystemSceneSnapshotBuilder {
       planets: host.planets,
       atmospheres: host.atmospheres,
       moonSystems: host.moonSystems,
-      minorBodyOrbitalCatalog: source.discoveryState.code >= DiscoveryState.CONFIRMED.code &&
-        key.generatorVersion === GeneratorVersion.V2
-        ? v2HostMinorBodyOrbitalCatalog(host) : null,
+      minorBodyOrbitalCatalog: v2MinorBodyCatalog,
       asteroidBelts: source.discoveryState.code >= DiscoveryState.CONFIRMED.code
         ? host.asteroidBelts : null,
       habitableZone: host.planetarySystem?.habitableZone ??
         PlanetarySystemHabitableZoneGenerator.generate(host.internalGenerationKey, host.stellarSystem),
-      impactRiskCatalog: null,
+      impactRiskCatalog: v2ImpactRiskCatalog,
     });
     const base = snapshotBase(source);
     const projected = withV2SinglePlanetCadence(projectResolvedSceneWorld(Object.freeze({
@@ -1255,6 +1262,8 @@ function projectResolvedSceneWorld(
         projected.firstOrbitAnchor,
       orbitalRiskTargets:
         projected.orbitalRiskTargets,
+      orbitalRiskEvaluated: world.impactRiskCatalog !== null &&
+        world.impactRiskCatalog.assessmentCount > 0,
       layers:
         projected.layers,
       orbits:

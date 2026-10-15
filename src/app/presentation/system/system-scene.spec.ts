@@ -1357,6 +1357,38 @@ describe(
       },
     );
 
+    it('RISK-R1: allows an evaluated zero-crossing matrix but not an unavailable one', () => {
+      const base = sceneSnapshot();
+      const zero = Object.freeze({ ...base,
+        orbitalRiskTargets: Object.freeze([]),
+        orbitalRiskEvaluated: true,
+        layers: Object.freeze({ ...base.layers,
+          orbitalRiskTargetCount: 0, orbitalCrossingTargetCount: 0,
+          orbitalApproachTargetCount: 0, orbitalCollisionGeometryTargetCount: 0,
+        }),
+      });
+      const fixture = TestBed.createComponent(SystemScene);
+      fixture.componentRef.setInput('snapshot', zero);
+      fixture.detectChanges();
+      const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+        '[data-testid="system-scene-layer-orbital-risk"]',
+      )!;
+      expect(button.disabled).toBe(false);
+      expect(button.textContent).toContain('RIESGO · 0');
+      button.click();
+      fixture.detectChanges();
+      expect(fixture.componentInstance.orbitalRiskVisible()).toBe(true);
+      expect(fixture.nativeElement.querySelector(
+        '[data-testid="system-scene-risk-evaluated-clear"]',
+      )?.textContent).toContain('Matriz orbital evaluada');
+      fixture.componentRef.setInput('snapshot', Object.freeze({ ...zero,
+        orbitalRiskEvaluated: false,
+      }));
+      fixture.detectChanges();
+      expect(button.disabled).toBe(true);
+      expect(fixture.componentInstance.orbitalRiskVisible()).toBe(false);
+    });
+
     it(
       'should toggle planet, moon, habitable-zone, orbital-risk and minor-body subtype layers through the shared SystemScene host',
       () => {
