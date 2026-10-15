@@ -75,12 +75,41 @@
     &--extreme { color: #ff6b7a; }
     &--regions { color: #8ea7c9; }
     &--habitable { color: #77e6a2; }
+    &--explored { color: #6ad7ff; background: rgba(106, 215, 255, 0.28); border-radius: 0.12rem; }
   }
 
-  p {
-    margin: 0.5rem 0 0;
-    font-size: 0.55rem;
-    line-height: 1.4;
+  &__coverage {
+    margin-top: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid rgba(106, 215, 255, 0.16);
+    font-family: var(--genesis-font-mono);
+    font-size: 0.59rem;
+  }
+
+  &__coverage-heading {
+    margin-bottom: 0.35rem;
+    color: var(--genesis-color-primary);
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+  }
+
+  &__coverage-row {
+    display: grid;
+    grid-template-columns: 0.7rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 1.4rem;
+
+    strong { font-size: 0.61rem; color: var(--genesis-color-text-muted); }
+  }
+
+  &__coverage-swatch {
+    width: 0.6rem;
+    height: 0.6rem;
+    border: 1px solid rgba(106, 215, 255, 0.35);
+    &--explored { background: rgba(106, 215, 255, 0.32); border-color: #6ad7ff; }
+    &--unexplored { background: rgba(106, 215, 255, 0.025); }
   }
 }
 

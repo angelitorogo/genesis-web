@@ -11,6 +11,8 @@ export interface GalacticMapViewSnapshot {
   readonly camera: GalacticMapCameraState;
   readonly galaxySpinRadians: number;
   readonly layers: GalacticMapLayerVisibility;
+  /** Optional for pre-GUI-cleanup v1 snapshots; defaults to true. */
+  readonly exploredShadingVisible?: boolean;
 }
 
 export function galacticMapViewStorageKey(model: GalacticMapModel): string {
@@ -51,7 +53,8 @@ export function parseGalacticMapViewSnapshot(raw: string | null): GalacticMapVie
         Math.hypot(targetX, targetY, targetZ) > 1.35 + 1e-6 ||
         typeof spin !== 'number' || !Number.isFinite(spin) || Math.abs(spin) > Math.PI * 2 ||
         typeof camera['rotationEnabled'] !== 'boolean' ||
-        !LAYER_NAMES.every(name => typeof layers[name] === 'boolean')) return null;
+        !LAYER_NAMES.every(name => typeof layers[name] === 'boolean') ||
+        (value['exploredShadingVisible'] !== undefined && typeof value['exploredShadingVisible'] !== 'boolean')) return null;
 
     return Object.freeze({
       version: 1,
@@ -61,6 +64,7 @@ export function parseGalacticMapViewSnapshot(raw: string | null): GalacticMapVie
         rotationEnabled: camera['rotationEnabled'] as boolean,
       }),
       galaxySpinRadians: spin,
+      exploredShadingVisible: (value['exploredShadingVisible'] ?? true) as boolean,
       layers: Object.freeze({
         systems: layers['systems'] as boolean,
         nebulae: layers['nebulae'] as boolean,

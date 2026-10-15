@@ -480,19 +480,8 @@ describe(
           '1',
         );
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-markers"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-discovery-marker-count"]',
-          )?.textContent,
-        ).toContain(
-          '1',
-        );
+        expect(element.querySelector('[data-testid="galactic-map-markers"]')).toBeNull();
+        expect(element.querySelector('[data-testid="galactic-map-unexplored-sector-count"]')).toBeTruthy();
 
 
         expect(
@@ -501,11 +490,7 @@ describe(
           ),
         ).toBeTruthy();
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-lod-status"]',
-          ),
-        ).toBeTruthy();
+        expect(element.querySelector('[data-testid="galactic-map-lod-status"]')).toBeNull();
 
         expect(
           element
@@ -548,7 +533,7 @@ describe(
             '[data-testid^="galactic-map-layer-"]',
           ),
         ).toHaveLength(
-          6,
+          7,
         );
 
         expect(
@@ -559,13 +544,7 @@ describe(
           'Elixisis',
         );
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-active-galaxy-index"]',
-          )?.textContent,
-        ).toContain(
-          'GALAXIA 0',
-        );
+        expect(element.querySelector('[data-testid="galactic-map-active-galaxy-index"]')).toBeNull();
       },
       30_000,
     );
@@ -606,13 +585,7 @@ describe(
           ),
         ).toBeNull();
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-designation"]',
-          )?.textContent,
-        ).toContain(
-          'GEN-V1-G0-',
-        );
+        expect(element.querySelector('[data-testid="galactic-map-designation"]')).toBeNull();
       },
     );
 
@@ -716,11 +689,22 @@ describe(
           'MAPA DE CONSULTA',
         );
 
+        // GALMAP-UI-R1a: la leyenda antigua se eliminó por diseño.
+        // El modo de consulta sigue identificado en su aviso específico.
         expect(
-          element.textContent,
+          element.querySelector(
+            '[data-testid="galactic-map-read-only-notice"]',
+          )?.textContent,
         ).toContain(
-          'Vista cartográfica de consulta',
+          'La galaxia está Catalogada',
         );
+
+        // Un mapa catalogado permite inspección, no exploración por bloques.
+        expect(
+          element.querySelector(
+            '[data-testid="galactic-map-block-controls"]',
+          ),
+        ).toBeNull();
       },
       30_000,
     );
@@ -888,11 +872,7 @@ describe(
           ),
         ).toBeTruthy();
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-markers"]',
-          ),
-        ).toBeTruthy();
+        expect(element.querySelector('[data-testid="galactic-map-markers"]')).toBeNull();
 
         expect(
           element.querySelector(
@@ -918,21 +898,7 @@ describe(
           ),
         ).toBeNull();
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-point-boundary"]',
-          )?.textContent,
-        ).toContain(
-          '10.9',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-point-boundary"]',
-          )?.textContent,
-        ).toContain(
-          'SPECULATIVE_SIMPLIFIED',
-        );
+        expect(element.querySelector('[data-testid="galactic-map-point-boundary"]')).toBeNull();
       },
     );
 

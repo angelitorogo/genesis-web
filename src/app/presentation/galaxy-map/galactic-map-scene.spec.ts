@@ -269,6 +269,8 @@ describe(
         number,
       ]>;
 
+    let sectorClearCalls: number;
+
     let previewCalls: Array<readonly [number, number, number]>;
     let previewClearCalls: number;
 
@@ -280,6 +282,8 @@ describe(
 
     let layerVisibilityCalls:
       GalacticMapLayerVisibility[];
+
+    let exploredShadingCalls: boolean[];
 
     let cameraState:
       GalacticMapCameraState;
@@ -413,6 +417,8 @@ describe(
         sectorSelectCalls =
           [];
 
+        sectorClearCalls = 0;
+
         previewCalls = [];
         previewClearCalls = 0;
 
@@ -424,6 +430,7 @@ describe(
 
         layerVisibilityCalls =
           [];
+        exploredShadingCalls = [];
 
         cameraStateListener =
           null;
@@ -492,6 +499,10 @@ describe(
 
             galaxySpinRadians() {
               return galaxySpinRadians;
+            },
+
+            setExploredShadingVisible(visible: boolean) {
+              exploredShadingCalls.push(visible);
             },
 
             restoreView(snapshot) {
@@ -637,7 +648,7 @@ describe(
 
             clearSelection() {},
 
-            clearSectorSelection() {},
+            clearSectorSelection() { sectorClearCalls++; },
 
             previewSectorAt(clientX, clientY, size) {
               previewCalls.push([clientX, clientY, size]);
@@ -692,6 +703,7 @@ describe(
           targetX: 0.2, targetY: -0.1, targetZ: 0, rotationEnabled: false,
         },
         galaxySpinRadians: 0.6,
+        exploredShadingVisible: false,
         layers: { systems: true, nebulae: false, starClusters: true,
           extremeObjects: true, regions: true, habitableZone: true },
       };
@@ -704,6 +716,7 @@ describe(
       expect(fixture.componentInstance.cameraState()?.distance).toBe(0.8);
       expect(fixture.componentInstance.galaxySpinRadians()).toBe(0.6);
       expect(fixture.componentInstance.layerVisibility().nebulae).toBe(false);
+      expect(fixture.componentInstance.exploredShadingVisible()).toBe(false);
       // A new model of the SAME galaxy after exploration must keep the zoom/spin.
       fixture.componentRef.setInput('model', model());
       fixture.detectChanges();
@@ -717,10 +730,11 @@ describe(
       fixture.detectChanges();
       expect(restoreCalls).toHaveLength(2);
       expect(fixture.componentInstance.layerVisibility().nebulae).toBe(true);
+      expect(fixture.componentInstance.exploredShadingVisible()).toBe(true);
       fixture.destroy();
     });
 
-    it('previsualiza el bloque bajo el ratón sin seleccionar ni explorar y se borra al salir o arrastrar', () => {
+    it('previsualiza el bloque en el mapa sin mostrar la ventana informativa y se borra al salir o arrastrar', () => {
       const fixture = TestBed.createComponent(GalacticMapScene);
       fixture.componentRef.setInput('model', model());
       fixture.componentRef.setInput('blockSize', 4);
@@ -729,8 +743,10 @@ describe(
       component.onCanvasPointerMove({ ...pointerEvent(1, 120, 140), buttons: 0 });
       fixture.detectChanges();
       expect(previewCalls.at(-1)).toEqual([120, 140, 4]);
-      expect(fixture.nativeElement.querySelector('[data-testid="galactic-map-sector-block-preview"]')
-        ?.getAttribute('data-preview-size')).toBe('4');
+      // The hover overlay remains functional, but its floating information card is removed.
+      expect(component.sectorPreview()?.size).toBe(4);
+      expect(fixture.nativeElement.querySelector('[data-testid="galactic-map-sector-block-preview"]'))
+        .toBeNull();
       expect(sectorSelectCalls).toHaveLength(0);
       component.onCanvasPointerLeave();
       fixture.detectChanges();
@@ -783,27 +799,8 @@ describe(
           ),
         ).toBeTruthy();
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-markers"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-markers"]',
-          )?.textContent,
-        ).toContain(
-          'Descubrimientos localizados',
-        );
-
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-markers"]',
-          )?.textContent,
-        ).not.toContain(
-          'Objetos localizados',
-        );
+        expect(element.querySelector('[data-testid="galactic-map-markers"]')).toBeNull();
+        expect(element.querySelector('[data-testid="galactic-map-unexplored-sector-count"]')).toBeTruthy();
 
         expect(
           element.querySelector(
@@ -836,14 +833,6 @@ describe(
         );
 
         expect(
-          element.querySelector(
-            '[data-testid="galactic-map-discovery-marker-count"]',
-          )?.textContent,
-        ).toContain(
-          '1',
-        );
-
-        expect(
           element
             .querySelector(
               '[data-testid="galactic-map-scene"]',
@@ -863,19 +852,7 @@ describe(
           'No explorado',
         );
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-lod-status"]',
-          ),
-        ).toBeTruthy();
-
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-lod-level"]',
-          )?.textContent,
-        ).toContain(
-          'OVERVIEW',
-        );
+        expect(element.querySelector('[data-testid="galactic-map-lod-status"]')).toBeNull();
 
         const scene =
           element.querySelector(
@@ -938,13 +915,7 @@ describe(
           'false',
         );
 
-        expect(
-          element.querySelector(
-            '[data-testid="galactic-map-worker-status"]',
-          )?.textContent,
-        ).toContain(
-          'READY',
-        );
+        expect(element.querySelector('[data-testid="galactic-map-worker-status"]')).toBeNull();
 
         expect(
           renderCalls,
@@ -1025,7 +996,7 @@ describe(
             '[data-testid^="galactic-map-layer-"]',
           ),
         ).toHaveLength(
-          6,
+          7,
         );
 
         expect(
@@ -1114,6 +1085,25 @@ describe(
         );
       },
     );
+
+    it('toggles only explored-sector shading, keeping scientific coverage and camera intact', () => {
+      const fixture = TestBed.createComponent(GalacticMapScene);
+      fixture.componentRef.setInput('model', model());
+      fixture.detectChanges();
+      const el = fixture.nativeElement as HTMLElement;
+      const toggle = el.querySelector('[data-testid="galactic-map-layer-explored-shading"]') as HTMLButtonElement;
+      const before = fixture.componentInstance.cameraState();
+      expect(toggle.getAttribute('aria-pressed')).toBe('true');
+      toggle.click();
+      fixture.detectChanges();
+      expect(toggle.getAttribute('aria-pressed')).toBe('false');
+      expect(exploredShadingCalls.at(-1)).toBe(false);
+      expect(el.querySelector('[data-testid="galactic-map-scene"]')?.getAttribute('data-explored-shading-visible')).toBe('false');
+      expect(fixture.componentInstance.cameraState()).toEqual(before);
+      expect(el.querySelector('[data-testid="galactic-map-explored-sector-count"]')?.textContent).toContain('1');
+      expect(readGalacticMapView(galacticMapViewStorageKey(model()))?.exploredShadingVisible).toBe(false);
+      fixture.destroy();
+    });
 
     it(
       'should rerender through the same runtime when the Angular input changes',
@@ -1335,6 +1325,48 @@ describe(
         ).toEqual([
           selectedSector,
         ]);
+      },
+    );
+
+    it(
+      'closes a selected-sector card with X, clears only its map highlight, and permits reselection',
+      () => {
+        const fixture = TestBed.createComponent(GalacticMapScene);
+        fixture.componentRef.setInput('model', model());
+        fixture.detectChanges();
+        const component = fixture.componentInstance;
+        const element = fixture.nativeElement as HTMLElement;
+        const explorationRequests: GalacticMapSectorSelection[] = [];
+        component.sectorExplore.subscribe((selection) => explorationRequests.push(selection));
+
+        const select = (pointerId: number) => {
+          component.onCanvasPointerDown(pointerEvent(pointerId, 120, 140));
+          component.onCanvasPointerUp(pointerEvent(pointerId, 122, 143));
+          fixture.detectChanges();
+        };
+
+        select(25);
+        expect(component.sectorSelection()).toBe(selectedSector);
+        const close = element.querySelector<HTMLButtonElement>(
+          '[data-testid="galactic-map-sector-selection-close"]',
+        );
+        expect(close).not.toBeNull();
+        expect(close?.getAttribute('aria-label')).toBe('Cerrar información del sector');
+        const beforeClear = sectorClearCalls;
+        close?.click();
+        fixture.detectChanges();
+        expect(component.sectorSelection()).toBeNull();
+        expect(sectorClearCalls).toBe(beforeClear + 1);
+        expect(element.querySelector('[data-testid="galactic-map-sector-selection"]')).toBeNull();
+        expect(explorationRequests).toEqual([]);
+        expect(component.markerSelection()).toBeNull();
+
+        // The same sector remains selectable; dismissing must not explore it.
+        select(26);
+        expect(component.sectorSelection()).toBe(selectedSector);
+        expect(element.querySelector('[data-testid="galactic-map-explore-sector-link"]')).not.toBeNull();
+        expect(explorationRequests).toEqual([]);
+        fixture.destroy();
       },
     );
 

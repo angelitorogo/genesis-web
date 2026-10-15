@@ -6,6 +6,8 @@ import {
   Output,
 } from '@angular/core';
 
+import { type GalacticMapExplorationCoverage } from './galactic-map-exploration-coverage';
+
 import {
   GalacticMapLayerId,
   type GalacticMapLayerVisibility,
@@ -53,12 +55,24 @@ export class GalacticMapLayerControls {
   visibility!:
     GalacticMapLayerVisibility;
 
-  @Input({
-    required:
-      true,
-  })
-  hasHabitableZone!:
-    boolean;
+  @Input({ required: true })
+  explorationCoverage!: GalacticMapExplorationCoverage | null;
+
+  @Input({ required: true })
+  exploredShadingVisible!: boolean;
+
+  @Output()
+  readonly exploredShadingVisibleChange = new EventEmitter<boolean>();
+
+  get unexploredSectorCount(): string {
+    const coverage = this.explorationCoverage;
+    return coverage === null ? '0' :
+      (coverage.totalSectorCount - BigInt(coverage.exploredSectorCount)).toString();
+  }
+
+  toggleExploredShading(): void {
+    this.exploredShadingVisibleChange.emit(!this.exploredShadingVisible);
+  }
 
   @Output()
   readonly visibilityChange =

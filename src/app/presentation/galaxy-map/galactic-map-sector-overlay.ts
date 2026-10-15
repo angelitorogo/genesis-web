@@ -24,8 +24,10 @@ export interface GalacticMapSectorOverlay {
   readonly object3d:
     THREE.Group;
 
-  dispose():
-    void;
+  /** Hides only the filled cells, not the grid, selection or persisted coverage. */
+  setExploredShadingVisible(visible: boolean): void;
+
+  dispose(): void;
 }
 
 export interface GalacticMapSectorLocalPosition {
@@ -86,8 +88,11 @@ export function createGalacticMapSectorOverlay(
   }
 
   return Object.freeze({
-    object3d:
-      group,
+    object3d: group,
+
+    setExploredShadingVisible(visible: boolean) {
+      for (const mesh of exploredMeshes) mesh.visible = visible;
+    },
 
     dispose() {
       group.traverse(

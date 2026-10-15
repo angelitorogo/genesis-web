@@ -26,6 +26,7 @@ describe('Galactic map view persistence (renderer-only)', () => {
     },
     galaxySpinRadians: 0.45,
     layers: { ...INITIAL_GALACTIC_MAP_LAYER_VISIBILITY, nebulae: false },
+    exploredShadingVisible: false,
   };
 
   beforeEach(() => [first, otherGalaxy, older].forEach(key => localStorage.removeItem(key)));
@@ -43,8 +44,16 @@ describe('Galactic map view persistence (renderer-only)', () => {
     expect(readGalacticMapView(older)).toBeNull();
   });
 
+  it('restores old v1 snapshots with shading enabled and without losing camera', () => {
+    const old = { ...snapshot } as Record<string, unknown>;
+    delete old['exploredShadingVisible'];
+    expect(parseGalacticMapViewSnapshot(JSON.stringify(old))?.exploredShadingVisible).toBe(true);
+    expect(parseGalacticMapViewSnapshot(JSON.stringify(old))?.camera).toEqual(snapshot.camera);
+  });
+
   it('rejects corruption, out-of-range state and invalid layer values', () => {
     expect(parseGalacticMapViewSnapshot('{oops')).toBeNull();
+    expect(parseGalacticMapViewSnapshot(JSON.stringify({ ...snapshot, exploredShadingVisible: 'no' }))).toBeNull();
     expect(parseGalacticMapViewSnapshot(JSON.stringify({ ...snapshot, version: 3 }))).toBeNull();
     expect(parseGalacticMapViewSnapshot(JSON.stringify({ ...snapshot, camera: { ...snapshot.camera, distance: -4 } }))).toBeNull();
     expect(parseGalacticMapViewSnapshot(JSON.stringify({ ...snapshot, camera: { ...snapshot.camera, targetX: 999 } }))).toBeNull();

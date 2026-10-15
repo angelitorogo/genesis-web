@@ -1,155 +1,48 @@
-import {
-  TestBed,
-} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
+import { GalacticMapLayerControls } from './galactic-map-layer-controls';
+import { GalacticMapLayerId, INITIAL_GALACTIC_MAP_LAYER_VISIBILITY } from './galactic-map-layer-state';
+import { GalacticMapExplorationCoverage } from './galactic-map-exploration-coverage';
+import { GeneratorVersion } from '../../domain/generation/generator-version';
+import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
+import { UniverseSeed } from '../../domain/universe/universe-seed';
+import { GalaxySectorGrid } from '../../domain/sector/galaxy-sector-grid';
+import { GalaxySectorCoordinates } from '../../domain/sector/galaxy-sector-coordinates';
 
-import {
-  GalacticMapLayerControls,
-} from './galactic-map-layer-controls';
+describe('GalacticMapLayerControls — panel compacto', () => {
+  const key = new UniverseGenerationKey(
+    UniverseSeed.parse('7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'), GeneratorVersion.V1);
+  const coverage = new GalacticMapExplorationCoverage(key, 0n,
+    new GalaxySectorGrid(key, 0n, 1000, 2),
+    [new GalaxySectorCoordinates(0, 0), new GalaxySectorCoordinates(2, -2)]);
+  const fixture = () => {
+    const f = TestBed.createComponent(GalacticMapLayerControls);
+    f.componentRef.setInput('visibility', INITIAL_GALACTIC_MAP_LAYER_VISIBILITY);
+    f.componentRef.setInput('explorationCoverage', coverage);
+    f.componentRef.setInput('exploredShadingVisible', true);
+    f.detectChanges();
+    return f;
+  };
 
-import {
-  GalacticMapLayerId,
-  INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
-} from './galactic-map-layer-state';
+  it('shows six thematic layers, one shading switch and only sector counters', () => {
+    const f = fixture();
+    const root = f.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('[data-testid^="galactic-map-layer-"]')).toHaveLength(7);
+    expect(root.querySelector('[data-testid="galactic-map-explored-sector-count"]')?.textContent).toBe('2');
+    expect(root.querySelector('[data-testid="galactic-map-unexplored-sector-count"]')?.textContent).toBe('23');
+    expect(root.textContent).not.toContain('SPECULATIVE_SIMPLIFIED');
+  });
 
-describe(
-  'GalacticMapLayerControls',
-  () => {
-    it(
-      'should render all six 10.5 layer switches and emit only the requested change',
-      () => {
-        const fixture =
-          TestBed.createComponent(
-            GalacticMapLayerControls,
-          );
-
-        fixture.componentRef.setInput(
-          'visibility',
-          INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
-        );
-
-        fixture.componentRef.setInput(
-          'hasHabitableZone',
-          true,
-        );
-
-        const emitted:
-          unknown[] =
-          [];
-
-        fixture.componentInstance
-          .visibilityChange
-          .subscribe(
-            (
-              value,
-            ) => {
-              emitted.push(
-                value,
-              );
-            },
-          );
-
-        fixture.detectChanges();
-
-        const root =
-          fixture.nativeElement as
-            HTMLElement;
-
-        expect(
-          root.querySelectorAll(
-            '[data-testid^="galactic-map-layer-"]',
-          ),
-        ).toHaveLength(
-          6,
-        );
-
-        (
-          root.querySelector(
-            '[data-testid="galactic-map-layer-nebulae"]',
-          ) as HTMLButtonElement
-        ).click();
-
-        expect(
-          emitted,
-        ).toEqual([
-          {
-            layerId:
-              GalacticMapLayerId.NEBULAE,
-            visible:
-              false,
-          },
-        ]);
-      },
-    );
-
-    it(
-      'should state explicitly whether the active galaxy has a favorable galactic habitability region',
-      () => {
-        const fixture =
-          TestBed.createComponent(
-            GalacticMapLayerControls,
-          );
-
-        fixture.componentRef.setInput(
-          'visibility',
-          INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
-        );
-
-        fixture.componentRef.setInput(
-          'hasHabitableZone',
-          false,
-        );
-
-        fixture.detectChanges();
-
-        const root =
-          fixture.nativeElement as
-            HTMLElement;
-
-        const status =
-          root.querySelector(
-            '[data-testid="galactic-map-habitability-status"]',
-          ) as HTMLElement;
-
-        expect(
-          status.getAttribute(
-            'data-has-habitable-zone',
-          ),
-        ).toBe(
-          'false',
-        );
-
-        expect(
-          status.textContent,
-        ).toContain(
-          'Sin región favorable identificada',
-        );
-
-        fixture.componentRef.setInput(
-          'hasHabitableZone',
-          true,
-        );
-
-        fixture.detectChanges();
-
-        const updatedStatus =
-          root.querySelector(
-            '[data-testid="galactic-map-habitability-status"]',
-          ) as HTMLElement;
-
-        expect(
-          updatedStatus.getAttribute(
-            'data-has-habitable-zone',
-          ),
-        ).toBe(
-          'true',
-        );
-
-        expect(
-          updatedStatus.textContent,
-        ).toContain(
-          'Región favorable identificada',
-        );
-      },
-    );
-  },
-);
+  it('toggles sector shading without changing existing six thematic layers', () => {
+    const f = fixture();
+    const root = f.nativeElement as HTMLElement;
+    const changes: boolean[] = [];
+    const layerChanges: unknown[] = [];
+    f.componentInstance.exploredShadingVisibleChange.subscribe(v => changes.push(v));
+    f.componentInstance.visibilityChange.subscribe(v => layerChanges.push(v));
+    (root.querySelector('[data-testid="galactic-map-layer-explored-shading"]') as HTMLButtonElement).click();
+    expect(changes).toEqual([false]);
+    expect(layerChanges).toEqual([]);
+    (root.querySelector('[data-testid="galactic-map-layer-nebulae"]') as HTMLButtonElement).click();
+    expect(layerChanges).toEqual([{layerId: GalacticMapLayerId.NEBULAE, visible: false}]);
+  });
+});

@@ -119,18 +119,6 @@
                 }
               </strong>
 
-              @if (model.knownName) {
-                <small
-                  class="galactic-map__meta"
-                  data-testid="galactic-map-active-galaxy-index"
-                >
-                  GALAXIA {{ model.galaxyIndex }}
-                </small>
-              }
-
-              <code data-testid="galactic-map-designation">
-                {{ model.designationCode }}
-              </code>
             </div>
 
             <dl class="galactic-map__meta galactic-map__facts">
@@ -219,29 +207,6 @@
                 (sectorExplore)="exploreSector($event)"
               ></app-galactic-map-scene>
 
-              <div
-                class="galactic-map__row galactic-map__viewport-footer"
-              >
-                <span class="galactic-map__meta">
-                  NUBE VISUAL GPU / LOD / WEB WORKER 10.9
-                </span>
-
-                <p>
-                  @if (model.canExploreSectors) {
-                    Los puntos continúan siendo muestras de render sin identidad
-                    física seleccionable. El clic cartográfico resuelve ahora el sector
-                    real bajo el cursor; el layout determinista, el índice espacial y la
-                    compactación de buffers siguen ejecutándose en el Web Worker. El
-                    hilo principal conserva cámara, controles y Three.js, sin
-                    materializar por ello sistemas, estrellas físicas, planetas ni
-                    Ground Truth de sectores no solicitados.
-                  } @else {
-                    Vista cartográfica de consulta: cámara, capas y sectores conocidos
-                    permanecen disponibles, pero ningún sector puede escanearse ni
-                    persistirse hasta que la galaxia alcance el estado Confirmada.
-                  }
-                </p>
-              </div>
             </section>
           } @else {
             <section
@@ -511,37 +476,6 @@
             </div>
           }
 
-          <section
-            class="galactic-map__meta galactic-map__boundary"
-            data-testid="galactic-map-point-boundary"
-          >
-            <span>
-              10.9
-            </span>
-
-            <p>
-              El mapa conserva la interacción 10.2, la cobertura 10.3, los
-              marcadores persistentes 10.4, las seis capas temáticas 10.5 y la
-              navegación al Archivo 10.6. Cada marcador persistente seleccionado
-              muestra ahora su desplazamiento X/Y, distancia al centro, radio
-              galactocéntrico, azimut y región radial usando únicamente la cuadrícula
-              conocida, su posición determinista dentro del sector y las fronteras
-              visuales ya congeladas. Las muestras GPU siguen sin adquirir identidad
-              física y ya no se exponen como selección jugable: las zonas libres
-              resuelven direcciones de sector reales. La región de habitabilidad galáctica mantiene el modelo V1
-              SPECULATIVE_SIMPLIFIED. El render 10.8 conserva la distribución visual
-              determinista de 10.1. La ventana sectorial sigue calculándose para cobertura,
-              selección y contexto espacial, pero la nube renderer-only permanece residente
-              para todo el grid y solo cambia al cruzar un nivel LOD. Así órbita, pan y zoom
-              no expulsan partículas visuales todavía relevantes. 10.9 mueve al Web Worker la
-              generación pesada del layout, el índice
-              espacial y la compactación LOD, transfiere ArrayBuffers sin copia adicional y
-              descarta respuestas antiguas mediante revisiones monotónicas. Mientras llega
-              una actualización, Three.js conserva el último batch válido y los controles
-              permanecen en el hilo principal. No se materializa contenido físico de
-              sectores no solicitados.
-            </p>
-          </section>
         }
       }
     }

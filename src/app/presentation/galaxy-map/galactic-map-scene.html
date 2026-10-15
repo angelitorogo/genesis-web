@@ -44,6 +44,7 @@
   [attr.data-layer-extreme-objects-visible]="layerVisibility().extremeObjects"
   [attr.data-layer-regions-visible]="layerVisibility().regions"
   [attr.data-layer-habitable-zone-visible]="layerVisibility().habitableZone"
+  [attr.data-explored-shading-visible]="exploredShadingVisible()"
 >
   <canvas
     #sceneCanvas
@@ -58,22 +59,6 @@
     (contextmenu)="onCanvasContextMenu($event)"
   ></canvas>
 
-  @if (sectorPreview(); as preview) {
-    <div class="galactic-map-scene__preview-status"
-      data-testid="galactic-map-sector-block-preview" aria-live="polite"
-      [attr.data-preview-valid]="preview.valid"
-      [attr.data-preview-size]="preview.size"
-      [attr.data-preview-pending]="preview.pending"
-      [attr.data-preview-skipped]="preview.skipped">
-      <strong>{{ preview.size }}×{{ preview.size }} · {{ preview.total }} sectores</strong>
-      @if (preview.valid) {
-        <span>{{ preview.pending }} por explorar · {{ preview.skipped }} ya explorados</span>
-      } @else {
-        <span>Fuera de los límites · mueve el cursor hacia el interior</span>
-      }
-    </div>
-  }
-
   <div
     class="galactic-map-scene__vignette"
     aria-hidden="true"
@@ -85,148 +70,6 @@
   >
     THREE.JS / WEBGL2 / INTERACTIVO
   </div>
-
-  @if (model.explorationCoverage; as coverage) {
-    <aside
-      class="galactic-map-scene__coverage"
-      data-testid="galactic-map-exploration-coverage"
-      aria-label="Cobertura de exploración por sectores"
-    >
-      <small>COBERTURA DE EXPLORACIÓN</small>
-
-      <div class="galactic-map-scene__coverage-row">
-        <span
-          class="galactic-map-scene__coverage-swatch galactic-map-scene__coverage-swatch--explored"
-          aria-hidden="true"
-        ></span>
-
-        <strong>Explorado</strong>
-
-        <code data-testid="galactic-map-explored-sector-count">
-          {{ coverage.exploredSectorCount }}
-        </code>
-      </div>
-
-      <div class="galactic-map-scene__coverage-row">
-        <span
-          class="galactic-map-scene__coverage-swatch galactic-map-scene__coverage-swatch--unexplored"
-          aria-hidden="true"
-        ></span>
-
-        <strong>No explorado</strong>
-
-        <code data-testid="galactic-map-total-sector-count">
-          {{ coverage.totalSectorCount.toString() }} total
-        </code>
-      </div>
-
-      <p>
-        La cuadrícula tenue representa el espacio sectorial aún no escaneado;
-        las celdas resaltadas ya tienen un SectorLocator persistido en estado
-        DETECTED o superior.
-      </p>
-
-      @if (lodState(); as lod) {
-        <div
-          class="galactic-map-scene__lod-status"
-          data-testid="galactic-map-lod-status"
-          aria-label="Estado de detalle adaptativo y sectores activos"
-        >
-          <small>
-            RENDER ADAPTATIVO / WORKER 10.9
-          </small>
-
-          <div class="galactic-map-scene__coverage-row">
-            <strong>
-              Sectores visibles
-            </strong>
-
-            <code data-testid="galactic-map-visible-sector-count">
-              {{ lod.visibleSectorCount }}
-            </code>
-          </div>
-
-          <div class="galactic-map-scene__coverage-row">
-            <strong>
-              Sectores activos
-            </strong>
-
-            <code data-testid="galactic-map-active-sector-count">
-              {{ lod.activeSectorCount }}
-            </code>
-          </div>
-
-          <div class="galactic-map-scene__coverage-row">
-            <strong>
-              LOD
-            </strong>
-
-            <code data-testid="galactic-map-lod-level">
-              {{ lod.lodLevel }}
-            </code>
-          </div>
-
-          <div class="galactic-map-scene__coverage-row">
-            <strong>
-              Worker
-            </strong>
-
-            <code data-testid="galactic-map-worker-status">
-              {{ workerState().status }}
-            </code>
-          </div>
-
-          <div class="galactic-map-scene__coverage-row">
-            <strong>
-              Revisión
-            </strong>
-
-            <code data-testid="galactic-map-worker-revision">
-              {{ workerState().appliedRevision }}/{{ workerState().requestRevision }}
-            </code>
-          </div>
-
-          <p>
-            Sectores visibles y activos describen la ventana espacial de cámara y
-            precarga, pero ya no expulsan muestras de la galaxia visual. La nube
-            renderer-only permanece residente para todo el grid y solo cambia su
-            retención al cruzar un nivel LOD; por ello órbita, pan o zoom dentro del
-            mismo LOD no pueden hacer desaparecer brazos o poblaciones estelares. El
-            layout determinista, el índice espacial y la compactación LOD se calculan
-            fuera del hilo principal, sin materializar sistemas, estrellas físicas,
-            planetas ni Ground Truth.
-          </p>
-        </div>
-      }
-
-      @if (model.discoveryMarkers; as discoveryMarkers) {
-        <div
-          class="galactic-map-scene__markers"
-          data-testid="galactic-map-markers"
-        >
-          <small>
-            MARCADORES PERSISTENTES
-          </small>
-
-          <div class="galactic-map-scene__coverage-row">
-            <strong>
-              Descubrimientos localizados
-            </strong>
-
-            <code data-testid="galactic-map-discovery-marker-count">
-              {{ discoveryMarkers.markerCount }}
-            </code>
-          </div>
-
-          <p>
-            Los descubrimientos localizados conservan su posición entre sesiones.
-            El color de cada marcador identifica su familia observacional:
-            sistemas, nebulosas, cúmulos u objetos extremos.
-          </p>
-        </div>
-      }
-    </aside>
-  }
 
   @if (renderState() === 'ready') {
     <div
@@ -259,8 +102,10 @@
 
     <app-galactic-map-layer-controls
       [visibility]="layerVisibility()"
-      [hasHabitableZone]="model.environmentalLayers ? model.environmentalLayers.hasHabitableZone : false"
+      [explorationCoverage]="model.explorationCoverage"
+      [exploredShadingVisible]="exploredShadingVisible()"
       (visibilityChange)="onLayerVisibilityChange($event)"
+      (exploredShadingVisibleChange)="onExploredShadingVisibleChange($event)"
     ></app-galactic-map-layer-controls>
 
     <div
@@ -413,10 +258,21 @@
 
   @if (sectorSelection(); as selectedSector) {
     <aside
-      class="galactic-map-scene__marker-selection"
+      class="galactic-map-scene__marker-selection galactic-map-scene__marker-selection--sector"
       data-testid="galactic-map-sector-selection"
       aria-live="polite"
     >
+      <button
+        type="button"
+        class="galactic-map-scene__sector-close"
+        data-testid="galactic-map-sector-selection-close"
+        aria-label="Cerrar información del sector"
+        title="Cerrar"
+        (click)="closeSectorSelection()"
+      >
+        <span aria-hidden="true">×</span>
+      </button>
+
       <small>
         SECTOR GALÁCTICO
       </small>

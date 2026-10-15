@@ -152,6 +152,12 @@ describe(
           2,
         );
 
+        overlay.setExploredShadingVisible(false);
+        expect(fill?.visible).toBe(false);
+        expect(overlay.object3d.getObjectByName('galactic-map-unexplored-grid')?.visible).toBe(true);
+        overlay.setExploredShadingVisible(true);
+        expect(fill?.visible).toBe(true);
+
         overlay.dispose();
 
         expect(

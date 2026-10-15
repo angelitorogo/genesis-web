@@ -383,6 +383,9 @@ export interface GalacticMapSceneRuntime {
       GalacticMapLayerVisibility,
   ): void;
 
+  /** Optional for older/synthetic runtime stubs; implemented by the WebGL runtime. */
+  setExploredShadingVisible?(visible: boolean): void;
+
   resetView():
     void;
 
@@ -571,6 +574,7 @@ export class GalacticMapScene
       camera: this.runtime.cameraState(),
       galaxySpinRadians: this.runtime.galaxySpinRadians(),
       layers: this.layerVisibilitySignal(),
+      exploredShadingVisible: this.exploredShadingVisibleSignal(),
     };
   }
 
@@ -664,6 +668,9 @@ export class GalacticMapScene
     signal<GalacticMapLayerVisibility>(
       INITIAL_GALACTIC_MAP_LAYER_VISIBILITY,
     );
+
+  private readonly exploredShadingVisibleSignal = signal(true);
+  readonly exploredShadingVisible = this.exploredShadingVisibleSignal.asReadonly();
 
   readonly renderState =
     this
@@ -939,6 +946,12 @@ export class GalacticMapScene
       .set(
         this.runtime.cameraState(),
       );
+  }
+
+  onExploredShadingVisibleChange(visible: boolean): void {
+    this.exploredShadingVisibleSignal.set(visible);
+    this.runtime?.setExploredShadingVisible?.(visible);
+    this.persistView();
   }
 
   onLayerVisibilityChange(
@@ -1238,6 +1251,13 @@ export class GalacticMapScene
       .set(
         sectorSelection,
       );
+  }
+
+  closeSectorSelection(): void {
+    // Only dismiss the sector card and its map highlight. Exploration data,
+    // camera state, persistent markers and discovery progress are unchanged.
+    this.sectorSelectionSignal.set(null);
+    this.runtime?.clearSectorSelection();
   }
 
   onCanvasPointerCancel(
@@ -1649,10 +1669,13 @@ export class GalacticMapScene
 
       if (snapshot !== null) {
         this.layerVisibilitySignal.set(snapshot.layers);
+        this.exploredShadingVisibleSignal.set(snapshot.exploredShadingVisible ?? true);
       } else if (!sameGalaxy) {
         this.layerVisibilitySignal.set(INITIAL_GALACTIC_MAP_LAYER_VISIBILITY);
+        this.exploredShadingVisibleSignal.set(true);
       }
       this.runtime.setLayerVisibility(this.layerVisibilitySignal());
+      this.runtime.setExploredShadingVisible?.(this.exploredShadingVisibleSignal());
       if (snapshot !== null) this.runtime.restoreView?.(snapshot);
 
       this
@@ -1937,6 +1960,8 @@ class ThreeGalacticMapSceneRuntime
   private sectorOverlay:
     GalacticMapSectorOverlay | null =
     null;
+
+  private exploredShadingVisible = true;
 
   private discoveryMarkerOverlay:
     GalacticMapDiscoveryMarkerOverlay | null =
@@ -2247,8 +2272,8 @@ class ThreeGalacticMapSceneRuntime
         sectorOverlay.object3d,
       );
 
-      this.sectorOverlay =
-        sectorOverlay;
+      this.sectorOverlay = sectorOverlay;
+      sectorOverlay.setExploredShadingVisible(this.exploredShadingVisible);
 
       const cellSize = sectorCellSize(explorationCoverage, this.activeHaloOuterRadiusNormalized);
       const geometry = new THREE.PlaneGeometry(cellSize * 0.82, cellSize * 0.82);
@@ -2421,6 +2446,12 @@ class ThreeGalacticMapSceneRuntime
       .setRotationEnabled(
         enabled,
       );
+  }
+
+  setExploredShadingVisible(visible: boolean): void {
+    this.exploredShadingVisible = visible;
+    this.sectorOverlay?.setExploredShadingVisible(visible);
+    this.renderFrame();
   }
 
   setLayerVisibility(
