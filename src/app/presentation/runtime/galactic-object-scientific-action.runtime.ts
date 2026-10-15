@@ -241,11 +241,24 @@ export class DexieGalacticObjectScientificActionRuntime
     // fabricated mass measurement, new physics or new schema is introduced.
     const evidenceRule = GalacticObjectScientificActionCatalogV2.evidenceRule(actionType);
     if (evidenceRule !== null) {
-      const knownDiscoveries = await this.discoveryRepository.getKnownDiscoveries(generationKey);
-      const acquired = ScientificEvidenceAcquisitionEngine.acquire(
-        generationKey, globalBefore, knownDiscoveries, evidenceRule,
-        currentSession.instrumentType, currentSession.level, Date.now(),
-      );
+      // PERF-GO1: re-use the exact six-milestone unlock calculation from
+      // stellar scientific progression. Keep the transaction atomic and retain
+      // the original catalogue path for repositories without the fast method.
+      const readMilestones = this.discoveryRepository.getObservationProgressMilestones;
+      const observedAtEpochMs = Date.now();
+      const acquired = readMilestones !== undefined
+        ? ScientificEvidenceAcquisitionEngine.acquireFromMilestones(
+            generationKey, globalBefore,
+            await readMilestones.call(this.discoveryRepository, generationKey),
+            evidenceRule, currentSession.instrumentType, currentSession.level,
+            observedAtEpochMs,
+          )
+        : ScientificEvidenceAcquisitionEngine.acquire(
+            generationKey, globalBefore,
+            await this.discoveryRepository.getKnownDiscoveries(generationKey),
+            evidenceRule, currentSession.instrumentType, currentSession.level,
+            observedAtEpochMs,
+          );
       await new DexieScientificEvidenceRepository(
         this.database, TARGET_SEED_RESOLVER,
       ).recordEvidence(generationKey, observationSession.targetLocator, acquired.evidence);

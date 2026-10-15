@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import Dexie from 'dexie';
 
 import {
@@ -445,6 +446,10 @@ describe(
       await discoveryRepository.setState(generationKey, rare, DiscoveryState.DETECTED);
       const baseline = await pointsRepository.getGlobalDiscoveryPoints(generationKey);
       const evidenceRepo = new DexieScientificEvidenceRepository(database, TARGET_SEED_RESOLVER);
+      // PERF-GO1: neither of the two scientific-evidence actions may scan and
+      // hydrate every persisted discovery; instrument unlocks use six milestones.
+      const readFullCatalogue = vi.spyOn(discoveryRepository, 'getKnownDiscoveries')
+        .mockRejectedValue(new Error('Forbidden full catalogue scan during action commit'));
       const first = await runtime.commitAction(
         session(DiscoveryState.DETECTED, ObservationInstrumentType.RADIO,
           ObservationInstrumentLevel.LEVEL_2, rare),
@@ -487,6 +492,8 @@ describe(
       )).rejects.toThrow(RangeError);
       expect(await pointsRepository.getGlobalDiscoveryPoints(generationKey)).toBe(total);
       expect(await evidenceRepo.getEvidence(generationKey, rare)).toEqual(evidence);
+      expect(readFullCatalogue).not.toHaveBeenCalled();
+      readFullCatalogue.mockRestore();
     });
 
     it('persists the two V2 active-nucleus stages from an existing DISCOVERED save without duplicating 28.1 evidence', async () => {

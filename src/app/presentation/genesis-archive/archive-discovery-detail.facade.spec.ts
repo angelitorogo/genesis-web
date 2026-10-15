@@ -1572,6 +1572,8 @@ describe(
             },
           );
 
+        const fastMilestoneReads = vi.fn(async () => []);
+
         const repositories:
           GenesisLocalRepositories =
           {
@@ -1639,6 +1641,11 @@ describe(
 
             discoveryRepository: {
               async getState() {
+                // PERF-GO1: after commit the old scientific card must remain
+                // mounted while its new knowledge stage is being resolved.
+                if (persistedState === DiscoveryState.DISCOVERED) {
+                  expect(facade.state().kind).toBe('content');
+                }
                 return persistedState;
               },
 
@@ -1649,14 +1656,10 @@ describe(
               },
 
               async getKnownDiscoveries() {
-                return [
-                  new KnownDiscovery(
-                    generationKey,
-                    locator,
-                    persistedState,
-                  ),
-                ];
+                throw new Error('PERF-GO1 must not read the entire universe catalogue.');
               },
+
+              getObservationProgressMilestones: fastMilestoneReads,
 
               async getKnownDiscoveriesInSector() {
                 throw new Error(
@@ -1793,6 +1796,8 @@ describe(
         ).toBe(
           DiscoveryState.DISCOVERED,
         );
+
+        expect(fastMilestoneReads).toHaveBeenCalledTimes(2);
 
         expect([
           'Cúmulo abierto',

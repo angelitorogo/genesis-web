@@ -11,6 +11,8 @@ import {
   type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
 
+import { type KnownDiscovery } from '../../domain/discovery/known-discovery';
+
 import {
   type DiscoveredToVisitedEntryKindValue,
 } from '../../domain/discovery/discovered-to-visited-entry';
@@ -1030,9 +1032,13 @@ export class ArchiveDiscoveryDetailFacade {
               .actionType,
           );
 
+      // PERF-GO1: retain the mounted scientific card while the new persisted
+      // knowledge level is being resolved. Only route navigation shows loading.
       await this
         .resolveDetails(
           request,
+          null,
+          true,
         );
 
       this
@@ -1663,14 +1669,20 @@ export class ArchiveDiscoveryDetailFacade {
     preloadedStellarSystemProgression:
       StellarSystemScientificProgressionSnapshot | null =
       null,
+
+    preserveCurrentContent = false,
   ): Promise<void> {
 
-    this
-      .stateSignal
-      .set({
-        kind:
-          'loading',
-      });
+    // PERF-GO1: prevent tearing down costly procedural WebGL renderers between
+    // scientific stages. Initial navigation still exposes the loading state.
+    if (!preserveCurrentContent || this.state().kind !== 'content') {
+      this
+        .stateSignal
+        .set({
+          kind:
+            'loading',
+        });
+    }
 
     this.currentRequest =
       Object.freeze({
@@ -2142,33 +2154,24 @@ export class ArchiveDiscoveryDetailFacade {
       return null;
     }
 
-    const [
-      globalDiscoveryPoints,
-      knownDiscoveries,
-    ] =
-      await Promise.all([
-        this
-          .repositories
-          .pointsRepository
-          .getGlobalDiscoveryPoints(
-            generationKey,
-          ),
+    // PERF-GO1: the six persisted milestone existence facts determine
+    // instrument unlocks. Reading/sorting every discovery in a mature universe
+    // was repeated at initial entry and after every stage transition.
+    const repository = this.repositories.discoveryRepository;
+    const [globalDiscoveryPoints, achievedMilestones] = await Promise.all([
+      this.repositories.pointsRepository.getGlobalDiscoveryPoints(generationKey),
+      repository.getObservationProgressMilestones !== undefined
+        ? repository.getObservationProgressMilestones(generationKey)
+        : repository.getKnownDiscoveries(generationKey).then((knownDiscoveries: readonly KnownDiscovery[]) =>
+            ObservationInstrumentProgressionEngine.evaluate(
+              generationKey, 0n, knownDiscoveries,
+            ).achievedMilestones),
+    ]);
 
-        this
-          .repositories
-          .discoveryRepository
-          .getKnownDiscoveries(
-            generationKey,
-          ),
-      ]);
-
-    const progression =
-      ObservationInstrumentProgressionEngine
-        .evaluate(
-          generationKey,
-          globalDiscoveryPoints,
-          knownDiscoveries,
-        );
+    const progression = ObservationInstrumentProgressionEngine
+      .evaluateFromMilestones(
+        generationKey, globalDiscoveryPoints, achievedMilestones,
+      );
 
     const instrumentOptions =
       Object.freeze(
