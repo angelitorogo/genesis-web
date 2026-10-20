@@ -27,7 +27,8 @@
 
         <p class="moon-detail__subtitle">
           Caracterización científica detallada del satélite organizada en General,
-          Órbita, Mareas y rotación, Entorno, Habitabilidad y Comparación con la Tierra.
+          Órbita, Mareas y rotación, Entorno, Atmósfera, Radiación, Geoquímica y energía,
+          Historia ambiental, Habitabilidad y Comparación con la Tierra.
         </p>
       </div>
 
@@ -163,6 +164,54 @@
                   data-testid="moon-scientific-preview"
                   [model]="card.preview"
                 ></app-scientific-body-preview>
+
+                @if (card.observedHabitability; as observed) {
+                  <section class="moon-detail__panel moon-detail__habitability-observed"
+                    data-testid="moon-habitability-observed-31-f-e"
+                    aria-label="Compatibilidad ambiental observada">
+                    <header>
+                      <small>FASE 31.12 · CONOCIMIENTO OBSERVADO</small>
+                      <h2>{{ observed.title }}</h2>
+                    </header>
+                    <dl class="moon-detail__section-facts">
+                      @for (route of observed.routes; track route.label) {
+                        <div>
+                          <dt>{{ route.label }}</dt>
+                          <dd>{{ route.status }}</dd>
+                          <small>{{ route.evidence }}</small>
+                          @if (route.criteria.length > 0) {
+                            <ul class="moon-detail__observed-criteria" aria-label="Criterios ambientales publicados">
+                              @for (criterion of route.criteria; track criterion.label) {
+                                <li>
+                                  <span>{{ criterion.label }}</span>
+                                  <strong [class.is-compatible]="criterion.status === 'Compatible'"
+                                    [class.is-incompatible]="criterion.status === 'Incompatible'">
+                                    {{ criterion.status }}
+                                  </strong>
+                                  <small>{{ criterion.origin }}</small>
+                                  @if (criterion.explanation) {
+                                    <small>{{ criterion.explanation }}</small>
+                                  }
+                                </li>
+                              }
+                            </ul>
+                          }
+                          @if (route.facts.length > 0) {
+                            <ul class="moon-detail__observed-facts" aria-label="Datos científicos publicados">
+                              @for (fact of route.facts; track fact.label) {
+                                <li>
+                                  <span>{{ fact.label }}: <strong>{{ fact.value }}</strong></span>
+                                  <small>{{ fact.origin }}</small>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </div>
+                      }
+                    </dl>
+                    <p>{{ observed.note }}</p>
+                  </section>
+                }
 
                 <nav
                   class="moon-detail__section-nav"

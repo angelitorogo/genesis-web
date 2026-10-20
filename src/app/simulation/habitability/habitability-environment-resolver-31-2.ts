@@ -176,13 +176,17 @@ export class HabitabilityEnvironmentResolver31_2 {
     if (moon !== null) {
       const temperature = moon.estimatedSurfaceTemperatureKelvin;
       const atmosphere = moon.atmosphereAssessment;
-      const pressure = atmosphere?.pressureBasis === 'CONDITIONAL_SCENARIO'
-        ? atmosphere.estimatedSurfacePressurePascal : null;
+      const isQuantifiedPressure = atmosphere?.pressureBasis === 'PHYSICAL_BALANCE' &&
+        atmosphere.physicalBalance32F1?.surfacePressurePascal !== null &&
+        atmosphere.physicalBalance32F1?.surfacePressurePascal !== undefined;
+      const pressure = atmosphere?.pressureBasis === 'CONDITIONAL_SCENARIO' || isQuantifiedPressure
+        ? atmosphere?.estimatedSurfacePressurePascal : null;
 
       if (pressure !== null && pressure !== undefined && finiteNonNegative(pressure)) {
         add(evidence, context, SURFACE, 'PRESSURE_OR_CONFINEMENT',
           pressure >= WATER_V1_TRIPLE_POINT_PRESSURE_PASCAL ? 'SUPPORTS' : 'CONTRADICTS',
-          'INFERRED_MODEL', 'moon.B.atmosphere.conditionalPressure');
+          isQuantifiedPressure ? 'PHYSICAL_MODEL' : 'INFERRED_MODEL',
+          isQuantifiedPressure ? 'moon.32F1.physicalColumn' : 'moon.B.atmosphere.conditionalPressure');
 
         const boiling = waterBoilingTemperatureKelvinForPressurePascal(pressure);
         if (boiling !== null && finitePositive(temperature)) {

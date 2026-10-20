@@ -1,4 +1,11 @@
 import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
+import type { MoonWaterPhaseInventory32F2a } from '../../domain/planetary/moon-water-phase-inventory-32-f-2a';
+import type { MoonInteriorStructure32F2b } from '../../domain/planetary/moon-interior-structure-32-f-2b';
+import type { MoonOceanReality32F2c } from '../../domain/planetary/moon-ocean-reality-32-f-2c';
+import type { MoonRadiationProtection32F3 } from '../../domain/planetary/moon-radiation-protection-32-f-3';
+import type { MoonGeochemicalEnergy32F4 } from '../../domain/planetary/moon-geochemical-energy-32-f-4';
+import type { MoonEnvironmentalHistory32F5 } from '../../domain/planetary/moon-environmental-history-32-f-5';
+import { PlanetaryHistoricalRuntime31Fi1 } from '../planetary-history/planetary-historical-runtime-31-f-i-1';
 import { type MoonAtmosphereAssessment } from '../../domain/planetary/moon-atmosphere-assessment';
 import {
   type BodyLocator,
@@ -92,6 +99,12 @@ export interface MoonScientificDetailSource {
       atmosphereRegime: string;
       atmosphereAssessment?: MoonAtmosphereAssessment | null;
       internalWaterAssessment?: MoonInternalWaterAssessment | null;
+      waterPhaseInventory32F2a?: MoonWaterPhaseInventory32F2a | null;
+      interiorStructure32F2b?: MoonInteriorStructure32F2b | null;
+      oceanReality32F2c?: MoonOceanReality32F2c | null;
+      radiationProtection32F3?: MoonRadiationProtection32F3 | null;
+      geochemicalEnergy32F4?: MoonGeochemicalEnergy32F4 | null;
+      environmentalHistory32F5?: MoonEnvironmentalHistory32F5 | null;
       waterInventoryIndex01: number;
       subsurfaceOceanPotentialIndex01: number;
       surfaceLiquidWaterPotentialIndex01: number;
@@ -250,6 +263,7 @@ export class MoonScientificTargetResolver {
       detail:
         detailProjection(
           moon,
+          PlanetaryHistoricalRuntime31Fi1.moonEnvironmentalHistory32F5(planetTarget, moonOrdinal),
         ),
     });
   }
@@ -288,6 +302,7 @@ function identityProjection(
 function detailProjection(
   moon:
     PlanetScientificRelevantMoonSource,
+  history32F5: MoonEnvironmentalHistory32F5 | null,
 ): MoonScientificDetailSource {
 
   return Object.freeze({
@@ -370,6 +385,17 @@ function detailProjection(
           moon.atmosphereAssessment ?? null,
         internalWaterAssessment:
           moon.internalWaterAssessment ?? null,
+        waterPhaseInventory32F2a:
+          moon.waterPhaseInventory32F2a ?? null,
+        interiorStructure32F2b:
+          moon.interiorStructure32F2b ?? null,
+        oceanReality32F2c:
+          moon.oceanReality32F2c ?? null,
+        radiationProtection32F3:
+          moon.radiationProtection32F3 ?? null,
+        geochemicalEnergy32F4:
+          moon.geochemicalEnergy32F4 ?? null,
+        environmentalHistory32F5: history32F5,
         waterInventoryIndex01:
           moon.waterInventoryIndex01,
         subsurfaceOceanPotentialIndex01:

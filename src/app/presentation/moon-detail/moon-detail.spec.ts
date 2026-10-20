@@ -125,6 +125,10 @@ describe(
             '[data-testid="moon-detail-locked"]',
           ),
         ).toBeTruthy();
+        expect(fixture.componentInstance.moonSectionHref('atmosphere'))
+          .toBe('/system/3/-17/8/planet/0/moon/0?u=96F17ABD83F31EF747FC750C996EB1C2#moon-section-atmosphere');
+        expect(fixture.componentInstance.moonSectionHref('radiation'))
+          .toBe('/system/3/-17/8/planet/0/moon/0?u=96F17ABD83F31EF747FC750C996EB1C2#moon-section-radiation');
         expect(
           fixture
             .componentInstance

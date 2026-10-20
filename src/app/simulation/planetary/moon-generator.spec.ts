@@ -217,6 +217,23 @@ describe(
           rocky.moonIdentities[0],
         );
 
+        // 32.F.1c — real generator -> materialized moon -> automatic bulk constraints.
+        // No atmospheric gas mass or loss-rate can be inferred from the V1 proxies.
+        const lunarMaterialized = rocky.relevantMoons[0];
+        const auto32F1c = lunarMaterialized.environmentState.atmosphereAssessment?.automaticConstraints32F1c;
+        expect(auto32F1c?.basis).toBe('V2_MATERIALIZED_GRAVITY_RADIUS_AND_TEMPERATURE');
+        expect(auto32F1c?.escapeVelocityMetersPerSecond).toBeGreaterThan(0);
+        expect(auto32F1c?.kilogramsOfGasPerPascal).toBeGreaterThan(0);
+        expect(auto32F1c?.pressureStatus).toBe('UNRESOLVED_WITHOUT_INDEPENDENT_GAS_MASS');
+        expect(lunarMaterialized.environmentState.atmosphereAssessment?.physicalBalance32F1).toBeNull();
+        expect(lunarMaterialized.environmentState.atmosphereAssessment?.pressureBasis)
+          .not.toBe('PHYSICAL_BALANCE');
+        const autoGiant32F1c = gasGiant.relevantMoons[0].environmentState.atmosphereAssessment?.automaticConstraints32F1c;
+        expect(autoGiant32F1c?.basis).toBe('V2_MATERIALIZED_GRAVITY_RADIUS_AND_TEMPERATURE');
+        expect(autoGiant32F1c?.kilogramsOfGasPerPascal).toBeGreaterThan(0);
+        expect(autoGiant32F1c?.escapeVelocityMetersPerSecond).not.toBe(auto32F1c?.escapeVelocityMetersPerSecond);
+
+
         expect(
           rocky.hillSphereRadiusPlanetRadii,
         ).toBeCloseTo(
@@ -1554,6 +1571,237 @@ describe('MoonGenerator L.1 satellite mass/size diversity', () => {
   );
   const locator = new SystemLocator(7n, -42n, 3n);
   const planetarySystem = planetarySystemFixture(generationKey, locator, 1);
+
+  it('32.F.1d: integrates formation mass budgets into real relevant moons without mutating V1 products', () => {
+    const giant = planetFixture(planetarySystem, 1, {
+      seedHex: '00000000000000000000000000000024',
+      planetType: PlanetType.GAS_GIANT,
+      massEarth: 318,
+      radiusEarth: 11.2,
+      semiMajorAxisAu: 5.2,
+    });
+    const first = MoonGenerator.generate(generationKey, giant);
+    const second = MoonGenerator.generate(generationKey, giant);
+    expect(first.relevantMoons.length).toBeGreaterThan(0);
+    for (const [index, moon] of first.relevantMoons.entries()) {
+      const inventory = moon.formationInventory32F1d;
+      expect(inventory).not.toBeNull();
+      expect(inventory?.hostPlanetOrdinal).toBe(moon.hostPlanetOrdinal);
+      expect(inventory?.moonOrdinal).toBe(moon.moonOrdinal);
+      expect(inventory?.totalMassKilograms).toBeCloseTo(moon.massEarth * 5.9722e24, -8);
+      expect(inventory?.initialAtmosphericGasMassKilograms).toBeNull();
+      expect(inventory).toEqual(second.relevantMoons[index].formationInventory32F1d);
+      expect(moon.identity).toBe(first.moonIdentities[index]);
+      expect(moon.environmentState.atmosphereAssessment?.physicalBalance32F1).toBeNull();
+      expect(moon.giantMoonState.sourceMoonMassEarth).toBe(moon.massEarth);
+    }
+  });
+
+  it('32.F.2a: lunas V2 reales conservan inventario H₂O y no convierten escenarios en océanos', () => {
+    const giant = planetFixture(planetarySystem, 1, {
+      seedHex: '00000000000000000000000000000024',
+      planetType: PlanetType.GAS_GIANT,
+      massEarth: 318,
+      radiusEarth: 11.2,
+      semiMajorAxisAu: 2,
+    });
+    const first = MoonGenerator.generate(generationKey, giant);
+    const second = MoonGenerator.generate(generationKey, giant);
+    expect(first.relevantMoons.length).toBeGreaterThan(0);
+    let phaseScenarios = 0;
+    for (const [index, moon] of first.relevantMoons.entries()) {
+      const phase = moon.waterPhaseInventory32F2a;
+      const formation = moon.formationInventory32F1d;
+      expect(phase).not.toBeNull();
+      expect(phase?.sourceFormationWaterKilograms).toBe(formation?.waterIceMassKilograms);
+      expect(phase?.hostPlanetOrdinal).toBe(moon.hostPlanetOrdinal);
+      expect(phase?.moonOrdinal).toBe(moon.moonOrdinal);
+      expect(phase).toEqual(second.relevantMoons[index].waterPhaseInventory32F2a);
+      expect(moon.habitabilityState).toEqual(second.relevantMoons[index].habitabilityState);
+      expect(moon.orbit).toEqual(second.relevantMoons[index].orbit);
+      expect(moon.environmentState.atmosphereAssessment?.physicalBalance32F1).toBeNull();
+      expect(phase?.actualSurfaceLiquidMassKilograms).toBeNull();
+      expect(phase?.actualInteriorLiquidMassKilograms).toBeNull();
+      for (const endpoint of phase?.possibleEndmembers ?? []) {
+        expect(Math.abs(endpoint.totalMassKilograms - phase!.sourceFormationWaterKilograms) /
+          Math.max(1, phase!.sourceFormationWaterKilograms)).toBeLessThanOrEqual(1e-12);
+        phaseScenarios++;
+      }
+    }
+    expect(phaseScenarios).toBeGreaterThan(first.relevantMoons.length);
+  });
+
+  it('32.F.2b: lunas V2 materializadas incorporan estructura de masa conservada sin tocar habitabilidad', () => {
+    const giant = planetFixture(planetarySystem, 1, {
+      seedHex: '00000000000000000000000000000024',
+      planetType: PlanetType.GAS_GIANT, massEarth: 318, radiusEarth: 11.2,
+      semiMajorAxisAu: 2,
+    });
+    const first = MoonGenerator.generate(generationKey, giant);
+    const second = MoonGenerator.generate(generationKey, giant);
+    expect(first.relevantMoons.length).toBeGreaterThan(0);
+    for (const [i, moon] of first.relevantMoons.entries()) {
+      const interior = moon.interiorStructure32F2b;
+      expect(interior).not.toBeNull();
+      expect(interior!.contractVersion).toBe('32.F.2b-differentiated-conditional-profile-v1');
+      expect(interior!.hostPlanetOrdinal).toBe(moon.hostPlanetOrdinal);
+      expect(interior!.moonOrdinal).toBe(moon.moonOrdinal);
+      expect(interior!.waterMassKilograms).toBe(moon.waterPhaseInventory32F2a!.sourceFormationWaterKilograms);
+      expect(interior!.actualOceanPresence).toBe('UNKNOWN');
+      expect(interior!.actualInteriorLiquidMassKilograms).toBeNull();
+      expect(interior!.layers.every(l => l.massKilograms >= 0)).toBe(true);
+      expect(interior).toEqual(second.relevantMoons[i].interiorStructure32F2b);
+      expect(moon.orbit).toEqual(second.relevantMoons[i].orbit);
+      expect(moon.habitabilityState).toEqual(second.relevantMoons[i].habitabilityState);
+      expect(moon.environmentState.atmosphereAssessment?.physicalBalance32F1).toBeNull();
+    }
+  });
+
+  it('32.F.2c: todas las lunas relevantes de V2 conservan un estado oceánico CT-0 de mundo generado', () => {
+    const giant = planetFixture(planetarySystem, 1, {
+      seedHex: '00000000000000000000000000000024',
+      planetType: PlanetType.GAS_GIANT, massEarth: 318, radiusEarth: 11.2,
+      semiMajorAxisAu: 2,
+    });
+    const first = MoonGenerator.generate(generationKey, giant);
+    const second = MoonGenerator.generate(generationKey, giant);
+    expect(first.relevantMoons.length).toBeGreaterThan(0);
+    for (const [i, moon] of first.relevantMoons.entries()) {
+      const reality = moon.oceanReality32F2c;
+      expect(reality).not.toBeNull();
+      expect(reality?.hostPlanetOrdinal).toBe(moon.hostPlanetOrdinal);
+      expect(reality?.moonOrdinal).toBe(moon.moonOrdinal);
+      expect(reality?.waterInventoryKilograms).toBe(moon.formationInventory32F1d?.waterIceMassKilograms);
+      expect(reality?.state).toMatch(/SIMULATED_MODEL/);
+      expect(reality).toEqual(second.relevantMoons[i].oceanReality32F2c);
+      expect(moon.orbit).toEqual(second.relevantMoons[i].orbit);
+      expect(moon.habitabilityState).toEqual(second.relevantMoons[i].habitabilityState);
+      expect(moon.environmentState.atmosphereAssessment?.physicalBalance32F1).toBeNull();
+    }
+  });
+
+  it('32.F.3: lunas V2 materializadas reciben fuentes separadas y blindaje oceánico sin dosis inventada', () => {
+    const giant = planetFixture(planetarySystem, 1, {
+      seedHex: '00000000000000000000000000000024',
+      planetType: PlanetType.GAS_GIANT, massEarth: 318, radiusEarth: 11.2,
+      semiMajorAxisAu: 2,
+    });
+    const first = MoonGenerator.generate(generationKey, giant);
+    const second = MoonGenerator.generate(generationKey, giant);
+    expect(first.relevantMoons.length).toBeGreaterThan(0);
+    let shielded = 0;
+    for (const [i, moon] of first.relevantMoons.entries()) {
+      const radiation = moon.radiationProtection32F3;
+      expect(radiation).not.toBeNull();
+      expect(radiation?.hostPlanetOrdinal).toBe(moon.hostPlanetOrdinal);
+      expect(radiation?.moonOrdinal).toBe(moon.moonOrdinal);
+      expect(radiation?.referenceBolometricWattsPerSquareMeter).toBeCloseTo(
+        moon.environmentState.sourceReferenceMeanInsolationEarth * 1361, 7);
+      expect(radiation?.ionisingPhotonIncidentWattsPerSquareMeter).toBeNull();
+      expect(radiation?.surfaceIonisingDoseGrayPerYear).toBeNull();
+      expect(radiation?.subsurfaceIonisingDoseGrayPerYear).toBeNull();
+      expect(radiation?.magneticParticleTransmission01).toBeNull();
+      expect(radiation).toEqual(second.relevantMoons[i].radiationProtection32F3);
+      if (radiation?.waterCoveringState === 'ICE_COVER_OVER_MODELLED_OCEAN') {
+        shielded++;
+        expect(moon.oceanReality32F2c?.state).toBe('PRESENT_IN_SIMULATED_MODEL');
+        expect(radiation.iceCoverMassColumnKilogramsPerSquareMeter).toBeGreaterThan(0);
+        expect(radiation.referenceOneMeVGammaIceOpticalDepth).toBeGreaterThan(0);
+      }
+      expect(moon.orbit).toEqual(second.relevantMoons[i].orbit);
+      expect(moon.habitabilityState).toEqual(second.relevantMoons[i].habitabilityState);
+    }
+    expect(shielded).toBeGreaterThan(0);
+  });
+
+  it('32.F.4: geoquímica CT-0 integra todas las lunas relevantes sin inventar reactivos ni alterar V2', () => {
+    const giant = planetFixture(planetarySystem, 1, {
+      seedHex: '00000000000000000000000000000024',
+      planetType: PlanetType.GAS_GIANT, massEarth: 318, radiusEarth: 11.2,
+      semiMajorAxisAu: 2,
+    });
+    const first = MoonGenerator.generate(generationKey, giant);
+    const second = MoonGenerator.generate(generationKey, giant);
+    expect(first.relevantMoons.length).toBeGreaterThan(0);
+    let liquid = 0;
+    for (const [i, moon] of first.relevantMoons.entries()) {
+      const chemistry = moon.geochemicalEnergy32F4;
+      expect(chemistry).not.toBeNull();
+      expect(chemistry?.hostPlanetOrdinal).toBe(moon.hostPlanetOrdinal);
+      expect(chemistry?.moonOrdinal).toBe(moon.moonOrdinal);
+      expect(chemistry?.provenance)
+        .toBe('CT0_PHASE_AND_THERMAL_MODEL_WITH_UNIDENTIFIED_REACTANTS');
+      expect(chemistry?.actualChemicalPowerWatts).toBeNull();
+      expect(chemistry?.actualChemicalDisequilibriumJoulesPerMole).toBeNull();
+      expect(chemistry?.reactions.every(x => x.extractableChemicalPowerWatts === null)).toBe(true);
+      expect(chemistry).toEqual(second.relevantMoons[i].geochemicalEnergy32F4);
+      if (moon.oceanReality32F2c?.state === 'PRESENT_IN_SIMULATED_MODEL') {
+        liquid++;
+        expect(chemistry?.solventState).toBe('MODELLED_LIQUID_H2O_CT0');
+      }
+      expect(moon.orbit).toEqual(second.relevantMoons[i].orbit);
+      expect(moon.tidalState).toEqual(second.relevantMoons[i].tidalState);
+      expect(moon.habitabilityState).toEqual(second.relevantMoons[i].habitabilityState);
+    }
+    expect(liquid).toBeGreaterThan(0);
+  });
+
+  it('32.F.1e: V2 distinguishes cold out-of-domain moons from evaluable H2O scenarios without resolving real atmosphere', () => {
+    // The 5.2 AU giant is a valid NEGATIVE control: all its relevant moons
+    // are colder than the 150 K minimum of the conditional H2O saturation
+    // model. Do not demand a non-null vapor balance outside that domain.
+    // At 2 AU the same seed/materialization provides ice-bearing moons with
+    // admissible temperatures, demonstrating a POSITIVE production path.
+    let coldEvaluated = 0;
+    let warmEvaluated = 0;
+    for (const semiMajorAxisAu of [5.2, 2]) {
+      const giant = planetFixture(planetarySystem, 1, {
+        seedHex: '00000000000000000000000000000024',
+        planetType: PlanetType.GAS_GIANT,
+        massEarth: 318,
+        radiusEarth: 11.2,
+        semiMajorAxisAu,
+      });
+      const first = MoonGenerator.generate(generationKey, giant);
+      const second = MoonGenerator.generate(generationKey, giant);
+      expect(first.relevantMoons.length).toBeGreaterThan(0);
+      let evaluated = 0;
+      for (const [i, moon] of first.relevantMoons.entries()) {
+        const atmospheric = moon.environmentState.atmosphereAssessment;
+        const scenario = atmospheric?.formationEvolution32F1e;
+        const iceMass = moon.formationInventory32F1d?.waterIceMassKilograms ?? 0;
+        const temperature = moon.environmentState.estimatedSurfaceTemperatureKelvin;
+        const isPhysicallyEligible = iceMass > 0 && temperature >= 150 && temperature < 647.096;
+        expect(scenario).not.toBeNull();
+        expect(scenario?.hostPlanetOrdinal).toBe(moon.hostPlanetOrdinal);
+        expect(scenario?.moonOrdinal).toBe(moon.moonOrdinal);
+        expect(scenario?.sourceWaterIceMassKilograms).toBe(iceMass);
+        expect(scenario).toEqual(second.relevantMoons[i].environmentState.atmosphereAssessment?.formationEvolution32F1e);
+        expect(scenario?.realAtmosphericPressureStatus).toBe('UNKNOWN');
+        expect(atmospheric?.physicalBalance32F1).toBeNull();
+        expect(atmospheric?.pressureBasis).not.toBe('PHYSICAL_BALANCE');
+        expect(moon.habitabilityState).toEqual(second.relevantMoons[i].habitabilityState);
+        expect(moon.orbit).toEqual(second.relevantMoons[i].orbit);
+        if (isPhysicallyEligible) {
+          expect(scenario?.conditionalInitialWaterVaporMassKilograms).toBeGreaterThan(0);
+          expect(scenario?.conditionalBalance).toBeNull();
+          expect(scenario?.conditionalThermalJeansEscapeKilogramsPerSecond).toBeNull();
+          expect(scenario?.conditionalFinalWaterVaporPressurePascal).toBeNull();
+          evaluated++;
+        } else {
+          expect(scenario?.conditionalBalance).toBeNull();
+          expect(scenario?.conditionalFinalWaterVaporPressurePascal).toBeNull();
+        }
+      }
+      if (semiMajorAxisAu === 5.2) {
+        coldEvaluated = evaluated;
+      } else {
+        warmEvaluated = evaluated;
+      }
+    }
+    expect(coldEvaluated).toBe(0);
+    expect(warmEvaluated).toBeGreaterThan(0);
+  });
 
   it('permits Titan/Ganymede-scale satellite masses on some giants, not all', () => {
     let hostsWithLargeMoons = 0;

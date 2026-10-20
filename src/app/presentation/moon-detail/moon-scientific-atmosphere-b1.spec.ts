@@ -83,6 +83,26 @@ describe('B.1 — coherencia de la clasificación atmosférica lunar', () => {
     expect(fractional.condensationRemovalIndex01).toBe(0.25);
   });
 
+  it('32.F.1e.b does not show fake zero future vapor or a surface-derived Jeans rate', () => {
+    const moon = new MoonPhysicalProperties(1, 1, 0.00016, 0.078, 1.85, 0.026);
+    const inventory = {
+      provenance: 'DETERMINISTIC_CONDITIONAL_FORMATION_MODEL_NOT_OBSERVATION',
+      hostPlanetOrdinal: 1, moonOrdinal: 1,
+      totalMassKilograms: moon.massEarth * 5.9722e24,
+      waterIceMassKilograms: 1e18, otherCondensableMassKilograms: 0,
+    } as import('../../domain/planetary/moon-formation-inventory-32-f-1d').MoonFormationInventory32F1d;
+    const assessed = MoonAtmosphereEngine.assess(moon, {
+      hostPlanetOrdinal: 1, moonOrdinal: 1, tidalHeatingIndex01: 0.5,
+    } as MoonTidalState, 235.7, 0.8, 0.65, null, inventory, 1.717);
+    const fields = lunarAtmosphereFields(assessed);
+    expect(valueOf(fields, 'Vapor H₂O inicial saturado (escenario 32.F.1e)')).toContain('Pa');
+    expect(valueOf(fields, 'Evolución del vapor H₂O (escenario 32.F.1e)'))
+      .toBe('No determinada: faltan condiciones de exobase y reposición');
+    expect(valueOf(fields, 'Escape térmico Jeans (escenario 32.F.1e)'))
+      .toBe('No calculable: exobase sin caracterizar');
+    expect(assessed.physicalBalance32F1).toBeNull();
+  });
+
   it('keeps the legacy display when there is no B assessment, and never contradicts inconsistent pressure/composition metadata', () => {
     expect(labelLunarAtmosphere('EXOSPHERE', null)).toBe('Exosfera');
     expect(lunarAtmosphereFields(null)).toEqual([]);

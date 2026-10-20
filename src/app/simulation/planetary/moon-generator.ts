@@ -19,6 +19,13 @@ import {
   MoonEnvironmentEngine,
 } from './moon-environment-engine';
 
+import { MoonFormationInventoryEngine32F1d } from './moon-formation-inventory-engine-32-f-1d';
+import { MoonWaterPhaseBalanceEngine32F2a } from './moon-water-phase-balance-32-f-2a';
+import { MoonInteriorStructureEngine32F2b } from './moon-interior-structure-engine-32-f-2b';
+import { MoonOceanRealityEngine32F2c } from './moon-ocean-reality-engine-32-f-2c';
+import { MoonRadiationProtectionEngine32F3 } from './moon-radiation-protection-engine-32-f-3';
+import { MoonGeochemicalEnergyEngine32F4 } from './moon-geochemical-energy-engine-32-f-4';
+
 import {
   MoonHabitabilityEngine,
 } from './moon-habitability-engine';
@@ -742,13 +749,57 @@ function relevantMoonsV1(
             orbit,
           );
 
+        // 32.F.1d/1e: attach the deterministic conditional formation mixture
+        // before the environment projection so the existing 32.F.1 engine
+        // can evaluate a provenance-labelled sensitivity case. Never change
+        // V1 physical, orbit, tides or liquid-water/habitability generation.
+        const formationInventory32F1d = MoonFormationInventoryEngine32F1d.fromMaterialized(
+          physical, moonIdentities[index].seed, planet.planetType,
+        );
         const environmentState =
           MoonEnvironmentEngine
             .generate(
               planet,
               physical,
               tidalState,
+              null,
+              formationInventory32F1d,
             );
+
+        // 32.F.2a computes mass-conserving phase *endmembers* only; this
+        // does not change V1 liquid-water flags or observed habitability.
+        const waterPhaseInventory32F2a = MoonWaterPhaseBalanceEngine32F2a.fromMaterialized(
+          physical, formationInventory32F1d, environmentState.estimatedSurfaceTemperatureKelvin,
+        );
+
+        // 32.F.2b: stratification, lithostatic pressure and bounded conductive
+        // thermal sensitivities. These conditional outputs NEVER feed V1
+        // current-water, habitability or observed-evidence classifications.
+        const interiorStructure32F2b = MoonInteriorStructureEngine32F2b.fromMaterialized(
+          physical, formationInventory32F1d, waterPhaseInventory32F2a,
+          environmentState.internalWaterAssessment,
+          environmentState.estimatedSurfaceTemperatureKelvin,
+        );
+
+        // 32.F.2c: domain-separated constitutive model sets the simulated CT-0
+        // world state where the phase/thermal solver is valid. This does not
+        // reclassify the V1 atmosphere, orbital dynamics or biology.
+        const oceanReality32F2c = MoonOceanRealityEngine32F2c.fromMaterialized(
+          physical, moonIdentities[index].seed, formationInventory32F1d,
+          waterPhaseInventory32F2a, interiorStructure32F2b,
+          environmentState.internalWaterAssessment,
+          environmentState.estimatedSurfaceTemperatureKelvin,
+        );
+
+        const radiationProtection32F3 = MoonRadiationProtectionEngine32F3.fromMaterialized(
+          physical, environmentState.sourceReferenceMeanInsolationEarth, oceanReality32F2c,
+        );
+
+        // 32.F.4: physical contact and thermal budgets, never fictional
+        // reactant concentrations, redox power or V1 habitability changes.
+        const geochemicalEnergy32F4 = MoonGeochemicalEnergyEngine32F4.fromMaterialized(
+          physical, formationInventory32F1d, interiorStructure32F2b, oceanReality32F2c,
+        );
 
         const habitabilityState =
           MoonHabitabilityEngine
@@ -782,6 +833,12 @@ function relevantMoonsV1(
           environmentState,
           habitabilityState,
           giantMoonState,
+          formationInventory32F1d,
+          waterPhaseInventory32F2a,
+          interiorStructure32F2b,
+          oceanReality32F2c,
+          radiationProtection32F3,
+          geochemicalEnergy32F4,
         );
       },
     );

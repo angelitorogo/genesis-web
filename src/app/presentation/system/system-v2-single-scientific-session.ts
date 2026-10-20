@@ -123,7 +123,9 @@ export class SystemV2SingleScientificSession {
       hostSystemDesignation: this.model.stellarSystemCard!.title,
       orbitTopology: this.host.planetarySystem.architecture.orbitTopology,
       hostPlanetCount: this.planetCount,
-    }), planet, atmosphere, moons);
+    }), planet, atmosphere, moons, Object.freeze({
+      physical: this.host.physical, lifetime: this.host.lifetime,
+    }));
   }
 
   private resolveMoon(key: UniverseGenerationKey, locator: BodyLocator,

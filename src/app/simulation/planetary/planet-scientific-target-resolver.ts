@@ -1,4 +1,14 @@
+import type { MaterializedPrimary31Fi3 } from '../planetary-history/planetary-v2-dated-physics-31-f-i-3';
+import { PlanetaryHistoricalRuntime31Fi1 } from '../planetary-history/planetary-historical-runtime-31-f-i-1';
+import { HabitabilityPhysicalIntegration31Fb,
+  type InternalPhysicalHabitability31Fb,
+} from './habitability-physical-integration-31-f-b';
 import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
+import type { MoonWaterPhaseInventory32F2a } from '../../domain/planetary/moon-water-phase-inventory-32-f-2a';
+import type { MoonInteriorStructure32F2b } from '../../domain/planetary/moon-interior-structure-32-f-2b';
+import type { MoonOceanReality32F2c } from '../../domain/planetary/moon-ocean-reality-32-f-2c';
+import type { MoonRadiationProtection32F3 } from '../../domain/planetary/moon-radiation-protection-32-f-3';
+import type { MoonGeochemicalEnergy32F4 } from '../../domain/planetary/moon-geochemical-energy-32-f-4';
 import { type MoonAtmosphereAssessment } from '../../domain/planetary/moon-atmosphere-assessment';
 import {
   BodyLocator,
@@ -185,6 +195,11 @@ export interface PlanetScientificRelevantMoonSource {
     string;
   readonly atmosphereAssessment?: MoonAtmosphereAssessment | null;
   readonly internalWaterAssessment?: MoonInternalWaterAssessment | null;
+  readonly waterPhaseInventory32F2a?: MoonWaterPhaseInventory32F2a | null;
+  readonly interiorStructure32F2b?: MoonInteriorStructure32F2b | null;
+  readonly oceanReality32F2c?: MoonOceanReality32F2c | null;
+  readonly radiationProtection32F3?: MoonRadiationProtection32F3 | null;
+  readonly geochemicalEnergy32F4?: MoonGeochemicalEnergy32F4 | null;
 
   readonly waterInventoryIndex01:
     number;
@@ -408,6 +423,7 @@ export interface PlanetScientificResolvedTarget {
 }
 
 interface Phase18PlanetTarget {
+  readonly retainedStellarHistory: MaterializedPrimary31Fi3;
   readonly identity:
     PlanetScientificIdentitySource;
 
@@ -428,6 +444,12 @@ interface Phase18PlanetTarget {
  * generation keys and procedural seeds are deliberately not returned to the UI.
  */
 export class PlanetScientificTargetResolver {
+
+  // Internal-only memo: attached to an authorized, already-materialized fiche
+  // target. A WeakMap never becomes a serializable property of the UI result.
+  // No observed evidence or permission is inferred from this CT-0 read model.
+  private static readonly internalPhysical31Fb =
+    new WeakMap<PlanetScientificResolvedTarget, InternalPhysicalHabitability31Fb>();
 
   private constructor() {}
 
@@ -489,7 +511,7 @@ export class PlanetScientificTargetResolver {
           planet,
         );
 
-    return this.projectGenerated(target.identity, planet, atmosphere, moonSystem);
+    return this.projectGenerated(target.identity, planet, atmosphere, moonSystem, target.retainedStellarHistory);
   }
 
   /**
@@ -503,11 +525,18 @@ export class PlanetScientificTargetResolver {
     planet: ReturnType<typeof PlanetGenerator.generate>,
     atmosphere: ReturnType<typeof AtmosphereGenerator.generate>,
     moonSystem: ReturnType<typeof MoonGenerator.generate>,
+    retainedStellarHistory?: MaterializedPrimary31Fi3,
+    publicHost?: { readonly multiplicity: 'BINARY' | 'TRIPLE';
+      readonly component: 'A' | 'B' | 'C' | 'AB' },
   ): PlanetScientificResolvedTarget {
     if (atmosphere.hostPlanet !== planet || moonSystem.hostPlanet !== planet) {
       throw new Error('Scientific projection must receive one consistent generated planet.');
     }
-    return Object.freeze({
+    // 31.F.b consumes the SAME frozen planet/atmosphere/moon states that
+    // 26.4 projects; it does not call any generator or extend the public card.
+    const internalHabitability = HabitabilityPhysicalIntegration31Fb.assessMaterialized(
+      planet, atmosphere, moonSystem);
+    const projected: PlanetScientificResolvedTarget = Object.freeze({
       identity,
       detail:
         Object.freeze({
@@ -796,6 +825,16 @@ export class PlanetScientificTargetResolver {
                             moon.environmentState.atmosphereAssessment,
                           internalWaterAssessment:
                             moon.environmentState.internalWaterAssessment,
+                          waterPhaseInventory32F2a:
+                            moon.waterPhaseInventory32F2a,
+                          interiorStructure32F2b:
+                            moon.interiorStructure32F2b,
+                          oceanReality32F2c:
+                            moon.oceanReality32F2c,
+                          radiationProtection32F3:
+                            moon.radiationProtection32F3,
+                          geochemicalEnergy32F4:
+                            moon.geochemicalEnergy32F4,
                           waterInventoryIndex01:
                             moon.environmentState.waterInventoryIndex01,
                           subsurfaceOceanPotentialIndex01:
@@ -862,6 +901,11 @@ export class PlanetScientificTargetResolver {
             }),
         }),
     });
+    this.internalPhysical31Fb.set(projected, internalHabitability);
+    // 31.F.i.1: private, real 32.6 current-history handoff. No dated forcing
+    // exists in this 19/20/21 materialization, so 31.7 cannot claim past climate.
+    PlanetaryHistoricalRuntime31Fi1.attach(projected, planet, atmosphere, moonSystem, retainedStellarHistory, publicHost);
+    return projected;
   }
 }
 
@@ -1017,5 +1061,9 @@ function resolvePhase18Target(
             .planetCount,
       }),
     planetarySystem,
+    retainedStellarHistory: Object.freeze({
+      physical: formationSnapshot.stellarPhysicalProperties,
+      lifetime: formationSnapshot.stellarLifetimeProfile,
+    }),
   });
 }

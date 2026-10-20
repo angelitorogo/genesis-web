@@ -1,3 +1,4 @@
+import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
 import {
   MoonAtmosphereRegime,
 } from '../../domain/planetary/moon-atmosphere-regime';
@@ -49,6 +50,30 @@ const SECONDS_PER_DAY =
 describe(
   'MoonEnvironmentEngine point 21.5',
   () => {
+    it('32.F.1: balance físico opcional no altera generación, agua, geología ni índices V1', () => {
+      const host = hostFixture(318, 11.2, 0.011);
+      const physical = new MoonPhysicalProperties(1, 1, 0.0225, 0.404, 1.88, 0.138);
+      const tidal = tidalFixture(host, physical, 20, 0.3);
+      const original = MoonEnvironmentEngine.generate(host, physical, tidal);
+      const quantified = MoonEnvironmentEngine.generate(host, physical, tidal, {
+        sourceKind: 'INDEPENDENT_MASS_AND_FLUXES', sourceId: '32F1-TEST-PHYSICAL',
+        durationSeconds: 365.25 * 86400, collisionCrossSectionSquareMeters: 1e-19,
+        gasForcings: [{ gas: AtmosphereGas.NITROGEN, initialGasMassKilograms: 1e18,
+          replenishmentKilogramsPerSecond: 0, thermalEscapeKilogramsPerSecond: 0,
+          particleEscapeKilogramsPerSecond: 0, photolysisRatePerSecond: 0,
+          photolysisEscapingFraction01: 1 }],
+      });
+      expect(original.atmosphereAssessment?.physicalBalance32F1).toBeNull();
+      expect(quantified.atmosphereAssessment?.pressureBasis).toBe('PHYSICAL_BALANCE');
+      expect(quantified.atmosphereAssessment?.physicalBalance32F1?.regime)
+        .toBe('STABLE_OVER_EVALUATED_INTERVAL');
+      expect(quantified.waterInventoryIndex01).toBe(original.waterInventoryIndex01);
+      expect(quantified.waterRegime).toBe(original.waterRegime);
+      expect(quantified.subsurfaceOceanPotentialIndex01).toBe(original.subsurfaceOceanPotentialIndex01);
+      expect(quantified.surfaceLiquidWaterPotentialIndex01).toBe(original.surfaceLiquidWaterPotentialIndex01);
+      expect(quantified.geologyRegime).toBe(original.geologyRegime);
+      expect(quantified.atmosphereRegime).toBe(original.atmosphereRegime);
+    });
     it('C — attaches conditional cryosphere science to the existing lunar environment without changing its inherited water indices', () => {
       const host = hostFixture(318, 11.2, 0.011);
       const physical = new MoonPhysicalProperties(1, 1, 0.0225, 0.404, 1.88, 0.138);

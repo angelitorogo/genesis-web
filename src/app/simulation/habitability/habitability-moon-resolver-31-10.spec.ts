@@ -3,6 +3,8 @@ import type { HabitabilityScenarioAssessment, HabitabilityRoute } from '../../do
 import type { MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
 import type { MoonAtmosphereAssessment } from '../../domain/planetary/moon-atmosphere-assessment';
 import { MoonWaterRegime } from '../../domain/planetary/moon-water-regime';
+import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
+import { MoonAtmosphereEngine } from '../planetary/moon-atmosphere-engine';
 import { MoonPhysicalProperties } from '../../domain/planetary/moon-physical-properties';
 import { MoonTidalState, moonTidalMigrationRegimeV1, synchronousOrbitPlanetRadiiV1 } from '../../domain/planetary/moon-tidal-state';
 import { MoonTidalLockingRegime } from '../../domain/planetary/moon-tidal-locking-regime';
@@ -108,6 +110,37 @@ describe('GENESIS 31.10 — lunar ocean-under-ice scenario geometry and provenan
     expect(r.diagnostics?.internalLiquidPressureResolved).toBe(false);
     expect(c(r.assessment, 'PRESSURE_OR_CONFINEMENT').sourceKey)
       .toBe('moon.C.conditionalConductiveIceShell.confinement');
+  });
+  it('32.F.1: accepts quantified lunar pressure through 31.10 without claiming ocean or life', () => {
+    const physical = new MoonPhysicalProperties(4, 2, 0.0225, 0.404, 1.88, 0.138);
+    const tidal = { hostPlanetOrdinal: 4, moonOrdinal: 2,
+      tidalHeatingIndex01: 0.38 } as MoonTidalState;
+    const atmosphere = MoonAtmosphereEngine.assess(physical, tidal, 100, 0.75, 0.3, {
+      sourceKind: 'INDEPENDENT_MASS_AND_FLUXES', sourceId: 'TEST_32F1_31_10',
+      durationSeconds: 86400, collisionCrossSectionSquareMeters: 1e-19,
+      gasForcings: [{ gas: AtmosphereGas.NITROGEN, initialGasMassKilograms: 1e18,
+        replenishmentKilogramsPerSecond: 0, thermalEscapeKilogramsPerSecond: 0,
+        particleEscapeKilogramsPerSecond: 0, photolysisRatePerSecond: 0,
+        photolysisEscapingFraction01: 1 }],
+    });
+    expect(atmosphere.pressureBasis).toBe('PHYSICAL_BALANCE');
+    const source = { ...moon, atmosphereAssessment: atmosphere };
+    const r = assess(source);
+    expect(r.diagnostics?.atmosphericPressureBasis).toBe('PHYSICAL_BALANCE');
+    expect(r.diagnostics?.estimatedSurfacePressurePascal)
+      .toBe(atmosphere.physicalBalance32F1?.surfacePressurePascal);
+    expect(r.diagnostics?.oceanConfirmed).toBe(false);
+    expect(c(r.assessment, 'LIQUID_RESERVOIR').verdict).toBe('UNRESOLVED');
+    const observed = assess(source, { ...ctx, perspective: 'OBSERVED_KNOWLEDGE' });
+    expect(observed.diagnostics).toBeNull();
+    expect(JSON.stringify(observed)).not.toContain('TEST_32F1_31_10');
+  });
+  it('32.F.1: rejects a physical-balance label without a resolved pressure', () => {
+    const source = { ...moon, atmosphereAssessment: {
+      ...gas, pressureBasis: 'PHYSICAL_BALANCE' as const,
+      estimatedSurfacePressurePascal: null,
+    } };
+    expect(() => assess(source)).toThrow('gas column must agree');
   });
   it('does not infer a measured hydrostatic pressure from a missing lunar gas column', () => {
     const r = assess({ ...moon, atmosphereAssessment: null });

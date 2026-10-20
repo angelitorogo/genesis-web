@@ -1,3 +1,4 @@
+import { ObservedHabitabilityFiche31Fe } from '../scientific/observed-habitability-fiche-31-f-e';
 import { type CompactHostMoon, type CompactHostMinorBody } from '../../domain/planetary/compact-host-secondary-population';
 import { MinorBodyKind } from '../../domain/planetary/minor-body-kind';
 import { buildSystemSceneTnoPresentationV1 } from './system-scene-tno-presentation';
@@ -120,6 +121,8 @@ export function compactMoonFiche(model:ArchiveDiscoveryDetailModel,system:Compac
     hostMoonCount:system.secondaries.moons.filter(m=>m.parentPlanetOrdinal===moon.parentPlanetOrdinal).length,
     accessLabel:'Consulta científica habilitada',knowledgeLabel:'Snapshot secundario 31.4g · estabilidad N-body no resuelta',
     locatorLabel:`G${model.galaxyIndex} / S${model.sectorKey} / O${model.galacticObjectIndex} / B${bodyIndex} / M${moon.ordinal-1}`,
+    observedHabitability: ObservedHabitabilityFiche31Fe.unresolved('MOON',model.discoveryState,true,
+      `G${model.galaxyIndex}/S${model.sectorKey}/O${model.galacticObjectIndex}/B${bodyIndex}/M${moon.ordinal-1}`) ?? undefined,
     sections:Object.freeze({sections,comparison,badges:Object.freeze(['Roche/Hill cribado','Geofísica condicionada'])}),
     preview:Object.freeze({kind:ScientificBodyPreviewKind.MOON,
       accessibleLabel:`${title}: inspección procedural de luna en órbita de planeta compacto.`,

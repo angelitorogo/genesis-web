@@ -1,3 +1,4 @@
+import { PlanetaryHistoricalRuntime31Fi1 } from '../planetary-history/planetary-historical-runtime-31-f-i-1';
 import { BodyLocator, MoonLocator } from '../../domain/generation/procedural-locator';
 import { type UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import {
@@ -61,6 +62,8 @@ export class StellarMultihostScientificTargetResolver {
     if (entry === null) return null;
     const projected = PlanetScientificTargetResolver.projectGenerated(
       this.identity(entry), entry.planet, entry.atmosphere, entry.moonSystem,
+      this.retainedStellarReference(entry),
+      { multiplicity: this.source.multiplicity.name as 'BINARY' | 'TRIPLE', component: entry.host },
     );
     return this.withPublicMoonDesignations(projected, entry);
   }
@@ -91,6 +94,21 @@ export class StellarMultihostScientificTargetResolver {
     );
   }
 
+  /** Phase-15 sources were materialized by the atomic V2 formation, not regenerated. */
+  private retainedStellarReference(entry: GeneratedPublicPlanet) {
+    if (entry.host !== 'AB') {
+      const source = this.source.components.find(c => c.label === entry.host);
+      return source ? Object.freeze({ physical: source.physical, lifetime: source.lifetime }) : undefined;
+    }
+    // P-type uses the greater-mass A/B source as its phase-16 primary. The
+    // 31.F.i.3 model independently verifies all companions are coeval before
+    // allowing a joint history. Distinct private-seed ages fail closed.
+    const [a, b] = this.source.components;
+    if (!a || !b) return undefined;
+    const primary = a.physical.initialMassSolar >= b.physical.initialMassSolar ? a : b;
+    return Object.freeze({ physical: primary.physical, lifetime: primary.lifetime });
+  }
+
   private findPlanet(generationKey: UniverseGenerationKey, locator: BodyLocator): GeneratedPublicPlanet | null {
     if (!this.matchesKey(generationKey)) return null;
     return this.index.resolvePlanet(locator);
@@ -110,7 +128,7 @@ export class StellarMultihostScientificTargetResolver {
         this.parentDesignation, entry.host, entry.sourcePlanetOrdinal, moon.moonOrdinal,
       ),
     })));
-    return Object.freeze({
+    const publicTarget = Object.freeze({
       ...target,
       detail: Object.freeze({
         ...target.detail,
@@ -120,6 +138,10 @@ export class StellarMultihostScientificTargetResolver {
         }),
       }),
     });
+    // Forward the private WeakMap record across the presentation-only alias;
+    // never attach private environmental history to the public DTO.
+    PlanetaryHistoricalRuntime31Fi1.forwardPrivateTarget(target, publicTarget);
+    return publicTarget;
   }
 
   private identity(entry: GeneratedPublicPlanet): PlanetScientificIdentitySource {

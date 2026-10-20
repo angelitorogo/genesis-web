@@ -1,3 +1,4 @@
+import { ObservedHabitabilityFiche31Fe, type ObservedHabitabilityFiche31Fe as ObservedHabitabilityFiche31FeModel } from '../scientific/observed-habitability-fiche-31-f-e';
 import {
   DiscoveryState,
 } from '../../domain/discovery/discovery-state';
@@ -61,6 +62,7 @@ export type PlanetScientificFicheResolutionKind =
   ];
 
 export interface PlanetScientificCardModel {
+  readonly observedHabitability?: ObservedHabitabilityFiche31FeModel;
   readonly title:
     string;
 
@@ -281,6 +283,11 @@ export class PlanetScientificCardAssembler {
             'Caracterización científica detallada',
           locatorLabel:
             `G${systemModel.galaxyIndex.toString()} / S${systemModel.sectorKey.toString()} / O${systemModel.galacticObjectIndex.toString()} / B${bodyIndex.toString()}`,
+          observedHabitability: ObservedHabitabilityFiche31Fe.planet(
+            target, systemModel.discoveryState, true,
+            `G${systemModel.galaxyIndex}/S${systemModel.sectorKey}/O${systemModel.galacticObjectIndex}/B${bodyIndex}`,
+            observedMultiplicity(systemModel),
+          ) ?? undefined,
           sections:
             PlanetScientificSectionsAssembler
               .build(
@@ -311,4 +318,9 @@ function orbitTopologyLabel(
     case PlanetarySystemOrbitTopology.CIRCUMBINARY:
       return 'Circumbinaria';
   }
+}
+
+function observedMultiplicity(model: ArchiveDiscoveryDetailModel): 'SINGLE' | 'BINARY' | 'TRIPLE' | 'UNKNOWN' {
+  const name = model.stellarSystemCard?.render?.multiplicity?.name;
+  return name === 'SINGLE' || name === 'BINARY' || name === 'TRIPLE' ? name : 'UNKNOWN';
 }

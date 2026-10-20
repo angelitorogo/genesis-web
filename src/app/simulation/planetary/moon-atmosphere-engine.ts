@@ -6,6 +6,11 @@ import {
   type MoonAtmosphereAssessment,
   type MoonAtmosphereSpeciesAssessment,
 } from '../../domain/planetary/moon-atmosphere-assessment';
+import type { MoonFormationInventory32F1d } from '../../domain/planetary/moon-formation-inventory-32-f-1d';
+import { MoonAtmosphereFormationEvolutionEngine32F1e } from './moon-atmosphere-formation-evolution-32-f-1e';
+import type { MoonAtmospherePhysicalForcing32F1 } from '../../domain/planetary/moon-atmosphere-physical-32-f-1';
+import { MoonAtmospherePhysicalEngine32F1 } from './moon-atmosphere-physical-engine-32-f-1';
+import { MoonAtmosphereAutomaticV2Source32F1c } from './moon-atmosphere-automatic-v2-32-f-1c';
 import { type MoonPhysicalProperties } from '../../domain/planetary/moon-physical-properties';
 import { type MoonTidalState } from '../../domain/planetary/moon-tidal-state';
 import {
@@ -39,6 +44,9 @@ export class MoonAtmosphereEngine {
     temperatureKelvin: number,
     iceRichnessIndex01: number,
     irradiationReferenceEarth: number,
+    independentForcing32F1: MoonAtmospherePhysicalForcing32F1 | null = null,
+    formationInventory32F1d: MoonFormationInventory32F1d | null = null,
+    orbitPeriodDays32F1e: number | null = null,
   ): MoonAtmosphereAssessment {
     if (!Number.isFinite(temperatureKelvin) || temperatureKelvin <= 0 ||
         !Number.isFinite(iceRichnessIndex01) || iceRichnessIndex01 < 0 || iceRichnessIndex01 > 1 ||
@@ -48,6 +56,19 @@ export class MoonAtmosphereEngine {
       throw new RangeError('Moon atmosphere sources must be finite and aligned.');
     }
 
+    // The 32.F.1d inventory must never be passed as an independent gaseous
+    // forcing. It provides only a conditional H2O-only endmember in 32.F.1e.
+    if (independentForcing32F1 !== null &&
+        independentForcing32F1.sourceKind !== 'INDEPENDENT_MASS_AND_FLUXES') {
+      throw new RangeError('32.F.1e conditional mass cannot impersonate independent forcing.');
+    }
+    if ((formationInventory32F1d === null) !== (orbitPeriodDays32F1e === null)) {
+      throw new RangeError('32.F.1e requires both inventory and orbit interval.');
+    }
+    const formationEvolution32F1e = formationInventory32F1d === null ? null
+      : MoonAtmosphereFormationEvolutionEngine32F1e.fromMaterialized(
+          physical, formationInventory32F1d, temperatureKelvin, orbitPeriodDays32F1e!,
+        );
     const tidalHeat = tidal.tidalHeatingIndex01;
     const escapeVelocity = EARTH_ESCAPE_VELOCITY_METERS_SECOND *
       Math.sqrt(physical.massEarth / physical.radiusEarth);
@@ -129,14 +150,34 @@ export class MoonAtmosphereEngine {
           }))
           .sort((a, b) => b.moleFraction01 - a.moleFraction01));
 
+    // Real mass/flux inputs take precedence over the old *conditional* scenario.
+    // The generator does not possess these inputs and never fabricates them.
+    const physicalBalance32F1 = independentForcing32F1 === null ? null
+      : MoonAtmospherePhysicalEngine32F1.evaluate(physical, temperatureKelvin, independentForcing32F1);
+    const physicalPressure = physicalBalance32F1?.surfacePressurePascal ?? null;
+    const physicalSpecies = physicalBalance32F1 === null || physicalPressure === null || physicalPressure <= 0
+      ? [] : physicalBalance32F1.gasResults.filter(item => item.gasMassKilograms > 0);
+    const totalMoles = physicalSpecies.reduce((sum, item) =>
+      sum + item.gasMassKilograms / (atmosphereGasMolarMassGramsPerMole(item.gas) / 1000), 0);
+    const effectiveSpecies: readonly MoonAtmosphereSpeciesAssessment[] = physicalPressure !== null
+      ? Object.freeze(physicalSpecies.map(item => Object.freeze({
+          gas: item.gas,
+          partialPressurePascal: item.partialPressurePascal,
+          moleFraction01: totalMoles > 0 ?
+            item.gasMassKilograms / (atmosphereGasMolarMassGramsPerMole(item.gas) / 1000) / totalMoles : 0,
+        }))) : species;
+    const hasPhysicalColumn = physicalPressure !== null;
     return Object.freeze({
       volatileInventoryIndex01,
       thermalEscapeSupportIndex01: clamp01(1 - escapedPressure / Math.max(1, sourcePressure)),
       replenishmentSupportIndex01,
       condensationRemovalIndex01: clamp01(condensedPressure / Math.max(1, sourcePressure - escapedPressure)),
-      estimatedSurfacePressurePascal: pressure,
-      pressureBasis: pressure === null ? 'UNRESOLVED' : 'CONDITIONAL_SCENARIO',
-      species,
+      estimatedSurfacePressurePascal: physicalBalance32F1 !== null ? physicalPressure : pressure,
+      pressureBasis: physicalBalance32F1 !== null ? (hasPhysicalColumn ? 'PHYSICAL_BALANCE' : 'UNRESOLVED') : pressure === null ? 'UNRESOLVED' : 'CONDITIONAL_SCENARIO',
+      physicalBalance32F1,
+      formationEvolution32F1e,
+      automaticConstraints32F1c: MoonAtmosphereAutomaticV2Source32F1c.fromMaterialized(physical, temperatureKelvin),
+      species: physicalBalance32F1 !== null && !hasPhysicalColumn ? Object.freeze([]) : effectiveSpecies,
       irradiationReferenceEarth,
       chargedParticleEnvironment: 'UNRESOLVED',
       hostMagnetosphereShielding: 'UNRESOLVED',

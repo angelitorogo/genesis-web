@@ -1,0 +1,75 @@
+<section class="history" aria-label="Cronología planetaria científica" data-testid="history-32-11">
+  <header class="history__header">
+    <div>
+      <small>HISTORIA PLANETARIA · CT-0 · 32.11</small>
+      <h2>Historia y causalidad</h2>
+      <p>No se muestran sucesos que no estén respaldados por registros físicos.</p>
+    </div>
+  </header>
+  @if (timeline(); as model) {
+    @if (model.status === 'LOCKED') {
+      <p class="history__notice" role="status" data-testid="history-locked">{{ model.coverageLabel }}</p>
+    } @else {
+      <p class="history__notice" role="note" data-testid="history-coverage">{{ model.coverageLabel }}</p>
+      <div class="history__toolbar">
+        <span class="history__count" aria-live="polite">{{ filtered().length }} registros accesibles</span>
+        <div class="history__filters" role="group" aria-label="Filtrar episodios">
+          <button type="button" [attr.aria-pressed]="category() === 'ALL'" (click)="setFilter('ALL')">Todos</button>
+          <button type="button" [attr.aria-pressed]="category() === 'EVENTS'" (click)="setFilter('EVENTS')">Impactos y transitorios</button>
+          <button type="button" [attr.aria-pressed]="category() === 'PROCESSES'" (click)="setFilter('PROCESSES')">Otros procesos</button>
+        </div>
+      </div>
+      @if (filtered().length === 0) {
+        <p class="history__notice" data-testid="history-no-events">No hay episodios publicados para esta selección. Esto no demuestra ausencia histórica de acontecimientos.</p>
+      } @else {
+        <div #viewport class="history__viewport" data-testid="history-viewport" role="region"
+          aria-label="Lista cronológica virtualizada" tabindex="0" (scroll)="onScroll($event)">
+          <div [style.height.px]="visibleWindow().topPaddingPx" aria-hidden="true"></div>
+          @for (row of visibleWindow().visible; track row.id) {
+            <button type="button" class="history__row" data-testid="history-row"
+              [class.history__row--selected]="selectedId() === row.id"
+              [attr.aria-pressed]="selectedId() === row.id"
+              (click)="toggleSelection(row)">
+              <span class="history__date">{{ row.timeLabel }}</span>
+              <strong>{{ row.title }}</strong>
+              <span class="history__meta">{{ row.evidenceLabel }} · {{ row.causeText }}</span>
+            </button>
+          }
+          <div [style.height.px]="visibleWindow().bottomPaddingPx" aria-hidden="true"></div>
+        </div>
+      }
+      @if (selected(); as item) {
+        <aside class="history__details" data-testid="history-details" aria-label="Detalle del episodio seleccionado">
+          <div class="history__details-head">
+            <h3>{{ item.title }}</h3>
+            <button type="button" (click)="selectedId.set(null)" aria-label="Cerrar detalle histórico">Cerrar ×</button>
+          </div>
+          <p>{{ item.timeLabel }}</p>
+          <p>{{ item.evidenceLabel }}</p>
+          <p>Procedencia científica: {{ item.sourceLabel }}</p>
+          <div class="history__relations">
+            <div>
+              <strong>Causas accesibles</strong>
+              @for (cause of selectedCauses(); track cause.id) {
+                <p>{{ cause.title }} · {{ cause.timeLabel }}</p>
+              } @empty {
+                <p>No hay relaciones causales publicadas para este episodio.</p>
+              }
+            </div>
+            <div>
+              <strong>Consecuencias accesibles</strong>
+              @for (effect of selectedEffects(); track effect.id) {
+                <p>{{ effect.title }} · {{ effect.timeLabel }}</p>
+              } @empty {
+                <p>No hay consecuencias publicadas para este episodio.</p>
+              }
+            </div>
+          </div>
+          <p class="history__disclaimer">No se infieren procesos, duración de recuperación ni vida a partir de este registro.</p>
+        </aside>
+      }
+    }
+  } @else {
+    <p class="history__notice" role="status">Cronología no conectada. No hay registros suministrados por el modelo histórico.</p>
+  }
+</section>

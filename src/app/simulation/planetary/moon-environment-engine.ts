@@ -1,4 +1,6 @@
 import { MoonAtmosphereEngine } from './moon-atmosphere-engine';
+import type { MoonFormationInventory32F1d } from '../../domain/planetary/moon-formation-inventory-32-f-1d';
+import type { MoonAtmospherePhysicalForcing32F1 } from '../../domain/planetary/moon-atmosphere-physical-32-f-1';
 import { MoonInternalWaterEngine } from './moon-internal-water-engine';
 import { moonIceOceanScenarioAdmissible, type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
 import {
@@ -65,6 +67,9 @@ export class MoonEnvironmentEngine {
 
     tidalState:
       MoonTidalState,
+
+    independentAtmosphere32F1: MoonAtmospherePhysicalForcing32F1 | null = null,
+    formationInventory32F1d: MoonFormationInventory32F1d | null = null,
   ): MoonEnvironmentState {
     assertSourceAlignment(
       hostPlanet,
@@ -320,6 +325,9 @@ export class MoonEnvironmentEngine {
         estimatedSurfaceTemperatureKelvin,
         inferredIceRichnessIndex01,
         sourceReferenceMeanInsolationEarth,
+        independentAtmosphere32F1,
+        formationInventory32F1d,
+        formationInventory32F1d === null ? null : tidalState.sourceOrbitalPeriodDays,
       ),
       internalWaterAssessment,
     );

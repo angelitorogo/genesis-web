@@ -26,6 +26,8 @@ import {
   type ArchiveDiscoveryDetailModel,
 } from '../genesis-archive/archive-discovery-detail.facade';
 
+import { ObservedHabitabilityFiche31Fe } from '../scientific/observed-habitability-fiche-31-f-e';
+
 import {
   type ScientificBodyPreviewSceneResolver,
 } from '../scientific/scientific-body-preview';
@@ -73,6 +75,37 @@ describe(
       },
     );
 
+    it.each([
+      ['tarjeta sin descriptor render', undefined, 'UNKNOWN'],
+      ['tarjeta con multiplicidad binaria', { multiplicity: { name: 'BINARY' } }, 'BINARY'],
+    ] as const)(
+      '31.F.e preserva la multiplicidad observada: %s',
+      (_case, render, expectedMultiplicity) => {
+        const originalModel = systemModel(DiscoveryState.CONFIRMED);
+        const model = {
+          ...originalModel,
+          stellarSystemCard: render === undefined
+            ? { title: 'Jotheria' }
+            : { title: 'Jotheria', render },
+        } as unknown as ArchiveDiscoveryDetailModel;
+        const projectionSpy = vi.spyOn(ObservedHabitabilityFiche31Fe, 'planet');
+        try {
+          const result = PlanetScientificCardAssembler.build(
+              model, 0n,
+              Object.freeze({ resolveDetailed: () => detailedTarget() }),
+              previewSceneResolver(),
+          );
+          expect(result.kind).toBe(PlanetScientificFicheResolutionKind.AVAILABLE);
+          expect(projectionSpy).toHaveBeenCalledWith(
+            expect.anything(), DiscoveryState.CONFIRMED, true,
+            'G3/S-17/O8/B0', expectedMultiplicity,
+          );
+        } finally {
+          projectionSpy.mockRestore();
+        }
+      },
+    );
+
     it(
       'should expose the scientific sections plus the point-26.9 Earth comparison after system confirmation without leaking procedural internals',
       () => {
@@ -113,6 +146,8 @@ describe(
         expect(result.card.title).toBe(
           'Jotheria b',
         );
+        expect(result.card.observedHabitability?.routes).toHaveLength(3);
+        expect(JSON.stringify(result.card.observedHabitability)).not.toMatch(/simulatedReality|physicalPotential|lifeProbability|sourceKey/);
         expect(result.card.planetOrdinal).toBe(1);
         expect(result.card.orbitTopologyLabel).toBe(
           'Circumbinaria',

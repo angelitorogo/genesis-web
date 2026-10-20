@@ -1,6 +1,13 @@
 import { Routes } from '@angular/router';
 
 export const genesisRoutes: Routes = [
+  // GENESIS 32.11: demo sintÃ©tica, no historia canÃ³nica del jugador.
+  {
+    path: 'laboratory/planetary-history',
+    loadComponent: () => import('./presentation/planetary-history/planetary-history-lab-32-11')
+      .then(module => module.PlanetaryHistoryLab32_11),
+    title: 'Timeline histÃ³rico | Laboratorio GENESIS',
+  },
   {
     path: '',
     pathMatch: 'full',

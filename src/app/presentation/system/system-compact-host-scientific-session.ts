@@ -1,3 +1,4 @@
+import { ObservedHabitabilityFiche31Fe } from '../scientific/observed-habitability-fiche-31-f-e';
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { SystemLocator } from '../../domain/generation/procedural-locator';
@@ -101,6 +102,8 @@ export class SystemCompactHostScientificSession {
       orbitTopologyLabel:'Circumcompacto · sistema simple',hostPlanetCount:this.planetCount,
       accessLabel:'Consulta científica habilitada',planetaryKnowledgeLabel:'Snapshot 31.4h · geofísica simulada y clima condicionado',
       locatorLabel:`G${this.model.galaxyIndex} / S${this.model.sectorKey} / O${this.model.galacticObjectIndex} / B${bodyIndex}`,
+      observedHabitability: ObservedHabitabilityFiche31Fe.unresolved('PLANET',this.model.discoveryState,true,
+        `G${this.model.galaxyIndex}/S${this.model.sectorKey}/O${this.model.galacticObjectIndex}/B${bodyIndex}`) ?? undefined,
       sections:Object.freeze({sections,comparison,relevantMoons,
         relevantMoonsEmptyMessage:'No hay lunas simuladas para este planeta; no implica ausencia física.'}),
       preview:Object.freeze({kind:ScientificBodyPreviewKind.PLANET,

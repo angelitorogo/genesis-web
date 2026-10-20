@@ -3,6 +3,7 @@ import type {
   HabitabilityScenarioAssessment,
 } from '../../domain/habitability/habitability-scenario';
 import type { MoonEnvironmentState } from '../../domain/planetary/moon-environment-state';
+import type { MoonAtmosphereAssessment } from '../../domain/planetary/moon-atmosphere-assessment';
 import type { MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
 import { MoonWaterRegime } from '../../domain/planetary/moon-water-regime';
 import { HabitabilityEngine } from './habitability-engine';
@@ -38,7 +39,7 @@ export interface MoonHabitabilityDiagnostics31_10 {
   /** Model-derived opportunity only. Not a detected water reservoir. */
   readonly volatileInventory: 'MODELED_ICE_WATER_OPPORTUNITY' | 'INVENTORY_LIMITED' | 'NOT_RESOLVED';
   readonly estimatedSurfacePressurePascal: number | null;
-  readonly atmosphericPressureBasis: 'CONDITIONAL_SCENARIO' | 'UNRESOLVED';
+  readonly atmosphericPressureBasis: MoonAtmosphereAssessment['pressureBasis'];
   readonly geometry: 'ADMISSIBLE_WITHIN_C_BOUNDS' | 'OUTSIDE_C_BOUNDS' | 'NOT_RESOLVED';
   /** Conservative geometrical ceiling of the existing C calculation. */
   readonly maximumGeometricShellKilometers: number | null;
@@ -122,7 +123,8 @@ export class HabitabilityMoonResolver31_10 {
         'moon.C.conditionalConductiveIceShell.confinement');
     }
 
-    const atmosphericPressure = moon.atmosphereAssessment?.pressureBasis === 'CONDITIONAL_SCENARIO'
+    const atmosphericPressure = moon.atmosphereAssessment?.pressureBasis === 'CONDITIONAL_SCENARIO' ||
+      moon.atmosphereAssessment?.pressureBasis === 'PHYSICAL_BALANCE'
       ? moon.atmosphereAssessment.estimatedSurfacePressurePascal : null;
     return result(context, prior, evidence, Object.freeze({
       iceOceanScenario,
@@ -195,13 +197,14 @@ function validateMoon(moon: MoonHabitabilitySource31_10): void {
   const atmosphere = moon.atmosphereAssessment;
   if (atmosphere) {
     if (atmosphere.pressureBasis !== 'CONDITIONAL_SCENARIO' &&
-        atmosphere.pressureBasis !== 'UNRESOLVED') {
+        atmosphere.pressureBasis !== 'UNRESOLVED' &&
+        atmosphere.pressureBasis !== 'PHYSICAL_BALANCE') {
       throw new RangeError('31.10: invalid lunar atmosphere pressure basis.');
     }
     const pressure = atmosphere.estimatedSurfacePressurePascal;
-    if (pressure !== null) nonnegative(pressure, 'conditional lunar surface pressure');
+    if (pressure !== null) nonnegative(pressure, 'lunar surface pressure');
     if ((atmosphere.pressureBasis === 'UNRESOLVED') !== (pressure === null)) {
-      throw new RangeError('31.10: pressure basis and conditional gas column must agree.');
+      throw new RangeError('31.10: pressure basis and gas column must agree.');
     }
     if (atmosphere.chargedParticleEnvironment !== 'UNRESOLVED' ||
         atmosphere.hostMagnetosphereShielding !== 'UNRESOLVED') {
