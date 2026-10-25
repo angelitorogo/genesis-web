@@ -5,12 +5,20 @@ const B = '1430-0000-0000-0000-0000-0000-0000-0002';
 
 async function select(page: Page, seed: string): Promise<void> {
   await page.goto('/settings');
-  await page.getByTestId('universe-seed-input').fill(seed);
+  const input = page.getByTestId('universe-seed-input');
+  // La selección persistida de V3 se hidrata desde IndexedDB al abrir Settings.
+  // No escribir mientras Angular todavía reconcilia el borrador con esa selección.
+  await expect(input).toBeEnabled({ timeout: 15_000 });
+  await input.fill(seed);
+  await expect(input).toHaveValue(seed);
   await page.getByTestId('universe-seed-apply-button').click();
+  // Do not accept a success message left over from selecting the other seed:
+  // wait for the new seed AND the confirmed persisted activation.
+  await expect(page.getByTestId('universe-seed-active'))
+    .toHaveText(seed, { timeout: 20_000 });
   await expect(page.getByTestId('universe-seed-status'))
-    .toContainText(/Universo (creado y activado|activado) correctamente/);
-  await expect(page.getByTestId('universe-seed-active')).toHaveText(seed);
-  await expect(page.getByTestId('universe-active-version')).toContainText('V2');
+    .toContainText(/Universo (creado y activado|activado) correctamente/, { timeout: 20_000 });
+  await expect(page.getByTestId('universe-active-version')).toContainText('V3');
 }
 
 /** Wait for the real map bootstrap and report its explicit failure states. */
@@ -25,13 +33,13 @@ async function readyMap(page: Page) {
   ).toBeVisible({ timeout: 15_000 });
 
   if (await mapError.isVisible()) {
-    throw new Error(`Fallo al cargar el mapa V2: ${await mapError.innerText()}`);
+    throw new Error(`Fallo al cargar el mapa V3: ${await mapError.innerText()}`);
   }
   if (await mapEmpty.isVisible()) {
-    throw new Error('El mapa no encuentra el universo V2 seleccionado.');
+    throw new Error('El mapa no encuentra el universo V3 seleccionado.');
   }
   if (await page.getByTestId('galactic-map-detailed-scene-restricted').isVisible()) {
-    throw new Error('El mapa V2 restringe la escena: la galaxia no está descubierta.');
+    throw new Error('El mapa V3 restringe la escena: la galaxia no está descubierta.');
   }
 
   const scene = page.getByTestId('galactic-map-scene');
@@ -48,7 +56,7 @@ async function points(page: Page): Promise<number> {
   return result;
 }
 
-test('14.3 — dos universos V2, progreso, recarga y navegación conservan su identidad', async ({ page }) => {
+test('14.3 — dos universos V3, progreso, recarga y navegación conservan su identidad', async ({ page }) => {
   // Playwright uses a fresh context; the user's other browser and V1 save are untouched.
   await select(page, A);
   expect(await points(page)).toBe(0);

@@ -10,7 +10,7 @@ async function createSeed(page: Page, seed: string): Promise<void> {
     'Universo creado y activado correctamente.',
   );
   await expect(page.getByTestId('universe-seed-active')).toContainText(seed);
-  await expect(page.getByTestId('universe-active-version')).toContainText('V2');
+  await expect(page.getByTestId('universe-active-version')).toContainText('V3');
 }
 
 async function readyMap(page: Page): Promise<import('@playwright/test').Locator> {
@@ -68,7 +68,7 @@ async function homePoints(page: Page): Promise<number> {
   return points;
 }
 
-test.describe('14.1 — nuevo universo V2 y primera exploración', () => {
+test.describe('14.1 — nuevo universo V3 y primera exploración', () => {
   test('inicia una partida desde cero, explora un sector y presenta el progreso en Home', async ({ page }) => {
     // Playwright provides a fresh browser context; never open or clear the user's V1 browser.
     await page.goto('/');

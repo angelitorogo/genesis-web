@@ -8,6 +8,10 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import {
+  GeneratorVersion,
+} from '../../domain/generation/generator-version';
+
+import {
   GalaxyLocator,
   type GalacticObjectLocator,
   type SectorLocator,
@@ -138,10 +142,11 @@ export class FocusedGalaxyConfirmationRuntime {
       UniverseGenerationKey,
   ): Promise<FocusedGalaxyConfirmationResult> {
 
+    // The QA materializer supports public V2 and V3 addresses. V1 stays
+    // protected; all writes below remain scoped to the selected universe key.
     if (
-      generationKey
-        .generatorVersionCode !==
-      2
+      generationKey.generatorVersion !== GeneratorVersion.V2 &&
+      generationKey.generatorVersion !== GeneratorVersion.V3
     ) {
       return {
         kind:

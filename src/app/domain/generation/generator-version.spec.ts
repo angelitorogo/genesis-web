@@ -46,7 +46,7 @@ describe(
         const unknownCodes = [
           -1,
           0,
-          3,
+          4,
           99,
         ];
 
@@ -85,7 +85,7 @@ describe(
           () =>
             GeneratorVersion
               .fromCode(
-                3,
+                4,
               ),
         ).toThrow(
           RangeError,
@@ -98,6 +98,8 @@ describe(
       expect(GeneratorVersion.fromCodeOrNull(2)).toBe(GeneratorVersion.V2);
       expect(GeneratorVersion.fromCode(2)).toBe(GeneratorVersion.V2);
       expect(GeneratorVersion.V2).not.toBe(GeneratorVersion.V1);
+      expect(GeneratorVersion.V3).toEqual({name:"V3",code:3});
+      expect(GeneratorVersion.fromCode(3)).toBe(GeneratorVersion.V3);
       expect(GeneratorVersion.isReleasedForNewUniverses(GeneratorVersion.V1)).toBe(true);
       expect(GeneratorVersion.isReleasedForNewUniverses(GeneratorVersion.V2)).toBe(true);
     });

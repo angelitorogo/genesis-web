@@ -80,7 +80,7 @@ export function appendSystemSceneMultihostCircumbinary(
     }));
     const own: SystemSceneMotionContributionSnapshot = Object.freeze({
       motionId, scale: 1, linearScenePerAu: scenePerAu,
-      presentationTimeScale: base.generatorVersionCode === 2
+      presentationTimeScale: (base.generatorVersionCode === 2 || base.generatorVersionCode === 3)
         ? v2PlanetTimeScale(motion.periodDays, playback, motion.semiMajorAxisAu,
             radialRanks.get(ordinal)!, circumbinaryPlanets.length)
         : motion.periodDays / (playback * 600),

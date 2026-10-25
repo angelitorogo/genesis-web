@@ -183,7 +183,7 @@ function completeSource31_10(target: MoonScientificResolvedTarget): MoonHabitabi
       !finiteFraction(e.inferredIceRichnessIndex01) ||
       !finitePositive(e.estimatedSurfaceTemperatureKelvin)) return null;
   return {
-    hostPlanetOrdinal: identity.hostPlanetOrdinal, moonOrdinal: identity.moonOrdinal,
+    hostPlanetOrdinal: physicalHostPlanetOrdinal(target), moonOrdinal: identity.moonOrdinal,
     sourceMoonRadiusEarth: g.radiusEarth,
     estimatedSurfaceTemperatureKelvin: e.estimatedSurfaceTemperatureKelvin,
     waterInventoryIndex01: e.waterInventoryIndex01,
@@ -194,13 +194,28 @@ function completeSource31_10(target: MoonScientificResolvedTarget): MoonHabitabi
     internalWaterAssessment: e.internalWaterAssessment ?? null,
   };
 }
+/** A public multihost planet number is NOT the ordinal of the physical
+ * child-system moon. Only the atomic multihost resolver can provide that
+ * private physical lineage; ordinary SINGLE and legacy fixtures use the
+ * canonical host ordinal. Do not derive this from the ocean being validated.
+ */
+function physicalHostPlanetOrdinal(target: MoonScientificResolvedTarget): number {
+  const source = target.physicalHostPlanetOrdinal;
+  if (source === undefined) return target.identity.hostPlanetOrdinal;
+  if (!Number.isSafeInteger(source) || source < 1) {
+    throw new RangeError('32.F.6b: invalid physical host planet ordinal.');
+  }
+  return source;
+}
+
 function validOcean(target: MoonScientificResolvedTarget): MoonOceanReality32F2c | null {
   const m = target.detail.environment.oceanReality32F2c;
   if (!m || m.provenance !== OCEAN_PROVENANCE ||
       m.contractVersion !== '32.F.2c-seeded-interior-ocean-model-v1') return null;
   const identity = target.identity;
-  if (identity && ((Number.isInteger(identity.hostPlanetOrdinal) &&
-      identity.hostPlanetOrdinal !== m.hostPlanetOrdinal) ||
+  const physicalHostOrdinal = physicalHostPlanetOrdinal(target);
+  if (identity && ((Number.isInteger(physicalHostOrdinal) &&
+      physicalHostOrdinal !== m.hostPlanetOrdinal) ||
       (Number.isInteger(identity.moonOrdinal) && identity.moonOrdinal !== m.moonOrdinal))) {
     throw new RangeError('32.F.6b: moon/ocean identities differ; refuse physical evidence.');
   }
@@ -242,14 +257,15 @@ function inspectOtherPhysicalModels(target: MoonScientificResolvedTarget,
   ocean: MoonOceanReality32F2c | null): MoonHabitabilityPhysicsCoverage32F6b {
   const e = target.detail.environment;
   const identity = target.identity;
+  const physicalHostOrdinal = physicalHostPlanetOrdinal(target);
   for (const [name, model] of [
     ['radiation', e.radiationProtection32F3],
     ['chemistry', e.geochemicalEnergy32F4],
     ['history', e.environmentalHistory32F5],
   ] as const) {
     if (!model || !identity) continue;
-    if ((Number.isInteger(identity.hostPlanetOrdinal) &&
-         model.hostPlanetOrdinal !== identity.hostPlanetOrdinal) ||
+    if ((Number.isInteger(physicalHostOrdinal) &&
+         model.hostPlanetOrdinal !== physicalHostOrdinal) ||
         (Number.isInteger(identity.moonOrdinal) &&
          model.moonOrdinal !== identity.moonOrdinal)) {
       throw new RangeError(`32.F.6b: ${name} model and lunar identity differ.`);

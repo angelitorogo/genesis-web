@@ -19,7 +19,7 @@ export function projectPulsarSecondGenerationPlanets(
   orbits: readonly SystemSceneOrbitSnapshot[];
   motions: readonly SystemSceneOrbitalMotionSnapshot[];
 }> {
-  if (snapshot.generatorVersionCode !== 2 || snapshot.multiplicityName !== 'SINGLE' ||
+  if ((snapshot.generatorVersionCode !== 2 && snapshot.generatorVersionCode !== 3) || snapshot.multiplicityName !== 'SINGLE' ||
       snapshot.knowledgeLevel !== 'CATALOGUED' && snapshot.knowledgeLevel !== 'CONFIRMED' ||
       !snapshot.stars.length) {
     throw new RangeError('Second-generation planets require a catalogued V2 SINGLE source.');

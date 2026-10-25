@@ -1,0 +1,142 @@
+{
+  "contract": "PRE-33.11b/V3-GALACTIC-STATISTICAL-CALIBRATION/v1",
+  "universeSeed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "samplingKey": "PRE33_11B_INDEPENDENT_AUDIT_SAMPLER_V1",
+  "sectorsPerRegion": 10,
+  "universeGenerator": "V3",
+  "evidencePolicy": "GROUND_TRUTH_SIMULATED_ONLY_NEVER_OBSERVED",
+  "galaxies": [
+    {
+      "galaxy": "Elixisis",
+      "galaxyIndex": 0,
+      "gridHalfExtent": 71,
+      "emptySectorCellsByRegion": {
+        "CENTRAL": 93,
+        "INNER": 1175,
+        "MIDDLE": 3928,
+        "OUTER": 6998
+      },
+      "calibration": {
+        "contract": "PRE-33.11b/V3-STRATIFIED-SECTOR-SAMPLING/v1",
+        "inferenceScope": "GALAXY_SECTOR_GRID_V3_SIMULATED_UNIVERSE",
+        "strategy": "STRATIFIED_SRS_OCCUPIED_SECTORS_WITHOUT_REPLACEMENT_PLUS_ONE_UNIFORM_LOCATOR",
+        "regionFrames": {
+          "CENTRAL": 264,
+          "INNER": 1005,
+          "MIDDLE": 1304,
+          "OUTER": 1046
+        },
+        "regionSampleSizes": {
+          "CENTRAL": 10,
+          "INNER": 10,
+          "MIDDLE": 10,
+          "OUTER": 10
+        },
+        "sectorsSampled": 40,
+        "emptySectors": 0,
+        "expanded": {
+          "planets": 31813.5,
+          "detailedMoons": 50991.7,
+          "identityOnlyMoons": 28690.4,
+          "moonLiquidH2O": 1338.2,
+          "moonAbsentH2O": 6048.5,
+          "moonUnknownH2O": 43605,
+          "planetLiquidH2O": 0,
+          "allMoons": 79682.09999999999
+        },
+        "regionalOpportunities": {
+          "CENTRAL": {
+            "occupiedSectorCells": 264,
+            "sampledSectorCells": 10,
+            "expandedPlanets": 3564,
+            "expandedDetailedMoons": 7048.8,
+            "expandedIdentityOnlyMoons": 8184,
+            "expandedLiquidH2O": 316.8,
+            "expandedUnknownH2O": 5517.6,
+            "modeledAqueousAmongDetailed": 0.0449438202247191
+          },
+          "INNER": {
+            "occupiedSectorCells": 1005,
+            "sampledSectorCells": 10,
+            "expandedPlanets": 9949.5,
+            "expandedDetailedMoons": 16582.5,
+            "expandedIdentityOnlyMoons": 10854,
+            "expandedLiquidH2O": 603,
+            "expandedUnknownH2O": 14070,
+            "modeledAqueousAmongDetailed": 0.03636363636363636
+          },
+          "MIDDLE": {
+            "occupiedSectorCells": 1304,
+            "sampledSectorCells": 10,
+            "expandedPlanets": 11605.6,
+            "expandedDetailedMoons": 16691.2,
+            "expandedIdentityOnlyMoons": 8606.4,
+            "expandedLiquidH2O": 0,
+            "expandedUnknownH2O": 15126.4,
+            "modeledAqueousAmongDetailed": 0
+          },
+          "OUTER": {
+            "occupiedSectorCells": 1046,
+            "sampledSectorCells": 10,
+            "expandedPlanets": 6694.4,
+            "expandedDetailedMoons": 10669.2,
+            "expandedIdentityOnlyMoons": 1046,
+            "expandedLiquidH2O": 418.4,
+            "expandedUnknownH2O": 8891,
+            "modeledAqueousAmongDetailed": 0.039215686274509796
+          }
+        },
+        "amongDetailedMoons": {
+          "quantity": "MODELED_H2O_CT0_AMONG_CHARACTERIZED_MOONS",
+          "point": 0.02624348668508797,
+          "standardErrorApprox": 0.010456099894220456,
+          "interval95Approx": [
+            0.0057495308924158765,
+            0.04673744247776006
+          ],
+          "interpretation": "DESIGN_APPROXIMATION_NOT_BIOLOGICAL_PROBABILITY"
+        },
+        "amongAllMoonsLowerBound": {
+          "quantity": "MINIMUM_KNOWN_MODELED_H2O_CT0_AMONG_ALL_MOONS",
+          "point": 0.01679423609568523,
+          "standardErrorApprox": 0.005719862919958716,
+          "interval95Approx": [
+            0.005583304772566147,
+            0.028005167418804315
+          ],
+          "interpretation": "DESIGN_APPROXIMATION_NOT_BIOLOGICAL_PROBABILITY"
+        },
+        "potentialAllMoonEnvelope": [
+          0.01679423609568523,
+          0.9240921110261903
+        ],
+        "families": {
+          "VOLCANIC": 2747.9999999999995,
+          "ICE": 8570.2,
+          "MINI_NEPTUNE": 11239.900000000001,
+          "DESERT": 2471.6,
+          "SUPER_EARTH": 340,
+          "ROCKY": 4990.1,
+          "GAS_GIANT": 237.6,
+          "ICE_GIANT": 1216.1
+        },
+        "status": "CALIBRATED_MODEL_OPPORTUNITY_INDICATORS",
+        "life": "NOT_EVALUATED",
+        "alternativeSolvents": "PHASE_UNRESOLVED",
+        "physicalEnergyAndRadiation": "NOT_CERTIFIED",
+        "limitations": [
+          "Inference is about the generated V3 finite grid and a randomized sector/locator design, not real astrophysical frequencies.",
+          "Expanded counts and approximate intervals are design-based model indicators; small strata, rare events and one locator per sector increase uncertainty.",
+          "Unknown phases and identity-only moons are retained in an identification envelope, not recoded as absent or biologically compatible.",
+          "CT-0 aqueous liquid is not chemical energy, survivable ionising dose, environmental historical continuity, abiogenesis, life or observed knowledge.",
+          "NH3 and CH4 liquid states require independent physical source models; no alternative biochemistry frequency is inferred.",
+          "An exact occupied-sector frame is enumerated from V3 locator lists only. Sampling uses an audit key independent of the universe seed."
+        ]
+      },
+      "issues": []
+    }
+  ],
+  "PRE3311aComparison": "Its 60 systems are a nonprobabilistic ring/quadrant coverage sample, not a galaxy population census or confidence interval.",
+  "life": "NOT_EVALUATED",
+  "verdict": "PRE33_11B_V3_GALACTIC_STATISTICAL_CALIBRATION_AUDITED"
+}

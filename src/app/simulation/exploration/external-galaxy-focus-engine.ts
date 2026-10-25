@@ -62,8 +62,9 @@ export class ExternalGalaxyFocusEngine {
 
     if (
       (generationKey
-        .generatorVersion === GeneratorVersion.V1 || generationKey
-        .generatorVersion === GeneratorVersion.V2)
+        .generatorVersion === GeneratorVersion.V1 || (generationKey
+        .generatorVersion === GeneratorVersion.V2 || generationKey
+        .generatorVersion === GeneratorVersion.V3))
     ) {
       return this.buildV1(
         currentGalaxyIndex,
@@ -94,8 +95,9 @@ export class ExternalGalaxyFocusEngine {
 
     if (
       (generationKey
-        .generatorVersion === GeneratorVersion.V1 || generationKey
-        .generatorVersion === GeneratorVersion.V2)
+        .generatorVersion === GeneratorVersion.V1 || (generationKey
+        .generatorVersion === GeneratorVersion.V2 || generationKey
+        .generatorVersion === GeneratorVersion.V3))
     ) {
       return this.resolveV1(
         offer,

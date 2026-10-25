@@ -39,7 +39,7 @@ export function v2PlanetTimeScale(
  * consumers together so satellite paths and camera tracking stay coherent.
  */
 export function withV2SinglePlanetCadence(snapshot: SystemSceneSnapshot): SystemSceneSnapshot {
-  if (snapshot.generatorVersionCode !== 2) return snapshot;
+  if ((snapshot.generatorVersionCode !== 2 && snapshot.generatorVersionCode !== 3)) return snapshot;
   const planetMotionIds = new Set(snapshot.orbits
     .filter(orbit => orbit.kind === 'planetary' && orbit.motionId !== null)
     .map(orbit => orbit.motionId!));

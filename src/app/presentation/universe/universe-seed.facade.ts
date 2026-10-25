@@ -46,7 +46,7 @@ export class UniverseSeedFacade {
         UniverseSeed.parse(
           DEFAULT_UNIVERSE_SEED,
         ),
-        GeneratorVersion.V1,
+        GeneratorVersion.V3,
       ),
     );
 
@@ -145,7 +145,7 @@ export class UniverseSeedFacade {
     });
   }
 
-  applyDraft(version: GeneratorVersion = this.activeGenerationKeyState().generatorVersion):
+  applyDraft(version: GeneratorVersion = GeneratorVersion.V3):
     boolean {
 
     const candidate =
@@ -217,6 +217,14 @@ export class UniverseSeedFacade {
     this.activeGenerationKeyState.set(key);
     this.draftState.set(key.universeSeed.serialize());
     this.explicitlySelected = true;
+  }
+
+  /** Clear any previous success synchronously before starting a new IndexedDB activation. */
+  markUniverseActivationPending(): void {
+    this.feedbackState.set({
+      kind: 'idle',
+      message: 'Activando universo…',
+    });
   }
 
   markUniverseCreated():

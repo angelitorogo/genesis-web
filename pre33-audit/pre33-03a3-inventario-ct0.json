@@ -1,0 +1,354 @@
+{
+  "contract": "PRE-33.03a.3/ct0-species-ledger/v1",
+  "generator": "V3",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "scope": "Read-only V3 planet inventory: physical carrier H2O is chemically hypothetical until formation, escape and delivery sources are independent.",
+  "interpretation": "PRE-33.03a.3 checks deterministic species mass ledgers and conservation. 19.5 carrier endmembers are conditional; dated H2O forcing not established by this public V3 sample. Unresolved does not mean zero water. No oceans CT0 or observed discovery certified.",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "single": 14,
+      "multiple": 6,
+      "planets": 144,
+      "solid": 72,
+      "deep": 72,
+      "geometryConditional": 74,
+      "radialUnresolved": 70,
+      "zeroShell": 0,
+      "possibleHighPressureDomain": 74,
+      "verifiedMaterialMass": 144,
+      "ct0OceansCertified": 0,
+      "conditionalSourceMassValidated": 144,
+      "ct0RetainedQuantified": 0,
+      "unclosedHistoricalForcing": 144,
+      "certificationBlockersValidated": 144,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Hethor b",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Hethor c",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Hethor d",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Hethor e",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Hethor f",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            2883193.4260863587,
+            1886559.9118813295
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Hethor g",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            2750323.063359267,
+            1813769.5372936642
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Hethor h",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            2886891.3209810797,
+            1871970.0737372842
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Hethor i",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            3558741.3356360886,
+            2342932.528446479
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Phaephae b",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "single": 17,
+      "multiple": 3,
+      "planets": 126,
+      "solid": 76,
+      "deep": 50,
+      "geometryConditional": 64,
+      "radialUnresolved": 62,
+      "zeroShell": 0,
+      "possibleHighPressureDomain": 64,
+      "verifiedMaterialMass": 126,
+      "ct0OceansCertified": 0,
+      "conditionalSourceMassValidated": 126,
+      "ct0RetainedQuantified": 0,
+      "unclosedHistoricalForcing": 126,
+      "certificationBlockersValidated": 126,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Yutia b",
+          "host": "B",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Yutia c",
+          "host": "B",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Yutia d",
+          "host": "B",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Yutia e",
+          "host": "B",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Yutia f",
+          "host": "B",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Yutia g",
+          "host": "B",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [
+            1627538.8402877618,
+            1072615.3057312444
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Lariis b",
+          "host": "C",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Lariis c",
+          "host": "C",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Lariis d",
+          "host": "C",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "single": 15,
+      "multiple": 5,
+      "planets": 143,
+      "solid": 74,
+      "deep": 69,
+      "geometryConditional": 80,
+      "radialUnresolved": 63,
+      "zeroShell": 0,
+      "possibleHighPressureDomain": 80,
+      "verifiedMaterialMass": 143,
+      "ct0OceansCertified": 0,
+      "conditionalSourceMassValidated": 143,
+      "ct0RetainedQuantified": 0,
+      "unclosedHistoricalForcing": 143,
+      "certificationBlockersValidated": 143,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Phoris b",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris c",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris d",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris e",
+          "host": "A",
+          "status": "RADIAL_REFERENCE_INCOMPATIBLE",
+          "domain": "SOLID_SURFACE_REFERENCE",
+          "layerMeters": [],
+          "highPressurePossible": null,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris f",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            3393811.5367863234,
+            2237925.9468126334
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris g",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            4498533.188946793,
+            2994335.825589141
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris h",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            2318417.6831594612,
+            1486781.9748625662
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris i",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            4387765.169211106,
+            2967739.1529196166
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        },
+        {
+          "body": "Phoris j",
+          "host": "A",
+          "status": "CONDITIONAL_GEOMETRY",
+          "domain": "DEEP_GAS_ENVELOPE_NO_SOLID_SURFACE",
+          "layerMeters": [
+            2388627.7861597706,
+            1527938.710997777
+          ],
+          "highPressurePossible": true,
+          "waterCertified": false
+        }
+      ]
+    }
+  ],
+  "oceansCertified": 0,
+  "playerKnowledgeModified": false,
+  "verdict": "CT0_WATER_LEDGER_VALIDATED_PHYSICAL_CERTIFICATION_UNRESOLVED"
+}

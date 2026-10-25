@@ -5,6 +5,8 @@ import {
 import {
   GeneratorVersion,
 } from '../../domain/generation/generator-version';
+import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
+import { UniverseSeed } from '../../domain/universe/universe-seed';
 
 import {
   DEFAULT_UNIVERSE_SEED,
@@ -57,6 +59,16 @@ describe(
       },
     );
 
+    it('uses V3 for a new seed even after an old save was active', () => {
+      const old = new UniverseGenerationKey(
+        UniverseSeed.parse(DEFAULT_UNIVERSE_SEED), GeneratorVersion.V2,
+      );
+      facade.activatePersistedUniverse(old);
+      facade.updateDraft('1337-0000-0000-0000-0000-0000-0000-0003');
+      expect(facade.applyDraft()).toBe(true);
+      expect(facade.generatorVersion()).toBe(GeneratorVersion.V3);
+    });
+
     it(
       'should serialize the active seed canonically',
       () => {
@@ -71,18 +83,18 @@ describe(
     );
 
     it(
-      'should expose GeneratorVersion V1',
+      'should expose GeneratorVersion V3 by default',
       () => {
         expect(
           facade.generatorVersion(),
         ).toBe(
-          GeneratorVersion.V1,
+          GeneratorVersion.V3,
         );
 
         expect(
           facade.generatorVersionCode(),
         ).toBe(
-          1,
+          3,
         );
       },
     );
@@ -105,7 +117,7 @@ describe(
         expect(
           key.generatorVersion,
         ).toBe(
-          GeneratorVersion.V1,
+          GeneratorVersion.V3,
         );
       },
     );
@@ -163,7 +175,7 @@ describe(
         expect(
           facade.generatorVersion(),
         ).toBe(
-          GeneratorVersion.V1,
+          GeneratorVersion.V3,
         );
       },
     );

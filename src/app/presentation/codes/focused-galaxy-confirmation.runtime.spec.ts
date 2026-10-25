@@ -138,4 +138,81 @@ describe('FocusedGalaxyConfirmationRuntime', () => {
     await expect(runtime.confirmFocusedGalaxy(otherKey)).resolves.toEqual({ kind: 'unsupported-version' });
     expect(planned).toBe(false);
   });
+  it('confirma en V3 todos los destinos de la galaxia enfocada y mantiene aislados V2, V1 y otras galaxias', async () => {
+    const v3 = new UniverseGenerationKey(key.universeSeed.copy(), GeneratorVersion.V3);
+    const states = new Map<string, DiscoveryStateValue>([
+      ['3/G:2', DiscoveryState.DISCOVERED],
+      ['3/G:8', DiscoveryState.DISCOVERED],
+      ['2/G:2', DiscoveryState.DISCOVERED],
+      ['2/Y:2:12:0', DiscoveryState.CATALOGUED],
+    ]);
+    const address = (version: number, locator: ProceduralLocator) =>
+      `${version}/${locatorKey(locator)}`;
+    const navigation: UniverseNavigationRepository = {
+      async getNavigation() { return { activeGalaxyIndex: 2n, recentGalaxyIndices: [8n] }; },
+      async setNavigation() { throw new Error('QA no debe cambiar el foco.'); },
+    };
+    const discovery: DiscoveryRepository = {
+      async getState(generationKey, locator) {
+        return states.get(address(generationKey.generatorVersionCode, locator)) ?? DiscoveryState.UNKNOWN;
+      },
+      async setState(generationKey, locator, state) {
+        states.set(address(generationKey.generatorVersionCode, locator), state);
+      },
+      async getKnownDiscoveries() { return []; },
+      async getKnownDiscoveriesInSector() { return []; },
+    };
+    let plans = 0;
+    const plan: FocusedGalaxyConfirmationPlanFactory = (generationKey, galaxyIndex) => {
+      expect(generationKey.generatorVersion).toBe(GeneratorVersion.V3);
+      expect(galaxyIndex).toBe(2n);
+      plans += 1;
+      return {
+        totalSectors: 1n,
+        sectors: [{
+          sectorLocator: new SectorLocator(2n, 12n),
+          systemLocators: [new SystemLocator(2n, 12n, 0n)],
+          galacticObjectLocators: [new GalacticObjectLocator(2n, 12n, 1n)],
+        }],
+      };
+    };
+    const runtime = new FocusedGalaxyConfirmationRuntime(navigation, discovery, plan);
+    const expected = { kind: 'confirmed', galaxyIndex: 2n, sectors: 1n, systems: 1n, galacticObjects: 1n };
+    await expect(runtime.confirmFocusedGalaxy(v3)).resolves.toEqual(expected);
+    await expect(runtime.confirmFocusedGalaxy(v3)).resolves.toEqual(expected);
+    expect(plans).toBe(2);
+    for (const locator of [
+      new GalaxyLocator(2n), new SectorLocator(2n, 12n),
+      new SystemLocator(2n, 12n, 0n), new GalacticObjectLocator(2n, 12n, 1n),
+    ]) {
+      expect(states.get(address(3, locator))).toBe(DiscoveryState.CONFIRMED);
+    }
+    expect(states.get('3/G:8')).toBe(DiscoveryState.DISCOVERED);
+    expect(states.get('2/G:2')).toBe(DiscoveryState.DISCOVERED);
+    expect(states.get('2/Y:2:12:0')).toBe(DiscoveryState.CATALOGUED);
+    await expect(runtime.confirmFocusedGalaxy(otherKey)).resolves.toEqual({ kind: 'unsupported-version' });
+    expect(plans).toBe(2);
+  });
+
+  it('V3 sin galaxia conocida en foco no escribe descubrimientos ni crea planes', async () => {
+    const v3 = new UniverseGenerationKey(key.universeSeed.copy(), GeneratorVersion.V3);
+    let planned = false;
+    const navigation: UniverseNavigationRepository = {
+      async getNavigation() { return { activeGalaxyIndex: 2n, recentGalaxyIndices: [] }; },
+      async setNavigation() { throw new Error('No write expected.'); },
+    };
+    const discovery: DiscoveryRepository = {
+      async getState() { return DiscoveryState.UNKNOWN; },
+      async setState() { throw new Error('No write expected.'); },
+      async getKnownDiscoveries() { return []; },
+      async getKnownDiscoveriesInSector() { return []; },
+    };
+    const runtime = new FocusedGalaxyConfirmationRuntime(navigation, discovery, () => {
+      planned = true;
+      return { totalSectors: 0n, sectors: [] };
+    });
+    await expect(runtime.confirmFocusedGalaxy(v3)).resolves.toEqual({ kind: 'no-focused-galaxy' });
+    expect(planned).toBe(false);
+  });
+
 });

@@ -46,9 +46,8 @@ async function setGlobalDiscoveryPoints(
         );
 
       try {
-        // Stage 12.2 creates a new universe as V2; an existing V1 save
-        // must keep V1. Resolve the *persisted* version instead of writing
-        // artificial PD into the old hard-coded V1 progress record.
+        // New seeds create V3; persisted V1/V2 saves keep their versions.
+        // Resolve the real persisted identity before inserting test progress.
         const universes =
           await new Promise<
             readonly {
@@ -68,10 +67,10 @@ async function setGlobalDiscoveryPoints(
         );
         if (
           matches.length !== 1 ||
-          ![1, 2].includes(matches[0].generatorVersionCode)
+          ![1, 2, 3].includes(matches[0].generatorVersionCode)
         ) {
           throw new Error(
-            'E2E progress setup requires exactly one persisted V1/V2 universe for the target seed.',
+            'E2E progress setup requires exactly one persisted V1/V2/V3 universe for the target seed.',
           );
         }
         const generatorVersionCode = matches[0].generatorVersionCode;

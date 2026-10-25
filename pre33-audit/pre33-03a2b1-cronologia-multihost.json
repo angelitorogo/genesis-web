@@ -1,0 +1,633 @@
+{
+  "contract": "PRE-33.03a.2b.1/coeval-shadow/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "generator": "V2",
+  "interpretation": "Public V2 uses independent private V1 scopes for components B/C. Coeval primary-A reference is an alternative counterfactual; state recomputed from frozen initial mass/metallicity; only coarse-phase-compatible branches may produce conditional H2O histories. NOT a correction/migration of frozen V2; no CT0 water certified.",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "multipleSystems": 6,
+      "multiplePlanets": 77,
+      "distinctFrozenAges": 77,
+      "frozenAlreadyCoeval": 0,
+      "coevalReferenceCompleted": 36,
+      "phaseConflict": 0,
+      "missingInputs": 0,
+      "missingPrimaryAge": 0,
+      "forcingOrSurface": 41,
+      "physicalConservationPassed": 36,
+      "mutationFailures": 0,
+      "ct0WaterCertified": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Wionaor b",
+          "host": "AB",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            13.546465669286288,
+            5.9400270465115526
+          ],
+          "referenceAgeGyr": 13.546465669286288,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia b",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia c",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia d",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia e",
+          "host": "A",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia f",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia g",
+          "host": "A",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia h",
+          "host": "A",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia i",
+          "host": "A",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion b",
+          "host": "B",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion c",
+          "host": "B",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion d",
+          "host": "B",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "referenceAgeGyr": 12.508522326027592,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "multipleSystems": 3,
+      "multiplePlanets": 40,
+      "distinctFrozenAges": 40,
+      "frozenAlreadyCoeval": 0,
+      "coevalReferenceCompleted": 15,
+      "phaseConflict": 0,
+      "missingInputs": 0,
+      "missingPrimaryAge": 0,
+      "forcingOrSurface": 25,
+      "physicalConservationPassed": 15,
+      "mutationFailures": 0,
+      "ct0WaterCertified": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Yutia b",
+          "host": "B",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia c",
+          "host": "B",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia d",
+          "host": "B",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia e",
+          "host": "B",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia f",
+          "host": "B",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia g",
+          "host": "B",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis b",
+          "host": "C",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis c",
+          "host": "C",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis d",
+          "host": "C",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis e",
+          "host": "C",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis f",
+          "host": "C",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis g",
+          "host": "C",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "referenceAgeGyr": 10.654320140594388,
+          "componentPhaseCompatible": [
+            true,
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "multipleSystems": 5,
+      "multiplePlanets": 71,
+      "distinctFrozenAges": 71,
+      "frozenAlreadyCoeval": 0,
+      "coevalReferenceCompleted": 39,
+      "phaseConflict": 0,
+      "missingInputs": 0,
+      "missingPrimaryAge": 0,
+      "forcingOrSurface": 32,
+      "physicalConservationPassed": 39,
+      "mutationFailures": 0,
+      "ct0WaterCertified": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Traren b",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren c",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren d",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren e",
+          "host": "A",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren f",
+          "host": "A",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren g",
+          "host": "A",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren h",
+          "host": "A",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos b",
+          "host": "B",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos c",
+          "host": "B",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos d",
+          "host": "B",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos e",
+          "host": "B",
+          "status": "COEVAL_REFERENCE_CONDITIONAL_COMPLETED",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos f",
+          "host": "B",
+          "status": "UNRESOLVED_FORCING_OR_SURFACE",
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "referenceAgeGyr": 0.012200584330736326,
+          "componentPhaseCompatible": [
+            true,
+            true
+          ],
+          "waterCT0Certified": false
+        }
+      ]
+    }
+  ],
+  "verdict": "COEVAL_SHADOW_AUDIT_PASSED_FROZEN_V2_UNCHANGED"
+}

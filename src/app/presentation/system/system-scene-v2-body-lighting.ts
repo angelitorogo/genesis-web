@@ -41,7 +41,7 @@ export function systemSceneLightingTargets<
     readonly minorBodies: readonly Minor[];
   },
 ): readonly (Planet | Moon | Minor)[] {
-  if (snapshot.generatorVersionCode !== 2) return snapshot.planets;
+  if ((snapshot.generatorVersionCode !== 2 && snapshot.generatorVersionCode !== 3)) return snapshot.planets;
   return [...snapshot.planets, ...snapshot.moons, ...snapshot.minorBodies];
 }
 

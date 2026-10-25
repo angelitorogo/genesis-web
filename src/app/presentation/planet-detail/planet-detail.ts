@@ -127,7 +127,7 @@ export class PlanetDetailPage
         return this.compactSession()?.planetFiche(this.requestedBodyIndex) ??
           this.multihostSession()?.planetFiche(this.requestedBodyIndex) ??
           this.v2SingleSession()?.planetFiche(this.requestedBodyIndex) ??
-          (model.generatorVersionCode === 2
+          ((model.generatorVersionCode === 2 || model.generatorVersionCode === 3)
             ? PlanetScientificCardAssembler.build(model, this.requestedBodyIndex,
                 { resolveDetailed: () => null })
             : PlanetScientificCardAssembler.build(model, this.requestedBodyIndex));

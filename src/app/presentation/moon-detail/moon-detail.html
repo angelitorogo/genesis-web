@@ -17,6 +17,8 @@
           @if (resolution(); as currentResolution) {
             @if (currentResolution.kind === 'AVAILABLE') {
               {{ currentResolution.card.title }}
+            } @else if (currentResolution.kind === 'IDENTITY_ONLY') {
+              {{ currentResolution.name }}
             } @else {
               Ficha de luna
             }
@@ -26,9 +28,14 @@
         </h1>
 
         <p class="moon-detail__subtitle">
-          Caracterización científica detallada del satélite organizada en General,
-          Órbita, Mareas y rotación, Entorno, Atmósfera, Radiación, Geoquímica y energía,
-          Historia ambiental, Habitabilidad y Comparación con la Tierra.
+          @if (resolution()?.kind === 'IDENTITY_ONLY') {
+            Identidad lunar confirmada. Caracterización física bajo demanda con escenarios
+            condicionales; las magnitudes ambientales individuales siguen sin resolver.
+          } @else {
+            Caracterización científica detallada del satélite organizada en General,
+            Órbita, Mareas y rotación, Entorno, Atmósfera, Radiación, Geoquímica y energía,
+            Historia ambiental, Habitabilidad y Comparación con la Tierra.
+          }
         </p>
       </div>
 
@@ -108,6 +115,47 @@
                   <strong>No hay una ficha científica individual para esta luna</strong>
                   <p>{{ currentResolution.reason }}</p>
                 </div>
+              </section>
+            }
+
+            @case ('IDENTITY_ONLY') {
+              <section class="moon-detail__panel" data-testid="moon-pre33-10-identity-only">
+                <small>PRE-33.10 · CUERPO CONOCIDO · FÍSICA BAJO DEMANDA</small>
+                <h2>{{ currentResolution.name }}</h2>
+                <p>Planeta anfitrión: {{ currentResolution.host }}. Su identidad está confirmada, pero la
+                caracterización física completa no está resuelta.</p>
+                <dl class="moon-detail__section-facts">
+                  <div><dt>Estado dinámico</dt><dd>{{ minorMoonStatus(currentResolution.characterization.status) }}</dd></div>
+                  <div><dt>Época física</dt><dd>{{ currentResolution.characterization.epochYears }} años</dd></div>
+                  <div><dt>Masa de escenario (supuesto, M⊕)</dt>
+                    <dd>{{ minorMoonNumber(currentResolution.characterization.scenarioMassEarth) }}</dd></div>
+                  <div><dt>Radio de escenario (supuesto)</dt>
+                    <dd>{{ minorMoonRadius(currentResolution.characterization.scenarioRadiusEarth) }}</dd></div>
+                  <div><dt>Órbita de escenario (supuesto, radios planetarios)</dt>
+                    <dd>{{ minorMoonNumber(currentResolution.characterization.scenarioSemiMajorAxisPlanetRadii) }}</dd></div>
+                  <div><dt>Período de escenario (supuesto, días)</dt>
+                    <dd>{{ minorMoonNumber(currentResolution.characterization.scenarioOrbitalPeriodDays) }}</dd></div>
+                  <div><dt>Techo del prior de masa por luna (supuesto, M⊕)</dt>
+                    <dd>{{ minorMoonNumber(currentResolution.characterization.massPriorCeilingEarth) }}</dd></div>
+                  <div><dt>Referencia Roche fluido (densidad lunar supuesta, radios planetarios)</dt>
+                    <dd>{{ minorMoonNumber(currentResolution.characterization.rocheFluidReferenceInnerPlanetRadii) }}</dd></div>
+                  <div><dt>Referencia exterior prógrada (0,49 × Hill; órbita circular supuesta, radios planetarios)</dt>
+                    <dd>{{ minorMoonNumber(currentResolution.characterization.hillProgradeReferenceOuterPlanetRadii) }}</dd></div>
+                  <div><dt>Intervalo empleado para muestreo (radios planetarios; no acredita estabilidad)</dt>
+                    <dd>{{ minorMoonNumber(currentResolution.characterization.samplingInnerPlanetRadii) }} –
+                        {{ minorMoonNumber(currentResolution.characterization.samplingOuterPlanetRadii) }}
+                        @if (currentResolution.characterization.samplingCeilingIsNumerical) {
+                          (el techo de 1.000 radios es numérico, no una frontera física)
+                        }
+                    </dd></div>
+                  <div><dt>Composición, agua, atmósfera y dosis</dt><dd>No resueltas</dd></div>
+                  <div><dt>Habitabilidad y vida</dt><dd>No evaluadas; ausencia de ficha no implica esterilidad</dd></div>
+                </dl>
+                <p>La masa procede de un prior arbitrado por el modelo (10⁻⁵ de la masa anfitriona
+                repartido entre lunas menores y limitado por las lunas detalladas), no de un límite
+                físico medido. Las referencias Roche y Hill son aproximaciones bajo hipótesis,
+                no certifican una órbita estable, ni una órbita lunar individual reconstruida.
+                No se crean hábitats, vida o evidencia observada a partir de este cálculo.</p>
               </section>
             }
 

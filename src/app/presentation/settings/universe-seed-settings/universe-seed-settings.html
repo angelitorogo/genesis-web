@@ -59,7 +59,7 @@
       for="universe-seed-input"
       class="seed-panel__label"
     >
-      Introducir seed manualmente (semilla nueva: V2; existente: versión guardada)
+      Introducir seed manualmente (los universos nuevos se generan con V3)
     </label>
 
     <input
@@ -71,6 +71,7 @@
       maxlength="39"
       placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
       data-testid="universe-seed-input"
+      [disabled]="restoringSelection()"
       [value]="seed.draft()"
       [attr.aria-invalid]="!seed.draftIsValid()"
       (input)="onSeedInput($event)"
@@ -81,6 +82,7 @@
         type="button"
         class="seed-panel__button seed-panel__button--primary"
         data-testid="universe-seed-apply-button"
+        [disabled]="restoringSelection()"
         (click)="applySeed()"
       >
         Usar seed

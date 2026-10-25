@@ -84,7 +84,7 @@ describe('14.3 — recarga real de V2 frente a una partida V1 homónima', () => 
         providers: [{ provide: GENESIS_LOCAL_REPOSITORIES, useValue: repositories }],
       });
       const freshSelection = TestBed.inject(UniverseSeedFacade);
-      expect(freshSelection.generatorVersion()).toBe(GeneratorVersion.V1);
+      expect(freshSelection.generatorVersion()).toBe(GeneratorVersion.V3);
       const dashboard = TestBed.inject(HomeFacade);
       await dashboard.refresh();
       expect(dashboard.state().kind).toBe('content');

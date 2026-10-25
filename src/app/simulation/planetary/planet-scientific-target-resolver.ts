@@ -1,3 +1,14 @@
+import type { GeochemistryPRE3307 } from '../../domain/planetary/geochemistry-pre33-07';
+import type { RadiationWorldPRE3308 } from '../../domain/planetary/radiation-transport-pre33-08';
+import { RadiationTransportEnginePRE3308 } from './radiation-transport-engine-pre33-08';
+import { GeochemistryWorldPRE3307 } from './geochemistry-world-pre33-07';
+import type { AtmosphereClosurePRE3306 } from '../../domain/planetary/atmosphere-causal-closure-pre33-06';
+import { AtmosphereCausalClosureEnginePRE3306 } from './atmosphere-causal-closure-engine-pre33-06';
+import { AtmosphereV3FormationEvolutionPRE3306 } from './atmosphere-v3-formation-evolution-pre33-06';
+import { PlanetH2OCT0InventoryEnginePRE3303A3 } from './planet-h2o-ct0-inventory-pre33-03a3';
+import { PlanetH2OForwardCT0EnginePRE3303A3 } from './planet-h2o-forward-ct0-pre33-03a3';
+import { PlanetH2OV3FormationOrigin } from './planet-h2o-v3-formation-origin';
+import { PlanetDeepOceanEnvelopeEnginePRE3303B } from './planet-deep-ocean-envelope-pre33-03b';
 import type { MaterializedPrimary31Fi3 } from '../planetary-history/planetary-v2-dated-physics-31-f-i-3';
 import { PlanetaryHistoricalRuntime31Fi1 } from '../planetary-history/planetary-historical-runtime-31-f-i-1';
 import { HabitabilityPhysicalIntegration31Fb,
@@ -6,6 +17,12 @@ import { HabitabilityPhysicalIntegration31Fb,
 import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
 import type { MoonWaterPhaseInventory32F2a } from '../../domain/planetary/moon-water-phase-inventory-32-f-2a';
 import type { MoonInteriorStructure32F2b } from '../../domain/planetary/moon-interior-structure-32-f-2b';
+import type { MoonEnergyConfinementPRE3305 } from '../../domain/planetary/moon-energy-confinement-pre33-05';
+import type { MoonAtmosphereBalancePRE3306 } from '../../domain/planetary/moon-atmosphere-balance-pre33-06';
+import { MoonAtmosphereBalanceEnginePRE3306 } from './moon-atmosphere-balance-engine-pre33-06';
+import { MoonEnergyConfinementEnginePRE3305 } from './moon-energy-confinement-engine-pre33-05';
+import type { MoonSubsurfaceDomainPRE3304 } from '../../domain/planetary/moon-subsurface-domain-pre33-04';
+import { MoonSubsurfaceDomainEnginePRE3304 } from './moon-subsurface-domain-engine-pre33-04';
 import type { MoonOceanReality32F2c } from '../../domain/planetary/moon-ocean-reality-32-f-2c';
 import type { MoonRadiationProtection32F3 } from '../../domain/planetary/moon-radiation-protection-32-f-3';
 import type { MoonGeochemicalEnergy32F4 } from '../../domain/planetary/moon-geochemical-energy-32-f-4';
@@ -198,6 +215,12 @@ export interface PlanetScientificRelevantMoonSource {
   readonly waterPhaseInventory32F2a?: MoonWaterPhaseInventory32F2a | null;
   readonly interiorStructure32F2b?: MoonInteriorStructure32F2b | null;
   readonly oceanReality32F2c?: MoonOceanReality32F2c | null;
+  readonly subsurfaceDomainPRE3304?: MoonSubsurfaceDomainPRE3304 | null;
+  readonly energyConfinementPRE3305?: MoonEnergyConfinementPRE3305 | null;
+  readonly atmosphereBalancePRE3306?: MoonAtmosphereBalancePRE3306 | null;
+  readonly atmosphereClosurePRE3306?: AtmosphereClosurePRE3306 | null;
+  readonly geochemistryPRE3307?: GeochemistryPRE3307 | null;
+  readonly radiationPRE3308?: RadiationWorldPRE3308 | null;
   readonly radiationProtection32F3?: MoonRadiationProtection32F3 | null;
   readonly geochemicalEnergy32F4?: MoonGeochemicalEnergy32F4 | null;
 
@@ -293,6 +316,8 @@ export interface PlanetScientificRelevantMoonSource {
 }
 
 export interface PlanetScientificDetailSource {
+  readonly geochemistryPRE3307?: GeochemistryPRE3307 | null;
+  readonly radiationPRE3308?: RadiationWorldPRE3308 | null;
   readonly general:
     Readonly<{
       planetType: string;
@@ -349,6 +374,36 @@ export interface PlanetScientificDetailSource {
       surfaceRadiationExposureIndex01: number | null;
       surfaceRadiationProtectionIndex01: number | null;
       hasEffectiveSurfaceRadiationProtection: boolean;
+      h2oCT0Ledger?: Readonly<{
+        status: 'UNRESOLVED_NO_DATED_HISTORY' | 'MODELED_CT0_BALANCE_CONDITIONAL';
+        modeledCarrierH2OKilograms: number;
+        retainedConditionalKilograms: number | null;
+        escapedConditionalKilograms: number | null;
+        forwardFormationKilograms: number | null;
+        forwardRetainedCT0Kilograms: number | null;
+        forwardStatus: string;
+        forwardDiskTemperatureKelvin: number | null;
+        forwardOriginModel: boolean;
+        forwardModelClosed: boolean;
+        forwardExternalDeliveryKilograms: number | null;
+        forwardEscapedKilograms: number | null;
+        forwardBasePressurePascal: number | null;
+        forwardDeepShellThicknessMeters: number | null;
+        forwardHighPressureIcePossible: boolean | null;
+        forwardLiquidLayerThicknessMeters: number | null;
+        forwardHistorySource: string | null;
+        physicalInventoryCertified: false;
+        oceanCertified: false;
+      }>;
+      deepStructureScenario?: Readonly<{
+        status: string;
+        layerMinMeters: number | null;
+        layerMaxMeters: number | null;
+        basePressureMaximumPascal: number | null;
+        highPressureIcePossible: boolean | null;
+        gaseousEnvelopeMassEarth: number;
+        exposedSolidSurface: boolean;
+      }>;
     }>;
 
   readonly atmosphere:
@@ -365,6 +420,7 @@ export interface PlanetScientificDetailSource {
       isVacuum: boolean;
       isDeepEnvelope: boolean;
       retainedGasComposition: readonly PlanetScientificGasSource[];
+      closurePRE3306?: AtmosphereClosurePRE3306 | null;
     }>;
 
   readonly climate:
@@ -411,6 +467,12 @@ export interface PlanetScientificDetailSource {
       surfaceHabitabilityCandidateCount: number;
       subsurfaceHabitabilityCandidateCount: number;
       relevantMoons: readonly PlanetScientificRelevantMoonSource[];
+      /** PRE-33.10b: V3 canonical identity-only moons, no physical materialization. */
+      minorMoonIdentities?: readonly Readonly<{
+        designation: string;
+        moonIndex: number;
+        moonOrdinal: number;
+      }>[];
     }>;
 }
 
@@ -528,6 +590,7 @@ export class PlanetScientificTargetResolver {
     retainedStellarHistory?: MaterializedPrimary31Fi3,
     publicHost?: { readonly multiplicity: 'BINARY' | 'TRIPLE';
       readonly component: 'A' | 'B' | 'C' | 'AB' },
+    publicGeneratorVersionCode: number = planet.generationKey.generatorVersion.code,
   ): PlanetScientificResolvedTarget {
     if (atmosphere.hostPlanet !== planet || moonSystem.hostPlanet !== planet) {
       throw new Error('Scientific projection must receive one consistent generated planet.');
@@ -536,10 +599,30 @@ export class PlanetScientificTargetResolver {
     // 26.4 projects; it does not call any generator or extend the public card.
     const internalHabitability = HabitabilityPhysicalIntegration31Fb.assessMaterialized(
       planet, atmosphere, moonSystem);
+    // Internal CT-0 structural hypothesis only, never observed ocean evidence.
+    const deepStructure = PlanetDeepOceanEnvelopeEnginePRE3303B.project(planet, atmosphere);
+    const ct0Ledger = PlanetH2OCT0InventoryEnginePRE3303A3.project(planet, atmosphere, undefined, undefined, deepStructure);
+    // V3 sources were created at the 17.7 -> 18 handoff, before 19.5.
+    // V1/V2 without a registered origin keep their previously frozen projection.
+    const originDisk = PlanetH2OV3FormationOrigin.environmentForPlanet(planet, atmosphere);
+    const forwardH2O = PlanetH2OForwardCT0EnginePRE3303A3.project(
+      planet, atmosphere, originDisk ?? undefined);
+    const atmosphereClosurePRE3306 = publicGeneratorVersionCode===3
+      ? AtmosphereV3FormationEvolutionPRE3306.planet(planet,atmosphere,
+          PlanetH2OV3FormationOrigin.sourceForPlanet(planet))
+      : null;
+    const planetRadiationPRE3308 = publicGeneratorVersionCode===3
+      ? RadiationTransportEnginePRE3308.world({bodyKind:'PLANET',
+          hasSolidSurface:deepStructure.envelope.hasExposedSolidSurface,
+          surfaceGravityEarth:planet.surfaceGravityEarth, atmosphericClosure:atmosphereClosurePRE3306}) : null;
+    const planetGeochemistryPRE3307 = publicGeneratorVersionCode===3
+      ? GeochemistryWorldPRE3307.planet(planet,atmosphereClosurePRE3306,forwardH2O) : null;
     const projected: PlanetScientificResolvedTarget = Object.freeze({
       identity,
       detail:
         Object.freeze({
+          geochemistryPRE3307:planetGeochemistryPRE3307,
+          radiationPRE3308:planetRadiationPRE3308,
           general:
             Object.freeze({
               planetType:
@@ -640,9 +723,49 @@ export class PlanetScientificTargetResolver {
                 atmosphere.surfaceRadiationProtectionIndex01,
               hasEffectiveSurfaceRadiationProtection:
                 atmosphere.hasEffectiveSurfaceRadiationProtection,
+              h2oCT0Ledger: Object.freeze({
+                // CT0 forward V3 model supersedes the legacy 19.5-origin
+                // reconciliation in the projected status only. The legacy
+                // domain result is preserved as a separate reference.
+                status: forwardH2O.v3ModelBalanceCertified===true
+                  ? 'MODELED_CT0_BALANCE_CONDITIONAL' as const : ct0Ledger.status,
+                modeledCarrierH2OKilograms: ct0Ledger.waterKilograms.formationReference,
+                retainedConditionalKilograms: forwardH2O.v3ModelBalanceCertified===true
+                  ? forwardH2O.waterKilograms.modeledCT0 : ct0Ledger.waterKilograms.retainedCT0,
+                escapedConditionalKilograms: forwardH2O.v3ModelBalanceCertified===true
+                  ? forwardH2O.waterKilograms.escaped : ct0Ledger.waterKilograms.escaped,
+                forwardFormationKilograms: forwardH2O.waterKilograms.modeledFormation,
+                forwardRetainedCT0Kilograms: forwardH2O.waterKilograms.modeledCT0,
+                forwardStatus: forwardH2O.status,
+                forwardDiskTemperatureKelvin: forwardH2O.chemistry.diskTemperatureKelvin,
+                forwardOriginModel: forwardH2O.source.chemistry === 'V3_FORMATION_DISK_ELEMENTAL_MODEL',
+                forwardModelClosed: forwardH2O.v3ModelBalanceCertified===true,
+                forwardExternalDeliveryKilograms: forwardH2O.waterKilograms.externalDelivery,
+                forwardEscapedKilograms: forwardH2O.waterKilograms.escaped,
+                forwardBasePressurePascal: forwardH2O.deepWater.basePressurePascal,
+                forwardDeepShellThicknessMeters: forwardH2O.deepWater.shellThicknessMeters,
+                forwardHighPressureIcePossible: forwardH2O.deepWater.highPressureIceDomainPossible,
+                forwardLiquidLayerThicknessMeters: forwardH2O.deepWater.liquidLayerThicknessMeters,
+                forwardHistorySource: forwardH2O.source.historyId,
+                physicalInventoryCertified: ct0Ledger.physicalCT0InventoryCertified,
+                oceanCertified: ct0Ledger.oceanExistenceCertified,
+              }),
+              deepStructureScenario: Object.freeze({
+                status: deepStructure.candidateWaterShell.status,
+                layerMinMeters: deepStructure.candidateWaterShell.geometryBracket.length
+                  ? Math.min(...deepStructure.candidateWaterShell.geometryBracket.map(g => g.waterLayerThicknessMeters)) : null,
+                layerMaxMeters: deepStructure.candidateWaterShell.geometryBracket.length
+                  ? Math.max(...deepStructure.candidateWaterShell.geometryBracket.map(g => g.waterLayerThicknessMeters)) : null,
+                basePressureMaximumPascal: deepStructure.candidateWaterShell.geometryBracket.length
+                  ? Math.max(...deepStructure.candidateWaterShell.geometryBracket.map(g => g.baseOverburdenPascal)) : null,
+                highPressureIcePossible: deepStructure.candidateWaterShell.couldReachHighPressureIceDomain,
+                gaseousEnvelopeMassEarth: planet.internalComposition.gaseousEnvelopeMassEarth,
+                exposedSolidSurface: deepStructure.envelope.hasExposedSolidSurface,
+              }),
             }),
           atmosphere:
             Object.freeze({
+              closurePRE3306: atmosphereClosurePRE3306,
               pressureRegime:
                 atmosphere.pressureRegime,
               retainedPressureRegime:
@@ -754,6 +877,19 @@ export class PlanetScientificTargetResolver {
                 moonSystem.surfaceHabitabilityCandidateCount,
               subsurfaceHabitabilityCandidateCount:
                 moonSystem.subsurfaceHabitabilityCandidateCount,
+              // PRE-33.10b: only the canonical names and ordinal indices are
+              // projected to CONFIRMED V3 fiches. No seed, phase-21 minor
+              // physical model, hypothetical orbit, or discovery promotion.
+              minorMoonIdentities:
+                Object.freeze(publicGeneratorVersionCode === 3
+                  ? moonSystem.moonIdentities
+                      .slice(moonSystem.relevantMoonCount)
+                      .map(identity => Object.freeze({
+                        designation: identity.designation.name,
+                        moonIndex: identity.moonOrdinal - 1,
+                        moonOrdinal: identity.moonOrdinal,
+                      }))
+                  : []),
               relevantMoons:
                 Object.freeze(
                   moonSystem
@@ -823,6 +959,24 @@ export class PlanetScientificTargetResolver {
                             moon.atmosphereRegime,
                           atmosphereAssessment:
                             moon.environmentState.atmosphereAssessment,
+                          // PRE-33.06 V3 generates a dated, mass-conserving lunar
+                          // scenario from formation volatiles. Unknown species are
+                          // kept CONDITIONAL, never promoted to causal/observed.
+                          atmosphereClosurePRE3306:
+                            publicGeneratorVersionCode===3
+                              ? AtmosphereV3FormationEvolutionPRE3306.moon(
+                                  moon.physicalProperties,
+                                  moon.environmentState.atmosphereAssessment,
+                                  moon.formationInventory32F1d??null,planet,
+                                  PlanetH2OV3FormationOrigin.sourceForPlanet(planet),
+                                  moon.environmentState.equilibriumTemperatureKelvin)
+                              : null,
+                          atmosphereBalancePRE3306:
+                            publicGeneratorVersionCode===3
+                              ? MoonAtmosphereBalanceEnginePRE3306.fromMaterialized(
+                                  moon.physicalProperties,
+                                  moon.environmentState.atmosphereAssessment,
+                                ) : null,
                           internalWaterAssessment:
                             moon.environmentState.internalWaterAssessment,
                           waterPhaseInventory32F2a:
@@ -831,10 +985,47 @@ export class PlanetScientificTargetResolver {
                             moon.interiorStructure32F2b,
                           oceanReality32F2c:
                             moon.oceanReality32F2c,
+                          // PRE-33.05 energy is sourced once from the V3 moon's
+                          // immutable orbital/structural/CT-0 model, not V1 indices.
+                          energyConfinementPRE3305:
+                            publicGeneratorVersionCode === 3 &&
+                            moon.formationInventory32F1d && moon.interiorStructure32F2b &&
+                            moon.oceanReality32F2c
+                              ? MoonEnergyConfinementEnginePRE3305.fromMaterialized(
+                                  moon.physicalProperties,moon.tidalState,
+                                  moon.formationInventory32F1d,moon.interiorStructure32F2b,
+                                  moon.oceanReality32F2c,
+                                ) : null,
+                          // PRE-33.04: derived strictly from already-materialized
+                          // lunar physical/CT-0 sources on the public V3 route.
+                          // Legacy V1/V2 public fiches remain unchanged.
+                          subsurfaceDomainPRE3304:
+                            publicGeneratorVersionCode === 3 &&
+                            moon.formationInventory32F1d && moon.interiorStructure32F2b &&
+                            moon.oceanReality32F2c
+                              ? MoonSubsurfaceDomainEnginePRE3304.fromMaterialized(
+                                  moon.physicalProperties,
+                                  moon.formationInventory32F1d,
+                                  moon.interiorStructure32F2b,
+                                  moon.oceanReality32F2c,
+                                  moon.environmentState.internalWaterAssessment,
+                                  MoonEnergyConfinementEnginePRE3305.fromMaterialized(
+                                    moon.physicalProperties,moon.tidalState,
+                                    moon.formationInventory32F1d,moon.interiorStructure32F2b,
+                                    moon.oceanReality32F2c,
+                                  ),
+                                ) : null,
                           radiationProtection32F3:
                             moon.radiationProtection32F3,
+                          radiationPRE3308:publicGeneratorVersionCode===3
+                            ? RadiationTransportEnginePRE3308.world({bodyKind:'MOON',
+                                hasSolidSurface:true,surfaceGravityEarth:moon.physicalProperties.surfaceGravityEarth,
+                                atmosphericClosure:null,lunarReference:moon.radiationProtection32F3}) : null,
                           geochemicalEnergy32F4:
                             moon.geochemicalEnergy32F4,
+                          geochemistryPRE3307:publicGeneratorVersionCode===3
+                            ? GeochemistryWorldPRE3307.moon(moon.geochemicalEnergy32F4,null,
+                                moon.formationInventory32F1d??null,moon.interiorStructure32F2b??null) : null,
                           waterInventoryIndex01:
                             moon.environmentState.waterInventoryIndex01,
                           subsurfaceOceanPotentialIndex01:

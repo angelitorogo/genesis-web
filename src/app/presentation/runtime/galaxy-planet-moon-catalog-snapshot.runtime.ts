@@ -1,3 +1,4 @@
+import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
 import { InjectionToken } from '@angular/core';
 import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
@@ -85,13 +86,14 @@ export interface GalaxyKnowledgeMoonCatalogEntry {
   readonly composition: GalaxyKnowledgeMoonComposition;
   readonly hostLabel: string;
   readonly orbitClass: 'SINGLE_HOST' | 'COMPACT_HOST' | 'S_TYPE' | 'P_TYPE';
-  readonly massEarth: number;
-  readonly radiusEarth: number;
-  readonly orbitalPeriodDays: number;
-  readonly inferredIceRichnessIndex01: number;
-  readonly surfaceLiquidWaterPotentialIndex01: number;
-  readonly subsurfaceOceanPotentialIndex01: number;
-  readonly waterRegime: MoonWaterRegime;
+  readonly materializationPRE3310?: 'IDENTITY_ONLY' | 'DETAILED';
+  readonly massEarth: number | null;
+  readonly radiusEarth: number | null;
+  readonly orbitalPeriodDays: number | null;
+  readonly inferredIceRichnessIndex01: number | null;
+  readonly surfaceLiquidWaterPotentialIndex01: number | null;
+  readonly subsurfaceOceanPotentialIndex01: number | null;
+  readonly waterRegime: MoonWaterRegime | null;
   readonly atmosphere?: CatalogAtmosphereState | null;
 }
 
@@ -101,6 +103,7 @@ export interface GalaxyKnowledgePlanetMoonCatalogSnapshot {
   readonly moons: readonly GalaxyKnowledgeMoonCatalogEntry[];
   readonly unmaterializedMinorMoonCount: bigint;
   readonly atmosphereProjectionVersion?: 1;
+  readonly identityCoveragePRE3310?: 1;
 }
 
 export interface GalaxyPlanetMoonCatalogSnapshotRuntime {
@@ -177,6 +180,8 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
       existing.knowledgeRevision === knowledgeRevision &&
       existing.planetMoonCatalogJson !== undefined
       && JSON.parse(existing.planetMoonCatalogJson).atmosphereProjectionVersion === 1
+      && (generationKey.generatorVersion !== GeneratorVersion.V3 ||
+        JSON.parse(existing.planetMoonCatalogJson).identityCoveragePRE3310 === 1)
     ) {
       const snapshot = restoreSnapshot(existing.planetMoonCatalogJson);
       this.hotSnapshot = Object.freeze({
@@ -293,6 +298,7 @@ export function buildGalaxyPlanetMoonCatalogSnapshot(
     moons: Object.freeze(moons),
     unmaterializedMinorMoonCount,
     atmosphereProjectionVersion: 1 as const,
+    ...(generationKey.generatorVersion === GeneratorVersion.V3 ? { identityCoveragePRE3310: 1 as const } : {}),
   });
 }
 
@@ -349,20 +355,40 @@ function projectConfirmedSystem(
   const multiple = StellarMultihostFormation.generateOrNull(generationKey, locator);
 
   if (multiple !== null) {
-    return projectMultipleSystem(systemDesignation, locator, multiple);
+    return projectMultipleSystem(systemDesignation, locator, multiple, generationKey.generatorVersion === GeneratorVersion.V3);
   }
 
   const single = StellarMultihostFormation.generateSingleOrNull(generationKey, locator);
   if (single === null) {
     throw new Error('CONFIRMED system could not resolve its physical host for 26.1c.3.');
   }
-  return projectSingleSystem(systemDesignation, locator, single);
+  return projectSingleSystem(systemDesignation, locator, single, generationKey.generatorVersion === GeneratorVersion.V3);
+}
+
+/** PRE-33.10: catalog the identity without evaluating physics on galaxy listing. */
+function projectIdentityOnlyMoon(
+  locator: MoonLocator, parent: SystemLocator, designation: string,
+  hostPlanetDesignation: string, systemDesignation: string, hostLabel: string,
+  orbitClass: GalaxyKnowledgeMoonCatalogEntry['orbitClass'],
+): GalaxyKnowledgeMoonCatalogEntry {
+  return Object.freeze({
+    id: moonLocatorLabel(locator), locator, parentSystemLocator: parent,
+    designation, hostPlanetDesignation, systemDesignation,
+    stateName: DiscoveryState.CONFIRMED.name,
+    composition: 'UNCLASSIFIED' as const, hostLabel, orbitClass,
+    materializationPRE3310: 'IDENTITY_ONLY' as const,
+    massEarth: null, radiusEarth: null, orbitalPeriodDays: null,
+    inferredIceRichnessIndex01: null,
+    surfaceLiquidWaterPotentialIndex01: null,
+    subsurfaceOceanPotentialIndex01: null, waterRegime: null, atmosphere: null,
+  });
 }
 
 function projectSingleSystem(
   systemDesignation: string,
   locator: SystemLocator,
   single: GeneratedSingleHost,
+  v3 = false,
 ): ProjectedSystemCatalog {
   const planets: GalaxyKnowledgePlanetCatalogEntry[] = [];
   const moons: GalaxyKnowledgeMoonCatalogEntry[] = [];
@@ -401,6 +427,16 @@ function projectSingleSystem(
     ));
 
     unmaterializedMinorMoonCount += BigInt(moonSystem.unmaterializedMinorMoonCount);
+    if (moonSystem.unmaterializedMinorMoonCount > 0 &&
+        v3) {
+      for (const identity of moonSystem.moonIdentities.slice(moonSystem.relevantMoonCount)) {
+        const publicMoonLocator = new MoonLocator(locator.galaxyIndex, locator.sectorKey,
+          locator.galacticObjectIndex, BigInt(index), BigInt(identity.moonOrdinal - 1));
+        moons.push(projectIdentityOnlyMoon(publicMoonLocator, locator,
+          `${planet.designation.name} ${moonRomanNumeralV1(identity.moonOrdinal)}`,
+          planet.designation.name, systemDesignation, 'A', 'SINGLE_HOST'));
+      }
+    }
     for (const moon of moonSystem.relevantMoons) {
       moons.push(projectRelevantMoon(
         moon.identity.locator,
@@ -450,6 +486,7 @@ function projectMultipleSystem(
   systemDesignation: string,
   locator: SystemLocator,
   multiple: GeneratedMultipleHost,
+  v3 = false,
 ): ProjectedSystemCatalog {
   const planets = multiple.publicPlanets.map(entry => projectMultiplePlanet(
     systemDesignation,
@@ -466,13 +503,21 @@ function projectMultipleSystem(
 
   for (const publicMoon of publicIndex.moons) {
     const moon = publicMoon.relevantMoon;
-    if (moon === null) continue;
+    if (moon === null && !v3) continue;
     const host = publicMoon.parent.host;
     const hostPlanetDesignation = stellarMultihostPublicPlanetDesignation(
       systemDesignation,
       host,
       publicMoon.parent.sourcePlanetOrdinal,
     );
+    if (moon === null) {
+      moons.push(projectIdentityOnlyMoon(publicMoon.publicLocator, locator,
+        stellarMultihostPublicMoonDesignation(systemDesignation, host,
+          publicMoon.parent.sourcePlanetOrdinal, publicMoon.sourceIdentity.moonOrdinal),
+        hostPlanetDesignation, systemDesignation, host,
+        host === 'AB' ? 'P_TYPE' : 'S_TYPE'));
+      continue;
+    }
     moons.push(projectRelevantMoon(
       publicMoon.publicLocator,
       locator,
@@ -668,6 +713,7 @@ function restoreSnapshot(json: string): GalaxyKnowledgePlanetMoonCatalogSnapshot
     moons: readonly RawMoon[];
     unmaterializedMinorMoonCount: bigint;
     atmosphereProjectionVersion?: 1;
+    identityCoveragePRE3310?: 1;
   };
 
   return Object.freeze({
@@ -676,6 +722,7 @@ function restoreSnapshot(json: string): GalaxyKnowledgePlanetMoonCatalogSnapshot
     moons: Object.freeze(raw.moons.map(restoreMoon)),
     unmaterializedMinorMoonCount: raw.unmaterializedMinorMoonCount,
     atmosphereProjectionVersion: raw.atmosphereProjectionVersion,
+    identityCoveragePRE3310: raw.identityCoveragePRE3310,
   });
 }
 

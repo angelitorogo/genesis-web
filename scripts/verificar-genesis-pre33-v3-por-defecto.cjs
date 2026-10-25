@@ -1,0 +1,21 @@
+'use strict';
+const { readFileSync } = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const read = rel => readFileSync(path.join(root, rel), 'utf8');
+function assert(condition, message) { if (!condition) throw new Error(message); }
+const facade = read('src/app/presentation/universe/universe-seed.facade.ts');
+const settings = read('src/app/presentation/settings/universe-seed-settings/universe-seed-settings.ts');
+const html = read('src/app/presentation/settings/universe-seed-settings/universe-seed-settings.html');
+const e2e = read('e2e/v3-first-universe.spec.ts');
+const version = read('src/app/domain/generation/generator-version.ts');
+const multihost = read('src/app/simulation/stellar/stellar-multihost-formation.ts');
+assert(/DEFAULT_UNIVERSE_SEED[\s\S]*?GeneratorVersion\.V3,/.test(facade), 'Initial UniverseGenerationKey must be V3.');
+assert(/applyDraft\(version: GeneratorVersion = GeneratorVersion\.V3\)/.test(facade), 'New seeds must default to V3.');
+assert(/selected\?\.generatorVersion \?\? GeneratorVersion\.V3/.test(settings), 'Settings new-seed fallback must be V3.');
+assert(/\(click\)="applySeed\(\)"/.test(html), 'The regular Use seed button must remain active.');
+assert(!html.includes('universe-seed-create-v3-button') && !settings.includes('createV3Game('), 'Separate V3 button must be absent.');
+assert(e2e.includes("getByTestId('universe-seed-apply-button').click()"), 'E2E must use the regular seed action.');
+assert(version.includes('if (code === V3.code) return V3'), 'Persisted code 3 must resolve to V3.');
+assert(multihost.includes('GeneratorVersion.V3'), 'Public multi-host formation must support V3.');
+console.log('PASS PRE33 V3 automatic: initial facade, new seed, sole button, persistence, multihost, E2E.');

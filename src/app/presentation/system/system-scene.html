@@ -155,7 +155,7 @@
           [class.system-scene__layer-button--active]="focusedLaboratoryStar() === star.id"
           (click)="centerLaboratorySystem(star.id)"
         >
-          {{ laboratoryMultipleControls || (gameplaySceneControls && snapshot.generatorVersionCode === 2) ? 'CENTRAR SISTEMA' : 'CENTRAR ESTRELLA' }} {{ star.label }}
+          {{ laboratoryMultipleControls || (gameplaySceneControls && (snapshot.generatorVersionCode === 2 || snapshot.generatorVersionCode === 3)) ? 'CENTRAR SISTEMA' : 'CENTRAR ESTRELLA' }} {{ star.label }}
         </button>
       }
     }
@@ -232,7 +232,7 @@
               }
             }
             <small>
-              @if (gameplaySceneControls && snapshot.generatorVersionCode === 2) {
+              @if (gameplaySceneControls && (snapshot.generatorVersionCode === 2 || snapshot.generatorVersionCode === 3)) {
                 S: zona alrededor de cada estrella; P: referencia del par A–B solo cuando
                 el modelo físico la considera aplicable. Una HZ radiativa no garantiza estabilidad.
               } @else {

@@ -219,6 +219,30 @@ describe('31.4: atomic public compact-host system and planet cutover',()=>{
     }
   });
 
+  it('PRE-33.10b supplies the complete accordion contract for compact-host planets', () => {
+    const session = SystemCompactHostScientificSession.buildOrNull(fixture(DiscoveryState.CONFIRMED))!;
+    for (const planet of session.system.planets) {
+      const fiche = session.planetFiche(planet.locator.bodyIndex);
+      expect(fiche.kind).toBe(PlanetScientificFicheResolutionKind.AVAILABLE);
+      if (fiche.kind !== PlanetScientificFicheResolutionKind.AVAILABLE) {
+        throw new Error('Compact-host planet fiche unavailable.');
+      }
+      const { relevantMoons, allMoons } = fiche.card.sections;
+      const expected = session.system.secondaries.moons.filter(
+        moon => moon.parentPlanetOrdinal === planet.ordinal,
+      );
+      expect(allMoons).toHaveLength(expected.length);
+      expect(allMoons.map(moon => moon.moonIndex)).toEqual(expected.map(moon => moon.ordinal - 1));
+      expect(allMoons.map(moon => moon.designation)).toEqual(
+        relevantMoons.map(moon => moon.designation),
+      );
+      expect(allMoons.every(moon => moon.kind === 'DETAILED')).toBe(true);
+      expect(allMoons.every(moon => moon.fields.length === 4)).toBe(true);
+      expect(Object.isFrozen(allMoons)).toBe(true);
+      expect(allMoons.every(moon => Object.isFrozen(moon))).toBe(true);
+    }
+  });
+
   it('uses the same planet ordinal, orbit and body locator in 3D and the scientific fiche',()=>{
     const model=fixture(DiscoveryState.CONFIRMED);
     const session=SystemCompactHostScientificSession.buildOrNull(model)!;

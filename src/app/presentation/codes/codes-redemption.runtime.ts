@@ -38,7 +38,7 @@ export class DexieCodesRedemptionRuntime {
       return { kind: 'invalid-code' };
     }
     // The feature is for V2 testing only; never mutate an existing V1 save.
-    if (generationKey.generatorVersionCode !== 2) {
+    if ((generationKey.generatorVersionCode !== 2 && generationKey.generatorVersionCode !== 3)) {
       return { kind: 'unsupported-version' };
     }
     await this.database.openDatabase();
@@ -87,7 +87,7 @@ export class DexieCodesRedemptionRuntime {
 
   /** Read only persisted receipts for this precise (seed, version) universe. */
   async getMaxSectorBlockSize(generationKey: UniverseGenerationKey): Promise<number> {
-    if (generationKey.generatorVersionCode !== 2) return 1;
+    if ((generationKey.generatorVersionCode !== 2 && generationKey.generatorVersionCode !== 3)) return 1;
     await this.database.openDatabase();
     const seed = generationKey.universeSeed.serialize();
     if (await this.database.universes.get([seed, generationKey.generatorVersionCode]) === undefined) {

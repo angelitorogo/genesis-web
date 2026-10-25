@@ -192,17 +192,17 @@ export class SystemSceneMultihostComposition {
       const scales = new Map<string, number>();
       const cometVisuals = new Map<string, V2CometVisualOrbit>();
       const ownStar = local.stars[0]!;
-      const localStarRadius = base.generatorVersionCode === 2
+      const localStarRadius = (base.generatorVersionCode === 2 || base.generatorVersionCode === 3)
         ? Math.max(0.055, Math.min(0.19, ownStar.radiusScene * factor))
         : Math.max(0.075, Math.min(0.24, ownStar.radiusScene * factor));
       const localStarOpticalRadius = Math.max(localStarRadius,
-        Math.min(base.generatorVersionCode === 2 ? 0.235 : 0.3,
+        Math.min((base.generatorVersionCode === 2 || base.generatorVersionCode === 3) ? 0.235 : 0.3,
           (ownStar.opticalRadiusScene ?? ownStar.radiusScene) * factor));
       for (const motion of local.motions) {
         const guideForMotion = orbitByMotion.get(motion.id);
         const rawAxis = (guideForMotion?.semiMajorScene ??
           motion.semiMajorAxisAu * local.scale.orbitScaleScenePerAu) * factor;
-        const comet = base.generatorVersionCode === 2 && guideForMotion?.kind === 'minor-body' &&
+        const comet = (base.generatorVersionCode === 2 || base.generatorVersionCode === 3) && guideForMotion?.kind === 'minor-body' &&
           guideForMotion.presentationEccentricity !== undefined;
         const visual = comet ? buildV2CometVisualOrbit({
           physicalSemiMajorScene: rawAxis,
@@ -229,11 +229,11 @@ export class SystemSceneMultihostComposition {
           // Each materialized host can have a different local playback clock.
           // Preserve its category/rank-defined VISUAL duration on the aggregate
           // clock; do not impose the legacy 90-second minimum on V2 minors.
-          const minorCadence = base.generatorVersionCode === 2 &&
+          const minorCadence = (base.generatorVersionCode === 2 || base.generatorVersionCode === 3) &&
             part.motionId.startsWith('minor-') && physical !== undefined
               ? previousTime * local.simulation.playbackDaysPerRealSecond / playback
               : null;
-          const planetCadence = radialRank !== undefined && physical && base.generatorVersionCode === 2
+          const planetCadence = radialRank !== undefined && physical && (base.generatorVersionCode === 2 || base.generatorVersionCode === 3)
             ? v2PlanetTimeScale(physical.periodDays, playback, physical.semiMajorAxisAu,
                 radialRank, rankedPlanetMotions.length) : null;
           return Object.freeze({ ...part, motionId: namespaced(part.motionId),
@@ -247,7 +247,7 @@ export class SystemSceneMultihostComposition {
         })]);
       const star = local.stars[0]!;
       // V2 source radii are already reduced once. Keep frozen V1 presentation.
-      const isV2 = formation.parentGenerationKey.generatorVersionCode === 2;
+      const isV2 = (formation.parentGenerationKey.generatorVersionCode === 2 || formation.parentGenerationKey.generatorVersionCode === 3);
       const starRadius = isV2
         ? Math.max(0.055, Math.min(0.19, star.radiusScene * factor))
         : Math.max(0.075, Math.min(0.24, star.radiusScene * factor));

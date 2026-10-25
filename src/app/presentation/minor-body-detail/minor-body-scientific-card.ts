@@ -246,12 +246,12 @@ export class MinorBodyScientificCardAssembler {
 
     // V2 public identities live in A/B/C private physical sources. Never
     // invoke a V1 generator with the public V2 key or use a V1 preview scene.
-    const v2Source = systemModel.generatorVersionCode === GeneratorVersion.V2.code &&
+    const v2Source = (systemModel.generatorVersionCode === GeneratorVersion.V2.code || systemModel.generatorVersionCode === GeneratorVersion.V3.code) &&
       resolver === DEFAULT_TARGET_RESOLVER
       ? resolveV2MinorBodySource(systemModel, generationKey, systemLocator,
           targetKind, proceduralId)
       : null;
-    if (systemModel.generatorVersionCode === GeneratorVersion.V2.code &&
+    if ((systemModel.generatorVersionCode === GeneratorVersion.V2.code || systemModel.generatorVersionCode === GeneratorVersion.V3.code) &&
         resolver === DEFAULT_TARGET_RESOLVER && v2Source === null) {
       return Object.freeze({
         kind: MinorBodyScientificFicheResolutionKind.NOT_FOUND,

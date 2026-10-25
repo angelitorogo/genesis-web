@@ -1174,7 +1174,7 @@ export class SystemSceneSnapshotBuilder {
       }
     }
     const v2MinorBodyCatalog = source.discoveryState.code >= DiscoveryState.CONFIRMED.code &&
-      key.generatorVersion === GeneratorVersion.V2
+      (key.generatorVersion === GeneratorVersion.V2 || key.generatorVersion === GeneratorVersion.V3)
       ? v2HostMinorBodyOrbitalCatalog(host)
       : null;
     const v2ImpactRiskCatalog = v2HostMinorBodyImpactRiskCatalog(host, v2MinorBodyCatalog);
@@ -1205,7 +1205,7 @@ export class SystemSceneSnapshotBuilder {
       componentCount: 1,
     }), world));
     // V2-only optical presentation; V1 snapshots retain their exact radii.
-    if (source.generatorVersionCode !== GeneratorVersion.V2.code) return projected;
+    if ((source.generatorVersionCode !== GeneratorVersion.V2.code && source.generatorVersionCode !== GeneratorVersion.V3.code)) return projected;
     const visuallyAdjusted = Object.freeze({ ...projected,
       stars: Object.freeze(projected.stars.map(star => Object.freeze({
         ...star, radiusScene: star.radiusScene * 0.78,
@@ -3481,7 +3481,7 @@ function projectSceneGeometry(
             ),
           sourceLuminositySolar:
             star.luminositySolar,
-          ...(generatorVersionCode === 2 ? {
+          ...((generatorVersionCode === 2 || generatorVersionCode === 3) ? {
             sourceRadiusSolar: star.radiusSolar,
             sourceEffectiveTemperatureKelvin: star.effectiveTemperatureKelvin,
           } : {}),
@@ -3801,7 +3801,7 @@ function projectSceneGeometry(
       maximumVisibleStarRadiusScene,
       maximumOpticalStarRadiusScene,
       playbackDaysPerRealSecond,
-      generatorVersionCode === 2,
+      (generatorVersionCode === 2 || generatorVersionCode === 3),
     );
 
   const asteroidBelts =

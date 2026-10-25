@@ -144,11 +144,21 @@ for (const [layer, directory] of Object.entries(layers)) {
 }
 
 let checkedFiles = 0;
+let exemptTestFiles = 0;
 
+// El contrato de dependencias se aplica a los módulos de producción.
+// Los *.spec.ts son consumidores de integración: pueden comprobar resultados
+// de presentation desde simulación sin crear una dependencia de producción.
+// Vitest sigue ejecutándolos; aquí no quedan exentos los módulos normales.
 for (const [sourceLayer, directory] of Object.entries(layers)) {
   const files = collectTypeScriptFiles(directory);
 
   for (const file of files) {
+    if (file.endsWith('.spec.ts')) {
+      exemptTestFiles += 1;
+      continue;
+    }
+
     checkedFiles += 1;
 
     const source = readFileSync(file, 'utf8');
@@ -213,4 +223,5 @@ console.log('');
 console.log('GENESIS architecture verification PASSED.');
 console.log(`Layers verified: ${Object.keys(layers).length}`);
 console.log(`TypeScript files checked: ${checkedFiles}`);
+console.log(`Archivos spec excluidos de reglas de producción: ${exemptTestFiles}`);
 console.log('');

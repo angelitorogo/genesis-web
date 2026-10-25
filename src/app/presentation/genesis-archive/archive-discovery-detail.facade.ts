@@ -1840,7 +1840,7 @@ export class ArchiveDiscoveryDetailFacade {
       const stellarSystemCard =
         locator instanceof
           SystemLocator
-          ? generationKey.generatorVersion.code === 2
+          ? (generationKey.generatorVersion.code === 2 || generationKey.generatorVersion.code === 3)
             ? ArchiveV2StellarSystemCardAssembler.build(generationKey, locator, discoveryState)
             : ArchiveStellarSystemCardAssembler.build(generationKey, locator, discoveryState)
           : null;
@@ -1977,12 +1977,12 @@ export class ArchiveDiscoveryDetailFacade {
               // The V2 multiple's A/B/C/P disk populations do not have one
               // authoritative parent disk. Never display the V1 parent disk
               // as a physical property of the complete multihost system.
-              generationKey.generatorVersion.code === 2 &&
+              (generationKey.generatorVersion.code === 2 || generationKey.generatorVersion.code === 3) &&
               (stellarSystemCard?.render.multiplicity?.name !== 'SINGLE' ||
                 CompactHostPlanetarySystemGenerator.generateOrNull(generationKey, locator) !== null)
                 ? null
                 : ProtoplanetaryDiskAnalysisEngine.analyzeOrNull(
-                    generationKey.generatorVersion.code === 2
+                    (generationKey.generatorVersion.code === 2 || generationKey.generatorVersion.code === 3)
                       ? multihostPhysicalSourceKey(generationKey)
                       : generationKey,
                     locator,

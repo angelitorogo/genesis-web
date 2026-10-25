@@ -21,7 +21,7 @@ export class ArchiveV2StellarSystemCardAssembler {
 
   static build(key: UniverseGenerationKey, locator: SystemLocator,
     state: DiscoveryStateValue): ArchiveStellarSystemCardModel {
-    if (key.generatorVersion !== GeneratorVersion.V2) {
+    if ((key.generatorVersion !== GeneratorVersion.V2 && key.generatorVersion !== GeneratorVersion.V3)) {
       throw new RangeError('A V2 stellar card requires the persisted V2 generation key.');
     }
     const physical = multihostPhysicalSourceKey(key);

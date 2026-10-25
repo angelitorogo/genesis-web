@@ -130,8 +130,9 @@ export class ExternalGalaxySearchEngine {
 
     if (
       (generationKey
-        .generatorVersion !== GeneratorVersion.V1 && generationKey
-        .generatorVersion !== GeneratorVersion.V2)
+        .generatorVersion !== GeneratorVersion.V1 && (generationKey
+        .generatorVersion !== GeneratorVersion.V2 && generationKey
+        .generatorVersion !== GeneratorVersion.V3))
     ) {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,
@@ -220,7 +221,7 @@ function deriveAttemptSeedV1(
     sha256
       .create()
       .update(
-        generationKey.generatorVersion === GeneratorVersion.V2
+        ((generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3) || generationKey.generatorVersion === GeneratorVersion.V3)
           ? SEARCH_DOMAIN_V2 : SEARCH_DOMAIN,
       )
       .update(

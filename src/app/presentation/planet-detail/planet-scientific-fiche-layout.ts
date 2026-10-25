@@ -21,7 +21,7 @@ export const PLANET_FICHE_FIELD_LAYOUT = Object.freeze({
   surface: [
     'Base superficial', 'Índice de rugosidad', 'Índice de inventario de agua',
     'Agua líquida superficial', 'Distribución hielo / líquido / vapor',
-    'Cobertura de hielo', 'Cobertura de agua', 'Radiación superficial', 'Protección radiativa',
+    'Cobertura de hielo', 'Cobertura de agua', 'Capas profundas y envoltura (hipótesis)', 'Radiación superficial', 'Protección radiativa',
   ],
   atmosphere: [
     'Régimen potencial inicial', 'Régimen gaseoso actual', 'Presión superficial gaseosa',
@@ -121,6 +121,14 @@ export function unifyPlanetFicheSections(
         note: source?.note ?? null,
       });
     });
-    return Object.freeze({ ...section, ...meta, fields: Object.freeze(fields) });
+    // PRE-33.07: preserve the new geo-chemical fields only when V3 actually
+    // supplies them. Do NOT create 'No determinado' placeholders on V1/V2.
+    const chemicalV3 = section.id === 'geology'
+      ? section.fields.filter(field => field.label.startsWith('PRE-33.07 — ')) : [];
+    const radiationV3 = section.id === 'surface'
+      ? section.fields.filter(field => field.label.startsWith('PRE-33.08 — ')) : [];
+    const continuityV3 = section.id === 'climate'
+      ? section.fields.filter(field => field.label.startsWith('PRE-33.09 — ')) : [];
+    return Object.freeze({ ...section, ...meta, fields: Object.freeze([...fields, ...chemicalV3, ...radiationV3, ...continuityV3]) });
   }));
 }

@@ -1,0 +1,213 @@
+{
+  "contract": "PRE-33.11/V3-STRATIFIED-DIVERSITY/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "selection": "20 systems per galaxy by deterministic sector-rings (nonprobabilistic); separate rare compact-host probe of at most 500 locators per galaxy",
+  "totals": {
+    "systems": 20,
+    "planets": 144,
+    "moons": 516,
+    "detailedMoons": 294,
+    "identityOnlyMoons": 222,
+    "compactProbes": 500,
+    "compactHostSystems": 3,
+    "compactPlanetarySystems": 3,
+    "compactPlanets": 5,
+    "errors": 0
+  },
+  "byType": {
+    "ROCKY": 28,
+    "SUPER_EARTH": 3,
+    "DESERT": 11,
+    "OCEAN": 0,
+    "ICE": 22,
+    "VOLCANIC": 8,
+    "MINI_NEPTUNE": 63,
+    "GAS_GIANT": 3,
+    "ICE_GIANT": 6
+  },
+  "byArchitecture": {
+    "SINGLE": 14,
+    "BINARY": 6
+  },
+  "byTopology": {
+    "CIRCUMSTELLAR": 138,
+    "CIRCUMBINARY": 6
+  },
+  "byNiche": {
+    "SOLID_BASE": 72,
+    "DEEP_ENVELOPE": 72
+  },
+  "byStratum": {
+    "SINGLE/A/VOLCANIC": 5,
+    "SINGLE/A/ROCKY": 17,
+    "SINGLE/A/ICE": 11,
+    "SINGLE/A/MINI_NEPTUNE": 31,
+    "BINARY/AB/ROCKY": 5,
+    "BINARY/A/VOLCANIC": 1,
+    "BINARY/A/ICE": 5,
+    "BINARY/A/MINI_NEPTUNE": 9,
+    "BINARY/B/VOLCANIC": 2,
+    "BINARY/B/DESERT": 6,
+    "BINARY/B/ROCKY": 6,
+    "BINARY/B/MINI_NEPTUNE": 23,
+    "BINARY/B/ICE_GIANT": 3,
+    "BINARY/AB/ICE": 1,
+    "SINGLE/A/ICE_GIANT": 3,
+    "BINARY/A/DESERT": 2,
+    "BINARY/B/ICE": 5,
+    "SINGLE/A/DESERT": 3,
+    "SINGLE/A/SUPER_EARTH": 3,
+    "SINGLE/A/GAS_GIANT": 3
+  },
+  "byCompactHostType": {
+    "NEUTRON_STAR": 1,
+    "PULSAR": 1,
+    "STELLAR_MASS_BLACK_HOLE": 1
+  },
+  "byMoonWaterRegime": {
+    "SURFACE_ICE": 244,
+    "NONE": 13,
+    "ICE_AND_SUBSURFACE_OCEAN": 37
+  },
+  "byMoonGeologyRegime": {
+    "INERT": 232,
+    "LOW_ACTIVITY": 23,
+    "TIDALLY_ACTIVE": 19,
+    "EXTREME": 15,
+    "ACTIVE": 5
+  },
+  "byMoonOceanCT0": {
+    "UNRESOLVED_IN_SIMULATED_MODEL": 236,
+    "ABSENT_IN_SIMULATED_MODEL": 36,
+    "PRESENT_IN_SIMULATED_MODEL": 22
+  },
+  "byMoonHostFamily": {
+    "VOLCANIC": 0,
+    "ROCKY": 9,
+    "ICE": 15,
+    "MINI_NEPTUNE": 261,
+    "DESERT": 0,
+    "ICE_GIANT": 81,
+    "SUPER_EARTH": 5,
+    "GAS_GIANT": 145
+  },
+  "oceanGate": {
+    "withinHZ": 5,
+    "solidIcyFormation": 5,
+    "simultaneouslyAdmissible": 0
+  },
+  "ratios": {
+    "gasGiantAmongStandardPlanets": 0.020833333333333332,
+    "allGiantsAmongStandardPlanets": 0.0625
+  },
+  "missingStrata": [
+    "NO_SAMPLED_OCEAN",
+    "NO_SAMPLED_TRIPLE"
+  ],
+  "galaxies": [
+    {
+      "galaxy": "Elixisis",
+      "galaxyIndex": 0,
+      "systems": 20,
+      "planets": 144,
+      "moons": 516,
+      "detailedMoons": 294,
+      "identityOnlyMoons": 222,
+      "compactProbes": 500,
+      "compactHostSystems": 3,
+      "compactPlanetarySystems": 3,
+      "compactPlanets": 5,
+      "byType": {
+        "VOLCANIC": 8,
+        "ROCKY": 28,
+        "ICE": 22,
+        "MINI_NEPTUNE": 63,
+        "DESERT": 11,
+        "ICE_GIANT": 6,
+        "SUPER_EARTH": 3,
+        "GAS_GIANT": 3
+      },
+      "byArchitecture": {
+        "SINGLE": 14,
+        "BINARY": 6
+      },
+      "byTopology": {
+        "CIRCUMSTELLAR": 138,
+        "CIRCUMBINARY": 6
+      },
+      "byNiche": {
+        "SOLID_BASE": 72,
+        "DEEP_ENVELOPE": 72
+      },
+      "byStratum": {
+        "SINGLE/A/VOLCANIC": 5,
+        "SINGLE/A/ROCKY": 17,
+        "SINGLE/A/ICE": 11,
+        "SINGLE/A/MINI_NEPTUNE": 31,
+        "BINARY/AB/ROCKY": 5,
+        "BINARY/A/VOLCANIC": 1,
+        "BINARY/A/ICE": 5,
+        "BINARY/A/MINI_NEPTUNE": 9,
+        "BINARY/B/VOLCANIC": 2,
+        "BINARY/B/DESERT": 6,
+        "BINARY/B/ROCKY": 6,
+        "BINARY/B/MINI_NEPTUNE": 23,
+        "BINARY/B/ICE_GIANT": 3,
+        "BINARY/AB/ICE": 1,
+        "SINGLE/A/ICE_GIANT": 3,
+        "BINARY/A/DESERT": 2,
+        "BINARY/B/ICE": 5,
+        "SINGLE/A/DESERT": 3,
+        "SINGLE/A/SUPER_EARTH": 3,
+        "SINGLE/A/GAS_GIANT": 3
+      },
+      "byCompactHostType": {
+        "NEUTRON_STAR": 1,
+        "PULSAR": 1,
+        "STELLAR_MASS_BLACK_HOLE": 1
+      },
+      "byMoonWaterRegime": {
+        "SURFACE_ICE": 244,
+        "NONE": 13,
+        "ICE_AND_SUBSURFACE_OCEAN": 37
+      },
+      "byMoonGeologyRegime": {
+        "INERT": 232,
+        "LOW_ACTIVITY": 23,
+        "TIDALLY_ACTIVE": 19,
+        "EXTREME": 15,
+        "ACTIVE": 5
+      },
+      "byMoonOceanCT0": {
+        "UNRESOLVED_IN_SIMULATED_MODEL": 236,
+        "ABSENT_IN_SIMULATED_MODEL": 36,
+        "PRESENT_IN_SIMULATED_MODEL": 22
+      },
+      "byMoonHostFamily": {
+        "VOLCANIC": 0,
+        "ROCKY": 9,
+        "ICE": 15,
+        "MINI_NEPTUNE": 261,
+        "DESERT": 0,
+        "ICE_GIANT": 81,
+        "SUPER_EARTH": 5,
+        "GAS_GIANT": 145
+      },
+      "oceanGate": {
+        "withinHZ": 5,
+        "solidIcyFormation": 5,
+        "simultaneouslyAdmissible": 0
+      },
+      "errors": []
+    }
+  ],
+  "scientificLimits": [
+    "OCEAN/DESERT/VOLCANIC are formation phenotypes, not proof of ocean, dryness or eruptions. NO life inference.",
+    "A missing sampled class is not an error and cannot justify quota changes.",
+    "The compact-host probe is conditional ascertainment, not representative prevalence; do not merge with the 60-system denominator.",
+    "S/P orbital geometry and Roche/Hill screening do not establish long-term N-body stability.",
+    "No planet/moon in this audit receives a habitability or life verdict; identity-only moons stay NOT_EVALUATED.",
+    "Count ratios are descriptive ONLY; sector/system clustering and deterministic selection prevent population-level confidence inference."
+  ],
+  "verdict": "PRE33_11_V3_DIVERSITY_AUDITED"
+}

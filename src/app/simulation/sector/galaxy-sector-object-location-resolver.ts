@@ -101,7 +101,7 @@ export class GalaxySectorObjectLocationResolver {
     if (generationKey.generatorVersion === GeneratorVersion.V1) {
       return resolveV1(generationKey, locator);
     }
-    if (generationKey.generatorVersion === GeneratorVersion.V2) {
+    if ((generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3)) {
       // Galactic layout is frozen physically; the V1 key is PRIVATE and is
       // never used to persist a discovery or generate a public V2 route.
       return resolveV1(frozenPhysicalSourceKey(generationKey), locator);

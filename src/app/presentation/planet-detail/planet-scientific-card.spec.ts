@@ -46,6 +46,61 @@ describe(
   'PlanetScientificCardAssembler point 26.4',
   () => {
 
+    it('PRE-33.10b enumera lunas detalladas y solo identidad plegables, sin física inventada', () => {
+      const original = detailedTarget();
+      const moons = Object.freeze({
+        ...original.detail.moons,
+        moonCount: 4,
+        relevantMoonCount: 1,
+        unmaterializedMinorMoonCount: 3,
+        minorMoonIdentities: Object.freeze([
+          Object.freeze({ designation: 'Jotheria b II', moonOrdinal: 2, moonIndex: 1 }),
+          Object.freeze({ designation: 'Jotheria b III', moonOrdinal: 3, moonIndex: 2 }),
+          Object.freeze({ designation: 'Jotheria b IV', moonOrdinal: 4, moonIndex: 3 }),
+        ]),
+      });
+      const target: PlanetScientificResolvedTarget = Object.freeze({
+        ...original,
+        detail: Object.freeze({ ...original.detail, moons }),
+      });
+      const result = PlanetScientificCardAssembler.build(
+        systemModel(DiscoveryState.CONFIRMED), 0n,
+        Object.freeze({ resolveDetailed: () => target }),
+        previewSceneResolver(),
+      );
+      expect(result.kind).toBe(PlanetScientificFicheResolutionKind.AVAILABLE);
+      if (result.kind !== PlanetScientificFicheResolutionKind.AVAILABLE) return;
+      const { allMoons, relevantMoons } = result.card.sections;
+      expect(relevantMoons).toHaveLength(1);
+      expect(allMoons.map(moon => moon.moonIndex)).toEqual([0, 1, 2, 3]);
+      expect(allMoons.map(moon => moon.designation)).toEqual([
+        'Jotheria b I', 'Jotheria b II', 'Jotheria b III', 'Jotheria b IV',
+      ]);
+      expect(allMoons.map(moon => moon.kind)).toEqual([
+        'DETAILED', 'IDENTITY_ONLY', 'IDENTITY_ONLY', 'IDENTITY_ONLY',
+      ]);
+      expect(allMoons[0]?.fields.length).toBeGreaterThan(0);
+      for (const minor of allMoons.slice(1)) {
+        expect(minor.fields).toEqual([]);
+        expect(minor.badges).toEqual([]);
+        expect(Object.isFrozen(minor)).toBe(true);
+      }
+      expect(JSON.stringify(allMoons)).not.toMatch(/moonSeed|identitySeed|life.*CONFIRMED/);
+    });
+
+    it('PRE-33.10b no añade lunas menores a proyecciones que no las autorizan', () => {
+      const target = detailedTarget();
+      const result = PlanetScientificCardAssembler.build(
+        systemModel(DiscoveryState.CONFIRMED), 0n,
+        Object.freeze({ resolveDetailed: () => target }),
+        previewSceneResolver(),
+      );
+      expect(result.kind).toBe(PlanetScientificFicheResolutionKind.AVAILABLE);
+      if (result.kind !== PlanetScientificFicheResolutionKind.AVAILABLE) return;
+      expect(result.card.sections.allMoons).toHaveLength(1);
+      expect(result.card.sections.allMoons[0]?.kind).toBe('DETAILED');
+    });
+
     it(
       'should keep detailed materialization behind the host-system CONFIRMED boundary',
       () => {

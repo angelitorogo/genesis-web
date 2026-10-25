@@ -1,0 +1,228 @@
+{
+  "contract": "PRE-33.11a/V3-GALACTIC-ENVIRONMENT/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "sampling": "Deterministic ring/quadrant system discovery; NONPROBABILISTIC, NOT a galactic census",
+  "totals": {
+    "systems": 20,
+    "planets": 143,
+    "planetModeledLiquidH2O": 0,
+    "planetModeledAbsentH2O": 143,
+    "planetUnknownH2O": 0,
+    "detailedMoons": 235,
+    "identityOnlyMoons": 196,
+    "moons": 431,
+    "moonModeledLiquidH2O": 13,
+    "moonModeledAbsentH2O": 33,
+    "moonUnknownH2O": 189,
+    "unresolvedNH3": 431,
+    "unresolvedCH4": 431,
+    "issues": 0
+  },
+  "byRegion": {
+    "CENTRAL": 28,
+    "INNER": 66,
+    "OUTER": 16,
+    "MIDDLE": 33
+  },
+  "byRegionEnvironment": {
+    "CENTRAL": {
+      "planets": 28,
+      "detailedMoons": 52,
+      "identityOnlyMoons": 7,
+      "moonLiquidH2O": 1,
+      "moonUnknownH2O": 45
+    },
+    "INNER": {
+      "planets": 66,
+      "detailedMoons": 107,
+      "identityOnlyMoons": 177,
+      "moonLiquidH2O": 6,
+      "moonUnknownH2O": 81
+    },
+    "OUTER": {
+      "planets": 16,
+      "detailedMoons": 30,
+      "identityOnlyMoons": 8,
+      "moonLiquidH2O": 4,
+      "moonUnknownH2O": 21
+    },
+    "MIDDLE": {
+      "planets": 33,
+      "detailedMoons": 46,
+      "identityOnlyMoons": 4,
+      "moonLiquidH2O": 2,
+      "moonUnknownH2O": 42
+    }
+  },
+  "byRegionFamily": {
+    "CENTRAL/DESERT": 6,
+    "CENTRAL/ROCKY": 2,
+    "CENTRAL/ICE": 5,
+    "CENTRAL/MINI_NEPTUNE": 13,
+    "INNER/VOLCANIC": 9,
+    "INNER/ROCKY": 6,
+    "INNER/ICE": 20,
+    "INNER/MINI_NEPTUNE": 24,
+    "INNER/ICE_GIANT": 1,
+    "OUTER/VOLCANIC": 3,
+    "OUTER/ROCKY": 3,
+    "OUTER/MINI_NEPTUNE": 5,
+    "OUTER/ICE_GIANT": 2,
+    "OUTER/GAS_GIANT": 1,
+    "OUTER/DESERT": 1,
+    "OUTER/ICE": 1,
+    "MIDDLE/ROCKY": 11,
+    "MIDDLE/ICE": 3,
+    "MIDDLE/MINI_NEPTUNE": 17,
+    "MIDDLE/DESERT": 2,
+    "CENTRAL/ICE_GIANT": 2,
+    "INNER/SUPER_EARTH": 2,
+    "INNER/GAS_GIANT": 4
+  },
+  "byArchitecture": {
+    "BINARY": 5,
+    "SINGLE": 15
+  },
+  "byPlanetFamily": {
+    "DESERT": 9,
+    "ROCKY": 22,
+    "ICE": 29,
+    "MINI_NEPTUNE": 59,
+    "VOLCANIC": 12,
+    "ICE_GIANT": 5,
+    "GAS_GIANT": 5,
+    "SUPER_EARTH": 2
+  },
+  "gradients": {
+    "Ilyzenia": {
+      "minMetallicity": 0.8182859112955895,
+      "maxMetallicity": 1.0426470352910047,
+      "minRadialRadius": 0.029039843863633633,
+      "maxRadialRadius": 0.7542536932847588,
+      "radialMonotonicityIssues": 0
+    }
+  },
+  "galaxies": [
+    {
+      "galaxy": "Ilyzenia",
+      "galaxyIndex": 2,
+      "systems": 20,
+      "planets": 143,
+      "planetModeledLiquidH2O": 0,
+      "planetModeledAbsentH2O": 143,
+      "planetUnknownH2O": 0,
+      "detailedMoons": 235,
+      "identityOnlyMoons": 196,
+      "moons": 431,
+      "moonModeledLiquidH2O": 13,
+      "moonModeledAbsentH2O": 33,
+      "moonUnknownH2O": 189,
+      "unresolvedNH3": 431,
+      "unresolvedCH4": 431,
+      "issues": 0,
+      "sampledSectors": 20,
+      "minRadius": 0.029039843863633633,
+      "maxRadius": 0.7542536932847588,
+      "minMetallicity": 0.8182859112955895,
+      "maxMetallicity": 1.0426470352910047,
+      "radialMonotonicityIssues": 0,
+      "byRegion": {
+        "CENTRAL": 28,
+        "INNER": 66,
+        "OUTER": 16,
+        "MIDDLE": 33
+      },
+      "byRegionEnvironment": {
+        "CENTRAL": {
+          "planets": 28,
+          "detailedMoons": 52,
+          "identityOnlyMoons": 7,
+          "moonLiquidH2O": 1,
+          "moonUnknownH2O": 45
+        },
+        "INNER": {
+          "planets": 66,
+          "detailedMoons": 107,
+          "identityOnlyMoons": 177,
+          "moonLiquidH2O": 6,
+          "moonUnknownH2O": 81
+        },
+        "OUTER": {
+          "planets": 16,
+          "detailedMoons": 30,
+          "identityOnlyMoons": 8,
+          "moonLiquidH2O": 4,
+          "moonUnknownH2O": 21
+        },
+        "MIDDLE": {
+          "planets": 33,
+          "detailedMoons": 46,
+          "identityOnlyMoons": 4,
+          "moonLiquidH2O": 2,
+          "moonUnknownH2O": 42
+        }
+      },
+      "byRegionFamily": {
+        "CENTRAL/DESERT": 6,
+        "CENTRAL/ROCKY": 2,
+        "CENTRAL/ICE": 5,
+        "CENTRAL/MINI_NEPTUNE": 13,
+        "INNER/VOLCANIC": 9,
+        "INNER/ROCKY": 6,
+        "INNER/ICE": 20,
+        "INNER/MINI_NEPTUNE": 24,
+        "INNER/ICE_GIANT": 1,
+        "OUTER/VOLCANIC": 3,
+        "OUTER/ROCKY": 3,
+        "OUTER/MINI_NEPTUNE": 5,
+        "OUTER/ICE_GIANT": 2,
+        "OUTER/GAS_GIANT": 1,
+        "OUTER/DESERT": 1,
+        "OUTER/ICE": 1,
+        "MIDDLE/ROCKY": 11,
+        "MIDDLE/ICE": 3,
+        "MIDDLE/MINI_NEPTUNE": 17,
+        "MIDDLE/DESERT": 2,
+        "CENTRAL/ICE_GIANT": 2,
+        "INNER/SUPER_EARTH": 2,
+        "INNER/GAS_GIANT": 4
+      },
+      "byArchitecture": {
+        "BINARY": 5,
+        "SINGLE": 15
+      },
+      "byPlanetFamily": {
+        "DESERT": 9,
+        "ROCKY": 22,
+        "ICE": 29,
+        "MINI_NEPTUNE": 59,
+        "VOLCANIC": 12,
+        "ICE_GIANT": 5,
+        "GAS_GIANT": 5,
+        "SUPER_EARTH": 2
+      },
+      "errors": []
+    }
+  ],
+  "missingStrata": [
+    "NO_SAMPLED_TRIPLE",
+    "NO_SAMPLED_OCEAN"
+  ],
+  "physicalCausality": "GALAXY_BASELINE_TO_SECTOR_RADIAL_METALLICITY_TO_17_FORMATION_PROFILE",
+  "solventPolicy": {
+    "H2O": "32.F.2c simulated moon CT-0 phase only; NOT liquid on a planet inferred from its phenotype",
+    "NH3": "UNKNOWN: no independent liquid NH3 P-T/composition model",
+    "CH4": "UNKNOWN: no independent liquid CH4 P-T/composition model",
+    "all": "Reaction reactants, actual chemical power, ionising dose, historic continuity and LIFE remain NOT_EVALUATED"
+  },
+  "scientificLimits": [
+    "No global life probabilities or artificial quotas. Galaxy radial metallicity is a characteristic proxy, not per-star elemental measurements.",
+    "Galactic radial/age gradients are existing V1 physics reused through private frozen source, not a newly calibrated V3 law.",
+    "Zero OCEAN phenotype does not imply zero liquid water; 32.F.2c is CT-0 constitutive model, not observation.",
+    "Lunar identity-only population is not sterile. Biological evaluation is deferred, not automatically positive.",
+    "Sector/system clustering invalidates treating planets as independent draws; PRE-33.11b handles calibration and representative sampling.",
+    "Extreme/compact host prevalence is from separate PRE-33.11 panel and cannot be folded into these spatial proportions.",
+    "No public discovery, persistent saves or V1/V2/V3 generative outcomes are written or modified."
+  ],
+  "verdict": "PRE33_11A_V3_GALACTIC_BIOCHEMICAL_COVERAGE_AUDITED"
+}

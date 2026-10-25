@@ -495,7 +495,7 @@ function resolveExtremeSubtype(
   }
 
   if (
-    generationKey.generatorVersion === GeneratorVersion.V2 &&
+    (generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3) &&
     state.code >= DiscoveryState.CATALOGUED.code
   ) {
     const exact = ExtremeObjectTypeResolver.resolve(generationKey, locator);

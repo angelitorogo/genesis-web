@@ -1,6 +1,7 @@
 import { PlanetaryHistoricalRuntime31Fi1 } from '../planetary-history/planetary-historical-runtime-31-f-i-1';
 import { BodyLocator, MoonLocator } from '../../domain/generation/procedural-locator';
 import { type UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
+import { GeneratorVersion } from '../../domain/generation/generator-version';
 import {
   PlanetScientificTargetResolver,
   type PlanetScientificIdentitySource,
@@ -64,6 +65,7 @@ export class StellarMultihostScientificTargetResolver {
       this.identity(entry), entry.planet, entry.atmosphere, entry.moonSystem,
       this.retainedStellarReference(entry),
       { multiplicity: this.source.multiplicity.name as 'BINARY' | 'TRIPLE', component: entry.host },
+      this.source.parentGenerationKey.generatorVersion.code,
     );
     return this.withPublicMoonDesignations(projected, entry);
   }
@@ -88,14 +90,30 @@ export class StellarMultihostScientificTargetResolver {
     if (publicMoon === null || publicMoon.relevantMoon === null) return null;
     // Existing moon projection consumes the EXACT same planet's already
     // materialized moon science; there is no second MoonGenerator invocation.
-    return MoonScientificTargetResolver.resolveDetailed(
+    const resolved = MoonScientificTargetResolver.resolveDetailed(
       generationKey, planetLocator, moonIndex,
       { resolveDetailed: (key, locator) => this.resolveDetailed(key, locator) },
     );
+    if (resolved === null) return null;
+    // Public B/C/P planet ordinals refer to slots in the parent system,
+    // whereas 32.F.2c/3/4/5 models retain the private physical host ordinal.
+    // The 32.F.6b validator must receive BOTH identifiers. Take the private
+    // one exclusively from the indexed source population, never from the
+    // ocean being validated or from an inferred public slot.
+    return Object.freeze({
+      ...resolved,
+      physicalHostPlanetOrdinal: publicMoon.parent.sourcePlanetOrdinal,
+    });
   }
 
   /** Phase-15 sources were materialized by the atomic V2 formation, not regenerated. */
   private retainedStellarReference(entry: GeneratedPublicPlanet) {
+    // V3's coeval formation is real, but evolved current luminosity and
+    // mass-loss orbital history are NOT source-backed yet. Never attach
+    // a V2-style *dated* planetary history based on progenitor references.
+    if (this.source.parentGenerationKey.generatorVersion === GeneratorVersion.V3) {
+      return undefined;
+    }
     if (entry.host !== 'AB') {
       const source = this.source.components.find(c => c.label === entry.host);
       return source ? Object.freeze({ physical: source.physical, lifetime: source.lifetime }) : undefined;

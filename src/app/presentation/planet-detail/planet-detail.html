@@ -292,56 +292,76 @@
                       </dl>
 
                       @if (section.id === 'moons') {
-                        @if (card.sections.relevantMoons.length === 0) {
-                          <p
-                            class="planet-detail__empty-detail"
-                            data-testid="planet-detail-no-relevant-moons"
-                          >
+                        @if (card.sections.allMoons.length === 0) {
+                          <p class="planet-detail__empty-detail" data-testid="planet-detail-no-relevant-moons">
                             {{ card.sections.relevantMoonsEmptyMessage }}
                           </p>
                         } @else {
-                          <div
-                            class="planet-detail__moon-grid"
-                            data-testid="planet-detail-relevant-moons"
-                          >
-                            @for (moon of card.sections.relevantMoons; track moon.designation) {
-                              <article class="planet-detail__moon-card">
-                                <header>
-                                  <small>{{ moon.ordinalLabel }}</small>
-                                  <h3>{{ moon.designation }}</h3>
-                                </header>
-
-                                @if (moon.badges.length > 0) {
-                                  <div class="planet-detail__moon-badges">
-                                    @for (badge of moon.badges; track badge) {
-                                      <span>{{ badge }}</span>
-                                    }
-                                  </div>
-                                }
-
-                                <dl>
-                                  @for (item of moon.fields; track item.label) {
-                                    <div>
-                                      <dt>{{ item.label }}</dt>
-                                      <dd>{{ item.value }}</dd>
-                                      @if (item.note) {
-                                        <small>{{ item.note }}</small>
-                                      }
-                                    </div>
-                                  }
-                                </dl>
-
-                                @if (moonRoute(moon.moonIndex); as route) {
-                                  <a
-                                    class="planet-detail__moon-link"
-                                    data-testid="planet-detail-moon-fiche-link"
-                                    [routerLink]="route"
-                                    [queryParams]="sourceQueryParams()"
+                          <p class="planet-detail__moon-help">
+                            Selecciona una luna para desplegar sus datos. La identidad conocida no implica
+                            que su caracterización física esté resuelta.
+                          </p>
+                          <div class="planet-detail__moon-grid" data-testid="planet-detail-relevant-moons">
+                            @for (moon of card.sections.allMoons; track moon.moonIndex) {
+                              <details
+                                class="planet-detail__moon-card"
+                                data-testid="planet-detail-moon-accordion"
+                                [attr.data-moon-kind]="moon.kind"
+                              >
+                                <summary class="planet-detail__moon-summary">
+                                  <span class="planet-detail__moon-heading">
+                                    <small>{{ moon.ordinalLabel }}</small>
+                                    <strong>{{ moon.designation }}</strong>
+                                  </span>
+                                  <span
+                                    class="planet-detail__moon-category"
+                                    [class.planet-detail__moon-category--minor]="moon.kind === 'IDENTITY_ONLY'"
                                   >
-                                    Abrir ficha científica →
-                                  </a>
-                                }
-                              </article>
+                                    {{ moon.kind === 'DETAILED' ? 'Caracterización individual' : 'Solo identidad · Física pendiente' }}
+                                  </span>
+                                  <span class="planet-detail__moon-chevron" aria-hidden="true">⌄</span>
+                                </summary>
+                                <div class="planet-detail__moon-content">
+                                  @if (moon.kind === 'DETAILED') {
+                                    @if (moon.badges.length > 0) {
+                                      <div class="planet-detail__moon-badges">
+                                        @for (badge of moon.badges; track badge) {
+                                          <span>{{ badge }}</span>
+                                        }
+                                      </div>
+                                    }
+                                    <dl>
+                                      @for (item of moon.fields; track item.label) {
+                                        <div>
+                                          <dt>{{ item.label }}</dt>
+                                          <dd>{{ item.value }}</dd>
+                                          @if (item.note) {
+                                            <small>{{ item.note }}</small>
+                                          }
+                                        </div>
+                                      }
+                                    </dl>
+                                  } @else {
+                                    <p class="planet-detail__moon-identity-note">
+                                      Identidad canónica del satélite confirmada. Masa, radio, órbita,
+                                      composición, habitabilidad y vida no están físicamente resueltos
+                                      en esta ficha planetaria. La ficha lunar permite consultar, bajo
+                                      demanda, escenarios dinámicos condicionales diferenciados de
+                                      observaciones y datos certificados.
+                                    </p>
+                                  }
+                                  @if (moonRoute(moon.moonIndex); as route) {
+                                    <a
+                                      class="planet-detail__moon-link"
+                                      data-testid="planet-detail-moon-fiche-link"
+                                      [routerLink]="route"
+                                      [queryParams]="sourceQueryParams()"
+                                    >
+                                      Abrir ficha científica →
+                                    </a>
+                                  }
+                                </div>
+                              </details>
                             }
                           </div>
                         }

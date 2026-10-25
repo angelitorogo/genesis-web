@@ -1,0 +1,149 @@
+{
+  "contract": "PRE-33.03c/V3-H2O-INTEGRAL-CLOSURE/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "version": "V3",
+  "sample": "Deterministic 4-ring sector sampling, not full galaxy census",
+  "status": "BLOCKED_BY_AUDIT_FINDINGS",
+  "totals": {
+    "systems": 600,
+    "planets": 3952,
+    "binary": 149,
+    "triple": 25,
+    "modeledCT0Closed": 3952,
+    "errors": 2
+  },
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 200,
+      "single": 144,
+      "binary": 50,
+      "triple": 6,
+      "planets": 1237,
+      "modeledCT0Closed": 1237,
+      "positiveFormation": 819,
+      "waterAtCT0": 819,
+      "deepGasEnvelope": 507,
+      "radialScenario": 625,
+      "radialUnresolved": 612,
+      "coevalSystems": 56,
+      "sourceDiskCount": 179,
+      "modeledLiquidThicknessShown": 0,
+      "independentThermalProfiles": 0,
+      "kg": {
+        "formation": 1.7848854536267976e+27,
+        "delivered": 1.26786268401123e+25,
+        "escaped": 7.492902801394902e+22,
+        "retained": 1.7974891514388948e+27
+      },
+      "maxResidual01": 4.2557091410225397e-16,
+      "issueCodes": {},
+      "errors": []
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 200,
+      "single": 150,
+      "binary": 42,
+      "triple": 8,
+      "planets": 1299,
+      "modeledCT0Closed": 1299,
+      "positiveFormation": 867,
+      "waterAtCT0": 867,
+      "deepGasEnvelope": 577,
+      "radialScenario": 703,
+      "radialUnresolved": 596,
+      "coevalSystems": 50,
+      "sourceDiskCount": 178,
+      "modeledLiquidThicknessShown": 0,
+      "independentThermalProfiles": 0,
+      "kg": {
+        "formation": 2.1123937368747732e+27,
+        "delivered": 1.567575716161689e+25,
+        "escaped": 6.540335663274954e+22,
+        "retained": 2.1280040906797554e+27
+      },
+      "maxResidual01": 4.4242567123485157e-16,
+      "issueCodes": {
+        "PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL": 1
+      },
+      "errors": [
+        {
+          "where": "G1/S-38654705667/O0/B3",
+          "issues": [
+            "PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL"
+          ]
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 200,
+      "single": 132,
+      "binary": 57,
+      "triple": 11,
+      "planets": 1416,
+      "modeledCT0Closed": 1416,
+      "positiveFormation": 947,
+      "waterAtCT0": 947,
+      "deepGasEnvelope": 596,
+      "radialScenario": 760,
+      "radialUnresolved": 656,
+      "coevalSystems": 68,
+      "sourceDiskCount": 207,
+      "modeledLiquidThicknessShown": 0,
+      "independentThermalProfiles": 0,
+      "kg": {
+        "formation": 2.1191592941294508e+27,
+        "delivered": 1.5364822131249532e+25,
+        "escaped": 6.046466830504987e+22,
+        "retained": 2.1344636515923986e+27
+      },
+      "maxResidual01": 4.307947435620714e-16,
+      "issueCodes": {
+        "PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL": 1
+      },
+      "errors": [
+        {
+          "where": "G2/S-60129542153/O1/B2",
+          "issues": [
+            "PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL"
+          ]
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "diskChemistry": "SOLAR_ELEMENTAL_ABUNDANCE_PATTERN_MODEL_NOT_INDEPENDENT_OBSERVATION",
+    "waterHistory": "DATED_PARAMETERIZED_XUV_OUTGASSING_RESIDUAL_DISK_NOT_OBSERVED_IMPACTS",
+    "waterCT0": "CLOSED_MODELED_MASS_BALANCE_NOT_INDEPENDENT_CHEMICAL_MEASUREMENT",
+    "thermal": "CONDITIONAL_DEPTH_PRESSURE_NOT_CERTIFIED_ICE_PHASE",
+    "playerKnowledge": "READ_ONLY_NO_DISCOVERIES_GRANTED",
+    "legacy": "V1_AND_V2_GENERATORS_NOT_MODIFIED_BY_THIS_AUDITOR"
+  },
+  "remainingScientificLimits": [
+    "No individually generated/observed native disk C/O abundance distribution beyond solar-pattern metallicity scaling",
+    "No independently reconstructed impact chronology or spectrally measured historical XUV",
+    "No solved compressible interior EOS or independently constrained deep P-T phase diagram",
+    "No observational certification of oceans; UI and IndexedDB not audited by this read-only Node runner"
+  ],
+  "failures": [
+    {
+      "galaxy": "Elisoune",
+      "where": "G1/S-38654705667/O0/B3",
+      "issues": [
+        "PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL"
+      ]
+    },
+    {
+      "galaxy": "Ilyzenia",
+      "where": "G2/S-60129542153/O1/B2",
+      "issues": [
+        "PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL"
+      ]
+    }
+  ]
+}

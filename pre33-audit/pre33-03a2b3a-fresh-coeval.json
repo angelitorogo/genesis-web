@@ -1,0 +1,335 @@
+{
+  "contract": "PRE-33.03a.2b.3a/fresh-coeval-14-to-21/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "generator": "V2 frozen reference; private coeval NEW-GAME candidate is NOT public V3",
+  "interpretation": "Actual B/C ages are reevaluated BEFORE physical rebuild 18/19/20/21; Keplerian orbit rebuilt. Nothing is published, persisted, observed, or migrated. Current evolved spectra, dynamical mass-loss history, remnant/transient 29/31, historical 32.7/32.12 and public generator V3 remain release BLOCKERS. No CT0 oceans certified.",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "multipleSystems": 6,
+      "singleSystems": 14,
+      "componentsRegenerated": 12,
+      "phaseChangedSystems": 0,
+      "planetReferencesRebuilt": 77,
+      "originalPlanets": 77,
+      "freshPlanets": 77,
+      "atmospheresRebuilt": 77,
+      "moonSystemsRebuilt": 77,
+      "materialMassValidated": 77,
+      "moonCountValidated": 77,
+      "coevalSources": 6,
+      "history29_31Blockers": 6,
+      "history32Blockers": 6,
+      "publicReleaseBlocked": 6,
+      "errors": [],
+      "examples": [
+        {
+          "system": "G0/S-30064771061/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            13.546465669286288,
+            5.9400270465115526
+          ],
+          "revisedAgesGyr": [
+            13.546465669286288,
+            13.546465669286288
+          ],
+          "originalPlanets": 1,
+          "regeneratedPlanets": 1,
+          "originalDigest": "4b81fcfcbaa22198",
+          "newDigest": "cc1049ec9271d760",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G0/S-30064771048/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "originalPlanets": 19,
+          "regeneratedPlanets": 19,
+          "originalDigest": "e4707d3f5277e143",
+          "newDigest": "862ae9a1af2f36f6",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G0/S68719476736/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "revisedAgesGyr": [
+            8.49369415010191,
+            8.49369415010191
+          ],
+          "originalPlanets": 18,
+          "regeneratedPlanets": 18,
+          "originalDigest": "a46e87a8f9d91b71",
+          "newDigest": "37f52449a0531a4f",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G0/S-25769803789/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            0.04204570861364967,
+            0.09365716134612367
+          ],
+          "revisedAgesGyr": [
+            0.04204570861364967,
+            0.04204570861364967
+          ],
+          "originalPlanets": 15,
+          "regeneratedPlanets": 15,
+          "originalDigest": "f3b5e1190df9f2d6",
+          "newDigest": "29c35ddc0cc0fb51",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G0/S30064771064/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            13.456903958806016,
+            13.568158713489058
+          ],
+          "revisedAgesGyr": [
+            13.456903958806016,
+            13.456903958806016
+          ],
+          "originalPlanets": 12,
+          "regeneratedPlanets": 12,
+          "originalDigest": "72ae2c8a96037785",
+          "newDigest": "8b2804e90270796b",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G0/S60129542137/O1",
+          "components": 2,
+          "originalAgesGyr": [
+            0.07866547625205968,
+            12.302412894852775
+          ],
+          "revisedAgesGyr": [
+            0.07866547625205968,
+            0.07866547625205968
+          ],
+          "originalPlanets": 12,
+          "regeneratedPlanets": 12,
+          "originalDigest": "ad7a4d918926565f",
+          "newDigest": "70fac7901a5b3ec1",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "multipleSystems": 3,
+      "singleSystems": 17,
+      "componentsRegenerated": 7,
+      "phaseChangedSystems": 0,
+      "planetReferencesRebuilt": 40,
+      "originalPlanets": 40,
+      "freshPlanets": 40,
+      "atmospheresRebuilt": 40,
+      "moonSystemsRebuilt": 40,
+      "materialMassValidated": 40,
+      "moonCountValidated": 40,
+      "coevalSources": 3,
+      "history29_31Blockers": 3,
+      "history32Blockers": 3,
+      "publicReleaseBlocked": 3,
+      "errors": [],
+      "examples": [
+        {
+          "system": "G1/S60129542150/O1",
+          "components": 3,
+          "originalAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "originalPlanets": 12,
+          "regeneratedPlanets": 12,
+          "originalDigest": "32ce9b112272f07c",
+          "newDigest": "7bbb616d31423d04",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G1/S-30064771058/O1",
+          "components": 2,
+          "originalAgesGyr": [
+            9.50480024320857,
+            12.82777132959099
+          ],
+          "revisedAgesGyr": [
+            9.50480024320857,
+            9.50480024320857
+          ],
+          "originalPlanets": 8,
+          "regeneratedPlanets": 8,
+          "originalDigest": "3bb976f865ff06aa",
+          "newDigest": "87d2b669282bf504",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G1/S25769803789/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            10.138152446301516,
+            8.214114693413936
+          ],
+          "revisedAgesGyr": [
+            10.138152446301516,
+            10.138152446301516
+          ],
+          "originalPlanets": 20,
+          "regeneratedPlanets": 20,
+          "originalDigest": "a6ab261c16e086e1",
+          "newDigest": "c91368855483d674",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "multipleSystems": 5,
+      "singleSystems": 15,
+      "componentsRegenerated": 10,
+      "phaseChangedSystems": 0,
+      "planetReferencesRebuilt": 71,
+      "originalPlanets": 71,
+      "freshPlanets": 71,
+      "atmospheresRebuilt": 71,
+      "moonSystemsRebuilt": 71,
+      "materialMassValidated": 71,
+      "moonCountValidated": 71,
+      "coevalSources": 5,
+      "history29_31Blockers": 5,
+      "history32Blockers": 5,
+      "publicReleaseBlocked": 5,
+      "errors": [],
+      "examples": [
+        {
+          "system": "G2/S38654705676/O1",
+          "components": 2,
+          "originalAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "originalPlanets": 16,
+          "regeneratedPlanets": 16,
+          "originalDigest": "634a6361ce34924e",
+          "newDigest": "5c3a29689996f170",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G2/S-12884901830/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "revisedAgesGyr": [
+            8.833594694286887,
+            8.833594694286887
+          ],
+          "originalPlanets": 16,
+          "regeneratedPlanets": 16,
+          "originalDigest": "c258a6c0cf61d1c2",
+          "newDigest": "1794bc9696320992",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G2/S-120259084305/O1",
+          "components": 2,
+          "originalAgesGyr": [
+            0.003652133460617841,
+            11.230691363757396
+          ],
+          "revisedAgesGyr": [
+            0.003652133460617841,
+            0.003652133460617841
+          ],
+          "originalPlanets": 1,
+          "regeneratedPlanets": 1,
+          "originalDigest": "d1cd7c98421cc214",
+          "newDigest": "5aaf0b519964f6f7",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G2/S-103079215109/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            10.580050938321687,
+            0.07723969930897906
+          ],
+          "revisedAgesGyr": [
+            10.580050938321687,
+            10.580050938321687
+          ],
+          "originalPlanets": 17,
+          "regeneratedPlanets": 17,
+          "originalDigest": "ad20acba8508e9e3",
+          "newDigest": "9190756ced9a910d",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        },
+        {
+          "system": "G2/S180388626409/O0",
+          "components": 2,
+          "originalAgesGyr": [
+            0.09114112298715488,
+            9.899104355010522
+          ],
+          "revisedAgesGyr": [
+            0.09114112298715488,
+            0.09114112298715488
+          ],
+          "originalPlanets": 21,
+          "regeneratedPlanets": 21,
+          "originalDigest": "1b43d22b9da7df6c",
+          "newDigest": "5bf46ba0fabd1ef7",
+          "stellarPhasesChanged": [],
+          "releaseBlocked": true
+        }
+      ]
+    }
+  ],
+  "publicGeneratorV3Released": false,
+  "legacyDataMutated": false,
+  "canonicalNewGameAvailable": false,
+  "verdict": "FRESH_COEVAL_14_TO_21_PASSED_PUBLIC_29_31_32_BLOCKED"
+}

@@ -13,10 +13,10 @@ async function mapReady(page: Page) {
     page.getByTestId('galactic-map-context').or(mapError).or(mapEmpty),
   ).toBeVisible({ timeout: 15_000 });
   if (await mapError.isVisible()) {
-    throw new Error(`No se pudo abrir el mapa V2: ${await mapError.innerText()}`);
+    throw new Error(`No se pudo abrir el mapa V3: ${await mapError.innerText()}`);
   }
   if (await mapEmpty.isVisible()) {
-    throw new Error('El mapa no encuentra el universo V2 que se acaba de crear.');
+    throw new Error('El mapa no encuentra el universo V3 que se acaba de crear.');
   }
 
   const scene = page.getByTestId('galactic-map-scene');
@@ -34,7 +34,7 @@ test('15.3 — retains galactic map camera and render orientation after navigati
   await expect(page.getByTestId('universe-seed-status'))
     .toHaveText(/Universo (creado y activado|activado) correctamente\./, { timeout: 15_000 });
   await expect(page.getByTestId('universe-seed-active')).toHaveText(SEED);
-  await expect(page.getByTestId('universe-active-version')).toContainText('V2');
+  await expect(page.getByTestId('universe-active-version')).toContainText('V3');
   const scene = await mapReady(page);
   const canvas = page.getByTestId('galactic-map-canvas');
 

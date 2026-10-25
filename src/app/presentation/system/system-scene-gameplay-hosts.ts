@@ -9,7 +9,7 @@ export interface GameplayHostLayout {
 
 /** Public, already-disclosed snapshot only; does not regenerate hidden planets. */
 export function systemSceneGameplayHostLayout(snapshot: SystemSceneSnapshot): readonly GameplayHostLayout[] {
-  if (snapshot.generatorVersionCode !== 2 ||
+  if ((snapshot.generatorVersionCode !== 2 && snapshot.generatorVersionCode !== 3) ||
       (snapshot.multiplicityName !== 'BINARY' && snapshot.multiplicityName !== 'TRIPLE') ||
       snapshot.stars.length < 2) return Object.freeze([]);
   const hosts: GameplayHostLayout[] = snapshot.stars.map(star => Object.freeze({

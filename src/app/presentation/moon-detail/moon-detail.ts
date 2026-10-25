@@ -32,6 +32,12 @@ import {
 } from '../scientific-body-preview/scientific-body-preview';
 
 import {
+  formatMinorMoonNumber,
+  formatMinorMoonRadius,
+  minorMoonDynamicStateLabel,
+} from './minor-moon-scenario-format-pre33-10a';
+
+import {
   MoonScientificCardAssembler,
   MoonScientificFicheResolutionKind,
 } from './moon-scientific-card';
@@ -60,6 +66,10 @@ import {
 })
 export class MoonDetailPage
   implements OnInit {
+
+  readonly minorMoonNumber = formatMinorMoonNumber;
+  readonly minorMoonRadius = formatMinorMoonRadius;
+  readonly minorMoonStatus = minorMoonDynamicStateLabel;
 
   readonly facade =
     inject(
@@ -140,7 +150,7 @@ export class MoonDetailPage
         return this.compactSession()?.moonFiche(this.requestedBodyIndex,this.requestedMoonIndex) ??
           this.multihostSession()?.moonFiche(this.requestedBodyIndex, this.requestedMoonIndex) ??
           this.v2SingleSession()?.moonFiche(this.requestedBodyIndex, this.requestedMoonIndex) ??
-          (model.generatorVersionCode === 2
+          ((model.generatorVersionCode === 2 || model.generatorVersionCode === 3)
             ? MoonScientificCardAssembler.build(model, this.requestedBodyIndex, this.requestedMoonIndex,
                 { resolveDetailed: () => null })
             : MoonScientificCardAssembler.build(model, this.requestedBodyIndex, this.requestedMoonIndex));

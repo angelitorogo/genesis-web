@@ -11,7 +11,8 @@ import { UniverseGenerationKey } from './universe-generation-key';
  */
 export function frozenPhysicalSourceKey(parent: UniverseGenerationKey): UniverseGenerationKey {
   if (parent.generatorVersion === GeneratorVersion.V1) return parent;
-  if (parent.generatorVersion === GeneratorVersion.V2) {
+  if (parent.generatorVersion === GeneratorVersion.V2 ||
+      parent.generatorVersion === GeneratorVersion.V3) {
     return new UniverseGenerationKey(parent.universeSeed, GeneratorVersion.V1);
   }
   throw new RangeError(`Unsupported GeneratorVersion for frozen physical source: ${parent.generatorVersionCode}.`);

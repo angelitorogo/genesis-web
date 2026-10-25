@@ -1,0 +1,4919 @@
+{
+  "contract": "PRE-33.00/v1",
+  "universeSeed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "generatorVersion": "V2",
+  "inputs": {
+    "galaxyIndices": [
+      0,
+      1,
+      2
+    ],
+    "systemsPerGalaxy": 20,
+    "maxSectors": 1500,
+    "fixtureSource": "Valores comunicados por el usuario, NO consulta directa a IndexedDB",
+    "persistenceMode": "USER_REFERENCE_NOT_INDEXEDDB"
+  },
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "designation": {
+        "name": "Elixisis",
+        "proceduralCode": "GEN-V2-G0-8460AF4A9B27AF5FBA119BA011989A94"
+      },
+      "morphology": "BARRED_SPIRAL",
+      "physical": {
+        "ageBillionYears": 12.123294893716025,
+        "diameterLightYears": 142971.4333314632,
+        "totalMassSolarMasses": 1348223772071.036,
+        "stellarPopulation": "124428709493",
+        "metallicitySolarRatio": 0.9273167862684915,
+        "starFormationRateSolarMassesPerYear": 5.731640920132622
+      },
+      "sectorGrid": {
+        "halfExtent": 71,
+        "fullGridSectors": 20449
+      },
+      "sectorCoordinatesAttempted": 65,
+      "sample": {
+        "systems": 20,
+        "planets": 153,
+        "moons": 540,
+        "relevantMoons": 311,
+        "identityOnlyMoons": 229,
+        "planetTypes": {
+          "VOLCANIC": 8,
+          "ROCKY": 31,
+          "ICE": 22,
+          "MINI_NEPTUNE": 69,
+          "DESERT": 11,
+          "ICE_GIANT": 6,
+          "SUPER_EARTH": 3,
+          "GAS_GIANT": 3
+        },
+        "planetPressureStatus": {
+          "MODELLED": 75,
+          "UNRESOLVED": 78
+        },
+        "planetPersistentSurfaceLiquidWater": 1,
+        "pressureColumnDifferences": 39,
+        "moonOceanPresent": 22,
+        "moonOceanStates": {
+          "UNRESOLVED_IN_SIMULATED_MODEL": 249,
+          "ABSENT_IN_SIMULATED_MODEL": 40,
+          "PRESENT_IN_SIMULATED_MODEL": 22
+        },
+        "moonOceanReasons": {
+          "THERMAL_TRANSPORT_OUTSIDE_DOMAIN": 239,
+          "MISSING_TIDAL_HEAT": 6,
+          "NO_FORMATION_H2O": 29,
+          "ICE_STABLE_IN_GENERATED_MODEL": 11,
+          "SUBSURFACE_LIQUID_IN_GENERATED_MODEL": 22,
+          "TEMPERATE_SURFACE_WITH_UNRESOLVED_CONFINEMENT": 4
+        },
+        "moonPressureBases": {
+          "UNRESOLVED": 306,
+          "CONDITIONAL_SCENARIO": 5
+        },
+        "moonPhysicalBalances": 0,
+        "moonChemicalPowerResolved": 0,
+        "moonChemicalDisequilibriumResolved": 0,
+        "moonSurfaceDoseResolved": 0,
+        "moonSubsurfaceDoseResolved": 0,
+        "examples": {
+          "pressureDifferences": [
+            {
+              "body": "Hethor e",
+              "retainedPressurePascal": 8.15400927970518,
+              "waterAssessmentPressurePascal": 3.849315757680988
+            },
+            {
+              "body": "Phaephae b",
+              "retainedPressurePascal": 67592.19267284327,
+              "waterAssessmentPressurePascal": 65410.078943786764
+            },
+            {
+              "body": "Phaephae c",
+              "retainedPressurePascal": 202.21978019522098,
+              "waterAssessmentPressurePascal": 99.58997803242383
+            },
+            {
+              "body": "Wionaor b",
+              "retainedPressurePascal": 114556.62549711595,
+              "waterAssessmentPressurePascal": 0.00000590628866132059
+            },
+            {
+              "body": "Baetia c",
+              "retainedPressurePascal": 128.7214934913167,
+              "waterAssessmentPressurePascal": 87.28264831576332
+            },
+            {
+              "body": "Baetia d",
+              "retainedPressurePascal": 220684.56285998173,
+              "waterAssessmentPressurePascal": 17609.987473194895
+            },
+            {
+              "body": "Baetia f",
+              "retainedPressurePascal": 106.63008049204568,
+              "waterAssessmentPressurePascal": 9.092365560291093
+            },
+            {
+              "body": "Chinais b",
+              "retainedPressurePascal": 44.28924149383915,
+              "waterAssessmentPressurePascal": 0.00000590628866132059
+            }
+          ],
+          "liquidPlanets": [
+            {
+              "body": "Puvion f",
+              "planetType": "ROCKY",
+              "liquidCoverageFraction": 0.12151928455481557
+            }
+          ],
+          "oceanMoons": [
+            {
+              "body": "Puvion h II",
+              "heatFluxWattsPerSquareMeter": 0.8832434699187791
+            },
+            {
+              "body": "Pharum e I",
+              "heatFluxWattsPerSquareMeter": 0.008970971320132802
+            },
+            {
+              "body": "Pharum g I",
+              "heatFluxWattsPerSquareMeter": 0.0026914615399487025
+            },
+            {
+              "body": "Pharum g II",
+              "heatFluxWattsPerSquareMeter": 0.004512404272841568
+            },
+            {
+              "body": "Nuvium g I",
+              "heatFluxWattsPerSquareMeter": 0.004276290055285077
+            },
+            {
+              "body": "Nuvium g II",
+              "heatFluxWattsPerSquareMeter": 0.0006238411282969479
+            },
+            {
+              "body": "Nuvium h II",
+              "heatFluxWattsPerSquareMeter": 0.005501415557523436
+            },
+            {
+              "body": "Krika h I",
+              "heatFluxWattsPerSquareMeter": 0.0014032135618012491
+            }
+          ],
+          "unresolvedMoons": [
+            {
+              "body": "Hethor f I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Hethor f II",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Hethor f III",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Hethor f IV",
+              "reason": "MISSING_TIDAL_HEAT"
+            },
+            {
+              "body": "Hethor g I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            }
+          ]
+        },
+        "systemsDetails": [
+          {
+            "system": "Aiolaara",
+            "sector": {
+              "x": 10,
+              "y": 14,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Hethor",
+            "sector": {
+              "x": 23,
+              "y": 24,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 8,
+            "planetDetails": [
+              {
+                "name": "Hethor b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hethor c",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hethor d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hethor e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hethor f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hethor g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hethor h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hethor i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "cd1954f8f3612797fc0eb95c750c3e2cbe0db11241c463164a628d9f7d0761aa"
+          },
+          {
+            "system": "Phaephae",
+            "sector": {
+              "x": 43,
+              "y": 54,
+              "band": 4
+            },
+            "multiplicity": "SINGLE",
+            "planets": 8,
+            "planetDetails": [
+              {
+                "name": "Phaephae b",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phaephae c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phaephae d",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phaephae e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phaephae f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phaephae g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phaephae h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phaephae i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "9b21376b5e8961d7d61dcc8bbbb1b0073976c4ab30876f641947cef5f65f6614"
+          },
+          {
+            "system": "Zatis",
+            "sector": {
+              "x": -7,
+              "y": 11,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 1,
+            "planetDetails": [
+              {
+                "name": "Wionaor b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "b21b113a4a60fcd6f6c24fadc722fbb34b45864d0047b031ee900c94f3b11675"
+          },
+          {
+            "system": "Baetia",
+            "sector": {
+              "x": -7,
+              "y": 24,
+              "band": 2
+            },
+            "multiplicity": "BINARY",
+            "planets": 19,
+            "planetDetails": [
+              {
+                "name": "Baetia b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baetia c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baetia d",
+                "planetType": "ICE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baetia e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baetia f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baetia g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baetia h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baetia i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion d",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion e",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion f",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": true
+              },
+              {
+                "name": "Puvion g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion h",
+                "planetType": "ICE_GIANT",
+                "moons": 16,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion i",
+                "planetType": "ICE_GIANT",
+                "moons": 19,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Puvion j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chinais b",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chinais c",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "836898ee655f6ff0006be5f7f519c3c0e0c283f0027ae2c58637e98ec611ed0a"
+          },
+          {
+            "system": "Pharum",
+            "sector": {
+              "x": -14,
+              "y": 46,
+              "band": 3
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Pharum b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum e",
+                "planetType": "ROCKY",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum g",
+                "planetType": "ICE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum j",
+                "planetType": "ICE_GIANT",
+                "moons": 19,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Pharum k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "7f4218520d575e13ce90f7caaca0f110eef18e2d40571364055d3f54dd1f3dbe"
+          },
+          {
+            "system": "Chuviae",
+            "sector": {
+              "x": 16,
+              "y": 0,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 18,
+            "planetDetails": [
+              {
+                "name": "Chuviae b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chuviae j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais e",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais h",
+                "planetType": "ICE_GIANT",
+                "moons": 23,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chianais i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Niosas b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "d8a623e843399c667b69cb7a3767cc5c37a473a407ea9365d3ae42924073fd18"
+          },
+          {
+            "system": "Staenaor",
+            "sector": {
+              "x": 7,
+              "y": 2,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Thiakos",
+            "sector": {
+              "x": -7,
+              "y": 10,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 8,
+            "planetDetails": [
+              {
+                "name": "Thiakos b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thiakos c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thiakos d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thiakos e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thiakos f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thiakos g",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thiakos h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thiakos i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "198ce370a56d06dbc277475362cf3849d258017de4768d6dc4331826ace82c96"
+          },
+          {
+            "system": "Kasae",
+            "sector": {
+              "x": -7,
+              "y": -13,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 15,
+            "planetDetails": [
+              {
+                "name": "Kasae b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kasae c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kasae d",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kasae e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kasae f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kasae g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kasae h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kasae i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vosos b",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vosos c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vosos d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vosos e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vosos f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vosos g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hither b",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "4cdd4c9b96bc61384e7a58fb6bb8b37af166648ed18c77e395b04af3e2dde99a"
+          },
+          {
+            "system": "Trerior",
+            "sector": {
+              "x": 6,
+              "y": -8,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 12,
+            "planetDetails": [
+              {
+                "name": "Canas b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas d",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas l",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Canas m",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "c849c6a10fb40bd4e1bc55185a4958f309c3289bdb49fcbdf4863ee64194affe"
+          },
+          {
+            "system": "Nuvium",
+            "sector": {
+              "x": 14,
+              "y": 11,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Nuvium b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium c",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium f",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium g",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 11,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium j",
+                "planetType": "ICE_GIANT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Nuvium k",
+                "planetType": "ICE_GIANT",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "c36fce57bf3eb0f4ed0efb6568c95eff9a4fb706e01f015bf492e06ca4d7f1ae"
+          },
+          {
+            "system": "Lenaum",
+            "sector": {
+              "x": 13,
+              "y": 15,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 8,
+            "planetDetails": [
+              {
+                "name": "Lenaum b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lenaum c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lenaum d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lenaum e",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lenaum f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lenaum g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lenaum h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lenaum i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "987bc44dddcd613be4c6fce356a0cbe619d08e49ab596f36045cda0489201a38"
+          },
+          {
+            "system": "Krika",
+            "sector": {
+              "x": -2,
+              "y": -8,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Krika b",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika c",
+                "planetType": "SUPER_EARTH",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika d",
+                "planetType": "SUPER_EARTH",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika e",
+                "planetType": "SUPER_EARTH",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika i",
+                "planetType": "GAS_GIANT",
+                "moons": 35,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika j",
+                "planetType": "GAS_GIANT",
+                "moons": 106,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Krika k",
+                "planetType": "GAS_GIANT",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "2b52b3cc419e26bcb9bdd0d2eda99553bf412380697ad930f30c2157c7ea432f"
+          },
+          {
+            "system": "Baedus",
+            "sector": {
+              "x": -32,
+              "y": -3,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 9,
+            "planetDetails": [
+              {
+                "name": "Baedus b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus d",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus f",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Baedus j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "26eff15d41dbf52f2154900c97731976d94cf87cf5e698713d0d473c46afc8e8"
+          },
+          {
+            "system": "Phiatheria",
+            "sector": {
+              "x": -25,
+              "y": -38,
+              "band": 3
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Cesar",
+            "sector": {
+              "x": 1,
+              "y": -5,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 5,
+            "planetDetails": [
+              {
+                "name": "Cesar b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cesar c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cesar d",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cesar e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cesar f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "82c204c26a8f44814de1a484a68d074c8e5fcbdf92840b978e6920a1b332f077"
+          },
+          {
+            "system": "Yeviara",
+            "sector": {
+              "x": 14,
+              "y": 3,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Lolaer",
+            "sector": {
+              "x": 13,
+              "y": -7,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 12,
+            "planetDetails": [
+              {
+                "name": "Chiomeria b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiomeria k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Draleria b",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Draleria c",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "c637f6af851a25d5b8c2f0607497d5336fd3a8371407a54c3202cd47af8f72ac"
+          },
+          {
+            "system": "Liakis",
+            "sector": {
+              "x": 18,
+              "y": 19,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        ],
+        "selection": "NAMED_FIXTURES_PLUS_DETERMINISTIC_RADIAL_QUADRANTS_NON_RANDOM_SAMPLE"
+      },
+      "referenceCheck": {
+        "status": "MATCH",
+        "differences": []
+      },
+      "determinism": [
+        {
+          "system": "Aiolaara",
+          "stable": true
+        },
+        {
+          "system": "Hethor",
+          "stable": true
+        },
+        {
+          "system": "Phaephae",
+          "stable": true
+        }
+      ],
+      "sampleFingerprint": "4126c6b8ce809a0d116bd749d92d956a73eecdc37dd1c64807fa3d05a59c58b9",
+      "issues": []
+    },
+    {
+      "galaxyIndex": 1,
+      "designation": {
+        "name": "Elisoune",
+        "proceduralCode": "GEN-V2-G1-FF98D90A403B28CC1FDE2AF4F711F8D2"
+      },
+      "morphology": "BARRED_SPIRAL",
+      "physical": {
+        "ageBillionYears": 9.059367160238239,
+        "diameterLightYears": 133461.82760466108,
+        "totalMassSolarMasses": 1822584669276.6748,
+        "stellarPopulation": "255024258010",
+        "metallicitySolarRatio": 1.1925114169357311,
+        "starFormationRateSolarMassesPerYear": 7.613317839469234
+      },
+      "sectorGrid": {
+        "halfExtent": 67,
+        "fullGridSectors": 18225
+      },
+      "sectorCoordinatesAttempted": 57,
+      "sample": {
+        "systems": 20,
+        "planets": 126,
+        "moons": 292,
+        "relevantMoons": 220,
+        "identityOnlyMoons": 72,
+        "planetTypes": {
+          "VOLCANIC": 12,
+          "ICE": 36,
+          "DESERT": 8,
+          "ROCKY": 19,
+          "MINI_NEPTUNE": 46,
+          "ICE_GIANT": 4,
+          "SUPER_EARTH": 1
+        },
+        "planetPressureStatus": {
+          "MODELLED": 76,
+          "UNRESOLVED": 50
+        },
+        "planetPersistentSurfaceLiquidWater": 3,
+        "pressureColumnDifferences": 55,
+        "moonOceanPresent": 8,
+        "moonOceanStates": {
+          "UNRESOLVED_IN_SIMULATED_MODEL": 182,
+          "PRESENT_IN_SIMULATED_MODEL": 8,
+          "ABSENT_IN_SIMULATED_MODEL": 30
+        },
+        "moonOceanReasons": {
+          "THERMAL_TRANSPORT_OUTSIDE_DOMAIN": 175,
+          "MISSING_TIDAL_HEAT": 7,
+          "SUBSURFACE_LIQUID_IN_GENERATED_MODEL": 8,
+          "NO_FORMATION_H2O": 21,
+          "ICE_STABLE_IN_GENERATED_MODEL": 9
+        },
+        "moonPressureBases": {
+          "UNRESOLVED": 218,
+          "CONDITIONAL_SCENARIO": 2
+        },
+        "moonPhysicalBalances": 0,
+        "moonChemicalPowerResolved": 0,
+        "moonChemicalDisequilibriumResolved": 0,
+        "moonSurfaceDoseResolved": 0,
+        "moonSubsurfaceDoseResolved": 0,
+        "examples": {
+          "pressureDifferences": [
+            {
+              "body": "Yutia b",
+              "retainedPressurePascal": 19017.60431686091,
+              "waterAssessmentPressurePascal": 17798.413498786584
+            },
+            {
+              "body": "Yutia c",
+              "retainedPressurePascal": 9647.327776088243,
+              "waterAssessmentPressurePascal": 485.33670264426934
+            },
+            {
+              "body": "Yutia d",
+              "retainedPressurePascal": 1.0873676202930764,
+              "waterAssessmentPressurePascal": 0.14899503974492606
+            },
+            {
+              "body": "Yutia e",
+              "retainedPressurePascal": 267302.200160013,
+              "waterAssessmentPressurePascal": 14502.862061595844
+            },
+            {
+              "body": "Yutia f",
+              "retainedPressurePascal": 42626.25087311848,
+              "waterAssessmentPressurePascal": 1905.6402128678687
+            },
+            {
+              "body": "Yutia g",
+              "retainedPressurePascal": 764.1982364270477,
+              "waterAssessmentPressurePascal": 37.654799061525125
+            },
+            {
+              "body": "Lariis b",
+              "retainedPressurePascal": 2933.069359661718,
+              "waterAssessmentPressurePascal": 185.9382942012078
+            },
+            {
+              "body": "Lariis c",
+              "retainedPressurePascal": 117.08650748707174,
+              "waterAssessmentPressurePascal": 3.9533302567797075
+            }
+          ],
+          "liquidPlanets": [
+            {
+              "body": "Quanaen b",
+              "planetType": "DESERT",
+              "liquidCoverageFraction": 0.010847134946862345
+            },
+            {
+              "body": "Quanaen d",
+              "planetType": "VOLCANIC",
+              "liquidCoverageFraction": 0.05748544740400156
+            },
+            {
+              "body": "Wikor c",
+              "planetType": "DESERT",
+              "liquidCoverageFraction": 0.01956571921298984
+            }
+          ],
+          "oceanMoons": [
+            {
+              "body": "Cumum e I",
+              "heatFluxWattsPerSquareMeter": 0.006616296911320419
+            },
+            {
+              "body": "Cumum g II",
+              "heatFluxWattsPerSquareMeter": 0.00476002189903993
+            },
+            {
+              "body": "Cumum h I",
+              "heatFluxWattsPerSquareMeter": 0.007866057901200567
+            },
+            {
+              "body": "Cumum i I",
+              "heatFluxWattsPerSquareMeter": 0.005139860702602949
+            },
+            {
+              "body": "Cumum i III",
+              "heatFluxWattsPerSquareMeter": 0.0037503324107253733
+            },
+            {
+              "body": "Cumum i V",
+              "heatFluxWattsPerSquareMeter": 0.005082485959124707
+            },
+            {
+              "body": "Cumum j I",
+              "heatFluxWattsPerSquareMeter": 0.31598937004314737
+            },
+            {
+              "body": "Wikor f I",
+              "heatFluxWattsPerSquareMeter": 0.0028882172909095727
+            }
+          ],
+          "unresolvedMoons": [
+            {
+              "body": "Yutia g I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Lariis c I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Lariis c II",
+              "reason": "MISSING_TIDAL_HEAT"
+            },
+            {
+              "body": "Lariis e I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Lariis g I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            }
+          ]
+        },
+        "systemsDetails": [
+          {
+            "system": "Basoria",
+            "sector": {
+              "x": 14,
+              "y": 6,
+              "band": 1
+            },
+            "multiplicity": "TRIPLE",
+            "planets": 12,
+            "planetDetails": [
+              {
+                "name": "Yutia b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yutia c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yutia d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yutia e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yutia f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yutia g",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lariis b",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lariis c",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lariis d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lariis e",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lariis f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Lariis g",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "c5050b6ddc4fcb089073cc096561d7848c468dc41851cc2cc64192f2b9ef5a97"
+          },
+          {
+            "system": "Shoriara",
+            "sector": {
+              "x": -7,
+              "y": 10,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Fialais",
+            "sector": {
+              "x": -9,
+              "y": -5,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Cumum",
+            "sector": {
+              "x": -27,
+              "y": -28,
+              "band": 3
+            },
+            "multiplicity": "SINGLE",
+            "planets": 11,
+            "planetDetails": [
+              {
+                "name": "Cumum b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum d",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum e",
+                "planetType": "ROCKY",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum f",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 11,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cumum l",
+                "planetType": "ICE_GIANT",
+                "moons": 7,
+                "relevantMoons": 7,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "3f19c13780cbf323a158f3b31ef2fdb71011cd47805e64b63b02056c781371a4"
+          },
+          {
+            "system": "Zenaor",
+            "sector": {
+              "x": 9,
+              "y": 9,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Zenaor b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor c",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor d",
+                "planetType": "DESERT",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor f",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor i",
+                "planetType": "ICE_GIANT",
+                "moons": 28,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zenaor k",
+                "planetType": "ICE_GIANT",
+                "moons": 22,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "a8dc40f0089e5fbf7f3ee8fb80f6a7e76f59bb8b178eeecb5bb8a9e6a56c8d8e"
+          },
+          {
+            "system": "Thunais",
+            "sector": {
+              "x": 57,
+              "y": 14,
+              "band": 4
+            },
+            "multiplicity": "SINGLE",
+            "planets": 9,
+            "planetDetails": [
+              {
+                "name": "Thunais b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais g",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thunais j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 11,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "45b2ca1bb0c3e50898e60abe7ae8d2e5175d64560f611140fb7ed7a40e3bec78"
+          },
+          {
+            "system": "Stiora",
+            "sector": {
+              "x": -5,
+              "y": 8,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Zameria",
+            "sector": {
+              "x": 6,
+              "y": -1,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 5,
+            "planetDetails": [
+              {
+                "name": "Zameria b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zameria c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zameria d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zameria e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zameria f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "d8df379c8f838a51231bc1b4230f738fa1113ce76798db4b02356c41bd6fb7ea"
+          },
+          {
+            "system": "Siolaion",
+            "sector": {
+              "x": 15,
+              "y": -26,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 6,
+            "planetDetails": [
+              {
+                "name": "Siolaion b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Siolaion c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Siolaion d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Siolaion e",
+                "planetType": "ICE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Siolaion f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Siolaion g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "2e633d1e63700ee25f2739e79005fe88ad9d20abc07906288d55c970c2a42538"
+          },
+          {
+            "system": "Diorar",
+            "sector": {
+              "x": 1,
+              "y": 16,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 7,
+            "planetDetails": [
+              {
+                "name": "Diorar b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Diorar c",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Diorar d",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Diorar e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Diorar f",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Diorar g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Diorar h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "937cde90a67e625ee9059a932ce4e079b58e39505b01505a1a0e5df5700fcaeb"
+          },
+          {
+            "system": "Zanaer",
+            "sector": {
+              "x": 22,
+              "y": 0,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Miraer",
+            "sector": {
+              "x": 0,
+              "y": 39,
+              "band": 3
+            },
+            "multiplicity": "SINGLE",
+            "planets": 9,
+            "planetDetails": [
+              {
+                "name": "Miraer b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer c",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer d",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Miraer j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "80a2c63a24d8909183ff339a8d7714ed1927ff7414a229c52936da224c9974da"
+          },
+          {
+            "system": "Gaeraoria",
+            "sector": {
+              "x": -7,
+              "y": 14,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 8,
+            "planetDetails": [
+              {
+                "name": "Quanaen b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": true
+              },
+              {
+                "name": "Quanaen c",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quanaen d",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": true
+              },
+              {
+                "name": "Quanaen e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quanaen f",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quanaen g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quanaen h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vriokae b",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "023092ce3042eea4ed58f044217aab0bb40b9d3b1e41b186c70a07aea2e3a7db"
+          },
+          {
+            "system": "Wikor",
+            "sector": {
+              "x": -11,
+              "y": 28,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 9,
+            "planetDetails": [
+              {
+                "name": "Wikor b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wikor c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": true
+              },
+              {
+                "name": "Wikor d",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wikor e",
+                "planetType": "SUPER_EARTH",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wikor f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wikor g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wikor h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wikor i",
+                "planetType": "ICE_GIANT",
+                "moons": 9,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wikor j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 12,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "a1287e4d338d9f6af5559dda3fdd5508aafd533ee780ec16ac95eb4d4b4262e0"
+          },
+          {
+            "system": "Churais",
+            "sector": {
+              "x": -8,
+              "y": -5,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Churais b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais g",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais h",
+                "planetType": "ICE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Churais k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "4ed0fed762c53aeac3baed2670369f46394a01e579d23ad43244598e1afb813d"
+          },
+          {
+            "system": "Yomion",
+            "sector": {
+              "x": -5,
+              "y": -28,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Yomion b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion d",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yomion k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "50b440022166bc766f49203c62cb82ee0ee7bffc20ed87807c5c07a3b7bfc0ed"
+          },
+          {
+            "system": "Yurius",
+            "sector": {
+              "x": 8,
+              "y": -11,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Vrevae",
+            "sector": {
+              "x": 6,
+              "y": 13,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 20,
+            "planetDetails": [
+              {
+                "name": "Vrevae b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae d",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae h",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Vrevae l",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wuvios b",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wuvios c",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wuvios d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wuvios e",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wuvios f",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wuvios g",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Wuvios h",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hiarior b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hiarior c",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "400a177112b36edaf516735d486fe0c95267fe822ddf339f322e11524f5bf862"
+          },
+          {
+            "system": "Ciakar",
+            "sector": {
+              "x": -31,
+              "y": 23,
+              "band": 3
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Duriia",
+            "sector": {
+              "x": -8,
+              "y": -4,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        ],
+        "selection": "NAMED_FIXTURES_PLUS_DETERMINISTIC_RADIAL_QUADRANTS_NON_RANDOM_SAMPLE"
+      },
+      "referenceCheck": {
+        "status": "NOT_CONFIGURED",
+        "differences": []
+      },
+      "determinism": [
+        {
+          "system": "Basoria",
+          "stable": true
+        },
+        {
+          "system": "Shoriara",
+          "stable": true
+        },
+        {
+          "system": "Fialais",
+          "stable": true
+        }
+      ],
+      "sampleFingerprint": "e18db505c2a2f67781f5657e82fc712619dc26748c50c4d1c6d3aff870d27cea",
+      "issues": []
+    },
+    {
+      "galaxyIndex": 2,
+      "designation": {
+        "name": "Ilyzenia",
+        "proceduralCode": "GEN-V2-G2-19068F8F5DF430EF3F892BAE79E19B02"
+      },
+      "morphology": "BARRED_SPIRAL",
+      "physical": {
+        "ageBillionYears": 8.983543159933259,
+        "diameterLightYears": 153172.6709990764,
+        "totalMassSolarMasses": 1554166504094.204,
+        "stellarPopulation": "230864726765",
+        "metallicitySolarRatio": 0.9138413583153586,
+        "starFormationRateSolarMassesPerYear": 2.1033472061510947
+      },
+      "sectorGrid": {
+        "halfExtent": 77,
+        "fullGridSectors": 24025
+      },
+      "sectorCoordinatesAttempted": 79,
+      "sample": {
+        "systems": 20,
+        "planets": 160,
+        "moons": 461,
+        "relevantMoons": 259,
+        "identityOnlyMoons": 202,
+        "planetTypes": {
+          "ROCKY": 28,
+          "ICE": 31,
+          "MINI_NEPTUNE": 66,
+          "VOLCANIC": 14,
+          "DESERT": 9,
+          "ICE_GIANT": 5,
+          "GAS_GIANT": 5,
+          "SUPER_EARTH": 2
+        },
+        "planetPressureStatus": {
+          "MODELLED": 84,
+          "UNRESOLVED": 76
+        },
+        "planetPersistentSurfaceLiquidWater": 2,
+        "pressureColumnDifferences": 51,
+        "moonOceanPresent": 13,
+        "moonOceanStates": {
+          "UNRESOLVED_IN_SIMULATED_MODEL": 211,
+          "ABSENT_IN_SIMULATED_MODEL": 35,
+          "PRESENT_IN_SIMULATED_MODEL": 13
+        },
+        "moonOceanReasons": {
+          "THERMAL_TRANSPORT_OUTSIDE_DOMAIN": 186,
+          "NO_FORMATION_H2O": 21,
+          "SUBSURFACE_LIQUID_IN_GENERATED_MODEL": 13,
+          "TEMPERATE_SURFACE_WITH_UNRESOLVED_CONFINEMENT": 18,
+          "ICE_STABLE_IN_GENERATED_MODEL": 14,
+          "MISSING_TIDAL_HEAT": 7
+        },
+        "moonPressureBases": {
+          "UNRESOLVED": 257,
+          "CONDITIONAL_SCENARIO": 2
+        },
+        "moonPhysicalBalances": 0,
+        "moonChemicalPowerResolved": 0,
+        "moonChemicalDisequilibriumResolved": 0,
+        "moonSurfaceDoseResolved": 0,
+        "moonSubsurfaceDoseResolved": 0,
+        "examples": {
+          "pressureDifferences": [
+            {
+              "body": "Traren c",
+              "retainedPressurePascal": 70309.09116159227,
+              "waterAssessmentPressurePascal": 66507.70171465844
+            },
+            {
+              "body": "Traren d",
+              "retainedPressurePascal": 97375.13281454472,
+              "waterAssessmentPressurePascal": 64619.27880558231
+            },
+            {
+              "body": "Traren e",
+              "retainedPressurePascal": 24872.41458013296,
+              "waterAssessmentPressurePascal": 1242.9031933973945
+            },
+            {
+              "body": "Chiamos e",
+              "retainedPressurePascal": 11.304873668404777,
+              "waterAssessmentPressurePascal": 10.549289780243377
+            },
+            {
+              "body": "Shevieria b",
+              "retainedPressurePascal": 39243.592307140396,
+              "waterAssessmentPressurePascal": 0.00000590628866132059
+            },
+            {
+              "body": "Phoris d",
+              "retainedPressurePascal": 785.7428267998115,
+              "waterAssessmentPressurePascal": 744.9048435041842
+            },
+            {
+              "body": "Phoris e",
+              "retainedPressurePascal": 1.860061790193531,
+              "waterAssessmentPressurePascal": 1.182225630617139
+            },
+            {
+              "body": "Chosor d",
+              "retainedPressurePascal": 6080.22993368698,
+              "waterAssessmentPressurePascal": 3355.421554159335
+            }
+          ],
+          "liquidPlanets": [
+            {
+              "body": "Hanaeria d",
+              "planetType": "ROCKY",
+              "liquidCoverageFraction": 0.12927559311060519
+            },
+            {
+              "body": "Ziris c",
+              "planetType": "DESERT",
+              "liquidCoverageFraction": 0.012868708323053252
+            }
+          ],
+          "oceanMoons": [
+            {
+              "body": "Phoris e I",
+              "heatFluxWattsPerSquareMeter": 0.002132275752626634
+            },
+            {
+              "body": "Hanaeria e I",
+              "heatFluxWattsPerSquareMeter": 0.38415425993637675
+            },
+            {
+              "body": "Hanaeria e II",
+              "heatFluxWattsPerSquareMeter": 0.004768817149771861
+            },
+            {
+              "body": "Hanaeria f I",
+              "heatFluxWattsPerSquareMeter": 0.06144432435516527
+            },
+            {
+              "body": "Hanaeria f II",
+              "heatFluxWattsPerSquareMeter": 0.1791928036606981
+            },
+            {
+              "body": "Jados i I",
+              "heatFluxWattsPerSquareMeter": 0.0024010560799583537
+            },
+            {
+              "body": "Jados j I",
+              "heatFluxWattsPerSquareMeter": 1.99217742278264
+            },
+            {
+              "body": "Jados j IV",
+              "heatFluxWattsPerSquareMeter": 0.0018934471136933066
+            }
+          ],
+          "unresolvedMoons": [
+            {
+              "body": "Traren d I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Traren e I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Traren f I",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Traren f II",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            },
+            {
+              "body": "Traren g II",
+              "reason": "THERMAL_TRANSPORT_OUTSIDE_DOMAIN"
+            }
+          ]
+        },
+        "systemsDetails": [
+          {
+            "system": "Traren",
+            "sector": {
+              "x": 9,
+              "y": 12,
+              "band": 1
+            },
+            "multiplicity": "BINARY",
+            "planets": 16,
+            "planetDetails": [
+              {
+                "name": "Traren b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Traren c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Traren d",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Traren e",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Traren f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Traren g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Traren h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos c",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chiamos i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Shevieria b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "cb85e954718d9a6acb900162535cba19a4290f32d63a31a84e98f2d64dd111af"
+          },
+          {
+            "system": "Phoris",
+            "sector": {
+              "x": -4,
+              "y": 4,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 11,
+            "planetDetails": [
+              {
+                "name": "Phoris b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris e",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Phoris l",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "7117c67906aa4c2bdb0ef8bb17df173257cd2616a56be2720543977959227e32"
+          },
+          {
+            "system": "Chosor",
+            "sector": {
+              "x": -20,
+              "y": -20,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 9,
+            "planetDetails": [
+              {
+                "name": "Chosor b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor f",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor g",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor i",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Chosor j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "1ac20b0a9bd2c046e13fd0fa868a1037e963922f3fff509eb6167fb19eb9ed21"
+          },
+          {
+            "system": "Thaeken",
+            "sector": {
+              "x": 18,
+              "y": -5,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 6,
+            "planetDetails": [
+              {
+                "name": "Thaeken b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thaeken c",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thaeken d",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thaeken e",
+                "planetType": "ICE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thaeken f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thaeken g",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "904bcda23b467f435252bec199927437b0b9b2c353baf62ccba1f4c3137e2bdc"
+          },
+          {
+            "system": "Mamia",
+            "sector": {
+              "x": 14,
+              "y": 6,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 8,
+            "planetDetails": [
+              {
+                "name": "Mamia b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Mamia c",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Mamia d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Mamia e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Mamia f",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Mamia g",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Mamia h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Mamia i",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "9b6c41496c70523485fe5d75e9d579f287cd08dfca0830c2f6aafcbde413cc07"
+          },
+          {
+            "system": "Triakus",
+            "sector": {
+              "x": 27,
+              "y": 3,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 7,
+            "planetDetails": [
+              {
+                "name": "Triakus b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Triakus c",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Triakus d",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Triakus e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Triakus f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Triakus g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 4,
+                "relevantMoons": 4,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Triakus h",
+                "planetType": "ICE_GIANT",
+                "moons": 23,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "be675f7209349354a69f55e2378a9957ec5877d1b09dd2dcf9562273468ebda3"
+          },
+          {
+            "system": "Steken",
+            "sector": {
+              "x": -19,
+              "y": 26,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Hanaeria",
+            "sector": {
+              "x": -3,
+              "y": 58,
+              "band": 3
+            },
+            "multiplicity": "BINARY",
+            "planets": 16,
+            "planetDetails": [
+              {
+                "name": "Hanaeria b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hanaeria c",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hanaeria d",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": true
+              },
+              {
+                "name": "Hanaeria e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hanaeria f",
+                "planetType": "ICE_GIANT",
+                "moons": 12,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hanaeria g",
+                "planetType": "GAS_GIANT",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hanaeria h",
+                "planetType": "ICE_GIANT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Hanaeria i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quilis b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quilis c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quilis d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quilis e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quilis f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quilis g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Quilis h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 8,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Zisas b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "64c5a96eb5a325ae530988defa536f6db49b665f783c69894670e4c3d76d8b6b"
+          },
+          {
+            "system": "Kriokus",
+            "sector": {
+              "x": -4,
+              "y": -1,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Kriokus b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus e",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus f",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus g",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 10,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kriokus k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "b5d3415578a64b1327b9733b7d96ad79b6c8493a9a34b887f4d8ce87afaa4db5"
+          },
+          {
+            "system": "Stiroria",
+            "sector": {
+              "x": -29,
+              "y": -17,
+              "band": 2
+            },
+            "multiplicity": "BINARY",
+            "planets": 1,
+            "planetDetails": [
+              {
+                "name": "Fasar b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "a9f389a20e5308a240567e238504b89ee1373d2758c46d0d56a884b7d18f31ae"
+          },
+          {
+            "system": "Fialer",
+            "sector": {
+              "x": -25,
+              "y": -5,
+              "band": 2
+            },
+            "multiplicity": "BINARY",
+            "planets": 17,
+            "planetDetails": [
+              {
+                "name": "Fialer b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Fialer c",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Fialer d",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Fialer e",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Fialer f",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Fialer g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Fialer h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae e",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Thioraae j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Henen b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "8bbd6ffb795b3652630a38e270f50467388514b3d06d456d226062fe5738b2bb"
+          },
+          {
+            "system": "Bivar",
+            "sector": {
+              "x": 19,
+              "y": -3,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Ziasus",
+            "sector": {
+              "x": 41,
+              "y": -23,
+              "band": 3
+            },
+            "multiplicity": "BINARY",
+            "planets": 21,
+            "planetDetails": [
+              {
+                "name": "Ziasus b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziasus c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziasus d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziasus e",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziasus f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziasus g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziasus h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 7,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion f",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion l",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Yolion m",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Maeveria b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Maeveria c",
+                "planetType": "ROCKY",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "cd70b480340958f192abbbce12f4a54c39fbd1753f74ee481239a73273bedb91"
+          },
+          {
+            "system": "Ziris",
+            "sector": {
+              "x": 2,
+              "y": 1,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 7,
+            "planetDetails": [
+              {
+                "name": "Ziris b",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziris c",
+                "planetType": "DESERT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": true
+              },
+              {
+                "name": "Ziris d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziris e",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziris f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziris g",
+                "planetType": "ICE_GIANT",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Ziris h",
+                "planetType": "ICE_GIANT",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "a922539c23305a33b4ebc76968512fe52815dcd7e28ad2f54a2e77924ca27fb4"
+          },
+          {
+            "system": "Jados",
+            "sector": {
+              "x": 10,
+              "y": 23,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 10,
+            "planetDetails": [
+              {
+                "name": "Jados b",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados c",
+                "planetType": "SUPER_EARTH",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados d",
+                "planetType": "SUPER_EARTH",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados e",
+                "planetType": "GAS_GIANT",
+                "moons": 79,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados g",
+                "planetType": "GAS_GIANT",
+                "moons": 65,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 3,
+                "relevantMoons": 3,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados j",
+                "planetType": "GAS_GIANT",
+                "moons": 37,
+                "relevantMoons": 8,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Jados k",
+                "planetType": "GAS_GIANT",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "1e75e4467570332548deb4894ff5b1fac424495a7f06e77c423811b73973fd6b"
+          },
+          {
+            "system": "Cuvas",
+            "sector": {
+              "x": 0,
+              "y": 19,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 9,
+            "planetDetails": [
+              {
+                "name": "Cuvas b",
+                "planetType": "VOLCANIC",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas c",
+                "planetType": "ICE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas d",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas e",
+                "planetType": "ICE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas f",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 6,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas i",
+                "planetType": "ICE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Cuvas j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "82177fed50d8853fdbfa668668858696f47ac2e0e90213031824ab1e93791d54"
+          },
+          {
+            "system": "Tiris",
+            "sector": {
+              "x": 35,
+              "y": -29,
+              "band": 3
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Kaekae",
+            "sector": {
+              "x": -24,
+              "y": 27,
+              "band": 2
+            },
+            "multiplicity": "SINGLE",
+            "planets": 12,
+            "planetDetails": [
+              {
+                "name": "Kaekae b",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae c",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae d",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae e",
+                "planetType": "ROCKY",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae f",
+                "planetType": "ROCKY",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "MODELLED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae g",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 1,
+                "relevantMoons": 1,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae h",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae i",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae j",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 9,
+                "relevantMoons": 6,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae k",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 0,
+                "relevantMoons": 0,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae l",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 5,
+                "relevantMoons": 5,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              },
+              {
+                "name": "Kaekae m",
+                "planetType": "MINI_NEPTUNE",
+                "moons": 2,
+                "relevantMoons": 2,
+                "pressureStatus": "UNRESOLVED",
+                "liquidWater": false
+              }
+            ],
+            "checksum": "5c741c09b99fe1ee58d3cb115b784c4eb014b8563f288ea4670c2b49eec4bd60"
+          },
+          {
+            "system": "Quiarier",
+            "sector": {
+              "x": -14,
+              "y": -1,
+              "band": 1
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          },
+          {
+            "system": "Giolen",
+            "sector": {
+              "x": 47,
+              "y": -26,
+              "band": 3
+            },
+            "multiplicity": "SINGLE",
+            "planets": 0,
+            "planetDetails": [],
+            "checksum": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        ],
+        "selection": "NAMED_FIXTURES_PLUS_DETERMINISTIC_RADIAL_QUADRANTS_NON_RANDOM_SAMPLE"
+      },
+      "referenceCheck": {
+        "status": "NOT_CONFIGURED",
+        "differences": []
+      },
+      "determinism": [
+        {
+          "system": "Traren",
+          "stable": true
+        },
+        {
+          "system": "Phoris",
+          "stable": true
+        },
+        {
+          "system": "Chosor",
+          "stable": true
+        }
+      ],
+      "sampleFingerprint": "adfb2836d907083cc971ece792e947a0ce37acb0b38395cc1092ae929f48fd76",
+      "issues": []
+    }
+  ],
+  "persistedComparison": {
+    "status": "REFERENCE_ONLY_NOT_READ_FROM_INDEXEDDB",
+    "differences": [],
+    "referenceCounts": {
+      "totalSectors": 20449,
+      "knownSectors": 20449,
+      "systems": 4758,
+      "clusters": 595,
+      "nebulae": 665,
+      "extremes": 299,
+      "planets": 35227,
+      "moons": 97537,
+      "asteroids": 50782,
+      "comets": 25558,
+      "tno": 29195,
+      "captured": 15,
+      "civilizations": 0
+    }
+  },
+  "blockers": [],
+  "overallStatus": "STRUCTURAL_SAMPLE_PASSED_WITH_PHYSICAL_GAPS",
+  "fingerprint": "107e4e5a149a0b17d9d11bc49cfebf73678afd68b4a6e92451d0ffacfa6f4489"
+}

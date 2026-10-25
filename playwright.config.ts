@@ -28,10 +28,11 @@ export default defineConfig({
       ? 2
       : 0,
 
+  // Limit resource contention between Three.js, Web Workers and IndexedDB.
   workers:
     isCI
       ? 1
-      : undefined,
+      : 4,
 
   reporter: [
     [

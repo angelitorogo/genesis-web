@@ -1,0 +1,52 @@
+{
+  "contract": "PRE-33.09/V3-CONTINUITY-AUDIT/v1",
+  "sample": "60 reproducible selected-sector systems, not a galaxy-wide census",
+  "totals": {
+    "systems": 20,
+    "planets": 143,
+    "moons": 235,
+    "planetProjections": 143,
+    "moonProjections": 235,
+    "v2PlanetsIsolated": 143,
+    "v2MoonsIsolated": 235,
+    "planetPhysicalColumns": 3,
+    "positiveAtmosphereColumns": 0,
+    "moonOceanIceColumns": 13,
+    "reportedDoses": 0,
+    "unknownDoses": 1134,
+    "envelopeWithoutSolidSurface": 69,
+    "independentlyQuantifiedSpectra": 0,
+    "evidenceProbes": 26,
+    "lunarDatedIrradianceIntervals": 0,
+    "lunarDatedEvents": 0,
+    "historyUnknown": 378,
+    "errors": 0
+  },
+  "galaxies": [
+    {
+      "galaxy": "Ilyzenia",
+      "galaxyIndex": 2,
+      "systems": 20,
+      "planets": 143,
+      "moons": 235,
+      "planetProjections": 143,
+      "moonProjections": 235,
+      "v2PlanetsIsolated": 143,
+      "v2MoonsIsolated": 235,
+      "planetPhysicalColumns": 3,
+      "positiveAtmosphereColumns": 0,
+      "moonOceanIceColumns": 13,
+      "reportedDoses": 0,
+      "unknownDoses": 1134,
+      "envelopeWithoutSolidSurface": 69,
+      "independentlyQuantifiedSpectra": 0,
+      "evidenceProbes": 26,
+      "lunarDatedIrradianceIntervals": 0,
+      "lunarDatedEvents": 0,
+      "historyUnknown": 378,
+      "errors": []
+    }
+  ],
+  "scope": "All V3/V2 scientific projections checked against fabricated historical continuity; moon 32.F.5 recorded irradiation and events; dated 31.7/31.8+32.12 tested separately; no biology",
+  "verdict": "PRE33_09_V3_CONTINUITY_GATING_AUDITED"
+}

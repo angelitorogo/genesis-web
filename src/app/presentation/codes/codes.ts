@@ -60,7 +60,7 @@ export class CodesPage {
             this.feedback.set({ kind: 'error', message: 'No hay una galaxia conocida actualmente en foco.' });
             return;
           case 'unsupported-version':
-            this.feedback.set({ kind: 'error', message: 'La confirmación galáctica de QA solo funciona en universos V2.' });
+            this.feedback.set({ kind: 'error', message: 'La confirmación galáctica de QA solo funciona en universos V2 o V3.' });
             return;
         }
       }
@@ -79,7 +79,7 @@ export class CodesPage {
           this.feedback.set({ kind: 'info', message: 'Este código ya se ha canjeado en este universo.' });
           break;
         case 'unsupported-version':
-          this.feedback.set({ kind: 'error', message: 'El código de pruebas solo funciona en universos V2.' });
+          this.feedback.set({ kind: 'error', message: 'El código de pruebas solo funciona en universos V2 o V3.' });
           break;
         case 'invalid-code':
           this.feedback.set({ kind: 'error', message: 'Código no válido o no disponible todavía.' });

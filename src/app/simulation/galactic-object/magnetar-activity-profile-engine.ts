@@ -52,7 +52,7 @@ export class GalacticMagnetarActivityProfileEngine {
     if (!(locator instanceof GalacticObjectLocator)) {
       throw new TypeError('28.4 requires a GalacticObjectLocator.');
     }
-    if (generationKey.generatorVersion !== GeneratorVersion.V2) return null;
+    if ((generationKey.generatorVersion !== GeneratorVersion.V2 && generationKey.generatorVersion !== GeneratorVersion.V3)) return null;
     if (DiscoveryState.fromCode(knowledgeState.code).code < DiscoveryState.CONFIRMED.code) return null;
     if (ExtremeObjectTypeResolver.resolve(generationKey, locator) !== ExtremeType.MAGNETAR) return null;
 

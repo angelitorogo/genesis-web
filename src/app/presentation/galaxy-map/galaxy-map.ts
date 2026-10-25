@@ -107,7 +107,7 @@ export class GalacticMapPage
   private async loadMapAndUnlocks(): Promise<void> {
     await this.facade.refresh();
     const model = this.facade.model();
-    if (model === null || model.generationKey.generatorVersionCode !== 2) return;
+    if (model === null || (model.generationKey.generatorVersionCode !== 2 && model.generationKey.generatorVersionCode !== 3)) return;
     try {
       this.maxBlockSize.set(await this.codes.getMaxSectorBlockSize(model.generationKey));
     } catch {

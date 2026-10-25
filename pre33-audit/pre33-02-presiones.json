@@ -1,0 +1,984 @@
+{
+  "contract": "PRE-33.02/v1",
+  "universeSeed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "generator": "V2",
+  "interpretation": "20.3 retained gas -> 20.4 condensed phase partition -> 20.6 climate / 20.7 water. Not an independent mass/flux atmospheric balance.",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "planets": 153,
+      "byStatus": {
+        "CONSISTENT_NO_CHANGE": 36,
+        "CONSISTENT_PHASE_PARTITION": 39,
+        "CONSISTENT_DEEP_ENVELOPE": 78
+      },
+      "differenceCount": 39,
+      "justifiedDifferences": 39,
+      "unexplainedDifferences": 0,
+      "observedPhysicalEvidenceGranted": 0,
+      "issues": {},
+      "examples": [
+        {
+          "body": "Hethor e",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 8.15400927970518,
+            "effectiveGasPressure20_4Pascal": 3.849315757680988,
+            "climatePressure20_6Pascal": 3.849315757680988,
+            "waterPressure20_7Pascal": 3.849315757680988,
+            "condensedEquivalentPressurePascal": 4.304693522024193,
+            "pressureChangePascal": 4.304693522024192,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Phaephae b",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 67592.19267284327,
+            "effectiveGasPressure20_4Pascal": 65410.078943786764,
+            "climatePressure20_6Pascal": 65410.078943786764,
+            "waterPressure20_7Pascal": 65410.078943786764,
+            "condensedEquivalentPressurePascal": 2182.1137290565134,
+            "pressureChangePascal": 2182.1137290565093,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Phaephae c",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 202.21978019522098,
+            "effectiveGasPressure20_4Pascal": 99.58997803242383,
+            "climatePressure20_6Pascal": 99.58997803242383,
+            "waterPressure20_7Pascal": 99.58997803242383,
+            "condensedEquivalentPressurePascal": 102.62980216279713,
+            "pressureChangePascal": 102.62980216279715,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Wionaor b",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 114556.62549711595,
+            "effectiveGasPressure20_4Pascal": 0.00000590628866132059,
+            "climatePressure20_6Pascal": 0.00000590628866132059,
+            "waterPressure20_7Pascal": 0.00000590628866132059,
+            "condensedEquivalentPressurePascal": 114556.62549120968,
+            "pressureChangePascal": 114556.62549120966,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Baetia c",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 128.7214934913167,
+            "effectiveGasPressure20_4Pascal": 87.28264831576332,
+            "climatePressure20_6Pascal": 87.28264831576332,
+            "waterPressure20_7Pascal": 87.28264831576332,
+            "condensedEquivalentPressurePascal": 41.43884517555339,
+            "pressureChangePascal": 41.43884517555337,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Baetia d",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 220684.56285998173,
+            "effectiveGasPressure20_4Pascal": 17609.987473194895,
+            "climatePressure20_6Pascal": 17609.987473194895,
+            "waterPressure20_7Pascal": 17609.987473194895,
+            "condensedEquivalentPressurePascal": 203074.57538678686,
+            "pressureChangePascal": 203074.57538678683,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Baetia f",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 106.63008049204568,
+            "effectiveGasPressure20_4Pascal": 9.092365560291093,
+            "climatePressure20_6Pascal": 9.092365560291093,
+            "waterPressure20_7Pascal": 9.092365560291093,
+            "condensedEquivalentPressurePascal": 97.53771493175458,
+            "pressureChangePascal": 97.53771493175458,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chinais b",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 44.28924149383915,
+            "effectiveGasPressure20_4Pascal": 0.00000590628866132059,
+            "climatePressure20_6Pascal": 0.00000590628866132059,
+            "waterPressure20_7Pascal": 0.00000590628866132059,
+            "condensedEquivalentPressurePascal": 44.28923558755048,
+            "pressureChangePascal": 44.289235587550486,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chinais c",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 22.876744202872512,
+            "effectiveGasPressure20_4Pascal": 0.8832439463564375,
+            "climatePressure20_6Pascal": 0.8832439463564375,
+            "waterPressure20_7Pascal": 0.8832439463564375,
+            "condensedEquivalentPressurePascal": 21.99350025651607,
+            "pressureChangePascal": 21.993500256516075,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Pharum f",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 293.0319892476124,
+            "effectiveGasPressure20_4Pascal": 194.1239228641776,
+            "climatePressure20_6Pascal": 194.1239228641776,
+            "waterPressure20_7Pascal": 194.1239228641776,
+            "condensedEquivalentPressurePascal": 98.90806638343481,
+            "pressureChangePascal": 98.9080663834348,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Pharum g",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 31.458992346857315,
+            "effectiveGasPressure20_4Pascal": 20.491112747404,
+            "climatePressure20_6Pascal": 20.491112747404,
+            "waterPressure20_7Pascal": 20.491112747404,
+            "condensedEquivalentPressurePascal": 10.967879599453312,
+            "pressureChangePascal": 10.967879599453315,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chuviae d",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 6.255025602677749,
+            "effectiveGasPressure20_4Pascal": 4.0202761105646125,
+            "climatePressure20_6Pascal": 4.0202761105646125,
+            "waterPressure20_7Pascal": 4.0202761105646125,
+            "condensedEquivalentPressurePascal": 2.2347494921131372,
+            "pressureChangePascal": 2.234749492113137,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        }
+      ],
+      "errors": [],
+      "sampleSystems": [
+        {
+          "sector": "10,14",
+          "system": "Aiolaara",
+          "planets": 0
+        },
+        {
+          "sector": "23,24",
+          "system": "Hethor",
+          "planets": 8
+        },
+        {
+          "sector": "43,54",
+          "system": "Phaephae",
+          "planets": 8
+        },
+        {
+          "sector": "-7,11",
+          "system": "Zatis",
+          "planets": 1
+        },
+        {
+          "sector": "-7,24",
+          "system": "Baetia",
+          "planets": 19
+        },
+        {
+          "sector": "-14,46",
+          "system": "Pharum",
+          "planets": 10
+        },
+        {
+          "sector": "16,0",
+          "system": "Chuviae",
+          "planets": 18
+        },
+        {
+          "sector": "7,2",
+          "system": "Staenaor",
+          "planets": 0
+        },
+        {
+          "sector": "-7,10",
+          "system": "Thiakos",
+          "planets": 8
+        },
+        {
+          "sector": "-7,-13",
+          "system": "Kasae",
+          "planets": 15
+        },
+        {
+          "sector": "6,-8",
+          "system": "Trerior",
+          "planets": 12
+        },
+        {
+          "sector": "14,11",
+          "system": "Nuvium",
+          "planets": 10
+        },
+        {
+          "sector": "13,15",
+          "system": "Lenaum",
+          "planets": 8
+        },
+        {
+          "sector": "-2,-8",
+          "system": "Krika",
+          "planets": 10
+        },
+        {
+          "sector": "-32,-3",
+          "system": "Baedus",
+          "planets": 9
+        },
+        {
+          "sector": "-25,-38",
+          "system": "Phiatheria",
+          "planets": 0
+        },
+        {
+          "sector": "1,-5",
+          "system": "Cesar",
+          "planets": 5
+        },
+        {
+          "sector": "14,3",
+          "system": "Yeviara",
+          "planets": 0
+        },
+        {
+          "sector": "13,-7",
+          "system": "Lolaer",
+          "planets": 12
+        },
+        {
+          "sector": "18,19",
+          "system": "Liakis",
+          "planets": 0
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "planets": 126,
+      "byStatus": {
+        "CONSISTENT_PHASE_PARTITION": 55,
+        "CONSISTENT_NO_CHANGE": 21,
+        "CONSISTENT_DEEP_ENVELOPE": 50
+      },
+      "differenceCount": 55,
+      "justifiedDifferences": 55,
+      "unexplainedDifferences": 0,
+      "observedPhysicalEvidenceGranted": 0,
+      "issues": {},
+      "examples": [
+        {
+          "body": "Yutia b",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 19017.60431686091,
+            "effectiveGasPressure20_4Pascal": 17798.413498786584,
+            "climatePressure20_6Pascal": 17798.413498786584,
+            "waterPressure20_7Pascal": 17798.413498786584,
+            "condensedEquivalentPressurePascal": 1219.1908180743285,
+            "pressureChangePascal": 1219.1908180743267,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Yutia c",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 9647.327776088243,
+            "effectiveGasPressure20_4Pascal": 485.33670264426934,
+            "climatePressure20_6Pascal": 485.33670264426934,
+            "waterPressure20_7Pascal": 485.33670264426934,
+            "condensedEquivalentPressurePascal": 9161.991073443973,
+            "pressureChangePascal": 9161.991073443973,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Yutia d",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 1.0873676202930764,
+            "effectiveGasPressure20_4Pascal": 0.14899503974492606,
+            "climatePressure20_6Pascal": 0.14899503974492606,
+            "waterPressure20_7Pascal": 0.14899503974492606,
+            "condensedEquivalentPressurePascal": 0.9383725805481502,
+            "pressureChangePascal": 0.9383725805481504,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Yutia e",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 267302.200160013,
+            "effectiveGasPressure20_4Pascal": 14502.862061595844,
+            "climatePressure20_6Pascal": 14502.862061595844,
+            "waterPressure20_7Pascal": 14502.862061595844,
+            "condensedEquivalentPressurePascal": 252799.33809841715,
+            "pressureChangePascal": 252799.33809841715,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Yutia f",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 42626.25087311848,
+            "effectiveGasPressure20_4Pascal": 1905.6402128678687,
+            "climatePressure20_6Pascal": 1905.6402128678687,
+            "waterPressure20_7Pascal": 1905.6402128678687,
+            "condensedEquivalentPressurePascal": 40720.61066025061,
+            "pressureChangePascal": 40720.61066025061,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Yutia g",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 764.1982364270477,
+            "effectiveGasPressure20_4Pascal": 37.654799061525125,
+            "climatePressure20_6Pascal": 37.654799061525125,
+            "waterPressure20_7Pascal": 37.654799061525125,
+            "condensedEquivalentPressurePascal": 726.5434373655228,
+            "pressureChangePascal": 726.5434373655225,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Lariis b",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 2933.069359661718,
+            "effectiveGasPressure20_4Pascal": 185.9382942012078,
+            "climatePressure20_6Pascal": 185.9382942012078,
+            "waterPressure20_7Pascal": 185.9382942012078,
+            "condensedEquivalentPressurePascal": 2747.13106546051,
+            "pressureChangePascal": 2747.13106546051,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Lariis c",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 117.08650748707174,
+            "effectiveGasPressure20_4Pascal": 3.9533302567797075,
+            "climatePressure20_6Pascal": 3.9533302567797075,
+            "waterPressure20_7Pascal": 3.9533302567797075,
+            "condensedEquivalentPressurePascal": 113.13317723029203,
+            "pressureChangePascal": 113.13317723029203,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Lariis d",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 41839.998143587465,
+            "effectiveGasPressure20_4Pascal": 1764.6577588428302,
+            "climatePressure20_6Pascal": 1764.6577588428302,
+            "waterPressure20_7Pascal": 1764.6577588428302,
+            "condensedEquivalentPressurePascal": 40075.34038474463,
+            "pressureChangePascal": 40075.34038474463,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Lariis e",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 49790.60667740516,
+            "effectiveGasPressure20_4Pascal": 2166.818297334623,
+            "climatePressure20_6Pascal": 2166.818297334623,
+            "waterPressure20_7Pascal": 2166.818297334623,
+            "condensedEquivalentPressurePascal": 47623.78838007053,
+            "pressureChangePascal": 47623.78838007053,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Lariis f",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 262328.79992212605,
+            "effectiveGasPressure20_4Pascal": 15842.119933227603,
+            "climatePressure20_6Pascal": 15842.119933227603,
+            "waterPressure20_7Pascal": 15842.119933227603,
+            "condensedEquivalentPressurePascal": 246486.67998889845,
+            "pressureChangePascal": 246486.67998889845,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Lariis g",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 337.36812616890927,
+            "effectiveGasPressure20_4Pascal": 12.775179470215862,
+            "climatePressure20_6Pascal": 12.775179470215862,
+            "waterPressure20_7Pascal": 12.775179470215862,
+            "condensedEquivalentPressurePascal": 324.5929466986934,
+            "pressureChangePascal": 324.5929466986934,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        }
+      ],
+      "errors": [],
+      "sampleSystems": [
+        {
+          "sector": "14,6",
+          "system": "Basoria",
+          "planets": 12
+        },
+        {
+          "sector": "-7,10",
+          "system": "Shoriara",
+          "planets": 0
+        },
+        {
+          "sector": "-9,-5",
+          "system": "Fialais",
+          "planets": 0
+        },
+        {
+          "sector": "-27,-28",
+          "system": "Cumum",
+          "planets": 11
+        },
+        {
+          "sector": "9,9",
+          "system": "Zenaor",
+          "planets": 10
+        },
+        {
+          "sector": "57,14",
+          "system": "Thunais",
+          "planets": 9
+        },
+        {
+          "sector": "-5,8",
+          "system": "Stiora",
+          "planets": 0
+        },
+        {
+          "sector": "6,-1",
+          "system": "Zameria",
+          "planets": 5
+        },
+        {
+          "sector": "15,-26",
+          "system": "Siolaion",
+          "planets": 6
+        },
+        {
+          "sector": "1,16",
+          "system": "Diorar",
+          "planets": 7
+        },
+        {
+          "sector": "22,0",
+          "system": "Zanaer",
+          "planets": 0
+        },
+        {
+          "sector": "0,39",
+          "system": "Miraer",
+          "planets": 9
+        },
+        {
+          "sector": "-7,14",
+          "system": "Gaeraoria",
+          "planets": 8
+        },
+        {
+          "sector": "-11,28",
+          "system": "Wikor",
+          "planets": 9
+        },
+        {
+          "sector": "-8,-5",
+          "system": "Churais",
+          "planets": 10
+        },
+        {
+          "sector": "-5,-28",
+          "system": "Yomion",
+          "planets": 10
+        },
+        {
+          "sector": "8,-11",
+          "system": "Yurius",
+          "planets": 0
+        },
+        {
+          "sector": "6,13",
+          "system": "Vrevae",
+          "planets": 20
+        },
+        {
+          "sector": "-31,23",
+          "system": "Ciakar",
+          "planets": 0
+        },
+        {
+          "sector": "-8,-4",
+          "system": "Duriia",
+          "planets": 0
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "planets": 160,
+      "byStatus": {
+        "CONSISTENT_NO_CHANGE": 33,
+        "CONSISTENT_PHASE_PARTITION": 51,
+        "CONSISTENT_DEEP_ENVELOPE": 76
+      },
+      "differenceCount": 51,
+      "justifiedDifferences": 51,
+      "unexplainedDifferences": 0,
+      "observedPhysicalEvidenceGranted": 0,
+      "issues": {},
+      "examples": [
+        {
+          "body": "Traren c",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 70309.09116159227,
+            "effectiveGasPressure20_4Pascal": 66507.70171465844,
+            "climatePressure20_6Pascal": 66507.70171465844,
+            "waterPressure20_7Pascal": 66507.70171465844,
+            "condensedEquivalentPressurePascal": 3801.38944693383,
+            "pressureChangePascal": 3801.3894469338265,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Traren d",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 97375.13281454472,
+            "effectiveGasPressure20_4Pascal": 64619.27880558231,
+            "climatePressure20_6Pascal": 64619.27880558231,
+            "waterPressure20_7Pascal": 64619.27880558231,
+            "condensedEquivalentPressurePascal": 32755.854008962404,
+            "pressureChangePascal": 32755.854008962408,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Traren e",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 24872.41458013296,
+            "effectiveGasPressure20_4Pascal": 1242.9031933973945,
+            "climatePressure20_6Pascal": 1242.9031933973945,
+            "waterPressure20_7Pascal": 1242.9031933973945,
+            "condensedEquivalentPressurePascal": 23629.51138673557,
+            "pressureChangePascal": 23629.51138673557,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chiamos e",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 11.304873668404777,
+            "effectiveGasPressure20_4Pascal": 10.549289780243377,
+            "climatePressure20_6Pascal": 10.549289780243377,
+            "waterPressure20_7Pascal": 10.549289780243377,
+            "condensedEquivalentPressurePascal": 0.7555838881614003,
+            "pressureChangePascal": 0.7555838881614001,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Shevieria b",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 39243.592307140396,
+            "effectiveGasPressure20_4Pascal": 0.00000590628866132059,
+            "climatePressure20_6Pascal": 0.00000590628866132059,
+            "waterPressure20_7Pascal": 0.00000590628866132059,
+            "condensedEquivalentPressurePascal": 39243.5923012341,
+            "pressureChangePascal": 39243.59230123411,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Phoris d",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 785.7428267998115,
+            "effectiveGasPressure20_4Pascal": 744.9048435041842,
+            "climatePressure20_6Pascal": 744.9048435041842,
+            "waterPressure20_7Pascal": 744.9048435041842,
+            "condensedEquivalentPressurePascal": 40.83798329562712,
+            "pressureChangePascal": 40.83798329562728,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Phoris e",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 1.860061790193531,
+            "effectiveGasPressure20_4Pascal": 1.182225630617139,
+            "climatePressure20_6Pascal": 1.182225630617139,
+            "waterPressure20_7Pascal": 1.182225630617139,
+            "condensedEquivalentPressurePascal": 0.677836159576392,
+            "pressureChangePascal": 0.677836159576392,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chosor d",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 6080.22993368698,
+            "effectiveGasPressure20_4Pascal": 3355.421554159335,
+            "climatePressure20_6Pascal": 3355.421554159335,
+            "waterPressure20_7Pascal": 3355.421554159335,
+            "condensedEquivalentPressurePascal": 2724.8083795276452,
+            "pressureChangePascal": 2724.8083795276452,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chosor e",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 3.192368516560593,
+            "effectiveGasPressure20_4Pascal": 1.5636406334024404,
+            "climatePressure20_6Pascal": 1.5636406334024404,
+            "waterPressure20_7Pascal": 1.5636406334024404,
+            "condensedEquivalentPressurePascal": 1.6287278831581524,
+            "pressureChangePascal": 1.6287278831581526,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chosor f",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 15.233683349720092,
+            "effectiveGasPressure20_4Pascal": 0.9661066325334556,
+            "climatePressure20_6Pascal": 0.9661066325334556,
+            "waterPressure20_7Pascal": 0.9661066325334556,
+            "condensedEquivalentPressurePascal": 14.267576717186635,
+            "pressureChangePascal": 14.267576717186637,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chosor g",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 19414.895318549858,
+            "effectiveGasPressure20_4Pascal": 1670.0282800508512,
+            "climatePressure20_6Pascal": 1670.0282800508512,
+            "waterPressure20_7Pascal": 1670.0282800508512,
+            "condensedEquivalentPressurePascal": 17744.867038499007,
+            "pressureChangePascal": 17744.867038499007,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        },
+        {
+          "body": "Chosor i",
+          "diagnostic": {
+            "contractVersion": "PRE-33.02/v1",
+            "status": "CONSISTENT_PHASE_PARTITION",
+            "issues": [],
+            "sourceRetainedPressure20_3Pascal": 569.0593862123181,
+            "effectiveGasPressure20_4Pascal": 49.50303786004397,
+            "climatePressure20_6Pascal": 49.50303786004397,
+            "waterPressure20_7Pascal": 49.50303786004397,
+            "condensedEquivalentPressurePascal": 519.5563483522741,
+            "pressureChangePascal": 519.5563483522742,
+            "phaseBasis": "MULTISPECIES_20_4",
+            "independentPhysicalAtmosphereCertified": false,
+            "lifeEvaluated": false
+          }
+        }
+      ],
+      "errors": [],
+      "sampleSystems": [
+        {
+          "sector": "9,12",
+          "system": "Traren",
+          "planets": 16
+        },
+        {
+          "sector": "-4,4",
+          "system": "Phoris",
+          "planets": 11
+        },
+        {
+          "sector": "-20,-20",
+          "system": "Chosor",
+          "planets": 9
+        },
+        {
+          "sector": "18,-5",
+          "system": "Thaeken",
+          "planets": 6
+        },
+        {
+          "sector": "14,6",
+          "system": "Mamia",
+          "planets": 8
+        },
+        {
+          "sector": "27,3",
+          "system": "Triakus",
+          "planets": 7
+        },
+        {
+          "sector": "-19,26",
+          "system": "Steken",
+          "planets": 0
+        },
+        {
+          "sector": "-3,58",
+          "system": "Hanaeria",
+          "planets": 16
+        },
+        {
+          "sector": "-4,-1",
+          "system": "Kriokus",
+          "planets": 10
+        },
+        {
+          "sector": "-29,-17",
+          "system": "Stiroria",
+          "planets": 1
+        },
+        {
+          "sector": "-25,-5",
+          "system": "Fialer",
+          "planets": 17
+        },
+        {
+          "sector": "19,-3",
+          "system": "Bivar",
+          "planets": 0
+        },
+        {
+          "sector": "41,-23",
+          "system": "Ziasus",
+          "planets": 21
+        },
+        {
+          "sector": "2,1",
+          "system": "Ziris",
+          "planets": 7
+        },
+        {
+          "sector": "10,23",
+          "system": "Jados",
+          "planets": 10
+        },
+        {
+          "sector": "0,19",
+          "system": "Cuvas",
+          "planets": 9
+        },
+        {
+          "sector": "35,-29",
+          "system": "Tiris",
+          "planets": 0
+        },
+        {
+          "sector": "-24,27",
+          "system": "Kaekae",
+          "planets": 12
+        },
+        {
+          "sector": "-14,-1",
+          "system": "Quiarier",
+          "planets": 0
+        },
+        {
+          "sector": "47,-26",
+          "system": "Giolen",
+          "planets": 0
+        }
+      ]
+    }
+  ],
+  "verdict": "PRESSURE_RECONCILIATION_PASSED"
+}

@@ -3,12 +3,12 @@ import { expect, test } from '@playwright/test';
 const seed = 'C0DE-2026-0000-0000-0000-0000-0000-0001';
 const code = 'A0C0-0000-0000-2710';
 
-test('Códigos: canje único de 10000 PD V2, persistente tras recarga', async ({ page }) => {
+test('Códigos: canje único de 10000 PD V3, persistente tras recarga', async ({ page }) => {
   await page.goto('/settings');
   await page.getByTestId('universe-seed-input').fill(seed);
   await page.getByTestId('universe-seed-apply-button').click();
   await expect(page.getByTestId('universe-seed-status')).toContainText('Universo creado y activado correctamente.');
-  await expect(page.getByTestId('universe-active-version')).toContainText('V2');
+  await expect(page.getByTestId('universe-active-version')).toContainText('V3');
   await page.goto('/');
   await expect(page.getByTestId('codes-link')).toHaveAttribute('href', '/codes');
   await expect(page.getByTestId('discovery-points')).toContainText('0');

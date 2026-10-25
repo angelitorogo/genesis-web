@@ -1,3 +1,5 @@
+import type { MinorMoonCharacterizationPRE3310 } from '../../domain/planetary/minor-moon-characterization-pre33-10';
+import { MinorMoonOnDemandPRE3310 } from '../../simulation/planetary/minor-moon-on-demand-pre33-10';
 import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
@@ -33,12 +35,13 @@ export class SystemV2SingleScientificSession {
   private readonly moonResolver: Readonly<{
     resolveDetailed: (key: UniverseGenerationKey, locator: BodyLocator, moonIndex: bigint) => MoonScientificResolvedTarget | null;
     resolveHostPlanetDetailed: (key: UniverseGenerationKey, locator: BodyLocator) => PlanetScientificResolvedTarget | null;
+    resolveMinor: (key: UniverseGenerationKey, locator: BodyLocator, moonIndex: bigint) => { designation: string; host: string; characterization: MinorMoonCharacterizationPRE3310 } | null;
   }>;
   private readonly previewResolver: ScientificBodyPreviewSceneResolver;
 
   private constructor(private readonly model: ArchiveDiscoveryDetailModel, host: GeneratedSingleHost) {
     this.publicKey = new UniverseGenerationKey(
-      UniverseSeed.parse(model.universeSeed), GeneratorVersion.V2,
+      UniverseSeed.parse(model.universeSeed), GeneratorVersion.fromCode(model.generatorVersionCode),
     );
     this.locator = new SystemLocator(model.galaxyIndex, model.sectorKey, model.galacticObjectIndex);
     this.host = host;
@@ -55,7 +58,7 @@ export class SystemV2SingleScientificSession {
       stellarSystemCard: model.stellarSystemCard,
     });
     this.scene = SystemSceneSnapshotBuilder.buildFromGeneratedSingle(metadata, host);
-    if (this.scene.generatorVersionCode !== 2 || this.scene.planets.length !== this.planetCount ||
+    if ((this.scene.generatorVersionCode !== 2 && this.scene.generatorVersionCode !== 3) || this.scene.planets.length !== this.planetCount ||
         this.scene.moons.length !== host.moonSystems.reduce((count, moons) => count + moons.relevantMoonCount, 0)) {
       throw new Error('The public SINGLE fiche and its 3D preview disagree.');
     }
@@ -67,6 +70,17 @@ export class SystemV2SingleScientificSession {
         this.resolveMoon(key, locator, moonIndex),
       resolveHostPlanetDetailed: (key: UniverseGenerationKey, locator: BodyLocator) =>
         this.resolvePlanet(key, locator),
+      resolveMinor: (key: UniverseGenerationKey, locator: BodyLocator, index: bigint) => {
+        if (key.generatorVersionCode !== 3 || !key.equals(this.publicKey) ||
+            !this.matchesSystem(locator) || locator.bodyIndex < 0n ||
+            locator.bodyIndex >= BigInt(this.planetCount)) return null;
+        const moons = this.host.moonSystems[Number(locator.bodyIndex)];
+        if (!moons) return null;
+        const value = MinorMoonOnDemandPRE3310.materialize(moons, index);
+        const identity = index >= 0n && index < BigInt(moons.moonCount) ? moons.moonIdentities[Number(index)] : undefined;
+        if (!value || !identity) return null;
+        return { designation: identity.designation.name, host: this.host.planets[Number(locator.bodyIndex)]!.designation.name, characterization: value };
+      },
     });
     this.previewResolver = Object.freeze({
       build: (request: ArchiveDiscoveryDetailModel) => {
@@ -84,11 +98,13 @@ export class SystemV2SingleScientificSession {
   }
 
   static buildOrNull(model: ArchiveDiscoveryDetailModel): SystemV2SingleScientificSession | null {
-    if (model.generatorVersionCode !== GeneratorVersion.V2.code ||
+    if ((model.generatorVersionCode !== GeneratorVersion.V2.code &&
+       model.generatorVersionCode !== GeneratorVersion.V3.code) ||
         model.locatorKind !== ArchiveDiscoveryLocatorKind.SYSTEM ||
         model.discoveryState.code < DiscoveryState.CATALOGUED.code ||
         model.stellarSystemCard?.render.multiplicity?.name !== 'SINGLE') return null;
-    const key = new UniverseGenerationKey(UniverseSeed.parse(model.universeSeed), GeneratorVersion.V2);
+    const key = new UniverseGenerationKey(UniverseSeed.parse(model.universeSeed),
+      GeneratorVersion.fromCode(model.generatorVersionCode));
     const locator = new SystemLocator(model.galaxyIndex, model.sectorKey, model.galacticObjectIndex);
     // The same public locator must never create a second conventional SINGLE inventory.
     if (CompactHostPlanetarySystemGenerator.generateOrNull(key, locator) !== null) return null;
@@ -125,7 +141,7 @@ export class SystemV2SingleScientificSession {
       hostPlanetCount: this.planetCount,
     }), planet, atmosphere, moons, Object.freeze({
       physical: this.host.physical, lifetime: this.host.lifetime,
-    }));
+    }), undefined, this.publicKey.generatorVersionCode);
   }
 
   private resolveMoon(key: UniverseGenerationKey, locator: BodyLocator,

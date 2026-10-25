@@ -54,7 +54,7 @@ describe('14.3 — selección persistente y aislamiento V1/V2', () => {
     old.markUniverseCreated();
     expect(localStorage.getItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY)).toBe(activeUniverseRef(other));
     const reloaded = new UniverseSeedFacade();
-    expect(reloaded.activeGenerationKey().equals(v1)).toBe(true);
+    expect(reloaded.activeGenerationKey().generatorVersion).toBe(GeneratorVersion.V3);
     expect(reloaded.resolvePersistedUniverse([v1, other])).toBe(other);
     reloaded.activatePersistedUniverse(other);
     expect(reloaded.activeGenerationKey().equals(other)).toBe(true);

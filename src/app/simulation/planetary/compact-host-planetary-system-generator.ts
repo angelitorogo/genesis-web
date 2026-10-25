@@ -53,7 +53,7 @@ export class CompactHostPlanetarySystemGenerator {
     /** Reuse the multiplicity already selected from this locator's V2 physical seed. */
     preselectedMultiplicity?: StellarSystemMultiplicity,
   ): CompactHostPlanetarySystem | null {
-    if (key.generatorVersion !== GeneratorVersion.V2) return null;
+    if ((key.generatorVersion !== GeneratorVersion.V2 && key.generatorVersion !== GeneratorVersion.V3)) return null;
     if (!(locator instanceof SystemLocator)) {
       throw new TypeError('A real SystemLocator is required.');
     }

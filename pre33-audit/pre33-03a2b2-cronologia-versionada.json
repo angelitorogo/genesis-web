@@ -1,0 +1,797 @@
+{
+  "contract": "PRE-33.03a.2b.2/coeval-scientific-physical-revision/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "generator": "V2",
+  "interpretation": "Opt-in versioned PHYSICAL stellar chronology built from primary age plus independent component initial mass/metallicity. All components are reevaluated with 14.8 and revised lifetime records; old V2 records, private seeds and Phase32 are NOT migrated. Frozen planetary snapshots only provide conditional H2O reference on phase-compatible branches. Atomic regeneration/versioned public migration is required before canonical CT0 certification.",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "multipleSystems": 6,
+      "planets": 77,
+      "scientificRevisions": 6,
+      "revisionComponents": 12,
+      "revisedAgesCoEval": 6,
+      "oldComponentAgeDisagreements": 6,
+      "stellarPhaseChanged": 0,
+      "requiringAtomicMigration": 0,
+      "conditionalWaterHistories": 36,
+      "unresolvedForcing": 41,
+      "unresolvedVersionedChronology": 0,
+      "massConserved": 36,
+      "canonicalV2Modified": 0,
+      "certifiedOceans": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Wionaor b",
+          "host": "AB",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 13.546465669286288,
+          "frozenAgesGyr": [
+            13.546465669286288,
+            5.9400270465115526
+          ],
+          "revisedAgesGyr": [
+            13.546465669286288,
+            13.546465669286288
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia b",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia c",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia d",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia e",
+          "host": "A",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia f",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia g",
+          "host": "A",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia h",
+          "host": "A",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia i",
+          "host": "A",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion b",
+          "host": "B",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion c",
+          "host": "B",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion d",
+          "host": "B",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 12.508522326027592,
+          "frozenAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "revisedAgesGyr": [
+            12.508522326027592,
+            12.508522326027592
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "multipleSystems": 3,
+      "planets": 40,
+      "scientificRevisions": 3,
+      "revisionComponents": 7,
+      "revisedAgesCoEval": 3,
+      "oldComponentAgeDisagreements": 3,
+      "stellarPhaseChanged": 0,
+      "requiringAtomicMigration": 0,
+      "conditionalWaterHistories": 15,
+      "unresolvedForcing": 25,
+      "unresolvedVersionedChronology": 0,
+      "massConserved": 15,
+      "canonicalV2Modified": 0,
+      "certifiedOceans": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Yutia b",
+          "host": "B",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia c",
+          "host": "B",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia d",
+          "host": "B",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia e",
+          "host": "B",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia f",
+          "host": "B",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia g",
+          "host": "B",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis b",
+          "host": "C",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis c",
+          "host": "C",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis d",
+          "host": "C",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis e",
+          "host": "C",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis f",
+          "host": "C",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis g",
+          "host": "C",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 10.654320140594388,
+          "frozenAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "revisedAgesGyr": [
+            10.654320140594388,
+            10.654320140594388,
+            10.654320140594388
+          ],
+          "phaseChanged": [
+            false,
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "multipleSystems": 5,
+      "planets": 71,
+      "scientificRevisions": 5,
+      "revisionComponents": 10,
+      "revisedAgesCoEval": 5,
+      "oldComponentAgeDisagreements": 5,
+      "stellarPhaseChanged": 0,
+      "requiringAtomicMigration": 0,
+      "conditionalWaterHistories": 39,
+      "unresolvedForcing": 32,
+      "unresolvedVersionedChronology": 0,
+      "massConserved": 39,
+      "canonicalV2Modified": 0,
+      "certifiedOceans": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Traren b",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren c",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren d",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren e",
+          "host": "A",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren f",
+          "host": "A",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren g",
+          "host": "A",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren h",
+          "host": "A",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos b",
+          "host": "B",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos c",
+          "host": "B",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos d",
+          "host": "B",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos e",
+          "host": "B",
+          "status": "VERSIONED_COEVAL_HISTORY_CONDITIONAL",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos f",
+          "host": "B",
+          "status": "NO_RESOLVED_FORCING_OR_SURFACE",
+          "sharedAgeGyr": 0.012200584330736326,
+          "frozenAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "revisedAgesGyr": [
+            0.012200584330736326,
+            0.012200584330736326
+          ],
+          "phaseChanged": [
+            false,
+            false
+          ],
+          "waterCT0Certified": false
+        }
+      ]
+    }
+  ],
+  "legacyGameCutover": false,
+  "atomicMigrationRequired": true,
+  "verdict": "VERSIONED_COEVAL_SCIENTIFIC_SOURCE_PASSED_LEGACY_UNCHANGED"
+}

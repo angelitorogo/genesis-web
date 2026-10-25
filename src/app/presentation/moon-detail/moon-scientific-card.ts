@@ -1,3 +1,4 @@
+import type { MinorMoonCharacterizationPRE3310 } from '../../domain/planetary/minor-moon-characterization-pre33-10';
 import { ObservedHabitabilityFiche31Fe, type ObservedHabitabilityFiche31Fe as ObservedHabitabilityFiche31FeModel } from '../scientific/observed-habitability-fiche-31-f-e';
 import {
   DiscoveryState,
@@ -55,6 +56,7 @@ export const MoonScientificFicheResolutionKind =
       'AVAILABLE',
     NOT_FOUND:
       'NOT_FOUND',
+    IDENTITY_ONLY: 'IDENTITY_ONLY',
   } as const);
 
 export type MoonScientificFicheResolutionKind =
@@ -99,6 +101,8 @@ export interface MoonScientificCardModel {
 }
 
 export type MoonScientificFicheResolution =
+  | { readonly kind: typeof MoonScientificFicheResolutionKind.IDENTITY_ONLY;
+      readonly name: string; readonly host: string; readonly characterization: MinorMoonCharacterizationPRE3310; }
   | {
       readonly kind:
         typeof MoonScientificFicheResolutionKind.LOCKED;
@@ -132,6 +136,9 @@ export interface MoonScientificTargetResolutionResolver {
     moonIndex:
       bigint,
   ): MoonScientificResolvedTarget | null;
+
+  resolveMinor?(key: UniverseGenerationKey, locator: BodyLocator, moonIndex: bigint):
+    { readonly designation: string; readonly host: string; readonly characterization: MinorMoonCharacterizationPRE3310 } | null;
 
   resolveHostPlanetDetailed?(
     generationKey:
@@ -272,6 +279,30 @@ export class MoonScientificCardAssembler {
         planetLocator,
         moonIndex,
       );
+
+    // PRE-33.10: a CONFIRMED V3 system exposes the canonical identity of
+    // every generated moon, even if its detailed physical model is absent.
+    // Keep V1/V2 unchanged and ask for conditional minor characterization
+    // only when the detailed resolver has found no physical moon.
+    if (
+      target === null &&
+      generationKey.generatorVersion === GeneratorVersion.V3
+    ) {
+      const minor = resolver.resolveMinor?.(
+        generationKey,
+        planetLocator,
+        moonIndex,
+      ) ?? null;
+
+      if (minor !== null) {
+        return Object.freeze({
+          kind: MoonScientificFicheResolutionKind.IDENTITY_ONLY,
+          name: minor.designation,
+          host: minor.host,
+          characterization: minor.characterization,
+        });
+      }
+    }
 
     if (
       target ===

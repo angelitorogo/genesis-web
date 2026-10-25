@@ -422,8 +422,7 @@ export class ArchiveGalacticObjectCardAssembler {
       );
 
     const distributedExtremeType =
-      generationKey.generatorVersion ===
-        GeneratorVersion.V2 &&
+      (generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3) &&
       coarseFamily ===
         GalacticObjectScientificSurveyFamily.EXTREME_OBJECT &&
       !isGalacticNucleusLocator(locator)
@@ -492,8 +491,7 @@ export class ArchiveGalacticObjectCardAssembler {
 
     if (scientificSubject === GalacticObjectScientificSubject.INTERMEDIATE_MASS_BLACK_HOLE) {
       const isV2ExtremeIntegration =
-        generationKey.generatorVersion ===
-          GeneratorVersion.V2;
+        (generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3);
 
       // DISCOVERED unlocks scientific investigation, NOT the IMBH mass,
       // identity or compact diagram. CATALOGUED is the first public disclosure.
@@ -836,8 +834,7 @@ function activeGalacticNucleusCardOrNull(
       GalacticNucleusState.QUASAR;
 
   const supportsActiveNucleusProgression =
-    generationKey.generatorVersion ===
-      GeneratorVersion.V2;
+    (generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3);
 
   const title =
     isQuasar
@@ -1728,8 +1725,7 @@ function buildPhysicalCard(
 
     case GalacticObjectScientificSubject.SUPERNOVA_REMNANT: {
       const exactExtremeType =
-        generationKey.generatorVersion ===
-          GeneratorVersion.V2
+        (generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3)
           ? distributedExtremeType ===
               ExtremeType.PULSAR_WIND_NEBULA
             ? ExtremeType.PULSAR_WIND_NEBULA

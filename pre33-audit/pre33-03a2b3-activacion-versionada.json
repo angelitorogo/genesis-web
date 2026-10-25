@@ -1,0 +1,325 @@
+{
+  "contract": "PRE-33.03a.2b.3/multihost-physical-branch-gate/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "scope": "Readonly public-V2 sample; no IndexedDB, no 32.12 write, not a census.",
+  "interpretation": "Versioned COEVAL scientific STELLAR preview can be explicitly activated/deactivated in ephemeral sessions. All dependent remnant/orbit/planet/atmosphere/moon/32.x models remain tied to frozen V2; CANONICAL migration is intentionally rejected until their coordinated regeneration AND separate public generator release. No saved game, planet, atmosphere, moon, historical event or ocean has been migrated or certified.",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "multipleSystems": 6,
+      "planets": 77,
+      "components": 12,
+      "reviewableStellarSources": 6,
+      "dependenciesNotRebuilt": 42,
+      "inspectedLegacyAtmospheres": 77,
+      "inspectedLegacyMoonSystems": 77,
+      "separatePreviewActivations": 6,
+      "previewRollbackPassed": 6,
+      "canonicalMigrationBlocked": 6,
+      "originalDigestUnchanged": 6,
+      "materialMassBalancesVerified": 77,
+      "moonPopulationCountsVerified": 77,
+      "remnantSourceGateVerified": 6,
+      "phase32GateVerified": 6,
+      "v2DefaultUnchanged": 6,
+      "scientificCt0Certified": 0,
+      "errors": [],
+      "examples": [
+        {
+          "system": "G0/S-30064771061/O0",
+          "components": 2,
+          "legacyPlanets": 1,
+          "legacyDigest": "4b81fcfcbaa22198",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G0/S-30064771048/O0",
+          "components": 2,
+          "legacyPlanets": 19,
+          "legacyDigest": "e4707d3f5277e143",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G0/S68719476736/O0",
+          "components": 2,
+          "legacyPlanets": 18,
+          "legacyDigest": "a46e87a8f9d91b71",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G0/S-25769803789/O0",
+          "components": 2,
+          "legacyPlanets": 15,
+          "legacyDigest": "f3b5e1190df9f2d6",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G0/S30064771064/O0",
+          "components": 2,
+          "legacyPlanets": 12,
+          "legacyDigest": "72ae2c8a96037785",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G0/S60129542137/O1",
+          "components": 2,
+          "legacyPlanets": 12,
+          "legacyDigest": "ad7a4d918926565f",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "multipleSystems": 3,
+      "planets": 40,
+      "components": 7,
+      "reviewableStellarSources": 3,
+      "dependenciesNotRebuilt": 21,
+      "inspectedLegacyAtmospheres": 40,
+      "inspectedLegacyMoonSystems": 40,
+      "separatePreviewActivations": 3,
+      "previewRollbackPassed": 3,
+      "canonicalMigrationBlocked": 3,
+      "originalDigestUnchanged": 3,
+      "materialMassBalancesVerified": 40,
+      "moonPopulationCountsVerified": 40,
+      "remnantSourceGateVerified": 3,
+      "phase32GateVerified": 3,
+      "v2DefaultUnchanged": 3,
+      "scientificCt0Certified": 0,
+      "errors": [],
+      "examples": [
+        {
+          "system": "G1/S60129542150/O1",
+          "components": 3,
+          "legacyPlanets": 12,
+          "legacyDigest": "32ce9b112272f07c",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G1/S-30064771058/O1",
+          "components": 2,
+          "legacyPlanets": 8,
+          "legacyDigest": "3bb976f865ff06aa",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G1/S25769803789/O0",
+          "components": 2,
+          "legacyPlanets": 20,
+          "legacyDigest": "a6ab261c16e086e1",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "multipleSystems": 5,
+      "planets": 71,
+      "components": 10,
+      "reviewableStellarSources": 5,
+      "dependenciesNotRebuilt": 35,
+      "inspectedLegacyAtmospheres": 71,
+      "inspectedLegacyMoonSystems": 71,
+      "separatePreviewActivations": 5,
+      "previewRollbackPassed": 5,
+      "canonicalMigrationBlocked": 5,
+      "originalDigestUnchanged": 5,
+      "materialMassBalancesVerified": 71,
+      "moonPopulationCountsVerified": 71,
+      "remnantSourceGateVerified": 5,
+      "phase32GateVerified": 5,
+      "v2DefaultUnchanged": 5,
+      "scientificCt0Certified": 0,
+      "errors": [],
+      "examples": [
+        {
+          "system": "G2/S38654705676/O1",
+          "components": 2,
+          "legacyPlanets": 16,
+          "legacyDigest": "634a6361ce34924e",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G2/S-12884901830/O0",
+          "components": 2,
+          "legacyPlanets": 16,
+          "legacyDigest": "c258a6c0cf61d1c2",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G2/S-120259084305/O1",
+          "components": 2,
+          "legacyPlanets": 1,
+          "legacyDigest": "d1cd7c98421cc214",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G2/S-103079215109/O0",
+          "components": 2,
+          "legacyPlanets": 17,
+          "legacyDigest": "ad20acba8508e9e3",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        },
+        {
+          "system": "G2/S180388626409/O0",
+          "components": 2,
+          "legacyPlanets": 21,
+          "legacyDigest": "1b43d22b9da7df6c",
+          "preview": "SCIENTIFIC_PREVIEW_AVAILABLE",
+          "lockedDependencies": [
+            "REMNANTS_29_31",
+            "MULTIHOST_ORBITS_16",
+            "PLANETS_18_19",
+            "ATMOSPHERES_20",
+            "MOONS_21",
+            "HISTORICAL_EVENTS_32_12",
+            "OBSERVED_AND_PERSISTED_IDENTITIES"
+          ],
+          "canonicalCommitBlocked": true
+        }
+      ]
+    }
+  ],
+  "legacyGameCutover": false,
+  "canonicalMigrationImplemented": false,
+  "scientificPreviewOptInReversible": true,
+  "verdict": "SCIENTIFIC_PREVIEW_ACTIVATION_PASSED_CANONICAL_CUTOVER_BLOCKED"
+}

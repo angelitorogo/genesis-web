@@ -182,7 +182,7 @@
           }
 
           @if (model.hasDetailedScene) {
-            @if (model.canExploreSectors && model.generationKey.generatorVersionCode === 2 && maxBlockSize() > 1) {
+            @if (model.canExploreSectors && (model.generationKey.generatorVersionCode === 2 || model.generationKey.generatorVersionCode === 3) && maxBlockSize() > 1) {
               <section class="galactic-map__block-controls" data-testid="galactic-map-block-controls"
                 aria-label="Mejoras de exploración por bloques">
                 <strong>Exploración por bloques</strong>

@@ -311,7 +311,7 @@ export class GalaxyVisualStructureGenerator {
         .generationKey
         .generatorVersion ===
       GeneratorVersion.V1 ||
-      galaxy.generationKey.generatorVersion === GeneratorVersion.V2
+      (galaxy.generationKey.generatorVersion === GeneratorVersion.V2 || galaxy.generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       return this.generateV1(
         galaxy,

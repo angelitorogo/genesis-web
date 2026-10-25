@@ -736,7 +736,7 @@ export class GalacticMapFacade {
     try {
       // A forged UI value never grants a non-redeemed upgrade.
       const unlocked = await this.codes.getMaxSectorBlockSize(model.generationKey);
-      if (model.generationKey.generatorVersionCode !== 2 || size > unlocked) {
+      if ((model.generationKey.generatorVersionCode !== 2 && model.generationKey.generatorVersionCode !== 3) || size > unlocked) {
         throw new Error('Este tamaño de exploración no está desbloqueado para el universo V2 activo.');
       }
       const coverage = model.explorationCoverage;

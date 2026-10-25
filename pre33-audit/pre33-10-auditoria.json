@@ -1,0 +1,67 @@
+{
+  "contract": "PRE-33.10/V3-DEFERRED-MOON-COVERAGE/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "sample": "Selected 20 systems per galaxy, not census; all moon identities from those systems",
+  "totals": {
+    "systems": 60,
+    "planets": 393,
+    "moons": 1148,
+    "detailedMoons": 699,
+    "identityOnlyMoons": 449,
+    "minorMaterialized": 449,
+    "conditionalPhysicalScenarios": 449,
+    "outsideOrbitalDomain": 0,
+    "catalogueIdentityEntries": 16,
+    "versionV2MinorVisible": 0,
+    "errors": 0
+  },
+  "galaxies": [
+    {
+      "galaxy": "Elixisis",
+      "galaxyIndex": 0,
+      "systems": 20,
+      "planets": 144,
+      "moons": 516,
+      "detailedMoons": 294,
+      "identityOnlyMoons": 222,
+      "minorMaterialized": 222,
+      "conditionalPhysicalScenarios": 222,
+      "outsideOrbitalDomain": 0,
+      "catalogueIdentityEntries": 7,
+      "versionV2MinorVisible": 0,
+      "errors": []
+    },
+    {
+      "galaxy": "Elisoune",
+      "galaxyIndex": 1,
+      "systems": 20,
+      "planets": 106,
+      "moons": 201,
+      "detailedMoons": 170,
+      "identityOnlyMoons": 31,
+      "minorMaterialized": 31,
+      "conditionalPhysicalScenarios": 31,
+      "outsideOrbitalDomain": 0,
+      "catalogueIdentityEntries": 7,
+      "versionV2MinorVisible": 0,
+      "errors": []
+    },
+    {
+      "galaxy": "Ilyzenia",
+      "galaxyIndex": 2,
+      "systems": 20,
+      "planets": 143,
+      "moons": 431,
+      "detailedMoons": 235,
+      "identityOnlyMoons": 196,
+      "minorMaterialized": 196,
+      "conditionalPhysicalScenarios": 196,
+      "outsideOrbitalDomain": 0,
+      "catalogueIdentityEntries": 2,
+      "versionV2MinorVisible": 0,
+      "errors": []
+    }
+  ],
+  "explanation": "Materialized physical bounds are conditional: no resolved water, habitability, chemical power or life. CONFIRMED makes all identity-only moons listable, without eager physical generation. Cache only in memory, reload reconstructs the same identity and bounds.",
+  "verdict": "PRE33_10_V3_DEFERRED_MOON_COVERAGE_AUDITED"
+}

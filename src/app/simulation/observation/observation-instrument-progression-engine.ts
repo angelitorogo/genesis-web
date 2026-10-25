@@ -80,9 +80,9 @@ export class ObservationInstrumentProgressionEngine {
     }
 
     if (
-      generationKey
-        .generatorVersion ===
-      GeneratorVersion.V2
+      (generationKey
+        .generatorVersion === GeneratorVersion.V2 || generationKey
+        .generatorVersion === GeneratorVersion.V3)
     ) {
       // Do not unlock V2 instruments using persisted milestones from V1,
       // another V2 seed or an accidentally mixed discovery list.
@@ -128,7 +128,7 @@ export class ObservationInstrumentProgressionEngine {
 
     if (
       generationKey.generatorVersion !== GeneratorVersion.V1 &&
-      generationKey.generatorVersion !== GeneratorVersion.V2
+      (generationKey.generatorVersion !== GeneratorVersion.V2 && generationKey.generatorVersion !== GeneratorVersion.V3)
     ) {
       throw new RangeError(
         `Unsupported GeneratorVersion: ${generationKey.generatorVersion.code}.`,

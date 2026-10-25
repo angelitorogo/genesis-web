@@ -7,6 +7,7 @@ import { ArchiveStellarSystemKnowledgeLevel,
 import { stellarVisualRadiusScale } from '../genesis-archive/stellar-visual-radius-scale';
 import { type GeneratedMultipleHost, type GeneratedSingleHost } from '../../simulation/stellar/stellar-multihost-formation';
 import { type StellarRelativeOrbit } from '../../domain/stellar/stellar-relative-orbit';
+import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { CircumbinaryRadiativeReferenceRegime, CircumbinaryStellarEvolutionRegime } from '../../domain/habitability/circumbinary-habitability-assessment';
 import { systemMultihostPublicStellarComponentDesignation } from './system-multihost-public-stellar-designation';
 
@@ -15,7 +16,7 @@ const format = (value: number): string => new Intl.NumberFormat('es-ES', {
 }).format(value);
 const fact = (label: string, value: string): ArchiveStellarSystemFactModel => Object.freeze({label, value});
 
-function componentCard(host: GeneratedSingleHost, parentTitle: string): ArchiveStellarSystemComponentCardModel {
+function componentCard(host: GeneratedSingleHost, parentTitle: string, v3: boolean): ArchiveStellarSystemComponentCardModel {
   return Object.freeze({
     componentLabel: host.label,
     // A child key is an internal generation scope: never expose its own
@@ -29,7 +30,8 @@ function componentCard(host: GeneratedSingleHost, parentTitle: string): ArchiveS
       fact('Masa de referencia', `${format(host.physical.initialMassSolar)} M☉`),
       fact('Radio de referencia', `${format(host.physical.radiusSolar)} R☉`),
       fact('Luminosidad de referencia', `${format(host.physical.luminositySolar)} L☉`),
-      fact('Temperatura efectiva', `${Math.round(host.physical.effectiveTemperatureKelvin)} K`),
+      fact(v3 ? 'Temperatura efectiva de referencia (no CT-0)' : 'Temperatura efectiva',
+        `${Math.round(host.physical.effectiveTemperatureKelvin)} K`),
       fact('Edad estelar', `${format(host.lifetime.ageBillionYears)} miles de millones de años`),
       fact('Planetas circumestelares', String(host.planets.length)),
       fact('Lunas relevantes', String(host.moonSystems.reduce((sum, system) => sum + system.relevantMoonCount, 0))),
@@ -37,9 +39,10 @@ function componentCard(host: GeneratedSingleHost, parentTitle: string): ArchiveS
   });
 }
 
-function orbitCard(orbit: StellarRelativeOrbit, outer: boolean): ArchiveStellarSystemOrbitCardModel {
+function orbitCard(orbit: StellarRelativeOrbit, outer: boolean, v3: boolean): ArchiveStellarSystemOrbitCardModel {
   return Object.freeze({
-    label: outer ? 'Órbita exterior (A+B)–C' : 'Órbita interior A–B',
+    label: (outer ? 'Órbita exterior (A+B)–C' : 'Órbita interior A–B') +
+      (v3 ? ' · referencia inicial, no órbita histórica certificada' : ''),
     roleLabel: outer ? 'Movimiento relativo de (A+B) y C' : 'Movimiento relativo de A y B',
     facts: Object.freeze([
       fact('Semieje mayor', `${format(orbit.semiMajorAxisAu)} UA`),
@@ -69,10 +72,11 @@ export class SystemMultihostStellarCardAssembler {
       throw new RangeError('The multihost system card needs a catalogued matching stellar identity.');
     }
     const confirmed = legacy.knowledgeLevel === ArchiveStellarSystemKnowledgeLevel.CONFIRMED;
-    const components = Object.freeze(formation.components.map(host => componentCard(host, legacy.title)));
+    const v3 = formation.parentGenerationKey.generatorVersion === GeneratorVersion.V3;
+    const components = Object.freeze(formation.components.map(host => componentCard(host, legacy.title, v3)));
     const orbits = Object.freeze([
-      orbitCard(formation.innerOrbit, false),
-      ...(formation.outerOrbit === null ? [] : [orbitCard(formation.outerOrbit, true)]),
+      orbitCard(formation.innerOrbit, false, v3),
+      ...(formation.outerOrbit === null ? [] : [orbitCard(formation.outerOrbit, true, v3)]),
     ]);
     const p = formation.circumbinary;
     const habitability = p.habitability;
@@ -90,6 +94,7 @@ export class SystemMultihostStellarCardAssembler {
       fact('Multiplicidad', formation.multiplicity.name === 'BINARY' ? 'Binario' : 'Triple jerárquico'),
       fact('Componentes', String(formation.components.length)),
       fact('Planetas generados', String(formation.publicPlanets.length)),
+      ...(v3 ? [fact('Modelo público', 'V3 · formación coetánea; irradiación evolucionada y órbitas históricas no evaluables')] : []),
       ...formation.components.map(host => fact(`Planetas de ${host.label}`, String(host.planets.length))),
       fact('Planetas de AB', String(p.planets.length)),
     ]);
@@ -97,9 +102,10 @@ export class SystemMultihostStellarCardAssembler {
       knowledgeLevel: legacy.knowledgeLevel,
       knowledgeLevelLabel: legacy.knowledgeLevelLabel,
       title: legacy.title,
-      summary: `Sistema ${formation.multiplicity.name === 'BINARY' ? 'binario' : 'triple jerárquico'} con ${formation.components.length} sistemas simples completos y ${p.planets.length} planeta(s) circumbinario(s) generado(s). Las regiones de estabilidad son aproximadas.`,
+      summary: `Sistema ${formation.multiplicity.name === 'BINARY' ? 'binario' : 'triple jerárquico'} con ${formation.components.length} sistemas simples completos y ${p.planets.length} planeta(s) circumbinario(s) generado(s). Las regiones de estabilidad son aproximadas.${v3 ? ' V3 usa una formación común; la masa actual evolucionada, las órbitas tras pérdida de masa y la historia de irradiación siguen no resueltas.' : ''}`, 
       nextScientificStep: confirmed
-        ? 'Composición física identificada; los límites dinámicos no equivalen a estabilidad N-cuerpos demostrada.'
+        ? (v3 ? 'V3: parámetros actuales evolucionados y episodios históricos no evaluables; valores de masa/luminosidad y órbitas indicados como referencias.' :
+            'Composición física identificada; los límites dinámicos no equivalen a estabilidad N-cuerpos demostrada.')
         : 'Confirmar para mostrar las conclusiones de habitabilidad de referencia.',
       multiplicityLabel: formation.multiplicity.name === 'BINARY' ? 'Binario' : 'Triple',
       componentCount: formation.components.length,

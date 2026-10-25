@@ -1,0 +1,426 @@
+{
+  "contract": "PRE-33.13/HISTORICAL-FIXTURES/v1",
+  "provenance": {
+    "originalFile": "auditoria-elixisis-pre33-20261020.json",
+    "originalAuditDate": "2026-10-20",
+    "originalFileSha256": "d71e58dfbb2a31d72f029cf3d58dbbb5463ac6e8928e1a51cb95e0465ef8a9aa",
+    "generation": "Source from original PRE-33 scientific audit; no reselection or renaming"
+  },
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 0,
+  "generatorVersion": "V2",
+  "referenceCounts": {
+    "systems": 45,
+    "planets": 341,
+    "moons": 902,
+    "detailedMoons": 560,
+    "identityOnlyMoons": 342
+  },
+  "systems": [
+    {
+      "x": 15,
+      "y": 9,
+      "name": "Pulaer",
+      "planets": 9,
+      "moons": 7,
+      "relevantMoons": 7,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 3,
+      "y": 25,
+      "name": "Vathum",
+      "planets": 7,
+      "moons": 17,
+      "relevantMoons": 14,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 2,
+      "y": 17,
+      "name": "Heriia",
+      "planets": 7,
+      "moons": 5,
+      "relevantMoons": 5,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 22,
+      "y": 20,
+      "name": "Triaraia",
+      "planets": 17,
+      "moons": 213,
+      "relevantMoons": 45,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": -22,
+      "y": 24,
+      "name": "Chuthoria",
+      "planets": 14,
+      "moons": 46,
+      "relevantMoons": 23,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": 22,
+      "y": 12,
+      "name": "Kiraum",
+      "planets": 19,
+      "moons": 25,
+      "relevantMoons": 25,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": 18,
+      "y": -30,
+      "name": "Menaar",
+      "planets": 12,
+      "moons": 18,
+      "relevantMoons": 18,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": 40,
+      "y": 13,
+      "name": "Phoseria",
+      "planets": 10,
+      "moons": 9,
+      "relevantMoons": 9,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 0,
+      "y": 16,
+      "name": "Stinaion",
+      "planets": 11,
+      "moons": 125,
+      "relevantMoons": 44,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -1,
+      "y": -57,
+      "name": "Xomae",
+      "planets": 12,
+      "moons": 48,
+      "relevantMoons": 28,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -26,
+      "y": -2,
+      "name": "Sotas",
+      "planets": 6,
+      "moons": 14,
+      "relevantMoons": 12,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 7,
+      "y": 23,
+      "name": "Jelis",
+      "planets": 7,
+      "moons": 10,
+      "relevantMoons": 10,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 17,
+      "y": 17,
+      "name": "Drionor",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -26,
+      "y": 62,
+      "name": "Yederia",
+      "planets": 5,
+      "moons": 9,
+      "relevantMoons": 9,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 15,
+      "y": -36,
+      "name": "Liororia",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 36,
+      "y": 32,
+      "name": "Aitos",
+      "planets": 1,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": 29,
+      "y": 1,
+      "name": "Kikas",
+      "planets": 8,
+      "moons": 7,
+      "relevantMoons": 7,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 21,
+      "y": -63,
+      "name": "Ridia",
+      "planets": 8,
+      "moons": 11,
+      "relevantMoons": 11,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": -58,
+      "y": 12,
+      "name": "Tianaa",
+      "planets": 20,
+      "moons": 49,
+      "relevantMoons": 39,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": 37,
+      "y": -56,
+      "name": "Naedion",
+      "planets": 6,
+      "moons": 11,
+      "relevantMoons": 10,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 54,
+      "y": 35,
+      "name": "Caloria",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 18,
+      "y": 17,
+      "name": "Phumer",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 59,
+      "y": -31,
+      "name": "Stethara",
+      "planets": 18,
+      "moons": 45,
+      "relevantMoons": 33,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": 50,
+      "y": 36,
+      "name": "Chaphen",
+      "planets": 23,
+      "moons": 45,
+      "relevantMoons": 38,
+      "multiplicity": "TRIPLE"
+    },
+    {
+      "x": 20,
+      "y": -10,
+      "name": "Thaelaeria",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -27,
+      "y": 10,
+      "name": "Poter",
+      "planets": 4,
+      "moons": 3,
+      "relevantMoons": 3,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": -29,
+      "y": 9,
+      "name": "Viamoria",
+      "planets": 4,
+      "moons": 4,
+      "relevantMoons": 4,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 28,
+      "y": -55,
+      "name": "Hiror",
+      "planets": 8,
+      "moons": 6,
+      "relevantMoons": 6,
+      "multiplicity": "TRIPLE"
+    },
+    {
+      "x": -25,
+      "y": -4,
+      "name": "Driodis",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 1,
+      "y": 35,
+      "name": "Movior",
+      "planets": 9,
+      "moons": 8,
+      "relevantMoons": 8,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -25,
+      "y": 46,
+      "name": "Vothum",
+      "planets": 9,
+      "moons": 25,
+      "relevantMoons": 22,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 12,
+      "y": 3,
+      "name": "Phiamis",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 31,
+      "y": -32,
+      "name": "Thanae",
+      "planets": 6,
+      "moons": 3,
+      "relevantMoons": 3,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -16,
+      "y": 23,
+      "name": "Kroria",
+      "planets": 5,
+      "moons": 1,
+      "relevantMoons": 1,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 41,
+      "y": -27,
+      "name": "Folaoria",
+      "planets": 5,
+      "moons": 6,
+      "relevantMoons": 6,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -29,
+      "y": 34,
+      "name": "Phata",
+      "planets": 11,
+      "moons": 22,
+      "relevantMoons": 20,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 3,
+      "y": 33,
+      "name": "Draetas",
+      "planets": 6,
+      "moons": 2,
+      "relevantMoons": 2,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -43,
+      "y": 4,
+      "name": "Staemia",
+      "planets": 8,
+      "moons": 23,
+      "relevantMoons": 19,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 2,
+      "y": 32,
+      "name": "Kaeloria",
+      "planets": 16,
+      "moons": 29,
+      "relevantMoons": 26,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": -10,
+      "y": 22,
+      "name": "Hionaar",
+      "planets": 1,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "BINARY"
+    },
+    {
+      "x": -39,
+      "y": 1,
+      "name": "Nalor",
+      "planets": 4,
+      "moons": 1,
+      "relevantMoons": 1,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -5,
+      "y": 37,
+      "name": "Basia",
+      "planets": 7,
+      "moons": 14,
+      "relevantMoons": 14,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -51,
+      "y": 8,
+      "name": "Sukion",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": 32,
+      "y": 24,
+      "name": "Faeviar",
+      "planets": 0,
+      "moons": 0,
+      "relevantMoons": 0,
+      "multiplicity": "SINGLE"
+    },
+    {
+      "x": -1,
+      "y": -19,
+      "name": "Paken",
+      "planets": 18,
+      "moons": 41,
+      "relevantMoons": 38,
+      "multiplicity": "BINARY"
+    }
+  ]
+}

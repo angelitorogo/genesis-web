@@ -189,7 +189,7 @@ export class ObservationEngine {
         .generationKey
         .generatorVersion ===
       GeneratorVersion.V1 ||
-      observatory.generationKey.generatorVersion === GeneratorVersion.V2
+      (observatory.generationKey.generatorVersion === GeneratorVersion.V2 || observatory.generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       return this.prepareV1(
         observatory,
@@ -213,7 +213,7 @@ export class ObservationEngine {
         .generationKey
         .generatorVersion ===
       GeneratorVersion.V1 ||
-      observatory.generationKey.generatorVersion === GeneratorVersion.V2
+      (observatory.generationKey.generatorVersion === GeneratorVersion.V2 || observatory.generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       return ObservationInstrumentCatalogV1
         .supportedInstruments;
@@ -243,7 +243,7 @@ export class ObservationEngine {
         .generationKey
         .generatorVersion ===
       GeneratorVersion.V1 ||
-      observatory.generationKey.generatorVersion === GeneratorVersion.V2
+      (observatory.generationKey.generatorVersion === GeneratorVersion.V2 || observatory.generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       const baseSession =
         this.prepareObservation(
@@ -282,7 +282,7 @@ export class ObservationEngine {
         .generationKey
         .generatorVersion ===
       GeneratorVersion.V1 ||
-      observatory.generationKey.generatorVersion === GeneratorVersion.V2
+      (observatory.generationKey.generatorVersion === GeneratorVersion.V2 || observatory.generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       ObservationInstrumentCatalogV1
         .instrument(
@@ -314,7 +314,7 @@ export class ObservationEngine {
         .generationKey
         .generatorVersion ===
       GeneratorVersion.V1 ||
-      observatory.generationKey.generatorVersion === GeneratorVersion.V2
+      (observatory.generationKey.generatorVersion === GeneratorVersion.V2 || observatory.generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       return ObservationInstrumentCapabilityCatalogV1
         .profile(
@@ -350,7 +350,7 @@ export class ObservationEngine {
         .generationKey
         .generatorVersion ===
       GeneratorVersion.V1 ||
-      observatory.generationKey.generatorVersion === GeneratorVersion.V2
+      (observatory.generationKey.generatorVersion === GeneratorVersion.V2 || observatory.generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       const instrumentSession =
         this.prepareInstrumentObservation(
@@ -710,7 +710,7 @@ export class ObservationEngine {
   ): ObservationSession {
 
     // A locator can repeat across universes: do not observe V1 data in V2.
-    if (observatory.generationKey.generatorVersion === GeneratorVersion.V2 &&
+    if ((observatory.generationKey.generatorVersion === GeneratorVersion.V2 || observatory.generationKey.generatorVersion === GeneratorVersion.V3) &&
         knownDiscoveries.some(discovery => !discovery.generationKey.equals(observatory.generationKey))) {
       throw new RangeError('V2 observation cannot mix discoveries from another universe.');
     }

@@ -40,7 +40,8 @@ export const ProceduralTargetResolver =
       if (generationKey.generatorVersion === GeneratorVersion.V1) {
         return resolveV1(generationKey.universeSeed, locator);
       }
-      if (generationKey.generatorVersion === GeneratorVersion.V2) {
+      if (generationKey.generatorVersion === GeneratorVersion.V2 ||
+          generationKey.generatorVersion === GeneratorVersion.V3) {
         // V2 inherits the frozen galactic distribution and parent-system seed.
         // A V2 BODY/MOON ordinal is a PUBLIC multihost catalog index, NOT the
         // private V1 body ordinal; do not expose a fabricated V1 identity here.

@@ -1,7 +1,14 @@
+import { lunarContinuityFieldsPRE3309 } from '../scientific/environmental-continuity-fields-pre33-09';
+import { geoChemicalFieldsPRE3307 } from '../scientific/geochemistry-fields-pre33-07';
+import { radiationFieldsPRE3308 } from '../scientific/radiation-fields-pre33-08';
+import { lunarTransversalAtmosphereFieldsPRE3306 } from '../planet-detail/planet-atmosphere-closure-fields-pre33-06';
 import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
 import type { MoonWaterPhaseInventory32F2a } from '../../domain/planetary/moon-water-phase-inventory-32-f-2a';
 import type { MoonInteriorStructure32F2b } from '../../domain/planetary/moon-interior-structure-32-f-2b';
 import type { MoonOceanReality32F2c } from '../../domain/planetary/moon-ocean-reality-32-f-2c';
+import type { MoonEnergyConfinementPRE3305 } from '../../domain/planetary/moon-energy-confinement-pre33-05';
+import type { MoonAtmosphereBalancePRE3306 } from '../../domain/planetary/moon-atmosphere-balance-pre33-06';
+import type { MoonSubsurfaceDomainPRE3304 } from '../../domain/planetary/moon-subsurface-domain-pre33-04';
 import type { MoonRadiationProtection32F3 } from '../../domain/planetary/moon-radiation-protection-32-f-3';
 import type { MoonGeochemicalEnergy32F4 } from '../../domain/planetary/moon-geochemical-energy-32-f-4';
 import type { MoonEnvironmentalHistory32F5 } from '../../domain/planetary/moon-environmental-history-32-f-5';
@@ -324,6 +331,81 @@ export function lunarOceanRealityFields32F2c(
       'La composición del agua todavía no se identifica en 32.F.1d; nunca se asigna salinidad de manera arbitraria.'),
     field('Dominio termodinámico 32.F.2c', labelOceanModelReason32F2c(model.reason),
       'Curva aproximada de fusión de H₂O pura de 0 a 2 GPa; salinidad, convección profunda y evolución histórica no resueltas.'),
+  ];
+}
+
+/** PRE-33.04: extends the physical pressure-domain presentation in the
+ * existing environment section; never substitutes CT-0 ocean truth or habitability. */
+export function lunarSubsurfaceDomainFieldsPRE3304(
+  model: MoonSubsurfaceDomainPRE3304 | null,
+): readonly MoonScientificFieldModel[] {
+  if (model === null) return [];
+  const n = (value: number): string => new Intl.NumberFormat('es-ES', {
+    maximumSignificantDigits: 4,
+  }).format(value);
+  const domain: Record<MoonSubsurfaceDomainPRE3304['domain'], string> = {
+    NO_FORMATION_H2O: 'Sin H₂O en el escenario de formación',
+    LEGACY_BELOW_2_GPA: 'Dominio cubierto por el modelo previo (hasta 2 GPa)',
+    EXTENDED_2_TO_10_GPA: 'Extensión condicional hasta 10 GPa',
+    BEYOND_10_GPA_UNRESOLVED: 'No resuelto: presión superior a 10 GPa',
+    GEOMETRY_OR_THERMAL_UNRESOLVED: 'Sin solución térmica o geométrica suficiente',
+  };
+  const result = model.thermalScenarios.map(x =>
+    `${x.thermalCase === 'LOW_TIDAL' ? 'Calor bajo' : x.thermalCase === 'HIGH_TIDAL' ? 'Calor alto' : 'Calor nominal'}: ` +
+    (x.classification === 'UNRESOLVED_TRANSPORT' ? 'no resuelto' :
+    `${n(x.iceCoverKilometers)} km hielo / ${n(x.liquidLayerKilometers)} km líquido / ${n(x.highPressureIceKilometers)} km hielo profundo`),
+  );
+  return [
+    field('PRE-33.04 — dominio físico subsuperficial V3', domain[model.domain],
+      'Extensión científica del modelo radial 32.F.2c, sin cambiar la existencia de océanos CT-0 ni los resultados de las partidas V1/V2.'),
+    field('PRE-33.04 — confinamiento y presión basal',
+      model.basalPressurePascal === null ? 'No aplicable' : `${n(model.basalPressurePascal / 1e9)} GPa`,
+      `Capa H₂O condicional ${n(model.shellThicknessKilometers)} km; geometría y densidades supuestas. ` +
+      (model.depthAt2GPaKilometers === null ? 'No alcanza 2 GPa.' : `2 GPa a ${n(model.depthAt2GPaKilometers)} km.`)),
+    field('PRE-33.04 — sensibilidad de fases y calor',
+      result.length ? result.join(' · ') : model.thermalEvaluation === 'OUTSIDE_PRESSURE_DOMAIN'
+        ? 'No evaluable: presión fuera del dominio de fusión modelado'
+        : 'Fases no evaluables con las fuentes térmicas actuales',
+      'Tres sensibilidades calculadas sobre el flujo mareal/radiogénico; en V3 PRE-33.05 aporta respuesta elástica acotada sin duplicar la energía radiogénica. Fusión H₂O aproximada hasta 10 GPa; sin EOS compresible, salinidad determinada ni evolución mareal independiente. Ningún espesor es observado.'),
+    field('PRE-33.04 — certificación lunar', 'Hipótesis del modelo; océano no confirmado',
+      'No se ha generado agua adicional, ni identificado salinidad, hielo VII observado, estabilidad histórica, biología o habitabilidad. PRE-33.05 acota la energía mareal; PRE-33.06 abordará las atmósferas.'),
+  ];
+}
+
+/** PRE-33.05: energy is a physics-bound model interval, not a legacy index
+ * or independent measured thermal history. Same existing lunar Environment fiche. */
+export function lunarEnergyConfinementFieldsPRE3305(
+  m: MoonEnergyConfinementPRE3305 | null,
+): readonly MoonScientificFieldModel[] {
+  if (!m) return [];
+  const sci = (v:number|null) => v===null?'No resuelto':
+    new Intl.NumberFormat('es-ES',{notation:'scientific',maximumSignificantDigits:4}).format(v);
+  const fmt = (v:number|null) => v===null?'No resuelto':
+    new Intl.NumberFormat('es-ES',{maximumSignificantDigits:4}).format(v);
+  const status:Record<MoonEnergyConfinementPRE3305['thermalConfinement'],string>={
+    DRY_NO_WATER:'Sin capa H₂O del modelo de formación',
+    OUTSIDE_10_GPA:'No resuelto: presión fuera de 10 GPa',
+    UNRESOLVED_HEAT_OR_STRUCTURE:'No resuelto: faltan fuentes energéticas o estructura',
+    ENERGY_BELOW_REFERENCE:'Calor modelado por debajo de la referencia conductiva',
+    ENERGY_SPANS_REFERENCE:'Intervalo energético cruza la referencia conductiva',
+    ENERGY_ABOVE_REFERENCE:'Calor modelado por encima de la referencia conductiva',
+    SURFACE_ICE_NOT_STABLE:'No aplica: no hay hielo superficial estable en el escenario',
+  };
+  return [
+    field('PRE-33.05 — calentamiento mareal físico',
+      m.tidalFluxMinimumWattsPerSquareMeter===null?'No resuelto para órbita no síncrona / e alta':
+        `${sci(m.tidalFluxMinimumWattsPerSquareMeter)}–${sci(m.tidalFluxMaximumWattsPerSquareMeter)} W/m²`,
+      `Respuesta elástica acotada k₂/Q: ${sci(m.tidalResponseK2OverQMinimum)}–${sci(m.tidalResponseK2OverQMaximum)}; no procede del índice mareal V1. Dependencia explícita de órbita y excentricidad.`),
+    field('PRE-33.05 — energía interna CT-0',
+      m.totalFluxMinimumWattsPerSquareMeter===null?'No resuelta':
+        `${sci(m.totalFluxMinimumWattsPerSquareMeter)}–${sci(m.totalFluxMaximumWattsPerSquareMeter)} W/m²`,
+      `Radiogénico CT-0 ${sci(m.radiogenicFluxWattsPerSquareMeter)} W/m² (misma fuente 32.F.2c, sin doble suma). Potencia mareal ${sci(m.tidalPowerMinimumWatts)}–${sci(m.tidalPowerMaximumWatts)} W; radionúclidos e historia térmica independientes no resueltos.`),
+    field('PRE-33.05 — amortiguamiento orbital',
+      m.eccentricityDampingYearsMinimum===null?'No evaluable con los supuestos disponibles':
+        `${sci(m.eccentricityDampingYearsMinimum)}–${sci(m.eccentricityDampingYearsMaximum)} años`,
+      'Escala instantánea de amortiguamiento de excentricidad con órbita fija, sin demostrar resonancia mantenida ni evolución secular; e=0 no implica energía mareal distinta de cero.'),
+    field('PRE-33.05 — confinamiento y fusión',status[m.thermalConfinement],
+      `Presión basal ${m.confinementPressurePascal===null?'no aplicable':fmt(m.confinementPressurePascal/1e9)+' GPa'}; flujo conductivo mínimo de referencia ${sci(m.referenceConductiveBasalMeltingFluxWattsPerSquareMeter)} W/m². No identifica un océano real, estabilidad ni fase profunda independiente.`),
   ];
 }
 
@@ -781,6 +863,8 @@ function environmentSection(
         item => !environment.oceanReality32F2c || item.label !== 'Océano actual y salinidad',
       ),
       ...lunarOceanRealityFields32F2c(environment.oceanReality32F2c ?? null),
+      ...lunarSubsurfaceDomainFieldsPRE3304(environment.subsurfaceDomainPRE3304 ?? null),
+      ...lunarEnergyConfinementFieldsPRE3305(environment.energyConfinementPRE3305 ?? null),
       ...lunarInternalWaterFields(
         environment.internalWaterAssessment ?? null,
         target.detail.general.radiusEarth,
@@ -879,8 +963,53 @@ function atmosphereSection(
         radiusEarth: target.detail.general.radiusEarth,
         surfaceGravityEarth: target.detail.general.surfaceGravityEarth,
       }),
+      ...lunarAtmosphereBalanceFieldsPRE3306(environment.atmosphereBalancePRE3306 ?? null),
+      ...lunarTransversalAtmosphereFieldsPRE3306(environment.atmosphereClosurePRE3306 ?? null),
     ],
   );
+}
+
+/** PRE-33.06: one additional diagnostic within the existing Atmosphere section. */
+export function lunarAtmosphereBalanceFieldsPRE3306(
+  m: MoonAtmosphereBalancePRE3306 | null,
+): readonly MoonScientificFieldModel[] {
+  if (m===null) return [];
+  const fmt=(x:number|null):string=>x===null?'No resuelto':
+    new Intl.NumberFormat('es-ES',{maximumSignificantDigits:4,notation:'scientific'}).format(x);
+  const available=m.status==='INDEPENDENT_INTERVAL_MODEL_NOT_OBSERVATION';
+  const source=m.independentSourceId===null
+    ? 'No identificada: falta masa gaseosa inicial independiente'
+    : `${m.independentSourceId} · masa inicial ${fmt(m.initialGasMassKilograms)} kg`;
+  const sinks=m.replenishedMassKilograms===null
+    ? 'No evaluables: faltan kg/s independientes de emisión, escape, fotólisis y condensación'
+    : `Reposición ${fmt(m.replenishedMassKilograms)} kg · pérdidas térmicas ${fmt(m.thermalEscapeMassKilograms)} kg · partículas ${fmt(m.particleEscapeMassKilograms)} kg · fotólisis escapada ${fmt(m.photolysisEscapedMassKilograms)} kg · condensados ${fmt(m.condensedMassKilograms)} kg`;
+  const scenarios=m.scenarioPressurePascal===null?'Escenario: no resuelto'
+    : `Escenario: ${fmt(m.scenarioPressurePascal)} Pa; masa equivalente ${fmt(m.scenarioEquivalentGasMassKilograms)} kg`;
+  const partials=m.scenarioPartialPressuresPascal.length===0?'Parciales del escenario: no evaluables'
+    : `Parciales condicionales: ${m.scenarioPartialPressuresPascal.slice(0,4).map(g=>`${g.gas} ${fmt(g.pressurePascal)} Pa`).join(' · ')}`;
+  const status:Record<MoonAtmosphereBalancePRE3306['status'],string>={
+    INDEPENDENT_INTERVAL_MODEL_NOT_OBSERVATION:'Balance de intervalo independiente: presión modelada, no observada',
+    MISSING_INDEPENDENT_GAS_INVENTORY:'Desconocido: sin inventario gaseoso independiente',
+    MISSING_INDEPENDENT_SOURCE_SINK_RATES:'Desconocido: no cierra el balance de fuentes y sumideros',
+    MISSING_INDEPENDENT_EXOBASE_AND_HIGH_ENERGY_FORCING:'Desconocido: faltan exobase y forzamientos EUV/partículas',
+    EXOBASE_OUTSIDE_COLLISIONAL_TRANSITION_DOMAIN:'No resuelto: exobase fuera del dominio colisional',
+    PHOTOCHEMICAL_PRODUCTS_UNIDENTIFIED:'No resuelto: fotoproductos gaseosos sin identificar',
+  };
+  return [
+    field('PRE-33.06 — inventario y origen gaseoso',source,
+      'Composición y masa condensable de formación 32.F.1d no identifican una atmósfera; P·área/g de un escenario no es inventario independiente.'),
+    field('PRE-33.06 — reposición, pérdidas y condensación',sinks,
+      'No se sustituyen tasas ausentes por cero. Fotólisis y escape son procesos distintos; productos de fotólisis no identificados impiden certificar la presión.'),
+    field('PRE-33.06 — exobase y forzamiento externo',
+      m.independentExobaseSourceId===null?'EUV, partículas y exobase no caracterizados':
+        `${m.independentExobaseSourceId} · Kn ${fmt(m.independentExobaseKnudsenNumber)}`,
+      'La insolación bolométrica no autoriza EUV ni tasa de sputtering. La exobase requiere densidad, temperatura, altitud y sección de colisión independientes.'),
+    field('PRE-33.06 — escenario / parciales / presión física',
+      `${scenarios} · ${partials} · presión física: ${available?fmt(m.physicalSurfacePressurePascal)+' Pa':'No resuelta'}`,
+      `Conversión geométrica ${fmt(m.kilogramsOfGasPerPascal)} kg/Pa. Escenarios, presiones parciales candidatas y presión sustentada por un balance independiente pertenecen a niveles de evidencia distintos.`),
+    field('PRE-33.06 — veredicto del balance atmosférico',status[m.status],
+      'No implica vacío, atmósfera estable histórica, presencia observada ni habitabilidad. Los índices V1 no se transforman en presión ni en tasas.'),
+  ];
 }
 
 /** 32.F.3: gamma reference transmission does NOT imply a known incident flux/dose. */
@@ -927,10 +1056,13 @@ function radiationSection(target: MoonScientificResolvedTarget): MoonScientificS
   return section(
     'radiation', 'SECCIÓN 06', 'Radiación',
     'Fuentes radiativas, geometría de protección y límites de las estimaciones de exposición.',
-    lunarRadiationFields32F3(target.detail.environment.radiationProtection32F3 ?? null).length > 0
-      ? lunarRadiationFields32F3(target.detail.environment.radiationProtection32F3 ?? null)
-      : [field('Exposición ionizante y protección', 'No resueltas',
-          'El modelo V2 no aporta una fuente espectral ionizante y de partículas ni una columna protectora validada.')],
+    [
+      ...(lunarRadiationFields32F3(target.detail.environment.radiationProtection32F3 ?? null).length > 0
+        ? lunarRadiationFields32F3(target.detail.environment.radiationProtection32F3 ?? null)
+        : [field('Exposición ionizante y protección', 'No resueltas',
+            'El modelo V2 no aporta una fuente espectral ionizante y de partículas ni una columna protectora validada.')]),
+      ...radiationFieldsPRE3308(target.detail.environment.radiationPRE3308 ?? null),
+    ],
   );
 }
 
@@ -1017,9 +1149,12 @@ function geochemistrySection(target: MoonScientificResolvedTarget): MoonScientif
   return section(
     'geochemistry', 'SECCIÓN 07', 'Geoquímica y energía',
     'Solventes, contacto agua-roca, transporte térmico y rutas de desequilibrio sin atribuir reactivos no identificados.',
-    model ? lunarGeochemistryFields32F4(model)
-      : [field('Geoquímica y fuentes de energía', 'No resueltas',
-          'La ficha heredada no dispone del contrato físico 32.F.4.')],
+    [
+      ...(model ? lunarGeochemistryFields32F4(model)
+        : [field('Geoquímica y fuentes de energía', 'No resueltas',
+            'La ficha heredada no dispone del contrato físico 32.F.4.')]),
+      ...geoChemicalFieldsPRE3307(target.detail.environment.geochemistryPRE3307 ?? null),
+    ],
   );
 }
 
@@ -1127,7 +1262,9 @@ export function lunarEnvironmentalHistoryFields32F5(
 function environmentalHistorySection(target: MoonScientificResolvedTarget): MoonScientificSectionModel {
   return section('history', 'SECCIÓN 08', 'Historia ambiental',
     'Cronología física fechada del sistema, cambios cuantificados y huecos de conocimiento, sin extrapolar CT-0.',
-    lunarEnvironmentalHistoryFields32F5(target.detail.environment.environmentalHistory32F5 ?? null));
+    [...lunarEnvironmentalHistoryFields32F5(target.detail.environment.environmentalHistory32F5 ?? null),
+      ...(target.detail.environment.radiationPRE3308 != null
+        ? lunarContinuityFieldsPRE3309(target.detail.environment.environmentalHistory32F5 ?? null) : [])]);
 }
 
 function habitabilitySection(

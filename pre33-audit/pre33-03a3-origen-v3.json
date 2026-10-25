@@ -1,0 +1,43 @@
+{
+  "contract": "PRE-33.03a.3/V3-DISK-FORMATION-ORIGIN/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "version": "V3",
+  "galaxies": [
+    {
+      "galaxy": "Elixisis",
+      "galaxyIndex": 0,
+      "systems": 20,
+      "planets": 144,
+      "originSources": 144,
+      "modeledPositive": 90,
+      "originKilograms": 2.4964167410188414e+26,
+      "ct0Certified": 0,
+      "errors": []
+    },
+    {
+      "galaxy": "Elisoune",
+      "galaxyIndex": 1,
+      "systems": 20,
+      "planets": 126,
+      "originSources": 126,
+      "modeledPositive": 86,
+      "originKilograms": 1.768103695341455e+26,
+      "ct0Certified": 0,
+      "errors": []
+    },
+    {
+      "galaxy": "Ilyzenia",
+      "galaxyIndex": 2,
+      "systems": 20,
+      "planets": 143,
+      "originSources": 143,
+      "modeledPositive": 92,
+      "originKilograms": 2.1354232102079286e+26,
+      "ct0Certified": 0,
+      "errors": []
+    }
+  ],
+  "certifiedCT0": false,
+  "unresolved": "Native disk C/O priors and external/time-resolved water forcings remain modeled or unavailable; no observation or ocean is certified.",
+  "verdict": "V3_FORMATION_ORIGIN_AUDITED_CT0_UNRESOLVED"
+}

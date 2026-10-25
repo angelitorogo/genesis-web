@@ -1,0 +1,1042 @@
+{
+  "contract": "PRE-33.03a.2b/multihost-orbital-forcing/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "generator": "V2",
+  "scope": "Deterministic read-only PUBLIC V2 sample, NOT galactic census or persisted knowledge.",
+  "interpretation": "Fixed Keplerian relative orbits, phase-averaged coplanar hypothesis; A/B/C ages are generated independently and may not define a coeval history. Only within 50 Myr allows a conditional approximation; no exact phase, N-body, historical mass-loss orbit or observed XUV. No oceans CT0 certified.",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "multipleSystems": 6,
+      "singleSystems": 14,
+      "planets": 77,
+      "multiplePlanets": 77,
+      "sType": 70,
+      "pType": 7,
+      "modeledS": 0,
+      "modeledP": 0,
+      "ct0ConditionalFlux": 77,
+      "ct0FluxUnresolved": 0,
+      "unresolvedComponentAge": 36,
+      "unresolvedStellarRadiation": 0,
+      "unresolvedEvolution": 0,
+      "unresolvedOrbitalSeparation": 0,
+      "unresolvedDeep": 41,
+      "physicalConservationPassed": 0,
+      "pendingCount": 77,
+      "ct0Certified": 0,
+      "inventedImpactEvents": 0,
+      "identityFailures": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Wionaor b",
+          "host": "AB",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            13.546465669286288,
+            5.9400270465115526
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 3.5315903859836816e-10,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia b",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.05523650540362559,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia c",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.00035075038650963337,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia d",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.000002615343087515544,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia e",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0000010461588742077187,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia f",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 4.897065162852246e-7,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia g",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 2.848575220692942e-7,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia h",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 1.9353261607815877e-7,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Baetia i",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 1.3231307655777068e-7,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion b",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.41040028716187404,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion c",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.06916970274163793,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion d",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.04820832213777019,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion e",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0233037239578374,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Puvion f",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.002336064891760155,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chinais b",
+          "host": "AB",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 1.0247439024798347e-9,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chinais c",
+          "host": "AB",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            12.508522326027592,
+            11.843588990234238
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 5.858165498354672e-10,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chuviae b",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.23197659806387297,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chuviae c",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.09442253924911387,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chuviae d",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0011477285407791766,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chuviae e",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.00022353500805460738,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chianais b",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.4620551058153081,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chianais c",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.003145329725459086,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chianais d",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0019309009792447818,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chianais e",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.49369415010191,
+            12.496479790544656
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.00007574356615738712,
+          "waterCT0Certified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "multipleSystems": 3,
+      "singleSystems": 17,
+      "planets": 40,
+      "multiplePlanets": 40,
+      "sType": 37,
+      "pType": 3,
+      "modeledS": 0,
+      "modeledP": 0,
+      "ct0ConditionalFlux": 20,
+      "ct0FluxUnresolved": 20,
+      "unresolvedComponentAge": 33,
+      "unresolvedStellarRadiation": 0,
+      "unresolvedEvolution": 0,
+      "unresolvedOrbitalSeparation": 0,
+      "unresolvedDeep": 7,
+      "physicalConservationPassed": 0,
+      "pendingCount": 40,
+      "ct0Certified": 0,
+      "inventedImpactEvents": 0,
+      "identityFailures": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Yutia b",
+          "host": "B",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia c",
+          "host": "B",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia d",
+          "host": "B",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia e",
+          "host": "B",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia f",
+          "host": "B",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Yutia g",
+          "host": "B",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis b",
+          "host": "C",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis c",
+          "host": "C",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis d",
+          "host": "C",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis e",
+          "host": "C",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis f",
+          "host": "C",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Lariis g",
+          "host": "C",
+          "multiplicity": "TRIPLE",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.654320140594388,
+            0.7810352259646584,
+            13.374591756899205
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quanaen b",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            9.50480024320857,
+            12.82777132959099
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quanaen c",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            9.50480024320857,
+            12.82777132959099
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quanaen d",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            9.50480024320857,
+            12.82777132959099
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quanaen e",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            9.50480024320857,
+            12.82777132959099
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quanaen f",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            9.50480024320857,
+            12.82777132959099
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Vriokae b",
+          "host": "AB",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            9.50480024320857,
+            12.82777132959099
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": null,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Vrevae b",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.138152446301516,
+            8.214114693413936
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.6735674321144284,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Vrevae c",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.138152446301516,
+            8.214114693413936
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.02358707148192944,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Vrevae d",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.138152446301516,
+            8.214114693413936
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0005814221468139669,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Vrevae e",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.138152446301516,
+            8.214114693413936
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.00018473529733520198,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Vrevae f",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.138152446301516,
+            8.214114693413936
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.000009595842957301462,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Vrevae h",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            10.138152446301516,
+            8.214114693413936
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0000017328633590943105,
+          "waterCT0Certified": false
+        }
+      ]
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "multipleSystems": 5,
+      "singleSystems": 15,
+      "planets": 71,
+      "multiplePlanets": 71,
+      "sType": 65,
+      "pType": 6,
+      "modeledS": 0,
+      "modeledP": 0,
+      "ct0ConditionalFlux": 71,
+      "ct0FluxUnresolved": 0,
+      "unresolvedComponentAge": 39,
+      "unresolvedStellarRadiation": 0,
+      "unresolvedEvolution": 0,
+      "unresolvedOrbitalSeparation": 0,
+      "unresolvedDeep": 32,
+      "physicalConservationPassed": 0,
+      "pendingCount": 71,
+      "ct0Certified": 0,
+      "inventedImpactEvents": 0,
+      "identityFailures": 0,
+      "errors": [],
+      "examples": [
+        {
+          "body": "Traren b",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.949880056644701,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren c",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.14106254827502485,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren d",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.046290306752456725,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren e",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.00510583415947352,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren f",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0016152238417355585,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren g",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.000039407906203776465,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Traren h",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.000003517040775415565,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos b",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 4.325561346116998,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos c",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 2.9572159686087844,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos d",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.33580838294432785,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos e",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.021051643670230998,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos f",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.00012809461880938737,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos g",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0000663506017156321,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Chiamos h",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_SURFACE_DOMAIN",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.000003279806340098324,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Shevieria b",
+          "host": "AB",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.012200584330736326,
+            1.582063335580232
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 1.1926941063512596e-8,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Hanaeria b",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 120.4249197522731,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Hanaeria c",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 48.315652832263254,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Hanaeria d",
+          "host": "A",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.7129568159739933,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quilis b",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.28843123637857926,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quilis c",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.04324423441251282,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quilis d",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.003948806424361322,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Quilis e",
+          "host": "B",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 0.0019538489784030615,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Zisas b",
+          "host": "AB",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            8.833594694286887,
+            9.102126579171854
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 1.1997992137034962e-7,
+          "waterCT0Certified": false
+        },
+        {
+          "body": "Fasar b",
+          "host": "AB",
+          "multiplicity": "BINARY",
+          "status": "UNRESOLVED_COMPONENT_AGE_ALIGNMENT",
+          "stellarAgesGyr": [
+            0.003652133460617841,
+            11.230691363757396
+          ],
+          "avgFluxFirstBin": null,
+          "ct0PhaseAverageXuvWattsPerSquareMeter": 3.776029850850114e-9,
+          "waterCT0Certified": false
+        }
+      ]
+    }
+  ],
+  "verdict": "MULTIPLE_ORBITAL_H2O_MODEL_PASSED_CHRONOLOGY_GAPS"
+}

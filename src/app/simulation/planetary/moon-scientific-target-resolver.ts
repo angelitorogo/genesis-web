@@ -1,6 +1,12 @@
+import type { GeochemistryPRE3307 } from '../../domain/planetary/geochemistry-pre33-07';
+import type { RadiationWorldPRE3308 } from '../../domain/planetary/radiation-transport-pre33-08';
+import type { AtmosphereClosurePRE3306 } from '../../domain/planetary/atmosphere-causal-closure-pre33-06';
 import { type MoonInternalWaterAssessment } from '../../domain/planetary/moon-internal-water-assessment';
 import type { MoonWaterPhaseInventory32F2a } from '../../domain/planetary/moon-water-phase-inventory-32-f-2a';
 import type { MoonInteriorStructure32F2b } from '../../domain/planetary/moon-interior-structure-32-f-2b';
+import type { MoonEnergyConfinementPRE3305 } from '../../domain/planetary/moon-energy-confinement-pre33-05';
+import type { MoonAtmosphereBalancePRE3306 } from '../../domain/planetary/moon-atmosphere-balance-pre33-06';
+import type { MoonSubsurfaceDomainPRE3304 } from '../../domain/planetary/moon-subsurface-domain-pre33-04';
 import type { MoonOceanReality32F2c } from '../../domain/planetary/moon-ocean-reality-32-f-2c';
 import type { MoonRadiationProtection32F3 } from '../../domain/planetary/moon-radiation-protection-32-f-3';
 import type { MoonGeochemicalEnergy32F4 } from '../../domain/planetary/moon-geochemical-energy-32-f-4';
@@ -102,8 +108,14 @@ export interface MoonScientificDetailSource {
       waterPhaseInventory32F2a?: MoonWaterPhaseInventory32F2a | null;
       interiorStructure32F2b?: MoonInteriorStructure32F2b | null;
       oceanReality32F2c?: MoonOceanReality32F2c | null;
+      subsurfaceDomainPRE3304?: MoonSubsurfaceDomainPRE3304 | null;
+      energyConfinementPRE3305?: MoonEnergyConfinementPRE3305 | null;
+      atmosphereBalancePRE3306?: MoonAtmosphereBalancePRE3306 | null;
+      atmosphereClosurePRE3306?: AtmosphereClosurePRE3306 | null;
       radiationProtection32F3?: MoonRadiationProtection32F3 | null;
       geochemicalEnergy32F4?: MoonGeochemicalEnergy32F4 | null;
+      geochemistryPRE3307?: GeochemistryPRE3307 | null;
+      radiationPRE3308?: RadiationWorldPRE3308 | null;
       environmentalHistory32F5?: MoonEnvironmentalHistory32F5 | null;
       waterInventoryIndex01: number;
       subsurfaceOceanPotentialIndex01: number;
@@ -138,6 +150,11 @@ export interface MoonScientificDetailSource {
 }
 
 export interface MoonScientificResolvedTarget {
+  /** Internal physical host ordinal for public multihost planet aliases.
+   * Never serialize it in a card, a route or observed player knowledge.
+   * Absent for the canonical SINGLE path, whose public and physical ordinals agree.
+   */
+  readonly physicalHostPlanetOrdinal?: number;
   readonly identity:
     MoonScientificIdentitySource;
 
@@ -391,10 +408,20 @@ function detailProjection(
           moon.interiorStructure32F2b ?? null,
         oceanReality32F2c:
           moon.oceanReality32F2c ?? null,
+        subsurfaceDomainPRE3304:
+          moon.subsurfaceDomainPRE3304 ?? null,
+        energyConfinementPRE3305:
+          moon.energyConfinementPRE3305 ?? null,
+        atmosphereBalancePRE3306:
+          moon.atmosphereBalancePRE3306 ?? null,
+        atmosphereClosurePRE3306:
+          moon.atmosphereClosurePRE3306 ?? null,
         radiationProtection32F3:
           moon.radiationProtection32F3 ?? null,
         geochemicalEnergy32F4:
           moon.geochemicalEnergy32F4 ?? null,
+        geochemistryPRE3307:moon.geochemistryPRE3307 ?? null,
+        radiationPRE3308:moon.radiationPRE3308 ?? null,
         environmentalHistory32F5: history32F5,
         waterInventoryIndex01:
           moon.waterInventoryIndex01,

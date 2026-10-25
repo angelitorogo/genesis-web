@@ -15,7 +15,7 @@ export class SystemMultihostGameCutover {
   static sessionOrNull(model: ArchiveDiscoveryDetailModel): SystemMultihostScientificSession | null {
     const version = GeneratorVersion.fromCode(model.generatorVersionCode);
     if (version === GeneratorVersion.V1) return null;
-    if (version !== GeneratorVersion.V2) {
+    if (version !== GeneratorVersion.V2 && version !== GeneratorVersion.V3) {
       throw new RangeError('Unsupported version for multihost scientific cutover.');
     }
     return SystemMultihostScientificSession.buildOrNull(model);

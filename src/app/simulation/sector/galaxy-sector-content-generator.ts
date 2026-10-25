@@ -148,7 +148,7 @@ export class GalaxySectorContentGenerator {
       );
     }
 
-    if (galaxy.generationKey.generatorVersion === GeneratorVersion.V2) {
+    if ((galaxy.generationKey.generatorVersion === GeneratorVersion.V2 || galaxy.generationKey.generatorVersion === GeneratorVersion.V3)) {
       // Physical occupancy/PRNG draws stay exactly V1, but the resulting
       // sector and its child addresses belong to the public V2 universe.
       const physicalGalaxy = GalaxyGenerator.generate(

@@ -1,3 +1,7 @@
+import { environmentalContinuityFieldsPRE3309 } from '../scientific/environmental-continuity-fields-pre33-09';
+import { geoChemicalFieldsPRE3307 } from '../scientific/geochemistry-fields-pre33-07';
+import { radiationFieldsPRE3308 } from '../scientific/radiation-fields-pre33-08';
+import { atmosphereClosureFieldsPRE3306 } from './planet-atmosphere-closure-fields-pre33-06';
 import {
   type PlanetScientificDetailSource,
   type PlanetScientificResolvedTarget,
@@ -68,6 +72,11 @@ export interface PlanetScientificMoonCardModel {
     readonly string[];
 }
 
+/** Display-only accordion entries, never independent physical moon records. */
+export type PlanetScientificMoonListEntry = PlanetScientificMoonCardModel & Readonly<{
+  kind: 'DETAILED' | 'IDENTITY_ONLY';
+}>;
+
 export interface PlanetScientificSectionsModel {
   readonly sections:
     readonly PlanetScientificSectionModel[];
@@ -77,6 +86,9 @@ export interface PlanetScientificSectionsModel {
 
   readonly relevantMoons:
     readonly PlanetScientificMoonCardModel[];
+
+  /** PRE-33.10b: merged ordered V3 list for the expandable fiches. */
+  readonly allMoons: readonly PlanetScientificMoonListEntry[];
 
   readonly relevantMoonsEmptyMessage:
     string;
@@ -154,36 +166,7 @@ export class PlanetScientificSectionsAssembler {
             detail.general.surfaceGravityEarth,
         });
 
-    return Object.freeze({
-      sections:
-        unifyPlanetFicheSections(Object.freeze([
-          generalSection(
-            detail,
-          ),
-          orbitSection(
-            detail,
-          ),
-          surfaceSection(
-            detail,
-          ),
-          atmosphereSection(
-            detail,
-          ),
-          climateSection(
-            detail,
-          ),
-          geologySection(
-            detail,
-          ),
-          moonsSection(
-            detail,
-          ),
-          comparisonSection(
-            comparison,
-          ),
-        ])),
-      comparison,
-      relevantMoons:
+    const relevantMoons: readonly PlanetScientificMoonCardModel[] =
         Object.freeze(
           detail
             .moons
@@ -265,7 +248,56 @@ export class PlanetScientificSectionsAssembler {
                     ]),
                 }),
             ),
-        ),
+        );
+
+    // Only V3 receives these canonical, identity-only records. Never copy a
+    // phase-21 physical sample or assume that an unknown moon is sterile.
+    const minorMoons: readonly PlanetScientificMoonListEntry[] =
+      (detail.moons.minorMoonIdentities ?? []).map(identity => Object.freeze({
+        kind: 'IDENTITY_ONLY' as const,
+        designation: identity.designation,
+        moonIndex: identity.moonIndex,
+        ordinalLabel: `Luna ${identity.moonOrdinal}`,
+        fields: Object.freeze([]) as readonly PlanetScientificFieldModel[],
+        badges: Object.freeze([]) as readonly string[],
+      }));
+
+    const allMoons: readonly PlanetScientificMoonListEntry[] = Object.freeze([
+      ...relevantMoons.map(moon => Object.freeze({ ...moon, kind: 'DETAILED' as const })),
+      ...minorMoons,
+    ].sort((a, b) => a.moonIndex - b.moonIndex));
+
+    return Object.freeze({
+      sections:
+        unifyPlanetFicheSections(Object.freeze([
+          generalSection(
+            detail,
+          ),
+          orbitSection(
+            detail,
+          ),
+          surfaceSection(
+            detail,
+          ),
+          atmosphereSection(
+            detail,
+          ),
+          climateSection(
+            detail,
+          ),
+          geologySection(
+            detail,
+          ),
+          moonsSection(
+            detail,
+          ),
+          comparisonSection(
+            comparison,
+          ),
+        ])),
+      comparison,
+      relevantMoons,
+      allMoons,
       relevantMoonsEmptyMessage:
         detail.moons.moonCount ===
           0
@@ -513,6 +545,19 @@ function surfaceSection(
         ),
       ),
       field(
+        'Capas profundas y envoltura (hipótesis)',
+        surface.deepStructureScenario?.status === 'CONDITIONAL_GEOMETRY'
+          ? `Capa H₂O equivalente: ${DECIMAL_1.format(surface.deepStructureScenario.layerMinMeters! / 1000)}–${DECIMAL_1.format(surface.deepStructureScenario.layerMaxMeters! / 1000)} km; presión basal de referencia hasta ${SCIENTIFIC_3.format(surface.deepStructureScenario.basePressureMaximumPascal!)} Pa; hielo de alta presión ${surface.deepStructureScenario.highPressureIcePossible ? 'posible' : 'sin umbral alcanzado'}`
+          : surface.deepStructureScenario?.status === 'RADIAL_REFERENCE_INCOMPATIBLE'
+            ? 'No evaluable: el escenario radial no cabe en el radio físico existente'
+            : surface.deepStructureScenario?.status === 'UPDATED_BULK_REQUIRED'
+              ? 'No evaluable: la evolución de H₂O requiere actualizar la masa y radio globales'
+              : 'Sin capa H₂O cuantificada con las fuentes disponibles',
+        surface.deepStructureScenario
+          ? `${surface.deepStructureScenario.exposedSolidSurface ? 'Base sólida de referencia' : 'Envoltura profunda sin superficie sólida expuesta'}. Envoltura gaseosa 19.5: ${SCIENTIFIC_3.format(surface.deepStructureScenario.gaseousEnvelopeMassEarth)} M⊕, especies H/He/H₂O no resueltas. Espesor y presión son escenarios máximos de redistribución de H₂O 33.03a, NO un océano CT-0 certificado ni una observación; la fase requiere un perfil P-T independiente.`
+          : 'Sin evaluación científica estructural; no se infiere un océano a partir de cobertura 20.7.',
+      ),
+      field(
         'Radiación superficial',
         labelRadiation(
           surface.surfaceRadiationRegime,
@@ -531,6 +576,7 @@ function surfaceSection(
         'Índices de exposición / protección',
         `${formatNullableNormalizedIndex(surface.surfaceRadiationExposureIndex01)} / ${formatNullableNormalizedIndex(surface.surfaceRadiationProtectionIndex01)}`,
       ),
+      ...radiationFieldsPRE3308(detail.radiationPRE3308 ?? null),
     ],
   );
 }
@@ -611,6 +657,7 @@ function atmosphereSection(
             ? 'Envolvente profunda'
             : 'Atmósfera retenida',
       ),
+      ...atmosphereClosureFieldsPRE3306(atmosphere.closurePRE3306 ?? null),
     ],
   );
 }
@@ -677,6 +724,7 @@ function climateSection(
           climate.heatRedistributionEfficiency01,
         ),
       ),
+      ...(detail.radiationPRE3308 != null ? environmentalContinuityFieldsPRE3309(null) : []),
     ],
   );
 }
@@ -780,6 +828,7 @@ function geologySection(
         'Índices de campo / protección magnetosférica',
         `${formatNormalizedIndex(geology.intrinsicMagneticFieldIndex01)} / ${formatNormalizedIndex(geology.magnetosphericProtectionIndex01)}`,
       ),
+      ...geoChemicalFieldsPRE3307(detail.geochemistryPRE3307 ?? null),
     ],
   );
 }

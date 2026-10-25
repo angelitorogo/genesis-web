@@ -4578,7 +4578,7 @@ class ThreeSystemSceneRuntime
       ringRenderable !==
         null
     ) {
-      if (this.currentSnapshot?.generatorVersionCode === 2) {
+      if ((this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)) {
         installV2BodyLightingOnSurfaces(ringRenderable.group, appearance.lightBinding);
       }
       axialPivot.add(
@@ -4660,7 +4660,7 @@ class ThreeSystemSceneRuntime
     spinPivot.name =
       `${moon.title} domain spin`;
 
-    if (this.currentSnapshot?.generatorVersionCode === 2) {
+    if ((this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)) {
       this.bodyLightBindings.set(moon.id, createV2BodyLightBinding());
     }
 
@@ -4821,7 +4821,7 @@ class ThreeSystemSceneRuntime
   ): void {
     // V2 requires a separate multistellar terminator for every object.
     // V1 retains captured-body instancing; TNO-R1 uses individual procedural surfaces.
-    if (this.currentSnapshot?.generatorVersionCode === 2) return;
+    if ((this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)) return;
 
     for (
       const layerKey
@@ -4959,7 +4959,7 @@ class ThreeSystemSceneRuntime
       body.position.z,
     );
 
-    const minorLight = this.currentSnapshot?.generatorVersionCode === 2
+    const minorLight = (this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)
       ? createV2BodyLightBinding()
       : null;
 
@@ -5748,7 +5748,7 @@ class ThreeSystemSceneRuntime
         0,
         0,
       );
-      const stellarFluxes = snapshot.generatorVersionCode === 2
+      const stellarFluxes = (snapshot.generatorVersionCode === 2 || snapshot.generatorVersionCode === 3)
         ? v2CometStellarIrradianceAtDay(snapshot, body, simulationDay)
         : null;
       const totalFlux = stellarFluxes?.reduce((sum, source) => sum + source.fluxEarth, 0)
@@ -6053,7 +6053,7 @@ class ThreeSystemSceneRuntime
 
     // Only the V2 TRIPLE path changes: its independently magnified A/B and C
     // orbits must not be used to estimate physical stellar flux.
-    const tripleSources = snapshot.generatorVersionCode === 2 &&
+    const tripleSources = (snapshot.generatorVersionCode === 2 || snapshot.generatorVersionCode === 3) &&
       snapshot.multiplicityName === 'TRIPLE'
       ? v2TripleLightingSources(snapshot, this.lightingSimulationDay)
       : null;

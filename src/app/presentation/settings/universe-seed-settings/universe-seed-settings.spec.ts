@@ -8,6 +8,7 @@ import {
 import { GeneratorVersion } from '../../../domain/generation/generator-version';
 import { UniverseSeed } from '../../../domain/universe/universe-seed';
 import { GENESIS_LOCAL_REPOSITORIES } from '../../runtime/genesis-local-repositories';
+import { ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY, activeUniverseRef } from '../../universe/active-universe-selection';
 
 import {
   UniverseBootstrapService,
@@ -36,6 +37,7 @@ describe(
     let persistedKeys: UniverseGenerationKey[];
     let repositoryReads: number;
     let repositoryFailure: Error | null;
+    let repositoryReadGate: Promise<void> | null;
 
     beforeEach(
       async () => {
@@ -50,6 +52,8 @@ describe(
         persistedKeys = [];
         repositoryReads = 0;
         repositoryFailure = null;
+        repositoryReadGate = null;
+        try { localStorage.removeItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY); } catch { /* blocked */ }
 
         await TestBed
           .configureTestingModule({
@@ -64,6 +68,7 @@ describe(
                   universeRepository: {
                     getAll: async () => {
                       repositoryReads += 1;
+                      if (repositoryReadGate !== null) await repositoryReadGate;
                       if (repositoryFailure !== null) {
                         throw repositoryFailure;
                       }
@@ -106,6 +111,95 @@ describe(
           .compileComponents();
       },
     );
+
+    it('restores the confirmed V3 seed when Settings is the first route after F5', async () => {
+      const key = new UniverseGenerationKey(
+        UniverseSeed.parse('ABCD-0000-0000-0000-0000-0000-0000-0003'),
+        GeneratorVersion.V3,
+      );
+      persistedKeys = [key];
+      localStorage.setItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY, activeUniverseRef(key));
+      try {
+        const fixture = TestBed.createComponent(UniverseSeedSettings);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(TestBed.inject(UniverseSeedFacade).activeGenerationKey().equals(key)).toBe(true);
+        expect((fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="universe-seed-active"]',
+        )?.textContent?.trim()).toBe(key.universeSeed.serialize());
+        expect(bootstrappedKeys).toHaveLength(0); // Restoring never creates a save.
+      } finally {
+        localStorage.removeItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY);
+      }
+    });
+
+    it('waits for delayed persisted V3 selection before allowing B-to-A editing', async () => {
+      const seedA = '1430-0000-0000-0000-0000-0000-0000-0001';
+      const seedB = '1430-0000-0000-0000-0000-0000-0000-0002';
+      const keyA = new UniverseGenerationKey(UniverseSeed.parse(seedA), GeneratorVersion.V3);
+      const keyB = new UniverseGenerationKey(UniverseSeed.parse(seedB), GeneratorVersion.V3);
+      persistedKeys = [keyA, keyB];
+      localStorage.setItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY, activeUniverseRef(keyB));
+      let releaseRead!: () => void;
+      repositoryReadGate = new Promise<void>(resolve => { releaseRead = resolve; });
+      try {
+        const fixture = TestBed.createComponent(UniverseSeedSettings);
+        fixture.detectChanges();
+        const root = fixture.nativeElement as HTMLElement;
+        const input = root.querySelector<HTMLInputElement>('[data-testid="universe-seed-input"]')!;
+        const apply = root.querySelector<HTMLButtonElement>('[data-testid="universe-seed-apply-button"]')!;
+        expect(input.disabled).toBe(true);
+        expect(apply.disabled).toBe(true);
+
+        releaseRead();
+        // Angular puede considerar estable el fixture antes de que termine una
+        // promesa externa simulada (IndexedDB). Esperar el estado de restauración
+        // evita una carrera del propio test sin debilitar la comprobación de UI.
+        await vi.waitFor(() => {
+          expect(fixture.componentInstance.restoringSelection()).toBe(false);
+        }, { timeout: 5_000 });
+        fixture.detectChanges();
+        expect(input.disabled).toBe(false);
+        expect(apply.disabled).toBe(false);
+        expect(input.value).toBe(seedB);
+
+        input.value = seedA;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        fixture.detectChanges();
+        expect(input.value).toBe(seedA);
+        expect(TestBed.inject(UniverseSeedFacade).draft()).toBe(seedA);
+        await fixture.componentInstance.applySeed();
+        fixture.detectChanges();
+        expect(TestBed.inject(UniverseSeedFacade).activeGenerationKey().equals(keyA)).toBe(true);
+        expect(bootstrappedKeys[0]?.equals(keyA)).toBe(true);
+      } finally {
+        localStorage.removeItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY);
+      }
+    });
+
+    it('does not override a freshly typed seed with delayed settings hydration', async () => {
+      const saved = new UniverseGenerationKey(
+        UniverseSeed.parse('ABCD-0000-0000-0000-0000-0000-0000-0003'),
+        GeneratorVersion.V3,
+      );
+      persistedKeys = [saved];
+      localStorage.setItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY, activeUniverseRef(saved));
+      try {
+        const fixture = TestBed.createComponent(UniverseSeedSettings);
+        fixture.detectChanges();
+        fixture.componentInstance.onSeedInput({ target: { value:
+          'BEEF-0000-0000-0000-0000-0000-0000-0003',
+        } } as unknown as Event);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const facade = TestBed.inject(UniverseSeedFacade);
+        expect(facade.draft()).toBe('BEEF-0000-0000-0000-0000-0000-0000-0003');
+        expect(facade.activeGenerationKey().equals(saved)).toBe(false);
+      } finally {
+        localStorage.removeItem(ACTIVE_UNIVERSE_SELECTION_STORAGE_KEY);
+      }
+    });
 
     it(
       'should render the active seed',
@@ -195,8 +289,8 @@ describe(
         );
 
         expect(repositoryReads).toBe(1);
-        expect(bootstrappedKeys[0]?.generatorVersion).toBe(GeneratorVersion.V2);
-        expect(facade.generatorVersion()).toBe(GeneratorVersion.V2);
+        expect(bootstrappedKeys[0]?.generatorVersion).toBe(GeneratorVersion.V3);
+        expect(facade.generatorVersion()).toBe(GeneratorVersion.V3);
         expect(
           facade.feedback(),
         ).toEqual({
@@ -209,7 +303,19 @@ describe(
       },
     );
 
-    it('reopens existing V1 save instead of rewriting its seed as V2', async () => {
+    it('uses only the regular seed button to create a V3 universe', async () => {
+      const fixture = TestBed.createComponent(UniverseSeedSettings);
+      fixture.detectChanges();
+      const element = fixture.nativeElement as HTMLElement;
+      expect(element.querySelector('[data-testid="universe-seed-create-v3-button"]')).toBeNull();
+      expect(element.querySelector('[data-testid="universe-seed-apply-button"]')).not.toBeNull();
+      fixture.componentInstance.seed.updateDraft('C0DE-0000-0000-0000-0000-0000-0000-0003');
+      await fixture.componentInstance.applySeed();
+      expect(bootstrappedKeys).toHaveLength(1);
+      expect(bootstrappedKeys[0]!.generatorVersion).toBe(GeneratorVersion.V3);
+    });
+
+    it('reopens existing V1 save instead of rewriting its seed as V3', async () => {
       const seed = UniverseSeed.parse('ABCD-0000-0000-0000-0000-0000-0000-0001');
       const savedV1 = new UniverseGenerationKey(seed, GeneratorVersion.V1);
       persistedKeys = [savedV1];
@@ -223,7 +329,7 @@ describe(
       expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V1);
     });
 
-    it('selects the existing V2 save and does not collide with an existing V1 of the same seed', async () => {
+    it('reopens an existing V2 seed instead of implicitly upgrading that persisted universe', async () => {
       const seed = UniverseSeed.parse('ABCD-0000-0000-0000-0000-0000-0000-0001');
       const savedV1 = new UniverseGenerationKey(seed, GeneratorVersion.V1);
       const savedV2 = new UniverseGenerationKey(seed.copy(), GeneratorVersion.V2);
@@ -244,7 +350,7 @@ describe(
       await fixture.componentInstance.applySeed();
       expect(repositoryReads).toBe(0);
       expect(bootstrappedKeys).toHaveLength(0);
-      expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V1);
+      expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V3);
     });
 
     it(
@@ -279,6 +385,27 @@ describe(
         });
       },
     );
+
+    it('does not reuse a previous success while a V3 seed switch is pending', async () => {
+      const facade = TestBed.inject(UniverseSeedFacade);
+      const seedA = '1430-0000-0000-0000-0000-0000-0000-0001';
+      const seedB = '1430-0000-0000-0000-0000-0000-0000-0002';
+      const keyA = new UniverseGenerationKey(UniverseSeed.parse(seedA), GeneratorVersion.V3);
+      const keyB = new UniverseGenerationKey(UniverseSeed.parse(seedB), GeneratorVersion.V3);
+      persistedKeys = [keyA, keyB];
+      facade.activatePersistedUniverse(keyB);
+      facade.markUniverseActivated();
+      const fixture = TestBed.createComponent(UniverseSeedSettings);
+      fixture.detectChanges();
+      fixture.componentInstance.onSeedInput({target: {value: seedA}} as unknown as Event);
+      const activation = fixture.componentInstance.applySeed();
+      fixture.detectChanges();
+      expect(facade.feedback()).toEqual({kind: 'idle', message: 'Activando universo…'});
+      await activation;
+      fixture.detectChanges();
+      expect(facade.activeGenerationKey().equals(keyA)).toBe(true);
+      expect(facade.feedback()).toEqual({kind: 'success', message: 'Universo creado y activado correctamente.'});
+    });
 
     it(
       'should reject invalid manual seed input without invoking bootstrap',
@@ -354,7 +481,7 @@ describe(
           .componentInstance
           .applySeed();
 
-        expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V1);
+        expect(TestBed.inject(UniverseSeedFacade).generatorVersion()).toBe(GeneratorVersion.V3);
         expect(
           TestBed
             .inject(

@@ -1,0 +1,238 @@
+{
+  "contract": "PRE-33.13/G2-CERTIFICATION/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "verdict": "G2_PENDIENTE_EVIDENCIA",
+  "requested": "PRE-33.13 / final scientific gate",
+  "authorization": "NO_SE_AUTORIZA_VIDA_EFECTIVA",
+  "never": "No es una demostracion de abiogenesis real ni licencia para revelar Ground Truth al jugador",
+  "originalHistoricalPanel": {
+    "status": "MISSING_ORIGINAL_45_IDENTITIES",
+    "verified": false,
+    "count": 0,
+    "issues": [
+      "HISTORIC_45_FIXTURE_IDENTITIES_NOT_PROVIDED"
+    ]
+  },
+  "source": {
+    "gitCommit": null,
+    "trackedWorkingTreeClean": false,
+    "sourceTreeSha256": "125488009b8553ee8cf796a0cbbc81dd9e029b5ce764b9ba7270986fb9a6bef0",
+    "files": [
+      {
+        "path": "src/app/domain/planetary/environmental-physical-contract-pre33-01.ts",
+        "sha256": "9bcd079f528214f6142140123a56968f4473a4430550ac768f784263a3b9c0e4"
+      },
+      {
+        "path": "src/app/simulation/planetary/geochemistry-reaction-engine-pre33-07.ts",
+        "sha256": "b1ddc9bcda4a0be104e5a3f6d08535db0844ab12137c484eb585190ea2577be0"
+      },
+      {
+        "path": "src/app/simulation/planetary/radiation-transport-engine-pre33-08.ts",
+        "sha256": "e063c7a7dc9dd09cf8da6a1217ba5b1d9bb1d9c6ae84d0a2c7a9a7c965199d46"
+      },
+      {
+        "path": "src/app/simulation/planetary-history/environmental-continuity-engine-pre33-09.ts",
+        "sha256": "b1eeeee09c81d5f2a6fb8d4bea0222ad177706f0643d42563a67e53e122e0877"
+      },
+      {
+        "path": "src/app/simulation/planetary/minor-moon-on-demand-pre33-10.ts",
+        "sha256": "b4d83644bc28a68237ab3704aed0ff0ff6c522cc51a46cce2ce0dd2e33380b3a"
+      },
+      {
+        "path": "src/app/simulation/planetary/galactic-life-readiness-pre33-11c.ts",
+        "sha256": "8a5f7d529dc9237e31b6b24978d23bf600c068c428333fc91682d4f99f962f07"
+      },
+      {
+        "path": "src/app/presentation/scientific/scientific-integration-regression-pre33-12.ts",
+        "sha256": "109c03ec624a4ec0fdb107e3e6788103e3655c890fccadbb8ed0b305058c800e"
+      },
+      {
+        "path": "src/app/simulation/habitability/habitability-moon-integration-32-f-6b.ts",
+        "sha256": "937f2c49b29b3f665cadc68bdc7061151eab598d3fcd4c58a4ec1ff3aee3afc9"
+      },
+      {
+        "path": "src/app/simulation/stellar/stellar-multihost-scientific-target-resolver.ts",
+        "sha256": "8aec44ff52d7e004f4408ef8417a039c6e796cb466ae186aebe6769aa2a58e71"
+      },
+      {
+        "path": "scripts/auditar-genesis-pre33-12.cjs",
+        "sha256": "95fe34519baf59bd1402ab622c28b65d2e5adf5fb7bb5512711bbc6ef003a01f"
+      },
+      {
+        "path": "src/app/domain/biology/pre33-13-certification-gate.ts",
+        "sha256": "388eface21dfd3482a171f93c6758dc6d1d61635f0c2feb25683ea493f90c4cf"
+      },
+      {
+        "path": "scripts/certificar-genesis-pre33-13.cjs",
+        "sha256": "edb9fd65d82769845d4563b51eec41b77b1bb5234a7cb96b59b02e096a3aa8ec"
+      }
+    ],
+    "missing": [],
+    "provenance": "UNVERSIONED_COPY",
+    "headVerified": false
+  },
+  "checks": {
+    "currentSourceReproduced": false,
+    "scientificCoreAuditsPassed": false,
+    "exactHistorical45Reproduced": false,
+    "multiGalaxyIndependentPassed": false,
+    "v2IdentityAndOrbitRegressionPassed": false,
+    "persistenceAndObservationPassed": false,
+    "workerUnitBuildE2EPassed": false,
+    "reproducibilityPassed": false
+  },
+  "missingChecks": [
+    "currentSourceReproduced",
+    "scientificCoreAuditsPassed",
+    "exactHistorical45Reproduced",
+    "multiGalaxyIndependentPassed",
+    "v2IdentityAndOrbitRegressionPassed",
+    "persistenceAndObservationPassed",
+    "workerUnitBuildE2EPassed",
+    "reproducibilityPassed"
+  ],
+  "blockers": [
+    "AUDIT_NOT_REPLAYED_ON_CURRENT_HEAD",
+    "HISTORICAL_REPRODUCTION_ERROR"
+  ],
+  "findings": [
+    {
+      "code": "IDENTIDAD_Y_ORBITA_MULTISISTEMA",
+      "state": "NO_VERIFICADA",
+      "source": "PRE33.12 / 32.F.6b",
+      "explanation": "Ordinal público y físico diferenciados en fichas y validador",
+      "permittedUse": "DO_NOT_USE"
+    },
+    {
+      "code": "OBSERVADO_NO_REVELA_REALIDAD_PRIVADA",
+      "state": "NO_VERIFICADA",
+      "source": "31.F.e / PRE33.12",
+      "explanation": "Accesos bloqueados y lecturas observadas comprobados en muestras",
+      "permittedUse": "DO_NOT_USE"
+    },
+    {
+      "code": "LUNAS_CONFIRMED_E_IDENTIDAD_DIFERIDA",
+      "state": "NO_VERIFICADA",
+      "source": "PRE33.10 / PRE33.12",
+      "explanation": "Todas las identidades lunares por planeta sin física artificial",
+      "permittedUse": "DO_NOT_USE"
+    },
+    {
+      "code": "PRESION_Y_NICHOS_FISICOS",
+      "state": "NO_VERIFICADA",
+      "source": "PRE33.02 / PRE33.06 / PRE33.12",
+      "explanation": "Evidencia diferenciada de presión-escenario y presión física",
+      "permittedUse": "DO_NOT_USE"
+    },
+    {
+      "code": "POTENCIA_QUIMICA_NO_RESUELTA",
+      "state": "NO_EVALUABLE_JUSTIFICADA",
+      "source": "PRE33.07",
+      "explanation": "No hay reactivos y tasas suficientes para potencia química positiva real en el panel; 36 cotas condicionales no son metabólicas",
+      "permittedUse": "HYPOTHESIS_ONLY"
+    },
+    {
+      "code": "DOSIMETRIA_GLOBAL_NO_RESUELTA",
+      "state": "NO_EVALUABLE_JUSTIFICADA",
+      "source": "PRE33.08",
+      "explanation": "Faltan espectros ionizantes, flujo y respuesta de dosimetría; atenuación gamma 1 MeV no es Gy/año",
+      "permittedUse": "HYPOTHESIS_ONLY"
+    },
+    {
+      "code": "CONTINUIDAD_GLOBAL_NO_CERTIFICADA",
+      "state": "NO_EVALUABLE_JUSTIFICADA",
+      "source": "PRE33.09",
+      "explanation": "No hay series fechadas completas; CT-0 no se extrapola a eones",
+      "permittedUse": "HYPOTHESIS_ONLY"
+    },
+    {
+      "code": "LUNAS_IDENTIDAD_SOLO",
+      "state": "FUERA_DOMINIO_FORMAL",
+      "source": "PRE33.10",
+      "explanation": "Caracterización individual no materializada: su identidad no certifica océano, química ni vida",
+      "permittedUse": "DO_NOT_USE"
+    },
+    {
+      "code": "SOLVENTES_NH3_CH4_SIN_FASE",
+      "state": "NO_EVALUABLE_JUSTIFICADA",
+      "source": "PRE33.11a/11c",
+      "explanation": "Sin perfil P-T composicional propio para un solvente alternativo",
+      "permittedUse": "HYPOTHESIS_ONLY"
+    },
+    {
+      "code": "FRECUENCIAS_AMBIENTALES_NO_BIOLOGICAS",
+      "state": "NO_VERIFICADA",
+      "source": "PRE33.11b/11c",
+      "explanation": "Las tasas de H2O lunar nunca se transforman en probabilidades de vida",
+      "permittedUse": "DO_NOT_USE"
+    },
+    {
+      "code": "HISTORICAL_HISTORIC_45_FIXTURE_IDENTITIES_NOT_PROVIDED",
+      "state": "NO_VERIFICADA",
+      "source": "PRE33.00",
+      "explanation": "Reproducción histórica pendiente de reconciliación",
+      "permittedUse": "DO_NOT_USE"
+    }
+  ],
+  "referencePanel60": {
+    "galaxies": [
+      {
+        "name": "Elixisis",
+        "systems": 20,
+        "planets": 144,
+        "moons": 516,
+        "detailed": 294,
+        "minor": 222
+      },
+      {
+        "name": "Elisoune",
+        "systems": 20,
+        "planets": 106,
+        "moons": 201,
+        "detailed": 170,
+        "minor": 31
+      },
+      {
+        "name": "Ilyzenia",
+        "systems": 20,
+        "planets": 143,
+        "moons": 431,
+        "detailed": 235,
+        "minor": 196
+      }
+    ],
+    "totals": {
+      "systems": 60,
+      "planets": 393,
+      "moons": 1148,
+      "detailedMoons": 699,
+      "identityOnlyMoons": 449,
+      "planetCards": 393,
+      "moonCards": 699,
+      "observedPlanetFiches": 393,
+      "observedMoonFiches": 699,
+      "lockedControls": 1092,
+      "v3EvidenceRecords": 1092,
+      "errors": 0
+    }
+  },
+  "previousReference": {
+    "reported20261020": {
+      "systems": 45,
+      "planets": 341,
+      "moons": 902,
+      "detailedMoons": 560
+    },
+    "note": "Referencia de otro panel y revision: NO comparable por igualdad de conteos sin lista exacta de localizadores"
+  },
+  "evidencePolicy": {
+    "unresolvedNotSterile": true,
+    "aqueousNotLife": true,
+    "thermalNotChemical": true,
+    "bolometricNotDose": true,
+    "ct0NotHistory": true,
+    "statisticalIncidenceNotAbiogenesis": true,
+    "lifeStillDisabled": true
+  },
+  "commandLog": []
+}

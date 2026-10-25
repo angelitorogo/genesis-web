@@ -1,0 +1,37 @@
+{
+  "contract": "PRE-33.10/V3-DEFERRED-MOON-COVERAGE/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "sample": "Selected 20 systems per galaxy, not census; all moon identities from those systems",
+  "totals": {
+    "systems": 20,
+    "planets": 143,
+    "moons": 431,
+    "detailedMoons": 235,
+    "identityOnlyMoons": 196,
+    "minorMaterialized": 196,
+    "conditionalPhysicalScenarios": 196,
+    "outsideOrbitalDomain": 0,
+    "catalogueIdentityEntries": 2,
+    "versionV2MinorVisible": 0,
+    "errors": 0
+  },
+  "galaxies": [
+    {
+      "galaxy": "Ilyzenia",
+      "galaxyIndex": 2,
+      "systems": 20,
+      "planets": 143,
+      "moons": 431,
+      "detailedMoons": 235,
+      "identityOnlyMoons": 196,
+      "minorMaterialized": 196,
+      "conditionalPhysicalScenarios": 196,
+      "outsideOrbitalDomain": 0,
+      "catalogueIdentityEntries": 2,
+      "versionV2MinorVisible": 0,
+      "errors": []
+    }
+  ],
+  "explanation": "Materialized physical bounds are conditional: no resolved water, habitability, chemical power or life. CONFIRMED makes all identity-only moons listable, without eager physical generation. Cache only in memory, reload reconstructs the same identity and bounds.",
+  "verdict": "PRE33_10_V3_DEFERRED_MOON_COVERAGE_AUDITED"
+}

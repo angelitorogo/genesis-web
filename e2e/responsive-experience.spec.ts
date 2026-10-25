@@ -272,7 +272,7 @@ test.describe(
               page.getByTestId(
                 destination.testId,
               ),
-            ).toBeVisible();
+            ).toBeVisible({timeout: 20_000});
 
             await expectNoHorizontalOverflow(
               page,

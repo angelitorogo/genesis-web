@@ -199,6 +199,10 @@ export function universeEntityToGenerationKey(
 
       break;
 
+    case 3:
+      generatorVersion = GeneratorVersion.V3;
+      break;
+
     case 2:
       // Keep V2 separate from V1 when restoring persisted identities.
       // Creation is gated independently until the full cutover is ready.

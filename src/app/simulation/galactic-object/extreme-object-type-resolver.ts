@@ -123,9 +123,9 @@ export class ExtremeObjectTypeResolver {
     }
 
     if (
-      generationKey
-        .generatorVersion !==
-      GeneratorVersion.V2
+      (generationKey
+        .generatorVersion !== GeneratorVersion.V2 && generationKey
+        .generatorVersion !== GeneratorVersion.V3)
     ) {
       throw new RangeError(
         `28.2G.1 supports only GeneratorVersion V2, received ${generationKey.generatorVersion.code}.`,

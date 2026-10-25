@@ -24,7 +24,7 @@ export function isCometActivityUnresolvedInSceneV1(
 ): boolean {
   // The conventional star must provide an actual luminous channel. A
   // compact-host depiction (and its separate inspection light) is not one.
-  if (generatorVersionCode !== 2) return false;
+  if (generatorVersionCode !== 2 && generatorVersionCode !== 3) return false;
   return !stars.some(star => star.compactHostKind === undefined && (
     (star.sourceLuminositySolar ?? 0) > 0 ||
     (star.sourceRadiusSolar ?? 0) > 0 &&
@@ -65,7 +65,7 @@ export function systemSceneCometActivityVisualParityV1(
     });
   }
 
-  return scene.generatorVersionCode === 2
+  return (scene.generatorVersionCode === 2 || scene.generatorVersionCode === 3)
     ? v2CometReadableActivity(comet, physical, radiusScene, incidentFluxEarth)
     : physical;
 }

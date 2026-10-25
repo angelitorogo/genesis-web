@@ -39,11 +39,13 @@ export class SystemCompactHostScientificSession {
   }
 
   static buildOrNull(model:ArchiveDiscoveryDetailModel):SystemCompactHostScientificSession|null {
-    if (model.generatorVersionCode !== GeneratorVersion.V2.code ||
+    if ((model.generatorVersionCode !== GeneratorVersion.V2.code &&
+       model.generatorVersionCode !== GeneratorVersion.V3.code) ||
       model.locatorKind !== ArchiveDiscoveryLocatorKind.SYSTEM ||
       model.discoveryState.code < DiscoveryState.CATALOGUED.code ||
       model.stellarSystemCard?.render.multiplicity?.name !== 'SINGLE') return null;
-    const key = new UniverseGenerationKey(UniverseSeed.parse(model.universeSeed), GeneratorVersion.V2);
+    const key = new UniverseGenerationKey(UniverseSeed.parse(model.universeSeed),
+      GeneratorVersion.fromCode(model.generatorVersionCode));
     const locator = new SystemLocator(model.galaxyIndex,model.sectorKey,model.galacticObjectIndex);
     const system = CompactHostPlanetarySystemGenerator.generateOrNull(key,locator);
     return system === null ? null : new SystemCompactHostScientificSession(model,system);
@@ -80,6 +82,13 @@ export class SystemCompactHostScientificSession {
         Object.freeze({label:'Órbita',value:`${m.semiMajorAxisPlanetRadii.toFixed(2)} Rplaneta · ${m.orbitalPeriodDays.toFixed(2)} días`,note:null}),
         Object.freeze({label:'Escenario térmico',value:m.temperatureScenarioK===null?'No resuelto':`${m.temperatureScenarioK.toFixed(1)} K`,note:null}),
       ]),badges:Object.freeze(['Roche/Hill cribado'])})));
+    // PRE-33.10b: the accordion consumes allMoons for every planet fiche,
+    // including compact-host planets. This population is already fully
+    // characterized; expose the existing read models without generating
+    // additional moon records or reclassifying any of them as identity-only.
+    const allMoons=Object.freeze(relevantMoons.map(moon=>Object.freeze({
+      ...moon,kind:'DETAILED' as const,
+    })));
     const previewMoons=Object.freeze(ownMoons.map(m=>{
       const sceneMoon=this.scene.moons.find(item=>item.id===`compact-moon-${planet.ordinal}-${m.ordinal}`);
       if (!sceneMoon) throw new Error('31.4g moon identity missing from compact scene.');
@@ -104,7 +113,7 @@ export class SystemCompactHostScientificSession {
       locatorLabel:`G${this.model.galaxyIndex} / S${this.model.sectorKey} / O${this.model.galacticObjectIndex} / B${bodyIndex}`,
       observedHabitability: ObservedHabitabilityFiche31Fe.unresolved('PLANET',this.model.discoveryState,true,
         `G${this.model.galaxyIndex}/S${this.model.sectorKey}/O${this.model.galacticObjectIndex}/B${bodyIndex}`) ?? undefined,
-      sections:Object.freeze({sections,comparison,relevantMoons,
+      sections:Object.freeze({sections,comparison,relevantMoons,allMoons,
         relevantMoonsEmptyMessage:'No hay lunas simuladas para este planeta; no implica ausencia física.'}),
       preview:Object.freeze({kind:ScientificBodyPreviewKind.PLANET,
         accessibleLabel:`${title}: vista procedural coherente con SystemScene; las coberturas de agua/atmósfera son escenarios simulados, no observaciones.`,

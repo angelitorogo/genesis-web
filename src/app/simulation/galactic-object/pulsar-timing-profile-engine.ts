@@ -50,7 +50,7 @@ export class GalacticPulsarTimingProfileEngine {
     if (!(locator instanceof GalacticObjectLocator)) {
       throw new TypeError('28.3 requires a GalacticObjectLocator.');
     }
-    if (generationKey.generatorVersion !== GeneratorVersion.V2) {
+    if ((generationKey.generatorVersion !== GeneratorVersion.V2 && generationKey.generatorVersion !== GeneratorVersion.V3)) {
       return null;
     }
     if (DiscoveryState.fromCode(knowledgeState.code).code < DiscoveryState.CONFIRMED.code) {

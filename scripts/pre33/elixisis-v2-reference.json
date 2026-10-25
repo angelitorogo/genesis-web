@@ -1,0 +1,30 @@
+{
+  "source": "Valores comunicados por el usuario, NO consulta directa a IndexedDB",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 0,
+  "name": "Elixisis",
+  "proceduralCode": "GEN-V2-G0-8460AF4A9B27AF5FBA119BA011989A94",
+  "type": "BARRED_SPIRAL",
+  "ageBillionYears": 12.12,
+  "diameterLightYears": 142971,
+  "totalMassSolarMasses": 1348000000000,
+  "stellarPopulation": "124428709493",
+  "metallicitySolarRatio": 0.927,
+  "starFormationRateSolarMassesPerYear": 5.732,
+  "persistedKnowledge": {
+    "totalSectors": 20449,
+    "knownSectors": 20449,
+    "systems": 4758,
+    "clusters": 595,
+    "nebulae": 665,
+    "extremes": 299,
+    "planets": 35227,
+    "moons": 97537,
+    "asteroids": 50782,
+    "comets": 25558,
+    "tno": 29195,
+    "captured": 15,
+    "civilizations": 0
+  },
+  "samplingNote": "La auditoría de sistemas públicos V2 no reutiliza nombres de muestras V1: selección por localizadores V2."
+}

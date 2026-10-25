@@ -3,6 +3,7 @@ import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 
 import { BodyLocator, SystemLocator } from '../../domain/generation/procedural-locator';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
+import { StellarMultihostFreshFormationPRE3303A2B3A } from './stellar-multihost-fresh-formation-pre33-03a2b3a';
 import { type SystemSeed } from '../../domain/seed/hierarchical-seeds';
 import { multihostPhysicalSourceKey } from './stellar-multihost-physical-source-key';
 import { UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
@@ -40,6 +41,7 @@ import { ProtoplanetaryFormationSnapshotGenerator } from '../planetary/protoplan
 import { PlanetaryFormationMaturationGenerator } from '../planetary/planetary-formation-maturation-generator';
 import { PlanetarySystemGenerator } from '../planetary/planetary-system-generator';
 import { PlanetGenerator } from '../planetary/planet-generator';
+import { PlanetH2OV3FormationOrigin } from '../planetary/planet-h2o-v3-formation-origin';
 import { AtmosphereGenerator } from '../planetary/atmosphere-generator';
 import { MoonGenerator } from '../planetary/moon-generator';
 import { AsteroidBeltGenerator } from '../planetary/asteroid-belt-generator';
@@ -158,20 +160,29 @@ export class StellarMultihostFormation {
     if (StellarSystemMultiplicitySelector.select(physicalKey, parentSeed) !== StellarSystemMultiplicity.SINGLE) {
       return null;
     }
-    const host = generateSingleHost('A', physicalKey, locator);
-    return key.generatorVersion === GeneratorVersion.V2
+    const host = generateSingleHost('A', physicalKey, locator, key.generatorVersion === GeneratorVersion.V3);
+    return (key.generatorVersion === GeneratorVersion.V2 || key.generatorVersion === GeneratorVersion.V3)
       ? withSecondGenerationPulsarPlanets(host)
       : host;
   }
 
   static generateV2SingleOrNull(key: UniverseGenerationKey, locator: SystemLocator): GeneratedSingleHost | null {
-    if (key.generatorVersion !== GeneratorVersion.V2) {
+    if (key.generatorVersion !== GeneratorVersion.V2 && key.generatorVersion !== GeneratorVersion.V3) {
       throw new RangeError('V2 single-source generation requires a canonical V2 generation key.');
     }
     return this.generateSingleOrNull(key, locator);
   }
 
   static generateOrNull(key: UniverseGenerationKey, locator: SystemLocator): GeneratedMultipleHost | null {
+    if (key.generatorVersion === GeneratorVersion.V3) {
+      // Public V3 MULTIPLE systems always use the fresh coeval population,
+      // NEVER the V2 frozen independent component ages or planetary graphs.
+      const legacyAddress = new UniverseGenerationKey(key.universeSeed, GeneratorVersion.V2);
+      const fresh = StellarMultihostFreshFormationPRE3303A2B3A
+        .generateFreshCoevalCandidateOrNull(legacyAddress, locator,
+          'PRE-33.03a.2b.3a/FRESH_COEVAL_CANDIDATE/v2');
+      return fresh === null ? null : Object.freeze({ ...fresh, parentGenerationKey: key });
+    }
     // Only the private physical lineage is V1-compatible. The returned
     // aggregate retains the original V1/V2 parent key for public identity.
     const physicalKey = multihostPhysicalSourceKey(key);
@@ -242,7 +253,8 @@ function childKey(parent: UniverseGenerationKey, parentSystemSeedHex: string, la
   throw new RangeError('No deterministic V2 private stellar source covers the valid parent sector.');
 }
 
-function generateSingleHost(label: MultihostLabel, key: UniverseGenerationKey, locator: SystemLocator): GeneratedSingleHost {
+function generateSingleHost(label: MultihostLabel, key: UniverseGenerationKey, locator: SystemLocator,
+  enableV3FormationH2O = false): GeneratedSingleHost {
   const galaxy = GalaxyGenerator.generate(key, locator.galaxyIndex);
   const grid = GalaxySectorGridGenerator.generate(galaxy);
   const density = GalaxySectorStellarDensityGenerator.generate(galaxy, grid,
@@ -257,7 +269,22 @@ function generateSingleHost(label: MultihostLabel, key: UniverseGenerationKey, l
   const blueprint = reference === null ? null : PlanetaryFormationMaturationGenerator.generate(key,
     reference.systemSeed, reference.diskProfile, reference.diskStructure, reference.planetFormationProfile,
     reference.candidatePopulation, reference.earlyDynamics);
-  const planetarySystem = blueprint === null ? null : PlanetarySystemGenerator.generate(key, stellarSystem, blueprint);
+  // V3 SINGLE uses the same CT0 maturity gate as V3 BINARY/TRIPLE.
+  // Forming a CT0 planet before its 17.7 formation completion age would
+  // create a negative H2O evolution interval and violate chronology.
+  const matureAtCT0 = !enableV3FormationH2O || blueprint === null ||
+    blueprint.formationCompletionAgeMillionYears <= lifetime.ageBillionYears*1000+1e-9;
+  const planetarySystem = blueprint === null || !matureAtCT0 ? null :
+    PlanetarySystemGenerator.generate(key, stellarSystem, blueprint);
+  if (planetarySystem && reference && enableV3FormationH2O) {
+    PlanetH2OV3FormationOrigin.registerAtFormation(
+      planetarySystem, reference.diskProfile, reference.planetFormationProfile,
+      {ageBillionYearsCT0:lifetime.ageBillionYears,
+       stellarMassSolar:physical.initialMassSolar,
+       bolometricLuminositySolar:physical.luminositySolar,
+       formationCompletionAgeMillionYears:blueprint!.formationCompletionAgeMillionYears,
+       fluxGeometry:'CIRCUMSTELLAR'});
+  }
   const planets = Object.freeze(planetarySystem === null ? [] : PlanetGenerator.generateAll(key, planetarySystem));
   const atmospheres = Object.freeze(planetarySystem === null ? [] : AtmosphereGenerator.generateAll(key, planetarySystem, planets));
   const moonSystems = Object.freeze(planetarySystem === null ? [] : MoonGenerator.generateAll(key, planetarySystem, planets));

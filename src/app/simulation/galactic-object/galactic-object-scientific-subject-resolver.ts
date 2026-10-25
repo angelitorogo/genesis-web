@@ -132,8 +132,7 @@ export class GalacticObjectScientificSubjectResolver {
         return GalacticObjectScientificSubject.GLOBULAR_CLUSTER;
       }
 
-      return generationKey.generatorVersion ===
-        GeneratorVersion.V2
+      return ((generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3) || generationKey.generatorVersion === GeneratorVersion.V3)
         ? GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
         : null;
     }
@@ -220,8 +219,7 @@ export class GalacticObjectScientificSubjectResolver {
      * without leaking whether it is a pulsar, magnetar, stellar BH, XRB, etc.
      */
     if (
-      generationKey.generatorVersion ===
-      GeneratorVersion.V2
+      ((generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3) || generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       const extremeType =
         ExtremeObjectTypeResolver.resolve(

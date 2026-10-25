@@ -7,6 +7,9 @@ import { ProceduralTargetResolver } from '../regeneration/procedural-target-reso
 import { StellarSystemMultiplicitySelector } from './stellar-system-multiplicity-selector';
 import { StellarMultihostFormation } from './stellar-multihost-formation';
 import { StellarMultihostScientificTargetResolver } from './stellar-multihost-scientific-target-resolver';
+import { HabitabilityMoonIntegration32F6b } from '../habitability/habitability-moon-integration-32-f-6b';
+import { ObservedHabitabilityFiche31Fe } from '../../presentation/scientific/observed-habitability-fiche-31-f-e';
+import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import {
   stellarMultihostPublicMoonDesignation,
   stellarMultihostPublicPlanetDesignation,
@@ -67,6 +70,10 @@ describe('Stage 5 multihost scientific resolution — opt-in, not active in rout
             .toEqual(resolved);
           expect(resolver.moonCardResolver.resolveHostPlanetDetailed(key, entry.publicLocator))
             .toEqual(target);
+          expect(resolved.physicalHostPlanetOrdinal).toBe(entry.sourcePlanetOrdinal);
+          expect(resolved.identity.hostPlanetOrdinal).toBe(identity.planetOrdinal);
+          expect(resolved.detail.environment.oceanReality32F2c?.hostPlanetOrdinal)
+            .toBe(entry.sourcePlanetOrdinal);
           expect(resolved.identity.hostPlanetDesignation).toBe(identity.designation);
           expect(resolved.identity.hostSystemDesignation).toBe(identity.hostSystemDesignation);
           expect(resolved.identity.moonOrdinal).toBe(moon.moonOrdinal);
@@ -81,6 +88,46 @@ describe('Stage 5 multihost scientific resolution — opt-in, not active in rout
       }
     },
   );
+
+  it('32.F.6b: a real public B/C/P lunar route retains its private ocean identity in observed habitability', () => {
+    // Regression for the actual failure: the previous hotfix added an optional
+    // physicalHostPlanetOrdinal field but the multihost adapter never SET it.
+    // The first publicly listed moon is not enough: it can accidentally share
+    // the same ordinal as the physical source planet.
+    const aliasKey = new UniverseGenerationKey(
+      UniverseSeed.parse('7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5'), GeneratorVersion.V1,
+    );
+    const locator = new SystemLocator(0n, 0n, 2n);
+    const source = StellarMultihostFormation.generateOrNull(aliasKey, locator)!;
+    expect(source).not.toBeNull();
+    const resolver = new StellarMultihostScientificTargetResolver(source);
+    const parent = source.publicPlanets.find(entry =>
+      Number(entry.publicLocator.bodyIndex) + 1 !== entry.sourcePlanetOrdinal &&
+      entry.moonSystem.relevantMoons.some(moon => moon.oceanReality32F2c != null),
+    );
+    expect(parent).toBeDefined();
+    if (!parent) return;
+    const moon = parent.moonSystem.relevantMoons.find(moon => moon.oceanReality32F2c != null)!;
+    const target = resolver.moonCardResolver.resolveDetailed(
+      aliasKey, parent.publicLocator, BigInt(moon.moonOrdinal - 1),
+    )!;
+    expect(target).not.toBeNull();
+    expect(target.identity.hostPlanetOrdinal).toBe(Number(parent.publicLocator.bodyIndex) + 1);
+    expect(target.physicalHostPlanetOrdinal).toBe(parent.sourcePlanetOrdinal);
+    expect(target.identity.hostPlanetOrdinal).not.toBe(target.physicalHostPlanetOrdinal);
+    expect(target.detail.environment.oceanReality32F2c?.hostPlanetOrdinal)
+      .toBe(target.physicalHostPlanetOrdinal);
+    expect(() => HabitabilityMoonIntegration32F6b.ct0ObserverGrants(target)).not.toThrow();
+    expect(() => ObservedHabitabilityFiche31Fe.moon(
+      target, DiscoveryState.CONFIRMED, true, 'G0/S0/O2/B-public/M-source', 'BINARY',
+    )).not.toThrow();
+    // The safety guard is still active if the physical lineage is falsified.
+    const wrongHost = Object.freeze({
+      ...target, physicalHostPlanetOrdinal: parent.sourcePlanetOrdinal + 1,
+    });
+    expect(() => HabitabilityMoonIntegration32F6b.ct0ObserverGrants(wrongHost))
+      .toThrow(/moon\/ocean identities differ/);
+  }, 120_000);
 
   it('rejects another universe, another system and unmodeled public bodies, without falling back to V1', () => {
     const source = StellarMultihostFormation.generateOrNull(key, populatedFixture(StellarSystemMultiplicity.BINARY))!;

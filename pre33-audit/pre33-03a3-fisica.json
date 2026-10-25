@@ -1,0 +1,45 @@
+{
+  "contract": "PRE-33.03a.3/forward-disk-chemistry-history/v1",
+  "generator": "V3",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxies": [
+    {
+      "galaxyIndex": 0,
+      "galaxy": "Elixisis",
+      "systems": 20,
+      "planets": 144,
+      "forwardFormed": 144,
+      "noFormationSource": 0,
+      "modeledWaterPositive": 95,
+      "historicalCT0Modeled": 0,
+      "ct0Certified": 0,
+      "issues": []
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxy": "Elisoune",
+      "systems": 20,
+      "planets": 126,
+      "forwardFormed": 126,
+      "noFormationSource": 0,
+      "modeledWaterPositive": 98,
+      "historicalCT0Modeled": 0,
+      "ct0Certified": 0,
+      "issues": []
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxy": "Ilyzenia",
+      "systems": 20,
+      "planets": 143,
+      "forwardFormed": 143,
+      "noFormationSource": 0,
+      "modeledWaterPositive": 98,
+      "historicalCT0Modeled": 0,
+      "ct0Certified": 0,
+      "issues": []
+    }
+  ],
+  "certification": "No CT0 certified: source stellar H2O abundances, dated independent XUV/deliveries and P-T not present in native V3 records.",
+  "verdict": "FORWARD_CHEMISTRY_AUDITED_CT0_CERTIFICATION_UNRESOLVED"
+}

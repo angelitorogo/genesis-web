@@ -47,10 +47,11 @@ export class GalacticNuclearActivityProfileGenerator {
         .generationKey
         .generatorVersion ===
         GeneratorVersion.V1 ||
-      galaxy
+      (galaxy
         .generationKey
-        .generatorVersion ===
-        GeneratorVersion.V2
+        .generatorVersion === GeneratorVersion.V2 || galaxy
+        .generationKey
+        .generatorVersion === GeneratorVersion.V3)
     ) {
       return this.generateCanonical(
         galaxy,

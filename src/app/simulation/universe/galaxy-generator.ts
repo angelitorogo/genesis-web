@@ -90,7 +90,8 @@ export class GalaxyGenerator {
       );
     }
 
-    if (generationKey.generatorVersion === GeneratorVersion.V2) {
+    if (generationKey.generatorVersion === GeneratorVersion.V2 ||
+        generationKey.generatorVersion === GeneratorVersion.V3) {
       /*
        * V2 keeps the validated V1 morphology and baseline physical magnitudes,
        * but owns a versioned nuclear branch. This intentionally replaces the

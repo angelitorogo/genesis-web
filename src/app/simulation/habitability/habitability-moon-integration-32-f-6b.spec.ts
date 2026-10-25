@@ -224,6 +224,45 @@ describe('32.F.6b — puente físico 31.10 / CT-0 sin indices V1 ni vida', () =>
     expect(result.usedMoonResolver31_10).toBe(false);
     expect(criterion(result.assessment,'LIQUID_RESERVOIR').verdict).toBe('SUPPORTS');
   });
+  it('el alias BINARY/TRIPLE conserva el ordinal físico del anfitrión y la identidad pública', () => {
+    const original = target(oceanForFlux(.001), {radiation: true, chemistry: true, history: true});
+    // Source physical planet 8 is shown as public parent-system planet 14.
+    // All 32.F contracts still belong to source planet 8 and moon 3.
+    const alias: MoonScientificResolvedTarget = {
+      ...original,
+      physicalHostPlanetOrdinal: 8,
+      identity: {...original.identity, hostPlanetOrdinal: 14,
+        hostPlanetDesignation: 'Parent AB-14'},
+    };
+    expect(alias.identity.hostPlanetOrdinal).toBe(14);
+    expect(alias.detail.environment.oceanReality32F2c?.hostPlanetOrdinal).toBe(8);
+    const grants = HabitabilityMoonIntegration32F6b.ct0ObserverGrants(alias);
+    expect(grants.some(g => g.constraint === 'LIQUID_RESERVOIR')).toBe(true);
+    const observed = HabitabilityMoonIntegration32F6b.assess(
+      context('TRIPLE', 'OBSERVED_KNOWLEDGE', grants), alias);
+    expect(criterion(observed.assessment,'LIQUID_RESERVOIR').verdict).toBe('SUPPORTS');
+    expect(observed.physicalCoverage).toBeNull();
+    const simulated = HabitabilityMoonIntegration32F6b.assess(context('BINARY'), alias);
+    expect(simulated.physicalCoverage?.historicalIrradianceIntervals).toBe(3);
+    expect(simulated.physicalCoverage?.chemicalEnergy).toBe('THERMAL_ONLY_REACTANTS_UNRESOLVED');
+  });
+  it('rechaza una procedencia lunar falsa en vez de ignorar el guard 32.F.6b', () => {
+    const original = target(oceanForFlux(.001), {radiation: true});
+    const alias = {...original, physicalHostPlanetOrdinal: 9,
+      identity: {...original.identity, hostPlanetOrdinal: 14}};
+    expect(() => HabitabilityMoonIntegration32F6b.ct0ObserverGrants(alias))
+      .toThrow(/moon\/ocean identities differ/);
+    const noCrosswalk = {...original, identity: {...original.identity, hostPlanetOrdinal: 14}};
+    expect(() => HabitabilityMoonIntegration32F6b.ct0ObserverGrants(noCrosswalk))
+      .toThrow(/moon\/ocean identities differ/);
+    const wrongRadiation = {...original, physicalHostPlanetOrdinal: 8,
+      identity: {...original.identity, hostPlanetOrdinal: 14},
+      detail: {...original.detail, environment: {...original.detail.environment,
+        radiationProtection32F3: {...original.detail.environment.radiationProtection32F3!,
+          hostPlanetOrdinal: 9}}}} as MoonScientificResolvedTarget;
+    expect(() => HabitabilityMoonIntegration32F6b.assess(context(), wrongRadiation))
+      .toThrow(/radiation model and lunar identity differ/);
+  });
   it('es determinista con los mismos modelos, sin tocar el estado del objetivo', () => {
     const t=target(oceanForFlux(.001),{radiation:true,chemistry:true,history:true});
     const original=JSON.stringify(t);

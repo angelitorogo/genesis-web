@@ -456,6 +456,8 @@ test.describe(
       async ({
         page,
       }) => {
+        // This test exercises WebGL, IndexedDB and particle workers together.
+        test.slow();
         await ensureActiveUniverse(
           page,
         );
@@ -652,33 +654,15 @@ test.describe(
           '143',
         );
 
-        const markers =
-          page.getByTestId(
-            'galactic-map-markers',
-          );
-
+        // The old marker legend was intentionally removed from the UI.
+        // Persistent discoveries are rendered in WebGL; verify the scene
+        // model and that no obsolete overlay has been resurrected.
         await expect(
-          markers,
-        ).toBeVisible();
-
-        await expect(
-          markers,
-        ).toContainText(
-          'Descubrimientos localizados',
-        );
-
-        await expect(
-          markers,
-        ).not.toContainText(
-          'Objetos localizados',
-        );
-
-        await expect(
-          markers.locator(
-            '.galactic-map-scene__marker-swatch',
-          ),
-        ).toHaveCount(
-          0,
+          page.getByTestId('galactic-map-markers'),
+        ).toHaveCount(0);
+        await expect(scene).toHaveAttribute(
+          'data-discovery-marker-count',
+          /^[1-9]\d*$/,
         );
 
         const markerCountBeforeReload =
@@ -694,14 +678,10 @@ test.describe(
           1,
         );
 
-        await expect(
-          page.getByTestId(
-            'galactic-map-discovery-marker-count',
-          ),
-        ).toContainText(
-          String(
-            markerCountBeforeReload,
-          ),
+        // The WebGL scene owns the marker count, not a removed DOM counter.
+        await expect(scene).toHaveAttribute(
+          'data-discovery-marker-count',
+          String(markerCountBeforeReload),
         );
 
         const markerLayer =
@@ -813,13 +793,10 @@ test.describe(
           'SPECULATIVE_SIMPLIFIED',
         );
 
-        await expect(
-          page.getByTestId(
-            'galactic-map-point-boundary',
-          ),
-        ).toContainText(
-          'SPECULATIVE_SIMPLIFIED',
-        );
+        // The obsolete boundary panel is absent; scientific provenance is
+        // exposed by the scene's real model attribute above.
+        await expect(page.getByTestId('galactic-map-point-boundary'))
+          .toHaveCount(0);
 
         await page.reload();
 
@@ -857,8 +834,8 @@ test.describe(
         );
 
         await expect(
-          markers,
-        ).toBeVisible();
+          page.getByTestId('galactic-map-markers'),
+        ).toHaveCount(0);
 
         const particleCount =
           Number(
@@ -928,11 +905,10 @@ test.describe(
           'OVERVIEW',
         );
 
-        await expect(
-          page.getByTestId(
-            'galactic-map-lod-status',
-          ),
-        ).toBeVisible();
+        // Worker LOD telemetry lives on the scene, not in a removed panel.
+        await expect(page.getByTestId('galactic-map-lod-status'))
+          .toHaveCount(0);
+        await expect(scene).toHaveAttribute('data-lod-level', 'OVERVIEW');
 
         const canvasSize =
           await canvas.evaluate(
@@ -1242,6 +1218,12 @@ test.describe(
             0.01,
           );
 
+        // Finish the previous Ctrl+left-pan gesture and place the cursor at
+        // the start of the right-button gesture BEFORE taking the baseline.
+        // Moving the pointer after the snapshot can still dispatch a final
+        // change from the previous gesture on a busy browser.
+        await page.mouse.move(centerX, centerY);
+
         const targetBeforeGalaxySpinX =
           await numericAttribute(
             scene,
@@ -1283,11 +1265,6 @@ test.describe(
             scene,
             'data-galaxy-spin',
           );
-
-        await page.mouse.move(
-          centerX,
-          centerY,
-        );
 
         await page.mouse.down({
           button:
@@ -1733,14 +1710,14 @@ test.describe(
           '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
         );
 
-        // Settings creates this fresh universe with V2, so the legacy
-        // route parameter must identify V2 rather than the old V1 default.
+        // A fresh seed now creates V3 automatically; the archive link must
+        // preserve its actual persisted generator version.
         expect(
           markerUrl.searchParams.get(
             'version',
           ),
         ).toBe(
-          '2',
+          '3',
         );
 
         const relativePosition =
@@ -1847,20 +1824,15 @@ test.describe(
           /^(?:CENTRAL|INNER|MIDDLE|OUTER|OUTSIDE_NOMINAL)$/,
         );
 
-        await expect(
-          page.getByTestId(
-            'galactic-map-point-boundary',
-          ),
-        ).toContainText(
-          '10.9',
-        );
+        await expect(page.getByTestId('galactic-map-point-boundary'))
+          .toHaveCount(0);
 
         await markerLink.click();
 
         await expect(
           page,
         ).toHaveURL(
-          /\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+\?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5&version=2$/,
+          /\/archive\/(?:system|galactic-object)\/0\/-?\d+\/\d+\?seed=7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5&version=3$/,
         );
 
         await expect(

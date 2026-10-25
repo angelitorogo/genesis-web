@@ -185,8 +185,7 @@ export class GravitationalLensingReconstructionProfileEngine {
     }
 
     if (
-      generationKey.generatorVersion !==
-        GeneratorVersion.V2
+      (generationKey.generatorVersion !== GeneratorVersion.V2 && generationKey.generatorVersion !== GeneratorVersion.V3)
     ) {
       return null;
     }

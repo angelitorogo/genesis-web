@@ -599,8 +599,8 @@ export class DexieDiscoveryRepository
     const firstBodyDiscovered =
       firstExplicitBodyDiscovered ||
       (
-        generationKey.generatorVersion.code ===
-          GeneratorVersion.V2.code &&
+        (generationKey.generatorVersion.code ===
+          GeneratorVersion.V2.code || generationKey.generatorVersion.code === GeneratorVersion.V3.code) &&
         firstSystemConfirmed
       );
 

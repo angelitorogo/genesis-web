@@ -112,7 +112,7 @@ export function productionStarFocusRadius(
   if (!star) throw new RangeError(`Unknown production star: ${starId}.`);
   const optical = Math.max(star.opticalRadiusScene ?? star.radiusScene, star.radiusScene);
   const stellarOnly = Math.max(0.45, optical * 3) + 0.25;
-  if (snapshot.generatorVersionCode !== 2 ||
+  if ((snapshot.generatorVersionCode !== 2 && snapshot.generatorVersionCode !== 3) ||
       (snapshot.multiplicityName !== 'BINARY' && snapshot.multiplicityName !== 'TRIPLE')) {
     return stellarOnly;
   }

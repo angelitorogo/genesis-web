@@ -14,3 +14,25 @@
 .planet-detail__observed-criteria li>strong.is-incompatible{color:#f3aa8b}
 .planet-detail__observed-criteria li>small,.planet-detail__observed-facts li>small{flex-basis:100%;color:var(--genesis-color-text-subtle);font-size:.57rem;letter-spacing:normal;text-transform:none}
 .planet-detail__observed-facts li>span strong{color:var(--genesis-color-text);font-weight:600}
+
+/* PRE-33.10b — moon accordions: native summary/details, accessible by keyboard. */
+.planet-detail__moon-grid{grid-template-columns:1fr;gap:.55rem}
+.planet-detail__moon-card{display:block;min-width:0;padding:0;overflow:hidden}
+.planet-detail__moon-summary{display:flex;align-items:center;gap:.85rem;min-height:66px;padding:.75rem .85rem;cursor:pointer;list-style:none}
+.planet-detail__moon-summary::-webkit-details-marker{display:none}
+.planet-detail__moon-summary:hover,.planet-detail__moon-summary:focus-visible{background:rgba(106,215,255,.075)}
+.planet-detail__moon-summary:focus-visible{outline:2px solid var(--genesis-color-primary);outline-offset:-3px}
+.planet-detail__moon-heading{display:grid;min-width:0;gap:.15rem;flex:1}
+.planet-detail__moon-heading strong{overflow-wrap:anywhere;font-size:.9rem}
+.planet-detail__moon-heading small{font-size:.55rem}
+.planet-detail__moon-category{flex:0 1 auto;max-width:40%;border:1px solid rgba(106,215,255,.28);border-radius:999px;padding:.34rem .6rem;color:var(--genesis-color-primary);font:700 .61rem var(--genesis-font-mono);text-align:center}
+.planet-detail__moon-category--minor{border-color:rgba(216,184,123,.3);color:var(--genesis-color-text-muted);background:rgba(216,184,123,.04)}
+.planet-detail__moon-chevron{flex:none;color:var(--genesis-color-primary);font-size:1.1rem;transition:transform .15s ease}
+.planet-detail__moon-card[open] .planet-detail__moon-chevron{transform:rotate(180deg)}
+.planet-detail__moon-content{display:grid;gap:.75rem;padding:0 .85rem .85rem;border-top:1px solid rgba(106,215,255,.1)}
+.planet-detail__moon-content .planet-detail__moon-badges{margin-top:.8rem}
+.planet-detail__moon-content dl{margin-top:.8rem}
+.planet-detail__moon-help,.planet-detail__moon-identity-note{color:var(--genesis-color-text-muted);line-height:1.55;margin:0}
+.planet-detail__moon-identity-note{margin-top:.8rem;font-size:.82rem}
+@media(max-width:40rem){.planet-detail__moon-summary{flex-wrap:wrap;gap:.45rem}.planet-detail__moon-category{max-width:65%;font-size:.56rem}.planet-detail__moon-chevron{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){.planet-detail__moon-chevron{transition:none}}

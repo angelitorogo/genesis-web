@@ -688,8 +688,7 @@ function classifyKnownExtremeObject(
    * route so the player cannot infer a compact subtype from telemetry.
    */
   if (
-    generationKey.generatorVersion ===
-      GeneratorVersion.V2 &&
+    (generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3) &&
     state.code >=
       DiscoveryState.CATALOGUED.code
   ) {
@@ -767,8 +766,7 @@ function classifyKnownExtremeObject(
     subject === null
   ) {
     if (
-      generationKey.generatorVersion ===
-      GeneratorVersion.V2
+      (generationKey.generatorVersion === GeneratorVersion.V2 || generationKey.generatorVersion === GeneratorVersion.V3)
     ) {
       /*
        * V2 null here means "not yet disclosable" (DISCOVERED) or an invalid

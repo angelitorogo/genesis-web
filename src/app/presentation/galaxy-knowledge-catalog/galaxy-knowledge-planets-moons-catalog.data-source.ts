@@ -279,10 +279,10 @@ function matchesMoonFilter(
 ): boolean {
   if (subtype === null) return true;
   if (subtype === 'SURFACE_LIQUID_40_PLUS') {
-    return isGalaxyKnownWaterMoonSurfaceLiquidPotential(record.surfaceLiquidWaterPotentialIndex01);
+    return record.surfaceLiquidWaterPotentialIndex01 !== null && isGalaxyKnownWaterMoonSurfaceLiquidPotential(record.surfaceLiquidWaterPotentialIndex01);
   }
   if (subtype === 'SUBSURFACE_OCEAN') {
-    return hasGalaxyKnownWaterMoonSubsurfaceOceanEvidence(record.waterRegime);
+    return record.waterRegime !== null && hasGalaxyKnownWaterMoonSubsurfaceOceanEvidence(record.waterRegime);
   }
   return record.composition === subtype;
 }
@@ -338,7 +338,8 @@ function toMoonRow(record: GalaxyKnowledgeMoonCatalogEntry): GalaxyKnowledgeCata
   return Object.freeze({
     id: record.id,
     title: record.designation,
-    subtitle: record.id,
+    subtitle: record.materializationPRE3310 === 'IDENTITY_ONLY'
+      ? `${record.id} · Física pendiente de materialización` : record.id,
     cells: Object.freeze({
       composition: moonCompositionLabel(record.composition),
       planet: record.hostPlanetDesignation,
@@ -459,12 +460,12 @@ function compareMoonByKey(
     case 'composition': return moonCompositionLabel(left.composition).localeCompare(moonCompositionLabel(right.composition), 'es');
     case 'planet': return left.hostPlanetDesignation.localeCompare(right.hostPlanetDesignation, 'es');
     case 'system': return left.systemDesignation.localeCompare(right.systemDesignation, 'es');
-    case 'mass': return left.massEarth - right.massEarth;
-    case 'radius': return left.radiusEarth - right.radiusEarth;
-    case 'period': return left.orbitalPeriodDays - right.orbitalPeriodDays;
-    case 'ice': return left.inferredIceRichnessIndex01 - right.inferredIceRichnessIndex01;
-    case 'surface-water': return left.surfaceLiquidWaterPotentialIndex01 - right.surfaceLiquidWaterPotentialIndex01;
-    case 'subsurface-ocean': return left.subsurfaceOceanPotentialIndex01 - right.subsurfaceOceanPotentialIndex01;
+    case 'mass': return compareNullableNumber(left.massEarth, right.massEarth);
+    case 'radius': return compareNullableNumber(left.radiusEarth, right.radiusEarth);
+    case 'period': return compareNullableNumber(left.orbitalPeriodDays, right.orbitalPeriodDays);
+    case 'ice': return compareNullableNumber(left.inferredIceRichnessIndex01, right.inferredIceRichnessIndex01);
+    case 'surface-water': return compareNullableNumber(left.surfaceLiquidWaterPotentialIndex01, right.surfaceLiquidWaterPotentialIndex01);
+    case 'subsurface-ocean': return compareNullableNumber(left.subsurfaceOceanPotentialIndex01, right.subsurfaceOceanPotentialIndex01);
     case 'sector': return compareBigInt(left.parentSystemLocator.sectorKey, right.parentSystemLocator.sectorKey);
     case 'locator': return left.id.localeCompare(right.id, 'en');
     default: return 0;
