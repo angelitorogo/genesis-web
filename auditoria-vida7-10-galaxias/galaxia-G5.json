@@ -1,0 +1,1886 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 5,
+  "galaxyName": "Elimonaris",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 38809,
+  "sectorsAnalyzed": 38809,
+  "sectorsWithError": 0,
+  "systemsFound": 12458,
+  "systemsWithoutPhysicalSource": 389,
+  "systemsWithError": 0,
+  "planetsProjected": 106810,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 298,
+  "nativeIntelligences": 192,
+  "nativeCivilizations": 116,
+  "levels": {
+    "PRIMITIVE": 77,
+    "ADVANCED": 35,
+    "VERY_ADVANCED": 4
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Aaethion B-2",
+      "system": "Aaethion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Tenia is5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-42949672938",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "19a534c1064acb4dbf56e156be1d290a304dedd64515e45878bd521045f32d11"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Aiophar f",
+      "system": "Aiophar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ximera ix4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "103079215109",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "9c4c57e6963dd0b88c3b97fe3fb34017a21398264db37d64e7fa5c2e8ac371e4"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Aovior A-3",
+      "system": "Aovior",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Iszor or4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-111669149678",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "88bd237c427604b6271efb9c5a2b613bffc08ec4e2163f5ec1211e0bb8375bf2"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Aurior B-4",
+      "system": "Aurior",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lovar is1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "34359738365",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "14"
+      },
+      "digestVIDA7": "774281a3c256bff8fcd572a639dd1ed206603b67c0a7f9ae6f751991897562e9"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Banaion B-2",
+      "system": "Banaion",
+      "level": "ADVANCED",
+      "founderSpecies": "Zuquor a4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "274877906945",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "7c416ea4c3793e7229b43556cb8ebacc01c44d8295e4d5d4df08f077cfe409e3"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Bionais e",
+      "system": "Bionais",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isvar um1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-85899345952",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "8fbd90eff6c1332e990fc67b0e28d17428a88ae74c63fa36ec89c14907cea2ad"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Buphor A-6",
+      "system": "Buphor",
+      "level": "ADVANCED",
+      "founderSpecies": "Nadros ix3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "128849018886",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "b5cfc36d3a342eeca2d2a8d493fa4692ea0b0794e834c55ac42ac1d1a3b1ccee"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Caelara e",
+      "system": "Caelara",
+      "level": "ADVANCED",
+      "founderSpecies": "Zunia al1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "180388626474",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "e793013d330cd3e539a75b9643c25d78087faefa14e822b799be1ac51f7a5e34"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Chaevum d",
+      "system": "Chaevum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Issyl um4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "98784247829",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "de06f49d7e093c76b9f1c91b952a5762708a916c91b03d8592fc411a07c204fd"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Chavia B-3",
+      "system": "Chavia",
+      "level": "ADVANCED",
+      "founderSpecies": "Navar ix2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-90194313243",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "ca4a8a9f0e2853a1034bad55116ce8f5204829dc2008db81b0747291ff2ff9fe"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Chiasa A-2",
+      "system": "Chiasa",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isquor al4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-210453397448",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "c126a7e5254b71c124c76e5fb3b325a10afd7e6a03af7175c0f9ecd6f963f40b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Chiotia A-3",
+      "system": "Chiotia",
+      "level": "ADVANCED",
+      "founderSpecies": "Xilix um2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "120259084278",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "028367265d38a746fc6c76cfe5f55235e207a31a801909be8de15a20291ba365"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Chitis A-3",
+      "system": "Chitis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ximera um4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-274877906921",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "00475d2252dbf5fc12ea5e0b373335e9f2a983ffa37472239f1cfede8d97d2e0"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Chudas c",
+      "system": "Chudas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elthar on2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-184683593766",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "e6fd1808ccd29564ecf0af056277a951a1a0cb71982657ccd49b72d4df24eae1"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Chudas d",
+      "system": "Chudas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kania ia6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-184683593766",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "360378c5546d88f02be69187526b638e359621bad355edbfa80c071579a074e3"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Cupha c",
+      "system": "Cupha",
+      "level": "ADVANCED",
+      "founderSpecies": "Valix on4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-137438953438",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "d99b232edc412d6bb4b211f2e5e1829d28ffd547989daa7f7ac39f9d9d653466"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Deriae d",
+      "system": "Deriae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Naquor en4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "4294967278",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "41bb7f8f7eac5011e06a48f367dabf38ffb93d2246453294df08b14e57973573"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Diseria c",
+      "system": "Diseria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Islix on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "12884901859",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "93a578a06a97a05413ebeca302ff6f0368a687fd922bbe9303132989ba765658"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Diviae B-3",
+      "system": "Diviae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lolix um1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "146028888083",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "a6897c155613d196ba9567e5a20e7fd14bf7516939cc7abbba876307d6973a1e"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Draemos b",
+      "system": "Draemos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Calix or3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "68719476652",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "56d00e438c52c4e40dfb34b1a12ef3d25f9855b822798fd9a577eaf3f52b62b6"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Driamos A-6",
+      "system": "Driamos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ormira a5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-219043332033",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "8fd629af1e72d854d932f6287dfed5c9b12116ec8533c2110fea3aa1d5143a92"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Drioraen A-2",
+      "system": "Drioraen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aedros on6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "85899345857",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "19e998bf0649118899b36979a19136f898baebaa7142c36d619205f9055f13b5"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Drioraion d",
+      "system": "Drioraion",
+      "level": "ADVANCED",
+      "founderSpecies": "Xithar ia4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "188978561059",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "3bf8905ba5074374572453f02790a4b35f56dc21d1af05bdacfdb72847ada77f"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Drolaas e",
+      "system": "Drolaas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zudros ia3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "193273528358",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "72aed6eb5c3b7849640cad43b24d93e9c5236fc2dca17b2ae0769db7e27a399d"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Duleria c",
+      "system": "Duleria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lolix ia3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-283467841556",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "e928830eaf5db5beb2ca7e17b00313df48770f7adcd68be38421b667491efb2d"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Fevier A-4",
+      "system": "Fevier",
+      "level": "ADVANCED",
+      "founderSpecies": "Gimira ia6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-154618822590",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "26781139d9afdde27212f5ca15b1c886c2bb1073772b17718e7315d365a0fa01"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Fiavieria A-4",
+      "system": "Fiavieria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elvor ia5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-21474836439",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "14805e112cf1a0c10ee1bccb7808eb9a81a6b0ee8de7da658b36dafe48d966a4"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Fiophor A-2",
+      "system": "Fiophor",
+      "level": "ADVANCED",
+      "founderSpecies": "Navar ia3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "64424509366",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "bd028e4bd0eeff61e09f9e2885d8eedeeaae7118c2b46f6313460b8a7806ba6b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Fotos c",
+      "system": "Fotos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuquor ia2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "64424509452",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "fd004a0c8caf6cbc5bbac68eae0ab3c0b36be7c0ad269a8bf987e8c4cb0f6bf8"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Gatoria d",
+      "system": "Gatoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isdros ix6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "98784247818",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "cde68fc57a2ec51fe1dd96f683806e09e7e3807d3bfce252008959c055d9be72"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Gelais c",
+      "system": "Gelais",
+      "level": "ADVANCED",
+      "founderSpecies": "Givar al4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-227633266763",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "65408c63b180ff1aeb177930e2ec525b17f5f96f1f8723a48f37b247cb5f06d2"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Giphara b",
+      "system": "Giphara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Tequor is5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "283467841539",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "a850be3cf5a4545e86530a0db244b8ee608affc1ead8a318f32b6b648d317274"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Glaekum e",
+      "system": "Glaekum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vamera en3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "8589934610",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "89d375558904315cbb68e831a2c88304b61d3fc98ce230fddc5492cd74a3f132"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Glaeraos d",
+      "system": "Glaeraos",
+      "level": "ADVANCED",
+      "founderSpecies": "Gilix a2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-17179869214",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "a83c66cc1988799bc64a8188550de6c35fddce2fdab3ba6dcd1b97f74271ec4d"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Glanaas c",
+      "system": "Glanaas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Sazor um1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-137438953482",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "1ee007ac859e76d4c4f3c98ba7155c26279234f3dd3e0e7e69eb7c010e7a4a93"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Glanar d",
+      "system": "Glanar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Saquor or5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-4294967297",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "04f15886700d1b39538f378f80f12c207371eabe145654ec51b7dc8b19ae37bf"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Haedus e",
+      "system": "Haedus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Fadros en5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "98784247774",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "f9b7d6c702c67d6dcad9d8e9ef2f4f4ea5373204adef749f76f9e4513296d703"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Haeser b",
+      "system": "Haeser",
+      "level": "ADVANCED",
+      "founderSpecies": "Isnia on2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-146028888063",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "d26110c3726533a0f702d7131ed58b784ac313fee9f94a17dfe6bb30aeaa7369"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Hosor A-1",
+      "system": "Hosor",
+      "level": "ADVANCED",
+      "founderSpecies": "Arvor on2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-158913789938",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "339b40cf03c8968aa7a73a3a2ac699c11c962d0cabc92ef4cebb7bf5d3f6a5e0"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Huta A-4",
+      "system": "Huta",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Githar a2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-219043332068",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "de5679ff355a13097f1e3f6dce24483dec37d5054753bde7ff4a191a25834397"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Jaekion f",
+      "system": "Jaekion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lothar en5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-115964116968",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "8942303e296546a85cbf3c70c3df22771188946e10a1fe7cb93109e7ecaf852f"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Jaetheria e",
+      "system": "Jaetheria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuvar um2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-266287972352",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "e5c9528b8e3e302303db9bbc15f18fc393fe932b2393082c2fc93793cd80574b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Javos B-4",
+      "system": "Javos",
+      "level": "ADVANCED",
+      "founderSpecies": "Zuvar is2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "17179869177",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "2c1b201dc7842a062524e898119268100d91e31a1ea7fe3b6d4116fc44244137"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Jiarus h",
+      "system": "Jiarus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elthar um5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-141733920787",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "602a4168d2fcf74ee93940fade2c908b989afa70c2927c7f86b3211b37573f9b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Jilaeria A-5",
+      "system": "Jilaeria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lonia or2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-55834574816",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "8331cc890e215ffa0ac3fe2322116624d54e00312a6a2204ee3060a860343280"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Joken b",
+      "system": "Joken",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orzor or3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-111669149757",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "9fe9f5f51b85c3bbef902f5aa91c097f07583d3e9149fe05125fca2ba46b8886"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Keseria e",
+      "system": "Keseria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nathar al2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-193273528305",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "9d56d98776570f55b336cdf2ccc47be56710303047bdd9c60f27bb95df6d31d7"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Kraevar B-3",
+      "system": "Kraevar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Fathar ix2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-30064771090",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "6b05a09ca4caac1949ceb708b7a1e8869d6b50d0dcd7e4344da48f877e826d61"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Kranaara c",
+      "system": "Kranaara",
+      "level": "ADVANCED",
+      "founderSpecies": "Vadros or3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "77309411299",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "7694be1baf7f5e65af65c0ffe6fc1f7fcc9de98d8c4b5f925ec071f7436dd021"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Krianer e",
+      "system": "Krianer",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ordros a4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "270582939630",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "973e8048e0b92ae0edf5d3a7fa0d406abe8985beb224bf7a12508dfa520a4c96"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Kridae d",
+      "system": "Kridae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kaquor ia2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-98784247746",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "fb42957e317e66879f495dc9a0a571438dc80ed08f0d4df47e7b2866730af381"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Krioraen A-4",
+      "system": "Krioraen",
+      "level": "ADVANCED",
+      "founderSpecies": "Vania a6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "141733920773",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "9f576b1c4e5cb0226cc94c2900cc0d286da93305fff3788d68ca4a351cf71628"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Krorais B-2",
+      "system": "Krorais",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Fazor um3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-25769803802",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "736b32a9cab6e99c0f9f29b63df340d0180c18a05f097055678d9ebec8775a8a"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Kusar A-3",
+      "system": "Kusar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Tevar ia1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "244813135825",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "de85b22f8978e15facff2038dde173b2b54de61f31ab8625f4c904f1d2a4d743"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Laviis b",
+      "system": "Laviis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xivar en1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "30064771055",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "7d5e803d9c76d77da9b8a8fba88cc642459e8ca21d6635b6414e602b337deb3c"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Lelae g",
+      "system": "Lelae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xivar is3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-377957122024",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "3c3632ec3110c2682bf7ce9cbbd299f7842434e3f4cbea3fcb2d856f860f7654"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Lialaae f",
+      "system": "Lialaae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Demera on7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-5",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "afb658899d32af062aa4de96ce08127b98d5c278ed8d6fd048bbb949702b9b7b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Miamae A-4",
+      "system": "Miamae",
+      "level": "ADVANCED",
+      "founderSpecies": "Zuvor ia1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "77309411344",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "dd755f69ae36317adacbfd83ce33a380d222fb33ff2ce3b6900d849db7d72f23"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Miomion d",
+      "system": "Miomion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nazor is3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "257698037739",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "8a22c4af5039ac8c82dfa126c23891229695d5c1ee35adca4a74a91aa4584dfb"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Miorias c",
+      "system": "Miorias",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Givor ia4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "12884901888",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "a2d335e5ed101af96ea6ec0c38e1cecd4c38fd533c9a1720950a1e3d3ebe7a8e"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Mioveria A-2",
+      "system": "Mioveria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isluna en7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "158913789942",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "832753f98b4bce4647a428d34eeedc00531a623cdfab52a2fa9b744b3e772907"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Nakae c",
+      "system": "Nakae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Gisyl ix2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "6",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "48944a9a8ad31226567fabb680d46c9fe43104a767352da99749ad29e0448335"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Paeder e",
+      "system": "Paeder",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Caquor on2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "12884901842",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "fb96d9d65126ff20394941572eda3233c1d38916621340d177276430c72cedc8"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Phaemae c",
+      "system": "Phaemae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Sania al5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-163208757240",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "ef695005d447c36f9e1e68eee40fe7298b65df57776908d96e6fc0ea5efd31f9"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Pheler g",
+      "system": "Pheler",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Valuna ia7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-167503724491",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "0dd1aeb3c81d025fd93e866ce65e891b91292b3f0942e9bff8c53995143b7eab"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Phelor d",
+      "system": "Phelor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Saluna um5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "22",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "c64c8c5d4c117b2aff2c0851684132804eab42d6654bd4a7580a877728eeb79f"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Phiaveria e",
+      "system": "Phiaveria",
+      "level": "ADVANCED",
+      "founderSpecies": "Temera on1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-68719476692",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "7e8981fc4b43b27492959716805ddf35bb7fce1c277ebb555329e7b52ea1a7f0"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Piraa B-4",
+      "system": "Piraa",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Delix is3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-197568495676",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "1758fbc54f0dff0e1c16239e7207dace3950793a212db6e20839a2aaed09a9e5"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quariara e",
+      "system": "Quariara",
+      "level": "ADVANCED",
+      "founderSpecies": "Vamera on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "21474836487",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "0f69fa89107a939e0f1dd78491a65a49a08fbe9f9047fa4d89ea02801af89b0c"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quekara A-5",
+      "system": "Quekara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Samira ix2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-107374182365",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "4e8cf14672de95c28c93ee69306e720cd5954c2407caaad2045a6ea1eb30e64b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quiavior A-3",
+      "system": "Quiavior",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Vasyl on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "12884901827",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "4b97c8150301d04aaad21f016d623bac48ca44fb5524c34141b1e4c3395db74b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quilis e",
+      "system": "Quilis",
+      "level": "ADVANCED",
+      "founderSpecies": "Ximira on2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "373662154746",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "e58c92915950d074cb40f7be957c4f0e54464fdd4dcaad255b46b3e41769eadc"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quionia f",
+      "system": "Quionia",
+      "level": "ADVANCED",
+      "founderSpecies": "Caluna ia7",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "42949672967",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "ab1887560af38f6ba5e7fe4cff09e3dd7986c2da10e42960ca6aa69677cf00c7"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quoraus d",
+      "system": "Quoraus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aemira is2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-77309411304",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "493e82d1df5376c9e12deee0e967e3bea83f465d94b930ff2849178443657f3f"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quothus B-4",
+      "system": "Quothus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Navar ia5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-154618822664",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "5be1ff02aa30e96f50195cfa66fd0a416465cc40f7f116f8ff8f1faafed08675"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Raeraar c",
+      "system": "Raeraar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kasyl ia2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "5",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "f28e202a10d78e570f9b6568856635865e0c86e75feafb4b6997d45b41fefc39"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Raviia A-5",
+      "system": "Raviia",
+      "level": "ADVANCED",
+      "founderSpecies": "Githar en8",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "64424509441",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "5aff3d4564c3ee606ebe5bb7adf5a971a0ec9acbd3bd7178efae8c3a38caaa9e"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Riaraion B-6",
+      "system": "Riaraion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cania en7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-115964116903",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "01cd6ffb87caabddadb6fe9bf3a9a56da5b078b339812c73a477a8e824b5a59c"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Saphen d",
+      "system": "Saphen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Gisyl on1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "25769803804",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "86fafd4c03ea51a06e6e90b30157f48c42bed62f34821c9fe2cb56df454e88d9"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Senaae b",
+      "system": "Senaae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arvor is1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "94489280469",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "d349eceec261997986f6ab1a3201387f1f1dc3561b196647e0f80e864a83478c"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Shiaphos e",
+      "system": "Shiaphos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Caluna a4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-85899345931",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "4406ecd5e5e445c185903c2651fc750e20dc2f48170a907923585c410122a8ad"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Siatheria A-3",
+      "system": "Siatheria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elvor ia5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "197568495581",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "d8f95290a004d5e9b698a5d772363e0d0040ed01d73d8f2e1c88de1d51a6bc96"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Siokas f",
+      "system": "Siokas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nania a3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "313532612615",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "0515a28b702b0e667ad38a3852f05e5bb161d435a0723c6d0dff1b8393b71b1f"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Stionaoria A-4",
+      "system": "Stionaoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Vasyl ia3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "73014443962",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "b3c5c5aaa1b6a6d9d58764c68c0ce735614ebcc14e2e35fe399b2ba3c6548598"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Stophum c",
+      "system": "Stophum",
+      "level": "ADVANCED",
+      "founderSpecies": "Xivar ia2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-21474836538",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "eba2795de082a23b93e2fbdc6726c5a394e95c3aaefa1dbafb80ac5e16bc58c5"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Sturium e",
+      "system": "Sturium",
+      "level": "ADVANCED",
+      "founderSpecies": "Kathar is4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "137438953475",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "36d5c275cba97d438ca404d34e1fc370295c48e94cfa9e6282dec90456817a2b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Teria c",
+      "system": "Teria",
+      "level": "ADVANCED",
+      "founderSpecies": "Zuzor on3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "240518168578",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "d4dfeaba94bad4afe3c8baadef9db457546f68c96f6747e09a277fc3b0cebf3e"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Thanoria c",
+      "system": "Thanoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Aethar ia5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-68719476713",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "b4e69b54ed8d6eb7e3d7fb7400d8441cfc9f2b7fd4880a4d1e9c898b28945230"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Tiaphae d",
+      "system": "Tiaphae",
+      "level": "ADVANCED",
+      "founderSpecies": "Calix on5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-85899345898",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "7f3d3f26f3e7e27c5a98fa7f6827c17bcaba9709c6e8f6f7b84ead26bbb634b1"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Tilais c",
+      "system": "Tilais",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lothar en2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-47244640267",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "a5a3e07e6d79003ce1a00a9d0464fefc8f1a8fba573a8ecf47991790cd3bb6eb"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Tovas d",
+      "system": "Tovas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Favar ia1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "17179869153",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "da9272808942212e986cf5c331d277e64e1cee1ceb2877c37a927def9a471194"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Triothor A-4",
+      "system": "Triothor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Lolix a6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "98784247877",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "973671b1d26fcd9441a6c80d5fb1b9623ceb127059bc0532727b8656afb1fd99"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Trudis c",
+      "system": "Trudis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ginia on5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "34359738331",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "c3ff954a615a9a266a70f4a224d4b9b3a074b82a017147b8fe02add47feade98"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Tulais A-6",
+      "system": "Tulais",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Saquor um3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "326417514441",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "8bec21b1815b971d9242af59e46aa4925deb6d19773c400ad999ffdc465348b6"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Tumos f",
+      "system": "Tumos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vamira um1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "335007449121",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "44d43bcb6377db82212ae96dc2f3c6a074c37dc641633b69a5808986e99a02e5"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vaevus c",
+      "system": "Vaevus",
+      "level": "ADVANCED",
+      "founderSpecies": "Lodros or6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-214748364754",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "541f7d79982f99f5f72154f7320f42ceceb5089774a7e2201d0db43b71455d09"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vaner B-4",
+      "system": "Vaner",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aeluna on4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-12884901871",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "14"
+      },
+      "digestVIDA7": "5a646b2b47a2643b2b4dded29c2b7c23283edd987a20ec98cfe03587c894a4f1"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Velor f",
+      "system": "Velor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuvor is2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "141733920843",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "29fa2ce96e7ce9d83d4acd47eeb4ef06c104ce51a2d5f6825baa34f8cfad7b4f"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vomara b",
+      "system": "Vomara",
+      "level": "ADVANCED",
+      "founderSpecies": "Aevor en2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "274877906925",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "4231526950845d754efbc821ef01ecd98dd3451be36aa6194cc33dedf703f80c"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vona e",
+      "system": "Vona",
+      "level": "ADVANCED",
+      "founderSpecies": "Giluna ix7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-313532612634",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "de7c5600d0c6ac1e312e5d152ac99b4a9affa6cad6b76793aafa3bc9d06a7b98"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vorius d",
+      "system": "Vorius",
+      "level": "ADVANCED",
+      "founderSpecies": "Naquor um6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-188978561046",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "390c4ae4e0b410ac987e7a47944f0143bb11a3f8ca3b79ab70b5900a9302b25b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vraemis A-4",
+      "system": "Vraemis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cathar al3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "38654705575",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "4756a4727393e7f44c353f333ba8d18295ce108be36b4994cfed334f8aa716ba"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vrama A-2",
+      "system": "Vrama",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xidros on5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-223338299374",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "258d001a648140b052c720c8d4ebc4fe2a425b5cd2dcb07c3441e2a64bc63003"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vrator A-3",
+      "system": "Vrator",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Savor um4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "38654705616",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "40f0e65fa3bc8feb45be078cab17d51685e44d1efa6396a4303a9ebc8b96da37"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vriavien d",
+      "system": "Vriavien",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aelix ix6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-292057776091",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "149a5cac56694c0f267a11722daf6445ee4f4a23c01646ec0e2e9264ea5ade3a"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Vudis d",
+      "system": "Vudis",
+      "level": "ADVANCED",
+      "founderSpecies": "Cavor um4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-42949672889",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "a14f31f3cc069a89d23eca8a87d70e93f29c01fe93fa3ebb198dade5214c88ee"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Xamae B-3",
+      "system": "Xamae",
+      "level": "ADVANCED",
+      "founderSpecies": "Orvor ia6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "8589934589",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "1c87861fb8978fee4a774af8c565d008ee1eb486ed7151bf4af16568e7b37470"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Xameria e",
+      "system": "Xameria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orquor ia4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "124554051574",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "d8935a9f283d9d3e08798196f056ebed142598453dd57fb3c4fed9b1f2014c98"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Xethis A-5",
+      "system": "Xethis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arthar um4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-51539607523",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "08e450b6f57eb2a1c0ee03dd1ae4d04156cf4b36b05966761eae9801b26492ad"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Xolaor A-6",
+      "system": "Xolaor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ardros a1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "8589934595",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "3e0a4b4e28b17b7e5b5ec4ea6e58b01c5ac41e21c4ac395993ea7cd29acfe56c"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Xuros f",
+      "system": "Xuros",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lovar or2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "21474836507",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "2979c5a3ba2db205e1424690443021cbc3c1a8d67443a1cd8af20775e2610192"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Yemus A-4",
+      "system": "Yemus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Dethar en7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "-21474836448",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "b5d50fbccde92c6979fb7ceccb07d1fb1d4259f0a56b3d284816ce6c67281572"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Yokor e",
+      "system": "Yokor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elvor on7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "133143986143",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "e72eccbb9a9dea7099b6a18f5afe7eef21931f0f6dab7d635069c4a79a36153e"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Zelaus e",
+      "system": "Zelaus",
+      "level": "ADVANCED",
+      "founderSpecies": "Zuquor a1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "47244640229",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "b62ffad1382937e01de61ae59ba57a8cc8aa3448d5f75d42e4ab59d1262e3ca6"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Zoter A-3",
+      "system": "Zoter",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arvar ix4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "339302416352",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "2da982fb1802cf009805100f2041b6651064ada2595d3b856f6e5c1d1d98c0fe"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Zulor d",
+      "system": "Zulor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arquor en1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "68719476769",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "fe943f4a65215e05d36ebdd4ba965a3ae77dea898e05c33d6802d6e0f86ffb4a"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

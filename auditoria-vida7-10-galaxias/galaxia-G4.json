@@ -1,0 +1,558 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 4,
+  "galaxyName": "Darea",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 15129,
+  "sectorsAnalyzed": 15129,
+  "sectorsWithError": 0,
+  "systemsFound": 4774,
+  "systemsWithoutPhysicalSource": 158,
+  "systemsWithError": 0,
+  "planetsProjected": 40842,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 93,
+  "nativeIntelligences": 64,
+  "nativeCivilizations": 33,
+  "levels": {
+    "PRIMITIVE": 24,
+    "ADVANCED": 7,
+    "VERY_ADVANCED": 2
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Aolaeria B-5",
+      "system": "Aolaeria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isluna um3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-107374182371",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "39c9dde90085a71ba881eab8c1f29849729b7eb83d603b56ac11ba6ec6a471ff"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Aonaa B-4",
+      "system": "Aonaa",
+      "level": "ADVANCED",
+      "founderSpecies": "Ximera or8",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-98784247764",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "a512652872e58d970ff02bc4e325ff08a299e91f09d34e252d40c12ff227add9"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Dionaer d",
+      "system": "Dionaer",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Temera ia2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "81604378666",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f5e92277cef8f299d9467cf4bff2e37fa8b1029275dc93b6370e01d23458022b"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Driaphas A-3",
+      "system": "Driaphas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isvar ix1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-64424509433",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "9b536ae808e3d3c9846e55d007dd07678606240dcb338b75e44e15618039e192"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Fanoria d",
+      "system": "Fanoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Faquor ia6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "60129542181",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "4dfb154350f4cb1095417f8752f30379a36155d06b2945b67690dbc440f67e14"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Faviia d",
+      "system": "Faviia",
+      "level": "ADVANCED",
+      "founderSpecies": "Zunia a1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-17179869213",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "6bdb8b5baa5673e10c14e04402a1d448dfaac70610bbb2a50f45b18fd2255392"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Fuveria A-4",
+      "system": "Fuveria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xidros al6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-25769803717",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "6dd912812a3b4b461d94d77ed40f59d59cb34f788ebdbdbd02a1d3465710b343"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Gionaia B-4",
+      "system": "Gionaia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Giluna a1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-150323855332",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "9cf4035a624cfa2f953af1b98affc8b5c598b146acb4ef154ce90287024b861b"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Giraas A-2",
+      "system": "Giraas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kamera al4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-25769803753",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "eb3761bfd36082969f0d1498c344a4c4b223115ef9efe435efc35dfe0d62a05f"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Glovioria f",
+      "system": "Glovioria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nalix en5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-30064771082",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "dbdd86a1f17cad3d3898940ff6e37edeed3c81432e9cfce58259656ab1a1c119"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Goda e",
+      "system": "Goda",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aezor or1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-77309411318",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "3f2a7bb9e1da7f7afa20b8db7786e51e0dba8af81005121d3cfca052de7188f1"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Kiosa e",
+      "system": "Kiosa",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kaquor on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-73014443979",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "5989e066e83a124d8fc9fd8ab3a847c5ffc06c2223707caf6deb74cbdd743494"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Krerius e",
+      "system": "Krerius",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cazor on1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "188978561017",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "aa22d5709ef5b89fc2d41eba094bf2a7f95dd464abe9812e2b106dd831ac2a29"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Kriamion A-2",
+      "system": "Kriamion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Gisyl a2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "171798691884",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "bc93e5efc0c1c678cee14e70ccd3cd8f809ff15e12b0c838b50ae648252d03d7"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Laepher A-4",
+      "system": "Laepher",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vazor a3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "68719476717",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "d471159ce74fe741ef0664273f929f1b9f8d8409b4b8f46259eaae927a0b6961"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Lilaor e",
+      "system": "Lilaor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aemera al3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "55834574878",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "569289b94f6de775b061af5b6b342f610fab986bbd92358fe88d466663905645"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Liothen A-1",
+      "system": "Liothen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orquor a2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-158913789977",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "13e30193bc63b918a1f077751834e2e5b1ad8af92c0750513a3af126f0b7228e"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Ninus c",
+      "system": "Ninus",
+      "level": "ADVANCED",
+      "founderSpecies": "Lolix is1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-64424509402",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "a257418c1b6f3e04506ae73457ee97c76b7c0426653bcd26264472b08d243cca"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Noraae f",
+      "system": "Noraae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arluna a3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-51539607560",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "9c6f287874e4e0c004596d5b8ea5a2f009e7ae25c1b24fc79176e3d026070e7f"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Pamen e",
+      "system": "Pamen",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Givor is7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "12884901887",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "74fb006840cb33cbffc3746f75620d1575ec925edb83c0436e8d33c215e3f120"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Pukoria B-5",
+      "system": "Pukoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Falix is1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "163208757201",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "381d59981fcd680f21071ef8a55ffe1431394108e33176fd9602571d778814fd"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Raeviar f",
+      "system": "Raeviar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Namira um1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "47244640244",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "56819ff23f39c8be354382c1c5f6a288429bc6ced368bf2c7be60deda9e585c7"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Saren d",
+      "system": "Saren",
+      "level": "ADVANCED",
+      "founderSpecies": "Arluna on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "90194313216",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "51573113fa78380cffebaafccdbcc5a9a8b9f438120df54091549d17af6cf99b"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Terium C-2",
+      "system": "Terium",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kamira a4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-21474836488",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "17"
+      },
+      "digestVIDA7": "7f0dc0871f0f25268584ee9ad47554d963fbc4edf105d0793595c7869072b9ef"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Thulos e",
+      "system": "Thulos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Salix um4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "85899345905",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "703019fcbb65cc1149c89f8b97c0e91a0d663e1d93474f8faafbe776e3771b41"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Tovioria e",
+      "system": "Tovioria",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Tevor ix5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "51539607593",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "f2ae9adb9e074dac7dd5d51a63191dfbe80cbee89b383a5bbc004f9951abc468"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Viaraos B-1",
+      "system": "Viaraos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vavar um2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "163208757233",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "a1480174c00da05e2936b0917a5f498b20551ec3986572738a4363ad72c4e595"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Viorius A-3",
+      "system": "Viorius",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuzor a7",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-141733920777",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ab17cea9a9cf4879614276088a461eec6c02380cf5a414fee93db709db951b9b"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Vranae B-4",
+      "system": "Vranae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Denia is4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "137438953469",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "679257b4b87257cd720a6b25135d9fa8905a4bfc6998939dcfc2622cb4a5b94a"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Vrarium e",
+      "system": "Vrarium",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vazor en1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "25769803781",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "5d1a7fdfc2e4505aeb10a4702e4efc790141f0c160116bf89d0908f2b0bd756a"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Xeviara b",
+      "system": "Xeviara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aemera on4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "150323855340",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "487c80b7349158f6acc8dfda3031f2525d9179d488ca8676c978518ed8055aa3"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Yetae d",
+      "system": "Yetae",
+      "level": "ADVANCED",
+      "founderSpecies": "Kaluna um3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-4294967258",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "61c2f334bc75c5c537e6a76d04a95369620662111bea68b3d77e7ba5f2e93bd6"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Zusara f",
+      "system": "Zusara",
+      "level": "ADVANCED",
+      "founderSpecies": "Kaluna on5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "-17179869186",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "cd9b7a59e06ed7195d08956d63470ca0cfd51dadfb4ecf65f84835d85d98c4fd"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

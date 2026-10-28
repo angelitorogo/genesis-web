@@ -1,0 +1,430 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 8,
+  "galaxyName": "Kaquiion",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 15625,
+  "sectorsAnalyzed": 15625,
+  "sectorsWithError": 0,
+  "systemsFound": 3452,
+  "systemsWithoutPhysicalSource": 587,
+  "systemsWithError": 0,
+  "planetsProjected": 21905,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 55,
+  "nativeIntelligences": 37,
+  "nativeCivilizations": 25,
+  "levels": {
+    "PRIMITIVE": 12,
+    "ADVANCED": 13,
+    "VERY_ADVANCED": 0
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Aeseria g",
+      "system": "Aeseria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ornia a6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "21474836481",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "29297700ce3d3a05bea7ae88ea7e1255bcab46366c90276b7dd5fa2b1e3bbe07"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Bamos d",
+      "system": "Bamos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Namira um2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-51539607560",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "fbd4d0e11cc94412bc46f014df71b113cb7abcb5fabbd46be39889b5153a8a66"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Chitas A-1",
+      "system": "Chitas",
+      "level": "ADVANCED",
+      "founderSpecies": "Xisyl um5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-77309411309",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "981bdb9809357d67efaea555e52244fa49909f251ed711ef36a0c0f9840db3e3"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Druven f",
+      "system": "Druven",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Tedros on5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-17179869158",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "a82798046b862583238dc6129a500f9c8875891e494ab5b78d3000a28dc14534"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Glakeria A-1",
+      "system": "Glakeria",
+      "level": "ADVANCED",
+      "founderSpecies": "Ximera en4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-107374182392",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "bad455daf0cf8e403e97b0037a94d7ac77164363e90073b6f0ab29a807925982"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Heveria b",
+      "system": "Heveria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arsyl al5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-227633266689",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "d655c89f95fe65d4badd5f153db5ae83439239c330f69325822f7d539b335da1"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Jiomer b",
+      "system": "Jiomer",
+      "level": "ADVANCED",
+      "founderSpecies": "Ormira ix8",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-107374182406",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "bbf955d73fed2f363afc2eb0bc43caae610625dfa2f3f669b60c391afe274bae"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Jureria B-4",
+      "system": "Jureria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Famira al3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-124554051635",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "1cab3fc08c42ad1161aa25c1a8af0510c8e42dea29f8ec81bf6ca1a3f69eff2a"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Krulum f",
+      "system": "Krulum",
+      "level": "ADVANCED",
+      "founderSpecies": "Dethar ix3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "167503724575",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "dfea19b8711bc2c612ce5abfec05c9b3e2f2a89ca58371473e71583663f58b84"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Lelaara c",
+      "system": "Lelaara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Dequor is5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "206158430214",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "14d5529c3786a5d2f8a5a464a328d9e16a14e514f18772deac8937df01aeef5f"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Lioraos e",
+      "system": "Lioraos",
+      "level": "ADVANCED",
+      "founderSpecies": "Caquor is6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "64424509451",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "6af3d11f54691cff2bdd2eea9b67cd8497356e16dd5c87e2d911c7537ab80a54"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Maenen e",
+      "system": "Maenen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zumira on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "81604378588",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "11e86dbca84cd6d6d2474a5b5f6a68ebc57c85d8ef6196bd63f6f478f11ac3ab"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Naeren e",
+      "system": "Naeren",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ardros on7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-30064771072",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "d3a299aab3bfaacc9d14fcec288f409808c00275edece672205499093d88a9c2"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Ninaion e",
+      "system": "Ninaion",
+      "level": "ADVANCED",
+      "founderSpecies": "Demera ia5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "180388626408",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "7d1a712bc033738fff28e7b4ac9f6257218f6c209f7c332cb1f11ba6278f34a0"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Riophia A-2",
+      "system": "Riophia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Dequor ia1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-206158430194",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "332ff3701ac98f5347e9c4adce4f3ca32a7abff47a25434c7ed6dd44f7475df8"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Stipha B-1",
+      "system": "Stipha",
+      "level": "ADVANCED",
+      "founderSpecies": "Lolix on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "81604378597",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "7"
+      },
+      "digestVIDA7": "71159d5f3fc62cad5229480644991d072b23b00222083e779e8b7489cbbeae43"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Suphus B-3",
+      "system": "Suphus",
+      "level": "ADVANCED",
+      "founderSpecies": "Kaluna or5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-128849018899",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "7a5f0b5266bb09f0b393011dace83afaf8dbb65e1c5c01133b7b3383149502b9"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Thimus e",
+      "system": "Thimus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arnia a4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-124554051606",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "dacbd5fd1eaa5b7f55a425a8b169fae70d007d7a2eb2aa58d6bf84d4e73b33cc"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Trikara A-2",
+      "system": "Trikara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Naquor en6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "42949673001",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "7d3358b379986ad4a38810e553d7738cf1b9a6ec7d232576e66640a61aa31675"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Triviae f",
+      "system": "Triviae",
+      "level": "ADVANCED",
+      "founderSpecies": "Temera is3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "42949672965",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "e6b73e3ae28a1e0cbd5c03845dc54a0b0ad57da6d619d4b7a0bcc2efeed5b1c4"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Triviae g",
+      "system": "Triviae",
+      "level": "ADVANCED",
+      "founderSpecies": "Xisyl is2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "42949672965",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "72efd2230867654800aadf5f099b10e75577faac920f1926fe602b83f653e402"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Vaver B-4",
+      "system": "Vaver",
+      "level": "ADVANCED",
+      "founderSpecies": "Aemera or1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "60129542177",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "14"
+      },
+      "digestVIDA7": "6d215fca4558b0fe7dd90574724119998b1ad498499277a9e2b4097e12ba24d1"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Vinar e",
+      "system": "Vinar",
+      "level": "ADVANCED",
+      "founderSpecies": "Temira al2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "-4294967272",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "a24094ddbd6f668882181378d0a85460273306f21af43b12d74c6a9cbb8bffd1"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Xaeraae A-3",
+      "system": "Xaeraae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vathar al1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "51539607540",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ac12f5cbdbf2319bd21c90c950a3eaf8ce1900c81733a71b3913ffeba214f67e"
+    },
+    {
+      "galaxyIndex": 8,
+      "galaxyName": "Kaquiion",
+      "planet": "Xiokum B-3",
+      "system": "Xiokum",
+      "level": "ADVANCED",
+      "founderSpecies": "Elsyl ix4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "8",
+        "sectorKey": "60129542143",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "bfc4f511e5450ce08e22ddb4b2f7daba57d9920540c4db69f5637920a0251a43"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

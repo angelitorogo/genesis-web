@@ -23,7 +23,7 @@ import {
   type GalaxyKnowledgeCatalogDirection,
   type GalaxyKnowledgeCatalogRow,
 } from './galaxy-knowledge-catalog.model';
-import { formatCatalogRadiusKm, formatCatalogTemperatureCelsius } from './galaxy-knowledge-catalog-units';
+import { formatCatalogOrbitalPeriodDays, formatCatalogRadiusKm, formatCatalogTemperatureCelsius } from './galaxy-knowledge-catalog-units';
 import {
   catalogAtmosphereCell, catalogAtmosphereSortOptions,
   compareCatalogAtmosphereByKey, catalogAtmosphereSortAvailability,
@@ -318,10 +318,10 @@ function toPlanetRow(record: GalaxyKnowledgePlanetCatalogEntry): GalaxyKnowledge
       type: planetSubtypeLabel(record.subtype),
       system: record.systemDesignation ?? 'Sistema sin caracterizar',
       mass: formatEarth(record.massEarth, 'M⊕'),
-      radius: formatCatalogRadiusKm(record.radiusEarth, 'earth-radii'),
+      radius: formatCatalogRadiusKm(record.radiusEarth, 'earth-radii', 0),
       orbit: formatNumber(record.semiMajorAxisAu, 'UA'),
-      period: formatNumber(record.orbitalPeriodDays, 'días'),
-      temperature: formatCatalogTemperatureCelsius(record.meanSurfaceTemperatureKelvin),
+      period: formatCatalogOrbitalPeriodDays(record.orbitalPeriodDays),
+      temperature: formatCatalogTemperatureCelsius(record.meanSurfaceTemperatureKelvin, 0),
       sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
       locator: record.id,
       water: record.orbitClass==='COMPACT_HOST' && record.compactConditionalLiquidCoverage01!==undefined
@@ -345,12 +345,12 @@ function toMoonRow(record: GalaxyKnowledgeMoonCatalogEntry): GalaxyKnowledgeCata
       planet: record.hostPlanetDesignation,
       system: record.systemDesignation,
       mass: formatEarth(record.massEarth, 'M⊕'),
-      radius: formatCatalogRadiusKm(record.radiusEarth, 'earth-radii'),
-      ice: formatPercent(record.inferredIceRichnessIndex01),
-      water: formatPercent(record.surfaceLiquidWaterPotentialIndex01),
-      'surface-water': formatPercent(record.surfaceLiquidWaterPotentialIndex01),
-      'subsurface-ocean': formatPercent(record.subsurfaceOceanPotentialIndex01),
-      period: formatNumber(record.orbitalPeriodDays, 'días'),
+      radius: formatCatalogRadiusKm(record.radiusEarth, 'earth-radii', 0),
+      ice: formatPercent(record.inferredIceRichnessIndex01, 1),
+      water: formatPercent(record.surfaceLiquidWaterPotentialIndex01, 1),
+      'surface-water': formatPercent(record.surfaceLiquidWaterPotentialIndex01, 1),
+      'subsurface-ocean': formatPercent(record.subsurfaceOceanPotentialIndex01, 1),
+      period: formatCatalogOrbitalPeriodDays(record.orbitalPeriodDays),
       sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
       locator: record.id,
       ...Object.fromEntries(catalogAtmosphereSortOptions(true).map(option => [option.key,catalogAtmosphereCell(record.atmosphere,option.key)])),
@@ -605,7 +605,7 @@ function formatFinite(value: number): string {
   });
 }
 
-function formatPercent(value: number | null): string | undefined {
+function formatPercent(value: number | null, minimumFractionDigits = 0): string | undefined {
   if (value === null || !Number.isFinite(value)) return undefined;
-  return `${(value * 100).toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 1 })} %`;
+  return `${(value * 100).toLocaleString('es-ES', { minimumFractionDigits, maximumFractionDigits: 1 })} %`;
 }

@@ -1,0 +1,29 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 3,
+  "galaxyName": "Naevaa",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 1089,
+  "sectorsAnalyzed": 1089,
+  "sectorsWithError": 0,
+  "systemsFound": 280,
+  "systemsWithoutPhysicalSource": 60,
+  "systemsWithError": 0,
+  "planetsProjected": 1161,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 0,
+  "nativeIntelligences": 0,
+  "nativeCivilizations": 0,
+  "levels": {
+    "PRIMITIVE": 0,
+    "ADVANCED": 0,
+    "VERY_ADVANCED": 0
+  },
+  "civilizations": [],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

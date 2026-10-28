@@ -1,0 +1,609 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "requestedGalaxies": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "completedGalaxies": 10,
+  "complete": true,
+  "totals": {
+    "systems": 60097,
+    "planets": 452743,
+    "notEvaluable": 0,
+    "systemsWithError": 4,
+    "sectorsWithError": 0,
+    "withoutPhysicalSource": 5276,
+    "eligiblePlanets": 1160,
+    "intelligences": 740,
+    "civilizations": 442,
+    "levels": {
+      "PRIMITIVE": 290,
+      "ADVANCED": 127,
+      "VERY_ADVANCED": 25
+    }
+  },
+  "galaxies": [
+    {
+      "galaxyIndex": 1,
+      "name": "Elisoune",
+      "systems": 4435,
+      "planets": 28144,
+      "civilizations": 16,
+      "levels": {
+        "PRIMITIVE": 8,
+        "ADVANCED": 3,
+        "VERY_ADVANCED": 5
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 774,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 2,
+      "name": "Ilyzenia",
+      "systems": 5673,
+      "planets": 38257,
+      "civilizations": 34,
+      "levels": {
+        "PRIMITIVE": 23,
+        "ADVANCED": 11,
+        "VERY_ADVANCED": 0
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 689,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 3,
+      "name": "Naevaa",
+      "systems": 280,
+      "planets": 1161,
+      "civilizations": 0,
+      "levels": {
+        "PRIMITIVE": 0,
+        "ADVANCED": 0,
+        "VERY_ADVANCED": 0
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 60,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 4,
+      "name": "Darea",
+      "systems": 4774,
+      "planets": 40842,
+      "civilizations": 33,
+      "levels": {
+        "PRIMITIVE": 24,
+        "ADVANCED": 7,
+        "VERY_ADVANCED": 2
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 158,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 5,
+      "name": "Elimonaris",
+      "systems": 12458,
+      "planets": 106810,
+      "civilizations": 116,
+      "levels": {
+        "PRIMITIVE": 77,
+        "ADVANCED": 35,
+        "VERY_ADVANCED": 4
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 389,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 6,
+      "name": "Aeria",
+      "systems": 15326,
+      "planets": 123501,
+      "civilizations": 129,
+      "levels": {
+        "PRIMITIVE": 84,
+        "ADVANCED": 32,
+        "VERY_ADVANCED": 13
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 689,
+      "systemsWithError": 4,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 7,
+      "name": "Keltala",
+      "systems": 5304,
+      "planets": 33517,
+      "civilizations": 33,
+      "levels": {
+        "PRIMITIVE": 26,
+        "ADVANCED": 7,
+        "VERY_ADVANCED": 0
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 908,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 8,
+      "name": "Kaquiion",
+      "systems": 3452,
+      "planets": 21905,
+      "civilizations": 25,
+      "levels": {
+        "PRIMITIVE": 12,
+        "ADVANCED": 13,
+        "VERY_ADVANCED": 0
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 587,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 9,
+      "name": "Oriphium",
+      "systems": 2918,
+      "planets": 24043,
+      "civilizations": 28,
+      "levels": {
+        "PRIMITIVE": 20,
+        "ADVANCED": 8,
+        "VERY_ADVANCED": 0
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 77,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    },
+    {
+      "galaxyIndex": 10,
+      "name": "Veletheth",
+      "systems": 5477,
+      "planets": 34563,
+      "civilizations": 28,
+      "levels": {
+        "PRIMITIVE": 16,
+        "ADVANCED": 11,
+        "VERY_ADVANCED": 1
+      },
+      "verdict": "CENSO_CON_HUECOS",
+      "nonEvaluable": 0,
+      "withoutPhysicalSource": 945,
+      "systemsWithError": 0,
+      "sectorsWithError": 0
+    }
+  ],
+  "veryAdvancedPlanets": [
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Glavara B-4",
+      "system": "Glavara",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arvor al5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "17179869198",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "14"
+      },
+      "digestVIDA7": "129547f660dce3c59ac476f06e18d085977a1d9345725b23ba9299a6755bfb4c"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Hianion f",
+      "system": "Hianion",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Nasyl al2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "68719476734",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "71fbb00babf317c5b015fe9e5a6c540c77e991ee1e9142a2f8cd486fa7e49048"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Nuriis B-4",
+      "system": "Nuriis",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Devor a5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "90194313204",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "00ebdc38ecfc28525ea2a2c384e2b5ebf2c0297a15e66f52dacf5cbaf146c568"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Vrionaas B-4",
+      "system": "Vrionaas",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Kavar al4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "38654705656",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "7"
+      },
+      "digestVIDA7": "7a7d2ba94e15824c8ec1edd676628199ae540e960e635867636de6c7bfb15fa9"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Xaneria A-4",
+      "system": "Xaneria",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ornia is6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-103079215095",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "90cca21a1f09709d919dffc69fdf8e31c87f84018ee7813c2a71caca9a6383c4"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Pamen e",
+      "system": "Pamen",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Givor is7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "12884901887",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "74fb006840cb33cbffc3746f75620d1575ec925edb83c0436e8d33c215e3f120"
+    },
+    {
+      "galaxyIndex": 4,
+      "galaxyName": "Darea",
+      "planet": "Tovioria e",
+      "system": "Tovioria",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Tevor ix5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "4",
+        "sectorKey": "51539607593",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "f2ae9adb9e074dac7dd5d51a63191dfbe80cbee89b383a5bbc004f9951abc468"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Quiavior A-3",
+      "system": "Quiavior",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Vasyl on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "12884901827",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "4b97c8150301d04aaad21f016d623bac48ca44fb5524c34141b1e4c3395db74b"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Triothor A-4",
+      "system": "Triothor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Lolix a6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "98784247877",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "973671b1d26fcd9441a6c80d5fb1b9623ceb127059bc0532727b8656afb1fd99"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Xolaor A-6",
+      "system": "Xolaor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ardros a1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "8589934595",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "3e0a4b4e28b17b7e5b5ec4ea6e58b01c5ac41e21c4ac395993ea7cd29acfe56c"
+    },
+    {
+      "galaxyIndex": 5,
+      "galaxyName": "Elimonaris",
+      "planet": "Zoter A-3",
+      "system": "Zoter",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arvar ix4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "5",
+        "sectorKey": "339302416352",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "2da982fb1802cf009805100f2041b6651064ada2595d3b856f6e5c1d1d98c0fe"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Aiaraoria d",
+      "system": "Aiaraoria",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Vania a1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "8589934602",
+        "galacticObjectIndex": "2",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ebc0b2ead0837463a3fb93b2720c8dafd174bc9c2847afe580b786d4eec9809c"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Biathor A-3",
+      "system": "Biathor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Lothar on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "184683593783",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "7c28c69c9fac64d25dbe2393186f158c040c0a76232a03c1a50ff3480189f078"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Cekas f",
+      "system": "Cekas",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Deluna on5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "107374182462",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "95f0dd479bedb0da3174da1d76863c131124fea92bd9b4ec0fbe627b11f6d53b"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Giatar d",
+      "system": "Giatar",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Faluna on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-124554051632",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f35d3ef9eb452c895ea716769dd549cba9b99dc3eaa7bad69ba68383f50fa344"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Gleven d",
+      "system": "Gleven",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Elzor a2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "193273528263",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "80652c423c84436a31c0e2c0074d395928e1d576fba51972a34305e996a27664"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Glurier e",
+      "system": "Glurier",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Orthar al2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "309237645314",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "1b97c54ff55ee3fd2d96440daf210412546692a85e212d388ae13533804afba1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Laetor d",
+      "system": "Laetor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Camira a4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "12884901872",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "99430ebd7e1909de562e60d78cfecc2372b2e1d1a486e936b1bc2d33e59f140e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Lioriia B-5",
+      "system": "Lioriia",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ginia en4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "188978560944",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "892335b2ba77a490af59084d31dc9ea2a8ed34cc05852d6eae9a810cead3a6e2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Stiavier c",
+      "system": "Stiavier",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ximera um2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "171798691801",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "b61a18a33d4c9a4a6264f36910022b2c51dfba6f12cdef7c255e01e17e41a87b"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Telaor A-4",
+      "system": "Telaor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arsyl is2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-47244640235",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "931bd279ac68de21852b9076f7faf3a90b34d818467426e2ebf34104f0cc5e0d"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Thumor e",
+      "system": "Thumor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arvar en5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-133143986181",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "25637ae8f31cf561f3fd7c10c98bcd8367e8aa9f5733d21c1dc4a9e8929ccee4"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Trimer B-6",
+      "system": "Trimer",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Calix ia6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-73014444045",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "7a2b192460ba2fecdb06c5c533603880b640fce348c8e75f1734adbc30b708b3"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vrekor c",
+      "system": "Vrekor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Vasyl or4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-167503724560",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "baf12869cf2f392bdeb6a5d22b30340bcf0ce81af80461f254140ac7baa11e64"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Vuthen d",
+      "system": "Vuthen",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Zuquor en6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-103079215117",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "129a45db08c4de321099528e9fcc0be84a1752f47507fd18520fad276aca6c8c"
+    }
+  ]
+}

@@ -1,0 +1,478 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 10,
+  "galaxyName": "Veletheth",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 23409,
+  "sectorsAnalyzed": 23409,
+  "sectorsWithError": 0,
+  "systemsFound": 5477,
+  "systemsWithoutPhysicalSource": 945,
+  "systemsWithError": 0,
+  "planetsProjected": 34563,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 86,
+  "nativeIntelligences": 59,
+  "nativeCivilizations": 28,
+  "levels": {
+    "PRIMITIVE": 16,
+    "ADVANCED": 11,
+    "VERY_ADVANCED": 1
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Aoriar g",
+      "system": "Aoriar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xiluna on2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "206158430185",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "5c4eb70e299d93d40c978884feb796499041e06e5ca05cd21eec40901a28017c"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Chiokara d",
+      "system": "Chiokara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elmira um3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "42949672943",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "aa5d322f920a638c260d206e7d33cb4c74978cbb79c3d2031319af92b4d337dd"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Cionaum e",
+      "system": "Cionaum",
+      "level": "ADVANCED",
+      "founderSpecies": "Iszor ix1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "107374182432",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "94022410a71843df8feb65a55fb76bfaa747152357c9288e9861f572185b8a87"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Dalaum f",
+      "system": "Dalaum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Sania ia3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "283467841520",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "32a5dce7c5ed9b7ab4ef6a7d0ffcd2f6957db586ff41aaae3b812a1c60ebae90"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Dioraen B-4",
+      "system": "Dioraen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Deluna en6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "18",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "e3e3e7d2adbd58652f9df88ad169b0fae3248bc16152993bd5c02e60e50bf554"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Dradion e",
+      "system": "Dradion",
+      "level": "ADVANCED",
+      "founderSpecies": "Caluna al4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-180388626405",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "f39331375ea57cc2b75ede76eeda88d1b79d932c6204236a58ca6e3a67ea721b"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Duvis c",
+      "system": "Duvis",
+      "level": "ADVANCED",
+      "founderSpecies": "Lovor ix6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-85899345900",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "b30d3765e441fe253c0411c6c4932aeff768378ba378f5cb2d12db02d778e9fc"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Giros g",
+      "system": "Giros",
+      "level": "ADVANCED",
+      "founderSpecies": "Demera en4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "176093659174",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "f1fc5f29568dd30967bd163659b02f93fc3dc5b83253d0e320d07ee5200b2a0f"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Konaor c",
+      "system": "Konaor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lovor is4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "146028888095",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "371e756c67d2c2bc543fe67f7d485101c09bc3db3eef080daeea12179245ba4e"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Laedis c",
+      "system": "Laedis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zumera al4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "158913789909",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "6d109563f268b10d3e38013273bc79ebd9cc89ba6bf9c5e47d5979dd7ac9f2e0"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Nerar e",
+      "system": "Nerar",
+      "level": "ADVANCED",
+      "founderSpecies": "Dequor or1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "55834574853",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "34118a5fa0df39e327f9f32d7bf30aaca73431bf728e278885de33f9318100ef"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Paesos A-4",
+      "system": "Paesos",
+      "level": "ADVANCED",
+      "founderSpecies": "Tedros ix4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-34359738336",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "ea841609593c25643c3f30dc207032c99544ce5e92fa75e0c03f91a83b2b8be3"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Phiamos c",
+      "system": "Phiamos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Tevar is4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "133143986202",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "8a6df9d662fcc8f70055d344bed778a538f4e5333b7131c8ea2b67ba1d80c887"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Quiovara A-3",
+      "system": "Quiovara",
+      "level": "ADVANCED",
+      "founderSpecies": "Elsyl ia4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "120259084267",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "4affcc2d53d43fd8b33a2c9965912e968516aadc64262dc48328e464454c9e66"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Rovien B-1",
+      "system": "Rovien",
+      "level": "ADVANCED",
+      "founderSpecies": "Arzor en5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "85899345937",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "c32ef9142c154263ac5cd9b5ebf41edb003c769537fb974ff9963dbbd7162483"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Staetoria g",
+      "system": "Staetoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isvor ix6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "38654705611",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "afe6b19ed12cac601bdad683e8010382128b06693bc6698bb8ef4ec4716eb2e7"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Thaenaeria b",
+      "system": "Thaenaeria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isquor is3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-184683593703",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "fd667ac3c20cf2a3b68dc2daf3040d400b7346108c9a323c172148caa4fef176"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Tiasion A-4",
+      "system": "Tiasion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Gidros um2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "38654705657",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "66c9ca0ca26efff2a428c3e53f56e7143c6cd7c80e668fc9df04829f1c4303fc"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Traeroria d",
+      "system": "Traeroria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vaquor is6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-240518168599",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "a96e481a8f5c436a15e8bb1b440465266cd27102f3018a23b253737e90646c49"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Trevara e",
+      "system": "Trevara",
+      "level": "ADVANCED",
+      "founderSpecies": "Salix is2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "25769803777",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "64e3235738c257117e2f03fb18a7fa0a2d8b8c00a16aedfe092b747b8848d548"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Tulaor B-4",
+      "system": "Tulaor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elmira en4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "94489280542",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "8"
+      },
+      "digestVIDA7": "cbbbe6a11722436f1360cdcaad8e21b6ff02c6d0eb401378327852b2c6e17d38"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Vrimeria d",
+      "system": "Vrimeria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elvor al6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-214748364787",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "5b02cab556d68b565a6f4fc427809cebed2025ef04de82ff337ae83220bedff7"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Vronoria f",
+      "system": "Vronoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Arquor on2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-115964117040",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "1dc7497361ae4fbfe756cc5451487fa9685e0fe2e2c6ac978c4c9d070c3e5d20"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Vuthen d",
+      "system": "Vuthen",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Zuquor en6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-103079215117",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "129a45db08c4de321099528e9fcc0be84a1752f47507fd18520fad276aca6c8c"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Yanais c",
+      "system": "Yanais",
+      "level": "ADVANCED",
+      "founderSpecies": "Naluna en1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "85899345921",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "25ab450ebea2e3d037fdc48ce4986a79b455cb50d527176f55f1fad693bff708"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Zaraer d",
+      "system": "Zaraer",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ornia um3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "-85899345928",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "0299fc41d7937bef1b3b6bdc0c753f2e60ce44a4b9441cf21ac1e7542fb67349"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Ziolar e",
+      "system": "Ziolar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cathar al1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "35",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "5a54615a77ce0ebf0105cd01ac09ce7d429b23c1a34d1985f8293c423829aa3b"
+    },
+    {
+      "galaxyIndex": 10,
+      "galaxyName": "Veletheth",
+      "planet": "Ziolar f",
+      "system": "Ziolar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Favor or2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "10",
+        "sectorKey": "35",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "7f4df3fef2c9b02a323405a54b6d039c2ddb9d6462237d6cc962a084a6b79c7f"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

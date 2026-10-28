@@ -1,0 +1,286 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 1,
+  "galaxyName": "Elisoune",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 18225,
+  "sectorsAnalyzed": 18225,
+  "sectorsWithError": 0,
+  "systemsFound": 4435,
+  "systemsWithoutPhysicalSource": 774,
+  "systemsWithError": 0,
+  "planetsProjected": 28144,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 67,
+  "nativeIntelligences": 37,
+  "nativeCivilizations": 16,
+  "levels": {
+    "PRIMITIVE": 8,
+    "ADVANCED": 3,
+    "VERY_ADVANCED": 5
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Glavara B-4",
+      "system": "Glavara",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arvor al5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "17179869198",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "14"
+      },
+      "digestVIDA7": "129547f660dce3c59ac476f06e18d085977a1d9345725b23ba9299a6755bfb4c"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Gudia f",
+      "system": "Gudia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kania um4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-30064771078",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "5a9407757145be0a1dc8e431993089189e094f4b94b1d4b23b6f5b404881457e"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Hianion f",
+      "system": "Hianion",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Nasyl al2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "68719476734",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "71fbb00babf317c5b015fe9e5a6c540c77e991ee1e9142a2f8cd486fa7e49048"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Loris A-4",
+      "system": "Loris",
+      "level": "ADVANCED",
+      "founderSpecies": "Sathar on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "30064771107",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "87c2a65fbfa40de511965534a999ca188fb5e570217fc96a5b6fc37999cd66fe"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Nothor f",
+      "system": "Nothor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nathar ia3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "17179869158",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "3b67d7554bffb4e99edee177e7c09d2d7123630c8d8843c7484248ab6f248905"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Nuriis A-3",
+      "system": "Nuriis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kania is5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "90194313204",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "8dfdb4745d6bb4492e6e2f5280e61e3f31dff130d49a761dfaace5fc6d72eacc"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Nuriis B-4",
+      "system": "Nuriis",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Devor a5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "90194313204",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "00ebdc38ecfc28525ea2a2c384e2b5ebf2c0297a15e66f52dacf5cbaf146c568"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Pionais A-2",
+      "system": "Pionais",
+      "level": "ADVANCED",
+      "founderSpecies": "Tethar or4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-85899345904",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "81304f234922bc69a0378a2f5db7282c994f5785980338acb067957ebf2a9a7f"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Rathar f",
+      "system": "Rathar",
+      "level": "ADVANCED",
+      "founderSpecies": "Zusyl um1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-38654705669",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "4b177d944882f686d1923ffe400db92bc14b6f25bf9f438a6eef71db230983cb"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Riraos B-3",
+      "system": "Riraos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aenia ix2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-167503724519",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "be5d3c6ad281162af4d56d243243c480d4d094ef4d41a41b9e4da7042dff622c"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Saesen f",
+      "system": "Saesen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vadros ia6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-64424509378",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "182928ec6bbba63fe9d378da6198e4848b446d63eed827ab90c06343c3bfc480"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Statum d",
+      "system": "Statum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Camera a7",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "34359738350",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "de75256f74f1e72c842f716a196925aed44f3d78ff33b389ebd5f7162ad43f35"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Thaphoria g",
+      "system": "Thaphoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xisyl a1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "25769803755",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "2163709e430aa07e104fadc4faff0afad07372af0367bd0c72dcf5d961b54763"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Traraor A-3",
+      "system": "Traraor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Savor al3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-42949672967",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "d2e712ae531a19802edb68bb111057b0384c42187b9ad0889415749ce93974a1"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Vrionaas B-4",
+      "system": "Vrionaas",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Kavar al4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "38654705656",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "7"
+      },
+      "digestVIDA7": "7a7d2ba94e15824c8ec1edd676628199ae540e960e635867636de6c7bfb15fa9"
+    },
+    {
+      "galaxyIndex": 1,
+      "galaxyName": "Elisoune",
+      "planet": "Xaneria A-4",
+      "system": "Xaneria",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ornia is6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "1",
+        "sectorKey": "-103079215095",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "90cca21a1f09709d919dffc69fdf8e31c87f84018ee7813c2a71caca9a6383c4"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

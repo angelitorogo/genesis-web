@@ -1,0 +1,25 @@
+{
+  "auditoria": "VIDA.7/Elixisis/full-physical-census/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxia": "Elixisis",
+  "versionGenerador": 3,
+  "modo": "COMPLETO",
+  "sistemasEncontrados": 4758,
+  "sistemasSinFisica": 797,
+  "sistemasConError": 0,
+  "sectoresAnalizados": 20449,
+  "planetasProyectados": 29333,
+  "planetasNoEvaluables": 0,
+  "planetasElegibles": 54,
+  "inteligenciasNativas": 38,
+  "civilizacionesNativas": 24,
+  "niveles": {
+    "PRIMITIVE": 14,
+    "ADVANCED": 10,
+    "VERY_ADVANCED": 0
+  },
+  "civilizacionesMuyAvanzadas": [],
+  "muestrasDeError": [],
+  "coberturaCompleta": true,
+  "veredicto": "CENSO_COMPLETO_SIN_ERRORES"
+}

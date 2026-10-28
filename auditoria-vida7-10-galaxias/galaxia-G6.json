@@ -1,0 +1,2111 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 6,
+  "galaxyName": "Aeria",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 48841,
+  "sectorsAnalyzed": 48841,
+  "sectorsWithError": 0,
+  "systemsFound": 15326,
+  "systemsWithoutPhysicalSource": 689,
+  "systemsWithError": 4,
+  "planetsProjected": 123501,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 333,
+  "nativeIntelligences": 204,
+  "nativeCivilizations": 129,
+  "levels": {
+    "PRIMITIVE": 84,
+    "ADVANCED": 32,
+    "VERY_ADVANCED": 13
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Aaerias d",
+      "system": "Aaerias",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Savar is4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-180388626413",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "6ca3299740168d692cb2116090eb320d7c324c0bdec5531c6345d1c3147f834d"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Aiaraoria d",
+      "system": "Aiaraoria",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Vania a1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "8589934602",
+        "galacticObjectIndex": "2",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ebc0b2ead0837463a3fb93b2720c8dafd174bc9c2847afe580b786d4eec9809c"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Aiavios f",
+      "system": "Aiavios",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Givar on1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-201863462988",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "eccfb12537fc700e0c0a4d4ebea07ce0a25f500080a59793d7676fc3596443d7"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Barus e",
+      "system": "Barus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aesyl or5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-42949672981",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "475b068d4affac3ed188fd8ed66704526d51f2cd93a26a297d231f964771b957"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Biathor A-3",
+      "system": "Biathor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Lothar on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "184683593783",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "7c28c69c9fac64d25dbe2393186f158c040c0a76232a03c1a50ff3480189f078"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Bisas B-3",
+      "system": "Bisas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Githar ia1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "180388626453",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "c3b5353fc673159d0530106ccfd101e20ae512fe7318d62166bae8f9042d0b13"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Bivos B-5",
+      "system": "Bivos",
+      "level": "ADVANCED",
+      "founderSpecies": "Faquor ia3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "309237645370",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "a1d0d3496ccc4115b62083e5d51a945dff1daa12baf095aa26db1fb5ea598982"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Bunaus d",
+      "system": "Bunaus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Saquor ia1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-111669149688",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "7737a5da2ecf2e96d1646d2dcaea8a17384e122489abbf6e0a4c27eefb507d1c"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Buthor c",
+      "system": "Buthor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aelix a6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-34359738403",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "69ec57e17c651fc7266287aa38ed1a206f27bddbeb3745dcf4860fe08e388a26"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Caevas A-4",
+      "system": "Caevas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orsyl al4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "107374182397",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "b1714717380dd6394092f8a6a0e53cfffd50b492e070b24f331f7df5a83abbe7"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Cekas f",
+      "system": "Cekas",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Deluna on5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "107374182462",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "95f0dd479bedb0da3174da1d76863c131124fea92bd9b4ec0fbe627b11f6d53b"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Chadoria f",
+      "system": "Chadoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lodros or4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "51539607512",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "3d25af555cb6999f2dcf1b58266e0d44b1c00a1915f82c7ec8c68d9a0ec93f93"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Chavieria B-1",
+      "system": "Chavieria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aelix on2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "317827579862",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "617a327dc1582046d8de1299f58afda4d8f5d1766d8067c30814023e7197ddd1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Chiorar A-3",
+      "system": "Chiorar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arsyl ix6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-313532612665",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ef90cb642dbb3b9b203da6760eb6c1fcbf41e4b206d68b35ed36551077893aec"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Chivieria A-2",
+      "system": "Chivieria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isvor on3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-386547056683",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "661b32166f081317e824c83f20374999ac2dbc80d7b1beaf84f115464a6fa787"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Ciaphos e",
+      "system": "Ciaphos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arquor or5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-249108103199",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "733bd2193988b9aab4002f8ed1470431f96355fbff333338889a3e7d85f85bc1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Cikum C-5",
+      "system": "Cikum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cavor a6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-317827579850",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "9a3959791fe07ce6db8e28cab04dbae6f2181e802989bb3c4b0ba350a279c706"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Cithia c",
+      "system": "Cithia",
+      "level": "ADVANCED",
+      "founderSpecies": "Kamera al2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "201863462934",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "9469c24d37703345e0a68abe333cf298041041d3690d873088f3a0aadea1808f"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Damos e",
+      "system": "Damos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orluna en2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "266287972401",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "dd9764ae05b506b233dec4a10b3adba5ef4126eac065fe5ec0ec94ea2ce63b5e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Dikae e",
+      "system": "Dikae",
+      "level": "ADVANCED",
+      "founderSpecies": "Aequor en4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-317827579839",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "d02e26caaca7f10201eadb5258a6606b9d7d075a68775289d9412983288daa5d"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Dirieria A-2",
+      "system": "Dirieria",
+      "level": "ADVANCED",
+      "founderSpecies": "Githar is6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-47244640253",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "d59b15a84e0fe18029d8532fa84e1837ee20dfa8eef49b3f521ab6d7b9560552"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Draesae A-2",
+      "system": "Draesae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Delix ix5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-85899345899",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "fb3c06c1fb981ce959e784b5a2f4d5fc30964d0d11c09716a3694382b3dadbc8"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Draesas e",
+      "system": "Draesas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xidros ia5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "17179869075",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "58a3226bd117cf19163f41aa9ba710bc9556dc5b44d665420dd756a2fa4ef4ab"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Driasion B-5",
+      "system": "Driasion",
+      "level": "ADVANCED",
+      "founderSpecies": "Salix en3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "442381631461",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "14"
+      },
+      "digestVIDA7": "8256e56478d74155fb191a854e5db54fe7b6eb2d0a4f48500255391edb034f28"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Dronaa b",
+      "system": "Dronaa",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Sadros en3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "270582939603",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "ec0cb14d7571df6bd76192b2c7e82fe89b59e8698826b1a5c6d1cbcbffd14994"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Drovios A-3",
+      "system": "Drovios",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orvar um4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "227633266685",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "5d4b10b58b31c8cd02fd89891f9172a25c8cf1b34c86625c0f13a5c05b29c6e7"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Druva B-2",
+      "system": "Druva",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nasyl ia3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "197568495673",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "8"
+      },
+      "digestVIDA7": "e61a91697d2d4f9662dd092c5dde0849c1b06c4e2ab5f238ee14bbd9087abbb2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Durios f",
+      "system": "Durios",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kania um1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-292057776191",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "7197a3d9e6e0693da47258cade28f8717606ad39591ed0d3bf87d4c56b926436"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Duvien d",
+      "system": "Duvien",
+      "level": "ADVANCED",
+      "founderSpecies": "Namera ia4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-206158430275",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "835f708524d2c01871dd07b883d728bf85aa099981fa6f3a3a9e5661d9e09b4a"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Faereria c",
+      "system": "Faereria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Gisyl is1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-193273528318",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "3d5b945d6f4a89f776beb24844202b1a3bab0f2760d318b67d18a768bcd751ce"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Giatar d",
+      "system": "Giatar",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Faluna on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-124554051632",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f35d3ef9eb452c895ea716769dd549cba9b99dc3eaa7bad69ba68383f50fa344"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Gimis B-5",
+      "system": "Gimis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nania or2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "128849018934",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "15"
+      },
+      "digestVIDA7": "fa5ff2ac7162a017f4cb891580b33ef89f6477b912d58d22c95ae87035f0666a"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Giriion e",
+      "system": "Giriion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xilix on2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-128849018874",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "ce79def24c5d936b240fb0ad96605c818ce1cea7b1cabdde15fa3605b50cb273"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Glaerioria d",
+      "system": "Glaerioria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Salix on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-21474836412",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "99a454e59da2b9bbf028f5411df10366a1c5d36ebd331f49e376a91c63bdf263"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Glaevion A-3",
+      "system": "Glaevion",
+      "level": "ADVANCED",
+      "founderSpecies": "Tezor al5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "64424509442",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "28ac680f71090719bcb85f1514344f2b1608c0a1726697da3a347b1806295eda"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Glenaion c",
+      "system": "Glenaion",
+      "level": "ADVANCED",
+      "founderSpecies": "Aemera ix1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-64424509446",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "edd2445163400fe4369f68b1ebbdc148ff493df422ef0477eb2bab84650045a0"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Gleven d",
+      "system": "Gleven",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Elzor a2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "193273528263",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "80652c423c84436a31c0e2c0074d395928e1d576fba51972a34305e996a27664"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Gliorien d",
+      "system": "Gliorien",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nasyl or4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "81604378668",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "d74802b31ff24ec830a2252775c041aeffcecf3897200b6ac3b292befd35d777"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Glurier e",
+      "system": "Glurier",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Orthar al2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "309237645314",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "1b97c54ff55ee3fd2d96440daf210412546692a85e212d388ae13533804afba1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Golor A-2",
+      "system": "Golor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zudros is4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-17179869184",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "e743cd27d36a5f7ae9f461a1a04022510fc6beb178a5748845415905ff6ebea9"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Hamae A-3",
+      "system": "Hamae",
+      "level": "ADVANCED",
+      "founderSpecies": "Ximira is7",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-210453397592",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "85138d050a704b50fa922e867bdbef640d69fc996bd993a6155fa332743ebd1b"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Hodar c",
+      "system": "Hodar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orsyl on1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "188978560966",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "a7146d56f5830919048bc1fa1a53c8f965548289e1262591d96500d66ea51027"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Jaras f",
+      "system": "Jaras",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Valix is3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-369367187518",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "1feda4b08a4921af0e6f572766f4e13cb1991575b4d2742ed536efbbc334af1d"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Jephia A-2",
+      "system": "Jephia",
+      "level": "ADVANCED",
+      "founderSpecies": "Xidros ia5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-73014444070",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "faecbd0ab9560cf69c3e4055aece768f1fde911b5a6a872be152d1d75d3489f1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Jiakara e",
+      "system": "Jiakara",
+      "level": "ADVANCED",
+      "founderSpecies": "Vavar ia4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "133143986203",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "cdc6710a131fc2edd6041b8b649626d7b6175e96c967009f85df394cc867100c"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Jiaviar e",
+      "system": "Jiaviar",
+      "level": "ADVANCED",
+      "founderSpecies": "Xiquor on6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-163208757267",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "538d2bce16ceb006a80b3ee64d83ebfc09ed0945ece4511a83b6627f439ba486"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Kiopha b",
+      "system": "Kiopha",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nalix en2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-34359738437",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "999dae964a61ca4696c77affa4e22c963e355fcb3986c90023f41d67892f800a"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Kioria e",
+      "system": "Kioria",
+      "level": "ADVANCED",
+      "founderSpecies": "Denia on1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-107374182377",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "22cbf570f2267e55e48ce4dd65efa7ccd4cb0bfdd1ebd86d870c632dea8487e0"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Kraeder B-4",
+      "system": "Kraeder",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lomera is2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "356482285543",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "2b5c6d1b9a808d5e4107ae2262617b3c8c186164065ab838681842ae3ba43ecf"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Kriation e",
+      "system": "Kriation",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cazor on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "150323855328",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "2a20c78e48d37ee3bea1add447fa9d15813fbd3cd00ebb091a19b2e5b09a9b66"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Krionaara A-2",
+      "system": "Krionaara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Tequor on5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "167503724580",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "7535fbb809d4a174c0016c5af4ce361516cddab5d604eee4404326389da34fc9"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Krodia A-4",
+      "system": "Krodia",
+      "level": "ADVANCED",
+      "founderSpecies": "Vamera al3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-330712481869",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "dc253d17b7c9749f42a9d1a116fa96a136517aa9271564cb93f2e5463c39212b"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Kuthum e",
+      "system": "Kuthum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arnia um1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "94489280511",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "1eaee99b566141c52d4ee7b267f851bbda9193a7cd43aba23bb6df962c41b52e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Laetor d",
+      "system": "Laetor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Camira a4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "12884901872",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "99430ebd7e1909de562e60d78cfecc2372b2e1d1a486e936b1bc2d33e59f140e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Latus f",
+      "system": "Latus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arzor is2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-163208757261",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "0ec39bf3eb640fb16cab7969e5aad23af4f927a4a9032a11caf3ce76f40ca3c9"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Lelos d",
+      "system": "Lelos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xisyl al3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-292057776119",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "29c7e36929c08513fbec41bdfc7a6dda67ad83cfb9c2a2c5e5f344ce40860ad4"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Lioriia B-5",
+      "system": "Lioriia",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ginia en4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "188978560944",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "892335b2ba77a490af59084d31dc9ea2a8ed34cc05852d6eae9a810cead3a6e2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Menor e",
+      "system": "Menor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Giluna is3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "120259084248",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "367052a6f45804ed6779a5960aa05d87d0f71e9092a41039b2ffa3acc06a24b5"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Miamor f",
+      "system": "Miamor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xivor a2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-30064771073",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "a0b6e111e0b469215dc17cefe19d811876943a3cdc04008aff43d912f37af0e3"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Miovar d",
+      "system": "Miovar",
+      "level": "ADVANCED",
+      "founderSpecies": "Namera a2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-133143986166",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "850d9e0c0c50bf8259444552312f3c65271dff1be4a77112f2eec86b098f1ba1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Mula c",
+      "system": "Mula",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Sania a1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-34359738389",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "f97125666e7b57d166dd7d7afffec738f66f0b4bbc438e097c9aba2e741fcbc0"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Nalaos e",
+      "system": "Nalaos",
+      "level": "ADVANCED",
+      "founderSpecies": "Sathar ix4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "94489280465",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "684ef0fe8a343929538a54961e0cd033b46e5f1335db226dce7d9c0fb4701c75"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Niasos A-2",
+      "system": "Niasos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lodros um2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "249108103110",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "e3898cced3d8f6d598a90f61baefa99358eed3086c927857a66aa62599f591e6"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Phiatus d",
+      "system": "Phiatus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Camira ix6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-17179869132",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f292f184b9f4aa8e5269eaeb8cc96c85284cbbbec5ac02b009ca5406a5156630"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Phiodion d",
+      "system": "Phiodion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arzor ia1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "8589934617",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "2d7067f8756bcc1002d92e94c21a77c17edbc664ed7daf11adf46e3feda98d5a"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Phionaar e",
+      "system": "Phionaar",
+      "level": "ADVANCED",
+      "founderSpecies": "Aezor um5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-30064771178",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "2b6a25b93fdc49c2ec2291e79cdb9e73f64adebc93711a1c2839d5ee881dc935"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Piasae A-1",
+      "system": "Piasae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuzor a2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-266287972334",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "08f1ff97699b2137bf5cbfc3b4b573ee8064e37f7812c5dbc9643283b79d74b2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Piaten e",
+      "system": "Piaten",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orluna al3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "163208757203",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "3408a1f668f090581642b09978af529f0fd9835261c34169605aa9fcc41b8843"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Piolaion A-2",
+      "system": "Piolaion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuvor ix2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "210453397492",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "1fff907155e133f3f8e5fda42cefde0bf4ead6609418d864ea0adf939ccc2e8d"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Piomas B-3",
+      "system": "Piomas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Desyl um3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-47244640274",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "a49aad520576a44b6aa055bd97e7dce8015284753db125e98cf261b9768e38b1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Pioraer d",
+      "system": "Pioraer",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Dethar um5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "42949673001",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "cb817099e5f331dbe22b710c239bda43eeb91c11b5e7f9f9d2ae09a35bbe09c7"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Quaenaus A-3",
+      "system": "Quaenaus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aelix a5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "64424509492",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "0e0a71cae4adfcc23a373a53d7bb41f47d4a517ca79cc947262d334c378e9526"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Quaereria d",
+      "system": "Quaereria",
+      "level": "ADVANCED",
+      "founderSpecies": "Elmera al3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-98784247845",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f3a76fdbb98b45bb4563a18a7e826eba8c30cc7176c7b520984a20c8dde38f87"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Quavien e",
+      "system": "Quavien",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Caluna ia4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "313532612690",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "a322a107b647f6435c702a08bf21d052ae4503b39b3b0e3079eb0fd6af3fa4c5"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Queter e",
+      "system": "Queter",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Sadros ix3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-373662154737",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "3c448d377e80552247a8a733140e2d3cbf34f39296ea25b3fffab046b8c13e2f"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Riokis A-3",
+      "system": "Riokis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuvar or1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "98784247770",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "34f1ea064bb2d441f0dc576f48445f13b7b04ecf92089d51c311a8b727b7f758"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Runais B-4",
+      "system": "Runais",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elzor or3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "94489280466",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "ffb02c72adba89d95ed2307e022ddaedd1ca56ec453059cf2c8ff4a06bf890a2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Saeda d",
+      "system": "Saeda",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Githar um2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "201863462813",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ab4109c090acb60211cfdcc0d0f88d4a5f29816c73ed32c0a965921e2e290061"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Saeler C-4",
+      "system": "Saeler",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xinia al3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "111669149642",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "20"
+      },
+      "digestVIDA7": "c1eb78bf26e154c9cd19054aad1bc67b1bd38386e98241dc0602c27a8db992a9"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Saesus e",
+      "system": "Saesus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xisyl en6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-124554051638",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "16329e60cd4c179520e938302742d14ff4531c4a08d08a42b9941a01805e48f2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Shorior c",
+      "system": "Shorior",
+      "level": "ADVANCED",
+      "founderSpecies": "Vavar a6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "167503724557",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "f78779c511b040e36e773158742cdecac1936db19fd0bda1f5cb78c0caba9f38"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Stavium d",
+      "system": "Stavium",
+      "level": "ADVANCED",
+      "founderSpecies": "Tenia ia6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-266287972325",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "91d6cb6c16598197a6714d093ec184ca49891ef01e12bc7aad7dd40d2b9a04e8"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Stiavier c",
+      "system": "Stiavier",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Ximera um2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "171798691801",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "b61a18a33d4c9a4a6264f36910022b2c51dfba6f12cdef7c255e01e17e41a87b"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Stilaoria B-4",
+      "system": "Stilaoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ximira al4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-133143986228",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "7dcb9b3dd4575cdeaff29f9bfd36859de7fd6c3eb59d3f8a627b2c6411bc5354"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Stisas c",
+      "system": "Stisas",
+      "level": "ADVANCED",
+      "founderSpecies": "Islix en3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-408021893097",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "10e325dd2d3493fee2f509adc68336909456eb6efd96236424b52ba5ddad17e3"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Stodoria f",
+      "system": "Stodoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Saluna en1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "223338299351",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "2c1336e0650a4797f51101b8e57e2a2560c06f2715dd4969d8fd76b42e359f84"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Stolaion B-5",
+      "system": "Stolaion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Issyl on7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "51539607565",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "e1139f4b0dca88f37110744042f41334da7e156a1c75525920e1d481c6e60d8e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Taviis A-4",
+      "system": "Taviis",
+      "level": "ADVANCED",
+      "founderSpecies": "Ximira en3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "34359738338",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "2b24760743e7a34e3fdfe79d1dd71ccb72b6a27ba0b7e9c6c3b914fcaacd1e49"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Telaor A-4",
+      "system": "Telaor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arsyl is2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-47244640235",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "931bd279ac68de21852b9076f7faf3a90b34d818467426e2ebf34104f0cc5e0d"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Thiana f",
+      "system": "Thiana",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ximira al3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-55834574871",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "53888fcfc476b8de80db90cc096f97996cdc537227fa4a7401cf0d843114ee9e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Thiophion A-4",
+      "system": "Thiophion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Favor on1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "21474836458",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "1aaacb70404479e92d18ccb31b05a095801276f16647072a9c8edc198ea19f87"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Thumor e",
+      "system": "Thumor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Arvar en5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-133143986181",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "25637ae8f31cf561f3fd7c10c98bcd8367e8aa9f5733d21c1dc4a9e8929ccee4"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Tiaden B-3",
+      "system": "Tiaden",
+      "level": "ADVANCED",
+      "founderSpecies": "Ornia ix3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "94489280512",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "24c17eae6bcc36ab1cc14ce5b509b4e50f398676b372f70ca627873a887eae21"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Tiaser g",
+      "system": "Tiaser",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ormera ix4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "47244640250",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "bdf9d1a35afaef1529935d6792c16aa1b942247f6d6711474a8a31fdb79e0bd9"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Titis B-1",
+      "system": "Titis",
+      "level": "ADVANCED",
+      "founderSpecies": "Kania a4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-94489280606",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "8"
+      },
+      "digestVIDA7": "7bd545557cacd92d9dca77b1fc1cfe07f62860132146e482078a11e5ed9120b6"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Traetor d",
+      "system": "Traetor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kamera en6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-31",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "68f9f45fe1dc52530fa776893acc46a26af8300b782ce780a71415f4878ea3c6"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Triaphara B-4",
+      "system": "Triaphara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Camera on3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-60129542136",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "14"
+      },
+      "digestVIDA7": "eb2c1b92388c5f5b0cbe018245250e527d3932a7d6c731c865a7966071f56482"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Trimer B-6",
+      "system": "Trimer",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Calix ia6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-73014444045",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "7a2b192460ba2fecdb06c5c533603880b640fce348c8e75f1734adbc30b708b3"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Trumos B-4",
+      "system": "Trumos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zusyl ix5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-47244640307",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "fe38f636b7fd55cc8fa881b15de57941ef735c11978f3a711f9f7287101e3829"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Trumum b",
+      "system": "Trumum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xisyl on1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "120259084284",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "2fc01d49dff3aa72d3693dfbeb74cef4010cb6a672dc6af81c46dd6554a2f4a6"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Tuviae C-5",
+      "system": "Tuviae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isthar on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "180388626413",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "15"
+      },
+      "digestVIDA7": "9e7b264510050a4c94ee1b0f09bd339233ced4f854197d4b243a061b3c04b3d7"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vamis B-1",
+      "system": "Vamis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Giquor or1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-133143986209",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "0ffe0be7110a32063656f611a56f0fae9ee4d30fe164b6c5d4e268510e7b4e57"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vraelaoria A-4",
+      "system": "Vraelaoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cania ix5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "412316860362",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "39b6b1b76c94cf2e834ffa5b80f778c0f8fa20e94d6d1fa02bb5e4ebcbf03ec9"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vraethara A-3",
+      "system": "Vraethara",
+      "level": "ADVANCED",
+      "founderSpecies": "Tevar ia2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "347892350935",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "a0d9463848eccba8b6b47b8b099ac287b607d662ae3f750b2077287d6411afa2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vranaar d",
+      "system": "Vranaar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aelix al6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "360777252886",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "e8158555f170eaef5360191e9635cf35dafd98679f6ff90ec2c500b1685a7cb6"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vrekor c",
+      "system": "Vrekor",
+      "level": "VERY_ADVANCED",
+      "founderSpecies": "Vasyl or4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-167503724560",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "baf12869cf2f392bdeb6a5d22b30340bcf0ce81af80461f254140ac7baa11e64"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vrelaa e",
+      "system": "Vrelaa",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Casyl ix2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "154618822732",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "91c42a4f2ae9a6f2688480c671917d1184f72b60acafdacdc35a918d3a66fd3e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vreros f",
+      "system": "Vreros",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Telix en6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "369367187513",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "4c05324099a04037af1e46170a4e602f643f45a9c03c03c33718eb499e47edb2"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vriaderia A-4",
+      "system": "Vriaderia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Loquor al3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-25769803762",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "b2bb2d313a0ac3aa339c0eedd9482ee29c07de461d280180011efdb94d356779"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vrolus B-2",
+      "system": "Vrolus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isvar en1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "111669149701",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "39d6838c33a4fb85cc6dd6f3153bd70af2f91755916a9866c5eea892664fa11f"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vronaen A-4",
+      "system": "Vronaen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Githar is4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "111669149688",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "ae52e40ffeb17dac92322512ccafa3e124f0dda45f185b7127c480c58d758857"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Vutara g",
+      "system": "Vutara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arthar um2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "133143986136",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "0626ca40f750dbb9f1db8eef29f8147f75d7df3afe8274167c5d250d228e4be9"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Walas A-3",
+      "system": "Walas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xisyl on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "257698037796",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "675bf8a519170a3ea4c0e968db10bb0218b391eae74857f3426b055dd4619a69"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Wiata A-3",
+      "system": "Wiata",
+      "level": "ADVANCED",
+      "founderSpecies": "Orzor en6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "193273528337",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f0bc2c8d8605d9e35a19cdda6b9412ae712490e594baa9a0abcb4e280c7c4468"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Wionaeria c",
+      "system": "Wionaeria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isdros al3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-42949672963",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "cf1116eb19cfcd23c9a3692ff70e97ca5a2b6683a201677e47d1f32dddeaa84e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Wuphia C-5",
+      "system": "Wuphia",
+      "level": "ADVANCED",
+      "founderSpecies": "Givar on3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "90194313144",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "19"
+      },
+      "digestVIDA7": "6d7320bc28b4f981c4ccac481d5d3e34e33ea3db0432c39715016ff52fba324d"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Wuvoria A-5",
+      "system": "Wuvoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arzor is4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "42949672974",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "9f11da8d9bc21d7734d35210a8d59a3473a700b91af348ee5ff85fe8a1cab387"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Xaethas g",
+      "system": "Xaethas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aeluna on1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-38654705588",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "58c767529d7dc4d85667546850e8e4cd58e7f061848d6069c44211fcc62eb543"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Yation A-2",
+      "system": "Yation",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vazor ia6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "34359738355",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "d067284fe941526ee6c2dad053fcb44635f3a969c4a2e36c3ac62667570da3a0"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Yialion B-4",
+      "system": "Yialion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cathar a2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "270582939724",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "a7a5feae91164f0c9933ebe90c5ba16d284135652c3e3bd96d98f5c775819a47"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Yiotae g",
+      "system": "Yiotae",
+      "level": "ADVANCED",
+      "founderSpecies": "Calix ix4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-115964116933",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "711351953be84e49f33e75de91bdfd1849d28276f8c9e6f554e8980526fbcd63"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Yiraoria B-5",
+      "system": "Yiraoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Sazor or2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-184683593748",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "9c01a5ba4e32707a1856c3125a7c1a11b0c19da31e2c8136fa0aa979955f3ef1"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Yotar B-2",
+      "system": "Yotar",
+      "level": "ADVANCED",
+      "founderSpecies": "Tethar or4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-115964116892",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "616c0627a2d70682f92e6c30ff9070a76d3ed4ac9c16b4ed91b0a36b426c852e"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Zaden A-4",
+      "system": "Zaden",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Lovor is2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "60129542066",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "e9baafc6007e384c810f8ebe70e462539304f393c64a359e588820b7998e15c7"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Zialen f",
+      "system": "Zialen",
+      "level": "ADVANCED",
+      "founderSpecies": "Vamira ia7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "81604378665",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "195fdf35c257a92ee7985b4dd62377eb0e39c23e33d0a1d8aad7ebaef94681f6"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Zialos B-4",
+      "system": "Zialos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ordros or4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "382252089298",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "46614cde6daa601907528182e8a906a1675731347c4281f11ecd2822af9f4417"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Zikis B-4",
+      "system": "Zikis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aevar on5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "8589934590",
+        "galacticObjectIndex": "2",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "f20255ac900702e7f015b664a69e90d98e352d5193e02e24f950c1c59d2ad511"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Ziotus e",
+      "system": "Ziotus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Samera on4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-244813135918",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "3a9d28332132d33abf3b23242a937fde870bdf0e1ddcc024c189b4ccd4d23f13"
+    },
+    {
+      "galaxyIndex": 6,
+      "galaxyName": "Aeria",
+      "planet": "Zuphoria d",
+      "system": "Zuphoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Sasyl ix5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "6",
+        "sectorKey": "-17179869170",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "27aee7ce7eedaf5ba4b4b23762594fa62f0a29c1cbcc6d2bd9e8b60043a27114"
+    }
+  ],
+  "errorExamples": [
+    {
+      "system": "6/-38654705558/0",
+      "error": "No deterministic V2 private stellar source covers the valid parent sector."
+    },
+    {
+      "system": "6/17179869292/0",
+      "error": "No deterministic V2 private stellar source covers the valid parent sector."
+    },
+    {
+      "system": "6/38654705773/0",
+      "error": "No deterministic V2 private stellar source covers the valid parent sector."
+    },
+    {
+      "system": "6/468151435246/0",
+      "error": "No deterministic V2 private stellar source covers the valid parent sector."
+    }
+  ],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

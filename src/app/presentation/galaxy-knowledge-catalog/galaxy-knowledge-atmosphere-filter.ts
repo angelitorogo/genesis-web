@@ -166,11 +166,22 @@ export function catalogAtmosphereSortAvailability(
   return Object.freeze({resolved, positive, unresolved: states.length - resolved});
 }
 
+/** Presentation precision only: filters and ordering use catalogAtmosphereSortValue unchanged.
+ * Positive trace gases/pressures are not displayed as a measured zero.
+ */
 export function catalogAtmosphereCell(state:CatalogAtmosphereState|null|undefined,key:string):string {
   const value=catalogAtmosphereSortValue(state,key);
-  if(value===null)return 'No determinado';
-  const text=value.toLocaleString('es-ES',{maximumFractionDigits:key==='pressure-atm'?7:6});
-  return `${text}${key==='pressure-atm'?' bar':' %'}${state?.conditional?' (esc.)':''}`;
+  if(value===null || !Number.isFinite(value))return 'No determinado';
+  const conditional=state?.conditional?' (esc.)':'';
+  if(key==='pressure-atm') {
+    if(value>0 && value<0.01) return `< 0,01 bar${conditional}`;
+    return `${value.toLocaleString('es-ES',{maximumFractionDigits:2})} bar${conditional}`;
+  }
+  if(key==='earth-similarity') {
+    return `${value.toLocaleString('es-ES',{maximumFractionDigits:0})} %${conditional}`;
+  }
+  if(value>0 && value<0.05) return `< 0,1 %${conditional}`;
+  return `${value.toLocaleString('es-ES',{minimumFractionDigits:1,maximumFractionDigits:1})} %${conditional}`;
 }
 export function catalogAtmosphereSortOptions(lunar:boolean):readonly Readonly<{key:string;label:string}>[] {
   return Object.freeze([

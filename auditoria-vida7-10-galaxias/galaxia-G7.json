@@ -1,0 +1,558 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 7,
+  "galaxyName": "Keltala",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 24025,
+  "sectorsAnalyzed": 24025,
+  "sectorsWithError": 0,
+  "systemsFound": 5304,
+  "systemsWithoutPhysicalSource": 908,
+  "systemsWithError": 0,
+  "planetsProjected": 33517,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 78,
+  "nativeIntelligences": 50,
+  "nativeCivilizations": 33,
+  "levels": {
+    "PRIMITIVE": 26,
+    "ADVANCED": 7,
+    "VERY_ADVANCED": 0
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Baerius d",
+      "system": "Baerius",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Saluna ia5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "4294967267",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "06e67b925af9f697cf6d07747d243416a488ac4f98b122219a2ab9a231686e7d"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Bithus c",
+      "system": "Bithus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Dethar um3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "8589934627",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "483c1a7a4776e5a79b22376906bec1005fabe86205d5783312f1485de47d8e06"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Chioras B-4",
+      "system": "Chioras",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kavor al4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "38654705691",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "b7172ffd4054a55f3309d1f80254dcdeff2e7a9b61a315b980895807d2fa5dce"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Fiosae B-3",
+      "system": "Fiosae",
+      "level": "ADVANCED",
+      "founderSpecies": "Isvor ix2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "146028888070",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "710ea872029a57f9413632848219244a67852aceef00b7e68e432dcc02600010"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Gaevae A-3",
+      "system": "Gaevae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Iszor um4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-292057776125",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "6e394018c5386389b1133dad7e5e1aa238d337cfa9910722f9b9d2d33cf5ff37"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Gethum B-4",
+      "system": "Gethum",
+      "level": "ADVANCED",
+      "founderSpecies": "Tevar al2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "25769803791",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "aca2f1f1c8851030fb5dec6a791e93e8be7347e4c964a170c60c9c842638c2e6"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Giathoria d",
+      "system": "Giathoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Favor ix7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-64424509453",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "5378f617b774d3cf50ab64970b68c649b7f7ee512278844bf21a99d1fa1eca19"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Glovion A-4",
+      "system": "Glovion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Namera en5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-313532612613",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "2a4488829d18ac9d4b30e7831cc6ee1f524d2018830a0965a7d4b3349556cac9"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Hethoria c",
+      "system": "Hethoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orlix on4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-4294967330",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "635be038d88b94e59a273a100d5f87b26aacd78cb546ab71501add747a45ae50"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Hionus A-3",
+      "system": "Hionus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elvar a5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "201863462908",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "cdeec166815582b66a75c635dd625fad4c91e53a0c587b5e1eb3c5d0e83bcdcb"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Julaen d",
+      "system": "Julaen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Fazor or7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "253403070456",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "79bb550c5947310ea79834ca594b6deb978570118d750ffa2995afe53f77dc74"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Junae C-3",
+      "system": "Junae",
+      "level": "ADVANCED",
+      "founderSpecies": "Vadros is5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-77309411341",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "16"
+      },
+      "digestVIDA7": "00e69aa51d6a4978cb7abc02cd98a8bd8c162e8a3eac2c07172dcfe6c9440cc6"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Kriovar e",
+      "system": "Kriovar",
+      "level": "ADVANCED",
+      "founderSpecies": "Isnia on1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-223338299356",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "395f9877b3d086a972bfa34529adab24b354544c3a996dd7460dd9ed322ea426"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Kurais c",
+      "system": "Kurais",
+      "level": "ADVANCED",
+      "founderSpecies": "Vania ia4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-51539607522",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "fc755d5eb5974a8d0c35d7e2b0890e6fc95616801f43da30ac37e5533dcaf9b3"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Loraos f",
+      "system": "Loraos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vamera al2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-154618822681",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "2bcedee6841ebd7ac3ee8fc753505977210f7cd07b022661ab2d877f6165b323"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Nation A-4",
+      "system": "Nation",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aeluna is6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-107374182412",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "5fd6ae1366366654f19ebf475b9c6ac5bbaa46fb0da9af9c8c75cb2234ebd1ae"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Niolor c",
+      "system": "Niolor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orvar or2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "68",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "5781a454496c1f96ad2e336ca3083e3d448f307c11800fa228def6cf7fd6234e"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Phomen A-2",
+      "system": "Phomen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ximira ix1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "163208757272",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "a903901bb1485a2343b6835efeef3b11b4b38d532685da4ae487d2fac024f0b1"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Rada d",
+      "system": "Rada",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vasyl um1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "154618822683",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "959646afca11d0a74ff20c8660f51b948e04d9e8ef8f8d3397100152000886ab"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Riama A-3",
+      "system": "Riama",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kalix al3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-60129542169",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "95cf7ab653cabcdcdd338947d9e2d4899208583a2c6b09c1cdb806a22ef77b2f"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Riama d",
+      "system": "Riama",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zuvor ia6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "115964116973",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ae9feb9307bba419fc68ca5509905660c8c97639fbd1d57b8a835cdce3be46d7"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Roder C-5",
+      "system": "Roder",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Zunia ia2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-21474836468",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "2314023863905ff7ba70fc7224f22408975f62a1d4d0d886cf1b5794e95fd061"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Shaemas f",
+      "system": "Shaemas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Tenia ia1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-287762808862",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "761e78a5c5d91fd167ee2defadc9dd3fba6b0934c6d538f9e4532f713e8ec630"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Shilas B-5",
+      "system": "Shilas",
+      "level": "ADVANCED",
+      "founderSpecies": "Loluna en4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "30064771122",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "29e207d9ac0f52a5ec2523fe98cd3f111d3d6c9a648d01aff61763e698789b43"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Shitoria d",
+      "system": "Shitoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arthar ia5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "201863462970",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "ac44aebc8ba047e76d4a00a37a41d97e0eecec1aa5dfce9a073c15e35a12acbb"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Siaphor d",
+      "system": "Siaphor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cavar on3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "253403070458",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "828b136fdfcc53429fabeb89ffa675b37b2b41baedb251e068f13c538373dcd4"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Trovier d",
+      "system": "Trovier",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Valix is3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-77309411329",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "6d4ed22d624bca8b672731621187f5fb2d8faf5465cbce6525215905481ec97a"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Vaemar d",
+      "system": "Vaemar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Armera a4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-47244640222",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "0044accba3b43267a2a6005c9b169c381aa3ab6edfb4ce3cd36cf1f5f3a20240"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Voraer e",
+      "system": "Voraer",
+      "level": "ADVANCED",
+      "founderSpecies": "Isthar on3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-34359738410",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "b34fb3f2ac280111e4174cab8c454e861c80e77fa3d63db64881d3be9482d8ab"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Waeraion C-3",
+      "system": "Waeraion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cadros on2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "163208757274",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "4d5649db3f5239b67bb17ca848d57ef3a4cc10649339b368e9fc406c80e36a16"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Xelais f",
+      "system": "Xelais",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elnia en3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "17179869174",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "b1d1b16881753a168d20d04f073ffeac9f68d316eb36995fe1326798e080afe3"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Xiamae B-3",
+      "system": "Xiamae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Losyl al4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "77309411298",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "2cdbd3c5562f78663be78b03de9a5e9a0f844f2c88cc1d611794c4fa93127ecb"
+    },
+    {
+      "galaxyIndex": 7,
+      "galaxyName": "Keltala",
+      "planet": "Xolara f",
+      "system": "Xolara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orthar en3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "7",
+        "sectorKey": "-223338299382",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "b6a1de911622825128f4f2d7dde8a82926a625c43b04ca9d846f727a79144f75"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

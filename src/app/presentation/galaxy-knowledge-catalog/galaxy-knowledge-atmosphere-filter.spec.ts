@@ -1,6 +1,6 @@
 import { AtmosphereGas as Gas } from '../../domain/planetary/atmosphere-gas';
 import { compareCatalogAtmosphereByKey, catalogAtmosphereSortAvailability, catalogAtmosphereSortValue, catalogEarthDrySimilarityPercent, matchesCatalogAtmosphere,
-  atmosphericMolePercent, parseCatalogAtmosphereFilter } from './galaxy-knowledge-atmosphere-filter';
+  atmosphericMolePercent, catalogAtmosphereCell, parseCatalogAtmosphereFilter } from './galaxy-knowledge-atmosphere-filter';
 
 const earth=Object.freeze({
   fractions: Object.freeze({[Gas.NITROGEN]:0.78084,[Gas.OXYGEN]:0.20946,
@@ -10,6 +10,22 @@ const earth=Object.freeze({
 const unresolved=Object.freeze({fractions:null,pressureBar:null,conditional:true});
 
 describe('Buscador atmosférico científico V1',()=>{
+  it('formats visible atmospheric values without losing the exact filter and sort inputs',()=>{
+    expect(catalogAtmosphereCell(earth, 'pressure-atm')).toBe('1,01 bar');
+    expect(catalogAtmosphereCell(earth, 'gas-NITROGEN')).toBe('78,1 %');
+    expect(catalogAtmosphereCell(earth, 'gas-CARBON_DIOXIDE')).toBe('< 0,1 %');
+    expect(catalogAtmosphereCell(earth, 'earth-similarity')).toBe('100 %');
+    expect(catalogAtmosphereCell({...earth,pressureBar:.0239852}, 'pressure-atm')).toBe('0,02 bar');
+    expect(catalogAtmosphereCell({...earth,pressureBar:.0003567}, 'pressure-atm')).toBe('< 0,01 bar');
+    expect(catalogAtmosphereCell({fractions:{[Gas.OXYGEN]:0},pressureBar:0,conditional:false}, 'gas-OXYGEN')).toBe('0,0 %');
+    expect(catalogAtmosphereCell(unresolved, 'gas-NITROGEN')).toBe('No determinado');
+    expect(catalogAtmosphereSortValue(earth,'gas-CARBON_DIOXIDE')).toBeCloseTo(0.042,8);
+    expect(matchesCatalogAtmosphere(earth,parseCatalogAtmosphereFilter({gasRanges:'CARBON_DIOXIDE:0.041:0.043'},false))).toBe(true);
+    const nearA={...earth,pressureBar:.0002};
+    const nearB={...earth,pressureBar:.0004};
+    expect(catalogAtmosphereCell(nearA,'pressure-atm')).toBe(catalogAtmosphereCell(nearB,'pressure-atm'));
+    expect(compareCatalogAtmosphereByKey(nearA,nearB,'pressure-atm','asc')).toBeLessThan(0);
+  });
   it('searches final mole fractions using inclusive exact, upper, lower and combined ranges',()=>{
     const a=parseCatalogAtmosphereFilter({gasRanges:'NITROGEN:78:79;OXYGEN:20:22;CARBON_DIOXIDE::0.05',gasCombine:'AND'},false);
     expect(matchesCatalogAtmosphere(earth,a)).toBe(true);

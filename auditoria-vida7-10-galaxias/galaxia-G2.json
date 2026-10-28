@@ -1,0 +1,574 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 2,
+  "galaxyName": "Ilyzenia",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 24025,
+  "sectorsAnalyzed": 24025,
+  "sectorsWithError": 0,
+  "systemsFound": 5673,
+  "systemsWithoutPhysicalSource": 689,
+  "systemsWithError": 0,
+  "planetsProjected": 38257,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 86,
+  "nativeIntelligences": 55,
+  "nativeCivilizations": 34,
+  "levels": {
+    "PRIMITIVE": 23,
+    "ADVANCED": 11,
+    "VERY_ADVANCED": 0
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Aiatum c",
+      "system": "Aiatum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aeluna or7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-17179869232",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "9a3bcbe0a6f27afe91249898a337c77f33f2b5499785e0e63c9fdfdb88d18389"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Bavoria e",
+      "system": "Bavoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Vamera ia1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "81604378681",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "e39c5c07cf10b2db6621cb79377bd821b75b51352ce212c24f7ab07de157ecfb"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Biaraar A-4",
+      "system": "Biaraar",
+      "level": "ADVANCED",
+      "founderSpecies": "Cavor en3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "81604378645",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "0cb67444f60fa4e23d46b799225685115700baa4b8c0259baf091ae54b599b8e"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Chiaphas d",
+      "system": "Chiaphas",
+      "level": "ADVANCED",
+      "founderSpecies": "Elzor ix4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "51539607508",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "e4c2423f93a73efb31fe33974553b588a1495d07b4b6ba14e2349f313c478405"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Chiriia A-3",
+      "system": "Chiriia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Eldros al6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-34359738303",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "792187ff90ebe0b49069f4bf58d6345c33c4e65b288040ec2b8fb7f788fe2078"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Churais B-2",
+      "system": "Churais",
+      "level": "ADVANCED",
+      "founderSpecies": "Aedros is5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "25769803762",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "60b06c624971936f078efb7a2ef93bcdae454acda23ad2506571fb99a8b05780"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Devor d",
+      "system": "Devor",
+      "level": "ADVANCED",
+      "founderSpecies": "Kadros is6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "51539607515",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "69655865521eabb8f8a11c1598b008a058fe7885d05cc83829f04c594a55335f"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Diaphos f",
+      "system": "Diaphos",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arluna on6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-107374182444",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "066558d3d6ee8fb191ac174ec7dcdac9a1324d1f4297317369395be1e7c5e0fa"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Driakara B-5",
+      "system": "Driakara",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elluna al1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "51539607537",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "3b4f1ec33b7b0254f458b966802709ae85e204f97a170650cb0c2ac7db02dfff"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Drialion d",
+      "system": "Drialion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Cathar or5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-90194313187",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "3f84e96149b5380457b8bc5bdc11cec5c6461f31a32e618080d0e1b49caab5df"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Giathar B-2",
+      "system": "Giathar",
+      "level": "ADVANCED",
+      "founderSpecies": "Orvor on2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "111669149667",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "50f416d2a3c65673445399915f16a434976c1f6f297cbe3c2804add5b4060608"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Glirien B-4",
+      "system": "Glirien",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aethar um1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-300647710734",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "15"
+      },
+      "digestVIDA7": "97dd600b541c4758dac5c5b5d2787611ba107ed3fcb8625f40ea7d94b5274e2e"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Gunum d",
+      "system": "Gunum",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isluna is4",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-68719476756",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "b015e3eda7763e1f80e9d23be1c7a830723f2e94c887dd6d4fa3b1e65a112654"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Hiolae B-7",
+      "system": "Hiolae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Devor al3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "42949672917",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "fd55b71bf0d468673f7378a471807ddd5b7a7f0e0a40ec7eeb96c4af96133675"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Jephae e",
+      "system": "Jephae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elsyl en1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-98784247812",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "8194fb24fad878a5bca7aad3ecb60aa945adf26260bed40db331e50d7e1a9d93"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Lilaoria A-3",
+      "system": "Lilaoria",
+      "level": "ADVANCED",
+      "founderSpecies": "Loquor or2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-42949672980",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "8f8e38eec736571a8d2dc2cb16ae20eefbb70142b4b354f42d3f2f80d625f557"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Memae A-3",
+      "system": "Memae",
+      "level": "ADVANCED",
+      "founderSpecies": "Demira ix6",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-94489280455",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "97904ea219044244d56c0c6befc5b8d40ccd48084b86864449642f09c244ba41"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Naeraor B-4",
+      "system": "Naeraor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arsyl um2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-201863462894",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "1bbb694974fcc05eecceaa21c7f3a6517856dc88f2c73174993290abf338d303"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Paepha A-3",
+      "system": "Paepha",
+      "level": "ADVANCED",
+      "founderSpecies": "Elsyl en6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "4294967221",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "5a2ff529b788a473462479be343de66871feedc3efc0aa280bf49f11d0ee53e2"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Phaeriae A-2",
+      "system": "Phaeriae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arluna or6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "133143986148",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "4319c95cfbc8ed8aabec042be3c03beae749ba0d943ed78fbd8e25598471542a"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Phaeviae B-4",
+      "system": "Phaeviae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Nania ia7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-197568495671",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "eac0e66824e557507f21b4a421b9ef18b78d38fccbffc74606cbdffafe716b7b"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Phiatae b",
+      "system": "Phiatae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xidros ia3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-64424509485",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "0"
+      },
+      "digestVIDA7": "bd99e37597a8316fc87f9100846c0012dfbe353d1990ddd64c07d798578cabb2"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Pikus C-3",
+      "system": "Pikus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Githar um2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-158913789975",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "22"
+      },
+      "digestVIDA7": "e7d1bd7a2027bf1f4587f3b31999659c792ffa1934cde7ba15710c46ba8527ed"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Rianeria f",
+      "system": "Rianeria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Gidros um1",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-77309411329",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "8faa5c1ac3796b0fe851505f94de03e72b5724919278de3782ce43d5564100a6"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Shiraer d",
+      "system": "Shiraer",
+      "level": "ADVANCED",
+      "founderSpecies": "Deluna on3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "94489280516",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "e77cd3b6f9a3bc052acf83e92b160aa241e5de2d8efacdbd779b287a4eb94c55"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Sivia e",
+      "system": "Sivia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xinia um3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "12884901854",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "88b3bf1a0832651ae27f01829820e519f00d0c25497e75e069e215fe92317c57"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Thiaraus c",
+      "system": "Thiaraus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Dedros ia1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "141733920758",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "622ddb4bbc7ec3ac6010d1e4944fd8bec774dfe7362ba814f834382dbc55ed6c"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Tralaia B-4",
+      "system": "Tralaia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Telix is3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-81604378628",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "12"
+      },
+      "digestVIDA7": "6c6258e0d7dcd53f2a0810108527db933ccd2f97dc9fbfdf22fdc702165a1503"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Tresis e",
+      "system": "Tresis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Casyl ix5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "64424509452",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "e8b13be4ac3d41a76a8dd43537bf22b2611476bcdb0dba4c224e02551567f5a0"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Vaerios A-3",
+      "system": "Vaerios",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ginia um5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-8589934601",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "0a587f61c7cbc0082ce98d25bf6db4499ea3a2998434d740fddc0557cda6b289"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Vralaen B-3",
+      "system": "Vralaen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Losyl en6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-64424509446",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "10"
+      },
+      "digestVIDA7": "80423761eb0eec97f9e1cd155e686556259eb99884e90460e1d658c91d15dc06"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Woraeria e",
+      "system": "Woraeria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Devar ix4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "34359738333",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "74761b80d28ade654dc0e778423dbe7b51bc53bbf2d2cd85464018dcd4f7a489"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Yokas B-3",
+      "system": "Yokas",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Samera ix4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-227633266683",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "9a002eff904eb9c13d3fcb697ee995232845d4d18f187581bbaed0d7a7ec178f"
+    },
+    {
+      "galaxyIndex": 2,
+      "galaxyName": "Ilyzenia",
+      "planet": "Zavioria e",
+      "system": "Zavioria",
+      "level": "ADVANCED",
+      "founderSpecies": "Elzor a3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "2",
+        "sectorKey": "-180388626416",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "225290a29b9232f99d7e6d6b38882e40f7af02f9a47ed607cb801681c2018ed2"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

@@ -1,0 +1,478 @@
+{
+  "revision": "VIDA.7/auditoria-multigalaxia/v1",
+  "sourceFingerprint": "13e41b5962e108e296768bd33a5a6e6659dd763b5d580bf62926bc358a14df88",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "galaxyIndex": 9,
+  "galaxyName": "Oriphium",
+  "generatorVersion": 3,
+  "coverageMode": "COMPLETO",
+  "sectorsExpected": 9409,
+  "sectorsAnalyzed": 9409,
+  "sectorsWithError": 0,
+  "systemsFound": 2918,
+  "systemsWithoutPhysicalSource": 77,
+  "systemsWithError": 0,
+  "planetsProjected": 24043,
+  "planetsNotEvaluable": 0,
+  "eligiblePlanets": 64,
+  "nativeIntelligences": 42,
+  "nativeCivilizations": 28,
+  "levels": {
+    "PRIMITIVE": 20,
+    "ADVANCED": 8,
+    "VERY_ADVANCED": 0
+  },
+  "civilizations": [
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Biolen B-2",
+      "system": "Biolen",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aezor ix2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-47244640271",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "7"
+      },
+      "digestVIDA7": "dd206e1947a30fd82be950f442d40ef713da7b0c571b7435a1f3284d799c91c4"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Bitheria C-1",
+      "system": "Bitheria",
+      "level": "ADVANCED",
+      "founderSpecies": "Faquor a1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "21474836470",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "a08385c873b7c4740bfca8f1e02886d9d84913ad48bc8b3a9d1e46a9c9975d85"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Chaelia c",
+      "system": "Chaelia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arluna ix3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "25769803789",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "04a579514b33a9a64c1e3cc7f93eecb2521ce14e6741653d82d494d078504401"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Chitum c",
+      "system": "Chitum",
+      "level": "ADVANCED",
+      "founderSpecies": "Cadros on5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-94489280471",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "f5ab38aa239aa6d8f49f3cb9c4ad88aafccccb19d82e6ee5464249048e8f78c6"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Dethar c",
+      "system": "Dethar",
+      "level": "ADVANCED",
+      "founderSpecies": "Gisyl or6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "21474836463",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "ffba118dc31406787c7c507b5b67759e31ec97b28d2aad73c08e58ab446d9235"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Gliovius c",
+      "system": "Gliovius",
+      "level": "ADVANCED",
+      "founderSpecies": "Naquor ia5",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "94489280519",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "7dac258cc119753d029e90a7b9a802e6def353b9fd0427449999fbad9b62b75b"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Hinaer g",
+      "system": "Hinaer",
+      "level": "ADVANCED",
+      "founderSpecies": "Ardros a3",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-68719476720",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "5"
+      },
+      "digestVIDA7": "d5a29107a4f2ea4448e698318c6b35f2a25a39e32b971fb920791de57af19771"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Hunaor f",
+      "system": "Hunaor",
+      "level": "ADVANCED",
+      "founderSpecies": "Lovar ix6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "55834574850",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "ceb06c5e61d79ce90f299bc279ed123785166e69bc55e7e1069ea45a86c76271"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Kionae d",
+      "system": "Kionae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Isnia al4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-38654705628",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f5b05b4b84f4a6cb11e1df4f3b941c8647248423d60333a50ad9c119f337bcdf"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Krovus A-5",
+      "system": "Krovus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Arzor en2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-21474836447",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "9e8b3958b6bc7dd12152d383f67a075b6c5406d7532fd1d7a740a4205a1f1a3a"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Niaphia f",
+      "system": "Niaphia",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Issyl a2",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-171798691856",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "4"
+      },
+      "digestVIDA7": "057ee2f72119d48139682266ef3b5f15969334265bb52633898b99de5131ee2f"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Quiatis c",
+      "system": "Quiatis",
+      "level": "ADVANCED",
+      "founderSpecies": "Zuvar en2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-47244640292",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "ccf119e380fde232f4e380c4a50c9c2dd275ae2e9f418e5557295ea8e49c864d"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Quumis B-2",
+      "system": "Quumis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Camira en3",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-51539607527",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "11"
+      },
+      "digestVIDA7": "fbdb52e24c42d218bdd444beb6df1867dfc8745d2f4622e0872bb12ef1200f31"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Sereria B-2",
+      "system": "Sereria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Dethar on6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-47244640274",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "9"
+      },
+      "digestVIDA7": "e266136922d23d3b05691fee9adbdc6354ac26670f60d5807e04a659eeca1a71"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Shatis e",
+      "system": "Shatis",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Xinia um6",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-141733920783",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "22c20ccd724e65ded9f6278c11971291664974cd2f0791dd1b661d33c4e7083a"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Shiathor A-4",
+      "system": "Shiathor",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Elmira al1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "85899345918",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "5230abc04c27a0cafea3d6da44f39912492445b6b96aee6665ce06b93add9c45"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Siariar h",
+      "system": "Siariar",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Kazor ix5",
+      "lineage": "INSECTOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "21474836504",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "b0b3f571b2fb73857d7c296cb951fa31aa4de159fb7e5cc678e18befebbea110"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Stika B-4",
+      "system": "Stika",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aeluna um1",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-21474836472",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "13"
+      },
+      "digestVIDA7": "2c9118ba5a1f2f9706b899b99534287e32d0ed7b45300dcfa6d08b5159e03553"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Stiorios e",
+      "system": "Stiorios",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Vavor ix3",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "55834574818",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "60900d006816b4b42ffc1b1fbc86b15d6b951d6b7e5e66646c96ad5a2ec86075"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Sumion d",
+      "system": "Sumion",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aevor al7",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "47244640230",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "f69536f2bca2634bddb587f655bb49e073302e79b5227883ab4b0782147b4e46"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Susa c",
+      "system": "Susa",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Aethar ix1",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "60129542139",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "1"
+      },
+      "digestVIDA7": "0fa724e299d51178634b1377e7fe27b39821f9029d1935da6879c406c7089c10"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Trador B-3",
+      "system": "Trador",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Samera a2",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-64424509462",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "097934c53520c9b9e1b155d4c7d7e570dff94f6e2296b7604ee2c5275ac1bab0"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Wiolaus d",
+      "system": "Wiolaus",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Samira or2",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-137438953472",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "2c8118603ec75fbb0a35c76c17f15eadd2f00ff69d5ac2cdc89f6cc826caab38"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Wonoria B-2",
+      "system": "Wonoria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Casyl en7",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "81604378667",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "f5378ffd3209fa63179f78989f8af0f220485d55d8d2067ed4da8043e42ea5da"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Xevae h",
+      "system": "Xevae",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Temira ia4",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-111669149698",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "6"
+      },
+      "digestVIDA7": "3b044beccf5196846cfde8fe570165b9af197db87a472a9286123832e6c935a2"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Xiarer e",
+      "system": "Xiarer",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Ximira al6",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "-21474836514",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "b176f30561e689eb480ac6b6974e3561c7d858d560bc68f67c69b5ee3acf0183"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Yuteria A-3",
+      "system": "Yuteria",
+      "level": "PRIMITIVE",
+      "founderSpecies": "Orzor al4",
+      "lineage": "REPTILIAN",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "98784247806",
+        "galacticObjectIndex": "0",
+        "bodyIndex": "2"
+      },
+      "digestVIDA7": "10190cbd97835172e6ef583b8ecf85b3ad27898b0be872ead6a37777f602b80b"
+    },
+    {
+      "galaxyIndex": 9,
+      "galaxyName": "Oriphium",
+      "planet": "Zunais e",
+      "system": "Zunais",
+      "level": "ADVANCED",
+      "founderSpecies": "Nania en5",
+      "lineage": "HUMANOID",
+      "locator": {
+        "galaxyIndex": "9",
+        "sectorKey": "51539607525",
+        "galacticObjectIndex": "1",
+        "bodyIndex": "3"
+      },
+      "digestVIDA7": "127bc4b06b8f4aef9b33c7463291ed49d7a1e262ea0fd6b8da21332130aff879"
+    }
+  ],
+  "errorExamples": [],
+  "completeSectorCoverage": true,
+  "verdict": "CENSO_CON_HUECOS"
+}

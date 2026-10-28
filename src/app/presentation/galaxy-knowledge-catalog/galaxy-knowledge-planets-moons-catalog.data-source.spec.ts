@@ -194,8 +194,11 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     expect(row.title).toBe('Asterion c');
     expect(row.cells['type']).toBe('Oceánico');
     expect(row.cells['water']).toBe('72 %');
-    expect(row.cells['radius']).toBe('8.919,4 km');
-    expect(row.cells['temperature']).toBe('7,85 °C');
+    expect(row.cells['radius']).toBe('8.919 km');
+    expect(row.cells['temperature']).toBe('8 °C');
+    expect(row.cells['period']).toBe('1 año, 3 meses y 24 días');
+    expect(row.cells['pressure-atm']).toBe('0,3 bar');
+    expect(row.cells['earth-similarity']).toMatch(/^\d+ %$/u);
     expect(row.actions[0]?.route).toEqual([
       '/system', '0', '12', '7', 'planet', '1',
     ]);
@@ -236,8 +239,24 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
       'Asterion d', 'Asterion c', 'Asterion b',
     ]);
     expect(result.page.items.map(row => row.cells['temperature'])).toEqual([
-      '-23,15 °C', '7,85 °C', '15,85 °C',
+      '-23 °C', '8 °C', '16 °C',
     ]);
+  });
+
+  it('displays orbital durations for planets and moons without changing numerical ordering', async () => {
+    const base = { generationKey, galaxyIndex: 0n, galaxyState: DiscoveryState.CONFIRMED } as const;
+    const common = { subtype: null, page: 1, pageSize: 25 as const, sortKey: 'period', direction: 'asc' as const };
+    const planets = await source.query({ ...base, query: { ...common, category: 'planets' } });
+    if (planets.kind !== 'page') throw new Error('Expected planet page.');
+    expect(planets.page.items.map(row => row.title)).toEqual(['Asterion b', 'Asterion c', 'Asterion d']);
+    expect(planets.page.items.map(row => row.cells['period'])).toEqual([
+      '8 meses y 17 días',
+      '1 año, 3 meses y 24 días',
+      '2 años y 1 mes',
+    ]);
+    const moons = await source.query({ ...base, query: { ...common, category: 'moons' } });
+    if (moons.kind !== 'page') throw new Error('Expected moon page.');
+    expect(moons.page.items[0]?.cells['period']).toBe('4 días');
   });
 
   it('31.4f labels compact water as conditional, never as a known water world', async () => {
@@ -280,7 +299,7 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     });
     if (waterPlanets.kind !== 'page') throw new Error('Expected water planet page.');
     expect(waterPlanets.page.items.map(row => row.title)).toEqual(['Asterion c']);
-    expect(waterPlanets.page.items[0]?.cells['radius']).toBe('8.919,4 km');
+    expect(waterPlanets.page.items[0]?.cells['radius']).toBe('8.919 km');
 
     const icyMoons = await source.query({
       generationKey,
@@ -298,7 +317,12 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     if (icyMoons.kind !== 'page') throw new Error('Expected moon page.');
     expect(icyMoons.page.totalItems).toBe(1);
     expect(icyMoons.page.items[0]?.cells['composition']).toBe('Helada');
-    expect(icyMoons.page.items[0]?.cells['radius']).toBe('1.720,17 km');
+    expect(icyMoons.page.items[0]?.cells['radius']).toBe('1.720 km');
+    expect(icyMoons.page.items[0]?.cells['period']).toBe('4 días');
+    expect(icyMoons.page.items[0]?.cells['ice']).toBe('82,0 %');
+    expect(icyMoons.page.items[0]?.cells['water']).toBe('44,0 %');
+    expect(icyMoons.page.items[0]?.cells['subsurface-ocean']).toBe('88,0 %');
+    expect(icyMoons.page.items[0]?.cells['pressure-atm']).toBe('< 0,01 bar (esc.)');
     expect(icyMoons.page.items[0]?.actions[0]?.route).toEqual([
       '/system', '0', '12', '7', 'planet', '1', 'moon', '0',
     ]);
@@ -368,7 +392,7 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     expect(all.kind).toBe('page');
     if(all.kind!=='page')return;
     expect(all.page.items.map(row=>row.title)).toEqual(['Asterion b','Asterion c','Asterion d']);
-    expect(all.page.items[0]!.cells['gas-CARBON_DIOXIDE']).toBe('0,042 %');
+    expect(all.page.items[0]!.cells['gas-CARBON_DIOXIDE']).toBe('< 0,1 %');
     expect(all.page.items[2]!.cells['gas-OXYGEN']).toBe('No determinado');
     const filter=parseCatalogAtmosphereFilter({gasRanges:'NITROGEN:75:85;OXYGEN:19:22;CARBON_DIOXIDE::0.05',pressureMin:'0.9',earthMin:'95'},false);
     const matching=await source.query({...base,query:{...common,atmosphere:filter}});
@@ -406,7 +430,7 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
     ]);
     expect(desc.page.atmosphericSortAvailability).toEqual({resolved:3,positive:2,unresolved:1});
     expect(desc.page.items.map(row=>row.cells['gas-OXYGEN'])).toEqual([
-      '60 %','20,946 %','0 %','No determinado',
+      '60,0 %','20,9 %','0,0 %','No determinado',
     ]);
     const oxygenRange=parseCatalogAtmosphereFilter({gasRanges:'OXYGEN:10:50'},false);
     const filtered=await source.query({...base,query:{...common,direction:'desc',atmosphere:oxygenRange}});
@@ -451,7 +475,7 @@ describe('26.1c.3 GalaxyKnowledgePlanetsMoonsCatalogDataSource', () => {
         atmosphere:parseCatalogAtmosphereFilter({gasRanges:'CARBON_DIOXIDE:55:70'},true)}});
     if(result.kind!=='page')return;
     expect(result.page.totalItems).toBe(1);
-    expect(result.page.items[0]!.cells['gas-CARBON_DIOXIDE']).toBe('60 % (esc.)');
+    expect(result.page.items[0]!.cells['gas-CARBON_DIOXIDE']).toBe('60,0 % (esc.)');
   });
 
 });
