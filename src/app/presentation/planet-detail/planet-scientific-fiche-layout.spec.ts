@@ -41,7 +41,6 @@ describe('Planet fiche: unified ordinary and compact scientific presentation', (
   it('does not silently lose scientific fields that already exist under compact-host labels', () => {
     const sources: ReadonlyArray<readonly [PlanetScientificSectionModel['id'], string, string, string]> = [
       ['general', 'Rotación simulada', 'Periodo de rotación', '48 h · 2 días'],
-      ['general', 'Duración del día aparente simulada', 'Duración del día', '49 h'],
       ['general', 'Inclinación axial simulada', 'Inclinación axial', '2 °'],
       ['general', 'Composición interna simulada', 'Composición interna', 'núcleo 30 %'],
       ['orbit', 'Período orbital', 'Periodo orbital', '93,239 días · 0,25527 años'],
@@ -82,6 +81,27 @@ describe('Planet fiche: unified ordinary and compact scientific presentation', (
       .find(item => item.label === 'Periodo orbital')?.value).toBe('No determinado');
   });
 
+
+  it('VIDA.9b deja exactamente los campos solicitados y oculta los diagnósticos PRE-33 de la ficha compacta', () => {
+    const labels = (id: keyof typeof PLANET_FICHE_FIELD_LAYOUT) =>
+      unifyPlanetFicheSections([section(id,[
+        field('PRE-33.07 — Solvente y nicho físico','no resuelto'),
+        field('PRE-33.08 — Dosis ionizante','no resuelta'),
+        field('PRE-33.09 — Continuidad ambiental histórica','no certificada'),
+      ])])[0]!.fields.map(item=>item.label);
+    expect(labels('general')).not.toContain('Duración del día');
+    expect(labels('surface')).toEqual([
+      'Base superficial', 'Índice de rugosidad', 'Índice de inventario de agua',
+      'Agua líquida superficial', 'Distribución hielo / líquido / vapor',
+      'Cobertura de hielo', 'Cobertura de agua', 'Radiación superficial',
+    ]);
+    expect(labels('geology')).toEqual([
+      'Régimen geológico', 'Vulcanismo', 'Tectónica',
+      'Índice de retención de calor interno', 'Campo magnético', 'Magnetosfera',
+    ]);
+    expect(labels('climate')).not.toContain('PRE-33.09 — Continuidad ambiental histórica');
+  });
+
   it('keeps the scientific note even when its value matches the missing-field fallback', () => {
     const projected = unifyPlanetFicheSections([section('climate', [
       field('Temperatura superficial escenario', 'No determinado', 'Nota de incertidumbre conservada'),
@@ -98,8 +118,8 @@ describe('Planet fiche: unified ordinary and compact scientific presentation', (
     const projected=unifyPlanetFicheSections([moons,comparison]);
     expect(projected[0]?.fields).toBe(moons.fields);
     expect(projected[1]?.fields).toBe(comparison.fields);
-    expect(projected[0]?.eyebrow).toBe('SECCIÓN 07');
-    expect(projected[1]?.eyebrow).toBe('SECCIÓN 08');
+    expect(projected[0]?.eyebrow).toBe('SECCIÓN 08');
+    expect(projected[1]?.eyebrow).toBe('SECCIÓN 09');
   });
 
   it('uses exactly the same eight headings and descriptions for conventional and compact sections', () => {

@@ -25,6 +25,18 @@ import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
   GENESIS_INDEXED_DB_STORES,
+  GENESIS_INDEXED_DB_V4_STORES,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V5,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V6,
+  GENESIS_INDEXED_DB_V6_STORES,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V7,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V8,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V9,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
+  GENESIS_INDEXED_DB_V10_STORES,
+  GENESIS_INDEXED_DB_V9_STORES,
+  GENESIS_INDEXED_DB_V8_STORES,
+  GENESIS_INDEXED_DB_V7_STORES,
   GENESIS_INDEXED_DB_V1_STORES,
   GENESIS_INDEXED_DB_V2_STORES,
   GENESIS_INDEXED_DB_V3_STORES,
@@ -106,8 +118,43 @@ export const GENESIS_INDEXED_DB_MIGRATIONS:
         GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
 
       generatorVersionStrategy:
-        GeneratorVersionMigrationStrategy
-          .PRESERVE,
+        GeneratorVersionMigrationStrategy.PRESERVE,
+    }),
+    Object.freeze({
+      id: 'v4-to-v5-private-biospheres',
+      fromSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+      toSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V5,
+      generatorVersionStrategy: GeneratorVersionMigrationStrategy.PRESERVE,
+    }),
+    Object.freeze({
+      id: 'v5-to-v6-private-biosphere-audits',
+      fromSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V5,
+      toSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V6,
+      generatorVersionStrategy: GeneratorVersionMigrationStrategy.PRESERVE,
+    }),
+    Object.freeze({
+      id: 'v6-to-v7-remove-legacy-biology',
+      fromSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V6,
+      toSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V7,
+      generatorVersionStrategy: GeneratorVersionMigrationStrategy.PRESERVE,
+    }),
+    Object.freeze({
+      id: 'v7-to-v8-vida3-microbial-private',
+      fromSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V7,
+      toSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V8,
+      generatorVersionStrategy: GeneratorVersionMigrationStrategy.PRESERVE,
+    }),
+    Object.freeze({
+      id: 'v8-to-v9-vida4-ecological-private',
+      fromSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V8,
+      toSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V9,
+      generatorVersionStrategy: GeneratorVersionMigrationStrategy.PRESERVE,
+    }),
+    Object.freeze({
+      id: 'v9-to-v10-vida9-biological-private',
+      fromSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V9,
+      toSchemaVersion: GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
+      generatorVersionStrategy: GeneratorVersionMigrationStrategy.PRESERVE,
     }),
   ]);
 
@@ -304,6 +351,37 @@ export async function migrateGenesisIndexedDbV3ToV4(
   );
 }
 
+export async function migrateGenesisIndexedDbV4ToV5(transaction: Transaction): Promise<void> {
+  await migrateMetadataSchemaVersion(transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V4, GENESIS_INDEXED_DB_SCHEMA_VERSION_V5);
+}
+
+export async function migrateGenesisIndexedDbV5ToV6(transaction: Transaction): Promise<void> {
+  await migrateMetadataSchemaVersion(transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V5, GENESIS_INDEXED_DB_SCHEMA_VERSION_V6);
+}
+
+/** Retire obsolete 33.F stores without touching generator identities or gameplay records. */
+export async function migrateGenesisIndexedDbV6ToV7(transaction: Transaction): Promise<void> {
+  await migrateMetadataSchemaVersion(transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V6, GENESIS_INDEXED_DB_SCHEMA_VERSION_V7);
+}
+
+export async function migrateGenesisIndexedDbV7ToV8(transaction: Transaction): Promise<void> {
+  await migrateMetadataSchemaVersion(transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V7, GENESIS_INDEXED_DB_SCHEMA_VERSION_V8);
+}
+
+export async function migrateGenesisIndexedDbV8ToV9(transaction: Transaction): Promise<void> {
+  await migrateMetadataSchemaVersion(transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V8, GENESIS_INDEXED_DB_SCHEMA_VERSION_V9);
+}
+
+export async function migrateGenesisIndexedDbV9ToV10(transaction: Transaction): Promise<void> {
+  await migrateMetadataSchemaVersion(transaction,
+    GENESIS_INDEXED_DB_SCHEMA_VERSION_V9, GENESIS_INDEXED_DB_SCHEMA_VERSION_V10);
+}
+
 export function registerGenesisIndexedDbVersions(
   database:
     Dexie,
@@ -346,11 +424,35 @@ export function registerGenesisIndexedDbVersions(
       GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
     )
     .stores(
-      GENESIS_INDEXED_DB_STORES,
+      GENESIS_INDEXED_DB_V4_STORES,
     )
     .upgrade(
       migrateGenesisIndexedDbV3ToV4,
     );
+
+  database.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V5)
+    .stores(GENESIS_INDEXED_DB_STORES)
+    .upgrade(migrateGenesisIndexedDbV4ToV5);
+
+  database.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V6)
+    .stores(GENESIS_INDEXED_DB_V6_STORES)
+    .upgrade(migrateGenesisIndexedDbV5ToV6);
+
+  database.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V7)
+    .stores(GENESIS_INDEXED_DB_V7_STORES)
+    .upgrade(migrateGenesisIndexedDbV6ToV7);
+
+  database.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V8)
+    .stores(GENESIS_INDEXED_DB_V8_STORES)
+    .upgrade(migrateGenesisIndexedDbV7ToV8);
+
+  database.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V9)
+    .stores(GENESIS_INDEXED_DB_V9_STORES)
+    .upgrade(migrateGenesisIndexedDbV8ToV9);
+
+  database.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V10)
+    .stores(GENESIS_INDEXED_DB_V10_STORES)
+    .upgrade(migrateGenesisIndexedDbV9ToV10);
 }
 
 async function migrateMetadataSchemaVersion(

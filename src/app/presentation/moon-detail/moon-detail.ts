@@ -1,3 +1,9 @@
+import { Vida9aPhysicalBiologyAuditPanel } from '../scientific/vida9a-physical-biology-audit-panel';
+import { effect } from '@angular/core';
+import { Vida9FullSystemBiologyPanel } from '../scientific/vida9-full-system-biology-panel';
+import { vida2SupportLabel } from '../../simulation/life/life-plausibility-physical-adapter-vida2';
+import { Vida1CompactFiche } from '../scientific/vida-1-compact-fiche';
+import { Vida3PrivateMicrobialRuntime } from '../runtime/vida3-private-microbial.runtime';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -53,6 +59,8 @@ import {
     GenesisScreen,
     RouterLink,
     ScientificBodyPreview,
+    Vida9FullSystemBiologyPanel,
+    Vida9aPhysicalBiologyAuditPanel,
   ],
 
   templateUrl:
@@ -70,6 +78,11 @@ export class MoonDetailPage
   readonly minorMoonNumber = formatMinorMoonNumber;
   readonly minorMoonRadius = formatMinorMoonRadius;
   readonly minorMoonStatus = minorMoonDynamicStateLabel;
+
+  /** VIDA.2: etiqueta del diagnostico fisico sin proyectar vida observada. */
+  readonly vida2SupportLabel = vida2SupportLabel;
+
+  private readonly vida3Private = inject(Vida3PrivateMicrobialRuntime);
 
   readonly facade =
     inject(
@@ -157,6 +170,37 @@ export class MoonDetailPage
       },
     );
 
+  /** VIDA.1: mantiene la navegacion compacta esperada por moon-detail.html. */
+  readonly compactSections = computed(() => {
+    const result = this.resolution();
+    return result?.kind === 'AVAILABLE'
+      ? Vida1CompactFiche.moon(result.card.sections.sections)
+      : [];
+  });
+
+  /** VIDA.6 lunar: persistencia privada, solo en fichas fisicas de sistemas confirmados V3. */
+  private readonly vida6Persistence = effect(() => {
+    const model = this.facade.model();
+    const resolved = this.resolution();
+    if (!model || model.generatorVersionCode !== 3 ||
+        this.requestedBodyIndex === null || this.requestedMoonIndex === null ||
+        resolved?.kind !== 'AVAILABLE' || !resolved.card.vida2) return;
+    const identity = {universeSeed:model.universeSeed,generatorVersionCode:3,
+      kind:'MOON' as const,galaxyIndex:model.galaxyIndex.toString(),
+      sectorKey:model.sectorKey.toString(),galacticObjectIndex:model.galacticObjectIndex.toString(),
+      bodyIndex:this.requestedBodyIndex.toString(),moonIndex:this.requestedMoonIndex.toString()};
+    const snapshot = resolved.card.privateEcosystemVIDA6;
+    const intelligence = resolved.card.privateCivilizationVIDA7;
+    const colonization = resolved.card.privateColonizationVIDA8;
+    const biology9 = resolved.card.confirmedBiologyVIDA9;
+    void this.vida3Private.ensure(identity,resolved.card.vida2)
+      .then(() => snapshot ? this.vida3Private.ensureEcosystem(snapshot) : undefined)
+      .then(() => intelligence ? this.vida3Private.ensureIntelligenceCivilization(intelligence) : undefined)
+      .then(() => colonization ? this.vida3Private.ensureColonization(colonization) : undefined)
+      .then(() => biology9 ? this.vida3Private.ensureBiologyVIDA9(biology9) : undefined)
+      .catch((error:unknown) => console.error('VIDA.6–VIDA.8 private lunar Ground Truth save failed',error));
+  });
+
   readonly systemRoute =
     computed(
       () => {
@@ -208,6 +252,15 @@ export class MoonDetailPage
         ] as const;
       },
     );
+
+  readonly rutaBaseEspecies = computed((): readonly string[] | null => {
+    const model = this.facade.model();
+    return model && this.requestedBodyIndex !== null && this.requestedMoonIndex !== null
+      ? ['/system',model.galaxyIndex.toString(),model.sectorKey.toString(),
+          model.galacticObjectIndex.toString(),'planet',this.requestedBodyIndex.toString(),
+          'moon',this.requestedMoonIndex.toString(),'species']
+      : null;
+  });
 
   readonly sourceQueryParams =
     computed(

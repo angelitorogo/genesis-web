@@ -1,0 +1,646 @@
+[
+  {
+    "path": "docs/audits/33-1/33-1-informe.md",
+    "sha256": "ce4c3f7f0007b7514a6234b611231c80bbf9f6751d4ec43ac3c361009e11bcdc"
+  },
+  {
+    "path": "docs/audits/33-10/33-10-informe.md",
+    "sha256": "40e789157bffca1abab72caa84b99d46b670412be95260794e991688f0c2ba6c"
+  },
+  {
+    "path": "docs/audits/33-11/33-11-informe.md",
+    "sha256": "a589ace7f09297ef4e1cb2d07b859a2ebc7f783e791d275bee94b3a4e5308b7d"
+  },
+  {
+    "path": "docs/audits/33-2/33-2-informe.md",
+    "sha256": "9af80748edb29cfe3f7c09d5eb5d1db98abc752c8e69b7aa9496c7907e522474"
+  },
+  {
+    "path": "docs/audits/33-3/33-3-informe.md",
+    "sha256": "00648a4f3ad9826e392bb1f4e3b33f35c24f529cf8e5f43f21bc2ef7142b296d"
+  },
+  {
+    "path": "docs/audits/33-4/33-4-informe.md",
+    "sha256": "5608b029f7ae047b0462d9b8350c9c3983e7208c5171a1697f53d9c939726695"
+  },
+  {
+    "path": "docs/audits/33-5/33-5-informe.md",
+    "sha256": "ec60105bbd75749918e5dfb669765bbdfac9407579b529593f7ee4a9401f08b7"
+  },
+  {
+    "path": "docs/audits/33-6/33-6-informe.md",
+    "sha256": "a3dcf564bdbd7709c103fff57d444885439d3ad5e96d99b0782c5f077096d303"
+  },
+  {
+    "path": "docs/audits/33-7/33-7-informe.md",
+    "sha256": "2e515167319eb44367ef686695582b839ea58918baa1d2b540b01a79dd7822b0"
+  },
+  {
+    "path": "docs/audits/33-8/33-8-informe.md",
+    "sha256": "b1f57157e6d68e3b738e8dc920db57dcc0a2cef4ee9196382e33a9e00c4d5120"
+  },
+  {
+    "path": "docs/audits/33-9/33-9-informe.md",
+    "sha256": "75b209b438f027dd46224940c41c1b1201fd211553e7bd425cad8e4f63317058"
+  },
+  {
+    "path": "docs/audits/33-f1/33-f1-informe.md",
+    "sha256": "f191756407f2fcb2d66b9535d073a76fecf9e7e32e045c0ad7e3bd1716a05aaa"
+  },
+  {
+    "path": "docs/audits/33-f2/33-f2-informe.md",
+    "sha256": "2a9c5822631e42b1fcea07ad40fa6023c4bc14349e2352de43f5cf4c6e43062c"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-activacion-definitiva-G2.md",
+    "sha256": "376dcd7922ad579e15b33113416c859f336d0c87d8a30bb2e23c5a7e6f539ae4"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-cierre-certificado.md",
+    "sha256": "17754fd9263ddbbce9dec0803f723ef2e273a544e8f2cb382a0ed59c3b9645f5"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-cierre-integrado.md",
+    "sha256": "919dedea5d4c8c57c022e6e21c07ffabe001a5b2a8b6dae4ff0e88ef73d6042e"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-hotfix-catalogo-no-bloqueante.md",
+    "sha256": "a8829d9e9c9786fb92291667e8927ae46cb9c0672b8e6ddc3d4d07001e86264a"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-hotfix-identidad-lunar-catalogo.md",
+    "sha256": "d8c0e6a2eb6bf36cb8f917a3ecb5fbb27ef4b29735924ff113dcc4d34cf833f0"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-hotfix-no-convergencia-catalogo.md",
+    "sha256": "6bb7c3f90abffb155618b206d484d4fabd1b3c3149e649c7e8fc460e15b68111"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-informe.md",
+    "sha256": "290725b39235277256f3f127cb4319fdcf6bd0b0ec2c6316279490a3f2780bab"
+  },
+  {
+    "path": "docs/audits/33-f3/33-f3-surface-planetary-review.md",
+    "sha256": "4c9a7b357bc23534f3610503c3468baf22a0a3d3b100143142cf0ee35bfab2ec"
+  },
+  {
+    "path": "docs/audits/33-f3a/33-f3a-estado-y-validacion.md",
+    "sha256": "ba83bf8581b35e093ede667e3db80a5f6abfdb2eab798be42b490aea192c6009"
+  },
+  {
+    "path": "docs/audits/pre33-11b/pre33-11b-auditoria.json",
+    "sha256": "10176bb5a07ee2ca30b7bd7bfddf67ded6112993ac6f0e00071e03facffcdef4"
+  },
+  {
+    "path": "docs/audits/pre33-11b/pre33-11b-informe.md",
+    "sha256": "88a3494aa230da2f1ccf4fdfed9f2a5d0703bb773e1e8af83094db372c0f90f6"
+  },
+  {
+    "path": "docs/audits/pre33-11b/pre33-11b-sectores.csv",
+    "sha256": "62344b691091a737060796ceb17755adfc278745fc40816179e1f446dc15b290"
+  },
+  {
+    "path": "docs/audits/pre33-11c/pre33-11c-auditoria.json",
+    "sha256": "d4ccded4ebc2fce47984e07569d00fd8195c0396dd13a33c61ac48dd6e3e2e25"
+  },
+  {
+    "path": "docs/audits/pre33-11c/pre33-11c-informe.md",
+    "sha256": "e0711a9fc6f6c313fbcbd84bba0c46e61f3524e4366e309f2111d7e7804fc708"
+  },
+  {
+    "path": "docs/audits/pre33-11c/pre33-11c-por-region-solvente.csv",
+    "sha256": "3a4603090f9e692e725c38ebcd9fd41b8fffa32b29257184da452b7c61e6ba1c"
+  },
+  {
+    "path": "docs/audits/pre33-12/pre33-12-auditoria.json",
+    "sha256": "a8f8f13f97beb45f7ac36b4a07c046fe7604296c30c95880c60cdd8223d1f656"
+  },
+  {
+    "path": "docs/audits/pre33-12/pre33-12-informe.md",
+    "sha256": "54d11333e43d7295d4ebfc6da1848550fb648d966ced1e0369f0f869f9257e3e"
+  },
+  {
+    "path": "docs/audits/pre33-12/pre33-12-por-planeta.csv",
+    "sha256": "4f12ec937de8806a9625002dd138c049e52f1094b3a0f1eed9882ffc4e7824eb"
+  },
+  {
+    "path": "docs/audits/pre33-13/auditoria-elixisis-pre33-20261020.json",
+    "sha256": "d71e58dfbb2a31d72f029cf3d58dbbb5463ac6e8928e1a51cb95e0465ef8a9aa"
+  },
+  {
+    "path": "docs/audits/pre33-13/pre33-13-45-historicos-Elixisis.json",
+    "sha256": "211ff439b0f8aeb8bbe058d86504cccc7fab7058c7890248cb324b8b1fa2c65b"
+  },
+  {
+    "path": "docs/audits/pre33-13/pre33-13-certificacion.json",
+    "sha256": "6bbdc87646364261b90ac045748de3035fd685aedd2e8c5cc4b01c528dff6b0a"
+  },
+  {
+    "path": "docs/audits/pre33-13/pre33-13-dossier.md",
+    "sha256": "bee3c014bea2444c4c5ceadc691d482a7e223f62962bd4c1f98df7ca072769d2"
+  },
+  {
+    "path": "docs/audits/pre33-13/pre33-13-dossier.pdf",
+    "sha256": "89ca01cbe51745302e3498ea8f78184a54b44775d6dcc64f3b7441be79cc75a2"
+  },
+  {
+    "path": "docs/audits/pre33-13/pre33-13-evidencia-historica.json",
+    "sha256": "5d2e1da706b3c03b469f7f5c90e20495b89606fe5b7ec20c8cb5c68b22264239"
+  },
+  {
+    "path": "docs/pre33-11/PRE33-11-auditoria.json",
+    "sha256": "562f75d69794f33dd91933b081b7f562d60ae04b40e4637a0881c7f63a7ce6e8"
+  },
+  {
+    "path": "docs/pre33-11/PRE33-11-informe.md",
+    "sha256": "4c2ced9a79b6eefb3d3c862e22402efd993cbd46d92feb7dd5013fa184de5e4f"
+  },
+  {
+    "path": "docs/pre33-11/PRE33-11-por-planeta.csv",
+    "sha256": "c30ef3ac9111350d4ac3304d1b6bae39e33ebaba128b15ff6069c31f4f044615"
+  },
+  {
+    "path": "docs/pre33-11a/PRE33-11a-auditoria.json",
+    "sha256": "d04100543a12d8847c5955c5033a26485088239fcb9320efab3e00019bb2d19f"
+  },
+  {
+    "path": "docs/pre33-11a/PRE33-11a-informe.md",
+    "sha256": "2b4c7f098a885edf290fd197ec4073179df489f2b5ded5ec72ddbdf7f76eb1be"
+  },
+  {
+    "path": "docs/pre33-11a/PRE33-11a-por-planeta.csv",
+    "sha256": "026a97ce6278719678c4cc567fb66305fd129721b36d1d6387696b9a644c972b"
+  },
+  {
+    "path": "scripts/activar-genesis-33-f3-g2.cjs",
+    "sha256": "599b64fc809dbbfd5c3f04d0ae3654afec24a07190396e3d4d78893acc592246"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-1.spec.cjs",
+    "sha256": "8aec746c0dea6444ce7ca22fca1d18a0832e86fe25eaee29007030fe4fefec73"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-10.spec.cjs",
+    "sha256": "e2e36d490e7742cfc6db6700fd133dc069d8a28755809bf509a308455f5e422d"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-11.spec.cjs",
+    "sha256": "8fb5b5e87eaa8ede60629f0ee570f8a9f4cdc51ddab0f8ae40841f4cc72f69ad"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-2.spec.cjs",
+    "sha256": "410bf0118fe6567ff900f7ce104a905a7a2f52251f2b775cc9264ac27e345688"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-3.spec.cjs",
+    "sha256": "ce1d97170347b5849ee8aa082e020ca1db3a8121f1fb5a0944ca29cbcb2e5ab3"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-4.spec.cjs",
+    "sha256": "297a674ef1fc0a1988655a59ab58e7c0dcd56bd226e4c5d90086b7c59b3266fc"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-5.spec.cjs",
+    "sha256": "ef871c3889d61528b1f99f4a1f6fc50bdf448f8851d02d2b4844f501ce359f5a"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-6.spec.cjs",
+    "sha256": "130ceaa852d05fe21a36eefb705437e1e597c1cdc062c0a5b67f65b26940e917"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-7.spec.cjs",
+    "sha256": "3233a0a7d0f714baa14877490e0e150422e92776d48fa8374fc02cb455db2645"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-8.spec.cjs",
+    "sha256": "53df5550feb1e80645eda8c3e5bd2bc737e5134591fd9b7612a62cde57c46f8d"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-9.spec.cjs",
+    "sha256": "28179f515b215a5f2feb23c43686f54bc68f1347341ea6129b1e11f009dc5c1d"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f1.spec.cjs",
+    "sha256": "9a02744bd438114363d8df628d07036edc3359ca98f550b4a47e15f667ed672f"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f2.spec.cjs",
+    "sha256": "fd05231def73ca99b2d45f3e6a9cbdb9e2d0051a4e9934464e7176ef5a764cfd"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-activacion-definitiva.spec.cjs",
+    "sha256": "c275d167f754f2d75fa743311a13eb41a69c60ea7d8a76548e3da0dcdec94146"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-activacion.cjs",
+    "sha256": "8f89b6df71c14501237996d6f98ca205526863806447e05bda529eed74dcce46"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-catalogo-no-bloqueante.spec.cjs",
+    "sha256": "76f3b55520253149be532d5b5485b3f517bbd8bce4a8794e5a38cfc1515af193"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-certificado.spec.cjs",
+    "sha256": "4a5060236f706625f12869f3784785337ad4a891d15eb146ce1e92cfed3e85f3"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-integral.spec.cjs",
+    "sha256": "3a2de138503c74f57749a0f257abdc23236fd29829d758bdb538989f9841d35a"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-phase-nonconvergence.spec.cjs",
+    "sha256": "c7936a2bc3ee41bc80ee79bfa5bd259526886365dada6e1d21666d240ddb5269"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-region-v3.spec.cjs",
+    "sha256": "8fd20eae26da7e92ee31c7f508b708993cf8ce1563e594de2b0903654893f879"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3-superficie.spec.cjs",
+    "sha256": "396802fed13119b59c128002a129f94a4c8e856148e08d38fea87de9ea094f3a"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3.spec.cjs",
+    "sha256": "411bbf912dc9ede21c776a215dcca9bd14f6f368f2f23707296ba4ef534dcc50"
+  },
+  {
+    "path": "scripts/auditar-genesis-33-f3a.spec.cjs",
+    "sha256": "612c03a538fc7ca36ea1327753f8abf6689900b18a47de3c7cae9e941779c432"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11.cjs",
+    "sha256": "1e07d4b8dc75628054ffc76441cde60f6d33a1fb5f43a95cf885be9e1b46e4d1"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11.spec.cjs",
+    "sha256": "b50b8c9b5fa679270f49b5934806a96206aa3836ecf358df214a65eceff3d5fe"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11a.cjs",
+    "sha256": "ae60f46eeaaf5f29ae80dc5b1fb8773d68a2a0c2c635a7c9e671fd28334d9857"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11a.spec.cjs",
+    "sha256": "d84cc17b02c19b8ab57fe8a2b21737cbf62c1a213fcde5e76f944cf340d2301a"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11b.cjs",
+    "sha256": "8159509b1ca36d8ea7cd920b8bb1ba5536e10ebec4b19309475da42be1911bf8"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11b.spec.cjs",
+    "sha256": "0845c78ccc8446b5a9072689a79f3c6ec7f980a2723b62c374518b3bac915faf"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11c.cjs",
+    "sha256": "4a312685f88b46e2af4e76f78b477cba88f36ed4fb181efd3657fe8ab869e5eb"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-11c.spec.cjs",
+    "sha256": "03b4ddd68b510471fd7937393aea9ca3ce0ab44a4bc5a9023ed8553b4226c2e3"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-12.cjs",
+    "sha256": "95fe34519baf59bd1402ab622c28b65d2e5adf5fb7bb5512711bbc6ef003a01f"
+  },
+  {
+    "path": "scripts/auditar-genesis-pre33-12.spec.cjs",
+    "sha256": "7e98bd605396daf7e0b8e0b0838207a78338bd1321e7264bdf1403c78e1254c4"
+  },
+  {
+    "path": "scripts/certificar-genesis-pre33-13.cjs",
+    "sha256": "4698f5046e199420c28855db0caaf89a1f595187142f0f5b9608730bede92399"
+  },
+  {
+    "path": "scripts/certificar-genesis-pre33-13.spec.cjs",
+    "sha256": "13e98f18b52e6443aaaee9b615cfbc6d398cb72fa8e84d13206a463c1a55e9c8"
+  },
+  {
+    "path": "src/app/data/local/entity/private-biosphere-33-f3a.entity.ts",
+    "sha256": "ab03d392f945cd2d811a9cc80d610e8603e1d769692f32a696d3c1036d33b262"
+  },
+  {
+    "path": "src/app/data/local/entity/private-biosphere-audit-33-f3.entity.ts",
+    "sha256": "09acc428e9930128864e97bb8be8885381ad500724895b3998f263259a6202b9"
+  },
+  {
+    "path": "src/app/data/local/repository/biosphere-native-validation-33-f3a.ts",
+    "sha256": "aea15d0ea16ad6e9e7ad4ee691a8b1fa229654777144697750570026024cdce8"
+  },
+  {
+    "path": "src/app/data/local/repository/dexie-native-biosphere-33-f3a.repository.ts",
+    "sha256": "d3cd2b14b6be117c977cd8d4e82d0543be439a93c83ba272e18925805c11f093"
+  },
+  {
+    "path": "src/app/data/local/repository/dexie-private-biosphere-33-f3.repository.spec.ts",
+    "sha256": "b2f87abedb2bdcfb4b923c77ba100f3656bfc4a5c6e76352ca56c8466a4da080"
+  },
+  {
+    "path": "src/app/data/local/repository/dexie-private-biosphere-33-f3.repository.ts",
+    "sha256": "c861ca6b094f090d2d9b5a359a35b75d9d6d38c60f3e2162c95f7108fd82b7b4"
+  },
+  {
+    "path": "src/app/domain/biology/abiogenesis-environment-33-3.ts",
+    "sha256": "7b428fe0a1e4598849dd5b70e11d96402fb966352d3c8a58dd82fcfe884054c6"
+  },
+  {
+    "path": "src/app/domain/biology/abiogenesis-hypothesis-33-2.ts",
+    "sha256": "087e24206d6e1e0796f46ae58a5ca05650720e4d8d921b0ec16684d5242f58b2"
+  },
+  {
+    "path": "src/app/domain/biology/abiotic-false-positive-33-8.ts",
+    "sha256": "0dd1a58483c0003e28cb9fe60e071980c621e86783a09a79abc11282475ecd7f"
+  },
+  {
+    "path": "src/app/domain/biology/biological-incidence-33-4.ts",
+    "sha256": "14edd80cf0865ede706b8352f15b70574f53551ca692c9a3016232df3e27b10e"
+  },
+  {
+    "path": "src/app/domain/biology/biological-knowledge-boundary-33-9.ts",
+    "sha256": "082c7b43db4c3c8b9d47ffe3f10696f937457d67248b4022a8060aa57bbe05d8"
+  },
+  {
+    "path": "src/app/domain/biology/biological-timeline-33-5.ts",
+    "sha256": "c8ea3d4c584c044e8dcbacac7264becce2d0c73354c427234120d18097b6bd46"
+  },
+  {
+    "path": "src/app/domain/biology/biosignature-33-6.ts",
+    "sha256": "b4c956555b043fc4e331fbe272c1cbfe68f8608ab9ad2ac9015944a4b38faf3b"
+  },
+  {
+    "path": "src/app/domain/biology/biosphere-persistence-33-f3.ts",
+    "sha256": "112e1186327d772d4c1e20ac9880929c4f76d63312e082139fee32f18871adc0"
+  },
+  {
+    "path": "src/app/domain/biology/evolution-body-key-33-f3a.ts",
+    "sha256": "a041e77efd138512395db4267db38585f1190dc0ecc676044240358ee09f6e6a"
+  },
+  {
+    "path": "src/app/domain/biology/evolution-state-33-1.ts",
+    "sha256": "c6cb3678c65cb9343aed257e0ae43232723add4120df409b62159bf82f3a93ca"
+  },
+  {
+    "path": "src/app/domain/biology/instrument-observability-33-11.ts",
+    "sha256": "725e663a443fe78e4c0c0b38215b458b658d8e1fc660ac3c5e44ff26ce13c8ea"
+  },
+  {
+    "path": "src/app/domain/biology/metabolic-energy-33-10.ts",
+    "sha256": "23656a3e2e655994e82f6cadfc50dbb7192249ec15446b1499ec346472cb5ff0"
+  },
+  {
+    "path": "src/app/domain/biology/observed-biological-evidence-33-7.ts",
+    "sha256": "79dffdf5c57210317b4a68fff1987eea093378cf4bc05b6ef50ef0a850c41d00"
+  },
+  {
+    "path": "src/app/domain/biology/physical-environment-integration-33-f1.ts",
+    "sha256": "1d23224b3e06d002a74d0f39e63f9a054a13bca500e79ee4ee3552b18c97ac1f"
+  },
+  {
+    "path": "src/app/domain/biology/pre33-13-certification-gate.spec.ts",
+    "sha256": "10771f18e82aef5dd1650a40f9ec70320ba0aed88ad552ba47366c2a267010b2"
+  },
+  {
+    "path": "src/app/domain/biology/pre33-13-certification-gate.ts",
+    "sha256": "388eface21dfd3482a171f93c6758dc6d1d61635f0c2feb25683ea493f90c4cf"
+  },
+  {
+    "path": "src/app/domain/biology/private-system-audit-33-f3.ts",
+    "sha256": "4e29daa21b9492e8f9857778323634d1aa459bf58d16f1d1c889a9396ecf9f57"
+  },
+  {
+    "path": "src/app/domain/biology/seeded-life-generation-33-f2.ts",
+    "sha256": "4228a7b895b6918984cb4bf0eb42063be93ba5c4e6066febceed9b1a5b2cc8fd"
+  },
+  {
+    "path": "src/app/domain/planetary-history/planetary-biosphere-history-32-10.ts",
+    "sha256": "4f5d28822afb3724606199916e39522fa4348747121e0cbc89856d5bb12dbf59"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-auto-save-33-f3.spec.ts",
+    "sha256": "8d52e4ef2705f718e44cf79ef3db3139fef968446ef17d6d756a5a7a5a922332"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-auto-save-33-f3.ts",
+    "sha256": "0ce41f67a722ce3d74f00859cf7fffadd8e9f9df432bcf5eda95e197752fe696"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-auto-save-audit-33-f3.spec.ts",
+    "sha256": "1332c79542c83d96850e5cab932a21259b71cb6f22664390e6415ef598acd127"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-certified-activation-33-f3.spec.ts",
+    "sha256": "89ebdfbac28a81ae2eaa501a9cf83269e81f8de57e7f42947fab5f8841a3fc8b"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-certified-activation-33-f3.ts",
+    "sha256": "d1620b0909be131acfbbd3c6eda3e092f9e77326aa4b204e7afca946f08a7d6a"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-g2-evidence.generated.ts",
+    "sha256": "be9864ebe205861b7a2d1bc2f8690cdd1b5aa98f8aeaf3047c13189687566d27"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-native-lifecycle-33-f3a.ts",
+    "sha256": "499308a971b0d494f9ce240796bc4762fac6783f19fa722e686afd5b94a692a5"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-phase-nonconvergence-33-f3.spec.ts",
+    "sha256": "18e3eb8569b2e79a15281165b8a0cb0d9aacc62658526332125e54074b46cd46"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-physical-production-33-f3.spec.ts",
+    "sha256": "17067b47235d73e74b2cf075785846169c38ac98e22fd1083e674f01f84579e8"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-physical-production-33-f3.ts",
+    "sha256": "ac62eba4e12a8cd98c46b793cb93ae11a79388c969970bf3209de34c8cdf0dc7"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-private-system-audit-33-f3.spec.ts",
+    "sha256": "184dd141485206fd6bf7fd3ecdf9e51f1e80ae17129637ea12519c5e0e729e5b"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-private-system-audit-33-f3.ts",
+    "sha256": "5cc5c8fdaa5e7325a1cb207720c4da2340c608d60c01352962efb64bd87768ff"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-reviewed-activation-33-f3.ts",
+    "sha256": "a05d399e52da51dd39416c11cfd663c1a717b9d9aa8e3dda20ca4d7b021836bd"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-surface-audit-33-f3.spec.ts",
+    "sha256": "b81594c45d606449817cce62bfab68d75dca7b0b698de6bbd1738485ea07d96d"
+  },
+  {
+    "path": "src/app/presentation/runtime/biosphere-v3-surface-audit-33-f3.ts",
+    "sha256": "b60c21fc641c978319c47ed4e1524578f7022ae5a5cff6f25ea8492e758257be"
+  },
+  {
+    "path": "src/app/presentation/scientific/scientific-integration-regression-pre33-12.spec.ts",
+    "sha256": "9c2056608b431ed5ffcb6055090481e035e9f00e5fa4e0319f8005404b997b80"
+  },
+  {
+    "path": "src/app/presentation/scientific/scientific-integration-regression-pre33-12.ts",
+    "sha256": "109c03ec624a4ec0fdb107e3e6788103e3655c890fccadbb8ed0b305058c800e"
+  },
+  {
+    "path": "src/app/simulation/biology/abiogenesis-environment-engine-33-3.spec.ts",
+    "sha256": "b3524fee093b8e165674dccff91fd5e067db93d4840c5a68d6a6a195ebbada90"
+  },
+  {
+    "path": "src/app/simulation/biology/abiogenesis-environment-engine-33-3.ts",
+    "sha256": "53933963ca47544d8d3257d4d89b176846033cc9a0e6d8b8893f5e6123f14ef4"
+  },
+  {
+    "path": "src/app/simulation/biology/abiogenesis-hypothesis-engine-33-2.spec.ts",
+    "sha256": "d4c8e7fb837716d3708a9ba6e6a882a7d13df0c67bab1de85ac239cdd6f27788"
+  },
+  {
+    "path": "src/app/simulation/biology/abiogenesis-hypothesis-engine-33-2.ts",
+    "sha256": "30fd7c6b9322f0c3c59004eded176010df7d7a4d3f93de1d6a0988591ec504af"
+  },
+  {
+    "path": "src/app/simulation/biology/abiotic-false-positive-engine-33-8.spec.ts",
+    "sha256": "f1bb2d95e686617da33245251307527055a8d80a1eca3e2d825f9496067b91b8"
+  },
+  {
+    "path": "src/app/simulation/biology/abiotic-false-positive-engine-33-8.ts",
+    "sha256": "5473562a375bc8afd5f753bbce56a442e0f01c8f09fac04ba02a366a45a447ff"
+  },
+  {
+    "path": "src/app/simulation/biology/biological-incidence-engine-33-4.spec.ts",
+    "sha256": "c7d0db5cfcb62ab908810c1882fc74a9403aa43e129cce56ac51750b976c0045"
+  },
+  {
+    "path": "src/app/simulation/biology/biological-incidence-engine-33-4.ts",
+    "sha256": "cb16875949871a0195c1ee6c170fabeedc1ca061ba35d27d80d113f4a7128f90"
+  },
+  {
+    "path": "src/app/simulation/biology/biological-knowledge-boundary-33-9.spec.ts",
+    "sha256": "da2e6e0e95b8f743598b970980eb9a4b56ee8c52036203a7549a9ae4b51c2241"
+  },
+  {
+    "path": "src/app/simulation/biology/biological-knowledge-boundary-33-9.ts",
+    "sha256": "e9cd88d8f67e64064c6bd9857783be8df8474c5c8cdf111577c13bee4492b242"
+  },
+  {
+    "path": "src/app/simulation/biology/biological-timeline-engine-33-5.spec.ts",
+    "sha256": "2a6760be5887e36ba647492e1dca41f6701353b853d0987f016e75639930a8b7"
+  },
+  {
+    "path": "src/app/simulation/biology/biological-timeline-engine-33-5.ts",
+    "sha256": "27b6c6dcb2e454ab81c35ba6a9b81e1f913a0634ee05a7f93b3a1894707bf7ac"
+  },
+  {
+    "path": "src/app/simulation/biology/biosignature-engine-33-6.spec.ts",
+    "sha256": "f7ed2ba64b3b59016dea70790e8d7a7f01eb1654a3a913da91907c3527edb701"
+  },
+  {
+    "path": "src/app/simulation/biology/biosignature-engine-33-6.ts",
+    "sha256": "8cc1742dc1e8419c8d65bb83738c189a28657b71ba156eac82e0e351fc8cb24c"
+  },
+  {
+    "path": "src/app/simulation/biology/biosphere-persistence-engine-33-f3.spec.ts",
+    "sha256": "6f96ea669bd7d876b7a2159ca3cd029b5e4d7aaeb4063a1a00f36d45cc8ed048"
+  },
+  {
+    "path": "src/app/simulation/biology/biosphere-persistence-engine-33-f3.ts",
+    "sha256": "791c7be4f766076a651dd9dd586e357fab61a93c7b1839db90832a38d4d05936"
+  },
+  {
+    "path": "src/app/simulation/biology/biosphere-v3-native-lifecycle-33-f3a.spec.ts",
+    "sha256": "06a193a39268b0aebe977c9a825aadae763442c4f0bd1694809e9e3e7cb19c09"
+  },
+  {
+    "path": "src/app/simulation/biology/evolution-engine-33-1.spec.ts",
+    "sha256": "a31aead23ed13426d26e746397ee2046cd2d30aa4c25b66422d372258b86be50"
+  },
+  {
+    "path": "src/app/simulation/biology/evolution-engine-33-1.ts",
+    "sha256": "1dff31fe791ba4b8584f520df4749f2413d081cfd528413d00045cfda0d2487e"
+  },
+  {
+    "path": "src/app/simulation/biology/evolution-history-bridge-33-1.ts",
+    "sha256": "fb6a8390c27f201483b81acf934ed020ae070d7b454aa8780a98076d7206461a"
+  },
+  {
+    "path": "src/app/simulation/biology/instrument-observability-engine-33-11.spec.ts",
+    "sha256": "9e7a50be9dd3819c4c863dba575f900f89b473286e3534c61fff804990083f4d"
+  },
+  {
+    "path": "src/app/simulation/biology/instrument-observability-engine-33-11.ts",
+    "sha256": "30438838b49076858a6fe042f000a7bdacc9182b6149c09da7e397d81918565b"
+  },
+  {
+    "path": "src/app/simulation/biology/metabolic-energy-engine-33-10.spec.ts",
+    "sha256": "d0e25fd33e23ae99427965854f496727c55aac517ee6d01c351cf2e46c61e4ac"
+  },
+  {
+    "path": "src/app/simulation/biology/metabolic-energy-engine-33-10.ts",
+    "sha256": "64f27bc6fde8ba906d2fdbf9292d4d24255c28988127414f63a6f0b92be9d72c"
+  },
+  {
+    "path": "src/app/simulation/biology/observed-biological-evidence-engine-33-7.spec.ts",
+    "sha256": "9b59992aa0a256f3c4eea33fc154f3dc790fa2a84c0a460d0b511639ec574dd2"
+  },
+  {
+    "path": "src/app/simulation/biology/observed-biological-evidence-engine-33-7.ts",
+    "sha256": "f45f90b795413017eeb60c3b356dcd0db504a40e15bacd376625b66a7f21ce25"
+  },
+  {
+    "path": "src/app/simulation/biology/physical-environment-integration-33-f1.spec.ts",
+    "sha256": "978604ef34cab672a9259a35a7acf46ffa849762c01d66fe86579f4fb9c91fbc"
+  },
+  {
+    "path": "src/app/simulation/biology/physical-environment-integration-33-f1.ts",
+    "sha256": "c0af3d9b4d37cc8ad02127f88699640939b6b089e2e454f2946407a54ff66946"
+  },
+  {
+    "path": "src/app/simulation/biology/seeded-life-generation-33-f2.spec.ts",
+    "sha256": "9806436ba405d713aa3df4415feee5f1f10928933f15c8b675e8d5e720a5e6fa"
+  },
+  {
+    "path": "src/app/simulation/biology/seeded-life-generation-33-f2.ts",
+    "sha256": "c2b392ccc700600649df11c1b61be6e2c7bd4234552cb7fbd6204bf056e28c72"
+  },
+  {
+    "path": "src/app/simulation/planetary-history/planetary-biosphere-history-resolver-32-10.spec.ts",
+    "sha256": "13914d5b7a2eea5d047cf718dbb6e99aac2e56117ef02bbe285594fa145d3122"
+  },
+  {
+    "path": "src/app/simulation/planetary-history/planetary-biosphere-history-resolver-32-10.ts",
+    "sha256": "d323ed561d14eb966b74c53f34d3a5f8a09f963b0ab83ac8ec713f5bae09cbe8"
+  },
+  {
+    "path": "src/app/simulation/planetary/galactic-environment-distribution-pre33-11a.spec.ts",
+    "sha256": "d8b77a3cccabfd630db6fd84ff40879b8df19702229313fc755ad1364c6c7064"
+  },
+  {
+    "path": "src/app/simulation/planetary/galactic-environment-distribution-pre33-11a.ts",
+    "sha256": "f1c70fd01cbcf31705d5af8d57628897e2bcdcab68073032f96b4b3b58c111b5"
+  },
+  {
+    "path": "src/app/simulation/planetary/galactic-life-readiness-pre33-11c.spec.ts",
+    "sha256": "09d50e5a674e6defa9f41deb490e5e038ebe8b968928f31c4cbac0f243e764a1"
+  },
+  {
+    "path": "src/app/simulation/planetary/galactic-life-readiness-pre33-11c.ts",
+    "sha256": "8a5f7d529dc9237e31b6b24978d23bf600c068c428333fc91682d4f99f962f07"
+  },
+  {
+    "path": "src/app/simulation/planetary/galactic-statistical-calibration-pre33-11b.spec.ts",
+    "sha256": "c1cd059ba03ae55681d9694669d43883249209714ed854b1ef06332c0b91929f"
+  },
+  {
+    "path": "src/app/simulation/planetary/galactic-statistical-calibration-pre33-11b.ts",
+    "sha256": "d5723c66469fd98993c2454ea8f0d05a4e96e490dad6a2524231af567565a848"
+  },
+  {
+    "path": "src/app/simulation/planetary/planetary-diversity-coverage-pre33-11.spec.ts",
+    "sha256": "db623157cf5a01ccf472a80f69779b8a693a32312d48ac2795b288705eadef30"
+  },
+  {
+    "path": "src/app/simulation/planetary/planetary-diversity-coverage-pre33-11.ts",
+    "sha256": "a15765afb0900aa2cd5fc6c9322c4fced0259a19a6e789c4239763faa870aaf1"
+  }
+]

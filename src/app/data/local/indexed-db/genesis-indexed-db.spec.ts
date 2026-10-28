@@ -10,7 +10,7 @@ import {
 
 import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION,
-  GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
   GENESIS_STORAGE_FORMAT_VERSION,
 } from './genesis-indexed-db-schema';
 
@@ -147,7 +147,7 @@ describe(
     );
 
     it(
-      'should use schema version 4',
+      'VIDA.9 uses schema version 10',
       async () => {
         await database
           .openDatabase();
@@ -160,12 +160,12 @@ describe(
 
         expect(
           database.verno,
-        ).toBe(4);
+        ).toBe(10);
 
         expect(
           GENESIS_INDEXED_DB_SCHEMA_VERSION,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
         );
       },
     );
@@ -180,7 +180,7 @@ describe(
     );
 
     it(
-      'should define the exact schema-v4 stores',
+      'VIDA.0 defines only gameplay schema-v7 stores',
       async () => {
         await database
           .openDatabase();

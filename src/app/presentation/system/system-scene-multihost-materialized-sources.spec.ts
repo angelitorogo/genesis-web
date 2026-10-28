@@ -1,3 +1,4 @@
+import { PlanetDeepOceanEnvelopeEnginePRE3303B } from '../../simulation/planetary/planet-deep-ocean-envelope-pre33-03b';
 import { vi } from 'vitest';
 import { DiscoveryState, type DiscoveryStateValue } from '../../domain/discovery/discovery-state';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
@@ -90,6 +91,21 @@ describe('Stage 6 pre-generated multihost scene sources (no route cutover)', () 
       }
     },
   );
+
+  it('materializes the system without eagerly projecting conditional PRE-33 water for every planet', () => {
+    const locator = fixture(StellarSystemMultiplicity.BINARY);
+    const formation = StellarMultihostFormation.generateOrNull(key, locator)!;
+    const conditionalWater = vi.spyOn(PlanetDeepOceanEnvelopeEnginePRE3303B, 'project')
+      .mockImplementation(() => { throw new RangeError('PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL'); });
+    try {
+      const session = SystemSceneMultihostMaterializedSources.build(formation, source(locator));
+      expect(session.boundPlanets.length + session.circumbinaryPublicLocators.length)
+        .toBe(formation.publicPlanets.length);
+      expect(conditionalWater).not.toHaveBeenCalled();
+    } finally {
+      conditionalWater.mockRestore();
+    }
+  });
 
   it('does not resolve hidden Ground Truth or accept another parent or child identity', () => {
     const locator = fixture(StellarSystemMultiplicity.BINARY);

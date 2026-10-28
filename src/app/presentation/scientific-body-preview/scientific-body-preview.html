@@ -7,8 +7,10 @@
   <header class="scientific-preview__header">
     <div>
       <small>REPRESENTACIÓN 3D</small>
-      <strong>Inspección visual adaptativa</strong>
-      <span>WebGL · escala visual no comparativa</span>
+      @if (model.kind !== 'PLANET') {
+        <strong>Inspección visual adaptativa</strong>
+        <span>WebGL · escala visual no comparativa</span>
+      }
       @if (transientSurfaceWaterNote(); as waterNote) {
         <span class="scientific-preview__surface-caveat" data-testid="scientific-body-preview-transient-water-note">
           {{ waterNote }}

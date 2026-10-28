@@ -35,6 +35,12 @@ import {
   GalaxyKnowledgeSnapshotEntity,
 } from '../entity/galaxy-knowledge-snapshot.entity';
 
+
+import type { PrivateMicrobialBiosphereVIDA3Entity } from '../entity/private-microbial-biosphere-vida3.entity';
+import type { PrivateEcologicalBiosphereVIDA4Entity } from '../entity/private-ecological-biosphere-vida4.entity';
+
+import type { Vida9BiologyStoredEntity } from '../../../domain/life/vida9-biology-exploration';
+
 import {
   registerGenesisIndexedDbVersions,
 } from './genesis-indexed-db-migrations';
@@ -135,6 +141,14 @@ export class GenesisIndexedDb
       GalaxyKnowledgeSnapshotEntity,
       GalaxyKnowledgeSnapshotEntityKey
     >;
+
+
+  readonly privateMicrobialBiospheres!:
+    Table<PrivateMicrobialBiosphereVIDA3Entity, readonly [string, number, string]>;
+  readonly privateEcologicalBiospheres!:
+    Table<PrivateEcologicalBiosphereVIDA4Entity, readonly [string, number, string]>;
+  readonly privateBiologicalRecordsVIDA9!:
+    Table<Vida9BiologyStoredEntity, readonly [string, number, string]>;
 
   constructor(
     databaseName:

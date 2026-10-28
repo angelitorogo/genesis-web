@@ -22,10 +22,14 @@ import {
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V1,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V2,
   GENESIS_INDEXED_DB_SCHEMA_VERSION_V3,
-  GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V5,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V8,
+  GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
   GENESIS_INDEXED_DB_V1_STORES,
   GENESIS_INDEXED_DB_V2_STORES,
   GENESIS_INDEXED_DB_V3_STORES,
+  GENESIS_INDEXED_DB_V8_STORES,
+  GENESIS_INDEXED_DB_STORES,
   GENESIS_STORAGE_FORMAT_VERSION,
 } from './genesis-indexed-db-schema';
 
@@ -158,7 +162,7 @@ describe(
     }
 
     it(
-      'should expose the exact canonical migration chain through v4',
+      'should expose the exact canonical migration chain through v7',
       () => {
         expect(
           GENESIS_INDEXED_DB_MIGRATIONS,
@@ -207,6 +211,28 @@ describe(
               GeneratorVersionMigrationStrategy
                 .PRESERVE,
           },
+          {
+            id: 'v4-to-v5-private-biospheres',
+            fromSchemaVersion: 4,
+            toSchemaVersion: 5,
+            generatorVersionStrategy: GeneratorVersionMigrationStrategy.PRESERVE,
+          },
+          {
+            id:'v5-to-v6-private-biosphere-audits',fromSchemaVersion:5,toSchemaVersion:6,
+            generatorVersionStrategy:GeneratorVersionMigrationStrategy.PRESERVE,
+          },
+          {
+            id:'v6-to-v7-remove-legacy-biology',fromSchemaVersion:6,toSchemaVersion:7,
+            generatorVersionStrategy:GeneratorVersionMigrationStrategy.PRESERVE,
+          },
+          {
+            id:'v7-to-v8-vida3-microbial-private',fromSchemaVersion:7,toSchemaVersion:8,
+            generatorVersionStrategy:GeneratorVersionMigrationStrategy.PRESERVE,
+          },
+          {id:'v8-to-v9-vida4-ecological-private',fromSchemaVersion:8,toSchemaVersion:9,
+            generatorVersionStrategy:GeneratorVersionMigrationStrategy.PRESERVE},
+          {id:'v9-to-v10-vida9-biological-private',fromSchemaVersion:9,toSchemaVersion:10,
+            generatorVersionStrategy:GeneratorVersionMigrationStrategy.PRESERVE},
         ]);
       },
     );
@@ -222,7 +248,7 @@ describe(
         expect(
           GENESIS_INDEXED_DB_SCHEMA_VERSION,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
         );
       },
     );
@@ -318,7 +344,7 @@ describe(
     );
 
     it(
-      'should migrate an empty v1 database through v4 without inventing metadata',
+      'should migrate an empty v1 database through v7 without inventing metadata',
       async () => {
         legacyDatabase =
           createLegacyV1Database();
@@ -338,7 +364,7 @@ describe(
         expect(
           database.verno,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
         );
 
         expect(
@@ -357,6 +383,9 @@ describe(
           'metadata',
           'navigation',
           'observations',
+          'privateBiologicalRecordsVIDA9',
+          'privateEcologicalBiospheres',
+          'privateMicrobialBiospheres',
           'progress',
           'universes',
         ]);
@@ -375,8 +404,53 @@ describe(
       },
     );
 
+    it('VIDA.4 upgrades V8 to V9 without changing earlier microbial records', async () => {
+      legacyDatabase = new Dexie(databaseName, {autoOpen:false, ...TEST_INDEXED_DB_DEPENDENCIES});
+      legacyDatabase.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V8)
+        .stores(GENESIS_INDEXED_DB_V8_STORES);
+      await legacyDatabase.open();
+      await legacyDatabase.table('metadata').put({key:'storage',schemaVersion:8,
+        storageFormatVersion:1,updatedAtEpochMs:42});
+      await legacyDatabase.table('privateMicrobialBiospheres').put({
+        universeSeed:'7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5',
+        generatorVersionCode:3,bodyStorageKey:'VIDA.3/microbial/v3-aquifer-lunar-surface|0:1:0:0:PLANET:-',
+        modelRevision:'VIDA.3/microbial/v3-aquifer-lunar-surface',snapshotJson:'{}',digest:'abc',
+      });
+      legacyDatabase.close();
+      database=createCurrentDatabase();
+      await database.openDatabase();
+      expect(database.verno).toBe(10);
+      expect((await database.metadata.get('storage'))?.schemaVersion).toBe(10);
+      expect(await database.privateMicrobialBiospheres.count()).toBe(1);
+      expect(await database.privateEcologicalBiospheres.count()).toBe(0);
+      expect(await database.observations.count()).toBe(0);
+    });
+
+    it('VIDA.0 migrates V5 to V7 and removes retired biology while preserving gameplay', async () => {
+      legacyDatabase = new Dexie(databaseName, { autoOpen: false, ...TEST_INDEXED_DB_DEPENDENCIES });
+      legacyDatabase.version(GENESIS_INDEXED_DB_SCHEMA_VERSION_V5).stores(GENESIS_INDEXED_DB_STORES);
+      await legacyDatabase.open();
+      await legacyDatabase.table('metadata').put({ key: 'storage', schemaVersion: 5,
+        storageFormatVersion: 1, updatedAtEpochMs: 123 });
+      await legacyDatabase.table('universes').put({
+        universeSeed: 'OLD-UNIVERSE', generatorVersionCode: 3,
+        createdAtEpochMs: 1, updatedAtEpochMs: 2,
+      });
+      await legacyDatabase.table('privateBiospheres').put({
+        universeSeed: 'OLD-UNIVERSE', generatorVersionCode: 3,
+        bodyStorageKey: 'bio33.1:test', payloadJson: '{}', schema: 'retired',
+      });
+      legacyDatabase.close();
+      database = createCurrentDatabase(); await database.openDatabase();
+      expect(database.verno).toBe(10);
+      expect(database.tables.map(x => x.name)).not.toContain('privateBiospheres');
+      expect(database.tables.map(x => x.name)).not.toContain('privateBiosphereAudits');
+      expect(await database.universes.count()).toBe(1);
+      expect((await database.metadata.get('storage'))?.schemaVersion).toBe(10);
+    });
+
     it(
-      'should migrate an existing v3 database to v4 with an empty derived snapshot store',
+      'should migrate an existing v3 database through v7 with an empty derived snapshot store',
       async () => {
         const now = 1_786_291_200_000;
 
@@ -402,7 +476,7 @@ describe(
         await database.openDatabase();
 
         expect(database.verno).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
         );
 
         expect(
@@ -412,12 +486,12 @@ describe(
         expect(
           (await database.metadata.get('storage'))
             ?.schemaVersion,
-        ).toBe(4);
+        ).toBe(10);
       },
     );
 
     it(
-      'should migrate v1 through v4 preserving data and GeneratorVersion',
+      'should migrate v1 through v7 preserving data and GeneratorVersion',
       async () => {
         const universeSeed =
           '7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1';
@@ -608,7 +682,7 @@ describe(
             'storage',
 
           schemaVersion:
-            4,
+            GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
 
           storageFormatVersion:
             1,
@@ -855,7 +929,7 @@ describe(
         expect(
           database.verno,
         ).toBe(
-          GENESIS_INDEXED_DB_SCHEMA_VERSION_V4,
+          GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
         );
 
         expect(
@@ -866,7 +940,7 @@ describe(
             ),
         ).toMatchObject({
           schemaVersion:
-            4,
+            GENESIS_INDEXED_DB_SCHEMA_VERSION_V10,
         });
 
         expect(

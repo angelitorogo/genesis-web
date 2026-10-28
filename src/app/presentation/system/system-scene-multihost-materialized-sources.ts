@@ -81,7 +81,19 @@ export class SystemSceneMultihostMaterializedSources {
         throw new Error('Duplicate public planet address in a generated multihost system.');
       }
       seenAddresses.add(addressKey);
-      if (this.scientific.resolveDetailed(key, entry.publicLocator)?.detail.general.massEarth !== entry.planet.massEarth) {
+      // Identity/physical-object correspondence must not depend on an optional
+      // PRE-33 water/phase projection. A single unresolved planet must not
+      // prevent every planet and moon in this confirmed system from opening.
+      const identity = this.scientific.resolve(key, entry.publicLocator);
+      const sourcePlanets = entry.host === 'AB'
+        ? formation.circumbinary.planets
+        : formation.components.find(component => component.label === entry.host)?.planets;
+      const sourcePlanet = sourcePlanets?.find(planet =>
+        planet.planetOrdinal === entry.sourcePlanetOrdinal);
+      if (identity === null || identity.locator.bodyIndex !== entry.publicLocator.bodyIndex ||
+          identity.planetOrdinal !== Number(entry.publicLocator.bodyIndex) + 1 ||
+          sourcePlanet !== entry.planet || !Number.isFinite(entry.planet.massEarth) ||
+          entry.planet.massEarth <= 0) {
         throw new Error('Physical planet and scientific resolver disagree.');
       }
       if (entry.host === 'AB') {

@@ -5,6 +5,7 @@ import {
   type UniverseBackupSnapshot,
 } from '../../../domain/backup/genesis-backup';
 
+
 import {
   type DiscoveryEntity,
 } from '../entity/discovery.entity';
@@ -122,17 +123,12 @@ export class DexieGenesisBackupService
       );
     }
 
-    const snapshot:
-      GenesisBackupSnapshot =
-      {
-        formatVersion:
-          BackupFormatVersion.V1.code,
-
-        exportedAtEpochMs:
-          this.clock(),
-
-        universes,
-      };
+    // VIDA.0: portable exports contain gameplay only, never retired 33.F biospheres.
+    const snapshot: GenesisBackupSnapshot = {
+      formatVersion: BackupFormatVersion.V1.code,
+      exportedAtEpochMs: this.clock(),
+      universes,
+    };
 
     return this.validator
       .validate(
@@ -375,6 +371,8 @@ export class DexieGenesisBackupService
           this.database.observations,
           this.database.progress,
           this.database.galaxyKnowledgeSnapshots,
+          this.database.privateMicrobialBiospheres,
+          this.database.privateEcologicalBiospheres,
         ],
 
         async () => {
@@ -402,6 +400,9 @@ export class DexieGenesisBackupService
             this.database
               .galaxyKnowledgeSnapshots
               .clear(),
+
+            this.database.privateMicrobialBiospheres.clear(),
+            this.database.privateEcologicalBiospheres.clear(),
 
             this.database
               .universes
@@ -538,6 +539,7 @@ export class DexieGenesisBackupService
           identity,
         )
         .toArray();
+
 
     galaxies.sort(
       (

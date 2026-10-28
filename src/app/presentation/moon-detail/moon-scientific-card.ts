@@ -1,3 +1,18 @@
+import { moonVida9aAudit } from '../scientific/vida9a-physical-biology-audit-adapter';
+import type { Vida9aAuditResult } from '../scientific/vida9a-physical-biology-coherence';
+import { Vida2PhysicalInput } from '../../simulation/life/life-plausibility-physical-adapter-vida2';
+import type { Vida2WorldAssessment } from '../../simulation/life/life-plausibility-engine-vida2';
+import { ProceduralMicrobialLifeVIDA3 } from '../../simulation/life/procedural-microbial-life-vida3';
+import { ProceduralEcologyVIDA4 } from '../../simulation/life/procedural-ecology-vida4';
+import { Vida9BiologyExploration } from '../../simulation/life/vida9-biology-exploration';
+import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
+import { Vida8TechnologicalColonization } from '../../simulation/life/vida8-technological-colonization';
+import { Vida8LocalOriginDiscovery } from '../../simulation/life/vida8-local-origin-discovery';
+import type { Vida8ColonizationSnapshot } from '../../domain/life/vida8-technological-colonization';
+import { Vida6EcosystemsSpecies } from '../../simulation/life/vida6-ecosystems-species';
+import { Vida7IntelligenceCivilizations } from '../../simulation/life/vida7-intelligence-civilizations';
+import type { Vida7IntelligenceCivilizationSnapshot } from '../../domain/life/vida7-intelligence-civilizations';
+import type { Vida6EcosystemSnapshot } from '../../domain/life/vida6-ecosystems-species';
 import type { MinorMoonCharacterizationPRE3310 } from '../../domain/planetary/minor-moon-characterization-pre33-10';
 import { ObservedHabitabilityFiche31Fe, type ObservedHabitabilityFiche31Fe as ObservedHabitabilityFiche31FeModel } from '../scientific/observed-habitability-fiche-31-f-e';
 import {
@@ -65,6 +80,16 @@ export type MoonScientificFicheResolutionKind =
   ];
 
 export interface MoonScientificCardModel {
+  /** Ground Truth privado; ninguna de estas dos proyecciones es evidencia observada. */
+  readonly vida2?: Vida2WorldAssessment;
+  readonly privateEcosystemVIDA6?: Vida6EcosystemSnapshot;
+  /** Ground Truth privado. En luna sera NON_PLANET, sin habitantes inteligentes. */
+  readonly privateCivilizationVIDA7?: Vida7IntelligenceCivilizationSnapshot;
+  /** Private technology, never indigenous lunar civilization. */
+  readonly privateColonizationVIDA8?: Vida8ColonizationSnapshot;
+  /** VIDA.9: fully revealed only because parent system is CONFIRMED. */
+  readonly confirmedBiologyVIDA9?: Vida9BiologyRecord;
+  readonly coherenceAuditVIDA9a?: Vida9aAuditResult;
   readonly observedHabitability?: ObservedHabitabilityFiche31FeModel;
   readonly title:
     string;
@@ -326,11 +351,47 @@ export class MoonScientificCardAssembler {
         ) ??
       null;
 
+    const vida2 = systemModel.generatorVersionCode === 3 ? Vida2PhysicalInput.moon(target) : undefined;
+    const micro = vida2 ? ProceduralMicrobialLifeVIDA3.evaluate({
+      universeSeed:systemModel.universeSeed,generatorVersionCode:3,kind:'MOON',
+      galaxyIndex:systemModel.galaxyIndex.toString(),sectorKey:systemModel.sectorKey.toString(),
+      galacticObjectIndex:systemModel.galacticObjectIndex.toString(),
+      bodyIndex:bodyIndex.toString(),moonIndex:moonIndex.toString(),
+    },vida2) : undefined;
+    const ecology = micro ? ProceduralEcologyVIDA4.evaluate(micro) : undefined;
+    const privateEcosystemVIDA6 = micro && ecology
+      ? Vida6EcosystemsSpecies.evaluate(micro,ecology) : undefined;
+    const privateCivilizationVIDA7 = privateEcosystemVIDA6
+      ? Vida7IntelligenceCivilizations.evaluate(privateEcosystemVIDA6) : undefined;
+    const privateColonizationVIDA8 = privateEcosystemVIDA6 && privateCivilizationVIDA7 && vida2
+      ? Vida8TechnologicalColonization.evaluate({ecosystem:privateEcosystemVIDA6,
+          nativeCivilization:privateCivilizationVIDA7,physical:vida2,
+          solidSurface:true}, resolver===DEFAULT_TARGET_RESOLVER && hostPlanetTarget
+          ? Vida8LocalOriginDiscovery.findInSystem({
+              universeSeed:systemModel.universeSeed,generatorVersionCode:3,
+              galaxyIndex:systemModel.galaxyIndex.toString(),
+              sectorKey:systemModel.sectorKey.toString(),
+              galacticObjectIndex:systemModel.galacticObjectIndex.toString(),
+            },hostPlanetTarget.identity.hostPlanetCount,(index)=>
+              PlanetScientificTargetResolver.resolveDetailed(generationKey,
+                new BodyLocator(systemModel.galaxyIndex,systemModel.sectorKey,
+                  systemModel.galacticObjectIndex,index)),true) : [])
+      : undefined;
+
+    const confirmedBiologyVIDA9 = privateEcosystemVIDA6 && privateCivilizationVIDA7 && privateColonizationVIDA8
+      ? Vida9BiologyExploration.evaluate(privateEcosystemVIDA6,privateCivilizationVIDA7,privateColonizationVIDA8)
+      : undefined;
     return Object.freeze({
       kind:
         MoonScientificFicheResolutionKind.AVAILABLE,
       card:
         Object.freeze({
+          vida2,
+          privateEcosystemVIDA6,
+          privateCivilizationVIDA7,
+          privateColonizationVIDA8,
+          confirmedBiologyVIDA9,
+          coherenceAuditVIDA9a: confirmedBiologyVIDA9 ? moonVida9aAudit(target,confirmedBiologyVIDA9) : undefined,
           title:
             target.identity.designation,
           summary:

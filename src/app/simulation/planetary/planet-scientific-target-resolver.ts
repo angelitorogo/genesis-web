@@ -374,6 +374,8 @@ export interface PlanetScientificDetailSource {
       surfaceRadiationExposureIndex01: number | null;
       surfaceRadiationProtectionIndex01: number | null;
       hasEffectiveSurfaceRadiationProtection: boolean;
+      /** Diagnostic for a non-converged legacy PRE-33.02 phase, never a certified absence of H2O. */
+      pre33WaterPhaseLimitation?: 'NON_CONVERGED_PHASE_MODEL' | null;
       h2oCT0Ledger?: Readonly<{
         status: 'UNRESOLVED_NO_DATED_HISTORY' | 'MODELED_CT0_BALANCE_CONDITIONAL';
         modeledCarrierH2OKilograms: number;
@@ -599,9 +601,29 @@ export class PlanetScientificTargetResolver {
     // 26.4 projects; it does not call any generator or extend the public card.
     const internalHabitability = HabitabilityPhysicalIntegration31Fb.assessMaterialized(
       planet, atmosphere, moonSystem);
-    // Internal CT-0 structural hypothesis only, never observed ocean evidence.
-    const deepStructure = PlanetDeepOceanEnvelopeEnginePRE3303B.project(planet, atmosphere);
-    const ct0Ledger = PlanetH2OCT0InventoryEnginePRE3303A3.project(planet, atmosphere, undefined, undefined, deepStructure);
+    // PRE-33.03's *conditional* water scenarios require a converged phase-20
+    // mixture. A non-converged V3 atmosphere is an unresolved scientific
+    // submodel, not a reason to hide the already generated planet, its orbit,
+    // its moon identities or the rest of the confirmed system. The PRE-33
+    // engines themselves remain strict; do not fabricate an H2O budget.
+    let deepStructure: ReturnType<typeof PlanetDeepOceanEnvelopeEnginePRE3303B.project> | null = null;
+    let ct0Ledger: ReturnType<typeof PlanetH2OCT0InventoryEnginePRE3303A3.project> | null = null;
+    let pre33WaterPhaseLimitation: 'NON_CONVERGED_PHASE_MODEL' | null = null;
+    try {
+      deepStructure = PlanetDeepOceanEnvelopeEnginePRE3303B.project(planet, atmosphere);
+      ct0Ledger = PlanetH2OCT0InventoryEnginePRE3303A3.project(
+        planet, atmosphere, undefined, undefined, deepStructure);
+    } catch (error: unknown) {
+      if (publicGeneratorVersionCode !== 3 || !(error instanceof RangeError) ||
+          error.message !==
+            'PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL') {
+        throw error;
+      }
+      // Keep all legacy PRE-33.03 water quantities explicitly unavailable.
+      deepStructure = null;
+      ct0Ledger = null;
+      pre33WaterPhaseLimitation = 'NON_CONVERGED_PHASE_MODEL';
+    }
     // V3 sources were created at the 17.7 -> 18 handoff, before 19.5.
     // V1/V2 without a registered origin keep their previously frozen projection.
     const originDisk = PlanetH2OV3FormationOrigin.environmentForPlanet(planet, atmosphere);
@@ -613,7 +635,7 @@ export class PlanetScientificTargetResolver {
       : null;
     const planetRadiationPRE3308 = publicGeneratorVersionCode===3
       ? RadiationTransportEnginePRE3308.world({bodyKind:'PLANET',
-          hasSolidSurface:deepStructure.envelope.hasExposedSolidSurface,
+          hasSolidSurface:deepStructure?.envelope.hasExposedSolidSurface ?? planet.hasDefinedSolidSurfaceBase,
           surfaceGravityEarth:planet.surfaceGravityEarth, atmosphericClosure:atmosphereClosurePRE3306}) : null;
     const planetGeochemistryPRE3307 = publicGeneratorVersionCode===3
       ? GeochemistryWorldPRE3307.planet(planet,atmosphereClosurePRE3306,forwardH2O) : null;
@@ -723,7 +745,8 @@ export class PlanetScientificTargetResolver {
                 atmosphere.surfaceRadiationProtectionIndex01,
               hasEffectiveSurfaceRadiationProtection:
                 atmosphere.hasEffectiveSurfaceRadiationProtection,
-              h2oCT0Ledger: Object.freeze({
+              ...(pre33WaterPhaseLimitation === null ? {} : {pre33WaterPhaseLimitation}),
+              h2oCT0Ledger: ct0Ledger === null ? undefined : Object.freeze({
                 // CT0 forward V3 model supersedes the legacy 19.5-origin
                 // reconciliation in the projected status only. The legacy
                 // domain result is preserved as a separate reference.
@@ -750,7 +773,7 @@ export class PlanetScientificTargetResolver {
                 physicalInventoryCertified: ct0Ledger.physicalCT0InventoryCertified,
                 oceanCertified: ct0Ledger.oceanExistenceCertified,
               }),
-              deepStructureScenario: Object.freeze({
+              deepStructureScenario: deepStructure === null ? undefined : Object.freeze({
                 status: deepStructure.candidateWaterShell.status,
                 layerMinMeters: deepStructure.candidateWaterShell.geometryBracket.length
                   ? Math.min(...deepStructure.candidateWaterShell.geometryBracket.map(g => g.waterLayerThicknessMeters)) : null,

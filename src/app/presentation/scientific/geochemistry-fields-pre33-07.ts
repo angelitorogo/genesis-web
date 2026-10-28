@@ -11,7 +11,7 @@ export function geoChemicalFieldsPRE3307(g:GeochemistryPRE3307|null):readonly Ge
   if(!g)return [];
   const solvent=g.niche.solventState==='MODELLED_LIQUID_CT0'
     ? `${g.niche.solvent} líquido modelado CT-0` : g.niche.solventState==='NOT_MODELLED'
-    ? 'Sin fase líquida de H₂O en el modelo CT-0' : 'Solvente/fase no resueltos';
+    ? 'Sin fase líquida modelada para este nicho PRE-33.07' : 'Solvente/fase no resueltos en este nicho PRE-33.07';
   const power=g.quantifiedPathwayPowerWatts===null?'No evaluable: faltan tasas y/o actividades'
     :`${fmt(g.quantifiedPathwayPowerWatts)} W (única ruta cuantificada)`;
   const resolved=g.reactions.filter(r=>r.status==='POWER_MODELLED_CT0').length;
@@ -21,7 +21,7 @@ export function geoChemicalFieldsPRE3307(g:GeochemistryPRE3307|null):readonly Ge
   const description=sensitivity?`${sensitivity.status} · ${sensitivity.physicalContact}`:'Sin inventario mineral de formación';
   return Object.freeze([
     {label:'PRE-33.07 — Solvente y nicho físico',value:solvent,
-      note:`${g.niche.niche}. Sin suponer agua como único solvente universal; otras fases requieren composición propia.`},
+      note:`${g.niche.niche}. Este resultado describe exclusivamente el nicho geoquímico evaluado, no los mares u océanos globales. Sin suponer agua como único solvente universal.`},
     {label:'PRE-33.07 — Reactivos y contacto',value:
       `${g.inventorySourceIds.length} fuentes de inventario; contacto agua-roca: ${g.niche.waterRockContact}`,
       note:'Una masa de H₂O o silicatos no identifica actividades, mineralogía reactiva ni una velocidad de reacción.'},
@@ -31,8 +31,8 @@ export function geoChemicalFieldsPRE3307(g:GeochemistryPRE3307|null):readonly Ge
     {label:'PRE-33.07 — Potencia química exergónica (ruta)',value:power,
       note:'P = max(0, −ΔG) × mol/s, solo para una ruta con especies, actividades, termodinámica y tasa. No es energía térmica, Carnot, ATP ni vida certificada.'},
     {label:'PRE-33.07 — Inventario mineral y transporte V3',value:description,
-      note:sensitivity?`Agua: ${sensitivity.liquidWaterKilograms===null?'no resuelta':fmt(sensitivity.liquidWaterKilograms)+' kg'}; silicatos: ${sensitivity.silicateRockKilograms===null?'no resueltos':fmt(sensitivity.silicateRockKilograms)+' kg'}. Se conserva la separación física océano-roca.`:
-        'No existen fuentes suficientes para evaluar la sensibilidad mineral.'},
+      note:sensitivity?`Agua: ${sensitivity.liquidWaterKilograms===null?'no resuelta':fmt(sensitivity.liquidWaterKilograms)+' kg'}; silicatos: ${sensitivity.silicateRockKilograms===null?'no resueltos':fmt(sensitivity.silicateRockKilograms)+' kg'}. Inventario líquido de la ruta PRE-33.07, NO masa total de mares ni océanos superficiales. Se conserva la separación física océano-roca.`:
+        'No hay inventario líquido resuelto para esta ruta; no permite inferir ausencia de océanos ni de vida.'},
     {label:'PRE-33.07 — Límite geoquímico condicional',value:bound===null||bound===undefined
       ?'No evaluable con el dominio y fuentes disponibles':
       `0 a ${fmt(bound)} W · escenario de sensibilidad, NO potencia física resuelta`,

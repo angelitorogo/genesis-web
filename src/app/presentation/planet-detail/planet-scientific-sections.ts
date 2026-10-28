@@ -1,3 +1,4 @@
+import type { Vida5AtmosphericFeedback } from '../../domain/life/vida5-biogenic-atmosphere';
 import { environmentalContinuityFieldsPRE3309 } from '../scientific/environmental-continuity-fields-pre33-09';
 import { geoChemicalFieldsPRE3307 } from '../scientific/geochemistry-fields-pre33-07';
 import { radiationFieldsPRE3308 } from '../scientific/radiation-fields-pre33-08';
@@ -87,6 +88,9 @@ export interface PlanetScientificSectionsModel {
   readonly relevantMoons:
     readonly PlanetScientificMoonCardModel[];
 
+  /** Total declarado, incluso si ningún satélite tiene caracterización individual. */
+  readonly totalMoonCount?: number;
+
   /** PRE-33.10b: merged ordered V3 list for the expandable fiches. */
   readonly allMoons: readonly PlanetScientificMoonListEntry[];
 
@@ -146,6 +150,7 @@ export class PlanetScientificSectionsAssembler {
   static build(
     target:
       PlanetScientificResolvedTarget,
+    atmosphericFeedbackVIDA5?: Vida5AtmosphericFeedback,
   ): PlanetScientificSectionsModel {
 
     const detail =
@@ -281,9 +286,11 @@ export class PlanetScientificSectionsAssembler {
           ),
           atmosphereSection(
             detail,
+            atmosphericFeedbackVIDA5,
           ),
           climateSection(
             detail,
+            atmosphericFeedbackVIDA5,
           ),
           geologySection(
             detail,
@@ -297,6 +304,7 @@ export class PlanetScientificSectionsAssembler {
         ])),
       comparison,
       relevantMoons,
+      totalMoonCount: detail.moons.moonCount,
       allMoons,
       relevantMoonsEmptyMessage:
         detail.moons.moonCount ===
@@ -346,9 +354,11 @@ function generalSection(
       field(
         'Periodo de rotación',
         planetRotationHoursAndDays(general.rotationPeriodHours),
-        general.isRetrogradeRotation
-          ? 'Rotación retrógrada'
-          : 'Rotación prógrada',
+        general.isTidallySynchronized
+          ? 'Periodo de giro sobre su eje (sideral). Rotación sincronizada por marea; la duración del día solar no está determinada en este modelo.'
+          : general.isRetrogradeRotation
+            ? 'Periodo de giro sobre su eje (sideral), retrógrado; no equivale necesariamente a la duración del día solar.'
+            : 'Periodo de giro sobre su eje (sideral), prógrado; no equivale necesariamente a la duración del día solar.',
       ),
       field(
         'Duración del día',
@@ -584,6 +594,7 @@ function surfaceSection(
 function atmosphereSection(
   detail:
     PlanetScientificDetailSource,
+  feedback?: Vida5AtmosphericFeedback,
 ): PlanetScientificSectionModel {
 
   const atmosphere =
@@ -600,21 +611,21 @@ function atmosphereSection(
         labelPressureRegime(
           atmosphere.pressureRegime,
         ),
-        'Clasificación de la atmósfera potencial antes de escape y condensación.',
+        null,
       ),
       field(
         'Régimen gaseoso actual',
         labelPressureRegime(
           atmosphere.retainedPressureRegime,
         ),
-        'Clasificación de la presión gaseosa final tras retención y equilibrio de condensación.',
+        null,
       ),
       field(
         'Presión superficial gaseosa',
         planetPressurePaBarEarth(
           atmosphere.retainedSurfacePressurePascal,
         ),
-        'Estado final tras escape atmosférico y equilibrio de condensación multiespecie.',
+        null,
       ),
       field(
         'Retención de volátiles',
@@ -657,6 +668,17 @@ function atmosphereSection(
             ? 'Envolvente profunda'
             : 'Atmósfera retenida',
       ),
+      ...(feedback?.status === 'APPLIED' ? [
+        field('Oxígeno atmosférico (VIDA.5)',
+          `${formatPercent(feedback.oxygenFraction01 ?? 0)} · presión parcial ${DECIMAL_1.format((feedback.oxygenPartialPressurePascal ?? 0)/1000)} kPa`,
+          'Equilibrio biogeoquímico procedural posterior al estado físico PRE-33; no demuestra observación ni detección directa de vida.'),
+        field('Reequilibrio de presión (VIDA.5)',
+          `${DECIMAL_2.format(feedback.pressureBalanceFactor ?? 1)} × respecto al cierre de columna`,
+          'Escenario simplificado de intercambio de volátiles con superficie y océanos; la presión física original se conserva como referencia.'),
+      ] : feedback?.status === 'UNRESOLVED_PHYSICAL_BUDGET' ? [
+        field('Coherencia biogeoquímica (VIDA.5)', 'Potencial ecológico sin estabilización atmosférica',
+          'El escenario físico actual no permite acreditar vegetación estable, fauna aerobia avanzada ni civilización. No se inventa oxígeno ni presión.'),
+      ] : []),
       ...atmosphereClosureFieldsPRE3306(atmosphere.closurePRE3306 ?? null),
     ],
   );
@@ -665,6 +687,7 @@ function atmosphereSection(
 function climateSection(
   detail:
     PlanetScientificDetailSource,
+  feedback?: Vida5AtmosphericFeedback,
 ): PlanetScientificSectionModel {
 
   const climate =
@@ -695,6 +718,11 @@ function climateSection(
           ? 'No determinado'
           : planetTemperatureDifference(climate.greenhouseSurfaceWarmingKelvin),
       ),
+      ...(feedback?.status === 'APPLIED' ? [
+        field('Respuesta climática estimada (VIDA.5)',
+          `${feedback.climateDeltaKelvin >= 0 ? '+' : ''}${DECIMAL_2.format(feedback.climateDeltaKelvin)} K`,
+          'Corrección térmica limitada por la disminución de CO₂; no es una nueva simulación radiativa completa.'),
+      ] : []),
       field(
         'Estabilidad climática',
         labelClimateStability(
@@ -843,7 +871,7 @@ function moonsSection(
 
   return section(
     'moons',
-    'SECCIÓN 07',
+    'SECCIÓN 08',
     'Lunas',
     'Población de satélites naturales asociados al planeta y caracterización de los cuerpos más relevantes.',
     [
@@ -895,7 +923,7 @@ function comparisonSection(
 
   return section(
     'comparison',
-    'SECCIÓN 08',
+    'SECCIÓN 09',
     'Comparación con la Tierra',
     'Comparación adimensional con la Tierra y escala lineal de tamaño basada en el radio físico ya determinado.',
     [

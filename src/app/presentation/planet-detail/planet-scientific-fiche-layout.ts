@@ -11,7 +11,7 @@ import {
 export const PLANET_FICHE_FIELD_LAYOUT = Object.freeze({
   general: [
     'Tipo planetario', 'Masa', 'Radio', 'Densidad media', 'Gravedad superficial',
-    'Periodo de rotación', 'Duración del día', 'Inclinación axial', 'Composición interna',
+    'Periodo de rotación', 'Inclinación axial', 'Composición interna',
   ],
   orbit: [
     'Semieje mayor', 'Excentricidad', 'Inclinación', 'Periastro', 'Apoastro',
@@ -21,7 +21,7 @@ export const PLANET_FICHE_FIELD_LAYOUT = Object.freeze({
   surface: [
     'Base superficial', 'Índice de rugosidad', 'Índice de inventario de agua',
     'Agua líquida superficial', 'Distribución hielo / líquido / vapor',
-    'Cobertura de hielo', 'Cobertura de agua', 'Capas profundas y envoltura (hipótesis)', 'Radiación superficial', 'Protección radiativa',
+    'Cobertura de hielo', 'Cobertura de agua', 'Radiación superficial',
   ],
   atmosphere: [
     'Régimen potencial inicial', 'Régimen gaseoso actual', 'Presión superficial gaseosa',
@@ -52,9 +52,9 @@ export const PLANET_FICHE_SECTION_METADATA = Object.freeze({
     summary:'Balance térmico global, efecto invernadero, variabilidad y redistribución de calor.'}),
   geology: Object.freeze({eyebrow:'SECCIÓN 06',title:'Geología',
     summary:'Actividad interna, vulcanismo, tectónica y protección magnetosférica.'}),
-  moons: Object.freeze({eyebrow:'SECCIÓN 07',title:'Lunas',
+  moons: Object.freeze({eyebrow:'SECCIÓN 08',title:'Lunas',
     summary:'Población de satélites naturales asociados al planeta y caracterización de los cuerpos más relevantes.'}),
-  comparison: Object.freeze({eyebrow:'SECCIÓN 08',title:'Comparación con la Tierra',
+  comparison: Object.freeze({eyebrow:'SECCIÓN 09',title:'Comparación con la Tierra',
     summary:'Comparación adimensional con la Tierra y escala lineal de tamaño basada en el radio físico ya determinado.'}),
 } as const);
 
@@ -121,14 +121,9 @@ export function unifyPlanetFicheSections(
         note: source?.note ?? null,
       });
     });
-    // PRE-33.07: preserve the new geo-chemical fields only when V3 actually
-    // supplies them. Do NOT create 'No determinado' placeholders on V1/V2.
-    const chemicalV3 = section.id === 'geology'
-      ? section.fields.filter(field => field.label.startsWith('PRE-33.07 — ')) : [];
-    const radiationV3 = section.id === 'surface'
-      ? section.fields.filter(field => field.label.startsWith('PRE-33.08 — ')) : [];
-    const continuityV3 = section.id === 'climate'
-      ? section.fields.filter(field => field.label.startsWith('PRE-33.09 — ')) : [];
-    return Object.freeze({ ...section, ...meta, fields: Object.freeze([...fields, ...chemicalV3, ...radiationV3, ...continuityV3]) });
+    // VIDA.9b: keep the scientific engines untouched, but publish only the
+    // approved compact fields. Extended PRE-33 diagnostics live in their own
+    // scientific contracts; they are not pasted back into this game-facing fiche.
+    return Object.freeze({ ...section, ...meta, fields: Object.freeze(fields) });
   }));
 }

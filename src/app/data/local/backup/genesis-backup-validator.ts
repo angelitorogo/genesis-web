@@ -33,6 +33,7 @@ import {
   UniverseSeed,
 } from '../../../domain/universe/universe-seed';
 
+
 import {
   type DiscoveryEntity,
 } from '../entity/discovery.entity';
@@ -112,10 +113,8 @@ export class GenesisBackupValidator {
         'backup.formatVersion',
       );
 
-    if (
-      formatVersion !==
-      BackupFormatVersion.V1.code
-    ) {
+    if (formatVersion !== BackupFormatVersion.V1.code &&
+        formatVersion !== BackupFormatVersion.V2.code) {
       throw new GenesisBackupValidationError(
         `Unsupported backup formatVersion: ${formatVersion}.`,
       );
@@ -150,12 +149,12 @@ export class GenesisBackupValidator {
             `backup.universes[${index}]`,
             universeKeys,
             observationIds,
+            formatVersion,
           ),
       );
 
     return {
-      formatVersion:
-        BackupFormatVersion.V1.code,
+      formatVersion: formatVersion as 1 | 2,
 
       exportedAtEpochMs,
 
@@ -175,6 +174,7 @@ export class GenesisBackupValidator {
 
     observationIds:
       Set<string>,
+    formatVersion: number,
   ): UniverseBackupSnapshot {
 
     const value =
@@ -195,6 +195,7 @@ export class GenesisBackupValidator {
         'discoveries',
         'observations',
         'progress',
+        ...(formatVersion === 2 ? ['privateBiospheres'] : []),
       ],
       path,
     );
@@ -367,6 +368,13 @@ export class GenesisBackupValidator {
               progressKeys,
             ),
         );
+
+    // Legacy portable V2 backups may contain the retired 33.F biology field.
+    // Validate it as an array for format compatibility, then intentionally discard it.
+    // We restore only the gameplay universe, observations, exploration and progress.
+    if (formatVersion === BackupFormatVersion.V2.code) {
+      requireArray(value['privateBiospheres'], `${path}.privateBiospheres`);
+    }
 
     return {
       universeSeed,

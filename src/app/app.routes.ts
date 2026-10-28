@@ -50,6 +50,18 @@ export const genesisRoutes: Routes = [
     title: 'Ficha de asteroide / cometa | GENESIS',
   },
   {
+    path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/planet/:bodyIndex/moon/:moonIndex/species/:speciesId',
+    loadComponent: () => import('./presentation/life-species-detail/life-species-detail')
+      .then(module => module.LifeSpeciesDetailPage),
+    title: 'Ficha de especie lunar | GENESIS',
+  },
+  {
+    path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/planet/:bodyIndex/species/:speciesId',
+    loadComponent: () => import('./presentation/life-species-detail/life-species-detail')
+      .then(module => module.LifeSpeciesDetailPage),
+    title: 'Ficha de especie | GENESIS',
+  },
+  {
     path: 'system/:galaxyIndex/:sectorKey/:galacticObjectIndex/planet/:bodyIndex/moon/:moonIndex',
     loadComponent: () =>
       import(

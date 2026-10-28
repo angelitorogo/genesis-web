@@ -212,6 +212,8 @@ export class DexieUniverseRepository
         this.database.observations,
         this.database.progress,
         this.database.galaxyKnowledgeSnapshots,
+        this.database.privateMicrobialBiospheres,
+        this.database.privateEcologicalBiospheres,
         ],
 
         async () => {
@@ -289,6 +291,14 @@ export class DexieUniverseRepository
               generatorVersionCode,
             ])
             .delete();
+
+
+          await this.database.privateMicrobialBiospheres
+            .where('[universeSeed+generatorVersionCode]')
+            .equals([universeSeed, generatorVersionCode]).delete();
+          await this.database.privateEcologicalBiospheres
+            .where('[universeSeed+generatorVersionCode]')
+            .equals([universeSeed, generatorVersionCode]).delete();
 
           await this.database
             .universes

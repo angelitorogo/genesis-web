@@ -1,4 +1,8 @@
+import { resolveEffectivePlanetVIDA5, safeCatalogPlanetProjectionV3 } from './galaxy-catalog-effective-planet-vida5';
+import { PlanetScientificTargetResolver, type PlanetScientificResolvedTarget } from '../../simulation/planetary/planet-scientific-target-resolver';
+import { StellarMultihostScientificTargetResolver } from '../../simulation/stellar/stellar-multihost-scientific-target-resolver';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
+import { Vida9ConfirmedSystemBiologyIndexer } from './vida9-confirmed-system-biology-indexer';
 import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
 import { InjectionToken } from '@angular/core';
 import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
@@ -103,6 +107,8 @@ export interface GalaxyKnowledgePlanetMoonCatalogSnapshot {
   readonly moons: readonly GalaxyKnowledgeMoonCatalogEntry[];
   readonly unmaterializedMinorMoonCount: bigint;
   readonly atmosphereProjectionVersion?: 1;
+  /** V3: public values already include the VIDA.5 biogenic atmosphere, not PRE-VIDA.5. */
+  readonly effectivePhysicalProjectionVIDA5?: 1 | 2;
   readonly identityCoveragePRE3310?: 1;
 }
 
@@ -121,6 +127,9 @@ export const GALAXY_PLANET_MOON_CATALOG_SNAPSHOT_RUNTIME =
       providedIn: 'root',
       factory: () => new DexieGalaxyPlanetMoonCatalogSnapshotRuntime(
         new DexieGalaxyKnowledgeSnapshotRepository(new GenesisIndexedDb()),
+        Date.now,
+        buildGalaxyPlanetMoonCatalogSnapshot,
+        new Vida9ConfirmedSystemBiologyIndexer(new GenesisIndexedDb()),
       ),
     },
   );
@@ -146,12 +155,18 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
   implements GalaxyPlanetMoonCatalogSnapshotRuntime {
 
   private hotSnapshot: GalaxyPlanetMoonHotSnapshot | null = null;
+  // VIDA.9 is independent of the legacy 33.F.3 biosphere production system,
+  // which VIDA.0 intentionally retired. Background writes never block reads.
+  private readonly vida9Pending = new Map<string, Promise<void>>();
+  private readonly vida9Completed = new Set<string>();
+  private vida9Queue: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly repository: GalaxyKnowledgeSnapshotRepository,
     private readonly clock: () => number = Date.now,
     private readonly builder: typeof buildGalaxyPlanetMoonCatalogSnapshot =
       buildGalaxyPlanetMoonCatalogSnapshot,
+    private readonly vida9Indexer: Pick<Vida9ConfirmedSystemBiologyIndexer, 'ensureConfirmedCatalog'> | null = null,
   ) {}
 
   async resolve(
@@ -159,6 +174,7 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
     galaxyIndex: bigint,
     knownDiscoveries: readonly KnownDiscovery[],
   ): Promise<GalaxyKnowledgePlanetMoonCatalogSnapshot> {
+    // Resolve the public knowledge-safe catalogue independently of biology.
     const knowledgeRevision = galaxyKnowledgeRevision(galaxyIndex, knownDiscoveries);
     if (
       this.hotSnapshot !== null &&
@@ -166,6 +182,7 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
       this.hotSnapshot.knowledgeRevision === knowledgeRevision &&
       this.hotSnapshot.generationKey.equals(generationKey)
     ) {
+      this.scheduleVida9(generationKey, this.hotSnapshot.snapshot, knowledgeRevision, knownDiscoveries);
       return this.hotSnapshot.snapshot;
     }
 
@@ -181,6 +198,8 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
       existing.planetMoonCatalogJson !== undefined
       && JSON.parse(existing.planetMoonCatalogJson).atmosphereProjectionVersion === 1
       && (generationKey.generatorVersion !== GeneratorVersion.V3 ||
+        JSON.parse(existing.planetMoonCatalogJson).effectivePhysicalProjectionVIDA5 === 2)
+      && (generationKey.generatorVersion !== GeneratorVersion.V3 ||
         JSON.parse(existing.planetMoonCatalogJson).identityCoveragePRE3310 === 1)
     ) {
       const snapshot = restoreSnapshot(existing.planetMoonCatalogJson);
@@ -190,6 +209,7 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
         knowledgeRevision,
         snapshot,
       });
+      this.scheduleVida9(generationKey, snapshot, knowledgeRevision, knownDiscoveries);
       return snapshot;
     }
 
@@ -216,8 +236,46 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
       knowledgeRevision,
       snapshot,
     });
+    this.scheduleVida9(generationKey, snapshot, knowledgeRevision, knownDiscoveries);
     return snapshot;
   }
+
+  /** Writes private VIDA.9 records only after the public catalogue is available. */
+  private scheduleVida9(
+    generationKey: UniverseGenerationKey,
+    snapshot: GalaxyKnowledgePlanetMoonCatalogSnapshot,
+    knowledgeRevision: string,
+    knownDiscoveries: readonly KnownDiscovery[],
+  ): void {
+    if (this.vida9Indexer === null || generationKey.generatorVersion !== GeneratorVersion.V3 ||
+      !(snapshot.planets.some(planet => planet.stateName === 'CONFIRMED') ||
+        snapshot.moons.some(moon => moon.stateName === 'CONFIRMED'))) return;
+    // Trust the canonical confirmed *system*, not only a stale or test catalogue.
+    if (!canonicalGalaxyKnownDiscoveries(generationKey, snapshot.galaxyIndex, knownDiscoveries)
+      .some(discovery => discovery.locator instanceof SystemLocator &&
+        discovery.state.code >= DiscoveryState.CONFIRMED.code)) return;
+
+    const taskKey = [generationKey.universeSeed.serialize(), generationKey.generatorVersionCode,
+      snapshot.galaxyIndex.toString(10), knowledgeRevision].join('|');
+    if (this.vida9Pending.has(taskKey) || this.vida9Completed.has(taskKey)) return;
+
+    const stableKey = generationKey.copy();
+    const indexer = this.vida9Indexer;
+    const work = this.vida9Queue.then(async () => {
+      // Yield a browser task before procedural materialization / IndexedDB writes.
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+      await indexer.ensureConfirmedCatalog(stableKey, snapshot);
+      this.vida9Completed.add(taskKey);
+    }).catch((error: unknown) => {
+      // A failed materialization may retry on the next resolve; public state is untouched.
+      console.error('VIDA.9: persistencia biológica pendiente. El catálogo continúa disponible.', error);
+    }).finally(() => {
+      this.vida9Pending.delete(taskKey);
+    });
+    this.vida9Pending.set(taskKey, work);
+    this.vida9Queue = work;
+  }
+
 }
 
 export function buildGalaxyPlanetMoonCatalogSnapshot(
@@ -298,7 +356,9 @@ export function buildGalaxyPlanetMoonCatalogSnapshot(
     moons: Object.freeze(moons),
     unmaterializedMinorMoonCount,
     atmosphereProjectionVersion: 1 as const,
-    ...(generationKey.generatorVersion === GeneratorVersion.V3 ? { identityCoveragePRE3310: 1 as const } : {}),
+    ...(generationKey.generatorVersion === GeneratorVersion.V3
+      ? { identityCoveragePRE3310: 1 as const, effectivePhysicalProjectionVIDA5: 2 as const }
+      : {}),
   });
 }
 
@@ -355,14 +415,14 @@ function projectConfirmedSystem(
   const multiple = StellarMultihostFormation.generateOrNull(generationKey, locator);
 
   if (multiple !== null) {
-    return projectMultipleSystem(systemDesignation, locator, multiple, generationKey.generatorVersion === GeneratorVersion.V3);
+    return projectMultipleSystem(systemDesignation, locator, multiple, generationKey);
   }
 
   const single = StellarMultihostFormation.generateSingleOrNull(generationKey, locator);
   if (single === null) {
     throw new Error('CONFIRMED system could not resolve its physical host for 26.1c.3.');
   }
-  return projectSingleSystem(systemDesignation, locator, single, generationKey.generatorVersion === GeneratorVersion.V3);
+  return projectSingleSystem(systemDesignation, locator, single, generationKey);
 }
 
 /** PRE-33.10: catalog the identity without evaluating physics on galaxy listing. */
@@ -388,8 +448,9 @@ function projectSingleSystem(
   systemDesignation: string,
   locator: SystemLocator,
   single: GeneratedSingleHost,
-  v3 = false,
+  generationKey: UniverseGenerationKey,
 ): ProjectedSystemCatalog {
+  const v3 = generationKey.generatorVersion === GeneratorVersion.V3;
   const planets: GalaxyKnowledgePlanetCatalogEntry[] = [];
   const moons: GalaxyKnowledgeMoonCatalogEntry[] = [];
   let unmaterializedMinorMoonCount = 0n;
@@ -415,6 +476,24 @@ function projectSingleSystem(
       BigInt(index),
     );
 
+    // V3 public identity is backed by an already materialized private V1
+    // planet/atmosphere/moon source. Never call legacy resolveDetailed(V3).
+    // PRE-33.03 is a strict per-planet physical diagnostic. A failed phase
+    // model must not abort the whole confirmed system/galaxy catalogue.
+    // Keep the public body's identity and independent basic physical fields;
+    // never substitute PRE-VIDA.5 temperature/atmosphere for unresolved CT-0.
+    const publicSource = v3 && single.planetarySystem !== null
+      ? safeCatalogPlanetProjectionV3(() => PlanetScientificTargetResolver.projectGenerated(Object.freeze({
+          locator: publicLocator,
+          planetOrdinal: index + 1,
+          designation: planet.designation.name,
+          hostSystemDesignation: systemDesignation,
+          orbitTopology: single.planetarySystem!.architecture.orbitTopology,
+          hostPlanetCount: single.planets.length,
+        }), planet, atmosphere, moonSystem, Object.freeze({
+          physical: single.physical, lifetime: single.lifetime,
+        }), undefined, generationKey.generatorVersionCode))
+      : undefined;
     planets.push(projectStandardPlanet(
       publicLocator,
       locator,
@@ -424,6 +503,8 @@ function projectSingleSystem(
       'SINGLE_HOST',
       planet,
       atmosphere,
+      generationKey,
+      publicSource,
     ));
 
     unmaterializedMinorMoonCount += BigInt(moonSystem.unmaterializedMinorMoonCount);
@@ -486,12 +567,19 @@ function projectMultipleSystem(
   systemDesignation: string,
   locator: SystemLocator,
   multiple: GeneratedMultipleHost,
-  v3 = false,
+  generationKey: UniverseGenerationKey,
 ): ProjectedSystemCatalog {
+  const v3 = generationKey.generatorVersion === GeneratorVersion.V3;
+  // Same public ordinal/host mapping as system and planet scientific fiches.
+  // The resolver receives the already-generated multihost aggregate.
+  const scientific = v3 ? new StellarMultihostScientificTargetResolver(multiple) : null;
   const planets = multiple.publicPlanets.map(entry => projectMultiplePlanet(
     systemDesignation,
     locator,
     entry,
+    generationKey,
+    scientific ? safeCatalogPlanetProjectionV3(() => scientific.resolveDetailed(
+      generationKey, entry.publicLocator)) : undefined,
   ));
   const publicIndex = StellarMultihostPublicTargetIndex.build(multiple);
   const moons: GalaxyKnowledgeMoonCatalogEntry[] = [];
@@ -546,6 +634,8 @@ function projectMultiplePlanet(
   systemDesignation: string,
   locator: SystemLocator,
   entry: GeneratedPublicPlanet,
+  generationKey: UniverseGenerationKey,
+  publicSource?: PlanetScientificResolvedTarget | null,
 ): GalaxyKnowledgePlanetCatalogEntry {
   return projectStandardPlanet(
     entry.publicLocator,
@@ -560,6 +650,8 @@ function projectMultiplePlanet(
     entry.host === 'AB' ? 'P_TYPE' : 'S_TYPE',
     entry.planet,
     entry.atmosphere,
+    generationKey,
+    publicSource,
   );
 }
 
@@ -572,7 +664,14 @@ function projectStandardPlanet(
   orbitClass: 'SINGLE_HOST' | 'S_TYPE' | 'P_TYPE',
   planet: GeneratedSingleHost['planets'][number],
   atmosphere: GeneratedSingleHost['atmospheres'][number],
+  generationKey: UniverseGenerationKey,
+  publicSource?: PlanetScientificResolvedTarget | null,
 ): GalaxyKnowledgePlanetCatalogEntry {
+  // Only actual V3 CONFIRMED planets: V1/V2 and compact/post-collapse scenarios
+  // retain their previous knowledge/evidence contract. No new discoveries.
+  const effective = generationKey.generatorVersion === GeneratorVersion.V3
+    ? publicSource ? resolveEffectivePlanetVIDA5(generationKey, locator, publicSource) : null
+    : undefined;
   return Object.freeze({
     id: bodyLocatorLabel(locator),
     locator,
@@ -587,10 +686,16 @@ function projectStandardPlanet(
     radiusEarth: planet.radiusEarth,
     semiMajorAxisAu: planet.orbit.semiMajorAxisAu,
     orbitalPeriodDays: planet.orbitalPeriod.periodDays,
-    meanSurfaceTemperatureKelvin: atmosphere.meanSurfaceTemperatureKelvin,
+    // Null is preferable to a misleading PRE-VIDA.5 reading when a V3
+    // physical target cannot be reconstructed.
+    meanSurfaceTemperatureKelvin: effective === undefined
+      ? atmosphere.meanSurfaceTemperatureKelvin
+      : effective?.detail.climate.meanSurfaceTemperatureKelvin ?? null,
     surfaceLiquidWaterCoverageFraction01: atmosphere.surfaceLiquidWaterCoverageFraction01,
     postCollapseIdentityHex: null,
-    atmosphere: projectPlanetAtmosphere(atmosphere),
+    atmosphere: effective === undefined
+      ? projectPlanetAtmosphere(atmosphere)
+      : effective === null ? null : projectEffectiveAtmosphere(effective),
   });
 }
 
@@ -690,6 +795,22 @@ function projectPlanetAtmosphere(
   });
 }
 
+/** EXACT effective gas mixture and pressure from the same target as the fiche. */
+function projectEffectiveAtmosphere(
+  target: NonNullable<ReturnType<typeof resolveEffectivePlanetVIDA5>>,
+): CatalogAtmosphereState {
+  const a = target.detail.atmosphere;
+  return Object.freeze({
+    fractions: a.isVacuum || a.retainedGasComposition.length === 0
+      ? null
+      : Object.freeze(Object.fromEntries(a.retainedGasComposition.map(g => [g.gas, g.moleFraction01]))),
+    pressureBar: a.retainedSurfacePressurePascal === null ||
+      !Number.isFinite(a.retainedSurfacePressurePascal)
+      ? null : a.retainedSurfacePressurePascal / 100_000,
+    conditional: false,
+  });
+}
+
 /** Lunar fractions are a conditional pressure scenario, not a confirmed atmosphere. */
 function projectMoonAtmosphere(
   assessment: NonNullable<GeneratedSingleHost['moonSystems'][number]['relevantMoons'][number]['environmentState']['atmosphereAssessment']> | null,
@@ -713,6 +834,7 @@ function restoreSnapshot(json: string): GalaxyKnowledgePlanetMoonCatalogSnapshot
     moons: readonly RawMoon[];
     unmaterializedMinorMoonCount: bigint;
     atmosphereProjectionVersion?: 1;
+    effectivePhysicalProjectionVIDA5?: 1 | 2;
     identityCoveragePRE3310?: 1;
   };
 
@@ -722,6 +844,7 @@ function restoreSnapshot(json: string): GalaxyKnowledgePlanetMoonCatalogSnapshot
     moons: Object.freeze(raw.moons.map(restoreMoon)),
     unmaterializedMinorMoonCount: raw.unmaterializedMinorMoonCount,
     atmosphereProjectionVersion: raw.atmosphereProjectionVersion,
+    effectivePhysicalProjectionVIDA5: raw.effectivePhysicalProjectionVIDA5,
     identityCoveragePRE3310: raw.identityCoveragePRE3310,
   });
 }

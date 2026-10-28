@@ -11,13 +11,12 @@ const V1 =
       1,
   } as const);
 
-export const BackupFormatVersion =
-  Object.freeze({
-    V1,
-  });
+const V2 = Object.freeze({name: 'V2', code: 2} as const);
+
+export const BackupFormatVersion = Object.freeze({V1,V2});
 
 export type BackupFormatVersionCode =
-  typeof BackupFormatVersion.V1.code;
+  typeof BackupFormatVersion.V1.code | typeof BackupFormatVersion.V2.code;
 
 /**
  * Códigos portables V1 de DiscoveryTargetType.

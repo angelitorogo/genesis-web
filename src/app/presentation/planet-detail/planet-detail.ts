@@ -1,3 +1,8 @@
+import { effect } from '@angular/core';
+import { Vida9FullSystemBiologyPanel } from '../scientific/vida9-full-system-biology-panel';
+import { Vida3PrivateMicrobialRuntime } from '../runtime/vida3-private-microbial.runtime';
+import { vida2SupportLabel } from '../../simulation/life/life-plausibility-physical-adapter-vida2';
+import { Vida1CompactFiche } from '../scientific/vida-1-compact-fiche';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -47,6 +52,7 @@ import {
     GenesisScreen,
     RouterLink,
     ScientificBodyPreview,
+    Vida9FullSystemBiologyPanel,
   ],
 
   templateUrl:
@@ -60,6 +66,10 @@ import {
 })
 export class PlanetDetailPage
   implements OnInit {
+
+  readonly vida2SupportLabel = vida2SupportLabel;
+
+  private readonly vida3Private = inject(Vida3PrivateMicrobialRuntime);
 
   readonly facade =
     inject(
@@ -133,6 +143,46 @@ export class PlanetDetailPage
             : PlanetScientificCardAssembler.build(model, this.requestedBodyIndex));
       },
     );
+
+  readonly compactSections = computed(() => {
+    const result = this.resolution();
+    return result?.kind === 'AVAILABLE'
+      ? Vida1CompactFiche.planet(result.card.sections.sections)
+      : [];
+  });
+
+  /** VIDA.3: private deterministic insert, never expose a biosphere to player knowledge. */
+  private readonly vida3Persistence = effect(() => {
+    const model = this.facade.model();
+    const resolved = this.resolution();
+    if (!model || model.generatorVersionCode !== 3 || this.requestedBodyIndex === null ||
+        resolved?.kind !== 'AVAILABLE' || !resolved.card.vida2) return;
+    const identity = {
+      universeSeed: model.universeSeed,
+      generatorVersionCode: model.generatorVersionCode,
+      kind: 'PLANET',
+      galaxyIndex: model.galaxyIndex.toString(),
+      sectorKey: model.sectorKey.toString(),
+      galacticObjectIndex: model.galacticObjectIndex.toString(),
+      bodyIndex: this.requestedBodyIndex.toString(),
+      moonIndex: null,
+    } as const;
+    const calibrated = resolved.card.ecologicalCalibrationVIDA5c;
+    const ecosystem = resolved.card.privateEcosystemVIDA6;
+    const civilization = resolved.card.privateCivilizationVIDA7;
+    const colonization = resolved.card.privateColonizationVIDA8;
+    const biology9 = resolved.card.confirmedBiologyVIDA9;
+    void this.vida3Private.ensure(identity, resolved.card.vida2)
+      .then(() => calibrated ? this.vida3Private.ensureCalibrated(calibrated) : undefined)
+      .then(() => ecosystem ? this.vida3Private.ensureEcosystem(ecosystem) : undefined)
+      .then(() => civilization ? this.vida3Private.ensureIntelligenceCivilization(civilization) : undefined)
+      .then(() => colonization ? this.vida3Private.ensureColonization(colonization) : undefined)
+      .then(() => biology9 ? this.vida3Private.ensureBiologyVIDA9(biology9) : undefined)
+      .catch((error: unknown) => {
+        // Never claim that private Ground Truth has been saved if IndexedDB rejects it.
+        console.error('VIDA.3–VIDA.8 private biology save failed', error);
+      });
+  });
 
   readonly systemRoute =
     computed(
@@ -270,6 +320,14 @@ export class PlanetDetailPage
       moonIndex.toString(),
     ]);
   }
+
+  readonly rutaBaseEspecies = computed((): readonly string[] | null => {
+    const model = this.facade.model();
+    return model && this.requestedBodyIndex !== null
+      ? ['/system',model.galaxyIndex.toString(),model.sectorKey.toString(),
+          model.galacticObjectIndex.toString(),'planet',this.requestedBodyIndex.toString(),'species']
+      : null;
+  });
 
   readonly sourceQueryParams =
     computed(

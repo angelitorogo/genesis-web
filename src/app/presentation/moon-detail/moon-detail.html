@@ -213,6 +213,19 @@
                   [model]="card.preview"
                 ></app-scientific-body-preview>
 
+                @if (card.confirmedBiologyVIDA9; as biology9) {
+                  <section class="moon-detail__panel" aria-label="Vida">
+                    <h2>Vida</h2>
+                    <app-vida9-full-system-biology-panel [record]="biology9"
+                      [rutaBaseEspecies]="rutaBaseEspecies()"
+                      [parametrosOrigen]="sourceQueryParams()"></app-vida9-full-system-biology-panel>
+                  </section>
+                }
+
+                @if (card.coherenceAuditVIDA9a; as audit9a) {
+                  <app-vida9a-physical-biology-audit-panel [audit]="audit9a"></app-vida9a-physical-biology-audit-panel>
+                }
+
                 @if (card.observedHabitability; as observed) {
                   <section class="moon-detail__panel moon-detail__habitability-observed"
                     data-testid="moon-habitability-observed-31-f-e"

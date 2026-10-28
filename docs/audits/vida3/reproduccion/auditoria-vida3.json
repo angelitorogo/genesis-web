@@ -1,0 +1,107 @@
+{
+  "contract": "VIDA.3/sample/audit/v1",
+  "seed": "7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B5",
+  "systemsPerGalaxyRequested": 20,
+  "isFullGalacticCensus": false,
+  "galaxies": [
+    {
+      "index": 0,
+      "name": "Elixisis",
+      "systems": 20,
+      "planets": 145,
+      "moons": 262,
+      "counts": [
+        {
+          "kind": "PLANET",
+          "evaluated": 145,
+          "plausible": 12,
+          "notPlausible": 94,
+          "indeterminate": 39,
+          "microbial": 1,
+          "surfaceMicrobial": 0,
+          "subsurfaceMicrobial": 1
+        },
+        {
+          "kind": "MOON",
+          "evaluated": 262,
+          "plausible": 31,
+          "notPlausible": 38,
+          "indeterminate": 193,
+          "microbial": 7,
+          "surfaceMicrobial": 0,
+          "subsurfaceMicrobial": 7
+        }
+      ],
+      "physicalGaps": [
+        {
+          "sector": "4:0",
+          "message": "PRE-33.03 requires PRE-33.02 coherent pressure/host: NON_CONVERGED_PHASE_MODEL"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "index": 1,
+      "name": "Elisoune",
+      "systems": 20,
+      "planets": 140,
+      "moons": 231,
+      "counts": [
+        {
+          "kind": "PLANET",
+          "evaluated": 140,
+          "plausible": 23,
+          "notPlausible": 88,
+          "indeterminate": 29,
+          "microbial": 4,
+          "surfaceMicrobial": 1,
+          "subsurfaceMicrobial": 3
+        },
+        {
+          "kind": "MOON",
+          "evaluated": 231,
+          "plausible": 39,
+          "notPlausible": 37,
+          "indeterminate": 155,
+          "microbial": 8,
+          "surfaceMicrobial": 0,
+          "subsurfaceMicrobial": 8
+        }
+      ],
+      "physicalGaps": [],
+      "errors": []
+    },
+    {
+      "index": 2,
+      "name": "Ilyzenia",
+      "systems": 20,
+      "planets": 98,
+      "moons": 198,
+      "counts": [
+        {
+          "kind": "PLANET",
+          "evaluated": 98,
+          "plausible": 11,
+          "notPlausible": 70,
+          "indeterminate": 17,
+          "microbial": 1,
+          "surfaceMicrobial": 0,
+          "subsurfaceMicrobial": 1
+        },
+        {
+          "kind": "MOON",
+          "evaluated": 198,
+          "plausible": 39,
+          "notPlausible": 36,
+          "indeterminate": 123,
+          "microbial": 7,
+          "surfaceMicrobial": 0,
+          "subsurfaceMicrobial": 7
+        }
+      ],
+      "physicalGaps": [],
+      "errors": []
+    }
+  ],
+  "errors": []
+}
