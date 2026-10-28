@@ -1,8 +1,8 @@
-import { Vida9aPhysicalBiologyAuditPanel } from '../scientific/vida9a-physical-biology-audit-panel';
 import { effect } from '@angular/core';
 import { Vida9FullSystemBiologyPanel } from '../scientific/vida9-full-system-biology-panel';
 import { vida2SupportLabel } from '../../simulation/life/life-plausibility-physical-adapter-vida2';
 import { Vida1CompactFiche } from '../scientific/vida-1-compact-fiche';
+import { compactMoonSectionsVIDA9e, moonScientificDisplayTextVIDA9f } from './moon-scientific-compact-vida9e';
 import { Vida3PrivateMicrobialRuntime } from '../runtime/vida3-private-microbial.runtime';
 import {
   ChangeDetectionStrategy,
@@ -60,7 +60,6 @@ import {
     RouterLink,
     ScientificBodyPreview,
     Vida9FullSystemBiologyPanel,
-    Vida9aPhysicalBiologyAuditPanel,
   ],
 
   templateUrl:
@@ -176,6 +175,15 @@ export class MoonDetailPage
     return result?.kind === 'AVAILABLE'
       ? Vida1CompactFiche.moon(result.card.sections.sections)
       : [];
+  });
+
+  /** VIDA.9e: sólo muestra tarjetas lunares esenciales, sin alterar modelos científicos. */
+  /** Mostrar nombres y resultados sin nomenclatura del motor, sin modificar los datos. */
+  readonly displayScientificText = moonScientificDisplayTextVIDA9f;
+
+  readonly visibleSections = computed(() => {
+    const result = this.resolution();
+    return result?.kind === 'AVAILABLE' ? compactMoonSectionsVIDA9e(result.card.sections) : [];
   });
 
   /** VIDA.6 lunar: persistencia privada, solo en fichas fisicas de sistemas confirmados V3. */

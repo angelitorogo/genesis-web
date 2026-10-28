@@ -32,9 +32,7 @@
             Identidad lunar confirmada. Caracterización física bajo demanda con escenarios
             condicionales; las magnitudes ambientales individuales siguen sin resolver.
           } @else {
-            Caracterización científica detallada del satélite organizada en General,
-            Órbita, Mareas y rotación, Entorno, Atmósfera, Radiación, Geoquímica y energía,
-            Historia ambiental, Habitabilidad y Comparación con la Tierra.
+            Propiedades físicas y ambientales de la luna, habitabilidad, vida y comparación con la Tierra.
           }
         </p>
       </div>
@@ -119,43 +117,17 @@
             }
 
             @case ('IDENTITY_ONLY') {
-              <section class="moon-detail__panel" data-testid="moon-pre33-10-identity-only">
-                <small>PRE-33.10 · CUERPO CONOCIDO · FÍSICA BAJO DEMANDA</small>
+              <section class="moon-detail__panel moon-detail__minor" data-testid="moon-pre33-10-identity-only">
+                <small>LUNA CONOCIDA · CARACTERIZACIÓN PARCIAL</small>
                 <h2>{{ currentResolution.name }}</h2>
-                <p>Planeta anfitrión: {{ currentResolution.host }}. Su identidad está confirmada, pero la
-                caracterización física completa no está resuelta.</p>
+                <p>Planeta anfitrión: {{ currentResolution.host }}. Su identidad está confirmada; los datos siguientes son escenarios, no propiedades resueltas.</p>
                 <dl class="moon-detail__section-facts">
                   <div><dt>Estado dinámico</dt><dd>{{ minorMoonStatus(currentResolution.characterization.status) }}</dd></div>
-                  <div><dt>Época física</dt><dd>{{ currentResolution.characterization.epochYears }} años</dd></div>
-                  <div><dt>Masa de escenario (supuesto, M⊕)</dt>
-                    <dd>{{ minorMoonNumber(currentResolution.characterization.scenarioMassEarth) }}</dd></div>
-                  <div><dt>Radio de escenario (supuesto)</dt>
-                    <dd>{{ minorMoonRadius(currentResolution.characterization.scenarioRadiusEarth) }}</dd></div>
-                  <div><dt>Órbita de escenario (supuesto, radios planetarios)</dt>
-                    <dd>{{ minorMoonNumber(currentResolution.characterization.scenarioSemiMajorAxisPlanetRadii) }}</dd></div>
-                  <div><dt>Período de escenario (supuesto, días)</dt>
-                    <dd>{{ minorMoonNumber(currentResolution.characterization.scenarioOrbitalPeriodDays) }}</dd></div>
-                  <div><dt>Techo del prior de masa por luna (supuesto, M⊕)</dt>
-                    <dd>{{ minorMoonNumber(currentResolution.characterization.massPriorCeilingEarth) }}</dd></div>
-                  <div><dt>Referencia Roche fluido (densidad lunar supuesta, radios planetarios)</dt>
-                    <dd>{{ minorMoonNumber(currentResolution.characterization.rocheFluidReferenceInnerPlanetRadii) }}</dd></div>
-                  <div><dt>Referencia exterior prógrada (0,49 × Hill; órbita circular supuesta, radios planetarios)</dt>
-                    <dd>{{ minorMoonNumber(currentResolution.characterization.hillProgradeReferenceOuterPlanetRadii) }}</dd></div>
-                  <div><dt>Intervalo empleado para muestreo (radios planetarios; no acredita estabilidad)</dt>
-                    <dd>{{ minorMoonNumber(currentResolution.characterization.samplingInnerPlanetRadii) }} –
-                        {{ minorMoonNumber(currentResolution.characterization.samplingOuterPlanetRadii) }}
-                        @if (currentResolution.characterization.samplingCeilingIsNumerical) {
-                          (el techo de 1.000 radios es numérico, no una frontera física)
-                        }
-                    </dd></div>
-                  <div><dt>Composición, agua, atmósfera y dosis</dt><dd>No resueltas</dd></div>
-                  <div><dt>Habitabilidad y vida</dt><dd>No evaluadas; ausencia de ficha no implica esterilidad</dd></div>
+                  <div><dt>Masa estimada (escenario)</dt><dd>{{ minorMoonNumber(currentResolution.characterization.scenarioMassEarth) }} M⊕</dd></div>
+                  <div><dt>Radio estimado (escenario)</dt><dd>{{ minorMoonRadius(currentResolution.characterization.scenarioRadiusEarth) }}</dd></div>
+                  <div><dt>Periodo orbital (escenario)</dt><dd>{{ minorMoonNumber(currentResolution.characterization.scenarioOrbitalPeriodDays) }} días</dd></div>
                 </dl>
-                <p>La masa procede de un prior arbitrado por el modelo (10⁻⁵ de la masa anfitriona
-                repartido entre lunas menores y limitado por las lunas detalladas), no de un límite
-                físico medido. Las referencias Roche y Hill son aproximaciones bajo hipótesis,
-                no certifican una órbita estable, ni una órbita lunar individual reconstruida.
-                No se crean hábitats, vida o evidencia observada a partir de este cálculo.</p>
+                <p>Atmósfera, agua, habitabilidad y vida: no resueltas. La ausencia de caracterización no significa esterilidad.</p>
               </section>
             }
 
@@ -168,42 +140,22 @@
                   <div class="moon-detail__identity">
                     <div class="moon-detail__knowledge-line">
                       <span class="moon-detail__state-badge">SISTEMA ANFITRIÓN · CONFIRMADO</span>
-                      <span>{{ card.knowledgeLabel }}</span>
+                      <span>CARACTERIZACIÓN CIENTÍFICA DETALLADA</span>
                     </div>
-
                     <strong>{{ card.title }}</strong>
-                    <p>{{ card.summary }}</p>
-                    <code>{{ card.locatorLabel }}</code>
-
+                    <p>{{ displayScientificText(card.summary) }}</p>
                     @if (card.sections.badges.length > 0) {
                       <div class="moon-detail__badges">
                         @for (badge of card.sections.badges; track badge) {
-                          <span>{{ badge }}</span>
+                          <span>{{ displayScientificText(badge) }}</span>
                         }
                       </div>
                     }
                   </div>
-
                   <dl class="moon-detail__facts">
-                    <div>
-                      <dt>Planeta anfitrión</dt>
-                      <dd>{{ card.hostPlanetTitle }}</dd>
-                    </div>
-
-                    <div>
-                      <dt>Sistema anfitrión</dt>
-                      <dd>{{ card.hostSystemTitle }}</dd>
-                    </div>
-
-                    <div>
-                      <dt>Ordinal lunar</dt>
-                      <dd>{{ card.moonOrdinal }} / {{ card.hostMoonCount }}</dd>
-                    </div>
-
-                    <div>
-                      <dt>Acceso</dt>
-                      <dd>{{ card.accessLabel }}</dd>
-                    </div>
+                    <div><dt>Planeta anfitrión</dt><dd>{{ card.hostPlanetTitle }}</dd></div>
+                    <div><dt>Sistema anfitrión</dt><dd>{{ card.hostSystemTitle }}</dd></div>
+                    <div><dt>Ordinal lunar</dt><dd>{{ card.moonOrdinal }} / {{ card.hostMoonCount }}</dd></div>
                   </dl>
                 </section>
 
@@ -213,73 +165,15 @@
                   [model]="card.preview"
                 ></app-scientific-body-preview>
 
-                @if (card.confirmedBiologyVIDA9; as biology9) {
-                  <section class="moon-detail__panel" aria-label="Vida">
-                    <h2>Vida</h2>
-                    <app-vida9-full-system-biology-panel [record]="biology9"
-                      [rutaBaseEspecies]="rutaBaseEspecies()"
-                      [parametrosOrigen]="sourceQueryParams()"></app-vida9-full-system-biology-panel>
-                  </section>
-                }
-
-                @if (card.coherenceAuditVIDA9a; as audit9a) {
-                  <app-vida9a-physical-biology-audit-panel [audit]="audit9a"></app-vida9a-physical-biology-audit-panel>
-                }
-
-                @if (card.observedHabitability; as observed) {
-                  <section class="moon-detail__panel moon-detail__habitability-observed"
-                    data-testid="moon-habitability-observed-31-f-e"
-                    aria-label="Compatibilidad ambiental observada">
-                    <header>
-                      <small>FASE 31.12 · CONOCIMIENTO OBSERVADO</small>
-                      <h2>{{ observed.title }}</h2>
-                    </header>
-                    <dl class="moon-detail__section-facts">
-                      @for (route of observed.routes; track route.label) {
-                        <div>
-                          <dt>{{ route.label }}</dt>
-                          <dd>{{ route.status }}</dd>
-                          <small>{{ route.evidence }}</small>
-                          @if (route.criteria.length > 0) {
-                            <ul class="moon-detail__observed-criteria" aria-label="Criterios ambientales publicados">
-                              @for (criterion of route.criteria; track criterion.label) {
-                                <li>
-                                  <span>{{ criterion.label }}</span>
-                                  <strong [class.is-compatible]="criterion.status === 'Compatible'"
-                                    [class.is-incompatible]="criterion.status === 'Incompatible'">
-                                    {{ criterion.status }}
-                                  </strong>
-                                  <small>{{ criterion.origin }}</small>
-                                  @if (criterion.explanation) {
-                                    <small>{{ criterion.explanation }}</small>
-                                  }
-                                </li>
-                              }
-                            </ul>
-                          }
-                          @if (route.facts.length > 0) {
-                            <ul class="moon-detail__observed-facts" aria-label="Datos científicos publicados">
-                              @for (fact of route.facts; track fact.label) {
-                                <li>
-                                  <span>{{ fact.label }}: <strong>{{ fact.value }}</strong></span>
-                                  <small>{{ fact.origin }}</small>
-                                </li>
-                              }
-                            </ul>
-                          }
-                        </div>
-                      }
-                    </dl>
-                    <p>{{ observed.note }}</p>
-                  </section>
-                }
-
                 <nav
                   class="moon-detail__section-nav"
                   aria-label="Secciones científicas de la luna"
                   data-testid="moon-detail-section-nav"
                 >
-                  @for (section of card.sections.sections; track section.id) {
+                  @for (section of visibleSections(); track section.id) {
+                    @if (section.id === 'comparison') {
+                      <a [attr.href]="moonSectionHref('vida')">Vida</a>
+                    }
                     <a [attr.href]="moonSectionHref(section.id)">
                       {{ section.title }}
                     </a>
@@ -290,7 +184,23 @@
                   class="moon-detail__sections"
                   data-testid="moon-detail-scientific-sections"
                 >
-                  @for (section of card.sections.sections; track section.id) {
+                  @for (section of visibleSections(); track section.id) {
+                    @if (section.id === 'comparison') {
+                      <article class="moon-detail__scientific-section" id="moon-section-vida"
+                        data-section-id="vida" aria-labelledby="moon-section-title-vida">
+                        <header>
+                          <small>SECCIÓN 09</small>
+                          <h2 id="moon-section-title-vida">Vida</h2>
+                        </header>
+                        @if (card.confirmedBiologyVIDA9; as biology9) {
+                          <app-vida9-full-system-biology-panel [record]="biology9"
+                            [rutaBaseEspecies]="rutaBaseEspecies()"
+                            [parametrosOrigen]="sourceQueryParams()"></app-vida9-full-system-biology-panel>
+                        } @else {
+                          <p class="moon-detail__empty-detail">Información biológica no disponible para esta luna.</p>
+                        }
+                      </article>
+                    }
                     <article
                       class="moon-detail__scientific-section"
                       [id]="'moon-section-' + section.id"
@@ -336,9 +246,6 @@
                             </div>
                           </div>
 
-                          <p>
-                            Escala lineal por diámetro. El cuerpo mayor ocupa el 100 % del marco y el menor conserva la proporción física de su radio.
-                          </p>
                         </div>
                       }
 
@@ -372,7 +279,7 @@
                       [routerLink]="route"
                       [queryParams]="sourceQueryParams()"
                     >
-                      SystemPage 3D →
+                      Volver al sistema 3D →
                     </a>
                   }
                 </nav>

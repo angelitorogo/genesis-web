@@ -7,7 +7,7 @@
   <header class="scientific-preview__header">
     <div>
       <small>REPRESENTACIÓN 3D</small>
-      @if (model.kind !== 'PLANET') {
+      @if (model.kind !== 'PLANET' && model.kind !== 'MOON') {
         <strong>Inspección visual adaptativa</strong>
         <span>WebGL · escala visual no comparativa</span>
       }
