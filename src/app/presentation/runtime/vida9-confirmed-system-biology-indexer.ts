@@ -24,7 +24,8 @@ import { Vida9BiologyExploration } from '../../simulation/life/vida9-biology-exp
 import type { Vida3BodyIdentity } from '../../domain/life/procedural-microbial-vida3';
 import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
 
-export interface Vida9IndexResult { readonly indexed:number; readonly withoutPhysicalModel:number; }
+export interface Vida9IndexResult { readonly indexed:number; readonly withoutPhysicalModel:number;
+  readonly civilizationBodyKeys?:readonly string[]; }
 
 export class Vida9ConfirmedSystemBiologyIndexer {
   private readonly repository:DexieVida9BiologyExplorationRepository;
@@ -34,6 +35,7 @@ export class Vida9ConfirmedSystemBiologyIndexer {
     if(generationKey.generatorVersion!==GeneratorVersion.V3)return {indexed:0,withoutPhysicalModel:0};
     const seed=generationKey.universeSeed.serialize();
     let indexed=0,withoutPhysicalModel=0;
+    const civilizationBodyKeys:string[]=[];
     const originsKey=(loc:BodyLocator)=>({universeSeed:seed,generatorVersionCode:3,
       galaxyIndex:String(loc.galaxyIndex),sectorKey:String(loc.sectorKey),
       galacticObjectIndex:String(loc.galacticObjectIndex)});
@@ -58,11 +60,18 @@ export class Vida9ConfirmedSystemBiologyIndexer {
       }
     };
     const planetFor=(loc:BodyLocator)=>physicalOrNull(()=>sourceForSystem(loc)?.resolvePlanet(loc)??null);
+    const originSources=new Map<string,ReturnType<typeof Vida8LocalOriginDiscovery.findInSystem>>();
     const sourcesFor=(loc:BodyLocator)=>{
+      const systemId=systemKey(loc);
+      const cached=originSources.get(systemId);
+      if(cached)return cached;
       const adapter=sourceForSystem(loc);
-      return adapter?Vida8LocalOriginDiscovery.findInSystem(
+      if(!adapter)return [];
+      const resolved=Vida8LocalOriginDiscovery.findInSystem(
         originsKey(loc),adapter.planetCount,(i)=>planetFor(new BodyLocator(
-          loc.galaxyIndex,loc.sectorKey,loc.galacticObjectIndex,i)),true):[];
+          loc.galaxyIndex,loc.sectorKey,loc.galacticObjectIndex,i)),true);
+      originSources.set(systemId,resolved);
+      return resolved;
     };
     const makeIdentity=(loc:BodyLocator,kind:'PLANET'|'MOON',moonIndex:string|null):Vida3BodyIdentity=>({
       ...originsKey(loc),kind,bodyIndex:String(loc.bodyIndex),moonIndex});
@@ -97,7 +106,9 @@ export class Vida9ConfirmedSystemBiologyIndexer {
       const loc=planet.locator;
       if(!loc)continue;
       const identity=makeIdentity(loc,'PLANET',null);
-      if(await existingFor(identity)){
+      const stored=await existingFor(identity);
+      if(stored){
+        if(stored.nativeCivilizationPresent)civilizationBodyKeys.push(stored.bodyStorageKey);
         indexed++;
         if(indexed%8===0)await new Promise<void>(resolve=>setTimeout(resolve,0));
         continue;
@@ -108,7 +119,9 @@ export class Vida9ConfirmedSystemBiologyIndexer {
       const record=physicalOrNull(()=>build(identity,Vida2PhysicalInput.planet(target),
         sourcesFor(loc),target.detail.surface.hasDefinedSolidSurfaceBase,target));
       if(!record){withoutPhysicalModel++;continue;}
-      await this.repository.ensure(record);indexed++;
+      const saved=await this.repository.getOrInsertPreservingExisting(record);
+      if(saved.nativeCivilizationPresent)civilizationBodyKeys.push(saved.bodyStorageKey);
+      indexed++;
       if(indexed%8===0) await new Promise<void>(resolve=>setTimeout(resolve,0));
     }
     for(const moon of moons){
@@ -127,9 +140,9 @@ export class Vida9ConfirmedSystemBiologyIndexer {
       const record=physicalOrNull(()=>build(identity,Vida2PhysicalInput.moon(target),
         host?sourcesFor(parent):[],true,null));
       if(!record){withoutPhysicalModel++;continue;}
-      await this.repository.ensure(record);indexed++;
+      await this.repository.getOrInsertPreservingExisting(record);indexed++;
       if(indexed%8===0) await new Promise<void>(resolve=>setTimeout(resolve,0));
     }
-    return {indexed,withoutPhysicalModel};
+    return {indexed,withoutPhysicalModel,civilizationBodyKeys};
   }
 }

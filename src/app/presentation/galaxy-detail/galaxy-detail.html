@@ -1771,12 +1771,11 @@
                 </strong>
               </article>
 
-              <article class="gd__knowledge-card">
-                <span>CIVILIZACIONES</span>
-                <strong data-testid="galaxy-detail-known-civilizations">
-                  {{ formatBigInt(model.explorationTelemetry.inventory.civilizations) }}
-                </strong>
-              </article>
+              <app-galaxy-civilizations-inventory
+                [generationKey]="model.generationKey ?? null"
+                [galaxyIndex]="model.profile.galaxyIndex"
+                [routeUniverseRef]="model.routeUniverseRef"
+              />
             </div>
 
             <div hidden aria-hidden="true">

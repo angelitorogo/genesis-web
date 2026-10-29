@@ -1,3 +1,9 @@
+import { DiscoveryState } from '../../domain/discovery/discovery-state';
+import { SystemLocator } from '../../domain/generation/procedural-locator';
+import { GeneratorVersion } from '../../domain/generation/generator-version';
+import { ensureVida9PlanetsInBackground } from '../runtime/vida9-background-materializer';
+import { GalaxyCivilizationKnownIndex } from '../galaxy-knowledge-catalog/galaxy-civilization-known-index';
+
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { GenesisScreen } from '../../ui/layout/genesis-screen/genesis-screen';
@@ -24,6 +30,7 @@ export class CodesPage {
   private readonly selection = inject(UniverseSeedFacade);
   private readonly runtime = inject(CODES_REDEMPTION_RUNTIME);
   private readonly focusedGalaxyConfirmation = inject(FOCUSED_GALAXY_CONFIRMATION_RUNTIME);
+  private readonly civilizationKnowledge = inject(GalaxyCivilizationKnownIndex);
   readonly code = signal(TEST_PD_CODE);
   readonly pending = signal(false);
   readonly feedback = signal<Feedback>(null);
@@ -50,6 +57,28 @@ export class CodesPage {
         const confirmation = await this.focusedGalaxyConfirmation.confirmFocusedGalaxy(generationKey);
         switch (confirmation.kind) {
           case 'confirmed':
+            // The administrative full-galaxy confirmation uses the same
+            // biology materializer as ordinary CONFIRMED system progression.
+            // Trigger only AFTER the galaxy's discovery writes have committed.
+            if(generationKey.generatorVersion===GeneratorVersion.V3){
+              void (async()=>{
+                const known=await this.repositories.discoveryRepository.getKnownDiscoveries(generationKey);
+                const systems=new Set(known.filter(d=>d.locator instanceof SystemLocator &&
+                    d.locator.galaxyIndex===confirmation.galaxyIndex &&
+                    d.state.code>=DiscoveryState.CONFIRMED.code)
+                  .map(d=>{
+                    const loc=d.locator as SystemLocator;
+                    return [loc.galaxyIndex,loc.sectorKey,loc.galacticObjectIndex].join('/');
+                  }));
+                const task=ensureVida9PlanetsInBackground(generationKey,confirmation.galaxyIndex,systems);
+                if(task){
+                  await task;
+                  // Persist the derived, confirmed-only galactic knowledge
+                  // before the inventory is opened for the first time.
+                  await this.civilizationKnowledge.read(generationKey,confirmation.galaxyIndex);
+                }
+              })().catch(error=>console.error('Civilizaciones: materialización galáctica tras confirmación',error));
+            }
             this.code.set('');
             this.feedback.set({
               kind: 'success',

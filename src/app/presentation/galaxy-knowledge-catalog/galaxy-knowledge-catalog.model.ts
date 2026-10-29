@@ -19,7 +19,8 @@ export type GalaxyKnowledgeCatalogCategory =
   | 'asteroids'
   | 'comets'
   | 'tno'
-  | 'captured';
+  | 'captured'
+  | 'civilizations';
 
 export interface GalaxyKnowledgeCatalogCategoryDefinition {
   readonly category: GalaxyKnowledgeCatalogCategory;
@@ -82,6 +83,8 @@ export interface GalaxyKnowledgeCatalogPage {
   readonly pageSize: GalaxyKnowledgeCatalogPageSize;
   readonly totalPages: number;
   readonly items: readonly GalaxyKnowledgeCatalogRow[];
+  /** False while VIDA.9 confirmed biological records are still being indexed. */
+  readonly knowledgeComplete?: boolean;
   /** Whole filtered selection, before pagination; only when sorting by atmospheric data. */
   readonly atmosphericSortAvailability?: Readonly<{
     resolved: number;
@@ -126,6 +129,7 @@ const CATEGORY_DEFINITIONS: readonly GalaxyKnowledgeCatalogCategoryDefinition[] 
   Object.freeze({ category: 'comets', label: 'Cometas', singularLabel: 'Cometa' }),
   Object.freeze({ category: 'tno', label: 'Objetos transneptunianos', singularLabel: 'Objeto transneptuniano' }),
   Object.freeze({ category: 'captured', label: 'Capturados', singularLabel: 'Objeto capturado' }),
+  Object.freeze({ category: 'civilizations', label: 'Civilizaciones', singularLabel: 'Civilización' }),
 ]);
 
 export function galaxyKnowledgeCatalogCategoryDefinition(

@@ -152,6 +152,15 @@
             </form>
           }
 
+          @if (model.descriptor.category === 'civilizations') {
+            <nav class="gkc__civilization-filters" aria-label="Filtrar civilizaciones por nivel" data-testid="gkc-civilization-filters">
+              <a [routerLink]="[]" [queryParams]="{type:null,page:1}" queryParamsHandling="merge">Todas</a>
+              <a [routerLink]="[]" [queryParams]="{type:'PRIMITIVE',page:1}" queryParamsHandling="merge">Primitivas</a>
+              <a [routerLink]="[]" [queryParams]="{type:'ADVANCED',page:1}" queryParamsHandling="merge">Avanzadas</a>
+              <a [routerLink]="[]" [queryParams]="{type:'VERY_ADVANCED',page:1}" queryParamsHandling="merge">Muy avanzadas</a>
+            </nav>
+          }
+
           <section class="gkc__toolbar" aria-label="Ordenación y paginación del catálogo">
             <label>
               <span>ORDENAR POR</span>
@@ -192,6 +201,7 @@
             </label>
           </section>
 
+          @if (model.descriptor.category !== 'civilizations') {
           <details class="gkc__column-picker" data-testid="gkc-column-picker">
             <summary>Personalizar columnas · {{ visibleColumns().length }} visibles</summary>
             <div class="gkc__column-picker-content">
@@ -219,6 +229,7 @@
               <button type="button" class="gkc__reset-columns" (click)="resetColumns()" data-testid="gkc-reset-columns">Restaurar columnas</button>
             </div>
           </details>
+          }
 
           @if (model.data.kind === 'not-connected') {
             <section class="gkc__state" data-testid="gkc-category-pending">
@@ -231,12 +242,16 @@
           } @else {
             <section class="gkc__page-meta" data-testid="gkc-page-meta">
               <span>
-                {{ formatCount(model.data.page.totalItems) }} {{ model.query.search || model.query.atmosphere?.ranges?.length || model.query.atmosphere?.minPressureBar != null || model.query.atmosphere?.maxPressureBar != null || model.query.atmosphere?.minEarthSimilarityPercent != null ? 'resultados filtrados' : 'objetos conocidos' }}
+                {{ formatCount(model.data.page.totalItems) }} {{ model.descriptor.category === 'civilizations' ? 'civilizaciones conocidas' : (model.query.search || model.query.atmosphere?.ranges?.length || model.query.atmosphere?.minPressureBar != null || model.query.atmosphere?.maxPressureBar != null || model.query.atmosphere?.minEarthSimilarityPercent != null ? 'resultados filtrados' : 'objetos conocidos') }}
               </span>
               <span>
                 Página {{ model.data.page.page }} / {{ model.data.page.totalPages }}
               </span>
             </section>
+
+            @if (model.descriptor.category === 'civilizations' && model.data.page.knowledgeComplete === false) {
+              <p class="gkc__civilization-pending">Recuento provisional: la caracterización biológica de algunos sistemas confirmados sigue pendiente. Puedes volver a consultar este catálogo cuando termine.</p>
+            }
 
             @if (model.data.page.atmosphericSortAvailability; as values) {
               <p class="gkc__atmosphere-sort-info" data-testid="gkc-atmosphere-sort-info">
@@ -259,6 +274,27 @@
             @if (model.data.page.items.length === 0) {
               <section class="gkc__state" data-testid="gkc-no-items">
                 No existen objetos conocidos que cumplan este filtro.
+              </section>
+            } @else if (model.descriptor.category === 'civilizations') {
+              <section class="gkc__civilization-list" aria-label="Civilizaciones conocidas" data-testid="gkc-civilizations-list">
+                @for (row of model.data.page.items; track row.id) {
+                  <article class="gkc__civilization-card" data-testid="gkc-civilization-card">
+                    <div class="gkc__civilization-main">
+                      <small>ESPECIE FUNDADORA</small><strong>{{ row.title }}</strong>
+                      <span>{{ row.cells['lineage'] }} · Civilización {{ row.cells['tier']?.toLocaleLowerCase('es-ES') }}</span>
+                    </div>
+                    <div class="gkc__civilization-origin">
+                      <small>PLANETA DE ORIGEN</small><strong>{{ row.cells['planet'] }}</strong>
+                      <span>Sistema {{ row.cells['system'] }}</span>
+                    </div>
+                    <div class="gkc__actions">
+                      @for (action of row.actions; track action.label) {
+                        <a [routerLink]="action.route" [queryParams]="actionQueryParams(action)"
+                          [class.gkc__action--primary]="action.emphasis === 'primary'">{{ action.label }}</a>
+                      }
+                    </div>
+                  </article>
+                }
               </section>
             } @else {
               <section class="gkc__table-wrap" aria-label="Resultados del catálogo científico">

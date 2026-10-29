@@ -348,3 +348,30 @@
   font-size: 0.78rem;
   line-height: 1.45;
 }
+
+/* Civilizaciones: fichas breves en lugar de la tabla de cuerpos físicos. */
+.gkc__civilization-list{display:grid;gap:.65rem}
+.gkc__civilization-card{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) auto;align-items:center;gap:1rem;padding:1rem;border:1px solid #234057;border-radius:.8rem;background:#0c1421}
+.gkc__civilization-main,.gkc__civilization-origin{display:grid;gap:.35rem;min-width:0}
+.gkc__civilization-main strong{font-size:1.1rem}
+.gkc__civilization-origin strong{font-size:.95rem}
+.gkc__civilization-card span{font-size:.83rem;color:#a7c6db}
+.gkc__civilization-card small{font-size:.69rem;color:#69d9ff;letter-spacing:.06em}
+.gkc__civilization-card .gkc__actions{justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:850px){.gkc__civilization-card{grid-template-columns:1fr}.gkc__civilization-card .gkc__actions{justify-content:start}}
+
+.gkc__civilization-filters{display:flex;flex-wrap:wrap;gap:.5rem}
+.gkc__civilization-filters a{padding:.65rem .8rem;border:1px solid #254459;border-radius:1.5rem;text-decoration:none;color:#82d9ff;background:#0b1723}
+.gkc__civilization-filters a:hover{border-color:#59caff}
+.gkc__civilization-pending{color:#bdd3e7;font-size:.85rem}
+
+/* Civilizaciones: fichas breves en lugar de la tabla de cuerpos físicos. */
+.gkc__civilization-list{display:grid;gap:.65rem}
+.gkc__civilization-card{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) auto;align-items:center;gap:1rem;padding:1rem;border:1px solid #234057;border-radius:.8rem;background:#0c1421}
+.gkc__civilization-main,.gkc__civilization-origin{display:grid;gap:.35rem;min-width:0}
+.gkc__civilization-main strong{font-size:1.1rem}
+.gkc__civilization-origin strong{font-size:.95rem}
+.gkc__civilization-card span{font-size:.83rem;color:#a7c6db}
+.gkc__civilization-card small{font-size:.69rem;color:#69d9ff;letter-spacing:.06em}
+.gkc__civilization-card .gkc__actions{justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:850px){.gkc__civilization-card{grid-template-columns:1fr}.gkc__civilization-card .gkc__actions{justify-content:start}}

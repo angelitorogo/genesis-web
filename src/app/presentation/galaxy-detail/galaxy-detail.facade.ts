@@ -97,6 +97,7 @@ const SIGNED_LONG_MAX =
   1n;
 
 export interface GalaxyDetailModel {
+  readonly generationKey?: UniverseGenerationKey;
   readonly routeUniverseRef:
     string;
 
@@ -679,6 +680,7 @@ export class GalaxyDetailFacade {
 
           model:
             Object.freeze({
+              generationKey,
               routeUniverseRef:
                 scientificRouteUniverseRef(
                   generationKey.universeSeed.serialize(),

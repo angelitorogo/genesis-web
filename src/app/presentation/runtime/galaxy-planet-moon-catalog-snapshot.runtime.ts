@@ -3,6 +3,7 @@ import { PlanetScientificTargetResolver, type PlanetScientificResolvedTarget } f
 import { StellarMultihostScientificTargetResolver } from '../../simulation/stellar/stellar-multihost-scientific-target-resolver';
 import { GeneratorVersion } from '../../domain/generation/generator-version';
 import { Vida9ConfirmedSystemBiologyIndexer } from './vida9-confirmed-system-biology-indexer';
+import { ensureVida9PlanetsInBackground, scheduleVida9MoonsInBackground } from './vida9-background-materializer';
 import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
 import { InjectionToken } from '@angular/core';
 import { CompactHostPlanetarySystemGenerator } from '../../simulation/planetary/compact-host-planetary-system-generator';
@@ -264,7 +265,28 @@ export class DexieGalaxyPlanetMoonCatalogSnapshotRuntime
     const work = this.vida9Queue.then(async () => {
       // Yield a browser task before procedural materialization / IndexedDB writes.
       await new Promise<void>(resolve => setTimeout(resolve, 0));
-      await indexer.ensureConfirmedCatalog(stableKey, snapshot);
+      // Production browsers index in a dedicated Worker. The legacy main-
+      // thread 29,000-planet / 81,000-moon loop was competing with first fiche
+      // navigation. Test doubles and runtimes without workers retain the
+      // original code path for regression coverage.
+      if(indexer instanceof Vida9ConfirmedSystemBiologyIndexer &&
+          typeof Worker==='function' && typeof indexedDB!=='undefined'){
+        const systems=new Set(canonicalGalaxyKnownDiscoveries(stableKey,snapshot.galaxyIndex,knownDiscoveries)
+          .filter(d=>d.locator instanceof SystemLocator &&
+            d.state.code>=DiscoveryState.CONFIRMED.code).map(d=>{
+              const loc=d.locator as SystemLocator;
+              return [loc.galaxyIndex,loc.sectorKey,loc.galacticObjectIndex].join('/');
+            }));
+        const planets=ensureVida9PlanetsInBackground(stableKey,snapshot.galaxyIndex,systems);
+        if(planets!==null){
+          await planets; // Planetary civilizations first, before any moon scan.
+          await scheduleVida9MoonsInBackground(stableKey,snapshot.galaxyIndex,snapshot);
+        }else{
+          await indexer.ensureConfirmedCatalog(stableKey,snapshot);
+        }
+      }else{
+        await indexer.ensureConfirmedCatalog(stableKey,snapshot);
+      }
       this.vida9Completed.add(taskKey);
     }).catch((error: unknown) => {
       // A failed materialization may retry on the next resolve; public state is untouched.

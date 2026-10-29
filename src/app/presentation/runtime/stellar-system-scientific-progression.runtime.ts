@@ -1,3 +1,5 @@
+import { ensureVida9PlanetsInBackground } from './vida9-background-materializer';
+
 import {
   InjectionToken,
 } from '@angular/core';
@@ -28,6 +30,8 @@ import {
   STELLAR_SYSTEM_SCIENTIFIC_PROFILE_V1,
   StellarSystemScientificDimension,
 } from '../../domain/discovery/stellar-system-scientific-profile';
+
+import { GeneratorVersion } from '../../domain/generation/generator-version';
 
 import {
   type ProceduralLocator,
@@ -477,7 +481,7 @@ export class DexieStellarSystemScientificProgressionRuntime
     await this.database
       .openDatabase();
 
-    return this.database
+    const committed = await this.database
       .transaction(
         'rw',
         this.database.universes,
@@ -690,6 +694,17 @@ export class DexieStellarSystemScientificProgressionRuntime
           );
         },
       );
+    // Authoritative CONFIRMED transition has COMMITTED. Only now enqueue the
+    // biology for this exact system; never before the Dexie transaction ends.
+    // The main UI must not wait for procedural VIDA.9 materialization.
+    if(committed.stateBefore.code < DiscoveryState.CONFIRMED.code &&
+        committed.stateAfter.code >= DiscoveryState.CONFIRMED.code &&
+        generationKey.generatorVersion === GeneratorVersion.V3){
+      const systemKey=[locator.galaxyIndex,locator.sectorKey,locator.galacticObjectIndex].join('/');
+      const task=ensureVida9PlanetsInBackground(generationKey,locator.galaxyIndex,new Set([systemKey]));
+      void task?.catch(error=>console.error('Civilizaciones: error al materializar el sistema confirmado',error));
+    }
+    return committed;
   }
 
   private async buildSnapshot(

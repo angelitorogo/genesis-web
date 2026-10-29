@@ -179,6 +179,7 @@ function normalizePage(
     pageSize: query.pageSize,
     totalPages,
     items: Object.freeze([...page.items]),
+    ...(page.knowledgeComplete === undefined ? {} : {knowledgeComplete:page.knowledgeComplete}),
     ...(page.atmosphericSortAvailability === undefined
       ? {} : { atmosphericSortAvailability: page.atmosphericSortAvailability }),
   });

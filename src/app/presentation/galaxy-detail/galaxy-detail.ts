@@ -48,6 +48,7 @@ import {
 import { GalaxyAccretionDiskVisualizationComponent } from './galaxy-accretion-disk-visualization';
 import { etiquetaMagnitudAcrecion } from './galaxy-accretion-disk-display';
 import { GalaxyNucleusVisualizationComponent } from './galaxy-nucleus-visualization';
+import { GalaxyCivilizationsInventoryComponent } from './galaxy-civilizations-inventory';
 
 import {
   GenesisScreen,
@@ -69,6 +70,7 @@ import {
     RouterLink,
     GalaxyAccretionDiskVisualizationComponent,
     GalaxyNucleusVisualizationComponent,
+    GalaxyCivilizationsInventoryComponent,
   ],
 
   templateUrl:

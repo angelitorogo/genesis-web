@@ -1,4 +1,4 @@
-import { inject, Injectable, InjectionToken } from '@angular/core';
+import { inject, Injectable, InjectionToken, Injector } from '@angular/core';
 
 import {
   type GalaxyKnowledgeCatalogCategory,
@@ -10,6 +10,7 @@ import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-syst
 import { GalaxyKnowledgePlanetsMoonsCatalogDataSource } from './galaxy-knowledge-planets-moons-catalog.data-source';
 import { GalaxyKnowledgeGalacticObjectsCatalogDataSource } from './galaxy-knowledge-galactic-objects-catalog.data-source';
 import { GalaxyKnowledgeMinorBodiesCatalogDataSource } from './galaxy-knowledge-minor-bodies-catalog.data-source';
+import { GalaxyKnowledgeCivilizationsCatalogDataSource } from './galaxy-knowledge-civilizations-catalog.data-source';
 
 export interface GalaxyKnowledgeCatalogDataSource {
   describe(
@@ -28,11 +29,16 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
   private readonly planetsMoons = inject(GalaxyKnowledgePlanetsMoonsCatalogDataSource);
   private readonly galacticObjects = inject(GalaxyKnowledgeGalacticObjectsCatalogDataSource);
   private readonly minorBodies = inject(GalaxyKnowledgeMinorBodiesCatalogDataSource);
+  private readonly injector = inject(Injector);
+  private get civilizations(): GalaxyKnowledgeCivilizationsCatalogDataSource {
+    return this.injector.get(GalaxyKnowledgeCivilizationsCatalogDataSource);
+  }
 
   describe(
     category: GalaxyKnowledgeCatalogCategory,
     subtype: string | null,
   ): GalaxyKnowledgeCatalogDescriptor {
+    if (category === 'civilizations') return this.civilizations.describe(subtype);
     if (category === 'systems') {
       return this.systems.describe(subtype);
     }
@@ -72,6 +78,7 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
   async query(
     request: GalaxyKnowledgeCatalogDataRequest,
   ): Promise<GalaxyKnowledgeCatalogDataResult> {
+    if (request.query.category === 'civilizations') return this.civilizations.query(request);
     if (request.query.category === 'systems') {
       return this.systems.query(request);
     }
@@ -113,5 +120,6 @@ function categoryTitle(category: GalaxyKnowledgeCatalogCategory): string {
     case 'comets': return 'Cometas conocidos';
     case 'tno': return 'Objetos transneptunianos conocidos';
     case 'captured': return 'Objetos capturados conocidos';
+    case 'civilizations': return 'Civilizaciones conocidas';
   }
 }
