@@ -784,8 +784,11 @@ function projectPlanetAtmosphere(
   atmosphere: GeneratedSingleHost['atmospheres'][number],
 ): CatalogAtmosphereState {
   const pressure=atmosphere.retainedSurfacePressurePascal;
-  const components=atmosphere.retainedGasComposition;
-  const fractions=atmosphere.isVacuum || components.length === 0
+  // Historical/partial fixtures may not contain a retained mixture. In that
+  // case its composition is unknown; do not manufacture an empty gas vector.
+  const components=Array.isArray(atmosphere.retainedGasComposition)
+    ? atmosphere.retainedGasComposition : null;
+  const fractions=atmosphere.isVacuum || components === null || components.length === 0
     ? null
     : Object.freeze(Object.fromEntries(components.map(component => [component.gas, component.moleFraction01])));
   return Object.freeze({

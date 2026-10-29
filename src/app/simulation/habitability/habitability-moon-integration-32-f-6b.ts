@@ -182,8 +182,10 @@ function completeSource31_10(target: MoonScientificResolvedTarget): MoonHabitabi
       !finiteFraction(e.waterInventoryIndex01) ||
       !finiteFraction(e.inferredIceRichnessIndex01) ||
       !finitePositive(e.estimatedSurfaceTemperatureKelvin)) return null;
+  const physicalHostOrdinal = physicalHostPlanetOrdinal(target);
+  if (physicalHostOrdinal === null) return null;
   return {
-    hostPlanetOrdinal: physicalHostPlanetOrdinal(target), moonOrdinal: identity.moonOrdinal,
+    hostPlanetOrdinal: physicalHostOrdinal, moonOrdinal: identity.moonOrdinal,
     sourceMoonRadiusEarth: g.radiusEarth,
     estimatedSurfaceTemperatureKelvin: e.estimatedSurfaceTemperatureKelvin,
     waterInventoryIndex01: e.waterInventoryIndex01,
@@ -199,9 +201,14 @@ function completeSource31_10(target: MoonScientificResolvedTarget): MoonHabitabi
  * private physical lineage; ordinary SINGLE and legacy fixtures use the
  * canonical host ordinal. Do not derive this from the ocean being validated.
  */
-function physicalHostPlanetOrdinal(target: MoonScientificResolvedTarget): number {
+function physicalHostPlanetOrdinal(target: MoonScientificResolvedTarget): number | null {
   const source = target.physicalHostPlanetOrdinal;
-  if (source === undefined) return target.identity.hostPlanetOrdinal;
+  if (source === undefined) {
+    // Partial/legacy observed DTOs may omit identity. Absence is unknown, not
+    // ordinal zero and never evidence for an unrelated physical source.
+    const host = target.identity?.hostPlanetOrdinal;
+    return typeof host === 'number' && Number.isSafeInteger(host) && host >= 1 ? host : null;
+  }
   if (!Number.isSafeInteger(source) || source < 1) {
     throw new RangeError('32.F.6b: invalid physical host planet ordinal.');
   }
@@ -214,6 +221,7 @@ function validOcean(target: MoonScientificResolvedTarget): MoonOceanReality32F2c
       m.contractVersion !== '32.F.2c-seeded-interior-ocean-model-v1') return null;
   const identity = target.identity;
   const physicalHostOrdinal = physicalHostPlanetOrdinal(target);
+  if (!identity || physicalHostOrdinal === null) return null;
   if (identity && ((Number.isInteger(physicalHostOrdinal) &&
       physicalHostOrdinal !== m.hostPlanetOrdinal) ||
       (Number.isInteger(identity.moonOrdinal) && identity.moonOrdinal !== m.moonOrdinal))) {

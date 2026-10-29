@@ -30,7 +30,11 @@ const ocean = (state: MoonOceanReality32F2c['state']): MoonOceanReality32F2c => 
   scientificLimits: [],
 });
 const target = (model: MoonOceanReality32F2c): MoonScientificResolvedTarget => ({
-  identity: { designation: 'luna confidencial' },
+  // A constitutive CT-0 reservoir belongs to one physical moon. The 32.F.6b
+  // bridge correctly refuses to grant it to a partial or mismatched identity.
+  // Match the V3 physical identity in this fixture without changing production.
+  physicalHostPlanetOrdinal: 1,
+  identity: { designation: 'luna confidencial', hostPlanetOrdinal: 1, moonOrdinal: 1 },
   detail: { environment: {
     estimatedSurfaceTemperatureKelvin: 235.7,
     waterRegime: 'ICE_AND_SUBSURFACE_OCEAN',
@@ -93,6 +97,18 @@ describe('32.F.2c — confirmación del sistema desbloquea el conocimiento oceá
       DiscoveryState.CONFIRMED, true, 'G0/S0/O0/B0/M0', 'SINGLE');
     expect(shown?.routes[1].criteria.find(x => x.label === 'Reservorio líquido')?.status).toBe('Desconocido');
     expect(shown?.routes[1].facts.some(f => f.value.includes('No resuelto'))).toBe(true);
+  });
+  it('no atribuye un océano físico a una luna sin identidad completa', () => {
+    const incomplete = {
+      ...target(ocean('PRESENT_IN_SIMULATED_MODEL')),
+      physicalHostPlanetOrdinal: undefined,
+      identity: { designation: 'luna confidencial' },
+    } as unknown as MoonScientificResolvedTarget;
+    const shown = ObservedHabitabilityFiche31Fe.moon(incomplete,
+      DiscoveryState.CONFIRMED, true, 'G0/S0/O0/B0/M0', 'SINGLE');
+    const subsurface = shown?.routes.find(x => x.label === 'Agua líquida subsuperficial');
+    expect(subsurface?.criteria.find(x => x.label === 'Reservorio líquido')?.status).toBe('Desconocido');
+    expect(subsurface?.facts.some(f => f.label.includes('realidad simulada'))).toBe(false);
   });
   it('no revela nada antes de CONFIRMED ni cuando la ficha está desautorizada', () => {
     const secret = new Proxy({} as MoonScientificResolvedTarget, {

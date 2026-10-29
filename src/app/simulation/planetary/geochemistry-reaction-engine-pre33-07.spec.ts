@@ -98,12 +98,15 @@ describe('PRE-33.07 — energía geoquímica causal',()=>{
         thermodynamicSourceId:'LAB_MODEL_CH4_THERMO',kineticSourceId:'LAB_MODEL_CH4_RATE'}]});
     expect(g.reactions.find(x=>x.route==='METHANE_OXIDATION')?.chemicalPowerWatts).toBeCloseTo(1000);
   });
-  it('ficha planetaria V3 conserva campos químicos y V2 no recibe placeholders',()=>{
+  it('los contratos V3 conservan química, pero la ficha compacta no expone diagnósticos internos',()=>{
     const chem=geoChemicalFieldsPRE3307(Engine.assess({...case0(),kinetics:[]}));
     const base={id:'geology' as const,eyebrow:'',title:'',summary:'',fields:chem};
     const v3=unifyPlanetFicheSections([base])[0];
     const v2=unifyPlanetFicheSections([{...base,fields:[]}])[0];
-    expect(v3.fields.some(f=>f.label==='PRE-33.07 — Potencia química exergónica (ruta)')).toBe(true);
+    expect(chem.some(f=>f.label==='PRE-33.07 — Potencia química exergónica (ruta)')).toBe(true);
+    // VIDA.9d deliberately hides internal PRE-33 diagnostics in the compact fiche.
+    expect(v3.fields.some(f=>f.label.startsWith('PRE-33.07'))).toBe(false);
+    expect(v3.fields.some(f=>f.label==='Régimen geológico')).toBe(true);
     expect(v2.fields.some(f=>f.label.startsWith('PRE-33.07'))).toBe(false);
   });
   it('luna 32.F.4 con reactivos desconocidos nunca obtiene potencia desde el calor',()=>{

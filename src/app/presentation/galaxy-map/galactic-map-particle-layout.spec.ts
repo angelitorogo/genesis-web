@@ -314,7 +314,7 @@ describe(
           synchronous.opacities,
         );
       },
-      30_000,
+      60_000, // Under full Vitest v8 coverage this GPU-buffer parity check needs headroom.
     );
 
     it(

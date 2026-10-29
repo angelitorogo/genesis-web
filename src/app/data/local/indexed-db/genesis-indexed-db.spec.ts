@@ -180,7 +180,7 @@ describe(
     );
 
     it(
-      'VIDA.0 defines only gameplay schema-v7 stores',
+      'VIDA.9 conserva exactamente las tablas gameplay y biológicas de esquema v10',
       async () => {
         await database
           .openDatabase();
@@ -203,6 +203,9 @@ describe(
           'metadata',
           'navigation',
           'observations',
+          'privateBiologicalRecordsVIDA9',
+          'privateEcologicalBiospheres',
+          'privateMicrobialBiospheres',
           'progress',
           'universes',
         ]);
