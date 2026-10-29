@@ -19,7 +19,7 @@ export type GalaxyAccretionDiskVisualization =
   | Readonly<{
       kind: 'AGN';
       heading: 'NÚCLEO AGN';
-      badge: 'Procedural / determinista / ilustrativo';
+      badge: 'Ilustración científica';
       caption: string;
       agnModel: AgnNucleusRenderModel;
       blackHoleCoreModel: BlackHoleLaboratoryRenderModel;
@@ -27,7 +27,7 @@ export type GalaxyAccretionDiskVisualization =
   | Readonly<{
       kind: 'QUASAR';
       heading: 'NÚCLEO QUÁSAR';
-      badge: 'Procedural / determinista / ilustrativo';
+      badge: 'Ilustración científica';
       caption: string;
       quasarModel: QuasarNucleusRenderModel;
       blackHoleCoreModel: BlackHoleLaboratoryRenderModel;
@@ -57,9 +57,9 @@ export function createGalaxyAccretionDiskVisualization(
     return Object.freeze({
       kind: 'AGN',
       heading: 'NÚCLEO AGN',
-      badge: 'Procedural / determinista / ilustrativo',
+      badge: 'Ilustración científica',
       caption:
-        'Render derivado del modelo físico actual del núcleo activo. Representa geometría, inclinación y brillo del disco; no es una observación directa ni una imagen a escala.',
+        'Representación del núcleo activo basada en sus propiedades físicas. Muestra la geometría, la inclinación y el brillo del disco; no es una observación directa ni una imagen a escala.',
       agnModel,
       blackHoleCoreModel,
     });
@@ -79,9 +79,9 @@ export function createGalaxyAccretionDiskVisualization(
     return Object.freeze({
       kind: 'QUASAR',
       heading: 'NÚCLEO QUÁSAR',
-      badge: 'Procedural / determinista / ilustrativo',
+      badge: 'Ilustración científica',
       caption:
-        'Render derivado del modelo físico actual del cuásar. La visualización resume disco, brillo central y posible componente relativista sin reemplazar evidencia instrumental ni observación astronómica.',
+        'Representación del cuásar basada en sus propiedades físicas. Muestra el disco, el brillo central y la posible emisión relativista; no sustituye una observación astronómica.',
       quasarModel,
       blackHoleCoreModel,
     });

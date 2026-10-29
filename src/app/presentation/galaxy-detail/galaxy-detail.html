@@ -8,8 +8,6 @@
       <div class="gd__header-copy">
         <p class="gd__eyebrow">
           CATÁLOGO INTERGALÁCTICO
-          <span aria-hidden="true">/</span>
-          26.1 · V2
         </p>
 
         <h1
@@ -20,9 +18,8 @@
         </h1>
 
         <p class="gd__subtitle">
-          Lectura científica progresiva de la galaxia según el conocimiento ya
-          persistido. La ficha distingue observación, física y confirmación sin
-          materializar información todavía desconocida.
+          Identidad, observación y características físicas de la galaxia según
+          el conocimiento disponible.
         </p>
       </div>
 
@@ -48,7 +45,7 @@
           ></span>
 
           <div>
-            <small>FICHA CIENTÍFICA / LECTURA LOCAL</small>
+            <small>FICHA CIENTÍFICA</small>
             <strong>Resolviendo galaxia conocida…</strong>
           </div>
         </section>
@@ -84,7 +81,7 @@
           <strong>La galaxia solicitada no forma parte del conocimiento persistido.</strong>
 
           <p>
-            Abrir una URL no detecta ni materializa galaxias desconocidas.
+            Solo pueden consultarse galaxias que ya forman parte del catálogo.
           </p>
         </section>
       }
@@ -152,7 +149,10 @@
                   Galaxia {{ model.profile.galaxyIndex }}
                 </p>
               } @else {
-                <h2 data-testid="galaxy-detail-index">
+                <h2
+                  class="gd__identity-name--pending"
+                  data-testid="galaxy-detail-index"
+                >
                   Galaxia {{ model.profile.galaxyIndex }}
                 </h2>
 
@@ -160,10 +160,6 @@
                   Nombre propio aún no resuelto
                 </p>
               }
-
-              <code data-testid="galaxy-detail-designation">
-                {{ model.profile.designationCode }}
-              </code>
 
               <div class="gd__hero-summary" aria-label="Resumen de identificación">
                 <div>
@@ -228,7 +224,7 @@
                 <span>01</span>
                 <div>
                   <strong>Identidad</strong>
-                  <small>Conocimiento persistido</small>
+                  <small>Datos conocidos</small>
                 </div>
               </li>
 
@@ -236,7 +232,7 @@
                 <span>02</span>
                 <div>
                   <strong>Observación</strong>
-                  <small>Perfil seguro</small>
+                  <small>Datos observados</small>
                 </div>
               </li>
 
@@ -294,8 +290,7 @@
                   </div>
 
                   <p>
-                    Primero se muestra lo observado; las magnitudes físicas solo
-                    aparecen cuando el estado científico las permite.
+                    Datos observados y propiedades científicas conocidas.
                   </p>
                 </div>
 
@@ -315,7 +310,7 @@
                       </div>
 
                       <div>
-                        <dt>DISCOVERY STATE</dt>
+                        <dt>ESTADO CIENTÍFICO</dt>
                         <dd data-testid="galaxy-detail-global-state">
                           {{ discoveryStateLabel(model.profile.knowledgeState) }}
                         </dd>
@@ -335,7 +330,7 @@
                       </div>
 
                       <div>
-                        <dt>IDENTIDAD PROCEDURAL</dt>
+                        <dt>IDENTIFICACIÓN</dt>
                         <dd>
                           @if (model.profile.knownName) {
                             Conocida
@@ -422,7 +417,7 @@
                 >
                   <div class="gd__section-heading gd__section-heading--science">
                     <div>
-                      <small>CAPA 03 / CATALOGADA</small>
+                      <small>SECCIÓN 03 · FÍSICA</small>
                       <h3 id="gd-physical-title">Propiedades físicas</h3>
                     </div>
 
@@ -487,7 +482,7 @@
                     >
                       <div class="gd__section-heading gd__section-heading--stacked">
                         <div>
-                          <small>CAPA 04 / CONFIRMADA</small>
+                          <small>SECCIÓN 04 · ESTRUCTURA</small>
                           <h3 id="gd-structure-title">Morfología física</h3>
                         </div>
                       </div>
@@ -539,7 +534,7 @@
                       >
                         <div class="gd__section-heading gd__section-heading--stacked">
                           <div>
-                            <small>CAPA 04 / NÚCLEO</small>
+                            <small>SECCIÓN 04 · NÚCLEO</small>
                             <h3 id="gd-nucleus-title">Núcleo galáctico</h3>
                           </div>
                         </div>
@@ -588,7 +583,7 @@
                         aria-labelledby="gd-accretion-title">
                         <div class="gd__section-heading">
                           <div>
-                            <small>28.1 / OBSERVACIÓN ESPECIAL</small>
+                            <small>OBSERVACIÓN DEL NÚCLEO</small>
                             <h3 id="gd-accretion-title">Observar disco de acreción</h3>
                           </div>
                           <span class="gd__availability">{{ disk.observed ? 'CAMPAÑA REGISTRADA' : 'PENDIENTE' }}</span>
@@ -604,11 +599,11 @@
                           <app-galaxy-accretion-disk-visualization [visual]="model.accretionDiskVisualization!" />
                           <dl class="gd__facts gd__facts--deep" data-testid="galaxy-detail-accretion-model-facts">
                             @for (fact of disk.modelFacts; track fact.label) {
-                              <div><dt>{{ fact.label }}</dt><dd>{{ fact.value }}</dd></div>
+                              <div><dt>{{ etiquetaMagnitudAcrecion(fact.label) }}</dt><dd>{{ fact.value }}</dd></div>
                             }
                           </dl>
-                          <p>Valores calculados por la aproximación 27.7 de disco delgado, estacionario
-                            y sin giro. No son medidas observadas ni incluyen variabilidad, inclinación
+                          <p>Estimaciones para un disco delgado, estacionario y sin giro.
+                            No son medidas directas ni incluyen variabilidad, inclinación
                             o transferencia radiativa.</p>
                         } @else {
                           <p data-testid="galaxy-detail-accretion-requirement">
@@ -641,7 +636,7 @@
                     </div>
 
                     <div class="gd__lock-copy">
-                      <small>SIGUIENTE CAPA CIENTÍFICA</small>
+                      <small>INFORMACIÓN PENDIENTE</small>
                       <h3>Estructura y núcleo pendientes</h3>
                       <p>
                         La estructura normalizada y el estado nuclear exacto requieren
@@ -670,8 +665,7 @@
                           >
                             Coste científico: {{ formatBigInt(confirmDiscoveryPointCost) }} PD globales.
                             Saldo disponible: {{ formatBigInt(model.globalDiscoveryPoints) }} PD.
-                            El gasto y CATALOGUED → CONFIRMED se confirman de forma atómica;
-                            no genera objetos, seeds ni Ground Truth adicional.
+                            La confirmación permite consultar la estructura y el núcleo galáctico.
                           </p>
 
                           @if (!canAffordScientificAction(model.globalDiscoveryPoints, confirmDiscoveryPointCost)) {
@@ -700,12 +694,11 @@
                   </div>
 
                   <div class="gd__lock-copy">
-                    <small>SIGUIENTE CAPA CIENTÍFICA</small>
+                    <small>INFORMACIÓN PENDIENTE</small>
                     <h3>Propiedades físicas pendientes</h3>
                     <p>
-                      Las magnitudes físicas exactas permanecen ocultas hasta que la
-                      galaxia alcance el estado Catalogada. La URL de esta ficha no
-                      materializa ni revela Ground Truth pendiente.
+                      Las magnitudes físicas estarán disponibles al catalogar
+                      esta galaxia.
                     </p>
 
                     @if (canValidateDetection(model.scientificProfile.knowledgeState)) {
@@ -728,9 +721,8 @@
                           class="gd__action-explanation"
                           data-testid="galaxy-detail-validate-detection-cost"
                         >
-                          DETECTED → DISCOVERED confirma la observación sin gastar PD.
-                          Desbloquea la identidad procedural ya definida, pero todavía
-                          no revela magnitudes físicas de Catalogada ni estructura de Confirmada.
+                          Validar la detección permite conocer la identidad de la galaxia
+                          sin gastar PD. Sus propiedades físicas seguirán pendientes.
                         </p>
                       </div>
                     } @else if (canCatalogue(model.scientificProfile.knowledgeState)) {
@@ -755,8 +747,8 @@
                         >
                           Coste científico: {{ formatBigInt(catalogueDiscoveryPointCost) }} PD globales.
                           Saldo disponible: {{ formatBigInt(model.globalDiscoveryPoints) }} PD.
-                          El gasto y VISITED → CATALOGUED se confirman de forma atómica;
-                          no materializa sistemas, cuerpos ni objetos no descubiertos.
+                          La catalogación permite consultar las magnitudes físicas
+                          de esta galaxia.
                         </p>
 
                         @if (!canAffordScientificAction(model.globalDiscoveryPoints, catalogueDiscoveryPointCost)) {
@@ -774,8 +766,8 @@
                         data-testid="galaxy-detail-catalogue-prerequisite"
                       >
                         @if (isDiscovered(model.scientificProfile.knowledgeState)) {
-                          Establece esta galaxia como foco de exploración para registrar
-                          DISCOVERED → VISITED sin coste de PD.
+                          Establece esta galaxia como foco de exploración
+                          sin coste de PD.
                         } @else {
                           La acción se habilita cuando esta galaxia alcance exactamente
                           el estado Visitada.
@@ -817,7 +809,7 @@
                     <div>
                       <strong>EN FOCO</strong>
                       <p>
-                        Esta galaxia ya define el contexto activo de Home,
+                        Esta galaxia es el foco activo de Inicio,
                         Exploración y Mapa galáctico.
                       </p>
                     </div>
@@ -849,8 +841,8 @@
                   >
                     <span>FOCO BLOQUEADO</span>
                     <p>
-                      Valida primero la detección. Una galaxia DETECTED no puede
-                      saltar directamente a VISITED.
+                      Valida primero la detección antes de establecer esta galaxia
+                      como foco de exploración.
                     </p>
                   </div>
                 }
@@ -883,14 +875,9 @@
                 >
                   <span>ALCANCE</span>
                   <p>
-                    Cambiar el foco actualiza únicamente el contexto persistido de
-                    exploración. Si esta galaxia pertenece al historial reciente,
-                    regresar valida primero esa relación persistida y conserva su
-                    progreso local. DETECTED debe validarse primero a DISCOVERED;
-                    establecer el foco registra DISCOVERED → VISITED. Catalogada y
-                    Confirmada conservan su estado exacto.
-                    No se leen ni gastan PD y esta acción no representa ni afirma
-                    un viaje físico o FTL.
+                    Elegir esta galaxia como foco cambia el contexto de exploración,
+                    conserva el conocimiento adquirido y no implica un viaje físico
+                    ni consume puntos de descubrimiento.
                   </p>
                 </div>
               </section>
@@ -904,13 +891,12 @@
           >
             <div class="gd__section-heading">
               <div>
-                <small>26.1b · TELEMETRÍA DE EXPLORACIÓN</small>
-                <h3 id="gd-progress-title">Conocimiento persistido ampliado</h3>
+                <small>EXPLORACIÓN GALÁCTICA</small>
+                <h3 id="gd-progress-title">Inventario y exploración</h3>
               </div>
 
               <p>
-                Los totales proceden del conocimiento persistido. Los desgloses
-                solo se resuelven cuando el estado científico ya permite conocerlos.
+                Cuerpos y regiones identificados durante la exploración.
               </p>
             </div>
 
@@ -1824,21 +1810,6 @@
             </div>
           </section>
 
-          <section
-            class="gd__boundary"
-            data-testid="galaxy-detail-boundary"
-          >
-            <span>26.1b · V2</span>
-
-            <p>
-              La ficha científica reutiliza la ruta estable de galaxia y proyecta
-              únicamente el conocimiento ya persistido. Catalogada habilita las
-              magnitudes físicas base; Confirmada añade estructura y núcleo. La
-              consulta no cambia DiscoveryState, no gasta PD y no expone Ground
-              Truth oculto mediante navegación directa.
-            </p>
-          </section>
-
           <nav
             class="gd__actions gd__actions--footer"
             aria-label="Navegación de la ficha de galaxia"
@@ -1871,7 +1842,7 @@
               class="gd__action"
               routerLink="/"
             >
-              Home
+              Inicio
             </a>
           </nav>
         }

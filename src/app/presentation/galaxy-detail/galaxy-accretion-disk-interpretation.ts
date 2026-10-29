@@ -1,3 +1,4 @@
+import { regimenVisualGalactico } from './galaxy-accretion-disk-display';
 import { type AgnNucleusRenderModel } from '../laboratory/galactic-objects/agn-nucleus-render-model';
 import { type QuasarNucleusRenderModel } from '../laboratory/galactic-objects/quasar-nucleus-render-model';
 
@@ -32,7 +33,7 @@ function classifyInclination(value01: number): string {
 function classifyThickness(value01: number): string {
   if (value01 <= 0.04) return 'Disco fino';
   if (value01 <= 0.075) return 'Disco intermedio';
-  return 'Torus / disco grueso';
+  return 'Toro de acreción / disco grueso';
 }
 
 function classifyStrength(value01: number, low: number, high: number, labels: readonly [string, string, string]): string {
@@ -45,9 +46,9 @@ export function buildAgnAccretionDiskInterpretation(
   model: AgnNucleusRenderModel,
 ): GalaxyAccretionDiskStrictInterpretation {
   return Object.freeze({
-    regimeLabel: `${model.family.replaceAll('_', ' ')} · ${classifyInclination(model.inclination)}`,
+    regimeLabel: `${regimenVisualGalactico(model.family)} · ${classifyInclination(model.inclination)}`,
     summary:
-      'Lectura visual estricta del modelo AGN: separa región interna caliente, anillo fotónico, disco principal y componente coronal sin presentar la ilustración como observación directa.',
+      'Ilustración del núcleo galáctico activo: distingue la región interna caliente, el anillo fotónico, el disco principal y la corona. No representa una observación directa.',
     readoutFacts: Object.freeze([
       { label: 'Inclinación', value: classifyInclination(model.inclination) },
       { label: 'Espesor visual', value: classifyThickness(model.diskThickness) },
@@ -67,10 +68,10 @@ export function buildAgnAccretionDiskInterpretation(
       },
       {
         label: 'Borde externo',
-        description: `El cierre del disco mantiene una textura más fría y clumpy con granularidad ${percentageLabel(model.clumpiness)} y deformación ${percentageLabel(model.warp)}.`,
+        description: `El cierre del disco mantiene una textura más fría e irregular con granularidad ${percentageLabel(model.clumpiness)} y deformación ${percentageLabel(model.warp)}.`,
       },
       {
-        label: 'Corona / emisión difusa',
+        label: 'Corona y emisión difusa',
         description: `La emisión alrededor del núcleo aparece con intensidad ${percentageLabel(model.coronaStrength)} y lenteado ${percentageLabel(model.lensingStrength)}.`,
       },
     ]),
@@ -81,13 +82,13 @@ export function buildQuasarAccretionDiskInterpretation(
   model: QuasarNucleusRenderModel,
 ): GalaxyAccretionDiskStrictInterpretation {
   const polarFeature = model.jetStrength >= model.windStrength
-    ? `Jets relativistas ${classifyStrength(model.jetStrength, 0.35, 0.65, ['moderados', 'intensos', 'dominantes'])}`
+    ? `Chorros relativistas ${classifyStrength(model.jetStrength, 0.35, 0.65, ['moderados', 'intensos', 'dominantes'])}`
     : `Viento polar ${classifyStrength(model.windStrength, 0.35, 0.65, ['moderado', 'intenso', 'dominante'])}`;
 
   return Object.freeze({
-    regimeLabel: `${model.family.replaceAll('_', ' ')} · ${classifyInclination(model.inclination)}`,
+    regimeLabel: `${regimenVisualGalactico(model.family)} · ${classifyInclination(model.inclination)}`,
     summary:
-      'Lectura visual estricta del modelo quásar: enfatiza el disco hiperluminoso y el componente polar dominante, diferenciando emisión coronal, halo de dispersión y estructura radial del disco.',
+      'Ilustración del cuásar: destaca el disco de gran luminosidad, la emisión polar, la corona y el halo de dispersión. No representa una observación directa.',
     readoutFacts: Object.freeze([
       { label: 'Inclinación', value: classifyInclination(model.inclination) },
       { label: 'Espesor visual', value: classifyThickness(model.diskThickness) },
@@ -107,7 +108,7 @@ export function buildQuasarAccretionDiskInterpretation(
       },
       {
         label: 'Componente polar',
-        description: `La estructura polar combina jets ${percentageLabel(model.jetStrength)} / vientos ${percentageLabel(model.windStrength)} con apertura ${percentageLabel(model.jetOpening)}.`,
+        description: `La estructura polar combina chorros relativistas ${percentageLabel(model.jetStrength)} / vientos ${percentageLabel(model.windStrength)} con apertura ${percentageLabel(model.jetOpening)}.`,
       },
       {
         label: 'Halo / entorno difuso',

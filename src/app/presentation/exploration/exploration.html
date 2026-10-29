@@ -47,7 +47,7 @@
           Detecta nuevas galaxias fuera del foco actual. La exploración de sectores de la galaxia activa se realiza directamente desde el Mapa galáctico.
         </p>
       </div>
-      <a class="exploration__back" routerLink="/" data-testid="exploration-home-link">← Volver a Home</a>
+      <a class="exploration__back exploration__action" routerLink="/" data-testid="exploration-home-link">← Volver a Home</a>
     </header>
 
     @switch (facade.state().kind) {
@@ -151,7 +151,7 @@
                   <div class="exploration__flow-heading">
                     <div>
                       <p class="exploration__label">
-                        SECUENCIA 7.4–7.8
+                        PROCESO DE BÚSQUEDA
                       </p>
 
                       <h3 id="external-galaxy-search-title">
@@ -397,12 +397,8 @@
                               <h4
                                 data-testid="external-galaxy-detection-code"
                               >
-                                {{ preliminary.designationCode }}
+                                Galaxia {{ preliminary.galaxyIndex }}
                               </h4>
-
-                              <p>
-                                La detección se registra como DETECTED. Solo se muestra información preliminar permitida por 7.6; el nombre propio y las propiedades exactas permanecen ocultos.
-                              </p>
                             } @else {
                               <p class="exploration__label">
                                 SIN DETECCIÓN EXTRAGALÁCTICA
@@ -412,9 +408,7 @@
                                 El barrido no aisló una nueva galaxia
                               </h4>
 
-                              <p>
-                                El intento queda registrado únicamente para la protección anti-bloqueo. No se inventa ninguna galaxia ni se altera el foco actual.
-                              </p>
+
                             }
                           </div>
                         </div>
@@ -426,7 +420,7 @@
                           <dl class="exploration__scan-facts">
                             <div>
                               <dt>
-                                Identificador interno
+                                Galaxia
                               </dt>
 
                               <dd
@@ -512,7 +506,7 @@
                           @if (facade.externalFocusChoiceRequired()) {
                             <button
                               type="button"
-                              class="exploration__action"
+                              class="exploration__action exploration__action--full"
                               data-testid="external-galaxy-remain-action"
                               [disabled]="facade.externalFocusPending()"
                               (click)="remainOnCurrentGalaxy()"
@@ -521,14 +515,14 @@
                             </button>
 
                             <a
-                              class="exploration__scan"
+                              class="exploration__action exploration__action--full"
                               data-testid="external-galaxy-validate-detection-action"
                               [routerLink]="[
                                 '/galaxies',
                                 preliminary.galaxyIndex.toString()
                               ]"
                             >
-                              VALIDAR DETECCIÓN EN FICHA
+                              Validar detección en ficha
                             </a>
                           }
                         }
@@ -548,9 +542,7 @@
                             Ningún barrido extragaláctico ejecutado
                           </h4>
 
-                          <p>
-                            Cada intento es determinista para la seed y el estado persistido. La protección anti-bloqueo garantiza que la mala suerte no pueda prolongarse indefinidamente.
-                          </p>
+
                         </div>
                       }
                     </section>
@@ -580,16 +572,7 @@
                     </p>
                   }
 
-                  <aside class="exploration__scope">
-                    <span aria-hidden="true">◇</span>
 
-                    <p>
-                      <strong>
-                        Límite 7.4–7.8.
-                      </strong>
-                      La búsqueda externa es independiente del escaneo de sectores, no revela Ground Truth exacto y cambiar de galaxia significa únicamente cambiar el foco de exploración; no afirma viaje físico ni FTL.
-                    </p>
-                  </aside>
                 </section>
               }
           </section>

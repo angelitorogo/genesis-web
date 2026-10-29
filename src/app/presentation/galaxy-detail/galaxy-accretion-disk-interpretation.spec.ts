@@ -6,6 +6,7 @@ import { GalaxyGenerator } from '../../simulation/universe/galaxy-generator';
 import { createAgnNucleusRenderModel } from '../laboratory/galactic-objects/agn-nucleus-render-model';
 import { createQuasarNucleusRenderModel } from '../laboratory/galactic-objects/quasar-nucleus-render-model';
 import { buildAgnAccretionDiskInterpretation, buildQuasarAccretionDiskInterpretation } from './galaxy-accretion-disk-interpretation';
+import { regimenVisualGalactico } from './galaxy-accretion-disk-display';
 
 const GENERATION_KEY = new UniverseGenerationKey(
   UniverseSeed.parse('7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'),
@@ -29,7 +30,10 @@ describe('galaxy-accretion-disk-interpretation', () => {
 
     expect(interpretation.readoutFacts).toHaveLength(6);
     expect(interpretation.legendFacts).toHaveLength(4);
-    expect(interpretation.regimeLabel).toContain('·');
+    expect(interpretation.regimeLabel).toBe(
+      `${regimenVisualGalactico(createAgnNucleusRenderModel(galaxy).family)} · ${interpretation.readoutFacts[0]?.value}`,
+    );
+    expect(interpretation.regimeLabel).not.toMatch(/LOW_LUMINOSITY|THIN_LUMINOUS|EDGE_ON/);
   });
 
   it('should derive a stable strict-visual interpretation for quasar renders', () => {
@@ -38,6 +42,7 @@ describe('galaxy-accretion-disk-interpretation', () => {
 
     expect(interpretation.readoutFacts).toHaveLength(6);
     expect(interpretation.legendFacts).toHaveLength(4);
-    expect(interpretation.summary).toContain('quásar');
+    expect(interpretation.summary).toContain('cuásar');
+    expect(interpretation.regimeLabel).not.toMatch(/RADIANT_FACE|EDGE_ON_DUST|HYPERLUMINOUS/);
   });
 });

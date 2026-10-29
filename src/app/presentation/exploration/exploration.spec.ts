@@ -31,6 +31,18 @@ import {
 } from '../../domain/exploration/exploration-sector-result';
 
 import {
+  ExternalGalaxyFocusOffer,
+} from '../../domain/exploration/external-galaxy-focus';
+
+import {
+  ExternalGalaxyPreliminaryInformation,
+  ExternalGalaxyMorphologyHint,
+  ExternalGalaxyScaleHint,
+  ExternalGalaxyStellarPopulationHint,
+  ExternalGalaxyNuclearActivityHint,
+} from '../../domain/observation/galaxy/external-galaxy-preliminary-information';
+
+import {
   GalaxyLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -468,6 +480,83 @@ describe(
             HTMLElement,
       };
     }
+
+    it(
+      'should show a Home navigation button and omit internal development labels',
+      async () => {
+        const { element } = await fixtureAndElement();
+        const home = element.querySelector<HTMLAnchorElement>(
+          '[data-testid="exploration-home-link"]',
+        );
+        expect(home?.getAttribute('href')).toBe('/');
+        expect(home?.classList.contains('exploration__action')).toBe(true);
+        expect(element.textContent).toContain('PROCESO DE BÚSQUEDA');
+        expect(element.textContent).not.toContain('SECUENCIA 7.4');
+        expect(element.textContent).not.toContain('Cada intento es determinista');
+        expect(element.textContent).not.toContain('Límite 7.4');
+      },
+    );
+
+    it(
+      'should hide procedural detection codes and display matching focus-decision buttons',
+      async () => {
+        globalDiscoveryPoints = 100n;
+        const index = 618136846955087647n;
+        const code = 'GEN-V3-G618136846955087647-40EE74431D89EF48A6B9B0C6C7DCD527';
+
+        const search = vi.spyOn(externalRuntime, 'search');
+        search.mockImplementationOnce(async () => {
+          consumedSearchOpportunities += 1n;
+          const profile = ExternalGalaxySearchPityEngine
+            .evaluateNextSearchProbability(generationKey, 100n, 0n);
+          return {
+            detected: true,
+            probabilityProfileUsed: profile,
+            consecutiveFailedSearchesBefore: 0n,
+            consecutiveFailedSearchesAfter: 0n,
+            globalDiscoveryPointsBefore: 100n,
+            globalDiscoveryPointsAfter: 100n,
+            awardedDiscoveryPoints: 40,
+            detectedGalaxyIndex: index,
+            preliminaryInformation: new ExternalGalaxyPreliminaryInformation(
+              index,
+              code,
+              DiscoveryState.DETECTED,
+              ExternalGalaxyMorphologyHint.DISK_LIKE,
+              ExternalGalaxyScaleHint.LARGE,
+              ExternalGalaxyStellarPopulationHint.HIGH,
+              ExternalGalaxyNuclearActivityHint.NO_CLEAR_ACTIVITY,
+            ),
+            focusOffer: new ExternalGalaxyFocusOffer(
+              0n,
+              index,
+              DiscoveryState.DETECTED,
+            ),
+            nextSearchProfile: profile,
+          };
+        });
+
+        const { fixture, element } = await fixtureAndElement();
+        await fixture.componentInstance.facade.searchExternalGalaxy();
+        fixture.detectChanges();
+
+        expect(element.querySelector('[data-testid="external-galaxy-search-result"]')
+          ?.getAttribute('data-detected')).toBe('true');
+        expect(element.querySelector('[data-testid="external-galaxy-detection-code"]')
+          ?.textContent).toContain(`Galaxia ${index}`);
+        expect(element.textContent).not.toContain(code);
+
+        const remain = element.querySelector<HTMLButtonElement>(
+          '[data-testid="external-galaxy-remain-action"]',
+        );
+        const validate = element.querySelector<HTMLAnchorElement>(
+          '[data-testid="external-galaxy-validate-detection-action"]',
+        );
+        expect(remain?.classList.contains('exploration__action--full')).toBe(true);
+        expect(validate?.classList.contains('exploration__action--full')).toBe(true);
+        expect(validate?.getAttribute('href')).toBe(`/galaxies/${index}`);
+      },
+    );
 
     it(
       'should keep /exploration exclusively focused on the external-galaxy search flow',

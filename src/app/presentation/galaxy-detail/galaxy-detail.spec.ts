@@ -672,7 +672,7 @@ describe(
             '[data-testid="galaxy-detail-scientific-lock"]',
           )?.textContent,
         ).toContain(
-          'Catalogada',
+          'Propiedades físicas pendientes',
         );
 
         expect(
@@ -686,7 +686,7 @@ describe(
             '[data-testid="galaxy-detail-catalogue-prerequisite"]',
           )?.textContent,
         ).toContain(
-          'DISCOVERED → VISITED',
+          'sin coste de PD',
         );
 
         expect(
@@ -752,7 +752,7 @@ describe(
             '[data-testid="galaxy-detail-progress"]',
           )?.textContent,
         ).toContain(
-          'Conocimiento persistido ampliado',
+          'Inventario y exploración',
         );
 
         for (
@@ -1041,10 +1041,12 @@ describe(
         expect(
           element.querySelector(
             '[data-testid="galaxy-detail-boundary"]',
-          )?.textContent,
-        ).toContain(
-          '26.1',
-        );
+          ),
+        ).toBeNull();
+
+        expect(element.querySelector('[data-testid="galaxy-detail-designation"]')).toBeNull();
+        expect(element.querySelector('[data-testid="galaxy-detail-progress"]')?.textContent)
+          .toContain('EXPLORACIÓN GALÁCTICA');
       },
       15_000,
     );
@@ -1382,6 +1384,12 @@ describe(
 
         expect(
           element.querySelector(
+            '[data-testid="galaxy-detail-index"]',
+          )?.classList.contains('gd__identity-name--pending'),
+        ).toBe(true);
+
+        expect(
+          element.querySelector(
             '[data-testid="galaxy-detail-name-restricted"]',
           )?.textContent,
         ).toContain(
@@ -1453,7 +1461,7 @@ describe(
             '[data-testid="galaxy-detail-validate-detection-cost"]',
           )?.textContent,
         ).toContain(
-          'DETECTED → DISCOVERED',
+          'Validar la detección',
         );
 
         expect(
@@ -1467,7 +1475,7 @@ describe(
             '[data-testid="galaxy-detail-focus-prerequisite"]',
           )?.textContent,
         ).toContain(
-          'no puede',
+          'Valida primero la detección',
         );
 
         expect(
@@ -1487,7 +1495,7 @@ describe(
             '[data-testid="galaxy-detail-focus-semantics"]',
           )?.textContent,
         ).toContain(
-          'no representa ni afirma un',
+          'no implica un viaje físico',
         );
       },
       15_000,
@@ -2828,7 +2836,10 @@ describe(
               instrumentLabel: 'Espectroscopia · nivel 3',
               requirementLabel: 'Disponible',
               observedInstrumentLabel: observed ? 'Espectroscopia' : null,
-              modelFacts: observed ? [{ label: 'Régimen de referencia', value: '4 %' }] : [],
+              modelFacts: observed ? [
+                { label: 'Régimen de referencia', value: '4 %' },
+                { label: 'Radio interior (modelo no rotante)', value: '1.601e+8 km' },
+              ] : [],
             };
           },
           async observe() { commits++; observed = true; },
@@ -2860,6 +2871,14 @@ describe(
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-model-facts"]'))
         .not.toBeNull();
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-procedural-render"]')).not.toBeNull();
+      const observedFacts: string = fixture.nativeElement.querySelector(
+        '[data-testid="galaxy-detail-accretion-model-facts"]',
+      ).textContent;
+      expect(observedFacts).toContain('Radio interior');
+      expect(observedFacts).toContain('1.601e+8 km');
+      expect(observedFacts).not.toContain('(modelo no rotante)');
+      expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-procedural-render"]').textContent)
+        .not.toContain('28.1c');
       expect(fixture.nativeElement.querySelector('[data-testid="galaxy-detail-accretion-observe-action"]'))
         .toBeNull();
     });

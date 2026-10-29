@@ -46,6 +46,7 @@ import {
 
 
 import { GalaxyAccretionDiskVisualizationComponent } from './galaxy-accretion-disk-visualization';
+import { etiquetaMagnitudAcrecion } from './galaxy-accretion-disk-display';
 import { GalaxyNucleusVisualizationComponent } from './galaxy-nucleus-visualization';
 
 import {
@@ -81,6 +82,8 @@ import {
 })
 export class GalaxyDetailPage
   implements OnInit {
+
+  readonly etiquetaMagnitudAcrecion = etiquetaMagnitudAcrecion;
 
   readonly facade =
     inject(

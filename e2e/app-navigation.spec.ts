@@ -664,7 +664,13 @@ test.describe(
           page.getByTestId(
             'galaxy-detail-boundary',
           ),
-        ).toBeVisible();
+        ).toHaveCount(0);
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-designation',
+          ),
+        ).toHaveCount(0);
 
         await page
           .getByTestId(
@@ -942,7 +948,7 @@ test.describe(
             'galaxy-detail-focus-current',
           ),
         ).toContainText(
-          'Esta galaxia ya define el contexto activo',
+          'Esta galaxia es el foco activo',
         );
 
         await expect(
@@ -958,15 +964,21 @@ test.describe(
             'galaxy-detail-focus-semantics',
           ),
         ).toContainText(
-          'DISCOVERED → VISITED',
+          'no implica un viaje físico',
         );
 
         await expect(
           page.getByTestId(
             'galaxy-detail-boundary',
           ),
+        ).toHaveCount(0);
+
+        await expect(
+          page.getByTestId(
+            'galaxy-detail-progress',
+          ),
         ).toContainText(
-          '26.1',
+          'EXPLORACIÓN GALÁCTICA',
         );
       },
     );
