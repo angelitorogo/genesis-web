@@ -1,4 +1,4 @@
-import {extractConfirmedCivilization,planetVida9KeysInGalaxy} from './galaxy-civilization-known-index';
+import {extractConfirmedCivilization,planetVida9KeysInGalaxy,shouldRecoverPersistedCivilizations,mergeKnownCivilizations,type KnownGalacticCivilization} from './galaxy-civilization-known-index';
 import {VIDA9_REVISION,vida9DigestForRecord,type Vida9BiologyRecord,type Vida9BiologyStoredEntity} from '../../domain/life/vida9-biology-exploration';
 import {vida9TestSources} from '../../simulation/life/vida9-test-fixture';
 
@@ -62,5 +62,42 @@ describe('VIDA.9: índice galáctico ligero de civilizaciones',()=>{
     ];
     expect(planetVida9KeysInGalaxy(keys,0n)).toEqual([keys[0],keys[3]]);
     expect(planetVida9KeysInGalaxy(keys,10n)).toEqual([keys[2]]);
+  });
+});
+
+
+describe('Recuperación del conocimiento biológico en una segunda galaxia',()=>{
+  const g1:KnownGalacticCivilization={
+    id:'1:13:8:2:PLANET:-',systemKey:'1/13/8',planetName:'Sistema A-2',
+    systemName:'Sistema',speciesName:'Especie',speciesId:'especie-1',
+    lineage:'Humanoide',tier:'ADVANCED',
+    locator:{galaxyIndex:'1',sectorKey:'13',galacticObjectIndex:'8',bodyIndex:'2'},
+  };
+  it('no acepta un Worker incompleto como un censo vacío de la nueva galaxia',()=>{
+    expect(shouldRecoverPersistedCivilizations({
+      workerComplete:false,indexed:12500,candidateCount:0,
+    })).toBe(true);
+    expect(shouldRecoverPersistedCivilizations({
+      workerComplete:true,indexed:12500,candidateCount:0,
+    })).toBe(true);
+    expect(shouldRecoverPersistedCivilizations({
+      workerComplete:true,indexed:12500,candidateCount:2,
+    })).toBe(false);
+  });
+  it('reconcilia registros guardados con candidatos del Worker sin duplicarlos',()=>{
+    const result=mergeKnownCivilizations([g1], [{...g1,speciesName:'Especie verificada'}]);
+    expect(result).toHaveLength(1);
+    expect(result[0].speciesName).toBe('Especie verificada');
+    const other={...g1,id:'1:13:8:3:PLANET:-',locator:{...g1.locator,bodyIndex:'3'}};
+    expect(mergeKnownCivilizations([g1],[other])).toHaveLength(2);
+  });
+  it('las claves de la galaxia 1 no mezclan cuerpos de la galaxia 10 ni lunas',()=>{
+    const keys:[string,number,string][]=[
+      ['semilla',3,'1:13:8:2:PLANET:-'],
+      ['semilla',3,'10:13:8:2:PLANET:-'],
+      ['semilla',3,'1:13:8:2:MOON:0'],
+    ];
+    expect(planetVida9KeysInGalaxy(keys,1n)).toEqual([keys[0]]);
+    expect(planetVida9KeysInGalaxy(keys,10n)).toEqual([keys[1]]);
   });
 });

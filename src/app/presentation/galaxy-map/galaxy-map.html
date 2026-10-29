@@ -205,8 +205,39 @@
                 [model]="model"
                 [blockSize]="selectedBlockSize()"
                 (sectorExplore)="exploreSector($event)"
+                (regionalSignalScan)="scanRegionalSignals($event)"
               ></app-galactic-map-scene>
-
+              @if (regionalSignal() !== 'idle') {
+                <aside class="galactic-map__regional-signal" role="status"
+                  data-testid="galactic-map-regional-37b-alert">
+                  <div class="galactic-map__regional-signal-copy">
+                    @switch (regionalSignal()) {
+                      @case ('scanning') {
+                        <strong>Buscando indicios tecnológicos…</strong>
+                        <p>Analizando 10 × 10 sectores. La exploración del mapa sigue disponible.</p>
+                      }
+                      @case ('DETECTED') {
+                        <strong>Anomalía tecnológica distante</strong>
+                        <p>Se han identificado indicios compatibles con tecnología muy avanzada en la región explorada. El origen exacto permanece desconocido.</p>
+                      }
+                      @case ('NO_SIGNAL') {
+                        <strong>Sin indicios tecnológicos identificados</strong>
+                        <p>Esta escucha regional no ha encontrado señales de tecnología muy avanzada. No descarta otras civilizaciones.</p>
+                      }
+                      @case ('INCOMPLETE') {
+                        <strong>Escucha regional incompleta</strong>
+                        <p>Algunos mundos no han podido evaluarse. No se puede descartar una señal en esta región.</p>
+                      }
+                      @case ('error') {
+                        <strong>No se pudo completar la escucha regional</strong>
+                        <p>Selecciona de nuevo el sector para reintentar el análisis.</p>
+                      }
+                    }
+                  </div>
+                  <button type="button" (click)="dismissRegionalSignal()"
+                    aria-label="Cerrar aviso regional" data-testid="galactic-map-regional-37b-close">×</button>
+                </aside>
+              }
             </section>
           } @else {
             <section

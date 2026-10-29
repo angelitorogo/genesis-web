@@ -125,6 +125,24 @@ export function confirmedCivilizationKnowledgeRevision(confirmed:ReadonlySet<str
   return `CIVILIZACIONES-1-${bytesToHex(sha256(utf8ToBytes(canonical))).toUpperCase()}`;
 }
 
+/** VIDA.9 is authoritative, not the Worker's list of candidate IDs. An
+ * incomplete or empty result must be reconciled with persisted planet rows. */
+export function shouldRecoverPersistedCivilizations(input:Readonly<{
+  workerComplete:boolean; indexed:number;candidateCount:number;
+}>):boolean{
+  return !input.workerComplete || (input.indexed>0 && input.candidateCount===0);
+}
+
+/** Merge candidate index and persisted recovery without duplicating planets. */
+export function mergeKnownCivilizations(
+  workerEntries:readonly KnownGalacticCivilization[],
+  persistedEntries:readonly KnownGalacticCivilization[],
+):readonly KnownGalacticCivilization[]{
+  const combined=new Map(workerEntries.map(entry=>[entry.id,entry] as const));
+  for(const entry of persistedEntries)combined.set(entry.id,entry);
+  return [...combined.values()].sort((a,b)=>a.id.localeCompare(b.id));
+}
+
 /** A derived observed-knowledge fragment, never independent biological Ground Truth. */
 export function restoreCivilizationKnowledgeIndex(json:string,confirmed:ReadonlySet<string>,
   galaxyIndex:bigint):KnownGalacticCivilizationCensus {
@@ -225,6 +243,72 @@ export class GalaxyCivilizationKnownIndex {
     try{
       return await promise;
     }finally{this.pending.delete(id);}
+  }
+
+  /** Persisted VIDA.9 fallback for a second galaxy or an incomplete Worker report.
+   * The Worker candidate list is an optimization, never the sole source of
+   * knowledge. IndexedDB may already contain valid civilization records even
+   * if a different physical system was skipped or failed in the background.
+   * Scan keys by galaxy and hydrate PLANETS only, yielding between batches. */
+  private async readPersistedConfirmedPlanets(
+    key:UniverseGenerationKey,galaxyIndex:bigint,confirmed:ReadonlySet<string>,
+    progress:(value:KnownGalacticCivilizationCensus)=>void,
+  ):Promise<Readonly<{entries:readonly KnownGalacticCivilization[];
+    recorded:number;scanned:number;unresolved:number}>>{
+    const seed=key.universeSeed.serialize(),version=key.generatorVersionCode;
+    const prefix=galaxyIndex.toString()+':';
+    const keys=await this.db.privateBiologicalRecordsVIDA9
+      .where('[universeSeed+generatorVersionCode+bodyStorageKey]')
+      .between([seed,version,prefix],[seed,version,prefix+'\uffff'])
+      .primaryKeys();
+    const planets=planetVida9KeysInGalaxy(
+      keys as unknown as readonly (readonly [string,number,string])[],galaxyIndex);
+    const entries:KnownGalacticCivilization[]=[];
+    const names=new Map<string,Readonly<{systemName:string;planetName:string}>|null>();
+    let recorded=0,scanned=0,unresolved=0;
+    for(let start=0;start<planets.length;start+=128){
+      const rows=await this.db.privateBiologicalRecordsVIDA9.bulkGet(
+        planets.slice(start,start+128).map(item=>[...item] as [string,number,string]));
+      for(const row of rows){
+        scanned++;
+        if(!row || !confirmed.has(row.systemStorageKey))continue;
+        recorded++;
+        let record:Vida9BiologyRecord|null;
+        try {record=extractConfirmedCivilization(row,confirmed);}
+        catch(error){
+          unresolved++;
+          console.error('Civilizaciones: registro confirmado inválido',row.bodyStorageKey,error);
+          continue;
+        }
+        if(!record)continue;
+        const identity=record.identity;
+        const system=new SystemLocator(BigInt(identity.galaxyIndex),BigInt(identity.sectorKey),
+          BigInt(identity.galacticObjectIndex));
+        const systemId=row.systemStorageKey+'/'+identity.bodyIndex;
+        let designation=names.get(systemId);
+        if(designation===undefined){
+          try {designation=knownCivilizationPlanetNames(key,system,BigInt(identity.bodyIndex));}
+          catch(error){
+            console.error('Civilizaciones: designación planetaria no evaluable',systemId,error);
+            designation=null;
+          }
+          names.set(systemId,designation);
+        }
+        if(!designation){unresolved++;continue;}
+        const civilization=record.intelligence.civilization!;
+        const species=record.ecosystem.species.find(s=>s.id===civilization.founderSpeciesId)!;
+        entries.push(Object.freeze({id:row.bodyStorageKey,systemKey:row.systemStorageKey,
+          planetName:designation.planetName,systemName:designation.systemName,
+          speciesName:species.proceduralName,speciesId:species.id,
+          lineage:CIVILIZATION_LINEAGE_LABELS[civilization.lineage]??'No clasificado',tier:civilization.tier,
+          locator:Object.freeze({galaxyIndex:identity.galaxyIndex,sectorKey:identity.sectorKey,
+            galacticObjectIndex:identity.galacticObjectIndex,bodyIndex:identity.bodyIndex})}));
+      }
+      if(start%1024===0 || start+128>=planets.length)
+        progress(censusOf(entries,recorded,scanned,false));
+      await yieldUi();
+    }
+    return {entries,recorded,scanned,unresolved};
   }
 
   /** Read-only, bounded work. NEVER build the full planet/moon galaxy catalogue. */
@@ -328,9 +412,35 @@ export class GalaxyCivilizationKnownIndex {
         if(saved.knowledgeRevision===galaxyKnowledgeRevision(galaxyIndex,allPhysicalKnown))
           physicalCount=confirmedPhysicalPlanetCount(saved.planetMoonCatalogJson,confirmed);
       }
-      const complete=outcome.indexed===outcome.expected && (outcome.problems?.length??0)===0 &&
-        unresolvedCandidates===0 && (physicalCount===null || outcome.expected===physicalCount);
-      const result=censusOf(entries,outcome.indexed,outcome.expected,complete);
+      const workerComplete=outcome.indexed===outcome.expected &&
+        (outcome.problems?.length??0)===0 && unresolvedCandidates===0 &&
+        (physicalCount===null || outcome.expected===physicalCount);
+      // A partial Worker result is NOT an empty galaxy. The immutable VIDA.9
+      // rows may already contain civilizations from systems successfully
+      // materialized earlier (including a newly confirmed second galaxy).
+      // The backfill candidate list is deliberately not authoritative.
+      const recovery=shouldRecoverPersistedCivilizations({
+        workerComplete,indexed:outcome.indexed,candidateCount:entries.length,
+      })
+        ? await this.readPersistedConfirmedPlanets(key,galaxyIndex,confirmed,progress)
+        : null;
+      const resultEntries=mergeKnownCivilizations(entries,recovery?.entries??[]);
+      const complete=workerComplete && (recovery===null || recovery.unresolved===0);
+      if(!complete){
+        console.warn('Civilizaciones: cobertura biológica galáctica incompleta',{
+          galaxyIndex:String(galaxyIndex),confirmedSystems:confirmed.size,
+          workerIndexed:outcome.indexed,workerExpected:outcome.expected,
+          withoutPhysicalModel:outcome.missingPhysical,
+          workerProblems:outcome.problems?.length??0,
+          invalidCandidates:unresolvedCandidates,
+          physicalConfirmedPlanets:physicalCount,
+          storedPlanets:recovery?.recorded??null,
+          restoredCivilizations:recovery?.entries.length??0,
+        });
+      }
+      const result=censusOf(resultEntries,
+        recovery?Math.max(outcome.indexed,recovery.recorded):outcome.indexed,
+        physicalCount??outcome.expected,complete);
       if(complete){
         const allKnown=repository.getKnownDiscoveriesInGalaxy
           ? await repository.getKnownDiscoveriesInGalaxy(key,galaxyIndex)
@@ -349,7 +459,10 @@ export class GalaxyCivilizationKnownIndex {
         if(confirmedCivilizationKnowledgeRevision(newest)!==revision)return result;
         await this.db.transaction('rw',this.db.galaxyKnowledgeSnapshots,async()=>{
           const present=await this.db.galaxyKnowledgeSnapshots.get(cacheKey);
-          const payload={...(present?.knowledgeRevision===currentRevision?present:{}),
+          // Never replace a newer scientific snapshot with a stale biology
+          // projection while another galaxy/system confirmation is committing.
+          if(present && present.knowledgeRevision!==currentRevision)return;
+          const payload={...present,
             universeSeed:seed,generatorVersionCode:version,galaxyIndex:String(galaxyIndex),
             scientificModelVersion:GALAXY_SCIENTIFIC_MODEL_VERSION,
             knowledgeRevision:currentRevision,civilizationKnowledgeRevision:revision,
@@ -360,64 +473,19 @@ export class GalaxyCivilizationKnownIndex {
       return result;
       }
     }
-    // One-time projection for old confirmed games; subsequently the derived
-    // snapshot is the same persisted knowledge surface used by planet/moon lists.
-    const prefix=galaxyIndex.toString()+':';
-    // Dexie primaryKeys reads indexed keys, NOT 80,000+ complete lunar JSON bodies.
-    const keys=await this.db.privateBiologicalRecordsVIDA9
-      .where('[universeSeed+generatorVersionCode+bodyStorageKey]')
-      .between([seed,version,prefix],[seed,version,prefix+'\uffff'])
-      .primaryKeys();
-    const planets=planetVida9KeysInGalaxy(
-      keys as unknown as readonly (readonly [string,number,string])[],galaxyIndex);
-    const entries:KnownGalacticCivilization[]=[];
-    const names=new Map<string,Readonly<{systemName:string;planetName:string}>|null>();
-    let recorded=0,scanned=0,unresolvedNames=0;
-    for(let start=0;start<planets.length;start+=128){
-      const rows=await this.db.privateBiologicalRecordsVIDA9.bulkGet(
-        planets.slice(start,start+128).map(item=>[...item] as [string,number,string]));
-      for(const row of rows){
-        scanned++;
-        if(!row || !confirmed.has(row.systemStorageKey))continue;
-        recorded++;
-        const record=extractConfirmedCivilization(row,confirmed);
-        if(!record)continue;
-        const identity=record.identity;
-        const system=new SystemLocator(BigInt(identity.galaxyIndex),BigInt(identity.sectorKey),
-          BigInt(identity.galacticObjectIndex));
-        const systemId=row.systemStorageKey+'/'+identity.bodyIndex;
-        let designation=names.get(systemId);
-        if(designation===undefined){
-          designation=knownCivilizationPlanetNames(key,system,BigInt(identity.bodyIndex));
-          names.set(systemId,designation);
-        }
-        if(!designation){unresolvedNames++;continue;}
-        const civilization=record.intelligence.civilization!;
-        const species=record.ecosystem.species.find(s=>s.id===civilization.founderSpeciesId)!;
-        entries.push(Object.freeze({id:row.bodyStorageKey,systemKey:row.systemStorageKey,
-          planetName:designation.planetName,systemName:designation.systemName,
-          speciesName:species.proceduralName,speciesId:species.id,
-          lineage:CIVILIZATION_LINEAGE_LABELS[civilization.lineage]??'No clasificado',tier:civilization.tier,
-          locator:Object.freeze({galaxyIndex:identity.galaxyIndex,sectorKey:identity.sectorKey,
-            galacticObjectIndex:identity.galacticObjectIndex,bodyIndex:identity.bodyIndex})}));
-      }
-      // A partial census is better than a spinner with an unknown completion time.
-      if(start%1024===0 || start+128>=planets.length)
-        progress(censusOf(entries,recorded,scanned,false));
-      await yieldUi();
-    }
-    // Only a physical, confirmed catalogue can certify completeness.
-    // Do not freeze an incomplete VIDA.9 backfill as the definitive inventory.
+    // Fallback when Workers are unavailable (tests, restricted browsers,
+    // older confirmed saves). Read immutable VIDA.9 planets, never moons.
+    const recovery=await this.readPersistedConfirmedPlanets(key,galaxyIndex,confirmed,progress);
+    const {entries,recorded,scanned,unresolved}=recovery;
     let expected:number|null=null;
     if(saved?.planetMoonCatalogJson){
       const fullKnown=repository.getKnownDiscoveriesInGalaxy
         ? await repository.getKnownDiscoveriesInGalaxy(key,galaxyIndex)
         : (await repository.getKnownDiscoveries(key)).filter(d=>d.locator.galaxyIndex===galaxyIndex);
-      // Only a current, canonical physical read model can certify expected rows.
       if(saved.knowledgeRevision===galaxyKnowledgeRevision(galaxyIndex,fullKnown))
         expected=confirmedPhysicalPlanetCount(saved.planetMoonCatalogJson,confirmed);
     }
-    const complete=expected!==null && expected===recorded && unresolvedNames===0;
+    const complete=expected!==null && expected===recorded && unresolved===0;
     const result=censusOf(entries,recorded,expected??scanned,complete);
     if(complete){
       await this.db.transaction('rw',this.db.galaxyKnowledgeSnapshots,async()=>{

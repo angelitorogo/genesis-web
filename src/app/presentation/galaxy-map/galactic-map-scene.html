@@ -303,6 +303,14 @@
         </p>
 
       }
+      @if (model.canExploreSectors && model.generationKey.generatorVersionCode === 3) {
+        <button type="button"
+          class="galactic-map-scene__marker-link galactic-map-scene__marker-link--button"
+          data-testid="galactic-map-regional-signal-scan"
+          (click)="requestRegionalSignalScan(selectedSector)">
+          Escuchar señales próximas (10×10 sectores)
+        </button>
+      }
       @if (model.canExploreSectors && (!selectedSector.explored || blockSize > 1)) {
         <button
           type="button"

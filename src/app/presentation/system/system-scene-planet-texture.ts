@@ -11,6 +11,8 @@ export interface SystemScenePlanetTextureInput {
   readonly surfaceStyle: SystemScenePlanetTextureSurfaceStyle;
   readonly baseColorHex: string;
   readonly visualSeedUint32?: number;
+  readonly width?: number;
+  readonly height?: number;
 }
 
 export interface SystemScenePlanetTextureData {
@@ -85,8 +87,8 @@ export function buildSystemScenePlanetTextureV1(
   assertInput(input);
 
   const seedUint32 = input.visualSeedUint32 ?? systemScenePlanetTextureSeed(input);
-  const width = SYSTEM_SCENE_PLANET_TEXTURE_WIDTH;
-  const height = SYSTEM_SCENE_PLANET_TEXTURE_HEIGHT;
+  const width = assertTextureDimension(input.width, SYSTEM_SCENE_PLANET_TEXTURE_WIDTH, 'width');
+  const height = assertTextureDimension(input.height, SYSTEM_SCENE_PLANET_TEXTURE_HEIGHT, 'height');
   const rgba = new Uint8Array(width * height * 4);
   const base = parseHexColor(input.baseColorHex);
   const personality = texturePersonality(seedUint32);
@@ -647,6 +649,14 @@ function lerp(a: number, b: number, t: number): number {
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
+}
+
+function assertTextureDimension(value: number | undefined, fallback: number, label: string): number {
+  const resolved = value ?? fallback;
+  if (!Number.isInteger(resolved) || resolved < 8) {
+    throw new RangeError(`Planet texture ${label} must be an integer >= 8.`);
+  }
+  return resolved;
 }
 
 function assertInput(input: SystemScenePlanetTextureInput): void {

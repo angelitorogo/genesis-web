@@ -5,6 +5,12 @@ import {
   sampleMoonTerrainD,
 } from './system-scene-moon-geomorphology';
 
+/** Explicit atlas dimensions for an individual scientific fiche; SystemScene retains its native LOD. */
+export interface SystemSceneMoonTextureDimensionsV1 {
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface SystemSceneMoonTextureDataV1 {
   readonly version: 1;
   readonly width: number;
@@ -20,10 +26,17 @@ export interface SystemSceneMoonTextureDataV1 {
  * sphere coordinates (no equirectangular sine stripes, no longitude seam).
  * The generated textures only visualize the immutable scientific projection.
  */
-export function buildSystemSceneMoonTextureV1(moon: SystemSceneMoonPresentationV1): SystemSceneMoonTextureDataV1 {
+export function buildSystemSceneMoonTextureV1(
+  moon: SystemSceneMoonPresentationV1,
+  dimensions: SystemSceneMoonTextureDimensionsV1 | null = null,
+): SystemSceneMoonTextureDataV1 {
   if (moon.version !== 1) throw new RangeError(`Unsupported moon presentation version: ${moon.version}.`);
-  const width = moon.shapeClass === 'MAJOR_PLANETARY' ? 192 : 128;
-  const height = width / 2;
+  if (dimensions !== null && (!Number.isInteger(dimensions.width) || !Number.isInteger(dimensions.height) ||
+      dimensions.width < 2 || dimensions.height < 2 || dimensions.width > 2048 || dimensions.height > 1024)) {
+    throw new RangeError('Moon atlas dimensions must be integer dimensions between 2×2 and 2048×1024.');
+  }
+  const width = dimensions?.width ?? (moon.shapeClass === 'MAJOR_PLANETARY' ? 192 : 128);
+  const height = dimensions?.height ?? width / 2;
   const base = parseHex(moon.presentationBaseColorHex);
   const accent = parseHex(moon.presentationAccentColorHex);
   const geometry = buildMoonSurfaceMorphologyD(moon);

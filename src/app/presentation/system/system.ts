@@ -41,6 +41,7 @@ import {
   SystemSceneSnapshotBuilder,
 } from './system-scene-snapshot';
 import { SystemMultihostGameCutover } from './system-multihost-game-cutover';
+import { SystemTechnosignatureAlert37a } from './system-technosignature-alert-37a';
 import { SystemV2SingleScientificSession } from './system-v2-single-scientific-session';
 import { SystemCompactHostScientificSession } from './system-compact-host-scientific-session';
 
@@ -55,6 +56,7 @@ import { SystemCompactHostScientificSession } from './system-compact-host-scient
     GenesisScreen,
     RouterLink,
     SystemScene,
+    SystemTechnosignatureAlert37a,
   ],
 
   templateUrl:

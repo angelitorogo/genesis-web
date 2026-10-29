@@ -6,6 +6,7 @@ import {
 
 import {
   buildSystemSceneMoonTextureV1,
+  type SystemSceneMoonTextureDimensionsV1,
 } from './system-scene-moon-texture';
 
 import {
@@ -35,12 +36,13 @@ export function createSystemSceneMoonRenderableV1(
   moon: SystemSceneMoonPresentationV1,
   textureCache: SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1> | null = null,
   sharedUnitSphereGeometry: THREE.SphereGeometry | null = null,
+  textureDimensions: SystemSceneMoonTextureDimensionsV1 | null = null,
 ): SystemSceneMoonRenderableV1 {
   if (moon.version !== 1) {
     throw new RangeError(`Unsupported moon presentation version: ${moon.version}.`);
   }
 
-  const textureLease = moonTextureLease(moon, textureCache);
+  const textureLease = moonTextureLease(moon, textureCache, textureDimensions);
   const textureResource = textureLease.resource;
   const textureData = textureResource.textureData;
   const albedo = textureResource.albedo;
@@ -250,8 +252,10 @@ void main() {
 function moonTextureLease(
   moon: SystemSceneMoonPresentationV1,
   cache: SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1> | null,
+  dimensions: SystemSceneMoonTextureDimensionsV1 | null,
 ): SystemSceneResourceLeaseV1<SystemSceneMoonTextureResourceV1> {
   const key = [moon.sourceMoonIdentity, moon.presentationSeedUint32, 'D3f',
+    dimensions === null ? 'SYSTEM_SCENE' : `${dimensions.width}x${dimensions.height}`, 
     moon.shapeClass, moon.surfaceStyle, moon.presentationBaseColorHex, moon.presentationAccentColorHex,
     moon.presentationIceCoverage01, moon.presentationLiquidCoverage01,
     moon.presentationVolcanicCoverage01, moon.presentationCloudCoverage01,
@@ -262,12 +266,13 @@ function moonTextureLease(
   if (cache !== null) {
     return cache.acquire(
       key,
-      (moon.shapeClass === 'MAJOR_PLANETARY' ? 192 * 96 : 128 * 64) * 4 * 4,
-      () => createMoonTextureResource(moon),
+      (dimensions?.width ?? (moon.shapeClass === 'MAJOR_PLANETARY' ? 192 : 128)) *
+        (dimensions?.height ?? (moon.shapeClass === 'MAJOR_PLANETARY' ? 96 : 64)) * 4 * 4,
+      () => createMoonTextureResource(moon, dimensions),
     );
   }
 
-  const resource = createMoonTextureResource(moon);
+  const resource = createMoonTextureResource(moon, dimensions);
   let released = false;
   return Object.freeze({
     resource,
@@ -284,8 +289,9 @@ function moonTextureLease(
 
 function createMoonTextureResource(
   moon: SystemSceneMoonPresentationV1,
+  dimensions: SystemSceneMoonTextureDimensionsV1 | null,
 ): SystemSceneMoonTextureResourceV1 {
-  const textureData = buildSystemSceneMoonTextureV1(moon);
+  const textureData = buildSystemSceneMoonTextureV1(moon, dimensions);
   const albedo = dataTexture(
     textureData.width,
     textureData.height,

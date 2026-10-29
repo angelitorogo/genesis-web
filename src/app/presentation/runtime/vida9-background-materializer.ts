@@ -26,8 +26,10 @@ function browserWorker():Worker|null{
   if(typeof Worker!=='function' || typeof indexedDB==='undefined')return null;
   if(worker)return worker;
   // Angular bundles this standalone worker; no generator code runs on the UI thread.
+  // Angular emits an ES module: without type:'module' the browser parses its
+  // bundled `import` statements as a classic script and rejects the Worker.
   const instance=new Worker(new URL('./vida9-background-materializer.worker',import.meta.url),
-    {name:'genesis-vida9-background'});
+    {name:'genesis-vida9-background',type:'module'});
   instance.addEventListener('message',(event:MessageEvent<WorkerResult>)=>{
     const result=event.data;
     const waiting=inFlight.get(result.requestId);

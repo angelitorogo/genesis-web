@@ -396,3 +396,30 @@
 .galactic-map__block-options{display:flex;flex-wrap:wrap;gap:.4rem}
 .galactic-map__block-options button{padding:.5rem;border:1px solid var(--genesis-color-border-subtle);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
 .galactic-map__block-options button[aria-pressed=true]{border-color:var(--genesis-color-primary);background:#234}
+
+/* 37.B: aviso pequeño integrado en el mapa; no bloquea ni tapa la escena. */
+.galactic-map__regional-signal {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  background: rgba(12, 29, 41, 0.96);
+  border-top: 1px solid rgba(106, 215, 255, 0.3);
+  color: var(--genesis-color-text);
+}
+.galactic-map__regional-signal-copy {
+  display: grid;
+  gap: 0.35rem;
+  strong { font-size: 0.95rem; }
+  p { margin: 0; line-height: 1.5; font-size: 0.85rem; color: var(--genesis-color-text-muted); }
+}
+.galactic-map__regional-signal button {
+  cursor: pointer;
+  border: 1px solid var(--genesis-color-border-subtle);
+  border-radius: 0.4rem;
+  background: transparent;
+  color: inherit;
+  min-width: 2rem;
+  min-height: 2rem;
+}

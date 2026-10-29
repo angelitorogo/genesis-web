@@ -21,6 +21,7 @@ import * as THREE from 'three';
 
 import {
   createSystemScenePlanetAppearanceV1,
+  type SystemScenePlanetTextureDimensionsV1,
 } from '../system/system-scene';
 
 import {
@@ -86,6 +87,11 @@ import { createSystemSceneTnoRenderableV1 } from '../system/system-scene-tno-ren
 import { createSystemSceneCapturedRenderableV1 } from '../system/system-scene-captured-renderable';
 
 import {
+  SCIENTIFIC_BODY_TEXTURE_VIS3D2E,
+  attachScientificMinorBodyAtlasVis3d2e,
+} from './scientific-minor-body-texture-vis3d2e';
+
+import {
   applySystemSceneCometActivityVisualV1,
   createSystemSceneCometRenderableV1,
 } from '../system/system-scene-comet-renderable';
@@ -119,6 +125,13 @@ const ISOLATED_NON_BODY_AUTOROTATE_CYCLE_SECONDS =
 
 const MINOR_BODY_INSPECTION_FILL_INTENSITY =
   0.90;
+
+/** VIS-3D.2d: 1024×512 atlas for both solid surface and cloud layer. */
+const SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED: SystemScenePlanetTextureDimensionsV1 = Object.freeze({
+  width: 1024,
+  height: 512,
+});
+
 
 /**
  * Explain transient modeled liquid in an inspection preview without changing
@@ -1284,6 +1297,7 @@ export class ScientificBodyPreview
         },
         false,
         planet.opticalPhotosphereTemperatureKelvin ?? null,
+        SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED,
       );
 
     const segments =
@@ -1399,6 +1413,12 @@ export class ScientificBodyPreview
     const renderable =
       createSystemSceneMoonRenderableV1(
         moonPresentation(moon),
+        null,
+        null,
+        this.model.kind === ScientificBodyPreviewKind.MOON &&
+          this.model.primary.moonOrdinal === moon.moonOrdinal
+          ? SCIENTIFIC_BODY_TEXTURE_VIS3D2E
+          : null,
       );
 
     const presentationRadius =
@@ -1590,14 +1610,17 @@ export class ScientificBodyPreview
       return;
     }
 
-    const renderable =
-      createSystemSceneAsteroidRenderableV1(
-        1,
-        asteroidPresentation(asteroid),
-      );
+    const presentation = asteroidPresentation(asteroid);
+    const renderable = createSystemSceneAsteroidRenderableV1(1, presentation);
+    const surfaces = renderable.object.children.filter(
+      (child): child is THREE.Mesh => child instanceof THREE.Mesh,
+    );
+    const atlas = attachScientificMinorBodyAtlasVis3d2e(
+      surfaces, 'ASTEROID', presentation.shapeSeedUint32,
+    );
 
     this.root.add(renderable.object);
-    this.resources.push(...renderable.resources);
+    this.resources.push(...renderable.resources, atlas);
   }
 
   private addComet(
@@ -1612,11 +1635,19 @@ export class ScientificBodyPreview
       return;
     }
 
-    const renderable =
-      createSystemSceneCometRenderableV1(
-        SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE,
-        cometPresentation(comet),
-      );
+    const presentation = cometPresentation(comet);
+    const renderable = createSystemSceneCometRenderableV1(
+      SCIENTIFIC_COMET_PREVIEW_RADIUS_SCENE, presentation,
+    );
+    // Only the nucleus has a regolith map: the coma and both tails keep
+    // their original lightweight translucent materials and activity model.
+    const nucleus = renderable.object.children[0];
+    if (!(nucleus instanceof THREE.Mesh)) {
+      throw new Error('Expected comet nucleus surface in VIS3D.2e preview.');
+    }
+    const atlas = attachScientificMinorBodyAtlasVis3d2e(
+      [nucleus], 'COMET', presentation.shapeSeedUint32,
+    );
 
     applySystemSceneCometActivityVisualV1(
       renderable.binding,
@@ -1625,7 +1656,7 @@ export class ScientificBodyPreview
     );
 
     this.root.add(renderable.object);
-    this.resources.push(...renderable.resources);
+    this.resources.push(...renderable.resources, atlas);
   }
 
   private addTransNeptunianObject(object: ScientificTransNeptunianPreviewVisual): void {
@@ -1634,8 +1665,13 @@ export class ScientificBodyPreview
       const renderable = object.presentation.source === 'CAP_R1_PROCEDURAL'
         ? createSystemSceneCapturedRenderableV1(1, object.presentation)
         : createSystemSceneTnoRenderableV1(1, object.presentation);
+      const atlas = attachScientificMinorBodyAtlasVis3d2e(
+        [renderable.surface],
+        object.presentation.source === 'CAP_R1_PROCEDURAL' ? 'CAPTURED' : 'TNO',
+        object.presentation.variantUint32,
+      );
       this.root.add(renderable.object);
-      this.resources.push(...renderable.resources);
+      this.resources.push(...renderable.resources, atlas);
       return;
     }
     // Legacy synthetic fixtures without a physical TNO projection.

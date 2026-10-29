@@ -10,6 +10,8 @@ export interface SystemSceneGiantAtmosphereTextureInput {
   readonly planetId: string;
   readonly atmosphere: SystemSceneGiantAtmospherePresentationSnapshot;
   readonly visualSeedUint32?: number;
+  readonly width?: number;
+  readonly height?: number;
 }
 
 export interface SystemSceneGiantAtmosphereTextureData {
@@ -54,6 +56,14 @@ export function systemSceneGiantAtmosphereTextureSeedV1(
   );
 }
 
+function assertTextureDimension(value: number | undefined, fallback: number, label: string): number {
+  const resolved = value ?? fallback;
+  if (!Number.isInteger(resolved) || resolved < 8) {
+    throw new RangeError(`Giant atmosphere texture ${label} must be an integer >= 8.`);
+  }
+  return resolved;
+}
+
 export function buildSystemSceneGiantAtmosphereTextureV1(
   input: SystemSceneGiantAtmosphereTextureInput,
 ): SystemSceneGiantAtmosphereTextureData {
@@ -74,8 +84,8 @@ export function buildSystemSceneGiantAtmosphereTextureV1(
       input.planetId,
       input.atmosphere.regime,
     );
-  const width = SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_WIDTH;
-  const height = SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_HEIGHT;
+  const width = assertTextureDimension(input.width, SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_WIDTH, 'width');
+  const height = assertTextureDimension(input.height, SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_HEIGHT, 'height');
   const albedoRgba = new Uint8Array(width * height * 4);
   const upperHazeRgba =
     input.atmosphere.presentationUpperHaze01 > 0.08

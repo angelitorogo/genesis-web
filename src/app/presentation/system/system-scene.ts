@@ -6340,6 +6340,11 @@ export interface SystemScenePlanetVisualSeedPackV1 {
   readonly giantAtmosphereTextureSeedUint32: number | null;
 }
 
+export interface SystemScenePlanetTextureDimensionsV1 {
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface PlanetAppearance {
   readonly material:
     THREE.MeshStandardMaterial;
@@ -6371,6 +6376,7 @@ export function createSystemScenePlanetAppearanceV1(
   compactVisualFill: boolean | number = false,
   /** A physical stellar photosphere, never the shader's illustrative glow. */
   photosphereTemperatureKelvin: number | null = null,
+  textureDimensions: SystemScenePlanetTextureDimensionsV1 | null = null,
 ): PlanetAppearance {
   const compactFillStrength = typeof compactVisualFill === 'number'
     ? Math.max(0, Math.min(1, compactVisualFill))
@@ -6385,6 +6391,7 @@ export function createSystemScenePlanetAppearanceV1(
               planet,
               systemIdentity,
               visualSeeds,
+              textureDimensions,
             );
           let disposed = false;
           return Object.freeze({
@@ -6408,6 +6415,7 @@ export function createSystemScenePlanetAppearanceV1(
             planet,
             systemIdentity,
             visualSeeds,
+            textureDimensions,
           ),
         );
 
@@ -6778,6 +6786,8 @@ function createSystemScenePlanetTextureResourceV1(
   visualSeeds:
     SystemScenePlanetVisualSeedPackV1 | null =
       null,
+  textureDimensions: SystemScenePlanetTextureDimensionsV1 | null =
+      null,
 ): SystemScenePlanetTextureResourceV1 {
 
   const giantAtmosphereTexture =
@@ -6791,6 +6801,10 @@ function createSystemScenePlanetTextureResourceV1(
           visualSeedUint32:
             visualSeeds?.giantAtmosphereTextureSeedUint32 ??
             undefined,
+          width:
+            textureDimensions?.width,
+          height:
+            textureDimensions?.height,
         });
 
   const textureData =
@@ -6803,6 +6817,10 @@ function createSystemScenePlanetTextureResourceV1(
           baseColorHex: planet.colorHex,
           visualSeedUint32:
             visualSeeds?.planetTextureSeedUint32,
+          width:
+            textureDimensions?.width,
+          height:
+            textureDimensions?.height,
         })
       : null;
 

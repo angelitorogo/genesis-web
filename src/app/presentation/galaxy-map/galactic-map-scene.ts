@@ -526,6 +526,9 @@ export class GalacticMapScene
   @Input() blockSize = 1;
 
   @Output()
+  readonly regionalSignalScan = new EventEmitter<GalacticMapSectorSelection>();
+
+  @Output()
   readonly sectorExplore =
     new EventEmitter<GalacticMapSectorSelection>();
 
@@ -1352,6 +1355,12 @@ export class GalacticMapScene
             10,
           ),
     };
+  }
+
+  requestRegionalSignalScan(selection: GalacticMapSectorSelection): void {
+    if (this.model.canExploreSectors && this.model.generationKey.generatorVersionCode === 3) {
+      this.regionalSignalScan.emit(selection);
+    }
   }
 
   requestSectorExploration(

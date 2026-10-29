@@ -5,6 +5,7 @@ import {
   inject,
   signal,
   OnInit,
+  OnDestroy,
 } from '@angular/core';
 
 import {
@@ -56,6 +57,8 @@ import {
 import {
   type GalacticMapSectorSelection,
 } from './galactic-map-sector-selection';
+import { RegionalTechnosignature37bScanner } from './regional-technosignature-37b.scanner';
+import type { RegionalSignalStatus37b } from './regional-technosignature-37b';
 
 @Component({
   selector:
@@ -80,9 +83,47 @@ import {
     ChangeDetectionStrategy.OnPush,
 })
 export class GalacticMapPage
-  implements OnInit {
+  implements OnInit, OnDestroy {
 
   private readonly codes = inject(CODES_REDEMPTION_RUNTIME);
+  private readonly regionalScanner = inject(RegionalTechnosignature37bScanner);
+  readonly regionalSignal = signal<'idle'|'scanning'|'error'|RegionalSignalStatus37b>('idle');
+  private regionalSequence = 0;
+
+  ngOnDestroy(): void {
+    ++this.regionalSequence;
+    this.regionalScanner.cancel();
+  }
+
+  dismissRegionalSignal(): void {
+    ++this.regionalSequence;
+    this.regionalScanner.cancel();
+    this.regionalSignal.set('idle');
+  }
+
+  async scanRegionalSignals(selection: GalacticMapSectorSelection, manual = true): Promise<void> {
+    const model = this.facade.model();
+    if (!model || !model.canExploreSectors || model.generationKey.generatorVersionCode !== 3 ||
+        !model.explorationCoverage?.grid.contains(selection.coordinates)) return;
+    const requestId = ++this.regionalSequence;
+    if (manual) this.regionalSignal.set('scanning');
+    try {
+      const result = await this.regionalScanner.scan({
+        seed: model.generationKey.universeSeed.serialize(),
+        version: model.generationKey.generatorVersionCode,
+        galaxyIndex: model.galaxyIndex.toString(),
+        centerX: selection.coordinates.x, centerY: selection.coordinates.y,
+      });
+      const latest = this.facade.model();
+      if (requestId !== this.regionalSequence || !latest ||
+          !latest.generationKey.equals(model.generationKey) || latest.galaxyIndex !== model.galaxyIndex) return;
+      if (manual || result === 'DETECTED' || result === 'INCOMPLETE') this.regionalSignal.set(result);
+      else this.regionalSignal.set('idle');
+    } catch {
+      if (manual && requestId === this.regionalSequence) this.regionalSignal.set('error');
+    }
+  }
+
   readonly maxBlockSize = signal(1);
   readonly selectedBlockSize = signal(1);
   readonly blockSizes = computed(() => Array.from({ length: this.maxBlockSize() }, (_, i) => i + 1));
@@ -116,16 +157,18 @@ export class GalacticMapPage
     }
   }
 
-  exploreSector(
-    selection:
-      GalacticMapSectorSelection,
-  ): void {
-
-    void this
-      .facade
-      .exploreBlock(
-        selection, this.selectedBlockSize(),
-      );
+  async exploreSector(
+    selection: GalacticMapSectorSelection,
+  ): Promise<void> {
+    const model = this.facade.model();
+    await this.facade.exploreBlock(selection, this.selectedBlockSize());
+    const current = this.facade.model();
+    if (model && current && model.generationKey.equals(current.generationKey) &&
+        model.galaxyIndex === current.galaxyIndex &&
+        !this.facade.inlineExplorationErrorMessage() &&
+        !this.facade.inlineExplorationPending()) {
+      void this.scanRegionalSignals(selection, false);
+    }
   }
 
   continueExploring():

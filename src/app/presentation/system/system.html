@@ -157,6 +157,12 @@
                   [gameplaySceneControls]="true"
                 ></app-system-scene>
 
+                @if (model.discoveryState.code === 5) {
+                  <app-system-technosignature-alert-37a
+                    [model]="model"
+                  ></app-system-technosignature-alert-37a>
+                }
+
                 <footer class="system-page__viewport-footer">
                   <span>REPRESENTACIÓN 3D CIENTÍFICA</span>
                   <p>
