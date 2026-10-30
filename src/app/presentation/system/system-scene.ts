@@ -109,13 +109,17 @@ import {
   systemSceneSphereSegments,
 } from './system-scene-body-render-state';
 
+import { refinePlanetRgbaTextureV1, PLANET_TEXTURE_DETAIL_SIZES_V1, type PlanetTextureRefinementKind } from './system-scene-planet-texture-refinement';
+
 import {
   buildSystemScenePlanetTextureV1,
+  systemScenePlanetTextureSeed,
   type SystemScenePlanetTextureSurfaceStyle,
 } from './system-scene-planet-texture';
 
 import {
   buildSystemScenePlanetSurfaceTextureV1,
+  type SystemScenePlanetVegetationProfileV1,
   type SystemScenePlanetSurfaceTextureData,
 } from './system-scene-planet-surface-texture';
 
@@ -1938,6 +1942,20 @@ class ThreeSystemSceneRuntime
   private readonly bodyLodBindings =
     new Map<string, SystemSceneBodyLodBindingV1>();
 
+  /** VIS-3D.1: at most one near-camera planet carries extra GPU texture maps. */
+  private detailedPlanetTexture: {
+    id: string;
+    material: THREE.MeshStandardMaterial;
+    originalMap: THREE.Texture | null;
+    originalRoughness: THREE.Texture | null;
+    originalBump: THREE.Texture | null;
+    originalEmissive: THREE.Texture | null;
+    cloudMaterial: THREE.MeshStandardMaterial | null;
+    originalCloud: THREE.Texture | null;
+    detailTextures: readonly THREE.DataTexture[];
+  } | null = null;
+
+
   /** Hidden moon layers defer 25.10 texture/material creation until first reveal. */
   private readonly pendingMoonVisuals =
     new Map<string, SystemScenePendingMoonVisualV1>();
@@ -2965,6 +2983,7 @@ class ThreeSystemSceneRuntime
 
     this.clearFrameObjects();
     this.cameraController.dispose();
+    this.releaseDetailedPlanetTexture();
     this.planetTextureCache.dispose();
     this.moonTextureCache.dispose();
     this.sphereGeometryPool.dispose();
@@ -4524,6 +4543,7 @@ class ThreeSystemSceneRuntime
         kind: 'planet',
         radiusScene: planet.radiusScene,
         level: initialLod,
+        planetSystemIdentity: systemIdentity,
       },
     );
 
@@ -5970,6 +5990,7 @@ class ThreeSystemSceneRuntime
       0;
     this.minorBodyOrbitLayerKeys.clear();
     this.bodySnapshotById.clear();
+    this.releaseDetailedPlanetTexture();
     this.bodyLodBindings.clear();
     this.pendingMoonVisuals.clear();
     this.animatedBodies.clear();
@@ -6202,9 +6223,11 @@ class ThreeSystemSceneRuntime
       this.cameraWorldPosition,
     );
 
+    let closestPlanet: { id: string; projectedDiameter: number; binding: SystemSceneBodyLodBindingV1 } | null = null;
+
     for (
-      const binding
-      of this.bodyLodBindings.values()
+      const [bodyId, binding]
+      of this.bodyLodBindings
     ) {
       if (
         !objectHierarchyVisible(
@@ -6240,6 +6263,17 @@ class ThreeSystemSceneRuntime
           binding.level,
         );
 
+      if (binding.kind === 'planet' && binding.planetSystemIdentity !== undefined &&
+          projectedDiameter >= 210 &&
+          (closestPlanet === null || projectedDiameter > closestPlanet.projectedDiameter)) {
+        // Do not spend GPU memory on a larger planet behind the camera.
+        const projectedCenter = this.lodWorldPosition.project(this.camera);
+        if (projectedCenter.z >= -1 && projectedCenter.z <= 1 &&
+            Math.abs(projectedCenter.x) <= 1.3 && Math.abs(projectedCenter.y) <= 1.3) {
+          closestPlanet = { id: bodyId, projectedDiameter, binding };
+        }
+      }
+
       if (
         nextLevel ===
           binding.level
@@ -6255,6 +6289,94 @@ class ThreeSystemSceneRuntime
       binding.level =
         nextLevel;
     }
+
+    // Avoid generating high definition for distant planets or every body of
+    // a dense system. Hysteresis prevents changes at the zoom boundary.
+    const previous = this.detailedPlanetTexture;
+    const candidate = closestPlanet?.projectedDiameter !== undefined &&
+      closestPlanet.projectedDiameter >= (previous?.id === closestPlanet.id ? 210 : 300)
+      ? closestPlanet : null;
+    if (candidate?.id !== previous?.id) {
+      this.releaseDetailedPlanetTexture();
+      if (candidate !== null) this.installDetailedPlanetTexture(candidate.id, candidate.binding);
+    }
+  }
+
+  private releaseDetailedPlanetTexture(): void {
+    const previous = this.detailedPlanetTexture;
+    if (previous === null) return;
+    previous.material.map = previous.originalMap;
+    previous.material.roughnessMap = previous.originalRoughness;
+    previous.material.bumpMap = previous.originalBump;
+    previous.material.emissiveMap = previous.originalEmissive;
+    previous.material.needsUpdate = true;
+    if (previous.cloudMaterial !== null) {
+      previous.cloudMaterial.map = previous.originalCloud;
+      previous.cloudMaterial.needsUpdate = true;
+    }
+    for (const texture of previous.detailTextures) texture.dispose();
+    this.detailedPlanetTexture = null;
+  }
+
+  private installDetailedPlanetTexture(id: string, binding: SystemSceneBodyLodBindingV1): void {
+    const body = this.bodySnapshotById.get(id);
+    if (body?.kind !== 'planet' || binding.planetSystemIdentity === undefined ||
+        !(binding.mesh.material instanceof THREE.MeshStandardMaterial)) return;
+    const material = binding.mesh.material;
+    const originalMap = material.map;
+    const originalRoughness = material.roughnessMap;
+    const originalBump = material.bumpMap;
+    const originalEmissive = material.emissiveMap;
+    const spinPivot = this.spinningBodies.get(id);
+    const cloudMesh = spinPivot?.children.find(child =>
+      child !== binding.mesh && child instanceof THREE.Mesh &&
+      child.material instanceof THREE.MeshStandardMaterial && child.material.transparent,
+    );
+    const cloudMaterial = cloudMesh instanceof THREE.Mesh &&
+      cloudMesh.material instanceof THREE.MeshStandardMaterial
+      ? cloudMesh.material : null;
+    const originalCloud = cloudMaterial?.map ?? null;
+
+    // Reuse the already computed D.4d atlas. No fresh physical projection,
+    // planetary generation or high-cost semantic-mask classification on zoom.
+    const seed = systemScenePlanetTextureSeed({
+      systemIdentity: binding.planetSystemIdentity,
+      planetId: id,
+      surfaceStyle: planetTextureSurfaceStyle(body),
+    });
+    const detailTextures: THREE.DataTexture[] = [];
+    const refine = (old: THREE.Texture | null, kind: PlanetTextureRefinementKind): THREE.DataTexture | null => {
+      if (!(old instanceof THREE.DataTexture)) return null;
+      const image = old.image as { readonly width: number; readonly height: number; readonly data: Uint8Array };
+      if (!(image.data instanceof Uint8Array) || image.width < 3 || image.height < 2) return null;
+      const width = PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width;
+      const refined = createRgbaDataTexture(width, width / 2,
+        refinePlanetRgbaTextureV1(image.data, image.width, image.height, width, seed, kind),
+        `GENESIS VIS-3D.1 ${kind} (zoom)`);
+      if (kind === 'DATA') refined.colorSpace = THREE.NoColorSpace;
+      detailTextures.push(refined);
+      return refined;
+    };
+    const main = refine(originalMap, body.giantAtmosphere === null ? 'COLOR' : 'GAS');
+    if (main === null) return;
+    const roughness = refine(originalRoughness, 'DATA');
+    const bump = refine(originalBump, 'DATA');
+    const emissive = refine(originalEmissive, 'EMISSION');
+    const cloud = refine(originalCloud, 'CLOUD');
+
+    material.map = main;
+    if (roughness !== null) material.roughnessMap = roughness;
+    if (bump !== null) material.bumpMap = bump;
+    if (emissive !== null) material.emissiveMap = emissive;
+    material.needsUpdate = true;
+    if (cloudMaterial !== null && cloud !== null) {
+      cloudMaterial.map = cloud;
+      cloudMaterial.needsUpdate = true;
+    }
+    this.detailedPlanetTexture = {
+      id, material, originalMap, originalRoughness, originalBump, originalEmissive,
+      cloudMaterial, originalCloud, detailTextures,
+    };
   }
 
   private renderFrame():
@@ -6310,6 +6432,7 @@ interface SystemSceneBodyLodBindingV1 {
   readonly kind: SystemSceneBodyLodKindV1;
   readonly radiusScene: number;
   level: SystemSceneBodyLodLevelV1;
+  readonly planetSystemIdentity?: string;
 }
 
 export interface SystemScenePlanetTextureResourceV1 {
@@ -6340,6 +6463,8 @@ export interface SystemScenePlanetVisualSeedPackV1 {
   readonly giantAtmosphereTextureSeedUint32: number | null;
 }
 
+/** VIS-3D.2 — explicit equirectangular atlas dimensions for the detailed fiche.
+ * SystemScene continues using its own adaptive numeric texture widths. */
 export interface SystemScenePlanetTextureDimensionsV1 {
   readonly width: number;
   readonly height: number;
@@ -6361,7 +6486,9 @@ export interface PlanetAppearance {
 
 export function createSystemScenePlanetAppearanceV1(
   planet:
-    SystemSceneBodySnapshot,
+    SystemSceneBodySnapshot & {
+      readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+    },
 
   systemIdentity:
     string,
@@ -6376,8 +6503,17 @@ export function createSystemScenePlanetAppearanceV1(
   compactVisualFill: boolean | number = false,
   /** A physical stellar photosphere, never the shader's illustrative glow. */
   photosphereTemperatureKelvin: number | null = null,
-  textureDimensions: SystemScenePlanetTextureDimensionsV1 | null = null,
+  /** VIS-3D.2: inspected fiche can request 1024 × 512; normal scenes retain LOD. */
+  textureDimensions: number | SystemScenePlanetTextureDimensionsV1 =
+    PLANET_TEXTURE_DETAIL_SIZES_V1.distant.width,
 ): PlanetAppearance {
+  const textureWidth = typeof textureDimensions === 'number'
+    ? textureDimensions
+    : textureDimensions.width;
+  if (typeof textureDimensions !== 'number' &&
+      textureDimensions.height !== textureWidth / 2) {
+    throw new RangeError('Planet preview atlas must be equirectangular (width = 2 × height).');
+  }
   const compactFillStrength = typeof compactVisualFill === 'number'
     ? Math.max(0, Math.min(1, compactVisualFill))
     : compactVisualFill ? 0.20 : 0;
@@ -6391,7 +6527,7 @@ export function createSystemScenePlanetAppearanceV1(
               planet,
               systemIdentity,
               visualSeeds,
-              textureDimensions,
+              textureWidth,
             );
           let disposed = false;
           return Object.freeze({
@@ -6407,7 +6543,7 @@ export function createSystemScenePlanetAppearanceV1(
           });
         })()
       : textureCache.acquire(
-          `${systemIdentity}|${planet.id}|D4c-25.11`,
+          `${systemIdentity}|${planet.id}|D4c-25.11|${textureWidth}`,
           planet.giantAtmosphere === null
             ? 1280 * 1024
             : 512 * 1024,
@@ -6415,7 +6551,7 @@ export function createSystemScenePlanetAppearanceV1(
             planet,
             systemIdentity,
             visualSeeds,
-            textureDimensions,
+            textureWidth,
           ),
         );
 
@@ -6778,7 +6914,9 @@ export function createSystemScenePlanetAppearanceV1(
 
 function createSystemScenePlanetTextureResourceV1(
   planet:
-    SystemSceneBodySnapshot,
+    SystemSceneBodySnapshot & {
+      readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+    },
 
   systemIdentity:
     string,
@@ -6786,8 +6924,7 @@ function createSystemScenePlanetTextureResourceV1(
   visualSeeds:
     SystemScenePlanetVisualSeedPackV1 | null =
       null,
-  textureDimensions: SystemScenePlanetTextureDimensionsV1 | null =
-      null,
+  textureWidth: number = PLANET_TEXTURE_DETAIL_SIZES_V1.distant.width,
 ): SystemScenePlanetTextureResourceV1 {
 
   const giantAtmosphereTexture =
@@ -6801,10 +6938,6 @@ function createSystemScenePlanetTextureResourceV1(
           visualSeedUint32:
             visualSeeds?.giantAtmosphereTextureSeedUint32 ??
             undefined,
-          width:
-            textureDimensions?.width,
-          height:
-            textureDimensions?.height,
         });
 
   const textureData =
@@ -6817,10 +6950,6 @@ function createSystemScenePlanetTextureResourceV1(
           baseColorHex: planet.colorHex,
           visualSeedUint32:
             visualSeeds?.planetTextureSeedUint32,
-          width:
-            textureDimensions?.width,
-          height:
-            textureDimensions?.height,
         })
       : null;
 
@@ -6834,6 +6963,8 @@ function createSystemScenePlanetTextureResourceV1(
           planetId: planet.id,
           baseTexture: textureData,
           surface: planet.surfaceEnvironment,
+          vegetationProfile:
+            planet.visualVegetationProfile ?? undefined,
           visualSeedUint32:
             visualSeeds?.surfaceTextureSeedUint32,
         });
@@ -6842,16 +6973,35 @@ function createSystemScenePlanetTextureResourceV1(
     giantAtmosphereTexture?.seedUint32 ??
     textureData!.seedUint32;
 
+  // High resolution is a visual reconstruction of the frozen D.4d atlas.
+  // The measured surface coverages and private biological records never change.
+  const refine = (
+    rgba: Uint8Array,
+    width: number,
+    height: number,
+    kind: PlanetTextureRefinementKind,
+  ): Uint8Array => textureWidth === width
+    ? rgba
+    : refinePlanetRgbaTextureV1(rgba, width, height, textureWidth, visualSeed, kind);
+  const imageWidth = textureWidth;
+  const imageHeight = textureWidth / 2;
+
   const surfaceTexture =
     giantAtmosphereTexture !== null
       ? createRgbaDataTexture(
-          giantAtmosphereTexture.width,
-          giantAtmosphereTexture.height,
-          giantAtmosphereTexture.albedoRgba,
+          imageWidth,
+          imageHeight,
+          refine(giantAtmosphereTexture.albedoRgba, giantAtmosphereTexture.width, giantAtmosphereTexture.height, 'GAS'),
           `GENESIS cached deep-envelope cloud tops 25.11 v${giantAtmosphereTexture.version}`,
         )
       : createPlanetSurfaceTexture(
-          semanticSurface ?? textureData!,
+          {
+            width: imageWidth,
+            height: imageHeight,
+            rgba: refine((semanticSurface ?? textureData!).rgba,
+              (semanticSurface ?? textureData!).width,
+              (semanticSurface ?? textureData!).height, 'COLOR'),
+          },
           semanticSurface === null
             ? `GENESIS cached procedural planet albedo 25.11 v${textureData!.version}`
             : `GENESIS cached physical surface 25.11 v${semanticSurface.version}`,
@@ -6862,9 +7012,9 @@ function createSystemScenePlanetTextureResourceV1(
     semanticSurface?.emissiveRgba === undefined
       ? null
       : createRgbaDataTexture(
-          semanticSurface.width,
-          semanticSurface.height,
-          semanticSurface.emissiveRgba,
+          imageWidth,
+          imageHeight,
+          refine(semanticSurface.emissiveRgba, semanticSurface.width, semanticSurface.height, 'EMISSION'),
           'GENESIS cached volcanism 25.11',
         );
 
@@ -6872,32 +7022,32 @@ function createSystemScenePlanetTextureResourceV1(
     semanticSurface?.cloudRgba !== null &&
     semanticSurface?.cloudRgba !== undefined
       ? createRgbaDataTexture(
-          semanticSurface.width,
-          semanticSurface.height,
-          semanticSurface.cloudRgba,
+          imageWidth,
+          imageHeight,
+          refine(semanticSurface.cloudRgba, semanticSurface.width, semanticSurface.height, 'CLOUD'),
           'GENESIS cached physical cloud projection 25.11',
         )
       : giantAtmosphereTexture?.upperHazeRgba !== null &&
         giantAtmosphereTexture?.upperHazeRgba !== undefined
         ? createRgbaDataTexture(
-            giantAtmosphereTexture.width,
-            giantAtmosphereTexture.height,
-            giantAtmosphereTexture.upperHazeRgba,
+            imageWidth,
+            imageHeight,
+            refine(giantAtmosphereTexture.upperHazeRgba, giantAtmosphereTexture.width, giantAtmosphereTexture.height, 'CLOUD'),
             `GENESIS cached upper haze 25.11 v${giantAtmosphereTexture.version}`,
           )
         : null;
 
   const roughnessTexture = semanticSurface?.roughnessRgba
     ? createRgbaDataTexture(
-        semanticSurface.width, semanticSurface.height,
-        semanticSurface.roughnessRgba,
+        imageWidth, imageHeight,
+        refine(semanticSurface.roughnessRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
         'GENESIS D.4c visual surface roughness',
       )
     : null;
   const reliefTexture = semanticSurface?.reliefRgba
     ? createRgbaDataTexture(
-        semanticSurface.width, semanticSurface.height,
-        semanticSurface.reliefRgba,
+        imageWidth, imageHeight,
+        refine(semanticSurface.reliefRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
         'GENESIS D.4c visual microrelief',
       )
     : null;

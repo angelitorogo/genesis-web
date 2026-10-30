@@ -6,11 +6,26 @@ import {
   type SystemScenePlanetSurfacePresentationSnapshot,
 } from './system-scene-planet-surface-presentation';
 
+export interface SystemScenePlanetVegetationProfileV1 {
+  readonly coverageFraction01: number;
+  readonly lushness01: number;
+  readonly floraSpeciesCount: number;
+  readonly paletteHexes: readonly string[];
+  readonly paletteEntries?: readonly SystemScenePlanetVegetationPaletteEntryV1[];
+}
+
+export interface SystemScenePlanetVegetationPaletteEntryV1 {
+  readonly hex: string;
+  readonly weight01: number;
+}
+
 export interface SystemScenePlanetSurfaceTextureInput {
   readonly systemIdentity: string;
   readonly planetId: string;
   readonly baseTexture: SystemScenePlanetTextureData;
   readonly surface: SystemScenePlanetSurfacePresentationSnapshot;
+  /** VISBIO.1b preview-only greenery overlay for worlds with flora. */
+  readonly vegetationProfile?: SystemScenePlanetVegetationProfileV1;
   readonly visualSeedUint32?: number;
 }
 
@@ -44,6 +59,11 @@ interface PixelField {
   readonly desertScore: number;
   readonly volcanicScore: number;
   readonly cloudScore: number;
+}
+
+interface VegetationToneV1 {
+  readonly rgb: [number, number, number];
+  readonly cumulativeWeight01: number;
 }
 
 const LIQUID = 1;
@@ -119,14 +139,38 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     semantic[index] = LIQUID;
   }
 
-  const landFields = fields.filter(field => semantic[field.uniqueIndex] === LAND);
+  // VISBIO.1c: flora chooses suitable exposed land *before* the illustrative
+  // desert mask. Previously deserts claimed tropical/temperate continents
+  // first, so the remaining LAND was concentrated near the poles. This does
+  // not touch the immutable liquid and ice area masks.
+  const vegetationProfile = input.vegetationProfile ?? null;
+  const vegetationCandidates = vegetationProfile === null ? [] : fields.filter(
+    field =>
+      semantic[field.uniqueIndex] === LAND &&
+      vegetationLatitudeEligibleV1(field, surface),
+  );
+  const vegetatedSelected = selectRegionalVegetationV1(
+    vegetationCandidates,
+    vegetationProfile,
+    uniqueWidth,
+    height,
+  );
+  const vegetationPalette =
+    buildVegetationPaletteColorsV1(vegetationProfile);
+
+  // 25.3 desert is a PRESENTATION proxy, not a physical observation. In a
+  // world with confirmed flora it cannot erase known green continents.
   const desertTarget = coverageCount(
     surface.presentationDesertCoverageFraction01 ?? 0,
     uniquePixelCount,
   );
+  const dryLandFields = fields.filter(
+    field => semantic[field.uniqueIndex] === LAND &&
+      !vegetatedSelected.has(field.uniqueIndex),
+  );
   const desertSelected = selectTop(
-    landFields,
-    Math.min(desertTarget, landFields.length),
+    dryLandFields,
+    Math.min(desertTarget, dryLandFields.length),
     field => field.desertScore,
   );
   for (const index of desertSelected) {
@@ -137,7 +181,11 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     surface.presentationVolcanicCoverageFraction01 ?? 0,
     uniquePixelCount,
   );
-  const solidFields = fields.filter(field => semantic[field.uniqueIndex] !== LIQUID && semantic[field.uniqueIndex] !== ICE);
+  const solidFields = fields.filter(field =>
+    semantic[field.uniqueIndex] !== LIQUID &&
+    semantic[field.uniqueIndex] !== ICE &&
+    !vegetatedSelected.has(field.uniqueIndex),
+  );
   const volcanicSelected = new Set(
     selectTop(
       solidFields,
@@ -188,20 +236,37 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     if (semanticKind !== LIQUID && coast > 0) {
       color = mixRgb(color, semanticKind === ICE ? [145, 205, 219] : [116, 149, 139], coast * 0.19);
     }
+    if (
+      semanticKind === LAND &&
+      vegetatedSelected.has(field.uniqueIndex)
+    ) {
+      color = mixRgb(
+        color,
+        vegetationColor(
+          field,
+          seed,
+          vegetationPalette,
+          vegetationProfile,
+        ),
+        0.63 +
+          0.08 * (1 - field.desertScore) +
+          0.18 * (vegetationProfile?.lushness01 ?? 0),
+      );
+    }
 
     // D.4c: material separation follows the existing surface classes, with
     // coherent relief inherited from the same deterministic field. Water is
     // optically smoother than ice, rock or dry regolith; none of these pixels
     // changes the semantic liquid/ice masks or the planetary science.
     const fineRelief = smoothPixelNoise01(seed, field.x, field.y, 13);
-    const relief = semanticKind === LIQUID
+    let relief = semanticKind === LIQUID
       ? 0.38 + 0.015 * field.elevation
       : semanticKind === ICE
         ? 0.56 + 0.09 * field.elevation + 0.045 * fineRelief
         : semanticKind === DESERT
           ? 0.40 + 0.35 * field.elevation + 0.13 * fineRelief
           : 0.35 + 0.43 * field.elevation + 0.16 * fineRelief;
-    const roughness = semanticKind === LIQUID
+    let roughness = semanticKind === LIQUID
       ? (surface.hasPersistentSurfaceLiquidWater === false ? 0.46 : 0.18) +
         0.11 * (1 - field.elevation) + 0.05 * coast
       : semanticKind === ICE
@@ -211,6 +276,17 @@ export function buildSystemScenePlanetSurfaceTextureV1(
           : volcanicSelected.has(field.uniqueIndex)
             ? 0.67 + 0.13 * fineRelief
             : 0.69 + 0.20 * fineRelief;
+    if (
+      semanticKind === LAND &&
+      vegetatedSelected.has(field.uniqueIndex)
+    ) {
+      roughness = clamp01(
+        roughness * (0.95 - 0.07 * (vegetationProfile?.lushness01 ?? 0)),
+      );
+      relief = clamp01(
+        relief * 0.96 + 0.012 + 0.015 * (vegetationProfile?.lushness01 ?? 0),
+      );
+    }
     const reliefByte = toByte(clamp01(relief) * 255);
     const roughnessByte = toByte(clamp01(roughness) * 255);
     roughnessRgba[baseOffset] = roughnessByte;
@@ -480,6 +556,389 @@ function buildCloudTexture(
 
   copySeamColumn(rgba, width, height);
   return rgba;
+}
+
+/** Only land outside observed ice caps can host the visual flora mask.
+ * With no polar ice, a warm ice-free world is allowed to have high-latitude
+ * vegetation; otherwise the outer 23° at both poles remain unpainted.
+ */
+function vegetationLatitudeEligibleV1(
+  field: PixelField,
+  surface: SystemScenePlanetSurfacePresentationSnapshot,
+): boolean {
+  if ((surface.surfaceIceCoverageFraction01 ?? 0) > 0.0001) {
+    return field.latitude01 <= Math.sin(67 * Math.PI / 180);
+  }
+  return field.latitude01 <= Math.sin(87 * Math.PI / 180);
+}
+
+/**
+ * VISBIO.1c: select a share of the *available* land in each geographic zone,
+ * not the top-scoring pixels over the entire globe. A global top-N produces
+ * polar clumps when phase-20 ocean/desert masks remove temperate candidates.
+ * Ranking is deterministic and uses existing coherent fields (no new RNG).
+ */
+function selectRegionalVegetationV1(
+  candidates: readonly PixelField[],
+  profile: SystemScenePlanetVegetationProfileV1 | null,
+  uniqueWidth: number,
+  height: number,
+): Set<number> {
+  const selected = new Set<number>();
+  if (profile === null || candidates.length === 0) {
+    return selected;
+  }
+
+  const longitudeBands = 12;
+  const latitudeBands = 6;
+  const regions: PixelField[][] = Array.from(
+    { length: longitudeBands * latitudeBands }, () => [],
+  );
+
+  for (const field of candidates) {
+    const col = Math.min(
+      longitudeBands - 1,
+      Math.floor(field.x * longitudeBands / uniqueWidth),
+    );
+    const row = Math.min(
+      latitudeBands - 1,
+      Math.floor(field.y * latitudeBands / height),
+    );
+    regions[row * longitudeBands + col]!.push(field);
+  }
+
+  const fraction = clamp01(profile.coverageFraction01);
+  for (const region of regions) {
+    const count = Math.round(region.length * fraction);
+    const picked = selectTop(
+      region,
+      count,
+      field => vegetationSelectionScore(field, profile),
+    );
+    for (const index of picked) {
+      selected.add(index);
+    }
+  }
+  return selected;
+}
+
+function vegetationSelectionScore(
+  field: PixelField,
+  vegetationProfile: SystemScenePlanetVegetationProfileV1 | null,
+): number {
+  const humidity = clamp01(
+    0.58 * (1 - field.elevation) +
+    0.42 * field.oceanScore,
+  );
+  const richnessBonus = clamp01(
+    ((vegetationProfile?.floraSpeciesCount ?? 1) - 1) / 5,
+  );
+  const lushnessBonus = vegetationProfile?.lushness01 ?? 0;
+
+  return clamp01(
+    (0.35 + 0.05 * lushnessBonus) * humidity +
+    0.31 * field.cloudScore +
+    0.18 * (1 - field.volcanicScore) +
+    0.13 * field.oceanScore +
+    0.03 * richnessBonus,
+  );
+}
+
+function vegetationColor(
+  field: PixelField,
+  seed: number,
+  palette: readonly VegetationToneV1[],
+  vegetationProfile: SystemScenePlanetVegetationProfileV1 | null,
+): [number, number, number] {
+  const micro = smoothPixelNoise01(seed, field.x, field.y, 17);
+  const selected = selectVegetationToneV1(
+    palette,
+    (field.elevation * 2.91 + field.cloudScore * 4.37 +
+      field.oceanScore * 1.13 + (seed >>> 0) / 0xffffffff) % 1,
+  );
+  const floraDiversity01 = clamp01(
+    ((vegetationProfile?.floraSpeciesCount ?? 1) - 1) / 5,
+  );
+  const chlorophyll = clamp01(
+    0.22 +
+    field.equator01 * 0.34 +
+    micro * 0.18 +
+    0.16 * (vegetationProfile?.lushness01 ?? 0),
+  );
+  const wetLift = mixRgb(
+    selected.rgb,
+    [160, 194, 104],
+    clamp01(0.04 + field.oceanScore * 0.14 + chlorophyll * 0.07),
+  );
+  const shaded = mixRgb(
+    wetLift,
+    [42, 86, 35],
+    clamp01(0.04 + field.elevation * 0.10 + (1 - field.oceanScore) * 0.05),
+  );
+
+  return mixRgb(
+    shaded,
+    [118, 176, 84],
+    clamp01(0.06 + floraDiversity01 * 0.08 + micro * 0.05),
+  );
+}
+
+function buildVegetationPaletteColorsV1(
+  vegetationProfile: SystemScenePlanetVegetationProfileV1 | null,
+): readonly VegetationToneV1[] {
+  if (vegetationProfile === null) {
+    return Object.freeze([
+      Object.freeze({
+        rgb: [110, 159, 72] as [number, number, number],
+        cumulativeWeight01: 1,
+      }),
+    ]);
+  }
+
+  const targetToneCount = Math.max(
+    1,
+    Math.min(
+      6,
+      vegetationProfile.floraSpeciesCount <= 1
+        ? 1
+        : vegetationProfile.floraSpeciesCount <= 3
+          ? vegetationProfile.floraSpeciesCount
+          : 6,
+    ),
+  );
+  const weightedSource = resolveWeightedPaletteEntriesV1(
+    vegetationProfile,
+  ).slice(0, Math.max(targetToneCount, 1));
+  const fallbackPalette = [
+    [148, 194, 108],
+    [118, 170, 86],
+    [88, 140, 64],
+    [74, 120, 60],
+    [160, 186, 102],
+  ] as const;
+  const lushness = vegetationProfile.lushness01;
+  const diversity01 = clamp01((vegetationProfile.floraSpeciesCount - 1) / 5);
+  const tones = weightedSource.length > 0
+    ? weightedSource
+    : [{
+        rgb: fallbackPalette[0] as [number, number, number],
+        weight01: 1,
+      }];
+  const totalWeight = tones.reduce((sum, tone) => sum + tone.weight01, 0);
+  let cumulativeWeight01 = 0;
+
+  return Object.freeze(
+    tones.map((tone, index) => {
+      const fallback = fallbackPalette[index % fallbackPalette.length]!;
+      const normalized = normalizeVegetationSpeciesColorV1(
+        tone.rgb,
+        fallback,
+        lushness,
+        diversity01,
+        index,
+      );
+      cumulativeWeight01 += tone.weight01 / Math.max(totalWeight, 0.0001);
+      return Object.freeze({
+        rgb: normalized,
+        cumulativeWeight01: Math.min(1, cumulativeWeight01),
+      });
+    }),
+  );
+}
+
+function resolveWeightedPaletteEntriesV1(
+  vegetationProfile: SystemScenePlanetVegetationProfileV1,
+): readonly { rgb: [number, number, number]; weight01: number }[] {
+  if ((vegetationProfile.paletteEntries?.length ?? 0) > 0) {
+    return vegetationProfile.paletteEntries!
+      .map(entry => ({
+        rgb: parseHexColorV1(entry.hex),
+        weight01: entry.weight01,
+      }))
+      .filter((entry): entry is { rgb: [number, number, number]; weight01: number } => entry.rgb !== null)
+      .sort((left, right) => right.weight01 - left.weight01)
+      .slice(0, 8);
+  }
+
+  return vegetationProfile.paletteHexes
+    .map((hex, index) => ({
+      rgb: parseHexColorV1(hex),
+      weight01: Math.max(0.0001, 1 / (index + 1)),
+    }))
+    .filter((entry): entry is { rgb: [number, number, number]; weight01: number } => entry.rgb !== null)
+    .slice(0, 8);
+}
+
+function normalizeVegetationSpeciesColorV1(
+  raw: [number, number, number],
+  fallback: readonly [number, number, number],
+  lushness01: number,
+  diversity01: number,
+  toneIndex: number,
+): [number, number, number] {
+  const [hue, saturation, lightness] = rgbToHslV1(raw);
+  const normalizedHue = normalizeVegetationHueV1(hue);
+  const hueDistance = circularHueDistanceV1(hue, normalizedHue);
+  const hueCorrection01 = clamp01(hueDistance / 180);
+  const projected = hslToRgbV1([
+    normalizedHue,
+    clamp01(0.28 + saturation * 0.52 + lushness01 * 0.08),
+    clamp01(0.26 + lightness * 0.34 + (1 - diversity01) * 0.10 - toneIndex * 0.018),
+  ]);
+  const anchorMixed = mixRgb(
+    projected,
+    fallback,
+    0.12 + 0.16 * hueCorrection01,
+  );
+  const darkCanopy = mixRgb(
+    anchorMixed,
+    [43, 97, 39],
+    clamp01(0.06 + toneIndex * 0.05 * diversity01),
+  );
+  return mixRgb(
+    darkCanopy,
+    [164, 208, 118],
+    clamp01((1 - diversity01) * 0.18 + lushness01 * 0.06),
+  );
+}
+
+function selectVegetationToneV1(
+  palette: readonly VegetationToneV1[],
+  sample01: number,
+): VegetationToneV1 {
+  for (const tone of palette) {
+    if (sample01 <= tone.cumulativeWeight01) {
+      return tone;
+    }
+  }
+
+  return palette[palette.length - 1] ?? Object.freeze({
+    rgb: [110, 159, 72] as [number, number, number],
+    cumulativeWeight01: 1,
+  });
+}
+
+function parseHexColorV1(
+  value: string,
+): [number, number, number] | null {
+  const match = /^#?([0-9a-fA-F]{6})$/.exec(value.trim());
+  if (match === null) {
+    return null;
+  }
+  const hex = match[1]!;
+  return [
+    Number.parseInt(hex.slice(0, 2), 16),
+    Number.parseInt(hex.slice(2, 4), 16),
+    Number.parseInt(hex.slice(4, 6), 16),
+  ];
+}
+
+function rgbToHslV1(
+  rgb: [number, number, number],
+): [number, number, number] {
+  const r = rgb[0] / 255;
+  const g = rgb[1] / 255;
+  const b = rgb[2] / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  const lightness = (max + min) / 2;
+
+  if (delta === 0) {
+    return [0, 0, lightness];
+  }
+
+  const saturation = lightness > 0.5
+    ? delta / (2 - max - min)
+    : delta / (max + min);
+
+  let hue = 0;
+  switch (max) {
+    case r:
+      hue = ((g - b) / delta + (g < b ? 6 : 0)) * 60;
+      break;
+    case g:
+      hue = ((b - r) / delta + 2) * 60;
+      break;
+    default:
+      hue = ((r - g) / delta + 4) * 60;
+      break;
+  }
+
+  return [hue, saturation, lightness];
+}
+
+function hslToRgbV1(
+  hsl: [number, number, number],
+): [number, number, number] {
+  const [h, s, l] = hsl;
+  const hue01 = ((h % 360) + 360) % 360 / 360;
+
+  if (s === 0) {
+    const gray = toByte(l * 255);
+    return [gray, gray, gray];
+  }
+
+  const q = l < 0.5
+    ? l * (1 + s)
+    : l + s - l * s;
+  const p = 2 * l - q;
+
+  const hueToChannel = (t: number): number => {
+    let wrapped = t;
+    if (wrapped < 0) {
+      wrapped += 1;
+    }
+    if (wrapped > 1) {
+      wrapped -= 1;
+    }
+    if (wrapped < 1 / 6) {
+      return p + (q - p) * 6 * wrapped;
+    }
+    if (wrapped < 1 / 2) {
+      return q;
+    }
+    if (wrapped < 2 / 3) {
+      return p + (q - p) * (2 / 3 - wrapped) * 6;
+    }
+    return p;
+  };
+
+  return [
+    toByte(hueToChannel(hue01 + 1 / 3) * 255),
+    toByte(hueToChannel(hue01) * 255),
+    toByte(hueToChannel(hue01 - 1 / 3) * 255),
+  ];
+}
+
+function normalizeVegetationHueV1(
+  hueDegrees: number,
+): number {
+  const hue = ((hueDegrees % 360) + 360) % 360;
+  if (hue >= 55 && hue <= 165) {
+    return hue;
+  }
+  if (hue >= 35 && hue < 55) {
+    return 55 + (hue - 35) * 0.55;
+  }
+  if (hue > 165 && hue <= 205) {
+    return 165 - (205 - hue) * 0.35;
+  }
+  if (hue > 205 && hue <= 255) {
+    return 160 - (255 - hue) * 0.10;
+  }
+  if (hue > 255 && hue < 320) {
+    return 105 + (hue - 255) * 0.22;
+  }
+  return 88 + hue * 0.10;
+}
+
+function circularHueDistanceV1(
+  leftDegrees: number,
+  rightDegrees: number,
+): number {
+  const delta = Math.abs((((leftDegrees - rightDegrees) % 360) + 540) % 360 - 180);
+  return delta;
 }
 
 function selectTop(

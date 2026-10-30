@@ -1,0 +1,15 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = process.cwd();
+const testFile = path.join(root, 'src/app/presentation/planet-detail/planet-scientific-card-vegetation-visbio1.spec.ts');
+const domainFile = path.join(root, 'src/app/domain/life/procedural-microbial-vida3.ts');
+assert(fs.existsSync(testFile), 'No se encontró el test de vegetación VISBIO.1');
+assert(fs.existsSync(domainFile), 'No se encontró el contrato canónico VIDA.3');
+const test = fs.readFileSync(testFile, 'utf8');
+const domain = fs.readFileSync(domainFile, 'utf8');
+assert(test.includes("import { VIDA3_MODEL_REVISION } from '../../domain/life/procedural-microbial-vida3';"));
+assert(test.includes('microbialRevision: VIDA3_MODEL_REVISION,'));
+assert(!test.includes("microbialRevision: 'VIDA.3/procedural-microbial-life/v1'"));
+assert(domain.includes("export const VIDA3_MODEL_REVISION = 'VIDA.3/microbial/v3-aquifer-lunar-surface' as const;"));
+console.log('VISBIO.1d.2: fixture microbialRevision alineado con contrato VIDA.3 OK');

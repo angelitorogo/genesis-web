@@ -165,6 +165,35 @@ export interface ScientificPlanetPreviewVisual {
 
   readonly giantAtmosphereVisualVariantUint32:
     number | null;
+
+  /** VISBIO.1b preview-only vegetation profile for fiche rendering. */
+  readonly vegetationProfile?:
+    ScientificPlanetVegetationPreviewProfile | null;
+}
+
+export interface ScientificPlanetVegetationPreviewProfile {
+  readonly coverageFraction01:
+    number;
+
+  readonly lushness01:
+    number;
+
+  readonly floraSpeciesCount:
+    number;
+
+  readonly paletteHexes:
+    readonly string[];
+
+  readonly paletteEntries?:
+    readonly ScientificPlanetVegetationPalettePreviewEntry[];
+}
+
+export interface ScientificPlanetVegetationPalettePreviewEntry {
+  readonly hex:
+    string;
+
+  readonly weight01:
+    number;
 }
 
 export interface ScientificMoonOrbitPreviewVisual {
@@ -538,6 +567,8 @@ export class ScientificBodyPreviewAssembler {
     scene:
       SystemSceneSnapshot,
     sourceBodyId?: string,
+    vegetationProfile:
+      ScientificPlanetVegetationPreviewProfile | null = null,
   ): ScientificBodyPreviewModel {
 
     const planetId = sourceBodyId ??
@@ -554,6 +585,7 @@ export class ScientificBodyPreviewAssembler {
         scene,
         sourcePlanet,
         target.detail.general.radiusEarth,
+        vegetationProfile,
       );
 
     const semiMajorByOrdinal =
@@ -962,6 +994,9 @@ function planetVisual(
 
   radiusEarth:
     number,
+
+  vegetationProfile:
+    ScientificPlanetVegetationPreviewProfile | null = null,
 ): ScientificPlanetPreviewVisual {
 
   if (
@@ -1059,6 +1094,7 @@ function planetVisual(
             source.id,
             source.giantAtmosphere.regime,
           ),
+    vegetationProfile,
   });
 }
 

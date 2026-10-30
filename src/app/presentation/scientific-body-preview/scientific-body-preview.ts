@@ -1283,6 +1283,8 @@ export class ScientificBodyPreview
       surfaceEnvironment: planet.surface,
       giantAtmosphere: planet.giantAtmosphere,
       specialPresentation: null,
+      visualVegetationProfile:
+        planet.vegetationProfile ?? null,
     });
 
     const appearance =
