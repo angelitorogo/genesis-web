@@ -1,173 +1,312 @@
-/** GENESIS 38.2e — piel/coberturas procedurales integradas, PBR sin metal pintado. */
+/**
+ * GENESIS 38.2g.a — estabilización del material biológico humanoide.
+ * Corrige shimmering/pixelado: pigmentación en coordenadas anatómicas estables,
+ * manchas de baja/mediana frecuencia con antialias procedural y microrelieve
+ * suavizado. Nunca altera la geometría/anatomía certificada ni el fenotipo VIDA.
+ */
 import * as THREE from 'three';
 import type { Vida38SpeciesVisualContract } from './vida38-species-visual-contract';
 import type { Vida38HumanoidAnatomy, Vida38HumanoidRawMesh } from './vida38-humanoid-organic-field-38-2e';
 import { measureVida38HumanoidMeshV1 } from './vida38-humanoid-organic-field-38-2e';
 
-function hash3(x:number,y:number,z:number,seed:number):number {
-  let h=seed ^ Math.imul(x,0x8da6b343) ^ Math.imul(y,0xd8163841) ^ Math.imul(z,0xcb1ab31f);
-  h=Math.imul(h^(h>>>16),0x7feb352d);
-  h=Math.imul(h^(h>>>15),0x846ca68b);
-  return ((h^(h>>>16))>>>0)/0xffffffff;
-}
-const smooth=(t:number)=>t*t*(3-2*t);
-const lerp=(a:number,b:number,t:number)=>a+(b-a)*t;
-function noise3(x:number,y:number,z:number,s:number):number {
-  const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z);
-  const fx=smooth(x-xi),fy=smooth(y-yi),fz=smooth(z-zi);
-  const n=(i:number,j:number,k:number)=>hash3(xi+i,yi+j,zi+k,s);
-  const a=lerp(lerp(n(0,0,0),n(1,0,0),fx),lerp(n(0,1,0),n(1,1,0),fx),fy);
-  const b=lerp(lerp(n(0,0,1),n(1,0,1),fx),lerp(n(0,1,1),n(1,1,1),fx),fy);
-  return lerp(a,b,fz);
-}
-function fractal(x:number,y:number,z:number,seed:number):number {
-  return noise3(x,y,z,seed)*0.55+noise3(x*2.08+1.5,y*2.08,z*2.08+2.4,seed+1)*0.30+
-    noise3(x*4.12,y*4.12+0.4,z*4.12,seed+2)*0.15;
-}
-function pigmentFraction(contract:Vida38SpeciesVisualContract,a:Vida38HumanoidAnatomy,x:number,y:number,z:number):number {
-  const seed=a.visualSeed;
-  const warp=fractal(x*2.7,y*2.7,z*2.7,seed)-0.5;
-  let pattern=0.12;
-  switch(contract.pigmentation.pattern) {
-    case 'BANDS': {
-      const waveform=Math.sin((y*8.7+warp*2.0)+Math.sin(x*6.0+z*2.8)*0.34);
-      pattern=smooth(Math.max(0,Math.min(1,0.5+waveform*0.58)))*0.62;
-      break;
-    }
-    case 'MOTTLED': pattern=Math.pow(fractal(x*5.2,y*5.2,z*5.2,seed+3),1.25)*0.65;break;
-    case 'SPOTS': {
-      const cells=noise3(x*11.7,y*11.7,z*11.7,seed+4);
-      pattern=(cells>0.62?0.72:0.11)+warp*0.12;
-      break;
-    }
-    case 'SOLID': pattern=0.07+fractal(x*2.4,y*2.4,z*2.4,seed+5)*0.09;break;
-  }
-  // Diferencias anatómicas sutiles; no se dibujan manchas flotantes.
-  const dorsal=Math.max(0,Math.min(1,(-z+0.10)*1.2));
-  const face=y>a.legLength+1.02?0.06:0;
-  return Math.max(0,Math.min(1,pattern*0.82+dorsal*0.18+face+warp*0.11));
-}
+export const VIDA38_HUMANOID_PBR_REVISION = 'VIDA.38.2g.a/organic-integument-stable/v1' as const;
 
-function tileNoise(x:number,y:number,seed:number):number {
-  // Función periódica para evitar una costura visible en normal/roughness map.
-  const a=Math.sin(2*Math.PI*x), b=Math.cos(2*Math.PI*x);
-  const c=Math.sin(2*Math.PI*y), d=Math.cos(2*Math.PI*y);
-  return (Math.sin(a*6.7+c*8.2+seed*0.013)*Math.cos(b*9.4+d*4.9+seed*0.017)+
-    Math.sin(a*17.1-d*13.2+seed*0.031)*0.35)/1.35;
+const VERTEX_DECLARATIONS = `
+varying vec3 vVida38OrganicPosition;
+`;
+const VERTEX_BODY = `
+vVida38OrganicPosition = position;
+`;
+
+/**
+ * Las coordenadas procedurales se evalúan en espacio local escalado a metros,
+ * por lo que el patrón queda “pegado” al cuerpo y no vibra con la cámara.
+ */
+export const VIDA38_HUMANOID_PBR_FRAGMENT_DECLARATIONS = `
+varying vec3 vVida38OrganicPosition;
+uniform vec3 uVida38PigmentPrimary;
+uniform vec3 uVida38PigmentSecondary;
+uniform float uVida38OrganicSeed;
+uniform float uVida38Pattern;
+uniform float uVida38Covering;
+uniform float uVida38EyeHeight;
+uniform float uVida38SkinDetail;
+uniform float uVida38MetersPerUnit;
+uniform float uVida38BodyLengthMeters;
+
+float vida38Hash(vec3 p) {
+  p = fract(p * 0.1031);
+  p += dot(p, p.yxz + 33.33);
+  return fract((p.x + p.y) * p.z);
 }
-function texturesForCovering(contract:Vida38SpeciesVisualContract,seed:number):{
-  normalMap:THREE.DataTexture; roughnessMap:THREE.DataTexture;
-} {
-  const width=256,height=256;
-  const normalPixels=new Uint8Array(width*height*4),roughnessPixels=new Uint8Array(width*height*4);
-  const covering=contract.morphology.covering;
-  const roughness=covering==='SCALES'?0.79:covering==='LEATHERY'?0.87:covering==='FUR'?0.94:0.89;
-  const scale=covering==='SCALES'?0.17:covering==='FUR'?0.10:0.075;
-  const step=1/width;
-  for(let iy=0;iy<height;iy++) for(let ix=0;ix<width;ix++) {
-    const u=ix/width,v=iy/height;
-    const bump=(x:number,y:number)=>{
-      const h=tileNoise(x,y,seed);
-      if(covering==='SCALES'){
-        const pattern=(Math.cos(u*2*Math.PI*32)*Math.cos(v*2*Math.PI*45));
-        return h*0.35+pattern*0.65;
-      }
-      if(covering==='FUR')return h*0.52+Math.sin(v*2*Math.PI*61+u*7)*0.48;
-      return h;
-    };
-    const dx=(bump((u+step)%1,v)-bump((u-step+1)%1,v))*scale;
-    const dy=(bump(u,(v+step)%1)-bump(u,(v-step+1)%1))*scale;
-    const nz=1/Math.sqrt(dx*dx+dy*dy+1);
-    const i=(iy*width+ix)*4;
-    normalPixels[i]=Math.round(((-dx*nz)*0.5+0.5)*255);
-    normalPixels[i+1]=Math.round(((-dy*nz)*0.5+0.5)*255);
-    normalPixels[i+2]=Math.round((nz*0.5+0.5)*255);
-    normalPixels[i+3]=255;
-    const varr=tileNoise(u,v,seed+19);
-    const r=Math.max(0.32,Math.min(0.99,roughness+varr*0.065));
-    roughnessPixels[i]=255;
-    roughnessPixels[i+1]=Math.round(r*255);
-    roughnessPixels[i+2]=255;
-    roughnessPixels[i+3]=255;
+float vida38Noise(vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(mix(vida38Hash(i), vida38Hash(i + vec3(1.0, 0.0, 0.0)), f.x),
+        mix(vida38Hash(i + vec3(0.0, 1.0, 0.0)), vida38Hash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+    mix(mix(vida38Hash(i + vec3(0.0, 0.0, 1.0)), vida38Hash(i + vec3(1.0, 0.0, 1.0)), f.x),
+        mix(vida38Hash(i + vec3(0.0, 1.0, 1.0)), vida38Hash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y),
+    f.z);
+}
+float vida38Fbm(vec3 p) {
+  float v = 0.0;
+  float w = 0.5;
+  for (int i = 0; i < 5; i++) {
+    v += w * vida38Noise(p);
+    p = p * 1.97 + vec3(9.4, 4.1, 7.6);
+    w *= 0.5;
   }
-  const make=(data:Uint8Array)=>{
-    const tex=new THREE.DataTexture(data,width,height,THREE.RGBAFormat,THREE.UnsignedByteType);
-    tex.wrapS=THREE.RepeatWrapping;tex.wrapT=THREE.RepeatWrapping;
-    tex.magFilter=THREE.LinearFilter;
-    tex.minFilter=THREE.LinearMipmapLinearFilter;
-    tex.generateMipmaps=true;
-    tex.needsUpdate=true;
-    return tex;
+  return v;
+}
+float vida38Worley(vec3 p) {
+  vec3 cell = floor(p);
+  vec3 f = fract(p);
+  float nearest = 4.0;
+  for (int x = -1; x <= 1; x++) for (int y = -1; y <= 1; y++) for (int z = -1; z <= 1; z++) {
+    vec3 off = vec3(float(x), float(y), float(z));
+    vec3 candidate = off + vec3(
+      vida38Hash(cell + off + vec3(11.0)),
+      vida38Hash(cell + off + vec3(23.0)),
+      vida38Hash(cell + off + vec3(37.0))) - f;
+    nearest = min(nearest, dot(candidate, candidate));
+  }
+  return sqrt(nearest);
+}
+float vida38AA(float value, float threshold, float softness) {
+  float width = max(fwidth(value) * softness, 0.0035);
+  return smoothstep(threshold - width, threshold + width, value);
+}
+float vida38AABand(float value, float low, float high, float softness) {
+  return vida38AA(value, low, softness) * (1.0 - vida38AA(value, high, softness));
+}
+vec3 vida38StableCoord(vec3 point) {
+  float meterScale = max(uVida38MetersPerUnit, 0.000001);
+  vec3 meters = point * meterScale;
+  float bodyScale = max(uVida38BodyLengthMeters, 0.25);
+  vec3 anisotropy = vec3(0.84, 1.0, 0.92 + clamp(bodyScale * 0.04, 0.0, 0.09));
+  return meters * anisotropy;
+}
+float vida38Pigment(vec3 point) {
+  vec3 p = vida38StableCoord(point) + vec3(uVida38OrganicSeed * 0.061, uVida38OrganicSeed * 0.027, uVida38OrganicSeed * 0.019);
+  vec3 macroWarp = vec3(
+    vida38Fbm(p * 0.85 + vec3(12.0, 4.0, 8.0)),
+    vida38Fbm(p * 0.85 + vec3(20.0, 7.0, 2.0)),
+    vida38Fbm(p * 0.85 + vec3(31.0, 9.0, 4.0))) - vec3(0.5);
+  vec3 q = p + macroWarp * 0.34;
+  float macro = vida38Fbm(q * 1.15 + vec3(1.0, 4.0, 8.0));
+  float regional = vida38Fbm(q * 2.35 + vec3(9.0, 2.0, 5.0));
+  float detail = vida38Fbm(q * 4.25 + vec3(2.0, 11.0, 3.0));
+  float pattern = 0.07;
+  if (uVida38Pattern < 0.5) {
+    pattern = 0.03 + macro * 0.16 + regional * 0.05;
+  } else if (uVida38Pattern < 1.5) {
+    float wave = sin(q.y * 5.8 + q.x * 2.4 + macroWarp.z * 3.2 + regional * 3.4);
+    float bandMask = 1.0 - vida38AA(abs(wave), 0.54, 1.65);
+    pattern = 0.05 + bandMask * 0.42 + macro * 0.08;
+  } else if (uVida38Pattern < 2.5) {
+    float spots = 1.0 - vida38Worley(q * 2.15 + vec3(2.1, 6.4, 8.2));
+    float spotMask = vida38AABand(spots, 0.30, 0.63, 1.8);
+    pattern = 0.04 + spotMask * 0.48 + regional * 0.10;
+  } else {
+    float fluid = macro * 0.62 + regional * 0.28 + detail * 0.10;
+    float cloudMask = vida38AA(fluid, 0.53, 1.55);
+    pattern = 0.04 + cloudMask * 0.46;
+  }
+  float dorsal = vida38AA(-point.z, 0.02, 1.4) * 0.07;
+  float face = point.y > uVida38EyeHeight - 0.34 ? 0.018 : 0.0;
+  return clamp(pattern + dorsal + face, 0.0, 0.72);
+}
+float vida38BiologicalRelief(vec3 point) {
+  vec3 p = vida38StableCoord(point);
+  float microskin = vida38Fbm(p * 11.0 + vec3(uVida38OrganicSeed * 0.013));
+  if (uVida38Covering < 0.5) {
+    float pores = 1.0 - vida38Worley(p * 7.0 + vec3(5.0, 2.0, 7.0));
+    return microskin * 0.32 + vida38AABand(pores, 0.30, 0.62, 1.25) * 0.18;
+  }
+  if (uVida38Covering < 1.5) {
+    vec3 scales = p * 4.6;
+    scales.x += fract(floor(scales.y) * 0.5) * 0.32;
+    float scaleCells = 1.0 - vida38Worley(scales + vec3(2.0, 5.0, 1.0));
+    return microskin * 0.22 + vida38AABand(scaleCells, 0.28, 0.67, 1.3) * 0.22;
+  }
+  if (uVida38Covering < 2.5) {
+    float strand = 0.5 + 0.5 * sin(p.y * 36.0 + p.x * 9.5 + vida38Fbm(p * 3.0) * 1.8);
+    return microskin * 0.25 + vida38AA(strand, 0.64, 1.2) * 0.16;
+  }
+  if (uVida38Covering < 3.5) {
+    float vane = 0.5 + 0.5 * sin(p.y * 26.0 + p.x * 7.0 + p.z * 3.5);
+    return microskin * 0.24 + vida38AA(vane, 0.66, 1.2) * 0.15;
+  }
+  return microskin * 0.24;
+}
+`;
+
+export const VIDA38_HUMANOID_PBR_COLOR_FRAGMENT = `
+#include <color_fragment>
+float vida38Coverage = vida38Pigment(vVida38OrganicPosition);
+float vida38LargeDetail = vida38Fbm(vida38StableCoord(vVida38OrganicPosition) * 1.45 + vec3(uVida38OrganicSeed * 0.009));
+float vida38Warmth = 0.97 + (vida38LargeDetail - 0.5) * 0.07;
+diffuseColor.rgb *= mix(uVida38PigmentPrimary, uVida38PigmentSecondary, vida38Coverage) * vida38Warmth;
+`;
+
+export const VIDA38_HUMANOID_PBR_ROUGHNESS_FRAGMENT = `
+#include <roughnessmap_fragment>
+float vida38RoughNoise = vida38Fbm(vida38StableCoord(vVida38OrganicPosition) * 2.8 + vec3(2.3, 1.7, uVida38OrganicSeed * 0.017));
+roughnessFactor=clamp(roughnessFactor + (vida38RoughNoise - 0.5) * 0.08, 0.58, 0.96);
+`;
+
+export const VIDA38_HUMANOID_PBR_NORMAL_FRAGMENT = `
+#include <normal_fragment_maps>
+float vida38FineHeight = vida38BiologicalRelief(vVida38OrganicPosition);
+vec3 vida38Dpdx = dFdx(-vViewPosition);
+vec3 vida38Dpdy = dFdy(-vViewPosition);
+vec3 vida38R1 = cross(vida38Dpdy, normal);
+vec3 vida38R2 = cross(normal, vida38Dpdx);
+float vida38Det = dot(vida38Dpdx, vida38R1);
+vec3 vida38Gradient = (dFdx(vida38FineHeight) * vida38R1 + dFdy(vida38FineHeight) * vida38R2);
+normal = normalize(normal - sign(vida38Det) * vida38Gradient * uVida38SkinDetail / max(abs(vida38Det), 0.000001));
+`;
+
+export function buildVida38HumanoidPbrShader38G(): Readonly<{
+  vertexCommon:string;vertexBody:string;fragmentCommon:string;
+  colorFragment:string;roughnessFragment:string;normalFragment:string;
+}> {
+  return {
+    vertexCommon: VERTEX_DECLARATIONS,
+    vertexBody: VERTEX_BODY,
+    fragmentCommon: VIDA38_HUMANOID_PBR_FRAGMENT_DECLARATIONS,
+    colorFragment: VIDA38_HUMANOID_PBR_COLOR_FRAGMENT,
+    roughnessFragment: VIDA38_HUMANOID_PBR_ROUGHNESS_FRAGMENT,
+    normalFragment: VIDA38_HUMANOID_PBR_NORMAL_FRAGMENT,
   };
-  return {normalMap:make(normalPixels),roughnessMap:make(roughnessPixels)};
 }
 
-export function createVida38HumanoidSkinV1(raw:Vida38HumanoidRawMesh,contract:Vida38SpeciesVisualContract):THREE.Mesh {
-  const geometry=new THREE.BufferGeometry();
+function patternIndex(contract: Vida38SpeciesVisualContract): number {
+  switch (contract.pigmentation.pattern) {
+    case 'SOLID': return 0;
+    case 'BANDS': return 1;
+    case 'SPOTS': return 2;
+    case 'MOTTLED': return 3;
+    default: return 0;
+  }
+}
+function coveringIndex(contract: Vida38SpeciesVisualContract): number {
+  switch (contract.morphology.covering) {
+    case 'SCALES': return 1;
+    case 'FUR': return 2;
+    case 'FEATHERS': return 3;
+    case 'MEMBRANE': return 4;
+    default: return 0;
+  }
+}
+
+/**
+ * Fragment shader: pigmentación y microrelieve totalmente en fragmento; sin
+ * depender de coordenadas de pantalla, sin color por vértice y con detalle más estable.
+ */
+export function createVida38HumanoidSkinV1(raw: Vida38HumanoidRawMesh, contract: Vida38SpeciesVisualContract): THREE.Mesh {
+  const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position',new THREE.BufferAttribute(raw.positions,3));
   geometry.setAttribute('normal',new THREE.BufferAttribute(raw.normals,3));
   geometry.setAttribute('uv',new THREE.BufferAttribute(raw.uvs,2));
   geometry.setIndex(new THREE.BufferAttribute(raw.indices,1));
-  const main=new THREE.Color(contract.pigmentation.primaryColorHex);
-  const secondary=new THREE.Color(contract.pigmentation.secondaryColorHex);
-  const vertexColors=new Float32Array(raw.positions.length);
-  for(let i=0;i<raw.positions.length;i+=3){
-    const x=raw.positions[i]!,y=raw.positions[i+1]!,z=raw.positions[i+2]!;
-    const pattern=pigmentFraction(contract,raw.anatomy,x,y,z);
-    const bright=0.88+fractal(x*25.1,y*25.1,z*25.1,raw.anatomy.visualSeed+7)*0.20;
-    const mix=main.clone().lerp(secondary,pattern).multiplyScalar(bright);
-    vertexColors[i]=mix.r;vertexColors[i+1]=mix.g;vertexColors[i+2]=mix.b;
-  }
-  geometry.setAttribute('color',new THREE.BufferAttribute(vertexColors,3));
-  geometry.computeBoundingSphere();geometry.computeBoundingBox();
-  const maps=texturesForCovering(contract,raw.anatomy.visualSeed);
-  const mat=new THREE.MeshPhysicalMaterial({
+  geometry.computeBoundingSphere();
+  geometry.computeBoundingBox();
+  const metrics = measureVida38HumanoidMeshV1(raw);
+  const source = buildVida38HumanoidPbrShader38G();
+  const mat = new THREE.MeshPhysicalMaterial({
     color:0xffffff,
-    vertexColors:true,
-    roughness:0.93,
-    roughnessMap:maps.roughnessMap,
-    normalMap:maps.normalMap,
-    normalScale:new THREE.Vector2(0.35,0.35),
+    roughness:contract.morphology.covering==='SCALES'?0.84:contract.morphology.covering==='FUR'?0.96:0.89,
     metalness:0,
-    clearcoat:0.026,
-    clearcoatRoughness:0.87,
-    sheen:contract.morphology.covering==='FUR'?0.18:0.045,
-    sheenRoughness:0.85,
+    clearcoat:0.006,
+    clearcoatRoughness:0.98,
+    sheen:contract.morphology.covering==='FUR'?0.08:0.018,
+    sheenRoughness:0.95,
+    specularIntensity:0.28,
     side:THREE.FrontSide,
   });
+  mat.onBeforeCompile = shader => {
+    shader.uniforms['uVida38PigmentPrimary'] = {value:new THREE.Color(contract.pigmentation.primaryColorHex)};
+    shader.uniforms['uVida38PigmentSecondary'] = {value:new THREE.Color(contract.pigmentation.secondaryColorHex)};
+    shader.uniforms['uVida38OrganicSeed'] = {value:(raw.anatomy.visualSeed % 65521)/1127};
+    shader.uniforms['uVida38Pattern'] = {value:patternIndex(contract)};
+    shader.uniforms['uVida38Covering'] = {value:coveringIndex(contract)};
+    shader.uniforms['uVida38EyeHeight'] = {value:raw.anatomy.legLength+(1.18+(raw.anatomy.neckLength-1)*0.14)*raw.anatomy.torsoLength};
+    shader.uniforms['uVida38SkinDetail'] = {value:contract.morphology.covering==='SCALES'?0.0026:0.0016};
+    shader.uniforms['uVida38MetersPerUnit'] = {value:metrics.metersPerUnit};
+    shader.uniforms['uVida38BodyLengthMeters'] = {value:contract.bodyLengthMeters};
+    shader.vertexShader=shader.vertexShader.replace('#include <common>', `#include <common>\n${source.vertexCommon}`);
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\n${source.vertexBody}`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>', `#include <common>\n${source.fragmentCommon}`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',source.colorFragment);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',source.roughnessFragment);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',source.normalFragment);
+  };
+  mat.customProgramCacheKey = () => `${VIDA38_HUMANOID_PBR_REVISION}|${patternIndex(contract)}|${coveringIndex(contract)}`;
   const mesh=new THREE.Mesh(geometry,mat);
   mesh.name='VIDA38_2E_ORGANIC_SKIN';
   mesh.castShadow=true;mesh.receiveShadow=true;
   mesh.userData['revision']='VIDA.38.2e/humanoid-implicit-mesh/v1';
+  mesh.userData['pbrRevision']=VIDA38_HUMANOID_PBR_REVISION;
   mesh.userData['meterLengthOriginal']=contract.bodyLengthMeters;
   mesh.userData['morphologyRevision']=raw.anatomy.morphology.revision;
   mesh.userData['anatomyFingerprint']=raw.anatomy.morphology.anatomyFingerprint;
-  mesh.userData['metersPerUnit']=measureVida38HumanoidMeshV1(raw).metersPerUnit;
+  mesh.userData['metersPerUnit']=metrics.metersPerUnit;
   mesh.userData['reconstructionHypothesis']=true;
   return mesh;
 }
 
-export function createVida38HumanoidOcularDetailsV1(a:Vida38HumanoidAnatomy,contract:Vida38SpeciesVisualContract):THREE.Object3D[] {
-  // Órganos visuales en cavidades SDF, no esferas flotando sobre la cabeza.
-  const objs:THREE.Object3D[]=[];
-  const irisBase=new THREE.Color(contract.pigmentation.secondaryColorHex).lerp(new THREE.Color('#33404a'),0.55);
-  const eyeballMat=new THREE.MeshPhysicalMaterial({color:0x29323a,roughness:0.17,clearcoat:0.64,clearcoatRoughness:0.18,metalness:0});
-  const irisMat=new THREE.MeshPhysicalMaterial({color:irisBase,roughness:0.26,clearcoat:0.25,metalness:0});
-  const pupilMat=new THREE.MeshPhysicalMaterial({color:0x071015,roughness:0.08,clearcoat:0.85,metalness:0});
-  for(const side of [-1,1]){
+/**
+ * VISTA OCULAR 38.2g. Una esfera hundida en la órbita con iris, esclerótica,
+ * pupila y limbo integrados en COLOR DE VÉRTICE. No apilar tres esferas.
+ */
+export function createVida38HumanoidOcularDetailsV1(a: Vida38HumanoidAnatomy,contract: Vida38SpeciesVisualContract):THREE.Object3D[] {
+  const eyes:THREE.Object3D[]=[];
+  const irisColor=new THREE.Color(contract.pigmentation.secondaryColorHex)
+    .lerp(new THREE.Color('#536970'),0.42);
+  const scleraColor=new THREE.Color('#9aa6a6').lerp(new THREE.Color(contract.pigmentation.primaryColorHex),0.18);
+  const pupilColor=new THREE.Color('#0a0d0e');
+  const limbusColor=new THREE.Color('#263238');
+  for(const side of [-1,1]) {
+    const radius=a.eyeRadius*0.93;
+    const geometry=new THREE.SphereGeometry(radius,64,40);
+    const positions=geometry.getAttribute('position');
+    const colors=new Float32Array(positions.count*3);
+    for(let i=0;i<positions.count;i++) {
+      const x=positions.getX(i)/radius;
+      const y=positions.getY(i)/radius;
+      const z=positions.getZ(i)/radius;
+      const radial=Math.hypot(x+side*0.018,y*1.02);
+      let pigment=scleraColor.clone();
+      if(z>0.18){
+        const irisEdge=THREE.MathUtils.smoothstep(radial,0.53,0.66);
+        const irisBlend=1-irisEdge;
+        const noise=Math.sin((Math.atan2(y,x)+Math.PI)*29.0+a.visualSeed*0.001)*0.08;
+        const iris=irisColor.clone().multiplyScalar(0.85+noise);
+        pigment.lerp(iris,irisBlend);
+        pigment.lerp(limbusColor,(1-THREE.MathUtils.smoothstep(radial,0.58,0.66))*THREE.MathUtils.smoothstep(radial,0.49,0.58)*0.72);
+        pigment.lerp(pupilColor,1-THREE.MathUtils.smoothstep(radial,0.21,0.31));
+      }
+      colors[i*3]=pigment.r;
+      colors[i*3+1]=pigment.g;
+      colors[i*3+2]=pigment.b;
+    }
+    geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
+    const mat=new THREE.MeshPhysicalMaterial({
+      color:0xffffff,vertexColors:true,metalness:0,roughness:0.17,
+      clearcoat:0.48,clearcoatRoughness:0.16,
+    });
+    const eye=new THREE.Mesh(geometry,mat);
     const cx=side*a.eyeSpacing;
     const cy=a.legLength+(1.18+(a.neckLength-1)*0.14)*a.torsoLength;
-    const cz=0.248+a.faceProjection*0.12+a.postureLean*Math.max(0,cy-a.legLength);
-    const bulb=new THREE.Mesh(new THREE.SphereGeometry(a.eyeRadius*0.93,28,20),eyeballMat);
-    bulb.position.set(cx,cy,cz-0.012);
-    bulb.scale.set(1.0,0.88,0.9);
-    const iris=new THREE.Mesh(new THREE.SphereGeometry(a.eyeRadius*0.45,24,16),irisMat);
-    iris.position.set(cx,cy,cz+a.eyeRadius*0.72);
-    iris.scale.set(1,1,0.37);
-    const pupil=new THREE.Mesh(new THREE.SphereGeometry(a.eyeRadius*0.20,20,14),pupilMat);
-    pupil.position.set(cx,cy,cz+a.eyeRadius*0.84);
-    pupil.scale.set(1,1,0.28);
-    for(const o of [bulb,iris,pupil]){o.name=`VIDA38_2E_EYE_${side}`;objs.push(o);}
+    const socketZ=0.248+a.faceProjection*0.12;
+    eye.position.set(cx,cy,socketZ+radius*0.26+a.postureLean*Math.max(0,cy-a.legLength));
+    eye.scale.set(1.0,0.86,0.96);
+    eye.name=`VIDA38_2G_OCULAR_INTEGRATED_${side}`;
+    eye.userData['reconstructionHypothesis']=true;
+    eyes.push(eye);
   }
-  return objs;
+  return eyes;
 }

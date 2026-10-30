@@ -44,6 +44,14 @@ export interface Vida38HumanoidAnatomy {
   readonly eyeSpacing: number;
   readonly eyeRadius: number;
   readonly browDepth: number;
+  /** 38.2g: variaciones faciales hipotéticas, estables y no cromáticas. */
+  readonly cheekFullness: number;
+  readonly chinShape: number;
+  readonly mouthWidth: number;
+  readonly nasalBridge: number;
+  readonly orbitalRidge: number;
+  readonly stanceBias: number;
+  readonly shoulderTilt: number;
   readonly torsoLength: number;
   readonly chestWidth: number;
   readonly waistWidth: number;
@@ -130,6 +138,13 @@ export function deriveVida38HumanoidAnatomy(contract: Vida38SpeciesVisualContrac
     eyeSpacing: clamp(0.102 * morphology.eyeSpacing * morphology.headScale, 0.074, 0.145),
     eyeRadius: clamp(0.043 * morphology.eyeSize * (0.94 + 0.06 * morphology.headScale), 0.033, 0.055),
     browDepth: clamp(0.085 * morphology.browProminence * (1 + 0.12 * cranial), 0.065, 0.12),
+    cheekFullness: r(201, 0.78, 1.24),
+    chinShape: r(202, 0.78, 1.30),
+    mouthWidth: clamp(r(203, 0.76, 1.19) * morphology.jawWidth, 0.72, 1.24),
+    nasalBridge: r(204, 0.76, 1.31),
+    orbitalRidge: r(205, 0.8, 1.22),
+    stanceBias: r(206, -0.07, 0.07),
+    shoulderTilt: r(207, -0.019, 0.019),
     torsoLength: morphology.torsoLength,
     chestWidth: morphology.chestWidth,
     waistWidth: morphology.waistWidth,
@@ -197,9 +212,19 @@ export function evaluateVida38HumanoidField(a: Vida38HumanoidAnatomy, x: number,
   d = smin(d,ellipsoid(x,headY,z,0,p+1.22,-0.025,a.headWidth,a.headHeight,a.headWidth*0.90*a.headDepth),0.13);
   d = smin(d,ellipsoid(x,headY,z,0,p+1.055,0.075*a.jawProjection,a.jawWidth,0.142*a.headScale,a.headWidth*0.82*a.headDepth),0.12);
   d = smin(d,ellipsoid(x,headY,z,0,p+1.19,a.faceProjection,a.headWidth*0.86,0.19*a.headScale,0.105*a.jawProjection),0.09);
-  d = smin(d,ellipsoid(x,headY,z,0,p+1.155+0.06*a.cranialShape,0.22+a.faceProjection*0.12,0.05,0.128*a.headScale,0.079*a.morphology.faceProjection),0.07);
-  d = smin(d,ellipsoid(x,headY,z,0,p+1.095,0.27+a.faceProjection*0.12,0.065,0.042*a.headScale,0.052),0.032);
-  d = smin(d,ellipsoid(x,headY,z,0,p+1.00,0.151*a.jawProjection,a.jawWidth*0.63,0.058,0.095*a.jawProjection),0.05);
+  // Puente nasal, pirámide de la nariz y mentón fundidos en la piel.
+  // La variación se aplica a la ISOSUPERFICIE, no como objetos superpuestos.
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.172+0.06*a.cranialShape,0.218+a.faceProjection*0.13,
+    0.043*a.nasalBridge,0.118*a.headScale,0.065*a.morphology.faceProjection),0.069);
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.095,0.278+a.faceProjection*0.12,
+    0.057*a.nasalBridge,0.040*a.headScale,0.055*a.nasalBridge),0.037);
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.00,0.161*a.jawProjection,
+    a.jawWidth*0.62*a.chinShape,0.055*a.chinShape,0.095*a.jawProjection),0.052);
+  // Labios sutiles, con volumen inferior más pequeño: la hendidura será tallada al final.
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.039,0.246*a.jawProjection,
+    a.jawWidth*0.49*a.mouthWidth,0.022,0.035),0.018);
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.010,0.240*a.jawProjection,
+    a.jawWidth*0.47*a.mouthWidth,0.017,0.029),0.014);
   // Ligero volumen pectoral integrado y continuidad dorsal en el tronco.
   for (const side of [-1,1]) {
     d = smin(d,ellipsoid(x,y,z,side*a.shoulderWidth*0.40,p+0.55,a.torsoDepth*0.62,
@@ -207,58 +232,89 @@ export function evaluateVida38HumanoidField(a: Vida38HumanoidAnatomy, x: number,
   }
   for (const side of [-1,1]) {
     const sx = side * a.eyeSpacing;
+    // Volumen malar y surco nasolabial; evita la cara lisa de muñeco.
+    d = smin(d,ellipsoid(x,headY,z,side*a.headWidth*0.55,p+1.106,0.153+a.faceProjection*0.10,
+      0.102*a.cheekFullness,0.078*a.cheekFullness,0.069*a.cheekFullness),0.063);
     d = smin(d,ellipsoid(x,headY,z,side*a.headWidth*0.76,p+1.19,-0.025,0.065*a.headScale,0.12*a.headScale,0.055*a.headDepth),0.07);
     d = smin(d,ellipsoid(x,headY,z,side*a.headWidth*0.70,p+1.075,-0.028,0.047*a.headScale,0.067*a.headScale,0.049),0.037);
     d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing*1.38,p+1.10,0.14,0.079,0.087,0.077),0.043);
-    d = smin(d,ellipsoid(x,headY,z,sx,p+1.25,0.212,0.086*a.headScale,0.036*a.morphology.browProminence,0.052),0.033);
+    d = smin(d,ellipsoid(x,headY,z,sx,p+1.245,0.222,
+      0.084*a.headScale*a.orbitalRidge,0.029*a.morphology.browProminence,0.045),0.03);
     d = smin(d,ellipsoid(x,headY,z,side*a.headWidth,p+1.13,-0.035,0.041*a.headScale,0.085*a.headScale,0.034),0.034);
 
     const shoulderX = side*a.shoulderWidth;
-    const elbowX = side*(a.shoulderWidth+0.095);
-    const wristX = side*(a.shoulderWidth+0.12);
+    const shoulderY = p+0.64+side*a.shoulderTilt;
+    // Postura de reposo: codo algo posterior y muñeca ligeramente adelantada.
+    // Asimetría microscópica por identidad, estable; evita brazos en posición de maniquí.
+    const pose = side * a.asymmetry;
+    const elbowX = side*(a.shoulderWidth+0.087+0.008*pose);
+    const wristX = side*(a.shoulderWidth+0.075+0.012*pose);
     const elbowY = p+0.25-(a.upperArmRatio-1)*0.08;
     const wristY = p+0.64-a.armReach-(a.forearmRatio-1)*0.04;
-    d = smin(d,ellipsoid(x,y,z,shoulderX*0.85,p+0.64,0,0.15*a.musculature*a.armThickness,0.17,0.135),0.145);
-    d = smin(d,limb(x,y,z,shoulderX*0.91,p+0.64,0,elbowX,elbowY,0.015,
+    const elbowZ = -0.055-0.2*pose;
+    const wristZ = 0.100+0.2*pose;
+    d = smin(d,ellipsoid(x,y,z,shoulderX*0.85,shoulderY,0,0.15*a.musculature*a.armThickness,0.17,0.135),0.145);
+    d = smin(d,limb(x,y,z,shoulderX*0.91,shoulderY,0,elbowX,elbowY,elbowZ,
       0.114*a.musculature*a.armThickness,0.073*a.musculature*a.armThickness),0.09);
-    d = smin(d,limb(x,y,z,elbowX,elbowY+0.02,0.015,wristX,wristY,0.026,
+    d = smin(d,limb(x,y,z,elbowX,elbowY+0.02,elbowZ,wristX,wristY,wristZ,
       0.077*a.musculature*a.armThickness,0.048*a.armThickness),0.07);
     const handY = p+0.55-a.armReach;
-    d = smin(d,ellipsoid(x,y,z,wristX+side*0.015,handY,0.043,0.069*a.handSize,0.13*a.handSize,0.065*a.handSize),0.07);
+    d = smin(d,ellipsoid(x,y,z,wristX+side*0.015,handY,wristZ+0.015,
+      0.065*a.handSize,0.126*a.handSize,0.061*a.handSize),0.075);
+    // Transición musculo-tendinosa con biceps y relieve dorsal del antebrazo.
+    d = smin(d,ellipsoid(x,y,z,side*(a.shoulderWidth+0.068),p+0.43,elbowZ-0.015,
+      0.102*a.armThickness,0.20*a.musculature,0.085*a.armThickness),0.078);
+    d = smin(d,ellipsoid(x,y,z,side*(a.shoulderWidth+0.087),p+0.08,(elbowZ+wristZ)*0.5-0.020,
+      0.075*a.armThickness,0.147,0.060*a.armThickness),0.067);
     const fingers = a.fingerCount;
     for(let i=0; i<fingers; i++) {
       const fx = wristX+side*(0.01+(i-(fingers-1)*0.5)*0.024);
-      const fz = 0.047+(i-(fingers-1)*0.5)*0.018;
+      const fz = wristZ+0.018+(i-(fingers-1)*0.5)*0.018;
       d = smin(d,limb(x,y,z,fx,handY-0.068*a.handSize,fz,fx+side*(i-(fingers-1)/2)*0.012,handY-(0.19+(i%2)*0.013)*a.fingerLength,fz+0.023,0.026*a.fingerThickness,0.017*a.fingerThickness),0.022);
     }
     // Pulgar o apéndice prensil: hipótesis visual en especies bípedas.
-    d = smin(d,limb(x,y,z,wristX-side*0.05,handY+0.01,0.10,wristX-side*0.095,handY-0.075,0.15,0.031,0.02),0.032);
+    d = smin(d,limb(x,y,z,wristX-side*0.05,handY+0.01,wristZ+0.07,wristX-side*0.095,handY-0.075,wristZ+0.12,0.031,0.02),0.032);
 
     const hipX = side*a.hipWidth*0.61*a.hipSpacing;
     const kneeX = hipX+side*0.008;
     const ankleX = hipX+side*0.018;
+    const footZ = a.stanceBias*side;
+    const kneeZ = 0.07 + footZ*0.45;
     d = smin(d,ellipsoid(x,y,z,hipX,p-0.055,-0.04,0.14*a.musculature*a.legThickness,0.17,0.13),0.12);
-    d = smin(d,limb(x,y,z,hipX,p-0.10,0,kneeX,kneeY,0.07,
+    d = smin(d,limb(x,y,z,hipX,p-0.10,0,kneeX,kneeY,kneeZ,
       0.132*a.musculature*a.legThickness,0.089*a.musculature*a.legThickness),0.095);
-    d = smin(d,limb(x,y,z,kneeX,kneeY+0.012,0.065,ankleX,0.15,0.02,
+    d = smin(d,limb(x,y,z,kneeX,kneeY+0.012,kneeZ,ankleX,0.15,0.02+footZ,
       a.calfVolume*1.5,a.calfVolume*0.70),0.085);
-    d = smin(d,ellipsoid(x,y,z,ankleX,0.15,0.024,0.060,0.11,0.064),0.065);
-    d = smin(d,ellipsoid(x,y,z,ankleX,0.072,0.11,0.103*a.footWidth,0.084,a.footLength*0.69),0.080);
+    // Grupos musculares: cuadriceps, gemelos, tendón de Aquiles y talón.
+    d = smin(d,ellipsoid(x,y,z,hipX,kneeY+(p-kneeY)*0.49,0.084+footZ*0.2,
+      0.113*a.legThickness,0.215*a.musculature,0.099*a.legThickness),0.075);
+    d = smin(d,ellipsoid(x,y,z,ankleX,kneeY*0.55,-0.045+footZ*0.6,
+      0.101*a.legThickness,0.18*a.musculature,0.100*a.legThickness),0.075);
+    d = smin(d,limb(x,y,z,ankleX,0.17,-0.044+footZ,ankleX,0.38,-0.044+footZ,
+      0.047*a.legThickness,0.053*a.legThickness),0.06);
+    d = smin(d,ellipsoid(x,y,z,ankleX,0.15,0.024+footZ,0.060,0.11,0.064),0.065);
+    d = smin(d,ellipsoid(x,y,z,ankleX,0.072,0.11+footZ,0.103*a.footWidth,0.084,a.footLength*0.69),0.080);
     for(let i=0;i<4;i++) {
       const tx = ankleX+(i-1.5)*0.042;
-      d = smin(d,limb(x,y,z,tx,0.055,0.22,tx,0.055,0.32-(i%2)*0.012,0.026,0.018),0.032);
+      d = smin(d,limb(x,y,z,tx,0.055,0.22+footZ,tx,0.055,0.32+footZ-(i%2)*0.012,0.026,0.018),0.032);
     }
   }
   // Labios / órbitas y oídos integrados por sustracción; no mallas pegadas.
   for(const side of [-1,1]) {
-    d = smax(d,-ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18,0.248+a.faceProjection*0.12,
-      a.eyeRadius*1.10,a.eyeRadius*0.81,0.075),0.016);
+    const socketZ = 0.248+a.faceProjection*0.12;
+    d = smax(d,-ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18,socketZ,
+      a.eyeRadius*1.23,a.eyeRadius*0.87,0.062),0.018);
+    // Párpados SDF suavizados que emergen de la misma superficie orgánica.
+    d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18+a.eyeRadius*0.66,socketZ+0.008,
+      a.eyeRadius*1.28,a.eyeRadius*0.27,0.031),0.020);
+    d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18-a.eyeRadius*0.62,socketZ+0.007,
+      a.eyeRadius*1.20,a.eyeRadius*0.19,0.028),0.019);
     d = smax(d,-ellipsoid(x,headY,z,side*a.eyeSpacing*0.68,p+1.09,0.29+a.faceProjection*0.12,
       0.014,0.014,0.029),0.008); // fosa nasal
     d = smax(d,-ellipsoid(x,headY,z,side*a.headWidth*1.09,p+1.13,0.004,0.012,0.044,0.031),0.006);
   }
-  d = smax(d,-ellipsoid(x,headY,z,0,p+1.00,0.247,
-    a.jawWidth*0.67,0.014,0.035),0.008); // surco bucal
+  d = smax(d,-ellipsoid(x,headY,z,0,p+1.020,0.247*a.jawProjection,
+    a.jawWidth*0.51*a.mouthWidth,0.010,0.035),0.007); // hendidura bucal, no agujero grotesco
   // No aleatorizar la superficie con ruido de alta amplitud: el relieve biológico
   // fino pertenece a los materiales y no debe erosionar la anatomía principal.
   return d;

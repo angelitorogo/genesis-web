@@ -316,7 +316,7 @@ function createHumanoidSpecialized(subject: THREE.Group, contract: Vida38Species
     subject.add(eye);
     objects.push(eye);
   }
-  subject.userData['vida38ReconstructionRevision'] = '38.2f';
+  subject.userData['vida38ReconstructionRevision'] = '38.2g';
   subject.userData['vida38MorphologyFingerprint'] = anatomy.morphology.anatomyFingerprint;
   subject.userData['vida38MorphologyProvenance'] = anatomy.morphology.provenance;
   subject.userData['vida38BodyLengthMeters'] = contract.bodyLengthMeters;
