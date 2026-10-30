@@ -11,6 +11,8 @@ import { MoonScientificCardAssembler } from '../moon-detail/moon-scientific-card
 import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
 import type { Vida6Species } from '../../domain/life/vida6-ecosystems-species';
 import { etiquetaNichoVidaEs, etiquetaVidaEs } from '../scientific/vida9-etiquetas-es';
+import { vida38SpeciesVisualContractFromConfirmedV1 } from '../life-species-visual/vida38-species-visual-contract';
+import { LifeSpeciesVisualPreviewComponent } from '../life-species-visual/life-species-visual-preview';
 
 function indiceNatural(valor:string|null):bigint|null {
   if (valor===null || !/^\d+$/.test(valor)) return null;
@@ -20,7 +22,7 @@ function indiceNatural(valor:string|null):bigint|null {
 /** Ficha independiente de especie: consulta la misma realidad CONFIRMED que la ficha anfitriona. */
 @Component({
   selector:'app-life-species-detail-page', standalone:true,
-  imports:[GenesisScreen,RouterLink],changeDetection:ChangeDetectionStrategy.OnPush,
+  imports:[GenesisScreen,RouterLink,LifeSpeciesVisualPreviewComponent],changeDetection:ChangeDetectionStrategy.OnPush,
   styles:[`
     :host{display:block;min-height:100dvh}
     main{width:min(100% - 2rem,68rem);margin:2rem auto;display:grid;gap:1rem;color:var(--genesis-color-text,#edf5fd)}
@@ -79,7 +81,17 @@ function indiceNatural(valor:string|null):bigint|null {
                   <span class="color" [style.backgroundColor]="e.phenotype.secondaryColorHex" aria-label="Pigmento secundario"></span></div>
                 </div>
               </div>
+              @if (contratoVisual(); as contrato) {
+                <p class="info" data-testid="vida38-contrato-visual">
+                  Contrato visual 38.1 preparado · huella {{contrato.appearanceFingerprint}}
+                  · muestra procedural 3D base disponible en 38.2.
+                  No constituye una imagen observada ni añade rasgos biológicos.
+                </p>
+              }
             </section>
+            @if (contratoVisual(); as contrato) {
+              <app-life-species-visual-preview [contract]="contrato"></app-life-species-visual-preview>
+            }
             <section>
               <h2>Relaciones ecológicas</h2>
               @if (relaciones().length===0) {<p class="info">Sin relaciones interespecíficas registradas.</p>}
@@ -167,6 +179,7 @@ export class LifeSpeciesDetailPage implements OnInit {
     return resultado?.kind==='AVAILABLE'?resultado.card.confirmedBiologyVIDA9??null:null;
   });
   readonly especie=computed(():Vida6Species|null=>this.registro()?.ecosystem.species.find(e=>e.id===this.especieId)??null);
+  readonly contratoVisual=computed(()=>vida38SpeciesVisualContractFromConfirmedV1(this.registro(),this.especieId??''));
   readonly relaciones=computed(()=>this.registro()?.ecosystem.relations.filter(r=>r.sourceSpeciesId===this.especieId || r.targetSpeciesId===this.especieId)??[]);
   nombreEspecie(id:string):string {return this.registro()?.ecosystem.species.find(e=>e.id===id)?.proceduralName??'Especie no disponible';}
   readonly rutaRegreso=computed(():readonly string[]=>{
