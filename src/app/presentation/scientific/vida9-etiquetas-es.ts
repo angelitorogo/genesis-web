@@ -25,6 +25,7 @@ const ES: Readonly<Record<string,string>> = Object.freeze({
   VOCAL_SYMBOLIC:'Vocal simbólica', VISUAL_GESTURAL:'Visual y gestual', CHEMOSENSORY_SYMBOLIC:'Quimiosensorial simbólica',
   SYMBOLIC_LEARNING:'Aprendizaje simbólico', SOCIAL_MEMORY:'Memoria social', PROBLEM_SOLVING:'Resolución de problemas',
   TOOL_MANIPULATION:'Manipulación de herramientas', COLLECTIVE_PLANNING:'Planificación colectiva',
+  MACROSCOPIC_TOOL_MANIPULATION:'Manipulación de herramientas con anatomía macroscópica',
   COUNCILS:'Consejos', CRAFT_TRADITIONS:'Tradiciones artesanales',
   KINSHIP_ASSEMBLIES:'Asambleas familiares', CONSENSUS_TRADITIONS:'Tradiciones de consenso',
   TERRITORIAL_COUNCILS:'Consejos territoriales', SEASONAL_COVENANTS:'Pactos estacionales',

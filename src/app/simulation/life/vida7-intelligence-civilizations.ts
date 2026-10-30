@@ -4,18 +4,20 @@
  * emplea las probabilidades solicitadas para VIDA.7 (65/30/5), independientes
  * de la cantidad o el orden de consultas. Ningun minimo por galaxia.
  */
+import {
+  vidaT1EligibleCivilizableSpecies,
+  vidaT1EligibilityOf, vidaT1SelectFounder,
+} from './vida-t1-civilized-founder';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
-import { VIDA4_GROUPS } from '../../domain/life/procedural-ecology-vida4';
 import {
-  VIDA5C_REVISION, VIDA5C_ROLL_NAMESPACE, VIDA7_FUTURE_INTELLIGENCE_RATE_V5C,
+  VIDA5C_REVISION, VIDA7_FUTURE_INTELLIGENCE_RATE_V5C,
   VIDA7_FUTURE_CIVILIZATION_RATE_V5C, type Vida5cAdvancedBiosphere,
 } from '../../domain/life/vida5c-advanced-biospheres';
 import { VIDA6_REVISION, type Vida6EcosystemSnapshot, type Vida6Species,
   type Vida6HabitatKind } from '../../domain/life/vida6-ecosystems-species';
-import { VIDA7_NAMESPACE, VIDA7_REVISION, VIDA7_TIER_PROBABILITIES,
-  VIDA7_INTELLIGENCE_PROBABILITY, VIDA7_CIVILIZATION_CONDITIONAL_PROBABILITY,
-  type Vida7Eligibility, type Vida7CivilizableLineage, type Vida7CivilizationTier,
+import { VIDA7_NAMESPACE, VIDA7_REVISION,
+  type Vida7CivilizableLineage, type Vida7CivilizationTier,
   type Vida7Civilization, type Vida7IntelligentSpecies,
   type Vida7Communication, type Vida7SocialStructure,
   type Vida7Settlement, type Vida7BuiltForm, type Vida7IntelligenceCivilizationSnapshot,
@@ -29,12 +31,6 @@ function roll(key: string): number {
 function choose<T>(items: readonly T[], key: string): T {
   if (!items.length) throw Error('VIDA.7 cannot select from empty candidates');
   return items[Math.min(items.length-1, Math.floor(roll(key)*items.length))];
-}
-function lineageOf(species: Vida6Species): Vida7CivilizableLineage | null {
-  if (species.group === 'HUMANOIDS') return 'HUMANOID';
-  if (species.group === 'REPTILES') return 'REPTILIAN';
-  if (species.group === 'INSECTS') return 'INSECTOID';
-  return null;
 }
 const COMMUNICATION: Readonly<Record<Vida7CivilizableLineage,Vida7Communication>> = {
   HUMANOID:'VOCAL_SYMBOLIC', REPTILIAN:'VISUAL_GESTURAL', INSECTOID:'CHEMOSENSORY_SYMBOLIC',
@@ -63,10 +59,6 @@ const CAPABILITIES: Readonly<Record<Vida7CivilizationTier,readonly string[]>> = 
 const SETTLEMENT_COUNTS: Readonly<Record<Vida7CivilizationTier,readonly number[]>> = {
   PRIMITIVE:[1,2,3], ADVANCED:[3,4,5], VERY_ADVANCED:[5,6,7],
 };
-const TIER_ORDER = ['PRIMITIVE','ADVANCED','VERY_ADVANCED'] as const;
-const SETTLEABLE: readonly Vida6HabitatKind[] = [
-  'SURFACE_SOIL','SURFACE_WET_MARGIN','SURFACE_CANOPY','SURFACE_OPEN_TERRAIN','SURFACE_ROCK_SHELTER',
-];
 const LINEAGE_SETTLEMENT_HABITATS: Readonly<Record<Vida7CivilizableLineage,readonly Vida6HabitatKind[]>> = {
   HUMANOID:['SURFACE_SOIL','SURFACE_WET_MARGIN','SURFACE_OPEN_TERRAIN','SURFACE_ROCK_SHELTER'],
   REPTILIAN:['SURFACE_WET_MARGIN','SURFACE_OPEN_TERRAIN','SURFACE_ROCK_SHELTER'],
@@ -124,24 +116,6 @@ function buildCivilization(
     settlementPatterns:Object.freeze(settlementPatterns),
   });
 }
-function eligibilityOf(ecosystem: Vida6EcosystemSnapshot,
-  calibration?: Vida5cAdvancedBiosphere): Vida7Eligibility {
-  if (ecosystem.identity.kind !== 'PLANET') return 'NON_PLANET';
-  if (!calibration) return 'NO_CALIBRATION';
-  if (ecosystem.habitat !== 'SURFACE_OPEN' ||
-      (ecosystem.regime !== 'SURFACE_DIVERSE' && ecosystem.regime !== 'SURFACE_LIMITED'))
-    return 'RESTRICTED_HABITAT';
-  if (!calibration.nativeCivilizationPrerequisitesReady ||
-      VIDA4_GROUPS.some(g=>!ecosystem.effectiveGroups.includes(g)))
-    return 'INCOMPLETE_ECOSYSTEM';
-  // Un mundo YA maduro en VIDA.5b puede estar listo aunque el preflight de
-  // promocion adicional VIDA.5c resulte negativo. Conservamos ese linaje.
-  if (calibration.atmosphericFeedback.status !== 'APPLIED' ||
-      (calibration.atmosphericFeedback.oxygenFraction01??0) < 0.16 ||
-      (calibration.atmosphericFeedback.oxygenPartialPressurePascal??0) < 16000)
-    return 'UNSUITABLE_ATMOSPHERE';
-  return 'ELIGIBLE';
-}
 export class Vida7IntelligenceCivilizations {
   private constructor() {}
 
@@ -170,32 +144,25 @@ export class Vida7IntelligenceCivilizations {
       if (ids.has(sp.id)) throw Error('VIDA.7 duplicate source species');
       ids.add(sp.id);
     }
-    const eligibility = eligibilityOf(ecosystem,calibration);
+    const eligibility = vidaT1EligibilityOf({
+      kind: ecosystem.identity.kind, habitat: ecosystem.habitat, regime: ecosystem.regime,
+      effectiveGroups: ecosystem.effectiveGroups, calibration,
+    });
     const namespace = [VIDA7_NAMESPACE,ecosystem.identity.universeSeed,ecosystem.bodyStorageKey].join('|');
     let intelligentSpecies: Vida7IntelligentSpecies | null = null;
     let civilization: Vida7Civilization | null = null;
     if (eligibility === 'ELIGIBLE') {
-      const eligible = ecosystem.species.filter(s=>{
-        const lineage=lineageOf(s);
-        return lineage!==null && SETTLEABLE.includes(s.habitat) &&
-          LINEAGE_SETTLEMENT_HABITATS[lineage].includes(s.habitat);
-      });
+      const eligible = vidaT1EligibleCivilizableSpecies(ecosystem.species);
       if (eligible.length===0) throw Error('VIDA.7 eligible biosphere lacks civilizable VIDA.6 species');
-      const forecastRoll = (phase:string) => roll([
-        VIDA5C_ROLL_NAMESPACE,ecosystem.identity.universeSeed,ecosystem.bodyStorageKey,phase,
-      ].join('|'));
-      if (forecastRoll('INTELLIGENCE') < VIDA7_INTELLIGENCE_PROBABILITY) {
-        // Choose a lineage first so a group with more species does not always dominate.
-        const lineages = [...new Set(eligible.map(s=>lineageOf(s)!))].sort();
-        const lineage = choose(lineages,namespace+'|lineage');
-        const species = choose(eligible.filter(s=>lineageOf(s)===lineage),namespace+'|species');
-        intelligentSpecies = cognitiveProfile(species,lineage);
-        if (forecastRoll('CIVILIZATION') < VIDA7_CIVILIZATION_CONDITIONAL_PROBABILITY) {
-          const tierRoll = roll(namespace+'|tier');
-          const tier: Vida7CivilizationTier = tierRoll<VIDA7_TIER_PROBABILITIES.PRIMITIVE ? TIER_ORDER[0] :
-            tierRoll<VIDA7_TIER_PROBABILITIES.PRIMITIVE+VIDA7_TIER_PROBABILITIES.ADVANCED ?
-              TIER_ORDER[1] : TIER_ORDER[2];
-          civilization=buildCivilization(intelligentSpecies,ecosystem,tier,namespace);
+      const selection = vidaT1SelectFounder(ecosystem.identity.universeSeed,
+        ecosystem.bodyStorageKey, eligible);
+      if (selection !== null) {
+        const species = eligible.find(candidate => candidate.id === selection.speciesId);
+        if (species === undefined) throw Error('VIDA.7 missing selected VIDA.T1 founder');
+        intelligentSpecies = cognitiveProfile(species, selection.lineage);
+        if (selection.civilizationTier !== null) {
+          civilization = buildCivilization(intelligentSpecies, ecosystem,
+            selection.civilizationTier, namespace);
         }
       }
     }

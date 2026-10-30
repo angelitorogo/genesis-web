@@ -8,6 +8,10 @@ import { VIDA4_GROUPS, VIDA4_MODEL_REVISION, type Vida4EcologySnapshot,
   type Vida4Group } from '../../domain/life/procedural-ecology-vida4';
 import { VIDA3_MODEL_REVISION, type Vida3MicrobialSnapshot } from '../../domain/life/procedural-microbial-vida3';
 import { VIDA5C_REVISION, type Vida5cAdvancedBiosphere } from '../../domain/life/vida5c-advanced-biospheres';
+import {
+  vidaT1CalibrateFounder, vidaT1EligibleCivilizableSpecies, vidaT1EligibilityOf,
+  vidaT1SelectFounder,
+} from './vida-t1-civilized-founder';
 import { VIDA6_RANDOM_NAMESPACE, VIDA6_REVISION, type Vida6BodyCovering,
   type Vida6BodyPlan, type Vida6EcosystemRegime, type Vida6EcosystemSnapshot,
   type Vida6HabitatKind, type Vida6InteractionKind, type Vida6Locomotion,
@@ -149,6 +153,21 @@ export class Vida6EcosystemsSpecies {
           niche:`${habitat}/${meal}`}));
       }
     }
+    // VIDA.T1: decide el mismo fundador que seleccionará VIDA.7 antes de sellar
+    // el Ground Truth VIDA.6. No cambia la identidad, censos ni tiradas.
+    const founderSelection = vidaT1EligibilityOf({
+      kind: micro.identity.kind, habitat: micro.habitat, regime,
+      effectiveGroups: groups, calibration: calibrated,
+    }) === 'ELIGIBLE'
+      ? vidaT1SelectFounder(micro.identity.universeSeed, micro.bodyStorageKey,
+          vidaT1EligibleCivilizableSpecies(species))
+      : null;
+    const calibratedSpecies = vidaT1CalibrateFounder(species, founderSelection,
+      micro.identity.universeSeed, micro.bodyStorageKey);
+    if (calibratedSpecies !== species) {
+      species.splice(0, species.length, ...calibratedSpecies);
+    }
+
     const relations: Vida6EcologicalRelation[] = [];
     const byId = new Map(species.map(s => [s.id,s]));
     for (const s of species) {
