@@ -88,9 +88,14 @@ describe('VISCIV.1 confirmed native civilization night-light atlas', () => {
     const civilized = patchSystemSceneDayNightFragmentShaderV1(source, true);
     expect(ordinary).not.toContain('uGenesisCivilizationLights');
     expect(civilized).toContain('uGenesisCivilizationLights');
-    expect(civilized).toContain('1.0 - smoothstep(0.035, 0.18, genesisDayFactor)');
+    expect(civilized).toContain('float genesisDeepNight = 1.0 - smoothstep(0.05, 0.16, genesisDayFactor);');
+    expect(civilized).toContain('uGenesisOrbitalHomeFlags');
+    expect(civilized).toContain('uGenesisOrbitalHomeDirectionsView[2]');
     expect(civilized).toContain('genesisDayFactor2 * genesisWeight2');
-    expect(civilized).toContain('outgoingLight += genesisUrbanEmission * genesisDeepNight');
+    expect(civilized).toContain('genesisHomeDarkness');
+    expect(civilized).toContain('genesisForeignStarPenumbra');
+    expect(civilized).toContain('genesisPartialUrbanLight');
+    expect(civilized).toContain('outgoingLight += genesisUrbanEmission * genesisUrbanVisibility');
     expect(civilized).toContain('#include <opaque_fragment>');
   });
 });

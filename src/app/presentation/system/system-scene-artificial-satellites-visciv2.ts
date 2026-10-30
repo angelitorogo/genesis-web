@@ -1,5 +1,11 @@
 import * as THREE from 'three';
 import { type Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
+import {
+  addOrbitalEngineeringDetailV5,
+  addOrbitalRingEngineeringDetailV5,
+  createOrbitalMetalMaterialV5,
+  finishOrbitalMaterialsV5,
+} from './system-scene-orbital-detail-visciv5';
 
 export type SystemSceneArtificialSatelliteTierV1 =
   | 'ADVANCED'
@@ -17,7 +23,29 @@ export interface SystemSceneArtificialSatellitePlanV1 {
   readonly lineOpacity01: number;
 }
 
+export type SystemSceneOrbitalInstallationKindV1 = 'INDUSTRIAL' | 'HABITAT' | 'PLATFORM';
+export type SystemSceneOrbitalRingKindV1 = 'TRANSPORT' | 'HABITAT';
+
+export interface SystemSceneOrbitalInfrastructureProfileV1 {
+  readonly profileId: 'INDUSTRIAL' | 'HABITAT' | 'MIXED' | 'SINGLE_RING' | 'DOUBLE_RING' | 'PLATFORM';
+  readonly stationKinds: readonly SystemSceneOrbitalInstallationKindV1[];
+  readonly ringKinds: readonly SystemSceneOrbitalRingKindV1[];
+}
+
+export interface SystemSceneOrbitalRingPlanV1 {
+  readonly orbitRadiusPlanetRadii: number;
+  readonly inclinationRadians: number;
+  readonly ascendingNodeRadians: number;
+  readonly phaseRadians: number;
+  readonly angularSpeedRadiansPerDay: number;
+  readonly ringKind: SystemSceneOrbitalRingKindV1;
+  readonly structureColorHex: string;
+  readonly moduleColorHex: string;
+  readonly moduleCount: number;
+}
+
 export interface SystemSceneOrbitalStationPlanV1 {
+  readonly installationKind: SystemSceneOrbitalInstallationKindV1;
   readonly orbitRadiusPlanetRadii: number;
   readonly inclinationRadians: number;
   readonly ascendingNodeRadians: number;
@@ -35,8 +63,12 @@ export interface SystemSceneArtificialSatelliteVisualV1 {
   readonly resources: readonly { dispose(): void }[];
 }
 
+export interface SystemSceneOrbitalRingVisualV1 extends SystemSceneArtificialSatelliteVisualV1 {
+  readonly rotationPivot: THREE.Group;
+}
+
 export interface SystemSceneArtificialSatelliteMaterialBindingV1 {
-  readonly material: THREE.MeshBasicMaterial;
+  readonly material: THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
   readonly baseColor: THREE.Color;
   readonly role: 'body' | 'panel' | 'accent' | 'truss' | 'window';
 }
@@ -91,45 +123,96 @@ export function buildSystemSceneArtificialSatellitePlansV1(
   return Object.freeze(plans);
 }
 
+/** Selection is derived only from the planet's canonical surface seed. */
+export function buildSystemSceneOrbitalInfrastructureProfileV1(
+  seedUint32: number,
+  tier: SystemSceneArtificialSatelliteTierV1,
+): SystemSceneOrbitalInfrastructureProfileV1 {
+  if (tier !== 'VERY_ADVANCED') {
+    return Object.freeze({
+      profileId: 'MIXED',
+      stationKinds: Object.freeze([]),
+      ringKinds: Object.freeze([]),
+    });
+  }
+
+  const candidates: readonly SystemSceneOrbitalInfrastructureProfileV1[] = [
+    { profileId: 'INDUSTRIAL', stationKinds: ['INDUSTRIAL', 'INDUSTRIAL'], ringKinds: [] },
+    { profileId: 'HABITAT', stationKinds: ['HABITAT', 'HABITAT', 'HABITAT'], ringKinds: [] },
+    { profileId: 'MIXED', stationKinds: ['INDUSTRIAL', 'HABITAT'], ringKinds: [] },
+    { profileId: 'SINGLE_RING', stationKinds: ['HABITAT'], ringKinds: ['TRANSPORT'] },
+    { profileId: 'DOUBLE_RING', stationKinds: ['HABITAT', 'HABITAT'], ringKinds: ['HABITAT', 'TRANSPORT'] },
+    { profileId: 'PLATFORM', stationKinds: ['PLATFORM', 'INDUSTRIAL'], ringKinds: [] },
+  ];
+  const index = Math.min(
+    candidates.length - 1,
+    Math.floor(rand(seedUint32, 0x401a) * candidates.length),
+  );
+  const selected = candidates[index]!;
+  return Object.freeze({
+    profileId: selected.profileId,
+    stationKinds: Object.freeze([...selected.stationKinds]),
+    ringKinds: Object.freeze([...selected.ringKinds]),
+  });
+}
+
 export function buildSystemSceneOrbitalStationPlansV1(
   seedUint32: number,
   tier: SystemSceneArtificialSatelliteTierV1,
   planetRadiusScene: number,
 ): readonly SystemSceneOrbitalStationPlanV1[] {
-  if (tier !== 'VERY_ADVANCED') {
-    return Object.freeze([]);
-  }
-
-  const count = 1 + Math.floor(rand(seedUint32, 0x3001) * 3);
+  const profile = buildSystemSceneOrbitalInfrastructureProfileV1(seedUint32, tier);
   const plans: SystemSceneOrbitalStationPlanV1[] = [];
-  const minRadius = 2.08;
-  const maxRadius = 3.28;
-
-  for (let i = 0; i < count; i += 1) {
-    const shell01 = count <= 1 ? 0.5 : i / Math.max(1, count - 1);
-    const radiusPlanetRadii = minRadius + (maxRadius - minRadius) * (0.14 + 0.86 * shell01) + 0.06 * (rand(seedUint32, 0x3100 + i * 11) - 0.5);
+  for (let i = 0; i < profile.stationKinds.length; i += 1) {
+    const installationKind = profile.stationKinds[i]!;
+    const share = (i + 1) / (profile.stationKinds.length + 1);
+    const radiusPlanetRadii = 2.08 + share * 1.12 + 0.08 * (rand(seedUint32, 0x3100 + i * 11) - 0.5);
     const inclination = (0.04 + 0.12 * rand(seedUint32, 0x3200 + i * 11)) * Math.PI;
     const node = rand(seedUint32, 0x3201 + i * 11) * Math.PI * 2;
     const phase = rand(seedUint32, 0x3202 + i * 11) * Math.PI * 2;
     const direction = rand(seedUint32, 0x3203 + i * 11) < 0.9 ? 1 : -1;
     const angularSpeed = direction * (0.24 + 0.42 * rand(seedUint32, 0x3204 + i * 11)) / Math.max(1.4, radiusPlanetRadii * radiusPlanetRadii);
-    const hullColorHex = rand(seedUint32, 0x3300 + i * 11) < 0.52 ? '#f0f5ff' : '#d8e0ea';
-    const lineColorHex = rand(seedUint32, 0x3301 + i * 11) < 0.5 ? '#a9cdf7' : '#d5ecff';
-    const stationScaleScene = Math.max(planetRadiusScene * 0.11, radiusPlanetRadii * planetRadiusScene * 0.028);
+    const palette = rand(seedUint32, 0x3300) < 0.5
+      ? ['#a3b5c1', '#87aac3'] as const
+      : ['#b5aa9c', '#b3a58c'] as const;
+    const stationScaleScene = Math.max(planetRadiusScene * 0.105, radiusPlanetRadii * planetRadiusScene * 0.027);
     plans.push(Object.freeze({
+      installationKind,
       orbitRadiusPlanetRadii: radiusPlanetRadii,
       inclinationRadians: inclination,
       ascendingNodeRadians: node,
       phaseRadians: phase,
       angularSpeedRadiansPerDay: angularSpeed,
-      hullColorHex,
-      lineColorHex,
-      stationScaleScene,
-      lineOpacity01: 0.28,
+      hullColorHex: palette[0],
+      lineColorHex: palette[1],
+      stationScaleScene: installationKind === 'PLATFORM' ? stationScaleScene * 0.87 : stationScaleScene,
+      lineOpacity01: 0.27,
     }));
   }
-
   return Object.freeze(plans);
+}
+
+export function buildSystemSceneOrbitalRingPlansV1(
+  seedUint32: number,
+  tier: SystemSceneArtificialSatelliteTierV1,
+): readonly SystemSceneOrbitalRingPlanV1[] {
+  const profile = buildSystemSceneOrbitalInfrastructureProfileV1(seedUint32, tier);
+  const colors = rand(seedUint32, 0x4400) < 0.5
+    ? ['#abbfdb', '#d4efff'] as const
+    : ['#c5baa5', '#ffdeb4'] as const;
+  const planeInclination = (0.08 + 0.06 * rand(seedUint32, 0x4402)) * Math.PI;
+  const planeNode = rand(seedUint32, 0x4403) * Math.PI * 2;
+  return Object.freeze(profile.ringKinds.map((ringKind, index) => Object.freeze({
+    orbitRadiusPlanetRadii: 1.76 + index * 0.54 + 0.10 * rand(seedUint32, 0x4401 + index),
+    inclinationRadians: planeInclination,
+    ascendingNodeRadians: planeNode,
+    phaseRadians: rand(seedUint32, 0x4404 + index) * Math.PI * 2,
+    angularSpeedRadiansPerDay: 0.015 + 0.025 * rand(seedUint32, 0x4405 + index),
+    ringKind,
+    structureColorHex: colors[0],
+    moduleColorHex: colors[1],
+    moduleCount: ringKind === 'HABITAT' ? 18 : 12,
+  })));
 }
 
 export function createSystemSceneArtificialSatelliteVisualV1(
@@ -140,8 +223,8 @@ export function createSystemSceneArtificialSatelliteVisualV1(
   const materials: SystemSceneArtificialSatelliteMaterialBindingV1[] = [];
   const resources: Array<{ dispose(): void }> = [];
 
-  const panelColor = new THREE.Color(0x5e86b8);
-  const bodyColor = new THREE.Color(0xdfe4ec);
+  const panelColor = new THREE.Color(0x47698a);
+  const bodyColor = new THREE.Color(0xa2b2c2);
   const accentColor = new THREE.Color(plan.pointColorHex);
   const baseScale = plan.pointScaleScene;
   const busWidth = baseScale * lerp(0.92, 1.14, rand(seedUint32, 0x2001));
@@ -184,6 +267,9 @@ export function createSystemSceneArtificialSatelliteVisualV1(
   group.rotation.z = rand(seedUint32, 0x2011) * Math.PI * 2;
   group.rotation.y = (rand(seedUint32, 0x2012) - 0.5) * 0.35;
 
+  addOrbitalEngineeringDetailV5(group, materials, resources, 'SATELLITE', baseScale, seedUint32);
+  finishOrbitalMaterialsV5(materials, resources, seedUint32);
+
   return Object.freeze({
     group,
     materials: Object.freeze(materials),
@@ -195,16 +281,19 @@ export function createSystemSceneOrbitalStationVisualV1(
   plan: SystemSceneOrbitalStationPlanV1,
   seedUint32: number,
 ): SystemSceneArtificialSatelliteVisualV1 {
+  if (plan.installationKind === 'HABITAT' || plan.installationKind === 'PLATFORM') {
+    return createSpecializedOrbitalStationVisualV1(plan, seedUint32);
+  }
   const group = new THREE.Group();
   const materials: SystemSceneArtificialSatelliteMaterialBindingV1[] = [];
   const resources: Array<{ dispose(): void }> = [];
 
   const baseScale = plan.stationScaleScene;
   const hullColor = new THREE.Color(plan.hullColorHex);
-  const trussColor = new THREE.Color('#97a8bf');
+  const trussColor = new THREE.Color('#788c9e');
   const panelColor = new THREE.Color('#496c9d');
-  const windowColor = new THREE.Color('#dff4ff');
-  const accentColor = new THREE.Color('#ffdca8');
+  const windowColor = new THREE.Color('#9fc4da');
+  const accentColor = new THREE.Color('#a48e77');
 
   const spineLength = baseScale * lerp(2.6, 3.3, rand(seedUint32, 0x4001));
   const spineHeight = baseScale * lerp(0.34, 0.48, rand(seedUint32, 0x4002));
@@ -273,6 +362,9 @@ export function createSystemSceneOrbitalStationVisualV1(
   group.rotation.z = rand(seedUint32, 0x4011) * Math.PI * 2;
   group.rotation.y = (rand(seedUint32, 0x4012) - 0.5) * 0.2;
 
+  addOrbitalEngineeringDetailV5(group, materials, resources, 'INDUSTRIAL', baseScale, seedUint32);
+  finishOrbitalMaterialsV5(materials, resources, seedUint32);
+
   return Object.freeze({
     group,
     materials: Object.freeze(materials),
@@ -280,15 +372,133 @@ export function createSystemSceneOrbitalStationVisualV1(
   });
 }
 
+/** Planet-centred orbital ring, distinct from the thin satellite orbit guides. */
+export function createSystemSceneOrbitalRingVisualV1(
+  plan: SystemSceneOrbitalRingPlanV1,
+  planetRadiusScene: number,
+): SystemSceneOrbitalRingVisualV1 {
+  const root = new THREE.Group();
+  root.name = `Artificial ${plan.ringKind.toLowerCase()} ring`;
+  root.rotation.z = plan.ascendingNodeRadians;
+  root.rotation.x = plan.inclinationRadians;
+  const rotor = new THREE.Group();
+  rotor.name = 'Artificial ring rotor';
+  root.add(rotor);
+  const materials: SystemSceneArtificialSatelliteMaterialBindingV1[] = [];
+  const resources: { dispose(): void }[] = [];
+  const radius = planetRadiusScene * plan.orbitRadiusPlanetRadii;
+  const segments = 96;
+  const arcLength = (2 * Math.PI * radius) / segments;
+  const beamThickness = Math.max(planetRadiusScene * 0.012, radius * 0.007);
+  const trussColor = new THREE.Color(plan.structureColorHex);
+  const beamMaterial = createOpaqueMaterial(trussColor);
+  const beamGeometry = new THREE.BoxGeometry(beamThickness, beamThickness, arcLength * 0.94);
+  const beams = new THREE.InstancedMesh(beamGeometry, beamMaterial, segments);
+  beams.name = 'Segmented structural ring';
+  const temp = new THREE.Object3D();
+  for (let i = 0; i < segments; i += 1) {
+    const angle = (i / segments) * Math.PI * 2;
+    temp.position.set(radius * Math.cos(angle), 0, radius * Math.sin(angle));
+    temp.rotation.set(0, -angle, 0);
+    temp.updateMatrix();
+    beams.setMatrixAt(i, temp.matrix);
+  }
+  beams.instanceMatrix.needsUpdate = true;
+  rotor.add(beams);
+  resources.push(beamGeometry, beamMaterial);
+  materials.push(Object.freeze({ material: beamMaterial, baseColor: trussColor.clone(), role: 'truss' }));
+
+  const modulesColor = new THREE.Color(plan.moduleColorHex);
+  const moduleMaterial = createOpaqueMaterial(modulesColor);
+  const moduleWidth = planetRadiusScene * (plan.ringKind === 'HABITAT' ? 0.085 : 0.058);
+  const moduleHeight = planetRadiusScene * (plan.ringKind === 'HABITAT' ? 0.055 : 0.036);
+  const moduleGeometry = new THREE.BoxGeometry(moduleWidth, moduleHeight, moduleWidth * 1.5);
+  const modules = new THREE.InstancedMesh(moduleGeometry, moduleMaterial, plan.moduleCount);
+  modules.name = plan.ringKind === 'HABITAT' ? 'Ring residential modules' : 'Ring transfer platforms';
+  for (let i = 0; i < plan.moduleCount; i += 1) {
+    const angle = (i / plan.moduleCount) * Math.PI * 2;
+    temp.position.set(radius * Math.cos(angle), 0, radius * Math.sin(angle));
+    temp.rotation.set(0, -angle, 0);
+    temp.updateMatrix();
+    modules.setMatrixAt(i, temp.matrix);
+  }
+  modules.instanceMatrix.needsUpdate = true;
+  rotor.add(modules);
+  resources.push(moduleGeometry, moduleMaterial);
+  materials.push(Object.freeze({ material: moduleMaterial, baseColor: modulesColor.clone(), role: plan.ringKind === 'HABITAT' ? 'window' : 'accent' }));
+
+  const ringSeed = Math.round(plan.orbitRadiusPlanetRadii * 65536) ^ Math.round(plan.ascendingNodeRadians * 8192);
+  addOrbitalRingEngineeringDetailV5(rotor, materials, resources, radius, beamThickness, ringSeed);
+  finishOrbitalMaterialsV5(materials, resources, ringSeed);
+
+  return Object.freeze({ group: root, rotationPivot: rotor, materials: Object.freeze(materials), resources: Object.freeze(resources) });
+}
+
+function createSpecializedOrbitalStationVisualV1(
+  plan: SystemSceneOrbitalStationPlanV1,
+  seedUint32: number,
+): SystemSceneArtificialSatelliteVisualV1 {
+  const root = new THREE.Group();
+  root.name = plan.installationKind === 'PLATFORM' ? 'Industrial mega-platform' : 'Orbital residential station';
+  const materials: SystemSceneArtificialSatelliteMaterialBindingV1[] = [];
+  const resources: { dispose(): void }[] = [];
+  const size = plan.stationScaleScene;
+  const isPlatform = plan.installationKind === 'PLATFORM';
+  const hull = new THREE.Color(plan.hullColorHex);
+  const truss = new THREE.Color('#667e93');
+  const panel = new THREE.Color(isPlatform ? '#354b60' : '#456b8b');
+  const windows = new THREE.Color(isPlatform ? '#a99173' : '#9bc9e5');
+  const assetSeed = seedUint32;
+
+  const addBox = (
+    width: number, height: number, depth: number,
+    pos: readonly [number, number, number],
+    color: THREE.Color,
+    role: SystemSceneArtificialSatelliteMaterialBindingV1['role'],
+  ): void => {
+    const geometry = new THREE.BoxGeometry(width, height, depth);
+    const material = createOpaqueMaterial(color);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(pos[0], pos[1], pos[2]);
+    root.add(mesh);
+    resources.push(geometry, material);
+    materials.push(Object.freeze({ material, baseColor: color.clone(), role }));
+  };
+
+  if (isPlatform) {
+    const length = size * (3.5 + 0.45 * rand(assetSeed, 0x5011));
+    addBox(length, size * 0.22, size * 1.65, [0, 0, 0], hull, 'body');
+    addBox(length * 0.72, size * 0.08, size * 1.38, [0, size * 0.16, 0], truss, 'truss');
+    for (let i = 0; i < 4; i += 1) {
+      const x = (i - 1.5) * (length / 4.8);
+      addBox(size * 0.38, size * 0.38, size * 0.50, [x, size * 0.36, 0], hull, 'body');
+      addBox(size * 0.28, size * 0.085, size * 0.54, [x, size * 0.58, 0], windows, 'accent');
+    }
+    addBox(length * 0.26, size * 0.09, size * 1.4, [0, -size * 0.2, 0], panel, 'panel');
+    addBox(size * 0.11, size * 0.95, size * 0.11, [0, size * 0.62, -size * 0.46], truss, 'truss');
+  } else {
+    const spine = size * (2.3 + 0.3 * rand(assetSeed, 0x5022));
+    addBox(spine, size * 0.25, size * 0.30, [0, 0, 0], truss, 'truss');
+    addBox(size * 0.65, size * 0.53, size * 0.62, [0, 0, 0], hull, 'body');
+    for (let i = -1; i <= 1; i += 2) {
+      addBox(size * 0.80, size * 0.51, size * 0.70, [i * spine * 0.42, 0, 0], hull, 'body');
+      addBox(size * 0.67, size * 0.12, size * 0.075, [i * spine * 0.42, size * 0.07, size * 0.395], windows, 'window');
+      addBox(size * 0.60, size * 0.085, size * 0.80, [i * spine * 0.42, -size * 0.32, 0], panel, 'panel');
+    }
+    addBox(size * 0.14, size * 0.78, size * 0.14, [0, size * 0.55, 0], truss, 'truss');
+    addBox(size * 0.4, size * 0.16, size * 0.25, [0, size * 0.98, 0], windows, 'window');
+  }
+  root.rotation.z = rand(assetSeed, 0x5030) * Math.PI * 2;
+  root.rotation.y = (rand(assetSeed, 0x5031) - 0.5) * 0.18;
+  addOrbitalEngineeringDetailV5(root, materials, resources, isPlatform ? 'PLATFORM' : 'HABITAT', size, assetSeed);
+  finishOrbitalMaterialsV5(materials, resources, assetSeed);
+  return Object.freeze({ group: root, materials: Object.freeze(materials), resources: Object.freeze(resources) });
+}
+
 function createOpaqueMaterial(
   color: THREE.Color,
-): THREE.MeshBasicMaterial {
-  return new THREE.MeshBasicMaterial({
-    color,
-    transparent: false,
-    opacity: 1,
-    toneMapped: false,
-  });
+): THREE.MeshStandardMaterial {
+  return createOrbitalMetalMaterialV5(color);
 }
 
 function rand(seed: number, salt: number): number {

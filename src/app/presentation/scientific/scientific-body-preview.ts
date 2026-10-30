@@ -1,3 +1,4 @@
+import { resolveOrbitalHomeStarIdsVISCIV6d } from '../system/system-scene-civilization-host-light-visciv6d';
 import { isCometActivityUnresolvedInSceneV1, systemSceneCometActivityVisualParityV1 } from '../system/system-scene-comet-activity-parity';
 import { resolveSystemSceneAtmospherePhotosphereKelvinV4 } from '../system/system-scene-atmosphere-photosphere-v4';
 import {
@@ -180,6 +181,8 @@ export interface ScientificPlanetStarLightSourceV1 {
   readonly y: number;
   readonly z: number;
   readonly weight01: number;
+  /** VISCIV.6d: true only for the star(s) the inspected planet orbits. */
+  readonly isOrbitalHost?: boolean;
 }
 
 export interface ScientificPlanetVegetationPreviewProfile {
@@ -1121,6 +1124,7 @@ function resolvePreviewCivilizationStarSourcesV1(
   scene: SystemSceneSnapshot,
   planet: SystemSceneBodySnapshot,
 ): readonly ScientificPlanetStarLightSourceV1[] {
+  const homeStarIds = new Set(resolveOrbitalHomeStarIdsVISCIV6d(planet, scene.stars));
   const entries = scene.stars
     .filter(star => (star.sourceLuminositySolar ?? 0) > 0)
     .map(star => {
@@ -1130,15 +1134,17 @@ function resolvePreviewCivilizationStarSourcesV1(
       const length = Math.max(0.0001, Math.hypot(dx, dy, dz));
       const flux = Math.max(0, star.sourceLuminositySolar ?? 0) /
         Math.max(0.05, length * length);
-      return { x: dx / length, y: dy / length, z: dz / length, flux };
+      return { x: dx / length, y: dy / length, z: dz / length, flux,
+        isOrbitalHost: homeStarIds.has(star.id) };
     })
     .sort((a, b) => b.flux - a.flux)
     .slice(0, 3);
   const total = entries.reduce((sum, entry) => sum + entry.flux, 0);
-  if (total <= 0) return Object.freeze([{ x: 0.53, y: 0.35, z: 0.77, weight01: 1 }]);
+  if (total <= 0) return Object.freeze([{ x: 0.53, y: 0.35, z: 0.77, weight01: 1, isOrbitalHost: true }]);
   return Object.freeze(entries.map(entry => Object.freeze({
     x: entry.x, y: entry.y, z: entry.z,
     weight01: entry.flux / total,
+    isOrbitalHost: entry.isOrbitalHost,
   })));
 }
 

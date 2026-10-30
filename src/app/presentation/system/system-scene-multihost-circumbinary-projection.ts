@@ -105,6 +105,9 @@ export function appendSystemSceneMultihostCircumbinary(
     );
     const planetBody: SystemSceneBodySnapshot = Object.freeze({
       id, kind: 'planet', label: publicPlanetDesignation, title: publicPlanetDesignation,
+      orbitalHomeStarIds: Object.freeze(base.stars
+        .filter(star => star.label === 'A' || star.label === 'B')
+        .map(star => star.id)),
       colorHex: COLORS[type], radiusScene: adaptiveSystemPlanetRadiusScene(planet.radiusEarth),
       position: position(parts), orbitId, motionContributions: parts,
       surfaceStyle: surface, lightIntensity: 0, sourceLuminositySolar: null,

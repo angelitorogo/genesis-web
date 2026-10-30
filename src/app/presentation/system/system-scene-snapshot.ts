@@ -426,6 +426,10 @@ export interface SystemSceneBodySnapshot {
     'star' |
     'planet';
 
+  /** VISCIV.6d: stellar ids the planet physically orbits (one S-type, two P-type).
+   * Renderer-only derived orbital identity, never private discoveries or saved data. */
+  readonly orbitalHomeStarIds?: readonly string[];
+
   /** 31.4: no conventional photosphere or invented stellar lighting. */
   readonly compactHostKind?: CompactPlanetaryHostType;
   /** 31.4c visual-only illumination, derived from the 31.3 reference channels.
@@ -3676,6 +3680,9 @@ function projectSceneGeometry(
             `planet-${planet.planetOrdinal}`,
           kind:
             'planet' as const,
+          orbitalHomeStarIds: Object.freeze(world.multiplicityName === 'SINGLE'
+            ? world.stars.slice(0, 1).map(star => star.id)
+            : world.stars.filter(star => star.label === 'A' || star.label === 'B').map(star => star.id)),
           label:
             planet.designation.name,
           title:

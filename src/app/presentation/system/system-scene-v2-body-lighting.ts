@@ -24,6 +24,8 @@ export function createV2BodyLightBinding(): SystemScenePlanetLightBindingV1 {
       new THREE.Vector3(1, 0, 0),
     ],
     lightWeightsView: new THREE.Vector3(1, 0, 0),
+    orbitalHomeDirectionsView: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(1, 0, 0)],
+    orbitalHomeFlagsView: new THREE.Vector2(0, 0),
   };
 }
 

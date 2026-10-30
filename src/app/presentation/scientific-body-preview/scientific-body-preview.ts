@@ -65,7 +65,9 @@ import {
 import {
   buildSystemSceneArtificialSatellitePlansV1,
   buildSystemSceneOrbitalStationPlansV1,
+  buildSystemSceneOrbitalRingPlansV1,
   createSystemSceneArtificialSatelliteVisualV1,
+  createSystemSceneOrbitalRingVisualV1,
   createSystemSceneOrbitalStationVisualV1,
   supportsSystemSceneArtificialSatellitesV1,
   type SystemSceneArtificialSatelliteMaterialBindingV1,
@@ -338,7 +340,7 @@ interface ScientificArtificialSatelliteBindingV1 {
   readonly materials:
     readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
   readonly orbitMaterial:
-    THREE.LineBasicMaterial;
+    THREE.LineBasicMaterial | null;
   readonly baseLineOpacity01:
     number;
 }
@@ -1498,6 +1500,10 @@ export class ScientificBodyPreview
       tier,
       radius,
     );
+    const ringPlans = buildSystemSceneOrbitalRingPlansV1(
+      planet.surfaceVisualVariantUint32,
+      tier,
+    );
     const group = new THREE.Group();
     group.name = `${planet.title} orbital infrastructure`;
     const bindings: ScientificArtificialSatelliteBindingV1[] = [];
@@ -1600,6 +1606,21 @@ export class ScientificBodyPreview
         stationVisual,
       );
       assetIndex += 1;
+    }
+
+    for (const plan of ringPlans) {
+      const ringVisual = createSystemSceneOrbitalRingVisualV1(plan, radius);
+      ringVisual.rotationPivot.rotation.y = plan.phaseRadians;
+      group.add(ringVisual.group);
+      resources.push(...ringVisual.resources);
+      bindings.push(Object.freeze({
+        orbitPivot: ringVisual.rotationPivot,
+        basePhaseRadians: plan.phaseRadians,
+        angularSpeedRadiansPerDay: plan.angularSpeedRadiansPerDay,
+        materials: ringVisual.materials,
+        orbitMaterial: null,
+        baseLineOpacity01: 0,
+      }));
     }
 
     return Object.freeze({
@@ -2378,12 +2399,22 @@ export class ScientificBodyPreview
     camera.updateMatrixWorld();
     const sources = this.model.primary.civilizationStarSources ?? [];
     const weights = [0, 0, 0];
+    const homeDirections = binding.orbitalHomeDirectionsView;
+    const homeFlags = binding.orbitalHomeFlagsView;
+    homeFlags?.set(0, 0);
+    let homeIndex = 0;
     for (let i = 0; i < 3; i++) {
       const source = sources[i];
       const direction = binding.lightDirectionsView[i]!;
       if (source) {
         direction.set(source.x, source.y, source.z).transformDirection(camera.matrixWorldInverse);
         weights[i] = source.weight01;
+        if (source.isOrbitalHost && homeDirections && homeFlags && homeIndex < 2) {
+          homeDirections[homeIndex]!.copy(direction);
+          if (homeIndex === 0) homeFlags.x = 1;
+          else homeFlags.y = 1;
+          homeIndex += 1;
+        }
       } else {
         direction.set(1, 0, 0);
       }
@@ -2440,7 +2471,9 @@ export class ScientificBodyPreview
           Math.max(0.22, brightness * roleGain),
         );
       }
-      binding.orbitMaterial.opacity = binding.baseLineOpacity01 * visibility;
+      if (binding.orbitMaterial !== null) {
+        binding.orbitMaterial.opacity = binding.baseLineOpacity01 * visibility;
+      }
     }
   }
 

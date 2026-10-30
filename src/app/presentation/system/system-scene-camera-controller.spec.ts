@@ -1,5 +1,6 @@
 import {
   systemSceneBodyFocusDistance,
+  systemSceneTrackedBodyMinDistanceV1,
   systemSceneCameraLimits,
   systemScenePointerTravelPixels,
 } from './system-scene-camera-controller';
@@ -25,7 +26,7 @@ describe(
         expect(
           limits.minDistance,
         ).toBeCloseTo(
-          0.28,
+          0.08,
           12,
         );
 
@@ -103,6 +104,26 @@ describe(
         .toBeLessThan(systemSceneBodyFocusDistance(0.04, normal.minDistance, normal.maxDistance));
       expect(systemSceneBodyFocusDistance(0.30, laboratory.minDistance, laboratory.maxDistance, true))
         .toBeGreaterThan(0.30 * 3);
+    });
+
+    it('has the same near-zoom floor across single, binary and triple system extents', () => {
+      const single = systemSceneCameraLimits(4.8);
+      const binary = systemSceneCameraLimits(38);
+      const triple = systemSceneCameraLimits(180);
+      expect(single.minDistance).toBe(0.08);
+      expect(binary.minDistance).toBe(single.minDistance);
+      expect(triple.minDistance).toBe(single.minDistance);
+      expect(triple.homeDistance).toBeGreaterThan(single.homeDistance);
+    });
+
+    it('allows close tracking around the body itself, not its stellar architecture', () => {
+      expect(systemSceneTrackedBodyMinDistanceV1(0.3)).toBeCloseTo(0.336, 12);
+      expect(systemSceneTrackedBodyMinDistanceV1(0.04)).toBeCloseTo(0.0448, 12);
+      expect(systemSceneTrackedBodyMinDistanceV1(0.01)).toBe(0.025);
+      expect(systemSceneTrackedBodyMinDistanceV1(Number.NaN)).toBeCloseTo(0.0448, 12);
+      expect(systemSceneTrackedBodyMinDistanceV1(0.04)).toBeLessThan(
+        systemSceneBodyFocusDistance(0.04, 0.08, 100),
+      );
     });
 
     it(

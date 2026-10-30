@@ -21,6 +21,9 @@ export interface SystemScenePlanetLightBindingV1 {
     THREE.Vector3,
   ];
   readonly lightWeightsView: THREE.Vector3;
+  /** Direction and active flag of each stellar orbital host, independent of flux rank. */
+  readonly orbitalHomeDirectionsView?: readonly [THREE.Vector3, THREE.Vector3];
+  readonly orbitalHomeFlagsView?: THREE.Vector2;
 }
 
 export const SYSTEM_SCENE_DAY_NIGHT_MATERIAL_VERSION =
@@ -111,6 +114,15 @@ export function installSystemSceneDayNightMaterialV1(
         shader.uniforms['uGenesisCivilizationLights'] = {
           value: nightLightsTexture,
         };
+        shader.uniforms['uGenesisOrbitalHomeDirectionsView'] = {
+          value: binding.orbitalHomeDirectionsView ?? [
+            new THREE.Vector3(1, 0, 0),
+            new THREE.Vector3(1, 0, 0),
+          ],
+        };
+        shader.uniforms['uGenesisOrbitalHomeFlags'] = {
+          value: binding.orbitalHomeFlagsView ?? new THREE.Vector2(0, 0),
+        };
       }
       shader.fragmentShader =
         patchSystemSceneDayNightFragmentShaderV1(
@@ -149,12 +161,38 @@ export function patchSystemSceneDayNightFragmentShaderV1(
   const withUniforms =
     fragmentShader.replace(
       GLSL_COMMON_MARKER,
-      `${GLSL_COMMON_MARKER}${civilizationLights ? '\nuniform sampler2D uGenesisCivilizationLights;' : ''}\nuniform vec3 uGenesisLightDirectionsView[3];\nuniform vec3 uGenesisLightWeights;\nuniform float uGenesisTerminatorSoftness;\nuniform float uGenesisNightFloor;\nuniform float uGenesisTwilightGlow;\nuniform float uGenesisAtmospherePresent;\nuniform vec3 uGenesisAtmosphereDayTint;\nuniform vec3 uGenesisAtmosphereNightTint;`,
+      `${GLSL_COMMON_MARKER}${civilizationLights ? '\nuniform sampler2D uGenesisCivilizationLights;\nuniform vec3 uGenesisOrbitalHomeDirectionsView[2];\nuniform vec2 uGenesisOrbitalHomeFlags;' : ''}\nuniform vec3 uGenesisLightDirectionsView[3];\nuniform vec3 uGenesisLightWeights;\nuniform float uGenesisTerminatorSoftness;\nuniform float uGenesisNightFloor;\nuniform float uGenesisTwilightGlow;\nuniform float uGenesisAtmospherePresent;\nuniform vec3 uGenesisAtmosphereDayTint;\nuniform vec3 uGenesisAtmosphereNightTint;`,
     );
 
   return withUniforms.replace(
     GLSL_OPAQUE_MARKER,
-    `float genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[2])));\nfloat genesisDayFactor = clamp(genesisDayFactor0 * genesisWeight0 + genesisDayFactor1 * genesisWeight1 + genesisDayFactor2 * genesisWeight2, 0.0, 1.0);\nfloat genesisNightVisibility = mix(uGenesisNightFloor, 1.0, genesisDayFactor);\nvec3 genesisNightTint = mix(vec3(1.0), uGenesisAtmosphereNightTint, 0.12 * (1.0 - genesisDayFactor));\noutgoingLight *= genesisNightVisibility * genesisNightTint;\n${civilizationLights ? `// VISCIV.1: artificial lighting follows the combined illumination of all active stars.\nfloat genesisDeepNight = 1.0 - smoothstep(0.035, 0.18, genesisDayFactor);\nvec3 genesisUrbanEmission = texture2D(uGenesisCivilizationLights, vMapUv).rgb;\noutgoingLight += genesisUrbanEmission * genesisDeepNight * 2.30;` : ''}\nfloat genesisTwilight0 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.070 * (0.40 + 0.60 * genesisDayFactor);\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
+    `float genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[2])));\nfloat genesisWeightedDay0 = genesisDayFactor0 * genesisWeight0;
+float genesisWeightedDay1 = genesisDayFactor1 * genesisWeight1;
+float genesisWeightedDay2 = genesisDayFactor2 * genesisWeight2;
+float genesisDayFactor = clamp(genesisWeightedDay0 + genesisWeightedDay1 + genesisWeightedDay2, 0.0, 1.0);
+float genesisNightVisibility = mix(uGenesisNightFloor, 1.0, genesisDayFactor);
+vec3 genesisNightTint = mix(vec3(1.0), uGenesisAtmosphereNightTint, 0.12 * (1.0 - genesisDayFactor));
+outgoingLight *= genesisNightVisibility * genesisNightTint;
+${civilizationLights ? `// VISCIV.6d: native orbital home star(s), NOT the brightest star.
+// S-type worlds have one home star; circumbinary P-type worlds have two.
+// Any direct home-star illumination switches off the local urban network.
+float genesisHomeDay0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth,
+  dot(normalize(normal), normalize(uGenesisOrbitalHomeDirectionsView[0]))) * uGenesisOrbitalHomeFlags.x;
+float genesisHomeDay1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth,
+  dot(normalize(normal), normalize(uGenesisOrbitalHomeDirectionsView[1]))) * uGenesisOrbitalHomeFlags.y;
+float genesisHomeDayFactor = max(genesisHomeDay0, genesisHomeDay1);
+float genesisHomeDarkness = 1.0 - smoothstep(0.46, 0.54, genesisHomeDayFactor);
+// All active stars still determine whether the world is in deep night.
+float genesisDeepNight = 1.0 - smoothstep(0.05, 0.16, genesisDayFactor);
+// Starlight from a FOREIGN star remains dim urban glow, regardless of rank.
+float genesisForeignStarPenumbra = smoothstep(0.08, 0.22, genesisDayFactor);
+float genesisPartialUrbanLight = 0.22 * genesisForeignStarPenumbra * (1.0 - genesisDeepNight);
+float genesisUrbanVisibility = clamp(
+  (genesisDeepNight + genesisPartialUrbanLight) * genesisHomeDarkness,
+  0.0, 1.0);
+vec3 genesisUrbanEmission = texture2D(uGenesisCivilizationLights, vMapUv).rgb;
+outgoingLight += genesisUrbanEmission * genesisUrbanVisibility * 2.30;` : ''}
+float genesisTwilight0 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.070 * (0.40 + 0.60 * genesisDayFactor);\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
   );
 }
 

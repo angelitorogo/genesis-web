@@ -29,12 +29,12 @@ describe('VISCIV.2c — visuales artificiales rectangulares y opacos', () => {
       visual.group.traverse(object => {
         if (object instanceof THREE.Mesh) meshes.push(object);
       });
-      expect(meshes).toHaveLength(4);
+      expect(meshes.length).toBeGreaterThan(4);
       expect(meshes.every(mesh => mesh.geometry instanceof THREE.BoxGeometry)).toBe(true);
-      expect(visual.materials).toHaveLength(3);
+      expect(visual.materials.length).toBeGreaterThan(3);
       expect(visual.materials.every(binding => binding.material.transparent === false)).toBe(true);
       expect(visual.materials.every(binding => binding.material.opacity === 1)).toBe(true);
-      expect(visual.resources).toHaveLength(6);
+      expect(visual.resources.length).toBeGreaterThan(6);
       expect(visual.resources.every(resource => typeof resource.dispose === 'function')).toBe(true);
       for (const resource of visual.resources) resource.dispose();
     }
@@ -51,9 +51,23 @@ describe('VISCIV.2c — visuales artificiales rectangulares y opacos', () => {
       if (object instanceof THREE.Mesh) meshes.push(object);
     });
     expect(meshes.length).toBeGreaterThanOrEqual(8);
-    expect(meshes.every(mesh => mesh.geometry instanceof THREE.BoxGeometry)).toBe(true);
+    // VISCIV.5 incorpora cilindros de acoplamiento/habitáculos y detalles
+    // instanciados: ya no todas las geometrías deben ser cajas.
+    expect(meshes.some(mesh => mesh.geometry instanceof THREE.BoxGeometry)).toBe(true);
+    expect(meshes.every(mesh =>
+      mesh.geometry instanceof THREE.BufferGeometry &&
+      (mesh.geometry.getAttribute('position')?.count ?? 0) > 0,
+    )).toBe(true);
+    if (plans[0]!.installationKind !== 'PLATFORM') {
+      expect(meshes.some(mesh => mesh.geometry instanceof THREE.CylinderGeometry)).toBe(true);
+    }
     expect(visual.materials.length).toBeGreaterThanOrEqual(5);
+    expect(visual.materials.some(binding =>
+      binding.material instanceof THREE.MeshStandardMaterial &&
+      binding.material.metalness > 0,
+    )).toBe(true);
     expect(visual.materials.every(binding => binding.material.transparent === false)).toBe(true);
+    expect(visual.materials.every(binding => binding.material.opacity === 1)).toBe(true);
     expect(visual.resources.every(resource => typeof resource.dispose === 'function')).toBe(true);
     for (const resource of visual.resources) resource.dispose();
   });

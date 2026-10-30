@@ -112,9 +112,15 @@ import {
 import { refinePlanetRgbaTextureV1, PLANET_TEXTURE_DETAIL_SIZES_V1, type PlanetTextureRefinementKind } from './system-scene-planet-texture-refinement';
 
 import {
+  applySystemSceneArtificialOrbitGuideVisibilityV1,
+} from './system-scene-artificial-orbit-guide-visibility-visciv5c';
+
+import {
   buildSystemSceneArtificialSatellitePlansV1,
   buildSystemSceneOrbitalStationPlansV1,
+  buildSystemSceneOrbitalRingPlansV1,
   createSystemSceneArtificialSatelliteVisualV1,
+  createSystemSceneOrbitalRingVisualV1,
   createSystemSceneOrbitalStationVisualV1,
   supportsSystemSceneArtificialSatellitesV1,
   type SystemSceneArtificialSatelliteMaterialBindingV1,
@@ -135,6 +141,7 @@ import {
 import { buildSystemScenePlanetNightLightsV1 } from './system-scene-planet-night-lights-visciv1';
 import { systemScenePlanetTextureCacheKeyVISCIV1b } from './system-scene-planet-civilization-cache-visciv1b';
 import type { Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
+import { resolveOrbitalHomeStarIdsVISCIV6d } from './system-scene-civilization-host-light-visciv6d';
 
 import {
   buildSystemSceneGiantAtmosphereTextureV1,
@@ -1003,7 +1010,7 @@ export class SystemScene
         seed,
         tier,
         planet.radiusScene,
-      ).length;
+      ).length + buildSystemSceneOrbitalRingPlansV1(seed, tier).length;
     }, 0);
   }
 
@@ -2112,6 +2119,9 @@ class ThreeSystemSceneRuntime
   private readonly planetLightTopFluxes =
     [0, 0, 0];
 
+  private readonly planetOrbitHomeDirectionScratch =
+    new THREE.Vector3();
+
   private readonly artificialSatellitePlanetWorldPosition =
     new THREE.Vector3();
 
@@ -2192,6 +2202,11 @@ class ThreeSystemSceneRuntime
     THREE.Object3D[] =
     [];
 
+  /** Only the orbital guide lines, never physical satellite/station/ring meshes. */
+  private readonly artificialSatelliteOrbitGuides:
+    THREE.LineLoop[] =
+    [];
+
   private readonly artificialSatelliteBindings:
     Array<{
       readonly hostBodyId: string;
@@ -2199,7 +2214,7 @@ class ThreeSystemSceneRuntime
       readonly basePhaseRadians: number;
       readonly angularSpeedRadiansPerDay: number;
       readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
-      readonly orbitMaterial: THREE.LineBasicMaterial;
+      readonly orbitMaterial: THREE.LineBasicMaterial | null;
       readonly baseLineOpacity01: number;
     }> = [];
 
@@ -2894,6 +2909,13 @@ class ThreeSystemSceneRuntime
         this.layerVisibility.artificialSatellites &&
         this.layerVisibility.planets;
     }
+
+    // Satellite/station orbit TRACES follow the same global ORBITS switch as
+    // natural paths; the satellite meshes and constructed orbital rings do not.
+    applySystemSceneArtificialOrbitGuideVisibilityV1(
+      this.artificialSatelliteOrbitGuides,
+      this.layerVisibility,
+    );
 
     // Apply last so turning off orbit GUIDES never hides their bodies, and
     // turning guides on cannot reveal an otherwise hidden moon/planet layer.
@@ -4807,7 +4829,7 @@ class ThreeSystemSceneRuntime
         readonly basePhaseRadians: number;
         readonly angularSpeedRadiansPerDay: number;
         readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
-        readonly orbitMaterial: THREE.LineBasicMaterial;
+        readonly orbitMaterial: THREE.LineBasicMaterial | null;
         readonly baseLineOpacity01: number;
       }[];
       readonly resources: readonly { dispose(): void }[];
@@ -4840,11 +4862,14 @@ class ThreeSystemSceneRuntime
       tier,
       planet.radiusScene,
     );
+    const ringPlans = buildSystemSceneOrbitalRingPlansV1(seed, tier);
 
     if (
       plans.length ===
         0 &&
       stationPlans.length ===
+        0 &&
+      ringPlans.length ===
         0
     ) {
       return null;
@@ -4861,7 +4886,7 @@ class ThreeSystemSceneRuntime
       readonly basePhaseRadians: number;
       readonly angularSpeedRadiansPerDay: number;
       readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
-      readonly orbitMaterial: THREE.LineBasicMaterial;
+      readonly orbitMaterial: THREE.LineBasicMaterial | null;
       readonly baseLineOpacity01: number;
     }> = [];
     const resources: Array<{ dispose(): void }> = [];
@@ -4940,6 +4965,7 @@ class ThreeSystemSceneRuntime
           orbitGeometry,
           orbitMaterial,
         );
+      this.artificialSatelliteOrbitGuides.push(orbitLine);
 
       assetVisual.group.position.set(
         orbitRadiusScene,
@@ -5024,6 +5050,25 @@ class ThreeSystemSceneRuntime
         stationVisual,
       );
       assetIndex += 1;
+    }
+
+    for (const plan of ringPlans) {
+      const ringVisual = createSystemSceneOrbitalRingVisualV1(
+        plan,
+        planet.radiusScene,
+      );
+      ringVisual.rotationPivot.rotation.y = plan.phaseRadians;
+      group.add(ringVisual.group);
+      resources.push(...ringVisual.resources);
+      bindings.push(Object.freeze({
+        hostBodyId: planet.id,
+        orbitPivot: ringVisual.rotationPivot,
+        basePhaseRadians: plan.phaseRadians,
+        angularSpeedRadiansPerDay: plan.angularSpeedRadiansPerDay,
+        materials: ringVisual.materials,
+        orbitMaterial: null,
+        baseLineOpacity01: 0,
+      }));
     }
 
     return Object.freeze({
@@ -6362,6 +6407,8 @@ class ThreeSystemSceneRuntime
       0;
     this.artificialSatelliteLayerObjects.length =
       0;
+    this.artificialSatelliteOrbitGuides.length =
+      0;
     this.artificialSatelliteBindings.length =
       0;
     this.habitableZoneLayerObjects.length =
@@ -6574,6 +6621,30 @@ class ThreeSystemSceneRuntime
           this.planetLightTopDirections,
           this.camera.matrixWorldInverse,
         );
+
+      if (body.kind === 'planet' && binding.orbitalHomeDirectionsView && binding.orbitalHomeFlagsView) {
+        const homeIds = resolveOrbitalHomeStarIdsVISCIV6d(body, snapshot.stars);
+        const homeFlags = binding.orbitalHomeFlagsView;
+        homeFlags.set(0, 0);
+        for (let hostIndex = 0; hostIndex < Math.min(2, homeIds.length); hostIndex += 1) {
+          const homeId = homeIds[hostIndex]!;
+          const homeStar = snapshot.stars.find(star => star.id === homeId);
+          if (!homeStar || (homeStar.sourceLuminositySolar ?? 0) <= 0) continue;
+          const homeObject = this.animatedBodies.get(homeId);
+          if (!homeObject) continue;
+          homeObject.getWorldPosition(this.planetLightStarWorldPosition);
+          this.planetOrbitHomeDirectionScratch.subVectors(
+            this.planetLightStarWorldPosition,
+            this.planetLightPlanetWorldPosition,
+          );
+          if (this.planetOrbitHomeDirectionScratch.lengthSq() <= 1e-9) continue;
+          binding.orbitalHomeDirectionsView[hostIndex]!.copy(
+            this.planetOrbitHomeDirectionScratch,
+          ).transformDirection(this.camera.matrixWorldInverse);
+          if (hostIndex === 0) homeFlags.x = 1;
+          else homeFlags.y = 1;
+        }
+      }
 
       if (
         compressedWeightSum <=
@@ -6919,9 +6990,11 @@ class ThreeSystemSceneRuntime
           ),
         );
       }
-      binding.orbitMaterial.opacity =
-        binding.baseLineOpacity01 *
-        visibility;
+      if (binding.orbitMaterial !== null) {
+        binding.orbitMaterial.opacity =
+          binding.baseLineOpacity01 *
+          visibility;
+      }
     }
   }
 
@@ -7211,6 +7284,11 @@ export function createSystemScenePlanetAppearanceV1(
         ] as const,
       lightWeightsView:
         new THREE.Vector3(1, 0, 0),
+      orbitalHomeDirectionsView: [
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(1, 0, 0),
+      ] as const,
+      orbitalHomeFlagsView: new THREE.Vector2(0, 0),
     });
 
   const surfaceTexture =

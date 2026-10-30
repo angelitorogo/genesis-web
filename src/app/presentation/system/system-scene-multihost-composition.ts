@@ -282,6 +282,7 @@ export class SystemSceneMultihostComposition {
         }
         planets.push(Object.freeze({ ...planet, id: namespaced(planet.id), label: publicDesignation,
           title: publicDesignation,
+          orbitalHomeStarIds: Object.freeze([namespaced(star.id)]),
           orbitId: planet.orbitId === null ? null : namespaced(planet.orbitId),
           radiusScene: planet.radiusScene * factor,
           position: position(parts), motionContributions: parts }));

@@ -59,6 +59,10 @@ export class SystemSceneCameraController {
   private systemMaxTargetRadius =
     2;
 
+  /** Camera distance floor for free navigation, restored after following a body. */
+  private systemMinDistance =
+    0.08;
+
   private laboratoryCloseZoom =
     false;
 
@@ -339,6 +343,8 @@ export class SystemSceneCameraController {
         laboratoryCloseZoom,
       );
 
+    this.systemMinDistance =
+      limits.minDistance;
     this.controls.minDistance =
       limits.minDistance;
     this.controls.maxDistance =
@@ -427,6 +433,14 @@ export class SystemSceneCameraController {
     }
 
     this.trackingViewDirection.normalize();
+
+    // Tracking zoom is relative to the selected body's rendered extent,
+    // never to the total radius of its SINGLE/BINARY/TRIPLE stellar system.
+    this.controls.minDistance =
+      systemSceneTrackedBodyMinDistanceV1(
+        bodyRadiusScene,
+        this.laboratoryCloseZoom,
+      );
 
     this.trackingDesiredDistance =
       systemSceneBodyFocusDistance(
@@ -623,6 +637,8 @@ export class SystemSceneCameraController {
       false;
     this.trackingStartTimestampMilliseconds =
       null;
+    this.controls.minDistance =
+      this.systemMinDistance;
     this.controls.maxTargetRadius =
       this.systemMaxTargetRadius;
     this.controls.cursor.copy(
@@ -701,16 +717,13 @@ export function systemSceneCameraLimits(
 
   return Object.freeze({
     homeDistance,
+    // Navigation range must not inherit stellar-system extent. In particular,
+    // a large TRIPLE system must not force a larger near-zoom limit than a
+    // SINGLE system with a similarly sized planet.
     minDistance:
       laboratoryCloseZoom
-        ? Math.max(
-            0.012,
-            Math.max(0.28, safeOuterRadius * 0.055) * 0.075,
-          )
-        : Math.max(
-            0.28,
-            safeOuterRadius * 0.055,
-          ),
+        ? 0.006
+        : 0.08,
     maxDistance:
       Math.max(
         28,
@@ -724,6 +737,21 @@ export function systemSceneCameraLimits(
           1.45,
       ),
   });
+}
+
+/**
+ * Near-zoom floor around a followed body, in scene units.
+ * The center-to-camera distance stays outside its rendered radius while
+ * remaining independent of the host system's total orbital architecture.
+ */
+export function systemSceneTrackedBodyMinDistanceV1(
+  bodyRadiusScene: number,
+  laboratoryCloseZoom = false,
+): number {
+  const radius = Number.isFinite(bodyRadiusScene) && bodyRadiusScene > 0
+    ? bodyRadiusScene
+    : 0.04;
+  return Math.max(laboratoryCloseZoom ? 0.006 : 0.025, radius * 1.12);
 }
 
 export function systemSceneBodyFocusDistance(
