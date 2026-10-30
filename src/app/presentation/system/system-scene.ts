@@ -7024,7 +7024,7 @@ function createSystemScenePlanetTextureResourceV1(
       ? createRgbaDataTexture(
           imageWidth,
           imageHeight,
-          refine(semanticSurface.cloudRgba, semanticSurface.width, semanticSurface.height, 'CLOUD'),
+          refine(semanticSurface.cloudRgba, semanticSurface.width, semanticSurface.height, 'WEATHER_CLOUD'),
           'GENESIS cached physical cloud projection 25.11',
         )
       : giantAtmosphereTexture?.upperHazeRgba !== null &&
@@ -7249,9 +7249,11 @@ function cloudLayerMeshOrNull(
         transparent:
           true,
         opacity:
-          0.92,
+          0.91,
+        // VIS3D.2f: preserve the feathered cirrus alpha edge. The former
+        // cutout threshold made faint vapor look like a hard-edged decal.
         alphaTest:
-          0.025,
+          0,
         depthWrite:
           false,
         roughness:

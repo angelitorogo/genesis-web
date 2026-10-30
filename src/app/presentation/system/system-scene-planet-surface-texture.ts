@@ -338,7 +338,7 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     uniquePixelCount,
   );
   const cloudRgba = cloudTarget > 0
-    ? buildCloudTexture(fields, cloudTarget, width, height)
+    ? buildCloudTexture(fields, cloudTarget, width, height, seed)
     : null;
 
   return Object.freeze({
@@ -529,29 +529,63 @@ function semanticColor(
   return mixRgb(base, continentalMineral, 0.58);
 }
 
+/**
+ * VIS3D.2f: a continuous cloud-opacity field, not a binary continent-shaped
+ * mask. Every texel is cloud-white even when fully transparent: GPU bilinear
+ * filtering/mipmaps must never blend an opaque white cloud with black RGB at
+ * an invisible texel (the source of the dark/brown cloud fringe).
+ *
+ * The coverage TARGET still comes from the frozen phase-20 presentation
+ * snapshot; cloud feathering and optical density are rendering only.
+ */
 function buildCloudTexture(
   fields: PixelField[],
   cloudTarget: number,
   width: number,
   height: number,
+  seed: number,
 ): Uint8Array {
-  const selected = new Set(
-    selectTop(fields, Math.min(cloudTarget, fields.length), field => field.cloudScore),
+  const selected = selectTop(
+    fields,
+    Math.min(cloudTarget, fields.length),
+    field => field.cloudScore,
   );
+  const lastSelected = selected[selected.length - 1];
+  const cutoff = lastSelected === undefined
+    ? 1
+    : fields[lastSelected]!.cloudScore;
+  const fieldMin = fields.reduce(
+    (minimum, field) => Math.min(minimum, field.cloudScore),
+    1,
+  );
+  const fieldMax = fields.reduce(
+    (maximum, field) => Math.max(maximum, field.cloudScore),
+    0,
+  );
+  const feather = Math.max(0.016, (fieldMax - fieldMin) * 0.13);
   const rgba = new Uint8Array(width * height * 4);
 
   for (const field of fields) {
     const offset = (field.y * width + field.x) * 4;
-    if (!selected.has(field.uniqueIndex)) {
-      rgba[offset + 3] = 0;
-      continue;
-    }
+    // Smooth, blurred vapor boundaries extending a small distance beyond
+    // cloud cores instead of a 0/1 alpha staircase at the coverage threshold.
+    const envelope = smootherStep(clamp01(
+      (field.cloudScore - cutoff + feather) / (2 * feather),
+    ));
+    const billow = smoothPixelNoise01(seed, field.x, field.y, 43);
+    const fine = smoothPixelNoise01(seed, field.x, field.y, 79);
+    const density = clamp01(
+      Math.pow(envelope, 0.88) *
+      (0.68 + 0.22 * billow + 0.10 * fine),
+    );
 
-    const brightness = clamp01(0.72 + field.cloudScore * 0.28);
-    rgba[offset] = toByte(236 * brightness);
-    rgba[offset + 1] = toByte(242 * brightness);
-    rgba[offset + 2] = toByte(247 * brightness);
-    rgba[offset + 3] = toByte(115 + field.cloudScore * 105);
+    // Warm/brown edge contamination cannot occur: transparent cloud pixels
+    // carry the same bright neutral RGB as nontransparent ones.
+    const brightness = clamp01(0.91 + 0.07 * billow + 0.02 * fine);
+    rgba[offset] = toByte(248 * brightness + 7);
+    rgba[offset + 1] = toByte(251 * brightness + 4);
+    rgba[offset + 2] = toByte(253 * brightness + 2);
+    rgba[offset + 3] = toByte(density * 222);
   }
 
   copySeamColumn(rgba, width, height);

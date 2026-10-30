@@ -5,7 +5,7 @@
  * The continuous source atlas is sampled periodically in longitude with a
  * bounded low-frequency warp, then receives subtle fine mineral/cloud detail.
  */
-export type PlanetTextureRefinementKind = 'COLOR' | 'GAS' | 'DATA' | 'CLOUD' | 'EMISSION';
+export type PlanetTextureRefinementKind = 'COLOR' | 'GAS' | 'DATA' | 'CLOUD' | 'WEATHER_CLOUD' | 'EMISSION';
 
 export function refinePlanetRgbaTextureV1(
   source: Uint8Array,
@@ -33,7 +33,8 @@ export function refinePlanetRgbaTextureV1(
   const sourceSpan = sourceWidth - 1;
   const targetSpan = targetWidth - 1;
   const color = kind === 'COLOR' || kind === 'GAS';
-  const warpStrength = kind === 'COLOR' ? 0.27 : kind === 'GAS' ? 0.13 : 0;
+  const weatherCloud = kind === 'WEATHER_CLOUD';
+  const warpStrength = kind === 'COLOR' ? 0.27 : kind === 'GAS' ? 0.13 : weatherCloud ? 0.42 : 0;
   const mineralStrength = kind === 'COLOR' ? 6.2 : kind === 'GAS' ? 2.8 : 0;
   const phase = (seedUint32 >>> 8) / 0x1000000 * 6.283185307179586;
   const phase2 = (seedUint32 & 65535) / 65535 * 6.283185307179586;
@@ -77,9 +78,27 @@ export function refinePlanetRgbaTextureV1(
         const top = source[a + channel]! * (1 - fx) + source[b + channel]! * fx;
         const bottom = source[c + channel]! * (1 - fx) + source[d + channel]! * fx;
         const noise = channel < 3 ? fine : 0;
-        // Alpha remains interpolated; no new clouds/lava/territories are created.
-        result[dest + channel] = Math.max(0, Math.min(255,
-          Math.round(top * (1 - fy) + bottom * fy + noise)));
+        let value = top * (1 - fy) + bottom * fy + noise;
+        if (weatherCloud && channel === 3 && value > 0) {
+          // VIS3D.2f: organic cirrus breakup from periodic, coherent noise.
+          // The three scales avoid visibly repeating striped/sine artifacts.
+          // Zero source alpha is still zero: there are no invented clouds.
+          const broad = periodicCloudNoise01(
+            x / targetSpan, latitude, 17, 9, seedUint32 ^ 0x84d34b71,
+          );
+          const billow = periodicCloudNoise01(
+            x / targetSpan, latitude, 47, 27, seedUint32 ^ 0x2b85fa19,
+          );
+          const wisps = periodicCloudNoise01(
+            x / targetSpan, latitude, 101, 53, seedUint32 ^ 0x51c79e3d,
+          );
+          const cloudStructure = 0.38 * broad + 0.41 * billow + 0.21 * wisps;
+          const densityFactor = Math.max(0.20, Math.min(1.08,
+            0.16 + 1.55 * cloudStructure,
+          ));
+          value *= densityFactor;
+        }
+        result[dest + channel] = Math.max(0, Math.min(255, Math.round(value)));
       }
     }
     // Explicitly duplicate the longitude seam exactly, including alpha.
@@ -95,3 +114,37 @@ export const PLANET_TEXTURE_DETAIL_SIZES_V1 = Object.freeze({
   closeSystem: Object.freeze({ width: 512, height: 256 }),
   scientificPreview: Object.freeze({ width: 1024, height: 512 }),
 });
+
+/** Seamless longitude noise for preview-only cloud microstructure. */
+function periodicCloudNoise01(
+  u: number,
+  v: number,
+  frequencyX: number,
+  frequencyY: number,
+  seed: number,
+): number {
+  const x = u * frequencyX;
+  const y = v * frequencyY;
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const dx = x - ix;
+  const dy = y - iy;
+  const fx = dx * dx * (3 - 2 * dx);
+  const fy = dy * dy * (3 - 2 * dy);
+  const x0 = ((ix % frequencyX) + frequencyX) % frequencyX;
+  const x1 = (x0 + 1) % frequencyX;
+  const p00 = cloudHash01(x0, iy, seed);
+  const p10 = cloudHash01(x1, iy, seed);
+  const p01 = cloudHash01(x0, iy + 1, seed);
+  const p11 = cloudHash01(x1, iy + 1, seed);
+  const top = p00 + (p10 - p00) * fx;
+  const bottom = p01 + (p11 - p01) * fx;
+  return top + (bottom - top) * fy;
+}
+
+function cloudHash01(x: number, y: number, seed: number): number {
+  let value = seed ^ Math.imul(x, 0x9e3779b1) ^ Math.imul(y, 0x85ebca6b);
+  value = Math.imul(value ^ (value >>> 16), 0x7feb352d);
+  value = Math.imul(value ^ (value >>> 15), 0x846ca68b);
+  return ((value ^ (value >>> 16)) >>> 0) / 0xffffffff;
+}
