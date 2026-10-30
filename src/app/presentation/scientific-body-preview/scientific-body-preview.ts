@@ -18,6 +18,7 @@ import {
 } from '@angular/core';
 
 import * as THREE from 'three';
+import type { SystemScenePlanetLightBindingV1 } from '../system/system-scene-atmosphere-material';
 
 import {
   createSystemScenePlanetAppearanceV1,
@@ -407,6 +408,8 @@ export class ScientificBodyPreview
   private localSpinBindings:
     LocalScientificSpinBinding[] =
       [];
+
+  private civilizationLightBinding: SystemScenePlanetLightBindingV1 | null = null;
 
   private localSimulationDay =
     0;
@@ -921,50 +924,33 @@ export class ScientificBodyPreview
   private addLighting():
     void {
 
-    if (
-      this.scene ===
-        null
-    ) {
+    if (this.scene === null) return;
+
+    const sources = this.model.kind === ScientificBodyPreviewKind.PLANET
+      ? this.model.primary.civilizationStarSources
+      : undefined;
+
+    const ambient = new THREE.HemisphereLight(
+      0xbcd9f3,
+      0x111318,
+      sources?.length ? 0.28 : 1.10,
+    );
+    this.scene.add(ambient);
+
+    if (sources && sources.length > 0) {
+      for (const source of sources) {
+        const stellar = new THREE.DirectionalLight(0xffffff, 2.35 * source.weight01);
+        stellar.position.set(source.x * 5, source.y * 5, source.z * 5);
+        this.scene.add(stellar);
+      }
       return;
     }
 
-    const ambient =
-      new THREE.HemisphereLight(
-        0xbcd9f3,
-        0x111318,
-        1.10,
-      );
-
-    const key =
-      new THREE.DirectionalLight(
-        0xffffff,
-        2.15,
-      );
-    key.position
-      .set(
-        4.5,
-        3.0,
-        5.0,
-      );
-
-    const rim =
-      new THREE.DirectionalLight(
-        0x78cfff,
-        0.75,
-      );
-    rim.position
-      .set(
-        -4.0,
-        1.0,
-        -3.0,
-      );
-
-    this.scene
-      .add(
-        ambient,
-        key,
-        rim,
-      );
+    const key = new THREE.DirectionalLight(0xffffff, 2.15);
+    key.position.set(4.5, 3.0, 5.0);
+    const rim = new THREE.DirectionalLight(0x78cfff, 0.75);
+    rim.position.set(-4.0, 1.0, -3.0);
+    this.scene.add(key, rim);
   }
 
   private rebuildScene():
@@ -1285,6 +1271,8 @@ export class ScientificBodyPreview
       specialPresentation: null,
       visualVegetationProfile:
         planet.vegetationProfile ?? null,
+      visualCivilizationTier:
+        planet.nightCivilizationTier ?? null,
     });
 
     const appearance =
@@ -1301,6 +1289,10 @@ export class ScientificBodyPreview
         planet.opticalPhotosphereTemperatureKelvin ?? null,
         SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED,
       );
+
+    if (planet.nightCivilizationTier !== null && planet.nightCivilizationTier !== undefined) {
+      this.civilizationLightBinding = appearance.lightBinding;
+    }
 
     const segments =
       systemSceneBodyLodSegmentsV1(
@@ -2127,6 +2119,7 @@ export class ScientificBodyPreview
             step.rootYawDeltaRadians;
         }
 
+        this.updateCivilizationLightBinding();
         this.renderer
           .render(
             this.scene,
@@ -2143,6 +2136,27 @@ export class ScientificBodyPreview
       window.requestAnimationFrame(
         frame,
       );
+  }
+
+  /** Keep the emissive-night mask aligned with the actual preview's stellar lights. */
+  private updateCivilizationLightBinding(): void {
+    const binding = this.civilizationLightBinding;
+    const camera = this.camera;
+    if (binding === null || camera === null || this.model.kind !== ScientificBodyPreviewKind.PLANET) return;
+    camera.updateMatrixWorld();
+    const sources = this.model.primary.civilizationStarSources ?? [];
+    const weights = [0, 0, 0];
+    for (let i = 0; i < 3; i++) {
+      const source = sources[i];
+      const direction = binding.lightDirectionsView[i]!;
+      if (source) {
+        direction.set(source.x, source.y, source.z).transformDirection(camera.matrixWorldInverse);
+        weights[i] = source.weight01;
+      } else {
+        direction.set(1, 0, 0);
+      }
+    }
+    binding.lightWeightsView.set(weights[0]!, weights[1]!, weights[2]!);
   }
 
   private stopAnimation():
@@ -2184,6 +2198,7 @@ export class ScientificBodyPreview
       [];
     this.localSpinBindings =
       [];
+    this.civilizationLightBinding = null;
     this.localDaysPerRealSecond =
       0;
   }

@@ -34,6 +34,8 @@ import {
 import {
   type Planet,
 } from '../../domain/planetary/planet';
+import { type Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
+import type { SystemScenePlanetVegetationProfileV1 } from './system-scene-planet-surface-texture';
 
 import {
   type PlanetarySystem,
@@ -501,6 +503,11 @@ export interface SystemSceneBodySnapshot {
   /** Point-25.9 ring/special-shape read-only projection; null for stars. */
   readonly specialPresentation:
     SystemScenePlanetSpecialPresentationV1 | null;
+
+  /** VISCIV.1a: optional observed-native civilization tier for night lights. */
+  readonly visualCivilizationTier?: Vida7CivilizationTier | null;
+  /** VISCIV.1d: same VISBIO flora profile as fiche; night land mask must match. */
+  readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
 }
 
 export interface SystemSceneMoonSnapshot {

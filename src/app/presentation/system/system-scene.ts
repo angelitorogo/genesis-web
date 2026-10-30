@@ -119,9 +119,13 @@ import {
 
 import {
   buildSystemScenePlanetSurfaceTextureV1,
+  systemScenePlanetSurfaceTextureSeedV1,
   type SystemScenePlanetVegetationProfileV1,
   type SystemScenePlanetSurfaceTextureData,
 } from './system-scene-planet-surface-texture';
+import { buildSystemScenePlanetNightLightsV1 } from './system-scene-planet-night-lights-visciv1';
+import { systemScenePlanetTextureCacheKeyVISCIV1b } from './system-scene-planet-civilization-cache-visciv1b';
+import type { Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
 
 import {
   buildSystemSceneGiantAtmosphereTextureV1,
@@ -6446,6 +6450,8 @@ export interface SystemScenePlanetTextureResourceV1 {
     THREE.DataTexture;
   readonly emissiveTexture:
     THREE.DataTexture | null;
+  readonly nightLightsTexture:
+    THREE.DataTexture | null;
   readonly cloudTexture:
     THREE.DataTexture | null;
   readonly roughnessTexture:
@@ -6488,6 +6494,7 @@ export function createSystemScenePlanetAppearanceV1(
   planet:
     SystemSceneBodySnapshot & {
       readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+      readonly visualCivilizationTier?: Vida7CivilizationTier | null;
     },
 
   systemIdentity:
@@ -6543,9 +6550,11 @@ export function createSystemScenePlanetAppearanceV1(
           });
         })()
       : textureCache.acquire(
-          `${systemIdentity}|${planet.id}|D4c-25.11|${textureWidth}`,
+          systemScenePlanetTextureCacheKeyVISCIV1b(systemIdentity, planet.id, textureWidth, planet.visualCivilizationTier),
           planet.giantAtmosphere === null
-            ? 1280 * 1024
+            ? (planet.visualCivilizationTier === null || planet.visualCivilizationTier === undefined
+                ? 1280 * 1024
+                : 3584 * 1024)
             : 512 * 1024,
           () => createSystemScenePlanetTextureResourceV1(
             planet,
@@ -6851,6 +6860,7 @@ export function createSystemScenePlanetAppearanceV1(
         }
       : buildSystemSceneDayNightMaterialProfileV1(atmosphereOptics),
     lightBinding,
+    textureResource.nightLightsTexture,
   );
 
   const overlays: THREE.Object3D[] = [];
@@ -6916,6 +6926,7 @@ function createSystemScenePlanetTextureResourceV1(
   planet:
     SystemSceneBodySnapshot & {
       readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+      readonly visualCivilizationTier?: Vida7CivilizationTier | null;
     },
 
   systemIdentity:
@@ -6965,6 +6976,8 @@ function createSystemScenePlanetTextureResourceV1(
           surface: planet.surfaceEnvironment,
           vegetationProfile:
             planet.visualVegetationProfile ?? undefined,
+          nightCivilizationTier:
+            planet.visualCivilizationTier ?? null,
           visualSeedUint32:
             visualSeeds?.surfaceTextureSeedUint32,
         });
@@ -7018,6 +7031,33 @@ function createSystemScenePlanetTextureResourceV1(
           'GENESIS cached volcanism 25.11',
         );
 
+  const canonicalNightLightsAtlas = planet.visualCivilizationTier &&
+    semanticSurface?.nightLandMask &&
+    planet.surfaceEnvironment?.solidSurfaceAvailable === true
+    ? buildSystemScenePlanetNightLightsV1({
+        landMask: semanticSurface.nightLandMask,
+        maskWidth: semanticSurface.width,
+        maskHeight: semanticSurface.height,
+        width: PLANET_TEXTURE_DETAIL_SIZES_V1.scientificPreview.width,
+        height: PLANET_TEXTURE_DETAIL_SIZES_V1.scientificPreview.height,
+        seedUint32: visualSeeds?.surfaceTextureSeedUint32 ??
+          systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id),
+        tier: planet.visualCivilizationTier,
+      })
+    : null;
+
+  const nightLightsTexture = canonicalNightLightsAtlas === null
+    ? null
+    : createRgbaDataTexture(
+        canonicalNightLightsAtlas.width,
+        canonicalNightLightsAtlas.height,
+        // VISCIV.1c hotfix: the system scene must display the very same
+        // deterministic city pattern as the planetary fiche. Keep the
+        // canonical atlas instead of regenerating/downsampling another one.
+        canonicalNightLightsAtlas.rgba,
+        'GENESIS VISCIV.1c canonical civilization night lights',
+      );
+
   const cloudTexture =
     semanticSurface?.cloudRgba !== null &&
     semanticSurface?.cloudRgba !== undefined
@@ -7062,6 +7102,7 @@ function createSystemScenePlanetTextureResourceV1(
     semanticSurface,
     surfaceTexture,
     emissiveTexture,
+    nightLightsTexture,
     cloudTexture,
     roughnessTexture,
     reliefTexture,
@@ -7073,6 +7114,7 @@ function createSystemScenePlanetTextureResourceV1(
       disposed = true;
       surfaceTexture.dispose();
       emissiveTexture?.dispose();
+      nightLightsTexture?.dispose();
       cloudTexture?.dispose();
       roughnessTexture?.dispose();
       reliefTexture?.dispose();

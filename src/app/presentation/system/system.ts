@@ -2,8 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 
 import {
@@ -44,6 +46,8 @@ import { SystemMultihostGameCutover } from './system-multihost-game-cutover';
 import { SystemTechnosignatureAlert37a } from './system-technosignature-alert-37a';
 import { SystemV2SingleScientificSession } from './system-v2-single-scientific-session';
 import { SystemCompactHostScientificSession } from './system-compact-host-scientific-session';
+import { SystemSceneCivilizationVisualsDataSource } from './system-scene-civilization-visuals.data-source';
+import { decorateSystemSceneSnapshotWithCivilizationTiers, type SystemSceneCivilizationVisualRecord } from './system-scene-civilization-visuals';
 
 @Component({
   selector:
@@ -80,6 +84,17 @@ export class SystemPage
     inject(
       ActivatedRoute,
     );
+
+  private readonly systemSceneCivilizationVisuals =
+    inject(
+      SystemSceneCivilizationVisualsDataSource,
+    );
+
+  private readonly sceneCivilizationTiers = signal<ReadonlyMap<string, SystemSceneCivilizationVisualRecord>>(
+    new Map(),
+  );
+
+  private civilizationVisualsRequestId = 0;
 
   readonly multihostSession = computed(() => {
     const model = this.facade.model();
@@ -121,7 +136,12 @@ export class SystemPage
           return null;
         }
 
-        return this.compactSession()?.scene ?? this.multihostSession()?.scene ?? this.v2SingleSession()?.scene ?? SystemSceneSnapshotBuilder.build(model);
+        const snapshot = this.compactSession()?.scene ?? this.multihostSession()?.scene ?? this.v2SingleSession()?.scene ?? SystemSceneSnapshotBuilder.build(model);
+
+        return decorateSystemSceneSnapshotWithCivilizationTiers(
+          snapshot,
+          this.sceneCivilizationTiers(),
+        );
       },
     );
 
@@ -160,6 +180,16 @@ export class SystemPage
             });
       },
     );
+
+
+  constructor() {
+    effect(() => {
+      const model = this.facade.model();
+      void this.refreshSystemSceneCivilizationVisuals(model);
+    }, {
+      allowSignalWrites: true,
+    });
+  }
 
   ngOnInit():
     void {
@@ -252,6 +282,35 @@ export class SystemPage
 
     return knowledgeLevel ===
       ArchiveStellarSystemKnowledgeLevel.CONFIRMED;
+  }
+
+  private async refreshSystemSceneCivilizationVisuals(
+    model: ReturnType<ArchiveDiscoveryDetailFacade['model']>,
+  ): Promise<void> {
+    const requestId = ++this.civilizationVisualsRequestId;
+    if (
+      model === null ||
+      model.locatorKind !== ArchiveDiscoveryLocatorKind.SYSTEM ||
+      model.stellarSystemCard?.knowledgeLevel !== ArchiveStellarSystemKnowledgeLevel.CONFIRMED
+    ) {
+      this.sceneCivilizationTiers.set(new Map());
+      return;
+    }
+
+    const tiers = await this.systemSceneCivilizationVisuals.read({
+      universeSeed: model.universeSeed,
+      generatorVersionCode: model.generatorVersionCode,
+      galaxyIndex: model.galaxyIndex,
+      sectorKey: model.sectorKey,
+      galacticObjectIndex: model.galacticObjectIndex,
+      confirmed: true,
+    });
+
+    if (requestId !== this.civilizationVisualsRequestId) {
+      return;
+    }
+
+    this.sceneCivilizationTiers.set(tiers);
   }
 
 }

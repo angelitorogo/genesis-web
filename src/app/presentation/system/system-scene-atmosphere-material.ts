@@ -61,6 +61,7 @@ export function installSystemSceneDayNightMaterialV1(
   material: THREE.MeshStandardMaterial,
   profile: SystemSceneDayNightMaterialProfileV1,
   binding: SystemScenePlanetLightBindingV1,
+  nightLightsTexture: THREE.DataTexture | null = null,
 ): void {
   validateProfile(profile);
 
@@ -106,15 +107,21 @@ export function installSystemSceneDayNightMaterialV1(
         value: nightTint,
       };
 
+      if (nightLightsTexture !== null) {
+        shader.uniforms['uGenesisCivilizationLights'] = {
+          value: nightLightsTexture,
+        };
+      }
       shader.fragmentShader =
         patchSystemSceneDayNightFragmentShaderV1(
           shader.fragmentShader,
+          nightLightsTexture !== null,
         );
     };
 
   material.customProgramCacheKey =
     () =>
-      `${upstreamProgramKey}|GENESIS-25.6-DAY-NIGHT-V1-${profile.atmospherePresent ? 'ATM' : 'VAC'}`;
+      `${upstreamProgramKey}|GENESIS-25.6-DAY-NIGHT-V1-${profile.atmospherePresent ? 'ATM' : 'VAC'}-${nightLightsTexture === null ? 'NO-CIV' : 'CIV-LIGHTS-V1'}`;
 
   material.userData['genesisDayNightPipeline'] =
     Object.freeze({
@@ -128,6 +135,7 @@ export function installSystemSceneDayNightMaterialV1(
 
 export function patchSystemSceneDayNightFragmentShaderV1(
   fragmentShader: string,
+  civilizationLights = false,
 ): string {
   if (
     !fragmentShader.includes(GLSL_COMMON_MARKER) ||
@@ -141,12 +149,12 @@ export function patchSystemSceneDayNightFragmentShaderV1(
   const withUniforms =
     fragmentShader.replace(
       GLSL_COMMON_MARKER,
-      `${GLSL_COMMON_MARKER}\nuniform vec3 uGenesisLightDirectionsView[3];\nuniform vec3 uGenesisLightWeights;\nuniform float uGenesisTerminatorSoftness;\nuniform float uGenesisNightFloor;\nuniform float uGenesisTwilightGlow;\nuniform float uGenesisAtmospherePresent;\nuniform vec3 uGenesisAtmosphereDayTint;\nuniform vec3 uGenesisAtmosphereNightTint;`,
+      `${GLSL_COMMON_MARKER}${civilizationLights ? '\nuniform sampler2D uGenesisCivilizationLights;' : ''}\nuniform vec3 uGenesisLightDirectionsView[3];\nuniform vec3 uGenesisLightWeights;\nuniform float uGenesisTerminatorSoftness;\nuniform float uGenesisNightFloor;\nuniform float uGenesisTwilightGlow;\nuniform float uGenesisAtmospherePresent;\nuniform vec3 uGenesisAtmosphereDayTint;\nuniform vec3 uGenesisAtmosphereNightTint;`,
     );
 
   return withUniforms.replace(
     GLSL_OPAQUE_MARKER,
-    `float genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[2])));\nfloat genesisDayFactor = clamp(genesisDayFactor0 * genesisWeight0 + genesisDayFactor1 * genesisWeight1 + genesisDayFactor2 * genesisWeight2, 0.0, 1.0);\nfloat genesisNightVisibility = mix(uGenesisNightFloor, 1.0, genesisDayFactor);\nvec3 genesisNightTint = mix(vec3(1.0), uGenesisAtmosphereNightTint, 0.12 * (1.0 - genesisDayFactor));\noutgoingLight *= genesisNightVisibility * genesisNightTint;\nfloat genesisTwilight0 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.070 * (0.40 + 0.60 * genesisDayFactor);\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
+    `float genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[2])));\nfloat genesisDayFactor = clamp(genesisDayFactor0 * genesisWeight0 + genesisDayFactor1 * genesisWeight1 + genesisDayFactor2 * genesisWeight2, 0.0, 1.0);\nfloat genesisNightVisibility = mix(uGenesisNightFloor, 1.0, genesisDayFactor);\nvec3 genesisNightTint = mix(vec3(1.0), uGenesisAtmosphereNightTint, 0.12 * (1.0 - genesisDayFactor));\noutgoingLight *= genesisNightVisibility * genesisNightTint;\n${civilizationLights ? `// VISCIV.1: artificial lighting follows the combined illumination of all active stars.\nfloat genesisDeepNight = 1.0 - smoothstep(0.035, 0.18, genesisDayFactor);\nvec3 genesisUrbanEmission = texture2D(uGenesisCivilizationLights, vMapUv).rgb;\noutgoingLight += genesisUrbanEmission * genesisDeepNight * 2.30;` : ''}\nfloat genesisTwilight0 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.070 * (0.40 + 0.60 * genesisDayFactor);\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
   );
 }
 

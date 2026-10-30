@@ -169,6 +169,17 @@ export interface ScientificPlanetPreviewVisual {
   /** VISBIO.1b preview-only vegetation profile for fiche rendering. */
   readonly vegetationProfile?:
     ScientificPlanetVegetationPreviewProfile | null;
+  /** VISCIV.1: present only when native civilization is revealed by confirmed system. */
+  readonly nightCivilizationTier?: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null;
+  /** Stellar vectors at snapshot epoch; visual-only, allows single/binary/triple night mask. */
+  readonly civilizationStarSources?: readonly ScientificPlanetStarLightSourceV1[];
+}
+
+export interface ScientificPlanetStarLightSourceV1 {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly weight01: number;
 }
 
 export interface ScientificPlanetVegetationPreviewProfile {
@@ -569,6 +580,7 @@ export class ScientificBodyPreviewAssembler {
     sourceBodyId?: string,
     vegetationProfile:
       ScientificPlanetVegetationPreviewProfile | null = null,
+    nightCivilizationTier: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null = null,
   ): ScientificBodyPreviewModel {
 
     const planetId = sourceBodyId ??
@@ -586,6 +598,7 @@ export class ScientificBodyPreviewAssembler {
         sourcePlanet,
         target.detail.general.radiusEarth,
         vegetationProfile,
+        nightCivilizationTier,
       );
 
     const semiMajorByOrdinal =
@@ -997,6 +1010,7 @@ function planetVisual(
 
   vegetationProfile:
     ScientificPlanetVegetationPreviewProfile | null = null,
+  nightCivilizationTier: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null = null,
 ): ScientificPlanetPreviewVisual {
 
   if (
@@ -1095,7 +1109,37 @@ function planetVisual(
             source.giantAtmosphere.regime,
           ),
     vegetationProfile,
+    nightCivilizationTier,
+    civilizationStarSources: nightCivilizationTier === null
+      ? undefined
+      : resolvePreviewCivilizationStarSourcesV1(scene, source),
   });
+}
+
+/** Directions from the inspected planet to each luminous star at the snapshot epoch. */
+function resolvePreviewCivilizationStarSourcesV1(
+  scene: SystemSceneSnapshot,
+  planet: SystemSceneBodySnapshot,
+): readonly ScientificPlanetStarLightSourceV1[] {
+  const entries = scene.stars
+    .filter(star => (star.sourceLuminositySolar ?? 0) > 0)
+    .map(star => {
+      const dx = star.position.x - planet.position.x;
+      const dy = star.position.y - planet.position.y;
+      const dz = star.position.z - planet.position.z;
+      const length = Math.max(0.0001, Math.hypot(dx, dy, dz));
+      const flux = Math.max(0, star.sourceLuminositySolar ?? 0) /
+        Math.max(0.05, length * length);
+      return { x: dx / length, y: dy / length, z: dz / length, flux };
+    })
+    .sort((a, b) => b.flux - a.flux)
+    .slice(0, 3);
+  const total = entries.reduce((sum, entry) => sum + entry.flux, 0);
+  if (total <= 0) return Object.freeze([{ x: 0.53, y: 0.35, z: 0.77, weight01: 1 }]);
+  return Object.freeze(entries.map(entry => Object.freeze({
+    x: entry.x, y: entry.y, z: entry.z,
+    weight01: entry.flux / total,
+  })));
 }
 
 function moonVisual(

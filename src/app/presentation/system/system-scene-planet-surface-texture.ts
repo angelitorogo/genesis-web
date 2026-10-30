@@ -1,6 +1,7 @@
 import {
   type SystemScenePlanetTextureData,
 } from './system-scene-planet-texture';
+import type { Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
 
 import {
   type SystemScenePlanetSurfacePresentationSnapshot,
@@ -26,6 +27,8 @@ export interface SystemScenePlanetSurfaceTextureInput {
   readonly surface: SystemScenePlanetSurfacePresentationSnapshot;
   /** VISBIO.1b preview-only greenery overlay for worlds with flora. */
   readonly vegetationProfile?: SystemScenePlanetVegetationProfileV1;
+  /** Preview-only city lights; never an assertion of observed settlements. */
+  readonly nightCivilizationTier?: Vida7CivilizationTier | null;
   readonly visualSeedUint32?: number;
 }
 
@@ -35,6 +38,8 @@ export interface SystemScenePlanetSurfaceTextureData {
   readonly height: number;
   readonly rgba: Uint8Array;
   readonly emissiveRgba: Uint8Array | null;
+  /** Terrain classes for night-light generator (1=land, 2=desert, 0=sea/ice). */
+  readonly nightLandMask?: Uint8Array | null;
   readonly cloudRgba: Uint8Array | null;
   /** D.4c: visual roughness in the Three.js green channel, not new geology. */
   readonly roughnessRgba: Uint8Array | null;
@@ -97,6 +102,7 @@ export function buildSystemScenePlanetSurfaceTextureV1(
       height,
       rgba: new Uint8Array(baseTexture.rgba),
       emissiveRgba: null,
+      nightLandMask: null,
       cloudRgba: null,
       roughnessRgba: null,
       reliefRgba: null,
@@ -341,12 +347,26 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     ? buildCloudTexture(fields, cloudTarget, width, height, seed)
     : null;
 
+  const nightLandMask = input.nightCivilizationTier
+    ? new Uint8Array(width * height)
+    : null;
+  if (nightLandMask !== null) {
+    for (const field of fields) {
+      const kind = semantic[field.uniqueIndex]!;
+      nightLandMask[field.y * width + field.x] = kind === LAND ? 1 : kind === DESERT ? 2 : 0;
+    }
+    for (let y = 0; y < height; y += 1) {
+      nightLandMask[y * width + width - 1] = nightLandMask[y * width]!;
+    }
+  }
+
   return Object.freeze({
     version: 1 as const,
     width,
     height,
     rgba,
     emissiveRgba,
+    nightLandMask,
     cloudRgba,
     roughnessRgba,
     reliefRgba,
