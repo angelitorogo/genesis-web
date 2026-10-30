@@ -62,6 +62,12 @@ import {
 import {
   createSystemSceneMoonRenderableV1,
 } from '../system/system-scene-moon-renderable';
+import {
+  buildSystemSceneArtificialSatellitePlansV1,
+  createSystemSceneArtificialSatelliteVisualV1,
+  supportsSystemSceneArtificialSatellitesV1,
+  type SystemSceneArtificialSatelliteMaterialBindingV1,
+} from '../system/system-scene-artificial-satellites-visciv2';
 
 import {
   type SystemSceneMoonPresentationV1,
@@ -320,6 +326,21 @@ interface LocalScientificSpinBinding {
     THREE.Group;
 }
 
+interface ScientificArtificialSatelliteBindingV1 {
+  readonly orbitPivot:
+    THREE.Group;
+  readonly basePhaseRadians:
+    number;
+  readonly angularSpeedRadiansPerDay:
+    number;
+  readonly materials:
+    readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
+  readonly orbitMaterial:
+    THREE.LineBasicMaterial;
+  readonly baseLineOpacity01:
+    number;
+}
+
 @Component({
   selector:
     'app-scientific-body-preview',
@@ -368,6 +389,9 @@ export class ScientificBodyPreview
   readonly autoRotate =
     signal(true);
 
+  readonly artificialSatellitesVisible =
+    signal(false);
+
   private readonly platformId =
     inject(
       PLATFORM_ID,
@@ -410,6 +434,19 @@ export class ScientificBodyPreview
       [];
 
   private civilizationLightBinding: SystemScenePlanetLightBindingV1 | null = null;
+
+  private artificialSatelliteBindings:
+    ScientificArtificialSatelliteBindingV1[] =
+      [];
+
+  private readonly artificialSatellitePlanetWorldPosition =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteCameraDirection =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteLightDirection =
+    new THREE.Vector3();
 
   private localSimulationDay =
     0;
@@ -574,6 +611,8 @@ export class ScientificBodyPreview
     ) {
       this.contextEnabled
         .set(false);
+      this.artificialSatellitesVisible
+        .set(false);
       this.rebuildScene();
     }
   }
@@ -650,6 +689,35 @@ export class ScientificBodyPreview
     return this.contextEnabled()
       ? 'MOSTRAR SOLO LUNA'
       : 'MOSTRAR SISTEMA LOCAL';
+  }
+
+  artificialSatellitesAvailable():
+    boolean {
+    return this.model.kind === ScientificBodyPreviewKind.PLANET && supportsSystemSceneArtificialSatellitesV1(
+      this.model.primary.nightCivilizationTier ?? null,
+    );
+  }
+
+  artificialSatellitesActionLabel():
+    string {
+    return this.artificialSatellitesVisible()
+      ? 'OCULTAR SATÉLITES'
+      : 'MOSTRAR SATÉLITES';
+  }
+
+  toggleArtificialSatellites():
+    void {
+
+    if (
+      !this.artificialSatellitesAvailable()
+    ) {
+      return;
+    }
+
+    this.artificialSatellitesVisible.update(
+      value => !value,
+    );
+    this.applyArtificialSatelliteVisibility();
   }
 
   toggleContext():
@@ -1369,6 +1437,23 @@ export class ScientificBodyPreview
       axialPivot.add(rings.group);
     }
 
+    const artificialSatellites = this.createArtificialSatellites(
+      planet,
+      radius,
+    );
+
+    if (artificialSatellites !== null) {
+      axialPivot.add(
+        artificialSatellites.group,
+      );
+      this.artificialSatelliteBindings.push(
+        ...artificialSatellites.bindings,
+      );
+      this.resources.push(
+        ...artificialSatellites.resources,
+      );
+    }
+
     this.root.add(axialPivot);
     this.resources.push(
       geometry,
@@ -1376,6 +1461,98 @@ export class ScientificBodyPreview
       ...appearance.resources,
       ...(rings?.resources ?? []),
     );
+    this.applyArtificialSatelliteVisibility();
+  }
+
+  private createArtificialSatellites(
+    planet:
+      ScientificPlanetPreviewVisual,
+    radius:
+      number,
+  ):
+    Readonly<{
+      group:
+        THREE.Group;
+      bindings:
+        readonly ScientificArtificialSatelliteBindingV1[];
+      resources:
+        readonly ({ dispose(): void })[];
+    }> | null {
+
+    const tier = planet.nightCivilizationTier ?? null;
+    if (
+      !supportsSystemSceneArtificialSatellitesV1(tier)
+    ) {
+      return null;
+    }
+
+    const plans = buildSystemSceneArtificialSatellitePlansV1(
+      planet.surfaceVisualVariantUint32,
+      tier,
+      radius,
+    );
+    const group = new THREE.Group();
+    group.name = `${planet.title} artificial satellites`;
+    const bindings: ScientificArtificialSatelliteBindingV1[] = [];
+    const resources: { dispose(): void }[] = [];
+
+    for (const plan of plans) {
+      const orbitPlane = new THREE.Group();
+      orbitPlane.rotation.z = plan.ascendingNodeRadians;
+      orbitPlane.rotation.x = plan.inclinationRadians;
+
+      const orbitPivot = new THREE.Group();
+      orbitPivot.rotation.y = plan.phaseRadians;
+
+      const orbitRadiusScene = radius * plan.orbitRadiusPlanetRadii;
+      const vertices = new Float32Array(LOCAL_ORBIT_SEGMENT_COUNT * 3);
+      for (let i = 0; i < LOCAL_ORBIT_SEGMENT_COUNT; i += 1) {
+        const angle = i / LOCAL_ORBIT_SEGMENT_COUNT * Math.PI * 2;
+        vertices[i * 3] = Math.cos(angle) * orbitRadiusScene;
+        vertices[i * 3 + 1] = 0;
+        vertices[i * 3 + 2] = Math.sin(angle) * orbitRadiusScene;
+      }
+      const orbitGeometry = new THREE.BufferGeometry();
+      orbitGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(vertices, 3),
+      );
+      const orbitMaterial = new THREE.LineBasicMaterial({
+        color: plan.lineColorHex,
+        transparent: true,
+        opacity: plan.lineOpacity01,
+        depthWrite: false,
+        toneMapped: false,
+      });
+      const orbit = new THREE.LineLoop(orbitGeometry, orbitMaterial);
+
+      const satelliteVisual = createSystemSceneArtificialSatelliteVisualV1(
+        plan,
+        planet.surfaceVisualVariantUint32 + plans.indexOf(plan) * 131,
+      );
+      satelliteVisual.group.position.set(orbitRadiusScene, 0, 0);
+
+      orbitPivot.add(satelliteVisual.group);
+      orbitPlane.add(orbit);
+      orbitPlane.add(orbitPivot);
+      group.add(orbitPlane);
+
+      bindings.push(Object.freeze({
+        orbitPivot,
+        basePhaseRadians: plan.phaseRadians,
+        angularSpeedRadiansPerDay: plan.angularSpeedRadiansPerDay,
+        materials: satelliteVisual.materials,
+        orbitMaterial,
+        baseLineOpacity01: plan.lineOpacity01,
+      }));
+      resources.push(orbitGeometry, orbitMaterial, ...satelliteVisual.resources);
+    }
+
+    return Object.freeze({
+      group,
+      bindings: Object.freeze(bindings),
+      resources: Object.freeze(resources),
+    });
   }
 
   private addMoon(
@@ -2120,6 +2297,7 @@ export class ScientificBodyPreview
         }
 
         this.updateCivilizationLightBinding();
+        this.updateArtificialSatelliteBinding();
         this.renderer
           .render(
             this.scene,
@@ -2157,6 +2335,66 @@ export class ScientificBodyPreview
       }
     }
     binding.lightWeightsView.set(weights[0]!, weights[1]!, weights[2]!);
+  }
+
+  private applyArtificialSatelliteVisibility():
+    void {
+    const visible = this.artificialSatellitesVisible();
+    for (const binding of this.artificialSatelliteBindings) {
+      binding.orbitPivot.parent!.visible = visible;
+    }
+  }
+
+  private updateArtificialSatelliteBinding(): void {
+    if (
+      !this.artificialSatellitesVisible() ||
+      this.camera === null ||
+      this.root === null ||
+      this.model.kind !== ScientificBodyPreviewKind.PLANET
+    ) {
+      return;
+    }
+    this.root.updateMatrixWorld(true);
+    this.camera.updateMatrixWorld(true);
+    this.camera.getWorldPosition(this.cameraWorldPositionScratch());
+    this.artificialSatellitePlanetWorldPosition.setFromMatrixPosition(this.root.matrixWorld);
+    this.artificialSatelliteCameraDirection
+      .subVectors(this.cameraWorldPositionScratch(), this.artificialSatellitePlanetWorldPosition)
+      .normalize();
+    const sources = this.model.primary.civilizationStarSources ?? [];
+    let weightedNight = 0;
+    let totalWeight = 0;
+    for (const source of sources) {
+      this.artificialSatelliteLightDirection.set(source.x, source.y, source.z).normalize();
+      const viewDot = this.artificialSatelliteCameraDirection.dot(this.artificialSatelliteLightDirection);
+      const nightFactor = THREE.MathUtils.clamp((-viewDot + 0.15) / 1.15, 0, 1);
+      const weight = Math.max(source.weight01, 0.001);
+      weightedNight += nightFactor * weight;
+      totalWeight += weight;
+    }
+    const visibility = totalWeight <= 0 ? 0.34 : 0.12 + 0.88 * THREE.MathUtils.clamp(weightedNight / totalWeight, 0, 1);
+    for (const binding of this.artificialSatelliteBindings) {
+      binding.orbitPivot.rotation.y = binding.basePhaseRadians + binding.angularSpeedRadiansPerDay * this.localSpinSimulationDay;
+      const brightness = 0.24 + 0.76 * visibility;
+      for (const materialBinding of binding.materials) {
+        const roleGain = materialBinding.role === 'panel'
+          ? 0.78
+          : materialBinding.role === 'accent'
+            ? 1
+            : 0.88;
+        materialBinding.material.color.copy(materialBinding.baseColor).multiplyScalar(
+          Math.max(0.22, brightness * roleGain),
+        );
+      }
+      binding.orbitMaterial.opacity = binding.baseLineOpacity01 * visibility;
+    }
+  }
+
+  private readonly previewCameraWorldPosition =
+    new THREE.Vector3();
+
+  private cameraWorldPositionScratch(): THREE.Vector3 {
+    return this.previewCameraWorldPosition;
   }
 
   private stopAnimation():
@@ -2199,6 +2437,8 @@ export class ScientificBodyPreview
     this.localSpinBindings =
       [];
     this.civilizationLightBinding = null;
+    this.artificialSatelliteBindings =
+      [];
     this.localDaysPerRealSecond =
       0;
   }

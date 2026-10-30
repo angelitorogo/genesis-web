@@ -112,6 +112,13 @@ import {
 import { refinePlanetRgbaTextureV1, PLANET_TEXTURE_DETAIL_SIZES_V1, type PlanetTextureRefinementKind } from './system-scene-planet-texture-refinement';
 
 import {
+  buildSystemSceneArtificialSatellitePlansV1,
+  createSystemSceneArtificialSatelliteVisualV1,
+  supportsSystemSceneArtificialSatellitesV1,
+  type SystemSceneArtificialSatelliteMaterialBindingV1,
+} from './system-scene-artificial-satellites-visciv2';
+
+import {
   buildSystemScenePlanetTextureV1,
   systemScenePlanetTextureSeed,
   type SystemScenePlanetTextureSurfaceStyle,
@@ -299,6 +306,9 @@ export interface SystemSceneLayerVisibility {
     boolean;
 
   readonly capturedObjects:
+    boolean;
+
+  readonly artificialSatellites:
     boolean;
 }
 
@@ -604,6 +614,11 @@ export class SystemScene
       false,
     );
 
+  private readonly artificialSatellitesVisibleSignal =
+    signal(
+      false,
+    );
+
   private readonly orbitLinesVisibleSignal = signal(true);
   private readonly focusedLaboratoryStarSignal = signal<string | null>(null);
   private readonly laboratoryDistancesSignal = signal<readonly LaboratoryStarDistance[]>([]);
@@ -685,6 +700,9 @@ export class SystemScene
 
   readonly capturedObjectsVisible =
     this.capturedObjectsVisibleSignal.asReadonly();
+
+  readonly artificialSatellitesVisible =
+    this.artificialSatellitesVisibleSignal.asReadonly();
 
   readonly selection =
     this
@@ -958,6 +976,31 @@ export class SystemScene
     );
   }
 
+  artificialSatellitePlanetCount():
+    number {
+    return this.snapshot.planets.filter(
+      planet => supportsSystemSceneArtificialSatellitesV1(
+        planet.visualCivilizationTier ?? null,
+      ),
+    ).length;
+  }
+
+  artificialSatelliteCount():
+    number {
+    const systemIdentity =
+      `${this.snapshot.universeSeed}|v${this.snapshot.generatorVersionCode}|${this.snapshot.proceduralIdentity}`;
+    return this.snapshot.planets.reduce((count, planet) => {
+      const tier = planet.visualCivilizationTier ?? null;
+      if (!supportsSystemSceneArtificialSatellitesV1(tier)) {
+        return count;
+      }
+      const seed = systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id);
+      return count + buildSystemSceneArtificialSatellitePlansV1(
+        seed, tier, planet.radiusScene,
+      ).length;
+    }, 0);
+  }
+
   togglePlanets():
     void {
 
@@ -1052,6 +1095,24 @@ export class SystemScene
     this.toggleMinorBodyLayer(
       'capturedObjects',
     );
+  }
+
+  toggleArtificialSatellites():
+    void {
+
+    if (
+      this.artificialSatellitePlanetCount() ===
+        0
+    ) {
+      return;
+    }
+
+    this.artificialSatellitesVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
   }
 
   selectionKindLabel(
@@ -1306,6 +1367,10 @@ export class SystemScene
         capturedObjects:
           this.capturedObjectsVisibleSignal() &&
           this.capturedObjectCount() >
+            0,
+        artificialSatellites:
+          this.artificialSatellitesVisibleSignal() &&
+          this.artificialSatellitePlanetCount() >
             0,
       });
 
@@ -1685,6 +1750,15 @@ export class SystemScene
         );
       }
 
+      if (
+        this.artificialSatellitePlanetCount() ===
+          0
+      ) {
+        this.artificialSatellitesVisibleSignal.set(
+          false,
+        );
+      }
+
       // Keep the production runtime call's original one-argument contract.
       // Only the laboratory explicitly opts into the extra camera setting.
       const info = this.laboratoryCloseZoom
@@ -2032,6 +2106,18 @@ class ThreeSystemSceneRuntime
   private readonly planetLightTopFluxes =
     [0, 0, 0];
 
+  private readonly artificialSatellitePlanetWorldPosition =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteCameraDirection =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteStarWorldPosition =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteLightDirection =
+    new THREE.Vector3();
+
   private readonly animatedOrbits =
     new Map<string, THREE.LineLoop>();
 
@@ -2096,6 +2182,21 @@ class ThreeSystemSceneRuntime
       readonly targetBodyId: string;
     }> = [];
 
+  private readonly artificialSatelliteLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly artificialSatelliteBindings:
+    Array<{
+      readonly hostBodyId: string;
+      readonly orbitPivot: THREE.Group;
+      readonly basePhaseRadians: number;
+      readonly angularSpeedRadiansPerDay: number;
+      readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
+      readonly orbitMaterial: THREE.LineBasicMaterial;
+      readonly baseLineOpacity01: number;
+    }> = [];
+
   private readonly asteroidLayerObjects:
     THREE.Object3D[] =
     [];
@@ -2156,6 +2257,7 @@ class ThreeSystemSceneRuntime
       comets: false,
       transNeptunianObjects: false,
       capturedObjects: false,
+      artificialSatellites: false,
     });
 
   private readonly raycaster =
@@ -2776,6 +2878,15 @@ class ThreeSystemSceneRuntime
     ) {
       object.visible =
         this.layerVisibility.capturedObjects;
+    }
+
+    for (
+      const object
+      of this.artificialSatelliteLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.artificialSatellites &&
+        this.layerVisibility.planets;
     }
 
     // Apply last so turning off orbit GUIDES never hides their bodies, and
@@ -4610,6 +4721,29 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    const artificialSatellites = this.createArtificialSatelliteVisuals(
+      planet,
+      systemIdentity,
+    );
+
+    if (
+      artificialSatellites !==
+        null
+    ) {
+      axialPivot.add(
+        artificialSatellites.group,
+      );
+      this.artificialSatelliteLayerObjects.push(
+        artificialSatellites.group,
+      );
+      this.artificialSatelliteBindings.push(
+        ...artificialSatellites.bindings,
+      );
+      this.frameDisposables.push(
+        ...artificialSatellites.resources,
+      );
+    }
+
     group.add(
       axialPivot,
     );
@@ -4651,6 +4785,193 @@ class ThreeSystemSceneRuntime
       .add(
         group,
       );
+  }
+
+  private createArtificialSatelliteVisuals(
+    planet:
+      SystemSceneBodySnapshot,
+    systemIdentity:
+      string,
+  ):
+    {
+      readonly group: THREE.Group;
+      readonly bindings: readonly {
+        readonly hostBodyId: string;
+        readonly orbitPivot: THREE.Group;
+        readonly basePhaseRadians: number;
+        readonly angularSpeedRadiansPerDay: number;
+        readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
+        readonly orbitMaterial: THREE.LineBasicMaterial;
+        readonly baseLineOpacity01: number;
+      }[];
+      readonly resources: readonly { dispose(): void }[];
+    } | null {
+
+    const tier =
+      planet.visualCivilizationTier ??
+      null;
+
+    if (
+      !supportsSystemSceneArtificialSatellitesV1(
+        tier,
+      )
+    ) {
+      return null;
+    }
+
+    const seed = systemScenePlanetSurfaceTextureSeedV1(
+      systemIdentity,
+      planet.id,
+    );
+
+    const plans = buildSystemSceneArtificialSatellitePlansV1(
+      seed,
+      tier,
+      planet.radiusScene,
+    );
+
+    if (
+      plans.length ===
+        0
+    ) {
+      return null;
+    }
+
+    const group =
+      new THREE.Group();
+    group.name =
+      `${planet.label} artificial satellites`;
+
+    const bindings: Array<{
+      readonly hostBodyId: string;
+      readonly orbitPivot: THREE.Group;
+      readonly basePhaseRadians: number;
+      readonly angularSpeedRadiansPerDay: number;
+      readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
+      readonly orbitMaterial: THREE.LineBasicMaterial;
+      readonly baseLineOpacity01: number;
+    }> = [];
+    const resources: Array<{ dispose(): void }> = [];
+
+    for (
+      const plan
+      of plans
+    ) {
+      const orbitPlane =
+        new THREE.Group();
+      orbitPlane.rotation.z =
+        plan.ascendingNodeRadians;
+      orbitPlane.rotation.x =
+        plan.inclinationRadians;
+
+      const orbitPivot =
+        new THREE.Group();
+      orbitPivot.rotation.y =
+        plan.phaseRadians;
+
+      const orbitRadiusScene =
+        planet.radiusScene * plan.orbitRadiusPlanetRadii;
+
+      const orbitGeometry =
+        new THREE.BufferGeometry();
+      const orbitVertices =
+        new Float32Array(
+          ORBIT_SEGMENT_COUNT *
+          3,
+        );
+
+      for (
+        let i = 0;
+        i < ORBIT_SEGMENT_COUNT;
+        i += 1
+      ) {
+        const angle =
+          (i / ORBIT_SEGMENT_COUNT) *
+          Math.PI * 2;
+        orbitVertices[i * 3] =
+          Math.cos(angle) * orbitRadiusScene;
+        orbitVertices[i * 3 + 1] =
+          0;
+        orbitVertices[i * 3 + 2] =
+          Math.sin(angle) * orbitRadiusScene;
+      }
+
+      orbitGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(
+          orbitVertices,
+          3,
+        ),
+      );
+
+      const orbitMaterial =
+        new THREE.LineBasicMaterial({
+          color:
+            plan.lineColorHex,
+          transparent:
+            true,
+          opacity:
+            plan.lineOpacity01,
+          depthWrite:
+            false,
+          toneMapped:
+            false,
+        });
+      const orbitLine =
+        new THREE.LineLoop(
+          orbitGeometry,
+          orbitMaterial,
+        );
+
+      const satelliteVisual =
+        createSystemSceneArtificialSatelliteVisualV1(
+          plan,
+          seed + plans.indexOf(plan) * 131,
+        );
+      satelliteVisual.group.position.set(
+        orbitRadiusScene,
+        0,
+        0,
+      );
+
+      orbitPivot.add(
+        satelliteVisual.group,
+      );
+      orbitPlane.add(
+        orbitLine,
+      );
+      orbitPlane.add(
+        orbitPivot,
+      );
+      group.add(
+        orbitPlane,
+      );
+
+      resources.push(
+        orbitMaterial,
+        ...satelliteVisual.resources,
+      );
+      bindings.push(
+        Object.freeze({
+          hostBodyId: planet.id,
+          orbitPivot,
+          basePhaseRadians: plan.phaseRadians,
+          angularSpeedRadiansPerDay: plan.angularSpeedRadiansPerDay,
+          materials: satelliteVisual.materials,
+          orbitMaterial,
+          baseLineOpacity01: plan.lineOpacity01,
+        }),
+      );
+      this.frameDisposables.push(
+        orbitGeometry,
+      );
+    }
+
+    return Object.freeze({
+      group,
+      bindings: Object.freeze(bindings),
+      resources: Object.freeze(resources),
+    });
   }
 
   private addMoon(
@@ -5607,6 +5928,16 @@ class ThreeSystemSceneRuntime
     }
 
     for (
+      const binding
+      of this.artificialSatelliteBindings
+    ) {
+      binding.orbitPivot.rotation.y =
+        binding.basePhaseRadians +
+        binding.angularSpeedRadiansPerDay *
+          (simulationDay - snapshot.simulation.epochSimulationDay);
+    }
+
+    for (
       const orbit
       of snapshot.orbits
     ) {
@@ -5969,6 +6300,10 @@ class ThreeSystemSceneRuntime
     this.planetLayerObjects.length =
       0;
     this.moonLayerObjects.length =
+      0;
+    this.artificialSatelliteLayerObjects.length =
+      0;
+    this.artificialSatelliteBindings.length =
       0;
     this.habitableZoneLayerObjects.length =
       0;
@@ -6383,6 +6718,154 @@ class ThreeSystemSceneRuntime
     };
   }
 
+  private updateArtificialSatelliteLighting():
+    void {
+
+    if (
+      !this.layerVisibility.artificialSatellites ||
+      this.artificialSatelliteBindings.length ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.updateMatrixWorld(
+      true,
+    );
+    this.camera.getWorldPosition(
+      this.cameraWorldPosition,
+    );
+
+    for (
+      const binding
+      of this.artificialSatelliteBindings
+    ) {
+      const host = this.animatedBodies.get(
+        binding.hostBodyId,
+      );
+
+      if (
+        host ===
+          undefined
+      ) {
+        continue;
+      }
+
+      host.getWorldPosition(
+        this.artificialSatellitePlanetWorldPosition,
+      );
+      this.artificialSatelliteCameraDirection
+        .subVectors(
+          this.cameraWorldPosition,
+          this.artificialSatellitePlanetWorldPosition,
+        )
+        .normalize();
+
+      let weightedNight =
+        0;
+      let totalWeight =
+        0;
+
+      for (
+        const star
+        of this.currentSnapshot?.stars ??
+          []
+      ) {
+        if ((star.sourceLuminositySolar ?? 0) <= 0) {
+          continue;
+        }
+
+        const starObject =
+          this.animatedBodies.get(
+            star.id,
+          );
+
+        if (
+          starObject ===
+            undefined
+        ) {
+          continue;
+        }
+
+        starObject.getWorldPosition(
+          this.artificialSatelliteStarWorldPosition,
+        );
+        this.artificialSatelliteLightDirection
+          .subVectors(
+            this.artificialSatelliteStarWorldPosition,
+            this.artificialSatellitePlanetWorldPosition,
+          );
+        const distanceSquared = Math.max(
+          this.artificialSatelliteLightDirection.lengthSq(),
+          1e-6,
+        );
+        this.artificialSatelliteLightDirection.normalize();
+        const weight =
+          Math.max(
+            star.sourceLuminositySolar ?? 0,
+            0.05,
+          ) /
+          distanceSquared;
+        const viewDot =
+          this.artificialSatelliteCameraDirection.dot(
+            this.artificialSatelliteLightDirection,
+          );
+        const nightFactor = THREE.MathUtils.clamp(
+          (-viewDot + 0.15) /
+            1.15,
+          0,
+          1,
+        );
+        weightedNight +=
+          nightFactor *
+          weight;
+        totalWeight +=
+          weight;
+      }
+
+      const visibility =
+        totalWeight <=
+          0
+          ? 0.34
+          : 0.12 +
+            0.88 *
+            THREE.MathUtils.clamp(
+              weightedNight /
+                totalWeight,
+              0,
+              1,
+            );
+
+      const brightness =
+        0.24 +
+        0.76 * visibility;
+      for (
+        const materialBinding
+        of binding.materials
+      ) {
+        const roleGain = materialBinding.role === 'panel'
+          ? 0.78
+          : materialBinding.role === 'accent'
+            ? 1
+            : 0.88;
+        materialBinding.material.color.copy(
+          materialBinding.baseColor,
+        ).multiplyScalar(
+          Math.max(
+            0.22,
+            brightness * roleGain,
+          ),
+        );
+      }
+      binding.orbitMaterial.opacity =
+        binding.baseLineOpacity01 *
+        visibility;
+    }
+  }
+
   private renderFrame():
     void {
 
@@ -6400,6 +6883,7 @@ class ThreeSystemSceneRuntime
       orientCompactBlackHoleToCamera(blackHole, this.camera);
     }
     this.updateBodyLightDirections();
+    this.updateArtificialSatelliteLighting();
     if (this.compactBlackHoleBodyOcclusion.length > 0) {
       // Camera and orbital motion can both reverse near/far order at any time.
       this.scene.updateMatrixWorld(true);

@@ -1501,6 +1501,7 @@ describe(
           comets: false,
           transNeptunianObjects: false,
           capturedObjects: false,
+          artificialSatellites: false,
         });
 
         moonButton?.click();
@@ -1583,6 +1584,7 @@ describe(
           comets: true,
           transNeptunianObjects: true,
           capturedObjects: true,
+          artificialSatellites: false,
         });
       },
     );

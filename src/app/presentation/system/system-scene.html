@@ -133,6 +133,17 @@
       CAPTURADOS · {{ capturedObjectCount() }}
     </button>
 
+    <button
+      type="button"
+      data-testid="system-scene-layer-artificial-satellites"
+      [attr.aria-pressed]="artificialSatellitesVisible()"
+      [disabled]="artificialSatellitePlanetCount() === 0"
+      [class.system-scene__layer-button--active]="artificialSatellitesVisible()"
+      (click)="toggleArtificialSatellites()"
+    >
+      SAT. ART. · {{ artificialSatelliteCount() }}
+    </button>
+
     @if (laboratoryOrbitControls || laboratoryMultipleControls || gameplaySceneControls) {
       <button
         type="button"

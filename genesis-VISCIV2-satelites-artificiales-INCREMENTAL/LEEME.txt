@@ -1,0 +1,17 @@
+VISCIV2 — Satélites artificiales de telecomunicaciones/observación
+
+Archivos incluidos:
+- src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts
+- src/app/presentation/system/system-scene.ts
+- src/app/presentation/system/system-scene.html
+- src/app/presentation/system/system-scene.spec.ts
+- src/app/presentation/scientific-body-preview/scientific-body-preview.ts
+- src/app/presentation/scientific-body-preview/scientific-body-preview.html
+
+Resumen:
+- Añade representación procedural determinista de satélites artificiales para planetas con civilización ADVANCED o VERY_ADVANCED.
+- Añade un toggle de capa en la escena 3D del sistema (por defecto desactivado).
+- Añade un botón en la ficha/preview planetaria (por defecto desactivado).
+- Los satélites se muestran como pequeños puntos en órbita con su traza orbital.
+- Su visibilidad se atenúa/refuerza según la iluminación visible del planeta.
+- No se toca base de datos ni persistencia.

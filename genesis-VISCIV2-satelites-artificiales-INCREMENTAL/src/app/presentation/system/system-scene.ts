@@ -1,0 +1,9146 @@
+import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
+import { buildAtmosphereOpticalScienceV1 } from './system-scene-atmosphere-optical-science';
+import { resolveSystemSceneAtmospherePhotosphereKelvinV4 } from './system-scene-atmosphere-photosphere-v4';
+import { systemSceneCometActivityVisualParityV1 } from './system-scene-comet-activity-parity';
+import { createSystemSceneTnoRenderableV1 } from './system-scene-tno-renderable';
+import { createSystemSceneCapturedRenderableV1 } from './system-scene-captured-renderable';
+import { v2CometStellarIrradianceAtDay } from './system-scene-v2-comet-stellar-flux';
+import {
+  isPlatformBrowser,
+} from '@angular/common';
+
+import {
+  RouterLink,
+} from '@angular/router';
+
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  inject,
+  InjectionToken,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  PLATFORM_ID,
+  signal,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
+
+import * as THREE from 'three';
+import { createCompactHostLaboratoryVisual, orientCompactBlackHoleToCamera } from './system-compact-host-laboratory-visual';
+import { prepareCompactBlackHoleBodyOcclusion, updateCompactBlackHoleBodyOcclusion, type CompactBlackHoleBodyOcclusionBinding } from './system-compact-black-hole-occlusion';
+import { ExtremeType } from '../../domain/galactic-object/extreme-object-type';
+import { type LaboratoryCompactSceneGraph } from '../laboratory/galactic-objects/laboratory-compact-scene-graph';
+
+import {
+  type MinorBodyKindValue,
+} from '../../domain/planetary/minor-body-kind';
+
+import {
+  scientificRouteQueryParams,
+} from '../scientific/scientific-route-identity';
+
+import {
+  type SystemSceneAsteroidBeltSnapshot,
+  type SystemSceneBodySnapshot,
+  type SystemSceneHabitableZoneSnapshot,
+  type SystemSceneMoonSnapshot,
+  type SystemSceneMinorBodySnapshot,
+  type SystemSceneMotionContributionSnapshot,
+  type SystemSceneOrbitalRiskTargetSnapshot,
+  type SystemSceneOrbitalMotionSnapshot,
+  type SystemSceneOrbitSnapshot,
+  type SystemSceneSnapshot,
+} from './system-scene-snapshot';
+
+import {
+  SystemSimulationClock,
+} from './system-simulation-clock';
+
+import {
+  systemSceneScientificAccess,
+} from './system-scene-scientific-access';
+
+import {
+  SystemSceneCameraController,
+} from './system-scene-camera-controller';
+
+import {
+  laboratoryStarDistances,
+  laboratorySubsystemRadius,
+  productionStarFocusRadius,
+  type LaboratoryStarDistance,
+} from './system-scene-laboratory-controls';
+import { ArchiveStellarSystemKnowledgeLevel } from '../genesis-archive/archive-stellar-system-card';
+import { systemSceneGameplayHostLayout, systemSceneHabitableZoneHostLabel } from './system-scene-gameplay-hosts';
+import { systemScenePlanetFicheRoute, systemSceneMoonFicheRoute } from './system-scene-scientific-route';
+
+import {
+  buildSystemSceneBodyCard,
+  type SystemSceneBodyCard,
+} from './system-scene-body-card';
+
+import {
+  SystemSceneActiveTime,
+  systemSceneAnimationLoopRequired,
+} from './system-scene-active-time';
+
+import {
+  projectSystemSceneMotionContributions,
+  sampleSystemSceneOrbitLocalAu,
+} from './system-scene-motion-projection';
+
+import {
+  assertSystemSceneProjectionSnapshot,
+} from './system-scene-projection-contract';
+
+import {
+  SystemSceneHabitableZoneVisualRegimeV4,
+} from './system-scene-multistellar-presentation';
+
+import {
+  systemSceneBodyAxialTiltRadians,
+  systemSceneBodyDisplaySpinRadians,
+  systemSceneSphereSegments,
+} from './system-scene-body-render-state';
+
+import { refinePlanetRgbaTextureV1, PLANET_TEXTURE_DETAIL_SIZES_V1, type PlanetTextureRefinementKind } from './system-scene-planet-texture-refinement';
+
+import {
+  buildSystemSceneArtificialSatellitePlansV1,
+  supportsSystemSceneArtificialSatellitesV1,
+} from './system-scene-artificial-satellites-visciv2';
+
+import {
+  buildSystemScenePlanetTextureV1,
+  systemScenePlanetTextureSeed,
+  type SystemScenePlanetTextureSurfaceStyle,
+} from './system-scene-planet-texture';
+
+import {
+  buildSystemScenePlanetSurfaceTextureV1,
+  systemScenePlanetSurfaceTextureSeedV1,
+  type SystemScenePlanetVegetationProfileV1,
+  type SystemScenePlanetSurfaceTextureData,
+} from './system-scene-planet-surface-texture';
+import { buildSystemScenePlanetNightLightsV1 } from './system-scene-planet-night-lights-visciv1';
+import { systemScenePlanetTextureCacheKeyVISCIV1b } from './system-scene-planet-civilization-cache-visciv1b';
+import type { Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
+
+import {
+  buildSystemSceneGiantAtmosphereTextureV1,
+  type SystemSceneGiantAtmosphereTextureData,
+} from './system-scene-giant-atmosphere-texture';
+
+import {
+  buildSystemSceneGlslMaterialProfileV1,
+  installSystemSceneGlslMaterialV1,
+} from './system-scene-glsl-material';
+
+import {
+  buildSystemSceneAtmosphereOpticsV1,
+  type SystemSceneAtmosphereOpticsV1,
+} from './system-scene-atmosphere-optics';
+
+import {
+  createSystemSceneAsteroidRenderableV1,
+} from './system-scene-asteroid-geometry';
+
+import {
+  systemSceneCometActivityAtSimulationDayV1,
+} from './system-scene-comet-presentation';
+
+import {
+  applySystemSceneCometActivityVisualV1,
+  createSystemSceneCometRenderableV1,
+  type SystemSceneCometActivityBindingV1,
+} from './system-scene-comet-renderable';
+
+import {
+  createSystemSceneRingRenderableV1,
+} from './system-scene-ring-renderable';
+
+import {
+  createSystemSceneMoonRenderableV1,
+  type SystemSceneMoonTextureResourceV1,
+} from './system-scene-moon-renderable';
+
+import {
+  systemSceneMoonDisplaySpinRadiansV2,
+} from './system-scene-moon-spin-presentation';
+
+import {
+  SystemSceneBoundedResourceCacheV1,
+} from './system-scene-resource-cache';
+
+import {
+  SystemSceneSphereGeometryPoolV1,
+} from './system-scene-geometry-pool';
+
+import {
+  systemSceneBodyLodLevelV1,
+  systemSceneProjectedDiameterPixelsV1,
+  type SystemSceneBodyLodKindV1,
+  type SystemSceneBodyLodLevelV1,
+} from './system-scene-lod';
+
+import {
+  buildSystemSceneDayNightMaterialProfileV1,
+  createSystemSceneAtmosphereShellMaterialV1,
+  installSystemSceneDayNightMaterialV1,
+  type SystemScenePlanetLightBindingV1,
+} from './system-scene-atmosphere-material';
+
+import {
+  createV2BodyLightBinding,
+  installV2BodyLightingOnSurfaces,
+  installV2MoonAtmosphereLighting,
+  v2SmallBodyDayNightProfile,
+  systemSceneLightingTargets,
+  v2TripleBodyLightFluxes,
+  v2TripleLightingSources,
+} from './system-scene-v2-body-lighting';
+
+import {
+  buildSystemSceneRenderBackendAssessmentV1,
+  systemSceneWebGpuApiAvailable,
+  type SystemSceneRenderBackendAssessmentV1,
+  type SystemSceneShaderPipeline,
+  type SystemSceneWebGpuEvaluation,
+} from './system-scene-render-backend';
+
+import {
+  SystemSceneProjectionSpace,
+  systemSceneProjectAuVectorInSpace,
+  type SystemSceneScaleSnapshot,
+} from './system-scene-scale-projection';
+
+
+const MAX_DEVICE_PIXEL_RATIO =
+  2;
+
+const ORBIT_SEGMENT_COUNT =
+  160;
+
+export type SystemSceneRenderState =
+  | 'initializing'
+  | 'ready'
+  | 'unavailable'
+  | 'error';
+
+export interface SystemSceneRenderInfo {
+  readonly renderer:
+    'WEBGL2';
+
+  readonly shaderPipeline:
+    SystemSceneShaderPipeline;
+
+  readonly webGpuEvaluation:
+    SystemSceneWebGpuEvaluation;
+
+  readonly physicalBodyCount:
+    number;
+
+  readonly sceneObjectCount:
+    number;
+}
+
+export interface SystemSceneSelection {
+  readonly bodyId:
+    string;
+
+  readonly kind:
+    'star' |
+    'planet' |
+    'moon' |
+    'minor-body';
+
+  readonly label:
+    string;
+
+  readonly title:
+    string;
+}
+
+export type SystemSceneSelectionChangeHandler =
+  (
+    selection:
+      SystemSceneSelection | null,
+  ) => void;
+
+export type SystemSceneMinorBodyLayerKey =
+  | 'asteroids'
+  | 'comets'
+  | 'transNeptunianObjects'
+  | 'capturedObjects';
+
+export interface SystemSceneLayerVisibility {
+  /** Only supplied by the binary/triple laboratory. */
+  readonly orbits?: boolean;
+  readonly planets:
+    boolean;
+
+  readonly moons:
+    boolean;
+
+  readonly habitableZone:
+    boolean;
+
+  readonly orbitalRisk:
+    boolean;
+
+  readonly asteroids:
+    boolean;
+
+  readonly comets:
+    boolean;
+
+  readonly transNeptunianObjects:
+    boolean;
+
+  readonly capturedObjects:
+    boolean;
+
+  readonly artificialSatellites:
+    boolean;
+}
+
+type SystemSceneSelectableBodySnapshot =
+  | SystemSceneBodySnapshot
+  | SystemSceneMoonSnapshot
+  | SystemSceneMinorBodySnapshot;
+
+interface SystemSceneMinorBodyInstanceBatchV1 {
+  readonly mesh: THREE.InstancedMesh;
+  readonly groups: THREE.Group[];
+  readonly radiiScene: number[];
+}
+
+interface SystemScenePendingMoonVisualV1 {
+  readonly moon: SystemSceneMoonSnapshot;
+  readonly spinPivot: THREE.Group;
+}
+
+export interface SystemSceneRuntime {
+  resize(
+    width:
+      number,
+
+    height:
+      number,
+
+    devicePixelRatio:
+      number,
+  ): void;
+
+  render(
+    snapshot:
+      SystemSceneSnapshot,
+    laboratoryCloseZoom?: boolean,
+  ): SystemSceneRenderInfo;
+
+  resetView?():
+    void;
+
+  followBody?(
+    bodyId:
+      string,
+  ): boolean;
+
+  focusLaboratorySystem?(starId: string, radiusScene: number): boolean;
+
+  stopFollowing?():
+    void;
+
+  setLayerVisibility?(
+    visibility:
+      SystemSceneLayerVisibility,
+  ): void;
+
+  setPageVisible?(
+    visible:
+      boolean,
+  ): void;
+
+  dispose():
+    void;
+}
+
+export type SystemSceneRuntimeFactory =
+  (
+    canvas:
+      HTMLCanvasElement,
+
+    onSelectionChange?:
+      SystemSceneSelectionChangeHandler,
+    onSimulationDay?: (simulationDay: number) => void,
+  ) => SystemSceneRuntime;
+
+export class SystemSceneWebGl2UnavailableError
+  extends Error {
+
+  constructor() {
+    super(
+      'WebGL2 is unavailable for the GENESIS stellar-system scene.',
+    );
+
+    this.name =
+      'SystemSceneWebGl2UnavailableError';
+  }
+}
+
+export const SYSTEM_SCENE_RUNTIME_FACTORY =
+  new InjectionToken<SystemSceneRuntimeFactory>(
+    'SYSTEM_SCENE_RUNTIME_FACTORY',
+    {
+      providedIn:
+        'root',
+
+      factory:
+        () =>
+          (
+            canvas:
+              HTMLCanvasElement,
+
+            onSelectionChange?:
+              SystemSceneSelectionChangeHandler,
+            onSimulationDay?: (simulationDay: number) => void,
+          ) =>
+            createThreeSystemSceneRuntime(
+              canvas,
+              onSelectionChange,
+              onSimulationDay,
+            ),
+    },
+  );
+
+/**
+ * Through point-25.2 Angular host for the stellar-system Three.js scene.
+ *
+ * The component owns browser lifecycle, canvas sizing and renderer disposal.
+ * It receives a frozen presentation snapshot and never computes authoritative
+ * stellar or planetary physics.
+ */
+@Component({
+  selector:
+    'app-system-scene',
+
+  standalone:
+    true,
+
+  imports: [
+    RouterLink,
+  ],
+
+  templateUrl:
+    './system-scene.html',
+
+  styleUrl:
+    './system-scene.scss',
+
+  changeDetection:
+    ChangeDetectionStrategy.OnPush,
+})
+export class SystemScene
+  implements
+    AfterViewInit,
+    OnChanges,
+    OnDestroy {
+
+  @Input({
+    required:
+      true,
+  })
+  snapshot!:
+    SystemSceneSnapshot;
+
+  /** Opt-in camera-only close-up, enabled exclusively by the laboratory. */
+  @Input()
+  laboratoryCloseZoom = false;
+
+  /** Opt-in controls for composed multiples, never enabled by /system. */
+  @Input()
+  laboratoryMultipleControls = false;
+
+  /** Opt-in orbit-guide toggle for SINGLE laboratory previews as well. */
+  @Input()
+  laboratoryOrbitControls = false;
+
+  /** Gameplay controls operate on the canonical snapshot, never on lab fixtures. */
+  @Input()
+  gameplaySceneControls = false;
+
+  /**
+   * Optional QA-only route exposed by hosts that deliberately allow opening
+   * the phase-26.2 stellar scientific fiche from a selected star. Production
+   * SystemPage leaves this null, so the navigation sheet stays gameplay-safe.
+   */
+  @Input()
+  stellarFicheQaRoute:
+    string | null =
+    null;
+
+  @Output()
+  readonly renderInfoChange =
+    new EventEmitter<SystemSceneRenderInfo>();
+
+  @Output()
+  readonly bodySelectionChange =
+    new EventEmitter<SystemSceneSelection | null>();
+
+  @ViewChild(
+    'sceneHost',
+    {
+      static:
+        true,
+    },
+  )
+  private sceneHostRef!:
+    ElementRef<HTMLElement>;
+
+  @ViewChild(
+    'sceneCanvas',
+    {
+      static:
+        true,
+    },
+  )
+  private sceneCanvasRef!:
+    ElementRef<HTMLCanvasElement>;
+
+  private readonly platformId =
+    inject(
+      PLATFORM_ID,
+    );
+
+  private readonly runtimeFactory =
+    inject(
+      SYSTEM_SCENE_RUNTIME_FACTORY,
+    );
+
+  private runtime:
+    SystemSceneRuntime | null =
+    null;
+
+  private resizeObserver:
+    ResizeObserver | null =
+    null;
+
+  private listeningToWindowResize =
+    false;
+
+  private listeningToDocumentVisibility =
+    false;
+
+  private readonly onWindowResize =
+    () => {
+      this.resizeRuntime();
+    };
+
+  private readonly onDocumentVisibilityChange =
+    () => {
+      this.applyDocumentVisibility();
+    };
+
+  private readonly renderStateSignal =
+    signal<SystemSceneRenderState>(
+      'initializing',
+    );
+
+  private readonly renderInfoSignal =
+    signal<SystemSceneRenderInfo | null>(
+      null,
+    );
+
+  private readonly selectionSignal =
+    signal<SystemSceneSelection | null>(
+      null,
+    );
+
+  private readonly trackingSelectionSignal =
+    signal<SystemSceneSelection | null>(
+      null,
+    );
+
+  private readonly bodyCardOpenSignal =
+    signal(
+      false,
+    );
+
+  private readonly planetsVisibleSignal =
+    signal(
+      true,
+    );
+
+  private readonly moonsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly habitableZoneVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly orbitalRiskVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly asteroidsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly cometsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly transNeptunianObjectsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly capturedObjectsVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly artificialSatellitesVisibleSignal =
+    signal(
+      false,
+    );
+
+  private readonly orbitLinesVisibleSignal = signal(true);
+  private readonly focusedLaboratoryStarSignal = signal<string | null>(null);
+  private readonly laboratoryDistancesSignal = signal<readonly LaboratoryStarDistance[]>([]);
+
+  readonly orbitLinesVisible = this.orbitLinesVisibleSignal.asReadonly();
+  readonly focusedLaboratoryStar = this.focusedLaboratoryStarSignal.asReadonly();
+  readonly laboratoryDistances = this.laboratoryDistancesSignal.asReadonly();
+
+  /** Rendered host population only; the simulation/scientific sources stay authoritative. */
+  gameplayHostLayout() {
+    return this.gameplaySceneControls ? systemSceneGameplayHostLayout(this.snapshot) : [];
+  }
+
+  habitableZoneHostLabel(zone: SystemSceneHabitableZoneSnapshot): string {
+    return systemSceneHabitableZoneHostLabel(this.snapshot, zone);
+  }
+
+
+  toggleOrbitLines(): void {
+    if (!this.laboratoryOrbitControls && !this.laboratoryMultipleControls &&
+        !this.gameplaySceneControls) return;
+    this.orbitLinesVisibleSignal.update(value => !value);
+    this.applyLayerVisibility();
+  }
+
+  /** Production reveals stellar telemetry only when its orbit is catalogued. */
+  stellarDistanceControlsAvailable(): boolean {
+    if (this.snapshot.stars.length < 2) return false;
+    if (this.laboratoryMultipleControls) return true;
+    return this.gameplaySceneControls &&
+      (this.snapshot.knowledgeLevel === ArchiveStellarSystemKnowledgeLevel.CATALOGUED ||
+       this.snapshot.knowledgeLevel === ArchiveStellarSystemKnowledgeLevel.CONFIRMED) &&
+      this.snapshot.orbits.some(orbit => orbit.kind === 'stellar') &&
+      this.snapshot.stars.every(star => star.motionContributions.length > 0) &&
+      this.snapshot.motions.length > 0;
+  }
+
+  centerLaboratorySystem(starId: string): void {
+    if ((!this.laboratoryMultipleControls && !this.gameplaySceneControls) ||
+        this.snapshot.stars.length < 2 ||
+        !this.snapshot.stars.some(star => star.id === starId)) return;
+    const radius = this.laboratoryMultipleControls
+      ? laboratorySubsystemRadius(this.snapshot, starId)
+      : productionStarFocusRadius(this.snapshot, starId);
+    if (this.runtime?.focusLaboratorySystem?.(starId, radius)) {
+      this.focusedLaboratoryStarSignal.set(starId);
+      this.trackingSelectionSignal.set(null);
+    }
+  }
+
+  private updateLaboratoryDistances(day: number): void {
+    if (this.stellarDistanceControlsAvailable()) {
+      this.laboratoryDistancesSignal.set(laboratoryStarDistances(this.snapshot, day));
+    } else {
+      this.laboratoryDistancesSignal.set([]);
+    }
+  }
+
+  readonly planetsVisible =
+    this.planetsVisibleSignal.asReadonly();
+
+  readonly moonsVisible =
+    this.moonsVisibleSignal.asReadonly();
+
+  readonly habitableZoneVisible =
+    this.habitableZoneVisibleSignal.asReadonly();
+
+  readonly orbitalRiskVisible =
+    this.orbitalRiskVisibleSignal.asReadonly();
+
+  readonly asteroidsVisible =
+    this.asteroidsVisibleSignal.asReadonly();
+
+  readonly cometsVisible =
+    this.cometsVisibleSignal.asReadonly();
+
+  readonly transNeptunianObjectsVisible =
+    this.transNeptunianObjectsVisibleSignal.asReadonly();
+
+  readonly capturedObjectsVisible =
+    this.capturedObjectsVisibleSignal.asReadonly();
+
+  readonly artificialSatellitesVisible =
+    this.artificialSatellitesVisibleSignal.asReadonly();
+
+  readonly selection =
+    this
+      .selectionSignal
+      .asReadonly();
+
+  readonly trackingSelection =
+    this
+      .trackingSelectionSignal
+      .asReadonly();
+
+  readonly bodyCardOpen =
+    this
+      .bodyCardOpenSignal
+      .asReadonly();
+
+  readonly renderState =
+    this
+      .renderStateSignal
+      .asReadonly();
+
+  readonly renderInfo =
+    this
+      .renderInfoSignal
+      .asReadonly();
+
+  scientificBodyFichesUnlocked():
+    boolean {
+    return systemSceneScientificAccess(
+      this.snapshot.discoveryStateCode,
+    ).scientificBodyFichesUnlocked;
+  }
+
+  scientificBodyFicheAccessCode():
+    'LOCKED' |
+    'UNLOCKED' {
+    return this.scientificBodyFichesUnlocked()
+      ? 'UNLOCKED'
+      : 'LOCKED';
+  }
+
+  planetScientificFicheRoute(): readonly string[] | null {
+    const selection = this.selectionSignal();
+    return this.scientificBodyFichesUnlocked() && selection?.kind === 'planet'
+      ? systemScenePlanetFicheRoute(this.snapshot, selection.bodyId) : null;
+  }
+
+  moonScientificFicheRoute(): readonly string[] | null {
+    const selection = this.selectionSignal();
+    return this.scientificBodyFichesUnlocked() && selection?.kind === 'moon'
+      ? systemSceneMoonFicheRoute(this.snapshot, selection.bodyId) : null;
+  }
+
+  minorBodyScientificFicheRoute():
+    readonly string[] | null {
+
+    if (
+      !this.scientificBodyFichesUnlocked()
+    ) {
+      return null;
+    }
+
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection ===
+        null ||
+      selection.kind !==
+        'minor-body'
+    ) {
+      return null;
+    }
+
+    const body =
+      this.snapshot.minorBodies.find(
+        candidate =>
+          candidate.id ===
+          selection.bodyId,
+      );
+
+    if (
+      body ===
+        undefined
+    ) {
+      return null;
+    }
+
+    const targetKind =
+      body.minorBodyKind.name ===
+        'ASTEROID'
+        ? 'asteroid'
+        : body.minorBodyKind.name ===
+          'COMET'
+          ? 'comet'
+          : body.minorBodyKind.name ===
+            'TRANS_NEPTUNIAN_OBJECT'
+            ? 'tno'
+            : body.minorBodyKind.name === 'CAPTURED_EXTRASOLAR_OBJECT'
+              ? 'captured'
+              : null;
+
+    if (
+      targetKind ===
+        null
+    ) {
+      return null;
+    }
+
+    const match =
+      /^(?:mh-[abc]-)?minor-\d+-([0-9A-F]{32})$/.exec(
+        body.id,
+      );
+
+    if (
+      match ===
+        null
+    ) {
+      return null;
+    }
+
+    return Object.freeze([
+      '/system',
+      this.snapshot.address.galaxyIndex,
+      this.snapshot.address.sectorKey,
+      this.snapshot.address.galacticObjectIndex,
+      'minor-body',
+      targetKind,
+      match[1]!,
+    ]);
+  }
+
+  planetScientificFicheQueryParams():
+    Readonly<{
+      u: string;
+    }> {
+
+    return scientificRouteQueryParams(
+      this.snapshot.universeSeed,
+      this.snapshot.generatorVersionCode,
+    );
+  }
+
+  planetCount():
+    number {
+    return this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0);
+  }
+
+  habitableZoneCount():
+    number {
+    return this.snapshot.habitableZones?.length ??
+      (this.snapshot.layers.habitableZoneAvailable ? 1 : 0);
+  }
+
+  asteroidBeltCount():
+    number {
+    return this.snapshot.asteroidBelts
+      ?.length ??
+      0;
+  }
+
+  asteroidLayerAvailable():
+    boolean {
+    return this.asteroidCount() >
+      0 ||
+      this.asteroidBeltCount() >
+      0;
+  }
+
+  asteroidBeltLegend():
+    string {
+    return (
+      this.snapshot.asteroidBelts ?? []
+    )
+      .map(
+        belt =>
+          `${belt.region} ${this.formatAu(belt.innerEdgeAu)}–${this.formatAu(belt.outerEdgeAu)} AU · pico ${this.formatAu(belt.peakAu)} AU`,
+      )
+      .join(' · ');
+  }
+
+  orbitalRiskTargetCount():
+    number {
+    return this.snapshot.layers.orbitalRiskTargetCount;
+  }
+
+  orbitalRiskRelevantTargetCount():
+    number {
+    return this.snapshot.orbitalRiskTargets.length;
+  }
+
+  orbitalRiskLayerAvailable(): boolean {
+    return this.snapshot.orbitalRiskEvaluated === true ||
+      this.snapshot.orbitalRiskTargets.length > 0;
+  }
+
+  orbitalCrossingTargetCount():
+    number {
+    return this.snapshot.layers.orbitalCrossingTargetCount;
+  }
+
+  orbitalApproachTargetCount():
+    number {
+    return this.snapshot.layers.orbitalApproachTargetCount;
+  }
+
+  orbitalCollisionGeometryTargetCount():
+    number {
+    return this.snapshot.layers.orbitalCollisionGeometryTargetCount;
+  }
+
+  selectedOrbitalRiskTarget():
+    SystemSceneOrbitalRiskTargetSnapshot | null {
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection === null
+    ) {
+      return null;
+    }
+
+    return this.snapshot.orbitalRiskTargets.find(
+      target =>
+        target.targetBodyId === selection.bodyId,
+    ) ?? null;
+  }
+
+  formatAu(
+    value:
+      number | null,
+  ): string {
+    if (
+      value === null
+    ) {
+      return '—';
+    }
+
+    return value < 0.1
+      ? value.toFixed(3)
+      : value < 10
+        ? value.toFixed(2)
+        : value.toFixed(1);
+  }
+
+  asteroidCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'asteroids',
+    );
+  }
+
+  cometCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'comets',
+    );
+  }
+
+  transNeptunianObjectCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'transNeptunianObjects',
+    );
+  }
+
+  capturedObjectCount():
+    number {
+    return this.minorBodyCountForLayer(
+      'capturedObjects',
+    );
+  }
+
+  artificialSatellitePlanetCount():
+    number {
+    return this.snapshot.planets.filter(
+      planet => supportsSystemSceneArtificialSatellitesV1(
+        planet.visualCivilizationTier ?? null,
+      ),
+    ).length;
+  }
+
+  togglePlanets():
+    void {
+
+    if (
+      this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0) ===
+        0
+    ) {
+      return;
+    }
+
+    this.planetsVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleMoons():
+    void {
+
+    if (
+      this.snapshot.layers.moonCount ===
+        0
+    ) {
+      return;
+    }
+
+    this.moonsVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleHabitableZone():
+    void {
+
+    if (
+      !this.snapshot.layers.habitableZoneAvailable
+    ) {
+      return;
+    }
+
+    this.habitableZoneVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleOrbitalRisk():
+    void {
+
+    if (!this.orbitalRiskLayerAvailable()) {
+      return;
+    }
+
+    this.orbitalRiskVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  toggleAsteroids():
+    void {
+    this.toggleMinorBodyLayer(
+      'asteroids',
+    );
+  }
+
+  toggleComets():
+    void {
+    this.toggleMinorBodyLayer(
+      'comets',
+    );
+  }
+
+  toggleTransNeptunianObjects():
+    void {
+    this.toggleMinorBodyLayer(
+      'transNeptunianObjects',
+    );
+  }
+
+  toggleCapturedObjects():
+    void {
+    this.toggleMinorBodyLayer(
+      'capturedObjects',
+    );
+  }
+
+  toggleArtificialSatellites():
+    void {
+
+    if (
+      this.artificialSatellitePlanetCount() ===
+        0
+    ) {
+      return;
+    }
+
+    this.artificialSatellitesVisibleSignal.update(
+      value =>
+        !value,
+    );
+
+    this.applyLayerVisibility();
+  }
+
+  selectionKindLabel(
+    kind:
+      SystemSceneSelection['kind'],
+  ): string {
+    switch (
+      kind
+    ) {
+      case 'star':
+        return 'ESTRELLA';
+      case 'planet':
+        return 'PLANETA';
+      case 'moon':
+        return 'LUNA';
+      default:
+        return 'CUERPO MENOR';
+    }
+  }
+
+  selectedBodyCard():
+    SystemSceneBodyCard | null {
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection ===
+        null
+    ) {
+      return null;
+    }
+
+    return buildSystemSceneBodyCard(
+      this.snapshot,
+      selection.bodyId,
+    );
+  }
+
+  openSelectedBodyCard():
+    void {
+    if (
+      this.selectionSignal() !==
+        null
+    ) {
+      this.bodyCardOpenSignal.set(
+        true,
+      );
+    }
+  }
+
+  closeSelectedBodyCard():
+    void {
+    this.bodyCardOpenSignal.set(
+      false,
+    );
+  }
+
+  isSelectedBodyTracked():
+    boolean {
+    const selection =
+      this.selectionSignal();
+
+    const trackingSelection =
+      this.trackingSelectionSignal();
+
+    return (
+      selection !== null &&
+      trackingSelection !== null &&
+      selection.bodyId ===
+        trackingSelection.bodyId
+    );
+  }
+
+  followSelectedBody():
+    void {
+    const selection =
+      this.selectionSignal();
+
+    if (
+      selection === null
+    ) {
+      return;
+    }
+
+    const followed =
+      this.runtime
+        ?.followBody
+        ?.(
+          selection.bodyId,
+        ) ??
+      false;
+
+    if (
+      followed
+    ) {
+      this.focusedLaboratoryStarSignal.set(null);
+      this.trackingSelectionSignal.set(
+        selection,
+      );
+    }
+  }
+
+  ngAfterViewInit():
+    void {
+
+    if (
+      !isPlatformBrowser(
+        this.platformId,
+      )
+    ) {
+      this
+        .renderStateSignal
+        .set(
+          'unavailable',
+        );
+
+      return;
+    }
+
+    try {
+      this.runtime =
+        this
+          .runtimeFactory(
+            this
+              .sceneCanvasRef
+              .nativeElement,
+            selection => {
+              this
+                .selectionSignal
+                .set(
+                  selection,
+                );
+
+              this
+                .bodyCardOpenSignal
+                .set(
+                  selection !==
+                    null,
+                );
+
+              this
+                .bodySelectionChange
+                .emit(
+                  selection,
+                );
+            },
+            day => this.updateLaboratoryDistances(day),
+          );
+
+      this.installResizeHandling();
+      this.installVisibilityHandling();
+      this.resizeRuntime();
+      this.renderSnapshot();
+    } catch (
+      error
+    ) {
+      this
+        .runtime
+        ?.dispose();
+
+      this.runtime =
+        null;
+
+      this
+        .renderStateSignal
+        .set(
+          error instanceof
+            SystemSceneWebGl2UnavailableError
+            ? 'unavailable'
+            : 'error',
+        );
+    }
+  }
+
+  ngOnChanges(
+    changes:
+      SimpleChanges,
+  ):
+    void {
+
+    if (
+      (changes['snapshot'] !== undefined ||
+        changes['laboratoryCloseZoom'] !== undefined) &&
+      this.runtime !==
+        null
+    ) {
+      this.renderSnapshot();
+    }
+  }
+
+  ngOnDestroy():
+    void {
+
+    this.removeResizeHandling();
+    this.removeVisibilityHandling();
+
+    this
+      .runtime
+      ?.dispose();
+
+    this.runtime =
+      null;
+  }
+
+  resetView():
+    void {
+
+    this
+      .runtime
+      ?.resetView
+      ?.();
+
+    this.trackingSelectionSignal.set(
+      null,
+    );
+    this.focusedLaboratoryStarSignal.set(null);
+  }
+
+  private applyLayerVisibility():
+    void {
+
+    this.runtime
+      ?.setLayerVisibility?.({
+        ...(this.laboratoryOrbitControls || this.laboratoryMultipleControls || this.gameplaySceneControls
+          ? { orbits: this.orbitLinesVisibleSignal() } : {}),
+        planets:
+          this.planetsVisibleSignal() &&
+          this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0) >
+            0,
+        moons:
+          this.moonsVisibleSignal() &&
+          this.snapshot.layers.moonCount >
+            0,
+        habitableZone:
+          this.habitableZoneVisibleSignal() &&
+          this.snapshot.layers.habitableZoneAvailable,
+        orbitalRisk:
+          this.orbitalRiskVisibleSignal() &&
+          this.snapshot.orbitalRiskTargets.length >
+            0,
+        asteroids:
+          this.asteroidsVisibleSignal() &&
+          this.asteroidLayerAvailable(),
+        comets:
+          this.cometsVisibleSignal() &&
+          this.cometCount() >
+            0,
+        transNeptunianObjects:
+          this.transNeptunianObjectsVisibleSignal() &&
+          this.transNeptunianObjectCount() >
+            0,
+        capturedObjects:
+          this.capturedObjectsVisibleSignal() &&
+          this.capturedObjectCount() >
+            0,
+        artificialSatellites:
+          this.artificialSatellitesVisibleSignal() &&
+          this.artificialSatellitePlanetCount() >
+            0,
+      });
+
+    const trackingSelection =
+      this.trackingSelectionSignal();
+
+    if (
+      trackingSelection !==
+        null &&
+      !this.isSelectionVisible(
+        trackingSelection,
+      )
+    ) {
+      this.trackingSelectionSignal.set(
+        null,
+      );
+    }
+  }
+
+  private isSelectionVisible(
+    selection:
+      SystemSceneSelection,
+  ): boolean {
+    switch (
+      selection.kind
+    ) {
+      case 'star':
+        return true;
+      case 'planet':
+        return this.planetsVisibleSignal();
+      case 'moon':
+        return this.moonsVisibleSignal();
+      case 'minor-body': {
+        const body =
+          this.snapshot.minorBodies.find(
+            candidate =>
+              candidate.id ===
+              selection.bodyId,
+          );
+
+        if (
+          body ===
+            undefined
+        ) {
+          return false;
+        }
+
+        switch (
+          minorBodyLayerKeyForKind(
+            body.minorBodyKind,
+          )
+        ) {
+          case 'asteroids':
+            return this.asteroidsVisibleSignal();
+          case 'comets':
+            return this.cometsVisibleSignal();
+          case 'transNeptunianObjects':
+            return this.transNeptunianObjectsVisibleSignal();
+          case 'capturedObjects':
+            return this.capturedObjectsVisibleSignal();
+        }
+      }
+    }
+  }
+
+  private toggleMinorBodyLayer(
+    layer:
+      SystemSceneMinorBodyLayerKey,
+  ): void {
+
+    if (
+      layer ===
+        'asteroids'
+        ? !this.asteroidLayerAvailable()
+        : this.minorBodyCountForLayer(
+            layer,
+          ) === 0
+    ) {
+      return;
+    }
+
+    switch (
+      layer
+    ) {
+      case 'asteroids':
+        this.asteroidsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+      case 'comets':
+        this.cometsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+      case 'transNeptunianObjects':
+        this.transNeptunianObjectsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+      case 'capturedObjects':
+        this.capturedObjectsVisibleSignal.update(
+          value =>
+            !value,
+        );
+        break;
+    }
+
+    this.applyLayerVisibility();
+  }
+
+  private minorBodyCountForLayer(
+    layer:
+      SystemSceneMinorBodyLayerKey,
+  ): number {
+    return this.snapshot.minorBodies.filter(
+      body =>
+        minorBodyLayerKeyForKind(
+          body.minorBodyKind,
+        ) === layer,
+    ).length;
+  }
+
+  private installResizeHandling():
+    void {
+
+    const host =
+      this
+        .sceneHostRef
+        .nativeElement;
+
+    if (
+      typeof ResizeObserver !==
+        'undefined'
+    ) {
+      this.resizeObserver =
+        new ResizeObserver(
+          () => {
+            this.resizeRuntime();
+          },
+        );
+
+      this
+        .resizeObserver
+        .observe(
+          host,
+        );
+
+      return;
+    }
+
+    window.addEventListener(
+      'resize',
+      this.onWindowResize,
+      {
+        passive:
+          true,
+      },
+    );
+
+    this.listeningToWindowResize =
+      true;
+  }
+
+  private installVisibilityHandling():
+    void {
+
+    document.addEventListener(
+      'visibilitychange',
+      this.onDocumentVisibilityChange,
+      {
+        passive:
+          true,
+      },
+    );
+
+    this.listeningToDocumentVisibility =
+      true;
+
+    this.applyDocumentVisibility();
+  }
+
+  private removeVisibilityHandling():
+    void {
+
+    if (
+      !this.listeningToDocumentVisibility ||
+      !isPlatformBrowser(
+        this.platformId,
+      )
+    ) {
+      return;
+    }
+
+    document.removeEventListener(
+      'visibilitychange',
+      this.onDocumentVisibilityChange,
+    );
+
+    this.listeningToDocumentVisibility =
+      false;
+  }
+
+  private applyDocumentVisibility():
+    void {
+
+    this.runtime
+      ?.setPageVisible?.(
+        document.visibilityState !==
+          'hidden',
+      );
+  }
+
+  private removeResizeHandling():
+    void {
+
+    this
+      .resizeObserver
+      ?.disconnect();
+
+    this.resizeObserver =
+      null;
+
+    if (
+      this.listeningToWindowResize &&
+      isPlatformBrowser(
+        this.platformId,
+      )
+    ) {
+      window.removeEventListener(
+        'resize',
+        this.onWindowResize,
+      );
+    }
+
+    this.listeningToWindowResize =
+      false;
+  }
+
+  private resizeRuntime():
+    void {
+
+    if (
+      this.runtime ===
+        null
+    ) {
+      return;
+    }
+
+    const host =
+      this
+        .sceneHostRef
+        .nativeElement;
+
+    const bounds =
+      host
+        .getBoundingClientRect();
+
+    const width =
+      Math.max(
+        1,
+        Math.round(
+          bounds.width ||
+          host.clientWidth ||
+          1,
+        ),
+      );
+
+    const height =
+      Math.max(
+        1,
+        Math.round(
+          bounds.height ||
+          host.clientHeight ||
+          1,
+        ),
+      );
+
+    this
+      .runtime
+      .resize(
+        width,
+        height,
+        window.devicePixelRatio ||
+          1,
+      );
+  }
+
+  private renderSnapshot():
+    void {
+
+    if (
+      this.runtime ===
+        null
+    ) {
+      return;
+    }
+
+    this.trackingSelectionSignal.set(
+      null,
+    );
+    this.focusedLaboratoryStarSignal.set(null);
+    this.laboratoryDistancesSignal.set([]);
+
+    try {
+      assertSystemSceneProjectionSnapshot(
+        this.snapshot,
+      );
+
+      if (
+        this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0) ===
+          0
+      ) {
+        this.planetsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.snapshot.layers.moonCount ===
+          0
+      ) {
+        this.moonsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        !this.snapshot.layers.habitableZoneAvailable
+      ) {
+        this.habitableZoneVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (!this.orbitalRiskLayerAvailable()) {
+        this.orbitalRiskVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.asteroidCount() ===
+          0
+      ) {
+        this.asteroidsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.cometCount() ===
+          0
+      ) {
+        this.cometsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.transNeptunianObjectCount() ===
+          0
+      ) {
+        this.transNeptunianObjectsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.capturedObjectCount() ===
+          0
+      ) {
+        this.capturedObjectsVisibleSignal.set(
+          false,
+        );
+      }
+
+      if (
+        this.artificialSatellitePlanetCount() ===
+          0
+      ) {
+        this.artificialSatellitesVisibleSignal.set(
+          false,
+        );
+      }
+
+      // Keep the production runtime call's original one-argument contract.
+      // Only the laboratory explicitly opts into the extra camera setting.
+      const info = this.laboratoryCloseZoom
+        ? this.runtime.render(this.snapshot, true)
+        : this.runtime.render(this.snapshot);
+
+      this.updateLaboratoryDistances(this.snapshot.simulation.epochSimulationDay);
+
+      this.applyLayerVisibility();
+
+      this
+        .renderInfoSignal
+        .set(
+          info,
+        );
+
+      this
+        .renderStateSignal
+        .set(
+          'ready',
+        );
+
+      this
+        .renderInfoChange
+        .emit(
+          info,
+        );
+    } catch {
+      this
+        .renderStateSignal
+        .set(
+          'error',
+        );
+    }
+  }
+}
+
+export function systemSceneDevicePixelRatio(
+  devicePixelRatio:
+    number,
+): number {
+
+  if (
+    !Number.isFinite(
+      devicePixelRatio,
+    )
+  ) {
+    return 1;
+  }
+
+  return Math.min(
+    MAX_DEVICE_PIXEL_RATIO,
+    Math.max(
+      1,
+      devicePixelRatio,
+    ),
+  );
+}
+
+function systemSceneVisualExtentRadiusScene(
+  body:
+    SystemSceneSelectableBodySnapshot,
+): number {
+
+  if (
+    body.kind ===
+      'planet' &&
+    body.specialPresentation !==
+      null &&
+    body.specialPresentation.rings !==
+      null
+  ) {
+    return body.radiusScene *
+      body.specialPresentation.rings
+        .outerRadiusPlanetRadii;
+  }
+
+  return body.radiusScene;
+}
+
+export function systemScenePickingRadiusScene(
+  kind:
+    SystemSceneSelectableBodySnapshot['kind'],
+
+  visibleRadiusScene:
+    number,
+): number {
+
+  return kind ===
+    'star'
+    ? Math.max(
+        visibleRadiusScene *
+          1.45,
+        0.13,
+      )
+    : Math.max(
+        visibleRadiusScene *
+          2.4,
+        0.085,
+      );
+}
+
+export function systemSceneCameraFovDegrees(
+  aspect:
+    number,
+): number {
+
+  if (
+    !Number.isFinite(
+      aspect,
+    ) ||
+    aspect <=
+      0
+  ) {
+    return 44;
+  }
+
+  if (
+    aspect <
+      0.9
+  ) {
+    return 54;
+  }
+
+  if (
+    aspect <
+      1.2
+  ) {
+    return 48;
+  }
+
+  return 44;
+}
+
+function currentHighResolutionTimestampMilliseconds():
+  number {
+
+  if (
+    typeof performance !==
+      'undefined' &&
+    typeof performance.now ===
+      'function'
+  ) {
+    const value =
+      performance.now();
+
+    if (
+      Number.isFinite(
+        value,
+      )
+    ) {
+      return value;
+    }
+  }
+
+  return 0;
+}
+
+function minorBodyLayerKeyForKind(
+  kind:
+    MinorBodyKindValue,
+): SystemSceneMinorBodyLayerKey {
+
+  switch (
+    kind.name
+  ) {
+    case 'ASTEROID':
+      return 'asteroids';
+    case 'COMET':
+      return 'comets';
+    case 'TRANS_NEPTUNIAN_OBJECT':
+      return 'transNeptunianObjects';
+    default:
+      return 'capturedObjects';
+  }
+}
+
+function createThreeSystemSceneRuntime(
+  canvas:
+    HTMLCanvasElement,
+
+  onSelectionChange:
+    SystemSceneSelectionChangeHandler =
+    () => {},
+  onSimulationDay?: (simulationDay: number) => void,
+): SystemSceneRuntime {
+
+  return new ThreeSystemSceneRuntime(
+    canvas,
+    onSelectionChange,
+    onSimulationDay,
+  );
+}
+
+class ThreeSystemSceneRuntime
+  implements SystemSceneRuntime {
+
+  private readonly renderer:
+    THREE.WebGLRenderer;
+
+  private readonly backendAssessment:
+    SystemSceneRenderBackendAssessmentV1;
+
+  private readonly scene =
+    new THREE.Scene();
+
+  private readonly camera =
+    new THREE.PerspectiveCamera(
+      44,
+      1,
+      0.01,
+      1_000,
+    );
+
+  private readonly backdropRoot =
+    new THREE.Group();
+
+  private readonly presentationRoot =
+    new THREE.Group();
+
+  private readonly starHaloTexture:
+    THREE.CanvasTexture;
+
+  private readonly starBloomTexture:
+    THREE.CanvasTexture;
+
+  private readonly starGlareTexture:
+    THREE.CanvasTexture;
+
+  private readonly persistentDisposables:
+    Array<{ dispose(): void }> = [];
+
+  private readonly frameDisposables:
+    Array<{ dispose(): void }> = [];
+
+  /** Point-25.11 shared bounded geometry/texture resources. */
+  private readonly sphereGeometryPool =
+    new SystemSceneSphereGeometryPoolV1();
+
+  private readonly planetTextureCache =
+    new SystemSceneBoundedResourceCacheV1<SystemScenePlanetTextureResourceV1>(
+      18,
+      12 * 1024 * 1024,
+    );
+
+  private readonly moonTextureCache =
+    new SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1>(
+      32,
+      6 * 1024 * 1024,
+    );
+
+  /** Shared laboratory visuals driven by this runtime's simulation clock. */
+  private readonly compactVisualBindings = new Map<string, LaboratoryCompactSceneGraph>();
+  /** Only BH graphs are screen-facing: NS beams and fields keep genuine 3D rotation. */
+  private readonly compactBlackHoleBillboards: THREE.Group[] = [];
+  /** 31.4i.1: planets, moons and minor bodies share BH foreground/background ordering. */
+  private readonly compactBlackHoleBodyOcclusion: CompactBlackHoleBodyOcclusionBinding[] = [];
+
+  private readonly bodyLodBindings =
+    new Map<string, SystemSceneBodyLodBindingV1>();
+
+  /** VIS-3D.1: at most one near-camera planet carries extra GPU texture maps. */
+  private detailedPlanetTexture: {
+    id: string;
+    material: THREE.MeshStandardMaterial;
+    originalMap: THREE.Texture | null;
+    originalRoughness: THREE.Texture | null;
+    originalBump: THREE.Texture | null;
+    originalEmissive: THREE.Texture | null;
+    cloudMaterial: THREE.MeshStandardMaterial | null;
+    originalCloud: THREE.Texture | null;
+    detailTextures: readonly THREE.DataTexture[];
+  } | null = null;
+
+
+  /** Hidden moon layers defer 25.10 texture/material creation until first reveal. */
+  private readonly pendingMoonVisuals =
+    new Map<string, SystemScenePendingMoonVisualV1>();
+
+  private viewportHeightPixels =
+    720;
+
+  /** One invisible instanced picking batch replaces one proxy mesh per body. */
+  private selectionProxyBatch:
+    THREE.InstancedMesh | null =
+    null;
+
+  private readonly selectionProxyBodyIds:
+    string[] = [];
+
+  private readonly selectionProxyGroups:
+    THREE.Group[] = [];
+
+  private readonly selectionProxyRadii:
+    number[] = [];
+
+  private readonly selectionProxyMatrix =
+    new THREE.Matrix4();
+
+  private readonly selectionProxyScale =
+    new THREE.Vector3();
+
+  private readonly selectionProxyPosition =
+    new THREE.Vector3();
+
+  private readonly selectionProxyQuaternion =
+    new THREE.Quaternion();
+
+  private readonly lodWorldPosition =
+    new THREE.Vector3();
+
+  private readonly cameraWorldPosition =
+    new THREE.Vector3();
+
+  private readonly animatedBodies =
+    new Map<string, THREE.Group>();
+
+  /** Spin pivot only; orbital translation remains on animatedBodies. */
+  private readonly spinningBodies =
+    new Map<string, THREE.Object3D>();
+
+  /** Point-25.6 uniforms: planets plus each V2 moon and minor body use the same stellar pass. */
+  private readonly bodyLightBindings =
+    new Map<string, SystemScenePlanetLightBindingV1>();
+
+  /** The actual presentation day applied to every animated body this frame. */
+  private lightingSimulationDay = 0;
+
+  private readonly planetLightPlanetWorldPosition =
+    new THREE.Vector3();
+
+  private readonly planetLightStarWorldPosition =
+    new THREE.Vector3();
+
+  private readonly planetLightDirectionScratch =
+    new THREE.Vector3();
+
+  private readonly planetLightTopDirections =
+    [
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+      new THREE.Vector3(),
+    ] as const;
+
+  private readonly planetLightTopFluxes =
+    [0, 0, 0];
+
+  private readonly artificialSatellitePlanetWorldPosition =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteCameraDirection =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteStarWorldPosition =
+    new THREE.Vector3();
+
+  private readonly artificialSatelliteLightDirection =
+    new THREE.Vector3();
+
+  private readonly animatedOrbits =
+    new Map<string, THREE.LineLoop>();
+
+  private readonly orbitLocalSamplesAu =
+    new Map<
+      string,
+      readonly {
+        readonly x:
+          number;
+        readonly y:
+          number;
+        readonly z:
+          number;
+      }[]
+    >();
+
+  private readonly selectableObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly bodySnapshotById =
+    new Map<string, SystemSceneSelectableBodySnapshot>();
+
+  private readonly planetLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly moonLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly habitableZoneLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly orbitalRiskLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly habitableZoneBindings:
+    Array<{
+      readonly group: THREE.Group;
+      readonly snapshot: SystemSceneHabitableZoneSnapshot;
+    }> = [];
+
+  private readonly asteroidBeltLayerBindings:
+    Array<{
+      readonly group: THREE.Group;
+      readonly snapshot: SystemSceneAsteroidBeltSnapshot;
+    }> =
+    [];
+
+  private readonly orbitalRiskOrbitOverlays:
+    Array<{
+      readonly line: THREE.LineLoop;
+      readonly orbit: SystemSceneOrbitSnapshot;
+    }> = [];
+
+  private readonly orbitalRiskMarkers:
+    Array<{
+      readonly sprite: THREE.Sprite;
+      readonly targetBodyId: string;
+    }> = [];
+
+  private readonly artificialSatelliteLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly artificialSatelliteBindings:
+    Array<{
+      readonly hostBodyId: string;
+      readonly orbitPivot: THREE.Group;
+      readonly basePhaseRadians: number;
+      readonly angularSpeedRadiansPerDay: number;
+      readonly pointMaterial: THREE.MeshBasicMaterial;
+      readonly orbitMaterial: THREE.LineBasicMaterial;
+      readonly baseLineOpacity01: number;
+    }> = [];
+
+  private readonly asteroidLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly cometLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  /** Point-25.8 dynamic coma/tail bindings for relevant comets. */
+  private readonly cometActivityBindings =
+    new Map<string, SystemSceneCometActivityBindingV1>();
+
+  private readonly cometLightDirectionAccumulator =
+    new THREE.Vector3();
+
+  private readonly cometLightDirectionScratch =
+    new THREE.Vector3();
+
+  private readonly cometWorldPosition =
+    new THREE.Vector3();
+
+  private readonly cometStarWorldPosition =
+    new THREE.Vector3();
+
+  private readonly transNeptunianObjectLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  private readonly capturedObjectLayerObjects:
+    THREE.Object3D[] =
+    [];
+
+  /** Point-25.11 visible instancing for generic TNO/captured minor bodies. */
+  private readonly minorBodyInstanceBatches =
+    new Map<SystemSceneMinorBodyLayerKey, SystemSceneMinorBodyInstanceBatchV1>();
+
+  private readonly minorBodyInstanceMatrix =
+    new THREE.Matrix4();
+
+  private readonly minorBodyInstanceScale =
+    new THREE.Vector3();
+
+  private readonly minorBodyInstanceQuaternion =
+    new THREE.Quaternion();
+
+  private minorBodyOrbitLayerKeys =
+    new Map<string, SystemSceneMinorBodyLayerKey>();
+
+  private layerVisibility:
+    SystemSceneLayerVisibility =
+    Object.freeze({
+      planets: true,
+      orbits: true,
+      moons: false,
+      habitableZone: false,
+      orbitalRisk: false,
+      asteroids: false,
+      comets: false,
+      transNeptunianObjects: false,
+      capturedObjects: false,
+      artificialSatellites: false,
+    });
+
+  private readonly raycaster =
+    new THREE.Raycaster();
+
+  private readonly pointerNdc =
+    new THREE.Vector2();
+
+  private readonly selectionRingTexture:
+    THREE.CanvasTexture;
+
+  private selectionMarker:
+    THREE.Sprite | null =
+    null;
+
+  private selectedBodyId:
+    string | null =
+    null;
+
+  private trackedBodyId:
+    string | null =
+    null;
+
+  private readonly trackedWorldPosition =
+    new THREE.Vector3();
+
+  private readonly cameraController:
+    SystemSceneCameraController;
+
+  private currentSnapshot:
+    SystemSceneSnapshot | null =
+    null;
+
+  private simulationClock:
+    SystemSimulationClock | null =
+    null;
+
+  private readonly activeTime =
+    new SystemSceneActiveTime();
+
+  private pageVisible =
+    true;
+
+  private motionById =
+    new Map<string, SystemSceneOrbitalMotionSnapshot>();
+
+  private readonly onAnimationFrame =
+    (
+      realTimestampMilliseconds:
+        number,
+    ): void => {
+
+      if (
+        !this.pageVisible ||
+        this.currentSnapshot ===
+          null ||
+        this.simulationClock ===
+          null
+      ) {
+        return;
+      }
+
+      const activeTimestampMilliseconds =
+        this.activeTime.project(
+          realTimestampMilliseconds,
+        );
+
+      const simulationState =
+        this.simulationClock.read(
+          activeTimestampMilliseconds,
+        );
+
+      this.applySimulationDay(
+        simulationState.simulationDay,
+      );
+
+      if (this.onSimulationDay &&
+          realTimestampMilliseconds - this.lastTelemetryTimestamp >= 250) {
+        this.lastTelemetryTimestamp = realTimestampMilliseconds;
+        this.onSimulationDay(simulationState.simulationDay);
+      }
+
+      this.updateTrackedBodyCamera(
+        activeTimestampMilliseconds,
+      );
+
+      this.renderFrame();
+    };
+
+  private disposed =
+    false;
+
+  private lastTelemetryTimestamp = Number.NEGATIVE_INFINITY;
+
+  constructor(
+    private readonly canvas:
+      HTMLCanvasElement,
+
+    private readonly onSelectionChange:
+      SystemSceneSelectionChangeHandler,
+    private readonly onSimulationDay?: (simulationDay: number) => void,
+  ) {
+
+    const context =
+      canvas.getContext(
+        'webgl2',
+        {
+          alpha:
+            false,
+          antialias:
+            true,
+          depth:
+            true,
+          stencil:
+            false,
+          preserveDrawingBuffer:
+            false,
+          powerPreference:
+            'high-performance',
+        },
+      );
+
+    if (
+      context ===
+        null
+    ) {
+      throw new SystemSceneWebGl2UnavailableError();
+    }
+
+    this.backendAssessment =
+      buildSystemSceneRenderBackendAssessmentV1({
+        webGl2Available:
+          true,
+        webGpuApiAvailable:
+          systemSceneWebGpuApiAvailable(
+            typeof navigator ===
+              'undefined'
+              ? null
+              : navigator,
+          ),
+      });
+
+    this.renderer =
+      new THREE.WebGLRenderer({
+        canvas,
+        context,
+        antialias:
+          true,
+        alpha:
+          false,
+        powerPreference:
+          'high-performance',
+      });
+
+    this.renderer.outputColorSpace =
+      THREE.SRGBColorSpace;
+
+    this.renderer.toneMapping =
+      THREE.ACESFilmicToneMapping;
+
+    this.renderer.toneMappingExposure =
+      1.10;
+
+    this
+      .renderer
+      .setClearColor(
+        0x010205,
+        1,
+      );
+
+    this.scene.background =
+      new THREE.Color(
+        0x010205,
+      );
+
+    this.starHaloTexture =
+      createRadialGlowTexture(
+        'broad',
+      );
+
+    this.starBloomTexture =
+      createRadialGlowTexture(
+        'compact',
+      );
+
+    this.starGlareTexture =
+      createStellarGlareTexture();
+
+    this.selectionRingTexture =
+      createSelectionRingTexture();
+
+    this.persistentDisposables.push(
+      this.starHaloTexture,
+      this.starBloomTexture,
+      this.starGlareTexture,
+      this.selectionRingTexture,
+    );
+
+    this.backdropRoot.name =
+      'GENESIS/SystemBackdrop';
+
+    this.presentationRoot.name =
+      'GENESIS/SystemPresentation';
+    this.presentationRoot.rotation.x =
+      -0.4;
+    this.presentationRoot.rotation.z =
+      0.08;
+
+    this.scene.add(
+      this.backdropRoot,
+      this.presentationRoot,
+      new THREE.AmbientLight(
+        0x45627a,
+        0.28,
+      ),
+      new THREE.HemisphereLight(
+        0x7ca0c5,
+        0x050608,
+        0.18,
+      ),
+    );
+
+    createBackdropStarField(
+      this.backdropRoot,
+      this.persistentDisposables,
+    );
+
+    this.cameraController =
+      new SystemSceneCameraController(
+        this.camera,
+        canvas,
+        () => {
+          this.renderFrame();
+        },
+        (clientX, clientY) => {
+          this.selectAtClientPoint(
+            clientX,
+            clientY,
+          );
+        },
+      );
+
+    this.cameraController.frameSystem(
+      4.8,
+    );
+  }
+
+  resize(
+    width:
+      number,
+
+    height:
+      number,
+
+    devicePixelRatio:
+      number,
+  ):
+    void {
+
+    this.assertAlive();
+
+    const safeWidth =
+      Math.max(
+        1,
+        width,
+      );
+
+    const safeHeight =
+      Math.max(
+        1,
+        height,
+      );
+
+    const aspect =
+      safeWidth /
+      safeHeight;
+
+    this.viewportHeightPixels =
+      safeHeight;
+
+    this
+      .renderer
+      .setPixelRatio(
+        systemSceneDevicePixelRatio(
+          devicePixelRatio,
+        ),
+      );
+
+    this
+      .renderer
+      .setSize(
+        safeWidth,
+        safeHeight,
+        false,
+      );
+
+    this.camera.aspect =
+      aspect;
+
+    this.camera.fov =
+      systemSceneCameraFovDegrees(
+        aspect,
+      );
+
+    this
+      .camera
+      .updateProjectionMatrix();
+
+    this.renderFrame();
+  }
+
+  render(
+    snapshot:
+      SystemSceneSnapshot,
+    laboratoryCloseZoom = false,
+  ): SystemSceneRenderInfo {
+
+    this.assertAlive();
+    assertSystemSceneProjectionSnapshot(
+      snapshot,
+    );
+
+    this.camera.near = laboratoryCloseZoom ? 0.003 : 0.01;
+    this.camera.updateProjectionMatrix();
+
+    this.scene.name =
+      `GENESIS System ${snapshot.proceduralIdentity}`;
+
+    this
+      .renderer
+      .setAnimationLoop(
+        null,
+      );
+
+    this.clearFrameObjects();
+    this.lastTelemetryTimestamp = Number.NEGATIVE_INFINITY;
+    this.currentSnapshot =
+      snapshot;
+    this.simulationClock =
+      new SystemSimulationClock(
+        snapshot.simulation
+          .playbackDaysPerRealSecond,
+        snapshot.simulation
+          .epochSimulationDay,
+      );
+    this.motionById =
+      new Map(
+        snapshot.motions.map(
+          motion =>
+            [
+              motion.id,
+              motion,
+            ] as const,
+        ),
+      );
+
+    this.minorBodyOrbitLayerKeys =
+      new Map(
+        snapshot.minorBodies.map(
+          body => [
+            body.orbitId,
+            minorBodyLayerKeyForKind(
+              body.minorBodyKind,
+            ),
+          ] as const,
+        ),
+      );
+
+    this.cameraController.frameSystem(
+      snapshot.scale
+        .targetOuterRadiusScene,
+      laboratoryCloseZoom,
+    );
+
+    this.initializeSelectionProxyBatch(
+      snapshot.stars.length +
+      snapshot.planets.length +
+      (snapshot.pulsarPlanetVisuals?.length ?? 0) +
+      snapshot.moons.length +
+      snapshot.minorBodies.length,
+    );
+    this.initializeMinorBodyInstanceBatches(
+      snapshot.minorBodies,
+    );
+
+    for (const zone of snapshot.habitableZones ??
+      (snapshot.habitableZone === null ? [] : [snapshot.habitableZone])) {
+      this.addHabitableZone(zone);
+    }
+
+    for (
+      const belt
+      of snapshot.asteroidBelts ??
+        []
+    ) {
+      this.addAsteroidBeltBand(
+        belt,
+      );
+    }
+
+    for (
+      const binding
+      of this.artificialSatelliteBindings
+    ) {
+      binding.orbitPivot.rotation.y =
+        binding.basePhaseRadians +
+        binding.angularSpeedRadiansPerDay * simulationDay;
+    }
+
+    for (
+      const orbit
+      of snapshot.orbits
+    ) {
+      this.addOrbit(
+        orbit,
+        snapshot.scale,
+      );
+    }
+
+    for (
+      const star
+      of snapshot.stars
+    ) {
+      this.addStar(
+        star,
+      );
+    }
+
+    const planetTextureSystemIdentity =
+      `${snapshot.universeSeed}|v${snapshot.generatorVersionCode}|${snapshot.proceduralIdentity}`;
+
+    for (
+      const planet
+      of snapshot.planets
+    ) {
+      this.addPlanet(
+        planet,
+        planetTextureSystemIdentity,
+      );
+    }
+
+    for (const planet of snapshot.pulsarPlanetVisuals ?? []) {
+      this.addPlanet(planet, planetTextureSystemIdentity);
+    }
+
+    for (
+      const moon
+      of snapshot.moons
+    ) {
+      this.addMoon(
+        moon,
+      );
+    }
+
+    for (
+      const minorBody
+      of snapshot.minorBodies
+    ) {
+      this.addMinorBody(
+        minorBody,
+      );
+    }
+
+    for (
+      const riskTarget
+      of snapshot.orbitalRiskTargets
+    ) {
+      this.addOrbitalRiskTarget(
+        riskTarget,
+        snapshot,
+      );
+    }
+
+    this.applyLayerVisibilityToObjects();
+
+    this.applySimulationDay(
+      snapshot.simulation
+        .epochSimulationDay,
+    );
+    this.renderFrame();
+
+    this.updateAnimationLoop();
+
+    return Object.freeze({
+      renderer:
+        this.backendAssessment
+          .selectedBackend,
+
+      shaderPipeline:
+        this.backendAssessment
+          .shaderPipeline,
+
+      webGpuEvaluation:
+        this.backendAssessment
+          .webGpuEvaluation,
+
+      physicalBodyCount:
+        snapshot.stars.length +
+        snapshot.planets.length +
+        (snapshot.pulsarPlanetVisuals?.length ?? 0) +
+        snapshot.moons.length +
+        snapshot.minorBodies.length,
+
+      sceneObjectCount:
+        countDescendants(
+          this.scene,
+        ),
+    });
+  }
+
+  setPageVisible(
+    visible:
+      boolean,
+  ): void {
+
+    this.assertAlive();
+
+    if (
+      this.pageVisible ===
+        visible
+    ) {
+      return;
+    }
+
+    const realTimestampMilliseconds =
+      currentHighResolutionTimestampMilliseconds();
+
+    this.pageVisible =
+      visible;
+
+    this.activeTime.setVisible(
+      visible,
+      realTimestampMilliseconds,
+    );
+
+    this.updateAnimationLoop();
+
+    if (
+      visible
+    ) {
+      this.renderFrame();
+    }
+  }
+
+  setLayerVisibility(
+    visibility:
+      SystemSceneLayerVisibility,
+  ): void {
+
+    this.assertAlive();
+    this.layerVisibility =
+      Object.freeze({
+        ...visibility,
+      });
+
+    if (
+      visibility.moons
+    ) {
+      this.materializePendingMoonVisuals();
+    }
+
+    this.applyLayerVisibilityToObjects();
+    this.renderFrame();
+  }
+
+  private applyLayerVisibilityToObjects():
+    void {
+    for (
+      const object
+      of this.planetLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.planets;
+    }
+
+    for (
+      const object
+      of this.moonLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.moons;
+    }
+
+    for (
+      const object
+      of this.habitableZoneLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.habitableZone;
+    }
+
+    for (
+      const object
+      of this.orbitalRiskLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.orbitalRisk;
+    }
+
+    for (
+      const object
+      of this.asteroidLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.asteroids;
+    }
+
+    for (
+      const object
+      of this.cometLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.comets;
+    }
+
+    for (
+      const object
+      of this.transNeptunianObjectLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.transNeptunianObjects;
+    }
+
+    for (
+      const object
+      of this.capturedObjectLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.capturedObjects;
+    }
+
+    for (
+      const object
+      of this.artificialSatelliteLayerObjects
+    ) {
+      object.visible =
+        this.layerVisibility.artificialSatellites &&
+        this.layerVisibility.planets;
+    }
+
+    // Apply last so turning off orbit GUIDES never hides their bodies, and
+    // turning guides on cannot reveal an otherwise hidden moon/planet layer.
+    for (const [id, line] of this.animatedOrbits) {
+      const orbit = this.currentSnapshot?.orbits.find(candidate => candidate.id === id);
+      const minorLayer = this.minorBodyOrbitLayerKeys.get(id);
+      const hostLayerVisible = orbit?.kind === 'planetary'
+        ? this.layerVisibility.planets
+        : orbit?.kind === 'moon'
+          ? this.layerVisibility.moons
+          : orbit?.kind === 'minor-body'
+            ? this.layerVisibility[minorLayer ?? 'capturedObjects']
+            : true;
+      line.visible = (this.layerVisibility.orbits ?? true) && hostLayerVisible;
+    }
+
+    if (
+      this.trackedBodyId !==
+        null
+    ) {
+      const tracked =
+        this.bodySnapshotById.get(
+          this.trackedBodyId,
+        );
+
+      if (
+        tracked ===
+          undefined ||
+        !this.isBodySnapshotVisible(
+          tracked,
+        )
+      ) {
+        this.stopFollowing();
+      }
+    }
+
+    if (
+      this.selectedBodyId !==
+        null
+    ) {
+      const selected =
+        this.bodySnapshotById.get(
+          this.selectedBodyId,
+        );
+
+      if (
+        selected?.kind ===
+          'planet' &&
+        !this.layerVisibility.planets
+      ) {
+        this.selectBody(
+          null,
+        );
+        return;
+      }
+
+      if (
+        selected?.kind ===
+          'moon' &&
+        !this.layerVisibility.moons
+      ) {
+        this.selectBody(
+          null,
+        );
+        return;
+      }
+
+      if (
+        selected?.kind ===
+          'minor-body' &&
+        !this.isMinorBodySnapshotVisible(
+          selected,
+        )
+      ) {
+        this.selectBody(
+          null,
+        );
+      }
+    }
+  }
+
+  private minorBodyLayerObjectArray(
+    minorBodyKind:
+      MinorBodyKindValue,
+  ): THREE.Object3D[] {
+    switch (
+      minorBodyLayerKeyForKind(
+        minorBodyKind,
+      )
+    ) {
+      case 'asteroids':
+        return this.asteroidLayerObjects;
+      case 'comets':
+        return this.cometLayerObjects;
+      case 'transNeptunianObjects':
+        return this.transNeptunianObjectLayerObjects;
+      case 'capturedObjects':
+        return this.capturedObjectLayerObjects;
+    }
+  }
+
+  private minorBodyLayerObjectArrayForKey(
+    layerKey:
+      SystemSceneMinorBodyLayerKey,
+  ): THREE.Object3D[] {
+    switch (
+      layerKey
+    ) {
+      case 'asteroids':
+        return this.asteroidLayerObjects;
+      case 'comets':
+        return this.cometLayerObjects;
+      case 'transNeptunianObjects':
+        return this.transNeptunianObjectLayerObjects;
+      case 'capturedObjects':
+        return this.capturedObjectLayerObjects;
+    }
+  }
+
+  private minorBodyOrbitLayerObjectArray(
+    orbitId:
+      string,
+  ): THREE.Object3D[] {
+    const layerKey =
+      this.minorBodyOrbitLayerKeys.get(
+        orbitId,
+      ) ?? 'capturedObjects';
+
+    switch (
+      layerKey
+    ) {
+      case 'asteroids':
+        return this.asteroidLayerObjects;
+      case 'comets':
+        return this.cometLayerObjects;
+      case 'transNeptunianObjects':
+        return this.transNeptunianObjectLayerObjects;
+      case 'capturedObjects':
+        return this.capturedObjectLayerObjects;
+    }
+  }
+
+  private isBodySnapshotVisible(
+    body:
+      SystemSceneSelectableBodySnapshot,
+  ): boolean {
+    switch (
+      body.kind
+    ) {
+      case 'star':
+        return true;
+      case 'planet':
+        return this.layerVisibility.planets;
+      case 'moon':
+        return this.layerVisibility.moons;
+      case 'minor-body':
+        return this.isMinorBodySnapshotVisible(
+          body,
+        );
+    }
+  }
+
+  private isMinorBodySnapshotVisible(
+    body:
+      SystemSceneMinorBodySnapshot,
+  ): boolean {
+    switch (
+      minorBodyLayerKeyForKind(
+        body.minorBodyKind,
+      )
+    ) {
+      case 'asteroids':
+        return this.layerVisibility.asteroids;
+      case 'comets':
+        return this.layerVisibility.comets;
+      case 'transNeptunianObjects':
+        return this.layerVisibility.transNeptunianObjects;
+      case 'capturedObjects':
+        return this.layerVisibility.capturedObjects;
+    }
+  }
+
+  dispose():
+    void {
+
+    if (
+      this.disposed
+    ) {
+      return;
+    }
+
+    this
+      .renderer
+      .setAnimationLoop(
+        null,
+      );
+
+    this.disposed =
+      true;
+    this.pageVisible =
+      false;
+
+    this.currentSnapshot =
+      null;
+    this.simulationClock =
+      null;
+    this.motionById.clear();
+
+    this.clearFrameObjects();
+    this.cameraController.dispose();
+    this.releaseDetailedPlanetTexture();
+    this.planetTextureCache.dispose();
+    this.moonTextureCache.dispose();
+    this.sphereGeometryPool.dispose();
+    disposeResources(
+      this.persistentDisposables,
+    );
+
+    this.backdropRoot.clear();
+    this.presentationRoot.clear();
+    this.scene.clear();
+
+    this
+      .renderer
+      .renderLists
+      .dispose();
+
+    this
+      .renderer
+      .dispose();
+
+    this
+      .renderer
+      .forceContextLoss();
+  }
+
+  followBody(
+    bodyId:
+      string,
+  ): boolean {
+
+    this.assertAlive();
+
+    const body =
+      this.bodySnapshotById.get(
+        bodyId,
+      );
+
+    const object =
+      this.animatedBodies.get(
+        bodyId,
+      );
+
+    if (
+      body ===
+        undefined ||
+      object ===
+        undefined ||
+      !this.isBodySnapshotVisible(
+        body,
+      )
+    ) {
+      return false;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+
+    object.getWorldPosition(
+      this.trackedWorldPosition,
+    );
+
+    this.trackedBodyId =
+      bodyId;
+
+    this.cameraController.beginBodyTracking(
+      this.trackedWorldPosition,
+      systemSceneVisualExtentRadiusScene(
+        body,
+      ),
+    );
+
+    this.updateAnimationLoop();
+    this.renderFrame();
+    return true;
+  }
+
+  focusLaboratorySystem(starId: string, radiusScene: number): boolean {
+    this.assertAlive();
+    if (!this.currentSnapshot?.stars.some(star => star.id === starId) ||
+        !Number.isFinite(radiusScene) || radiusScene <= 0) return false;
+    const star = this.animatedBodies.get(starId);
+    if (!star) return false;
+    this.scene.updateMatrixWorld(true);
+    star.getWorldPosition(this.trackedWorldPosition);
+    this.trackedBodyId = starId;
+    this.cameraController.beginBodyTracking(this.trackedWorldPosition, radiusScene);
+    this.updateAnimationLoop();
+    this.renderFrame();
+    return true;
+  }
+
+  stopFollowing():
+    void {
+
+    this.assertAlive();
+
+    this.trackedBodyId =
+      null;
+
+    this.cameraController.stopBodyTracking();
+
+    this.updateAnimationLoop();
+    this.renderFrame();
+  }
+
+  resetView():
+    void {
+
+    this.assertAlive();
+    this.stopFollowing();
+    this.cameraController.resetView();
+  }
+
+  private addHabitableZone(
+    habitableZone:
+      SystemSceneHabitableZoneSnapshot,
+  ): void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      'Habitable zone';
+
+    const visualRegime =
+      habitableZone.visualRegime ??
+      (
+        habitableZone.topology ===
+          'CIRCUMSTELLAR'
+          ? SystemSceneHabitableZoneVisualRegimeV4
+              .CIRCUMSTELLAR
+          : habitableZone.dynamicallyHabitableInnerRadiusScene ===
+                null ||
+              habitableZone.dynamicallyHabitableOuterRadiusScene ===
+                null
+            ? SystemSceneHabitableZoneVisualRegimeV4
+                .CIRCUMBINARY_RADIATIVE_ONLY
+            : habitableZone.dynamicalOverlapFraction01 >=
+                1 -
+                  1e-9
+              ? SystemSceneHabitableZoneVisualRegimeV4
+                  .CIRCUMBINARY_FULLY_STABLE
+              : SystemSceneHabitableZoneVisualRegimeV4
+                  .CIRCUMBINARY_PARTIALLY_STABLE
+      );
+
+    const radiativeOnly =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMBINARY_RADIATIVE_ONLY;
+
+    const radiativeNotApplicable =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMBINARY_RADIATIVE_NOT_APPLICABLE;
+
+    const partiallyStable =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMBINARY_PARTIALLY_STABLE;
+
+    const circumstellar =
+      visualRegime ===
+      SystemSceneHabitableZoneVisualRegimeV4
+        .CIRCUMSTELLAR;
+
+    if (
+      !radiativeNotApplicable
+    ) {
+      const radiativeGeometry =
+        new THREE.RingGeometry(
+          habitableZone.radiativeInnerRadiusScene,
+          habitableZone.radiativeOuterRadiusScene,
+          192,
+        );
+
+      const radiativeMaterial =
+        new THREE.MeshBasicMaterial({
+          color:
+            radiativeOnly
+              ? 0x7c98a2
+              : 0x4c9fb2,
+          transparent:
+            true,
+          opacity:
+            circumstellar
+              ? 0.14
+              : radiativeOnly
+                ? 0.024
+                : partiallyStable
+                  ? 0.052
+                  : 0.08,
+          side:
+            THREE.DoubleSide,
+          depthWrite:
+            false,
+          depthTest:
+            false,
+          blending:
+            radiativeOnly
+              ? THREE.NormalBlending
+              : THREE.AdditiveBlending,
+        });
+
+      const radiativeBand =
+        new THREE.Mesh(
+          radiativeGeometry,
+          radiativeMaterial,
+        );
+
+      radiativeBand.rotation.x =
+        -Math.PI / 2;
+      radiativeBand.renderOrder =
+        70;
+
+      group.add(
+        radiativeBand,
+      );
+
+      this.frameDisposables.push(
+        radiativeGeometry,
+        radiativeMaterial,
+      );
+
+      const radiativeBoundaryOpacity =
+        circumstellar
+          ? 0.58
+          : radiativeOnly
+            ? 0.34
+            : partiallyStable
+              ? 0.42
+              : 0.48;
+
+      this.addHabitableZoneBoundary(
+        group,
+        habitableZone.radiativeInnerRadiusScene,
+        radiativeOnly
+          ? 0x8ca8b1
+          : 0x5eb6c8,
+        radiativeBoundaryOpacity,
+        {
+          dashed:
+            radiativeOnly,
+        },
+      );
+
+      this.addHabitableZoneBoundary(
+        group,
+        habitableZone.radiativeOuterRadiusScene,
+        radiativeOnly
+          ? 0x8ca8b1
+          : 0x5eb6c8,
+        radiativeBoundaryOpacity,
+        {
+          dashed:
+            radiativeOnly,
+        },
+      );
+
+    }
+
+    const dynamicInner =
+      habitableZone.dynamicallyHabitableInnerRadiusScene;
+
+    const dynamicOuter =
+      habitableZone.dynamicallyHabitableOuterRadiusScene;
+
+    if (
+      dynamicInner !==
+        null &&
+      dynamicOuter !==
+        null
+    ) {
+      const dynamicGeometry =
+        new THREE.RingGeometry(
+          dynamicInner,
+          dynamicOuter,
+          192,
+        );
+
+      const dynamicMaterial =
+        new THREE.MeshBasicMaterial({
+          color:
+            0x63d79d,
+          transparent:
+            true,
+          opacity:
+            0.24,
+          side:
+            THREE.DoubleSide,
+          depthWrite:
+            false,
+          depthTest:
+            false,
+          blending:
+            THREE.AdditiveBlending,
+        });
+
+      const dynamicBand =
+        new THREE.Mesh(
+          dynamicGeometry,
+          dynamicMaterial,
+        );
+
+      dynamicBand.rotation.x =
+        -Math.PI / 2;
+      dynamicBand.position.y =
+        0.003;
+      dynamicBand.renderOrder =
+        72;
+
+      group.add(
+        dynamicBand,
+      );
+
+      this.frameDisposables.push(
+        dynamicGeometry,
+        dynamicMaterial,
+      );
+
+      this.addHabitableZoneBoundary(
+        group,
+        dynamicInner,
+        0x74e5aa,
+        0.88,
+      );
+
+      this.addHabitableZoneBoundary(
+        group,
+        dynamicOuter,
+        0x74e5aa,
+        0.88,
+      );
+    }
+
+    if (
+      !circumstellar &&
+      habitableZone.circumbinaryStabilityInnerRadiusScene !==
+        undefined &&
+      habitableZone.circumbinaryStabilityInnerRadiusScene !==
+        null
+    ) {
+      this.addHabitableZoneBoundary(
+        group,
+        habitableZone.circumbinaryStabilityInnerRadiusScene,
+        0xe3af64,
+        radiativeNotApplicable
+          ? 0.78
+          : 0.52,
+        {
+          dashed:
+            true,
+          dashSize:
+            0.075,
+          gapSize:
+            0.045,
+          renderOrder:
+            76,
+        },
+      );
+
+      if (
+        habitableZone.circumbinaryStabilityOuterRadiusScene !==
+          undefined &&
+        habitableZone.circumbinaryStabilityOuterRadiusScene !==
+          null
+      ) {
+        this.addHabitableZoneBoundary(
+          group,
+          habitableZone.circumbinaryStabilityOuterRadiusScene,
+          0xe3af64,
+          0.38,
+          {
+            dashed:
+              true,
+            dashSize:
+              0.06,
+            gapSize:
+              0.055,
+            renderOrder:
+              75,
+          },
+        );
+      }
+    }
+
+    this.habitableZoneBindings.push({
+      group,
+      snapshot: habitableZone,
+    });
+
+    this.habitableZoneLayerObjects.push(
+      group,
+    );
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
+  private addHabitableZoneBoundary(
+    group:
+      THREE.Group,
+
+    radiusScene:
+      number,
+
+    color:
+      number,
+
+    opacity:
+      number,
+
+    options?:
+      Readonly<{
+        dashed?:
+          boolean;
+
+        dashSize?:
+          number;
+
+        gapSize?:
+          number;
+
+        renderOrder?:
+          number;
+      }>,
+  ): void {
+
+    const points =
+      Array.from(
+        {
+          length:
+            160,
+        },
+        (
+          _,
+          index,
+        ) => {
+          const angle =
+            Math.PI *
+            2 *
+            index /
+            160;
+
+          return new THREE.Vector3(
+            Math.cos(angle) *
+              radiusScene,
+            0.006,
+            Math.sin(angle) *
+              radiusScene,
+          );
+        },
+      );
+
+    const geometry =
+      new THREE.BufferGeometry()
+        .setFromPoints(
+          points,
+        );
+
+    const material:
+      THREE.LineBasicMaterial |
+      THREE.LineDashedMaterial =
+      options
+        ?.dashed ===
+        true
+        ? new THREE.LineDashedMaterial({
+            color,
+            transparent:
+              true,
+            opacity,
+            dashSize:
+              options.dashSize ??
+              0.052,
+            gapSize:
+              options.gapSize ??
+              0.042,
+            depthWrite:
+              false,
+            depthTest:
+              false,
+            blending:
+              THREE.AdditiveBlending,
+          })
+        : new THREE.LineBasicMaterial({
+            color,
+            transparent:
+              true,
+            opacity,
+            depthWrite:
+              false,
+            depthTest:
+              false,
+            blending:
+              THREE.AdditiveBlending,
+          });
+
+    const line =
+      new THREE.LineLoop(
+        geometry,
+        material,
+      );
+
+    if (
+      material instanceof
+      THREE.LineDashedMaterial
+    ) {
+      line.computeLineDistances();
+    }
+
+    line.renderOrder =
+      options
+        ?.renderOrder ??
+      74;
+
+    group.add(
+      line,
+    );
+
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+  }
+
+
+  private addAsteroidBeltBand(
+    belt:
+      SystemSceneAsteroidBeltSnapshot,
+  ): void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Asteroid belt ${belt.region}`;
+
+    const bandGeometry =
+      new THREE.RingGeometry(
+        belt.innerRadiusScene,
+        belt.outerRadiusScene,
+        256,
+      );
+
+    const bandMaterial =
+      new THREE.MeshBasicMaterial({
+        color:
+          belt.colorHex,
+        transparent:
+          true,
+        opacity:
+          belt.opacity,
+        side:
+          THREE.DoubleSide,
+        depthWrite:
+          false,
+        depthTest:
+          true,
+      });
+
+    const bandMesh =
+      new THREE.Mesh(
+        bandGeometry,
+        bandMaterial,
+      );
+
+    bandMesh.rotation.x =
+      -Math.PI / 2;
+    bandMesh.renderOrder =
+      34;
+
+    group.add(
+      bandMesh,
+    );
+
+    this.frameDisposables.push(
+      bandGeometry,
+      bandMaterial,
+    );
+
+    if (
+      belt.peakRadiusScene !==
+        null
+    ) {
+      this.addAsteroidBeltBoundary(
+        group,
+        belt.peakRadiusScene,
+        belt.colorHex,
+        belt.peakOpacity,
+        0.002,
+      );
+    }
+
+    this.addAsteroidBeltBoundary(
+      group,
+      belt.innerRadiusScene,
+      belt.colorHex,
+      belt.boundaryOpacity,
+      0.001,
+    );
+
+    this.addAsteroidBeltBoundary(
+      group,
+      belt.outerRadiusScene,
+      belt.colorHex,
+      belt.boundaryOpacity,
+      0.001,
+    );
+
+    this.asteroidLayerObjects.push(
+      group,
+    );
+
+    this.asteroidBeltLayerBindings.push({
+      group,
+      snapshot:
+        belt,
+    });
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
+  private addAsteroidBeltBoundary(
+    group:
+      THREE.Group,
+
+    radiusScene:
+      number,
+
+    colorHex:
+      string,
+
+    opacity:
+      number,
+
+    offsetY:
+      number,
+  ): void {
+
+    const points: THREE.Vector3[] = [];
+
+    const segmentCount =
+      256;
+
+    for (
+      let index =
+        0;
+      index <
+        segmentCount;
+      index +=
+        1
+    ) {
+      const angle =
+        index /
+        segmentCount *
+        Math.PI *
+        2;
+
+      points.push(
+        new THREE.Vector3(
+          Math.cos(angle) *
+            radiusScene,
+          offsetY,
+          Math.sin(angle) *
+            radiusScene,
+        ),
+      );
+    }
+
+    const geometry =
+      new THREE.BufferGeometry().setFromPoints(
+        points,
+      );
+
+    const material =
+      new THREE.LineBasicMaterial({
+        color:
+          colorHex,
+        transparent:
+          true,
+        opacity,
+        depthWrite:
+          false,
+        depthTest:
+          true,
+      });
+
+    const line =
+      new THREE.LineLoop(
+        geometry,
+        material,
+      );
+
+    line.renderOrder =
+      36;
+
+    group.add(
+      line,
+    );
+
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+  }
+
+  private addOrbitalRiskTarget(
+    riskTarget:
+      SystemSceneOrbitalRiskTargetSnapshot,
+
+    snapshot:
+      SystemSceneSnapshot,
+  ): void {
+
+    const sourceOrbit =
+      snapshot.orbits.find(
+        orbit =>
+          orbit.id ===
+          riskTarget.targetOrbitId,
+      ) ??
+      null;
+
+    if (
+      sourceOrbit !==
+        null
+    ) {
+      const geometry =
+        new THREE.BufferGeometry();
+
+      geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(
+          new Float32Array(
+            ORBIT_SEGMENT_COUNT *
+            3,
+          ),
+          3,
+        ),
+      );
+
+      const material =
+        new THREE.LineBasicMaterial({
+          color:
+            riskTarget.colorHex,
+          transparent:
+            true,
+          opacity:
+            riskTarget.severity === 'COLLISION_GEOMETRY'
+              ? 0.78
+              : riskTarget.severity === 'APPROACH'
+                ? 0.52
+                : 0.20,
+          depthWrite:
+            false,
+          depthTest:
+            false,
+          blending:
+            THREE.AdditiveBlending,
+        });
+
+      const line =
+        new THREE.LineLoop(
+          geometry,
+          material,
+        );
+
+      line.name =
+        `Orbital risk ${riskTarget.targetLabel}`;
+      line.renderOrder =
+        20;
+
+      this.updateOrbitGeometry(
+        line,
+        sourceOrbit,
+        snapshot.scale,
+        snapshot.simulation.epochSimulationDay,
+      );
+
+      this.orbitalRiskOrbitOverlays.push({
+        line,
+        orbit:
+          sourceOrbit,
+      });
+
+      this.orbitalRiskLayerObjects.push(
+        line,
+      );
+
+      this.frameDisposables.push(
+        geometry,
+        material,
+      );
+
+      this.presentationRoot.add(
+        line,
+      );
+    }
+
+    const targetBody =
+      [
+        ...snapshot.planets,
+        ...snapshot.moons,
+      ].find(
+        body =>
+          body.id ===
+          riskTarget.targetBodyId,
+      ) ??
+      null;
+
+    if (
+      targetBody ===
+        null
+    ) {
+      return;
+    }
+
+    const markerMaterial =
+      new THREE.SpriteMaterial({
+        map:
+          this.selectionRingTexture,
+        color:
+          riskTarget.colorHex,
+        transparent:
+          true,
+        opacity:
+          riskTarget.severity === 'COLLISION_GEOMETRY'
+            ? 0.86
+            : riskTarget.severity === 'APPROACH'
+              ? 0.64
+              : 0.32,
+        depthWrite:
+          false,
+        depthTest:
+          false,
+        blending:
+          THREE.AdditiveBlending,
+      });
+
+    const marker =
+      new THREE.Sprite(
+        markerMaterial,
+      );
+
+    const markerScale =
+      riskTarget.severity === 'COLLISION_GEOMETRY'
+        ? 6.2
+        : riskTarget.severity === 'APPROACH'
+          ? 5.2
+          : 3.8;
+
+    const diameter =
+      Math.max(
+        targetBody.radiusScene *
+          markerScale,
+        riskTarget.targetKind ===
+          'planet'
+          ? riskTarget.severity === 'CROSSING'
+            ? 0.22
+            : 0.30
+          : riskTarget.severity === 'CROSSING'
+            ? 0.14
+            : 0.18,
+      );
+
+    marker.scale.set(
+      diameter,
+      diameter,
+      1,
+    );
+    marker.position.set(
+      targetBody.position.x,
+      targetBody.position.y,
+      targetBody.position.z,
+    );
+    marker.renderOrder =
+      120;
+    marker.name =
+      `Risk marker ${riskTarget.targetLabel}`;
+
+    this.orbitalRiskMarkers.push({
+      sprite:
+        marker,
+      targetBodyId:
+        riskTarget.targetBodyId,
+    });
+
+    this.orbitalRiskLayerObjects.push(
+      marker,
+    );
+
+    this.frameDisposables.push(
+      markerMaterial,
+    );
+
+    this.presentationRoot.add(
+      marker,
+    );
+  }
+
+  private addOrbit(
+    orbit:
+      SystemSceneOrbitSnapshot,
+
+    sceneScale:
+      SystemSceneScaleSnapshot,
+  ):
+    void {
+
+    const motion =
+      orbit.motionId ===
+        null
+        ? null
+        : this.motionById.get(
+            orbit.motionId,
+          ) ??
+          null;
+
+    if (
+      motion !==
+      null
+    ) {
+      this.orbitLocalSamplesAu.set(
+        orbit.id,
+        sampleSystemSceneOrbitLocalAu(
+          orbit.presentationEccentricity === undefined ? motion :
+            { ...motion, eccentricity: orbit.presentationEccentricity },
+          orbit.kind,
+          ORBIT_SEGMENT_COUNT,
+        ),
+      );
+    }
+
+    const geometry =
+      new THREE.BufferGeometry();
+
+    geometry.setAttribute(
+      'position',
+      new THREE.BufferAttribute(
+        new Float32Array(
+          ORBIT_SEGMENT_COUNT *
+          3,
+        ),
+        3,
+      ),
+    );
+
+    const material:
+      THREE.LineBasicMaterial |
+      THREE.LineDashedMaterial =
+      orbit.kind ===
+        'stellar'
+        ? new THREE.LineDashedMaterial({
+            color:
+              orbit.colorHex,
+            transparent:
+              true,
+            opacity:
+              orbit.opacity,
+            dashSize:
+              0.055,
+            gapSize:
+              0.035,
+          })
+        : new THREE.LineBasicMaterial({
+            color:
+              orbit.colorHex,
+            transparent:
+              true,
+            opacity:
+              orbit.opacity,
+          });
+
+    this.frameDisposables.push(
+      geometry,
+      material,
+    );
+
+    const line =
+      new THREE.LineLoop(
+        geometry,
+        material,
+      );
+
+    line.name =
+      `Orbit ${orbit.label}`;
+
+    this.updateOrbitGeometry(
+      line,
+      orbit,
+      sceneScale,
+      0,
+    );
+
+    this.animatedOrbits.set(
+      orbit.id,
+      line,
+    );
+
+    if (
+      orbit.kind ===
+      'planetary'
+    ) {
+      this.planetLayerObjects.push(
+        line,
+      );
+    } else if (
+      orbit.kind ===
+      'moon'
+    ) {
+      this.moonLayerObjects.push(
+        line,
+      );
+    } else if (
+      orbit.kind ===
+      'minor-body'
+    ) {
+      this.minorBodyOrbitLayerObjectArray(
+        orbit.id,
+      ).push(
+        line,
+      );
+    }
+
+    this
+      .presentationRoot
+      .add(
+        line,
+      );
+  }
+
+  private updateOrbitGeometry(
+    line:
+      THREE.LineLoop,
+
+    orbit:
+      SystemSceneOrbitSnapshot,
+
+    sceneScale:
+      SystemSceneScaleSnapshot,
+
+    simulationDay:
+      number,
+  ):
+    void {
+
+    const positionAttribute =
+      line.geometry.getAttribute(
+        'position',
+      ) as THREE.BufferAttribute;
+
+    const localSamplesAu =
+      this.orbitLocalSamplesAu.get(
+        orbit.id,
+      ) ??
+      null;
+
+    const projectionSpace =
+      orbit.projectionSpace ??
+      SystemSceneProjectionSpace.GLOBAL;
+
+    const orbitPostProjectionScale =
+      orbit.postProjectionScale ??
+      1;
+
+    for (
+      let index = 0;
+      index <
+        ORBIT_SEGMENT_COUNT;
+      index += 1
+    ) {
+      let xScene:
+        number;
+      let yScene:
+        number;
+      let zScene:
+        number;
+
+      if (
+        localSamplesAu !==
+        null
+      ) {
+        const sample =
+          localSamplesAu[
+            index
+          ]!;
+
+        const linearScenePerAu =
+          orbit.linearScenePerAu ??
+          null;
+
+        if (
+          linearScenePerAu !==
+            null &&
+          Number.isFinite(
+            linearScenePerAu,
+          ) &&
+          linearScenePerAu >
+            0
+        ) {
+          xScene =
+            sample.x *
+            orbit.motionScale *
+            linearScenePerAu *
+            orbitPostProjectionScale;
+          yScene =
+            sample.y *
+            orbit.motionScale *
+            linearScenePerAu *
+            orbitPostProjectionScale;
+          zScene =
+            sample.z *
+            orbit.motionScale *
+            linearScenePerAu *
+            orbitPostProjectionScale;
+        } else {
+          const rawSample =
+            projectionSpace ===
+              SystemSceneProjectionSpace.GLOBAL
+              ? {
+                  x:
+                    sample.x *
+                    orbit.motionScale,
+                  y:
+                    sample.y *
+                    orbit.motionScale,
+                  z:
+                    sample.z *
+                    orbit.motionScale,
+                }
+              : {
+                  x:
+                    sample.x,
+                  y:
+                    sample.y,
+                  z:
+                    sample.z,
+                };
+
+          const projected =
+            systemSceneProjectAuVectorInSpace(
+              rawSample,
+              sceneScale,
+              projectionSpace,
+            );
+
+          const physicalScaleAfterProjection =
+            projectionSpace ===
+              SystemSceneProjectionSpace.GLOBAL
+              ? 1
+              : orbit.motionScale;
+
+          const postProjectionScale =
+            physicalScaleAfterProjection *
+            orbitPostProjectionScale;
+
+          xScene =
+            projected.x *
+            postProjectionScale;
+          yScene =
+            projected.y *
+            postProjectionScale;
+          zScene =
+            projected.z *
+            postProjectionScale;
+        }
+      } else {
+        const phase =
+          (index /
+            ORBIT_SEGMENT_COUNT) *
+          Math.PI *
+          2;
+
+        const localX =
+          orbit.semiMajorScene *
+            Math.cos(
+              phase,
+            ) -
+          orbit.focusOffsetScene;
+
+        const localZ =
+          orbit.semiMinorScene *
+          Math.sin(
+            phase,
+          );
+
+        const position =
+          rotateOrbitPoint(
+            localX,
+            localZ,
+            orbit.rotationDegrees,
+            orbit.inclinationDegrees,
+          );
+
+        xScene =
+          position.x;
+        yScene =
+          position.y;
+        zScene =
+          position.z;
+      }
+
+      positionAttribute.setXYZ(
+        index,
+        xScene,
+        yScene,
+        zScene,
+      );
+    }
+
+    positionAttribute.needsUpdate =
+      true;
+    line.geometry.computeBoundingSphere();
+
+    if (
+      line.material instanceof
+      THREE.LineDashedMaterial
+    ) {
+      line.computeLineDistances();
+    }
+
+    const anchorPosition =
+      this.positionFromContributions(
+        orbit.anchorMotionContributions,
+        simulationDay,
+        sceneScale,
+      );
+
+    line.position.set(
+      anchorPosition.x,
+      anchorPosition.y,
+      anchorPosition.z,
+    );
+  }
+
+  private addStar(
+    star:
+      SystemSceneBodySnapshot,
+  ):
+    void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Star ${star.label}`;
+    group.position.set(
+      star.position.x,
+      star.position.y,
+      star.position.z,
+    );
+
+    // 31.4c: the host is NOT a luminous conventional star. Reuse the EXACT
+    // validated laboratory Three.js graph and keep the system's one renderer.
+    if (star.compactHostKind !== undefined) {
+      const graph = createCompactHostLaboratoryVisual(
+        star.compactHostKind,
+        this.currentSnapshot?.proceduralIdentity ?? star.id,
+        star.radiusScene,
+        star.compactHostAccretionLuminositySolar ?? null,
+      );
+      group.add(graph.root);
+      this.compactVisualBindings.set(star.id, graph);
+      if (star.compactHostKind === ExtremeType.STELLAR_MASS_BLACK_HOLE) {
+        this.compactBlackHoleBillboards.push(graph.root);
+      }
+      this.frameDisposables.push(graph);
+      const referenceVisualFlux = Math.max(
+        star.compactHostPresentationFlux ?? 0,
+        star.compactHostInspectionLightFlux ?? 0,
+      );
+      if (referenceVisualFlux > 0) {
+        // A presentation light only: scene-space compression of a *conditional*
+        // radiation scenario, never a physical or optical luminosity claim.
+        const visualLight = new THREE.PointLight(
+          star.compactHostKind === ExtremeType.STELLAR_MASS_BLACK_HOLE ? 0xffd6ab : 0xbadfff,
+          12 * referenceVisualFlux, 0, 1.35,
+        );
+        visualLight.name = `${star.label} conditional presentation irradiance`;
+        group.add(visualLight);
+      }
+      this.animatedBodies.set(star.id, group);
+      this.registerSelectableBody(star, group);
+      this.presentationRoot.add(group);
+      return;
+    }
+
+    const initialLod:
+      SystemSceneBodyLodLevelV1 =
+      'MEDIUM';
+
+    const sphereGeometry =
+      this.sphereGeometryPool.get(
+        'star',
+        initialLod,
+      );
+
+    const sphereMaterial =
+      new THREE.MeshBasicMaterial({
+        color:
+          star.colorHex,
+        toneMapped:
+          false,
+      });
+
+    const photosphere =
+      new THREE.Mesh(
+        sphereGeometry,
+        sphereMaterial,
+      );
+
+    photosphere.scale.setScalar(
+      star.radiusScene,
+    );
+    photosphere.name =
+      `${star.label} photosphere`;
+
+    this.bodyLodBindings.set(
+      star.id,
+      {
+        mesh: photosphere,
+        kind: 'star',
+        radiusScene: star.radiusScene,
+        level: initialLod,
+      },
+    );
+
+    const optics =
+      stellarOpticalProfile(
+        star,
+      );
+
+    const opticalRadiusScene =
+      star.opticalRadiusScene ??
+      star.radiusScene;
+
+    const coronaMaterial =
+      stellarSpriteMaterial(
+        this.starHaloTexture,
+        star.colorHex,
+        optics.coronaOpacity,
+      );
+
+    const corona =
+      new THREE.Sprite(
+        coronaMaterial,
+      );
+
+    const coronaDiameter =
+      opticalRadiusScene *
+      optics.coronaDiameterScale;
+
+    corona.scale.set(
+      coronaDiameter,
+      coronaDiameter,
+      1,
+    );
+    corona.name =
+      `${star.label} corona`;
+
+    const bloomMaterial =
+      stellarSpriteMaterial(
+        this.starBloomTexture,
+        star.colorHex,
+        optics.bloomOpacity,
+      );
+
+    const bloom =
+      new THREE.Sprite(
+        bloomMaterial,
+      );
+
+    const bloomDiameter =
+      opticalRadiusScene *
+      optics.bloomDiameterScale;
+
+    bloom.scale.set(
+      bloomDiameter,
+      bloomDiameter,
+      1,
+    );
+    bloom.name =
+      `${star.label} bloom`;
+
+    const aureoleMaterial =
+      stellarSpriteMaterial(
+        this.starBloomTexture,
+        star.colorHex,
+        optics.aureoleOpacity,
+      );
+
+    const aureole =
+      new THREE.Sprite(
+        aureoleMaterial,
+      );
+
+    const aureoleDiameter =
+      opticalRadiusScene *
+      optics.aureoleDiameterScale;
+
+    aureole.scale.set(
+      aureoleDiameter,
+      aureoleDiameter,
+      1,
+    );
+    aureole.name =
+      `${star.label} aureole`;
+
+    const glareMaterial =
+      stellarSpriteMaterial(
+        this.starGlareTexture,
+        stellarDiffractionColor(
+          star.colorHex,
+          optics.energy01,
+        ),
+        optics.glareOpacity,
+      );
+
+    const glare =
+      new THREE.Sprite(
+        glareMaterial,
+      );
+
+    glare.scale.set(
+      opticalRadiusScene *
+        optics.glareDiameterScale,
+      opticalRadiusScene *
+        optics.glareDiameterScale,
+      1,
+    );
+    glare.name =
+      `${star.label} diffraction glare`;
+
+    const light =
+      new THREE.PointLight(
+        star.colorHex,
+        star.lightIntensity,
+        0,
+        1.45,
+      );
+
+    light.name =
+      `${star.label} illumination`;
+
+    group.add(
+      corona,
+      glare,
+      bloom,
+      aureole,
+      photosphere,
+      light,
+    );
+
+    this.frameDisposables.push(
+      sphereMaterial,
+      coronaMaterial,
+      bloomMaterial,
+      aureoleMaterial,
+      glareMaterial,
+    );
+
+    this.animatedBodies.set(
+      star.id,
+      group,
+    );
+
+    this.registerSelectableBody(
+      star,
+      group,
+    );
+
+    this
+      .presentationRoot
+      .add(
+        group,
+      );
+  }
+
+  private addPlanet(
+    planet:
+      SystemSceneBodySnapshot,
+
+    systemIdentity:
+      string,
+  ):
+    void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Planet ${planet.label}`;
+    group.position.set(
+      planet.position.x,
+      planet.position.y,
+      planet.position.z,
+    );
+
+    const initialLod:
+      SystemSceneBodyLodLevelV1 =
+      'MEDIUM';
+
+    const sphereGeometry =
+      this.sphereGeometryPool.get(
+        'planet',
+        initialLod,
+      );
+
+    const appearance =
+      createSystemScenePlanetAppearanceV1(
+        planet,
+        systemIdentity,
+        this.planetTextureCache,
+        null,
+        planet.compactPlanetPresentationFill01 ??
+          (this.currentSnapshot?.stars.some(star => star.compactHostKind !== undefined) ? 0.08 : false),
+        this.currentSnapshot === null
+          ? null
+          : resolveSystemSceneAtmospherePhotosphereKelvinV4(this.currentSnapshot.stars),
+      );
+
+    this.bodyLightBindings.set(
+      planet.id,
+      appearance.lightBinding,
+    );
+
+    const axialPivot =
+      new THREE.Group();
+    axialPivot.name =
+      `${planet.label} axial tilt`;
+    axialPivot.rotation.z =
+      systemSceneBodyAxialTiltRadians(
+        planet.spin,
+      );
+
+    const spinPivot =
+      new THREE.Group();
+    spinPivot.name =
+      `${planet.label} domain spin`;
+
+    const sphere =
+      new THREE.Mesh(
+        sphereGeometry,
+        appearance.material,
+      );
+    sphere.scale.setScalar(
+      planet.radiusScene,
+    );
+
+    this.bodyLodBindings.set(
+      planet.id,
+      {
+        mesh: sphere,
+        kind: 'planet',
+        radiusScene: planet.radiusScene,
+        level: initialLod,
+        planetSystemIdentity: systemIdentity,
+      },
+    );
+
+    spinPivot.add(
+      sphere,
+    );
+
+    for (
+      const overlay
+      of appearance.overlays
+    ) {
+      spinPivot.add(
+        overlay,
+      );
+    }
+
+    const specialPresentation =
+      planet.specialPresentation;
+
+    if (
+      specialPresentation !==
+        null &&
+      specialPresentation.oblateness
+        .presentationAdjusted
+    ) {
+      spinPivot.scale.set(
+        specialPresentation.oblateness
+          .presentationEquatorialScale,
+        specialPresentation.oblateness
+          .presentationPolarScale,
+        specialPresentation.oblateness
+          .presentationEquatorialScale,
+      );
+    }
+
+    axialPivot.add(
+      spinPivot,
+    );
+
+    const ringRenderable =
+      specialPresentation ===
+        null ||
+      specialPresentation.rings ===
+        null
+        ? null
+        : createSystemSceneRingRenderableV1(
+            planet.radiusScene,
+            specialPresentation.rings,
+          );
+
+    if (
+      ringRenderable !==
+        null
+    ) {
+      if ((this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)) {
+        installV2BodyLightingOnSurfaces(ringRenderable.group, appearance.lightBinding);
+      }
+      axialPivot.add(
+        ringRenderable.group,
+      );
+    }
+
+    const artificialSatellites = this.createArtificialSatelliteVisuals(
+      planet,
+      spinPivot,
+    );
+
+    if (
+      artificialSatellites !==
+        null
+    ) {
+      axialPivot.add(
+        artificialSatellites.group,
+      );
+      this.artificialSatelliteLayerObjects.push(
+        artificialSatellites.group,
+      );
+      this.artificialSatelliteBindings.push(
+        ...artificialSatellites.bindings,
+      );
+      this.frameDisposables.push(
+        ...artificialSatellites.resources,
+      );
+    }
+
+    group.add(
+      axialPivot,
+    );
+
+    // The lab BH has intentionally depth-independent layers; all orbital
+    // surfaces need consistent front/back compositing, not only planets.
+    this.registerCompactBlackHoleBodyOcclusion(group);
+
+    this.spinningBodies.set(
+      planet.id,
+      spinPivot,
+    );
+
+    this.frameDisposables.push(
+      appearance.material,
+      ...appearance.resources,
+      ...(
+        ringRenderable?.resources ??
+        []
+      ),
+    );
+
+    this.animatedBodies.set(
+      planet.id,
+      group,
+    );
+
+    this.registerSelectableBody(
+      planet,
+      group,
+    );
+
+    this.planetLayerObjects.push(
+      group,
+    );
+
+    this
+      .presentationRoot
+      .add(
+        group,
+      );
+  }
+
+  private createArtificialSatelliteVisuals(
+    planet:
+      SystemSceneBodySnapshot,
+    _hostSpinPivot:
+      THREE.Group,
+  ):
+    {
+      readonly group: THREE.Group;
+      readonly bindings: readonly {
+        readonly hostBodyId: string;
+        readonly orbitPivot: THREE.Group;
+        readonly basePhaseRadians: number;
+        readonly angularSpeedRadiansPerDay: number;
+        readonly pointMaterial: THREE.MeshBasicMaterial;
+        readonly orbitMaterial: THREE.LineBasicMaterial;
+        readonly baseLineOpacity01: number;
+      }[];
+      readonly resources: readonly THREE.Material[];
+    } | null {
+
+    const tier =
+      planet.visualCivilizationTier ??
+      null;
+
+    if (
+      !supportsSystemSceneArtificialSatellitesV1(
+        tier,
+      )
+    ) {
+      return null;
+    }
+
+    const seed = systemScenePlanetSurfaceTextureSeedV1(
+      `${this.currentSnapshot?.universeSeed ?? 'seed'}|${this.currentSnapshot?.proceduralIdentity ?? 'system'}|sat`,
+      planet.id,
+    );
+
+    const plans = buildSystemSceneArtificialSatellitePlansV1(
+      seed,
+      tier,
+      planet.radiusScene,
+    );
+
+    if (
+      plans.length ===
+        0
+    ) {
+      return null;
+    }
+
+    const group =
+      new THREE.Group();
+    group.name =
+      `${planet.label} artificial satellites`;
+
+    const bindings: Array<{
+      readonly hostBodyId: string;
+      readonly orbitPivot: THREE.Group;
+      readonly basePhaseRadians: number;
+      readonly angularSpeedRadiansPerDay: number;
+      readonly pointMaterial: THREE.MeshBasicMaterial;
+      readonly orbitMaterial: THREE.LineBasicMaterial;
+      readonly baseLineOpacity01: number;
+    }> = [];
+    const resources: THREE.Material[] = [];
+
+    for (
+      const plan
+      of plans
+    ) {
+      const orbitPlane =
+        new THREE.Group();
+      orbitPlane.rotation.z =
+        plan.ascendingNodeRadians;
+      orbitPlane.rotation.x =
+        plan.inclinationRadians;
+
+      const orbitPivot =
+        new THREE.Group();
+      orbitPivot.rotation.y =
+        plan.phaseRadians;
+
+      const orbitRadiusScene =
+        planet.radiusScene * plan.orbitRadiusPlanetRadii;
+
+      const orbitGeometry =
+        new THREE.BufferGeometry();
+      const orbitVertices =
+        new Float32Array(
+          ORBIT_SEGMENT_COUNT *
+          3,
+        );
+
+      for (
+        let i = 0;
+        i < ORBIT_SEGMENT_COUNT;
+        i += 1
+      ) {
+        const angle =
+          (i / ORBIT_SEGMENT_COUNT) *
+          Math.PI * 2;
+        orbitVertices[i * 3] =
+          Math.cos(angle) * orbitRadiusScene;
+        orbitVertices[i * 3 + 1] =
+          0;
+        orbitVertices[i * 3 + 2] =
+          Math.sin(angle) * orbitRadiusScene;
+      }
+
+      orbitGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(
+          orbitVertices,
+          3,
+        ),
+      );
+
+      const orbitMaterial =
+        new THREE.LineBasicMaterial({
+          color:
+            plan.lineColorHex,
+          transparent:
+            true,
+          opacity:
+            plan.lineOpacity01,
+          depthWrite:
+            false,
+          toneMapped:
+            false,
+        });
+      const orbitLine =
+        new THREE.LineLoop(
+          orbitGeometry,
+          orbitMaterial,
+        );
+
+      const pointMaterial =
+        new THREE.MeshBasicMaterial({
+          color:
+            plan.pointColorHex,
+          transparent:
+            true,
+          opacity:
+            0.94,
+          toneMapped:
+            false,
+        });
+      const point =
+        new THREE.Mesh(
+          new THREE.SphereGeometry(
+            plan.pointScaleScene,
+            8,
+            8,
+          ),
+          pointMaterial,
+        );
+      point.position.set(
+        orbitRadiusScene,
+        0,
+        0,
+      );
+
+      orbitPivot.add(
+        point,
+      );
+      orbitPlane.add(
+        orbitLine,
+      );
+      orbitPlane.add(
+        orbitPivot,
+      );
+      group.add(
+        orbitPlane,
+      );
+
+      resources.push(
+        orbitMaterial,
+        pointMaterial,
+      );
+      bindings.push(
+        Object.freeze({
+          hostBodyId: planet.id,
+          orbitPivot,
+          basePhaseRadians: plan.phaseRadians,
+          angularSpeedRadiansPerDay: plan.angularSpeedRadiansPerDay,
+          pointMaterial,
+          orbitMaterial,
+          baseLineOpacity01: plan.lineOpacity01,
+        }),
+      );
+      this.frameDisposables.push(
+        orbitGeometry,
+        point.geometry,
+      );
+    }
+
+    return Object.freeze({
+      group,
+      bindings: Object.freeze(bindings),
+      resources: Object.freeze(resources),
+    });
+  }
+
+  private addMoon(
+    moon:
+      SystemSceneMoonSnapshot,
+  ):
+    void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Moon ${moon.title}`;
+    group.position.set(
+      moon.position.x,
+      moon.position.y,
+      moon.position.z,
+    );
+
+    const axialPivot =
+      new THREE.Group();
+    axialPivot.name =
+      `${moon.title} axial frame`;
+    axialPivot.rotation.z =
+      systemSceneBodyAxialTiltRadians(
+        moon.spin,
+      );
+
+    const spinPivot =
+      new THREE.Group();
+    spinPivot.name =
+      `${moon.title} domain spin`;
+
+    if ((this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)) {
+      this.bodyLightBindings.set(moon.id, createV2BodyLightBinding());
+    }
+
+    if (
+      this.layerVisibility.moons
+    ) {
+      this.materializeMoonVisual(
+        moon,
+        spinPivot,
+      );
+    } else {
+      this.pendingMoonVisuals.set(
+        moon.id,
+        {
+          moon,
+          spinPivot,
+        },
+      );
+    }
+
+    axialPivot.add(
+      spinPivot,
+    );
+    group.add(
+      axialPivot,
+    );
+
+    // Visible moons already have their meshes. Hidden moons are prepared when
+    // their geometry is materialized (never bind an empty deferred group).
+    if (!this.pendingMoonVisuals.has(moon.id)) {
+      this.registerCompactBlackHoleBodyOcclusion(group);
+    }
+
+    this.spinningBodies.set(
+      moon.id,
+      spinPivot,
+    );
+
+    this.animatedBodies.set(
+      moon.id,
+      group,
+    );
+
+    this.registerSelectableBody(
+      moon,
+      group,
+    );
+
+    this.moonLayerObjects.push(
+      group,
+    );
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
+  private materializePendingMoonVisuals(): void {
+    for (
+      const pending
+      of [...this.pendingMoonVisuals.values()]
+    ) {
+      this.materializeMoonVisual(
+        pending.moon,
+        pending.spinPivot,
+      );
+    }
+  }
+
+  private materializeMoonVisual(
+    moon:
+      SystemSceneMoonSnapshot,
+
+    spinPivot:
+      THREE.Group,
+  ): void {
+
+    if (
+      !this.pendingMoonVisuals.has(
+        moon.id,
+      ) &&
+      spinPivot.children.length >
+        0
+    ) {
+      return;
+    }
+
+    const moonInitialLod:
+      SystemSceneBodyLodLevelV1 =
+      'MEDIUM';
+    const sharedMoonGeometry =
+      moon.visualPresentation.shapeClass ===
+        'MINOR_IRREGULAR'
+        ? null
+        : this.sphereGeometryPool.get(
+            'moon',
+            moonInitialLod,
+          );
+
+    const renderable =
+      createSystemSceneMoonRenderableV1(
+        moon.visualPresentation,
+        this.moonTextureCache,
+        sharedMoonGeometry,
+      );
+
+    const moonLight = this.bodyLightBindings.get(moon.id);
+    if (moonLight !== undefined) {
+      installV2BodyLightingOnSurfaces(
+        renderable.root,
+        moonLight,
+        v2SmallBodyDayNightProfile(
+          moon.visualPresentation.presentationAtmospherePresent,
+          moon.visualPresentation.presentationAtmosphereColorHex,
+        ),
+      );
+      installV2MoonAtmosphereLighting(renderable.root, moonLight);
+    }
+
+    spinPivot.add(
+      renderable.root,
+    );
+    this.frameDisposables.push(
+      ...renderable.resources,
+    );
+
+    if (
+      renderable.surfaceUsesSharedUnitGeometry
+    ) {
+      this.bodyLodBindings.set(
+        moon.id,
+        {
+          mesh: renderable.surfaceMesh,
+          kind: 'moon',
+          radiusScene:
+            moon.visualPresentation
+              .presentationRadiusScene,
+          level: moonInitialLod,
+        },
+      );
+    }
+
+    this.pendingMoonVisuals.delete(
+      moon.id,
+    );
+
+    // On initial construction the parent hierarchy does not exist yet; addMoon
+    // registers afterwards. On deferred reveal the hierarchy already exists.
+    const moonGroup = spinPivot.parent?.parent;
+    if (moonGroup instanceof THREE.Group) {
+      this.registerCompactBlackHoleBodyOcclusion(moonGroup);
+    }
+  }
+
+  private initializeMinorBodyInstanceBatches(
+    bodies:
+      readonly SystemSceneMinorBodySnapshot[],
+  ): void {
+    // V2 requires a separate multistellar terminator for every object.
+    // V1 retains captured-body instancing; TNO-R1 uses individual procedural surfaces.
+    if ((this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)) return;
+
+    for (
+      const layerKey
+      of ['capturedObjects'] as const
+    ) {
+      const candidates =
+        bodies.filter(
+          body =>
+            minorBodyLayerKeyForKind(
+              body.minorBodyKind,
+            ) ===
+              layerKey,
+        );
+
+      if (
+        candidates.length ===
+          0
+      ) {
+        continue;
+      }
+
+      const geometry =
+        new THREE.IcosahedronGeometry(
+          1,
+          1,
+        );
+      const material =
+        new THREE.MeshStandardMaterial({
+          color:
+            candidates[0]!.colorHex,
+          roughness:
+            0.92,
+          metalness:
+            0.02,
+        });
+      const mesh =
+        new THREE.InstancedMesh(
+          geometry,
+          material,
+          candidates.length,
+        );
+
+      mesh.name =
+        `GENESIS ${layerKey} instanced batch 25.11`;
+      mesh.count =
+        0;
+      mesh.frustumCulled =
+        false;
+      mesh.instanceMatrix.setUsage(
+        THREE.DynamicDrawUsage,
+      );
+
+      const batch:
+        SystemSceneMinorBodyInstanceBatchV1 =
+        {
+          mesh,
+          groups: [],
+          radiiScene: [],
+        };
+
+      this.minorBodyInstanceBatches.set(
+        layerKey,
+        batch,
+      );
+      this.minorBodyLayerObjectArrayForKey(
+        layerKey,
+      ).push(
+        mesh,
+      );
+      this.presentationRoot.add(
+        mesh,
+      );
+      this.frameDisposables.push(
+        geometry,
+        material,
+      );
+    }
+  }
+
+  private updateMinorBodyInstanceBatches(): void {
+    for (
+      const batch
+      of this.minorBodyInstanceBatches.values()
+    ) {
+      for (
+        let index =
+          0;
+        index <
+          batch.groups.length;
+        index +=
+          1
+      ) {
+        const group =
+          batch.groups[index]!;
+        const radius =
+          batch.radiiScene[index]!;
+
+        this.minorBodyInstanceScale.set(
+          radius,
+          radius,
+          radius,
+        );
+        this.minorBodyInstanceMatrix.compose(
+          group.position,
+          this.minorBodyInstanceQuaternion,
+          this.minorBodyInstanceScale,
+        );
+        batch.mesh.setMatrixAt(
+          index,
+          this.minorBodyInstanceMatrix,
+        );
+      }
+
+      batch.mesh.count =
+        batch.groups.length;
+      batch.mesh.instanceMatrix.needsUpdate =
+        true;
+    }
+  }
+
+  private addMinorBody(
+    body:
+      SystemSceneMinorBodySnapshot,
+  ):
+    void {
+
+    const group =
+      new THREE.Group();
+
+    group.name =
+      `Minor body ${body.title}`;
+    group.position.set(
+      body.position.x,
+      body.position.y,
+      body.position.z,
+    );
+
+    const minorLight = (this.currentSnapshot?.generatorVersionCode === 2 || this.currentSnapshot?.generatorVersionCode === 3)
+      ? createV2BodyLightBinding()
+      : null;
+
+    if (
+      body.minorBodyKind.name ===
+        'ASTEROID' &&
+      body.asteroidPresentation !==
+        null
+    ) {
+      const asteroidRenderable =
+        createSystemSceneAsteroidRenderableV1(
+          body.radiusScene,
+          body.asteroidPresentation,
+        );
+
+      group.add(
+        asteroidRenderable.object,
+      );
+      this.frameDisposables.push(
+        ...asteroidRenderable.resources,
+      );
+    } else if (
+      body.minorBodyKind.name ===
+        'COMET' &&
+      body.cometPresentation !==
+        null
+    ) {
+      const cometRenderable =
+        createSystemSceneCometRenderableV1(
+          body.radiusScene,
+          body.cometPresentation,
+        );
+
+      group.add(
+        cometRenderable.object,
+      );
+      this.cometActivityBindings.set(
+        body.id,
+        cometRenderable.binding,
+      );
+      this.frameDisposables.push(
+        ...cometRenderable.resources,
+      );
+    } else if (body.minorBodyKind.name === 'TRANS_NEPTUNIAN_OBJECT' && body.tnoPresentation != null) {
+      const renderable = createSystemSceneTnoRenderableV1(body.radiusScene, body.tnoPresentation);
+      group.add(renderable.object);
+      this.frameDisposables.push(...renderable.resources);
+    } else if (body.minorBodyKind.name === 'CAPTURED_EXTRASOLAR_OBJECT' && body.capturedPresentation != null) {
+      const renderable = createSystemSceneCapturedRenderableV1(body.radiusScene, body.capturedPresentation);
+      group.add(renderable.object);
+      this.frameDisposables.push(...renderable.resources);
+    } else {
+      const layerKey =
+        minorBodyLayerKeyForKind(
+          body.minorBodyKind,
+        );
+      const batch =
+        this.minorBodyInstanceBatches.get(
+          layerKey,
+        );
+
+      if (
+        batch !==
+          undefined
+      ) {
+        batch.groups.push(
+          group,
+        );
+        batch.radiiScene.push(
+          body.radiusScene,
+        );
+        batch.mesh.count =
+          batch.groups.length;
+      } else {
+        const geometry =
+          new THREE.IcosahedronGeometry(
+            body.radiusScene,
+            1,
+          );
+
+        const material =
+          new THREE.MeshStandardMaterial({
+            color:
+              body.colorHex,
+            roughness:
+              0.92,
+            metalness:
+              0.02,
+          });
+
+        group.add(
+          new THREE.Mesh(
+            geometry,
+            material,
+          ),
+        );
+
+        this.frameDisposables.push(
+          geometry,
+          material,
+        );
+      }
+    }
+
+    if (minorLight !== null) {
+      this.bodyLightBindings.set(body.id, minorLight);
+      installV2BodyLightingOnSurfaces(group, minorLight);
+    }
+
+    // Includes asteroid lobes, comet nucleus/coma/tails, TNO and captured
+    // object meshes. Physics and selection objects remain untouched.
+    this.registerCompactBlackHoleBodyOcclusion(group);
+
+    this.animatedBodies.set(
+      body.id,
+      group,
+    );
+
+    this.registerSelectableBody(
+      body,
+      group,
+    );
+
+    this.minorBodyLayerObjectArray(
+      body.minorBodyKind,
+    ).push(
+      group,
+    );
+
+    this.presentationRoot.add(
+      group,
+    );
+  }
+
+  /** 31.4i.1 — Bind only materialized meshes in BH host scenes. */
+  private registerCompactBlackHoleBodyOcclusion(group: THREE.Group): void {
+    if (this.compactBlackHoleBillboards.length === 0) return;
+    const binding = prepareCompactBlackHoleBodyOcclusion(group);
+    if (binding.drawables.length > 0) {
+      this.compactBlackHoleBodyOcclusion.push(binding);
+    }
+  }
+
+  private registerSelectableBody(
+    body:
+      SystemSceneSelectableBodySnapshot,
+
+    group:
+      THREE.Group,
+  ):
+    void {
+
+    const pickRadius =
+      systemScenePickingRadiusScene(
+        body.kind,
+        systemSceneVisualExtentRadiusScene(
+          body,
+        ),
+      );
+
+    this.bodySnapshotById.set(
+      body.id,
+      body,
+    );
+
+    const proxyBatch =
+      this.selectionProxyBatch;
+
+    if (
+      proxyBatch ===
+        null
+    ) {
+      return;
+    }
+
+    this.selectionProxyBodyIds.push(
+      body.id,
+    );
+    this.selectionProxyGroups.push(
+      group,
+    );
+    this.selectionProxyRadii.push(
+      pickRadius,
+    );
+    proxyBatch.count =
+      this.selectionProxyBodyIds.length;
+  }
+
+  private initializeSelectionProxyBatch(
+    capacity:
+      number,
+  ): void {
+
+    if (
+      capacity <=
+        0
+    ) {
+      return;
+    }
+
+    const material =
+      new THREE.MeshBasicMaterial({
+        transparent:
+          true,
+        opacity:
+          0,
+        depthWrite:
+          false,
+        colorWrite:
+          false,
+      });
+
+    const mesh =
+      new THREE.InstancedMesh(
+        this.sphereGeometryPool.get(
+          'moon',
+          'LOW',
+        ),
+        material,
+        capacity,
+      );
+
+    mesh.name =
+      'GENESIS selection proxy batch 25.11';
+    mesh.count =
+      0;
+    mesh.frustumCulled =
+      false;
+    mesh.instanceMatrix.setUsage(
+      THREE.DynamicDrawUsage,
+    );
+
+    this.selectionProxyBatch =
+      mesh;
+    this.selectableObjects.push(
+      mesh,
+    );
+    this.presentationRoot.add(
+      mesh,
+    );
+    this.frameDisposables.push(
+      material,
+    );
+  }
+
+  private updateSelectionProxyBatch(): void {
+    const mesh =
+      this.selectionProxyBatch;
+
+    if (
+      mesh ===
+        null
+    ) {
+      return;
+    }
+
+    for (
+      let index =
+        0;
+      index <
+        this.selectionProxyBodyIds.length;
+      index +=
+        1
+    ) {
+      const group =
+        this.selectionProxyGroups[index]!;
+      const visible =
+        objectHierarchyVisible(
+          group,
+        );
+      const radius =
+        visible
+          ? this.selectionProxyRadii[index]!
+          : 1e-6;
+
+      if (visible) {
+        this.selectionProxyPosition.copy(
+          group.position,
+        );
+      } else {
+        this.selectionProxyPosition.set(
+          1_000_000,
+          1_000_000,
+          1_000_000,
+        );
+      }
+
+      this.selectionProxyScale.set(
+        radius,
+        radius,
+        radius,
+      );
+      this.selectionProxyMatrix.compose(
+        this.selectionProxyPosition,
+        this.selectionProxyQuaternion,
+        this.selectionProxyScale,
+      );
+      mesh.setMatrixAt(
+        index,
+        this.selectionProxyMatrix,
+      );
+    }
+
+    mesh.count =
+      this.selectionProxyBodyIds.length;
+    mesh.instanceMatrix.needsUpdate =
+      true;
+  }
+
+  private selectAtClientPoint(
+    clientX:
+      number,
+
+    clientY:
+      number,
+  ):
+    void {
+
+    const bounds =
+      this.canvas
+        .getBoundingClientRect();
+
+    if (
+      bounds.width <=
+        0 ||
+      bounds.height <=
+        0
+    ) {
+      return;
+    }
+
+    this.pointerNdc.set(
+      (
+        (clientX -
+          bounds.left) /
+        bounds.width
+      ) *
+        2 -
+        1,
+      -(
+        (
+          clientY -
+          bounds.top
+        ) /
+        bounds.height
+      ) *
+        2 +
+        1,
+    );
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.updateMatrixWorld(
+      true,
+    );
+
+    this.raycaster.setFromCamera(
+      this.pointerNdc,
+      this.camera,
+    );
+
+    this.updateSelectionProxyBatch();
+
+    const intersection =
+      this.raycaster.intersectObjects(
+        this.selectableObjects.filter(
+          object =>
+            objectHierarchyVisible(
+              object,
+            ),
+        ),
+        false,
+      )[0];
+
+    const instancedBodyId =
+      intersection !==
+        undefined &&
+      intersection.object ===
+        this.selectionProxyBatch &&
+      intersection.instanceId !==
+        undefined
+        ? this.selectionProxyBodyIds[
+            intersection.instanceId
+          ] ??
+          null
+        : null;
+
+    const legacyBodyId =
+      intersection
+        ?.object
+        .userData[
+          'systemSceneBodyId'
+        ];
+
+    this.selectBody(
+      instancedBodyId ??
+      (
+        typeof legacyBodyId ===
+          'string'
+          ? legacyBodyId
+          : null
+      ),
+    );
+  }
+
+  private selectBody(
+    bodyId:
+      string | null,
+  ):
+    void {
+
+    if (
+      this.selectionMarker !==
+      null
+    ) {
+      this.selectionMarker.removeFromParent();
+      this.selectionMarker.material.dispose();
+      this.selectionMarker =
+        null;
+    }
+
+    this.selectedBodyId =
+      bodyId;
+
+    if (
+      bodyId ===
+        null
+    ) {
+      this.onSelectionChange(
+        null,
+      );
+      this.renderFrame();
+      return;
+    }
+
+    const body =
+      this.bodySnapshotById.get(
+        bodyId,
+      );
+
+    const group =
+      this.animatedBodies.get(
+        bodyId,
+      );
+
+    if (
+      body ===
+        undefined ||
+      group ===
+        undefined
+    ) {
+      this.onSelectionChange(
+        null,
+      );
+      this.renderFrame();
+      return;
+    }
+
+    const markerMaterial =
+      new THREE.SpriteMaterial({
+        map:
+          this.selectionRingTexture,
+        color:
+          0x8ce5ff,
+        transparent:
+          true,
+        opacity:
+          0.94,
+        depthTest:
+          false,
+        depthWrite:
+          false,
+        toneMapped:
+          false,
+      });
+
+    const marker =
+      new THREE.Sprite(
+        markerMaterial,
+      );
+
+    const visualExtentRadius =
+      systemSceneVisualExtentRadiusScene(
+        body,
+      );
+
+    const diameter =
+      body.kind ===
+        'star'
+        ? Math.max(
+            visualExtentRadius *
+              4.5,
+            0.46,
+          )
+        : Math.max(
+            visualExtentRadius *
+              4.8,
+            0.34,
+          );
+
+    marker.scale.set(
+      diameter,
+      diameter,
+      1,
+    );
+    marker.renderOrder =
+      100;
+    marker.name =
+      `${body.title} selection marker`;
+
+    group.add(
+      marker,
+    );
+
+    this.selectionMarker =
+      marker;
+
+    this.onSelectionChange(
+      Object.freeze({
+        bodyId:
+          body.id,
+        kind:
+          body.kind,
+        label:
+          body.label,
+        title:
+          body.title,
+      }),
+    );
+
+    this.renderFrame();
+  }
+
+  private applySimulationDay(
+    simulationDay:
+      number,
+  ):
+    void {
+
+    const snapshot =
+      this.currentSnapshot;
+
+    if (
+      snapshot ===
+      null
+    ) {
+      return;
+    }
+
+    const sceneScale =
+      snapshot.scale;
+    this.lightingSimulationDay = simulationDay;
+
+    for (
+      const body
+      of [
+        ...snapshot.stars,
+        ...snapshot.planets,
+        ...(snapshot.pulsarPlanetVisuals ?? []),
+        ...snapshot.moons,
+        ...snapshot.minorBodies,
+      ]
+    ) {
+      const object =
+        this.animatedBodies.get(
+          body.id,
+        );
+
+      if (
+        object ===
+        undefined
+      ) {
+        continue;
+      }
+
+      const position =
+        body.motionContributions.length ===
+          0
+          ? body.position
+          : this.positionFromContributions(
+              body.motionContributions,
+              simulationDay,
+              sceneScale,
+            );
+
+      object.position.set(
+        position.x,
+        position.y,
+        position.z,
+      );
+
+      if (
+        body.kind !==
+          'minor-body'
+      ) {
+        const spinObject =
+          this.spinningBodies.get(
+            body.id,
+          );
+
+        if (
+          spinObject !==
+            undefined
+        ) {
+          spinObject.rotation.y =
+            body.kind ===
+              'moon'
+              ? systemSceneMoonDisplaySpinRadiansV2(
+                  body.spin,
+                  simulationDay,
+                  snapshot.simulation,
+                )
+              : systemSceneBodyDisplaySpinRadians(
+                  body.spin,
+                  simulationDay,
+                  snapshot.simulation,
+                );
+        }
+      }
+    }
+
+    for (
+      const orbit
+      of snapshot.orbits
+    ) {
+      const line =
+        this.animatedOrbits.get(
+          orbit.id,
+        );
+
+      if (
+        line ===
+        undefined
+      ) {
+        continue;
+      }
+
+      const anchorPosition =
+        this.positionFromContributions(
+          orbit.anchorMotionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      line.position.set(
+        anchorPosition.x,
+        anchorPosition.y,
+        anchorPosition.z,
+      );
+    }
+
+    for (const binding of this.habitableZoneBindings) {
+      const anchor = this.positionFromContributions(
+        binding.snapshot.anchorMotionContributions,
+        simulationDay,
+        sceneScale,
+      );
+      binding.group.position.copy(anchor);
+    }
+
+    for (
+      const binding
+      of this.asteroidBeltLayerBindings
+    ) {
+      const anchorPosition =
+        this.positionFromContributions(
+          binding.snapshot
+            .anchorMotionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      binding.group.position.copy(
+        anchorPosition,
+      );
+    }
+
+    for (
+      const overlay
+      of this.orbitalRiskOrbitOverlays
+    ) {
+      const anchorPosition =
+        this.positionFromContributions(
+          overlay.orbit.anchorMotionContributions,
+          simulationDay,
+          sceneScale,
+        );
+
+      overlay.line.position.copy(
+        anchorPosition,
+      );
+    }
+
+    for (
+      const marker
+      of this.orbitalRiskMarkers
+    ) {
+      const targetBody =
+        this.animatedBodies.get(
+          marker.targetBodyId,
+        ) ??
+        null;
+
+      if (
+        targetBody !==
+          null
+      ) {
+        marker.sprite.position.copy(
+          targetBody.position,
+        );
+      }
+    }
+
+    for (const visual of this.compactVisualBindings.values()) {
+      // One simulated day advances one visual second, not physical compact spin.
+      visual.update(simulationDay);
+    }
+
+    this.updateCometActivityPresentation(
+      simulationDay,
+    );
+    this.updateMinorBodyInstanceBatches();
+    this.updateSelectionProxyBatch();
+  }
+
+  private updateCometActivityPresentation(
+    simulationDay:
+      number,
+  ): void {
+
+    const snapshot =
+      this.currentSnapshot;
+
+    if (
+      snapshot ===
+        null ||
+      this.cometActivityBindings.size ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+
+    for (
+      const body
+      of snapshot.minorBodies
+    ) {
+      const presentation =
+        body.cometPresentation;
+      const binding =
+        this.cometActivityBindings.get(
+          body.id,
+        );
+      const cometObject =
+        this.animatedBodies.get(
+          body.id,
+        );
+
+      if (
+        presentation ===
+          null ||
+        binding ===
+          undefined ||
+        cometObject ===
+          undefined
+      ) {
+        continue;
+      }
+
+      const activity =
+        systemSceneCometActivityAtSimulationDayV1(
+          presentation,
+          simulationDay,
+          body.radiusScene,
+        );
+
+      cometObject.getWorldPosition(
+        this.cometWorldPosition,
+      );
+      this.cometLightDirectionAccumulator.set(
+        0,
+        0,
+        0,
+      );
+      const stellarFluxes = (snapshot.generatorVersionCode === 2 || snapshot.generatorVersionCode === 3)
+        ? v2CometStellarIrradianceAtDay(snapshot, body, simulationDay)
+        : null;
+      const totalFlux = stellarFluxes?.reduce((sum, source) => sum + source.fluxEarth, 0)
+        ?? activity.incidentFluxEarth;
+
+      for (
+        const star
+        of snapshot.stars
+      ) {
+        const starObject =
+          this.animatedBodies.get(
+            star.id,
+          );
+
+        if (
+          starObject ===
+            undefined
+        ) {
+          continue;
+        }
+
+        starObject.getWorldPosition(
+          this.cometStarWorldPosition,
+        );
+        this.cometLightDirectionScratch
+          .subVectors(
+            this.cometStarWorldPosition,
+            this.cometWorldPosition,
+          );
+
+        const distanceSquared =
+          Math.max(
+            this.cometLightDirectionScratch
+              .lengthSq(),
+            0.0025,
+          );
+        const fluxWeight = stellarFluxes === null
+          ? (star.compactHostKind === undefined ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01) : 0) / distanceSquared
+          : (stellarFluxes.find(source => source.starId === star.id)?.fluxEarth ?? 0);
+
+        if (
+          this.cometLightDirectionScratch
+            .lengthSq() >
+          1e-12
+        ) {
+          this.cometLightDirectionScratch
+            .normalize();
+          this.cometLightDirectionAccumulator
+            .addScaledVector(
+              this.cometLightDirectionScratch,
+              fluxWeight,
+            );
+        }
+      }
+
+      if (
+        this.cometLightDirectionAccumulator
+          .lengthSq() <=
+        1e-12
+      ) {
+        this.cometLightDirectionAccumulator.set(
+          -1,
+          0,
+          0,
+        );
+      } else {
+        this.cometLightDirectionAccumulator
+          .normalize()
+          .negate();
+      }
+
+      applySystemSceneCometActivityVisualV1(
+        binding,
+        systemSceneCometActivityVisualParityV1(
+          snapshot, presentation, activity, body.radiusScene, totalFlux,
+        ),
+        this.cometLightDirectionAccumulator,
+      );
+    }
+  }
+
+  private updateTrackedBodyCamera(
+    realTimestampMilliseconds:
+      number,
+  ): void {
+
+    if (
+      this.trackedBodyId ===
+        null
+    ) {
+      return;
+    }
+
+    const object =
+      this.animatedBodies.get(
+        this.trackedBodyId,
+      );
+
+    if (
+      object ===
+        undefined
+    ) {
+      this.trackedBodyId =
+        null;
+      this.cameraController.stopBodyTracking();
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+
+    object.getWorldPosition(
+      this.trackedWorldPosition,
+    );
+
+    this.cameraController.updateBodyTracking(
+      this.trackedWorldPosition,
+      realTimestampMilliseconds,
+    );
+  }
+
+  private positionFromContributions(
+    contributions:
+      readonly SystemSceneMotionContributionSnapshot[],
+
+    simulationDay:
+      number,
+
+    sceneScale:
+      SystemSceneScaleSnapshot,
+  ): THREE.Vector3 {
+
+    const projected =
+      projectSystemSceneMotionContributions(
+        contributions,
+        motionId =>
+          this.motionById.get(
+            motionId,
+          ),
+        simulationDay,
+        sceneScale,
+      );
+
+    return new THREE.Vector3(
+      projected.x,
+      projected.y,
+      projected.z,
+    );
+  }
+
+  private clearFrameObjects():
+    void {
+
+    if (
+      this.selectionMarker !==
+        null
+    ) {
+      this.selectionMarker.removeFromParent();
+      this.selectionMarker.material.dispose();
+    }
+
+    this.trackedBodyId =
+      null;
+    this.cameraController.stopBodyTracking();
+
+    disposeResources(
+      this.frameDisposables,
+    );
+
+    if (
+      this.selectedBodyId !==
+        null
+    ) {
+      this.onSelectionChange(
+        null,
+      );
+    }
+
+    this.selectionMarker =
+      null;
+    this.selectedBodyId =
+      null;
+    this.selectionProxyBatch =
+      null;
+    this.selectionProxyBodyIds.length =
+      0;
+    this.selectionProxyGroups.length =
+      0;
+    this.selectionProxyRadii.length =
+      0;
+    this.selectableObjects.length =
+      0;
+    this.planetLayerObjects.length =
+      0;
+    this.moonLayerObjects.length =
+      0;
+    this.artificialSatelliteLayerObjects.length =
+      0;
+    this.habitableZoneLayerObjects.length =
+      0;
+    this.orbitalRiskLayerObjects.length =
+      0;
+    this.habitableZoneBindings.length =
+      0;
+    this.asteroidBeltLayerBindings.length =
+      0;
+    this.orbitalRiskOrbitOverlays.length =
+      0;
+    this.orbitalRiskMarkers.length =
+      0;
+    this.asteroidLayerObjects.length =
+      0;
+    this.cometLayerObjects.length =
+      0;
+    this.cometActivityBindings.clear();
+    this.minorBodyInstanceBatches.clear();
+    this.transNeptunianObjectLayerObjects.length =
+      0;
+    this.capturedObjectLayerObjects.length =
+      0;
+    this.minorBodyOrbitLayerKeys.clear();
+    this.bodySnapshotById.clear();
+    this.releaseDetailedPlanetTexture();
+    this.bodyLodBindings.clear();
+    this.pendingMoonVisuals.clear();
+    this.animatedBodies.clear();
+    this.spinningBodies.clear();
+    this.bodyLightBindings.clear();
+    this.compactVisualBindings.clear();
+    this.compactBlackHoleBillboards.length = 0;
+    this.compactBlackHoleBodyOcclusion.length = 0;
+    this.animatedOrbits.clear();
+    this.orbitLocalSamplesAu.clear();
+
+    while (
+      this.presentationRoot.children.length >
+      0
+    ) {
+      const child =
+        this.presentationRoot
+          .children[0];
+
+      this.presentationRoot.remove(
+        child,
+      );
+    }
+  }
+
+  private updateAnimationLoop():
+    void {
+
+    if (
+      this.disposed
+    ) {
+      return;
+    }
+
+    const motionCount =
+      this.currentSnapshot
+        ?.motions.length ??
+      0;
+
+    this
+      .renderer
+      .setAnimationLoop(
+        systemSceneAnimationLoopRequired(
+          this.pageVisible,
+          // Compact stars can pulse/rotate even when they have no planets.
+          motionCount + this.compactVisualBindings.size,
+          this.trackedBodyId !==
+            null,
+        )
+          ? this.onAnimationFrame
+          : null,
+      );
+  }
+
+  private updateBodyLightDirections():
+    void {
+
+    const snapshot =
+      this.currentSnapshot;
+
+    if (
+      snapshot ===
+        null ||
+      this.bodyLightBindings.size ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.updateMatrixWorld(
+      true,
+    );
+    this.camera.matrixWorldInverse
+      .copy(
+        this.camera.matrixWorld,
+      )
+      .invert();
+
+    // Only the V2 TRIPLE path changes: its independently magnified A/B and C
+    // orbits must not be used to estimate physical stellar flux.
+    const tripleSources = (snapshot.generatorVersionCode === 2 || snapshot.generatorVersionCode === 3) &&
+      snapshot.multiplicityName === 'TRIPLE'
+      ? v2TripleLightingSources(snapshot, this.lightingSimulationDay)
+      : null;
+
+    for (
+      const body
+      of systemSceneLightingTargets(snapshot)
+    ) {
+      const binding =
+        this.bodyLightBindings.get(
+          body.id,
+        );
+      const planetObject =
+        this.animatedBodies.get(
+          body.id,
+        );
+
+      if (
+        binding ===
+          undefined ||
+        planetObject ===
+          undefined
+      ) {
+        continue;
+      }
+
+      planetObject.getWorldPosition(
+        this.planetLightPlanetWorldPosition,
+      );
+      const tripleFluxes = tripleSources === null ? null : v2TripleBodyLightFluxes(
+        body.motionContributions, snapshot.motions, tripleSources, this.lightingSimulationDay,
+      );
+      this.planetLightTopFluxes[0] =
+        0;
+      this.planetLightTopFluxes[1] =
+        0;
+      this.planetLightTopFluxes[2] =
+        0;
+
+      for (
+        const star
+        of snapshot.stars
+      ) {
+        const starObject =
+          this.animatedBodies.get(
+            star.id,
+          );
+
+        if (
+          starObject ===
+            undefined
+        ) {
+          continue;
+        }
+
+        starObject.getWorldPosition(
+          this.planetLightStarWorldPosition,
+        );
+        this.planetLightDirectionScratch
+          .subVectors(
+            this.planetLightStarWorldPosition,
+            this.planetLightPlanetWorldPosition,
+          );
+
+        const distanceSquared =
+          Math.max(
+            this.planetLightDirectionScratch
+              .lengthSq(),
+            0.0025,
+          );
+
+        if (
+          distanceSquared <=
+            0
+        ) {
+          continue;
+        }
+
+        const flux = tripleFluxes === null
+          ? (star.compactHostKind === undefined
+              ? Math.max(star.sourceLuminositySolar ?? 0.01, 0.01)
+              : Math.max(star.compactHostPresentationFlux ?? 0, star.compactHostInspectionLightFlux ?? 0)) / distanceSquared
+          : (tripleFluxes.find(source => source.starId === star.id)?.flux ?? 0);
+
+        this.planetLightDirectionScratch
+          .normalize();
+        insertTopPlanetLightContribution(
+          this.planetLightTopFluxes,
+          this.planetLightTopDirections,
+          flux,
+          this.planetLightDirectionScratch,
+        );
+      }
+
+      const compressedWeightSum =
+        assignPlanetLightBindingView(
+          binding,
+          this.planetLightTopFluxes,
+          this.planetLightTopDirections,
+          this.camera.matrixWorldInverse,
+        );
+
+      if (
+        compressedWeightSum <=
+        1e-9
+      ) {
+        binding.lightDirectionsView[0].set(
+          1,
+          0,
+          0,
+        );
+        binding.lightDirectionsView[1].set(
+          1,
+          0,
+          0,
+        );
+        binding.lightDirectionsView[2].set(
+          1,
+          0,
+          0,
+        );
+        // If no directional emission or separate disk-inspection lighting is
+        // available, only the bounded albedo-following fill remains.
+        binding.lightWeightsView.set(
+          snapshot.stars.some(star => star.compactHostKind !== undefined)
+            ? 0 : 1,
+          0,
+          0,
+        );
+      }
+    }
+  }
+
+  private updateBodyLod(): void {
+    if (
+      this.bodyLodBindings.size ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.getWorldPosition(
+      this.cameraWorldPosition,
+    );
+
+    let closestPlanet: { id: string; projectedDiameter: number; binding: SystemSceneBodyLodBindingV1 } | null = null;
+
+    for (
+      const [bodyId, binding]
+      of this.bodyLodBindings
+    ) {
+      if (
+        !objectHierarchyVisible(
+          binding.mesh,
+        )
+      ) {
+        continue;
+      }
+
+      binding.mesh.getWorldPosition(
+        this.lodWorldPosition,
+      );
+
+      const distance =
+        Math.max(
+          this.lodWorldPosition.distanceTo(
+            this.cameraWorldPosition,
+          ),
+          binding.radiusScene * 1.05,
+        );
+
+      const projectedDiameter =
+        systemSceneProjectedDiameterPixelsV1(
+          binding.radiusScene,
+          distance,
+          this.camera.fov,
+          this.viewportHeightPixels,
+        );
+
+      const nextLevel =
+        systemSceneBodyLodLevelV1(
+          projectedDiameter,
+          binding.level,
+        );
+
+      if (binding.kind === 'planet' && binding.planetSystemIdentity !== undefined &&
+          projectedDiameter >= 210 &&
+          (closestPlanet === null || projectedDiameter > closestPlanet.projectedDiameter)) {
+        // Do not spend GPU memory on a larger planet behind the camera.
+        const projectedCenter = this.lodWorldPosition.project(this.camera);
+        if (projectedCenter.z >= -1 && projectedCenter.z <= 1 &&
+            Math.abs(projectedCenter.x) <= 1.3 && Math.abs(projectedCenter.y) <= 1.3) {
+          closestPlanet = { id: bodyId, projectedDiameter, binding };
+        }
+      }
+
+      if (
+        nextLevel ===
+          binding.level
+      ) {
+        continue;
+      }
+
+      binding.mesh.geometry =
+        this.sphereGeometryPool.get(
+          binding.kind,
+          nextLevel,
+        );
+      binding.level =
+        nextLevel;
+    }
+
+    // Avoid generating high definition for distant planets or every body of
+    // a dense system. Hysteresis prevents changes at the zoom boundary.
+    const previous = this.detailedPlanetTexture;
+    const candidate = closestPlanet?.projectedDiameter !== undefined &&
+      closestPlanet.projectedDiameter >= (previous?.id === closestPlanet.id ? 210 : 300)
+      ? closestPlanet : null;
+    if (candidate?.id !== previous?.id) {
+      this.releaseDetailedPlanetTexture();
+      if (candidate !== null) this.installDetailedPlanetTexture(candidate.id, candidate.binding);
+    }
+  }
+
+  private releaseDetailedPlanetTexture(): void {
+    const previous = this.detailedPlanetTexture;
+    if (previous === null) return;
+    previous.material.map = previous.originalMap;
+    previous.material.roughnessMap = previous.originalRoughness;
+    previous.material.bumpMap = previous.originalBump;
+    previous.material.emissiveMap = previous.originalEmissive;
+    previous.material.needsUpdate = true;
+    if (previous.cloudMaterial !== null) {
+      previous.cloudMaterial.map = previous.originalCloud;
+      previous.cloudMaterial.needsUpdate = true;
+    }
+    for (const texture of previous.detailTextures) texture.dispose();
+    this.detailedPlanetTexture = null;
+  }
+
+  private installDetailedPlanetTexture(id: string, binding: SystemSceneBodyLodBindingV1): void {
+    const body = this.bodySnapshotById.get(id);
+    if (body?.kind !== 'planet' || binding.planetSystemIdentity === undefined ||
+        !(binding.mesh.material instanceof THREE.MeshStandardMaterial)) return;
+    const material = binding.mesh.material;
+    const originalMap = material.map;
+    const originalRoughness = material.roughnessMap;
+    const originalBump = material.bumpMap;
+    const originalEmissive = material.emissiveMap;
+    const spinPivot = this.spinningBodies.get(id);
+    const cloudMesh = spinPivot?.children.find(child =>
+      child !== binding.mesh && child instanceof THREE.Mesh &&
+      child.material instanceof THREE.MeshStandardMaterial && child.material.transparent,
+    );
+    const cloudMaterial = cloudMesh instanceof THREE.Mesh &&
+      cloudMesh.material instanceof THREE.MeshStandardMaterial
+      ? cloudMesh.material : null;
+    const originalCloud = cloudMaterial?.map ?? null;
+
+    // Reuse the already computed D.4d atlas. No fresh physical projection,
+    // planetary generation or high-cost semantic-mask classification on zoom.
+    const seed = systemScenePlanetTextureSeed({
+      systemIdentity: binding.planetSystemIdentity,
+      planetId: id,
+      surfaceStyle: planetTextureSurfaceStyle(body),
+    });
+    const detailTextures: THREE.DataTexture[] = [];
+    const refine = (old: THREE.Texture | null, kind: PlanetTextureRefinementKind): THREE.DataTexture | null => {
+      if (!(old instanceof THREE.DataTexture)) return null;
+      const image = old.image as { readonly width: number; readonly height: number; readonly data: Uint8Array };
+      if (!(image.data instanceof Uint8Array) || image.width < 3 || image.height < 2) return null;
+      const width = PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width;
+      const refined = createRgbaDataTexture(width, width / 2,
+        refinePlanetRgbaTextureV1(image.data, image.width, image.height, width, seed, kind),
+        `GENESIS VIS-3D.1 ${kind} (zoom)`);
+      if (kind === 'DATA') refined.colorSpace = THREE.NoColorSpace;
+      detailTextures.push(refined);
+      return refined;
+    };
+    const main = refine(originalMap, body.giantAtmosphere === null ? 'COLOR' : 'GAS');
+    if (main === null) return;
+    const roughness = refine(originalRoughness, 'DATA');
+    const bump = refine(originalBump, 'DATA');
+    const emissive = refine(originalEmissive, 'EMISSION');
+    const cloud = refine(originalCloud, 'CLOUD');
+
+    material.map = main;
+    if (roughness !== null) material.roughnessMap = roughness;
+    if (bump !== null) material.bumpMap = bump;
+    if (emissive !== null) material.emissiveMap = emissive;
+    material.needsUpdate = true;
+    if (cloudMaterial !== null && cloud !== null) {
+      cloudMaterial.map = cloud;
+      cloudMaterial.needsUpdate = true;
+    }
+    this.detailedPlanetTexture = {
+      id, material, originalMap, originalRoughness, originalBump, originalEmissive,
+      cloudMaterial, originalCloud, detailTextures,
+    };
+  }
+
+  private updateArtificialSatelliteLighting():
+    void {
+
+    if (
+      !this.layerVisibility.artificialSatellites ||
+      this.artificialSatelliteBindings.length ===
+        0
+    ) {
+      return;
+    }
+
+    this.scene.updateMatrixWorld(
+      true,
+    );
+    this.camera.updateMatrixWorld(
+      true,
+    );
+    this.camera.getWorldPosition(
+      this.cameraWorldPosition,
+    );
+
+    for (
+      const binding
+      of this.artificialSatelliteBindings
+    ) {
+      const host = this.animatedBodies.get(
+        binding.hostBodyId,
+      );
+
+      if (
+        host ===
+          undefined
+      ) {
+        continue;
+      }
+
+      host.getWorldPosition(
+        this.artificialSatellitePlanetWorldPosition,
+      );
+      this.artificialSatelliteCameraDirection
+        .subVectors(
+          this.cameraWorldPosition,
+          this.artificialSatellitePlanetWorldPosition,
+        )
+        .normalize();
+
+      let weightedNight =
+        0;
+      let totalWeight =
+        0;
+
+      for (
+        const star
+        of this.currentSnapshot?.stars ??
+          []
+      ) {
+        if ((star.sourceLuminositySolar ?? 0) <= 0) {
+          continue;
+        }
+
+        const starObject =
+          this.animatedBodies.get(
+            star.id,
+          );
+
+        if (
+          starObject ===
+            undefined
+        ) {
+          continue;
+        }
+
+        starObject.getWorldPosition(
+          this.artificialSatelliteStarWorldPosition,
+        );
+        this.artificialSatelliteLightDirection
+          .subVectors(
+            this.artificialSatelliteStarWorldPosition,
+            this.artificialSatellitePlanetWorldPosition,
+          );
+        const distanceSquared = Math.max(
+          this.artificialSatelliteLightDirection.lengthSq(),
+          1e-6,
+        );
+        this.artificialSatelliteLightDirection.normalize();
+        const weight =
+          Math.max(
+            star.sourceLuminositySolar ?? 0,
+            0.05,
+          ) /
+          distanceSquared;
+        const viewDot =
+          this.artificialSatelliteCameraDirection.dot(
+            this.artificialSatelliteLightDirection,
+          );
+        const nightFactor = THREE.MathUtils.clamp(
+          (-viewDot + 0.15) /
+            1.15,
+          0,
+          1,
+        );
+        weightedNight +=
+          nightFactor *
+          weight;
+        totalWeight +=
+          weight;
+      }
+
+      const visibility =
+        totalWeight <=
+          0
+          ? 0.34
+          : 0.12 +
+            0.88 *
+            THREE.MathUtils.clamp(
+              weightedNight /
+                totalWeight,
+              0,
+              1,
+            );
+
+      binding.pointMaterial.opacity =
+        0.25 +
+        0.72 * visibility;
+      binding.orbitMaterial.opacity =
+        binding.baseLineOpacity01 *
+        visibility;
+    }
+  }
+
+  private renderFrame():
+    void {
+
+    if (
+      this.disposed ||
+      !this.pageVisible
+    ) {
+      return;
+    }
+
+    this.updateBodyLod();
+    this.updateMinorBodyInstanceBatches();
+    this.updateSelectionProxyBatch();
+    for (const blackHole of this.compactBlackHoleBillboards) {
+      orientCompactBlackHoleToCamera(blackHole, this.camera);
+    }
+    this.updateBodyLightDirections();
+    this.updateArtificialSatelliteLighting();
+    if (this.compactBlackHoleBodyOcclusion.length > 0) {
+      // Camera and orbital motion can both reverse near/far order at any time.
+      this.scene.updateMatrixWorld(true);
+      this.camera.updateMatrixWorld(true);
+      const blackHole = this.compactBlackHoleBillboards[0]!;
+      for (const body of this.compactBlackHoleBodyOcclusion) {
+        updateCompactBlackHoleBodyOcclusion(body, blackHole, this.camera);
+      }
+    }
+
+    this
+      .renderer
+      .render(
+        this.scene,
+        this.camera,
+      );
+  }
+
+  private assertAlive():
+    void {
+
+    if (
+      this.disposed
+    ) {
+      throw new Error(
+        'SystemScene runtime has already been disposed.',
+      );
+    }
+  }
+}
+
+interface SystemSceneBodyLodBindingV1 {
+  readonly mesh: THREE.Mesh;
+  readonly kind: SystemSceneBodyLodKindV1;
+  readonly radiusScene: number;
+  level: SystemSceneBodyLodLevelV1;
+  readonly planetSystemIdentity?: string;
+}
+
+export interface SystemScenePlanetTextureResourceV1 {
+  readonly giantAtmosphereTexture:
+    SystemSceneGiantAtmosphereTextureData | null;
+  readonly textureData:
+    ReturnType<typeof buildSystemScenePlanetTextureV1> | null;
+  readonly semanticSurface:
+    SystemScenePlanetSurfaceTextureData | null;
+  readonly surfaceTexture:
+    THREE.DataTexture;
+  readonly emissiveTexture:
+    THREE.DataTexture | null;
+  readonly nightLightsTexture:
+    THREE.DataTexture | null;
+  readonly cloudTexture:
+    THREE.DataTexture | null;
+  readonly roughnessTexture:
+    THREE.DataTexture | null;
+  readonly reliefTexture:
+    THREE.DataTexture | null;
+  readonly visualSeed:
+    number;
+  dispose(): void;
+}
+
+export interface SystemScenePlanetVisualSeedPackV1 {
+  readonly planetTextureSeedUint32: number;
+  readonly surfaceTextureSeedUint32: number;
+  readonly giantAtmosphereTextureSeedUint32: number | null;
+}
+
+/** VIS-3D.2 — explicit equirectangular atlas dimensions for the detailed fiche.
+ * SystemScene continues using its own adaptive numeric texture widths. */
+export interface SystemScenePlanetTextureDimensionsV1 {
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface PlanetAppearance {
+  readonly material:
+    THREE.MeshStandardMaterial;
+
+  readonly overlays:
+    readonly THREE.Object3D[];
+
+  readonly resources:
+    readonly { dispose(): void }[];
+
+  readonly lightBinding:
+    SystemScenePlanetLightBindingV1;
+}
+
+export function createSystemScenePlanetAppearanceV1(
+  planet:
+    SystemSceneBodySnapshot & {
+      readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+      readonly visualCivilizationTier?: Vida7CivilizationTier | null;
+    },
+
+  systemIdentity:
+    string,
+
+  textureCache:
+    SystemSceneBoundedResourceCacheV1<SystemScenePlanetTextureResourceV1> | null,
+
+  visualSeeds:
+    SystemScenePlanetVisualSeedPackV1 | null =
+      null,
+  /** Optical fill for bodies around compact hosts, not a physical heating term. */
+  compactVisualFill: boolean | number = false,
+  /** A physical stellar photosphere, never the shader's illustrative glow. */
+  photosphereTemperatureKelvin: number | null = null,
+  /** VIS-3D.2: inspected fiche can request 1024 × 512; normal scenes retain LOD. */
+  textureDimensions: number | SystemScenePlanetTextureDimensionsV1 =
+    PLANET_TEXTURE_DETAIL_SIZES_V1.distant.width,
+): PlanetAppearance {
+  const textureWidth = typeof textureDimensions === 'number'
+    ? textureDimensions
+    : textureDimensions.width;
+  if (typeof textureDimensions !== 'number' &&
+      textureDimensions.height !== textureWidth / 2) {
+    throw new RangeError('Planet preview atlas must be equirectangular (width = 2 × height).');
+  }
+  const compactFillStrength = typeof compactVisualFill === 'number'
+    ? Math.max(0, Math.min(1, compactVisualFill))
+    : compactVisualFill ? 0.20 : 0;
+  const isCompactVisual = compactVisualFill !== false;
+
+  const textureLease =
+    textureCache === null
+      ? (() => {
+          const resource =
+            createSystemScenePlanetTextureResourceV1(
+              planet,
+              systemIdentity,
+              visualSeeds,
+              textureWidth,
+            );
+          let disposed = false;
+          return Object.freeze({
+            resource,
+            cached: false,
+            dispose: () => {
+              if (disposed) {
+                return;
+              }
+              disposed = true;
+              resource.dispose();
+            },
+          });
+        })()
+      : textureCache.acquire(
+          systemScenePlanetTextureCacheKeyVISCIV1b(systemIdentity, planet.id, textureWidth, planet.visualCivilizationTier),
+          planet.giantAtmosphere === null
+            ? (planet.visualCivilizationTier === null || planet.visualCivilizationTier === undefined
+                ? 1280 * 1024
+                : 3584 * 1024)
+            : 512 * 1024,
+          () => createSystemScenePlanetTextureResourceV1(
+            planet,
+            systemIdentity,
+            visualSeeds,
+            textureWidth,
+          ),
+        );
+
+  const textureResource =
+    textureLease.resource;
+  const giantAtmosphereTexture =
+    textureResource.giantAtmosphereTexture;
+  const textureData =
+    textureResource.textureData;
+  const semanticSurface =
+    textureResource.semanticSurface;
+  const visualSeed =
+    textureResource.visualSeed;
+
+  const opticalSurface = planet.surfaceEnvironment;
+  const composition = opticalSurface?.retainedGasComposition;
+  const knownGases = composition !== undefined && composition.every(gas =>
+    Object.values(AtmosphereGas).includes(gas.gas as AtmosphereGas));
+  const opticalScience = opticalSurface?.solidSurfaceAvailable === true
+    ? buildAtmosphereOpticalScienceV1({
+        columnKind: 'SOLID_SURFACE',
+        retainedGasComposition: composition === undefined || !knownGases
+          ? null
+          : composition.map(component => ({
+          gas: component.gas as AtmosphereGas,
+          moleFraction01: component.moleFraction01,
+        })),
+        retainedSurfacePressurePascal: opticalSurface.retainedSurfacePressurePascal,
+        meanSurfaceTemperatureKelvin: opticalSurface.meanSurfaceTemperatureKelvin,
+        surfaceGravityMetersPerSecondSquared:
+          planet.opticalSurfaceGravityMetersPerSecondSquared ?? null,
+        referenceBolometricFluxEarth:
+          planet.opticalReferenceInsolationEarth ?? null,
+        stellarEffectiveTemperatureKelvin: photosphereTemperatureKelvin,
+      })
+    : null;
+
+  const atmosphereOptics =
+    buildSystemSceneAtmosphereOpticsV1({
+      opticalScience,
+      baseColorHex:
+        planet.colorHex,
+      surfaceStyle:
+        planetTextureSurfaceStyle(
+          planet,
+        ),
+      surfaceEnvironment:
+        planet.surfaceEnvironment ===
+          null
+          ? null
+          : {
+              solidSurfaceAvailable:
+                planet.surfaceEnvironment
+                  .solidSurfaceAvailable,
+              retainedSurfacePressurePascal:
+                planet.surfaceEnvironment
+                  .retainedSurfacePressurePascal,
+              retainedAtmosphericWaterVaporMoleFraction01:
+                planet.surfaceEnvironment
+                  .retainedAtmosphericWaterVaporMoleFraction01,
+              presentationCloudCoverageFraction01:
+                planet.surfaceEnvironment
+                  .presentationCloudCoverageFraction01,
+              surfaceIceCoverageFraction01:
+                planet.surfaceEnvironment
+                  .surfaceIceCoverageFraction01,
+              retainedGasComposition:
+                planet.surfaceEnvironment
+                  .retainedGasComposition,
+            },
+      giantAtmosphere:
+        planet.giantAtmosphere ===
+          null
+          ? null
+          : {
+              methaneMoleFraction01:
+                planet.giantAtmosphere
+                  .methaneMoleFraction01,
+              waterVaporMoleFraction01:
+                planet.giantAtmosphere
+                  .waterVaporMoleFraction01,
+              presentationMethaneBlueing01:
+                planet.giantAtmosphere
+                  .presentationMethaneBlueing01,
+              presentationWarmChromophore01:
+                planet.giantAtmosphere
+                  .presentationWarmChromophore01,
+              presentationPolarHaze01:
+                planet.giantAtmosphere
+                  .presentationPolarHaze01,
+              presentationUpperHaze01:
+                planet.giantAtmosphere
+                  .presentationUpperHaze01,
+            },
+    });
+
+  const lightBinding:
+    SystemScenePlanetLightBindingV1 =
+    Object.freeze({
+      lightDirectionsView:
+        [
+          new THREE.Vector3(1, 0, 0),
+          new THREE.Vector3(1, 0, 0),
+          new THREE.Vector3(1, 0, 0),
+        ] as const,
+      lightWeightsView:
+        new THREE.Vector3(1, 0, 0),
+    });
+
+  const surfaceTexture =
+    textureResource.surfaceTexture;
+
+  const resources: Array<{ dispose(): void }> = [
+    textureLease,
+  ];
+
+  const materialOptions: THREE.MeshStandardMaterialParameters = {
+    color:
+      0xffffff,
+    map:
+      surfaceTexture,
+  };
+
+  if (
+    planet.giantAtmosphere !==
+      null
+  ) {
+    materialOptions.roughness =
+      clampValue(
+        0.68 +
+          0.18 *
+            planet.giantAtmosphere
+              .presentationUpperHaze01,
+        0.64,
+        0.90,
+      );
+    materialOptions.metalness =
+      0;
+  } else if (
+    planet.surfaceEnvironment
+      ?.solidSurfaceAvailable ===
+      true
+  ) {
+    // Native Three.js per-pixel roughness/bump: water is glossy, ice has
+    // fine relief, rock and regolith scatter more broadly. The field is purely
+    // presentational and inherits the original fixed coverage masks.
+    materialOptions.roughness = 1;
+    if (textureResource.roughnessTexture !== null) {
+      materialOptions.roughnessMap = textureResource.roughnessTexture;
+    }
+    if (textureResource.reliefTexture !== null) {
+      materialOptions.bumpMap = textureResource.reliefTexture;
+      materialOptions.bumpScale = planet.radiusScene * 0.014;
+    }
+    materialOptions.metalness = 0.015;
+  } else {
+    switch (
+      planet.surfaceStyle
+    ) {
+      case 'icy':
+        materialOptions.roughness =
+          0.34;
+        materialOptions.metalness =
+          0.01;
+        break;
+
+      case 'oceanic':
+        materialOptions.roughness =
+          0.56;
+        materialOptions.metalness =
+          0.02;
+        break;
+
+      case 'gaseous':
+        materialOptions.roughness =
+          0.78;
+        materialOptions.metalness =
+          0.01;
+        break;
+
+      default:
+        materialOptions.roughness =
+          0.86;
+        materialOptions.metalness =
+          0.03;
+        break;
+    }
+  }
+
+  if (
+    semanticSurface
+      ?.emissiveRgba !==
+      null &&
+    semanticSurface
+      ?.emissiveRgba !==
+      undefined
+  ) {
+    const emissiveTexture =
+      textureResource.emissiveTexture;
+
+    if (emissiveTexture !== null) {
+      materialOptions.emissive =
+        0xffffff;
+      materialOptions.emissiveIntensity =
+        0.45 +
+        (
+          planet.surfaceEnvironment
+            ?.volcanismIndex01 ??
+          0
+        ) *
+          0.9;
+      materialOptions.emissiveMap =
+        emissiveTexture;
+    }
+  }
+
+  if (isCompactVisual) {
+    // A bounded albedo-following visual fill, not endogenous planet emission.
+    // Stronger reference irradiation raises legibility while the actual
+    // PointLight + day/night shader preserve a directional day side.
+    materialOptions.emissive = new THREE.Color(0xb7dfff);
+    materialOptions.emissiveMap = surfaceTexture;
+    materialOptions.emissiveIntensity = 0.12 + 0.32 * compactFillStrength;
+  }
+
+  const material =
+    new THREE.MeshStandardMaterial(
+      materialOptions,
+    );
+
+  if (
+    planet.giantAtmosphere !==
+      null
+  ) {
+    installSystemSceneGlslMaterialV1(
+      material,
+      buildSystemSceneGlslMaterialProfileV1({
+        kind:
+          'DEEP_ENVELOPE',
+        giantJetSharpness01:
+          planet.giantAtmosphere
+            .presentationJetSharpness01,
+        giantTurbulence01:
+          planet.giantAtmosphere
+            .presentationTurbulence01,
+        giantMethaneBlueing01:
+          planet.giantAtmosphere
+            .presentationMethaneBlueing01,
+        giantWarmChromophore01:
+          planet.giantAtmosphere
+            .presentationWarmChromophore01,
+        giantPolarHaze01:
+          planet.giantAtmosphere
+            .presentationPolarHaze01,
+        giantUpperHaze01:
+          planet.giantAtmosphere
+            .presentationUpperHaze01,
+      }),
+    );
+  } else if (
+    planet.surfaceEnvironment
+      ?.solidSurfaceAvailable ===
+      true
+  ) {
+    installSystemSceneGlslMaterialV1(
+      material,
+      buildSystemSceneGlslMaterialProfileV1({
+        kind:
+          'SOLID_SURFACE',
+        liquidCoverageFraction01:
+          planet.surfaceEnvironment
+            .surfaceLiquidWaterCoverageFraction01 ??
+          0,
+        iceCoverageFraction01:
+          planet.surfaceEnvironment
+            .surfaceIceCoverageFraction01 ??
+          0,
+        desertCoverageFraction01:
+          planet.surfaceEnvironment
+            .presentationDesertCoverageFraction01 ??
+          0,
+        volcanismIndex01:
+          planet.surfaceEnvironment
+            .volcanismIndex01 ??
+          0,
+      }),
+    );
+  }
+
+  installSystemSceneDayNightMaterialV1(
+    material,
+    isCompactVisual
+      ? {
+          ...buildSystemSceneDayNightMaterialProfileV1(atmosphereOptics),
+          // Preserve a contrasting night side while making the planet visible.
+          nightFloor01: 0.07 + 0.12 * compactFillStrength,
+        }
+      : buildSystemSceneDayNightMaterialProfileV1(atmosphereOptics),
+    lightBinding,
+    textureResource.nightLightsTexture,
+  );
+
+  const overlays: THREE.Object3D[] = [];
+
+  const cloudLayer =
+    cloudLayerMeshOrNull(
+      planet,
+      semanticSurface,
+      giantAtmosphereTexture,
+      textureResource.cloudTexture,
+      visualSeed,
+      atmosphereOptics,
+      lightBinding,
+    );
+
+  if (
+    cloudLayer !==
+    null
+  ) {
+    overlays.push(
+      cloudLayer.mesh,
+    );
+
+    resources.push(
+      cloudLayer.geometry,
+      cloudLayer.material,
+    );
+  }
+
+  const atmosphere =
+    atmosphereLayerMeshOrNull(
+      planet,
+      atmosphereOptics,
+      lightBinding,
+    );
+
+  if (
+    atmosphere !==
+    null
+  ) {
+    overlays.push(
+      atmosphere.mesh,
+    );
+
+    resources.push(
+      atmosphere.geometry,
+      atmosphere.material,
+    );
+  }
+
+  return Object.freeze({
+    material,
+    overlays:
+      Object.freeze(overlays),
+    resources:
+      Object.freeze(resources),
+    lightBinding,
+  });
+}
+
+
+function createSystemScenePlanetTextureResourceV1(
+  planet:
+    SystemSceneBodySnapshot & {
+      readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+      readonly visualCivilizationTier?: Vida7CivilizationTier | null;
+    },
+
+  systemIdentity:
+    string,
+
+  visualSeeds:
+    SystemScenePlanetVisualSeedPackV1 | null =
+      null,
+  textureWidth: number = PLANET_TEXTURE_DETAIL_SIZES_V1.distant.width,
+): SystemScenePlanetTextureResourceV1 {
+
+  const giantAtmosphereTexture =
+    planet.giantAtmosphere ===
+      null
+      ? null
+      : buildSystemSceneGiantAtmosphereTextureV1({
+          systemIdentity,
+          planetId: planet.id,
+          atmosphere: planet.giantAtmosphere,
+          visualSeedUint32:
+            visualSeeds?.giantAtmosphereTextureSeedUint32 ??
+            undefined,
+        });
+
+  const textureData =
+    giantAtmosphereTexture ===
+      null
+      ? buildSystemScenePlanetTextureV1({
+          systemIdentity,
+          planetId: planet.id,
+          surfaceStyle: planetTextureSurfaceStyle(planet),
+          baseColorHex: planet.colorHex,
+          visualSeedUint32:
+            visualSeeds?.planetTextureSeedUint32,
+        })
+      : null;
+
+  const semanticSurface =
+    giantAtmosphereTexture !== null ||
+    planet.surfaceEnvironment === null ||
+    textureData === null
+      ? null
+      : buildSystemScenePlanetSurfaceTextureV1({
+          systemIdentity,
+          planetId: planet.id,
+          baseTexture: textureData,
+          surface: planet.surfaceEnvironment,
+          vegetationProfile:
+            planet.visualVegetationProfile ?? undefined,
+          nightCivilizationTier:
+            planet.visualCivilizationTier ?? null,
+          visualSeedUint32:
+            visualSeeds?.surfaceTextureSeedUint32,
+        });
+
+  const visualSeed =
+    giantAtmosphereTexture?.seedUint32 ??
+    textureData!.seedUint32;
+
+  // High resolution is a visual reconstruction of the frozen D.4d atlas.
+  // The measured surface coverages and private biological records never change.
+  const refine = (
+    rgba: Uint8Array,
+    width: number,
+    height: number,
+    kind: PlanetTextureRefinementKind,
+  ): Uint8Array => textureWidth === width
+    ? rgba
+    : refinePlanetRgbaTextureV1(rgba, width, height, textureWidth, visualSeed, kind);
+  const imageWidth = textureWidth;
+  const imageHeight = textureWidth / 2;
+
+  const surfaceTexture =
+    giantAtmosphereTexture !== null
+      ? createRgbaDataTexture(
+          imageWidth,
+          imageHeight,
+          refine(giantAtmosphereTexture.albedoRgba, giantAtmosphereTexture.width, giantAtmosphereTexture.height, 'GAS'),
+          `GENESIS cached deep-envelope cloud tops 25.11 v${giantAtmosphereTexture.version}`,
+        )
+      : createPlanetSurfaceTexture(
+          {
+            width: imageWidth,
+            height: imageHeight,
+            rgba: refine((semanticSurface ?? textureData!).rgba,
+              (semanticSurface ?? textureData!).width,
+              (semanticSurface ?? textureData!).height, 'COLOR'),
+          },
+          semanticSurface === null
+            ? `GENESIS cached procedural planet albedo 25.11 v${textureData!.version}`
+            : `GENESIS cached physical surface 25.11 v${semanticSurface.version}`,
+        );
+
+  const emissiveTexture =
+    semanticSurface?.emissiveRgba === null ||
+    semanticSurface?.emissiveRgba === undefined
+      ? null
+      : createRgbaDataTexture(
+          imageWidth,
+          imageHeight,
+          refine(semanticSurface.emissiveRgba, semanticSurface.width, semanticSurface.height, 'EMISSION'),
+          'GENESIS cached volcanism 25.11',
+        );
+
+  const canonicalNightLightsAtlas = planet.visualCivilizationTier &&
+    semanticSurface?.nightLandMask &&
+    planet.surfaceEnvironment?.solidSurfaceAvailable === true
+    ? buildSystemScenePlanetNightLightsV1({
+        landMask: semanticSurface.nightLandMask,
+        maskWidth: semanticSurface.width,
+        maskHeight: semanticSurface.height,
+        width: PLANET_TEXTURE_DETAIL_SIZES_V1.scientificPreview.width,
+        height: PLANET_TEXTURE_DETAIL_SIZES_V1.scientificPreview.height,
+        seedUint32: visualSeeds?.surfaceTextureSeedUint32 ??
+          systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id),
+        tier: planet.visualCivilizationTier,
+      })
+    : null;
+
+  const nightLightsTexture = canonicalNightLightsAtlas === null
+    ? null
+    : createRgbaDataTexture(
+        canonicalNightLightsAtlas.width,
+        canonicalNightLightsAtlas.height,
+        // VISCIV.1c hotfix: the system scene must display the very same
+        // deterministic city pattern as the planetary fiche. Keep the
+        // canonical atlas instead of regenerating/downsampling another one.
+        canonicalNightLightsAtlas.rgba,
+        'GENESIS VISCIV.1c canonical civilization night lights',
+      );
+
+  const cloudTexture =
+    semanticSurface?.cloudRgba !== null &&
+    semanticSurface?.cloudRgba !== undefined
+      ? createRgbaDataTexture(
+          imageWidth,
+          imageHeight,
+          refine(semanticSurface.cloudRgba, semanticSurface.width, semanticSurface.height, 'WEATHER_CLOUD'),
+          'GENESIS cached physical cloud projection 25.11',
+        )
+      : giantAtmosphereTexture?.upperHazeRgba !== null &&
+        giantAtmosphereTexture?.upperHazeRgba !== undefined
+        ? createRgbaDataTexture(
+            imageWidth,
+            imageHeight,
+            refine(giantAtmosphereTexture.upperHazeRgba, giantAtmosphereTexture.width, giantAtmosphereTexture.height, 'CLOUD'),
+            `GENESIS cached upper haze 25.11 v${giantAtmosphereTexture.version}`,
+          )
+        : null;
+
+  const roughnessTexture = semanticSurface?.roughnessRgba
+    ? createRgbaDataTexture(
+        imageWidth, imageHeight,
+        refine(semanticSurface.roughnessRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
+        'GENESIS D.4c visual surface roughness',
+      )
+    : null;
+  const reliefTexture = semanticSurface?.reliefRgba
+    ? createRgbaDataTexture(
+        imageWidth, imageHeight,
+        refine(semanticSurface.reliefRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
+        'GENESIS D.4c visual microrelief',
+      )
+    : null;
+  // Linear data maps must not be interpreted as sRGB albedo.
+  if (roughnessTexture !== null) roughnessTexture.colorSpace = THREE.NoColorSpace;
+  if (reliefTexture !== null) reliefTexture.colorSpace = THREE.NoColorSpace;
+
+  let disposed = false;
+  return Object.freeze({
+    giantAtmosphereTexture,
+    textureData,
+    semanticSurface,
+    surfaceTexture,
+    emissiveTexture,
+    nightLightsTexture,
+    cloudTexture,
+    roughnessTexture,
+    reliefTexture,
+    visualSeed,
+    dispose: () => {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
+      surfaceTexture.dispose();
+      emissiveTexture?.dispose();
+      nightLightsTexture?.dispose();
+      cloudTexture?.dispose();
+      roughnessTexture?.dispose();
+      reliefTexture?.dispose();
+    },
+  });
+}
+
+function planetTextureSurfaceStyle(
+  planet:
+    SystemSceneBodySnapshot,
+): SystemScenePlanetTextureSurfaceStyle {
+
+  switch (
+    planet.surfaceStyle
+  ) {
+    case 'rocky':
+    case 'oceanic':
+    case 'icy':
+    case 'gaseous':
+    case 'volcanic':
+      return planet.surfaceStyle;
+
+    case 'emissive':
+      throw new RangeError(
+        `Planet ${planet.id} cannot use the stellar emissive surface style.`,
+      );
+  }
+}
+
+interface RgbaTextureData {
+  readonly width:
+    number;
+
+  readonly height:
+    number;
+
+  readonly rgba:
+    Uint8Array;
+}
+
+function createPlanetSurfaceTexture(
+  textureData:
+    RgbaTextureData,
+
+  name:
+    string,
+): THREE.DataTexture {
+
+  return createRgbaDataTexture(
+    textureData.width,
+    textureData.height,
+    textureData.rgba,
+    name,
+  );
+}
+
+function createRgbaDataTexture(
+  width:
+    number,
+
+  height:
+    number,
+
+  rgba:
+    Uint8Array,
+
+  name:
+    string,
+): THREE.DataTexture {
+
+  const texture =
+    new THREE.DataTexture(
+      rgba,
+      width,
+      height,
+      THREE.RGBAFormat,
+      THREE.UnsignedByteType,
+    );
+
+  texture.name =
+    name;
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
+  texture.wrapS =
+    THREE.RepeatWrapping;
+  texture.wrapT =
+    THREE.ClampToEdgeWrapping;
+  texture.magFilter =
+    THREE.LinearFilter;
+  texture.minFilter =
+    THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps =
+    true;
+  texture.flipY =
+    true;
+  texture.needsUpdate =
+    true;
+
+  return texture;
+}
+
+function cloudLayerMeshOrNull(
+  planet:
+    SystemSceneBodySnapshot,
+
+  semanticSurface:
+    SystemScenePlanetSurfaceTextureData | null,
+
+  giantAtmosphereTexture:
+    SystemSceneGiantAtmosphereTextureData | null,
+
+  cachedCloudTexture:
+    THREE.DataTexture | null,
+
+  seed:
+    number,
+
+  atmosphereOptics:
+    SystemSceneAtmosphereOpticsV1,
+
+  lightBinding:
+    SystemScenePlanetLightBindingV1,
+): {
+  readonly mesh:
+    THREE.Mesh;
+
+  readonly geometry:
+    THREE.SphereGeometry;
+
+  readonly material:
+    THREE.MeshStandardMaterial;
+} | null {
+
+  if (
+    semanticSurface !==
+      null &&
+    planet.surfaceEnvironment
+      ?.solidSurfaceAvailable ===
+      true
+  ) {
+    if (
+      semanticSurface.cloudRgba ===
+      null
+    ) {
+      return null;
+    }
+
+    const texture =
+      cachedCloudTexture;
+
+    if (texture === null) {
+      return null;
+    }
+
+    const segments =
+      systemSceneSphereSegments(
+        'planet',
+      );
+
+    const geometry =
+      new THREE.SphereGeometry(
+        planet.radiusScene *
+          1.024,
+        segments.widthSegments,
+        segments.heightSegments,
+      );
+
+    const material =
+      new THREE.MeshStandardMaterial({
+        color:
+          0xffffff,
+        map:
+          texture,
+        transparent:
+          true,
+        opacity:
+          0.91,
+        // VIS3D.2f: preserve the feathered cirrus alpha edge. The former
+        // cutout threshold made faint vapor look like a hard-edged decal.
+        alphaTest:
+          0,
+        depthWrite:
+          false,
+        roughness:
+          0.96,
+        metalness:
+          0,
+      });
+
+    installSystemSceneDayNightMaterialV1(
+      material,
+      buildSystemSceneDayNightMaterialProfileV1(
+        atmosphereOptics,
+      ),
+      lightBinding,
+    );
+
+    const mesh =
+      new THREE.Mesh(
+        geometry,
+        material,
+      );
+
+    mesh.rotation.y =
+      ((seed >>> 9) & 0xff) /
+      255 *
+      Math.PI *
+      2;
+
+    return Object.freeze({
+      mesh,
+      geometry,
+      material,
+    });
+  }
+
+  if (
+    giantAtmosphereTexture ===
+      null ||
+    giantAtmosphereTexture.upperHazeRgba ===
+      null
+  ) {
+    return null;
+  }
+
+  const texture =
+    cachedCloudTexture;
+
+  if (texture === null) {
+    return null;
+  }
+
+  const segments =
+    systemSceneSphereSegments(
+      'planet',
+    );
+
+  const geometry =
+    new THREE.SphereGeometry(
+      planet.radiusScene *
+        1.018,
+      segments.widthSegments,
+      segments.heightSegments,
+    );
+
+  const material =
+    new THREE.MeshStandardMaterial({
+      color:
+        0xffffff,
+      map:
+        texture,
+      transparent:
+        true,
+      opacity:
+        0.78,
+      alphaTest:
+        0.012,
+      depthWrite:
+        false,
+      roughness:
+        0.98,
+      metalness:
+        0,
+    });
+
+  installSystemSceneDayNightMaterialV1(
+    material,
+    buildSystemSceneDayNightMaterialProfileV1(
+      atmosphereOptics,
+    ),
+    lightBinding,
+  );
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material,
+    );
+
+  mesh.rotation.y =
+    ((seed >>> 9) & 0xff) /
+    255 *
+    Math.PI *
+    2;
+
+  return Object.freeze({
+    mesh,
+    geometry,
+    material,
+  });
+}
+
+function atmosphereLayerMeshOrNull(
+  planet:
+    SystemSceneBodySnapshot,
+
+  optics:
+    SystemSceneAtmosphereOpticsV1,
+
+  lightBinding:
+    SystemScenePlanetLightBindingV1,
+): {
+  readonly mesh:
+    THREE.Mesh;
+
+  readonly geometry:
+    THREE.SphereGeometry;
+
+  readonly material:
+    THREE.ShaderMaterial;
+} | null {
+
+  const material =
+    createSystemSceneAtmosphereShellMaterialV1(
+      optics,
+      lightBinding,
+    );
+
+  if (
+    material ===
+      null
+  ) {
+    return null;
+  }
+
+  const segments =
+    systemSceneSphereSegments(
+      'planet',
+    );
+
+  const geometry =
+    new THREE.SphereGeometry(
+      planet.radiusScene *
+        optics.presentationShellScale,
+      segments.widthSegments,
+      segments.heightSegments,
+    );
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material,
+    );
+
+  mesh.name =
+    `${planet.label} atmosphere 25.6`;
+  mesh.renderOrder =
+    4;
+
+  return Object.freeze({
+    mesh,
+    geometry,
+    material,
+  });
+}
+
+
+function insertTopPlanetLightContribution(
+  topFluxes:
+    [number, number, number] | number[],
+
+  topDirections:
+    readonly [
+      THREE.Vector3,
+      THREE.Vector3,
+      THREE.Vector3,
+    ],
+
+  flux:
+    number,
+
+  direction:
+    THREE.Vector3,
+): void {
+
+  if (
+    !Number.isFinite(flux) ||
+    flux <= 0
+  ) {
+    return;
+  }
+
+  for (
+    let index =
+      0;
+    index < 3;
+    index += 1
+  ) {
+    if (
+      flux <=
+      topFluxes[index]!
+    ) {
+      continue;
+    }
+
+    for (
+      let shift =
+        2;
+      shift > index;
+      shift -= 1
+    ) {
+      topFluxes[shift] =
+        topFluxes[
+          shift - 1
+        ]!;
+      topDirections[shift].copy(
+        topDirections[
+          shift - 1
+        ],
+      );
+    }
+
+    topFluxes[index] =
+      flux;
+    topDirections[index].copy(
+      direction,
+    );
+    return;
+  }
+}
+
+function assignPlanetLightBindingView(
+  binding:
+    SystemScenePlanetLightBindingV1,
+
+  topFluxes:
+    readonly [number, number, number] | readonly number[],
+
+  topDirections:
+    readonly [
+      THREE.Vector3,
+      THREE.Vector3,
+      THREE.Vector3,
+    ],
+
+  cameraMatrixWorldInverse:
+    THREE.Matrix4,
+): number {
+
+  const compressed0 =
+    Math.sqrt(
+      Math.max(
+        topFluxes[0] ?? 0,
+        0,
+      ),
+    );
+  const compressed1 =
+    Math.sqrt(
+      Math.max(
+        topFluxes[1] ?? 0,
+        0,
+      ),
+    );
+  const compressed2 =
+    Math.sqrt(
+      Math.max(
+        topFluxes[2] ?? 0,
+        0,
+      ),
+    );
+
+  const compressedSum =
+    compressed0 +
+    compressed1 +
+    compressed2;
+
+  if (
+    compressedSum <=
+    1e-9
+  ) {
+    return 0;
+  }
+
+  const weight0 =
+    compressed0 /
+    compressedSum;
+  const weight1 =
+    compressed1 /
+    compressedSum;
+  const weight2 =
+    compressed2 /
+    compressedSum;
+
+  for (
+    let index =
+      0;
+    index < 3;
+    index += 1
+  ) {
+    binding.lightDirectionsView[index]
+      .copy(
+        topDirections[index],
+      )
+      .transformDirection(
+        cameraMatrixWorldInverse,
+      );
+  }
+
+  binding.lightWeightsView.set(
+    weight0,
+    weight1,
+    weight2,
+  );
+
+  return compressedSum;
+}
+
+function stellarSpriteMaterial(
+  texture:
+    THREE.Texture,
+
+  color:
+    THREE.ColorRepresentation,
+
+  opacity:
+    number,
+): THREE.SpriteMaterial {
+
+  return new THREE.SpriteMaterial({
+    map:
+      texture,
+    color,
+    transparent:
+      true,
+    opacity,
+    blending:
+      THREE.AdditiveBlending,
+    depthWrite:
+      false,
+    toneMapped:
+      false,
+  });
+}
+
+interface StellarOpticalProfile {
+  readonly energy01:
+    number;
+
+  readonly coronaDiameterScale:
+    number;
+
+  readonly bloomDiameterScale:
+    number;
+
+  readonly aureoleDiameterScale:
+    number;
+
+  readonly glareDiameterScale:
+    number;
+
+  readonly coronaOpacity:
+    number;
+
+  readonly bloomOpacity:
+    number;
+
+  readonly aureoleOpacity:
+    number;
+
+  readonly glareOpacity:
+    number;
+}
+
+function stellarOpticalProfile(
+  star:
+    SystemSceneBodySnapshot,
+): StellarOpticalProfile {
+
+  const rgb =
+    parseDisplayHexColor(
+      star.colorHex,
+    );
+
+  const luminance =
+    (
+      0.2126 *
+        rgb.red +
+      0.7152 *
+        rgb.green +
+      0.0722 *
+        rgb.blue
+    ) /
+    255;
+
+  const blueBias =
+    clamp01(
+      0.5 +
+      (
+        rgb.blue -
+        rgb.red
+      ) /
+        510,
+    );
+
+  const opticalRadiusScene =
+    star.opticalRadiusScene ??
+    star.radiusScene;
+
+  const sizeEnergy =
+    clamp01(
+      (
+        opticalRadiusScene -
+        0.16
+      ) /
+      (
+        0.46 -
+        0.16
+      ),
+    );
+
+  const massEnergy =
+    clamp01(
+      (
+        star.lightIntensity -
+        1.2
+      ) /
+      (
+        3.4 -
+        1.2
+      ),
+    );
+
+  const energy01 =
+    clamp01(
+      0.14 +
+      0.24 *
+        luminance +
+      0.18 *
+        blueBias +
+      0.20 *
+        sizeEnergy +
+      0.24 *
+        massEnergy,
+    );
+
+  return Object.freeze({
+    energy01,
+    coronaDiameterScale:
+      2 *
+      (
+        4.9 +
+        3.9 *
+          energy01
+      ),
+    bloomDiameterScale:
+      2 *
+      (
+        3.05 +
+        2.05 *
+          energy01
+      ),
+    aureoleDiameterScale:
+      2 *
+      (
+        1.95 +
+        1.05 *
+          energy01
+      ),
+    glareDiameterScale:
+      2 *
+      (
+        9.2 +
+        8.6 *
+          energy01
+      ),
+    coronaOpacity:
+      0.16 +
+      0.16 *
+        energy01,
+    bloomOpacity:
+      0.30 +
+      0.26 *
+        energy01,
+    aureoleOpacity:
+      0.36 +
+      0.28 *
+        energy01,
+    glareOpacity:
+      0.58 +
+      0.22 *
+        energy01,
+  });
+}
+
+function stellarDiffractionColor(
+  stellarColorHex:
+    string,
+
+  energy01:
+    number,
+): THREE.Color {
+
+  const stellar =
+    new THREE.Color(
+      stellarColorHex,
+    );
+
+  return stellar.lerp(
+    new THREE.Color(
+      0xffffff,
+    ),
+    0.34 +
+      0.18 *
+        energy01,
+  );
+}
+
+function parseDisplayHexColor(
+  colorHex:
+    string,
+): {
+  readonly red:
+    number;
+
+  readonly green:
+    number;
+
+  readonly blue:
+    number;
+} {
+
+  const normalized =
+    colorHex.startsWith(
+      '#',
+    )
+      ? colorHex.slice(
+          1,
+        )
+      : colorHex;
+
+  if (
+    normalized.length !==
+      6
+  ) {
+    return Object.freeze({
+      red: 255,
+      green: 255,
+      blue: 255,
+    });
+  }
+
+  const value =
+    Number.parseInt(
+      normalized,
+      16,
+    );
+
+  if (
+    !Number.isFinite(
+      value,
+    )
+  ) {
+    return Object.freeze({
+      red: 255,
+      green: 255,
+      blue: 255,
+    });
+  }
+
+  return Object.freeze({
+    red:
+      value >>
+        16 &
+      0xff,
+    green:
+      value >>
+        8 &
+      0xff,
+    blue:
+      value &
+      0xff,
+  });
+}
+
+function clampValue(
+  value:
+    number,
+
+  minimum:
+    number,
+
+  maximum:
+    number,
+): number {
+
+  return Math.min(
+    maximum,
+    Math.max(
+      minimum,
+      value,
+    ),
+  );
+}
+
+function clamp01(
+  value:
+    number,
+): number {
+
+  return Math.min(
+    1,
+    Math.max(
+      0,
+      value,
+    ),
+  );
+}
+
+function createRadialGlowTexture(
+  kind:
+    'broad' |
+    'compact',
+): THREE.CanvasTexture {
+
+  const size =
+    256;
+
+  const canvas =
+    document.createElement(
+      'canvas',
+    );
+
+  canvas.width =
+    size;
+  canvas.height =
+    size;
+
+  const context =
+    canvas.getContext(
+      '2d',
+    );
+
+  if (
+    context ===
+    null
+  ) {
+    throw new Error(
+      'Unable to create stellar glow texture.',
+    );
+  }
+
+  const center =
+    size /
+    2;
+
+  const gradient =
+    context.createRadialGradient(
+      center,
+      center,
+      0,
+      center,
+      center,
+      center,
+    );
+
+  if (
+    kind ===
+    'compact'
+  ) {
+    gradient.addColorStop(
+      0,
+      'rgba(255,255,255,0.96)',
+    );
+    gradient.addColorStop(
+      0.12,
+      'rgba(255,255,255,0.82)',
+    );
+    gradient.addColorStop(
+      0.30,
+      'rgba(255,255,255,0.34)',
+    );
+    gradient.addColorStop(
+      0.58,
+      'rgba(255,255,255,0.075)',
+    );
+    gradient.addColorStop(
+      1,
+      'rgba(255,255,255,0)',
+    );
+  } else {
+    gradient.addColorStop(
+      0,
+      'rgba(255,255,255,0.70)',
+    );
+    gradient.addColorStop(
+      0.16,
+      'rgba(255,255,255,0.36)',
+    );
+    gradient.addColorStop(
+      0.40,
+      'rgba(255,255,255,0.12)',
+    );
+    gradient.addColorStop(
+      0.72,
+      'rgba(255,255,255,0.025)',
+    );
+    gradient.addColorStop(
+      1,
+      'rgba(255,255,255,0)',
+    );
+  }
+
+  context.fillStyle =
+    gradient;
+  context.fillRect(
+    0,
+    0,
+    size,
+    size,
+  );
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas,
+    );
+
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
+  texture.needsUpdate =
+    true;
+
+  return texture;
+}
+
+function createSelectionRingTexture():
+  THREE.CanvasTexture {
+
+  const size =
+    256;
+
+  const canvas =
+    document.createElement(
+      'canvas',
+    );
+
+  canvas.width =
+    size;
+  canvas.height =
+    size;
+
+  const context =
+    canvas.getContext(
+      '2d',
+    );
+
+  if (
+    context ===
+      null
+  ) {
+    throw new Error(
+      'Unable to create system-scene selection texture.',
+    );
+  }
+
+  const center =
+    size /
+    2;
+
+  context.clearRect(
+    0,
+    0,
+    size,
+    size,
+  );
+
+  const glow =
+    context.createRadialGradient(
+      center,
+      center,
+      size *
+        0.31,
+      center,
+      center,
+      size *
+        0.48,
+    );
+
+  glow.addColorStop(
+    0,
+    'rgba(255,255,255,0)',
+  );
+  glow.addColorStop(
+    0.52,
+    'rgba(255,255,255,0.04)',
+  );
+  glow.addColorStop(
+    0.72,
+    'rgba(255,255,255,0.72)',
+  );
+  glow.addColorStop(
+    0.80,
+    'rgba(255,255,255,0.98)',
+  );
+  glow.addColorStop(
+    0.88,
+    'rgba(255,255,255,0.28)',
+  );
+  glow.addColorStop(
+    1,
+    'rgba(255,255,255,0)',
+  );
+
+  context.fillStyle =
+    glow;
+  context.fillRect(
+    0,
+    0,
+    size,
+    size,
+  );
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas,
+    );
+
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
+  texture.needsUpdate =
+    true;
+
+  return texture;
+}
+
+function createStellarGlareTexture():
+  THREE.CanvasTexture {
+
+  const size =
+    512;
+
+  const canvas =
+    document.createElement(
+      'canvas',
+    );
+
+  canvas.width =
+    size;
+  canvas.height =
+    size;
+
+  const context =
+    canvas.getContext(
+      '2d',
+    );
+
+  if (
+    context ===
+    null
+  ) {
+    throw new Error(
+      'Unable to create stellar diffraction texture.',
+    );
+  }
+
+  const center =
+    size /
+    2;
+
+  const centralGlow =
+    context.createRadialGradient(
+      center,
+      center,
+      0,
+      center,
+      center,
+      54,
+    );
+
+  centralGlow.addColorStop(
+    0,
+    'rgba(255,255,255,0.95)',
+  );
+  centralGlow.addColorStop(
+    0.18,
+    'rgba(255,255,255,0.42)',
+  );
+  centralGlow.addColorStop(
+    0.55,
+    'rgba(255,255,255,0.08)',
+  );
+  centralGlow.addColorStop(
+    1,
+    'rgba(255,255,255,0)',
+  );
+
+  context.fillStyle =
+    centralGlow;
+  context.fillRect(
+    center -
+      54,
+    center -
+      54,
+    108,
+    108,
+  );
+
+  drawDiffractionBeam(
+    context,
+    center,
+    0,
+    158,
+    5.4,
+    0.20,
+    14,
+  );
+  drawDiffractionBeam(
+    context,
+    center,
+    Math.PI /
+      2,
+    226,
+    5.8,
+    0.22,
+    15,
+  );
+
+  drawDiffractionBeam(
+    context,
+    center,
+    0,
+    172,
+    1.15,
+    0.92,
+    4.5,
+  );
+  drawDiffractionBeam(
+    context,
+    center,
+    Math.PI /
+      2,
+    232,
+    1.15,
+    0.96,
+    4.5,
+  );
+
+  drawDiffractionBeam(
+    context,
+    center,
+    Math.PI /
+      4,
+    105,
+    0.95,
+    0.48,
+    3.2,
+  );
+  drawDiffractionBeam(
+    context,
+    center,
+    -Math.PI /
+      4,
+    105,
+    0.95,
+    0.48,
+    3.2,
+  );
+
+  drawDiffractionBeam(
+    context,
+    center,
+    Math.PI /
+      8,
+    72,
+    0.72,
+    0.28,
+    2.4,
+  );
+  drawDiffractionBeam(
+    context,
+    center,
+    Math.PI /
+      8 +
+      Math.PI /
+        2,
+    72,
+    0.72,
+    0.28,
+    2.4,
+  );
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas,
+    );
+
+  texture.colorSpace =
+    THREE.SRGBColorSpace;
+  texture.needsUpdate =
+    true;
+
+  return texture;
+}
+
+function drawDiffractionBeam(
+  context:
+    CanvasRenderingContext2D,
+
+  center:
+    number,
+
+  angleRadians:
+    number,
+
+  halfLength:
+    number,
+
+  lineWidth:
+    number,
+
+  opacity:
+    number,
+
+  blurPixels:
+    number,
+): void {
+
+  context.save();
+  context.translate(
+    center,
+    center,
+  );
+  context.rotate(
+    angleRadians,
+  );
+
+  const gradient =
+    context.createLinearGradient(
+      -halfLength,
+      0,
+      halfLength,
+      0,
+    );
+
+  gradient.addColorStop(
+    0,
+    'rgba(255,255,255,0)',
+  );
+  gradient.addColorStop(
+    0.34,
+    `rgba(255,255,255,${opacity * 0.18})`,
+  );
+  gradient.addColorStop(
+    0.485,
+    `rgba(255,255,255,${opacity * 0.72})`,
+  );
+  gradient.addColorStop(
+    0.5,
+    `rgba(255,255,255,${opacity})`,
+  );
+  gradient.addColorStop(
+    0.515,
+    `rgba(255,255,255,${opacity * 0.72})`,
+  );
+  gradient.addColorStop(
+    0.66,
+    `rgba(255,255,255,${opacity * 0.18})`,
+  );
+  gradient.addColorStop(
+    1,
+    'rgba(255,255,255,0)',
+  );
+
+  context.strokeStyle =
+    gradient;
+  context.lineWidth =
+    lineWidth;
+  context.lineCap =
+    'round';
+  context.shadowColor =
+    `rgba(255,255,255,${opacity * 0.72})`;
+  context.shadowBlur =
+    blurPixels;
+
+  context.beginPath();
+  context.moveTo(
+    -halfLength,
+    0,
+  );
+  context.lineTo(
+    halfLength,
+    0,
+  );
+  context.stroke();
+  context.restore();
+}
+
+function rotateOrbitPoint(
+  localX:
+    number,
+
+  localZ:
+    number,
+
+  rotationDegrees:
+    number,
+
+  inclinationDegrees:
+    number,
+): {
+  readonly x:
+    number;
+
+  readonly y:
+    number;
+
+  readonly z:
+    number;
+} {
+
+  const rotationRadians =
+    rotationDegrees *
+    Math.PI /
+    180;
+
+  const inclinationRadians =
+    inclinationDegrees *
+    Math.PI /
+    180;
+
+  const x1 =
+    localX;
+
+  const y1 =
+    -localZ *
+    Math.sin(
+      inclinationRadians,
+    );
+
+  const z1 =
+    localZ *
+    Math.cos(
+      inclinationRadians,
+    );
+
+  const cosRotation =
+    Math.cos(
+      rotationRadians,
+    );
+
+  const sinRotation =
+    Math.sin(
+      rotationRadians,
+    );
+
+  return Object.freeze({
+    x:
+      x1 *
+        cosRotation -
+      z1 *
+        sinRotation,
+    y:
+      y1,
+    z:
+      x1 *
+        sinRotation +
+      z1 *
+        cosRotation,
+  });
+}
+
+function createBackdropStarField(
+  root:
+    THREE.Group,
+
+  disposables:
+    Array<{ dispose(): void }>,
+): void {
+
+  const positions =
+    new Float32Array(
+      700 * 3,
+    );
+
+  for (
+    let index = 0;
+    index <
+      700;
+    index += 1
+  ) {
+    const radius =
+      78 +
+      pseudoRandom(
+        index,
+        0,
+      ) *
+        54;
+
+    const theta =
+      pseudoRandom(
+        index,
+        1,
+      ) *
+      Math.PI *
+      2;
+
+    const phi =
+      Math.acos(
+        pseudoRandom(
+          index,
+          2,
+        ) *
+          2 -
+          1,
+      );
+
+    const x =
+      radius *
+      Math.sin(
+        phi,
+      ) *
+      Math.cos(
+        theta,
+      );
+
+    const y =
+      radius *
+      Math.cos(
+        phi,
+      );
+
+    const z =
+      radius *
+      Math.sin(
+        phi,
+      ) *
+      Math.sin(
+        theta,
+      );
+
+    positions[index * 3] =
+      x;
+    positions[index * 3 + 1] =
+      y;
+    positions[index * 3 + 2] =
+      z;
+  }
+
+  const geometry =
+    new THREE.BufferGeometry();
+
+  geometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(
+      positions,
+      3,
+    ),
+  );
+
+  const material =
+    new THREE.PointsMaterial({
+      color:
+        0xaec9dc,
+      size:
+        0.55,
+      sizeAttenuation:
+        true,
+      transparent:
+        true,
+      opacity:
+        0.7,
+      depthWrite:
+        false,
+    });
+
+  const points =
+    new THREE.Points(
+      geometry,
+      material,
+    );
+
+  points.name =
+    'Backdrop stars';
+
+  root.add(
+    points,
+  );
+
+  disposables.push(
+    geometry,
+    material,
+  );
+}
+
+
+
+function pseudoRandom(
+  index:
+    number,
+
+  salt:
+    number,
+): number {
+
+  const x =
+    Math.sin(
+      index * 12.9898 +
+      salt * 78.233,
+    ) *
+    43758.5453123;
+
+  return x -
+    Math.floor(
+      x,
+    );
+}
+
+function objectHierarchyVisible(
+  object:
+    THREE.Object3D,
+): boolean {
+
+  let current:
+    THREE.Object3D | null =
+    object;
+
+  while (
+    current !==
+    null
+  ) {
+    if (
+      !current.visible
+    ) {
+      return false;
+    }
+
+    current =
+      current.parent;
+  }
+
+  return true;
+}
+
+function countDescendants(
+  root:
+    THREE.Object3D,
+): number {
+
+  let count =
+    0;
+
+  root.traverse(
+    object => {
+      if (
+        object !==
+        root
+      ) {
+        count += 1;
+      }
+    },
+  );
+
+  return count;
+}
+
+function disposeResources(
+  resources:
+    Array<{ dispose(): void }>,
+): void {
+
+  while (
+    resources.length >
+    0
+  ) {
+    resources
+      .pop()
+      ?.dispose();
+  }
+}

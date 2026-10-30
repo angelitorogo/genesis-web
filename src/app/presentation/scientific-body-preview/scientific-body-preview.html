@@ -31,6 +31,18 @@
         </button>
       }
 
+      @if (artificialSatellitesAvailable()) {
+        <button
+          type="button"
+          class="scientific-preview__action"
+          data-testid="scientific-body-preview-artificial-satellites-toggle"
+          [attr.aria-pressed]="artificialSatellitesVisible()"
+          (click)="toggleArtificialSatellites()"
+        >
+          {{ artificialSatellitesActionLabel() }}
+        </button>
+      }
+
       <button
         type="button"
         class="scientific-preview__action"
