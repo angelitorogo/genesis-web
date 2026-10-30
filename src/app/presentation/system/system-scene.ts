@@ -113,7 +113,9 @@ import { refinePlanetRgbaTextureV1, PLANET_TEXTURE_DETAIL_SIZES_V1, type PlanetT
 
 import {
   buildSystemSceneArtificialSatellitePlansV1,
+  buildSystemSceneOrbitalStationPlansV1,
   createSystemSceneArtificialSatelliteVisualV1,
+  createSystemSceneOrbitalStationVisualV1,
   supportsSystemSceneArtificialSatellitesV1,
   type SystemSceneArtificialSatelliteMaterialBindingV1,
 } from './system-scene-artificial-satellites-visciv2';
@@ -997,6 +999,10 @@ export class SystemScene
       const seed = systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id);
       return count + buildSystemSceneArtificialSatellitePlansV1(
         seed, tier, planet.radiusScene,
+      ).length + buildSystemSceneOrbitalStationPlansV1(
+        seed,
+        tier,
+        planet.radiusScene,
       ).length;
     }, 0);
   }
@@ -4829,9 +4835,16 @@ class ThreeSystemSceneRuntime
       tier,
       planet.radiusScene,
     );
+    const stationPlans = buildSystemSceneOrbitalStationPlansV1(
+      seed,
+      tier,
+      planet.radiusScene,
+    );
 
     if (
       plans.length ===
+        0 &&
+      stationPlans.length ===
         0
     ) {
       return null;
@@ -4840,7 +4853,7 @@ class ThreeSystemSceneRuntime
     const group =
       new THREE.Group();
     group.name =
-      `${planet.label} artificial satellites`;
+      `${planet.label} orbital infrastructure`;
 
     const bindings: Array<{
       readonly hostBodyId: string;
@@ -4853,24 +4866,34 @@ class ThreeSystemSceneRuntime
     }> = [];
     const resources: Array<{ dispose(): void }> = [];
 
-    for (
-      const plan
-      of plans
-    ) {
+    const appendOrbitalAsset = (
+      orbitRadiusPlanetRadii: number,
+      inclinationRadians: number,
+      ascendingNodeRadians: number,
+      phaseRadians: number,
+      angularSpeedRadiansPerDay: number,
+      orbitColorHex: string,
+      orbitOpacity01: number,
+      assetVisual: Readonly<{
+        group: THREE.Group;
+        materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
+        resources: readonly { dispose(): void }[];
+      }>,
+    ): void => {
       const orbitPlane =
         new THREE.Group();
       orbitPlane.rotation.z =
-        plan.ascendingNodeRadians;
+        ascendingNodeRadians;
       orbitPlane.rotation.x =
-        plan.inclinationRadians;
+        inclinationRadians;
 
       const orbitPivot =
         new THREE.Group();
       orbitPivot.rotation.y =
-        plan.phaseRadians;
+        phaseRadians;
 
       const orbitRadiusScene =
-        planet.radiusScene * plan.orbitRadiusPlanetRadii;
+        planet.radiusScene * orbitRadiusPlanetRadii;
 
       const orbitGeometry =
         new THREE.BufferGeometry();
@@ -4906,16 +4929,11 @@ class ThreeSystemSceneRuntime
 
       const orbitMaterial =
         new THREE.LineBasicMaterial({
-          color:
-            plan.lineColorHex,
-          transparent:
-            true,
-          opacity:
-            plan.lineOpacity01,
-          depthWrite:
-            false,
-          toneMapped:
-            false,
+          color: orbitColorHex,
+          transparent: true,
+          opacity: orbitOpacity01,
+          depthWrite: false,
+          toneMapped: false,
         });
       const orbitLine =
         new THREE.LineLoop(
@@ -4923,19 +4941,14 @@ class ThreeSystemSceneRuntime
           orbitMaterial,
         );
 
-      const satelliteVisual =
-        createSystemSceneArtificialSatelliteVisualV1(
-          plan,
-          seed + plans.indexOf(plan) * 131,
-        );
-      satelliteVisual.group.position.set(
+      assetVisual.group.position.set(
         orbitRadiusScene,
         0,
         0,
       );
 
       orbitPivot.add(
-        satelliteVisual.group,
+        assetVisual.group,
       );
       orbitPlane.add(
         orbitLine,
@@ -4949,22 +4962,68 @@ class ThreeSystemSceneRuntime
 
       resources.push(
         orbitMaterial,
-        ...satelliteVisual.resources,
+        ...assetVisual.resources,
       );
       bindings.push(
         Object.freeze({
           hostBodyId: planet.id,
           orbitPivot,
-          basePhaseRadians: plan.phaseRadians,
-          angularSpeedRadiansPerDay: plan.angularSpeedRadiansPerDay,
-          materials: satelliteVisual.materials,
+          basePhaseRadians: phaseRadians,
+          angularSpeedRadiansPerDay,
+          materials: assetVisual.materials,
           orbitMaterial,
-          baseLineOpacity01: plan.lineOpacity01,
+          baseLineOpacity01: orbitOpacity01,
         }),
       );
       this.frameDisposables.push(
         orbitGeometry,
       );
+    };
+
+    let assetIndex = 0;
+
+    for (
+      const plan
+      of plans
+    ) {
+      const satelliteVisual =
+        createSystemSceneArtificialSatelliteVisualV1(
+          plan,
+          seed + assetIndex * 131,
+        );
+      appendOrbitalAsset(
+        plan.orbitRadiusPlanetRadii,
+        plan.inclinationRadians,
+        plan.ascendingNodeRadians,
+        plan.phaseRadians,
+        plan.angularSpeedRadiansPerDay,
+        plan.lineColorHex,
+        plan.lineOpacity01,
+        satelliteVisual,
+      );
+      assetIndex += 1;
+    }
+
+    for (
+      const plan
+      of stationPlans
+    ) {
+      const stationVisual =
+        createSystemSceneOrbitalStationVisualV1(
+          plan,
+          seed + 10000 + assetIndex * 173,
+        );
+      appendOrbitalAsset(
+        plan.orbitRadiusPlanetRadii,
+        plan.inclinationRadians,
+        plan.ascendingNodeRadians,
+        plan.phaseRadians,
+        plan.angularSpeedRadiansPerDay,
+        plan.lineColorHex,
+        plan.lineOpacity01,
+        stationVisual,
+      );
+      assetIndex += 1;
     }
 
     return Object.freeze({

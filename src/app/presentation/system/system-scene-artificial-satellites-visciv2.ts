@@ -17,6 +17,18 @@ export interface SystemSceneArtificialSatellitePlanV1 {
   readonly lineOpacity01: number;
 }
 
+export interface SystemSceneOrbitalStationPlanV1 {
+  readonly orbitRadiusPlanetRadii: number;
+  readonly inclinationRadians: number;
+  readonly ascendingNodeRadians: number;
+  readonly phaseRadians: number;
+  readonly angularSpeedRadiansPerDay: number;
+  readonly hullColorHex: string;
+  readonly lineColorHex: string;
+  readonly stationScaleScene: number;
+  readonly lineOpacity01: number;
+}
+
 export interface SystemSceneArtificialSatelliteVisualV1 {
   readonly group: THREE.Group;
   readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
@@ -26,7 +38,7 @@ export interface SystemSceneArtificialSatelliteVisualV1 {
 export interface SystemSceneArtificialSatelliteMaterialBindingV1 {
   readonly material: THREE.MeshBasicMaterial;
   readonly baseColor: THREE.Color;
-  readonly role: 'body' | 'panel' | 'accent';
+  readonly role: 'body' | 'panel' | 'accent' | 'truss' | 'window';
 }
 
 export function supportsSystemSceneArtificialSatellitesV1(
@@ -40,16 +52,16 @@ export function buildSystemSceneArtificialSatellitePlansV1(
   tier: SystemSceneArtificialSatelliteTierV1,
   planetRadiusScene: number,
 ): readonly SystemSceneArtificialSatellitePlanV1[] {
-  const baseCount = tier === 'ADVANCED' ? 3 : 6;
-  const extra = Math.floor(rand(seedUint32, 0x1001) * (tier === 'ADVANCED' ? 3 : 4));
+  const baseCount = tier === 'ADVANCED' ? 3 : 9;
+  const extra = Math.floor(rand(seedUint32, 0x1001) * (tier === 'ADVANCED' ? 3 : 6));
   const count = baseCount + extra;
   const plans: SystemSceneArtificialSatellitePlanV1[] = [];
-  const minRadius = tier === 'ADVANCED' ? 1.45 : 1.38;
-  const maxRadius = tier === 'ADVANCED' ? 2.12 : 2.34;
+  const minRadius = tier === 'ADVANCED' ? 1.45 : 1.34;
+  const maxRadius = tier === 'ADVANCED' ? 2.12 : 2.52;
   for (let i = 0; i < count; i++) {
     const shell01 = count <= 1 ? 0.5 : i / Math.max(1, count - 1);
     const shellNoise = rand(seedUint32, 0x1100 + i * 17);
-    const radiusPlanetRadii = minRadius + (maxRadius - minRadius) * (0.18 + 0.82 * shell01) + 0.04 * (shellNoise - 0.5);
+    const radiusPlanetRadii = minRadius + (maxRadius - minRadius) * (0.16 + 0.84 * shell01) + 0.04 * (shellNoise - 0.5);
     const inclination = (0.03 + 0.18 * rand(seedUint32, 0x1200 + i * 17)) * Math.PI;
     const node = rand(seedUint32, 0x1201 + i * 17) * Math.PI * 2;
     const phase = rand(seedUint32, 0x1202 + i * 17) * Math.PI * 2;
@@ -62,8 +74,8 @@ export function buildSystemSceneArtificialSatellitePlansV1(
           ? (rand(seedUint32, 0x1302 + i * 13) < 0.58 ? '#eaf6ff' : '#b9d9ff')
           : (rand(seedUint32, 0x1303 + i * 13) < 0.55 ? '#edf7ff' : '#c6e0ff'));
     const sceneRadius = radiusPlanetRadii * planetRadiusScene;
-    const pointScaleScene = Math.max(sceneRadius * 0.018, planetRadiusScene * (tier === 'VERY_ADVANCED' ? 0.048 : 0.042));
-    const lineOpacity01 = tier === 'VERY_ADVANCED' ? 0.26 : 0.18;
+    const pointScaleScene = Math.max(sceneRadius * 0.018, planetRadiusScene * (tier === 'VERY_ADVANCED' ? 0.044 : 0.039));
+    const lineOpacity01 = tier === 'VERY_ADVANCED' ? 0.24 : 0.18;
     plans.push(Object.freeze({
       orbitRadiusPlanetRadii: radiusPlanetRadii,
       inclinationRadians: inclination,
@@ -76,6 +88,47 @@ export function buildSystemSceneArtificialSatellitePlansV1(
       lineOpacity01,
     }));
   }
+  return Object.freeze(plans);
+}
+
+export function buildSystemSceneOrbitalStationPlansV1(
+  seedUint32: number,
+  tier: SystemSceneArtificialSatelliteTierV1,
+  planetRadiusScene: number,
+): readonly SystemSceneOrbitalStationPlanV1[] {
+  if (tier !== 'VERY_ADVANCED') {
+    return Object.freeze([]);
+  }
+
+  const count = 1 + Math.floor(rand(seedUint32, 0x3001) * 3);
+  const plans: SystemSceneOrbitalStationPlanV1[] = [];
+  const minRadius = 2.08;
+  const maxRadius = 3.28;
+
+  for (let i = 0; i < count; i += 1) {
+    const shell01 = count <= 1 ? 0.5 : i / Math.max(1, count - 1);
+    const radiusPlanetRadii = minRadius + (maxRadius - minRadius) * (0.14 + 0.86 * shell01) + 0.06 * (rand(seedUint32, 0x3100 + i * 11) - 0.5);
+    const inclination = (0.04 + 0.12 * rand(seedUint32, 0x3200 + i * 11)) * Math.PI;
+    const node = rand(seedUint32, 0x3201 + i * 11) * Math.PI * 2;
+    const phase = rand(seedUint32, 0x3202 + i * 11) * Math.PI * 2;
+    const direction = rand(seedUint32, 0x3203 + i * 11) < 0.9 ? 1 : -1;
+    const angularSpeed = direction * (0.24 + 0.42 * rand(seedUint32, 0x3204 + i * 11)) / Math.max(1.4, radiusPlanetRadii * radiusPlanetRadii);
+    const hullColorHex = rand(seedUint32, 0x3300 + i * 11) < 0.52 ? '#f0f5ff' : '#d8e0ea';
+    const lineColorHex = rand(seedUint32, 0x3301 + i * 11) < 0.5 ? '#a9cdf7' : '#d5ecff';
+    const stationScaleScene = Math.max(planetRadiusScene * 0.11, radiusPlanetRadii * planetRadiusScene * 0.028);
+    plans.push(Object.freeze({
+      orbitRadiusPlanetRadii: radiusPlanetRadii,
+      inclinationRadians: inclination,
+      ascendingNodeRadians: node,
+      phaseRadians: phase,
+      angularSpeedRadiansPerDay: angularSpeed,
+      hullColorHex,
+      lineColorHex,
+      stationScaleScene,
+      lineOpacity01: 0.28,
+    }));
+  }
+
   return Object.freeze(plans);
 }
 
@@ -99,21 +152,16 @@ export function createSystemSceneArtificialSatelliteVisualV1(
   const panelHeight = baseScale * lerp(0.22, 0.30, rand(seedUint32, 0x2006));
   const mastHeight = baseScale * lerp(0.48, 0.72, rand(seedUint32, 0x2007));
   const mastThickness = baseScale * 0.08;
+
   const bodyGeometry = new THREE.BoxGeometry(busWidth, busHeight, busDepth);
-  const bodyMaterial = new THREE.MeshBasicMaterial({
-    color: bodyColor,
-    toneMapped: false,
-  });
+  const bodyMaterial = createOpaqueMaterial(bodyColor);
   const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
   group.add(bodyMesh);
   resources.push(bodyGeometry, bodyMaterial);
   materials.push(Object.freeze({ material: bodyMaterial, baseColor: bodyColor.clone(), role: 'body' }));
 
   const panelGeometry = new THREE.BoxGeometry(panelWidth, panelHeight, baseScale * 0.06);
-  const panelMaterial = new THREE.MeshBasicMaterial({
-    color: panelColor,
-    toneMapped: false,
-  });
+  const panelMaterial = createOpaqueMaterial(panelColor);
   const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
   leftPanel.position.set(-panelHalfSpan, 0, 0);
   const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
@@ -123,10 +171,7 @@ export function createSystemSceneArtificialSatelliteVisualV1(
   materials.push(Object.freeze({ material: panelMaterial, baseColor: panelColor.clone(), role: 'panel' }));
 
   const mastGeometry = new THREE.BoxGeometry(mastThickness, mastHeight, mastThickness);
-  const mastMaterial = new THREE.MeshBasicMaterial({
-    color: accentColor,
-    toneMapped: false,
-  });
+  const mastMaterial = createOpaqueMaterial(accentColor);
   const mast = new THREE.Mesh(mastGeometry, mastMaterial);
   mast.position.set(0, busHeight * 0.5 + mastHeight * 0.36, 0);
   group.add(mast);
@@ -146,6 +191,106 @@ export function createSystemSceneArtificialSatelliteVisualV1(
   });
 }
 
+export function createSystemSceneOrbitalStationVisualV1(
+  plan: SystemSceneOrbitalStationPlanV1,
+  seedUint32: number,
+): SystemSceneArtificialSatelliteVisualV1 {
+  const group = new THREE.Group();
+  const materials: SystemSceneArtificialSatelliteMaterialBindingV1[] = [];
+  const resources: Array<{ dispose(): void }> = [];
+
+  const baseScale = plan.stationScaleScene;
+  const hullColor = new THREE.Color(plan.hullColorHex);
+  const trussColor = new THREE.Color('#97a8bf');
+  const panelColor = new THREE.Color('#496c9d');
+  const windowColor = new THREE.Color('#dff4ff');
+  const accentColor = new THREE.Color('#ffdca8');
+
+  const spineLength = baseScale * lerp(2.6, 3.3, rand(seedUint32, 0x4001));
+  const spineHeight = baseScale * lerp(0.34, 0.48, rand(seedUint32, 0x4002));
+  const spineDepth = baseScale * lerp(0.26, 0.38, rand(seedUint32, 0x4003));
+  const spineGeometry = new THREE.BoxGeometry(spineLength, spineHeight, spineDepth);
+  const spineMaterial = createOpaqueMaterial(hullColor);
+  const spine = new THREE.Mesh(spineGeometry, spineMaterial);
+  group.add(spine);
+  resources.push(spineGeometry, spineMaterial);
+  materials.push(Object.freeze({ material: spineMaterial, baseColor: hullColor.clone(), role: 'body' }));
+
+  const hubWidth = baseScale * lerp(0.72, 0.94, rand(seedUint32, 0x4004));
+  const hubHeight = baseScale * lerp(0.56, 0.74, rand(seedUint32, 0x4005));
+  const hubDepth = baseScale * lerp(0.44, 0.60, rand(seedUint32, 0x4006));
+  const hubGeometry = new THREE.BoxGeometry(hubWidth, hubHeight, hubDepth);
+  const hubMaterial = createOpaqueMaterial(hullColor.clone().multiplyScalar(0.96));
+  const hub = new THREE.Mesh(hubGeometry, hubMaterial);
+  hub.position.set(0, 0, 0);
+  group.add(hub);
+  resources.push(hubGeometry, hubMaterial);
+  materials.push(Object.freeze({ material: hubMaterial, baseColor: hubMaterial.color.clone(), role: 'body' }));
+
+  const armLength = baseScale * lerp(1.15, 1.48, rand(seedUint32, 0x4007));
+  const armThickness = baseScale * 0.10;
+  const armGeometry = new THREE.BoxGeometry(armThickness, armLength, armThickness);
+  const armMaterial = createOpaqueMaterial(trussColor);
+  const armLeft = new THREE.Mesh(armGeometry, armMaterial);
+  armLeft.position.set(-spineLength * 0.18, 0, 0);
+  const armRight = new THREE.Mesh(armGeometry, armMaterial);
+  armRight.position.set(spineLength * 0.18, 0, 0);
+  group.add(armLeft, armRight);
+  resources.push(armGeometry, armMaterial);
+  materials.push(Object.freeze({ material: armMaterial, baseColor: trussColor.clone(), role: 'truss' }));
+
+  const dockWidth = baseScale * lerp(0.72, 0.92, rand(seedUint32, 0x4008));
+  const dockHeight = baseScale * lerp(0.22, 0.30, rand(seedUint32, 0x4009));
+  const dockDepth = baseScale * lerp(0.22, 0.30, rand(seedUint32, 0x4010));
+  const dockGeometry = new THREE.BoxGeometry(dockWidth, dockHeight, dockDepth);
+  const dockMaterial = createOpaqueMaterial(accentColor);
+  const dockTop = new THREE.Mesh(dockGeometry, dockMaterial);
+  dockTop.position.set(-spineLength * 0.18, armLength * 0.54, 0);
+  const dockBottom = new THREE.Mesh(dockGeometry, dockMaterial);
+  dockBottom.position.set(spineLength * 0.18, -armLength * 0.54, 0);
+  group.add(dockTop, dockBottom);
+  resources.push(dockGeometry, dockMaterial);
+  materials.push(Object.freeze({ material: dockMaterial, baseColor: accentColor.clone(), role: 'accent' }));
+
+  const panelGeometry = new THREE.BoxGeometry(baseScale * 0.92, baseScale * 0.18, baseScale * 0.06);
+  const panelMaterial = createOpaqueMaterial(panelColor);
+  const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+  leftPanel.position.set(-spineLength * 0.52, 0, 0);
+  const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+  rightPanel.position.set(spineLength * 0.52, 0, 0);
+  group.add(leftPanel, rightPanel);
+  resources.push(panelGeometry, panelMaterial);
+  materials.push(Object.freeze({ material: panelMaterial, baseColor: panelColor.clone(), role: 'panel' }));
+
+  const windowGeometry = new THREE.BoxGeometry(baseScale * 0.48, baseScale * 0.10, baseScale * 0.03);
+  const windowMaterial = createOpaqueMaterial(windowColor);
+  const windows = new THREE.Mesh(windowGeometry, windowMaterial);
+  windows.position.set(0, spineHeight * 0.08, hubDepth * 0.55);
+  group.add(windows);
+  resources.push(windowGeometry, windowMaterial);
+  materials.push(Object.freeze({ material: windowMaterial, baseColor: windowColor.clone(), role: 'window' }));
+
+  group.rotation.z = rand(seedUint32, 0x4011) * Math.PI * 2;
+  group.rotation.y = (rand(seedUint32, 0x4012) - 0.5) * 0.2;
+
+  return Object.freeze({
+    group,
+    materials: Object.freeze(materials),
+    resources: Object.freeze(resources),
+  });
+}
+
+function createOpaqueMaterial(
+  color: THREE.Color,
+): THREE.MeshBasicMaterial {
+  return new THREE.MeshBasicMaterial({
+    color,
+    transparent: false,
+    opacity: 1,
+    toneMapped: false,
+  });
+}
+
 function rand(seed: number, salt: number): number {
   return mix(seed ^ Math.imul((salt + 1) >>> 0, 0x85ebca6b)) / 4294967295;
 }
@@ -159,7 +304,6 @@ function mix(value: number): number {
   x ^= x >>> 16;
   return x >>> 0;
 }
-
 
 function lerp(min: number, max: number, amount01: number): number {
   return min + (max - min) * amount01;
