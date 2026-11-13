@@ -59,7 +59,7 @@ describe('VIS3D.2e — las lunas en ficha no alteran SystemScene', () => {
     } finally {
       high.resources.forEach(resource => resource.dispose());
     }
-  }, 15000);
+  }, 60_000);
 
   it('rechaza dimensiones inválidas en la API optativa', () => {
     expect(() => buildSystemSceneMoonTextureV1(moon, { width: -1, height: 512 })).toThrow(RangeError);

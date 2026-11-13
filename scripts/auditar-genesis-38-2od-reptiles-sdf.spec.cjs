@@ -1,0 +1,16 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const base = path.join(__dirname, '..', 'src', 'app', 'presentation', 'life-species-visual');
+const scene = fs.readFileSync(path.join(base, 'vida38-species-visual-preview-scene.ts'), 'utf8');
+const preview = fs.readFileSync(path.join(base, 'vida38-civilized-reptilian-preview-38-2o.ts'), 'utf8');
+assert.match(scene, /createVida38CivilizedReptilianPreview38O/);
+assert.match(scene, /isCivilizedReptilian/);
+assert.match(preview, /buildVida38HumanoidRawMesh/);
+assert.match(preview, /deriveVida38HumanoidAnatomy/);
+assert.match(preview, /morphRawMeshToReptilian38OD/);
+assert.match(preview, /VIDA38_2OD_REPTILIAN_BODY/);
+assert.match(preview, /VIDA38_2OD_REPTILIAN_GARMENT/);
+assert.match(preview, /vida38ReptilianSdfReuse38OD/);
+console.log('GENESIS_38_2OD_AUDIT_OK: reutilización del SDF humanoide detectada para reptilianos civilizados');

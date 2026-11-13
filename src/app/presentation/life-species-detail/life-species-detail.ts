@@ -11,8 +11,8 @@ import { MoonScientificCardAssembler } from '../moon-detail/moon-scientific-card
 import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
 import type { Vida6Species } from '../../domain/life/vida6-ecosystems-species';
 import { etiquetaNichoVidaEs, etiquetaVidaEs } from '../scientific/vida9-etiquetas-es';
-import { vida38SpeciesVisualContractFromConfirmedV1 } from '../life-species-visual/vida38-species-visual-contract';
 import { LifeSpeciesVisualPreviewComponent } from '../life-species-visual/life-species-visual-preview';
+import { vida38AuthorizeSpeciesRoute385, vida38ExpectedBodyKey385 } from './vida38-acceso-ficha-38-5';
 
 function indiceNatural(valor:string|null):bigint|null {
   if (valor===null || !/^\d+$/.test(valor)) return null;
@@ -42,7 +42,7 @@ function indiceNatural(valor:string|null):bigint|null {
       <main data-testid="vida9-ficha-especie">
         <header>
           <small class="ceja">FICHA BIOLÓGICA · ESPECIE</small>
-          <h1>{{especie()?.proceduralName ?? 'Especie'}}</h1>
+          <h1>{{especie()?.proceduralName ?? 'Ficha de especie'}}</h1>
           <p class="info">Información generada del sistema confirmado, correspondiente al estado CT-0.</p>
           <a class="volver" [routerLink]="rutaRegreso()" [queryParams]="parametrosOrigen()" [fragment]="esLuna ? undefined : 'planet-section-vida'">← Volver a la ficha del cuerpo</a>
         </header>
@@ -50,7 +50,7 @@ function indiceNatural(valor:string|null):bigint|null {
           <section role="status">Cargando los datos de la especie…</section>
         } @else if (facade.state().kind === 'error') {
           <section role="alert">No se pudo cargar la ficha del cuerpo anfitrión.</section>
-        } @else if (registro(); as r) {
+        } @else if (conocimiento(); as ficha) {
           @if (especie(); as e) {
             <section>
               <h2>Clasificación y hábitat</h2>
@@ -102,10 +102,10 @@ function indiceNatural(valor:string|null):bigint|null {
                 }
               </ul>
             </section>
-            @if (r.intelligence.intelligentSpecies?.speciesId === e.id) {
+            @if (registro()?.intelligence?.intelligentSpecies?.speciesId === e.id) {
               <section>
                 <h2>Inteligencia y civilización</h2>
-                @if (r.intelligence.intelligentSpecies; as inteligencia) {
+                @if (registro()?.intelligence?.intelligentSpecies; as inteligencia) {
                   <div class="grid">
                     <div class="dato"><span>Linaje</span><strong>{{etiqueta(inteligencia.lineage)}}</strong></div>
                     <div class="dato"><span>Comunicación</span><strong>{{etiqueta(inteligencia.communication)}}</strong></div>
@@ -114,7 +114,7 @@ function indiceNatural(valor:string|null):bigint|null {
                   <h2>Capacidades cognitivas</h2>
                   <ul class="lista">@for (rasgo of inteligencia.cognitionTraits; track rasgo) {<li>{{etiqueta(rasgo)}}</li>}</ul>
                 }
-                @if (r.intelligence.civilization; as civ) {
+                @if (ficha.civilization; as civ) {
                   <p><strong>Civilización: {{etiqueta(civ.tier)}}</strong></p>
                   <div class="grid">
                     <div class="dato"><span>Tradición de gobierno</span><strong>{{etiqueta(civ.culture.governingTradition)}}</strong></div>
@@ -162,26 +162,36 @@ export class LifeSpeciesDetailPage implements OnInit {
   });
   readonly registro=computed(():Vida9BiologyRecord|null=>{
     const model=this.facade.model();
-    if (!model || this.cuerpo===null || (this.esLuna && this.luna===null))return null;
-    if (this.esLuna && this.luna!==null) {
-      const resultado=this.sesionCompacta()?.moonFiche(this.cuerpo,this.luna) ??
-        this.sesionMultiple()?.moonFiche(this.cuerpo,this.luna) ??
-        this.sesionSimple()?.moonFiche(this.cuerpo,this.luna) ??
-        MoonScientificCardAssembler.build(model,this.cuerpo,this.luna,
+    // TypeScript no estrecha `this.cuerpo` al comprobarlo dentro de un helper.
+    // Guardamos y validamos los índices locales antes de resolver fichas.
+    const bodyIndex=this.cuerpo;
+    const moonIndex=this.luna;
+    if (!model || bodyIndex===null || (this.esLuna && moonIndex===null) ||
+        vida38ExpectedBodyKey385(model,bodyIndex,moonIndex,this.esLuna)===null)return null;
+    if (this.esLuna && moonIndex!==null) {
+      const resultado=this.sesionCompacta()?.moonFiche(bodyIndex,moonIndex) ??
+        this.sesionMultiple()?.moonFiche(bodyIndex,moonIndex) ??
+        this.sesionSimple()?.moonFiche(bodyIndex,moonIndex) ??
+        MoonScientificCardAssembler.build(model,bodyIndex,moonIndex,
           (model.generatorVersionCode===2 || model.generatorVersionCode===3) ? {resolveDetailed:()=>null}:undefined);
       return resultado?.kind==='AVAILABLE'?resultado.card.confirmedBiologyVIDA9??null:null;
     }
-    const resultado=this.sesionCompacta()?.planetFiche(this.cuerpo) ??
-      this.sesionMultiple()?.planetFiche(this.cuerpo) ??
-      this.sesionSimple()?.planetFiche(this.cuerpo) ??
-      PlanetScientificCardAssembler.build(model,this.cuerpo,
+    const resultado=this.sesionCompacta()?.planetFiche(bodyIndex) ??
+      this.sesionMultiple()?.planetFiche(bodyIndex) ??
+      this.sesionSimple()?.planetFiche(bodyIndex) ??
+      PlanetScientificCardAssembler.build(model,bodyIndex,
         (model.generatorVersionCode===2 || model.generatorVersionCode===3) ? {resolveDetailed:()=>null}:undefined);
     return resultado?.kind==='AVAILABLE'?resultado.card.confirmedBiologyVIDA9??null:null;
   });
-  readonly especie=computed(():Vida6Species|null=>this.registro()?.ecosystem.species.find(e=>e.id===this.especieId)??null);
-  readonly contratoVisual=computed(()=>vida38SpeciesVisualContractFromConfirmedV1(this.registro(),this.especieId??''));
-  readonly relaciones=computed(()=>this.registro()?.ecosystem.relations.filter(r=>r.sourceSpeciesId===this.especieId || r.targetSpeciesId===this.especieId)??[]);
-  nombreEspecie(id:string):string {return this.registro()?.ecosystem.species.find(e=>e.id===id)?.proceduralName??'Especie no disponible';}
+  readonly conocimiento=computed(()=>vida38AuthorizeSpeciesRoute385(
+    this.facade.model(),this.cuerpo,this.luna,this.esLuna,this.registro(),this.especieId));
+  readonly especie=computed(():Vida6Species|null=>this.conocimiento()?.species??null);
+  readonly contratoVisual=computed(()=>this.conocimiento()?.visualContract??null);
+  readonly relaciones=computed(()=>this.conocimiento()?.ecologicalRelations??[]);
+  nombreEspecie(id:string):string {
+    if (!this.conocimiento())return 'Especie no disponible';
+    return this.registro()?.ecosystem.species.find(e=>e.id===id)?.proceduralName??'Especie no disponible';
+  }
   readonly rutaRegreso=computed(():readonly string[]=>{
     const m=this.facade.model();
     if (!m || this.cuerpo===null) return ['/galaxies'];

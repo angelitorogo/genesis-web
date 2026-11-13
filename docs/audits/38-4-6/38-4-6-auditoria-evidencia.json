@@ -1,0 +1,810 @@
+{
+  "revision": "GENESIS/38.4-38.6/auditoria-evidencia-v1",
+  "generatedAt": "2026-11-13T09:13:15.097Z",
+  "projectRoot": "C:\\Users\\argom\\Desktop\\ANGEL\\DESARROLLO\\FRONT ANGULAR\\genesis-web",
+  "sourceFingerprintSHA256": "ac81b533a91e36bd9a9156f7a0254266d4fd63fdd428da0d5607675e70ac2acb",
+  "filesReviewed": 1268,
+  "scope": "Auditoría estática de evidencia: NO certifica semántica en runtime ni hace cambios visuales",
+  "states": {
+    "INDICIOS": "Se encontraron señales técnicas, pero aún requiere prueba de comportamiento",
+    "REVISAR": "Hay que contrastar condiciones reales",
+    "SIN_EVIDENCIA": "No se localizó evidencia suficiente"
+  },
+  "checks": [
+    {
+      "id": "38.4.determinismo",
+      "state": "REVISAR",
+      "summary": "El uso de semillas/ID es rastreable; falta comparar dos reconstrucciones reales y comprobar estabilidad tras serializar/restaurar.",
+      "evidence": [
+        {
+          "file": "src/app/presentation/life-species-visual/life-species-visual-preview.ts",
+          "line": 81,
+          "excerpt": "<app-vida38-reptilian-gallery-38-2oe5 [selectedSpeciesId]=\"comparisonContract?.speciesId ?? null\" (open)=\"openGallerySpecimen($event)\"></app-vida38-reptilian-gallery-38-2oe5>"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 11,
+          "excerpt": "const speciesId=`LAB-38W-HUMANOID-${String(serial).padStart(5,'0')}`;"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 12,
+          "excerpt": "const skin=SKINS[hashVida38W(speciesId+'skin')%SKINS.length]!;"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 13,
+          "excerpt": "const contract:Vida38SpeciesVisualContract={revision:VIDA38_SPECIES_VISUAL_REVISION,speciesId,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 14,
+          "excerpt": "speciesName:`Humanoide avanzado de laboratorio ${serial}`,variantSeedUint32:hashVida38W(speciesId+'seed'),appearanceFingerprint:`LAB_ONLY/38W/${speciesId}`,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 2,
+          "excerpt": "import {deriveVida38AdvancedHumanoidPlan38W,hashVida38W,type Vida38AdvancedHumanoidPlan38W} from './vida38-advanced-humanoid-plan-38-2w';"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 12,
+          "excerpt": "const skin=SKINS[hashVida38W(speciesId+'skin')%SKINS.length]!;"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 14,
+          "excerpt": "speciesName:`Humanoide avanzado de laboratorio ${serial}`,variantSeedUint32:hashVida38W(speciesId+'seed'),appearanceFingerprint:`LAB_ONLY/38W/${speciesId}`,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 17,
+          "excerpt": "locomotion:'WALKING',bodyLengthMeters:1.55+(hashVida38W(speciesId+'height')%125)/100,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 18,
+          "excerpt": "pigmentation:{primaryColorHex:skin[0],secondaryColorHex:skin[1],pattern:(['SOLID','MOTTLED','SPOTS','BANDS'] as const)[hashVida38W(speciesId+'pattern')%4]!,bioluminescent:false},"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-identity-38-2oe2.ts",
+          "line": 4,
+          "excerpt": "* No usa Math.random(), estado global, ni requiere acceso a IndexedDB. */"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-variation-38-2oe1.ts",
+          "line": 2,
+          "excerpt": "* No usa Math.random(), estado global ni orden de enumeración del catálogo. */"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-humanoid-torso-38-2ge.ts",
+          "line": 56,
+          "excerpt": "// Sin cromatismo, orden de carga, appearanceFingerprint ni Math.random()."
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-reptilian-organic-garments-38-2oe7c.ts",
+          "line": 6,
+          "excerpt": "* No hay Math.random(), texturas externas ni escrituras persistentes."
+        }
+      ],
+      "next": "Ejecutar Vitest CT-0 con 2 modelos del mismo contrato y comparar geometría/materiales/plan. Revisar cualquier Math.random de las rutas productivas."
+    },
+    {
+      "id": "38.4.variantes-espaciales",
+      "state": "REVISAR",
+      "summary": "La presencia de variantSeedUint32 NO demuestra que las variantes dependan de rasgos biológicos suficientes.",
+      "evidence": [
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+          "line": 14,
+          "excerpt": "speciesName:`Humanoide avanzado de laboratorio ${serial}`,variantSeedUint32:hashVida38W(speciesId+'seed'),appearanceFingerprint:`LAB_ONLY/38W/${speciesId}`,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-plan-38-2w.ts",
+          "line": 43,
+          "excerpt": "const seed=[c.speciesId,c.appearanceFingerprint,c.variantSeedUint32,'38.2w'].join('|');"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-thumbnails-38-2w.ts",
+          "line": 6,
+          "excerpt": "const key=(c:Vida38SpeciesVisualContract)=>[VIDA38_ADV_HUMANOID_RENDERER_REVISION_38W,c.speciesId,c.appearanceFingerprint,c.variantSeedUint32].join('|');"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-insectoid-fixtures-38-2t.ts",
+          "line": 28,
+          "excerpt": "variantSeedUint32:vida38Hash38T(speciesId+'|seed'),appearanceFingerprint,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-insectoid-plan-38-2t.ts",
+          "line": 120,
+          "excerpt": "const seed = `${contract.speciesId}|${contract.appearanceFingerprint}|${contract.variantSeedUint32}|38.2t`;"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-insectoid-thumbnails-38-2t.ts",
+          "line": 9,
+          "excerpt": "VIDA38_ADV_INSECT_RENDERER_REVISION_38T,c.speciesId,c.appearanceFingerprint,c.variantSeedUint32,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-fixtures-38-2s.ts",
+          "line": 27,
+          "excerpt": "variantSeedUint32:vida38Hash38S(`${speciesId}|seed`),"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-thumbnails-38-2s3.ts",
+          "line": 23,
+          "excerpt": "contract.variantSeedUint32,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-bird-morphology-38-2i.ts",
+          "line": 95,
+          "excerpt": "const seed=hash([VIDA38_BIRD_REVISION,c.speciesId,c.variantSeedUint32,c.morphology.bodyPlan,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-civilized-humanoid-fixtures-38-2r.ts",
+          "line": 23,
+          "excerpt": "variantSeedUint32:vida38Hash38R(`${speciesId}|seed`),appearanceFingerprint:fingerprint,"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-civilized-humanoid-plan-38-2r.ts",
+          "line": 114,
+          "excerpt": "const seed=`38.2r|${contract.speciesId}|${contract.appearanceFingerprint}|${contract.variantSeedUint32}`;"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-civilized-insectoid-fixtures-38-2q.ts",
+          "line": 33,
+          "excerpt": "variantSeedUint32:hash32('seed:'+speciesId),appearanceFingerprint,"
+        }
+      ],
+      "next": "Inspeccionar el mapper contrato VIDA→render: mismo ID y rasgos idénticos deben mantener apariencia aunque cambie la localización; variante distinta solo con evidencia biológica explícita."
+    },
+    {
+      "id": "38.5.origen",
+      "state": "REVISAR",
+      "summary": "Se ha encontrado referencia a origen, pero hay que comprobar idioma visible, fuente VIDA y nivel de conocimiento.",
+      "evidence": [
+        {
+          "file": "src/app/presentation/galaxy-knowledge-catalog/galaxy-knowledge-civilizations-catalog.data-source.ts",
+          "line": 17,
+          "excerpt": "description:'Civilizaciones nativas identificadas en sistemas confirmados. Las colonias tecnológicas se distinguen de las civilizaciones de origen.',"
+        },
+        {
+          "file": "src/app/presentation/galaxy-knowledge-catalog/galaxy-knowledge-civilizations-catalog.data-source.ts",
+          "line": 21,
+          "excerpt": "{key:'planet',label:'Planeta de origen'},{key:'system',label:'Sistema anfitrión'},"
+        },
+        {
+          "file": "src/app/presentation/galaxy-knowledge-catalog/galaxy-knowledge-civilizations-catalog.data-source.ts",
+          "line": 24,
+          "excerpt": "{key:'planet',label:'PLANETA DE ORIGEN'}, {key:'system',label:'SISTEMA'},"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 133,
+          "excerpt": "<p class=\"info\">Los datos pertenecen al universo simulado. No se ha generado una fecha histórica certificada de origen.</p>"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-bird-organic-field-38-2i.ts",
+          "line": 498,
+          "excerpt": "for(let origin=0;origin<triangleCount;origin++){"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-bird-organic-field-38-2i.ts",
+          "line": 499,
+          "excerpt": "if(flips[origin]!==-1)continue;"
+        }
+      ],
+      "next": "Validar en fichas de especie y civilización reales: texto español, propiedad VIDA trazable, nulos explícitos y no revelar datos no observados."
+    },
+    {
+      "id": "38.5.ecosistema",
+      "state": "REVISAR",
+      "summary": "Se ha encontrado referencia a ecosistema, pero hay que comprobar idioma visible, fuente VIDA y nivel de conocimiento.",
+      "evidence": [
+        {
+          "file": "src/app/domain/life/vida6-ecosystems-species.ts",
+          "line": 5,
+          "excerpt": "import type { Vida4Group } from './procedural-ecology-vida4';"
+        },
+        {
+          "file": "src/app/domain/life/vida6-ecosystems-species.ts",
+          "line": 39,
+          "excerpt": "readonly habitat: Vida6HabitatKind;"
+        },
+        {
+          "file": "src/app/domain/life/vida6-ecosystems-species.ts",
+          "line": 62,
+          "excerpt": "readonly habitat: Vida3MicrobialSnapshot['habitat'];"
+        },
+        {
+          "file": "src/app/domain/life/vida7-intelligence-civilizations.ts",
+          "line": 36,
+          "excerpt": "/** Modelo de emplazamiento compatible con el habitat realmente ocupado en VIDA.6. */"
+        },
+        {
+          "file": "src/app/domain/life/vida7-intelligence-civilizations.ts",
+          "line": 37,
+          "excerpt": "readonly habitat: Vida6HabitatKind;"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 60,
+          "excerpt": "<div class=\"dato\"><span>Hábitat</span><strong>{{etiqueta(e.habitat)}}</strong></div>"
+        }
+      ],
+      "next": "Validar en fichas de especie y civilización reales: texto español, propiedad VIDA trazable, nulos explícitos y no revelar datos no observados."
+    },
+    {
+      "id": "38.5.relaciones",
+      "state": "REVISAR",
+      "summary": "Se ha encontrado referencia a relaciones, pero hay que comprobar idioma visible, fuente VIDA y nivel de conocimiento.",
+      "evidence": [
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 96,
+          "excerpt": "<h2>Relaciones ecológicas</h2>"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 97,
+          "excerpt": "@if (relaciones().length===0) {<p class=\"info\">Sin relaciones interespecíficas registradas.</p>}"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 99,
+          "excerpt": "@for (relacion of relaciones(); track relacion.sourceSpeciesId+'|'+relacion.targetSpeciesId+'|'+relacion.kind) {"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 100,
+          "excerpt": "<li>{{etiqueta(relacion.kind)}} · {{nombreEspecie(relacion.sourceSpeciesId)}} y {{nombreEspecie(relacion.targetSpeciesId)}}"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 101,
+          "excerpt": "· intensidad {{relacion.intensity01}}</li>"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 183,
+          "excerpt": "readonly relaciones=computed(()=>this.registro()?.ecosystem.relations.filter(r=>r.sourceSpeciesId===this.especieId || r.targetSpeciesId===this.especieId)??[]);"
+        }
+      ],
+      "next": "Validar en fichas de especie y civilización reales: texto español, propiedad VIDA trazable, nulos explícitos y no revelar datos no observados."
+    },
+    {
+      "id": "38.5.cultura",
+      "state": "REVISAR",
+      "summary": "Se ha encontrado referencia a cultura, pero hay que comprobar idioma visible, fuente VIDA y nivel de conocimiento.",
+      "evidence": [
+        {
+          "file": "src/app/domain/life/vida7-intelligence-civilizations.ts",
+          "line": 46,
+          "excerpt": "readonly culture: {"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 120,
+          "excerpt": "<div class=\"dato\"><span>Tradición de gobierno</span><strong>{{etiqueta(civ.culture.governingTradition)}}</strong></div>"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 121,
+          "excerpt": "<div class=\"dato\"><span>Enfoque cultural</span><strong>{{etiqueta(civ.culture.culturalFocus)}}</strong></div>"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 122,
+          "excerpt": "<div class=\"dato\"><span>Organización</span><strong>{{etiqueta(civ.culture.socialOrganization)}}</strong></div>"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-plan-38-2w.ts",
+          "line": 15,
+          "excerpt": "readonly culture:Vida38AdvancedHumanoidCulture38W;readonly role:Vida38AdvancedHumanoidRole38W;"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-plan-38-2w.ts",
+          "line": 45,
+          "excerpt": "const culture=VIDA38_ADV_HUMANOID_CULTURES_38W[hashVida38W(seed+'|culture')%6]!;"
+        }
+      ],
+      "next": "Validar en fichas de especie y civilización reales: texto español, propiedad VIDA trazable, nulos explícitos y no revelar datos no observados."
+    },
+    {
+      "id": "38.5.tecnologia",
+      "state": "REVISAR",
+      "summary": "Se ha encontrado referencia a tecnologia, pero hay que comprobar idioma visible, fuente VIDA y nivel de conocimiento.",
+      "evidence": [
+        {
+          "file": "src/app/domain/life/vida7-intelligence-civilizations.ts",
+          "line": 53,
+          "excerpt": "readonly technology: readonly string[];"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 124,
+          "excerpt": "<h2>Tecnologías</h2><ul class=\"lista\">@for (tecnologia of civ.technology; track tecnologia) {<li>{{etiqueta(tecnologia)}}</li>}</ul>"
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-preview-38-2o.ts",
+          "line": 582,
+          "excerpt": "/** Revestimiento continuo de 360° para tecnología interestelar."
+        },
+        {
+          "file": "src/app/presentation/life-species-visual/vida38-reptilian-wardrobe-coherence-38-2oe8b.ts",
+          "line": 145,
+          "excerpt": ": 'Vestimenta previa a la tecnología muy avanzada.',"
+        },
+        {
+          "file": "src/app/presentation/moon-detail/moon-scientific-card.ts",
+          "line": 9,
+          "excerpt": "import { Vida8TechnologicalColonization } from '../../simulation/life/vida8-technological-colonization';"
+        },
+        {
+          "file": "src/app/presentation/moon-detail/moon-scientific-card.ts",
+          "line": 11,
+          "excerpt": "import type { Vida8ColonizationSnapshot } from '../../domain/life/vida8-technological-colonization';"
+        }
+      ],
+      "next": "Validar en fichas de especie y civilización reales: texto español, propiedad VIDA trazable, nulos explícitos y no revelar datos no observados."
+    },
+    {
+      "id": "38.5.procedencia-vida",
+      "state": "REVISAR",
+      "summary": "La representación no debe sustituir culturas/roles persistidos de VIDA por roles generados para laboratorio.",
+      "evidence": [
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 2,
+          "excerpt": "import { VIDA6_REVISION, type Vida6EcosystemSnapshot } from '../../../domain/life/vida6-ecosystems-species';"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 5,
+          "excerpt": "export class DexieVida6EcosystemsSpeciesRepository {"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 8,
+          "excerpt": "async ensure(snapshot: Vida6EcosystemSnapshot): Promise<Vida6EcosystemSnapshot> {"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 9,
+          "excerpt": "if (snapshot.revision !== VIDA6_REVISION || snapshot.identity.generatorVersionCode !== 3)"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 10,
+          "excerpt": "throw Error('VIDA.6 private persistence requires V3 and the current revision');"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 15,
+          "excerpt": "const same = (row: {snapshotJson:string;digest:string;modelRevision:string}):Vida6EcosystemSnapshot => {"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 16,
+          "excerpt": "const previous = JSON.parse(row.snapshotJson) as Vida6EcosystemSnapshot;"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 22,
+          "excerpt": "throw Error('VIDA.6 immutable ecosystem mismatch; no overwrite');"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 26,
+          "excerpt": "return await this.db.transaction('rw',this.db.privateEcologicalBiospheres,async()=>{"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 27,
+          "excerpt": "const previous = await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 29,
+          "excerpt": "await this.db.privateEcologicalBiospheres.add({universeSeed:identity.universeSeed,"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+          "line": 36,
+          "excerpt": "const previous = await this.db.privateEcologicalBiospheres.get(key);"
+        }
+      ],
+      "next": "Trazar campos de ficha a VIDA.6/VIDA.7 y verificar que los labels de laboratorio LAB_ONLY nunca aparecen como conocimiento observado."
+    },
+    {
+      "id": "38.6.luces",
+      "state": "REVISAR",
+      "summary": "Encontradas referencias a luces; aún hay que probar la condición científica exacta que habilita el dibujo.",
+      "evidence": [
+        {
+          "file": "src/app/domain/life/technosignatures-37a.ts",
+          "line": 7,
+          "excerpt": "export type Technosignature37aNightLight = 'LOCAL_POSSIBLE' | 'URBAN_POSSIBLE' | 'EXTENSIVE_POSSIBLE';"
+        },
+        {
+          "file": "src/app/domain/life/technosignatures-37a.ts",
+          "line": 12,
+          "excerpt": "readonly nightLight: Technosignature37aNightLight;"
+        },
+        {
+          "file": "src/app/domain/life/technosignatures-37a.ts",
+          "line": 25,
+          "excerpt": "nightLight:'LOCAL_POSSIBLE',sceneAlert:false,observedRadioSignal:false});"
+        },
+        {
+          "file": "src/app/domain/life/technosignatures-37a.ts",
+          "line": 28,
+          "excerpt": "nightLight:'URBAN_POSSIBLE',sceneAlert:true,observedRadioSignal:false});"
+        },
+        {
+          "file": "src/app/domain/life/technosignatures-37a.ts",
+          "line": 31,
+          "excerpt": "nightLight:'EXTENSIVE_POSSIBLE',sceneAlert:true,observedRadioSignal:false});"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-atmosphere-material.ts",
+          "line": 60,
+          "excerpt": "* suppresses ambient light on the night side and softens the visible terminator"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-atmosphere-material.ts",
+          "line": 67,
+          "excerpt": "nightLightsTexture: THREE.DataTexture | null = null,"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-atmosphere-material.ts",
+          "line": 113,
+          "excerpt": "if (nightLightsTexture !== null) {"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-atmosphere-material.ts",
+          "line": 115,
+          "excerpt": "value: nightLightsTexture,"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-atmosphere-material.ts",
+          "line": 130,
+          "excerpt": "nightLightsTexture !== null,"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-atmosphere-material.ts",
+          "line": 136,
+          "excerpt": "`${upstreamProgramKey}|GENESIS-25.6-DAY-NIGHT-V1-${profile.atmospherePresent ? 'ATM' : 'VAC'}-${nightLightsTexture === null ? 'NO-CIV' : 'CIV-LIGHTS-V1'}`;"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-atmosphere-optics.ts",
+          "line": 43,
+          "excerpt": "* parameters for the GLSL atmosphere shell, terminator and night-side response;"
+        }
+      ],
+      "next": "Revisar render + fuente de datos: construir solo con evidencia VIDA.8/37 y conocimiento permitido; si falta evidencia, 0 objetos visibles."
+    },
+    {
+      "id": "38.6.asentamientos",
+      "state": "REVISAR",
+      "summary": "Encontradas referencias a asentamientos; aún hay que probar la condición científica exacta que habilita el dibujo.",
+      "evidence": [
+        {
+          "file": "src/app/domain/life/vida7-intelligence-civilizations.ts",
+          "line": 34,
+          "excerpt": "export interface Vida7Settlement {"
+        },
+        {
+          "file": "src/app/domain/life/vida7-intelligence-civilizations.ts",
+          "line": 54,
+          "excerpt": "readonly settlementPatterns: readonly Vida7Settlement[];"
+        },
+        {
+          "file": "src/app/domain/life/vida8-technological-colonization.ts",
+          "line": 11,
+          "excerpt": "export type Vida8PopulationBand = 'OUTPOST' | 'SETTLEMENT' | 'CITY' | 'NETWORK';"
+        },
+        {
+          "file": "src/app/domain/life/vida8-technological-colonization.ts",
+          "line": 23,
+          "excerpt": "export interface Vida8ColonialSettlement {"
+        },
+        {
+          "file": "src/app/domain/life/vida8-technological-colonization.ts",
+          "line": 48,
+          "excerpt": "readonly settlement: Vida8ColonialSettlement;"
+        },
+        {
+          "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+          "line": 125,
+          "excerpt": "<h2>Asentamientos</h2><ul class=\"lista\">@for (sitio of civ.settlementPatterns; track sitio.id) {"
+        },
+        {
+          "file": "src/app/presentation/planet-detail/planet-vegetation-preview-profile-visbio.ts",
+          "line": 3,
+          "excerpt": "* civilization-night settlement geography at every camera scale. */"
+        },
+        {
+          "file": "src/app/presentation/scientific/vida9-etiquetas-es.ts",
+          "line": 53,
+          "excerpt": "SETTLEMENT:'Asentamiento', CITY:'Ciudad', NETWORK:'Red de asentamientos',"
+        },
+        {
+          "file": "src/app/presentation/scientific/vida9-full-system-biology-panel.ts",
+          "line": 67,
+          "excerpt": "<p><strong>Colonia {{ $index + 1 }}</strong> · {{etiqueta(colonia.settlement.habitatTechnology)}} · {{etiqueta(colonia.settlement.populationBand)}}</p>"
+        },
+        {
+          "file": "src/app/presentation/scientific/vida9-full-system-biology-panel.ts",
+          "line": 68,
+          "excerpt": "<p>Población colonial: {{colonia.settlement.colonialPopulationRange[0]}}–{{colonia.settlement.colonialPopulationRange[1]}} habitantes.</p>"
+        },
+        {
+          "file": "src/app/presentation/scientific/vida9a-physical-biology-coherence.ts",
+          "line": 95,
+          "excerpt": "'La población colonial se deriva exclusivamente de los asentamientos coloniales VIDA.8.'));"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-planet-night-lights-visciv1.ts",
+          "line": 2,
+          "excerpt": "* No population, road or settlement coordinates are added to scientific state."
+        }
+      ],
+      "next": "Revisar render + fuente de datos: construir solo con evidencia VIDA.8/37 y conocimiento permitido; si falta evidencia, 0 objetos visibles."
+    },
+    {
+      "id": "38.6.colonias",
+      "state": "REVISAR",
+      "summary": "Encontradas referencias a colonias; aún hay que probar la condición científica exacta que habilita el dibujo.",
+      "evidence": [
+        {
+          "file": "src/app/data/local/entity/private-ecological-biosphere-vida4.entity.ts",
+          "line": 6,
+          "excerpt": "readonly modelRevision: 'VIDA.4/ecology/v1' | 'VIDA.4/ecology/v2-advanced-calibration' | 'VIDA.5c/advanced-biosphere/v1' | 'VIDA.6/ecosystems-species/v1' | 'VIDA.7/intelligence-civilizations/v1' | 'VIDA.8/technological-colonization/v1';"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 2,
+          "excerpt": "import { VIDA8_REVISION, type Vida8ColonizationSnapshot } from '../../../domain/life/vida8-technological-colonization';"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 8,
+          "excerpt": "snapshot.colonialPopulationPresent!==(snapshot.colonies.length>0) ||"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 9,
+          "excerpt": "snapshot.introducedLifePresent!==snapshot.colonies.some(c=>c.introducedOrganisms.length>0) ||"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 10,
+          "excerpt": "snapshot.colonies.some(c=>c.terraform?.environmentChanged ||"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 26,
+          "excerpt": "prior.colonies.length!==snapshot.colonies.length)"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 27,
+          "excerpt": "throw Error('VIDA.8 immutable colonization mismatch; no overwrite');"
+        },
+        {
+          "file": "src/app/domain/life/vida8-technological-colonization.ts",
+          "line": 2,
+          "excerpt": "* No convierte colonias en biosferas naturales ni aplica terraformacion a la fisica V3."
+        },
+        {
+          "file": "src/app/domain/life/vida8-technological-colonization.ts",
+          "line": 7,
+          "excerpt": "export const VIDA8_REVISION = 'VIDA.8/technological-colonization/v1' as const;"
+        },
+        {
+          "file": "src/app/domain/life/vida8-technological-colonization.ts",
+          "line": 8,
+          "excerpt": "export const VIDA8_NAMESPACE = 'VIDA.8/technological-colonization/v1' as const;"
+        },
+        {
+          "file": "src/app/domain/life/vida8-technological-colonization.ts",
+          "line": 69,
+          "excerpt": "readonly colonies: readonly Vida8Colony[];"
+        },
+        {
+          "file": "src/app/domain/life/vida9-biology-exploration.ts",
+          "line": 6,
+          "excerpt": "import type { Vida8ColonizationSnapshot } from './vida8-technological-colonization';"
+        }
+      ],
+      "next": "Revisar render + fuente de datos: construir solo con evidencia VIDA.8/37 y conocimiento permitido; si falta evidencia, 0 objetos visibles."
+    },
+    {
+      "id": "38.6.estaciones",
+      "state": "REVISAR",
+      "summary": "Encontradas referencias a estaciones; aún hay que probar la condición científica exacta que habilita el dibujo.",
+      "evidence": [
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 47,
+          "excerpt": "export interface SystemSceneOrbitalStationPlanV1 {"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 159,
+          "excerpt": "export function buildSystemSceneOrbitalStationPlansV1("
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 163,
+          "excerpt": "): readonly SystemSceneOrbitalStationPlanV1[] {"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 165,
+          "excerpt": "const plans: SystemSceneOrbitalStationPlanV1[] = [];"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 280,
+          "excerpt": "export function createSystemSceneOrbitalStationVisualV1("
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 281,
+          "excerpt": "plan: SystemSceneOrbitalStationPlanV1,"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 285,
+          "excerpt": "return createSpecializedOrbitalStationVisualV1(plan, seedUint32);"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 437,
+          "excerpt": "function createSpecializedOrbitalStationVisualV1("
+        },
+        {
+          "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.ts",
+          "line": 438,
+          "excerpt": "plan: SystemSceneOrbitalStationPlanV1,"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene.ts",
+          "line": 120,
+          "excerpt": "buildSystemSceneOrbitalStationPlansV1,"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene.ts",
+          "line": 124,
+          "excerpt": "createSystemSceneOrbitalStationVisualV1,"
+        },
+        {
+          "file": "src/app/presentation/system/system-scene.ts",
+          "line": 1009,
+          "excerpt": ").length + buildSystemSceneOrbitalStationPlansV1("
+        }
+      ],
+      "next": "Revisar render + fuente de datos: construir solo con evidencia VIDA.8/37 y conocimiento permitido; si falta evidencia, 0 objetos visibles."
+    },
+    {
+      "id": "38.6.gates-conocimiento",
+      "state": "REVISAR",
+      "summary": "La existencia de campos VIDA.8/37 no prueba que el dibujo quede condicionado por ellos; se requieren tests positivos y negativos.",
+      "evidence": [
+        {
+          "file": "src/app/data/local/entity/galaxy-knowledge-snapshot.entity.ts",
+          "line": 19,
+          "excerpt": "/** Materialized *observed* civilizational knowledge from CONFIRMED systems."
+        },
+        {
+          "file": "src/app/data/local/entity/galaxy-knowledge-snapshot.entity.ts",
+          "line": 22,
+          "excerpt": "/** Revision of the canonical set of confirmed systems. */"
+        },
+        {
+          "file": "src/app/data/local/entity/private-ecological-biosphere-vida4.entity.ts",
+          "line": 6,
+          "excerpt": "readonly modelRevision: 'VIDA.4/ecology/v1' | 'VIDA.4/ecology/v2-advanced-calibration' | 'VIDA.5c/advanced-biosphere/v1' | 'VIDA.6/ecosystems-species/v1' | 'VIDA.7/intelligence-civilizations/v1' | 'VIDA.8/technological-colonization/v1';"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 2,
+          "excerpt": "import { VIDA8_REVISION, type Vida8ColonizationSnapshot } from '../../../domain/life/vida8-technological-colonization';"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 4,
+          "excerpt": "export class DexieVida8TechnologicalColonizationRepository {"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 6,
+          "excerpt": "async ensure(snapshot:Vida8ColonizationSnapshot):Promise<Vida8ColonizationSnapshot>{"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 7,
+          "excerpt": "if(snapshot.revision!==VIDA8_REVISION || snapshot.identity.generatorVersionCode!==3 ||"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 14,
+          "excerpt": "throw Error('VIDA.8 invalid private colonial state');"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 20,
+          "excerpt": "const prior=JSON.parse(row.snapshotJson) as Vida8ColonizationSnapshot;"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+          "line": 27,
+          "excerpt": "throw Error('VIDA.8 immutable colonization mismatch; no overwrite');"
+        },
+        {
+          "file": "src/app/data/local/repository/dexie-vida9-biology-exploration.repository.ts",
+          "line": 85,
+          "excerpt": "record.revision!==VIDA9_REVISION || record.revealPolicy!=='FULL_SYSTEM_REVEAL_ON_CONFIRMED' ||"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 2,
+          "excerpt": "CataloguedToConfirmedScientificProfile,"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 4,
+          "excerpt": "} from './catalogued-to-confirmed-scientific-profile';"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 7,
+          "excerpt": "DetectedToDiscoveredScientificDimension,"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 8,
+          "excerpt": "DetectedToDiscoveredScientificProfile,"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 9,
+          "excerpt": "} from './detected-to-discovered-scientific-profile';"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 58,
+          "excerpt": "DetectedToDiscoveredScientificDimension"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 69,
+          "excerpt": "DetectedToDiscoveredScientificDimension"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 80,
+          "excerpt": "DetectedToDiscoveredScientificDimension"
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 122,
+          "excerpt": "const CONFIRMED_CLASSIFICATION ="
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 133,
+          "excerpt": "const CONFIRMED_PHYSICAL_PROPERTIES ="
+        },
+        {
+          "file": "src/app/domain/discovery/stellar-system-scientific-profile.ts",
+          "line": 144,
+          "excerpt": "const CONFIRMED_ORBITAL_ARCHITECTURE ="
+        }
+      ],
+      "next": "Crear fixture sin civilización/colonización: 0 luces y estructuras; fixture con justificación y conocimiento: aparecen exactamente los elementos autorizados."
+    }
+  ],
+  "conclusion": "CIERRE_NO_CERTIFICADO"
+}

@@ -1,0 +1,20 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.441 seconds] - 2026-11-11T20:00:18.388Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [32m✓[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-humanoid-organic-field-38-2e.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 10944[2mms[22m[39m
+     [33m[2m✓[22m[39m crea una única superficie estanca, orientable y sin aristas no manifold [33m 1947[2mms[22m[39m
+     [33m[2m✓[22m[39m es reproducible incluso al regenerar la geometría desde cero [33m 1319[2mms[22m[39m
+     [33m[2m✓[22m[39m ofrece tres niveles de detalle sin cambiar los rasgos ni la identidad [33m 6530[2mms[22m[39m
+     [33m[2m✓[22m[39m normales finitas y casi unitarias en toda la superficie [33m 1142[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 21:00:18
+[2m   Duration [22m 12.21s[2m (transform 88ms, setup 300ms, import 61ms, tests 10.94s, environment 714ms)[22m
+
+

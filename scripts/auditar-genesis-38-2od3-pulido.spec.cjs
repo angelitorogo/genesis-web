@@ -1,0 +1,10 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const f = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-civilized-reptilian-preview-38-2o.ts'),'utf8');
+assert.match(f,/VIDA38_2OD_REPTILIAN_TAIL_BASE/);
+assert.match(f,/vida38ReptilianPolish38OD3/);
+assert.match(f,/neonAccentHex/);
+assert.match(f,/m.level === 'VERY_ADVANCED'/);
+console.log('GENESIS_38_2OD3_AUDIT_OK: cola integrada, ropa futurista y ojos corregidos');

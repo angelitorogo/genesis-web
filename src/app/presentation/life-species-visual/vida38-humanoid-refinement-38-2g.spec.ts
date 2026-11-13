@@ -146,7 +146,9 @@ describe('GENESIS 38.2g — anatomía y materiales biológicos de humanoides',()
       const geometry=eye.geometry;
       expect(geometry.getAttribute('color')).toBeDefined();
       expect(eye.name).toContain('OCULAR_INTEGRATED');
-      expect(eye.position.z).toBeGreaterThan(0.24);
+      // 38.2g.c: el ojo ahora está dentro de su cavidad, NO sobresaliendo.
+      expect(eye.position.z).toBeGreaterThan(0.15);
+      expect(eye.position.z).toBeLessThan(0.25);
       geometry.dispose();
       (eye.material as THREE.Material).dispose();
     }

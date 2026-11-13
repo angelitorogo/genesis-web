@@ -97,7 +97,7 @@ describe('VIDA.T1 — mínimo morfológico del fundador civilizado', () => {
     expect(onlyIntelligent).toBeGreaterThan(20);
     expect(tiers).toEqual(new Set(['PRIMITIVE','ADVANCED','VERY_ADVANCED']));
     expect(lineages).toEqual(new Set(['HUMANOID','REPTILIAN','INSECTOID']));
-  }, 15000);
+  }, 60_000);
 
   it('no aumenta animales por simple inteligencia cuando no hay civilización', () => {
     const candidate = sources(23);

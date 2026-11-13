@@ -1,0 +1,837 @@
+{
+  "revision": "GENESIS/38.4a1/procedencia-semilla/v1",
+  "generatedAt": "2026-11-13T11:13:55.044Z",
+  "filesReviewed": 2307,
+  "scope": "Análisis estático conservador. No demuestra dependencias transitivas ni permite cerrar 38.4.",
+  "summary": {
+    "total": 54,
+    "fixtures": 52,
+    "production": 2,
+    "spatialPotential": 0,
+    "unresolved": 2
+  },
+  "findings": [
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-humanoid-fixtures-38-2w.ts",
+      "line": 14,
+      "expression": "hashVida38W(speciesId+'seed'),appearanceFingerprint:`LAB_ONLY/38W/${speciesId}`,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-insectoid-fixtures-38-2t.ts",
+      "line": 28,
+      "expression": "vida38Hash38T(speciesId+'|seed'),appearanceFingerprint,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-38-2s3.spec.ts",
+      "line": 35,
+      "expression": "(base.variantSeedUint32 + 17) >>> 0 }",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-fixtures-38-2s.ts",
+      "line": 27,
+      "expression": "vida38Hash38S(`${speciesId}|seed`),",
+      "isFixture": true,
+      "identity": [
+        "pigmentation",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-bird-face-visibility-38-2ia2b.spec.ts",
+      "line": 35,
+      "expression": "(0x3a924a71 + index * 711) >>> 0,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-birds-38-2i.spec.ts",
+      "line": 12,
+      "expression": "0x7ac91a33,appearanceFingerprint:'avian-source-digest',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-birds-refinement-38-2ia.spec.ts",
+      "line": 16,
+      "expression": "0x7ac91a33,appearanceFingerprint:'avian-refinement-source',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-certificacion-funcional-38-4a.spec.ts",
+      "line": 139,
+      "expression": "(c.variantSeedUint32+1)>>>0}",
+      "isFixture": true,
+      "identity": [],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-humanoid-fixtures-38-2r.ts",
+      "line": 23,
+      "expression": "vida38Hash38R(`${speciesId}|seed`),appearanceFingerprint:fingerprint,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-insectoid-fixtures-38-2q.ts",
+      "line": 33,
+      "expression": "hash32('seed:'+speciesId),appearanceFingerprint,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint",
+        "bodyPlan",
+        "adaptations"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2o.spec.ts",
+      "line": 9,
+      "expression": "996633, appearanceFingerprint: `38-2o:${id}`,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oa.spec.ts",
+      "line": 10,
+      "expression": "996633,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2ob.spec.ts",
+      "line": 10,
+      "expression": "996633,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oc.spec.ts",
+      "line": 10,
+      "expression": "996633,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od.spec.ts",
+      "line": 11,
+      "expression": "382000,",
+      "isFixture": true,
+      "identity": [
+        "pigmentation",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od2.spec.ts",
+      "line": 11,
+      "expression": "382002,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od3.spec.ts",
+      "line": 9,
+      "expression": "382003, appearanceFingerprint: `38-2od3:${id}`,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od4.spec.ts",
+      "line": 9,
+      "expression": "382004, appearanceFingerprint: `38-2od4:${id}`,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od5.spec.ts",
+      "line": 10,
+      "expression": "382005,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe.spec.ts",
+      "line": 12,
+      "expression": "382006,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe2.spec.ts",
+      "line": 26,
+      "expression": "382007, appearanceFingerprint: v.appearanceFingerprint,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe3.spec.ts",
+      "line": 12,
+      "expression": "382007,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe4.spec.ts",
+      "line": 11,
+      "expression": "382004,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-fungi-38-2m.spec.ts",
+      "line": 14,
+      "expression": "381827,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-face-38-2gd.spec.ts",
+      "line": 20,
+      "expression": "0x12efab84,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-material-stability-38-2ga.spec.ts",
+      "line": 16,
+      "expression": "0x51a7b1e2,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-morphology-38-2f.spec.ts",
+      "line": 21,
+      "expression": "0xacab1234,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-organic-field-38-2e.spec.ts",
+      "line": 15,
+      "expression": "seed,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba",
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-organic-regional-material-38-2gb.spec.ts",
+      "line": 16,
+      "expression": "0x88127ea1,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "morphology"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-refinement-38-2g.spec.ts",
+      "line": 23,
+      "expression": "0xb19fa011,",
+      "isFixture": true,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-refinement-38-2gc.spec.ts",
+      "line": 23,
+      "expression": "0xf003201a, appearanceFingerprint: '38gc-controlled-test',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-torso-38-2ge.spec.ts",
+      "line": 16,
+      "expression": "149,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-insects-38-2k.spec.ts",
+      "line": 12,
+      "expression": "0x6e8c971a,appearanceFingerprint:'38k-specimen',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-mammals-38-2h.spec.ts",
+      "line": 12,
+      "expression": "0x124a9e11,appearanceFingerprint:'mammal-digest',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-microbes-38-2n.spec.ts",
+      "line": 14,
+      "expression": "382001, appearanceFingerprint: `microbe-spec:${id}`,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-no-decorative-rocks-38-2mb.spec.ts",
+      "line": 20,
+      "expression": "424242,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "bodyPlan",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-no-decorative-support-38-2ma.spec.ts",
+      "line": 9,
+      "expression": "424242,appearanceFingerprint:`fp:${id}`,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "bodyPlan",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-plant-canopy-support-38-2la.spec.ts",
+      "line": 11,
+      "expression": "0x8cae2481, appearanceFingerprint: '38.2la-cue',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-plants-38-2l.spec.ts",
+      "line": 9,
+      "expression": "8765432,appearanceFingerprint:'test-plant',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-primitive-humanoid-fixtures-38-2x.ts",
+      "line": 13,
+      "expression": "seed,appearanceFingerprint:`LAB_ONLY/38X/${speciesId}`,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-primitive-insectoid-fixtures-38-2v.ts",
+      "line": 28,
+      "expression": "vida38Hash38T(speciesId+'|seed'),appearanceFingerprint,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-primitive-reptilian-fixtures-38-2u.ts",
+      "line": 26,
+      "expression": "vida38PrimitiveHash38U(speciesId+'|seed'),appearanceFingerprint,",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-body-visibility-38-2ja.spec.ts",
+      "line": 24,
+      "expression": "0x6215af12,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-dentition-38-2jb.spec.ts",
+      "line": 15,
+      "expression": "0x6c3591fb,appearanceFingerprint:'reptile-dental-test',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p.spec.ts",
+      "line": 12,
+      "expression": "382020,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p1.spec.ts",
+      "line": 11,
+      "expression": "382021,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p1a.spec.ts",
+      "line": 11,
+      "expression": "3820211,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p2.spec.ts",
+      "line": 13,
+      "expression": "382022,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p2a.spec.ts",
+      "line": 12,
+      "expression": "382022,",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptiles-38-2j.spec.ts",
+      "line": 12,
+      "expression": "0x04d2a12a,appearanceFingerprint:'reptile-specimen',",
+      "isFixture": true,
+      "identity": [
+        "morphology",
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-gallery-fixtures-38-2oe5.ts",
+      "line": 56,
+      "expression": "seed32(`seed:${speciesId}`),",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-test-fixtures-38-2s8c.ts",
+      "line": 37,
+      "expression": "seed32(`seed:${speciesId}`),",
+      "isFixture": true,
+      "identity": [
+        "speciesId",
+        "appearanceFingerprint"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "LABORATORIO"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-species-visual-contract.ts",
+      "line": 37,
+      "expression": "number",
+      "isFixture": false,
+      "identity": [
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba",
+        "Valor asignado por variable sin expresión origen"
+      ],
+      "state": "PROCEDENCIA_NO_DEMOSTRADA"
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-species-visual-contract.ts",
+      "line": 182,
+      "expression": "hash32(identity),",
+      "isFixture": false,
+      "identity": [
+        "species.id",
+        "lineage",
+        "phenotype",
+        "bodyPlan",
+        "adaptations",
+        "speciesId"
+      ],
+      "spatial": [],
+      "unresolved": [
+        "Requiere seguir símbolos y llamadas aguas arriba"
+      ],
+      "state": "PROCEDENCIA_NO_DEMOSTRADA"
+    }
+  ],
+  "requiredVerification": [
+    "Inspeccionar mapper VIDA→Vida38SpeciesVisualContract y derivaciones aguas arriba",
+    "Crear caso de VIDA persistido real: mismo ID y rasgos, ubicación alternativa",
+    "Verificar fingerprint y variantSeedUint32 ante backup/restore real",
+    "Permitir variantes distintas solo con rasgos biológicos explícitos"
+  ]
+}

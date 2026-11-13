@@ -1,0 +1,20 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.267 seconds] - 2026-11-11T20:02:54.541Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [32m✓[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-reptiles-38-2j.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 4632[2mms[22m[39m
+     [33m[2m✓[22m[39m el perfil y la malla son independientes de los pigmentos [33m 1524[2mms[22m[39m
+     [33m[2m✓[22m[39m produce mallas conectadas en tres arquetipos muy divergentes [33m 1802[2mms[22m[39m
+     [33m[2m✓[22m[39m inyecta un material de escamas estable sin ruido temporal ni coordenadas de pantalla [33m 651[2mms[22m[39m
+     [33m[2m✓[22m[39m activa el generador únicamente para reptiles cuadrúpedos y conserva la longitud VIDA [33m 633[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m   Start at [22m 21:02:54
+[2m   Duration [22m 6.42s[2m (transform 409ms, setup 320ms, import 442ms, tests 4.63s, environment 791ms)[22m
+
+

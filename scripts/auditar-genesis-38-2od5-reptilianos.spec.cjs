@@ -1,0 +1,11 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),path=require('node:path');
+const b=path.join(__dirname,'../src/app/presentation/life-species-visual');
+const preview=fs.readFileSync(path.join(b,'vida38-civilized-reptilian-preview-38-2o.ts'),'utf8');
+const union=fs.readFileSync(path.join(b,'vida38-civilized-reptilian-sdf-union-38-2od5.ts'),'utf8');
+assert.match(preview,/buildVida38CivilReptilianSdfMesh38OD5\(anatomy, quality, morphology.tailLength\)/);
+assert.match(preview,/addVeryAdvancedSuit38OD5/);
+assert.match(preview,/FULL_360/);
+assert.match(preview,/const socket=new THREE.Mesh\(eyePlate38OD/);
+assert.match(union,/smoothUnion\(base,tail,0.145\)/);
+assert.doesNotMatch(preview,/material\('#ff/);
+console.log('GENESIS_38_2OD5_ESTRUCTURA_OK');

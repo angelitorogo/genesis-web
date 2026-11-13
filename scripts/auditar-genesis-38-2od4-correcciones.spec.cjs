@@ -1,0 +1,10 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const f = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-civilized-reptilian-preview-38-2o.ts'),'utf8');
+assert.match(f,/upperBlob\.includes\('VERY_ADVANCED'\)/);
+assert.match(f,/const tailColor = contract\.pigmentation\.primaryColorHex/);
+assert.match(f,/Mono principal tecnológico/);
+assert.match(f,/Ojo reptiliano visible pero no salton/);
+console.log('GENESIS_38_2OD4_AUDIT_OK: nivel muy avanzado, cola del color corporal y atuendo futurista');

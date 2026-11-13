@@ -1,0 +1,17 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const base = path.join(__dirname, '..', 'src/app/presentation/life-species-visual');
+const scene = fs.readFileSync(path.join(base, 'vida38-species-visual-preview-scene.ts'), 'utf8');
+const preview = fs.readFileSync(path.join(base, 'vida38-civilized-reptilian-preview-38-2o.ts'), 'utf8');
+const morph = fs.readFileSync(path.join(base, 'vida38-civilized-reptilian-morphology-38-2oc.ts'), 'utf8');
+const garments = fs.readFileSync(path.join(base, 'vida38-civilized-reptilian-garments-38-2oc.ts'), 'utf8');
+assert.match(scene, /createVida38CivilizedReptilianPreview38O/);
+assert.match(scene, /isCivilizedReptilian/);
+assert.match(preview, /organicHumanoidReptilian38OC/);
+assert.match(preview, /VIDA38_2OC_REPTILIAN_HUMANOID/);
+assert.match(preview, /VIDA38_2OC_REPTILIAN_GARMENT/);
+assert.match(morph, /Vida38ReptilianHumanoidProfile38OC/);
+assert.match(garments, /createVida38ReptilianGarments38OC/);
+console.log('GENESIS_38_2OC_AUDIT_OK: reptilianos civilizados humanoides orgánicos reales integrados');

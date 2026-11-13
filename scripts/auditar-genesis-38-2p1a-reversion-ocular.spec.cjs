@@ -1,0 +1,17 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const root = path.resolve(__dirname, '..');
+const src = (name) => fs.readFileSync(path.join(root, 'src/app/presentation/life-species-visual', name), 'utf8');
+const eyes = src('vida38-reptile-eyes-38-2p.ts');
+const preview = src('vida38-reptile-preview-38-2j.ts');
+assert.match(eyes, /38\.2p1a\/reptile-ocular-surface-restore/);
+assert.match(eyes, /VIDA38_2P_REPTILE_\$\{kind\}_\$\{side\}/);
+assert.match(eyes, /new THREE\.CircleGeometry\(plan\.eyeHeight \* \.41/);
+assert.match(eyes, /new THREE\.PlaneGeometry\(plan\.slitWidth/);
+assert.doesNotMatch(eyes, /new THREE\.MeshPhysicalMaterial\(\{ color: eyeBaseColor/);
+assert.doesNotMatch(eyes, /UPPER_LID|LOWER_LID|ORBIT_38P1/);
+assert.doesNotMatch(preview, /new THREE\.TubeGeometry\(new THREE\.CatmullRomCurve3\(mouthPoints\)/);
+assert.doesNotMatch(preview, /seam\.name/);
+console.log('GENESIS_38_2P1A_AUDIT_OK: iris + pupila recuperados; sin capa blanca ni comisura tubular');

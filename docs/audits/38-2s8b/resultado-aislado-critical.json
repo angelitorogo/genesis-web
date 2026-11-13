@@ -1,0 +1,69 @@
+{
+  "version": "38.2s8b",
+  "group": "critical",
+  "started": "2026-11-11T19:02:38.533Z",
+  "ended": "2026-11-11T19:04:36.443Z",
+  "results": [
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-38-2s7.spec.ts",
+      "types": [
+        "timeout"
+      ],
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 34,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-38-2s8.spec.ts",
+      "types": [
+        "timeout"
+      ],
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 20,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-insectoid-38-2q1a.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od5.spec.ts",
+      "types": [
+        "assertion",
+        "timeout"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 19,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-wardrobe-38-2oe8b.spec.ts",
+      "types": [
+        "execution"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 14,
+      "error": null
+    }
+  ]
+}

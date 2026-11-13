@@ -1,0 +1,13 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const preview = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-civilized-reptilian-preview-38-2o.ts'), 'utf8');
+const plan = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-civilized-reptilian-accessories-38-2oe3.ts'), 'utf8');
+assert.match(plan, /deriveVida38ReptilianAccessoryPlan38OE3/);
+assert.match(plan, /VISOR/);
+assert.match(plan, /SCEPTER/);
+assert.match(preview, /VIDA38_2OE3_REPTILIAN_ACCESSORY_EYEWEAR/);
+assert.match(preview, /VIDA38_2OE3_REPTILIAN_ACCESSORY_HANDHELD/);
+assert.match(preview, /vida38ReptilianAccessorySignature38OE3/);
+console.log('GENESIS_38_2OE3_AUDIT_OK: accesorios deterministas y procedurales presentes');

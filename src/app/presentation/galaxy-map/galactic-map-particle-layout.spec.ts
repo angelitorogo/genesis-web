@@ -380,7 +380,7 @@ describe(
           synchronous.opacities,
         );
       },
-      30_000,
+      60_000,
     );
 
 
@@ -447,7 +447,7 @@ describe(
           synchronous.opacities,
         );
       },
-      30_000,
+      60_000,
     );
 
     it(

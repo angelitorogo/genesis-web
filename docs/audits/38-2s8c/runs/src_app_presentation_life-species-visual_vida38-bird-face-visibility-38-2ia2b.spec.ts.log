@@ -1,0 +1,19 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.551 seconds] - 2026-11-11T19:56:47.411Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [32m✓[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-bird-face-visibility-38-2ia2b.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 2648[2mms[22m[39m
+     [33m[2m✓[22m[39m sitúa las córneas sobre la ÚLTIMA salida del SDF, con iris realmente exterior [33m 310[2mms[22m[39m
+     [33m[2m✓[22m[39m conserva un pico visible en malla LOW y una topología cerrada [33m 1768[2mms[22m[39m
+     [33m[2m✓[22m[39m integra ojos e iris en las posiciones calculadas, no en un punto fijo [33m 557[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 20:56:47
+[2m   Duration [22m 3.93s[2m (transform 102ms, setup 318ms, import 87ms, tests 2.65s, environment 695ms)[22m
+
+

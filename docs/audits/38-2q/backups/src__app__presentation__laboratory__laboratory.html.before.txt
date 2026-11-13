@@ -1,0 +1,194 @@
+<main
+  class="laboratory"
+  data-testid="laboratory-page"
+>
+  <header class="laboratory__hero">
+    <div>
+      <p class="laboratory__eyebrow">
+        GENESIS · VISUAL LABORATORY
+      </p>
+
+      <h1>
+        Laboratorios
+      </h1>
+
+      <p>
+        Zona interna de inspección y regresión visual. Utiliza generadores,
+        modelos y renderers reales de GENESIS sin modificar la partida,
+        persistencia, PD, Ground Truth observado ni estados de descubrimiento.
+      </p>
+    </div>
+
+    <span class="laboratory__badge">
+      READ ONLY / QA
+    </span>
+  </header>
+
+  <section
+    class="laboratory__grid"
+    aria-label="Laboratorios disponibles"
+  >
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-galaxies-link"
+      routerLink="/laboratory/galaxies"
+    >
+      <span class="laboratory__card-index">
+        01
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          MORFOLOGÍA / THREE.JS
+        </p>
+
+        <h2>
+          Galaxias
+        </h2>
+
+        <p>
+          Inspecciona las cinco morfologías V1 con el mismo renderer Three.js,
+          Web Worker y LOD utilizados por el mapa galáctico.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-galactic-objects-link"
+      routerLink="/laboratory/galactic-objects"
+    >
+      <span class="laboratory__card-index">
+        02
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          OBJETOS / DISCOVERY STATE
+        </p>
+
+        <h2>
+          Objetos galácticos
+        </h2>
+
+        <p>
+          Catálogo visual completo actual: nebulosas, H II, cúmulos,
+          remanentes SN, extremos reservados y núcleos galácticos, con
+          progresión de conocimiento cuando corresponde.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-spectroscopy-link"
+      routerLink="/laboratory/spectroscopy"
+    >
+      <span class="laboratory__card-index">
+        03
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          FASE 13 / SVG
+        </p>
+
+        <h2>
+          Espectroscopía
+        </h2>
+
+        <p>
+          Estrella, atmósfera, nebulosa, AGN, QUASAR y remanente de supernova
+          con comparación instrumental L1–L5 e incertidumbre.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-stellar-systems-link"
+      routerLink="/laboratory/stellar-systems"
+    >
+      <span class="laboratory__card-index">
+        04
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          FASE 16 / SVG
+        </p>
+
+        <h2>
+          Sistemas estelares
+        </h2>
+
+        <p>
+          Sistemas simples, binarios y triples con ocho familias A–H,
+          progresión DETECTED→CONFIRMED, órbitas jerárquicas, estabilidad
+          circumbinaria y zona habitable cuando corresponde.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+    <a
+      class="laboratory__card"
+      data-testid="laboratory-planetary-formation-link"
+      routerLink="/laboratory/planetary-formation"
+    >
+      <span class="laboratory__card-index">
+        05
+      </span>
+
+      <div>
+        <p class="laboratory__eyebrow">
+          FASE 17 / SVG
+        </p>
+
+        <h2>
+          Sistemas protoplanetarios
+        </h2>
+
+        <p>
+          Cadena completa 17.1–17.7: estrella joven, disco, gas y polvo,
+          condensación, candidatos, migraciones, colisiones, ANALIZAR DISCO y
+          anclas de formación antes de la arquitectura planetaria madura.
+        </p>
+      </div>
+
+      <strong>
+        Abrir laboratorio →
+      </strong>
+    </a>
+  
+        <!-- VIDA38_2OE5B_LAB_INDEX: sexta entrada del laboratorio -->
+        <a href="/laboratorio/reptilianos-civilizados" data-testid="vida38-oe5b-laboratory-entry"
+          style="display:flex;flex-direction:column;gap:1rem;justify-content:space-between;min-height:205px;padding:1.25rem 1.45rem;border:1px solid rgba(76,182,232,.28);border-radius:16px;background:#0c1320;color:#eef8ff;text-decoration:none;">
+          <div>
+            <small style="color:#55ccff;letter-spacing:.11em;font-size:.68rem;font-weight:700;">FASE 38 · VIDA / THREE.JS</small>
+            <h3 style="margin:.65rem 0 .45rem;color:#f4faff;font-size:1.3rem;">Reptilianos civilizados</h3>
+            <p style="line-height:1.6;color:#98b0ca;margin:.25rem 0;">Galería comparativa de 12 o 24 especies muy avanzadas, con anatomía, trajes y accesorios deterministas. Abre cada ejemplar en el visor 3D.</p>
+          </div>
+          <span style="color:#53d1fb;font-size:.78rem;font-weight:700;">Abrir laboratorio →</span>
+        </a>
+</section>
+
+  <footer class="laboratory__footer">
+    Los laboratorios muestran únicamente sistemas ya implementados.
+    No anticipan contenido de fases futuras.
+  </footer>
+</main>

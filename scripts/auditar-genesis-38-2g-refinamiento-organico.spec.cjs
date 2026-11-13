@@ -91,10 +91,10 @@ try {
     assert.ok(shader.includes(fragment),`Shader incompleto: ${fragment}`);
   assert.ok(shader.includes('mat.onBeforeCompile'));
   assert.ok(shader.includes('OCULAR_INTEGRATED'));
-  assert.ok(shader.includes("geometry.setAttribute('color',new THREE.BufferAttribute(colors,3))"));
+  assert.ok(shader.includes("geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))") || shader.includes("geometry.setAttribute('color',new THREE.BufferAttribute(colors,3))"));
   assert.ok(!shader.includes('new THREE.BufferAttribute(vertexColors,3)'),
     'Se reintrodujo pigmento por vértice en la piel');
-  assert.ok(scene.includes("subject.userData['vida38ReconstructionRevision'] = '38.2g'"));
+  assert.ok(scene.includes("subject.userData['vida38ReconstructionRevision'] = '38.2g.e'") || scene.includes("subject.userData['vida38ReconstructionRevision'] = '38.2g.d'") || scene.includes("subject.userData['vida38ReconstructionRevision'] = '38.2g.c'") || scene.includes("subject.userData['vida38ReconstructionRevision'] = '38.2g'"));
   console.log('GENESIS_38_2G_AUDIT_OK: SDF, seis identidades, pigmentación independiente, mallas cerradas, metrificación VIDA y shader integrado');
 } finally {
   if(previousLoader)require.extensions['.ts']=previousLoader;

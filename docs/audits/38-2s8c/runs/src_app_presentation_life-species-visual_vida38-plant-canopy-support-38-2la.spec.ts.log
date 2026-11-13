@@ -1,0 +1,41 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.604 seconds] - 2026-11-11T19:50:44.327Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [31m❯[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-plant-canopy-support-38-2la.spec.ts [2m([22m[2m3 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 92[2mms[22m[39m
+     [32m✓[39m no añade el palo CANOPY a herbáceas, arbustos ni árboles[32m 29[2mms[22m[39m
+     [32m✓[39m conserva la arquitectura procedural y el determinismo vegetal[32m 16[2mms[22m[39m
+[31m     [31m×[31m mantiene el elemento decorativo CANOPY para especies no vegetales[39m[32m 45[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (3)[39m
+[2m   Start at [22m 20:50:44
+[2m   Duration [22m 2.04s[2m (transform 511ms, setup 319ms, import 561ms, tests 92ms, environment 857ms)[22m
+
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-plant-canopy-support-38-2la.spec.ts[2m > [22m38.2l.a — eliminación de soportes espurios en la vegetación[2m > [22mmantiene el elemento decorativo CANOPY para especies no vegetales
+[31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+[36m [2m❯[22m src/app/presentation/life-species-visual/vida38-plant-canopy-support-38-2la.spec.ts:[2m64:19[22m[39m
+    [90m 62|[39m     [35mconst[39m props[33m:[39m [33mTHREE[39m[33m.[39m[33mObject3D[39m[] [33m=[39m [][33m;[39m
+    [90m 63|[39m     model.root.traverse(object => { if (object.name === 'VIDA38_CANOPY…
+    [90m 64|[39m     [34mexpect[39m(props)[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m   |[39m                   [31m^[39m
+    [90m 65|[39m     [34mexpect[39m(props[[34m0[39m][33m![39m[33m.[39muserData[[32m'decorativeHabitatCue'[39m])[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m 66|[39m     model[33m.[39m[34mdispose[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+

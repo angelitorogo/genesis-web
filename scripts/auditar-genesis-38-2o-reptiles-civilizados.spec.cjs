@@ -1,0 +1,12 @@
+'use strict';
+const fs=require('node:fs'), path=require('node:path'), assert=require('node:assert/strict');
+const base=path.join(__dirname,'..','src/app/presentation/life-species-visual');
+const scene=fs.readFileSync(path.join(base,'vida38-species-visual-preview-scene.ts'),'utf8');
+const moduleText=fs.readFileSync(path.join(base,'vida38-civilized-reptilian-preview-38-2o.ts'),'utf8');
+assert.match(scene,/createVida38CivilizedReptilianPreview38O/);
+assert.match(scene,/function isCivilizedReptilian/);
+assert.match(scene,/return isCivilizedReptilian\(contract\) \|\| contract\.morphology\.bodyPlan === 'BIPED' \? 'BIPED_BODY' : 'QUADRUPED_BODY';/);
+assert.match(moduleText,/VIDA38_2O_ALIEN_GARMENT/);
+assert.match(moduleText,/civilizationLevel38O/);
+assert.match(moduleText,/uprightPosture38O/);
+console.log('GENESIS_38_2O_AUDIT_OK: reptilianos civilizados bípedos con ropa alienígena integrados en 38.2');

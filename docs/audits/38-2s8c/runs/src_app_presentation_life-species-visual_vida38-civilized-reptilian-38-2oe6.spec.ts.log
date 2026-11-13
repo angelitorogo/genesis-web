@@ -1,0 +1,33 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.177 seconds] - 2026-11-11T19:59:25.053Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [31m❯[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe6.spec.ts [2m([22m[2m1 test[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 19148[2mms[22m[39m
+[31m     [31m×[31m muestra varias familias de ropa y siluetas claramente distintas en la galería de laboratorio[39m[33m 19146[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m   Start at [22m 20:59:25
+[2m   Duration [22m 20.64s[2m (transform 221ms, setup 315ms, import 229ms, tests 19.15s, environment 747ms)[22m
+
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe6.spec.ts[2m > [22m38.2o.e6 — diversificación fuerte de indumentaria reptiliana civilizada[2m > [22mmuestra varias familias de ropa y siluetas claramente distintas en la galería de laboratorio
+[31m[1mError[22m: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe6.spec.ts:[2m7:3[22m[39m
+    [90m  5|[39m
+    [90m  6|[39m describe('38.2o.e6 — diversificación fuerte de indumentaria reptiliana…
+    [90m  7|[39m   it('muestra varias familias de ropa y siluetas claramente distintas …
+    [90m   |[39m   [31m^[39m
+    [90m  8|[39m     [35mconst[39m families [33m=[39m [35mnew[39m [33mSet[39m[33m<[39mstring[33m>[39m()[33m;[39m
+    [90m  9|[39m     [35mconst[39m silhouettes [33m=[39m [35mnew[39m [33mSet[39m[33m<[39mstring[33m>[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+

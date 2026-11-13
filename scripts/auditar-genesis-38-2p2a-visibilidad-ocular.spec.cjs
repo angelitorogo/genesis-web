@@ -1,0 +1,15 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const src = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p.ts'), 'utf8');
+const preview = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-reptile-preview-38-2j.ts'), 'utf8');
+assert.match(src, /VIDA\.38\.2p2a\/reptile-sdf-cavity-globe\/v1/);
+assert.match(src, /deriveVida38ReptileOrbitalFrame38P2A/);
+assert.match(src, /curvedOcularPatch38P2A/);
+assert.match(src, /measureVida38ReptileEyeExposure38P2A/);
+assert.match(src, /frame\.center/);
+assert.match(src, /VIDA38_2P_REPTILE_\$\{kind\}/);
+assert.doesNotMatch(preview, /new THREE\.ConeGeometry\(/);
+assert.match(preview, /reptileDentition38J/);
+console.log('GENESIS_38_2P2A_AUDIT_OK: iris curvados, anclaje en cavidad SDF y sin dientes flotantes');

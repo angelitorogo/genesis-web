@@ -1,0 +1,98 @@
+{
+  "revision": "GENESIS/38.5/fichas/auditoria-no-destructiva-v1",
+  "file": "src/app/presentation/life-species-detail/life-species-detail.ts",
+  "checks": {
+    "VIDA.6 ecosistema": [
+      {
+        "line": 60,
+        "text": "<div class=\"dato\"><span>Hábitat</span><strong>{{etiqueta(e.habitat)}}</strong></div>"
+      },
+      {
+        "line": 181,
+        "text": "readonly especie=computed(():Vida6Species|null=>this.registro()?.ecosystem.species.find(e=>e.id===this.especieId)??null);"
+      },
+      {
+        "line": 183,
+        "text": "readonly relaciones=computed(()=>this.registro()?.ecosystem.relations.filter(r=>r.sourceSpeciesId===this.especieId || r.targetSpeciesId===this.especieId)??[]);"
+      },
+      {
+        "line": 184,
+        "text": "nombreEspecie(id:string):string {return this.registro()?.ecosystem.species.find(e=>e.id===id)?.proceduralName??'Especie no disponible';}"
+      }
+    ],
+    "VIDA.6 relaciones": [
+      {
+        "line": 97,
+        "text": "@if (relaciones().length===0) {<p class=\"info\">Sin relaciones interespecíficas registradas.</p>}"
+      },
+      {
+        "line": 99,
+        "text": "@for (relacion of relaciones(); track relacion.sourceSpeciesId+'|'+relacion.targetSpeciesId+'|'+relacion.kind) {"
+      },
+      {
+        "line": 183,
+        "text": "readonly relaciones=computed(()=>this.registro()?.ecosystem.relations.filter(r=>r.sourceSpeciesId===this.especieId || r.targetSpeciesId===this.especieId)??[]);"
+      }
+    ],
+    "VIDA.7 cultura": [
+      {
+        "line": 120,
+        "text": "<div class=\"dato\"><span>Tradición de gobierno</span><strong>{{etiqueta(civ.culture.governingTradition)}}</strong></div>"
+      },
+      {
+        "line": 121,
+        "text": "<div class=\"dato\"><span>Enfoque cultural</span><strong>{{etiqueta(civ.culture.culturalFocus)}}</strong></div>"
+      },
+      {
+        "line": 122,
+        "text": "<div class=\"dato\"><span>Organización</span><strong>{{etiqueta(civ.culture.socialOrganization)}}</strong></div>"
+      }
+    ],
+    "VIDA.7 tecnología": [
+      {
+        "line": 124,
+        "text": "<h2>Tecnologías</h2><ul class=\"lista\">@for (tecnologia of civ.technology; track tecnologia) {<li>{{etiqueta(tecnologia)}}</li>}</ul>"
+      }
+    ],
+    "Orígenes sin fecha inventada": [
+      {
+        "line": 133,
+        "text": "<p class=\"info\">Los datos pertenecen al universo simulado. No se ha generado una fecha histórica certificada de origen.</p>"
+      }
+    ],
+    "Control de acceso explícito": [
+      {
+        "line": 4,
+        "text": "import { ArchiveDiscoveryDetailFacade, ArchiveDiscoveryLocatorKind } from '../genesis-archive/archive-discovery-detail.facade';"
+      },
+      {
+        "line": 22,
+        "text": "/** Ficha independiente de especie: consulta la misma realidad CONFIRMED que la ficha anfitriona. */"
+      },
+      {
+        "line": 46,
+        "text": "<p class=\"info\">Información generada del sistema confirmado, correspondiente al estado CT-0.</p>"
+      },
+      {
+        "line": 139,
+        "text": "<section role=\"status\">La ficha de esta especie no está disponible. El sistema debe estar confirmado.</section>"
+      },
+      {
+        "line": 172,
+        "text": "return resultado?.kind==='AVAILABLE'?resultado.card.confirmedBiologyVIDA9??null:null;"
+      },
+      {
+        "line": 179,
+        "text": "return resultado?.kind==='AVAILABLE'?resultado.card.confirmedBiologyVIDA9??null:null;"
+      }
+    ],
+    "Riesgo de laboratorio": [],
+    "Acceso directo a Ground Truth": []
+  },
+  "verdict": "REVISAR_POLITICA_Y_ENLACE_PRODUCTIVO",
+  "warnings": [
+    "La coincidencia textual no demuestra que una ruta tenga autorización",
+    "El nuevo proyector 38.5 no reemplaza automáticamente el componente Angular",
+    "No cerrar 38.5 sin probar navegación a fichas desde sistema NO confirmado y confirmado"
+  ]
+}

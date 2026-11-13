@@ -1,7 +1,26 @@
 import * as THREE from 'three';
+import { enforceVida38AdvancedReptilianVisibleRenderer38S6 } from './vida38-advanced-reptilian-runtime-38-2s6';
+import { createVida38AdvancedReptilianPreview38S2, isVida38AdvancedReptilian38S } from './vida38-advanced-reptilian-preview-38-2s2';
+import { createVida38CivilizedHumanoidPreview38R, isVida38VeryAdvancedHumanoid38R } from './vida38-civilized-humanoid-preview-38-2r';
+import { createVida38AdvancedHumanoidPreview38W, isVida38AdvancedHumanoid38W } from './vida38-advanced-humanoid-preview-38-2w';
+import { createVida38PrimitiveHumanoidPreview38X, isVida38PrimitiveHumanoid38X } from './vida38-primitive-humanoid-preview-38-2x';
 import type { Vida38SpeciesVisualContract } from './vida38-species-visual-contract';
 import { buildVida38HumanoidRawMesh, deriveVida38HumanoidAnatomy, type Vida38HumanoidQuality } from './vida38-humanoid-organic-field-38-2e';
 import { createVida38HumanoidSkinV1, createVida38HumanoidOcularDetailsV1 } from './vida38-humanoid-organic-material-38-2e';
+import { createVida38HumanoidHairV1, createVida38HumanoidTeethV1 } from './vida38-humanoid-hair-dentition-38-2gd';
+import { createVida38HumanoidChestHair38GE } from './vida38-humanoid-chest-hair-38-2ge';
+import { createVida38MammalPreview38H } from './vida38-mammal-preview-38-2h';
+import { createVida38ReptilePreview38J } from './vida38-reptile-preview-38-2j';
+import { createVida38BirdPreview38I } from './vida38-bird-preview-38-2i';
+import { createVida38InsectPreview38K } from './vida38-insect-preview-38-2k';
+import { createVida38CivilizedInsectoidPreview38Q, isVida38VeryAdvancedInsectoid38Q } from './vida38-civilized-insectoid-preview-38-2q';
+import { createVida38AdvancedInsectoidPreview38T, isVida38AdvancedInsectoid38T } from './vida38-advanced-insectoid-preview-38-2t';
+import { createVida38PrimitiveInsectoidPreview38V, isVida38PrimitiveInsectoid38V } from './vida38-primitive-insectoid-preview-38-2v';
+import { createVida38PlantPreview38L } from './vida38-plant-preview-38-2l';
+import { createVida38FungalPreview38M } from './vida38-fungi-preview-38-2m';
+import { createVida38MicrobialPreview38N } from './vida38-microbial-preview-38-2n';
+import { createVida38CivilizedReptilianPreview38O } from './vida38-civilized-reptilian-preview-38-2o';
+import { createVida38PrimitiveReptilianPreview38U, isVida38PrimitiveReptilian38U } from './vida38-primitive-reptilian-preview-38-2u';
 
 export const VIDA38_SPECIES_VISUAL_PREVIEW_REVISION = 'VIDA.38.2/species-visual-preview/v1' as const;
 
@@ -30,6 +49,21 @@ export interface Vida38SpeciesPreviewDescriptorV1 {
   readonly focusDistance: number;
   readonly verticalOffset: number;
   readonly specialistIntelligenceDeferred: boolean;
+}
+
+
+function civilizationLevelFrom(contract: Vida38SpeciesVisualContract): 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null {
+  const intelligence = contract.intelligence as unknown as Record<string, unknown> | null;
+  if (intelligence === null) return null;
+  const value = String(intelligence['civilizationLevel'] ?? intelligence['civilisationLevel'] ?? intelligence['societyLevel'] ?? intelligence['stage'] ?? intelligence['civilizationStage'] ?? '').toUpperCase();
+  if (value === 'VERY_ADVANCED') return 'VERY_ADVANCED';
+  if (value === 'ADVANCED') return 'ADVANCED';
+  if (value === 'PRIMITIVE') return 'PRIMITIVE';
+  return intelligence['lineage'] ? 'PRIMITIVE' : null;
+}
+function isCivilizedReptilian(contract: Vida38SpeciesVisualContract): boolean {
+  const intelligence = contract.intelligence as unknown as Record<string, unknown> | null;
+  return contract.morphology.group === 'REPTILES' && String(intelligence?.['lineage'] ?? '').toUpperCase() === 'REPTILIAN' && civilizationLevelFrom(contract) !== null;
 }
 
 export interface Vida38SpeciesPreviewModelV1 {
@@ -68,6 +102,8 @@ class Rng {
 }
 
 function familyFrom(contract: Vida38SpeciesVisualContract): Vida38SpeciesRenderFamilyV1 {
+  if (isVida38AdvancedReptilian38S(contract)) return 'BIPED_BODY';
+
   switch (contract.morphology.group) {
     case 'MICROORGANISMS': return 'MICROBIAL_COLONY';
     case 'FUNGI': return 'FUNGAL_CLUSTER';
@@ -76,6 +112,7 @@ function familyFrom(contract: Vida38SpeciesVisualContract): Vida38SpeciesRenderF
     case 'BIRDS': return 'AVIAN_BODY';
     case 'HUMANOIDS': return 'BIPED_BODY';
     case 'REPTILES':
+      return isCivilizedReptilian(contract) || contract.morphology.bodyPlan === 'BIPED' ? 'BIPED_BODY' : 'QUADRUPED_BODY';
     case 'MAMMALS':
       return contract.morphology.bodyPlan === 'BIPED' ? 'BIPED_BODY' : 'QUADRUPED_BODY';
     default:
@@ -112,8 +149,7 @@ export function describeVida38SpeciesPreviewV1(contract: Vida38SpeciesVisualCont
   const verticalOffset = family === 'MICROBIAL_COLONY' ? 0.05 : family === 'PLANT_FORM' ? 0.7 : family === 'AVIAN_BODY' ? 0.4 : 0.6;
   const specialistIntelligenceDeferred = contract.intelligence !== null && (
     contract.intelligence.lineage === 'HUMANOID' ||
-    contract.intelligence.lineage === 'REPTILIAN' ||
-    contract.intelligence.lineage === 'INSECTOID'
+    (contract.intelligence.lineage === 'INSECTOID' && !isVida38VeryAdvancedInsectoid38Q(contract) && !isVida38AdvancedInsectoid38T(contract))
   );
   return Object.freeze({
     revision: VIDA38_SPECIES_VISUAL_PREVIEW_REVISION,
@@ -149,20 +185,6 @@ function material(colorHex: string, roughness: number, metalness: number, emissi
   });
 }
 
-function physicalMaterial(colorHex: string, roughness: number, transmission: number, opacity: number, clearcoat = 0.25): THREE.MeshPhysicalMaterial {
-  return new THREE.MeshPhysicalMaterial({
-    color: color(colorHex),
-    roughness,
-    metalness: 0.02,
-    transmission,
-    transparent: opacity < 1,
-    opacity,
-    depthWrite: opacity >= 1,
-    clearcoat,
-    thickness: 0.22,
-  });
-}
-
 function mixHex(a: string, b: string, factor: number): string {
   const ca = color(a);
   const cb = color(b);
@@ -190,6 +212,9 @@ function collectDisposables(root: THREE.Object3D): Array<{ dispose: () => void }
   };
   root.traverse(object => {
     const mesh = object as THREE.Mesh;
+    // Liberación de buffers de instancias (cerdas insectoides, plumaje aviar,
+    // pelaje mamífero), además de geometría y material GPU.
+    if (mesh instanceof THREE.InstancedMesh) collect(mesh);
     const geometry = (mesh as { geometry?: THREE.BufferGeometry }).geometry;
     collect(geometry);
     const meshMaterial = (mesh as { material?: THREE.Material | THREE.Material[] }).material;
@@ -220,15 +245,11 @@ function addBaseCue(container: THREE.Group, descriptor: Vida38SpeciesPreviewDesc
     base.add(disk);
   }
   if (descriptor.habitatCue === 'ROCK') {
-    for (let i = 0; i < 4; i++) {
-      const rock = new THREE.Mesh(
-        new THREE.DodecahedronGeometry(rng.range(0.13, 0.26), 0),
-        material(mixHex('#56646e', descriptor.secondaryColorHex, 0.12), 0.98, 0.02),
-      );
-      rock.position.set(rng.range(-0.65, 0.65), -0.68 + rng.range(-0.03, 0.02), rng.range(-0.42, 0.42));
-      rock.rotation.set(rng.range(-0.4, 0.4), rng.range(0, Math.PI), rng.range(-0.5, 0.5));
-      base.add(rock);
-    }
+    // 38.2m.b: el visor ya no incorpora piedras decorativas en ninguna especie.
+    // Compatibilidad determinista: el antiguo atrezzo consumía 4 * 7 sorteos
+    // antes de generar el cuerpo. Mantener el mismo estado del RNG evita
+    // cambiar anatomía, postura y pigmentación de especies ya conocidas.
+    for (let i = 0; i < 28; i++) rng.next();
   } else if (descriptor.habitatCue === 'WET') {
     const pool = new THREE.Mesh(
       new THREE.CylinderGeometry(1.16, 1.28, 0.04, 44, 1),
@@ -239,15 +260,7 @@ function addBaseCue(container: THREE.Group, descriptor: Vida38SpeciesPreviewDesc
     );
     pool.position.y = -0.73;
     base.add(pool);
-  } else if (descriptor.habitatCue === 'CANOPY') {
-    const branch = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.11, 0.14, 1.95, 16, 1),
-      material('#685346', 0.96, 0.03),
-    );
-    branch.rotation.z = 0.55;
-    branch.position.set(-0.15, -0.32, 0);
-    base.add(branch);
-  } else if (descriptor.habitatCue === 'SUBSURFACE_WATER') {
+  } else if (descriptor.habitatCue === 'SUBSURFACE_WATER' && descriptor.family !== 'MICROBIAL_COLONY') {
     const plume = new THREE.Mesh(
       new THREE.SphereGeometry(1.05, 32, 24),
       new THREE.MeshPhysicalMaterial({
@@ -316,7 +329,22 @@ function createHumanoidSpecialized(subject: THREE.Group, contract: Vida38Species
     subject.add(eye);
     objects.push(eye);
   }
-  subject.userData['vida38ReconstructionRevision'] = '38.2g';
+  // 38.2g.d: pelo/vello y dientes no son evidencias observadas; se construyen
+  // solo a partir de la anatomía confirmada y del perfil visual hipotético.
+  for (const detail of [
+    ...createVida38HumanoidHairV1(anatomy, contract, quality),
+    ...createVida38HumanoidTeethV1(anatomy, contract),
+    ...createVida38HumanoidChestHair38GE(anatomy, contract, quality),
+  ]) {
+    subject.add(detail);
+    objects.push(detail);
+  }
+  subject.userData['vida38ReconstructionRevision'] = '38.2g.e';
+  subject.userData['vida38TorsoFingerprint'] = anatomy.torso.fingerprint;
+  subject.userData['vida38TorsoProvenance'] = anatomy.torso.provenance;
+  subject.userData['vida38BodyBuild'] = anatomy.torso.build;
+  subject.userData['vida38FacialFingerprint'] = anatomy.face.fingerprint;
+  subject.userData['vida38FacialProvenance'] = anatomy.face.provenance;
   subject.userData['vida38MorphologyFingerprint'] = anatomy.morphology.anatomyFingerprint;
   subject.userData['vida38MorphologyProvenance'] = anatomy.morphology.provenance;
   subject.userData['vida38BodyLengthMeters'] = contract.bodyLengthMeters;
@@ -406,284 +434,6 @@ function addLeafFronds(subject: THREE.Group, rng: Rng, colorHex: string, count: 
   return leaves;
 }
 
-function createMicrobialColony(subject: THREE.Group, contract: Vida38SpeciesVisualContract, rng: Rng): THREE.Object3D[] {
-  const created: THREE.Object3D[] = [];
-  const membrane = new THREE.Mesh(
-    new THREE.SphereGeometry(0.98, 42, 32),
-    physicalMaterial(mixHex(contract.pigmentation.primaryColorHex, '#ebf6ff', 0.28), 0.18, 0.26, 0.24, 0.6),
-  );
-  membrane.scale.set(1.08, 0.72, 0.96);
-  subject.add(membrane); created.push(membrane);
-
-  const innerGel = new THREE.Mesh(
-    new THREE.SphereGeometry(0.84, 34, 24),
-    physicalMaterial(mixHex(contract.pigmentation.primaryColorHex, contract.pigmentation.secondaryColorHex, 0.18), 0.22, 0.08, 0.42, 0.35),
-  );
-  innerGel.scale.set(1.02, 0.62, 0.9);
-  innerGel.position.y = -0.02;
-  subject.add(innerGel); created.push(innerGel);
-
-  const mat = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.96, 1.05, 0.12, 40, 1),
-    material(mixHex(contract.pigmentation.primaryColorHex, '#12212b', 0.18), 0.38, 0.02),
-  );
-  mat.position.y = -0.2;
-  mat.scale.set(1, 0.7, 1);
-  subject.add(mat); created.push(mat);
-
-  const cellMeshes: THREE.Mesh[] = [];
-  const colonyCount = 24 + Math.round(rng.range(0, 14));
-  for (let i = 0; i < colonyCount; i++) {
-    const cell = new THREE.Mesh(
-      new THREE.SphereGeometry(rng.range(0.06, 0.15), 18, 16),
-      material(i % 3 === 0 ? contract.pigmentation.secondaryColorHex : contract.pigmentation.primaryColorHex, 0.26, 0.02),
-    );
-    cell.position.set(rng.range(-0.64, 0.64), rng.range(-0.16, 0.28), rng.range(-0.54, 0.54));
-    cell.scale.set(rng.range(0.7, 1.7), rng.range(0.7, 1.5), rng.range(0.7, 1.5));
-    subject.add(cell); created.push(cell); cellMeshes.push(cell);
-
-    const nucleus = new THREE.Mesh(
-      new THREE.SphereGeometry(rng.range(0.018, 0.045), 10, 8),
-      material(mixHex(contract.pigmentation.secondaryColorHex, '#f7fbff', 0.22), 0.18, 0.02),
-    );
-    nucleus.position.copy(cell.position).add(new THREE.Vector3(rng.range(-0.03, 0.03), rng.range(-0.02, 0.03), rng.range(-0.03, 0.03)));
-    subject.add(nucleus); created.push(nucleus);
-
-    if (rng.next() > 0.46) {
-      const bud = new THREE.Mesh(
-        new THREE.SphereGeometry(rng.range(0.022, 0.06), 12, 10),
-        material(mixHex(contract.pigmentation.secondaryColorHex, '#eff6ff', 0.08), 0.3, 0.02),
-      );
-      bud.position.copy(cell.position).add(new THREE.Vector3(rng.range(-0.1, 0.1), rng.range(0.03, 0.1), rng.range(-0.1, 0.1)));
-      subject.add(bud); created.push(bud);
-    }
-  }
-  for (let i = 0; i < 12; i++) {
-    const points = [new THREE.Vector3(rng.range(-0.22, 0.22), rng.range(-0.14, 0.05), rng.range(-0.18, 0.18))];
-    for (let j = 0; j < 5; j++) {
-      points.push(new THREE.Vector3(rng.range(-0.82, 0.82), rng.range(-0.28, 0.34), rng.range(-0.78, 0.78)));
-    }
-    const curve = new THREE.CatmullRomCurve3(points);
-    const filament = new THREE.Mesh(
-      new THREE.TubeGeometry(curve, 44, rng.range(0.008, 0.018), 8, false),
-      material(mixHex(contract.pigmentation.secondaryColorHex, '#f3f9ff', 0.2), 0.28, 0.01),
-    );
-    subject.add(filament); created.push(filament);
-  }
-  applyPattern(cellMeshes, contract, rng);
-  return created;
-}
-function createFungalCluster(subject: THREE.Group, contract: Vida38SpeciesVisualContract, rng: Rng): THREE.Object3D[] {
-  const created: THREE.Object3D[] = [];
-  const capColor = mixHex(contract.pigmentation.secondaryColorHex, '#d6cab8', 0.22);
-  const stemColor = mixHex(contract.pigmentation.primaryColorHex, '#dbe5de', 0.42);
-  const stems: THREE.Mesh[] = [];
-  const count = 5 + Math.round(rng.range(0, 5));
-  for (let i = 0; i < count; i++) {
-    const height = rng.range(0.72, 1.54);
-    const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(rng.range(0.045, 0.07), rng.range(0.07, 0.1), height, 16, 5),
-      material(stemColor, 0.8, 0.01),
-    );
-    stem.position.set(rng.range(-0.45, 0.45), -0.32 + height / 2, rng.range(-0.4, 0.4));
-    stem.rotation.z = rng.range(-0.18, 0.18);
-    subject.add(stem); created.push(stem); stems.push(stem);
-
-    const cap = new THREE.Mesh(
-      new THREE.SphereGeometry(rng.range(0.22, 0.4), 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.72),
-      material(capColor, 0.56, 0.02),
-    );
-    cap.scale.set(rng.range(1.25, 2.05), rng.range(0.48, 0.82), rng.range(1.25, 1.95));
-    cap.position.set(stem.position.x, stem.position.y + height / 2 - 0.03, stem.position.z);
-    subject.add(cap); created.push(cap);
-
-    const gills = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.18, 0.06, 20, 1, true),
-      material(mixHex('#f3eee2', capColor, 0.2), 0.54, 0.01),
-    );
-    gills.position.set(cap.position.x, cap.position.y - 0.08, cap.position.z);
-    gills.scale.set(cap.scale.x * 0.82, 1, cap.scale.z * 0.82);
-    subject.add(gills); created.push(gills);
-
-    for (let j = 0; j < 6; j++) {
-      const lamella = new THREE.Mesh(
-        new THREE.BoxGeometry(0.01, 0.05, cap.scale.z * 0.22),
-        material(mixHex('#faf7eb', capColor, 0.18), 0.5, 0.01),
-      );
-      lamella.position.set(cap.position.x, cap.position.y - 0.08, cap.position.z);
-      lamella.rotation.y = (Math.PI / 6) * j;
-      subject.add(lamella); created.push(lamella);
-    }
-  }
-  for (let i = 0; i < 18; i++) {
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(rng.range(-0.15, 0.15), -0.72, rng.range(-0.12, 0.12)),
-      new THREE.Vector3(rng.range(-0.35, 0.35), -0.66, rng.range(-0.32, 0.32)),
-      new THREE.Vector3(rng.range(-0.72, 0.72), -0.58, rng.range(-0.58, 0.58)),
-    ]);
-    const hypha = new THREE.Mesh(
-      new THREE.TubeGeometry(curve, 20, 0.012, 6, false),
-      material(mixHex(stemColor, '#faf7eb', 0.12), 0.9, 0.01),
-    );
-    subject.add(hypha); created.push(hypha);
-  }
-  applyPattern(stems, contract, rng);
-  return created;
-}
-function createPlant(subject: THREE.Group, contract: Vida38SpeciesVisualContract, rng: Rng): THREE.Object3D[] {
-  const created: THREE.Object3D[] = [];
-  const barkColor = mixHex(contract.pigmentation.secondaryColorHex, '#654f3d', 0.45);
-  const foliageColor = mixHex(contract.pigmentation.primaryColorHex, '#6a9a74', 0.18);
-  const trunk = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.14, 0.22, 2.0, 20, 5),
-    material(barkColor, 0.92, 0.02),
-  );
-  trunk.position.y = 0.08;
-  subject.add(trunk); created.push(trunk);
-
-  const rootFlare = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.22, 0.22, 18, 1), material(mixHex(barkColor, '#3b2f25', 0.15), 0.96, 0.02));
-  rootFlare.position.y = -0.86;
-  subject.add(rootFlare); created.push(rootFlare);
-
-  const crownMeshes: THREE.Mesh[] = [];
-  const bodyPlan = contract.morphology.bodyPlan;
-  if (bodyPlan === 'FROND') {
-    for (const leaf of addLeafFronds(subject, rng, foliageColor, 16, 0.18, 0.68)) {
-      created.push(leaf);
-      crownMeshes.push(leaf);
-      const vein = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.42, 8, 1), material(mixHex(foliageColor, '#e6efdd', 0.08), 0.62, 0.01));
-      vein.position.copy(leaf.position);
-      vein.rotation.copy(leaf.rotation);
-      subject.add(vein); created.push(vein);
-    }
-  } else {
-    for (let i = 0; i < 10; i++) {
-      const branch = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.03, 0.055, rng.range(0.52, 0.96), 10, 1),
-        material(mixHex(barkColor, '#7b664d', 0.3), 0.94, 0.02),
-      );
-      branch.position.set(rng.range(-0.12, 0.12), rng.range(0.28, 1.02), rng.range(-0.12, 0.12));
-      branch.rotation.z = rng.range(-1.15, 1.15);
-      branch.rotation.x = rng.range(-0.65, 0.65);
-      subject.add(branch); created.push(branch);
-      const cluster = new THREE.Mesh(
-        new THREE.SphereGeometry(rng.range(0.22, 0.34), 18, 14),
-        material(foliageColor, 0.76, 0.02),
-      );
-      cluster.scale.set(rng.range(0.85, 1.3), rng.range(1.2, 1.9), rng.range(0.8, 1.25));
-      cluster.position.copy(branch.position).add(new THREE.Vector3(
-        Math.sin(branch.rotation.z) * rng.range(0.32, 0.54),
-        rng.range(0.1, 0.28),
-        Math.sin(branch.rotation.x) * rng.range(0.15, 0.32),
-      ));
-      subject.add(cluster); created.push(cluster); crownMeshes.push(cluster);
-      for (let k = 0; k < 3; k++) {
-        const leaflet = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 10), material(mixHex(foliageColor, contract.pigmentation.secondaryColorHex, 0.12), 0.76, 0.02));
-        leaflet.scale.set(0.7, 1.8, 0.28);
-        leaflet.position.copy(cluster.position).add(new THREE.Vector3(rng.range(-0.18, 0.18), rng.range(-0.08, 0.1), rng.range(-0.18, 0.18)));
-        leaflet.rotation.set(rng.range(-0.6, 0.6), rng.range(0, Math.PI * 2), rng.range(-0.8, 0.8));
-        subject.add(leaflet); created.push(leaflet); crownMeshes.push(leaflet);
-      }
-    }
-  }
-
-  if (contract.adaptations.includes('HUMIDITY_TOLERANCE')) {
-    for (let i = 0; i < 6; i++) {
-      const pod = new THREE.Mesh(
-        new THREE.SphereGeometry(rng.range(0.08, 0.14), 14, 12),
-        material(mixHex(contract.pigmentation.secondaryColorHex, '#d9c0b2', 0.25), 0.68, 0.02),
-      );
-      pod.position.set(rng.range(-0.45, 0.45), rng.range(0.55, 1.18), rng.range(-0.35, 0.35));
-      pod.scale.y = rng.range(1.2, 1.8);
-      subject.add(pod); created.push(pod); crownMeshes.push(pod);
-    }
-  }
-  applyPattern(crownMeshes, contract, rng);
-  return created;
-}
-function createInsect(subject: THREE.Group, contract: Vida38SpeciesVisualContract, rng: Rng): THREE.Object3D[] {
-  const created: THREE.Object3D[] = [];
-  const profile = materialProfile(contract);
-  const shell = mixHex(contract.pigmentation.primaryColorHex, '#1f252d', 0.1);
-  const accent = mixHex(contract.pigmentation.secondaryColorHex, '#d4e0e8', 0.06);
-  const abdomen = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.52, 8, 16), material(shell, profile.roughness, 0.18));
-  abdomen.rotation.x = Math.PI / 2;
-  abdomen.position.set(0, 0.0, -0.22);
-  abdomen.scale.set(1.18, 1.0, 1.24);
-  const thorax = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.36, 8, 16), material(accent, profile.roughness, 0.14));
-  thorax.rotation.x = Math.PI / 2;
-  thorax.position.set(0, 0.02, 0.18);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 22, 18), material(shell, profile.roughness * 0.88, 0.18));
-  head.scale.set(1.0, 0.9, 0.86);
-  head.position.set(0, 0.12, 0.55);
-  for (const mesh of [abdomen, thorax, head]) { subject.add(mesh); created.push(mesh); }
-  created.push(...addSegmentRidge(subject, new THREE.Vector3(0, 0.1, 0.05), new THREE.Vector3(0, 0.08, -0.5), 6, mixHex(accent, '#0f151b', 0.25)));
-  const eyeColor = mixHex(contract.pigmentation.secondaryColorHex, '#eff7ff', 0.36);
-  for (let side = -1; side <= 1; side += 2) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), material(eyeColor, 0.08, 0.12));
-    eye.position.set(side * 0.12, 0.16, 0.62);
-    eye.scale.set(0.9, 1.15, 0.8);
-    subject.add(eye); created.push(eye);
-    const mandible = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.24, 8, 1), material(shell, 0.32, 0.12));
-    mandible.position.set(side * 0.055, -0.02, 0.7);
-    mandible.rotation.z = side * 0.48;
-    mandible.rotation.x = 0.78;
-    subject.add(mandible); created.push(mandible);
-  }
-  const legPairs = Math.max(3, contract.morphology.appendagePairs);
-  for (let side = -1; side <= 1; side += 2) {
-    for (let i = 0; i < legPairs; i++) {
-      const anchorZ = 0.28 - i * 0.22;
-      const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.014, 0.3, 8, 1), material(shell, 0.34, 0.12));
-      upper.position.set(side * 0.18, -0.02 - i * 0.03, anchorZ);
-      upper.rotation.z = side * (0.9 + i * 0.08);
-      upper.rotation.x = rng.range(-0.15, 0.15);
-      subject.add(upper); created.push(upper);
-      const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.009, 0.32, 8, 1), material(shell, 0.32, 0.12));
-      lower.position.set(side * (0.34 + 0.04 * i), -0.18 - i * 0.04, anchorZ - 0.03);
-      lower.rotation.z = side * (1.18 + i * 0.06);
-      lower.rotation.x = rng.range(-0.2, 0.2);
-      subject.add(lower); created.push(lower);
-      created.push(...addClawFan(subject, new THREE.Vector3(side * (0.48 + 0.04 * i), -0.32 - i * 0.04, anchorZ - 0.06), side, side * 0.2, mixHex(shell, '#f0ead2', 0.14)));
-    }
-    const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.006, 0.52, 8, 1), material(accent, 0.26, 0.12));
-    antenna.position.set(side * 0.09, 0.2, 0.72);
-    antenna.rotation.z = side * 0.4;
-    antenna.rotation.x = -0.62;
-    subject.add(antenna); created.push(antenna);
-  }
-  if (contract.locomotion === 'FLYING') {
-    for (let side = -1; side <= 1; side += 2) {
-      const foreWing = new THREE.Mesh(
-        new THREE.SphereGeometry(0.38, 20, 12),
-        physicalMaterial(mixHex('#dfe9f2', contract.pigmentation.secondaryColorHex, 0.1), 0.16, 0.18, 0.28, 0.65),
-      );
-      foreWing.scale.set(1.8, 0.05, 0.96);
-      foreWing.position.set(side * 0.34, 0.18, 0.08);
-      foreWing.rotation.y = side * 0.18;
-      foreWing.rotation.z = side * 0.28;
-      subject.add(foreWing); created.push(foreWing);
-      for (let v = 0; v < 4; v++) {
-        const vein = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.42 - v * 0.05, 6, 1), material(mixHex(contract.pigmentation.secondaryColorHex, '#f0f7fd', 0.2), 0.22, 0.04));
-        vein.position.copy(foreWing.position).add(new THREE.Vector3(side * (0.08 + v * 0.1), 0, 0));
-        vein.rotation.z = side * (0.3 + v * 0.08);
-        vein.rotation.x = Math.PI / 2;
-        subject.add(vein); created.push(vein);
-      }
-      const hindWing = new THREE.Mesh(
-        new THREE.SphereGeometry(0.28, 16, 10),
-        physicalMaterial(mixHex('#dfe9f2', contract.pigmentation.primaryColorHex, 0.06), 0.18, 0.16, 0.24, 0.4),
-      );
-      hindWing.scale.set(1.5, 0.05, 0.74);
-      hindWing.position.set(side * 0.28, 0.16, -0.02);
-      hindWing.rotation.y = side * 0.12;
-      hindWing.rotation.z = side * 0.18;
-      subject.add(hindWing); created.push(hindWing);
-    }
-  }
-  applyPattern([abdomen, thorax, head], contract, rng);
-  return created;
-}
 function createQuadruped(subject: THREE.Group, contract: Vida38SpeciesVisualContract, rng: Rng): THREE.Object3D[] {
   const created: THREE.Object3D[] = [];
   const profile = materialProfile(contract);
@@ -884,6 +634,12 @@ function createGenericBiped(subject: THREE.Group, contract: Vida38SpeciesVisualC
 }
 
 function createBiped(subject: THREE.Group, contract: Vida38SpeciesVisualContract, rng: Rng, quality: Vida38HumanoidQuality): THREE.Object3D[] {
+  if (isVida38AdvancedReptilian38S(contract)) return createVida38AdvancedReptilianPreview38S2(subject, contract, quality);
+  if (isVida38PrimitiveReptilian38U(contract)) return createVida38PrimitiveReptilianPreview38U(subject, contract, quality);
+
+  if (isCivilizedReptilian(contract)) {
+    return createVida38CivilizedReptilianPreview38O(subject, contract, quality);
+  }
   const specializedHumanoid = contract.morphology.group === 'HUMANOIDS' || contract.intelligence?.lineage === 'HUMANOID';
   return specializedHumanoid
     ? createHumanoidSpecialized(subject, contract, rng, quality)
@@ -910,14 +666,66 @@ export function createVida38SpeciesPreviewModelV1(contract: Vida38SpeciesVisualC
   const rng = new Rng(hash32(`${contract.variantSeedUint32}|${contract.appearanceFingerprint}|38.2`));
   addBaseCue(root, descriptor, rng);
 
+  // 38.2s5: garantía de selección directa del renderer ADVANCED
+  // Este desvío se ejecuta ANTES de familyFrom y del resto de renderers.
+  // El guard exige REPTILES + lineage REPTILIAN + civilizationTier ADVANCED.
+  if (isVida38PrimitiveHumanoid38X(contract)) {
+    createVida38PrimitiveHumanoidPreview38X(subject, contract, options.humanoidQuality ?? 'HIGH');
+  } else if (isVida38AdvancedHumanoid38W(contract)) {
+    // 38.2w: laboratorio y fichas usan exactamente la misma rama profesional.
+    createVida38AdvancedHumanoidPreview38W(subject, contract, options.humanoidQuality ?? 'HIGH');
+  } else if (isVida38AdvancedReptilian38S(contract)) {
+    createVida38AdvancedReptilianPreview38S2(subject, contract, options.humanoidQuality ?? 'HIGH');
+  } else if (isVida38PrimitiveReptilian38U(contract)) {
+    createVida38PrimitiveReptilianPreview38U(subject, contract, options.humanoidQuality ?? 'HIGH');
+  } else if (isVida38PrimitiveInsectoid38V(contract)) {
+    // 38.2v: laboratorio y fichas usan el mismo renderer civilizado PRIMITIVE.
+    createVida38PrimitiveInsectoidPreview38V(subject, contract, options.humanoidQuality ?? 'HIGH');
+  } else if (isVida38AdvancedInsectoid38T(contract)) {
+    // 38.2t: ruta única para fichas y galería. Nunca cae en INSECT_BODY natural.
+    createVida38AdvancedInsectoidPreview38T(subject, contract, options.humanoidQuality ?? 'HIGH');
+  } else {
   switch (descriptor.family) {
-    case 'MICROBIAL_COLONY': createMicrobialColony(subject, contract, rng); break;
-    case 'FUNGAL_CLUSTER': createFungalCluster(subject, contract, rng); break;
-    case 'PLANT_FORM': createPlant(subject, contract, rng); break;
-    case 'INSECT_BODY': createInsect(subject, contract, rng); break;
-    case 'AVIAN_BODY': createBird(subject, contract, rng); break;
-    case 'BIPED_BODY': createBiped(subject, contract, rng, options.humanoidQuality ?? 'HIGH'); break;
-    case 'QUADRUPED_BODY': createQuadruped(subject, contract, rng); break;
+    case 'MICROBIAL_COLONY':
+      if (contract.morphology.group === 'MICROORGANISMS')
+        createVida38MicrobialPreview38N(subject, contract, options.humanoidQuality ?? 'HIGH');
+      break;
+    case 'FUNGAL_CLUSTER':
+      if (contract.morphology.group === 'FUNGI')
+        createVida38FungalPreview38M(subject, contract, options.humanoidQuality ?? 'HIGH');
+      break;
+    case 'PLANT_FORM':
+      if (contract.morphology.group === 'PLANTS_TREES')
+        createVida38PlantPreview38L(subject, contract, options.humanoidQuality ?? 'HIGH');
+      break;
+    case 'INSECT_BODY':
+      if (contract.morphology.group === 'INSECTS') {
+        if (isVida38VeryAdvancedInsectoid38Q(contract))
+          createVida38CivilizedInsectoidPreview38Q(subject, contract, options.humanoidQuality ?? 'HIGH');
+        else
+          createVida38InsectPreview38K(subject, contract, options.humanoidQuality ?? 'HIGH');
+      }
+      break;
+    case 'AVIAN_BODY':
+      if (contract.morphology.group === 'BIRDS')
+        createVida38BirdPreview38I(subject, contract, options.humanoidQuality ?? 'HIGH');
+      else createBird(subject, contract, rng);
+      break;
+    case 'BIPED_BODY':
+      if (isVida38VeryAdvancedHumanoid38R(contract)) {
+        createVida38CivilizedHumanoidPreview38R(subject, contract, options.humanoidQuality ?? 'HIGH');
+      } else {
+        createBiped(subject, contract, rng, options.humanoidQuality ?? 'HIGH');
+      }
+      break;
+    case 'QUADRUPED_BODY':
+      if (contract.morphology.group === 'MAMMALS' && contract.morphology.bodyPlan === 'TETRAPOD')
+        createVida38MammalPreview38H(subject, contract, options.humanoidQuality ?? 'HIGH');
+      else if (contract.morphology.group === 'REPTILES' && contract.morphology.bodyPlan === 'TETRAPOD')
+        createVida38ReptilePreview38J(subject, contract, options.humanoidQuality ?? 'HIGH');
+      else createQuadruped(subject, contract, rng);
+      break;
+  }
   }
 
   if (descriptor.bioluminescent) {
@@ -925,7 +733,7 @@ export function createVida38SpeciesPreviewModelV1(contract: Vida38SpeciesVisualC
     halo.position.set(0.2, 0.8, 0.6);
     subject.add(halo);
   }
-  if (contract.adaptations.includes('SENSORY_ORIENTATION') && descriptor.family !== 'INSECT_BODY' && descriptor.family !== 'MICROBIAL_COLONY' && contract.morphology.group !== 'HUMANOIDS') {
+  if (contract.adaptations.includes('SENSORY_ORIENTATION') && descriptor.family !== 'PLANT_FORM' && descriptor.family !== 'FUNGAL_CLUSTER' && descriptor.family !== 'INSECT_BODY' && descriptor.family !== 'MICROBIAL_COLONY' && contract.morphology.group !== 'HUMANOIDS' && contract.morphology.group !== 'MAMMALS' && contract.morphology.group !== 'BIRDS' && contract.morphology.group !== 'REPTILES') {
     for (let side = -1; side <= 1; side += 2) {
       const sensor = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.01, 0.36, 8, 1), material(mixHex(contract.pigmentation.secondaryColorHex, '#eff5ff', 0.08), 0.36, 0.06));
       sensor.position.set(side * 0.12, 0.92, 0.16);
@@ -933,9 +741,12 @@ export function createVida38SpeciesPreviewModelV1(contract: Vida38SpeciesVisualC
       subject.add(sensor);
     }
   }
+  // GENESIS 38.2s6 POST-RENDER: garantiza vestuario real REPTILIAN/ADVANCED
+  // No cambia las ramas VERY_ADVANCED; solo repara el modelo ADVANCED si se dibujó el antiguo.
+  enforceVida38AdvancedReptilianVisibleRenderer38S6(subject, contract, options.humanoidQuality ?? 'HIGH');
   normalizeSubject(subject);
-
-  const pitch = descriptor.family === 'MICROBIAL_COLONY' ? 0.15 : descriptor.family === 'PLANT_FORM' ? 0.05 : 0.08;
+  const restingHeight = subject.position.y;
+  const pitch = descriptor.family === 'MICROBIAL_COLONY' ? 0.035 : descriptor.family === 'PLANT_FORM' ? 0.05 : 0.08;
   return {
     revision: VIDA38_SPECIES_VISUAL_PREVIEW_REVISION,
     descriptor,
@@ -945,9 +756,14 @@ export function createVida38SpeciesPreviewModelV1(contract: Vida38SpeciesVisualC
       subject.rotation.y = elapsedSeconds * 0.18;
       subject.rotation.x = Math.sin(elapsedSeconds * 0.4) * pitch;
       if (descriptor.family === 'MICROBIAL_COLONY') {
-        subject.position.y = Math.sin(elapsedSeconds * 0.8) * 0.04;
-      } else if (descriptor.family === 'AVIAN_BODY' || descriptor.family === 'INSECT_BODY') {
-        subject.position.y = Math.sin(elapsedSeconds * 1.1) * 0.03;
+        // Movimiento ambiental mínimo: respetar el encuadre y la altura de reposo 38.2h.a.
+        subject.position.y = restingHeight + Math.sin(elapsedSeconds * 0.8) * 0.012;
+      } else if (descriptor.family === 'AVIAN_BODY') {
+        // Preservar el centrado 38.2h.a incluso durante la animación.
+        subject.position.y = restingHeight + Math.sin(elapsedSeconds * 1.1) * 0.024;
+      } else if (descriptor.family === 'INSECT_BODY') {
+        // Igual que en 38.2h.a, conservar el centrado al animar.
+        subject.position.y = restingHeight + Math.sin(elapsedSeconds * 1.1) * 0.017;
       } else if (descriptor.family === 'PLANT_FORM') {
         subject.rotation.z = Math.sin(elapsedSeconds * 0.25) * 0.03;
       }

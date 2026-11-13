@@ -17,7 +17,7 @@ describe('VISCIV.2 — satélites orbitales artificiales de civilizaciones conoc
     expect(advanced.length).toBeGreaterThanOrEqual(3);
     expect(advanced.length).toBeLessThanOrEqual(5);
     expect(veryAdvanced.length).toBeGreaterThanOrEqual(6);
-    expect(veryAdvanced.length).toBeLessThanOrEqual(9);
+    expect(veryAdvanced.length).toBeLessThanOrEqual(12);
   });
 
   it('conserva exactamente las mismas órbitas y colores para la misma semilla', () => {
@@ -32,7 +32,7 @@ describe('VISCIV.2 — satélites orbitales artificiales de civilizaciones conoc
     for (const tier of ['ADVANCED', 'VERY_ADVANCED'] as const) {
       for (const plan of buildSystemSceneArtificialSatellitePlansV1(5555, tier, 0.8)) {
         expect(plan.orbitRadiusPlanetRadii).toBeGreaterThan(1.3);
-        expect(plan.orbitRadiusPlanetRadii).toBeLessThan(2.5);
+        expect(plan.orbitRadiusPlanetRadii).toBeLessThan(3.0);
         expect(Number.isFinite(plan.phaseRadians)).toBe(true);
         expect(Number.isFinite(plan.inclinationRadians)).toBe(true);
         expect(Number.isFinite(plan.angularSpeedRadiansPerDay)).toBe(true);

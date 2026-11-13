@@ -1,0 +1,33 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.223 seconds] - 2026-11-11T19:54:40.136Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [32m✓[39m [30m[43m genesis-web [49m[39m src/app/presentation/galaxy-map/galactic-map-particle-layout.spec.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 33624[2mms[22m[39m
+     [33m[2m✓[22m[39m should generate exactly the same GPU buffers for the same galactic map model [33m 2059[2mms[22m[39m
+     [33m[2m✓[22m[39m should preserve exact frozen GPU buffers when the same render input is structured-clone safe for point-10.9 [33m 1798[2mms[22m[39m
+     [33m[2m✓[22m[39m should preserve the dedicated BARRED_SPIRAL renderer across the structured-clone Web Worker boundary [33m 4756[2mms[22m[39m
+     [33m[2m✓[22m[39m should preserve the SPIRAL stellar and volumetric-gas enrichment across the structured-clone Web Worker boundary [33m 3876[2mms[22m[39m
+     [33m[2m✓[22m[39m should preserve the dedicated DWARF renderer across the structured-clone Web Worker boundary [33m 7277[2mms[22m[39m
+     [33m[2m✓[22m[39m should preserve the dedicated IRREGULAR renderer across the structured-clone Web Worker boundary [33m 7892[2mms[22m[39m
+     [33m[2m✓[22m[39m should keep morphology-specific stellar budgets after SPIRAL moves gas and dust to continuous scene overlays [33m 622[2mms[22m[39m
+     [33m[2m✓[22m[39m should keep barred-spiral arms broad and organic while overlapping the bar-root region [33m 333[2mms[22m[39m
+     [33m[2m✓[22m[39m should visibly populate both barred-spiral bar ends through the arm-root transition [33m 354[2mms[22m[39m
+     [33m[2m✓[22m[39m should curve both barred-spiral bar ends into the arm roots instead of keeping a ruler-straight centerline [33m 354[2mms[22m[39m
+     [33m[2m✓[22m[39m should render BARRED_SPIRAL through a dedicated warm bulge, chromatic disk and volumetric gas population [33m 573[2mms[22m[39m
+     [33m[2m✓[22m[39m should embed SPIRAL gas as a sparse chromatic 3D volume instead of a planar overlay [33m 512[2mms[22m[39m
+     [33m[2m✓[22m[39m should keep every generated attribute finite and bounded [33m 454[2mms[22m[39m
+     [33m[2m✓[22m[39m should vary the dwarf gas palette across deterministic family samples [33m 560[2mms[22m[39m
+     [33m[2m✓[22m[39m should render IRREGULAR through a dedicated lopsided body, warm centre, mixed stars and chromatic volumetric gas [33m 333[2mms[22m[39m
+     [33m[2m✓[22m[39m should vary the IRREGULAR gas palette across deterministic renderer identities without changing morphology routing [33m 676[2mms[22m[39m
+     [33m[2m✓[22m[39m should keep a discovered spiral disk substantially thinner than the spheroidal body [33m 303[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m23 passed[39m[22m[90m (23)[39m
+[2m   Start at [22m 20:54:40
+[2m   Duration [22m 35.02s[2m (transform 222ms, setup 315ms, import 207ms, tests 33.62s, environment 699ms)[22m
+
+

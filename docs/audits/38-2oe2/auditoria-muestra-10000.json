@@ -1,0 +1,139 @@
+{
+  "source": "SYNTHETIC_SAME_PIGMENT_AND_BODY_LENGTH",
+  "revision": "38.2o.e2",
+  "population": 10000,
+  "uniqueSourceIds": 10000,
+  "exactDuplicatePairs": 0,
+  "nearDuplicatePairs": 36742,
+  "distinctVisualPlans": 10000,
+  "distribution": {
+    "profiles": 10,
+    "garmentLines": 6,
+    "cultures": 6
+  },
+  "samplePairs": [
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/648",
+      "distance": 0.089479,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/978",
+      "distance": 0.059734,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/3636",
+      "distance": 0.069454,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/3795",
+      "distance": 0.134169,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/5800",
+      "distance": 0.093309,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/5958",
+      "distance": 0.134922,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/7303",
+      "distance": 0.125616,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/0",
+      "secondSpeciesId": "V3/reptilian/civilized/8451",
+      "distance": 0.100603,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/402",
+      "distance": 0.081346,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/1265",
+      "distance": 0.119213,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/5476",
+      "distance": 0.101744,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/5606",
+      "distance": 0.115675,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/6166",
+      "distance": 0.123996,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/7002",
+      "distance": 0.108747,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/8519",
+      "distance": 0.103486,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/9060",
+      "distance": 0.138016,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/9333",
+      "distance": 0.125461,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/9386",
+      "distance": 0.047478,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/128",
+      "secondSpeciesId": "V3/reptilian/civilized/9568",
+      "distance": 0.048631,
+      "exact": false
+    },
+    {
+      "firstSpeciesId": "V3/reptilian/civilized/402",
+      "secondSpeciesId": "V3/reptilian/civilized/1265",
+      "distance": 0.090701,
+      "exact": false
+    }
+  ],
+  "nearDistanceThreshold": 0.14,
+  "exactAuditPassed": true,
+  "method": "PARAMETRIC_VISUAL_PLAN_NOT_RENDERED_PIXELS"
+}

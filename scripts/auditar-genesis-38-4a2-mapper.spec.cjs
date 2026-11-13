@@ -1,0 +1,8 @@
+'use strict';
+const {test}=require('node:test');const assert=require('node:assert/strict');const {inspect}=require('./auditar-genesis-38-4a2-mapper.cjs');
+function source(x){return `function mapper(species,phenotype,planetId){const identity=${x};return {variantSeedUint32:hash32(identity)};}`;}
+test('rastrea identity y hash32 sin suponer origen a partir de número',()=>{const r=inspect(source('species.id+"|"+phenotype.bodyPlan'));assert.equal(r.hash32IdentityMappings.length,1);assert.equal(r.hash32IdentityMappings[0].spatialDependencies.length,0);assert.equal(r.hash32IdentityMappings[0].identityExpression,'species.id+"|"+phenotype.bodyPlan');});
+test('detecta dependencia espacial directa',()=>{const r=inspect(source('species.id+"|"+planetId'));assert.equal(r.overall,'REVISAR_DEPENDENCIA_ESPACIAL');assert.ok(r.hash32IdentityMappings[0].spatialDependencies.some(s=>s.includes('planetId')));});
+test('detecta dependencia espacial transitiva por variable local',()=>{const r=inspect('function mapper(species,planetId){const region=planetId;const identity=species.id+region;return {variantSeedUint32:hash32(identity)};}');assert.equal(r.overall,'REVISAR_DEPENDENCIA_ESPACIAL');});
+test('no declara certificación cuando no encuentra hash32(identity)',()=>{const r=inspect('export const variantSeedUint32=5');assert.equal(r.overall,'MAPPER_NO_LOCALIZADO');});
+test('recupera dependencias por property access en una expresión',()=>{const r=inspect(source('species.id+"|"+phenotype.bodyPlan+"|"+phenotype.adaptations.join(",")'));assert.ok(r.hash32IdentityMappings[0].properties.includes('phenotype.bodyPlan'));});

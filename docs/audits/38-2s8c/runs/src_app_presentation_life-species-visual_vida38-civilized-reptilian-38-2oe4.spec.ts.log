@@ -1,0 +1,21 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.565 seconds] - 2026-11-11T19:59:05.514Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [32m✓[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe4.spec.ts [2m([22m[2m6 tests[22m[2m)[22m[33m 4829[2mms[22m[39m
+     [33m[2m✓[22m[39m dos globos, dos iris curvados y dos pupilas verticales; sin placas planas [33m 972[2mms[22m[39m
+     [33m[2m✓[22m[39m el globo sobresale menos de 2 cm respecto al punto de anclaje facial [33m 815[2mms[22m[39m
+     [33m[2m✓[22m[39m mantiene el mismo anclaje local después del centrado y escala del visor [33m 774[2mms[22m[39m
+     [33m[2m✓[22m[39m las gafas VERY_ADVANCED usan monturas abiertas, no cajas opacas [33m 731[2mms[22m[39m
+     [33m[2m✓[22m[39m la anatomía y la identidad visual permanecen deterministas [33m 1533[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m   Start at [22m 20:59:05
+[2m   Duration [22m 6.51s[2m (transform 444ms, setup 295ms, import 465ms, tests 4.83s, environment 717ms)[22m
+
+

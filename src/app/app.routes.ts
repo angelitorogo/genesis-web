@@ -1,6 +1,11 @@
 import { Routes } from '@angular/router';
 
 export const genesisRoutes: Routes = [
+  // VIDA38_2OE5B_LAB_INDEX: acceso directo desde el índice de Laboratorio.
+  {
+    path: 'laboratorio/reptilianos-civilizados',
+    loadComponent: () => import('./presentation/life-species-visual/vida38-reptilian-gallery-laboratory-38-2oe5b.component').then(m => m.Vida38ReptilianGalleryLaboratory38OE5BComponent),
+  },
   // GENESIS 32.11: demo sintÃ©tica, no historia canÃ³nica del jugador.
   {
     path: 'laboratory/planetary-history',

@@ -1,0 +1,47 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [10.804 seconds] - 2026-11-11T19:52:10.501Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [31m❯[39m [30m[43m genesis-web [49m[39m src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts [2m([22m[2m4 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 9[2mms[22m[39m
+     [32m✓[39m no habilita satélites para ausencia de civilización ni nivel primitivo[32m 2[2mms[22m[39m
+[31m     [31m×[31m genera pocos satélites para una civilización avanzada y más para una muy avanzada[39m[32m 3[2mms[22m[39m
+     [32m✓[39m conserva exactamente las mismas órbitas y colores para la misma semilla[32m 1[2mms[22m[39m
+[31m     [31m×[31m mantiene órbitas fuera del planeta, con geometría finita y puntos pequeños[39m[32m 2[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 20:52:10
+[2m   Duration [22m 1.25s[2m (transform 73ms, setup 333ms, import 11ms, tests 9ms, environment 692ms)[22m
+
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[43m genesis-web [49m[39m src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts[2m > [22mVISCIV.2 — satélites orbitales artificiales de civilizaciones conocidas[2m > [22mgenera pocos satélites para una civilización avanzada y más para una muy avanzada
+[31m[1mAssertionError[22m: expected 12 to be less than or equal to 9[39m
+[36m [2m❯[22m src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts:[2m20:33[22m[39m
+    [90m 18|[39m     [34mexpect[39m(advanced[33m.[39mlength)[33m.[39m[34mtoBeLessThanOrEqual[39m([34m5[39m)[33m;[39m
+    [90m 19|[39m     [34mexpect[39m(veryAdvanced[33m.[39mlength)[33m.[39m[34mtoBeGreaterThanOrEqual[39m([34m6[39m)[33m;[39m
+    [90m 20|[39m     [34mexpect[39m(veryAdvanced[33m.[39mlength)[33m.[39m[34mtoBeLessThanOrEqual[39m([34m9[39m)[33m;[39m
+    [90m   |[39m                                 [31m^[39m
+    [90m 21|[39m   })[33m;[39m
+    [90m 22|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[43m genesis-web [49m[39m src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts[2m > [22mVISCIV.2 — satélites orbitales artificiales de civilizaciones conocidas[2m > [22mmantiene órbitas fuera del planeta, con geometría finita y puntos pequeños
+[31m[1mAssertionError[22m: expected 2.539584126956664 to be less than 2.5[39m
+[36m [2m❯[22m src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts:[2m35:45[22m[39m
+    [90m 33|[39m       for (const plan of buildSystemSceneArtificialSatellitePlansV1(55…
+    [90m 34|[39m         [34mexpect[39m(plan[33m.[39morbitRadiusPlanetRadii)[33m.[39m[34mtoBeGreaterThan[39m([34m1.3[39m)[33m;[39m
+    [90m 35|[39m         [34mexpect[39m(plan[33m.[39morbitRadiusPlanetRadii)[33m.[39m[34mtoBeLessThan[39m([34m2.5[39m)[33m;[39m
+    [90m   |[39m                                             [31m^[39m
+    [90m 36|[39m         [34mexpect[39m([33mNumber[39m[33m.[39m[34misFinite[39m(plan[33m.[39mphaseRadians))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+    [90m 37|[39m         [34mexpect[39m([33mNumber[39m[33m.[39m[34misFinite[39m(plan[33m.[39minclinationRadians))[33m.[39m[34mtoBe[39m([35mtrue[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+

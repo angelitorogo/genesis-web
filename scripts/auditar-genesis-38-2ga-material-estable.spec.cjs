@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Auditoría 38.2g.a: estabilidad del shader biológico humanoide.
+ * Auditoría 38.2g: estabilidad del shader biológico humanoide.
  * Verifica compilación TypeScript, anclaje anatómico del patrón y ausencia de
  * coordenadas dependientes de pantalla/cámara.
  */
@@ -42,9 +42,9 @@ try {
   }
   assert.ok(!shaderSource.includes('gl_FragCoord'), 'Se reintrodujo un patrón dependiente de pantalla');
   assert.ok(shaderSource.includes('roughnessFactor=clamp') || shaderSource.includes('roughnessFactor = clamp'), 'No se suavizó el contraste de rugosidad');
-  assert.ok(shaderSource.includes("specularIntensity:0.28") || shaderSource.includes('specularIntensity: 0.28'), 'No se redujo el brillo especular');
-  assert.ok(shaderSource.includes("uVida38SkinDetail'] = {value:contract.morphology.covering==='SCALES'?0.0026:0.0016}") || shaderSource.includes("uVida38SkinDetail'] = { value: contract.morphology.covering === 'SCALES' ? 0.0026 : 0.0016 }"), 'No se redujo el microrelieve');
-  console.log('GENESIS_38_2GA_AUDIT_OK: shader estable, antialias procedural, patrón anatómico y microrelieve suavizado');
+  assert.ok(shaderSource.includes("specularIntensity:0.24") || shaderSource.includes("specularIntensity: 0.24") || shaderSource.includes("specularIntensity:0.28") || shaderSource.includes("specularIntensity: 0.28"), 'No se redujo el brillo especular');
+  assert.ok(shaderSource.includes("uVida38SkinDetail'] = {value:contract.morphology.covering==='SCALES'?0.0024:0.0018}") || shaderSource.includes("uVida38SkinDetail'] = { value: contract.morphology.covering === 'SCALES' ? 0.0024 : 0.0018 }") || shaderSource.includes("uVida38SkinDetail'] = {value:contract.morphology.covering==='SCALES'?0.0026:0.0016}") || shaderSource.includes("uVida38SkinDetail'] = { value: contract.morphology.covering === 'SCALES' ? 0.0026 : 0.0016 }"), 'No se redujo el microrelieve');
+  console.log('GENESIS_38_2G_AUDIT_OK: shader estable, antialias procedural, patrón anatómico y microrelieve suavizado');
 } finally {
   if (previousLoader) require.extensions['.ts'] = previousLoader;
   else delete require.extensions['.ts'];

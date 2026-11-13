@@ -1,0 +1,42 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.117 seconds] - 2026-11-11T19:41:20.370Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [31m❯[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe8.spec.ts [2m([22m[2m4 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 1032[2mms[22m[39m
+[31m     [31m×[31m mantiene selección determinista y genera diversidad de materiales/siluetas[39m[32m 14[2mms[22m[39m
+     [32m✓[39m construye coraza segmentada, espalda, hombreras curvas y calzado conformal sin BoxGeometry[32m 130[2mms[22m[39m
+     [32m✓[39m construye vestimenta industrial anatómica distinta de una armadura militar[32m 9[2mms[22m[39m
+     [33m[2m✓[22m[39m reutiliza el renderer 38.2o de laboratorio para un ejemplar blindado [33m 877[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m3 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 20:41:20
+[2m   Duration [22m 2.46s[2m (transform 155ms, setup 307ms, import 178ms, tests 1.03s, environment 735ms)[22m
+
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe8.spec.ts[2m > [22m38.2o.e8 — armaduras y prendas técnicas anatómicas[2m > [22mmantiene selección determinista y genera diversidad de materiales/siluetas
+[31m[1mAssertionError[22m: expected 3 to be 4 // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 4[39m
+[31m+ 3[39m
+
+[36m [2m❯[22m src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe8.spec.ts:[2m64:30[22m[39m
+    [90m 62|[39m     [34mexpect[39m(signatures[33m.[39msize)[33m.[39m[34mtoBeGreaterThanOrEqual[39m([34m30[39m)[33m;[39m
+    [90m 63|[39m     [34mexpect[39m(materials[33m.[39msize)[33m.[39m[34mtoBe[39m([34m3[39m)[33m;[39m
+    [90m 64|[39m     [34mexpect[39m(silhouettes[33m.[39msize)[33m.[39m[34mtoBe[39m([34m4[39m)[33m;[39m
+    [90m   |[39m                              [31m^[39m
+    [90m 65|[39m   })[33m;[39m
+    [90m 66|[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+

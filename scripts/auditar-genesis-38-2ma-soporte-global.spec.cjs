@@ -1,0 +1,10 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const base = path.join(__dirname, '..', 'src/app/presentation/life-species-visual');
+const preview = fs.readFileSync(path.join(base, 'vida38-species-visual-preview-scene.ts'), 'utf8');
+assert.doesNotMatch(preview, /VIDA38_CANOPY_DECORATIVE_REFERENCE_BRANCH/);
+assert.doesNotMatch(preview, /descriptor\.habitatCue === 'CANOPY'/);
+assert.doesNotMatch(preview, /new THREE\.CylinderGeometry\(0\.11, 0\.14, 1\.95, 16, 1\)/);
+console.log('GENESIS_38_2MA_AUDIT_OK: eliminado el palo decorativo CANOPY en todos los taxones');

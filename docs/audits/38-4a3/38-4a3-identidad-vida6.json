@@ -1,0 +1,27 @@
+{
+  "revision": "GENESIS/38.4a3/vida6-id-trace/v1",
+  "filesReviewed": 1207,
+  "mapperIdentityDerivedFromSpeciesId": true,
+  "vida6Candidates": [
+    {
+      "file": "src/app/domain/life/vida6-ecosystems-species.ts",
+      "line": 36,
+      "fragment": "  readonly bioluminescent: boolean;\n}\nexport interface Vida6Species {\n  readonly id: string;\n  readonly proceduralName: string;\n  readonly group: Vida4Group;\n  readonly habitat: Vida6HabitatKind;",
+      "spatialCandidate": false
+    },
+    {
+      "file": "src/app/simulation/life/vida6-ecosystems-species.ts",
+      "line": 151,
+      "fragment": "        const meal = nutrition(group,habitat,key+'|meal');\n        const detail = traits(group,habitat,meal,key);\n        const name = `${pick(NAME_A,key+'|a')}${pick(NAME_B,key+'|b')} ${pick(NAME_C,key+'|c')}${String(i+1)}`;\n        species.push(Object.freeze({id:`vida6:${hash(key).slice(0,24)}`,proceduralName:name,\n          group,habitat,nutrition:meal,adaptations:detail.adaptations,phenotype:detail.phenotype,\n          niche:`${habitat}/${meal}`}));\n      }",
+      "spatialCandidate": false
+    }
+  ],
+  "spatialCandidateCount": 0,
+  "verdict": "REQUIERE_VALIDACION_GENERADOR",
+  "limitations": [
+    "Coincidencias textuales NO prueban la dependencia transitiva de species.id.",
+    "Un ID biológico puede codificar su origen natal legítimo: estabilidad entre vistas exige conservar ese mismo ID, no regenerarlo en otro mundo.",
+    "La prueba de JSON NO equivale a un backup/restore IndexedDB real.",
+    "Para certificar generación VIDA.6 son necesarios fixtures productivos y acceso al generador/repository real."
+  ]
+}

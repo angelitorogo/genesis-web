@@ -1,0 +1,19 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.872 seconds] - 2026-11-11T20:00:44.316Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [32m✓[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-humanoid-refinement-38-2g.spec.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 8102[2mms[22m[39m
+     [33m[2m✓[22m[39m conserva mallas cerradas y finitas en seis identidades y mantiene la longitud VIDA [33m 5245[2mms[22m[39m
+     [33m[2m✓[22m[39m no crea atributo de color por vértice y configura el shader PBR orgánico [33m 836[2mms[22m[39m
+     [33m[2m✓[22m[39m recolorear un humanoide no modifica ni posiciones ni topología [33m 1990[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m   Start at [22m 21:00:44
+[2m   Duration [22m 9.45s[2m (transform 96ms, setup 328ms, import 102ms, tests 8.10s, environment 732ms)[22m
+
+

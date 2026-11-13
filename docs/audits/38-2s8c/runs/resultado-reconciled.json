@@ -1,0 +1,130 @@
+{
+  "revision": "38.2s8c",
+  "group": "reconciled",
+  "started": "2026-11-11T19:38:04.385Z",
+  "results": [
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-insectoid-38-2q1a.spec.ts",
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-insectoid-38-2q1a.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od2.spec.ts",
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 23,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2od2.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od3.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2od3.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od5.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 20,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2od5.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe2.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe2.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe6a.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe6a.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe7.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 18,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe7.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe7b.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe7b.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe7c.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe7c.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe8.spec.ts",
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe8.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-cultural-diversity-38-2oe9.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-reptilian-cultural-diversity-38-2oe9.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-wardrobe-38-2oe8b.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 15,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-reptilian-wardrobe-38-2oe8b.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-species-visual-preview-scene.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 27,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-species-visual-preview-scene.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-fixtures-regression-38-2s8c.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 14,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-reptilian-fixtures-regression-38-2s8c.spec.ts.log",
+      "error": null
+    }
+  ],
+  "ended": "2026-11-11T19:42:35.592Z",
+  "passed": 12,
+  "failed": 3
+}

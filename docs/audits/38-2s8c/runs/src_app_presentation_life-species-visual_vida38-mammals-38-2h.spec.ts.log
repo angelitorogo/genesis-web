@@ -1,0 +1,20 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [11.072 seconds] - 2026-11-11T20:01:40.676Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [32m✓[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-mammals-38-2h.spec.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 6508[2mms[22m[39m
+     [33m[2m✓[22m[39m cambiar los pigmentos no modifica ni la identidad morfológica ni la geometría [33m 1136[2mms[22m[39m
+     [33m[2m✓[22m[39m genera once superficies orgánicas conectadas y sin aristas abiertas [33m 4516[2mms[22m[39m
+     [33m[2m✓[22m[39m el material permite pelaje solo donde VIDA lo justifica y mantiene shader estable [33m 443[2mms[22m[39m
+     [33m[2m✓[22m[39m usa el nuevo renderer solo en mamíferos, preserva recursos y la escala VIDA [33m 393[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 21:01:41
+[2m   Duration [22m 8.31s[2m (transform 477ms, setup 307ms, import 507ms, tests 6.51s, environment 758ms)[22m
+
+

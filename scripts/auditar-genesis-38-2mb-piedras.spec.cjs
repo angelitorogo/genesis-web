@@ -1,0 +1,11 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const preview = fs.readFileSync(path.join(__dirname, '../src/app/presentation/life-species-visual/vida38-species-visual-preview-scene.ts'), 'utf8');
+assert.doesNotMatch(preview, /new THREE\.DodecahedronGeometry/);
+assert.doesNotMatch(preview, /base\.add\(rock\)/);
+assert.doesNotMatch(preview, /VIDA38_CANOPY_DECORATIVE_REFERENCE_BRANCH/);
+assert.match(preview, /if \(descriptor\.habitatCue === 'ROCK'\) \{[\s\S]*?for \(let i = 0; i < 28; i\+\+\) rng\.next\(\);/);
+assert.match(preview, /disk\.receiveShadow = true/);
+console.log('GENESIS_38_2MB_AUDIT_OK: no piedras ni palo decorativo; plataforma y RNG legado preservados');

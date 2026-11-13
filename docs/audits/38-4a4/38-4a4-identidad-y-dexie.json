@@ -1,0 +1,922 @@
+{
+  "revision": "GENESIS/38.4a4/identidad-dexie/v1",
+  "scope": "Auditoría estructural con TypeScript AST. NO ejecuta una transacción Dexie ni afirma haberla hecho.",
+  "generatorFile": "src/app/simulation/life/vida6-ecosystems-species.ts",
+  "domainFile": "src/app/domain/life/vida6-ecosystems-species.ts",
+  "contractFile": "src/app/presentation/life-species-visual/vida38-species-visual-contract.ts",
+  "generator": {
+    "matches": [
+      {
+        "line": 151,
+        "assignment": "id:`vida6:${hash(key).slice(0,24)}`",
+        "enclosingFunction": "evaluate",
+        "dependencies": [
+          {
+            "symbol": "hash",
+            "line": null,
+            "kind": "OUTER_OR_IMPORTED",
+            "expression": null,
+            "references": []
+          },
+          {
+            "symbol": "key",
+            "line": 142,
+            "kind": "LOCAL",
+            "expression": "`${groupKey}|${i}`",
+            "references": [
+              "groupKey",
+              "i"
+            ]
+          },
+          {
+            "symbol": "groupKey",
+            "line": 140,
+            "kind": "LOCAL",
+            "expression": "`${namespace}|${group}`",
+            "references": [
+              "group",
+              "namespace"
+            ]
+          },
+          {
+            "symbol": "group",
+            "line": null,
+            "kind": "OUTER_OR_IMPORTED",
+            "expression": null,
+            "references": []
+          },
+          {
+            "symbol": "namespace",
+            "line": 136,
+            "kind": "LOCAL",
+            "expression": "[VIDA6_RANDOM_NAMESPACE, micro.identity.universeSeed,\n      micro.identity.generatorVersionCode, micro.bodyStorageKey].join('|')",
+            "references": [
+              "VIDA6_RANDOM_NAMESPACE",
+              "micro"
+            ]
+          },
+          {
+            "symbol": "VIDA6_RANDOM_NAMESPACE",
+            "line": null,
+            "kind": "OUTER_OR_IMPORTED",
+            "expression": null,
+            "references": []
+          },
+          {
+            "symbol": "micro",
+            "line": 106,
+            "kind": "PARAMETER",
+            "expression": "micro: Vida3MicrobialSnapshot",
+            "references": []
+          },
+          {
+            "symbol": "i",
+            "line": 141,
+            "kind": "LOCAL",
+            "expression": "0",
+            "references": []
+          }
+        ],
+        "possibleSpatial": [
+          "namespace"
+        ],
+        "biologicalHints": [
+          "groupKey",
+          "group"
+        ],
+        "scopeComplete": true
+      }
+    ],
+    "diagnostics": []
+  },
+  "mapperSeed": true,
+  "repositoryEvidence": [
+    {
+      "file": "src/app/data/local/repository/dexie-vida9-biology-exploration.repository.ts",
+      "mentions": 23,
+      "signatures": [
+        {
+          "line": 5,
+          "signature": "export class DexieVida9BiologyExplorationRepository "
+        },
+        {
+          "line": 7,
+          "signature": "async ensure(record:Vida9BiologyRecord):Promise<Vida9BiologyRecord>"
+        },
+        {
+          "line": 46,
+          "signature": "async getOrInsertPreservingExisting(record:Vida9BiologyRecord):Promise<Vida9BiologyRecord>"
+        },
+        {
+          "line": 73,
+          "signature": "async get(seed:string,version:number,bodyStorageKey:string):Promise<Vida9BiologyRecord|null>"
+        }
+      ],
+      "snippets": [
+        {
+          "line": 2,
+          "text": "import { VIDA9_REVISION, vida9DigestForRecord, type Vida9BiologyRecord } from '../../../domain/life/vida9-biology-exploration';"
+        },
+        {
+          "line": 2,
+          "text": "import { VIDA9_REVISION, vida9DigestForRecord, type Vida9BiologyRecord } from '../../../domain/life/vida9-biology-exploration';"
+        },
+        {
+          "line": 7,
+          "text": "async ensure(record:Vida9BiologyRecord):Promise<Vida9BiologyRecord>{"
+        },
+        {
+          "line": 7,
+          "text": "async ensure(record:Vida9BiologyRecord):Promise<Vida9BiologyRecord>{"
+        },
+        {
+          "line": 7,
+          "text": "async ensure(record:Vida9BiologyRecord):Promise<Vida9BiologyRecord>{"
+        },
+        {
+          "line": 9,
+          "text": "if (record.revision!==VIDA9_REVISION || record.epoch!=='CT-0' || record.epochOffsetYears!==0 ||"
+        },
+        {
+          "line": 19,
+          "text": "return JSON.parse(row.payloadJson) as Vida9BiologyRecord;"
+        },
+        {
+          "line": 23,
+          "text": "const prior=await this.db.privateBiologicalRecordsVIDA9.get(key);"
+        },
+        {
+          "line": 34,
+          "text": "const prior=await this.db.privateBiologicalRecordsVIDA9.get(key);"
+        },
+        {
+          "line": 42,
+          "text": "* a different candidate but must never replace the stored original. get()"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+      "mentions": 15,
+      "signatures": [
+        {
+          "line": 5,
+          "signature": "export class DexieVida6EcosystemsSpeciesRepository "
+        },
+        {
+          "line": 8,
+          "signature": "async ensure(snapshot: Vida6EcosystemSnapshot): Promise<Vida6EcosystemSnapshot> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 2,
+          "text": "import { VIDA6_REVISION, type Vida6EcosystemSnapshot } from '../../../domain/life/vida6-ecosystems-species';"
+        },
+        {
+          "line": 8,
+          "text": "async ensure(snapshot: Vida6EcosystemSnapshot): Promise<Vida6EcosystemSnapshot> {"
+        },
+        {
+          "line": 8,
+          "text": "async ensure(snapshot: Vida6EcosystemSnapshot): Promise<Vida6EcosystemSnapshot> {"
+        },
+        {
+          "line": 8,
+          "text": "async ensure(snapshot: Vida6EcosystemSnapshot): Promise<Vida6EcosystemSnapshot> {"
+        },
+        {
+          "line": 15,
+          "text": "const same = (row: {snapshotJson:string;digest:string;modelRevision:string}):Vida6EcosystemSnapshot => {"
+        },
+        {
+          "line": 15,
+          "text": "const same = (row: {snapshotJson:string;digest:string;modelRevision:string}):Vida6EcosystemSnapshot => {"
+        },
+        {
+          "line": 16,
+          "text": "const previous = JSON.parse(row.snapshotJson) as Vida6EcosystemSnapshot;"
+        },
+        {
+          "line": 16,
+          "text": "const previous = JSON.parse(row.snapshotJson) as Vida6EcosystemSnapshot;"
+        },
+        {
+          "line": 26,
+          "text": "return await this.db.transaction('rw',this.db.privateEcologicalBiospheres,async()=>{"
+        },
+        {
+          "line": 27,
+          "text": "const previous = await this.db.privateEcologicalBiospheres.get(key);"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/backup/genesis-backup-validator.ts",
+      "mentions": 13,
+      "signatures": [
+        {
+          "line": 66,
+          "signature": "export class GenesisBackupValidationError\n  extends Error "
+        },
+        {
+          "line": 82,
+          "signature": "export class GenesisBackupValidator "
+        },
+        {
+          "line": 89,
+          "signature": "validate(\n    input:\n      unknown,\n  ): GenesisBackupSnapshot "
+        },
+        {
+          "line": 165,
+          "signature": "private validateUniverse(\n    input:\n      unknown,\n\n    path:\n      string,\n\n    universeKeys:\n      Set<string>,\n\n    observationIds:\n      Set<string>,\n    formatVersion: number,\n  ): UniverseBackupSnapshot "
+        },
+        {
+          "line": 392,
+          "signature": "private validateNavigation(\n    input:\n      unknown,\n\n    path:\n      string,\n  ): NavigationBackupEntry "
+        },
+        {
+          "line": 473,
+          "signature": "private validateGalaxy(\n    input:\n      unknown,\n\n    path:\n      string,\n\n    galaxyIndices:\n      Set<string>,\n  ): GalaxyBackupEntry "
+        },
+        {
+          "line": 556,
+          "signature": "private validateDiscovery(\n    input:\n      unknown,\n\n    path:\n      string,\n\n    generationKey:\n      UniverseGenerationKey,\n\n    discoveryKeys:\n      Set<string>,\n  ): DiscoveryBackupEntry "
+        },
+        {
+          "line": 754,
+          "signature": "private validateObservation(\n    input:\n      unknown,\n\n    path:\n      string,\n\n    observationIds:\n      Set<string>,\n  ): ObservationBackupEntry "
+        },
+        {
+          "line": 858,
+          "signature": "private validateProgress(\n    input:\n      unknown,\n\n    path:\n      string,\n\n    progressKeys:\n      Set<string>,\n  ): ProgressBackupEntry "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 10,
+          "text": "} from '../../../domain/backup/genesis-backup';"
+        },
+        {
+          "line": 10,
+          "text": "} from '../../../domain/backup/genesis-backup';"
+        },
+        {
+          "line": 97,
+          "text": "'backup',"
+        },
+        {
+          "line": 107,
+          "text": "'backup',"
+        },
+        {
+          "line": 113,
+          "text": "'backup.formatVersion',"
+        },
+        {
+          "line": 119,
+          "text": "`Unsupported backup formatVersion: ${formatVersion}.`,"
+        },
+        {
+          "line": 126,
+          "text": "'backup.exportedAtEpochMs',"
+        },
+        {
+          "line": 132,
+          "text": "'backup.universes',"
+        },
+        {
+          "line": 149,
+          "text": "`backup.universes[${index}]`,"
+        },
+        {
+          "line": 198,
+          "text": "...(formatVersion === 2 ? ['privateBiospheres'] : []),"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-procedural-ecology-vida4.repository.ts",
+      "mentions": 10,
+      "signatures": [
+        {
+          "line": 5,
+          "signature": "export class DexieProceduralEcologyVIDA4Repository "
+        },
+        {
+          "line": 8,
+          "signature": "async ensure(snapshot: Vida4EcologySnapshot): Promise<Vida4EcologySnapshot> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 8,
+          "text": "async ensure(snapshot: Vida4EcologySnapshot): Promise<Vida4EcologySnapshot> {"
+        },
+        {
+          "line": 13,
+          "text": "const same = (row: {snapshotJson: string; digest: string; modelRevision: string}) => {"
+        },
+        {
+          "line": 14,
+          "text": "const previous = JSON.parse(row.snapshotJson) as Vida4EcologySnapshot;"
+        },
+        {
+          "line": 23,
+          "text": "return await this.db.transaction('rw', this.db.privateEcologicalBiospheres, async () => {"
+        },
+        {
+          "line": 24,
+          "text": "const previous = await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 24,
+          "text": "const previous = await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 26,
+          "text": "await this.db.privateEcologicalBiospheres.add({"
+        },
+        {
+          "line": 29,
+          "text": "snapshotJson: JSON.stringify(snapshot), digest: snapshot.digest,"
+        },
+        {
+          "line": 35,
+          "text": "const previous = await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 35,
+          "text": "const previous = await this.db.privateEcologicalBiospheres.get(key);"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-vida5c-advanced-biospheres.repository.ts",
+      "mentions": 10,
+      "signatures": [
+        {
+          "line": 4,
+          "signature": "export class DexieVida5cAdvancedBiospheresRepository "
+        },
+        {
+          "line": 6,
+          "signature": "async ensure(snapshot: Vida5cAdvancedBiosphere): Promise<Vida5cAdvancedBiosphere> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 6,
+          "text": "async ensure(snapshot: Vida5cAdvancedBiosphere): Promise<Vida5cAdvancedBiosphere> {"
+        },
+        {
+          "line": 11,
+          "text": "const same = (value: {snapshotJson: string;digest: string;modelRevision:string}) => {"
+        },
+        {
+          "line": 12,
+          "text": "const prior = JSON.parse(value.snapshotJson) as Vida5cAdvancedBiosphere;"
+        },
+        {
+          "line": 20,
+          "text": "return await this.db.transaction('rw', this.db.privateEcologicalBiospheres, async () => {"
+        },
+        {
+          "line": 21,
+          "text": "const old = await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 21,
+          "text": "const old = await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 23,
+          "text": "await this.db.privateEcologicalBiospheres.add({universeSeed:id.universeSeed,"
+        },
+        {
+          "line": 26,
+          "text": "snapshotJson:JSON.stringify(snapshot),digest:snapshot.digest});"
+        },
+        {
+          "line": 31,
+          "text": "const old = await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 31,
+          "text": "const old = await this.db.privateEcologicalBiospheres.get(key);"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-vida7-intelligence-civilizations.repository.ts",
+      "mentions": 10,
+      "signatures": [
+        {
+          "line": 6,
+          "signature": "export class DexieVida7IntelligenceCivilizationsRepository "
+        },
+        {
+          "line": 9,
+          "signature": "async ensure(snapshot: Vida7IntelligenceCivilizationSnapshot):\n    Promise<Vida7IntelligenceCivilizationSnapshot> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 9,
+          "text": "async ensure(snapshot: Vida7IntelligenceCivilizationSnapshot):"
+        },
+        {
+          "line": 21,
+          "text": "const same=(row:{snapshotJson:string;digest:string;modelRevision:string})=>{"
+        },
+        {
+          "line": 22,
+          "text": "const prior=JSON.parse(row.snapshotJson) as Vida7IntelligenceCivilizationSnapshot;"
+        },
+        {
+          "line": 34,
+          "text": "return await this.db.transaction('rw',this.db.privateEcologicalBiospheres,async()=>{"
+        },
+        {
+          "line": 35,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 35,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 37,
+          "text": "await this.db.privateEcologicalBiospheres.add({"
+        },
+        {
+          "line": 40,
+          "text": "snapshotJson:JSON.stringify(snapshot),digest:snapshot.digest,"
+        },
+        {
+          "line": 46,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 46,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-vida8-technological-colonization.repository.ts",
+      "mentions": 10,
+      "signatures": [
+        {
+          "line": 4,
+          "signature": "export class DexieVida8TechnologicalColonizationRepository "
+        },
+        {
+          "line": 6,
+          "signature": "async ensure(snapshot:Vida8ColonizationSnapshot):Promise<Vida8ColonizationSnapshot>"
+        }
+      ],
+      "snippets": [
+        {
+          "line": 6,
+          "text": "async ensure(snapshot:Vida8ColonizationSnapshot):Promise<Vida8ColonizationSnapshot>{"
+        },
+        {
+          "line": 19,
+          "text": "const same=(row:{snapshotJson:string;digest:string;modelRevision:string})=>{"
+        },
+        {
+          "line": 20,
+          "text": "const prior=JSON.parse(row.snapshotJson) as Vida8ColonizationSnapshot;"
+        },
+        {
+          "line": 31,
+          "text": "return await this.db.transaction('rw',this.db.privateEcologicalBiospheres,async()=>{"
+        },
+        {
+          "line": 32,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 32,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 34,
+          "text": "await this.db.privateEcologicalBiospheres.add({"
+        },
+        {
+          "line": 37,
+          "text": "snapshotJson:JSON.stringify(snapshot),digest:snapshot.digest,"
+        },
+        {
+          "line": 43,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        },
+        {
+          "line": 43,
+          "text": "const prior=await this.db.privateEcologicalBiospheres.get(key);"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/backup/dexie-genesis-backup.service.ts",
+      "mentions": 6,
+      "signatures": [
+        {
+          "line": 52,
+          "signature": "export class DexieGenesisBackupService\n  implements GenesisBackupPort "
+        },
+        {
+          "line": 75,
+          "signature": "async createSnapshot():\n    Promise<GenesisBackupSnapshot> "
+        },
+        {
+          "line": 139,
+          "signature": "async exportJson():\n    Promise<string> "
+        },
+        {
+          "line": 149,
+          "signature": "async importJson(\n    json:\n      string,\n  ): Promise<void> "
+        },
+        {
+          "line": 173,
+          "signature": "async importSnapshot(\n    snapshot:\n      unknown,\n  ): Promise<void> "
+        },
+        {
+          "line": 481,
+          "signature": "private async createUniverseSnapshot(\n    universe:\n      UniverseEntity,\n  ): Promise<UniverseBackupSnapshot> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 6,
+          "text": "} from '../../../domain/backup/genesis-backup';"
+        },
+        {
+          "line": 6,
+          "text": "} from '../../../domain/backup/genesis-backup';"
+        },
+        {
+          "line": 46,
+          "text": "} from './genesis-backup-validator';"
+        },
+        {
+          "line": 375,
+          "text": "this.database.privateEcologicalBiospheres,"
+        },
+        {
+          "line": 405,
+          "text": "this.database.privateEcologicalBiospheres.clear(),"
+        },
+        {
+          "line": 495,
+          "text": ".get("
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-procedural-microbial-vida3.repository.ts",
+      "mentions": 6,
+      "signatures": [
+        {
+          "line": 5,
+          "signature": "export class DexieProceduralMicrobialVIDA3Repository "
+        },
+        {
+          "line": 8,
+          "signature": "async ensure(snapshot: Vida3MicrobialSnapshot): Promise<Vida3MicrobialSnapshot> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 8,
+          "text": "async ensure(snapshot: Vida3MicrobialSnapshot): Promise<Vida3MicrobialSnapshot> {"
+        },
+        {
+          "line": 16,
+          "text": "const same = (existing: {snapshotJson: string; digest: string}): Vida3MicrobialSnapshot => {"
+        },
+        {
+          "line": 17,
+          "text": "const prior = JSON.parse(existing.snapshotJson) as Vida3MicrobialSnapshot;"
+        },
+        {
+          "line": 25,
+          "text": "const existing = await this.db.privateMicrobialBiospheres.get(key);"
+        },
+        {
+          "line": 30,
+          "text": "snapshotJson: JSON.stringify(snapshot), digest: snapshot.digest,"
+        },
+        {
+          "line": 37,
+          "text": "const existing = await this.db.privateMicrobialBiospheres.get(key);"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-universe.repository.ts",
+      "mentions": 5,
+      "signatures": [
+        {
+          "line": 23,
+          "signature": "export class DexieUniverseRepository\n  implements UniverseRepository "
+        },
+        {
+          "line": 35,
+          "signature": "async createIfAbsent(\n  generationKey:\n    UniverseGenerationKey,\n): Promise<boolean> "
+        },
+        {
+          "line": 111,
+          "signature": "async exists(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<boolean> "
+        },
+        {
+          "line": 138,
+          "signature": "async getAll():\n    Promise<\n      readonly UniverseGenerationKey[]\n    > "
+        },
+        {
+          "line": 181,
+          "signature": "async delete(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<boolean> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 73,
+          "text": ".get("
+        },
+        {
+          "line": 130,
+          "text": ".get(["
+        },
+        {
+          "line": 216,
+          "text": "this.database.privateEcologicalBiospheres,"
+        },
+        {
+          "line": 223,
+          "text": ".get("
+        },
+        {
+          "line": 299,
+          "text": "await this.database.privateEcologicalBiospheres"
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-discovery-points.repository.ts",
+      "mentions": 4,
+      "signatures": [
+        {
+          "line": 42,
+          "signature": "export class DexieDiscoveryPointsRepository\n  implements DiscoveryPointsRepository "
+        },
+        {
+          "line": 54,
+          "signature": "async getGlobalDiscoveryPoints(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<bigint> "
+        },
+        {
+          "line": 81,
+          "signature": "async getLifetimeEarnedGlobalDiscoveryPoints(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<bigint> "
+        },
+        {
+          "line": 133,
+          "signature": "async ensureLifetimeEarnedGlobalDiscoveryPointsAtLeast(\n    generationKey:\n      UniverseGenerationKey,\n\n    minimumHistoricalLifetimeEarnedDiscoveryPoints:\n      bigint,\n  ): Promise<bigint> "
+        },
+        {
+          "line": 279,
+          "signature": "async setGlobalDiscoveryPoints(\n    generationKey:\n      UniverseGenerationKey,\n\n    discoveryPoints:\n      bigint,\n  ): Promise<void> "
+        },
+        {
+          "line": 435,
+          "signature": "async getGalaxyDiscoveryPoints(\n    generationKey:\n      UniverseGenerationKey,\n\n    galaxyIndex:\n      bigint,\n  ): Promise<bigint> "
+        },
+        {
+          "line": 490,
+          "signature": "async setGalaxyDiscoveryPoints(\n    generationKey:\n      UniverseGenerationKey,\n\n    galaxyIndex:\n      bigint,\n\n    discoveryPoints:\n      bigint,\n  ): Promise<void> "
+        },
+        {
+          "line": 539,
+          "signature": "private async getGlobalProgressEntity(\n    generationKey:\n      UniverseGenerationKey,\n  ) "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 162,
+          "text": ".get(["
+        },
+        {
+          "line": 308,
+          "text": ".get(["
+        },
+        {
+          "line": 470,
+          "text": ".get(["
+        },
+        {
+          "line": 559,
+          "text": ".get(["
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-galaxy-knowledge-snapshot.repository.ts",
+      "mentions": 3,
+      "signatures": [
+        {
+          "line": 27,
+          "signature": "export class DexieGalaxyKnowledgeSnapshotRepository\n  implements GalaxyKnowledgeSnapshotRepository "
+        },
+        {
+          "line": 34,
+          "signature": "async get(\n    generationKey: UniverseGenerationKey,\n    galaxyIndex: bigint,\n    scientificModelVersion: number,\n  ): Promise<GalaxyKnowledgeSnapshotEntity | undefined> "
+        },
+        {
+          "line": 55,
+          "signature": "async put(\n    entity: GalaxyKnowledgeSnapshotEntity,\n  ): Promise<void> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 16,
+          "text": "get("
+        },
+        {
+          "line": 34,
+          "text": "async get("
+        },
+        {
+          "line": 47,
+          "text": "return this.database.galaxyKnowledgeSnapshots.get(["
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-discovery.repository.ts",
+      "mentions": 2,
+      "signatures": [
+        {
+          "line": 84,
+          "signature": "export class DexieDiscoveryRepository\n  implements DiscoveryRepository "
+        },
+        {
+          "line": 99,
+          "signature": "async getState(\n    generationKey:\n      UniverseGenerationKey,\n\n    locator:\n      ProceduralLocator,\n  ): Promise<DiscoveryStateValue> "
+        },
+        {
+          "line": 188,
+          "signature": "async setState(\n    generationKey:\n      UniverseGenerationKey,\n\n    locator:\n      ProceduralLocator,\n\n    state:\n      DiscoveryStateValue,\n  ): Promise<void> "
+        },
+        {
+          "line": 308,
+          "signature": "async getKnownDiscoveries(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<\n    readonly KnownDiscovery[]\n  > "
+        },
+        {
+          "line": 364,
+          "signature": "async getKnownDiscoveriesInGalaxy(\n    generationKey:\n      UniverseGenerationKey,\n\n    galaxyIndex:\n      bigint,\n\n    targetTypeCode?:\n      number,\n  ): Promise<\n    readonly KnownDiscovery[]\n  > "
+        },
+        {
+          "line": 425,
+          "signature": "async getKnownDiscoveriesInSector(\n    generationKey:\n      UniverseGenerationKey,\n\n    galaxyIndex:\n      bigint,\n\n    coordinates:\n      GalaxySectorCoordinates,\n  ): Promise<\n    readonly KnownDiscovery[]\n  > "
+        },
+        {
+          "line": 505,
+          "signature": "async getObservationProgressMilestones(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<\n    readonly ObservationProgressMilestone[]\n  > "
+        },
+        {
+          "line": 650,
+          "signature": "private toKnownDiscovery(\n    generationKey:\n      UniverseGenerationKey,\n\n    entity:\n      DiscoveryEntity,\n  ): KnownDiscovery "
+        },
+        {
+          "line": 709,
+          "signature": "private assertSpatialIntegrity(\n    entity:\n      DiscoveryEntity,\n  ): void "
+        },
+        {
+          "line": 725,
+          "signature": "private resolveTargetSeed(\n    generationKey:\n      UniverseGenerationKey,\n\n    locator:\n      ProceduralLocator,\n  ): string "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 135,
+          "text": ".get(["
+        },
+        {
+          "line": 248,
+          "text": ".get("
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-external-galaxy-search-state.repository.ts",
+      "mentions": 2,
+      "signatures": [
+        {
+          "line": 30,
+          "signature": "export class DexieExternalGalaxySearchStateRepository "
+        },
+        {
+          "line": 41,
+          "signature": "async getState(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<PersistedExternalGalaxySearchState> "
+        },
+        {
+          "line": 125,
+          "signature": "async setState(\n    generationKey:\n      UniverseGenerationKey,\n\n    state:\n      PersistedExternalGalaxySearchState,\n  ): Promise<void> "
+        },
+        {
+          "line": 238,
+          "signature": "async getConsecutiveFailedSearches(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<bigint> "
+        },
+        {
+          "line": 251,
+          "signature": "async setConsecutiveFailedSearches(\n    generationKey:\n      UniverseGenerationKey,\n\n    consecutiveFailedSearches:\n      bigint,\n  ): Promise<void> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 62,
+          "text": ".get(["
+        },
+        {
+          "line": 180,
+          "text": ".get(["
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-scientific-evidence.repository.ts",
+      "mentions": 2,
+      "signatures": [
+        {
+          "line": 72,
+          "signature": "export class DexieScientificEvidenceRepository\n  implements ScientificEvidenceRepository "
+        },
+        {
+          "line": 83,
+          "signature": "async getEvidence(\n    generationKey:\n      UniverseGenerationKey,\n\n    locator:\n      ProceduralLocator,\n  ): Promise<readonly ScientificEvidence[]> "
+        },
+        {
+          "line": 140,
+          "signature": "async recordEvidence(\n    generationKey:\n      UniverseGenerationKey,\n\n    locator:\n      ProceduralLocator,\n\n    evidence:\n      ScientificEvidence,\n  ): Promise<ScientificEvidence> "
+        },
+        {
+          "line": 240,
+          "signature": "private targetIdentity(\n    generationKey:\n      UniverseGenerationKey,\n\n    locator:\n      ProceduralLocator,\n  ): ScientificEvidenceTargetIdentity "
+        },
+        {
+          "line": 280,
+          "signature": "private fromObservation(\n    observation:\n      "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 68,
+          "text": "* - existing backup/import already carries the records;"
+        },
+        {
+          "line": 171,
+          "text": ".get("
+        }
+      ]
+    },
+    {
+      "file": "src/app/data/local/repository/dexie-universe-navigation.repository.ts",
+      "mentions": 2,
+      "signatures": [
+        {
+          "line": 21,
+          "signature": "export class DexieUniverseNavigationRepository\n  implements UniverseNavigationRepository "
+        },
+        {
+          "line": 33,
+          "signature": "async getNavigation(\n    generationKey:\n      UniverseGenerationKey,\n  ): Promise<UniverseNavigationState> "
+        },
+        {
+          "line": 94,
+          "signature": "async setNavigation(\n    generationKey:\n      UniverseGenerationKey,\n\n    navigation:\n      UniverseNavigationState,\n  ): Promise<void> "
+        }
+      ],
+      "snippets": [
+        {
+          "line": 54,
+          "text": ".get(["
+        },
+        {
+          "line": 139,
+          "text": ".get(["
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "identityTrace": "IDENTIDAD_TRAZADA_REQUIERE_CASOS_PRODUCTIVOS",
+    "repositoryApiDiscovery": "FUENTES_LOCALIZADAS",
+    "indexedDbRoundTrip": "NO_EJECUTADA_REPOSITORIOS_REALES"
+  },
+  "requirements": [
+    "Probar con el generador VIDA.6 productivo dos reconstrucciones independientes y un caso de consulta desde otra ubicación conservando species.id.",
+    "Instanciar la base Dexie real y sus repositorios VIDA.6/9 en un entorno IndexedDB de prueba aislado.",
+    "Guardar y leer por los métodos reales, reconstruir el contrato con el mapper productivo y comparar species.id, variantSeedUint32 y appearanceFingerprint.",
+    "Cerrar 38.4 solo cuando la prueba real anterior pase; JSON roundtrip y auditorías estáticas no la sustituyen."
+  ]
+}

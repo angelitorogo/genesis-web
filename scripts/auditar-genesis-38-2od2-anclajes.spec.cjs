@@ -1,0 +1,15 @@
+'use strict';
+const fs=require('node:fs'), path=require('node:path'), assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');
+const scene=fs.readFileSync(path.join(root,'src/app/presentation/life-species-visual/vida38-species-visual-preview-scene.ts'),'utf8');
+const renderer=fs.readFileSync(path.join(root,'src/app/presentation/life-species-visual/vida38-civilized-reptilian-preview-38-2o.ts'),'utf8');
+assert.match(scene,/createVida38CivilizedReptilianPreview38O/);
+assert.match(renderer,/buildVida38HumanoidRawMesh\(anatomy, quality\)/);
+assert.match(renderer,/createVida38HumanoidSkinV1\(reptilianRaw, baseContract\)/);
+assert.match(renderer,/surfaceAt38OD/);
+assert.match(renderer,/fittedGarment38OD/);
+assert.match(renderer,/getAttribute\('position'\)/);
+assert.match(renderer,/vida38ReptilianAnchored38OD2/);
+assert.doesNotMatch(renderer,/new THREE\.(ExtrudeGeometry|CylinderGeometry|TorusGeometry)/);
+assert.doesNotMatch(renderer,/geometry\.attributes\.position/);
+console.log('GENESIS_38_2OD2_AUDIT_OK: SDF presente; ropa sobre superficie; anclajes anatómicos; sin decorado cilíndrico');

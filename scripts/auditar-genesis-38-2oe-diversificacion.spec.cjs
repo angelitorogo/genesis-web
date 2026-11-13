@@ -1,0 +1,16 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const file = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-civilized-reptilian-preview-38-2o.ts'), 'utf8');
+assert.match(file, /AMPHIBIOUS_DIPLOMAT/);
+assert.match(file, /LONGNECK_SEER/);
+assert.match(file, /HORNED_WARLORD/);
+assert.match(file, /PLATED_TITAN/);
+assert.match(file, /EXTREME_DIGITIGRADE_HUNTER/);
+assert.match(file, /TECHNO_PRIEST/);
+assert.match(file, /INDUSTRIAL_COLONIZER/);
+assert.match(file, /vida38ReptilianGarmentLine38OE/);
+assert.match(file, /vida38ReptilianCulture38OE/);
+assert.match(file, /VIDA38_2OE_REPTILIAN_HORN/);
+console.log('GENESIS_38_2OE_AUDIT_OK: diversificación amplia de reptilianos civilizados detectada');

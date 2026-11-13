@@ -1,0 +1,181 @@
+{
+  "version": "38.2s8b",
+  "group": "assertions",
+  "started": "2026-11-11T19:04:38.642Z",
+  "ended": "2026-11-11T19:09:23.363Z",
+  "results": [
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-insectoid-38-2q1a.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od2.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 17,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od3.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 18,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od5.spec.ts",
+      "types": [
+        "assertion",
+        "timeout"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 19,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe.spec.ts",
+      "types": [
+        "assertion",
+        "timeout"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 21,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe2.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 16,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe6a.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 17,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe7.spec.ts",
+      "types": [
+        "execution"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 14,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe7b.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe7c.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe8.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 16,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-plant-canopy-support-38-2la.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-dentition-38-2jb.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 16,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-cultural-diversity-38-2oe9.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 16,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptilian-wardrobe-38-2oe8b.spec.ts",
+      "types": [
+        "execution"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 15,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-species-visual-preview-scene.spec.ts",
+      "types": [
+        "assertion",
+        "timeout"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 26,
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts",
+      "types": [
+        "assertion"
+      ],
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 14,
+      "error": null
+    }
+  ]
+}

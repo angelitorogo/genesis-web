@@ -1,0 +1,11 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const spec = fs.readFileSync(path.join(process.cwd(), 'src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe7.spec.ts'), 'utf8');
+const gallery = fs.readFileSync(path.join(process.cwd(), 'src/app/presentation/life-species-visual/vida38-reptilian-gallery-fixtures-38-2oe5.ts'), 'utf8');
+assert.match(gallery, /export type Vida38ReptilianGallerySize38OE5 = 12 \| 24/);
+assert.match(spec, /buildVida38ReptilianGallery38OE5\(24\)/);
+assert.doesNotMatch(spec, /buildVida38ReptilianGallery38OE5\(48\)/);
+for (const ordinal of [7, 121, 17, 18]) assert.match(spec, new RegExp(`ordinal: ${ordinal}(?:\\b|,)`));
+console.log('GENESIS_38_2OE7A_AUDIT_OK: galería 12|24 y pruebas SDF reducidas a cuatro muestras');

@@ -1,0 +1,15 @@
+'use strict';
+const fs=require('node:fs');const path=require('node:path');const assert=require('node:assert/strict');
+const base=path.join(__dirname,'..','src','app','presentation','life-species-visual');
+const gallery=fs.readFileSync(path.join(base,'vida38-reptilian-gallery-38-2oe5.component.ts'),'utf8');
+const viewer=fs.readFileSync(path.join(base,'life-species-visual-preview.ts'),'utf8');
+const data=fs.readFileSync(path.join(base,'vida38-reptilian-gallery-fixtures-38-2oe5.ts'),'utf8');
+assert.match(gallery,/createVida38SpeciesPreviewModelV1/);
+assert.match(gallery,/toDataURL\('image\/png'\)/);
+assert.match(gallery,/model.dispose\(\)/);
+assert.match(viewer,/openGallerySpecimen\(specimen/);
+assert.match(viewer,/restoreRealSpecimen\(\)/);
+assert.match(viewer,/Galería comparativa reptiliana/);
+assert.match(data,/selectVida38ReptilianVariation38OE1/);
+assert.match(data,/LAB_ONLY/);
+console.log('GENESIS_38_2OE5_AUDIT_OK: galería 12-24, render 3D y retorno a especie original');

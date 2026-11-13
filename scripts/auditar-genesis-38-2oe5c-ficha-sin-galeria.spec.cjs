@@ -1,0 +1,13 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const root = path.resolve(__dirname, '..');
+const ui = fs.readFileSync(path.join(root,'src/app/presentation/life-species-visual/life-species-visual-preview.ts'),'utf8');
+assert.match(ui, /@Input\(\) showReptilianGalleryToggle = false;/);
+assert.match(ui, /@if \(showReptilianGalleryToggle\)/);
+assert.match(ui, /toggleMoveMode\(\)/);
+assert.match(ui, /resetView\(\)/);
+assert.match(ui, /@if \(comparisonContract !== null\)/);
+assert.match(ui, /openGallerySpecimen\(specimen: Vida38SpeciesVisualContract\)/);
+console.log('GENESIS_38_2OE5C_AUDIT_OK: la ficha del juego no ofrece el acceso a la galería por defecto; visor intacto');

@@ -1,0 +1,57 @@
+{
+  "revision": "GENESIS/38.4a2/mapper-biologico/v1",
+  "file": "src/app/presentation/life-species-visual/vida38-species-visual-contract.ts",
+  "hash32IdentityMappings": [
+    {
+      "seedLine": 182,
+      "seedExpression": "hash32(identity)",
+      "identityLine": 168,
+      "identityExpression": "`VIDA.38.1|${species.id}`",
+      "localDependencies": [
+        {
+          "name": "species",
+          "line": 152,
+          "expression": "matches[0]!"
+        },
+        {
+          "name": "matches",
+          "line": 150,
+          "expression": "confirmedRecord.ecosystem.species.filter(species => species.id === speciesId)"
+        }
+      ],
+      "properties": [
+        "confirmedRecord.ecosystem",
+        "confirmedRecord.ecosystem.species",
+        "confirmedRecord.ecosystem.species.filter",
+        "matches[0]",
+        "species.id"
+      ],
+      "spatialDependencies": [],
+      "unresolvedSymbols": [],
+      "state": "SIN_DEPENDENCIA_ESPACIAL_DIRECTA"
+    }
+  ],
+  "allSeedAssignments": [
+    {
+      "line": 182,
+      "expression": "hash32(identity)"
+    }
+  ],
+  "exportedMappers": [
+    {
+      "name": "vida38SpeciesVisualContractFromConfirmedV1",
+      "line": 137,
+      "parameters": [
+        "confirmedRecord: Vida38ConfirmedBiologySource | null",
+        "speciesId: string"
+      ]
+    }
+  ],
+  "parseDiagnostics": [],
+  "overall": "SIN_DEPENDENCIA_ESPACIAL_DIRECTA",
+  "limitations": [
+    "No prueba por sí mismo la estabilidad de species.id (puede codificar origen espacial) ni la semántica de funciones importadas.",
+    "No equivale a backup/restore de IndexedDB.",
+    "Las diferencias biológicas deben verificarse mediante tests productivos con fixtures VIDA reales."
+  ]
+}

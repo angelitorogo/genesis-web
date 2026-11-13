@@ -1,0 +1,12 @@
+{
+  "revision": "GENESIS/38.4a5/repository-contract-guard/v1",
+  "requiredSourceFiles": [
+    "src/app/data/local/repository/dexie-vida6-ecosystems-species.repository.ts",
+    "src/app/data/local/repository/dexie-vida9-biology-exploration.repository.ts",
+    "src/app/presentation/life-species-visual/vida38-species-visual-contract.ts"
+  ],
+  "failures": [],
+  "repositoryRoundTrip": "NO_EJECUTADO",
+  "indexedDBEngineTest": "EJECUTAR_PLAYWRIGHT",
+  "reason": "Las implementaciones completas y esquema no fueron aportados; no se suplantan los repositorios por dobles."
+}

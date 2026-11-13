@@ -1,0 +1,250 @@
+{
+  "revision": "38.2s8c",
+  "group": "pending",
+  "started": "2026-11-11T19:43:13.943Z",
+  "results": [
+    {
+      "file": "src/app/presentation/galaxy-map/galactic-map-particle-layout.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 48,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_galaxy-map_galactic-map-particle-layout.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/laboratory/galactic-objects/galactic-object-laboratory.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_laboratory_galactic-objects_galactic-object-laboratory.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-38-2s4.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 19,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-advanced-reptilian-38-2s4.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-38-2s7.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 19,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-advanced-reptilian-38-2s7.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-advanced-reptilian-38-2s8.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-advanced-reptilian-38-2s8.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-bird-face-visibility-38-2ia2b.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 18,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-bird-face-visibility-38-2ia2b.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-birds-38-2i.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-birds-38-2i.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-birds-refinement-38-2ia.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 17,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-birds-refinement-38-2ia.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2o.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 17,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2o.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2od.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 26,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2od.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe4.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe4.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-civilized-reptilian-38-2oe6.spec.ts",
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 34,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-civilized-reptilian-38-2oe6.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-morphology-38-2f.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 20,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-humanoid-morphology-38-2f.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-organic-field-38-2e.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 25,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-humanoid-organic-field-38-2e.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-refinement-38-2g.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 22,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-humanoid-refinement-38-2g.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-humanoid-refinement-38-2gc.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 17,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-humanoid-refinement-38-2gc.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-insects-38-2k.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 17,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-insects-38-2k.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-mammals-38-2h.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-mammals-38-2h.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-no-decorative-rocks-38-2mb.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 18,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-no-decorative-rocks-38-2mb.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-no-decorative-support-38-2ma.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 17,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-no-decorative-support-38-2ma.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-plant-canopy-support-38-2la.spec.ts",
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-plant-canopy-support-38-2la.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-dentition-38-2jb.spec.ts",
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 16,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-reptile-dentition-38-2jb.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 17,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-reptile-eyes-38-2p.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/life-species-visual/vida38-reptiles-38-2j.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 20,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_life-species-visual_vida38-reptiles-38-2j.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/scientific-body-preview/scientific-minor-body-texture-vis3d2e.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 19,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_scientific-body-preview_scientific-minor-body-texture-vis3d2e.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/system/system-scene-artificial-satellites-visciv2.spec.ts",
+      "ok": false,
+      "exitCode": 1,
+      "seconds": 14,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_system_system-scene-artificial-satellites-visciv2.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/system/system-scene-civilization-surface-parity-visciv1d.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 19,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_system_system-scene-civilization-surface-parity-visciv1d.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/system/system-scene-planet-clouds-vis3d2f.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 30,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_system_system-scene-planet-clouds-vis3d2f.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/presentation/system/system-scene-planet-texture-refinement.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 21,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_presentation_system_system-scene-planet-texture-refinement.spec.ts.log",
+      "error": null
+    },
+    {
+      "file": "src/app/simulation/life/vida-t1-civilized-founder.spec.ts",
+      "ok": true,
+      "exitCode": 0,
+      "seconds": 17,
+      "log": "docs\\audits\\38-2s8c\\runs\\src_app_simulation_life_vida-t1-civilized-founder.spec.ts.log",
+      "error": null
+    }
+  ],
+  "ended": "2026-11-11T19:53:39.989Z",
+  "passed": 26,
+  "failed": 4
+}

@@ -1,0 +1,10 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const eyes = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p.ts'), 'utf8');
+assert.match(eyes, /VIDA\.38\.2p2\/reptile-orbital-globe\/v1/);
+assert.match(eyes, /GLOBE/);
+assert.match(eyes, /globeInset/);
+assert.match(eyes, /globeHex/);
+console.log('GENESIS_38_2P2_AUDIT_OK: globo ocular reptiliano integrado presente');

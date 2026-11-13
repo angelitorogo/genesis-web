@@ -1,0 +1,12 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const eyes = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-reptile-eyes-38-2p.ts'), 'utf8');
+const preview = fs.readFileSync(path.join(__dirname, '..', 'src/app/presentation/life-species-visual/vida38-reptile-preview-38-2j.ts'), 'utf8');
+assert.match(eyes, /VIDA\.38\.2p1\/reptile-ocular-refined\/v1/);
+assert.match(eyes, /UPPER_LID/);
+assert.match(eyes, /LOWER_LID/);
+assert.match(eyes, /ORBIT/);
+assert.match(preview, /VIDA38_2J_MOUTH_SEAM/);
+console.log('GENESIS_38_2P1_AUDIT_OK: refinamiento ocular y facial de reptiles presente');

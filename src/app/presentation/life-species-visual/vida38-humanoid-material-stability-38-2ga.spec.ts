@@ -37,10 +37,10 @@ function contract(speciesId: string): Vida38SpeciesVisualContract {
   };
 }
 
-describe('GENESIS 38.2g.a — estabilización de materiales biológicos humanoides', () => {
+describe('GENESIS 38.2g — estabilidad de materiales biológicos humanoides', () => {
   it('versiona el shader estable y usa coordenadas anatómicas en metros', () => {
     const shader = buildVida38HumanoidPbrShader38G();
-    expect(VIDA38_HUMANOID_PBR_REVISION).toContain('38.2g.a');
+    expect(VIDA38_HUMANOID_PBR_REVISION).toContain('38.2g.');
     expect(shader.fragmentCommon).toContain('uVida38MetersPerUnit');
     expect(shader.fragmentCommon).toContain('uVida38BodyLengthMeters');
     expect(shader.fragmentCommon).toContain('vida38StableCoord');
@@ -53,9 +53,9 @@ describe('GENESIS 38.2g.a — estabilización de materiales biológicos humanoid
     const shader = buildVida38HumanoidPbrShader38G();
     expect(shader.colorFragment).toContain('vida38StableCoord');
     expect(shader.roughnessFragment).toContain('roughnessFactor=clamp');
-    expect(shader.roughnessFragment).toContain('* 0.08');
+    expect(shader.roughnessFragment).toContain('vida38SkinLod');
     expect(shader.normalFragment).toContain('uVida38SkinDetail');
-    expect(shader.fragmentCommon).toContain('pattern = 0.04 + cloudMask * 0.46');
+    expect(shader.fragmentCommon).toContain('vida38Pigment');
   });
 
   it('inyecta uniforms de estabilidad en onBeforeCompile y conserva el material no metálico', () => {

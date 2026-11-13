@@ -7,6 +7,8 @@
  * comprobar determinismo, conexión topológica y seguridad numérica en Node.
  */
 import type { Vida38SpeciesVisualContract } from './vida38-species-visual-contract';
+import { deriveVida38HumanoidFace38GD, type Vida38HumanoidFaceProfile38GD } from './vida38-humanoid-face-38-2gd';
+import { deriveVida38HumanoidTorso38GE, type Vida38HumanoidTorsoProfile38GE } from './vida38-humanoid-torso-38-2ge';
 import {
   deriveVida38HumanoidMorphologyV1,
   type Vida38HumanoidMorphologyProfileV1,
@@ -22,6 +24,10 @@ export interface Vida38HumanoidAnatomy {
   readonly revision: typeof VIDA38_HUMANOID_ORGANIC_REVISION;
   /** 38.2f: perfil versionado independiente de pigmentación, aplicado en SDF. */
   readonly morphology: Vida38HumanoidMorphologyProfileV1;
+  /** 38.2g.d — reconstrucción craneofacial hipotética versionada. */
+  readonly face: Vida38HumanoidFaceProfile38GD;
+  /** 38.2g.e: constitución, vello torácico y separación anatómica de los brazos. */
+  readonly torso: Vida38HumanoidTorsoProfile38GE;
   readonly visualSeed: number;
   readonly speciesId: string;
   readonly lengthMeters: number;
@@ -89,6 +95,32 @@ export interface Vida38HumanoidRawMesh {
   readonly bounds: { readonly min: V3; readonly max: V3 };
 }
 
+/** 38.2g.c — coordenadas craneales compartidas entre SDF y globo ocular. */
+export interface Vida38HumanoidFaceLandmarks38GC {
+  readonly eyeY: number;
+  readonly eyeCenterZ: number;
+  readonly globeRadius: number;
+  readonly socketZ: number;
+  readonly lipY: number;
+  readonly jawY: number;
+}
+export function deriveVida38HumanoidFaceLandmarks38GC(a: Vida38HumanoidAnatomy): Vida38HumanoidFaceLandmarks38GC {
+  const eyeY = a.legLength + (1.18 + (a.neckLength - 1) * 0.14) * a.torsoLength;
+  const socketZ = 0.248 + a.faceProjection * 0.12;
+  // El globo se aloja DETRÁS del reborde orbital, no delante de la piel.
+  // 38.2g lo colocaba ~0.07 u más adelante: producía ojos de muñeco.
+  const globeRadius = a.eyeRadius * 0.80;
+  const eyeCenterZ = socketZ - a.eyeRadius * 1.04;
+  return Object.freeze({
+    eyeY,
+    eyeCenterZ,
+    globeRadius,
+    socketZ,
+    lipY: a.legLength + (1.021 + (a.neckLength - 1) * 0.14) * a.torsoLength,
+    jawY: a.legLength + (1.055 + (a.neckLength - 1) * 0.14) * a.torsoLength,
+  });
+}
+
 function fnv(input: string): number {
   let h = 2166136261;
   for (let i = 0; i < input.length; i++) h = Math.imul(h ^ input.charCodeAt(i), 16777619) >>> 0;
@@ -116,6 +148,8 @@ export function deriveVida38HumanoidAnatomy(contract: Vida38SpeciesVisualContrac
   return Object.freeze({
     revision: VIDA38_HUMANOID_ORGANIC_REVISION,
     morphology,
+    face: deriveVida38HumanoidFace38GD(contract),
+    torso: deriveVida38HumanoidTorso38GE(contract, morphology),
     visualSeed: seed,
     speciesId: contract.speciesId,
     lengthMeters: contract.bodyLengthMeters,
@@ -196,6 +230,8 @@ export function evaluateVida38HumanoidField(a: Vida38HumanoidAnatomy, x: number,
   // Para que todas las partes se fusionen en UNA superficie cerrada, las
   // transiciones hueso/músculo/piel proceden de un único campo escalar.
   const p = a.legLength;
+  const f = a.face;
+  const t = a.torso;
   // 38.2f: deformar el CAMPO en su dominio, antes de Marching Tetrahedra.
   // No se escalan objetos separados, se modifica una única isosuperficie.
   const lean = a.postureLean * Math.max(0, y - p);
@@ -204,76 +240,134 @@ export function evaluateVida38HumanoidField(a: Vida38HumanoidAnatomy, x: number,
   const neckOffset = (a.neckLength - 1) * 0.14;
   const headY = y - neckOffset;
   const kneeY = p * clamp(0.56 - (a.thighRatio - 1) * 0.13 + (a.calfRatio - 1) * 0.08, 0.53, 0.59);
-  let d = ellipsoid(x,y,z,0,p+0.43,0,a.shoulderWidth*1.07,0.45,a.torsoDepth);
-  d = smin(d,ellipsoid(x,y,z,0,p+0.16,0,a.abdomenWidth*0.94,0.305*a.morphology.abdomenVolume,a.torsoDepth*0.83),0.16);
-  d = smin(d,ellipsoid(x,y,z,0,p-0.04,-0.012,a.hipWidth*1.08,0.21,a.torsoDepth*0.95),0.13);
+  // 38.2g.e: pecho, cintura y abdomen responden a un arquetipo corporal
+  // estable: cuerpos filiformes, esbeltos, atléticos, compactos y pesados.
+  // El volumen sigue siendo una única superficie SDF, no mallas escaladas.
+  const chestRadius = a.shoulderWidth * 1.06 * t.chestScale;
+  const waistRadius = a.abdomenWidth * 0.89 * t.waistScale;
+  let d = ellipsoid(x,y,z,0,p+0.44,0,chestRadius,0.43,a.torsoDepth*(0.94+0.06*t.chestScale));
+  d = smin(d,ellipsoid(x,y,z,0,p+0.14,0,waistRadius,0.29*t.abdomenScale,a.torsoDepth*0.86*t.abdomenScale),0.13);
+  d = smin(d,ellipsoid(x,y,z,0,p-0.04,-0.012,a.hipWidth*1.06*(0.94+0.06*t.waistScale),0.21,a.torsoDepth*0.95),0.12);
   d = smin(d,limb(x,y,z,0,p+0.73,-0.01,0,p+0.98+neckOffset,0,0.115*a.neckThickness,0.085*a.neckThickness),0.10);
+  // 38.2g.c: músculos trapecio y clavículas CONTINUOS, no mallas anexas.
+  for (const side of [-1, 1]) {
+    const clx = side * a.shoulderWidth * 0.72;
+    d = smin(d,limb(x,y,z,0,p+0.87,-0.09,clx,p+0.72+side*a.shoulderTilt,-0.015,
+      0.079*a.neckThickness,0.104*a.musculature),0.093);
+    d = smin(d,limb(x,y,z,side*a.shoulderWidth*0.16,p+0.79,a.torsoDepth*0.80,
+      side*a.shoulderWidth*0.89,p+0.68,a.torsoDepth*0.64,
+      0.033*a.musculature,0.039*a.musculature),0.052);
+  }
+
   // Cráneo, mandíbula y estructuras del rostro integrados antes de extraer malla.
-  d = smin(d,ellipsoid(x,headY,z,0,p+1.22,-0.025,a.headWidth,a.headHeight,a.headWidth*0.90*a.headDepth),0.13);
-  d = smin(d,ellipsoid(x,headY,z,0,p+1.055,0.075*a.jawProjection,a.jawWidth,0.142*a.headScale,a.headWidth*0.82*a.headDepth),0.12);
-  d = smin(d,ellipsoid(x,headY,z,0,p+1.19,a.faceProjection,a.headWidth*0.86,0.19*a.headScale,0.105*a.jawProjection),0.09);
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.22,-0.025,a.headWidth*f.facialWidth,a.headHeight*f.skullCrown,a.headWidth*0.90*a.headDepth),0.13);
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.055,0.075*a.jawProjection,a.jawWidth*f.jawBreadth,0.142*a.headScale*f.faceLength,a.headWidth*0.82*a.headDepth),0.12);
+  d = smin(d,ellipsoid(x,headY,z,0,p+1.19,a.faceProjection,a.headWidth*0.86*f.facialWidth,0.19*a.headScale*f.faceLength,0.105*a.jawProjection),0.09);
   // Puente nasal, pirámide de la nariz y mentón fundidos en la piel.
   // La variación se aplica a la ISOSUPERFICIE, no como objetos superpuestos.
   d = smin(d,ellipsoid(x,headY,z,0,p+1.172+0.06*a.cranialShape,0.218+a.faceProjection*0.13,
-    0.043*a.nasalBridge,0.118*a.headScale,0.065*a.morphology.faceProjection),0.069);
+    0.043*a.nasalBridge*f.noseWidth,0.118*a.headScale*f.nasalBridge,0.065*a.morphology.faceProjection),0.069);
+  // Cresta nasal transicional con amplitud dependiente del perfil 38.2f.
+  d = smin(d,limb(x,headY,z,0,p+1.232,0.215+a.faceProjection*0.08,
+    0,p+1.104,0.270+a.faceProjection*0.12,
+    0.024*a.nasalBridge*f.noseWidth,0.041*a.nasalBridge*f.noseWidth),0.035);
   d = smin(d,ellipsoid(x,headY,z,0,p+1.095,0.278+a.faceProjection*0.12,
-    0.057*a.nasalBridge,0.040*a.headScale,0.055*a.nasalBridge),0.037);
+    0.057*a.nasalBridge*f.noseWidth,0.040*a.headScale,0.055*a.nasalBridge),0.037);
   d = smin(d,ellipsoid(x,headY,z,0,p+1.00,0.161*a.jawProjection,
-    a.jawWidth*0.62*a.chinShape,0.055*a.chinShape,0.095*a.jawProjection),0.052);
+    a.jawWidth*0.62*a.chinShape*f.jawBreadth,0.055*a.chinShape,0.095*a.jawProjection*f.chinProjection),0.052);
   // Labios sutiles, con volumen inferior más pequeño: la hendidura será tallada al final.
   d = smin(d,ellipsoid(x,headY,z,0,p+1.039,0.246*a.jawProjection,
-    a.jawWidth*0.49*a.mouthWidth,0.022,0.035),0.018);
+    a.jawWidth*0.49*a.mouthWidth,0.022*f.lipFullness,0.035*f.lipFullness),0.018);
   d = smin(d,ellipsoid(x,headY,z,0,p+1.010,0.240*a.jawProjection,
-    a.jawWidth*0.47*a.mouthWidth,0.017,0.029),0.014);
+    a.jawWidth*0.47*a.mouthWidth,0.017*f.lipFullness,0.029*f.lipFullness),0.014);
   // Ligero volumen pectoral integrado y continuidad dorsal en el tronco.
   for (const side of [-1,1]) {
-    d = smin(d,ellipsoid(x,y,z,side*a.shoulderWidth*0.40,p+0.55,a.torsoDepth*0.62,
-      a.shoulderWidth*0.40,0.18*a.musculature,0.103*a.chestWidth),0.082);
+    d = smin(d,ellipsoid(x,y,z,side*a.shoulderWidth*0.37*t.chestScale,p+0.55,a.torsoDepth*0.62,
+      a.shoulderWidth*0.40*t.chestScale,0.175*a.musculature*t.pectoralDefinition,
+      0.098*a.chestWidth*t.pectoralDefinition),0.075);
   }
   for (const side of [-1,1]) {
     const sx = side * a.eyeSpacing;
     // Volumen malar y surco nasolabial; evita la cara lisa de muñeco.
     d = smin(d,ellipsoid(x,headY,z,side*a.headWidth*0.55,p+1.106,0.153+a.faceProjection*0.10,
-      0.102*a.cheekFullness,0.078*a.cheekFullness,0.069*a.cheekFullness),0.063);
+      0.105*a.cheekFullness*f.cheekVolume,0.067*a.cheekFullness*f.cheekVolume,0.062*a.cheekFullness*f.cheekVolume),0.054);
     d = smin(d,ellipsoid(x,headY,z,side*a.headWidth*0.76,p+1.19,-0.025,0.065*a.headScale,0.12*a.headScale,0.055*a.headDepth),0.07);
     d = smin(d,ellipsoid(x,headY,z,side*a.headWidth*0.70,p+1.075,-0.028,0.047*a.headScale,0.067*a.headScale,0.049),0.037);
     d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing*1.38,p+1.10,0.14,0.079,0.087,0.077),0.043);
-    d = smin(d,ellipsoid(x,headY,z,sx,p+1.245,0.222,
-      0.084*a.headScale*a.orbitalRidge,0.029*a.morphology.browProminence,0.045),0.03);
+    // 38.2g.d: arcos supraciliares pueden estar AUSENTES. Cuando existen,
+    // el grosor y el desarrollo forman parte del campo SDF, no una ceja pegada.
+    if (f.browRidge > 0.045) {
+      const xBrow = sx*f.eyebrowSeparation;
+      const ridgeY = p + 1.245 + side * f.eyebrowSlant * 0.016;
+      d = smin(d,ellipsoid(x,headY,z,xBrow,ridgeY,0.222,
+        0.085*a.headScale*f.eyebrowLength,0.024*f.browRidge,0.030 + 0.013*f.browRidge),0.025);
+    }
     d = smin(d,ellipsoid(x,headY,z,side*a.headWidth,p+1.13,-0.035,0.041*a.headScale,0.085*a.headScale,0.034),0.034);
 
-    const shoulderX = side*a.shoulderWidth;
-    const shoulderY = p+0.64+side*a.shoulderTilt;
-    // Postura de reposo: codo algo posterior y muñeca ligeramente adelantada.
-    // Asimetría microscópica por identidad, estable; evita brazos en posición de maniquí.
-    const pose = side * a.asymmetry;
-    const elbowX = side*(a.shoulderWidth+0.087+0.008*pose);
-    const wristX = side*(a.shoulderWidth+0.075+0.012*pose);
-    const elbowY = p+0.25-(a.upperArmRatio-1)*0.08;
+    // 38.2g.e — conexión anatómica SOLO en el hombro. Antes el volumen
+    // de bíceps en y=p+0.43 se fundía con el torso hasta casi el codo.
+    // Codo, antebrazo y mano se desplazan lateralmente dejando axila abierta.
+    const shoulderX = side*(a.shoulderWidth*1.03*t.chestScale);
+    const shoulderY = p+0.70+side*a.shoulderTilt;
+    const pose = side*a.asymmetry;
+    const elbowX = shoulderX+side*(t.elbowOutset+0.008*pose);
+    const wristX = shoulderX+side*(t.wristOutset+0.012*pose);
+    const elbowY = p+0.31-(a.upperArmRatio-1)*0.075;
     const wristY = p+0.64-a.armReach-(a.forearmRatio-1)*0.04;
-    const elbowZ = -0.055-0.2*pose;
-    const wristZ = 0.100+0.2*pose;
-    d = smin(d,ellipsoid(x,y,z,shoulderX*0.85,shoulderY,0,0.15*a.musculature*a.armThickness,0.17,0.135),0.145);
-    d = smin(d,limb(x,y,z,shoulderX*0.91,shoulderY,0,elbowX,elbowY,elbowZ,
-      0.114*a.musculature*a.armThickness,0.073*a.musculature*a.armThickness),0.09);
-    d = smin(d,limb(x,y,z,elbowX,elbowY+0.02,elbowZ,wristX,wristY,wristZ,
-      0.077*a.musculature*a.armThickness,0.048*a.armThickness),0.07);
-    const handY = p+0.55-a.armReach;
-    d = smin(d,ellipsoid(x,y,z,wristX+side*0.015,handY,wristZ+0.015,
-      0.065*a.handSize,0.126*a.handSize,0.061*a.handSize),0.075);
-    // Transición musculo-tendinosa con biceps y relieve dorsal del antebrazo.
-    d = smin(d,ellipsoid(x,y,z,side*(a.shoulderWidth+0.068),p+0.43,elbowZ-0.015,
-      0.102*a.armThickness,0.20*a.musculature,0.085*a.armThickness),0.078);
-    d = smin(d,ellipsoid(x,y,z,side*(a.shoulderWidth+0.087),p+0.08,(elbowZ+wristZ)*0.5-0.020,
-      0.075*a.armThickness,0.147,0.060*a.armThickness),0.067);
+    const elbowZ = -0.070-0.2*pose;
+    const wristZ = 0.13+0.2*pose;
+    const deltoidRadius = 0.113*a.musculature*a.armThickness*t.shoulderCapScale;
+    d = smin(d,ellipsoid(x,y,z,shoulderX*0.985,shoulderY-0.016,-0.018,
+      deltoidRadius*1.13,0.143*t.shoulderCapScale,0.120),0.090);
+    d = smin(d,limb(x,y,z,shoulderX*0.95,shoulderY,-0.018,elbowX,elbowY,elbowZ,
+      0.100*a.musculature*a.armThickness,0.072*a.musculature*a.armThickness),0.068);
+    d = smin(d,limb(x,y,z,elbowX,elbowY+0.012,elbowZ,wristX,wristY,wristZ,
+      0.073*a.musculature*a.armThickness,0.046*a.armThickness),0.054);
+    // Bíceps lateral: no puede cerrar la abertura axilar por debajo de p+0.53.
+    const bicepsX = (shoulderX+elbowX)*0.5+side*t.armpitClearance*0.12;
+    d = smin(d,ellipsoid(x,y,z,bicepsX,p+0.49,elbowZ-0.017,
+      0.082*a.armThickness,0.140*a.musculature,0.079*a.armThickness),0.043);
+    // Masa muscular del antebrazo libre de fusiones con la pared abdominal.
+    const forearmX = (elbowX+wristX)*0.5;
+    const forearmY = (elbowY+wristY)*0.5;
+    d = smin(d,ellipsoid(x,y,z,forearmX,forearmY,elbowZ*0.46+wristZ*0.54,
+      0.061*a.armThickness,0.142,0.059*a.armThickness),0.041);
+
+    // Palma expandida transversalmente, y dedo por dedo con separación real.
+    // La unión con la muñeca es SDF. Las falanges se bifurcan a partir del
+    // borde inferior de la palma y permanecen legibles incluso en LOD MEDIUM.
+    const handY = wristY-0.113*a.handSize;
+    const palmX = wristX+side*0.014;
+    const palmZ = wristZ+0.016;
+    const palmWidth = 0.082*a.handSize*t.palmWidth;
+    d = smin(d,ellipsoid(x,y,z,palmX,handY,palmZ,
+      palmWidth,0.114*a.handSize,0.052*a.handSize),0.051);
+    d = smin(d,ellipsoid(x,y,z,palmX,handY-0.044,palmZ+0.021,
+      palmWidth*0.91,0.078*a.handSize,0.044*a.handSize),0.033);
     const fingers = a.fingerCount;
+    // Raíces próximas en palma, puntas en abanico: deja huecos legibles en HIGH.
+    const rootSpacing = 0.031*a.handSize*t.fingerSpread;
+    const tipSpacing = 0.056*a.handSize*t.fingerSpread;
+    const centerIndex = (fingers-1)*0.5;
     for(let i=0; i<fingers; i++) {
-      const fx = wristX+side*(0.01+(i-(fingers-1)*0.5)*0.024);
-      const fz = wristZ+0.018+(i-(fingers-1)*0.5)*0.018;
-      d = smin(d,limb(x,y,z,fx,handY-0.068*a.handSize,fz,fx+side*(i-(fingers-1)/2)*0.012,handY-(0.19+(i%2)*0.013)*a.fingerLength,fz+0.023,0.026*a.fingerThickness,0.017*a.fingerThickness),0.022);
+      const lateral = i-centerIndex;
+      const fx = palmX+lateral*rootSpacing;
+      const startY = handY-0.093*a.handSize;
+      const tipY = handY-(0.234+(1-Math.abs(lateral/Math.max(1,centerIndex)))*0.033)*a.fingerLength*t.digitLength;
+      const tipX = palmX+lateral*tipSpacing;
+      const fz = palmZ+0.016+0.006*(1-Math.abs(lateral/Math.max(1,centerIndex)));
+      const radius = 0.0165*a.fingerThickness;
+      // Falange proximal y distal: taper continuo, sin muñones de cilindros.
+      const midY = startY+(tipY-startY)*0.55;
+      d = smin(d,limb(x,y,z,fx,startY,fz,fx+(tipX-fx)*0.5,midY,fz+0.014,
+        radius*1.20,radius),0.009);
+      d = smin(d,limb(x,y,z,fx+(tipX-fx)*0.5,midY,fz+0.014,tipX,tipY,fz+0.021,
+        radius,radius*0.71),0.007);
     }
-    // Pulgar o apéndice prensil: hipótesis visual en especies bípedas.
-    d = smin(d,limb(x,y,z,wristX-side*0.05,handY+0.01,wristZ+0.07,wristX-side*0.095,handY-0.075,wristZ+0.12,0.031,0.02),0.032);
+    // Pulgar oponible claramente apartado del abanico de dedos.
+    d = smin(d,limb(x,y,z,palmX-side*palmWidth*0.72,handY+0.023,palmZ+0.025,
+      palmX-side*(palmWidth+0.058*a.handSize),handY-0.083,palmZ+0.097,
+      0.024*a.fingerThickness,0.013*a.fingerThickness),0.022);
 
     const hipX = side*a.hipWidth*0.61*a.hipSpacing;
     const kneeX = hipX+side*0.008;
@@ -294,6 +388,11 @@ export function evaluateVida38HumanoidField(a: Vida38HumanoidAnatomy, x: number,
       0.047*a.legThickness,0.053*a.legThickness),0.06);
     d = smin(d,ellipsoid(x,y,z,ankleX,0.15,0.024+footZ,0.060,0.11,0.064),0.065);
     d = smin(d,ellipsoid(x,y,z,ankleX,0.072,0.11+footZ,0.103*a.footWidth,0.084,a.footLength*0.69),0.080);
+    // Arco plantar, región metatarsiana y talón: volúmenes SDF suavizados.
+    d = smin(d,ellipsoid(x,y,z,ankleX,0.070,-0.055+footZ,
+      0.065*a.footWidth,0.056,0.094),0.055);
+    d = smin(d,ellipsoid(x,y,z,ankleX,0.082,0.18+footZ,
+      0.112*a.footWidth,0.054,0.117*a.footLength/0.26),0.050);
     for(let i=0;i<4;i++) {
       const tx = ankleX+(i-1.5)*0.042;
       d = smin(d,limb(x,y,z,tx,0.055,0.22+footZ,tx,0.055,0.32+footZ-(i%2)*0.012,0.026,0.018),0.032);
@@ -302,26 +401,39 @@ export function evaluateVida38HumanoidField(a: Vida38HumanoidAnatomy, x: number,
   // Labios / órbitas y oídos integrados por sustracción; no mallas pegadas.
   for(const side of [-1,1]) {
     const socketZ = 0.248+a.faceProjection*0.12;
-    d = smax(d,-ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18,socketZ,
-      a.eyeRadius*1.23,a.eyeRadius*0.87,0.062),0.018);
-    // Párpados SDF suavizados que emergen de la misma superficie orgánica.
-    d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18+a.eyeRadius*0.66,socketZ+0.008,
-      a.eyeRadius*1.28,a.eyeRadius*0.27,0.031),0.020);
-    d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18-a.eyeRadius*0.62,socketZ+0.007,
-      a.eyeRadius*1.20,a.eyeRadius*0.19,0.028),0.019);
+    // Órbita real en la cara, excavada antes de recuperar párpados integrados.
+    // La profundidad admite el globo 38.2g.c hundido y excluye ojos flotantes.
+    d = smax(d,-ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18+side*f.eyeTilt*0.014,socketZ-0.030,
+      a.eyeRadius*1.26,a.eyeRadius*1.07*f.eyeOpenness,0.052),0.020);
+    // Párpado superior más pesado, curvatura continua sobre la córnea.
+    d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18+a.eyeRadius*0.71*f.eyeOpenness+side*f.eyeTilt*0.014,socketZ-0.008,
+      a.eyeRadius*1.25,a.eyeRadius*0.29*f.eyelidTension,0.032),0.019);
+    // Línea palpebral inferior menos prominente.
+    d = smin(d,ellipsoid(x,headY,z,side*a.eyeSpacing,p+1.18-a.eyeRadius*0.77*f.eyeOpenness+side*f.eyeTilt*0.014,socketZ-0.019,
+      a.eyeRadius*1.19,a.eyeRadius*0.19*f.eyelidTension,0.026),0.019);
     d = smax(d,-ellipsoid(x,headY,z,side*a.eyeSpacing*0.68,p+1.09,0.29+a.faceProjection*0.12,
       0.014,0.014,0.029),0.008); // fosa nasal
     d = smax(d,-ellipsoid(x,headY,z,side*a.headWidth*1.09,p+1.13,0.004,0.012,0.044,0.031),0.006);
   }
-  d = smax(d,-ellipsoid(x,headY,z,0,p+1.020,0.247*a.jawProjection,
-    a.jawWidth*0.51*a.mouthWidth,0.010,0.035),0.007); // hendidura bucal, no agujero grotesco
+  // Comisuras y surco peribucal esculpidos en la misma isosuperficie.
+  // Menor profundidad + transición suave: no aparece la gran abertura negra.
+  // La curvatura de la boca cambia por especie: los extremos ascienden
+  // suavemente en expresiones relajadas y descienden en las más severas.
+  const mouthLateral = clamp(x / Math.max(0.04,a.jawWidth*0.48*a.mouthWidth),-1,1);
+  const mouthY = p + 1.022 + f.mouthCurve*mouthLateral*mouthLateral;
+  d = smax(d,-ellipsoid(x,headY,z,0,mouthY,0.244*a.jawProjection,
+    a.jawWidth*0.48*a.mouthWidth,f.mouthOpen,0.024),0.008);
+  for (const side of [-1, 1]) {
+    d = smin(d,ellipsoid(x,headY,z,side*a.jawWidth*0.43*a.mouthWidth,
+      p+1.026+f.mouthCurve,0.220*a.jawProjection,0.027,0.020*f.lipFullness,0.019),0.021);
+  }
   // No aleatorizar la superficie con ruido de alta amplitud: el relieve biológico
   // fino pertenece a los materiales y no debe erosionar la anatomía principal.
   return d;
 }
 
 export const VIDA38_HUMANOID_GRID: Readonly<Record<Vida38HumanoidQuality, readonly [number,number,number]>> = Object.freeze({
-  LOW: [36, 70, 29], MEDIUM: [52, 103, 42], HIGH: [68, 134, 55],
+  LOW: [38, 72, 30], MEDIUM: [60, 112, 46], HIGH: [84, 142, 64],
 });
 
 const TETS = [
@@ -334,7 +446,7 @@ export function buildVida38HumanoidRawMesh(anatomy: Vida38HumanoidAnatomy, quali
   const [nx,ny,nz] = VIDA38_HUMANOID_GRID[quality];
   const ymax=Math.max(2.95,
     anatomy.legLength + (1.22 + anatomy.headHeight * 1.35 + (anatomy.neckLength-1)*0.14) * anatomy.torsoLength + 0.10);
-  const [xmin,xmax,ymin,zmin,zmax] = [-0.96,0.96,-0.15,-0.72,0.77];
+  const [xmin,xmax,ymin,zmin,zmax] = [-1.10,1.10,-0.15,-0.72,0.77];
   const dx=(xmax-xmin)/(nx-1),dy=(ymax-ymin)/(ny-1),dz=(zmax-zmin)/(nz-1);
   const id = (i:number,j:number,k:number) => (k*ny+j)*nx+i;
   const field = new Float32Array(nx*ny*nz);

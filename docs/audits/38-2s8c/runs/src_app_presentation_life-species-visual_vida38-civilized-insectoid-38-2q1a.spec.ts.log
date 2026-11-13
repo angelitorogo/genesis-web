@@ -1,0 +1,38 @@
+Using Vitest configuration file: C:\Users\argom\Desktop\ANGEL\DESARROLLO\FRONT ANGULAR\genesis-web\vitest-base.config.ts
+❯ Building...
+✔ Building...
+Application bundle generation complete. [12.612 seconds] - 2026-11-11T19:38:18.423Z
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90mC:/Users/argom/Desktop/ANGEL/DESARROLLO/FRONT ANGULAR/genesis-web[39m
+
+ [31m❯[39m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-civilized-insectoid-38-2q1a.spec.ts [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[32m 208[2mms[22m[39m
+     [32m✓[39m combina rasgos deterministas con siete familias cefálicas y varias alas/aguijones[32m 18[2mms[22m[39m
+     [32m✓[39m reemplaza la esfera cefálica por una malla esculpida con clípeo, suturas y relieve[32m 58[2mms[22m[39m
+     [32m✓[39m genera alas con membrana subdividida, venación, raíz y distintas formas[32m 30[2mms[22m[39m
+     [32m✓[39m integra el aguijón con bulbo abdominal, segmentos y punta variable[32m 11[2mms[22m[39m
+[31m     [31m×[31m integra el renderer especializado sin alterar brazos, ojos o vestuario existentes[39m[32m 89[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m4 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 20:38:18
+[2m   Duration [22m 1.83s[2m (transform 207ms, setup 365ms, import 229ms, tests 208ms, environment 806ms)[22m
+
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m [30m[43m genesis-web [49m[39m src/app/presentation/life-species-visual/vida38-civilized-insectoid-38-2q1a.spec.ts[2m > [22m38.2q1a — cabeza, alas y aguijones orgánicos[2m > [22mintegra el renderer especializado sin alterar brazos, ojos o vestuario existentes
+[31m[1mAssertionError[22m: expected false to be true // Object.is equality[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+[36m [2m❯[22m src/app/presentation/life-species-visual/vida38-civilized-insectoid-38-2q1a.spec.ts:[2m141:207[22m[39m
+
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+

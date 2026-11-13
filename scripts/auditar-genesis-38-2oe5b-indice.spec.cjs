@@ -1,0 +1,18 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { integrate } = require('./integrar-genesis-38-2oe5b-laboratorio.cjs');
+const root = process.cwd();
+const page = path.join(root, 'src/app/presentation/life-species-visual/vida38-reptilian-gallery-laboratory-38-2oe5b.component.ts');
+const text = fs.readFileSync(page, 'utf8');
+assert.match(text, /Vida38ReptilianGallery38OE5Component/);
+assert.match(text, /LifeSpeciesVisualPreviewComponent/);
+assert.match(text, /openSpecimen/);
+const result = integrate(root, { checkOnly: true });
+assert.ok(result.indexFile && result.routesFile);
+const routes = fs.readFileSync(path.join(root, result.routesFile), 'utf8');
+const index = fs.readFileSync(path.join(root, result.indexFile), 'utf8');
+assert.match(routes, /laboratorio\/reptilianos-civilizados/);
+assert.match(index, /vida38-oe5b-laboratory-entry/);
+console.log('GENESIS_38_2OE5B_AUDIT_OK: ruta, tarjeta del índice y visor integrado');

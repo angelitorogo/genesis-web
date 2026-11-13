@@ -1,0 +1,11 @@
+'use strict';
+const fs=require('node:fs'), path=require('node:path'), assert=require('node:assert/strict');
+const base=path.join(__dirname,'..','src/app/presentation/life-species-visual');
+const mod=fs.readFileSync(path.join(base,'vida38-civilized-reptilian-preview-38-2o.ts'),'utf8');
+assert.match(mod,/type ReptilianCivilProfile = 'SLENDER' \| 'ROBUST' \| 'CRESTED'/);
+assert.match(mod,/bodyProfile38OA/);
+assert.match(mod,/organicRevision38OA/);
+assert.match(mod,/addScaleBands/);
+assert.match(mod,/addAdvancedGarments/);
+assert.match(mod,/addVeryAdvancedGarments/);
+console.log('GENESIS_38_2OA_AUDIT_OK: revisión orgánica y variada de reptilianos civilizados detectada');

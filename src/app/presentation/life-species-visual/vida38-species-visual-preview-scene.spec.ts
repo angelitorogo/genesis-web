@@ -85,8 +85,10 @@ describe('Fase 38.2 — representación 3D procedural de especies', () => {
   it('genera una maqueta determinista para el mismo ID y fenotipo', () => {
     const sample = species({ id: 'vida6:deterministic', proceduralName: 'Determinista', group: 'REPTILES' });
     const contract = contractOf(sample);
-    const a = createVida38SpeciesPreviewModelV1(contract);
-    const b = createVida38SpeciesPreviewModelV1(contract);
+    // Comparación determinista en LOW: la forma es la misma entre LOD,
+    // y evita regenerar dos mallas HIGH en una prueba de integración genérica.
+    const a = createVida38SpeciesPreviewModelV1(contract, {humanoidQuality: 'LOW'});
+    const b = createVida38SpeciesPreviewModelV1(contract, {humanoidQuality: 'LOW'});
     expect(a.descriptor).toEqual(b.descriptor);
     expect(meshSummary(a.root)).toEqual(meshSummary(b.root));
     a.dispose();
@@ -170,9 +172,9 @@ describe('Fase 38.2 — representación 3D procedural de especies', () => {
     });
     const contract = vida38SpeciesVisualContractFromConfirmedV1(record, intelligentSpecies.id)!;
     const descriptor = describeVida38SpeciesPreviewV1(contract);
-    expect(descriptor.specialistIntelligenceDeferred).toBe(true);
-    const model = createVida38SpeciesPreviewModelV1(contract);
-    expect(model.descriptor.family).toBe('QUADRUPED_BODY');
+    expect(descriptor.specialistIntelligenceDeferred).toBe(false);
+    const model = createVida38SpeciesPreviewModelV1(contract, {humanoidQuality: 'LOW'});
+    expect(model.descriptor.family).toBe('BIPED_BODY');
     model.dispose();
   });
 
@@ -202,13 +204,27 @@ describe('Fase 38.2 — representación 3D procedural de especies', () => {
         connectedBodyCount++;
         expect(mesh.geometry.index?.count).toBeGreaterThan(30_000);
         expect(mesh.material).toBeInstanceOf(THREE.MeshPhysicalMaterial);
-        expect((mesh.material as THREE.MeshPhysicalMaterial).normalMap).not.toBeNull();
-        expect((mesh.material as THREE.MeshPhysicalMaterial).roughnessMap).not.toBeNull();
+        // Desde 38.2g el relieve/roughness se genera en onBeforeCompile,
+        // no mediante mapas normalMap/roughnessMap de textura.
+        const material = mesh.material as THREE.MeshPhysicalMaterial;
+        expect(material.metalness).toBe(0);
+        expect(mesh.userData['pbrRevision']).toContain('38.2g.c');
+        const shader = {
+          uniforms: {} as Record<string, unknown>,
+          vertexShader: '#include <common>\n#include <begin_vertex>',
+          fragmentShader: '#include <common>\n#include <color_fragment>\n#include <roughnessmap_fragment>\n#include <normal_fragment_maps>',
+        };
+        material.onBeforeCompile(
+          shader as Parameters<typeof material.onBeforeCompile>[0],
+          {} as Parameters<typeof material.onBeforeCompile>[1],
+        );
+        expect(shader.fragmentShader).toContain('vida38BiologicalRelief');
+        expect(shader.fragmentShader).toContain('roughnessFactor=clamp');
       }
-      if (object.name.startsWith('VIDA38_2E_EYE')) eyes++;
+      if (object.name.startsWith('VIDA38_2GC_OCULAR_INTEGRATED_')) eyes++;
     });
     expect(connectedBodyCount).toBe(1);
-    expect(eyes).toBe(6);
+    expect(eyes).toBe(2);
     const raw = buildVida38HumanoidRawMesh(deriveVida38HumanoidAnatomy(contractOf(humanoid)), 'MEDIUM');
     const audit = auditVida38HumanoidRawMesh(raw);
     expect(audit.invalid).toBe(0);
