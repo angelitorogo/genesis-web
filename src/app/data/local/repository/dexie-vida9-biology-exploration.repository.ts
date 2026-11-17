@@ -1,3 +1,4 @@
+import {publishGenesisKnowledgeCommit38BisB6} from './genesis-knowledge-commits-38-bis-b6';
 import type { GenesisIndexedDb } from '../indexed-db/genesis-indexed-db';
 import { VIDA9_REVISION, vida9DigestForRecord, type Vida9BiologyRecord } from '../../../domain/life/vida9-biology-exploration';
 
@@ -18,8 +19,9 @@ export class DexieVida9BiologyExplorationRepository {
         throw Error('VIDA.9 immutable biological record mismatch; no overwrite');
       return JSON.parse(row.payloadJson) as Vida9BiologyRecord;
     };
+    let inserted=false;
     try {
-      return await this.db.transaction('rw',this.db.privateBiologicalRecordsVIDA9,async()=>{
+      const saved=await this.db.transaction('rw',this.db.privateBiologicalRecordsVIDA9,async()=>{
         const prior=await this.db.privateBiologicalRecordsVIDA9.get(key);
         if(prior)return same(prior);
         await this.db.privateBiologicalRecordsVIDA9.add({universeSeed:id.universeSeed,
@@ -27,8 +29,14 @@ export class DexieVida9BiologyExplorationRepository {
           systemStorageKey:[id.galaxyIndex,id.sectorKey,id.galacticObjectIndex].join('/'),
           revision:record.revision,epochOffsetYears:0,payloadJson:JSON.stringify(record),
           digest:record.digest});
+        inserted=true;
         return record;
       });
+      if(inserted)await publishGenesisKnowledgeCommit38BisB6({
+        universeSeed:id.universeSeed,generatorVersionCode:id.generatorVersionCode,
+        galaxyIndex:id.galaxyIndex,kind:'VIDA9',
+      });
+      return saved;
     }catch(error){
       if (!(error instanceof Error) || error.name!=='ConstraintError') throw error;
       const prior=await this.db.privateBiologicalRecordsVIDA9.get(key);

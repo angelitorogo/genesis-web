@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
 import { etiquetaVidaEs } from './vida9-etiquetas-es';
+import type {MoonColonialProvenances38BisA5} from '../moon-detail/moon-colonial-provenance-38-bis-a5';
 
 /** Vista resumida de VIDA.9: información ya revelada únicamente en sistemas CONFIRMED. */
 @Component({
@@ -67,6 +68,19 @@ import { etiquetaVidaEs } from './vida9-etiquetas-es';
             <p><strong>Colonia {{ $index + 1 }}</strong> · {{etiqueta(colonia.settlement.habitatTechnology)}} · {{etiqueta(colonia.settlement.populationBand)}}</p>
             <p>Población colonial: {{colonia.settlement.colonialPopulationRange[0]}}–{{colonia.settlement.colonialPopulationRange[1]}} habitantes.</p>
             <p>Procedencia: {{etiqueta(colonia.origin.lineage)}} · Civilización {{etiqueta(colonia.origin.tier).toLocaleLowerCase('es-ES')}}.</p>
+            @if (mostrarOrigenColonial38BisA5) {
+              @if (origenesColoniales38BisA5?.[colonia.id]; as origen) {
+                <p>Especie fundadora: <strong>{{origen.speciesName}}</strong>.</p>
+                <p>Planeta natal:
+                  <a [routerLink]="origen.planetRoute" [queryParams]="parametrosOrigen">{{origen.planetName}}</a>.
+                  @if (origen.historical) { <small>Procedencia reconciliada históricamente (VIDA.8).</small> }
+                </p>
+              } @else if (origenesColoniales38BisA5 === null) {
+                <p>Especie y planeta de origen: verificando procedencia…</p>
+              } @else {
+                <p>Especie y planeta de origen: no verificables con el conocimiento confirmado.</p>
+              }
+            }
             @if (colonia.terraform; as proyecto) {
               <p>Terraformación: {{etiqueta(proyecto.stage)}}. El entorno físico todavía no se ha modificado.</p>
             }
@@ -80,6 +94,8 @@ export class Vida9FullSystemBiologyPanel {
   @Input({required:true}) record!:Vida9BiologyRecord;
   @Input() rutaBaseEspecies: readonly string[] | null = null;
   @Input() parametrosOrigen: { readonly u: string } | null = null;
+  @Input() mostrarOrigenColonial38BisA5 = false;
+  @Input() origenesColoniales38BisA5:MoonColonialProvenances38BisA5|null=null;
   readonly etiqueta=etiquetaVidaEs;
   nombreEspecie(id:string):string | null {
     return this.record.ecosystem.species.find(especie=>especie.id===id)?.proceduralName ?? null;

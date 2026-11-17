@@ -29,9 +29,10 @@ describe('VISCIV.4 — Orbital infrastructures procedurales', () => {
     );
     const types = new Set(profiles.map(profile => profile.profileId));
     expect(types.size).toBe(6);
-    expect(profiles.some(profile => profile.ringKinds.length === 0)).toBe(true);
+    expect(profiles.every(profile => profile.ringKinds.length >= 1)).toBe(true);
     expect(profiles.some(profile => profile.ringKinds.length === 1)).toBe(true);
     expect(profiles.some(profile => profile.ringKinds.length === 2)).toBe(true);
+    expect(profiles.some(profile => profile.ringKinds.length === 3)).toBe(true);
     expect(profiles.some(profile => profile.stationKinds.includes('INDUSTRIAL'))).toBe(true);
     expect(profiles.some(profile => profile.stationKinds.includes('HABITAT'))).toBe(true);
     expect(profiles.some(profile => profile.stationKinds.includes('PLATFORM'))).toBe(true);
@@ -45,7 +46,7 @@ describe('VISCIV.4 — Orbital infrastructures procedurales', () => {
     expect(buildSystemSceneArtificialSatellitePlansV1(seed, 'VERY_ADVANCED', 1).length).toBeGreaterThanOrEqual(9);
   });
 
-  it('crea anillos dobles realmente concéntricos, con módulos opacos', () => {
+  it('crea anillos dobles concéntricos pero no coplanares, con módulos opacos', () => {
     const seed = Array.from({ length: 256 }, (_, i) => i * 7919).find(candidate =>
       buildSystemSceneOrbitalRingPlansV1(candidate, 'VERY_ADVANCED').length === 2,
     );
@@ -53,8 +54,9 @@ describe('VISCIV.4 — Orbital infrastructures procedurales', () => {
     const rings = buildSystemSceneOrbitalRingPlansV1(seed!, 'VERY_ADVANCED');
     expect(rings).toHaveLength(2);
     expect(rings[1]!.orbitRadiusPlanetRadii).toBeGreaterThan(rings[0]!.orbitRadiusPlanetRadii);
-    expect(rings[0]!.inclinationRadians).toBe(rings[1]!.inclinationRadians);
-    expect(rings[0]!.ascendingNodeRadians).toBe(rings[1]!.ascendingNodeRadians);
+    expect(rings[1]!.orbitRadiusPlanetRadii - rings[0]!.orbitRadiusPlanetRadii).toBeGreaterThan(0.55);
+    expect(rings[0]!.inclinationRadians).not.toBe(rings[1]!.inclinationRadians);
+    expect(rings[0]!.ascendingNodeRadians).not.toBe(rings[1]!.ascendingNodeRadians);
     for (const ring of rings) {
       const visual = createSystemSceneOrbitalRingVisualV1(ring, 1);
       expect(visual.rotationPivot.parent).toBe(visual.group);
@@ -64,6 +66,22 @@ describe('VISCIV.4 — Orbital infrastructures procedurales', () => {
       expect(instanced[1]!.count).toBe(ring.moduleCount);
       expect(visual.materials.every(binding => !binding.material.transparent && binding.material.opacity === 1)).toBe(true);
       for (const resource of visual.resources) resource.dispose();
+    }
+  });
+
+
+  it('garantiza entre uno y tres anillos en VERY_ADVANCED y evita solapes radiales', () => {
+    const profiles = Array.from({ length: 512 }, (_, i) => i * 3571).map(seed =>
+      buildSystemSceneOrbitalRingPlansV1(seed, 'VERY_ADVANCED'),
+    );
+    expect(profiles.every(plans => plans.length >= 1 && plans.length <= 3)).toBe(true);
+    expect(profiles.some(plans => plans.length === 1)).toBe(true);
+    expect(profiles.some(plans => plans.length === 2)).toBe(true);
+    expect(profiles.some(plans => plans.length === 3)).toBe(true);
+    for (const plans of profiles) {
+      for (let i = 1; i < plans.length; i += 1) {
+        expect(plans[i]!.orbitRadiusPlanetRadii - plans[i - 1]!.orbitRadiusPlanetRadii).toBeGreaterThan(0.55);
+      }
     }
   });
 

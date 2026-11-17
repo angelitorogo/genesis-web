@@ -1,0 +1,64 @@
+{
+  "phase": "38.bis-a2",
+  "previous": "38.bis estadisticas coloniales",
+  "files": [
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.model.ts",
+      "size": 8028,
+      "sha256": "af21afb6db62cbe29d5d9fa47af76b731704f00f2d73c2555dd3a9ff3c69a9eb"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis-colonization-stats.ts",
+      "size": 5924,
+      "sha256": "97f91449aa761fd6d3465479d93b0bc14050bdcf7af268f95f000fd8a77e50f1"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis-origin-diagnostics.ts",
+      "size": 2818,
+      "sha256": "06620e4a89ef4a0dbb450760daa6cc55a51f67853a1f56db395caefede04c8f0"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.index.ts",
+      "size": 29164,
+      "sha256": "58e066cd7ccc467ff380e6c053f73a98a44217b1337574aaa5de2a6e36e03b40"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.facade.ts",
+      "size": 18749,
+      "sha256": "039989b212ed14f30f67f277a8da5f93ec9f961b07a07f902a1b7fbe0fd0e390"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis-diagnostics.spec.ts",
+      "size": 6386,
+      "sha256": "5e3d8c4ac8fc032ae6759ba8084cd79f400b0b9c48d1d0fcae85c7c3df735da7"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/genesis-archive.ts",
+      "size": 5081,
+      "sha256": "bfcfebdfbeb40e6e48cb11363007671fac608d7b70c3089aeb5896a81f5ac8ca"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/genesis-archive.html",
+      "size": 14369,
+      "sha256": "50f022ca4e188180049b940bc3c150d6689d34112efc4942dcb237ddf2d63d37"
+    },
+    {
+      "path": "LEEME-GENESIS-38-bis-a2-diagnostico.md",
+      "size": 4644,
+      "sha256": "b2a227555d444bdad9f70babb7ae70ab04a15576d70c3f2a43f2428c3927dbff"
+    },
+    {
+      "path": "docs/audits/38-bis-a2/38-bis-a2-diagnostico.md",
+      "size": 1362,
+      "sha256": "3ddc27cbb7f4ffc5b79849d510570bdd36f27afd08e6b377032929b84692cf82"
+    }
+  ],
+  "checks": {
+    "architecture": "PASS 1212 ts files",
+    "strict_core_types": "PASS",
+    "pure_node_checks": "14/14 PASS",
+    "typescript_syntax": "7/7 PASS",
+    "angular_build": "NOT RUN"
+  },
+  "note": "diagnostic cause counts require user IndexedDB at runtime"
+}

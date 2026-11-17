@@ -350,6 +350,20 @@ function toRow(
       periapsis: formatNumber(record.periapsisAu, 'UA'),
       ice: formatPercent(record.volatileOrIceFraction01),
     }),
+    sortNumbers: Object.freeze({
+      diameter: record.diameterKilometers,
+      period: record.orbitalPeriodYears,
+      'semi-major-axis': record.semiMajorAxisAu,
+      eccentricity: record.eccentricity,
+      inclination: record.inclinationDegrees,
+      periapsis: record.periapsisAu,
+      apoapsis: record.apoapsisAu,
+      density: record.densityGramsPerCubicCentimeter,
+      albedo: record.albedo01 === null ? null : record.albedo01*100,
+      ice: record.volatileOrIceFraction01 === null ? null : record.volatileOrIceFraction01*100,
+      volatile: record.volatileOrIceFraction01 === null ? null : record.volatileOrIceFraction01*100,
+      'incoming-velocity': record.incomingVelocityKmPerSecond,
+    }),
     actions: Object.freeze([
       Object.freeze({
         label: 'Abrir ficha científica',

@@ -85,6 +85,9 @@ export class SystemPage
       ActivatedRoute,
     );
 
+  /** Route-scoped, nonpersistent VISCIV.6e diagnostic switch. */
+  readonly orbitalInfrastructureDebug = this.route.snapshot.queryParamMap.get('debugOrbital') === '1';
+
   private readonly systemSceneCivilizationVisuals =
     inject(
       SystemSceneCivilizationVisualsDataSource,

@@ -117,6 +117,7 @@ export class GalaxyKnowledgeCatalogFacade {
           generationKey,
           galaxyIndex,
           galaxyState,
+          scientificOnly: true,
           query,
         }),
         query,

@@ -1,4 +1,10 @@
 import { effect } from '@angular/core';
+import { DiscoveryState } from '../../domain/discovery/discovery-state';
+import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
+import { PlanetMoonColonizationDataSource386b } from '../planet-detail/planet-moon-colonization-data-source-38-6b';
+import { moonPreviewWithVerifiedBiology38BisA4 } from './moon-confirmed-record-parity-38-bis-a4';
+import { MoonColonialProvenanceDataSource38BisA5,
+  type MoonColonialProvenances38BisA5 } from './moon-colonial-provenance-38-bis-a5';
 import { Vida9FullSystemBiologyPanel } from '../scientific/vida9-full-system-biology-panel';
 import { vida2SupportLabel } from '../../simulation/life/life-plausibility-physical-adapter-vida2';
 import { Vida1CompactFiche } from '../scientific/vida-1-compact-fiche';
@@ -9,6 +15,7 @@ import {
   Component,
   computed,
   inject,
+  signal,
   OnInit,
 } from '@angular/core';
 
@@ -184,6 +191,100 @@ export class MoonDetailPage
   readonly visibleSections = computed(() => {
     const result = this.resolution();
     return result?.kind === 'AVAILABLE' ? compactMoonSectionsVIDA9e(result.card.sections) : [];
+  });
+
+  /** 38.bis-a4: the Archive and 38.6b obtain moon colonies from persisted
+   * VIDA.9, whereas the scientific assembler may reconstruct a different CT-0
+   * projection. The persisted validated record is authoritative for the fiche.
+   * A route change invalidates the asynchronous result before it can render.
+   */
+  private readonly verifiedMoonDataSource38BisA4 = inject(PlanetMoonColonizationDataSource386b);
+  private readonly persistedMoon38BisA4 = signal<{
+    readonly identityKey:string;
+    readonly record:Vida9BiologyRecord|null;
+  }|null>(null);
+
+  private readonly moonRecordRequest38BisA4 = computed(() => {
+    const model=this.facade.model();
+    const resolved=this.resolution();
+    const body=this.requestedBodyIndex,moon=this.requestedMoonIndex;
+    if(!model || model.locatorKind!==ArchiveDiscoveryLocatorKind.SYSTEM ||
+       model.discoveryState.code<DiscoveryState.CONFIRMED.code ||
+       model.generatorVersionCode!==3 || body===null || moon===null ||
+       moon>BigInt(Number.MAX_SAFE_INTEGER) || resolved?.kind!=='AVAILABLE')return null;
+    const moonIndex=Number(moon);
+    const request={confirmed:true,universeSeed:model.universeSeed,
+      generatorVersionCode:model.generatorVersionCode,galaxyIndex:model.galaxyIndex,
+      sectorKey:model.sectorKey,galacticObjectIndex:model.galacticObjectIndex,
+      bodyIndex:body,moonIndices:[moonIndex]} as const;
+    const identityKey=[model.universeSeed,model.generatorVersionCode,model.galaxyIndex,
+      model.sectorKey,model.galacticObjectIndex,body,moon].join('|');
+    return {identityKey,request,moonIndex};
+  });
+
+  private readonly persistedMoonLoad38BisA4=effect((onCleanup)=>{
+    const context=this.moonRecordRequest38BisA4();
+    this.persistedMoon38BisA4.set(null);
+    if(!context)return;
+    let obsolete=false;
+    onCleanup(()=>{obsolete=true;});
+    void this.verifiedMoonDataSource38BisA4
+      .readVerifiedMoonRecord(context.request,context.moonIndex)
+      .then(record=>{
+        if(!obsolete)this.persistedMoon38BisA4.set({identityKey:context.identityKey,record});
+      }).catch(()=>{
+        if(!obsolete)this.persistedMoon38BisA4.set({identityKey:context.identityKey,record:null});
+      });
+  });
+
+  readonly persistedMoonPending38BisA4=computed(()=>{
+    const context=this.moonRecordRequest38BisA4();
+    return context!==null && this.persistedMoon38BisA4()?.identityKey!==context.identityKey;
+  });
+
+  readonly verifiedPersistedMoonBiology38BisA4=computed(()=>{
+    const context=this.moonRecordRequest38BisA4();
+    const value=this.persistedMoon38BisA4();
+    return context!==null&&value?.identityKey===context.identityKey?value.record:null;
+  });
+
+  readonly visibleMoonBiology38BisA4=computed(()=>{
+    const result=this.resolution();
+    if(result?.kind!=='AVAILABLE' || this.persistedMoonPending38BisA4())return null;
+    return this.verifiedPersistedMoonBiology38BisA4()??result.card.confirmedBiologyVIDA9??null;
+  });
+
+  /** 38.bis-a5: only a validated, confirmed persisted moon may authorize
+   * the lookup of its founding planet. An in-flight result cannot cross routes. */
+  private readonly founderSource38BisA5=inject(MoonColonialProvenanceDataSource38BisA5);
+  private readonly founderResult38BisA5=signal<{
+    identityKey:string; values:MoonColonialProvenances38BisA5;
+  }|null>(null);
+  private readonly founderLoad38BisA5=effect((onCleanup)=>{
+    const context=this.moonRecordRequest38BisA4();
+    const record=this.verifiedPersistedMoonBiology38BisA4();
+    this.founderResult38BisA5.set(null);
+    if(!context||!record||record.colonization.colonies.length===0)return;
+    let obsolete=false;
+    onCleanup(()=>{obsolete=true;});
+    void this.founderSource38BisA5.read(record,context.request,context.moonIndex)
+      .then(values=>{
+        if(!obsolete)this.founderResult38BisA5.set({identityKey:context.identityKey,values});
+      }).catch(()=>{
+        if(!obsolete)this.founderResult38BisA5.set({identityKey:context.identityKey,values:Object.freeze({})});
+      });
+  });
+  readonly verifiedFounderNames38BisA5=computed(()=>{
+    const context=this.moonRecordRequest38BisA4();
+    const result=this.founderResult38BisA5();
+    return context && result?.identityKey===context.identityKey ? result.values : null;
+  });
+
+  readonly moonPreview38BisA4=computed(()=>{
+    const result=this.resolution();
+    if(result?.kind!=='AVAILABLE')return null;
+    return moonPreviewWithVerifiedBiology38BisA4(
+      result.card.preview,this.verifiedPersistedMoonBiology38BisA4());
   });
 
   /** VIDA.6 lunar: persistencia privada, solo en fichas fisicas de sistemas confirmados V3. */

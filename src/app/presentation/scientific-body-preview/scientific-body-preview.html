@@ -79,6 +79,16 @@
       (keydown)="onKeyDown($event)"
     ></canvas>
 
+    @if (orbitalInfrastructureDiagnosticVISCIV6e(); as debug) {
+      <aside class="scientific-preview__orbital-debug" data-testid="visciv6e-planet-diagnostic"
+        [attr.data-tier]="debug.tier" [attr.data-stations]="debug.stations"
+        [attr.data-rings]="debug.rings">
+        <strong>VISCIV.6e · DEPURACIÓN ORBITAL</strong>
+        <span>{{ debug.tier }} · SAT {{ debug.satellites }} · EST {{ debug.stations }} · AROS {{ debug.rings }}</span>
+        <small>Capa {{ artificialSatellitesVisible() ? 'ON' : 'OFF' }} · Visual procedural, no observación confirmada</small>
+      </aside>
+    }
+
     @if (renderState() === 'initializing') {
       <div class="scientific-preview__state" role="status" aria-live="polite">
         Inicializando representación 3D…

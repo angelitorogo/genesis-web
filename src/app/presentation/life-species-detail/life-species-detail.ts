@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { GenesisScreen } from '../../ui/layout/genesis-screen/genesis-screen';
 import { ArchiveDiscoveryDetailFacade, ArchiveDiscoveryLocatorKind } from '../genesis-archive/archive-discovery-detail.facade';
@@ -12,6 +12,8 @@ import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-explora
 import type { Vida6Species } from '../../domain/life/vida6-ecosystems-species';
 import { etiquetaNichoVidaEs, etiquetaVidaEs } from '../scientific/vida9-etiquetas-es';
 import { LifeSpeciesVisualPreviewComponent } from '../life-species-visual/life-species-visual-preview';
+import { describeVida38EcologicalRelationB5 } from './vida38-relaciones-legibles-38-bis-b5';
+import { Vida38SpeciesColoniesDataSourceB5, type Vida38SpeciesColoniesB5 } from './vida38-colonias-especie-38-bis-b5';
 import { vida38AuthorizeSpeciesRoute385, vida38ExpectedBodyKey385 } from './vida38-acceso-ficha-38-5';
 
 function indiceNatural(valor:string|null):bigint|null {
@@ -35,6 +37,9 @@ function indiceNatural(valor:string|null):bigint|null {
     .dato strong{font-size:.95rem} .lista{margin:.4rem 0;padding-left:1.3rem;line-height:1.7}
     .volver{color:var(--genesis-color-primary,#8adfff);text-decoration:none;font-weight:600}
     .colores{display:flex;gap:.65rem;margin-top:.5rem}.color{height:2rem;width:3rem;border:1px solid #728a9e;border-radius:6px}
+    .colonia-lista a{color:var(--genesis-color-primary,#8adfff);font-weight:600;text-decoration:none}.colonia-lista a:hover{text-decoration:underline}
+    .ecologia{line-height:1.5}.ecologia em{font-style:normal;color:var(--genesis-color-text-muted,#b4c1cd);font-size:.85rem}
+    h3{font-size:1rem;margin:.9rem 0 .35rem}
     .info{color:var(--genesis-color-text-muted,#b4c1cd);line-height:1.6;margin:.4rem 0}
   `],
   template:`
@@ -43,7 +48,6 @@ function indiceNatural(valor:string|null):bigint|null {
         <header>
           <small class="ceja">FICHA BIOLÓGICA · ESPECIE</small>
           <h1>{{especie()?.proceduralName ?? 'Ficha de especie'}}</h1>
-          <p class="info">Información generada del sistema confirmado, correspondiente al estado CT-0.</p>
           <a class="volver" [routerLink]="rutaRegreso()" [queryParams]="parametrosOrigen()" [fragment]="esLuna ? undefined : 'planet-section-vida'">← Volver a la ficha del cuerpo</a>
         </header>
         @if (facade.state().kind === 'loading') {
@@ -76,29 +80,28 @@ function indiceNatural(valor:string|null):bigint|null {
                 <div class="dato"><span>Patrón de pigmentación</span><strong>{{etiqueta(e.phenotype.pattern)}}</strong></div>
                 <div class="dato"><span>Pares de apéndices</span><strong>{{e.phenotype.appendagePairs}}</strong></div>
                 <div class="dato"><span>Bioluminiscencia</span><strong>{{e.phenotype.bioluminescent?'Sí':'No'}}</strong></div>
-                <div class="dato"><span>Pigmentos procedurales</span>
+                <div class="dato"><span>Pigmentos</span>
                   <div class="colores"><span class="color" [style.backgroundColor]="e.phenotype.primaryColorHex" aria-label="Pigmento principal"></span>
                   <span class="color" [style.backgroundColor]="e.phenotype.secondaryColorHex" aria-label="Pigmento secundario"></span></div>
                 </div>
               </div>
-              @if (contratoVisual(); as contrato) {
-                <p class="info" data-testid="vida38-contrato-visual">
-                  Contrato visual 38.1 preparado · huella {{contrato.appearanceFingerprint}}
-                  · muestra procedural 3D base disponible en 38.2.
-                  No constituye una imagen observada ni añade rasgos biológicos.
-                </p>
-              }
             </section>
             @if (contratoVisual(); as contrato) {
-              <app-life-species-visual-preview [contract]="contrato"></app-life-species-visual-preview>
+              <app-life-species-visual-preview [contract]="contrato" [simpleSpeciesFiche]="true"></app-life-species-visual-preview>
             }
             <section>
               <h2>Relaciones ecológicas</h2>
-              @if (relaciones().length===0) {<p class="info">Sin relaciones interespecíficas registradas.</p>}
+              <p class="info">Estas relaciones describen cómo interactúa la especie con otras del mismo ecosistema.
+                En «consume» la primera especie se alimenta de la segunda; «competencia» indica uso de recursos compartidos;
+                «beneficio mutuo» favorece a ambas, y «descomposición» describe el reciclaje de materia orgánica.
+                La intensidad es un índice relativo entre 0 y 1, no una cantidad de alimento ni una frecuencia observada.</p>
+              @if (relaciones().length===0) {<p class="info">Sin relaciones con otras especies registradas.</p>}
               <ul class="lista">
                 @for (relacion of relaciones(); track relacion.sourceSpeciesId+'|'+relacion.targetSpeciesId+'|'+relacion.kind) {
-                  <li>{{etiqueta(relacion.kind)}} · {{nombreEspecie(relacion.sourceSpeciesId)}} y {{nombreEspecie(relacion.targetSpeciesId)}}
-                    · intensidad {{relacion.intensity01}}</li>
+                  @if (explicarRelacion(relacion); as explicacion) {
+                    <li class="ecologia"><strong>{{explicacion.text}}</strong>
+                      <em> · Intensidad relativa: {{explicacion.relativeIntensity}} de 1</em></li>
+                  }
                 }
               </ul>
             </section>
@@ -128,10 +131,43 @@ function indiceNatural(valor:string|null):bigint|null {
                 } @else {<p class="info">Esta especie es inteligente, pero no ha desarrollado una civilización.</p>}
               </section>
             }
-            <section><h2>Identidad científica</h2>
-              <p class="info">Identificador procedural: <code>{{e.id}}</code></p>
-              <p class="info">Los datos pertenecen al universo simulado. No se ha generado una fecha histórica certificada de origen.</p>
-            </section>
+            @if (conocimiento()?.civilization) {
+              <section data-testid="vida38-especie-colonias">
+                <h2>Colonias</h2>
+                @if (consultandoColonias()) {
+                  <p class="info" role="status">Consultando planetas y lunas colonizados…</p>
+                } @else if (colonias(); as expansion) {
+                  <div class="grid">
+                    <div class="dato"><span>Planetas colonizados</span><strong>{{expansion.planets.length}}</strong></div>
+                    <div class="dato"><span>Lunas colonizadas</span><strong>{{expansion.moons.length}}</strong></div>
+                    <div class="dato"><span>Colonias registradas</span><strong>{{expansion.totalColonies}}</strong></div>
+                  </div>
+                  @if (expansion.planets.length) {
+                    <h3>Planetas colonizados</h3>
+                    <ul class="lista colonia-lista">@for (destino of expansion.planets; track destino.bodyStorageKey) {
+                      <li><a [routerLink]="destino.route" [queryParams]="parametrosOrigen()">{{destino.title}}</a>
+                        · {{destino.colonyCount}} {{destino.colonyCount===1?'colonia':'colonias'}}</li>
+                    }</ul>
+                  }
+                  @if (expansion.moons.length) {
+                    <h3>Lunas colonizadas</h3>
+                    <ul class="lista colonia-lista">@for (destino of expansion.moons; track destino.bodyStorageKey) {
+                      <li><a [routerLink]="destino.route" [queryParams]="parametrosOrigen()">{{destino.title}}</a>
+                        · {{destino.colonyCount}} {{destino.colonyCount===1?'colonia':'colonias'}}</li>
+                    }</ul>
+                  }
+                  @if (expansion.totalColonies===0) {
+                    <p class="info">No se han encontrado colonias de esta civilización en los registros disponibles del sistema.</p>
+                  }
+                  <p class="info">Se muestran destinos con procedencia comprobada.
+                    @if (expansion.partial) {Algunos registros no han podido verificarse; la relación puede estar incompleta.}
+                    @else {Los cuerpos sin información disponible no se contabilizan.}
+                  </p>
+                } @else {
+                  <p class="info">No se ha podido comprobar el inventario colonial de esta civilización.</p>
+                }
+              </section>
+            }
           } @else {
             <section role="status">No existe una especie con esta identidad en la biosfera del cuerpo indicado.</section>
           }
@@ -188,6 +224,34 @@ export class LifeSpeciesDetailPage implements OnInit {
   readonly especie=computed(():Vida6Species|null=>this.conocimiento()?.species??null);
   readonly contratoVisual=computed(()=>this.conocimiento()?.visualContract??null);
   readonly relaciones=computed(()=>this.conocimiento()?.ecologicalRelations??[]);
+  readonly explicarRelacion=(r:Vida9BiologyRecord['ecosystem']['relations'][number])=>
+    describeVida38EcologicalRelationB5(r,this.especieId??'',id=>this.nombreEspecie(id));
+  private readonly coloniasFuente=inject(Vida38SpeciesColoniesDataSourceB5);
+  readonly colonias=signal<Vida38SpeciesColoniesB5|null>(null);
+  readonly consultandoColonias=signal(false);
+  private readonly cargaColonial=effect(onCleanup=>{
+    const conocimiento=this.conocimiento();
+    const record=this.registro();
+    const model=this.facade.model();
+    const bodyIndex=this.cuerpo;
+    const speciesId=this.especieId;
+    if(!conocimiento?.civilization || !record || !model || this.esLuna ||
+        bodyIndex===null || !speciesId){
+      this.consultandoColonias.set(false);
+      this.colonias.set(null);
+      return;
+    }
+    let active=true;
+    onCleanup(()=>{active=false;});
+    this.colonias.set(null);
+    this.consultandoColonias.set(true);
+    void this.coloniasFuente.read({model,bodyIndex,speciesId,
+      visibleSourceRecord:record}).then(result=>{
+        if(active){this.colonias.set(result);this.consultandoColonias.set(false);}
+      }).catch(()=>{
+        if(active){this.colonias.set(null);this.consultandoColonias.set(false);}
+      });
+  });
   nombreEspecie(id:string):string {
     if (!this.conocimiento())return 'Especie no disponible';
     return this.registro()?.ecosystem.species.find(e=>e.id===id)?.proceduralName??'Especie no disponible';

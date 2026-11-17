@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 
 import { type KnownDiscovery } from '../../domain/discovery/known-discovery';
+import {confirmedScientificSystemKeys38BisB7, scientificSystemKey38BisB7} from '../../domain/exploration/scientific-confirmation-38-bis-b7';
 import { type UniverseGenerationKey } from '../../domain/generation/universe-generation-key';
 import { PlanetType } from '../../domain/planetary/planet-type';
 import {
@@ -96,9 +97,12 @@ export class GalaxyKnowledgePlanetsMoonsCatalogDataSource {
       knownDiscoveries,
     );
 
+    // Historical BodyLocator rows can be known before confirmation. Never publish
+    // them in a scientific list unless their own state or whole parent system is confirmed.
+    const confirmedSystems = confirmedScientificSystemKeys38BisB7(knownDiscoveries);
     return request.query.category === 'planets'
-      ? planetPage(snapshot, request, this.planetViewCache)
-      : moonPage(snapshot, request, this.moonViewCache);
+      ? planetPage(snapshot, request, this.planetViewCache, confirmedSystems)
+      : moonPage(snapshot, request, this.moonViewCache, confirmedSystems);
   }
 
   private async loadGalaxyKnowledge(
@@ -196,12 +200,15 @@ function planetPage(
   snapshot: GalaxyKnowledgePlanetMoonCatalogSnapshot,
   request: GalaxyKnowledgeCatalogDataRequest,
   viewCache: GalaxyKnowledgeCatalogViewCache<GalaxyKnowledgePlanetCatalogEntry>,
+  confirmedSystems: ReadonlySet<string>,
 ): GalaxyKnowledgeCatalogDataResult {
   const subtype = normalizePlanetSubtype(request.query.subtype);
   const records = viewCache.resolve(
     snapshot.planets,
-    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null) + JSON.stringify(request.query.atmosphere ?? null),
-    record => matchesPlanetFilter(record, subtype)
+    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null) + JSON.stringify(request.query.atmosphere ?? null) + (request.scientificOnly ? '|confirmed-b7' : '|exploration'),
+    record => (!request.scientificOnly || record.stateName === 'CONFIRMED' ||
+        confirmedSystems.has(scientificSystemKey38BisB7(record.parentSystemLocator)))
+      && matchesPlanetFilter(record, subtype)
       && catalogNameMatches(record.designation, request.query.search)
       && matchesCatalogAtmosphere(record.atmosphere, request.query.atmosphere ?? EMPTY_ATMOSPHERE_FILTER),
     (left, right) => comparePlanets(left, right, request.query.sortKey, request.query.direction),
@@ -218,12 +225,15 @@ function moonPage(
   snapshot: GalaxyKnowledgePlanetMoonCatalogSnapshot,
   request: GalaxyKnowledgeCatalogDataRequest,
   viewCache: GalaxyKnowledgeCatalogViewCache<GalaxyKnowledgeMoonCatalogEntry>,
+  confirmedSystems: ReadonlySet<string>,
 ): GalaxyKnowledgeCatalogDataResult {
   const subtype = normalizeMoonSubtype(request.query.subtype);
   const records = viewCache.resolve(
     snapshot.moons,
-    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null) + JSON.stringify(request.query.atmosphere ?? null),
-    record => matchesMoonFilter(record, subtype)
+    galaxyKnowledgeCatalogViewKey(subtype, request.query.sortKey, request.query.direction, request.query.search ?? null) + JSON.stringify(request.query.atmosphere ?? null) + (request.scientificOnly ? '|confirmed-b7' : '|exploration'),
+    record => (!request.scientificOnly || record.stateName === 'CONFIRMED' ||
+        confirmedSystems.has(scientificSystemKey38BisB7(record.parentSystemLocator)))
+      && matchesMoonFilter(record, subtype)
       && catalogNameMatches(record.designation, request.query.search)
       && matchesCatalogAtmosphere(record.atmosphere, request.query.atmosphere ?? EMPTY_ATMOSPHERE_FILTER),
     (left, right) => compareMoons(left, right, request.query.sortKey, request.query.direction),
@@ -330,6 +340,14 @@ function toPlanetRow(record: GalaxyKnowledgePlanetCatalogEntry): GalaxyKnowledge
         : formatPercent(record.surfaceLiquidWaterCoverageFraction01),
       ...Object.fromEntries(catalogAtmosphereSortOptions(false).map(option => [option.key,catalogAtmosphereCell(record.atmosphere,option.key)])),
     }),
+    sortNumbers: Object.freeze({
+      mass: record.massEarth, radius: record.radiusEarth,
+      orbit: record.semiMajorAxisAu, period: record.orbitalPeriodDays,
+      water: record.surfaceLiquidWaterCoverageFraction01 === null
+        ? null : record.surfaceLiquidWaterCoverageFraction01 * 100,
+      temperature: record.meanSurfaceTemperatureKelvin === null
+        ? null : record.meanSurfaceTemperatureKelvin - 273.15,
+    }),
     actions: Object.freeze(actions),
   });
 }
@@ -354,6 +372,15 @@ function toMoonRow(record: GalaxyKnowledgeMoonCatalogEntry): GalaxyKnowledgeCata
       sector: record.parentSystemLocator.sectorKey.toLocaleString('es-ES'),
       locator: record.id,
       ...Object.fromEntries(catalogAtmosphereSortOptions(true).map(option => [option.key,catalogAtmosphereCell(record.atmosphere,option.key)])),
+    }),
+    sortNumbers: Object.freeze({
+      mass: record.massEarth, radius: record.radiusEarth,
+      period: record.orbitalPeriodDays,
+      ice: record.inferredIceRichnessIndex01 === null ? null : record.inferredIceRichnessIndex01*100,
+      'surface-water': record.surfaceLiquidWaterPotentialIndex01 === null
+        ? null : record.surfaceLiquidWaterPotentialIndex01*100,
+      'subsurface-ocean': record.subsurfaceOceanPotentialIndex01 === null
+        ? null : record.subsurfaceOceanPotentialIndex01*100,
     }),
     actions: Object.freeze([
       Object.freeze({

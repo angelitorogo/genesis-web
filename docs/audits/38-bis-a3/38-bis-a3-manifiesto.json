@@ -1,0 +1,45 @@
+{
+  "revision": "GENESIS/38.bis-a3/colonial-origin-historical-reconciliation/v1",
+  "mode": "incremental-read-only",
+  "files": [
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis-origin-reconciliation.ts",
+      "sha256": "c444fd6ac43db1be7bb553425051acd8fe9b2763da76139c2f56d374283251c4"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis-reconciliation.spec.ts",
+      "sha256": "a3490d0b369033fd329e0b8e14c0fb3e82f4d28208bd83c8742ea86b1a780d09"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.model.ts",
+      "sha256": "257bd6100615602dbb671cfe941bfaacc43f81673ae8c2deb2a9d165d08b9f53"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.index.ts",
+      "sha256": "6dbfd3f9eff50d6b791bdb6632bb4a5e6635f38078b96b7c06ebe4d9a1c0dca6"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis-colonization-stats.ts",
+      "sha256": "fa230b9cd065875ffe1806ebe53ecb6bbd613d35ace8fea43de7e86a42cfb023"
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/genesis-archive.html",
+      "sha256": "c3ea9c0e8864d7ad7cb290475d34b680d0584c9b35f090e1b2fb1260faf510df"
+    },
+    {
+      "path": "docs/audits/38-bis-a3/38-bis-a3-informe.md",
+      "sha256": "dacdae546647d7195e3dad88cf61849dcd35a7f648b8b641306ed6872fa0cd08"
+    },
+    {
+      "path": "LEEME-GENESIS-38-bis-a3.md",
+      "sha256": "ea19b921624040e57a814884f4600c940042bea886046840610dcc182d6a9f7e"
+    }
+  ],
+  "sourceProtection": "No production VIDA engine, Dexie schema, 3D or night-lights files modified",
+  "tests": {
+    "architecture": "passed",
+    "pureIsolatedAssertions": "10/10 passed",
+    "typescriptPure": "passed with local dependency declarations",
+    "vitestAndAngular": "not run - no installed dependencies"
+  }
+}

@@ -37,8 +37,10 @@ import { Vida38ReptilianGallery38OE5Component } from './vida38-reptilian-gallery
     <section class="panel" data-testid="vida38-preview-panel">
       <div class="header">
         <div>
-          <h3 class="title">Reconstrucción visual 38.2</h3>
-          <p class="info">Modelo 3D procedural derivado del contrato 38.1; la anatomía que el contrato no especifica es una hipótesis artística, no una imagen observada.</p>
+          <h3 class="title">{{simpleSpeciesFiche ? 'Representación 3D' : 'Reconstrucción visual 38.2'}}</h3>
+          @if (!simpleSpeciesFiche) {
+            <p class="info">Modelo 3D procedural derivado del contrato 38.1; la anatomía que el contrato no especifica es una hipótesis artística, no una imagen observada.</p>
+          }
         </div>
         <div class="toolbar">
           <button class="btn" type="button" (click)="toggleAnimation()">{{paused ? 'Reanudar animación' : 'Pausar animación'}}</button>
@@ -57,18 +59,20 @@ import { Vida38ReptilianGallery38OE5Component } from './vida38-reptilian-gallery
         <div class="control-hint">Izquierdo: girar · Derecho/Ctrl+izquierdo: mover · Rueda: zoom</div>
         @if (descriptor !== null) {
           <div class="overlay">
-            <span class="pill">{{descriptor.family === 'PLANT_FORM' ? plantGrowthLabel() : descriptor.family === 'FUNGAL_CLUSTER' ? fungalGrowthLabel() : descriptor.family === 'MICROBIAL_COLONY' ? microbialGrowthLabel() : etiqueta(descriptor.family)}} · {{etiqueta(descriptor.habitatCue)}} · {{descriptor.family === 'PLANT_FORM' ? 'Reconstrucción botánica' : descriptor.bodyScaleClass}}</span>
+            <span class="pill">{{descriptor.family === 'PLANT_FORM' ? plantGrowthLabel() : descriptor.family === 'FUNGAL_CLUSTER' ? fungalGrowthLabel() : descriptor.family === 'MICROBIAL_COLONY' ? microbialGrowthLabel() : etiqueta(descriptor.family)}} · {{etiqueta(descriptor.habitatCue)}} · {{descriptor.family === 'PLANT_FORM' ? 'Reconstrucción botánica' : (simpleSpeciesFiche ? etiqueta(descriptor.bodyScaleClass) : descriptor.bodyScaleClass)}}</span>
             <div class="legend">
               <strong>{{activeContract?.speciesName}}</strong>
               @if (comparisonContract !== null) {
                 <p>MUESTRA DE LABORATORIO · No pertenece al universo generado</p>
               }
-              <p>
-                Muestra base 38.2: morfología, tamaño, locomoción, pigmentación y adaptaciones.
-                @if (descriptor.specialistIntelligenceDeferred) {
-                  <span> La variedad morfológica específica de civilizaciones se ampliará en 38.3.</span>
-                }
-              </p>
+              @if (!simpleSpeciesFiche) {
+                <p>
+                  Muestra base 38.2: morfología, tamaño, locomoción, pigmentación y adaptaciones.
+                  @if (descriptor.specialistIntelligenceDeferred) {
+                    <span> La variedad morfológica específica de civilizaciones se ampliará en 38.3.</span>
+                  }
+                </p>
+              }
               <div class="swatches" style="margin-top:.65rem">
                 <span class="swatch" [style.backgroundColor]="descriptor.primaryColorHex" aria-label="Pigmento principal"></span>
                 <span class="swatch" [style.backgroundColor]="descriptor.secondaryColorHex" aria-label="Pigmento secundario"></span>
@@ -80,7 +84,7 @@ import { Vida38ReptilianGallery38OE5Component } from './vida38-reptilian-gallery
       @if (galleryOpen) {
         <app-vida38-reptilian-gallery-38-2oe5 [selectedSpeciesId]="comparisonContract?.speciesId ?? null" (open)="openGallerySpecimen($event)"></app-vida38-reptilian-gallery-38-2oe5>
       }
-      @if (descriptor !== null) {
+      @if (descriptor !== null && !simpleSpeciesFiche) {
         <div class="meta">
           <div class="meta-card"><span>Familia de render</span><strong>{{descriptor.family === 'PLANT_FORM' ? plantGrowthLabel() : descriptor.family === 'FUNGAL_CLUSTER' ? fungalGrowthLabel() : descriptor.family === 'MICROBIAL_COLONY' ? microbialGrowthLabel() : etiqueta(descriptor.family)}}</strong></div>
           @if (descriptor.family === 'PLANT_FORM') {
@@ -96,6 +100,8 @@ import { Vida38ReptilianGallery38OE5Component } from './vida38-reptilian-gallery
 })
 export class LifeSpeciesVisualPreviewComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input({ required: true }) contract: Vida38SpeciesVisualContract | null = null;
+  /** Omite los mensajes internos solo en las fichas biológicas del juego. */
+  @Input() simpleSpeciesFiche = false;
   // La galería comparativa es exclusiva de Laboratorio. Las fichas de
   // especies del juego no exponen ningún acceso a muestras sintéticas.
   @Input() showReptilianGalleryToggle = false;

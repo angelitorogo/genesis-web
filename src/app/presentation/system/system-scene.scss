@@ -365,3 +365,25 @@
     box-shadow: 0 0 .45rem rgba(106, 215, 255, .62);
   }
 }
+
+/* VISCIV.6e: temporary route-gated QA telemetry, never persisted. */
+.system-scene__orbital-debug {
+  position: absolute;
+  z-index: 4;
+  top: 7rem;
+  right: 1rem;
+  max-height: min(43vh, 22rem);
+  max-width: min(26rem, calc(100% - 2rem));
+  overflow: auto;
+  display: grid;
+  gap: .28rem;
+  padding: .6rem .7rem;
+  border: 1px solid rgba(106, 215, 255, .38);
+  border-radius: .6rem;
+  background: rgba(1, 8, 17, .88);
+  color: #c6e8fb;
+  font: .66rem/1.45 monospace;
+  pointer-events: auto;
+}
+.system-scene__orbital-debug strong { color: #88dbfc; font-size: .65rem; }
+.system-scene__orbital-debug > div { display: grid; gap: .1rem; border-top: 1px solid rgba(106,215,255,.18); padding-top: .25rem; }

@@ -416,6 +416,7 @@ export class PlanetScientificCardAssembler {
                   privateEcosystemVIDA6,
                 ),
                 resolveConfirmedPlanetCivilizationTierV1(confirmedBiologyVIDA9),
+                confirmedBiologyVIDA9 ?? null,
               ),
         }),
     });

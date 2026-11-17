@@ -18,6 +18,7 @@ import {
 } from '@angular/core';
 
 import * as THREE from 'three';
+import { createVida38InfrastructureSurfaceVisual386, vida38MoonVisibleInfrastructurePlans386c2, type Vida38InfrastructureVisual386 } from '../infrastructure/vida38-infrastructure-render-38-6';
 import type { SystemScenePlanetLightBindingV1 } from '../system/system-scene-atmosphere-material';
 
 import {
@@ -63,15 +64,16 @@ import {
   createSystemSceneMoonRenderableV1,
 } from '../system/system-scene-moon-renderable';
 import {
-  buildSystemSceneArtificialSatellitePlansV1,
-  buildSystemSceneOrbitalStationPlansV1,
-  buildSystemSceneOrbitalRingPlansV1,
   createSystemSceneArtificialSatelliteVisualV1,
   createSystemSceneOrbitalRingVisualV1,
+  updateOrbitalRingNightLightsVISCIV6g,
+  updateOrbitalRingTrafficVISCIV6k,
+  type SystemSceneOrbitalRingVisualV1,
   createSystemSceneOrbitalStationVisualV1,
   supportsSystemSceneArtificialSatellitesV1,
   type SystemSceneArtificialSatelliteMaterialBindingV1,
 } from '../system/system-scene-artificial-satellites-visciv2';
+import { buildSystemSceneOrbitalInfrastructureManifestVISCIV6e } from '../system/system-scene-orbital-infrastructure-visciv6e';
 
 import {
   type SystemSceneMoonPresentationV1,
@@ -343,6 +345,7 @@ interface ScientificArtificialSatelliteBindingV1 {
     THREE.LineBasicMaterial | null;
   readonly baseLineOpacity01:
     number;
+  readonly ringVisualVISCIV6g?: SystemSceneOrbitalRingVisualV1;
 }
 
 @Component({
@@ -367,6 +370,10 @@ export class ScientificBodyPreview
   @Input({ required: true })
   model!:
     ScientificBodyPreviewModel;
+
+  /** Temporary QA panel enabled by &debugOrbital=1 in the planet URL. */
+  @Input()
+  orbitalInfrastructureDebug = false;
 
   @ViewChild(
     'canvas',
@@ -436,6 +443,8 @@ export class ScientificBodyPreview
   private localSpinBindings:
     LocalScientificSpinBinding[] =
       [];
+
+  private infrastructureVisuals: Array<{visual:Vida38InfrastructureVisual386;radius:number}> = [];
 
   private civilizationLightBinding: SystemScenePlanetLightBindingV1 | null = null;
 
@@ -695,6 +704,20 @@ export class ScientificBodyPreview
       : 'MOSTRAR SISTEMA LOCAL';
   }
 
+  orbitalInfrastructureDiagnosticVISCIV6e() {
+    if (!this.orbitalInfrastructureDebug || this.model.kind !== ScientificBodyPreviewKind.PLANET) return null;
+    const planet = this.model.primary;
+    const manifest = buildSystemSceneOrbitalInfrastructureManifestVISCIV6e(
+      planet.surfaceVisualVariantUint32, planet.nightCivilizationTier ?? null, 1,
+    );
+    return Object.freeze({
+      tier: manifest.tier ?? 'SIN TIER VISUAL',
+      satellites: manifest.satelliteCount,
+      stations: manifest.stationCount,
+      rings: manifest.ringCount,
+    });
+  }
+
   artificialSatellitesAvailable():
     boolean {
     return this.model.kind === ScientificBodyPreviewKind.PLANET && supportsSystemSceneArtificialSatellitesV1(
@@ -704,6 +727,11 @@ export class ScientificBodyPreview
 
   artificialSatellitesActionLabel():
     string {
+    const veryAdvanced = this.model.kind === ScientificBodyPreviewKind.PLANET &&
+      this.model.primary.nightCivilizationTier === 'VERY_ADVANCED';
+    if (veryAdvanced) return this.artificialSatellitesVisible()
+      ? 'OCULTAR INFRAESTRUCTURA ORBITAL'
+      : 'MOSTRAR INFRAESTRUCTURA ORBITAL';
     return this.artificialSatellitesVisible()
       ? 'OCULTAR SATÉLITES'
       : 'MOSTRAR SATÉLITES';
@@ -1398,6 +1426,12 @@ export class ScientificBodyPreview
     );
     sphere.scale.setScalar(radius);
     spinPivot.add(sphere);
+    if (planet.infrastructurePlans?.length && planet.surfaceStyle !== 'gaseous') {
+      const infra = createVida38InfrastructureSurfaceVisual386(planet.infrastructurePlans,radius,appearance.nightLightsTexture);
+      spinPivot.add(infra.group);
+      this.resources.push(...infra.resources);
+      this.infrastructureVisuals.push({visual:infra,radius});
+    }
 
     for (const overlay of appearance.overlays) {
       spinPivot.add(overlay);
@@ -1490,20 +1524,14 @@ export class ScientificBodyPreview
       return null;
     }
 
-    const plans = buildSystemSceneArtificialSatellitePlansV1(
-      planet.surfaceVisualVariantUint32,
-      tier,
-      radius,
+    // VISCIV.6e: procedural visual infrastructure for CONFIRMED civilizations,
+    // not an assertion that specific stations/rings were observed.
+    const manifest = buildSystemSceneOrbitalInfrastructureManifestVISCIV6e(
+      planet.surfaceVisualVariantUint32, tier, radius,
     );
-    const stationPlans = buildSystemSceneOrbitalStationPlansV1(
-      planet.surfaceVisualVariantUint32,
-      tier,
-      radius,
-    );
-    const ringPlans = buildSystemSceneOrbitalRingPlansV1(
-      planet.surfaceVisualVariantUint32,
-      tier,
-    );
+    const plans = manifest.satellites;
+    const stationPlans = manifest.stations;
+    const ringPlans = manifest.rings;
     const group = new THREE.Group();
     group.name = `${planet.title} orbital infrastructure`;
     const bindings: ScientificArtificialSatelliteBindingV1[] = [];
@@ -1620,6 +1648,7 @@ export class ScientificBodyPreview
         materials: ringVisual.materials,
         orbitMaterial: null,
         baseLineOpacity01: 0,
+        ringVisualVISCIV6g: ringVisual,
       }));
     }
 
@@ -1700,6 +1729,21 @@ export class ScientificBodyPreview
     spinPivot.add(
       renderable.root,
     );
+    // 38.6c2: the MINOR_IRREGULAR gate used to discard valid VIDA.8 colonies.
+    // Keep their native/civilization semantics unchanged, but support verified
+    // colonies on tiny moons using the same deformed mesh as the moon visual.
+    const moonInfrastructure = vida38MoonVisibleInfrastructurePlans386c2(
+      moon.infrastructurePlans,moon.shapeClass==='MINOR_IRREGULAR');
+    if (moonInfrastructure.length) {
+      const irregularSurface = moon.shapeClass === 'MINOR_IRREGULAR'
+        ? {geometry:renderable.surfaceMesh.geometry,
+           geometryScale:radius/presentationRadius,radiusEarth:moon.radiusEarth}
+        : null;
+      const infra = createVida38InfrastructureSurfaceVisual386(moonInfrastructure,radius,null,irregularSurface);
+      spinPivot.add(infra.group);
+      this.resources.push(...infra.resources);
+      this.infrastructureVisuals.push({visual:infra,radius});
+    }
     axialPivot.add(
       spinPivot,
     );
@@ -2373,6 +2417,7 @@ export class ScientificBodyPreview
 
         this.updateCivilizationLightBinding();
         this.updateArtificialSatelliteBinding();
+        this.updateInfrastructureLod386();
         this.renderer
           .render(
             this.scene,
@@ -2389,6 +2434,21 @@ export class ScientificBodyPreview
       window.requestAnimationFrame(
         frame,
       );
+  }
+
+  private updateInfrastructureLod386(): void {
+    if (!this.camera || this.infrastructureVisuals.length === 0) return;
+    this.scene?.updateMatrixWorld(true);
+    const height = this.canvasRef.nativeElement.clientHeight || 500;
+    const cameraPosition = new THREE.Vector3();
+    this.camera.getWorldPosition(cameraPosition);
+    const center = new THREE.Vector3();
+    for (const {visual,radius} of this.infrastructureVisuals) {
+      visual.group.getWorldPosition(center);
+      const distance = Math.max(radius*1.05,cameraPosition.distanceTo(center));
+      const pixels = 2*radius*height/(2*distance*Math.tan(this.camera.fov*Math.PI/360));
+      visual.updateProjectedDiameterPixels(pixels);
+    }
   }
 
   /** Keep the emissive-night mask aligned with the actual preview's stellar lights. */
@@ -2458,8 +2518,15 @@ export class ScientificBodyPreview
       totalWeight += weight;
     }
     const visibility = totalWeight <= 0 ? 0.34 : 0.12 + 0.88 * THREE.MathUtils.clamp(weightedNight / totalWeight, 0, 1);
+    const ringStellarSourcesVISCIV6g = sources.map(source => ({
+      direction: new THREE.Vector3(source.x, source.y, source.z),
+      weight: source.weight01,
+    }));
     for (const binding of this.artificialSatelliteBindings) {
       binding.orbitPivot.rotation.y = binding.basePhaseRadians + binding.angularSpeedRadiansPerDay * this.localSpinSimulationDay;
+      if (binding.ringVisualVISCIV6g) {
+        updateOrbitalRingTrafficVISCIV6k(binding.ringVisualVISCIV6g, this.localSpinSimulationDay);
+      }
       const brightness = 0.24 + 0.76 * visibility;
       for (const materialBinding of binding.materials) {
         const roleGain = materialBinding.role === 'panel'
@@ -2473,6 +2540,11 @@ export class ScientificBodyPreview
       }
       if (binding.orbitMaterial !== null) {
         binding.orbitMaterial.opacity = binding.baseLineOpacity01 * visibility;
+      }
+      if (binding.ringVisualVISCIV6g) {
+        updateOrbitalRingNightLightsVISCIV6g(
+          binding.ringVisualVISCIV6g, ringStellarSourcesVISCIV6g,
+        );
       }
     }
   }
@@ -2523,6 +2595,7 @@ export class ScientificBodyPreview
       [];
     this.localSpinBindings =
       [];
+    this.infrastructureVisuals = [];
     this.civilizationLightBinding = null;
     this.artificialSatelliteBindings =
       [];

@@ -1,0 +1,43 @@
+{
+  "release": "GENESIS Web 38.6c3",
+  "base": "apply after 38.6c2",
+  "files": [
+    {
+      "path": "LEEME-GENESIS-38-6c3.md",
+      "sha256": "81fbde724a9254127ecc5a42f1636bb74701b07d1514e6ea62fb3449de8b303c",
+      "size": 4724
+    },
+    {
+      "path": "docs/audits/38-6c3/38-6c3-informe.md",
+      "sha256": "6fe7278e42d87d31b6965a1488f9dfbfbcb798ea4946bf856aee775983c4a16d",
+      "size": 2132
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-colonial-night-lighting-38-6c3.spec.ts",
+      "sha256": "9d0b871d3b2ada2e0644b35e7fda5e6165c1437d16798050b2123e0299bbd2fd",
+      "size": 6473
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-colonial-night-lighting-38-6c3.ts",
+      "sha256": "4e541ec37fec0da00180c0990bf2f79ea01acfd6869e6105ad526537491fcff4",
+      "size": 2176
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-render-38-6.ts",
+      "sha256": "b58b2dc351b662a094a7e0fb0cd19d2d2a08e3578b265a125cd0d024904662ea",
+      "size": 25699
+    },
+    {
+      "path": "src/app/presentation/system/system-scene.ts",
+      "sha256": "8c128369df453e2583a994d69102baa87ed4c51c349135749d269da9774748c3",
+      "size": 198180
+    }
+  ],
+  "validation": {
+    "architecture": "PASS",
+    "ts_syntax": "PASS",
+    "isolated_math_tests": "5/5",
+    "angular_build": "NOT_RUN",
+    "vitest": "NOT_RUN"
+  }
+}

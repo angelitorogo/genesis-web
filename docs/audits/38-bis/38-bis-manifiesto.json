@@ -1,0 +1,76 @@
+{
+  "revision": "GENESIS/38.bis/observed-index/v1",
+  "delivery": "incremental",
+  "files": [
+    {
+      "path": "src/app/app.routes.ts",
+      "sha256": "a218458ae44cf92acdcff3c1a3b87a9070a882996f2a67b0756edc967c246c44",
+      "sizeBytes": 9176
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/genesis-archive.ts",
+      "sha256": "f854f6a4ccff6d6fe94b3507a2490fc8e7ac87a8baaf3efcb110ffadb0d79516",
+      "sizeBytes": 4815
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/genesis-archive.html",
+      "sha256": "53710cb420c9fbe12a993251c0eb86359dc4022bfe153a1cb561bb620babe3fa",
+      "sizeBytes": 9734
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/genesis-archive.scss",
+      "sha256": "fc8c88282223bcd95cdbd4f17398a6b83590e90cf4b3cb8b816e397ca3c86026",
+      "sizeBytes": 3777
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/genesis-archive.spec.ts",
+      "sha256": "e5dc75ac60f7eed18cdba558501a39d5e782bee9a821aabb710c92f0d66d5824",
+      "sizeBytes": 2318
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.facade.ts",
+      "sha256": "8ce12396fb7f70893ebda74d291a862baaff898189cb9ac492f4364462ec8edf",
+      "sizeBytes": 13525
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.index.ts",
+      "sha256": "bfbcf4adf39774a86e004f87fd3195fbd5b465e27b75bebebcdb3b02a904016b",
+      "sizeBytes": 25119
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.model.spec.ts",
+      "sha256": "b13e788a87cf3b42f04bdcdba7b291a982206394d042358156a7b28bc606a3d0",
+      "sizeBytes": 4536
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.model.ts",
+      "sha256": "5e8b234cd4eb590b65ac5acd52f071212f341808126e2547f471a407406ad1f3",
+      "sizeBytes": 5099
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.store.spec.ts",
+      "sha256": "4e48dcb003f18b234f9061705cff159df10179436375b44787a38c2ec84b48a9",
+      "sizeBytes": 3559
+    },
+    {
+      "path": "src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.store.ts",
+      "sha256": "45c435b409079cea821d32cd55131b6bfc311a254a8a54f06e76eedb6d2ceb48",
+      "sizeBytes": 4004
+    },
+    {
+      "path": "LEEME-GENESIS-38-bis.md",
+      "sha256": "71ca02c57cb8aca52ec937c3dd091a83127a3509966cb7c4a29c52552fc9d1e4",
+      "sizeBytes": 5970
+    },
+    {
+      "path": "docs/audits/38-bis/38-bis-informe.md",
+      "sha256": "c51f1e479eeb29b0b4d6e3501d99096fe43e61cc97ad4df40459fb67e5b4b161",
+      "sizeBytes": 2872
+    }
+  ],
+  "validation": {
+    "architecture": "PASS 2026-11-14; 6 layers, 1216 production TS, 1107 spec excluded",
+    "typescript_syntax": "PASS 9 files",
+    "Angular_Vitest_Playwright": "NOT_RUN missing node_modules and network"
+  }
+}

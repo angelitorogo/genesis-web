@@ -1,4 +1,7 @@
+import { slowOrbitalVisualSpeedVISCIV6l } from './system-scene-orbital-tempo-visciv6l';
 import * as THREE from 'three';
+import { createOrbitalTrafficVisualVISCIV6k, updateOrbitalTrafficVISCIV6k,
+  type OrbitalTrafficVisualVISCIV6k } from './system-scene-orbital-traffic-visciv6k';
 import { type Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
 import {
   addOrbitalEngineeringDetailV5,
@@ -6,6 +9,11 @@ import {
   createOrbitalMetalMaterialV5,
   finishOrbitalMaterialsV5,
 } from './system-scene-orbital-detail-visciv5';
+import {
+  createOrbitalArchitecturalLightsVISCIV6j,
+  updateOrbitalArchitecturalNightLightsVISCIV6j,
+  type OrbitalLightLayerVISCIV6j,
+} from './system-scene-orbital-illumination-visciv6j';
 
 export type SystemSceneArtificialSatelliteTierV1 =
   | 'ADVANCED'
@@ -24,10 +32,10 @@ export interface SystemSceneArtificialSatellitePlanV1 {
 }
 
 export type SystemSceneOrbitalInstallationKindV1 = 'INDUSTRIAL' | 'HABITAT' | 'PLATFORM';
-export type SystemSceneOrbitalRingKindV1 = 'TRANSPORT' | 'HABITAT';
+export type SystemSceneOrbitalRingKindV1 = 'TRANSPORT' | 'HABITAT' | 'INDUSTRIAL';
 
 export interface SystemSceneOrbitalInfrastructureProfileV1 {
-  readonly profileId: 'INDUSTRIAL' | 'HABITAT' | 'MIXED' | 'SINGLE_RING' | 'DOUBLE_RING' | 'PLATFORM';
+  readonly profileId: 'INDUSTRIAL' | 'HABITAT' | 'MIXED' | 'SINGLE_RING' | 'DOUBLE_RING' | 'TRIPLE_RING';
   readonly stationKinds: readonly SystemSceneOrbitalInstallationKindV1[];
   readonly ringKinds: readonly SystemSceneOrbitalRingKindV1[];
 }
@@ -42,6 +50,9 @@ export interface SystemSceneOrbitalRingPlanV1 {
   readonly structureColorHex: string;
   readonly moduleColorHex: string;
   readonly moduleCount: number;
+  /** VISCIV.6g: thickness and radial width are purely graphical, in planet radii. */
+  readonly structuralThicknessFactor?: number;
+  readonly bandWidthPlanetRadii?: number;
 }
 
 export interface SystemSceneOrbitalStationPlanV1 {
@@ -65,6 +76,13 @@ export interface SystemSceneArtificialSatelliteVisualV1 {
 
 export interface SystemSceneOrbitalRingVisualV1 extends SystemSceneArtificialSatelliteVisualV1 {
   readonly rotationPivot: THREE.Group;
+  /** Opaque, unlit beacons, updated per orbital segment and stellar direction. */
+  readonly nightBeaconsVISCIV6g?: THREE.InstancedMesh;
+  readonly beaconRadialsVISCIV6g?: readonly THREE.Vector3[];
+  readonly beaconColorVISCIV6g?: THREE.Color;
+  /** VISCIV.6j: architectural lighting layers, following the exact same night-side update. */
+  readonly architecturalLightsVISCIV6j?: readonly OrbitalLightLayerVISCIV6j[];
+  readonly orbitalTrafficVISCIV6k?: OrbitalTrafficVisualVISCIV6k;
 }
 
 export interface SystemSceneArtificialSatelliteMaterialBindingV1 {
@@ -98,7 +116,11 @@ export function buildSystemSceneArtificialSatellitePlansV1(
     const node = rand(seedUint32, 0x1201 + i * 17) * Math.PI * 2;
     const phase = rand(seedUint32, 0x1202 + i * 17) * Math.PI * 2;
     const direction = rand(seedUint32, 0x1203 + i * 17) < 0.82 ? 1 : -1;
-    const angularSpeed = direction * (0.7 + 1.1 * rand(seedUint32, 0x1204 + i * 17)) / Math.max(1.1, radiusPlanetRadii * radiusPlanetRadii);
+    const angularSpeed = slowOrbitalVisualSpeedVISCIV6l(
+      direction * (0.7 + 1.1 * rand(seedUint32, 0x1204 + i * 17))
+        / Math.max(1.1, radiusPlanetRadii * radiusPlanetRadii),
+      'SATELLITE',
+    );
     const warmNetwork = tier === 'ADVANCED' && rand(seedUint32, 0x1300 + i * 13) < 0.34;
     const colorHex = warmNetwork
       ? (rand(seedUint32, 0x1301 + i * 13) < 0.5 ? '#ffd59a' : '#ffedc0')
@@ -137,12 +159,12 @@ export function buildSystemSceneOrbitalInfrastructureProfileV1(
   }
 
   const candidates: readonly SystemSceneOrbitalInfrastructureProfileV1[] = [
-    { profileId: 'INDUSTRIAL', stationKinds: ['INDUSTRIAL', 'INDUSTRIAL'], ringKinds: [] },
-    { profileId: 'HABITAT', stationKinds: ['HABITAT', 'HABITAT', 'HABITAT'], ringKinds: [] },
-    { profileId: 'MIXED', stationKinds: ['INDUSTRIAL', 'HABITAT'], ringKinds: [] },
+    { profileId: 'INDUSTRIAL', stationKinds: ['INDUSTRIAL', 'INDUSTRIAL'], ringKinds: ['INDUSTRIAL'] },
+    { profileId: 'HABITAT', stationKinds: ['HABITAT', 'HABITAT', 'HABITAT'], ringKinds: ['HABITAT', 'HABITAT'] },
+    { profileId: 'MIXED', stationKinds: ['INDUSTRIAL', 'HABITAT'], ringKinds: ['INDUSTRIAL', 'HABITAT'] },
     { profileId: 'SINGLE_RING', stationKinds: ['HABITAT'], ringKinds: ['TRANSPORT'] },
     { profileId: 'DOUBLE_RING', stationKinds: ['HABITAT', 'HABITAT'], ringKinds: ['HABITAT', 'TRANSPORT'] },
-    { profileId: 'PLATFORM', stationKinds: ['PLATFORM', 'INDUSTRIAL'], ringKinds: [] },
+    { profileId: 'TRIPLE_RING', stationKinds: ['PLATFORM', 'INDUSTRIAL'], ringKinds: ['TRANSPORT', 'HABITAT', 'INDUSTRIAL'] },
   ];
   const index = Math.min(
     candidates.length - 1,
@@ -171,7 +193,11 @@ export function buildSystemSceneOrbitalStationPlansV1(
     const node = rand(seedUint32, 0x3201 + i * 11) * Math.PI * 2;
     const phase = rand(seedUint32, 0x3202 + i * 11) * Math.PI * 2;
     const direction = rand(seedUint32, 0x3203 + i * 11) < 0.9 ? 1 : -1;
-    const angularSpeed = direction * (0.24 + 0.42 * rand(seedUint32, 0x3204 + i * 11)) / Math.max(1.4, radiusPlanetRadii * radiusPlanetRadii);
+    const angularSpeed = slowOrbitalVisualSpeedVISCIV6l(
+      direction * (0.24 + 0.42 * rand(seedUint32, 0x3204 + i * 11))
+        / Math.max(1.4, radiusPlanetRadii * radiusPlanetRadii),
+      'STATION',
+    );
     const palette = rand(seedUint32, 0x3300) < 0.5
       ? ['#a3b5c1', '#87aac3'] as const
       : ['#b5aa9c', '#b3a58c'] as const;
@@ -202,17 +228,40 @@ export function buildSystemSceneOrbitalRingPlansV1(
     : ['#c5baa5', '#ffdeb4'] as const;
   const planeInclination = (0.08 + 0.06 * rand(seedUint32, 0x4402)) * Math.PI;
   const planeNode = rand(seedUint32, 0x4403) * Math.PI * 2;
-  return Object.freeze(profile.ringKinds.map((ringKind, index) => Object.freeze({
-    orbitRadiusPlanetRadii: 1.76 + index * 0.54 + 0.10 * rand(seedUint32, 0x4401 + index),
-    inclinationRadians: planeInclination,
-    ascendingNodeRadians: planeNode,
-    phaseRadians: rand(seedUint32, 0x4404 + index) * Math.PI * 2,
-    angularSpeedRadiansPerDay: 0.015 + 0.025 * rand(seedUint32, 0x4405 + index),
-    ringKind,
-    structureColorHex: colors[0],
-    moduleColorHex: colors[1],
-    moduleCount: ringKind === 'HABITAT' ? 18 : 12,
-  })));
+  const ringCount = profile.ringKinds.length;
+  const baseRadius = 1.74 + 0.06 * rand(seedUint32, 0x4401);
+  const radialSpacing = 0.62 + 0.10 * rand(seedUint32, 0x4406) + (ringCount >= 3 ? 0.04 : 0);
+  // VISCIV.6h — an individual visual plane per ring, using the SAME canonical seed.
+  // The first ring (and all single-ring profiles) keeps its VISCIV.6g plane exactly.
+  // Multiple rings alternate modest inclinations/nodes, producing a deliberate
+  // crossed silhouette. Disjoint radial shells remain the geometric clearance
+  // constraint: even tilted planes cannot make rings with different shell radii
+  // intersect. No change to stations, moons, astronomy or persisted CT-0 data.
+  const degreeToRadian = Math.PI / 180;
+  return Object.freeze(profile.ringKinds.map((ringKind, index) => {
+    const planeSign = index === 1 ? 1 : -1;
+    const inclinationOffset = index === 0 ? 0
+      : planeSign * (7.0 + 3.0 * rand(seedUint32, 0x6600 + index * 13)) * degreeToRadian;
+    const nodeOffset = index === 0 ? 0
+      : planeSign * (7.0 + 4.0 * rand(seedUint32, 0x6601 + index * 13)) * degreeToRadian;
+    return Object.freeze({
+      orbitRadiusPlanetRadii: baseRadius + index * radialSpacing + 0.05 * (rand(seedUint32, 0x4407 + index) - 0.5),
+      inclinationRadians: planeInclination + inclinationOffset,
+      ascendingNodeRadians: index === 0 ? planeNode : (planeNode + nodeOffset + 2 * Math.PI) % (2 * Math.PI),
+      phaseRadians: rand(seedUint32, 0x4404 + index) * Math.PI * 2,
+      angularSpeedRadiansPerDay: 0.013 + 0.022 * rand(seedUint32, 0x4405 + index),
+      ringKind,
+      structureColorHex: ringKind === 'INDUSTRIAL' ? '#8d9fab' : colors[0],
+      moduleColorHex: ringKind === 'INDUSTRIAL' ? '#d2aa76' : colors[1],
+      moduleCount: ringKind === 'HABITAT' ? (ringCount >= 3 ? 20 : 18)
+        : ringKind === 'INDUSTRIAL' ? (ringCount >= 3 ? 22 : 18)
+        : (ringCount >= 3 ? 14 : 12),
+      structuralThicknessFactor: (ringKind === 'INDUSTRIAL' ? 1.50 : ringKind === 'HABITAT' ? 1.22 : 0.85)
+        * (0.9 + 0.2 * rand(seedUint32, 0x5501 + index * 7)),
+      bandWidthPlanetRadii: (ringKind === 'INDUSTRIAL' ? 0.23 : ringKind === 'HABITAT' ? 0.18 : 0.10)
+        * (0.9 + 0.2 * rand(seedUint32, 0x5511 + index * 7)),
+    });
+  }));
 }
 
 export function createSystemSceneArtificialSatelliteVisualV1(
@@ -389,7 +438,8 @@ export function createSystemSceneOrbitalRingVisualV1(
   const radius = planetRadiusScene * plan.orbitRadiusPlanetRadii;
   const segments = 96;
   const arcLength = (2 * Math.PI * radius) / segments;
-  const beamThickness = Math.max(planetRadiusScene * 0.012, radius * 0.007);
+  const beamThickness = Math.max(planetRadiusScene * 0.012, radius * 0.007)
+    * (plan.structuralThicknessFactor ?? 1);
   const trussColor = new THREE.Color(plan.structureColorHex);
   const beamMaterial = createOpaqueMaterial(trussColor);
   const beamGeometry = new THREE.BoxGeometry(beamThickness, beamThickness, arcLength * 0.94);
@@ -410,11 +460,14 @@ export function createSystemSceneOrbitalRingVisualV1(
 
   const modulesColor = new THREE.Color(plan.moduleColorHex);
   const moduleMaterial = createOpaqueMaterial(modulesColor);
-  const moduleWidth = planetRadiusScene * (plan.ringKind === 'HABITAT' ? 0.085 : 0.058);
-  const moduleHeight = planetRadiusScene * (plan.ringKind === 'HABITAT' ? 0.055 : 0.036);
+  const moduleWidth = planetRadiusScene * (plan.ringKind === 'HABITAT' ? 0.10
+    : plan.ringKind === 'INDUSTRIAL' ? 0.093 : 0.055);
+  const moduleHeight = planetRadiusScene * (plan.ringKind === 'HABITAT' ? 0.066
+    : plan.ringKind === 'INDUSTRIAL' ? 0.076 : 0.031);
   const moduleGeometry = new THREE.BoxGeometry(moduleWidth, moduleHeight, moduleWidth * 1.5);
   const modules = new THREE.InstancedMesh(moduleGeometry, moduleMaterial, plan.moduleCount);
-  modules.name = plan.ringKind === 'HABITAT' ? 'Ring residential modules' : 'Ring transfer platforms';
+  modules.name = plan.ringKind === 'HABITAT' ? 'Ring residential modules'
+    : plan.ringKind === 'INDUSTRIAL' ? 'Ring industrial gantries' : 'Ring transfer platforms';
   for (let i = 0; i < plan.moduleCount; i += 1) {
     const angle = (i / plan.moduleCount) * Math.PI * 2;
     temp.position.set(radius * Math.cos(angle), 0, radius * Math.sin(angle));
@@ -425,13 +478,511 @@ export function createSystemSceneOrbitalRingVisualV1(
   modules.instanceMatrix.needsUpdate = true;
   rotor.add(modules);
   resources.push(moduleGeometry, moduleMaterial);
-  materials.push(Object.freeze({ material: moduleMaterial, baseColor: modulesColor.clone(), role: plan.ringKind === 'HABITAT' ? 'window' : 'accent' }));
+  materials.push(Object.freeze({ material: moduleMaterial, baseColor: modulesColor.clone(), role:
+    plan.ringKind === 'HABITAT' ? 'window' : plan.ringKind === 'INDUSTRIAL' ? 'body' : 'accent' }));
 
   const ringSeed = Math.round(plan.orbitRadiusPlanetRadii * 65536) ^ Math.round(plan.ascendingNodeRadians * 8192);
   addOrbitalRingEngineeringDetailV5(rotor, materials, resources, radius, beamThickness, ringSeed);
   finishOrbitalMaterialsV5(materials, resources, ringSeed);
 
-  return Object.freeze({ group: root, rotationPivot: rotor, materials: Object.freeze(materials), resources: Object.freeze(resources) });
+  // VISCIV.6g: separate rails and bracing make each ring's width legible.
+  // All additions are instanced: bounded GPU draw calls, no per-segment meshes.
+  const widthScene = (plan.bandWidthPlanetRadii ?? 0.13) * planetRadiusScene;
+  const architecturalGroup = new THREE.Group();
+  architecturalGroup.name = 'VISCIV6g orbital ring architectural band';
+  const railMaterial = createOpaqueMaterial(
+    new THREE.Color(plan.ringKind === 'INDUSTRIAL' ? '#718496'
+      : plan.ringKind === 'HABITAT' ? '#adbdc8' : '#8ca9c5'),
+  );
+  const railCount = plan.ringKind === 'TRANSPORT' ? 1 : 2;
+  for (let rail = 0; rail < railCount; rail++) {
+    const railRadius = radius + (railCount === 1 ? widthScene * 0.46
+      : (rail === 0 ? -0.5 : 0.5) * widthScene);
+    const geometry = new THREE.BoxGeometry(beamThickness * 0.82, beamThickness * 0.68,
+      (2 * Math.PI * railRadius / segments) * 0.94);
+    const batch = new THREE.InstancedMesh(geometry, railMaterial, segments);
+    batch.name = 'VISCIV6g orbital ring rail';
+    for (let i = 0; i < segments; i++) {
+      const angle = (i / segments) * Math.PI * 2;
+      temp.position.set(railRadius * Math.cos(angle), 0, railRadius * Math.sin(angle));
+      temp.rotation.set(0, -angle, 0);
+      temp.updateMatrix();
+      batch.setMatrixAt(i, temp.matrix);
+    }
+    batch.instanceMatrix.needsUpdate = true;
+    architecturalGroup.add(batch);
+    resources.push(geometry);
+  }
+  resources.push(railMaterial);
+  materials.push(Object.freeze({ material: railMaterial, baseColor: railMaterial.color.clone(), role: 'truss' }));
+
+  if (railCount === 2) {
+    const braceCount = plan.ringKind === 'INDUSTRIAL' ? 48 : 32;
+    const braceGeometry = new THREE.BoxGeometry(widthScene, beamThickness * 0.65, beamThickness * 1.25);
+    const braceMaterial = createOpaqueMaterial(new THREE.Color('#62788b'));
+    const braces = new THREE.InstancedMesh(braceGeometry, braceMaterial, braceCount);
+    braces.name = 'VISCIV6g radial industrial or habitat crossbraces';
+    for (let i = 0; i < braceCount; i++) {
+      const angle = (i / braceCount) * Math.PI * 2;
+      temp.position.set(radius * Math.cos(angle), 0, radius * Math.sin(angle));
+      temp.rotation.set(0, -angle, 0);
+      temp.updateMatrix();
+      braces.setMatrixAt(i, temp.matrix);
+    }
+    braces.instanceMatrix.needsUpdate = true;
+    architecturalGroup.add(braces);
+    resources.push(braceGeometry, braceMaterial);
+    materials.push(Object.freeze({ material: braceMaterial, baseColor: braceMaterial.color.clone(), role: 'truss' }));
+  }
+  rotor.add(architecturalGroup);
+
+  const monumentalGroup = addMonumentalOrbitalArchitectureVISCIV6i(
+    plan, planetRadiusScene, radius, widthScene, beamThickness, materials, resources,
+  );
+  rotor.add(monumentalGroup);
+
+  const architecturalLights = createOrbitalArchitecturalLightsVISCIV6j(plan, planetRadiusScene);
+  rotor.add(architecturalLights.group);
+  resources.push(...architecturalLights.resources);
+
+  // VISCIV.6k: actual moving traffic follows this ring's local orbital plane.
+  const orbitalTraffic = createOrbitalTrafficVisualVISCIV6k(plan, planetRadiusScene);
+  rotor.add(orbitalTraffic.group);
+  resources.push(...orbitalTraffic.resources);
+
+  // Tiny opaque beacons; BasicMaterial stays visible on the dark hemisphere,
+  // while per-instance colors are updated from real scene stellar directions.
+  const beaconCount = plan.ringKind === 'HABITAT' ? 56
+    : plan.ringKind === 'INDUSTRIAL' ? 40 : 32;
+  const beaconColor = new THREE.Color(plan.ringKind === 'INDUSTRIAL' ? '#ffcf8c'
+    : plan.ringKind === 'HABITAT' ? '#b5e6ff' : '#9dbdff');
+  const beaconGeometry = new THREE.BoxGeometry(
+    planetRadiusScene * (plan.ringKind === 'HABITAT' ? 0.024 : 0.018),
+    planetRadiusScene * 0.012, planetRadiusScene * 0.025,
+  );
+  const beaconMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+  const beacons = new THREE.InstancedMesh(beaconGeometry, beaconMaterial, beaconCount);
+  beacons.name = 'VISCIV6g nocturnal orbital beacons';
+  const beaconRadials: THREE.Vector3[] = [];
+  for (let i = 0; i < beaconCount; i++) {
+    const angle = (i / beaconCount) * Math.PI * 2;
+    const radial = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
+    beaconRadials.push(radial);
+    temp.position.copy(radial).multiplyScalar(radius);
+    temp.position.y = beamThickness * 0.92;
+    temp.rotation.set(0, -angle, 0);
+    temp.updateMatrix();
+    beacons.setMatrixAt(i, temp.matrix);
+    beacons.setColorAt(i, beaconColor.clone().multiplyScalar(0.015));
+  }
+  beacons.instanceMatrix.needsUpdate = true;
+  if (beacons.instanceColor) beacons.instanceColor.needsUpdate = true;
+  const beaconGroup = new THREE.Group();
+  beaconGroup.name = 'VISCIV6g night-beacon instances';
+  beaconGroup.add(beacons);
+  rotor.add(beaconGroup);
+  resources.push(beaconGeometry, beaconMaterial);
+
+  return Object.freeze({ group: root, rotationPivot: rotor, materials: Object.freeze(materials),
+    resources: Object.freeze(resources), nightBeaconsVISCIV6g: beacons,
+    beaconRadialsVISCIV6g: Object.freeze(beaconRadials), beaconColorVISCIV6g: beaconColor,
+    architecturalLightsVISCIV6j: architecturalLights.layers,
+    orbitalTrafficVISCIV6k: orbitalTraffic });
+}
+
+/** VISCIV.6k shared animation clock for both system scene and body fiche. */
+export function updateOrbitalRingTrafficVISCIV6k(
+  visual: SystemSceneOrbitalRingVisualV1,
+  simulationDay: number,
+): void {
+  if (visual.orbitalTrafficVISCIV6k) {
+    updateOrbitalTrafficVISCIV6k(visual.orbitalTrafficVISCIV6k, simulationDay);
+  }
+}
+
+/**
+ * VISCIV.6g: light only the orbital segments facing away from the stars.
+ * This updates instance colors, not planetary biology, research or orbital positions.
+ * Geometry and materials are shared; no new GPU objects are allocated per frame.
+ */
+export function updateOrbitalRingNightLightsVISCIV6g(
+  visual: SystemSceneOrbitalRingVisualV1,
+  stellarSources: readonly Readonly<{ direction: THREE.Vector3; weight: number }>[],
+): void {
+  const beacons = visual.nightBeaconsVISCIV6g;
+  const radials = visual.beaconRadialsVISCIV6g;
+  const baseColor = visual.beaconColorVISCIV6g;
+  if (!beacons || !radials || !baseColor) return;
+  visual.rotationPivot.updateWorldMatrix(true, false);
+  const quaternion = new THREE.Quaternion();
+  visual.rotationPivot.getWorldQuaternion(quaternion);
+  const worldRadial = new THREE.Vector3();
+  const color = new THREE.Color();
+  for (let i = 0; i < radials.length; i++) {
+    worldRadial.copy(radials[i]!).applyQuaternion(quaternion);
+    let nightWeight = 0;
+    let totalWeight = 0;
+    for (const source of stellarSources) {
+      if (!(source.weight > 0) || source.direction.lengthSq() < 1e-9) continue;
+      const dot = worldRadial.dot(source.direction) / Math.sqrt(source.direction.lengthSq());
+      const night = THREE.MathUtils.clamp((0.12 - dot) / 0.50, 0, 1);
+      nightWeight += source.weight * night;
+      totalWeight += source.weight;
+    }
+    const illumination = totalWeight > 0 ? nightWeight / totalWeight : 0;
+    // A slight dusk glow is intentional, but daytime structures remain metallic.
+    const intensity = 0.012 + 0.38 * illumination;
+    beacons.setColorAt(i, color.copy(baseColor).multiplyScalar(intensity));
+  }
+  if (beacons.instanceColor) beacons.instanceColor.needsUpdate = true;
+  if (visual.architecturalLightsVISCIV6j) {
+    updateOrbitalArchitecturalNightLightsVISCIV6j(
+      visual.architecturalLightsVISCIV6j, quaternion, stellarSources,
+    );
+  }
+}
+
+function addMonumentalOrbitalArchitectureVISCIV6i(
+  plan: SystemSceneOrbitalRingPlanV1,
+  planetRadiusScene: number,
+  radius: number,
+  widthScene: number,
+  beamThickness: number,
+  materials: SystemSceneArtificialSatelliteMaterialBindingV1[],
+  resources: { dispose(): void }[],
+): THREE.Group {
+  const root = new THREE.Group();
+  root.name = 'VISCIV6i monumental orbital superstructure';
+  addMonumentalDeckLevelsVISCIV6i(root, plan, planetRadiusScene, radius, widthScene, beamThickness, materials, resources);
+  addMonumentalNodesVISCIV6i(root, plan, planetRadiusScene, radius, widthScene, beamThickness, materials, resources);
+  switch (plan.ringKind) {
+    case 'HABITAT':
+      addHabitatDistrictsVISCIV6i(root, planetRadiusScene, radius, widthScene, beamThickness, materials, resources);
+      break;
+    case 'INDUSTRIAL':
+      addIndustrialShipyardsVISCIV6i(root, planetRadiusScene, radius, widthScene, beamThickness, materials, resources);
+      break;
+    case 'TRANSPORT':
+      addTransportCorridorsVISCIV6i(root, planetRadiusScene, radius, widthScene, beamThickness, materials, resources);
+      break;
+  }
+  return root;
+}
+
+function addMonumentalDeckLevelsVISCIV6i(
+  parent: THREE.Group,
+  plan: SystemSceneOrbitalRingPlanV1,
+  planetRadiusScene: number,
+  radius: number,
+  widthScene: number,
+  beamThickness: number,
+  materials: SystemSceneArtificialSatelliteMaterialBindingV1[],
+  resources: { dispose(): void }[],
+): void {
+  const group = new THREE.Group();
+  group.name = 'VISCIV6i deck levels';
+  const deckColor = new THREE.Color(plan.ringKind === 'INDUSTRIAL' ? '#75899a'
+    : plan.ringKind === 'HABITAT' ? '#b3c2ce' : '#89a9c5');
+  // VISCIV.6i.a: actual architectural relief, not merely relaxed tests.
+  // All dimensions are in planet radii and remain inside the 6h radial shells.
+  // The former ranges were too flat to fulfil the monumental silhouette contract.
+  const deckLevels = plan.ringKind === 'INDUSTRIAL'
+    ? [-0.14, -0.05, 0.05, 0.14]
+    : plan.ringKind === 'HABITAT'
+      ? [-0.115, -0.035, 0.035, 0.115]
+      : [-0.085, 0, 0.085];
+  const lateralOffsets = plan.ringKind === 'TRANSPORT'
+    ? [0]
+    : [-widthScene * 0.36, widthScene * 0.36];
+  for (const yFactor of deckLevels) {
+    for (const radialOffset of lateralOffsets) {
+      addOrbitalBoxBandVISCIV6i({
+        parent: group,
+        name: 'VISCIV6i monumental deck band',
+        count: 96,
+        radius: radius + radialOffset,
+        y: yFactor * planetRadiusScene,
+        width: Math.max(widthScene * (plan.ringKind === 'INDUSTRIAL' ? 0.82 : 0.70), beamThickness * 1.9),
+        height: beamThickness * (plan.ringKind === 'INDUSTRIAL' ? 1.25 : 0.92),
+        depth: ((2 * Math.PI * Math.max(0.01, radius + radialOffset)) / 96) * 0.91,
+        color: deckColor,
+        role: 'body',
+        resources,
+        materials,
+        geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+      });
+    }
+  }
+
+  // Connect the separated decks with load-bearing vertical towers.
+  // Instances share just one geometry/material per radial lane, preventing
+  // the new height from looking like disconnected floating concentric strips.
+  const deckSpan = (deckLevels[deckLevels.length - 1]! - deckLevels[0]!) * planetRadiusScene;
+  const supportsColor = new THREE.Color(plan.ringKind === 'INDUSTRIAL' ? '#697f91'
+    : plan.ringKind === 'HABITAT' ? '#8fa6b9' : '#7b9db9');
+  for (const radialOffset of lateralOffsets) {
+    addOrbitalBoxBandVISCIV6i({
+      parent: group,
+      name: 'VISCIV6ia interdeck structural pylons',
+      count: plan.ringKind === 'INDUSTRIAL' ? 48 : plan.ringKind === 'HABITAT' ? 40 : 32,
+      radius: radius + radialOffset,
+      y: (deckLevels[0]! + deckLevels[deckLevels.length - 1]!) * 0.5 * planetRadiusScene,
+      width: Math.max(beamThickness * 1.45, widthScene * 0.13),
+      height: deckSpan + beamThickness * 0.45,
+      depth: Math.max(beamThickness * 1.25, planetRadiusScene * 0.026),
+      color: supportsColor,
+      role: 'truss',
+      resources,
+      materials,
+      geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+    });
+  }
+  parent.add(group);
+}
+
+function addMonumentalNodesVISCIV6i(
+  parent: THREE.Group,
+  plan: SystemSceneOrbitalRingPlanV1,
+  planetRadiusScene: number,
+  radius: number,
+  widthScene: number,
+  beamThickness: number,
+  materials: SystemSceneArtificialSatelliteMaterialBindingV1[],
+  resources: { dispose(): void }[],
+): void {
+  const group = new THREE.Group();
+  group.name = 'VISCIV6i great orbital nodes';
+  const nodeCount = plan.ringKind === 'TRANSPORT' ? 6 : plan.ringKind === 'HABITAT' ? 8 : 10;
+  const hubColor = new THREE.Color(plan.ringKind === 'INDUSTRIAL' ? '#8f9faa' : '#aebdca');
+  const hubWidth = widthScene * (plan.ringKind === 'INDUSTRIAL' ? 1.4 : 1.15);
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i monumental node hubs',
+    count: nodeCount,
+    radius,
+    y: beamThickness * (plan.ringKind === 'TRANSPORT' ? 0.85 : 1.15),
+    width: hubWidth,
+    height: beamThickness * (plan.ringKind === 'INDUSTRIAL' ? 3.1 : 2.4),
+    depth: planetRadiusScene * (plan.ringKind === 'TRANSPORT' ? 0.14 : 0.20),
+    color: hubColor,
+    role: 'body',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i monumental node spires',
+    count: nodeCount,
+    radius,
+    y: beamThickness * (plan.ringKind === 'TRANSPORT' ? 2.1 : 2.7),
+    width: planetRadiusScene * 0.04,
+    height: beamThickness * (plan.ringKind === 'INDUSTRIAL' ? 4.3 : 3.6),
+    depth: planetRadiusScene * 0.04,
+    color: new THREE.Color('#6f8496'),
+    role: 'truss',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  parent.add(group);
+}
+
+function addHabitatDistrictsVISCIV6i(
+  parent: THREE.Group,
+  planetRadiusScene: number,
+  radius: number,
+  widthScene: number,
+  beamThickness: number,
+  materials: SystemSceneArtificialSatelliteMaterialBindingV1[],
+  resources: { dispose(): void }[],
+): void {
+  const group = new THREE.Group();
+  group.name = 'VISCIV6i habitat districts';
+  const districtCount = 28;
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i habitat arcologies',
+    count: districtCount,
+    radius: radius,
+    y: beamThickness * 2.05,
+    width: widthScene * 0.36,
+    height: beamThickness * 3.4,
+    depth: planetRadiusScene * 0.12,
+    color: new THREE.Color('#c7d7e4'),
+    role: 'body',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i habitat domes',
+    count: 20,
+    radius: radius - widthScene * 0.18,
+    y: beamThickness * 2.25,
+    width: planetRadiusScene * 0.09,
+    height: planetRadiusScene * 0.05,
+    depth: planetRadiusScene * 0.09,
+    color: new THREE.Color('#98c7e8'),
+    role: 'window',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.SphereGeometry(w * 0.5, 10, 8),
+  });
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i habitat skybridges',
+    count: districtCount,
+    radius: radius + widthScene * 0.18,
+    y: beamThickness * 1.45,
+    width: widthScene * 0.22,
+    height: beamThickness * 0.72,
+    depth: planetRadiusScene * 0.18,
+    color: new THREE.Color('#8aa1b5'),
+    role: 'panel',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  parent.add(group);
+}
+
+function addIndustrialShipyardsVISCIV6i(
+  parent: THREE.Group,
+  planetRadiusScene: number,
+  radius: number,
+  widthScene: number,
+  beamThickness: number,
+  materials: SystemSceneArtificialSatelliteMaterialBindingV1[],
+  resources: { dispose(): void }[],
+): void {
+  const group = new THREE.Group();
+  group.name = 'VISCIV6i industrial shipyards';
+  const dockCount = 16;
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i industrial drydocks',
+    count: dockCount,
+    radius: radius + widthScene * 0.56,
+    y: beamThickness * 1.35,
+    width: widthScene * 0.95,
+    height: beamThickness * 1.25,
+    depth: planetRadiusScene * 0.28,
+    color: new THREE.Color('#899ba9'),
+    role: 'body',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i industrial gantries',
+    count: dockCount,
+    radius: radius + widthScene * 0.72,
+    y: beamThickness * 2.25,
+    width: planetRadiusScene * 0.05,
+    height: beamThickness * 4.2,
+    depth: planetRadiusScene * 0.05,
+    color: new THREE.Color('#6e8293'),
+    role: 'truss',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i industrial side docks',
+    count: 24,
+    radius: radius - widthScene * 0.48,
+    y: beamThickness * 0.75,
+    width: widthScene * 0.44,
+    height: beamThickness * 0.82,
+    depth: planetRadiusScene * 0.22,
+    color: new THREE.Color('#c8a270'),
+    role: 'accent',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  parent.add(group);
+}
+
+function addTransportCorridorsVISCIV6i(
+  parent: THREE.Group,
+  planetRadiusScene: number,
+  radius: number,
+  widthScene: number,
+  beamThickness: number,
+  materials: SystemSceneArtificialSatelliteMaterialBindingV1[],
+  resources: { dispose(): void }[],
+): void {
+  const group = new THREE.Group();
+  group.name = 'VISCIV6i transport corridors';
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i transport corridor deck',
+    count: 64,
+    radius,
+    y: beamThickness * 1.1,
+    width: widthScene * 0.72,
+    height: beamThickness * 0.72,
+    depth: planetRadiusScene * 0.18,
+    color: new THREE.Color('#9fb6cc'),
+    role: 'panel',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  addOrbitalBoxBandVISCIV6i({
+    parent: group,
+    name: 'VISCIV6i transport terminals',
+    count: 12,
+    radius,
+    y: beamThickness * 1.95,
+    width: widthScene * 0.92,
+    height: beamThickness * 1.7,
+    depth: planetRadiusScene * 0.20,
+    color: new THREE.Color('#c2d5eb'),
+    role: 'window',
+    resources,
+    materials,
+    geometryFactory: (w, h, d) => new THREE.BoxGeometry(w, h, d),
+  });
+  parent.add(group);
+}
+
+function addOrbitalBoxBandVISCIV6i(input: Readonly<{
+  parent: THREE.Group;
+  name: string;
+  count: number;
+  radius: number;
+  y: number;
+  width: number;
+  height: number;
+  depth: number;
+  color: THREE.Color;
+  role: SystemSceneArtificialSatelliteMaterialBindingV1['role'];
+  resources: { dispose(): void }[];
+  materials: SystemSceneArtificialSatelliteMaterialBindingV1[];
+  geometryFactory: (width: number, height: number, depth: number) => THREE.BufferGeometry;
+}>): void {
+  const geometry = input.geometryFactory(input.width, input.height, input.depth);
+  const material = createOpaqueMaterial(input.color);
+  const mesh = new THREE.InstancedMesh(geometry, material, input.count);
+  mesh.name = input.name;
+  const temp = new THREE.Object3D();
+  for (let i = 0; i < input.count; i += 1) {
+    const angle = (i / input.count) * Math.PI * 2;
+    temp.position.set(input.radius * Math.cos(angle), input.y, input.radius * Math.sin(angle));
+    temp.rotation.set(0, -angle, 0);
+    temp.updateMatrix();
+    mesh.setMatrixAt(i, temp.matrix);
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+  input.parent.add(mesh);
+  input.resources.push(geometry, material);
+  input.materials.push(Object.freeze({ material, baseColor: input.color.clone(), role: input.role }));
 }
 
 function createSpecializedOrbitalStationVisualV1(

@@ -1,0 +1,35 @@
+{
+  "revision": "38.6c4",
+  "files": [
+    {
+      "path": "LEEME-GENESIS-38-6c4.md",
+      "bytes": 4456,
+      "sha256": "a841901d79f76d532c7a3f935553f05ff31555380a933d153750c7bdb665aed9"
+    },
+    {
+      "path": "docs/audits/38-6c4/38-6c4-informe.md",
+      "bytes": 1490,
+      "sha256": "2caa1381e37b2a0e1f51b6b1d9213fc8d065b441a6fb2805ad67abc5cc3cacb0"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-colonial-radial-occlusion-38-6c4.spec.ts",
+      "bytes": 8151,
+      "sha256": "dd9c3b1653b2f928fcb14aa8a4acb25b01f02af85e18e9d92d67ddef72b229ae"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-colonial-radial-occlusion-38-6c4.ts",
+      "bytes": 6166,
+      "sha256": "c1caa93909af967c7bf21f0a4f221777300340ebd87cbb511632bdaef73db078"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-render-38-6.ts",
+      "bytes": 26487,
+      "sha256": "a5a02cc55f8bfb0dc8579eabbe649dded4f4e0274b3942c69cd3224ad7220f78"
+    },
+    {
+      "path": "src/app/presentation/system/system-scene.ts",
+      "bytes": 198538,
+      "sha256": "7c791d684ee579863674e52845e9354f051d06fd6bbd4085b89adc404d760298"
+    }
+  ]
+}

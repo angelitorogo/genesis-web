@@ -1,0 +1,46 @@
+{
+  "revision": "GENESIS/38.6a/day-night-geography/v1",
+  "description": "Correspondencia urbana diurna desde atlas real VISCIV.1c; no cambia night lights ni ciencia",
+  "files": [
+    {
+      "path": "LEEME-GENESIS-38-6a.md",
+      "bytes": 1779,
+      "sha256": "11c9f0f9c20b75115285aee83cae681e34372ff94e54f683483f03eeb56e47a0"
+    },
+    {
+      "path": "docs/audits/38-6a/38-6a-informe.md",
+      "bytes": 4827,
+      "sha256": "87df16ccbb85c928c8fd3ec575bccd07d3a3f849ef5e00c20a7c5c5aac9c163b"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-day-urban-38-6a.ts",
+      "bytes": 6644,
+      "sha256": "a0f4ad9e4a014d43cd8eb7f63a13770a1fb8de797e25a30098cc5e83599e6480"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-day-urban-visual-38-6a.ts",
+      "bytes": 7183,
+      "sha256": "b645cc6459c22fd030ed477511e0deec83d70e21b8245054c713c69d465fbfe2"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-day-urban-38-6a.spec.ts",
+      "bytes": 6795,
+      "sha256": "e78d2bc696c11fa878565f6b1849bca7705a3a334733822aadcdb8f9e448dd55"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-render-38-6.ts",
+      "bytes": 10344,
+      "sha256": "5a092e0a07a47959700f4c47513f78aa138e04661ee5832e88527aa40507c8c3"
+    },
+    {
+      "path": "src/app/presentation/system/system-scene.ts",
+      "bytes": 196139,
+      "sha256": "62cac8684c54fb3fe211f1e0d5286826e89e42af5f6617bca78a7aac20aeb03c"
+    },
+    {
+      "path": "src/app/presentation/scientific-body-preview/scientific-body-preview.ts",
+      "bytes": 62124,
+      "sha256": "11952ccfdfdb33039cfe685db6281a504b10039119f42712639abd0f6c520d8c"
+    }
+  ]
+}

@@ -892,11 +892,11 @@
             <div class="gd__section-heading">
               <div>
                 <small>EXPLORACIÓN GALÁCTICA</small>
-                <h3 id="gd-progress-title">Inventario y exploración</h3>
+                <h3 id="gd-progress-title">Inventario confirmado y exploración</h3>
               </div>
 
               <p>
-                Cuerpos y regiones identificados durante la exploración.
+                Exploración y cobertura por sectores; inventario científico compuesto únicamente por objetos confirmados.
               </p>
             </div>
 
@@ -935,7 +935,7 @@
                       data-testid="galaxy-detail-systems-catalog-link"
                       (click)="$event.stopPropagation()"
                     >
-                      {{ formatBigInt(model.explorationTelemetry.inventory.systems) }}
+                      {{ formatBigInt(model.scientificTelemetry.inventory.systems) }}
                     </a>
                   </strong>
                 </summary>
@@ -949,7 +949,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'SINGLE' }"
                         data-testid="galaxy-detail-systems-single-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.systems.single) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.systems.single) }}
                       </a>
                     </dd>
                   </div>
@@ -962,7 +962,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'BINARY' }"
                         data-testid="galaxy-detail-systems-binary-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.systems.binary) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.systems.binary) }}
                       </a>
                     </dd>
                   </div>
@@ -975,20 +975,20 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'TRIPLE' }"
                         data-testid="galaxy-detail-systems-triple-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.systems.triple) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.systems.triple) }}
                       </a>
                     </dd>
                   </div>
-                  @if (model.explorationTelemetry.compactHostSystems.total > 0) {
+                  @if (model.scientificTelemetry.compactHostSystems.total > 0) {
                     <div data-testid="galaxy-detail-compact-host-systems-total">
                       <dt>CON ANFITRIÓN COMPACTO (SUBCONJUNTO)</dt>
-                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT' }" data-testid="galaxy-detail-compact-systems-catalog-link">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.total) }}</a></dd>
+                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT' }" data-testid="galaxy-detail-compact-systems-catalog-link">{{ formatBigInt(model.scientificTelemetry.compactHostSystems.total) }}</a></dd>
                     </div>
-                    <div><dt>ESTRELLAS DE NEUTRONES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'NEUTRON_STAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.neutronStars) }}</a></dd></div>
-                    <div><dt>PÚLSARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'PULSAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.pulsars) }}</a></dd></div>
-                    <div><dt>PÚLSARES DE MILISEGUNDOS</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'MILLISECOND_PULSAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.millisecondPulsars) }}</a></dd></div>
-                    <div><dt>MAGNÉTARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'MAGNETAR' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.magnetars) }}</a></dd></div>
-                    <div><dt>AGUJEROS NEGROS ESTELARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'STELLAR_MASS_BLACK_HOLE' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.stellarMassBlackHoles) }}</a></dd></div>
+                    <div><dt>ESTRELLAS DE NEUTRONES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'NEUTRON_STAR' }">{{ formatBigInt(model.scientificTelemetry.compactHostSystems.neutronStars) }}</a></dd></div>
+                    <div><dt>PÚLSARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'PULSAR' }">{{ formatBigInt(model.scientificTelemetry.compactHostSystems.pulsars) }}</a></dd></div>
+                    <div><dt>PÚLSARES DE MILISEGUNDOS</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'MILLISECOND_PULSAR' }">{{ formatBigInt(model.scientificTelemetry.compactHostSystems.millisecondPulsars) }}</a></dd></div>
+                    <div><dt>MAGNÉTARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'MAGNETAR' }">{{ formatBigInt(model.scientificTelemetry.compactHostSystems.magnetars) }}</a></dd></div>
+                    <div><dt>AGUJEROS NEGROS ESTELARES</dt><dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'STELLAR_MASS_BLACK_HOLE' }">{{ formatBigInt(model.scientificTelemetry.compactHostSystems.stellarMassBlackHoles) }}</a></dd></div>
                   }
                   <div>
                     <dt>SIN CLASIFICAR</dt>
@@ -999,7 +999,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'UNCLASSIFIED' }"
                         data-testid="galaxy-detail-systems-unclassified-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.systems.unclassified) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.systems.unclassified) }}
                       </a>
                     </dd>
                   </div>
@@ -1017,7 +1017,7 @@
                       data-testid="galaxy-detail-clusters-catalog-link"
                       (click)="$event.stopPropagation()"
                     >
-                      {{ formatBigInt(model.explorationTelemetry.inventory.starClusters) }}
+                      {{ formatBigInt(model.scientificTelemetry.inventory.starClusters) }}
                     </a>
                   </strong>
                 </summary>
@@ -1031,7 +1031,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'OPEN' }"
                         data-testid="galaxy-detail-clusters-open-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.starClusters.open) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.starClusters.open) }}
                       </a>
                     </dd>
                   </div>
@@ -1044,7 +1044,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'GLOBULAR' }"
                         data-testid="galaxy-detail-clusters-globular-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.starClusters.globular) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.starClusters.globular) }}
                       </a>
                     </dd>
                   </div>
@@ -1057,7 +1057,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'UNCLASSIFIED' }"
                         data-testid="galaxy-detail-clusters-unclassified-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.starClusters.unclassified) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.starClusters.unclassified) }}
                       </a>
                     </dd>
                   </div>
@@ -1075,7 +1075,7 @@
                       data-testid="galaxy-detail-nebulae-catalog-link"
                       (click)="$event.stopPropagation()"
                     >
-                      {{ formatBigInt(model.explorationTelemetry.inventory.nebulae) }}
+                      {{ formatBigInt(model.scientificTelemetry.inventory.nebulae) }}
                     </a>
                   </strong>
                 </summary>
@@ -1089,7 +1089,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'EMISSION' }"
                         data-testid="galaxy-detail-nebulae-emission-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.emission) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.nebulae.emission) }}
                       </a>
                     </dd>
                   </div>
@@ -1102,7 +1102,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'REFLECTION' }"
                         data-testid="galaxy-detail-nebulae-reflection-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.reflection) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.nebulae.reflection) }}
                       </a>
                     </dd>
                   </div>
@@ -1115,7 +1115,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'DARK' }"
                         data-testid="galaxy-detail-nebulae-dark-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.dark) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.nebulae.dark) }}
                       </a>
                     </dd>
                   </div>
@@ -1128,7 +1128,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'PLANETARY' }"
                         data-testid="galaxy-detail-nebulae-planetary-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.planetary) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.nebulae.planetary) }}
                       </a>
                     </dd>
                   </div>
@@ -1141,7 +1141,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'HII_REGION' }"
                         data-testid="galaxy-detail-nebulae-hii-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.hiiRegions) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.nebulae.hiiRegions) }}
                       </a>
                     </dd>
                   </div>
@@ -1154,7 +1154,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'UNCLASSIFIED' }"
                         data-testid="galaxy-detail-nebulae-unclassified-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.nebulae.unclassified) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.nebulae.unclassified) }}
                       </a>
                     </dd>
                   </div>
@@ -1172,7 +1172,7 @@
                       data-testid="galaxy-detail-extremes-catalog-link"
                       (click)="$event.stopPropagation()"
                     >
-                      {{ formatBigInt(model.explorationTelemetry.inventory.extremeObjects) }}
+                      {{ formatBigInt(model.scientificTelemetry.inventory.extremeObjects) }}
                     </a>
                   </strong>
                 </summary>
@@ -1186,7 +1186,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'NEUTRON_STAR' }"
                         data-testid="galaxy-detail-extremes-neutron-star-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.neutronStars) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.neutronStars) }}
                       </a>
                     </dd>
                   </div>
@@ -1199,7 +1199,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'PULSAR' }"
                         data-testid="galaxy-detail-extremes-pulsar-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.pulsars) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.pulsars) }}
                       </a>
                     </dd>
                   </div>
@@ -1212,7 +1212,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'MILLISECOND_PULSAR' }"
                         data-testid="galaxy-detail-extremes-millisecond-pulsar-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.millisecondPulsars) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.millisecondPulsars) }}
                       </a>
                     </dd>
                   </div>
@@ -1225,7 +1225,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'MAGNETAR' }"
                         data-testid="galaxy-detail-extremes-magnetar-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.magnetars) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.magnetars) }}
                       </a>
                     </dd>
                   </div>
@@ -1238,7 +1238,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'STELLAR_MASS_BLACK_HOLE' }"
                         data-testid="galaxy-detail-extremes-stellar-black-hole-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.stellarMassBlackHoles) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.stellarMassBlackHoles) }}
                       </a>
                     </dd>
                   </div>
@@ -1251,7 +1251,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'INTERMEDIATE_MASS_BLACK_HOLE' }"
                         data-testid="galaxy-detail-extremes-intermediate-black-hole-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.intermediateMassBlackHoles) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.intermediateMassBlackHoles) }}
                       </a>
                     </dd>
                   </div>
@@ -1264,7 +1264,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'SUPERNOVA_REMNANT' }"
                         data-testid="galaxy-detail-extremes-supernova-remnant-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.supernovaRemnants) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.supernovaRemnants) }}
                       </a>
                     </dd>
                   </div>
@@ -1277,7 +1277,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'PULSAR_WIND_NEBULA' }"
                         data-testid="galaxy-detail-extremes-pwn-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.pulsarWindNebulae) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.pulsarWindNebulae) }}
                       </a>
                     </dd>
                   </div>
@@ -1290,7 +1290,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'X_RAY_BINARY_NS' }"
                         data-testid="galaxy-detail-extremes-xrb-ns-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.xRayBinariesNeutronStar) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.xRayBinariesNeutronStar) }}
                       </a>
                     </dd>
                   </div>
@@ -1303,7 +1303,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'X_RAY_BINARY_BH' }"
                         data-testid="galaxy-detail-extremes-xrb-bh-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.xRayBinariesBlackHole) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.xRayBinariesBlackHole) }}
                       </a>
                     </dd>
                   </div>
@@ -1316,7 +1316,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'MICROQUASAR' }"
                         data-testid="galaxy-detail-extremes-microquasar-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.microquasars) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.microquasars) }}
                       </a>
                     </dd>
                   </div>
@@ -1329,7 +1329,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'ULX' }"
                         data-testid="galaxy-detail-extremes-ulx-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.ultraluminousXRaySources) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.ultraluminousXRaySources) }}
                       </a>
                     </dd>
                   </div>
@@ -1342,7 +1342,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'AGN' }"
                         data-testid="galaxy-detail-extremes-agn-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.activeGalacticNuclei) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.activeGalacticNuclei) }}
                       </a>
                     </dd>
                   </div>
@@ -1355,7 +1355,7 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'QUASAR' }"
                         data-testid="galaxy-detail-extremes-quasar-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.quasars) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.quasars) }}
                       </a>
                     </dd>
                   </div>
@@ -1368,14 +1368,14 @@
                         [queryParams]="{ u: model.routeUniverseRef, type: 'UNCLASSIFIED' }"
                         data-testid="galaxy-detail-extremes-unclassified-catalog-link"
                       >
-                        {{ formatBigInt(model.explorationTelemetry.breakdown.extremeObjects.unclassified) }}
+                        {{ formatBigInt(model.scientificTelemetry.breakdown.extremeObjects.unclassified) }}
                       </a>
                     </dd>
                   </div>
-                  @if (model.explorationTelemetry.compactHostSystems.total > 0) {
+                  @if (model.scientificTelemetry.compactHostSystems.total > 0) {
                     <div data-testid="galaxy-detail-extremes-compact-system-cross-reference">
                       <dt>ANFITRIONES COMPACTOS EN SISTEMAS · NO SUMADOS A EXTREMOS</dt>
-                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT' }">{{ formatBigInt(model.explorationTelemetry.compactHostSystems.total) }}</a></dd>
+                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'systems']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT' }">{{ formatBigInt(model.scientificTelemetry.compactHostSystems.total) }}</a></dd>
                     </div>
                   }
                 </dl>
@@ -1394,10 +1394,10 @@
                     >
                       <span data-testid="galaxy-detail-known-planets">
                         {{ formatSystemContentCount(
-                          model.explorationTelemetry.inventory.planets,
-                          model.explorationTelemetry.inventory.systems,
-                          model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                          model.explorationTelemetry.inventory.planets
+                          model.scientificTelemetry.inventory.planets,
+                          model.scientificTelemetry.inventory.systems,
+                          model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                          model.scientificTelemetry.inventory.planets
                         ) }}
                       </span>
                     </a>
@@ -1406,9 +1406,9 @@
 
                 @if (
                   hasSystemContentKnowledge(
-                    model.explorationTelemetry.inventory.systems,
-                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                    model.explorationTelemetry.inventory.planets
+                    model.scientificTelemetry.inventory.systems,
+                    model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.scientificTelemetry.inventory.planets
                   )
                 ) {
                   <dl class="gd__rail-facts">
@@ -1421,7 +1421,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'ROCKY' }"
                           data-testid="galaxy-detail-planets-rocky-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.rocky) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.rocky) }}
                         </a>
                       </dd>
                     </div>
@@ -1434,7 +1434,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'SUPER_EARTH' }"
                           data-testid="galaxy-detail-planets-super-earth-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.superEarth) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.superEarth) }}
                         </a>
                       </dd>
                     </div>
@@ -1447,7 +1447,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'DESERT' }"
                           data-testid="galaxy-detail-planets-desert-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.desert) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.desert) }}
                         </a>
                       </dd>
                     </div>
@@ -1460,7 +1460,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'OCEAN' }"
                           data-testid="galaxy-detail-planets-ocean-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.ocean) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.ocean) }}
                         </a>
                       </dd>
                     </div>
@@ -1473,7 +1473,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'ICE' }"
                           data-testid="galaxy-detail-planets-ice-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.ice) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.ice) }}
                         </a>
                       </dd>
                     </div>
@@ -1486,7 +1486,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'VOLCANIC' }"
                           data-testid="galaxy-detail-planets-volcanic-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.volcanic) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.volcanic) }}
                         </a>
                       </dd>
                     </div>
@@ -1499,7 +1499,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'MINI_NEPTUNE' }"
                           data-testid="galaxy-detail-planets-mini-neptune-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.miniNeptune) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.miniNeptune) }}
                         </a>
                       </dd>
                     </div>
@@ -1512,7 +1512,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'GAS_GIANT' }"
                           data-testid="galaxy-detail-planets-gas-giant-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.gasGiant) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.gasGiant) }}
                         </a>
                       </dd>
                     </div>
@@ -1525,7 +1525,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'ICE_GIANT' }"
                           data-testid="galaxy-detail-planets-ice-giant-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.iceGiant) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.iceGiant) }}
                         </a>
                       </dd>
                     </div>
@@ -1538,7 +1538,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'POST_COLLAPSE_MODEL' }"
                           data-testid="galaxy-detail-planets-post-collapse-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.postCollapseModel) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.postCollapseModel) }}
                         </a>
                       </dd>
                     </div>
@@ -1551,13 +1551,13 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'UNCLASSIFIED' }"
                           data-testid="galaxy-detail-planets-unclassified-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.unclassified) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.unclassified) }}
                         </a>
                       </dd>
                     </div>
                     <div data-testid="galaxy-detail-compact-host-planets-total">
                       <dt>EN ÓRBITA DE ANFITRIONES COMPACTOS (SUBCONJUNTO)</dt>
-                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'planets']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT_HOST' }" data-testid="galaxy-detail-compact-planets-catalog-link">{{ formatBigInt(model.explorationTelemetry.compactHostPlanets) }}</a></dd>
+                      <dd><a class="gd__catalog-count-link" [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'planets']" [queryParams]="{ u: model.routeUniverseRef, type: 'COMPACT_HOST' }" data-testid="galaxy-detail-compact-planets-catalog-link">{{ formatBigInt(model.scientificTelemetry.compactHostPlanets) }}</a></dd>
                     </div>
                     <div>
                       <dt>AGUA LÍQUIDA SUPERFICIAL ≥ 20 %</dt>
@@ -1568,7 +1568,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'WATER_20_PLUS' }"
                           data-testid="galaxy-detail-planets-water-20-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.planets.liquidSurfaceAtLeast20Percent) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.planets.liquidSurfaceAtLeast20Percent) }}
                         </a>
                       </dd>
                     </div>
@@ -1590,10 +1590,10 @@
                       (click)="$event.stopPropagation()"
                     >
                       {{ formatSystemContentCount(
-                        model.explorationTelemetry.inventory.moons,
-                        model.explorationTelemetry.inventory.systems,
-                        model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                        model.explorationTelemetry.inventory.moons
+                        model.scientificTelemetry.inventory.moons,
+                        model.scientificTelemetry.inventory.systems,
+                        model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                        model.scientificTelemetry.inventory.moons
                       ) }}
                     </a>
                   </strong>
@@ -1601,9 +1601,9 @@
 
                 @if (
                   hasSystemContentKnowledge(
-                    model.explorationTelemetry.inventory.systems,
-                    model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                    model.explorationTelemetry.inventory.moons
+                    model.scientificTelemetry.inventory.systems,
+                    model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                    model.scientificTelemetry.inventory.moons
                   )
                 ) {
                   <dl class="gd__rail-facts">
@@ -1616,7 +1616,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'ROCKY' }"
                           data-testid="galaxy-detail-moons-rocky-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.moons.rocky) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.moons.rocky) }}
                         </a>
                       </dd>
                     </div>
@@ -1629,7 +1629,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'MIXED_ROCK_ICE' }"
                           data-testid="galaxy-detail-moons-mixed-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.moons.mixedRockIce) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.moons.mixedRockIce) }}
                         </a>
                       </dd>
                     </div>
@@ -1642,14 +1642,14 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'ICY' }"
                           data-testid="galaxy-detail-moons-icy-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.moons.icy) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.moons.icy) }}
                         </a>
                       </dd>
                     </div>
-                    <div data-testid="galaxy-detail-moons-unmaterialized"><dt>MENORES NO CARACTERIZADAS FÍSICAMENTE</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinor) }}</dd></div>
-                    <div data-testid="galaxy-detail-moons-unmaterialized-regular"><dt>↳ REGULARES ESTIMADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinorRegular) }}</dd></div>
-                    <div data-testid="galaxy-detail-moons-unmaterialized-irregular"><dt>↳ IRREGULARES ESTIMADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinorIrregular) }}</dd></div>
-                    <div data-testid="galaxy-detail-moons-unmaterialized-other"><dt>↳ OTRAS NO MATERIALIZADAS</dt><dd>{{ formatBigInt(model.explorationTelemetry.breakdown.moons.unmaterializedMinorOther) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized"><dt>MENORES NO CARACTERIZADAS FÍSICAMENTE</dt><dd>{{ formatBigInt(model.scientificTelemetry.breakdown.moons.unmaterializedMinor) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized-regular"><dt>↳ REGULARES ESTIMADAS</dt><dd>{{ formatBigInt(model.scientificTelemetry.breakdown.moons.unmaterializedMinorRegular) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized-irregular"><dt>↳ IRREGULARES ESTIMADAS</dt><dd>{{ formatBigInt(model.scientificTelemetry.breakdown.moons.unmaterializedMinorIrregular) }}</dd></div>
+                    <div data-testid="galaxy-detail-moons-unmaterialized-other"><dt>↳ OTRAS NO MATERIALIZADAS</dt><dd>{{ formatBigInt(model.scientificTelemetry.breakdown.moons.unmaterializedMinorOther) }}</dd></div>
                     <div data-testid="galaxy-detail-moons-unclassified">
                       <dt>SIN CLASIFICAR</dt>
                       <dd>
@@ -1659,7 +1659,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'UNCLASSIFIED' }"
                           data-testid="galaxy-detail-moons-unclassified-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.moons.unclassified) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.moons.unclassified) }}
                         </a>
                       </dd>
                     </div>
@@ -1672,7 +1672,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'SURFACE_LIQUID_40_PLUS' }"
                           data-testid="galaxy-detail-moons-water-40-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.moons.surfaceLiquidPotentialAtLeast40Percent) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.moons.surfaceLiquidPotentialAtLeast40Percent) }}
                         </a>
                       </dd>
                     </div>
@@ -1685,7 +1685,7 @@
                           [queryParams]="{ u: model.routeUniverseRef, type: 'SUBSURFACE_OCEAN' }"
                           data-testid="galaxy-detail-moons-subsurface-ocean-catalog-link"
                         >
-                          {{ formatBigInt(model.explorationTelemetry.breakdown.moons.subsurfaceOceanEvidence) }}
+                          {{ formatBigInt(model.scientificTelemetry.breakdown.moons.subsurfaceOceanEvidence) }}
                         </a>
                       </dd>
                     </div>
@@ -1705,10 +1705,10 @@
                     data-testid="galaxy-detail-asteroids-catalog-link"
                   >
                     {{ formatSystemContentCount(
-                      model.explorationTelemetry.inventory.asteroids,
-                      model.explorationTelemetry.inventory.systems,
-                      model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                      model.explorationTelemetry.inventory.asteroids
+                      model.scientificTelemetry.inventory.asteroids,
+                      model.scientificTelemetry.inventory.systems,
+                      model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                      model.scientificTelemetry.inventory.asteroids
                     ) }}
                   </a>
                 </strong>
@@ -1724,10 +1724,10 @@
                     data-testid="galaxy-detail-comets-catalog-link"
                   >
                     {{ formatSystemContentCount(
-                      model.explorationTelemetry.inventory.comets,
-                      model.explorationTelemetry.inventory.systems,
-                      model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                      model.explorationTelemetry.inventory.comets
+                      model.scientificTelemetry.inventory.comets,
+                      model.scientificTelemetry.inventory.systems,
+                      model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                      model.scientificTelemetry.inventory.comets
                     ) }}
                   </a>
                 </strong>
@@ -1743,10 +1743,10 @@
                     data-testid="galaxy-detail-tno-catalog-link"
                   >
                     {{ formatSystemContentCount(
-                      model.explorationTelemetry.inventory.transNeptunianObjects,
-                      model.explorationTelemetry.inventory.systems,
-                      model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                      model.explorationTelemetry.inventory.transNeptunianObjects
+                      model.scientificTelemetry.inventory.transNeptunianObjects,
+                      model.scientificTelemetry.inventory.systems,
+                      model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                      model.scientificTelemetry.inventory.transNeptunianObjects
                     ) }}
                   </a>
                 </strong>
@@ -1762,10 +1762,10 @@
                     data-testid="galaxy-detail-captured-catalog-link"
                   >
                     {{ formatSystemContentCount(
-                      model.explorationTelemetry.inventory.capturedObjects,
-                      model.explorationTelemetry.inventory.systems,
-                      model.explorationTelemetry.breakdown.confirmedSystemsWithInventory,
-                      model.explorationTelemetry.inventory.capturedObjects
+                      model.scientificTelemetry.inventory.capturedObjects,
+                      model.scientificTelemetry.inventory.systems,
+                      model.scientificTelemetry.breakdown.confirmedSystemsWithInventory,
+                      model.scientificTelemetry.inventory.capturedObjects
                     ) }}
                   </a>
                 </strong>

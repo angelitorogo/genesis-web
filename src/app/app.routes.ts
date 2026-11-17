@@ -175,6 +175,13 @@ export const genesisRoutes: Routes = [
     title: 'Ficha de objeto galáctico | Archivo GENESIS',
   },
   {
+    path: 'archive/catalog/:category',
+    loadComponent: () =>
+      import('./presentation/genesis-archive/genesis-archive')
+        .then(module => module.GenesisArchive),
+    title: 'Catálogo universal | Archivo GENESIS',
+  },
+  {
     path: 'archive',
     loadComponent: () =>
       import(

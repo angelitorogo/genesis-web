@@ -75,6 +75,8 @@ export interface GalaxyKnowledgeCatalogRow {
   readonly subtitle?: string | null;
   readonly cells: Readonly<Partial<Record<string, string>>>;
   readonly actions: readonly GalaxyKnowledgeCatalogAction[];
+  /** Magnitudes ya observadas para índices derivados; null = no evaluable. */
+  readonly sortNumbers?: Readonly<Record<string, number | null>>;
 }
 
 export interface GalaxyKnowledgeCatalogPage {
@@ -94,6 +96,8 @@ export interface GalaxyKnowledgeCatalogPage {
 }
 
 export interface GalaxyKnowledgeCatalogDataRequest {
+  /** b7: scientific list mode; do not treat exploration progress as confirmed knowledge. */
+  readonly scientificOnly?: boolean;
   readonly generationKey: UniverseGenerationKey;
   readonly galaxyIndex: bigint;
   readonly galaxyState: KnownDiscoveryState;

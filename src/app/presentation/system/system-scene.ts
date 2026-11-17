@@ -32,6 +32,8 @@ import {
 } from '@angular/core';
 
 import * as THREE from 'three';
+import { installVida38ColonialRadialOcclusion386c4 } from '../infrastructure/vida38-colonial-radial-occlusion-38-6c4';
+import { createVida38InfrastructureSurfaceVisual386, vida38MoonVisibleInfrastructurePlans386c2, type Vida38InfrastructureVisual386 } from '../infrastructure/vida38-infrastructure-render-38-6';
 import { createCompactHostLaboratoryVisual, orientCompactBlackHoleToCamera } from './system-compact-host-laboratory-visual';
 import { prepareCompactBlackHoleBodyOcclusion, updateCompactBlackHoleBodyOcclusion, type CompactBlackHoleBodyOcclusionBinding } from './system-compact-black-hole-occlusion';
 import { ExtremeType } from '../../domain/galactic-object/extreme-object-type';
@@ -116,15 +118,16 @@ import {
 } from './system-scene-artificial-orbit-guide-visibility-visciv5c';
 
 import {
-  buildSystemSceneArtificialSatellitePlansV1,
-  buildSystemSceneOrbitalStationPlansV1,
-  buildSystemSceneOrbitalRingPlansV1,
   createSystemSceneArtificialSatelliteVisualV1,
   createSystemSceneOrbitalRingVisualV1,
+  updateOrbitalRingNightLightsVISCIV6g,
+  updateOrbitalRingTrafficVISCIV6k,
+  type SystemSceneOrbitalRingVisualV1,
   createSystemSceneOrbitalStationVisualV1,
   supportsSystemSceneArtificialSatellitesV1,
   type SystemSceneArtificialSatelliteMaterialBindingV1,
 } from './system-scene-artificial-satellites-visciv2';
+import { buildSystemSceneOrbitalInfrastructureManifestVISCIV6e } from './system-scene-orbital-infrastructure-visciv6e';
 
 import {
   buildSystemScenePlanetTextureV1,
@@ -485,6 +488,10 @@ export class SystemScene
   /** Gameplay controls operate on the canonical snapshot, never on lab fixtures. */
   @Input()
   gameplaySceneControls = false;
+
+  /** Temporary QA panel: enabled by /system?...&debugOrbital=1. */
+  @Input()
+  orbitalInfrastructureDebug = false;
 
   /**
    * Optional QA-only route exposed by hosts that deliberately allow opening
@@ -1004,14 +1011,28 @@ export class SystemScene
         return count;
       }
       const seed = systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id);
-      return count + buildSystemSceneArtificialSatellitePlansV1(
+      // The shared VISCIV.6e manifest powers both count and actual meshes.
+      return count + buildSystemSceneOrbitalInfrastructureManifestVISCIV6e(
         seed, tier, planet.radiusScene,
-      ).length + buildSystemSceneOrbitalStationPlansV1(
-        seed,
-        tier,
-        planet.radiusScene,
-      ).length + buildSystemSceneOrbitalRingPlansV1(seed, tier).length;
+      ).totalCount;
     }, 0);
+  }
+
+  /** QA-only projection. Never reads private biology or non-confirmed objects. */
+  orbitalInfrastructureDiagnosticRowsVISCIV6e() {
+    if (!this.orbitalInfrastructureDebug) return [];
+    const identity = `${this.snapshot.universeSeed}|v${this.snapshot.generatorVersionCode}|${this.snapshot.proceduralIdentity}`;
+    return this.snapshot.planets.map(planet => {
+      const tier = planet.visualCivilizationTier ?? null;
+      const manifest = buildSystemSceneOrbitalInfrastructureManifestVISCIV6e(
+        systemScenePlanetSurfaceTextureSeedV1(identity, planet.id), tier, planet.radiusScene,
+      );
+      return Object.freeze({
+        bodyId: planet.id, label: planet.label, tier: tier ?? 'SIN TIER VISUAL',
+        satellites: manifest.satelliteCount, stations: manifest.stationCount,
+        rings: manifest.ringCount,
+      });
+    });
   }
 
   togglePlanets():
@@ -2033,6 +2054,8 @@ class ThreeSystemSceneRuntime
   private readonly bodyLodBindings =
     new Map<string, SystemSceneBodyLodBindingV1>();
 
+  private readonly infrastructureVisualBindings386: Array<{bodyId:string;radius:number;visual:Vida38InfrastructureVisual386}> = [];
+
   /** VIS-3D.1: at most one near-camera planet carries extra GPU texture maps. */
   private detailedPlanetTexture: {
     id: string;
@@ -2216,6 +2239,7 @@ class ThreeSystemSceneRuntime
       readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
       readonly orbitMaterial: THREE.LineBasicMaterial | null;
       readonly baseLineOpacity01: number;
+      readonly ringVisualVISCIV6g?: SystemSceneOrbitalRingVisualV1;
     }> = [];
 
   private readonly asteroidLayerObjects:
@@ -4693,6 +4717,13 @@ class ThreeSystemSceneRuntime
     spinPivot.add(
       sphere,
     );
+    if (planet.visualInfrastructurePlans?.length && planet.surfaceStyle !== 'gaseous') {
+      const infra = createVida38InfrastructureSurfaceVisual386(planet.visualInfrastructurePlans,planet.radiusScene,appearance.nightLightsTexture,null,true);
+      this.installColonialNaturalShading386c3(infra,appearance.lightBinding);
+      spinPivot.add(infra.group);
+      this.frameDisposables.push(...infra.resources);
+      this.infrastructureVisualBindings386.push({bodyId:planet.id,radius:planet.radiusScene,visual:infra});
+    }
 
     for (
       const overlay
@@ -4831,6 +4862,7 @@ class ThreeSystemSceneRuntime
         readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
         readonly orbitMaterial: THREE.LineBasicMaterial | null;
         readonly baseLineOpacity01: number;
+        readonly ringVisualVISCIV6g?: SystemSceneOrbitalRingVisualV1;
       }[];
       readonly resources: readonly { dispose(): void }[];
     } | null {
@@ -4852,17 +4884,14 @@ class ThreeSystemSceneRuntime
       planet.id,
     );
 
-    const plans = buildSystemSceneArtificialSatellitePlansV1(
-      seed,
-      tier,
-      planet.radiusScene,
+    // VISCIV.6e restores the visual station/ring branches deleted in 38.6.
+    // They are procedural *visuals*, not catalogued observational evidence.
+    const manifest = buildSystemSceneOrbitalInfrastructureManifestVISCIV6e(
+      seed, tier, planet.radiusScene,
     );
-    const stationPlans = buildSystemSceneOrbitalStationPlansV1(
-      seed,
-      tier,
-      planet.radiusScene,
-    );
-    const ringPlans = buildSystemSceneOrbitalRingPlansV1(seed, tier);
+    const plans = manifest.satellites;
+    const stationPlans = manifest.stations;
+    const ringPlans = manifest.rings;
 
     if (
       plans.length ===
@@ -4888,6 +4917,7 @@ class ThreeSystemSceneRuntime
       readonly materials: readonly SystemSceneArtificialSatelliteMaterialBindingV1[];
       readonly orbitMaterial: THREE.LineBasicMaterial | null;
       readonly baseLineOpacity01: number;
+      readonly ringVisualVISCIV6g?: SystemSceneOrbitalRingVisualV1;
     }> = [];
     const resources: Array<{ dispose(): void }> = [];
 
@@ -5068,6 +5098,7 @@ class ThreeSystemSceneRuntime
         materials: ringVisual.materials,
         orbitMaterial: null,
         baseLineOpacity01: 0,
+        ringVisualVISCIV6g: ringVisual,
       }));
     }
 
@@ -5232,6 +5263,22 @@ class ThreeSystemSceneRuntime
     spinPivot.add(
       renderable.root,
     );
+    // 38.6c2: do not discard a verified colony because its destination moon
+    // has irregular presentation geometry. Align to the real rendered mesh.
+    const moonInfrastructure = vida38MoonVisibleInfrastructurePlans386c2(
+      moon.visualInfrastructurePlans,moon.visualPresentation.shapeClass==='MINOR_IRREGULAR');
+    if (moonInfrastructure.length) {
+      const radius = moon.visualPresentation.presentationRadiusScene;
+      const irregularSurface = moon.visualPresentation.shapeClass === 'MINOR_IRREGULAR'
+        ? {geometry:renderable.surfaceMesh.geometry,geometryScale:1,
+           radiusEarth:moon.visualPresentation.sourceRadiusEarth}
+        : null;
+      const infra = createVida38InfrastructureSurfaceVisual386(moonInfrastructure,radius,null,irregularSurface,true);
+      if (moonLight) this.installColonialNaturalShading386c3(infra,moonLight);
+      spinPivot.add(infra.group);
+      this.frameDisposables.push(...infra.resources);
+      this.infrastructureVisualBindings386.push({bodyId:moon.id,radius,visual:infra});
+    }
     this.frameDisposables.push(
       ...renderable.resources,
     );
@@ -6039,6 +6086,12 @@ class ThreeSystemSceneRuntime
         binding.basePhaseRadians +
         binding.angularSpeedRadiansPerDay *
           (simulationDay - snapshot.simulation.epochSimulationDay);
+      if (binding.ringVisualVISCIV6g) {
+        updateOrbitalRingTrafficVISCIV6k(
+          binding.ringVisualVISCIV6g,
+          simulationDay - snapshot.simulation.epochSimulationDay,
+        );
+      }
     }
 
     for (
@@ -6437,6 +6490,7 @@ class ThreeSystemSceneRuntime
     this.bodySnapshotById.clear();
     this.releaseDetailedPlanetTexture();
     this.bodyLodBindings.clear();
+    this.infrastructureVisualBindings386.length = 0;
     this.pendingMoonVisuals.clear();
     this.animatedBodies.clear();
     this.spinningBodies.clear();
@@ -6771,6 +6825,51 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  /** 38.6c3: suppress unphysical ambient/star reflections from colony
+   * structures on the dark hemisphere. Use the SAME top-three multi-star
+   * terminator as the moon/planet; never touch the lights of native cities.
+   * Self-luminous status lamps are MeshBasicMaterial and remain unaffected. */
+  private installColonialNaturalShading386c3(
+    visual: Vida38InfrastructureVisual386,
+    light: SystemScenePlanetLightBindingV1,
+  ): void {
+    const installed=new Set<THREE.MeshStandardMaterial>();
+    visual.group.traverse(object=>{
+      if (!(object instanceof THREE.InstancedMesh) ||
+          object.userData['colonialVisual386c']!==true ||
+          !(object.material instanceof THREE.MeshStandardMaterial)) return;
+      const mat=object.material;
+      if(installed.has(mat)) return;
+      installed.add(mat);
+      installSystemSceneDayNightMaterialV1(mat,v2SmallBodyDayNightProfile(false),light);
+      // The regular shader uses each building face normal. That is not the
+      // moon horizon: a side wall can face a star BEHIND the moon.
+      installVida38ColonialRadialOcclusion386c4(mat,light,visual.colonialBodyCenterView386c4);
+    });
+  }
+
+  private updateColonialNightLighting386c3(): void {
+    for(const {bodyId,visual} of this.infrastructureVisualBindings386) {
+      const light=this.bodyLightBindings.get(bodyId);
+      if(!light) continue;
+      visual.updateColonialNightLighting386c3(
+        light.lightDirectionsView,light.lightWeightsView,this.camera.matrixWorldInverse);
+    }
+  }
+
+  private updateInfrastructureLod386(): void {
+    if (!this.infrastructureVisualBindings386.length) return;
+    this.scene.updateMatrixWorld(true);
+    this.camera.getWorldPosition(this.cameraWorldPosition);
+    for (const {radius,visual} of this.infrastructureVisualBindings386) {
+      visual.group.getWorldPosition(this.lodWorldPosition);
+      const distance = Math.max(radius*1.05,
+        this.lodWorldPosition.distanceTo(this.cameraWorldPosition));
+      visual.updateProjectedDiameterPixels(systemSceneProjectedDiameterPixelsV1(
+        radius,distance,this.camera.fov,this.viewportHeightPixels));
+    }
+  }
+
   private releaseDetailedPlanetTexture(): void {
     const previous = this.detailedPlanetTexture;
     if (previous === null) return;
@@ -6894,6 +6993,7 @@ class ThreeSystemSceneRuntime
         )
         .normalize();
 
+      const ringStellarSourcesVISCIV6g: { direction: THREE.Vector3; weight: number }[] = [];
       let weightedNight =
         0;
       let totalWeight =
@@ -6939,6 +7039,11 @@ class ThreeSystemSceneRuntime
             0.05,
           ) /
           distanceSquared;
+        if (binding.ringVisualVISCIV6g) {
+          ringStellarSourcesVISCIV6g.push({
+            direction: this.artificialSatelliteLightDirection.clone(), weight,
+          });
+        }
         const viewDot =
           this.artificialSatelliteCameraDirection.dot(
             this.artificialSatelliteLightDirection,
@@ -6995,6 +7100,11 @@ class ThreeSystemSceneRuntime
           binding.baseLineOpacity01 *
           visibility;
       }
+      if (binding.ringVisualVISCIV6g) {
+        updateOrbitalRingNightLightsVISCIV6g(
+          binding.ringVisualVISCIV6g, ringStellarSourcesVISCIV6g,
+        );
+      }
     }
   }
 
@@ -7009,12 +7119,14 @@ class ThreeSystemSceneRuntime
     }
 
     this.updateBodyLod();
+    this.updateInfrastructureLod386();
     this.updateMinorBodyInstanceBatches();
     this.updateSelectionProxyBatch();
     for (const blackHole of this.compactBlackHoleBillboards) {
       orientCompactBlackHoleToCamera(blackHole, this.camera);
     }
     this.updateBodyLightDirections();
+    this.updateColonialNightLighting386c3();
     this.updateArtificialSatelliteLighting();
     if (this.compactBlackHoleBodyOcclusion.length > 0) {
       // Camera and orbital motion can both reverse near/far order at any time.
@@ -7093,6 +7205,9 @@ export interface SystemScenePlanetTextureDimensionsV1 {
 }
 
 export interface PlanetAppearance {
+  /** Read-only pointer to the *existing* canonical VISCIV.1c night atlas; 38.6a uses it
+   * solely to align daytime structures. Never mutates or duplicates night lights. */
+  readonly nightLightsTexture: THREE.DataTexture | null;
   readonly material:
     THREE.MeshStandardMaterial;
 
@@ -7534,6 +7649,7 @@ export function createSystemScenePlanetAppearanceV1(
 
   return Object.freeze({
     material,
+    nightLightsTexture: textureResource.nightLightsTexture,
     overlays:
       Object.freeze(overlays),
     resources:

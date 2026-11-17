@@ -7,10 +7,10 @@
     <header class="gkc__header">
       <div>
         <p class="gkc__eyebrow">ARCHIVO CIENTÍFICO / 26.1c</p>
-        <h1 id="gkc-title">Explorador de conocimiento persistido</h1>
+        <h1 id="gkc-title">Catálogo científico confirmado</h1>
         <p>
-          Catálogo paginado y ordenable de aquello que la galaxia conoce científicamente.
-          Nunca consulta Ground Truth oculto para completar la lista.
+          Catálogo paginado de objetos confirmados. Los cuerpos de sistemas completamente confirmados
+          se autorizan conjuntamente. No consulta Ground Truth oculto para completar la lista.
         </p>
       </div>
 
@@ -98,13 +98,13 @@
                 <button type="button" (click)="clearSearch()" data-testid="gkc-search-clear">Limpiar</button>
               }
             </div>
-            <small>Busca en todos los objetos conocidos de este catálogo, no solo en la página actual.</small>
+            <small>Busca en todos los objetos confirmados de este catálogo, no solo en la página actual.</small>
           </form>
 
           @if (model.descriptor.category === 'planets' || model.descriptor.category === 'moons') {
             <form class="gkc__atmosphere" (submit)="applyAtmosphereFilters($event)" aria-label="Filtros de composición atmosférica" data-testid="gkc-atmosphere-filters">
               <div class="gkc__atmosphere-heading">
-                <div><strong>BUSCADOR ATMOSFÉRICO</strong><p>Fracciones molares finales · intervalos inclusivos · resultados del catálogo conocido.</p></div>
+                <div><strong>BUSCADOR ATMOSFÉRICO</strong><p>Fracciones molares finales · intervalos inclusivos · resultados del catálogo confirmado.</p></div>
                 <button type="button" (click)="addGasRow()" data-testid="gkc-add-gas">+ Añadir gas</button>
               </div>
               @for (row of gasRows; track $index; let i = $index) {

@@ -4,6 +4,7 @@ import { type CompactPlanetaryHostType } from '../../domain/stellar/compact-plan
 import { compactHostTypeLabel } from '../genesis-archive/archive-compact-host-card';
 
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
+import {confirmedScientificDiscoveries38BisB7} from '../../domain/exploration/scientific-confirmation-38-bis-b7';
 import { DiscoveryTargetType } from '../../domain/discovery/discovery-target-type';
 import { type KnownDiscovery } from '../../domain/discovery/known-discovery';
 import { SystemLocator } from '../../domain/generation/procedural-locator';
@@ -122,7 +123,7 @@ export class GalaxyKnowledgeSystemsCatalogDataSource {
       this.recordsFor(
         request.generationKey,
         request.galaxyIndex,
-        discoveries,
+        request.scientificOnly ? confirmedScientificDiscoveries38BisB7(discoveries) : discoveries,
       ),
       galaxyKnowledgeCatalogViewKey(
         subtype,

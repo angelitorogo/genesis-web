@@ -131,6 +131,11 @@ describe(
             '[data-testid="planet-scientific-card"]',
           ),
         ).toBeNull();
+        // 38.6b: a CATALOGUED direct URL may not disclose lunar colony counts.
+        expect((fixture.nativeElement as HTMLElement)
+          .querySelector('[data-testid="planet-moon-colonies-total"]')).toBeNull();
+        expect((fixture.nativeElement as HTMLElement)
+          .querySelector('[data-testid="planet-moon-colonies-individual"]')).toBeNull();
         expect(
           fixture
             .componentInstance

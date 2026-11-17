@@ -1,0 +1,95 @@
+{
+  "revision": "GENESIS/38.6/infrastructure/CT0/v1",
+  "generatedOn": "2026-11-13",
+  "sourceInput": "genesis-web-fuentes-38-6.zip",
+  "fileCount": 14,
+  "files": [
+    {
+      "path": "LEEME-GENESIS-38-6.md",
+      "status": "ADDED",
+      "bytes": 1386,
+      "sha256": "2996bdda91ebfeed1a5fda1d0dd4528dfb42cc2cae60199034bc92fc5f969abb"
+    },
+    {
+      "path": "docs/audits/38-6/38-6-informe.md",
+      "status": "ADDED",
+      "bytes": 6849,
+      "sha256": "010ab2c6a4285d44a08d61511a4eb56b5793f345dc0be21d97b09f7bf4530503"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-38-6.spec.ts",
+      "status": "ADDED",
+      "bytes": 9568,
+      "sha256": "48821204599b1c449da81f41d098e305dd35f5906d72d4e23f682c599aa92716"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-plan-38-6.ts",
+      "status": "ADDED",
+      "bytes": 9410,
+      "sha256": "e8b995957d6ffa99d1f4fef2de2a68115350aa4eb7a32c999223f3ef84b752b8"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-render-38-6.ts",
+      "status": "ADDED",
+      "bytes": 9581,
+      "sha256": "62eba62382342cde904d7fc36d9d5f8d79f3b8dc05b6570e28685bc06f10757c"
+    },
+    {
+      "path": "src/app/presentation/moon-detail/moon-scientific-card.ts",
+      "status": "MODIFIED",
+      "bytes": 14624,
+      "sha256": "93a56c6b376742ffceabed15b4fc46ebdcbdc7f44798ed02a7d3e9e7a3a41b3d"
+    },
+    {
+      "path": "src/app/presentation/planet-detail/planet-scientific-card.ts",
+      "status": "MODIFIED",
+      "bytes": 17183,
+      "sha256": "7d4e58c8888e899c4811936ee71058aacdc8247d00d9cb2bd21bb012568be439"
+    },
+    {
+      "path": "src/app/presentation/scientific/scientific-body-preview.ts",
+      "status": "MODIFIED",
+      "bytes": 36746,
+      "sha256": "cf20871ee707b7ea93d95cc93bd84050f685da6b7d4b1996c69af0624e1741cd"
+    },
+    {
+      "path": "src/app/presentation/scientific-body-preview/scientific-body-preview.ts",
+      "status": "MODIFIED",
+      "bytes": 62094,
+      "sha256": "2aa9f4cd648d9c935dd10bbbbe023bcd16a3408da2ceeffd72c414dfe72dbb7e"
+    },
+    {
+      "path": "src/app/presentation/system/system-scene-civilization-visuals.data-source.ts",
+      "status": "MODIFIED",
+      "bytes": 5123,
+      "sha256": "15c585278d892cbc3638c722acdeeaedac2ce9568c6d6ddddb10966f312e73bd"
+    },
+    {
+      "path": "src/app/presentation/system/system-scene-civilization-visuals.ts",
+      "status": "MODIFIED",
+      "bytes": 5650,
+      "sha256": "57f784e7ece72854fb60db4c49a92042e848b10dd8552e640bbb4552a10de688"
+    },
+    {
+      "path": "src/app/presentation/system/system-scene-snapshot.ts",
+      "status": "MODIFIED",
+      "bytes": 150628,
+      "sha256": "04ad5737cb07ed6e1b529b088c675a67599cfdd217aa986c39469de4b51e2871"
+    },
+    {
+      "path": "src/app/presentation/system/system-scene.ts",
+      "status": "MODIFIED",
+      "bytes": 195817,
+      "sha256": "d5a5f65961068ce0522f4d9c684dd628c6983c3a46a9afa922b3b8df587d5c2f"
+    }
+  ],
+  "checks": {
+    "architecture": "PASS",
+    "plannerCoreNode": "7/7",
+    "typescriptPlannerAndRendererStub": "PASS",
+    "typescriptSyntax": "11/11",
+    "angularBuild": "NOT_RUN (dependencies unavailable)",
+    "vitest": "NOT_RUN (dependencies unavailable)",
+    "playwright": "NOT_RUN (dependencies unavailable)"
+  }
+}

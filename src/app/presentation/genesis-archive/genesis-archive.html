@@ -1,17 +1,346 @@
 <genesis-screen>
-  <main
-    class="genesis-archive"
-    data-testid="genesis-archive-page"
-  >
-    <genesis-section-title
-      eyebrow="CATÁLOGO CIENTÍFICO"
-      title="Archivo GENESIS"
-      description="Repositorio local de galaxias, sistemas, cuerpos, observaciones y descubrimientos catalogados durante la exploración."
-    ></genesis-section-title>
+  <main class="genesis-archive" data-testid="genesis-archive-page">
+    <genesis-section-title eyebrow="CATÁLOGO CIENTÍFICO UNIVERSAL" title="Archivo GENESIS"
+      description="Catálogo científico de objetos confirmados, con índices locales y acceso a sus fichas originales.">
+    </genesis-section-title>
 
-    <genesis-empty-state
-      title="Archivo vacío"
-      message="Todavía no existen descubrimientos catalogados. El conocimiento obtenido durante futuras exploraciones aparecerá aquí."
-    ></genesis-empty-state>
+    @if (facade.state() === 'loading') {
+      <section class="archive-state" role="status">{{ facade.progress() || 'Abriendo el índice local de conocimiento…' }}</section>
+    } @else if (facade.state() === 'empty') {
+      <genesis-empty-state title="Archivo vacío"
+        message="No hay un universo persistido. Los objetos se incorporarán al Archivo cuando queden científicamente confirmados."></genesis-empty-state>
+    } @else if (facade.state() === 'error') {
+      <section class="archive-state archive-state--error" role="alert">{{ facade.error() }}</section>
+    } @else {
+      <div class="archive-toolbar">
+        <label>UNIVERSO
+          <select data-testid="archive-universe" [value]="facade.selectedUniverseRef()" (change)="changeUniverse($event)">
+            @for (universe of facade.universes(); track universe.ref) {
+              <option [value]="universe.ref">{{universe.label}}</option>
+            }
+          </select>
+        </label>
+        <div class="archive-status" role="status">
+          {{ facade.indexedGalaxies() }} galaxias confirmadas
+          @if (facade.busy()) { · Indexando en segundo plano… }
+        </div>
+        <button type="button" data-testid="archive-reindex" (click)="refreshIndex()" [disabled]="facade.busy()">Actualizar índice</button>
+      </div>
+      @if (facade.progress()) {<p class="archive-progress" role="status">{{facade.progress()}}</p>}
+      @if (facade.error()) {<p class="archive-warning" role="alert">{{facade.error()}}</p>}
+
+      <details class="archive-index-checkpoints" data-testid="archive-index-progress">
+        <summary>
+          <strong>Progreso persistido de indexación</strong>
+          <span>{{facade.indexProgressStored()}} / {{facade.indexProgressTotal()}} fragmentos de catálogo guardados</span>
+          @if (facade.busy()) {<span>· Trabajando en el índice…</span>}
+        </summary>
+        <div class="archive-index-checkpoints__content">
+          <p class="archive-coverage">Los fragmentos guardados y las ordenaciones científicas terminadas se conservan tras recargar.
+            «Guardado» significa que existe un índice local, incluso si está siendo revisado. «Revisadas en esta apertura»
+            cuenta las galaxias ya comprobadas frente al conocimiento actual; empieza de cero al volver a abrir el Archivo.
+            Un trabajo interrumpido puede repetirse sin perder fragmentos anteriores.</p>
+          <div class="archive-index-checkpoints__categories" data-testid="archive-index-progress-categories">
+            @for (part of facade.indexProgress(); track part.category) {
+              <div class="archive-index-checkpoints__category">
+                <strong>{{name(part.category)}}</strong>
+                <span>{{part.stored}} / {{part.total}} guardadas</span>
+                <span>· {{part.checked}} / {{part.total}} revisadas en esta apertura</span>
+                @if (part.active) {<span>· {{part.active}} en curso</span>}
+                @if (part.interrupted) {<span>· {{part.interrupted}} interrumpidas</span>}
+                @if (part.failed) {<span>· {{part.failed}} con error</span>}
+              </div>
+            }
+          </div>
+          <label class="archive-index-checkpoints__selector">DETALLE POR CATEGORÍA Y GALAXIA
+            <select data-testid="archive-progress-category" [value]="indexProgressCategory" (change)="progressCategoryChanged($event)">
+              @for (category of facade.categories; track category.id) {
+                @if (category.id !== 'galaxies') {
+                  <option [value]="category.id">{{category.label}}</option>
+                }
+              }
+            </select>
+          </label>
+          <div class="archive-index-checkpoints__galaxies">
+            @for (item of progressDetails(); track item.galaxyIndex) {
+              <details class="archive-index-checkpoints__galaxy" [attr.data-galaxy]="item.galaxyIndex">
+                <summary>
+                  <span>{{item.name}}</span>
+                  <span class="archive-progress-state" [attr.data-status]="item.base">Catálogo: {{progressLabel(item.base)}}</span>
+                  <span>{{item.scientificSorts.length === 0 ? 'Sin magnitudes adicionales' :
+                    'Ordenaciones: '+storedSorts(item.scientificSorts)+' / '+item.scientificSorts.length}}</span>
+                </summary>
+                @if (item.scientificSorts.length > 0) {
+                  <div class="archive-index-checkpoints__fields">
+                    @for (sort of item.scientificSorts; track sort.key) {
+                      <div class="archive-index-checkpoints__field">
+                        <span>{{sort.label}}</span>
+                        <strong class="archive-progress-state" [attr.data-status]="sort.status">{{progressLabel(sort.status)}}</strong>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="archive-coverage">Esta categoría solo utiliza el orden por nombre.</p>
+                }
+              </details>
+            }
+          </div>
+        </div>
+      </details>
+
+
+      @if (facade.category() === null || facade.category() === 'civilizations' ||
+           facade.category() === 'colonies' || facade.category() === 'colonized-planets' ||
+           facade.category() === 'colonized-moons') {
+        @if (facade.colonizationOverview(); as overview) {
+          <section class="archive-colonization-statistics" data-testid="archive-colonization-statistics"
+            aria-label="Estadísticas de civilizaciones colonizadoras">
+            <h2>Expansión de las civilizaciones</h2>
+            <p>Colonias tecnológicas conocidas. El mundo natal solo se muestra cuando se ha verificado su procedencia.</p>
+            <button type="button" data-testid="archive-diagnose-colonization"
+              [disabled]="facade.busy()" (click)="diagnoseColonization()">
+              Verificar procedencias y cobertura
+            </button>
+            <div class="archive-colonization-grid">
+              <article><small>CIVILIZACIONES COLONIZADORAS VERIFICADAS</small>
+                <strong>{{overview.statistics?.verifiedColonizers?.toLocaleString('es-ES') ?? 'Pendiente'}}</strong>
+                <span>De {{overview.potentialColonizers===null?'las candidatas por indexar':
+                  overview.potentialColonizers.toLocaleString('es-ES')+' civilizaciones avanzadas y muy avanzadas catalogadas'}}</span>
+              </article>
+              <article><small>COLONIAS FUNDADAS POR CIVILIZACIONES AVANZADAS</small>
+                <strong>{{overview.statistics?.advancedColonies?.toLocaleString('es-ES') ?? 'Pendiente'}}</strong>
+                <span>Nivel de desarrollo de la civilización fundadora</span>
+              </article>
+              <article><small>COLONIAS FUNDADAS POR CIVILIZACIONES MUY AVANZADAS</small>
+                <strong>{{overview.statistics?.veryAdvancedColonies?.toLocaleString('es-ES') ?? 'Pendiente'}}</strong>
+                <span>Nivel de desarrollo de la civilización fundadora</span>
+              </article>
+              <article><small>MÁXIMO POR CIVILIZACIÓN</small>
+                <strong>{{overview.statistics?.largestColonizer?.colonyCount?.toLocaleString('es-ES') ?? 'Pendiente'}}</strong>
+                @if (overview.statistics?.largestColonizer; as leader) {
+                  <a [routerLink]="leader.founder.route"
+                    [queryParams]="{u:facade.selectedUniverseRef()}">Ver mundo natal · {{leader.founder.name}}</a>
+                } @else {<span>Sin fundadora verificable todavía</span>}
+              </article>
+            </div>
+            @if (overview.statistics; as statistics) {
+              @if ((statistics.historicallyReconciledColonies??0)>0) {
+                <p class="archive-coverage" data-testid="archive-historical-reconciliations">
+                  {{statistics.historicallyReconciledColonies}} colonias con procedencia conciliada
+                  mediante una comprobación histórica de su identidad y procedencia.
+                  Los registros originales permanecen intactos.
+                </p>
+              }
+              @if (statistics.digestDriftCounts; as drift) {
+                @if (drift.vida6Only+drift.vida7Only+drift.both>0) {
+                  <p class="archive-coverage" data-testid="archive-digest-drift-breakdown">
+                    Diferencias entre los registros históricos y actuales del mundo natal:
+                    solo ecosistemas {{drift.vida6Only}}, solo civilización {{drift.vida7Only}},
+                    ambos {{drift.both}}.
+                  </p>
+                }
+              }
+              @if (statistics.unattributedColonies>0) {
+                <p class="archive-coverage">{{statistics.unattributedColonies.toLocaleString('es-ES')}} colonias
+                  con mundo natal aún no verificable. No se contabilizan como civilizaciones colonizadoras identificadas.</p>
+                <details data-testid="archive-colonial-origin-diagnostics">
+                  <summary>Diagnóstico de procedencia · {{statistics.unattributedColonies.toLocaleString('es-ES')}} colonias</summary>
+                  <p class="archive-coverage">Motivos derivados de los registros confirmados; no se revelan datos privados de mundos natales no certificados.</p>
+                  <ul>
+                    @for (reason of statistics.originDiagnostics ?? []; track reason.reason) {
+                      <li>{{reasonLabel(reason.reason)}}: <strong>{{reason.count.toLocaleString('es-ES')}}</strong></li>
+                    }
+                  </ul>
+                </details>
+              }
+            }
+            <p class="archive-coverage">Cobertura: {{overview.indexedColonyGalaxies}} de
+              {{overview.totalGalaxies}} galaxias con estadísticas coloniales y
+              {{overview.indexedCivilizationGalaxies}} de {{overview.totalGalaxies}} con niveles de civilización verificados.
+              @if (overview.pendingTierIndexing>0) {
+                {{overview.pendingTierIndexing}} pendientes de indexar.
+              }
+              @if (overview.pendingTierVerification>0) {
+                {{overview.pendingTierVerification}} pendientes de verificar contra el conocimiento actual.
+              }
+              @if (overview.missingTierSummaries>0) {
+                {{overview.missingTierSummaries}} con índice antiguo o sin desglose por nivel: pulsa «Actualizar índice».
+              }
+              @if (overview.partial) { Censo parcial: los totales son mínimos documentados, no estimaciones de toda la realidad simulada. }
+            </p>
+          </section>
+        }
+      }
+
+      @if (facade.category() === null) {
+        <section class="archive-intro">
+          <h2>Inventario universal</h2>
+          <p>Selecciona una categoría para buscar entre todas las galaxias confirmadas del universo seleccionado.</p>
+          <p>Los recuentos se construyen progresivamente a partir de datos persistidos. «Pendiente» o «parcial» no significa cero objetos.</p>
+        </section>
+        <div class="archive-dashboard" data-testid="archive-dashboard">
+          @for (category of facade.categories; track category.id) {
+            <a class="archive-tile" [routerLink]="['/archive/catalog',category.id]" [queryParams]="{u:facade.selectedUniverseRef()}"
+              [attr.data-category]="category.id">
+              <span class="archive-tile__label">{{category.label}}</span>
+              <strong class="archive-tile__count">{{countText(category.id)}}</strong>
+              <span class="archive-tile__description">{{category.description}}</span>
+              <span class="archive-tile__action">Abrir listado →</span>
+            </a>
+          }
+        </div>
+      } @else {
+        <a class="archive-return" [routerLink]="['/archive']" [queryParams]="{u:facade.selectedUniverseRef()}">← Volver al Archivo GENESIS</a>
+        <section class="archive-heading">
+          <h2>{{name(facade.category()!)}}</h2>
+          <p>Resultados procedentes de conocimiento persistido. Los datos de colonización requieren un sistema confirmado y un registro científico válido.</p>
+        </section>
+
+        @if (facade.category() === 'galaxies') {
+          <div class="archive-rows" data-testid="archive-galaxies-list">
+            @for (galaxy of facade.galaxies(); track galaxy.index) {
+              <article class="archive-row">
+                <div><strong>{{galaxy.title}}</strong><small>Estado: {{discoveryStateName(galaxy.stateCode)}}</small></div>
+                <a [routerLink]="['/galaxies',galaxy.index]" [queryParams]="{u:facade.selectedUniverseRef()}">Abrir ficha →</a>
+              </article>
+            } @empty { <p>Sin galaxias confirmadas.</p> }
+          </div>
+        } @else {
+          <section class="archive-filters archive-filters--advanced" aria-label="Filtros y ordenación del archivo">
+            <div class="archive-filters__heading">
+              <div>
+                <h3>Explorar y ordenar {{name(facade.category()!)}}</h3>
+                <p>Ordenación global sobre el conocimiento indexado, antes de paginar. Las magnitudes no evaluables se colocan al final.</p>
+              </div>
+              <button type="button" class="archive-filters__reset" (click)="resetFilters()">Restablecer filtros</button>
+            </div>
+            <div class="archive-filters__grid">
+              <label>GALAXIA
+                <select data-testid="archive-galaxy-filter" [value]="facade.selectedGalaxy()??''" (change)="changeGalaxy($event)">
+                  <option value="">Todas las galaxias</option>
+                  @for (galaxy of facade.galaxies(); track galaxy.index) {
+                    <option [value]="galaxy.index">{{galaxy.title}}</option>
+                  }
+                </select>
+              </label>
+              @if (facade.category() === 'civilizations') {
+                <label>NIVEL
+                  <select data-testid="archive-tier-filter" [value]="facade.selectedSubtype()??''" (change)="changeSubtype($event)">
+                    <option value="">Todos los niveles</option>
+                    <option value="PRIMITIVE">Primitiva</option>
+                    <option value="ADVANCED">Avanzada</option>
+                    <option value="VERY_ADVANCED">Muy avanzada</option>
+                  </select>
+                </label>
+              }
+              @if (facade.category() === 'extremes') {
+                <label>FAMILIA
+                  <select data-testid="archive-extreme-filter" [value]="facade.selectedSubtype()??''" (change)="changeSubtype($event)">
+                    <option value="">Todas las familias</option>
+                    <option value="BLACK_HOLE">Agujeros negros</option>
+                    <option value="GALACTIC_NUCLEUS">Núcleos galácticos</option>
+                    <option value="NEUTRON_STAR">Estrellas de neutrones</option>
+                    <option value="SUPERNOVA_REMNANT">Restos de supernova</option>
+                    <option value="COMPACT_BINARY">Binarias compactas</option>
+                    <option value="HIGH_ENERGY_SOURCE">Fuentes de alta energía</option>
+                  </select>
+                </label>
+              }
+              @if (facade.category() === 'colonies') {
+                <label>DESTINO
+                  <select data-testid="archive-colony-filter" [value]="facade.selectedSubtype()??''" (change)="changeSubtype($event)">
+                    <option value="">Planetas y lunas</option>
+                    <option value="PLANET">Planetas</option>
+                    <option value="MOON">Lunas</option>
+                  </select>
+                </label>
+              }
+              <label>ORDENAR POR
+                <select data-testid="archive-sort-field" [value]="facade.sortKey()" (change)="changeSort($event)">
+                  @for (option of facade.sortOptions(); track option.key) {
+                    <option [value]="option.key">{{option.label}}</option>
+                  }
+                </select>
+              </label>
+              <label>DIRECCIÓN
+                <select data-testid="archive-direction" [value]="facade.direction()" (change)="changeDirection($event)">
+                  <option value="asc">Menor a mayor / A–Z</option>
+                  <option value="desc">Mayor a menor / Z–A</option>
+                </select>
+              </label>
+              <label>POR PÁGINA
+                <select data-testid="archive-size" [value]="facade.pageSize()" (change)="changePageSize($event)">
+                  @for (size of pageSizes; track size) {<option [value]="size">{{size}}</option>}
+                </select>
+              </label>
+            </div>
+            <div class="archive-filters__bottom">
+              <form (submit)="search($event)" class="archive-search archive-search--advanced">
+                <label>BUSCAR POR INICIO DE NOMBRE
+                  <input type="search" maxlength="120" data-testid="archive-search"
+                    [value]="searchDraft" (input)="searchDraft=$any($event.target).value"
+                    placeholder="Nombre o designación…" />
+                </label>
+                <button type="submit">Buscar</button>
+                <button type="button" (click)="clearSearch()">Limpiar</button>
+              </form>
+              @if (isNumericSort()) {
+                <form class="archive-range" (submit)="applyRange($event)" aria-label="Intervalo científico">
+                  <label>VALOR MÍNIMO
+                    <input type="text" inputmode="decimal" data-testid="archive-minimum"
+                      [value]="minimumDraft" (input)="minimumDraft=$any($event.target).value"
+                      placeholder="Sin mínimo" />
+                  </label>
+                  <label>VALOR MÁXIMO
+                    <input type="text" inputmode="decimal" data-testid="archive-maximum"
+                      [value]="maximumDraft" (input)="maximumDraft=$any($event.target).value"
+                      placeholder="Sin máximo" />
+                  </label>
+                  <button type="submit">Aplicar rango</button>
+                </form>
+              }
+            </div>
+          </section>
+          <p class="archive-coverage" data-testid="archive-coverage">
+            {{facade.count(facade.category()!).indexed}} de {{facade.count(facade.category()!).totalGalaxies}} galaxias indexadas.
+            @if (!facade.count(facade.category()!).knowledgeComplete) { Recuento provisional: podrían faltar registros biológicos o galaxias por indexar. }
+          </p>
+          @if (facade.page(); as page) {
+            <div class="archive-page-info">
+              <strong>{{page.total.toLocaleString('es-ES')}} resultados indexados</strong>
+              <span>Página {{page.page}} / {{page.totalPages}}</span>
+            </div>
+            <div class="archive-rows" data-testid="archive-results">
+              @for (row of page.items; track row.id) {
+                <article class="archive-row archive-row--compact" data-testid="archive-result"
+                  [attr.data-category]="row.category">
+                  <strong class="archive-row__name">{{publicCopy(row.title)}}</strong>
+                  <dl class="archive-row__summary" aria-label="Datos del objeto">
+                    @for (field of compactFields(row); track field.key) {
+                      <div class="archive-row__field" [attr.data-field]="field.key">
+                        <dt class="archive-row__field-label">{{field.label}}</dt>
+                        <dd class="archive-row__field-value">{{field.value}}</dd>
+                      </div>
+                    }
+                  </dl>
+                  <div class="archive-row__actions">
+                    @for (action of compactActions(row); track action.label) {
+                      <a [routerLink]="action.route" [queryParams]="actionQueryParams(action)">{{action.label}}</a>
+                    }
+                  </div>
+                </article>
+              } @empty {
+                <section class="archive-state">No existen resultados indexados para este filtro. Si la indexación continúa, pueden aparecer nuevos resultados.</section>
+              }
+            </div>
+            <nav class="archive-pages" aria-label="Paginación">
+              <button type="button" [disabled]="page.page<=1" (click)="toPage(page.page-1)">Anterior</button>
+              <span>{{page.page}} / {{page.totalPages}}</span>
+              <button type="button" [disabled]="page.page>=page.totalPages" (click)="toPage(page.page+1)">Siguiente</button>
+            </nav>
+          } @else {<section role="status">Preparando listado indexado…</section>}
+        }
+      }
+    }
   </main>
 </genesis-screen>

@@ -151,7 +151,7 @@
                   </dl>
                 </section>
 
-                <app-scientific-body-preview
+                <app-scientific-body-preview [orbitalInfrastructureDebug]="orbitalInfrastructureDebug"
                   class="planet-detail__preview"
                   data-testid="planet-scientific-preview"
                   [model]="card.preview"
@@ -239,6 +239,13 @@
                             }
                           </div>
                         }
+                        @if (section.id === 'moons') {
+                          <div data-testid="planet-moon-colonies-total">
+                            <dt>{{ lunarColonyView386b().total.label }}</dt>
+                            <dd>{{ lunarColonyView386b().total.value }}</dd>
+                            <small>{{ lunarColonyView386b().total.note }}</small>
+                          </div>
+                        }
                       </dl>
 
                       @if (section.id === 'moons') {
@@ -288,6 +295,13 @@
                                           @if (item.note) {
                                             <small>{{ item.note }}</small>
                                           }
+                                        </div>
+                                      }
+                                      @if (lunarColonyView386b().perMoon.get(moon.moonIndex); as colonyField) {
+                                        <div data-testid="planet-moon-colonies-individual" [attr.data-moon-index]="moon.moonIndex">
+                                          <dt>{{ colonyField.label }}</dt>
+                                          <dd>{{ colonyField.value }}</dd>
+                                          <small>{{ colonyField.note }}</small>
                                         </div>
                                       }
                                     </dl>

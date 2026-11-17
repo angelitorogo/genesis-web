@@ -28,6 +28,21 @@
   </div>
 
 
+  @if (orbitalInfrastructureDebug) {
+    <aside class="system-scene__orbital-debug" data-testid="visciv6e-system-diagnostic"
+      aria-label="Diagnóstico temporal VISCIV.6e">
+      <strong>VISCIV.6e · INFRAESTRUCTURA ORBITAL · SOLO DEPURACIÓN</strong>
+      <span>Visual procedural, no prueba observacional · Capa {{ artificialSatellitesVisible() ? 'ON' : 'OFF' }}</span>
+      @for (row of orbitalInfrastructureDiagnosticRowsVISCIV6e(); track row.bodyId) {
+        <div data-testid="visciv6e-system-planet" [attr.data-body-id]="row.bodyId"
+          [attr.data-tier]="row.tier" [attr.data-stations]="row.stations" [attr.data-rings]="row.rings">
+          <b>{{ row.label }}</b>
+          <span>{{ row.tier }} · SAT {{ row.satellites }} · EST {{ row.stations }} · AROS {{ row.rings }}</span>
+        </div>
+      }
+    </aside>
+  }
+
   <div
     class="system-scene__controls"
     data-testid="system-scene-controls"
@@ -141,7 +156,7 @@
       [class.system-scene__layer-button--active]="artificialSatellitesVisible()"
       (click)="toggleArtificialSatellites()"
     >
-      SAT. ART. · {{ artificialSatelliteCount() }}
+      INFRA. ORB. · {{ artificialSatelliteCount() }}
     </button>
 
     @if (laboratoryOrbitControls || laboratoryMultipleControls || gameplaySceneControls) {

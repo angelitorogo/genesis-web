@@ -12,6 +12,9 @@ import {
 import {
   type GalaxyExplorationTelemetry,
 } from '../../domain/exploration/galaxy-exploration-telemetry';
+import { confirmedScientificDiscoveries38BisB7 } from '../../domain/exploration/scientific-confirmation-38-bis-b7';
+import { GalaxyExplorationTelemetryEngine } from '../../simulation/exploration/galaxy-exploration-telemetry-engine';
+import { generateKnownCompactHostCatalog } from '../../simulation/exploration/galaxy-known-compact-host-catalog-generator';
 
 import {
   type GalaxyGeneralProfile,
@@ -108,6 +111,10 @@ export interface GalaxyDetailModel {
     GalaxyKnowledgeStatistics;
 
   readonly explorationTelemetry:
+    GalaxyExplorationTelemetry;
+
+  /** b7: exclusively confirmed objects (plus public bodies of confirmed systems). */
+  readonly scientificTelemetry:
     GalaxyExplorationTelemetry;
 
   readonly scientificProfile:
@@ -610,6 +617,13 @@ export class GalaxyDetailFacade {
       const explorationTelemetry =
         knowledgeSnapshot.explorationTelemetry;
 
+      const confirmedDiscoveries = confirmedScientificDiscoveries38BisB7(knownDiscoveries);
+      const scientificTelemetry = GalaxyExplorationTelemetryEngine.build(
+        generationKey, galaxyIndex, DiscoveryState.CONFIRMED, confirmedDiscoveries,
+        generateKnownCompactHostCatalog(generationKey, galaxyIndex, confirmedDiscoveries)
+          .map(entry => entry.host),
+      );
+
       const scientificProfile =
         GalaxyScientificProfileEngine
           .build(
@@ -689,6 +703,7 @@ export class GalaxyDetailFacade {
               profile,
               statistics,
               explorationTelemetry,
+              scientificTelemetry,
               scientificProfile,
               globalDiscoveryPoints,
               accretionDiskObservation,

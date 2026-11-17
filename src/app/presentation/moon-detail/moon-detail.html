@@ -159,10 +159,20 @@
                   </dl>
                 </section>
 
+                @if (verifiedPersistedMoonBiology38BisA4(); as persistedBiology) {
+                  @if (persistedBiology.colonization.colonies.length > 0) {
+                    <p class="moon-detail__empty-detail" data-testid="moon-confirmed-colonies-38-bis-a4">
+                      Colonización tecnológica VIDA.8 confirmada ·
+                      {{ persistedBiology.colonization.colonies.length }}
+                      {{ persistedBiology.colonization.colonies.length === 1 ? 'colonia' : 'colonias' }}.
+                      La ubicación de sus construcciones es una reconstrucción procedural no observada.
+                    </p>
+                  }
+                }
                 <app-scientific-body-preview
                   class="moon-detail__preview"
                   data-testid="moon-scientific-preview"
-                  [model]="card.preview"
+                  [model]="moonPreview38BisA4() ?? card.preview"
                 ></app-scientific-body-preview>
 
                 <nav
@@ -192,10 +202,14 @@
                           <small>SECCIÓN 09</small>
                           <h2 id="moon-section-title-vida">Vida</h2>
                         </header>
-                        @if (card.confirmedBiologyVIDA9; as biology9) {
+                        @if (persistedMoonPending38BisA4()) {
+                          <p class="moon-detail__empty-detail" role="status">Verificando registro biológico lunar persistido…</p>
+                        } @else if (visibleMoonBiology38BisA4(); as biology9) {
                           <app-vida9-full-system-biology-panel [record]="biology9"
                             [rutaBaseEspecies]="rutaBaseEspecies()"
-                            [parametrosOrigen]="sourceQueryParams()"></app-vida9-full-system-biology-panel>
+                            [parametrosOrigen]="sourceQueryParams()"
+                            [mostrarOrigenColonial38BisA5]="true"
+                            [origenesColoniales38BisA5]="verifiedFounderNames38BisA5()"></app-vida9-full-system-biology-panel>
                         } @else {
                           <p class="moon-detail__empty-detail">Información biológica no disponible para esta luna.</p>
                         }

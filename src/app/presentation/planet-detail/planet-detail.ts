@@ -1,4 +1,7 @@
-import { effect } from '@angular/core';
+import { effect, signal } from '@angular/core';
+import { DiscoveryState } from '../../domain/discovery/discovery-state';
+import { planetMoonColonizationView386b } from './planet-moon-colonization-38-6b';
+import { PlanetMoonColonizationDataSource386b } from './planet-moon-colonization-data-source-38-6b';
 import { Vida9FullSystemBiologyPanel } from '../scientific/vida9-full-system-biology-panel';
 import { Vida3PrivateMicrobialRuntime } from '../runtime/vida3-private-microbial.runtime';
 import { vida2SupportLabel } from '../../simulation/life/life-plausibility-physical-adapter-vida2';
@@ -81,6 +84,8 @@ export class PlanetDetailPage
       ActivatedRoute,
     );
 
+  readonly orbitalInfrastructureDebug = this.route.snapshot.queryParamMap.get('debugOrbital') === '1';
+
   private readonly requestedBodyIndex =
     parseNonNegativeBigIntOrNull(
       this
@@ -143,6 +148,41 @@ export class PlanetDetailPage
             : PlanetScientificCardAssembler.build(model, this.requestedBodyIndex));
       },
     );
+
+  private readonly lunarColonySource386b = inject(PlanetMoonColonizationDataSource386b);
+  private readonly lunarColonyCounts386b = signal<ReadonlyMap<number,number|null>|null>(null);
+
+  /** Only verified counts; planet/multihost/compact cards keep their current contracts. */
+  readonly lunarColonyView386b = computed(() => {
+    const result=this.resolution();
+    const moons=result?.kind==='AVAILABLE'?result.card.sections.allMoons:[];
+    return planetMoonColonizationView386b(moons.map(m=>m.moonIndex),
+      result?.kind==='AVAILABLE'?(result.card.sections.totalMoonCount??moons.length):0,
+      this.lunarColonyCounts386b());
+  });
+
+  private readonly lunarColonyLoad386b = effect((onCleanup) => {
+    const model=this.facade.model();
+    const result=this.resolution();
+    // A prior route's census must never remain visible during another load.
+    this.lunarColonyCounts386b.set(null);
+    if (!model || model.locatorKind!==ArchiveDiscoveryLocatorKind.SYSTEM ||
+        model.discoveryState.code<DiscoveryState.CONFIRMED.code ||
+        model.generatorVersionCode!==3 || this.requestedBodyIndex===null ||
+        result?.kind!=='AVAILABLE' || result.card.sections.allMoons.length===0) return;
+    const request={confirmed:true,universeSeed:model.universeSeed,
+      generatorVersionCode:model.generatorVersionCode,galaxyIndex:model.galaxyIndex,
+      sectorKey:model.sectorKey,galacticObjectIndex:model.galacticObjectIndex,
+      bodyIndex:this.requestedBodyIndex,
+      moonIndices:result.card.sections.allMoons.map(m=>m.moonIndex)} as const;
+    let stale=false;
+    onCleanup(()=>{stale=true;});
+    void this.lunarColonySource386b.read(request).then(counts=>{
+      if(!stale)this.lunarColonyCounts386b.set(counts);
+    }).catch(()=>{
+      if(!stale)this.lunarColonyCounts386b.set(null);
+    });
+  });
 
   readonly compactSections = computed(() => {
     const result = this.resolution();

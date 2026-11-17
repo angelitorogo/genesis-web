@@ -1,0 +1,41 @@
+{
+  "phase": "GENESIS/38.6c/colonial-surface-visibility/CT0/v1",
+  "installation": "Extract archive at genesis-web root, -Force",
+  "scope": "Visual layer only. No scientific or persistence changes.",
+  "files": [
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-render-38-6.ts",
+      "bytes": 13695,
+      "sha256": "251fbfa4b85f51769390378cf7452c5fd429ebcc1d692d4d475032cc425c04c3"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-colonial-complex-38-6c.ts",
+      "bytes": 7493,
+      "sha256": "c165a77e5fd45885fe337161d574e3d074f4f54f83185fee51e83f3f77e86286"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-colonial-complex-38-6c.spec.ts",
+      "bytes": 9668,
+      "sha256": "20f09ee86e28af51a821275c82ab7c9172bf606d2d598c2ade6717ed96b11440"
+    },
+    {
+      "path": "docs/audits/38-6c/38-6c-informe.md",
+      "bytes": 2912,
+      "sha256": "91bf8109ccdc369b398bf3de946759d7f69f5d41703b5d18512c589ada48c827"
+    },
+    {
+      "path": "LEEME-GENESIS-38-6c.md",
+      "bytes": 3630,
+      "sha256": "de13a4bbe2a1969983a926c9f34d848b96d600b3de35ec5c43e7c85894d321c0"
+    }
+  ],
+  "checks": {
+    "architecture": "PASS (1216 TypeScript production files)",
+    "pureTypecheck": "PASS",
+    "pureLayoutAssertions": "PASS (30)",
+    "typescriptSyntax": "PASS",
+    "angularBuild": "NOT_EXECUTED; requires node_modules",
+    "vitestThree": "NOT_EXECUTED; requires node_modules",
+    "visualLiveIndexedDB": "NOT_EXECUTED; user session needed"
+  }
+}

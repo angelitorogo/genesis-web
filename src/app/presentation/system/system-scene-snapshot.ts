@@ -1,3 +1,4 @@
+import type { Vida38InfrastructurePlan386 } from '../infrastructure/vida38-infrastructure-plan-38-6';
 import { type CompactPlanetaryHostType } from '../../domain/stellar/compact-planetary-host';
 import { buildSystemSceneTnoPresentationV1, type SystemSceneTnoPresentationV1 } from './system-scene-tno-presentation';
 import { buildSystemSceneCapturedPresentationV1, type SystemSceneCapturedPresentationV1 } from './system-scene-captured-presentation';
@@ -512,9 +513,12 @@ export interface SystemSceneBodySnapshot {
   readonly visualCivilizationTier?: Vida7CivilizationTier | null;
   /** VISCIV.1d: same VISBIO flora profile as fiche; night land mask must match. */
   readonly visualVegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+  /** Confirmed CT-0 physical reconstruction; never an observed location. */
+  readonly visualInfrastructurePlans?: readonly Vida38InfrastructurePlan386[];
 }
 
 export interface SystemSceneMoonSnapshot {
+  readonly visualInfrastructurePlans?: readonly Vida38InfrastructurePlan386[];
   readonly id:
     string;
 

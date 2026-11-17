@@ -1,0 +1,36 @@
+{
+  "phase": "38.6c2",
+  "status": "incremental pendiente de validación Angular/visual",
+  "files": [
+    {
+      "path": "LEEME-GENESIS-38-6c2.md",
+      "bytes": 3413,
+      "sha256": "4733bd96d989086285e774822b140b385ee834df409545c9f47ec53d274073fd"
+    },
+    {
+      "path": "docs/audits/38-6c2/38-6c2-informe.md",
+      "bytes": 2187,
+      "sha256": "c7f4dd49fbd08337ab8ff9f53885859bac7eb8433081ebc300d71f514ba53c01"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-render-38-6.ts",
+      "bytes": 20459,
+      "sha256": "8307bf80cc0c992518ae47b5ab6da23f6e16fa4589c067ab572c6f82e2747874"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-minor-moon-colonies-38-6c2.spec.ts",
+      "bytes": 8940,
+      "sha256": "e95a8d099676fad5edfb76f92cfe5e3c96bdb9107af9d4ed986fc24369b7a554"
+    },
+    {
+      "path": "src/app/presentation/scientific-body-preview/scientific-body-preview.ts",
+      "bytes": 62735,
+      "sha256": "0ab4c925cbe2a7ab64cb5ca8f0278055c2720807d00d637f696a5caee6bece74"
+    },
+    {
+      "path": "src/app/presentation/system/system-scene.ts",
+      "bytes": 196680,
+      "sha256": "453f858041f7ceba6831160f61dc81735de429ad1fd2c4689fcec189394a62cf"
+    }
+  ]
+}

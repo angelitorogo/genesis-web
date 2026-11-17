@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 
 import { DiscoveryState, type DiscoveryStateValue } from '../../domain/discovery/discovery-state';
+import {confirmedScientificDiscoveries38BisB7} from '../../domain/exploration/scientific-confirmation-38-bis-b7';
 import { DiscoveryTargetType } from '../../domain/discovery/discovery-target-type';
 import { type KnownDiscovery } from '../../domain/discovery/known-discovery';
 import { ExplorationResultKind } from '../../domain/exploration/exploration-sector-result';
@@ -127,7 +128,8 @@ export class GalaxyKnowledgeGalacticObjectsCatalogDataSource {
     }
 
     const discoveries = await this.loadKnownGalacticObjects(request.generationKey, request.galaxyIndex);
-    const known = discoveries.filter((discovery): discovery is KnownDiscovery & { readonly locator: GalacticObjectLocator } =>
+    const scientificDiscoveries = request.scientificOnly ? confirmedScientificDiscoveries38BisB7(discoveries) : discoveries;
+    const known = scientificDiscoveries.filter((discovery): discovery is KnownDiscovery & { readonly locator: GalacticObjectLocator } =>
       discovery.locator instanceof GalacticObjectLocator,
     );
 

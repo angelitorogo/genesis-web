@@ -81,12 +81,12 @@ describe('VISCIV.5 — ingeniería metálica, materiales PBR y detalles determin
     }
   });
 
-  it('mantiene dos objetos instanciados principales por anillo y añade barandillas y refuerzos en subgrupo', () => {
+  it('mantiene dos objetos instanciados principales por anillo incluso en configuraciones de tres anillos', () => {
     const seed = Array.from({ length: 512 }, (_, i) => i * 7919).find(candidate =>
-      buildSystemSceneOrbitalRingPlansV1(candidate, 'VERY_ADVANCED').length === 2,
+      buildSystemSceneOrbitalRingPlansV1(candidate, 'VERY_ADVANCED').length === 3,
     )!;
     const plans = buildSystemSceneOrbitalRingPlansV1(seed, 'VERY_ADVANCED');
-    expect(plans).toHaveLength(2);
+    expect(plans).toHaveLength(3);
     for (const plan of plans) {
       const visual = createSystemSceneOrbitalRingVisualV1(plan, 1);
       const directBatches = visual.rotationPivot.children.filter(object => object instanceof THREE.InstancedMesh);

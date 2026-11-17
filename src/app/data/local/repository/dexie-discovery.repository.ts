@@ -1,6 +1,8 @@
 import {
   KnownDiscovery,
 } from '../../../domain/discovery/known-discovery';
+import {publishGenesisKnowledgeCommit38BisB6, type GenesisKnowledgeCommitKind38BisB6}
+  from './genesis-knowledge-commits-38-bis-b6';
 
 import {
   DiscoveryState,
@@ -238,7 +240,7 @@ export class DexieDiscoveryRepository
         .delete(
           key,
         );
-
+      await this.notifyArchive38BisB6(generationKey,locator,targetType.name);
       return;
     }
 
@@ -303,6 +305,18 @@ export class DexieDiscoveryRepository
       .put(
         entity,
       );
+    if(existing?.discoveryStateCode!==state.code)
+      await this.notifyArchive38BisB6(generationKey,locator,targetType.name);
+  }
+
+  private async notifyArchive38BisB6(generationKey:UniverseGenerationKey,
+    locator:ProceduralLocator,kind:string):Promise<void>{
+    await publishGenesisKnowledgeCommit38BisB6({
+      universeSeed:generationKey.universeSeed.serialize(),
+      generatorVersionCode:generationKey.generatorVersionCode,
+      galaxyIndex:locator.galaxyIndex.toString(),
+      kind:kind as GenesisKnowledgeCommitKind38BisB6,
+    });
   }
 
   async getKnownDiscoveries(

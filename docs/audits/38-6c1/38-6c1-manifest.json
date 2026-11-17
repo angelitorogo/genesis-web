@@ -1,0 +1,33 @@
+{
+  "phase": "GENESIS/38.6c1/colony-distant-lod/CT-0",
+  "revision": "visual-only-v1",
+  "files": [
+    {
+      "path": "LEEME-GENESIS-38-6c1.md",
+      "bytes": 3918,
+      "sha256": "d6f551480d08c586f135449c546c6abe06400ebe5f07772a0a26704633504b33"
+    },
+    {
+      "path": "docs/audits/38-6c1/38-6c1-informe.md",
+      "bytes": 1565,
+      "sha256": "c82e2a6c2511bfd1124a855240dc9e51c27fdced8fb9fada063c09deb5a08a95"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-colonial-distance-lod-38-6c1.spec.ts",
+      "bytes": 6619,
+      "sha256": "857a0af445398de6b55a9d115f8f9955b23ee090ab8d49ff241b2b6bd4f182f0"
+    },
+    {
+      "path": "src/app/presentation/infrastructure/vida38-infrastructure-render-38-6.ts",
+      "bytes": 16040,
+      "sha256": "0ff24b5ac3adf8a58e21ebb3885ddc4d036e32b56367a347bd363ff7eaac16ec"
+    }
+  ],
+  "validation": {
+    "architecture": "PASS",
+    "typescriptSyntax": "PASS",
+    "scaleMath": "PASS",
+    "angularBuild": "NOT_RUN",
+    "vitest": "NOT_RUN"
+  }
+}

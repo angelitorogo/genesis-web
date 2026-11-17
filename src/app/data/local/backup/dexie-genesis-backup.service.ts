@@ -1,3 +1,4 @@
+import {publishGenesisKnowledgeCommit38BisB6} from '../repository/genesis-knowledge-commits-38-bis-b6';
 import {
   BackupFormatVersion,
   type GenesisBackupPort,
@@ -476,6 +477,16 @@ export class DexieGenesisBackupService
           }
         },
       );
+    // After the full restoration transaction commits, reconcile only the
+    // galaxies present in the restored discovery snapshot. The Archive cache
+    // remains disposable; these notices never alter imported science.
+    const restoredGalaxies=new Set(discoveries.filter(row=>row.discoveryStateCode>0)
+      .map(row=>JSON.stringify([row.universeSeed,row.generatorVersionCode,row.galaxyIndex])));
+    for(const encoded of restoredGalaxies){
+      const [universeSeed,generatorVersionCode,galaxyIndex]=JSON.parse(encoded) as [string,number,string];
+      await publishGenesisKnowledgeCommit38BisB6({universeSeed,generatorVersionCode,
+        galaxyIndex,kind:'RESTORE'});
+    }
   }
 
   private async createUniverseSnapshot(

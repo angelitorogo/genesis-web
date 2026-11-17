@@ -1,3 +1,5 @@
+import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
+import { vida38InfrastructurePlansFromConfirmed386, type Vida38InfrastructurePlan386 } from '../infrastructure/vida38-infrastructure-plan-38-6';
 import { resolveOrbitalHomeStarIdsVISCIV6d } from '../system/system-scene-civilization-host-light-visciv6d';
 import { isCometActivityUnresolvedInSceneV1, systemSceneCometActivityVisualParityV1 } from '../system/system-scene-comet-activity-parity';
 import { resolveSystemSceneAtmospherePhotosphereKelvinV4 } from '../system/system-scene-atmosphere-photosphere-v4';
@@ -172,6 +174,7 @@ export interface ScientificPlanetPreviewVisual {
     ScientificPlanetVegetationPreviewProfile | null;
   /** VISCIV.1: present only when native civilization is revealed by confirmed system. */
   readonly nightCivilizationTier?: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null;
+  readonly infrastructurePlans?: readonly Vida38InfrastructurePlan386[];
   /** Stellar vectors at snapshot epoch; visual-only, allows single/binary/triple night mask. */
   readonly civilizationStarSources?: readonly ScientificPlanetStarLightSourceV1[];
 }
@@ -293,6 +296,8 @@ export interface ScientificMoonPreviewVisual {
 
   /** Full SystemScene appearance except for its internal seed field.
    * The renderer restores that field from visualVariantUint32 locally. */
+  readonly infrastructurePlans?: readonly Vida38InfrastructurePlan386[];
+
   readonly sourceMoonPresentation?:
     Omit<import('../system/system-scene-moon-presentation').SystemSceneMoonPresentationV1, 'presentationSeedUint32'>;
 
@@ -584,6 +589,7 @@ export class ScientificBodyPreviewAssembler {
     vegetationProfile:
       ScientificPlanetVegetationPreviewProfile | null = null,
     nightCivilizationTier: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null = null,
+    confirmedBiology: Vida9BiologyRecord | null = null,
   ): ScientificBodyPreviewModel {
 
     const planetId = sourceBodyId ??
@@ -595,14 +601,11 @@ export class ScientificBodyPreviewAssembler {
         planetId,
       );
 
-    const primary =
-      planetVisual(
-        scene,
-        sourcePlanet,
-        target.detail.general.radiusEarth,
-        vegetationProfile,
-        nightCivilizationTier,
-      );
+    const planetInfrastructure = vida38InfrastructurePlansFromConfirmed386(confirmedBiology);
+    const primary = Object.freeze({
+      ...planetVisual(scene,sourcePlanet,target.detail.general.radiusEarth,vegetationProfile,nightCivilizationTier),
+      ...(planetInfrastructure.length ? {infrastructurePlans:planetInfrastructure} : {}),
+    });
 
     const semiMajorByOrdinal =
       new Map(
@@ -666,6 +669,7 @@ export class ScientificBodyPreviewAssembler {
     scene:
       SystemSceneSnapshot,
     sourceHostPlanetId?: string,
+    confirmedBiology: Vida9BiologyRecord | null = null,
   ): ScientificBodyPreviewModel {
 
     const hostPlanetId = sourceHostPlanetId ??
@@ -691,12 +695,11 @@ export class ScientificBodyPreviewAssembler {
       );
     }
 
-    const primary =
-      moonVisual(
-        scene,
-        sourceMoon,
-        target.detail.orbit.semiMajorAxisPlanetRadii,
-      );
+    const moonInfrastructure = vida38InfrastructurePlansFromConfirmed386(confirmedBiology);
+    const primary = Object.freeze({
+      ...moonVisual(scene,sourceMoon,target.detail.orbit.semiMajorAxisPlanetRadii),
+      ...(moonInfrastructure.length ? {infrastructurePlans:moonInfrastructure} : {}),
+    });
 
     if (
       hostPlanetTarget ===
@@ -752,19 +755,9 @@ export class ScientificBodyPreviewAssembler {
               moon.hostPlanetId ===
                 hostPlanetId,
           )
-          .map(
-            moon =>
-              moonVisual(
-                scene,
-                moon,
-                semiMajorByOrdinal.get(
-                  moonOrdinalFromSnapshot(
-                    moon,
-                  ),
-                ) ??
-                  1,
-              ),
-          )
+          .map(moon => moon.id === sourceMoon.id
+            ? primary
+            : moonVisual(scene,moon,semiMajorByOrdinal.get(moonOrdinalFromSnapshot(moon)) ?? 1))
           .sort(
             (left, right) =>
               left.moonOrdinal -
