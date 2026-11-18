@@ -77,17 +77,40 @@ describe('VISCIV.6i — arquitectura monumental de anillos orbitales', () => {
     ];
     try {
       const heights = visuals.map(visual => {
-        const monumental = visual.rotationPivot.getObjectByName('VISCIV6i monumental orbital superstructure')!;
-        const box = new THREE.Box3().setFromObject(monumental);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        return size.y;
+        // El anillo se crea ya inclinado. Las operaciones de sombras/escena
+        // pueden haber actualizado matrixWorld con esa inclinación.
+        // Box3.setFromObject() NO recalcula necesariamente las matrices de
+        // todos los ancestros. Sin actualizar la jerarquía, la caja mantiene
+        // parte de la inclinación orbital y mide ~4 radios planetarios.
+        const originalRootRotation = visual.group.rotation.clone();
+        const originalRotorRotation = visual.rotationPivot.rotation.clone();
+        try {
+          visual.group.updateMatrixWorld(true); // Reproduce el estado real previo.
+          visual.group.rotation.set(0, 0, 0);
+          visual.rotationPivot.rotation.set(0, 0, 0);
+          // VISCIV.6i.b: actualizar explícitamente TODAS las matrices tras
+          // modificar las rotaciones, antes de construir la bounding box.
+          visual.group.updateMatrixWorld(true);
+          const monumental = visual.rotationPivot.getObjectByName('VISCIV6i monumental orbital superstructure')!;
+          const box = new THREE.Box3().setFromObject(monumental);
+          const size = new THREE.Vector3();
+          box.getSize(size);
+          return size.y;
+        } finally {
+          // No alterar la orientación real de la infraestructura durante el test.
+          visual.group.rotation.copy(originalRootRotation);
+          visual.rotationPivot.rotation.copy(originalRotorRotation);
+          visual.group.updateMatrixWorld(true);
+        }
       });
       // VISCIV.6i.a: meaningful visual relief. Keep the original thresholds;
       // validate the actual Three.js bounding boxes rather than lowering them.
       expect(heights[0]!).toBeGreaterThan(0.20);
       expect(heights[1]!).toBeGreaterThan(0.24);
       expect(heights[2]!).toBeGreaterThan(0.12);
+      // Detectar contaminaciones por la inclinación orbital (radio ~2-3).
+      for (const height of heights) expect(height).toBeLessThan(1.0);
+      // El relieve industrial debe superar al del anillo de transporte.
       expect(heights[1]!).toBeGreaterThan(heights[2]!);
     } finally {
       visuals.forEach(disposeVisualVISCIV6i);

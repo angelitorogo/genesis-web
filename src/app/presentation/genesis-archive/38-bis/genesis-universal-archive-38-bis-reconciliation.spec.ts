@@ -1,4 +1,4 @@
-import 'fake-indexeddb/auto';
+import {createArchiveTestStore38Bis} from './genesis-universal-archive-test-db-38bis';
 import {describe,expect,it} from 'vitest';
 import {sha256} from '@noble/hashes/sha2.js';
 import {bytesToHex,utf8ToBytes} from '@noble/hashes/utils.js';
@@ -134,11 +134,11 @@ describe('38.bis-a3 — reconciliación histórica no destructiva de VIDA.8',()=
   });
   it('preserva el diagnóstico y la ruta autorizada después de cierre de IndexedDB',async()=>{
     const name='genesis-38bis-a3-'+Date.now()+'-'+Math.random();
-    let store=new GenesisUniversalArchiveStore38Bis(name);
+    let store=createArchiveTestStore38Bis(name);
     try{
       const rows=[project('a',true),project('b',false)];
       await store.publish(section(rows),rows);
-      store.close();store=new GenesisUniversalArchiveStore38Bis(name);
+      store.close();store=createArchiveTestStore38Bis(name);
       const sections=await store.sectionsFor('reconciled-scope');
       expect(sections[0]?.colonizationStatistics?.historicallyReconciledColonies).toBe(1);
       const page=await store.page({scope:'reconciled-scope',category:'colonies',galaxyIndex:null,

@@ -112,6 +112,17 @@ import {
 } from './system-scene-body-render-state';
 
 import { refinePlanetRgbaTextureV1, PLANET_TEXTURE_DETAIL_SIZES_V1, type PlanetTextureRefinementKind } from './system-scene-planet-texture-refinement';
+import { SOLID_PLANET_DETAIL_WIDTH_VISSURF2 } from './system-scene-planet-surface-detail-vissurf2';
+import { buildCoherentSolidPlanetSurfaceVISSURF5 } from './system-scene-planet-coherent-geography-vissurf5';
+import { composeSolidPlanetMaterialsVISSURF5d } from './system-scene-planet-material-composition-vissurf5d';
+import {
+  calibrateSolidRoughnessForRendererVISSURF5c,
+  configureSolidSurfaceNormalDetailVISSURF5c,
+  installSolidSurfaceDebugShaderVISSURF5c,
+  prepareSolidSurfaceDataTextureVISSURF5c,
+  readPlanetSurfaceRenderModeVISSURF5c,
+  showPlanetOpticalLayerVISSURF5c,
+} from './system-scene-planet-render-pipeline-vissurf5c';
 
 import {
   applySystemSceneArtificialOrbitGuideVisibilityV1,
@@ -128,6 +139,11 @@ import {
   type SystemSceneArtificialSatelliteMaterialBindingV1,
 } from './system-scene-artificial-satellites-visciv2';
 import { buildSystemSceneOrbitalInfrastructureManifestVISCIV6e } from './system-scene-orbital-infrastructure-visciv6e';
+import {
+  installOrbitalSurfaceShadowVISCIV6n,
+  type OrbitalSurfaceShadowBindingVISCIV6n,
+  type OrbitalSurfaceShadowRingVISCIV6n,
+} from './system-scene-orbital-surface-shadow-visciv6n';
 
 import {
   buildSystemScenePlanetTextureV1,
@@ -2063,6 +2079,7 @@ class ThreeSystemSceneRuntime
     originalMap: THREE.Texture | null;
     originalRoughness: THREE.Texture | null;
     originalBump: THREE.Texture | null;
+    originalNormal: THREE.Texture | null;
     originalEmissive: THREE.Texture | null;
     cloudMaterial: THREE.MeshStandardMaterial | null;
     originalCloud: THREE.Texture | null;
@@ -2229,6 +2246,9 @@ class ThreeSystemSceneRuntime
   private readonly artificialSatelliteOrbitGuides:
     THREE.LineLoop[] =
     [];
+
+  /** Planet surface ring-shadow shader bindings (only VERY_ADVANCED planets). */
+  private readonly orbitalSurfaceShadowBindingsVISCIV6n: OrbitalSurfaceShadowBindingVISCIV6n[] = [];
 
   private readonly artificialSatelliteBindings:
     Array<{
@@ -4803,6 +4823,15 @@ class ThreeSystemSceneRuntime
       );
     }
 
+    if (artificialSatellites !== null && artificialSatellites.ringShadowRingsVISCIV6n.length > 0) {
+      this.orbitalSurfaceShadowBindingsVISCIV6n.push(
+        installOrbitalSurfaceShadowVISCIV6n(
+          appearance.material, sphere,
+          artificialSatellites.ringShadowRingsVISCIV6n, planet.radiusScene,
+        ),
+      );
+    }
+
     group.add(
       axialPivot,
     );
@@ -4865,6 +4894,7 @@ class ThreeSystemSceneRuntime
         readonly ringVisualVISCIV6g?: SystemSceneOrbitalRingVisualV1;
       }[];
       readonly resources: readonly { dispose(): void }[];
+      readonly ringShadowRingsVISCIV6n: readonly OrbitalSurfaceShadowRingVISCIV6n[];
     } | null {
 
     const tier =
@@ -4920,6 +4950,7 @@ class ThreeSystemSceneRuntime
       readonly ringVisualVISCIV6g?: SystemSceneOrbitalRingVisualV1;
     }> = [];
     const resources: Array<{ dispose(): void }> = [];
+    const ringShadowRingsVISCIV6n: OrbitalSurfaceShadowRingVISCIV6n[] = [];
 
     const appendOrbitalAsset = (
       orbitRadiusPlanetRadii: number,
@@ -5089,6 +5120,9 @@ class ThreeSystemSceneRuntime
       );
       ringVisual.rotationPivot.rotation.y = plan.phaseRadians;
       group.add(ringVisual.group);
+      ringShadowRingsVISCIV6n.push({
+        root: ringVisual.group, rotor: ringVisual.rotationPivot, plan,
+      });
       resources.push(...ringVisual.resources);
       bindings.push(Object.freeze({
         hostBodyId: planet.id,
@@ -5106,6 +5140,7 @@ class ThreeSystemSceneRuntime
       group,
       bindings: Object.freeze(bindings),
       resources: Object.freeze(resources),
+      ringShadowRingsVISCIV6n: Object.freeze(ringShadowRingsVISCIV6n),
     });
   }
 
@@ -6464,6 +6499,7 @@ class ThreeSystemSceneRuntime
       0;
     this.artificialSatelliteBindings.length =
       0;
+    this.orbitalSurfaceShadowBindingsVISCIV6n.length = 0;
     this.habitableZoneLayerObjects.length =
       0;
     this.orbitalRiskLayerObjects.length =
@@ -6876,6 +6912,7 @@ class ThreeSystemSceneRuntime
     previous.material.map = previous.originalMap;
     previous.material.roughnessMap = previous.originalRoughness;
     previous.material.bumpMap = previous.originalBump;
+    previous.material.normalMap = previous.originalNormal;
     previous.material.emissiveMap = previous.originalEmissive;
     previous.material.needsUpdate = true;
     if (previous.cloudMaterial !== null) {
@@ -6894,6 +6931,7 @@ class ThreeSystemSceneRuntime
     const originalMap = material.map;
     const originalRoughness = material.roughnessMap;
     const originalBump = material.bumpMap;
+    const originalNormal = material.normalMap;
     const originalEmissive = material.emissiveMap;
     const spinPivot = this.spinningBodies.get(id);
     const cloudMesh = spinPivot?.children.find(child =>
@@ -6913,15 +6951,41 @@ class ThreeSystemSceneRuntime
       surfaceStyle: planetTextureSurfaceStyle(body),
     });
     const detailTextures: THREE.DataTexture[] = [];
+    const solidSource = originalMap instanceof THREE.DataTexture
+      ? originalMap.userData['genesisSolidSurfaceSourceVISSURF1'] as SystemScenePlanetSurfaceTextureData | undefined
+      : undefined;
+    // Reuse the existing classified D.4d atlas; never rebuild its semantic masks.
+    const solidDetailSeed = originalMap instanceof THREE.DataTexture
+      ? originalMap.userData['genesisSolidSurfaceSeedVISSURF1'] as number | undefined
+      : undefined;
+    const detailedSolid = solidSource?.surfaceClassMask && body.giantAtmosphere === null
+      ? composeSolidPlanetMaterialsVISSURF5d(
+          buildCoherentSolidPlanetSurfaceVISSURF5(solidSource,
+            SOLID_PLANET_DETAIL_WIDTH_VISSURF2.closeSystem, solidDetailSeed ?? seed),
+          solidDetailSeed ?? seed)
+      : null;
+    if (detailedSolid !== null) {
+      calibrateSolidRoughnessForRendererVISSURF5c(detailedSolid.roughnessRgba, detailedSolid.classMask);
+    }
     const refine = (old: THREE.Texture | null, kind: PlanetTextureRefinementKind): THREE.DataTexture | null => {
       if (!(old instanceof THREE.DataTexture)) return null;
       const image = old.image as { readonly width: number; readonly height: number; readonly data: Uint8Array };
       if (!(image.data instanceof Uint8Array) || image.width < 3 || image.height < 2) return null;
-      const width = PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width;
+      const solidBytes = detailedSolid === null ? null
+        : old === originalMap ? detailedSolid.rgba
+          : old === originalRoughness ? detailedSolid.roughnessRgba
+            : old === originalBump ? detailedSolid.reliefRgba : null;
+      const width = solidBytes !== null
+        ? SOLID_PLANET_DETAIL_WIDTH_VISSURF2.closeSystem
+        : PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width;
       const refined = createRgbaDataTexture(width, width / 2,
-        refinePlanetRgbaTextureV1(image.data, image.width, image.height, width, seed, kind),
-        `GENESIS VIS-3D.1 ${kind} (zoom)`);
+        solidBytes ?? refinePlanetRgbaTextureV1(image.data, image.width, image.height, width, seed, kind),
+        `GENESIS ${solidBytes === null ? 'VIS-3D.1' : 'VISSURF.2'} ${kind} (zoom)`);
       if (kind === 'DATA') refined.colorSpace = THREE.NoColorSpace;
+      if (solidBytes !== null) {
+        prepareSolidSurfaceDataTextureVISSURF5c(refined,
+          old === originalMap ? 'COLOR' : old === originalRoughness ? 'ROUGHNESS' : 'RELIEF');
+      }
       detailTextures.push(refined);
       return refined;
     };
@@ -6929,12 +6993,25 @@ class ThreeSystemSceneRuntime
     if (main === null) return;
     const roughness = refine(originalRoughness, 'DATA');
     const bump = refine(originalBump, 'DATA');
+    const normal = detailedSolid?.normalRgba
+      ? createRgbaDataTexture(SOLID_PLANET_DETAIL_WIDTH_VISSURF2.closeSystem,
+          SOLID_PLANET_DETAIL_WIDTH_VISSURF2.closeSystem / 2, detailedSolid.normalRgba,
+          'GENESIS VISSURF.5 coherent normals (zoom)')
+      : null;
+    if (normal !== null) {
+      prepareSolidSurfaceDataTextureVISSURF5c(normal, 'NORMAL');
+      detailTextures.push(normal);
+    }
     const emissive = refine(originalEmissive, 'EMISSION');
     const cloud = refine(originalCloud, 'CLOUD');
 
     material.map = main;
     if (roughness !== null) material.roughnessMap = roughness;
-    if (bump !== null) material.bumpMap = bump;
+    if (normal !== null) {
+      configureSolidSurfaceNormalDetailVISSURF5c(material, normal, bump);
+    } else if (bump !== null) {
+      material.bumpMap = bump;
+    }
     if (emissive !== null) material.emissiveMap = emissive;
     material.needsUpdate = true;
     if (cloudMaterial !== null && cloud !== null) {
@@ -6942,7 +7019,7 @@ class ThreeSystemSceneRuntime
       cloudMaterial.needsUpdate = true;
     }
     this.detailedPlanetTexture = {
-      id, material, originalMap, originalRoughness, originalBump, originalEmissive,
+      id, material, originalMap, originalRoughness, originalBump, originalNormal, originalEmissive,
       cloudMaterial, originalCloud, detailTextures,
     };
   }
@@ -7126,6 +7203,10 @@ class ThreeSystemSceneRuntime
       orientCompactBlackHoleToCamera(blackHole, this.camera);
     }
     this.updateBodyLightDirections();
+    // Surface shadow uses the same up-to-date stellar directions/weights.
+    for (const shadow of this.orbitalSurfaceShadowBindingsVISCIV6n) {
+      shadow.update(this.camera, this.layerVisibility.artificialSatellites);
+    }
     this.updateColonialNightLighting386c3();
     this.updateArtificialSatelliteLighting();
     if (this.compactBlackHoleBodyOcclusion.length > 0) {
@@ -7185,6 +7266,8 @@ export interface SystemScenePlanetTextureResourceV1 {
   readonly roughnessTexture:
     THREE.DataTexture | null;
   readonly reliefTexture:
+    THREE.DataTexture | null;
+  readonly normalTexture:
     THREE.DataTexture | null;
   readonly visualSeed:
     number;
@@ -7447,7 +7530,10 @@ export function createSystemScenePlanetAppearanceV1(
     if (textureResource.roughnessTexture !== null) {
       materialOptions.roughnessMap = textureResource.roughnessTexture;
     }
-    if (textureResource.reliefTexture !== null) {
+    if (textureResource.normalTexture !== null) {
+      materialOptions.normalMap = textureResource.normalTexture;
+      materialOptions.normalScale = new THREE.Vector2(0.98, 0.98);
+    } else if (textureResource.reliefTexture !== null) {
       materialOptions.bumpMap = textureResource.reliefTexture;
       materialOptions.bumpScale = planet.radiusScene * 0.014;
     }
@@ -7494,7 +7580,7 @@ export function createSystemScenePlanetAppearanceV1(
       ?.emissiveRgba !==
       undefined
   ) {
-    const emissiveTexture =
+      const emissiveTexture =
       textureResource.emissiveTexture;
 
     if (emissiveTexture !== null) {
@@ -7599,9 +7685,15 @@ export function createSystemScenePlanetAppearanceV1(
     textureResource.nightLightsTexture,
   );
 
+  // Diagnostic mode is opt-in only, never persisted. The default scene is unchanged.
+  const surfaceRenderModeVISSURF5c = planet.surfaceEnvironment?.solidSurfaceAvailable === true
+    ? readPlanetSurfaceRenderModeVISSURF5c()
+    : 'COMPOSITE';
+  installSolidSurfaceDebugShaderVISSURF5c(material, surfaceRenderModeVISSURF5c);
+
   const overlays: THREE.Object3D[] = [];
 
-  const cloudLayer =
+  const cloudLayer = !showPlanetOpticalLayerVISSURF5c(surfaceRenderModeVISSURF5c, 'CLOUDS') ? null :
     cloudLayerMeshOrNull(
       planet,
       semanticSurface,
@@ -7626,7 +7718,7 @@ export function createSystemScenePlanetAppearanceV1(
     );
   }
 
-  const atmosphere =
+  const atmosphere = !showPlanetOpticalLayerVISSURF5c(surfaceRenderModeVISSURF5c, 'ATMOSPHERE') ? null :
     atmosphereLayerMeshOrNull(
       planet,
       atmosphereOptics,
@@ -7723,6 +7815,20 @@ function createSystemScenePlanetTextureResourceV1(
     giantAtmosphereTexture?.seedUint32 ??
     textureData!.seedUint32;
 
+  // VISSURF.2: generate subpixel geography in a shared UV domain, with
+  // per-material coverage conserved and D.4d science/clouds unchanged.
+  const detailedSolidSurface = semanticSurface?.surfaceClassMask && textureWidth > semanticSurface.width
+    ? composeSolidPlanetMaterialsVISSURF5d(
+        buildCoherentSolidPlanetSurfaceVISSURF5(semanticSurface, textureWidth,
+          visualSeeds?.surfaceTextureSeedUint32 ??
+            systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id)),
+        visualSeeds?.surfaceTextureSeedUint32 ??
+          systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id))
+    : null;
+  if (detailedSolidSurface !== null) {
+    calibrateSolidRoughnessForRendererVISSURF5c(
+      detailedSolidSurface.roughnessRgba, detailedSolidSurface.classMask);
+  }
   // High resolution is a visual reconstruction of the frozen D.4d atlas.
   // The measured surface coverages and private biological records never change.
   const refine = (
@@ -7748,7 +7854,7 @@ function createSystemScenePlanetTextureResourceV1(
           {
             width: imageWidth,
             height: imageHeight,
-            rgba: refine((semanticSurface ?? textureData!).rgba,
+            rgba: detailedSolidSurface?.rgba ?? refine((semanticSurface ?? textureData!).rgba,
               (semanticSurface ?? textureData!).width,
               (semanticSurface ?? textureData!).height, 'COLOR'),
           },
@@ -7756,6 +7862,13 @@ function createSystemScenePlanetTextureResourceV1(
             ? `GENESIS cached procedural planet albedo 25.11 v${textureData!.version}`
             : `GENESIS cached physical surface 25.11 v${semanticSurface.version}`,
         );
+
+  if (semanticSurface?.surfaceClassMask) {
+    surfaceTexture.userData['genesisSolidSurfaceSourceVISSURF1'] = semanticSurface;
+    surfaceTexture.userData['genesisSolidSurfaceSeedVISSURF1'] =
+      visualSeeds?.surfaceTextureSeedUint32 ??
+        systemScenePlanetSurfaceTextureSeedV1(systemIdentity, planet.id);
+  }
 
   const emissiveTexture =
     semanticSurface?.emissiveRgba === null ||
@@ -7795,21 +7908,26 @@ function createSystemScenePlanetTextureResourceV1(
         'GENESIS VISCIV.1c canonical civilization night lights',
       );
 
+  // VISSURF.1: explicit cloud budget independent from new solid-surface detail.
+  const cloudWidth = Math.min(textureWidth, PLANET_TEXTURE_DETAIL_SIZES_V1.scientificPreview.width);
+  const refineCloud = (rgba: Uint8Array, width: number, height: number,
+    kind: 'CLOUD' | 'WEATHER_CLOUD'): Uint8Array => cloudWidth === width
+    ? rgba : refinePlanetRgbaTextureV1(rgba, width, height, cloudWidth, visualSeed, kind);
   const cloudTexture =
     semanticSurface?.cloudRgba !== null &&
     semanticSurface?.cloudRgba !== undefined
       ? createRgbaDataTexture(
-          imageWidth,
-          imageHeight,
-          refine(semanticSurface.cloudRgba, semanticSurface.width, semanticSurface.height, 'WEATHER_CLOUD'),
+          cloudWidth,
+          cloudWidth / 2,
+          refineCloud(semanticSurface.cloudRgba, semanticSurface.width, semanticSurface.height, 'WEATHER_CLOUD'),
           'GENESIS cached physical cloud projection 25.11',
         )
       : giantAtmosphereTexture?.upperHazeRgba !== null &&
         giantAtmosphereTexture?.upperHazeRgba !== undefined
         ? createRgbaDataTexture(
-            imageWidth,
-            imageHeight,
-            refine(giantAtmosphereTexture.upperHazeRgba, giantAtmosphereTexture.width, giantAtmosphereTexture.height, 'CLOUD'),
+            cloudWidth,
+            cloudWidth / 2,
+            refineCloud(giantAtmosphereTexture.upperHazeRgba, giantAtmosphereTexture.width, giantAtmosphereTexture.height, 'CLOUD'),
             `GENESIS cached upper haze 25.11 v${giantAtmosphereTexture.version}`,
           )
         : null;
@@ -7817,20 +7935,35 @@ function createSystemScenePlanetTextureResourceV1(
   const roughnessTexture = semanticSurface?.roughnessRgba
     ? createRgbaDataTexture(
         imageWidth, imageHeight,
-        refine(semanticSurface.roughnessRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
+        detailedSolidSurface?.roughnessRgba ??
+          refine(semanticSurface.roughnessRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
         'GENESIS D.4c visual surface roughness',
       )
     : null;
   const reliefTexture = semanticSurface?.reliefRgba
     ? createRgbaDataTexture(
         imageWidth, imageHeight,
-        refine(semanticSurface.reliefRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
+        detailedSolidSurface?.reliefRgba ??
+          refine(semanticSurface.reliefRgba, semanticSurface.width, semanticSurface.height, 'DATA'),
         'GENESIS D.4c visual microrelief',
       )
     : null;
-  // Linear data maps must not be interpreted as sRGB albedo.
-  if (roughnessTexture !== null) roughnessTexture.colorSpace = THREE.NoColorSpace;
-  if (reliefTexture !== null) reliefTexture.colorSpace = THREE.NoColorSpace;
+  const normalTexture = detailedSolidSurface?.normalRgba
+    ? createRgbaDataTexture(imageWidth, imageHeight, detailedSolidSurface.normalRgba,
+        'GENESIS VISSURF.5 coherent surface normals')
+    : null;
+  // Distinct color/data color spaces and coherent filtering at grazing angles.
+  // These settings apply only to solid surfaces; cloud textures are untouched.
+  if (semanticSurface?.surfaceClassMask) {
+    prepareSolidSurfaceDataTextureVISSURF5c(surfaceTexture, 'COLOR');
+    prepareSolidSurfaceDataTextureVISSURF5c(roughnessTexture, 'ROUGHNESS');
+    prepareSolidSurfaceDataTextureVISSURF5c(reliefTexture, 'RELIEF');
+    prepareSolidSurfaceDataTextureVISSURF5c(normalTexture, 'NORMAL');
+  } else {
+    if (roughnessTexture !== null) roughnessTexture.colorSpace = THREE.NoColorSpace;
+    if (reliefTexture !== null) reliefTexture.colorSpace = THREE.NoColorSpace;
+    if (normalTexture !== null) normalTexture.colorSpace = THREE.NoColorSpace;
+  }
 
   let disposed = false;
   return Object.freeze({
@@ -7843,6 +7976,7 @@ function createSystemScenePlanetTextureResourceV1(
     cloudTexture,
     roughnessTexture,
     reliefTexture,
+    normalTexture,
     visualSeed,
     dispose: () => {
       if (disposed) {
@@ -7855,6 +7989,7 @@ function createSystemScenePlanetTextureResourceV1(
       cloudTexture?.dispose();
       roughnessTexture?.dispose();
       reliefTexture?.dispose();
+      normalTexture?.dispose();
     },
   });
 }

@@ -40,6 +40,8 @@ export interface SystemScenePlanetSurfaceTextureData {
   readonly emissiveRgba: Uint8Array | null;
   /** Terrain classes for night-light generator (1=land, 2=desert, 0=sea/ice). */
   readonly nightLandMask?: Uint8Array | null;
+  /** VISSURF.1: solo presentación, clases de material para afinar la superficie sin reinterpretar ciencia. */
+  readonly surfaceClassMask?: Uint8Array | null;
   readonly cloudRgba: Uint8Array | null;
   /** D.4c: visual roughness in the Three.js green channel, not new geology. */
   readonly roughnessRgba: Uint8Array | null;
@@ -103,6 +105,7 @@ export function buildSystemScenePlanetSurfaceTextureV1(
       rgba: new Uint8Array(baseTexture.rgba),
       emissiveRgba: null,
       nightLandMask: null,
+      surfaceClassMask: null,
       cloudRgba: null,
       roughnessRgba: null,
       reliefRgba: null,
@@ -339,6 +342,21 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     copySeamColumn(emissiveRgba, width, height);
   }
 
+  // VISSURF.1 — Preserve the frozen D.4d semantic atlas as a compact visual
+  // classification for close-up reconstruction. The ORIGINAL night-land mask,
+  // coverage counts, seed and cloud texture retain their previous contracts.
+  const surfaceClassMask = new Uint8Array(width * height);
+  for (const field of fields) {
+    const index = field.uniqueIndex;
+    const kind = semantic[index]!;
+    surfaceClassMask[field.y * width + field.x] = kind === LAND && vegetatedSelected.has(index)
+      ? 5 : volcanicSelected.has(index) && kind !== LIQUID && kind !== ICE
+        ? 6 : kind;
+  }
+  for (let y = 0; y < height; y += 1) {
+    surfaceClassMask[y * width + width - 1] = surfaceClassMask[y * width]!;
+  }
+
   const cloudTarget = coverageCount(
     surface.presentationCloudCoverageFraction01 ?? 0,
     uniquePixelCount,
@@ -367,6 +385,7 @@ export function buildSystemScenePlanetSurfaceTextureV1(
     rgba,
     emissiveRgba,
     nightLandMask,
+    surfaceClassMask,
     cloudRgba,
     roughnessRgba,
     reliefRgba,

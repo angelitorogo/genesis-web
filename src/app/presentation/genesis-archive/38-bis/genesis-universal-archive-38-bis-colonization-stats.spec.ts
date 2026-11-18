@@ -1,4 +1,4 @@
-import 'fake-indexeddb/auto';
+import {createArchiveTestStore38Bis} from './genesis-universal-archive-test-db-38bis';
 import {describe,it,expect} from 'vitest';
 import type {Vida8OriginRef} from '../../../domain/life/vida8-technological-colonization';
 import type {Vida9BiologyRecord} from '../../../domain/life/vida9-biology-exploration';
@@ -91,12 +91,12 @@ describe('38.bis · estadísticas coloniales y procedencia científica CT-0',()=
   });
   it('los enlaces y estadísticas se conservan en IndexedDB tras cierre y reapertura',async()=>{
     const name='genesis-colony-stats-38bis-'+Date.now()+'-'+Math.random();
-    let store=new GenesisUniversalArchiveStore38Bis(name);
+    let store=createArchiveTestStore38Bis(name);
     try{
       const rows=[colony('a','1','ADVANCED',a),colony('b','1','VERY_ADVANCED',b)];
       await store.publish(section('1',rows),rows);
       store.close();
-      store=new GenesisUniversalArchiveStore38Bis(name);
+      store=createArchiveTestStore38Bis(name);
       const saved=await store.sectionsFor(scope);
       expect(saved[0]?.colonizationStatistics?.verifiedColonizers).toBe(2);
       const page=await store.page({scope,category:'colonies',galaxyIndex:null,

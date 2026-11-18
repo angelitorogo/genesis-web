@@ -1,4 +1,4 @@
-import 'fake-indexeddb/auto';
+import {createArchiveTestStore38Bis} from './genesis-universal-archive-test-db-38bis';
 import {beforeEach,afterEach,describe,it,expect} from 'vitest';
 import {GenesisUniversalArchiveStore38Bis} from './genesis-universal-archive-38-bis.store';
 import type {UniversalArchiveRow38Bis,UniversalArchiveSection38Bis,
@@ -23,7 +23,7 @@ const prepare=async(field='water')=>{
   for(const galaxy of ['0','1'])await db.ensureSortField(scope,'planets',galaxy,field);
 };
 describe('38.bis-b3 · ordenación numérica indexada de todas las galaxias',()=>{
-  beforeEach(()=>{db=new GenesisUniversalArchiveStore38Bis('b3-'+(++sequence)+'-'+Date.now());});
+  beforeEach(()=>{db=createArchiveTestStore38Bis('b3-'+(++sequence)+'-'+Date.now());});
   afterEach(async()=>{db.close();await db.delete();});
   it('ordena cifras científicas, no las cadenas ni las filas de la página visible',async()=>{
     await db.publish(section('0',2),[row('a','0','A',10.1,-90),row('b','0','B',2.8,30)]);

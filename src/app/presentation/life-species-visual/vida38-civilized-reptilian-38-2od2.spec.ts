@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { VIDA38_SPECIES_VISUAL_REVISION, type Vida38SpeciesVisualContract } from './vida38-species-visual-contract';
 import { createVida38SpeciesPreviewModelV1, describeVida38SpeciesPreviewV1 } from './vida38-species-visual-preview-scene';
+import {inspectVida38PrimitiveReptilianModel38U,validateVida38PrimitiveReptilianModel38U} from './vida38-primitive-reptilian-preview-38-2u';
 
 function reptilian(id: string, level: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED'): Vida38SpeciesVisualContract {
   return {
@@ -16,7 +17,7 @@ function reptilian(id: string, level: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED'
     locomotion: 'WALKING', bodyLengthMeters: 2.1,
     pigmentation: { primaryColorHex: '#7c9d8b', secondaryColorHex: '#b9a795', pattern: 'BANDS', bioluminescent: false },
     adaptations: ['SENSORY_ORIENTATION'],
-    intelligence: { lineage: 'REPTILIAN', civilizationLevel: level } as unknown as NonNullable<Vida38SpeciesVisualContract['intelligence']>,
+    intelligence: { lineage: 'REPTILIAN', civilizationTier: level, civilizationLevel: level } as unknown as NonNullable<Vida38SpeciesVisualContract['intelligence']>,
   };
 }
 
@@ -50,11 +51,22 @@ describe('38.2o.d2 — anclaje anatómico SDF y encuadre sin objetos sueltos', (
       const garments: THREE.Mesh[] = [];
       model.subject.traverse((obj: THREE.Object3D) => {
         if (obj.name.startsWith('VIDA38_2OD_') && obj !== body) details.push(obj);
-        if (obj instanceof THREE.Mesh && (obj.name === 'VIDA38_2OD_REPTILIAN_GARMENT' ||
-          obj.userData['vida38AdvancedReptilianWardrobe38S4'] || obj.userData['vida38AdvancedReptilianDiversity38S8'])) garments.push(obj);
+        if (obj instanceof THREE.Mesh && (
+          obj.userData['vida38PrimitiveReptilianPart38U'] === 'GARMENT' ||
+          obj.userData['vida38AdvancedReptilianWardrobe38S4'] !== undefined ||
+          obj.userData['vida38AdvancedReptilianDiversity38S8'] !== undefined ||
+          (level === 'VERY_ADVANCED' && (obj.name === 'VIDA38_2OD_REPTILIAN_GARMENT' ||
+            obj.userData['garmentPart38OE6'] !== undefined || obj.userData['garmentGeom38OE7'] !== undefined ||
+            obj.userData['vida38TechnicalGarmentDiscipline38OE8'] !== undefined)))) garments.push(obj);
         expect(obj.name).not.toBe('VIDA38_CANOPY_DECORATIVE_REFERENCE_BRANCH');
       });
-      expect(garments.length).toBeGreaterThan(0);
+      if (level !== 'VERY_ADVANCED') {
+        expect(garments.length).toBeGreaterThan(0);
+      } else {
+        // El revestimiento avanzado puede ser una piel técnica 360º con shader,
+        // no necesariamente una malla heredada independiente.
+        expect(model.subject.userData['vida38WardrobeEngine38OE8B']).toBeDefined();
+      }
       expect(model.subject.getObjectByName('VIDA38_2OD_REPTILIAN_TAIL')).toBeTruthy();
       for (const detail of details) {
         if (!(detail instanceof THREE.Mesh)) continue;
@@ -67,23 +79,20 @@ describe('38.2o.d2 — anclaje anatómico SDF y encuadre sin objetos sueltos', (
     }
   }, 60_000);
 
-  it('la ropa nace de los mismos vértices del cuerpo y no de cilindros suspendidos', () => {
+  it('el vestuario primitivo usa la geometría SDF real y sus anclajes 38.2u7, no la prenda antigua', () => {
     const model = createVida38SpeciesPreviewModelV1(reptilian('rep:fitted', 'PRIMITIVE'), { humanoidQuality: 'LOW' });
-    const body = model.subject.getObjectByName('VIDA38_2OD_REPTILIAN_BODY') as THREE.Mesh;
-    const vertices = (body.geometry as THREE.BufferGeometry).getAttribute('position') as THREE.BufferAttribute;
-    const garment = model.subject.children.find((obj: THREE.Object3D) => obj.name === 'VIDA38_2OD_REPTILIAN_GARMENT') as THREE.Mesh | undefined;
-    expect(garment).toBeTruthy();
-    const fitted = (garment!.geometry as THREE.BufferGeometry).getAttribute('position') as THREE.BufferAttribute;
-    expect(fitted.count).toBeGreaterThan(15);
-    for (let i = 0; i < fitted.count; i += Math.max(1, Math.floor(fitted.count / 15))) {
-      const v = new THREE.Vector3().fromBufferAttribute(fitted, i);
-      let nearest = Infinity;
-      for (let j = 0; j < vertices.count; j++) {
-        const dx = vertices.getX(j) - v.x, dy = vertices.getY(j) - v.y, dz = vertices.getZ(j) - v.z;
-        nearest = Math.min(nearest, dx*dx + dy*dy + dz*dz);
-      }
-      expect(Math.sqrt(nearest)).toBeLessThan(0.025);
-    }
-    model.dispose();
+    try {
+      const body = model.subject.getObjectByName('VIDA38_2OD_REPTILIAN_BODY') as THREE.Mesh | undefined;
+      expect(body).toBeTruthy();
+      const diagnostics = inspectVida38PrimitiveReptilianModel38U(model.subject);
+      expect(diagnostics.anatomyCount).toBe(1);
+      expect(diagnostics.garmentCount).toBeGreaterThan(0);
+      expect(model.subject.userData['vida38PrimitiveSurfaceFit38U7']).toBeTruthy();
+      const plan = model.subject.userData['vida38PrimitiveReptilianPlan38U'] as
+        import('./vida38-primitive-reptilian-plan-38-2u').Vida38PrimitiveReptilianPlan38U;
+      expect(plan).toBeDefined();
+      expect(validateVida38PrimitiveReptilianModel38U(model.subject, plan.wear)).toMatchObject({valid: true, problems: []});
+      expect(model.subject.children.some(child => child.name === 'VIDA38_2OD_REPTILIAN_GARMENT')).toBe(false);
+    } finally { model.dispose(); }
   }, 60_000);
 });

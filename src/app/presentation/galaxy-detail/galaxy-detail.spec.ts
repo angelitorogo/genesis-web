@@ -752,7 +752,7 @@ describe(
             '[data-testid="galaxy-detail-progress"]',
           )?.textContent,
         ).toContain(
-          'Inventario y exploración',
+          'Inventario confirmado y exploración',
         );
 
         for (

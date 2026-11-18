@@ -1,4 +1,4 @@
-import 'fake-indexeddb/auto';
+import {createArchiveTestStore38Bis} from './genesis-universal-archive-test-db-38bis';
 import {afterEach,beforeEach,describe,expect,it} from 'vitest';
 import {GenesisUniversalArchiveStore38Bis} from './genesis-universal-archive-38-bis.store';
 import type {UniversalArchiveRow38Bis,UniversalArchiveSection38Bis} from './genesis-universal-archive-38-bis.model';
@@ -20,7 +20,7 @@ const query=(overrides:Partial<{galaxyIndex:string|null;subtype:string|null;sear
     galaxyIndex:null,subtype:null,search:'',descending:false,page:1,pageSize:25 as const,...overrides});
 
 describe('38.bis — IndexedDB real: índice global atómico y paginación',()=>{
-  beforeEach(()=>{db=new GenesisUniversalArchiveStore38Bis(`archive-38bis-${++sequence}-${Date.now()}`);});
+  beforeEach(()=>{db=createArchiveTestStore38Bis(`archive-38bis-${++sequence}-${Date.now()}`);});
   afterEach(async()=>{db.close();await db.delete();});
   it('consulta todas las galaxias, filtra y pagina sin cargar un catálogo en Angular',async()=>{
     await db.publish(section('0',2),[row('a','0','Elízia'),row('b','0','Astra')]);

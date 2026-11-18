@@ -1,4 +1,4 @@
-import 'fake-indexeddb/auto';
+import {createArchiveTestStore38Bis} from './genesis-universal-archive-test-db-38bis';
 import {afterEach,describe,expect,it,vi} from 'vitest';
 import {GenesisUniversalArchiveStore38Bis} from './genesis-universal-archive-38-bis.store';
 import type {UniversalArchiveSection38Bis, UniversalArchiveRow38Bis} from './genesis-universal-archive-38-bis.model';
@@ -7,7 +7,7 @@ const oldScope='GENESIS/38.bis/observed-index/v1|SEED|3';
 const newScope='GENESIS/38.bis/scientific-confirmed/v2|SEED|3';
 let sequence=0;
 const stores:GenesisUniversalArchiveStore38Bis[]=[];
-function db(){const d=new GenesisUniversalArchiveStore38Bis(`archive-b7-${++sequence}-${Date.now()}`);stores.push(d);return d;}
+function db(){const d=createArchiveTestStore38Bis(`archive-b7-${++sequence}-${Date.now()}`);stores.push(d);return d;}
 const section=(scope:string,galaxyIndex:string):UniversalArchiveSection38Bis=>({
   scope,category:'systems',galaxyIndex,count:1,sourceRevision:'known',indexedAtEpochMs:0,knowledgeComplete:true,
 });

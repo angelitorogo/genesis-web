@@ -1,4 +1,9 @@
 import { slowOrbitalVisualSpeedVISCIV6l } from './system-scene-orbital-tempo-visciv6l';
+import {
+  createOrbitalPlanetShadowVISCIV6m,
+  updateOrbitalPlanetShadowVISCIV6m,
+  type OrbitalPlanetShadowVISCIV6m,
+} from './system-scene-orbital-planet-shadow-visciv6m';
 import * as THREE from 'three';
 import { createOrbitalTrafficVisualVISCIV6k, updateOrbitalTrafficVISCIV6k,
   type OrbitalTrafficVisualVISCIV6k } from './system-scene-orbital-traffic-visciv6k';
@@ -83,6 +88,8 @@ export interface SystemSceneOrbitalRingVisualV1 extends SystemSceneArtificialSat
   /** VISCIV.6j: architectural lighting layers, following the exact same night-side update. */
   readonly architecturalLightsVISCIV6j?: readonly OrbitalLightLayerVISCIV6j[];
   readonly orbitalTrafficVISCIV6k?: OrbitalTrafficVisualVISCIV6k;
+  /** VISCIV.6m: shadowed metal, never artificial illumination. */
+  readonly planetShadowVISCIV6m?: OrbitalPlanetShadowVISCIV6m;
 }
 
 export interface SystemSceneArtificialSatelliteMaterialBindingV1 {
@@ -583,11 +590,19 @@ export function createSystemSceneOrbitalRingVisualV1(
   rotor.add(beaconGroup);
   resources.push(beaconGeometry, beaconMaterial);
 
+  // VISCIV.6m: bind static metal instances once; exclude moving traffic and
+  // self-lit architectural layers. Shared by the system scene and planet fiche.
+  const planetShadow = createOrbitalPlanetShadowVISCIV6m(
+    root, rotor, planetRadiusScene, orbitalTraffic.group,
+  );
+  resources.push(...planetShadow.batches.map(batch => batch.mesh));
+
   return Object.freeze({ group: root, rotationPivot: rotor, materials: Object.freeze(materials),
     resources: Object.freeze(resources), nightBeaconsVISCIV6g: beacons,
     beaconRadialsVISCIV6g: Object.freeze(beaconRadials), beaconColorVISCIV6g: beaconColor,
     architecturalLightsVISCIV6j: architecturalLights.layers,
-    orbitalTrafficVISCIV6k: orbitalTraffic });
+    orbitalTrafficVISCIV6k: orbitalTraffic,
+    planetShadowVISCIV6m: planetShadow });
 }
 
 /** VISCIV.6k shared animation clock for both system scene and body fiche. */
@@ -609,6 +624,13 @@ export function updateOrbitalRingNightLightsVISCIV6g(
   visual: SystemSceneOrbitalRingVisualV1,
   stellarSources: readonly Readonly<{ direction: THREE.Vector3; weight: number }>[],
 ): void {
+  // Physical occlusion of opaque orbital structures is independent of the
+  // city's artificial lights and uses the same simulated stellar directions.
+  if (visual.planetShadowVISCIV6m) {
+    updateOrbitalPlanetShadowVISCIV6m(
+      visual.planetShadowVISCIV6m, visual.group, visual.rotationPivot, stellarSources,
+    );
+  }
   const beacons = visual.nightBeaconsVISCIV6g;
   const radials = visual.beaconRadialsVISCIV6g;
   const baseColor = visual.beaconColorVISCIV6g;

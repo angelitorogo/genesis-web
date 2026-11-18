@@ -13,7 +13,7 @@ function reptilian(id: string, level: 'PRIMITIVE'|'ADVANCED'|'VERY_ADVANCED'): V
     locomotion: 'WALKING', bodyLengthMeters: 2.2,
     pigmentation: { primaryColorHex: '#6b8f96', secondaryColorHex: '#c5ab9e', pattern: 'BANDS', bioluminescent: false },
     adaptations: ['SENSORY_ORIENTATION'],
-    intelligence: { lineage: 'REPTILIAN', civilizationLevel: level } as unknown as NonNullable<Vida38SpeciesVisualContract['intelligence']>,
+    intelligence: { lineage: 'REPTILIAN', civilizationTier: level, civilizationLevel: level } as unknown as NonNullable<Vida38SpeciesVisualContract['intelligence']>,
   };
 }
 
@@ -31,8 +31,23 @@ describe('38.2o — regresión migrada a SDF humanoide 38.2o.d2', () => {
       expect(model.subject.userData['vida38ReptilianSdfReuse38OD']).toBe(true);
       expect(model.subject.userData['civilizationLevel38O']).toBe(level);
       expect(model.subject.userData['uprightPosture38O']).toBe(true);
-      const garments = model.subject.children.filter((o: THREE.Object3D) => o.name === 'VIDA38_2OD_REPTILIAN_GARMENT');
-      expect(garments.length).toBeGreaterThan(0);
+      // 38.2u y 38.2s sustituyeron expresamente la prenda heredada.
+      // Exigir el vestuario propio del tier, sin resucitar mallas antiguas.
+      if (level === 'PRIMITIVE') {
+        expect(model.subject.userData['vida38PrimitiveReptilianOriginalSdf38U']).toBe(true);
+        const primitiveGarments = model.subject.children.filter((o: THREE.Object3D) =>
+          o.userData['vida38PrimitiveReptilianPart38U'] === 'GARMENT');
+        expect(primitiveGarments.length).toBeGreaterThan(0);
+      } else if (level === 'ADVANCED') {
+        const modernGarments = model.subject.children.filter((o: THREE.Object3D) =>
+          o.userData['vida38AdvancedReptilianWardrobe38S4'] !== undefined);
+        expect(modernGarments.length).toBeGreaterThanOrEqual(5);
+        expect(model.subject.children.some((o: THREE.Object3D) =>
+          o.name === 'VIDA38_2OD_REPTILIAN_GARMENT')).toBe(false);
+      } else {
+        expect(model.subject.userData['vida38ReptilianLevel38OD']).toBe('VERY_ADVANCED');
+        expect(model.subject.userData['vida38WardrobeEngine38OE8B']).toBeDefined();
+      }
       const size = new THREE.Box3().setFromObject(model.subject).getSize(new THREE.Vector3());
       expect(size.y).toBeGreaterThan(size.x * 1.25);
       model.dispose();

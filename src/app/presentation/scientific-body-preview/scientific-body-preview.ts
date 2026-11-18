@@ -74,6 +74,11 @@ import {
   type SystemSceneArtificialSatelliteMaterialBindingV1,
 } from '../system/system-scene-artificial-satellites-visciv2';
 import { buildSystemSceneOrbitalInfrastructureManifestVISCIV6e } from '../system/system-scene-orbital-infrastructure-visciv6e';
+import {
+  installOrbitalSurfaceShadowVISCIV6n,
+  type OrbitalSurfaceShadowBindingVISCIV6n,
+  type OrbitalSurfaceShadowRingVISCIV6n,
+} from '../system/system-scene-orbital-surface-shadow-visciv6n';
 
 import {
   type SystemSceneMoonPresentationV1,
@@ -139,10 +144,16 @@ const ISOLATED_NON_BODY_AUTOROTATE_CYCLE_SECONDS =
 const MINOR_BODY_INSPECTION_FILL_INTENSITY =
   0.90;
 
-/** VIS-3D.2d: 1024×512 atlas for both solid surface and cloud layer. */
+/** VIS-3D.2d: 1024×512 remains the normal preview/cloud resolution. */
 const SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED: SystemScenePlanetTextureDimensionsV1 = Object.freeze({
   width: 1024,
   height: 512,
+});
+
+/** VISSURF.2: only solid terrain uses 2048x1024; clouds remain 1024x512. */
+const SCIENTIFIC_PREVIEW_SOLID_SURFACE_DETAIL_VISSURF2: SystemScenePlanetTextureDimensionsV1 = Object.freeze({
+  width: 2048,
+  height: 1024,
 });
 
 
@@ -447,6 +458,8 @@ export class ScientificBodyPreview
   private infrastructureVisuals: Array<{visual:Vida38InfrastructureVisual386;radius:number}> = [];
 
   private civilizationLightBinding: SystemScenePlanetLightBindingV1 | null = null;
+
+  private orbitalSurfaceShadowVISCIV6n: OrbitalSurfaceShadowBindingVISCIV6n | null = null;
 
   private artificialSatelliteBindings:
     ScientificArtificialSatelliteBindingV1[] =
@@ -1387,7 +1400,9 @@ export class ScientificBodyPreview
         },
         false,
         planet.opticalPhotosphereTemperatureKelvin ?? null,
-        SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED,
+        planet.surface?.solidSurfaceAvailable === true && planet.giantAtmosphere === null
+          ? SCIENTIFIC_PREVIEW_SOLID_SURFACE_DETAIL_VISSURF2
+          : SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED,
       );
 
     if (planet.nightCivilizationTier !== null && planet.nightCivilizationTier !== undefined) {
@@ -1490,6 +1505,12 @@ export class ScientificBodyPreview
       this.resources.push(
         ...artificialSatellites.resources,
       );
+      if (artificialSatellites.ringShadowRingsVISCIV6n.length > 0) {
+        this.orbitalSurfaceShadowVISCIV6n = installOrbitalSurfaceShadowVISCIV6n(
+          appearance.material, sphere,
+          artificialSatellites.ringShadowRingsVISCIV6n, radius,
+        );
+      }
     }
 
     this.root.add(axialPivot);
@@ -1515,6 +1536,7 @@ export class ScientificBodyPreview
         readonly ScientificArtificialSatelliteBindingV1[];
       resources:
         readonly ({ dispose(): void })[];
+      ringShadowRingsVISCIV6n: readonly OrbitalSurfaceShadowRingVISCIV6n[];
     }> | null {
 
     const tier = planet.nightCivilizationTier ?? null;
@@ -1536,6 +1558,7 @@ export class ScientificBodyPreview
     group.name = `${planet.title} orbital infrastructure`;
     const bindings: ScientificArtificialSatelliteBindingV1[] = [];
     const resources: { dispose(): void }[] = [];
+    const ringShadowRingsVISCIV6n: OrbitalSurfaceShadowRingVISCIV6n[] = [];
 
     const appendOrbitalAsset = (
       orbitRadiusPlanetRadii: number,
@@ -1640,6 +1663,9 @@ export class ScientificBodyPreview
       const ringVisual = createSystemSceneOrbitalRingVisualV1(plan, radius);
       ringVisual.rotationPivot.rotation.y = plan.phaseRadians;
       group.add(ringVisual.group);
+      ringShadowRingsVISCIV6n.push({
+        root: ringVisual.group, rotor: ringVisual.rotationPivot, plan,
+      });
       resources.push(...ringVisual.resources);
       bindings.push(Object.freeze({
         orbitPivot: ringVisual.rotationPivot,
@@ -1656,6 +1682,7 @@ export class ScientificBodyPreview
       group,
       bindings: Object.freeze(bindings),
       resources: Object.freeze(resources),
+      ringShadowRingsVISCIV6n: Object.freeze(ringShadowRingsVISCIV6n),
     });
   }
 
@@ -2417,6 +2444,9 @@ export class ScientificBodyPreview
 
         this.updateCivilizationLightBinding();
         this.updateArtificialSatelliteBinding();
+        this.orbitalSurfaceShadowVISCIV6n?.update(
+          this.camera, this.artificialSatellitesVisible(),
+        );
         this.updateInfrastructureLod386();
         this.renderer
           .render(
@@ -2597,6 +2627,7 @@ export class ScientificBodyPreview
       [];
     this.infrastructureVisuals = [];
     this.civilizationLightBinding = null;
+    this.orbitalSurfaceShadowVISCIV6n = null;
     this.artificialSatelliteBindings =
       [];
     this.localDaysPerRealSecond =

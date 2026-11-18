@@ -1,4 +1,4 @@
-import 'fake-indexeddb/auto';
+import {createArchiveTestStore38Bis} from './genesis-universal-archive-test-db-38bis';
 import {describe,it,expect} from 'vitest';
 import {GenesisUniversalArchiveStore38Bis} from './genesis-universal-archive-38-bis.store';
 import {archiveDirtyCategories38BisB6} from './genesis-universal-archive-dirty-38-bis-b6';
@@ -13,7 +13,7 @@ const event:GenesisKnowledgeCommit38BisB6={
 };
 let seq=0;
 async function db(){
-  const store=new GenesisUniversalArchiveStore38Bis('test-genesis-38bis-b6-'+(++seq));
+  const store=createArchiveTestStore38Bis('test-genesis-38bis-b6-'+(++seq));
   await store.open();return store;
 }
 
@@ -45,7 +45,7 @@ describe('38.bis-b6 — eventos y cola persistida de actualización incremental'
     const claimed=await store.claimKnowledgeChange38BisB6(1000);
     expect(claimed?.status).toBe('RUNNING');
     store.close();
-    const restored=new GenesisUniversalArchiveStore38Bis(name);
+    const restored=createArchiveTestStore38Bis(name);
     try{
       expect(await restored.recoverKnowledgeChanges38BisB6(1002,500)).toBe(0);
       expect(await restored.recoverKnowledgeChanges38BisB6(1800,500)).toBe(1);

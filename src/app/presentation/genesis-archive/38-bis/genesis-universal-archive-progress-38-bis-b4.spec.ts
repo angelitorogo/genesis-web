@@ -1,4 +1,4 @@
-import 'fake-indexeddb/auto';
+import {createArchiveTestStore38Bis} from './genesis-universal-archive-test-db-38bis';
 import {afterEach,beforeEach,describe,expect,it} from 'vitest';
 import {GenesisUniversalArchiveStore38Bis} from './genesis-universal-archive-38-bis.store';
 import {archiveProgressDetails38BisB4,archiveProgressOverview38BisB4,
@@ -18,7 +18,7 @@ let db:GenesisUniversalArchiveStore38Bis;
 let sequence=0;
 
 describe('38.bis-b4 · checkpoints persistentes, no científicos',()=>{
-  beforeEach(()=>{db=new GenesisUniversalArchiveStore38Bis(`38bis-b4-${++sequence}-${Date.now()}`);});
+  beforeEach(()=>{db=createArchiveTestStore38Bis(`38bis-b4-${++sequence}-${Date.now()}`);});
   afterEach(async()=>{db.close();await db.delete();});
 
   it('muestra pendiente cuando no hay fragmentos y marca en curso solo durante la sesión activa',async()=>{
@@ -60,7 +60,7 @@ describe('38.bis-b4 · checkpoints persistentes, no científicos',()=>{
   it('distingue el fragmento interrumpido de uno completado y lo recupera al publicar',async()=>{
     await db.checkpoint(scope,'planets','0','base','RUNNING');
     db.close();
-    db=new GenesisUniversalArchiveStore38Bis(db.name);
+    db=createArchiveTestStore38Bis(db.name);
     const interrupted=archiveProgressDetails38BisB4(galaxies,'planets',await db.progressFor(scope),null);
     expect(interrupted[0]?.base).toBe('INTERRUPTED');
     expect(interrupted[1]?.base).toBe('PENDING');
@@ -72,7 +72,7 @@ describe('38.bis-b4 · checkpoints persistentes, no científicos',()=>{
   it('conserva ordenaciones por magnitud y marca pendientes las que nunca se construyeron',async()=>{
     await db.publish(section('0'),[row]);
     await db.ensureSortField(scope,'planets','0','water');
-    db.close();db=new GenesisUniversalArchiveStore38Bis(db.name);
+    db.close();db=createArchiveTestStore38Bis(db.name);
     const details=archiveProgressDetails38BisB4(galaxies,'planets',await db.progressFor(scope),null);
     expect(details[0]?.scientificSorts.find(f=>f.key==='water')?.status).toBe('STORED');
     expect(details[0]?.scientificSorts.find(f=>f.key==='temperature')?.status).toBe('PENDING');

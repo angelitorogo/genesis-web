@@ -47,8 +47,11 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
   readonly progressCheckpoints!:Table<ArchiveProgressCheckpoint38BisB4,string>;
   readonly dirtyJobs!:Table<ArchiveDirtyJob38BisB6,string>;
 
-  constructor(name='genesis-web-archive-38bis') {
-    super(name,{autoOpen:false});
+  /** Permite inyectar IndexedDB en tests sin depender de globales del worker.
+   * En producción no se proporciona: se utiliza el IndexedDB real del navegador. */
+  constructor(name='genesis-web-archive-38bis',
+    dependencies?: Readonly<{indexedDB: IDBFactory; IDBKeyRange: typeof IDBKeyRange}>) {
+    super(name,{autoOpen:false,...dependencies});
     this.version(1).stores({
       rows:'id, [scope+category], [scope+category+galaxyIndex], [scope+category+sortTitle], [scope+category+galaxyIndex+sortTitle], [scope+category+subtype+sortTitle], [scope+category+galaxyIndex+subtype+sortTitle]',
       sections:'[scope+category+galaxyIndex], [scope+category], scope',
