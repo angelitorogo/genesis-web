@@ -24,6 +24,7 @@ describe('38.bis — Archivo GENESIS universal',()=>{
     selectedUniverseRef:signal('PUBLIC-REF'),indexedGalaxies:signal(0),
     sections:signal([]),category,busy:signal(false),progress:signal(''),
     indexProgress,indexProgressStored,indexProgressTotal,progressDetails,
+    sortIndexStats38BisT3:signal({valid:0,stale:0}),dirtyJobCount38BisT3:signal(0),
     page,selectedGalaxy:signal(null),selectedSubtype:signal(null),
     direction:signal('asc'),pageNumber:signal(1),pageSize:signal(25),
     sortKey:signal('name'),minimum:signal(null),maximum:signal(null),
@@ -36,6 +37,7 @@ describe('38.bis — Archivo GENESIS universal',()=>{
   };
   beforeEach(()=>{
     state.set('empty');category.set(null);page.set(null);indexProgress.set([]);
+    stub.sortKey.set('name');stub.direction.set('asc');
     stub.load.mockClear();progressDetails.mockClear();
     TestBed.configureTestingModule({imports:[GenesisArchive],providers:[provideRouter([]),
       {provide:GenesisUniversalArchiveFacade38Bis,useValue:stub}]});
@@ -63,7 +65,8 @@ describe('38.bis — Archivo GENESIS universal',()=>{
     const panel=fixture.nativeElement.querySelector('[data-testid="archive-index-progress"]') as HTMLElement|null;
     expect(panel).toBeTruthy();
     expect(panel?.textContent).toContain('1 / 2 fragmentos de catálogo guardados');
-    expect(panel?.textContent).toContain('0 / 2 revisadas en esta apertura');
+    expect(panel?.textContent).not.toContain('revisadas en esta apertura');
+    expect(panel?.textContent).toContain('0 ordenaciones vigentes');
     expect(panel?.textContent).toContain('Planetas');
     expect(progressDetails).toHaveBeenCalledWith('planets');
   });
@@ -84,6 +87,55 @@ describe('38.bis — Archivo GENESIS universal',()=>{
     expect(element.querySelector('[data-testid="archive-minimum"]')).toBeNull();
     expect((element.querySelector('[data-testid="archive-sort-field"]') as HTMLSelectElement).textContent)
       .toContain('Nivel tecnológico');
+  });
+
+  it('mantiene visibles la columna y la dirección activas cuando las opciones aparecen de forma diferida',()=>{
+    state.set('ready');
+    const fixture=TestBed.createComponent(GenesisArchive);fixture.detectChanges();
+    const element=fixture.nativeElement as HTMLElement;
+    // La fachada conoce el criterio antes de recibir una categoría: inicialmente
+    // el <select> no tiene opciones. Después llegan ambas señales desde la ruta.
+    stub.sortKey.set('life');stub.direction.set('desc');category.set('moons');
+    fixture.detectChanges();
+    const sort=element.querySelector('[data-testid="archive-sort-field"]') as HTMLSelectElement;
+    const direction=element.querySelector('[data-testid="archive-direction"]') as HTMLSelectElement;
+    expect(sort.value).toBe('life');
+    expect(sort.selectedOptions[0]?.textContent?.trim()).toBe('Vida');
+    expect(direction.value).toBe('desc');
+    expect(direction.selectedOptions[0]?.textContent?.trim()).toBe('Sí primero / No después');
+
+    // Una página nueva no debe hacer que el selector vuelva a "Nombre".
+    page.set({items:[],total:130,page:2,pageSize:25,totalPages:6});
+    fixture.detectChanges();
+    expect(sort.value).toBe('life');expect(direction.value).toBe('desc');
+
+    // Al cambiar de categoría, la lista de opciones se reconstruye.
+    stub.sortKey.set('civilization');stub.direction.set('asc');category.set('planets');
+    fixture.detectChanges();
+    expect(sort.value).toBe('civilization');
+    expect(sort.selectedOptions[0]?.textContent?.trim()).toBe('Civilización');
+    expect(direction.value).toBe('asc');
+    expect(direction.selectedOptions[0]?.textContent?.trim()).toBe('No primero / Sí después');
+
+    stub.sortKey.set('galaxy');stub.direction.set('desc');fixture.detectChanges();
+    expect(sort.value).toBe('galaxy');
+    expect(sort.selectedOptions[0]?.textContent?.trim()).toBe('Galaxia');
+    expect(direction.value).toBe('desc');
+    expect(direction.selectedOptions[0]?.textContent?.trim()).toBe('Mayor a menor / Z–A');
+  });
+
+  it('representa el campo actual al cambiar de nombre a una magnitud numérica',()=>{
+    state.set('ready');category.set('planets');
+    const fixture=TestBed.createComponent(GenesisArchive);fixture.detectChanges();
+    const sort=fixture.nativeElement.querySelector('[data-testid="archive-sort-field"]') as HTMLSelectElement;
+    const direction=fixture.nativeElement.querySelector('[data-testid="archive-direction"]') as HTMLSelectElement;
+    expect(sort.value).toBe('name');
+    stub.sortKey.set('temperature');stub.direction.set('desc');fixture.detectChanges();
+    expect(sort.value).toBe('temperature');
+    expect(direction.value).toBe('desc');
+    stub.sortKey.set('name');stub.direction.set('asc');fixture.detectChanges();
+    expect(sort.value).toBe('name');
+    expect(direction.value).toBe('asc');
   });
 
 });

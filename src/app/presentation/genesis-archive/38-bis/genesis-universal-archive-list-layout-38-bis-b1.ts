@@ -15,7 +15,8 @@ type Definition = readonly (readonly [key:string,label:string])[];
 const DEFINITIONS:Readonly<Record<Exclude<UniversalArchiveIndexedCategory38Bis,'sectors'>,Definition>>={
   systems:[['galaxy','Galaxia'],['state','Estado'],['multiplicity','Tipo de sistema']],
   planets:[['system','Sistema'],['galaxy','Galaxia'],['state','Estado'],['type','Tipo'],
-    ['mass','Masa'],['radius','Radio'],['life','Vida'],['colonies','Colonias']],
+    ['mass','Masa'],['radius','Radio'],['life','Vida'],['colonies','Colonias'],
+    ['civilization','Civilización']],
   moons:[['planet','Planeta'],['system','Sistema'],['galaxy','Galaxia'],
     ['composition','Composición'],['mass','Masa'],['radius','Radio'],
     ['life','Vida'],['colonies','Colonias']],
@@ -48,7 +49,10 @@ export function archiveCompactFields38BisB1(row:UniversalArchiveRow38Bis,
     const original=key==='galaxy'?galaxyName:row.cells[key];
     const value=typeof original==='string'&&original.trim()
       ? archivePublicCopyA6(original) : 'No evaluable';
-    return {key,label,value:value||'No evaluable'};
+    const displayed=(key==='life'||key==='colonies'||key==='civilization') &&
+      (value==='No evaluable'||value==='No determinado'||value==='Sin registro')
+      ?'Sin determinar':value;
+    return {key,label,value:displayed||'No evaluable'};
   });
 }
 

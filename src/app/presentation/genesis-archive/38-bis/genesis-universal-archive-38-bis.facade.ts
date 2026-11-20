@@ -52,6 +52,7 @@ export class GenesisUniversalArchiveFacade38Bis {
   private readonly verifiedStatisticsSignal=signal<ReadonlySet<string>>(new Set<string>());
   private readonly progressSignal=signal('');
   private readonly progressSnapshotSignal=signal<ArchiveProgressSnapshot38BisB4>(EMPTY_ARCHIVE_PROGRESS_38BIS_B4);
+  private readonly dirtyJobCountSignal38BisT3=signal(0);
   /** Comprobaciones completadas en esta apertura; no deben confundirse con índices persistidos. */
   private readonly checkedCatalogSignal=signal<ReadonlySet<string>>(new Set<string>());
   private readonly activeProgressSignal=signal<ArchiveProgressActive38BisB4|null>(null);
@@ -69,6 +70,7 @@ export class GenesisUniversalArchiveFacade38Bis {
   private jobSequence=0;
   private pageRequestSequence=0;
   private progressRefreshSequence=0;
+  private pendingRefreshTimer38BisT3:ReturnType<typeof setTimeout>|null=null;
 
   readonly state=this.stateSignal.asReadonly();
   readonly error=this.errorSignal.asReadonly();
@@ -85,6 +87,15 @@ export class GenesisUniversalArchiveFacade38Bis {
     this.categories.filter(c=>c.id!=='galaxies')
       .map(c=>c.id as UniversalArchiveIndexedCategory38Bis),this.progressSnapshotSignal(),
       this.activeProgressSignal(),this.checkedCatalogSignal()));
+  readonly dirtyJobCount38BisT3=this.dirtyJobCountSignal38BisT3.asReadonly();
+  readonly sortIndexStats38BisT3=computed(()=>{
+    const snapshot=this.progressSnapshotSignal();
+    const current=new Map(snapshot.sections.map(s=>
+      [s.category+'|'+s.galaxyIndex,s.sourceRevision]));
+    const valid=snapshot.sortRevisions.filter(r=>
+      r.sourceRevision===current.get(r.category+'|'+r.galaxyIndex)).length;
+    return {valid,stale:snapshot.sortRevisions.length-valid};
+  });
   readonly indexProgressStored=computed(()=>this.indexProgress().reduce((sum,c)=>sum+c.stored,0));
   readonly indexProgressTotal=computed(()=>this.indexProgress().reduce((sum,c)=>sum+c.total,0));
   progressDetails(category:UniversalArchiveIndexedCategory38Bis){
@@ -109,8 +120,16 @@ export class GenesisUniversalArchiveFacade38Bis {
     if(!scope)return;
     const request=++this.progressRefreshSequence;
     const snapshot=await this.index.store.progressFor(scope);
-    if(request===this.progressRefreshSequence&&scope===this.scopeSignal())
-      this.progressSnapshotSignal.set(snapshot);
+    if(request===this.progressRefreshSequence&&scope===this.scopeSignal()){
+      // Archive metadata must not reveal previously confirmed galaxies that
+      // vanished after restore. Filter without any source-science traversal.
+      const allowed=new Set(this.galaxies().map(g=>g.index));
+      this.progressSnapshotSignal.set({
+        sections:snapshot.sections.filter(s=>allowed.has(s.galaxyIndex)),
+        sortRevisions:snapshot.sortRevisions.filter(s=>allowed.has(s.galaxyIndex)),
+        checkpoints:snapshot.checkpoints.filter(s=>allowed.has(s.galaxyIndex)),
+      });
+    }
   }
   readonly selectedGalaxy=this.selectedGalaxySignal.asReadonly();
   readonly selectedSubtype=this.selectedSubtypeSignal.asReadonly();
@@ -172,7 +191,9 @@ export class GenesisUniversalArchiveFacade38Bis {
     const call=++this.loadSequence;
     ++this.jobSequence; // Cancel any in-progress work for an older route.
     this.busySignal.set(false);
+    if(this.pendingRefreshTimer38BisT3!==null){clearTimeout(this.pendingRefreshTimer38BisT3);this.pendingRefreshTimer38BisT3=null;}
     this.progressSnapshotSignal.set(EMPTY_ARCHIVE_PROGRESS_38BIS_B4);
+    this.dirtyJobCountSignal38BisT3.set(0);
     this.checkedCatalogSignal.set(new Set<string>());
     this.activeProgressSignal.set(null);
     const currentCategory=universalArchiveCategory38Bis(raw.category);
@@ -221,36 +242,75 @@ export class GenesisUniversalArchiveFacade38Bis {
       // B7a: the old revision is a separate namespace. Do not await its
       // potentially enormous deletion while the Archive remains in loading.
       // Run bounded garbage collection only after publishing the ready view.
-      // The current-scope pruning is still required to handle restored games.
-      this.progressSignal.set('Comprobando fragmentos del catálogo confirmado…');
-      await this.index.store.pruneUnknownGalaxies(scope,new Set(galaxies.map(g=>g.index)));
-      this.sectionsSignal.set((await this.index.store.sectionsFor(scope)).filter(s=>galaxies.some(g=>g.index===s.galaxyIndex)));
+      // Stale scopes are excluded by the confirmed-galaxy allowlist; explicit
+      // restore events or manual maintenance reconcile them later.
+      this.progressSignal.set('Leyendo índices persistidos…');
+      // T3: no general revision scan, no full cleanup, no forced indexing on entry.
+      // Confirmed galaxies are already an authoritative knowledge gate.
+      const allowedGalaxies=new Set(galaxies.map(g=>g.index));
+      const sections=(await this.index.store.sectionsFor(scope))
+        .filter(s=>allowedGalaxies.has(s.galaxyIndex));
+      const dirty=await this.index.store.knowledgeJobsFor38BisT3(scope);
+      const pendingKeys=new Set(dirty.map(j=>j.category+'|'+j.galaxyIndex));
+      this.dirtyJobCountSignal38BisT3.set(dirty.length);
+      this.sectionsSignal.set(sections);
+      this.verifiedSectionsSignal.set(new Set(sections.filter(s=>s.category===currentCategory &&
+        !pendingKeys.has(s.category+'|'+s.galaxyIndex)).map(s=>s.galaxyIndex)));
+      this.verifiedStatisticsSignal.set(new Set(sections.filter(s=>
+        (s.category==='civilizations'||s.category==='colonies')&&
+        !pendingKeys.has(s.category+'|'+s.galaxyIndex)).map(s=>s.category+'|'+s.galaxyIndex)));
       await this.reloadIndexProgress(scope);
       if(call!==this.loadSequence)return;
       if(galaxyIndex!==null&&!galaxies.some(g=>g.index===galaxyIndex))throw new Error('La galaxia no pertenece al conocimiento persistido');
       this.stateSignal.set('ready');
-      this.progressSignal.set('');
-      this.index.store.scheduleLegacyCleanup38BisB7a(scope);
+      const totalNeeded=galaxies.length*this.categories.filter(c=>c.id!=='galaxies').length;
+      const stale=this.sortIndexStats38BisT3().stale;
+      this.progressSignal.set(dirty.length>0
+        ?`Actualizaciones en segundo plano: ${dirty.length} fragmento(s) pendiente(s).`
+        :sections.length!==totalNeeded?'Catálogos incompletos. Usa «Actualizar índice» para reconciliarlos.'
+          :stale>0?`${stale} ordenaciones pendientes de reconstrucción; utiliza «Actualizar índice» si deseas reconciliarlas.`
+            :'Índices científicos y ordenaciones actualizados.');
+      // Legacy cleanup is maintenance, not an Archive-opening prerequisite.
       await this.refreshPage();
       if(call!==this.loadSequence)return;
-      if(currentCategory!==null&&currentCategory!=='galaxies'){
-        // Verify the visible category FIRST, then resume the rest of the
-        // universal catalogue. Formerly the category view cancelled the 210-
-        // fragment build and never started it again (e.g. 160/210 forever).
-        void this.buildCategory(key,galaxyIndex===null?galaxies:
-          galaxies.filter(g=>g.index===galaxyIndex),currentCategory,call)
-          .finally(()=>{
-            if(call===this.loadSequence && scope===this.scopeSignal() && this.state()==='ready')
-              void this.backgroundIndex(key,galaxies,scope);
-          });
-      } else {
-        // Galaxies and the Archive home both resume the universal index.
-        void this.backgroundIndex(key,galaxies,scope);
-      }
+      if(dirty.length>0)this.schedulePendingRefresh38BisT3(key,scope,call);
+      // An empty (new) Archive can be indexed by explicit refresh or future
+      // confirmation events. Entry itself NEVER starts the 210-fragment pass.
     }catch(error){if(call!==this.loadSequence)return;
       this.errorSignal.set(error instanceof Error?error.message:'No se pudo abrir el archivo');
       this.stateSignal.set('error');
     }
+  }
+
+  /** Only watch the small durable queue while an active update is pending.
+   * Never compare 210 scientific revisions on the navigation path. */
+  private schedulePendingRefresh38BisT3(key:UniverseGenerationKey,scope:string,call:number):void {
+    if(this.pendingRefreshTimer38BisT3!==null)return;
+    this.pendingRefreshTimer38BisT3=setTimeout(()=>{
+      this.pendingRefreshTimer38BisT3=null;
+      void (async()=>{
+        if(call!==this.loadSequence||scope!==this.scopeSignal())return;
+        const jobs=await this.index.store.knowledgeJobsFor38BisT3(scope);
+        const pending=new Set(jobs.map(j=>j.category+'|'+j.galaxyIndex));
+        this.dirtyJobCountSignal38BisT3.set(jobs.length);
+        const selected=this.category();
+        const all=this.galaxies();
+        const allowed=new Set(all.map(g=>g.index));
+        const sections=(await this.index.store.sectionsFor(scope)).filter(s=>allowed.has(s.galaxyIndex));
+        if(call!==this.loadSequence||scope!==this.scopeSignal())return;
+        this.sectionsSignal.set(sections);
+        this.verifiedSectionsSignal.set(new Set(sections.filter(s=>s.category===selected&&
+          !pending.has(s.category+'|'+s.galaxyIndex)).map(s=>s.galaxyIndex)));
+        this.verifiedStatisticsSignal.set(new Set(sections.filter(s=>
+          (s.category==='civilizations'||s.category==='colonies')&&
+          !pending.has(s.category+'|'+s.galaxyIndex)).map(s=>s.category+'|'+s.galaxyIndex)));
+        await this.reloadIndexProgress(scope);
+        if(call!==this.loadSequence||scope!==this.scopeSignal())return;
+        this.progressSignal.set(jobs.length>0?`Actualizaciones en segundo plano: ${jobs.length} pendiente(s).`:'Índices científicos y ordenaciones actualizados.');
+        await this.refreshPage();
+        if(jobs.some(j=>j.status!=='ERROR'))this.schedulePendingRefresh38BisT3(key,scope,call);
+      })().catch(error=>this.errorSignal.set(error instanceof Error?error.message:String(error)));
+    },2200);
   }
 
   private selectUniverse(keys:readonly UniverseGenerationKey[],ref:string|null):UniverseGenerationKey|null {
@@ -278,7 +338,10 @@ export class GenesisUniversalArchiveFacade38Bis {
       for(const galaxy of required){
         const active={category,galaxyIndex:galaxy,field:sortKey};
         this.activeProgressSignal.set(active);
-        try{await this.index.store.ensureSortField(scope,category,galaxy,sortKey);}
+        try{
+          const name=this.galaxies().find(g=>g.index===galaxy)?.title??galaxy;
+          await this.index.ensureSort38BisT3(this.generationKey!,galaxy,category,sortKey,name);
+        }
         finally{
           if(this.activeProgressSignal()===active)this.activeProgressSignal.set(null);
           await this.reloadIndexProgress(scope);
@@ -292,9 +355,17 @@ export class GenesisUniversalArchiveFacade38Bis {
       page:this.pageNumber(),pageSize:this.pageSize()});
     // Solo la página visible consulta registros biológicos certificados.
     const enriched=category==='planets'||category==='moons'
-      ?{...page,items:await this.index.enrichVisibleBiologyB1(this.generationKey!,page.items)}:page;
+      ?{...page,items:(await this.index.enrichVisibleBiologyB1(this.generationKey!,page.items))
+        .map(row=>({...row,cells:{...row.cells,galaxy:
+          this.galaxies().find(g=>g.index===row.galaxyIndex)?.title??row.galaxyIndex}}))}:page;
     if(pageRequest===this.pageRequestSequence && scope===this.scopeSignal() && category===this.category())
       this.pageSignal.set(enriched);
+  }
+
+  private async warmUsedSorts38BisT3(key:UniverseGenerationKey,
+    category:UniversalArchiveIndexedCategory38Bis,galaxy:KnownArchiveGalaxy38Bis):Promise<void>{
+    const fields=await this.index.store.usedSortFields38BisT3(archive38BisScope(key),category);
+    for(const field of fields)await this.index.ensureSort38BisT3(key,galaxy.index,category,field,galaxy.title);
   }
 
   /** Targeted verification: colonies and civilization tiers only. It never
@@ -375,6 +446,7 @@ export class GenesisUniversalArchiveFacade38Bis {
         finally{if(this.activeProgressSignal()===active)this.activeProgressSignal.set(null);}
         if(job!==this.jobSequence||this.loadSequence!==call)return;
         await this.acceptVerifiedSection38BisT2(archive38BisScope(key),section);
+        await this.warmUsedSorts38BisT3(key,category,galaxy);
         this.markCatalogChecked(category,galaxy.index);
         if(category==='colonies'||category==='civilizations')
           this.verifiedStatisticsSignal.update(prior=>new Set([...prior,category+'|'+galaxy.index]));
@@ -440,6 +512,7 @@ export class GenesisUniversalArchiveFacade38Bis {
           if(job!==this.jobSequence||scope!==this.scopeSignal())return;
           this.markCatalogChecked(category,galaxy.index);
           await this.acceptVerifiedSection38BisT2(scope,section);
+          await this.warmUsedSorts38BisT3(key,category,galaxy);
           if(category==='colonies'||category==='civilizations')
             this.verifiedStatisticsSignal.update(prior=>new Set([...prior,category+'|'+galaxy.index]));
           if(this.category()===category){

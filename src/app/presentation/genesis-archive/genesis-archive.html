@@ -33,19 +33,21 @@
         <summary>
           <strong>Progreso persistido de indexación</strong>
           <span>{{facade.indexProgressStored()}} / {{facade.indexProgressTotal()}} fragmentos de catálogo guardados</span>
+          <span>· {{facade.sortIndexStats38BisT3().valid}} ordenaciones vigentes</span>
+          @if (facade.sortIndexStats38BisT3().stale) {<span>· {{facade.sortIndexStats38BisT3().stale}} ordenaciones pendientes</span>}
+          @if (facade.dirtyJobCount38BisT3()) {<span>· {{facade.dirtyJobCount38BisT3()}} fragmentos en actualización</span>}
           @if (facade.busy()) {<span>· Trabajando en el índice…</span>}
         </summary>
         <div class="archive-index-checkpoints__content">
           <p class="archive-coverage">Los fragmentos guardados y las ordenaciones científicas terminadas se conservan tras recargar.
-            «Guardado» significa que existe un índice local, incluso si está siendo revisado. «Revisadas en esta apertura»
-            cuenta las galaxias ya comprobadas frente al conocimiento actual; empieza de cero al volver a abrir el Archivo.
-            Un trabajo interrumpido puede repetirse sin perder fragmentos anteriores.</p>
+            Los catálogos y las ordenaciones utilizadas se actualizan por eventos de conocimiento confirmado.
+            Entrar al Archivo reutiliza los índices persistidos sin revisar todas las galaxias.
+            Las actualizaciones interrumpidas se reanudan desde la cola persistente.</p>
           <div class="archive-index-checkpoints__categories" data-testid="archive-index-progress-categories">
             @for (part of facade.indexProgress(); track part.category) {
               <div class="archive-index-checkpoints__category">
                 <strong>{{name(part.category)}}</strong>
                 <span>{{part.stored}} / {{part.total}} guardadas</span>
-                <span>· {{part.checked}} / {{part.total}} revisadas en esta apertura</span>
                 @if (part.active) {<span>· {{part.active}} en curso</span>}
                 @if (part.interrupted) {<span>· {{part.interrupted}} interrumpidas</span>}
                 @if (part.failed) {<span>· {{part.failed}} con error</span>}
@@ -258,14 +260,19 @@
               <label>ORDENAR POR
                 <select data-testid="archive-sort-field" [value]="facade.sortKey()" (change)="changeSort($event)">
                   @for (option of facade.sortOptions(); track option.key) {
-                    <option [value]="option.key">{{option.label}}</option>
+                    <option [value]="option.key" [selected]="option.key === facade.sortKey()">{{option.label}}</option>
                   }
                 </select>
               </label>
               <label>DIRECCIÓN
                 <select data-testid="archive-direction" [value]="facade.direction()" (change)="changeDirection($event)">
-                  <option value="asc">Menor a mayor / A–Z</option>
-                  <option value="desc">Mayor a menor / Z–A</option>
+                  @if (facade.sortKey() === 'life' || facade.sortKey() === 'colonies' || facade.sortKey() === 'civilization') {
+                    <option value="asc" [selected]="facade.direction() === 'asc'">No primero / Sí después</option>
+                    <option value="desc" [selected]="facade.direction() === 'desc'">Sí primero / No después</option>
+                  } @else {
+                    <option value="asc" [selected]="facade.direction() === 'asc'">Menor a mayor / A–Z</option>
+                    <option value="desc" [selected]="facade.direction() === 'desc'">Mayor a menor / Z–A</option>
+                  }
                 </select>
               </label>
               <label>POR PÁGINA

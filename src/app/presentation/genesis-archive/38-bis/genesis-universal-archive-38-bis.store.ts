@@ -265,9 +265,14 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
       // Toda reconstrucción de un fragmento invalida sus claves derivadas.
       await this.sortRows.where('[scope+category+galaxyIndex]')
         .equals([section.scope,section.category,section.galaxyIndex]).delete();
-      const revisions=await this.sortRevisions.where('[scope+category+galaxyIndex]')
+      // T3: retain revision headers as durable usage intents. If a manual
+      // rebuild reuses the same scientific revision, mark it stale explicitly.
+      const intents=await this.sortRevisions.where('[scope+category+galaxyIndex]')
         .equals([section.scope,section.category,section.galaxyIndex]).toArray();
-      if(revisions.length)await this.sortRevisions.bulkDelete(revisions.map(r=>r.id));
+      for(const intent of intents){
+        if(intent.sourceRevision===section.sourceRevision)
+          await this.sortRevisions.put({...intent,sourceRevision:'stale|'+intent.sourceRevision});
+      }
       await this.rows.where('[scope+category+galaxyIndex]')
         .equals([section.scope,section.category,section.galaxyIndex]).delete();
       for(let i=0;i<rows.length;i+=500)await this.rows.bulkPut(rows.slice(i,i+500));
@@ -283,10 +288,27 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
     });
   }
 
+  /** Durable sort intents: a previously used field stays discoverable even
+   * when its fragment was atomically replaced. New galaxies inherit only
+   * category fields actually used somewhere in this universe. */
+  async usedSortFields38BisT3(scope:string,category:UniversalArchiveIndexedCategory38Bis):Promise<readonly string[]> {
+    await this.open();
+    const revisions=await this.sortRevisions.where('scope').equals(scope)
+      .filter(row=>row.category===category).toArray();
+    return [...new Set(revisions.map(r=>r.field))]
+      .filter(field=>archiveSortOption38BisB3(category,field).key===field && field!=='name');
+  }
+
+  /** A small scoped queue lookup; it does not examine scientific records. */
+  async knowledgeJobsFor38BisT3(scope:string):Promise<readonly ArchiveDirtyJob38BisB6[]> {
+    await this.open();return this.dirtyJobs.where('scope').equals(scope).toArray();
+  }
+
   /** Construye únicamente la columna solicitada, reutilizando las filas observadas.
    * No toca datos científicos ni requiere releer los catálogos galácticos. */
   async ensureSortField(scope:string,category:UniversalArchiveIndexedCategory38Bis,
-    galaxyIndex:string,field:string):Promise<void> {
+    galaxyIndex:string,field:string,
+    project?:(rows:readonly UniversalArchiveRow38Bis[])=>Promise<readonly UniversalArchiveRow38Bis[]>):Promise<void> {
     const option=archiveSortOption38BisB3(category,field);
     if(option.kind==='name')return;
     await this.open();
@@ -299,7 +321,11 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
     const rows=await this.rows.where('[scope+category+galaxyIndex]')
       .equals([scope,category,galaxyIndex]).toArray();
     if(rows.length!==source.count)throw new Error('38.bis-b3: fragmento de ordenación incompleto');
-    const prepared:ArchiveSortRow38BisB3[]=rows.map(row=>{
+    // Biology / galaxy projection stays outside the generic disposable store.
+    // Values come only from the confirmed VIDA.9 view, never Ground Truth.
+    const projected=project?await project(rows):rows;
+    if(projected.length!==rows.length)throw new Error('38.bis-T3: proyección de ordenación incompleta');
+    const prepared:ArchiveSortRow38BisB3[]=projected.map(row=>{
       const v=archiveSortValue38BisB3(row,option);
       const available=v===null?0:1;
       return Object.freeze({id:sortRevisionId(scope,category,galaxyIndex,option.key)+'|'+row.id,

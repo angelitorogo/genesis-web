@@ -1,0 +1,21 @@
+/* GENESIS 38.bis-T3a - Portable select binding audit (node, no Angular dependencies). */
+'use strict';
+const fs=require('node:fs');
+const assert=require('node:assert/strict');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'src/app/presentation/genesis-archive/genesis-archive.html'),'utf8');
+const spec=fs.readFileSync(path.join(root,'src/app/presentation/genesis-archive/genesis-archive.spec.ts'),'utf8');
+const sort=html.match(/<select data-testid="archive-sort-field"[^>]*>([\s\S]*?)<\/select>/);
+assert.ok(sort,'Selector de criterio');
+assert.match(sort[0], /\[value\]="facade\.sortKey\(\)"/);
+assert.match(sort[0], /\[selected\]="option\.key === facade\.sortKey\(\)"/);
+const direction=html.match(/<select data-testid="archive-direction"[^>]*>([\s\S]*?)<\/select>/);
+assert.ok(direction,'Selector de dirección');
+assert.match(direction[0], /\[value\]="facade\.direction\(\)"/);
+assert.equal((direction[0].match(/\[selected\]="facade\.direction\(\) ===/g)||[]).length,4);
+assert.match(spec,/mantiene visibles la columna y la dirección activas cuando las opciones aparecen de forma diferida/);
+assert.match(spec,/representa el campo actual al cambiar de nombre a una magnitud numérica/);
+assert.match(spec,/expect\(sort\.value\)\.toBe\('life'\)/);
+assert.match(spec,/expect\(sort\.value\)\.toBe\('galaxy'\)/);
+console.log('GENESIS 38.bis-T3a: PASS - selectores de criterio/dirección enlazados de forma reactiva');

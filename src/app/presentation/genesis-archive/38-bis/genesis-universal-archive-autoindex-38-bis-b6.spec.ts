@@ -24,7 +24,7 @@ describe('38.bis-b6 — eventos y cola persistida de actualización incremental'
     expect(archiveDirtyCategories38BisB6('GALACTIC_OBJECT')).toContain('nebulae');
     expect(archiveDirtyCategories38BisB6('GALACTIC_OBJECT')).not.toContain('moons');
     expect(archiveDirtyCategories38BisB6('VIDA9')).toEqual([
-      'civilizations','colonies','colonized-planets','colonized-moons']);
+      'planets','moons','civilizations','colonies','colonized-planets','colonized-moons']);
     expect(archiveDirtyCategories38BisB6('SECTOR')).toEqual([]);
   });
 
@@ -76,8 +76,8 @@ describe('38.bis-b6 — eventos y cola persistida de actualización incremental'
       await store.enqueueKnowledgeChange38BisB6({...event,galaxyIndex:'10',kind:'VIDA9'},'scope-1');
       await store.enqueueKnowledgeChange38BisB6({...event,kind:'VIDA9'},'scope-2');
       const jobs=await store.dirtyJobs.toArray();
-      expect(jobs).toHaveLength(12);
-      expect(new Set(jobs.map(row=>row.id)).size).toBe(12);
+      expect(jobs).toHaveLength(18);
+      expect(new Set(jobs.map(row=>row.id)).size).toBe(18);
     }finally{await store.delete();}
   });
 

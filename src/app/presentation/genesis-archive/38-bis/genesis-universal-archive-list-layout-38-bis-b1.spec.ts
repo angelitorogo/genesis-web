@@ -19,7 +19,7 @@ const keys=(category:UniversalArchiveIndexedCategory38Bis)=>
 describe('38.bis-b1 · listados compactos, campos científicos y navegación',()=>{
   it('preserva orden de los campos solicitado para sistemas, planetas y lunas',()=>{
     expect(keys('systems')).toEqual(['Galaxia','Estado','Tipo de sistema']);
-    expect(keys('planets')).toEqual(['Sistema','Galaxia','Estado','Tipo','Masa','Radio','Vida','Colonias']);
+    expect(keys('planets')).toEqual(['Sistema','Galaxia','Estado','Tipo','Masa','Radio','Vida','Colonias','Civilización']);
     expect(keys('moons')).toEqual(['Planeta','Sistema','Galaxia','Composición','Masa','Radio','Vida','Colonias']);
   });
   it('conserva todas las familias de objetos y exactamente las magnitudes solicitadas',()=>{
@@ -64,7 +64,7 @@ describe('38.bis-b1 · listados compactos, campos científicos y navegación',()
     expect(archivePageBiologyLocator38BisB1(row('moons',{},[
       action('Abrir ficha científica',['/system','99','10','5','planet','8','moon','0'])]))).toBeNull();
     expect(archiveCompactFields38BisB1(lunar,'Elixisis').find(f=>f.key==='life')?.value)
-      .toBe('No evaluable');
+      .toBe('Sin determinar');
     expect(archiveObservedLife38BisB1({nativeLifePresent:false,introducedLifePresent:false,
       colonialPopulationPresent:true} as Vida9BiologyRecord)).toBe('Sí');
     expect(archiveObservedLife38BisB1({nativeLifePresent:false,introducedLifePresent:false,

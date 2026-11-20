@@ -5,7 +5,7 @@ import {universalArchiveSearchKey38Bis,
   type UniversalArchiveIndexedCategory38Bis,
   type UniversalArchiveRow38Bis} from './genesis-universal-archive-38-bis.model';
 
-export type ArchiveSortKind38BisB3='number'|'text'|'tier';
+export type ArchiveSortKind38BisB3='number'|'text'|'tier'|'boolean';
 export interface ArchiveSortOption38BisB3 {
   readonly key:string;
   readonly label:string;
@@ -14,16 +14,19 @@ export interface ArchiveSortOption38BisB3 {
 const name={key:'name',label:'Nombre / designación',kind:'name'} as const;
 const text=(key:string,label:string):ArchiveSortOption38BisB3=>({key,label,kind:'text'});
 const number=(key:string,label:string):ArchiveSortOption38BisB3=>({key,label,kind:'number'});
+const boolean=(key:string,label:string):ArchiveSortOption38BisB3=>({key,label,kind:'boolean'});
 const tier={key:'tier',label:'Nivel tecnológico',kind:'tier'} as const;
 
 const OPTIONS:Readonly<Record<Exclude<UniversalArchiveIndexedCategory38Bis,'sectors'>,
   readonly ArchiveSortOption38BisB3[]>>={
   systems:[name,text('state','Estado'),text('multiplicity','Tipo de sistema')],
-  planets:[name,text('system','Sistema'),text('state','Estado'),text('type','Tipo planetario'),
+  planets:[name,text('galaxy','Galaxia'),boolean('life','Vida'),boolean('colonies','Colonias'),
+    boolean('civilization','Civilización'),text('system','Sistema'),text('state','Estado'),text('type','Tipo planetario'),
     number('mass','Masa (M⊕)'),number('radius','Radio'),number('orbit','Semieje mayor'),
     number('period','Período orbital'),number('water','Agua líquida superficial (%)'),
     number('temperature','Temperatura superficial (°C)')],
-  moons:[name,text('planet','Planeta anfitrión'),text('system','Sistema'),
+  moons:[name,text('galaxy','Galaxia'),boolean('life','Vida'),boolean('colonies','Colonias'),
+    text('planet','Planeta anfitrión'),text('system','Sistema'),
     text('composition','Composición'),number('mass','Masa (M⊕)'),number('radius','Radio'),
     number('period','Período orbital'),number('ice','Riqueza de hielo (%)'),
     number('surface-water','Agua superficial potencial (%)'),
@@ -82,6 +85,10 @@ export function archiveSortValue38BisB3(row:UniversalArchiveRow38Bis,
     const level=row.subtype==='PRIMITIVE'?0:row.subtype==='ADVANCED'?1:
       row.subtype==='VERY_ADVANCED'?2:null;
     return level;
+  }
+  if(option.kind==='boolean'){
+    const value=row.cells[option.key]?.trim();
+    return value==='Sí'?1:value==='No'?0:null;
   }
   if(option.kind==='number'){
     const raw=row.sortNumbers?.[option.key];

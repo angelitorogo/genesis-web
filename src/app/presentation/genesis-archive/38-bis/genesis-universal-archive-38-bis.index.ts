@@ -239,7 +239,7 @@ export class GenesisUniversalArchiveIndex38Bis {
           .catch(()=>false);
         systemStates.set(locator.systemStorageKey,allowed);
       }
-      let life='No evaluable',colonies='No evaluable';
+      let life='No evaluable',colonies='No evaluable',civilization='No evaluable';
       if(await allowed){
         try{
           const record=await repo.get(seed,version,locator.bodyStorageKey);
@@ -247,10 +247,15 @@ export class GenesisUniversalArchiveIndex38Bis {
           if(record && validColonies!==null){
             life=archiveObservedLife38BisB1(record);
             colonies=validColonies.length>0?'Sí':'No';
+            // Native civilization is separate from introduced colonies.
+            // An inconsistent VIDA.7 snapshot must remain undetermined.
+            const consistentNative=record.nativeCivilizationPresent===record.intelligence.civilizationPresent &&
+              record.nativeCivilizationPresent===(record.intelligence.civilization!=null);
+            if(consistentNative)civilization=record.nativeCivilizationPresent?'Sí':'No';
           }
         }catch{ /* Un digest erróneo no autoriza afirmar ausencia ni existencia. */ }
       }
-      return Object.freeze({...row,cells:Object.freeze({...row.cells,life,colonies})});
+      return Object.freeze({...row,cells:Object.freeze({...row.cells,life,colonies,civilization})});
     };
     // Máximo de 12 lecturas simultáneas: paginación rápida, sin grandes
     // transacciones ni reconstrucción de miles de registros al abrir el archivo.
@@ -259,6 +264,29 @@ export class GenesisUniversalArchiveIndex38Bis {
       result.push(...await Promise.all(rows.slice(offset,offset+12).map(project)));
     }
     return Object.freeze(result);
+  }
+
+  private readonly sorting38BisT3=new Map<string,Promise<void>>();
+
+  /** Builds a persisted sort from confirmed read-models, deduplicating a UI
+   * request racing against an always-on background refresh. */
+  ensureSort38BisT3(key:UniverseGenerationKey,galaxyIndex:string,
+    category:UniversalArchiveIndexedCategory38Bis,field:string,galaxyTitle:string):Promise<void> {
+    const scope=archive38BisScope(key);
+    const identity=JSON.stringify([scope,galaxyIndex,category,field]);
+    const pending=this.sorting38BisT3.get(identity);
+    if(pending)return pending;
+    const project=async(rows:readonly UniversalArchiveRow38Bis[]):Promise<readonly UniversalArchiveRow38Bis[]>=>{
+      if(field==='galaxy')return rows.map(row=>({...row,cells:{...row.cells,galaxy:galaxyTitle}}));
+      if(['life','colonies','civilization'].includes(field))
+        return this.enrichVisibleBiologyB1(key,rows);
+      return rows;
+    };
+    const task=this.store.ensureSortField(scope,category,galaxyIndex,field,project);
+    this.sorting38BisT3.set(identity,task);
+    void task.finally(()=>{if(this.sorting38BisT3.get(identity)===task)this.sorting38BisT3.delete(identity);})
+      .catch(()=>undefined);
+    return task;
   }
 
   ensure(key:UniverseGenerationKey,galaxyIndex:string,category:UniversalArchiveIndexedCategory38Bis,
@@ -287,8 +315,14 @@ export class GenesisUniversalArchiveIndex38Bis {
       ?await repository.getKnownDiscoveriesInGalaxy(key,galaxy)
       :(await repository.getKnownDiscoveries(key)).filter(d=>d.locator.galaxyIndex===galaxy);
     const originalRevision=galaxyKnowledgeRevision(galaxy,known);
-    const biological=category==='civilizations'||COLONY_CATEGORIES.has(category);
+    // T3 boolean sort keys depend on confirmed VIDA.9 knowledge too.
+    const biological=category==='planets'||category==='moons'||
+      category==='civilizations'||COLONY_CATEGORIES.has(category);
     let vida9Count=0;let vida9Revision='0';
+    // For planet/moon boolean sorts, an unconfirmed VIDA.9 body is not part
+    // of the observable scientific revision, even as metadata.
+    const publicBodyCategory=category==='planets'||category==='moons';
+    const confirmedBiologicalSystems=publicBodyCategory?confirmedSystems38Bis(known):null;
     if(biological && key.generatorVersionCode===3){
       await this.sourceDb.openDatabase();
       let hashA=2166136261,hashB=2246822519;
@@ -297,6 +331,7 @@ export class GenesisUniversalArchiveIndex38Bis {
         .between([key.universeSeed.serialize(),key.generatorVersionCode,galaxyIndex+':'],
           [key.universeSeed.serialize(),key.generatorVersionCode,galaxyIndex+':\uffff'])
         .each(row=>{
+          if(confirmedBiologicalSystems && !confirmedBiologicalSystems.has(row.systemStorageKey))return;
           vida9Count++;
           // IndexedDB iterates bodyStorageKey in stable ascending order. Fingerprint
           // persisted biological IDs, immutable digests and payload length, so an

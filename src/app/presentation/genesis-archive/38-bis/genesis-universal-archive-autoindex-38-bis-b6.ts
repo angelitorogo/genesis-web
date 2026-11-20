@@ -5,6 +5,7 @@ import {UniverseGenerationKey} from '../../../domain/generation/universe-generat
 import {GeneratorVersion} from '../../../domain/generation/generator-version';
 import {UniverseSeed} from '../../../domain/universe/universe-seed';
 import {GalaxyLocator} from '../../../domain/generation/procedural-locator';
+import {GalaxyGeneralProfileEngine} from '../../../simulation/exploration/galaxy-general-profile-engine';
 import {isConfirmedScientificGalaxy38BisB7} from '../../../domain/exploration/scientific-confirmation-38-bis-b7';
 import {GENESIS_LOCAL_REPOSITORIES} from '../../runtime/genesis-local-repositories';
 import {GenesisUniversalArchiveIndex38Bis,archive38BisScope} from './genesis-universal-archive-38-bis.index';
@@ -20,6 +21,7 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
   private active=false;
   private working=false;
   private timer:ReturnType<typeof setTimeout>|null=null;
+  private timerDueAt=0;
   private unsubscribe:(()=>void)|null=null;
 
   /** Called once at application bootstrap; registers before any user navigation. */
@@ -34,6 +36,7 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
     this.active=false;
     this.unsubscribe?.();this.unsubscribe=null;
     if(this.timer!==null){clearTimeout(this.timer);this.timer=null;}
+    this.timerDueAt=0;
   }
 
   private async record(event:GenesisKnowledgeCommit38BisB6):Promise<void>{
@@ -51,9 +54,14 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
   }
 
   private schedule(delay:number):void {
-    if(!this.active||this.timer!==null)return;
+    if(!this.active)return;
+    const due=Date.now()+delay;
+    // A new scientific confirmation must preempt the 30-second idle retry.
+    if(this.timer!==null && this.timerDueAt<=due)return;
+    if(this.timer!==null)clearTimeout(this.timer);
+    this.timerDueAt=due;
     this.timer=setTimeout(()=>{
-      this.timer=null;
+      this.timer=null;this.timerDueAt=0;
       void this.tick();
     },delay);
   }
@@ -105,6 +113,17 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
       // ensure() checks persisted galaxy discovery revision and VIDA.9 digest
       // fingerprint. It rebuilds only the affected galaxy/category, atomically.
       await this.index.ensure(key,job.galaxyIndex,job.category);
+      // Rebuild only fields the player has actually used for this category,
+      // including used fields in other galaxies (new galaxy enrollment).
+      const fields=await this.index.store.usedSortFields38BisT3(archive38BisScope(key),job.category);
+      if(fields.length){
+        const profile=GalaxyGeneralProfileEngine.build(key,BigInt(job.galaxyIndex),state);
+        const galaxyTitle=profile.knownName??profile.designationCode;
+        for(const field of fields){
+          await this.index.ensureSort38BisT3(key,job.galaxyIndex,job.category,field,galaxyTitle);
+          await new Promise<void>(resolve=>setTimeout(resolve,0));
+        }
+      }
       await this.index.store.finishKnowledgeChange38BisB6(job);
     }catch(error){
       await this.index.store.finishKnowledgeChange38BisB6(job,

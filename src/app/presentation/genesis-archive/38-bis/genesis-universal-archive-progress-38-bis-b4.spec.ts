@@ -85,7 +85,8 @@ describe('38.bis-b4 · checkpoints persistentes, no científicos',()=>{
     await db.publish(section('0','v2'),[row]);
     const details=archiveProgressDetails38BisB4(galaxies,'planets',await db.progressFor(scope),null);
     expect(details[0]?.base).toBe('STORED');
-    expect(details[0]?.scientificSorts.find(f=>f.key==='water')?.status).toBe('PENDING');
+    // T3 retains a durable usage-intent: it is OUTDATED, not never used.
+    expect(details[0]?.scientificSorts.find(f=>f.key==='water')?.status).toBe('OUTDATED');
   });
 
   it('un error de reindexación no equivale a una categoría sin datos',async()=>{

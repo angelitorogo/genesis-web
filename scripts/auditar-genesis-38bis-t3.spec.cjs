@@ -1,0 +1,36 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const facade=read('src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.facade.ts');
+const index=read('src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.index.ts');
+const store=read('src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-38-bis.store.ts');
+const sort=read('src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-sort-38-bis-b3.ts');
+const worker=read('src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-autoindex-38-bis-b6.ts');
+const dirty=read('src/app/presentation/genesis-archive/38-bis/genesis-universal-archive-dirty-38-bis-b6.ts');
+const html=read('src/app/presentation/genesis-archive/genesis-archive.html');
+// Invariants: no automatic universal scan on navigation, no source DB migration,
+// durable use-intents, queue first and no private biology in a sort row.
+const load=facade.split('  async load(')[1]?.split('  private selectUniverse(')[0];
+assert.ok(load,'T3 load');
+assert.doesNotMatch(load,/void this\.backgroundIndex\(/u);
+assert.doesNotMatch(load,/void this\.buildCategory\(/u);
+assert.doesNotMatch(load,/pruneUnknownGalaxies\(/u);
+assert.match(load,/knowledgeJobsFor38BisT3\(scope\)/u);
+assert.match(load,/sectionsFor\(scope\)/u);
+assert.match(store,/usedSortFields38BisT3\(/u);
+assert.match(store,/T3: retain revision headers/u);
+assert.match(worker,/ensureSort38BisT3\(/u);
+assert.match(worker,/finishKnowledgeChange38BisB6\(job\)/u);
+assert.match(index,/enrichVisibleBiologyB1\(key,rows\)/u);
+assert.match(index,/record\.nativeCivilizationPresent/u);
+assert.match(index,/getState\(key,new SystemLocator\(/u);
+assert.match(dirty,/VIDA9:\['planets','moons'/u);
+assert.match(sort,/boolean\('civilization','Civilización'\)/u);
+assert.match(sort,/moons:\[name,text\('galaxy','Galaxia'\)/u);
+assert.match(html,/Índices científicos|índices persistidos/u);
+assert.doesNotMatch(html,/revisadas en esta apertura/iu);
+assert.ok(!fs.existsSync(path.join(root,'src/app/presentation/genesis-archive/38-bis/private-biology-t3.ts')));
+console.log('GENESIS 38.bis-T3: auditoría de contratos OK (apertura, cola, 7 campos, privacidad, persistencia).');
