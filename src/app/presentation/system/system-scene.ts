@@ -199,6 +199,9 @@ import {
   createSystemSceneMoonRenderableV1,
   type SystemSceneMoonTextureResourceV1,
 } from './system-scene-moon-renderable';
+import { buildSystemSceneMoonTextureV1 } from './system-scene-moon-texture';
+import type { SystemSceneMoonPresentationV1 } from './system-scene-moon-presentation';
+import { shouldUseMoonDetailLUNSURF1 } from './system-scene-moon-surface-detail-lunsurf1';
 
 import {
   systemSceneMoonDisplaySpinRadiansV2,
@@ -2087,6 +2090,22 @@ class ThreeSystemSceneRuntime
   } | null = null;
 
 
+  /** LUNSURF.1 — one focused lunar atlas only, including irregular moons.
+   * The regular orbital scene keeps its established lightweight textures. */
+  private readonly lunarSurfaceFocusSourcesLUNSURF1 =
+    new Map<string, {mesh: THREE.Mesh; presentation: SystemSceneMoonPresentationV1}>();
+
+  private focusedLunarSurfaceLUNSURF1: {
+    id: string;
+    material: THREE.MeshPhysicalMaterial;
+    map: THREE.Texture | null;
+    normalMap: THREE.Texture | null;
+    roughnessMap: THREE.Texture | null;
+    roughness: number;
+    normalScale: THREE.Vector2;
+    textures: readonly THREE.DataTexture[];
+  } | null = null;
+
   /** Hidden moon layers defer 25.10 texture/material creation until first reveal. */
   private readonly pendingMoonVisuals =
     new Map<string, SystemScenePendingMoonVisualV1>();
@@ -3171,6 +3190,7 @@ class ThreeSystemSceneRuntime
     this.clearFrameObjects();
     this.cameraController.dispose();
     this.releaseDetailedPlanetTexture();
+    this.releaseFocusedLunarSurfaceLUNSURF1();
     this.planetTextureCache.dispose();
     this.moonTextureCache.dispose();
     this.sphereGeometryPool.dispose();
@@ -5298,6 +5318,10 @@ class ThreeSystemSceneRuntime
     spinPivot.add(
       renderable.root,
     );
+    this.lunarSurfaceFocusSourcesLUNSURF1.set(moon.id, {
+      mesh: renderable.surfaceMesh,
+      presentation: moon.visualPresentation,
+    });
     // 38.6c2: do not discard a verified colony because its destination moon
     // has irregular presentation geometry. Align to the real rendered mesh.
     const moonInfrastructure = vida38MoonVisibleInfrastructurePlans386c2(
@@ -6525,6 +6549,8 @@ class ThreeSystemSceneRuntime
     this.minorBodyOrbitLayerKeys.clear();
     this.bodySnapshotById.clear();
     this.releaseDetailedPlanetTexture();
+    this.releaseFocusedLunarSurfaceLUNSURF1();
+    this.lunarSurfaceFocusSourcesLUNSURF1.clear();
     this.bodyLodBindings.clear();
     this.infrastructureVisualBindings386.length = 0;
     this.pendingMoonVisuals.clear();
@@ -6770,7 +6796,7 @@ class ThreeSystemSceneRuntime
   private updateBodyLod(): void {
     if (
       this.bodyLodBindings.size ===
-        0
+        0 && this.lunarSurfaceFocusSourcesLUNSURF1.size === 0
     ) {
       return;
     }
@@ -6849,12 +6875,43 @@ class ThreeSystemSceneRuntime
         nextLevel;
     }
 
+    // LUNSURF.1: a single lunar focus uses the same near-camera policy as
+    // planets. Irregular moons participate without swapping their geometry.
+    let closestMoonLUNSURF1: {id:string; projectedDiameter:number;
+      mesh:THREE.Mesh; presentation:SystemSceneMoonPresentationV1} | null = null;
+    for (const [id, source] of this.lunarSurfaceFocusSourcesLUNSURF1) {
+      if (!objectHierarchyVisible(source.mesh)) continue;
+      source.mesh.getWorldPosition(this.lodWorldPosition);
+      const distance = Math.max(source.presentation.presentationRadiusScene * 1.05,
+        this.lodWorldPosition.distanceTo(this.cameraWorldPosition));
+      const projectedDiameter = systemSceneProjectedDiameterPixelsV1(
+        source.presentation.presentationRadiusScene, distance,
+        this.camera.fov, this.viewportHeightPixels);
+      if (projectedDiameter < 210 ||
+          (closestMoonLUNSURF1 !== null &&
+            closestMoonLUNSURF1.projectedDiameter >= projectedDiameter)) continue;
+      const center = this.lodWorldPosition.project(this.camera);
+      if (center.z < -1 || center.z > 1 || Math.abs(center.x) > 1.3 ||
+          Math.abs(center.y) > 1.3) continue;
+      closestMoonLUNSURF1 = {id, projectedDiameter, ...source};
+    }
+    const moonPrevious = this.focusedLunarSurfaceLUNSURF1;
+    const moonFocus = closestMoonLUNSURF1 !== null &&
+      shouldUseMoonDetailLUNSURF1(closestMoonLUNSURF1.projectedDiameter,
+        closestMoonLUNSURF1.id,moonPrevious?.id ?? null,
+        closestPlanet?.projectedDiameter ?? null)
+      ? closestMoonLUNSURF1 : null;
+    if (moonFocus?.id !== moonPrevious?.id) {
+      this.releaseFocusedLunarSurfaceLUNSURF1();
+      if (moonFocus !== null) this.installFocusedLunarSurfaceLUNSURF1(moonFocus);
+    }
+
     // Avoid generating high definition for distant planets or every body of
     // a dense system. Hysteresis prevents changes at the zoom boundary.
     const previous = this.detailedPlanetTexture;
     const candidate = closestPlanet?.projectedDiameter !== undefined &&
       closestPlanet.projectedDiameter >= (previous?.id === closestPlanet.id ? 210 : 300)
-      ? closestPlanet : null;
+      ? (moonFocus === null ? closestPlanet : null) : null;
     if (candidate?.id !== previous?.id) {
       this.releaseDetailedPlanetTexture();
       if (candidate !== null) this.installDetailedPlanetTexture(candidate.id, candidate.binding);
@@ -6904,6 +6961,53 @@ class ThreeSystemSceneRuntime
       visual.updateProjectedDiameterPixels(systemSceneProjectedDiameterPixelsV1(
         radius,distance,this.camera.fov,this.viewportHeightPixels));
     }
+  }
+
+  private releaseFocusedLunarSurfaceLUNSURF1(): void {
+    const current = this.focusedLunarSurfaceLUNSURF1;
+    if (current === null) return;
+    current.material.map = current.map;
+    current.material.normalMap = current.normalMap;
+    current.material.roughnessMap = current.roughnessMap;
+    current.material.roughness = current.roughness;
+    current.material.normalScale.copy(current.normalScale);
+    current.material.needsUpdate = true;
+    for (const texture of current.textures) texture.dispose();
+    this.focusedLunarSurfaceLUNSURF1 = null;
+  }
+
+  private installFocusedLunarSurfaceLUNSURF1(source: {
+    id: string;
+    mesh: THREE.Mesh;
+    presentation: SystemSceneMoonPresentationV1;
+  }): void {
+    if (!(source.mesh.material instanceof THREE.MeshPhysicalMaterial)) return;
+    const material = source.mesh.material;
+    // Only the visual D.3 projection is sampled at HD. No science or new
+    // crater positions are generated: the original seed and body persist.
+    const data = buildSystemSceneMoonTextureV1(source.presentation,
+      {width:1024, height:512});
+    if (data.normalRgba === null || data.roughnessRgba === null) return;
+    const mk = (rgba:Uint8Array, name:string, color:boolean) => {
+      const texture = createRgbaDataTexture(data.width,data.height,rgba,name);
+      texture.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      texture.anisotropy = 4;
+      return texture;
+    };
+    const albedo = mk(data.albedoRgba,'GENESIS LUNSURF.1 focus albedo',true);
+    const normal = mk(data.normalRgba,'GENESIS LUNSURF.1 focus normal',false);
+    const roughness = mk(data.roughnessRgba,'GENESIS LUNSURF.1 focus roughness',false);
+    this.focusedLunarSurfaceLUNSURF1 = {
+      id:source.id,material,map:material.map,normalMap:material.normalMap,
+      roughnessMap:material.roughnessMap,roughness:material.roughness,
+      normalScale:material.normalScale.clone(),textures:[albedo,normal,roughness],
+    };
+    material.map = albedo;
+    material.normalMap = normal;
+    material.normalScale.set(0.9,0.9);
+    material.roughnessMap = roughness;
+    material.roughness = 1;
+    material.needsUpdate = true;
   }
 
   private releaseDetailedPlanetTexture(): void {

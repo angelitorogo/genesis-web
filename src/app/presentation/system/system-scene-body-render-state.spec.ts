@@ -163,7 +163,7 @@ describe(
 
 
     it(
-      'should compress accelerated unsynchronized planet spin for texture readability without altering synchronized bodies',
+      'should bound accelerated free and synchronized planet spins independently without mutating domain state',
       () => {
 
         const planetSpin =
@@ -230,19 +230,23 @@ describe(
           1e-12,
         );
 
-        expect(
-          systemSceneBodyDisplaySpinRadians(
-            synchronizedSpin,
-            10.025,
-            timing,
-          ),
-        ).toBeCloseTo(
-          systemSceneBodySpinRadians(
-            synchronizedSpin,
-            10.025,
-          ),
-          12,
+        const synchronizedEpoch = systemSceneBodyDisplaySpinRadians(
+          synchronizedSpin, 0, timing,
         );
+        const synchronizedAfter = systemSceneBodyDisplaySpinRadians(
+          synchronizedSpin, 10.025, timing,
+        );
+        const synchronizedAdvance =
+          (synchronizedAfter - synchronizedEpoch + Math.PI * 2) % (Math.PI * 2);
+        expect(synchronizedAdvance).toBeCloseTo(
+          (10.025 / timing.playbackDaysPerRealSecond) * Math.PI * 2 / 240,
+          10,
+        );
+        expect(synchronizedAfter).not.toBeCloseTo(
+          systemSceneBodySpinRadians(synchronizedSpin, 10.025), 3,
+        );
+        expect(synchronizedSpin.isSynchronized).toBe(true);
+        expect(synchronizedSpin.rotationPeriodHours).toBe(24);
       },
     );
 

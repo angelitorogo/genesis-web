@@ -13,6 +13,7 @@ import {archiveProgressOverview38BisB4,archiveProgressDetails38BisB4,
   from './genesis-universal-archive-progress-38-bis-b4';
 import {combineArchiveColonies38Bis,diagnoseArchiveCivilizationCoverage38Bis} from './genesis-universal-archive-38-bis-colonization-stats';
 import {archiveIndexPlan38BisT2,archiveIndexTaskKey38BisT2} from './genesis-universal-archive-index-plan-38bis-t2';
+import {archiveVisibleFragmentChanged38BisT3b} from './genesis-universal-archive-t3b-update-policy';
 import {type UniversalArchivePage38Bis,type UniversalArchiveCategory38Bis,
   type UniversalArchiveIndexedCategory38Bis,type UniversalArchiveSection38Bis,
   type UniversalArchivePageSize38Bis,universalArchiveCategory38Bis,
@@ -116,20 +117,23 @@ export class GenesisUniversalArchiveFacade38Bis {
       !(s.category===section.category&&s.galaxyIndex===section.galaxyIndex)),section]);
     await this.reloadIndexProgress(scope);
   }
+  /** Metadata-only filtering: never inspect scientific discovery rows to
+   * decide whether cached sections may be displayed on an ordinary opening. */
+  private adoptProgressSnapshot38BisT3b(scope:string,snapshot:ArchiveProgressSnapshot38BisB4):void{
+    if(scope!==this.scopeSignal())return;
+    const allowed=new Set(this.galaxies().map(g=>g.index));
+    this.progressSnapshotSignal.set({
+      sections:snapshot.sections.filter(s=>allowed.has(s.galaxyIndex)),
+      sortRevisions:snapshot.sortRevisions.filter(s=>allowed.has(s.galaxyIndex)),
+      checkpoints:snapshot.checkpoints.filter(s=>allowed.has(s.galaxyIndex)),
+    });
+  }
   private async reloadIndexProgress(scope=this.scopeSignal()):Promise<void>{
     if(!scope)return;
     const request=++this.progressRefreshSequence;
     const snapshot=await this.index.store.progressFor(scope);
-    if(request===this.progressRefreshSequence&&scope===this.scopeSignal()){
-      // Archive metadata must not reveal previously confirmed galaxies that
-      // vanished after restore. Filter without any source-science traversal.
-      const allowed=new Set(this.galaxies().map(g=>g.index));
-      this.progressSnapshotSignal.set({
-        sections:snapshot.sections.filter(s=>allowed.has(s.galaxyIndex)),
-        sortRevisions:snapshot.sortRevisions.filter(s=>allowed.has(s.galaxyIndex)),
-        checkpoints:snapshot.checkpoints.filter(s=>allowed.has(s.galaxyIndex)),
-      });
-    }
+    if(request===this.progressRefreshSequence)
+      this.adoptProgressSnapshot38BisT3b(scope,snapshot);
   }
   readonly selectedGalaxy=this.selectedGalaxySignal.asReadonly();
   readonly selectedSubtype=this.selectedSubtypeSignal.asReadonly();
@@ -189,6 +193,7 @@ export class GenesisUniversalArchiveFacade38Bis {
 
   async load(raw:UniversalArchiveParameters38Bis):Promise<void> {
     const call=++this.loadSequence;
+    ++this.progressRefreshSequence; // Invalidate a snapshot from an older Archive route.
     ++this.jobSequence; // Cancel any in-progress work for an older route.
     this.busySignal.set(false);
     if(this.pendingRefreshTimer38BisT3!==null){clearTimeout(this.pendingRefreshTimer38BisT3);this.pendingRefreshTimer38BisT3=null;}
@@ -248,9 +253,12 @@ export class GenesisUniversalArchiveFacade38Bis {
       // T3: no general revision scan, no full cleanup, no forced indexing on entry.
       // Confirmed galaxies are already an authoritative knowledge gate.
       const allowedGalaxies=new Set(galaxies.map(g=>g.index));
-      const sections=(await this.index.store.sectionsFor(scope))
-        .filter(s=>allowedGalaxies.has(s.galaxyIndex));
-      const dirty=await this.index.store.knowledgeJobsFor38BisT3(scope);
+      // One read-only transaction for fragment headers AND pending jobs.
+      // A background commit cannot interleave to give us stale sections with
+      // an already-cleared job queue. No source-science traversal occurs.
+      const {progress:snapshot,jobs:dirty}=await this.index.store.openingSnapshot38BisT3b(scope);
+      if(call!==this.loadSequence)return;
+      const sections=snapshot.sections.filter(s=>allowedGalaxies.has(s.galaxyIndex));
       const pendingKeys=new Set(dirty.map(j=>j.category+'|'+j.galaxyIndex));
       this.dirtyJobCountSignal38BisT3.set(dirty.length);
       this.sectionsSignal.set(sections);
@@ -259,7 +267,7 @@ export class GenesisUniversalArchiveFacade38Bis {
       this.verifiedStatisticsSignal.set(new Set(sections.filter(s=>
         (s.category==='civilizations'||s.category==='colonies')&&
         !pendingKeys.has(s.category+'|'+s.galaxyIndex)).map(s=>s.category+'|'+s.galaxyIndex)));
-      await this.reloadIndexProgress(scope);
+      this.adoptProgressSnapshot38BisT3b(scope,snapshot);
       if(call!==this.loadSequence)return;
       if(galaxyIndex!==null&&!galaxies.some(g=>g.index===galaxyIndex))throw new Error('La galaxia no pertenece al conocimiento persistido');
       this.stateSignal.set('ready');
@@ -290,24 +298,30 @@ export class GenesisUniversalArchiveFacade38Bis {
       this.pendingRefreshTimer38BisT3=null;
       void (async()=>{
         if(call!==this.loadSequence||scope!==this.scopeSignal())return;
-        const jobs=await this.index.store.knowledgeJobsFor38BisT3(scope);
+        const {progress:snapshot,jobs}=await this.index.store.openingSnapshot38BisT3b(scope);
+        if(call!==this.loadSequence||scope!==this.scopeSignal())return;
         const pending=new Set(jobs.map(j=>j.category+'|'+j.galaxyIndex));
         this.dirtyJobCountSignal38BisT3.set(jobs.length);
         const selected=this.category();
-        const all=this.galaxies();
-        const allowed=new Set(all.map(g=>g.index));
-        const sections=(await this.index.store.sectionsFor(scope)).filter(s=>allowed.has(s.galaxyIndex));
-        if(call!==this.loadSequence||scope!==this.scopeSignal())return;
+        const selectedGalaxy=this.selectedGalaxy();
+        const allowed=new Set(this.galaxies().map(g=>g.index));
+        const sections=snapshot.sections.filter(s=>allowed.has(s.galaxyIndex));
+        const visibleFragmentChanged=archiveVisibleFragmentChanged38BisT3b(
+          this.sectionsSignal(),sections,selected,selectedGalaxy);
         this.sectionsSignal.set(sections);
         this.verifiedSectionsSignal.set(new Set(sections.filter(s=>s.category===selected&&
           !pending.has(s.category+'|'+s.galaxyIndex)).map(s=>s.galaxyIndex)));
         this.verifiedStatisticsSignal.set(new Set(sections.filter(s=>
           (s.category==='civilizations'||s.category==='colonies')&&
           !pending.has(s.category+'|'+s.galaxyIndex)).map(s=>s.category+'|'+s.galaxyIndex)));
-        await this.reloadIndexProgress(scope);
+        this.adoptProgressSnapshot38BisT3b(scope,snapshot);
         if(call!==this.loadSequence||scope!==this.scopeSignal())return;
         this.progressSignal.set(jobs.length>0?`Actualizaciones en segundo plano: ${jobs.length} pendiente(s).`:'Índices científicos y ordenaciones actualizados.');
-        await this.refreshPage();
+        // A background job in another galaxy/category must NOT reload the
+        // visible page and trigger its (potentially expensive) sort pipeline.
+        if(selected!==null&&selected!=='galaxies' &&
+            (visibleFragmentChanged||this.pageSignal()===null))
+          await this.refreshPage();
         if(jobs.some(j=>j.status!=='ERROR'))this.schedulePendingRefresh38BisT3(key,scope,call);
       })().catch(error=>this.errorSignal.set(error instanceof Error?error.message:String(error)));
     },2200);

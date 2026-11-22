@@ -1,5 +1,14 @@
 import type { SystemSceneMoonPresentationV1 } from './system-scene-moon-presentation';
 import {
+  interpretMoonHydricVisualLUNSURF2,
+  sampleMoonHydricFaciesLUNSURF2,
+} from './system-scene-moon-hydric-facies-lunsurf2';
+import {
+  buildMoonTangentNormalMapLUNSURF1,
+  moonMaterialRoughnessLUNSURF1,
+  sampleMoonFineSurfaceLUNSURF1,
+} from './system-scene-moon-surface-detail-lunsurf1';
+import {
   buildMoonSurfaceMorphologyD,
   moonTextureDirectionD,
   sampleMoonTerrainD,
@@ -17,6 +26,9 @@ export interface SystemSceneMoonTextureDataV1 {
   readonly height: number;
   readonly albedoRgba: Uint8Array;
   readonly reliefRgba: Uint8Array;
+  /** HD-only tangent normals; distant moons retain their established LOD. */
+  readonly normalRgba: Uint8Array | null;
+  readonly roughnessRgba: Uint8Array | null;
   readonly emissiveRgba: Uint8Array | null;
   readonly cloudRgba: Uint8Array | null;
 }
@@ -40,8 +52,13 @@ export function buildSystemSceneMoonTextureV1(
   const base = parseHex(moon.presentationBaseColorHex);
   const accent = parseHex(moon.presentationAccentColorHex);
   const geometry = buildMoonSurfaceMorphologyD(moon);
+  const hydricInterpretation = interpretMoonHydricVisualLUNSURF2(moon);
   const albedo = new Uint8Array(width * height * 4);
   const relief = new Uint8Array(width * height * 4);
+  // High detail belongs to focused scientific fiches, never the distant moon
+  // budget. Avoid extra CPU/GPU allocations for ordinary SystemScene moons.
+  const highDetail = width >= 512 && height >= 256;
+  const roughnessMap = highDetail ? new Uint8Array(width * height * 4) : null;
   const moltenSurface = moon.surfaceStyle === 'VOLCANIC' && geometry.silicateActivity01 > 0.55 &&
     moon.sourceGeologyRegime === 'EXTREME';
   const emissive = moltenSurface ? new Uint8Array(width * height * 4) : null;
@@ -165,19 +182,15 @@ export function buildSystemSceneMoonTextureV1(
         }
       }
 
-      // D.3f — high *potential* with unresolved surface pressure can expose
-      // topographic lowlands and pale mineral/volatile deposits, NOT deep-blue
-      // permanent seas. Calos-like moons remain geologically interesting while
-      // their visually rendered water remains conditional on a B gas column.
-      if (moon.presentationLiquidCoverage01 === 0 &&
-          moon.sourceSurfaceLiquidWaterPotentialIndex01 >= 0.72 &&
-          moon.sourceWaterInventoryIndex01 >= 0.42 &&
-          moon.sourceEstimatedSurfaceTemperatureKelvin >= 273.15 &&
-          moon.sourceEstimatedSurfaceTemperatureKelvin <= 325) {
-        const exposedBasin = smoothstep(0.40, 0.83, t.liquidMask01) *
-          (0.40 + 0.60 * (1 - t.terrain01));
-        color = mixRgb(color, { r: 143, g: 134, b: 119 }, exposedBasin * 0.42);
-        brightness -= 0.055 * exposedBasin;
+      // LUNSURF.2 — candidate hydric mineral facies. D.3f previously gated
+      // this branch through t.liquidMask01, which is exactly zero whenever
+      // pressure is unresolved. A hypothetical basin thus never appeared.
+      // Independent mineral materials, no false ocean or glacier geometry.
+      const hydric = sampleMoonHydricFaciesLUNSURF2(
+        direction, moon, t, hydricInterpretation);
+      if (hydric !== null) {
+        color = mixRgb(color, hydric.pigment, hydric.blend01);
+        brightness += hydric.brightnessDelta;
       }
 
       if (moon.surfaceStyle !== 'VOLCANIC') {
@@ -186,11 +199,27 @@ export function buildSystemSceneMoonTextureV1(
         color = mixRgb(color, { r: 78, g: 89, b: 104 }, fractureShadow);
         brightness += ridges * (geometry.iceTectonics01 > 0.35 ? 0.082 : -0.020) + transitionBelt * 0.030;
       }
-      writeRgba(albedo, index, scaleRgb(color, clamp(brightness, 0.39, 1.26)), 255);
+      // LUNSURF.1: keep the established D.3 macrogeology, crater placement,
+      // water/ice gates and pigment identity; add deterministic, spatially
+      // correlated sub-regional mineral detail only when the fiche requests HD.
+      const fine = highDetail ? sampleMoonFineSurfaceLUNSURF1(direction, moon) : null;
+      if (fine !== null) {
+        const contrast = moon.surfaceStyle === 'ICY' ? 1.10 : 1.16;
+        brightness = 0.94 + (brightness - 0.94) * contrast +
+          fine.pigment * (moon.surfaceStyle === 'ICY' ? 0.35 : 0.48);
+      }
+      writeRgba(albedo, index, scaleRgb(color, clamp(brightness, 0.36, 1.30)), 255);
 
       const relief01 = clamp01(t.relief01 - 0.14 * craterBowl + 0.15 * craterRim -
-        0.04 * t.liquidMask01 * clamp01(moon.presentationLiquidCoverage01 * 2));
+        0.04 * t.liquidMask01 * clamp01(moon.presentationLiquidCoverage01 * 2) +
+        (fine === null ? 0 : fine.displacement *
+          (1 - 0.82 * t.liquidMask01 * moon.presentationLiquidCoverage01)));
       writeRgba(relief, index, { r: 255 * relief01, g: 255 * relief01, b: 255 * relief01 }, 255);
+      if (roughnessMap !== null && fine !== null) {
+        const r = 255 * clamp01(moonMaterialRoughnessLUNSURF1(moon, t, fine.grain) +
+          (hydric?.roughnessDelta ?? 0));
+        writeRgba(roughnessMap, index, {r, g:r, b:r}, 255);
+      }
 
       if (emissive !== null) {
         const glow = clamp01(t.molten01 * moon.presentationVolcanicCoverage01 * 1.8);
@@ -211,7 +240,10 @@ export function buildSystemSceneMoonTextureV1(
   }
 
   return Object.freeze({ version: 1 as const, width, height, albedoRgba: albedo,
-    reliefRgba: relief, emissiveRgba: emissive, cloudRgba: clouds });
+    reliefRgba: relief,
+    normalRgba: highDetail ? buildMoonTangentNormalMapLUNSURF1(relief, width, height) : null,
+    roughnessRgba: roughnessMap,
+    emissiveRgba: emissive, cloudRgba: clouds });
 }
 
 interface Rgb { readonly r: number; readonly g: number; readonly b: number }

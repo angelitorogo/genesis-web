@@ -26,6 +26,8 @@ export interface SystemSceneMoonTextureResourceV1 {
   readonly textureData: ReturnType<typeof buildSystemSceneMoonTextureV1>;
   readonly albedo: THREE.DataTexture;
   readonly relief: THREE.DataTexture;
+  readonly normal: THREE.DataTexture | null;
+  readonly roughness: THREE.DataTexture | null;
   readonly emissive: THREE.DataTexture | null;
   readonly clouds: THREE.DataTexture | null;
   dispose(): void;
@@ -69,7 +71,11 @@ export function createSystemSceneMoonRenderableV1(
     color: 0xffffff,
     map: albedo,
     bumpMap: textureResource.relief,
-    roughnessMap: textureResource.relief,
+    // At fiche-HD, a dedicated roughness atlas decouples material reflectance
+    // from terrain height; normal detail no longer relies on bump alone.
+    roughnessMap: textureResource.roughness ?? textureResource.relief,
+    normalMap: textureResource.normal,
+    normalScale: new THREE.Vector2(0.9, 0.9),
     bumpScale: moon.presentationRadiusScene * (
       moon.shapeClass === 'MINOR_IRREGULAR'
         ? 0.056
@@ -79,7 +85,7 @@ export function createSystemSceneMoonRenderableV1(
             ? 0.038
             : 0.033
     ),
-    roughness: bareSurface ? 0.94 : moon.surfaceStyle === 'OCEANIC'
+    roughness: textureResource.roughness !== null ? 1 : bareSurface ? 0.94 : moon.surfaceStyle === 'OCEANIC'
       ? 0.28
       : moon.surfaceStyle === 'ICY'
         ? 0.64
@@ -254,7 +260,7 @@ function moonTextureLease(
   cache: SystemSceneBoundedResourceCacheV1<SystemSceneMoonTextureResourceV1> | null,
   dimensions: SystemSceneMoonTextureDimensionsV1 | null,
 ): SystemSceneResourceLeaseV1<SystemSceneMoonTextureResourceV1> {
-  const key = [moon.sourceMoonIdentity, moon.presentationSeedUint32, 'D3f',
+  const key = [moon.sourceMoonIdentity, moon.presentationSeedUint32, 'D3f-LUNSURF1',
     dimensions === null ? 'SYSTEM_SCENE' : `${dimensions.width}x${dimensions.height}`, 
     moon.shapeClass, moon.surfaceStyle, moon.presentationBaseColorHex, moon.presentationAccentColorHex,
     moon.presentationIceCoverage01, moon.presentationLiquidCoverage01,
@@ -305,6 +311,20 @@ function createMoonTextureResource(
     'GENESIS cached moon relief D',
     false,
   );
+  const normal = textureData.normalRgba === null ? null : dataTexture(
+    textureData.width,
+    textureData.height,
+    textureData.normalRgba,
+    'GENESIS HD moon normal map LUNSURF.1',
+    false,
+  );
+  const roughness = textureData.roughnessRgba === null ? null : dataTexture(
+    textureData.width,
+    textureData.height,
+    textureData.roughnessRgba,
+    'GENESIS HD moon material roughness LUNSURF.1',
+    false,
+  );
   const emissive = textureData.emissiveRgba === null
     ? null
     : dataTexture(
@@ -322,11 +342,21 @@ function createMoonTextureResource(
         'GENESIS cached moon clouds 25.11',
       );
 
+  if (normal !== null) {
+    // Only focused HD maps receive anisotropic filtering; clouds keep their
+    // approved sampling and all ordinary SystemScene moons stay lightweight.
+    for (const map of [albedo, relief, normal, roughness]) {
+      if (map !== null) map.anisotropy = 4;
+    }
+  }
+
   let disposed = false;
   return Object.freeze({
     textureData,
     albedo,
     relief,
+    normal,
+    roughness,
     emissive,
     clouds,
     dispose: () => {
@@ -336,6 +366,8 @@ function createMoonTextureResource(
       disposed = true;
       albedo.dispose();
       relief.dispose();
+      normal?.dispose();
+      roughness?.dispose();
       emissive?.dispose();
       clouds?.dispose();
     },

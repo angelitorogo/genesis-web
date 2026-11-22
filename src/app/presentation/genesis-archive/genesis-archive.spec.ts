@@ -42,6 +42,20 @@ describe('38.bis — Archivo GENESIS universal',()=>{
     TestBed.configureTestingModule({imports:[GenesisArchive],providers:[provideRouter([]),
       {provide:GenesisUniversalArchiveFacade38Bis,useValue:stub}]});
   });
+  it('ofrece regresar a Home incluso con Archivo vacío y conserva la navegación al cargar datos',()=>{
+    const fixture=TestBed.createComponent(GenesisArchive);
+    fixture.detectChanges();
+    const page=fixture.nativeElement as HTMLElement;
+    const link=page.querySelector('[data-testid="archive-home-link"]') as HTMLAnchorElement|null;
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute('href')).toBe('/');
+    expect(link?.textContent).toContain('Volver a Home');
+    expect(page.querySelector('[data-testid="genesis-archive-page"]')?.contains(link!)).toBe(true);
+
+    state.set('ready');fixture.detectChanges();
+    expect(page.querySelectorAll('[data-testid="archive-home-link"]')).toHaveLength(1);
+    expect(page.querySelector('[data-testid="archive-home-link"]')?.getAttribute('href')).toBe('/');
+  });
   it('mantiene el estado vacío mientras no exista ningún universo persistido',()=>{
     const fixture=TestBed.createComponent(GenesisArchive);fixture.detectChanges();
     const element=fixture.nativeElement as HTMLElement;

@@ -175,7 +175,9 @@ export interface ScientificPlanetPreviewVisual {
   /** VISCIV.1: present only when native civilization is revealed by confirmed system. */
   readonly nightCivilizationTier?: 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null;
   readonly infrastructurePlans?: readonly Vida38InfrastructurePlan386[];
-  /** Stellar vectors at snapshot epoch; visual-only, allows single/binary/triple night mask. */
+  /** VISSURF.6: stellar directions of the confirmed physical system, independent of VIDA. */
+  readonly stellarLightSources?: readonly ScientificPlanetStarLightSourceV1[];
+  /** @deprecated Historical preview fixtures; use stellarLightSources. */
   readonly civilizationStarSources?: readonly ScientificPlanetStarLightSourceV1[];
 }
 
@@ -1106,37 +1108,65 @@ function planetVisual(
           ),
     vegetationProfile,
     nightCivilizationTier,
-    civilizationStarSources: nightCivilizationTier === null
-      ? undefined
-      : resolvePreviewCivilizationStarSourcesV1(scene, source),
+    // Every planet needs its real stellar illumination, regardless of VIDA.
+    stellarLightSources: resolvePreviewStellarLightSourcesVISSURF6(scene, source),
   });
 }
 
-/** Directions from the inspected planet to each luminous star at the snapshot epoch. */
-function resolvePreviewCivilizationStarSourcesV1(
+/** Directions from the inspected planet to each luminous star at snapshot epoch. */
+function resolvePreviewStellarLightSourcesVISSURF6(
   scene: SystemSceneSnapshot,
   planet: SystemSceneBodySnapshot,
 ): readonly ScientificPlanetStarLightSourceV1[] {
-  const homeStarIds = new Set(resolveOrbitalHomeStarIdsVISCIV6d(planet, scene.stars));
-  const entries = scene.stars
+  const orbitalHomeStarIds = new Set(
+    resolveOrbitalHomeStarIdsVISCIV6d(planet, scene.stars),
+  );
+  return buildPreviewStellarLightSourcesVISSURF6(
+    scene.stars,
+    planet.position,
+    orbitalHomeStarIds,
+  );
+}
+
+/**
+ * Visual weights follow the sqrt(flux) compression used by SystemScene.
+ * This function does not read biology, colonies or civilization tiers.
+ */
+export function buildPreviewStellarLightSourcesVISSURF6(
+  stars: readonly {
+    readonly id: string;
+    readonly position: { readonly x: number; readonly y: number; readonly z: number };
+    readonly sourceLuminositySolar?: number | null;
+  }[],
+  planetPosition: { readonly x: number; readonly y: number; readonly z: number },
+  orbitalHomeStarIds: ReadonlySet<string>,
+): readonly ScientificPlanetStarLightSourceV1[] {
+  const entries = stars
     .filter(star => (star.sourceLuminositySolar ?? 0) > 0)
     .map(star => {
-      const dx = star.position.x - planet.position.x;
-      const dy = star.position.y - planet.position.y;
-      const dz = star.position.z - planet.position.z;
+      const dx = star.position.x - planetPosition.x;
+      const dy = star.position.y - planetPosition.y;
+      const dz = star.position.z - planetPosition.z;
       const length = Math.max(0.0001, Math.hypot(dx, dy, dz));
       const flux = Math.max(0, star.sourceLuminositySolar ?? 0) /
         Math.max(0.05, length * length);
-      return { x: dx / length, y: dy / length, z: dz / length, flux,
-        isOrbitalHost: homeStarIds.has(star.id) };
+      return {
+        x: dx / length, y: dy / length, z: dz / length,
+        flux, isOrbitalHost: orbitalHomeStarIds.has(star.id),
+      };
     })
     .sort((a, b) => b.flux - a.flux)
     .slice(0, 3);
-  const total = entries.reduce((sum, entry) => sum + entry.flux, 0);
-  if (total <= 0) return Object.freeze([{ x: 0.53, y: 0.35, z: 0.77, weight01: 1, isOrbitalHost: true }]);
+  const total = entries.reduce((sum, entry) => sum + Math.sqrt(entry.flux), 0);
+  // Legacy starless preview fixtures retain a stable inspection light.
+  if (total <= 0) {
+    return Object.freeze([Object.freeze({
+      x: 0.53, y: 0.35, z: 0.77, weight01: 1, isOrbitalHost: true,
+    })]);
+  }
   return Object.freeze(entries.map(entry => Object.freeze({
     x: entry.x, y: entry.y, z: entry.z,
-    weight01: entry.flux / total,
+    weight01: Math.sqrt(entry.flux) / total,
     isOrbitalHost: entry.isOrbitalHost,
   })));
 }

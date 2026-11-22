@@ -57,13 +57,15 @@ const TWO_PI =
   Math.PI * 2;
 
 /**
- * Readability ceiling for accelerated system playback. The authoritative
- * rotation period remains untouched in the snapshot; only the non-synchronized
- * planet mesh is visually time-compressed so procedural texture detail remains
- * inspectable while orbital motion is accelerated by point 24.3.
+ * Point-25.1: meshes are an inspection representation, not the domain clock.
+ * Free planets retain the approved 30 s minimum visual cycle; tidally locked
+ * planets now share the slow 240 s inspection ceiling of 38.bis-T5 fiches.
+ * Never change frozen physical spin, orbit, epoch or synchronization flags.
  */
 const MAX_UNSYNCHRONIZED_PLANET_DISPLAY_CYCLES_PER_REAL_SECOND =
   1 / 30;
+
+export const SYSTEM_SCENE_SYNCHRONIZED_PLANET_DISPLAY_CYCLE_SECONDS_38BIS_T6 = 240;
 
 /**
  * Point-25.1 fixed sphere tessellation baseline.
@@ -166,14 +168,16 @@ export function systemSceneBodySpinRadians(
  *
  * Point 24.3 intentionally accelerates orbital simulation so a system can be
  * inspected in seconds rather than years. Feeding that accelerated
- * simulationDay directly into a 10-30 h planetary spin can make textures blur
- * through several turns per real second. For non-synchronized planets only,
- * compress that visual cadence monotonically and asymptotically cap it at one
- * turn per 30 real seconds.
+ * simulationDay directly into a planet's rotation produces visual blur. The
+ * presentation cadence is monotonically compressed: free planets are capped
+ * at 30 s per visible revolution, tidally synchronized planets at 240 s (the
+ * same slow inspection ceiling used in the scientific fiche). All moons keep
+ * their separate point-25.11 visual presenter.
  *
- * Synchronized planets and all moons keep the authoritative simulation-time
- * projection so tidal locking is never broken visually. No domain period is
- * mutated or written back.
+ * Orbital motion is NOT slowed here. Thus the accelerated animation of a
+ * tidally locked world is deliberately not a literal face-to-star projection;
+ * physical rotation and tidal locking still live unchanged in the snapshot.
+ * Both the SystemScene pivot and its attached clouds/colonies share this phase.
  */
 export function systemSceneBodyDisplaySpinRadians(
   spin:
@@ -195,7 +199,6 @@ export function systemSceneBodyDisplaySpinRadians(
 
   if (
     (spin.source !== 'PLANET_19_3' && spin.source !== 'COMPACT_31_4F') ||
-    spin.isSynchronized ||
     spin.rotationPeriodHours ===
       null
   ) {
@@ -233,12 +236,15 @@ export function systemSceneBodyDisplaySpinRadians(
     24 /
     spin.rotationPeriodHours;
 
+  const maxDisplayCyclesPerRealSecond = spin.isSynchronized
+    ? 1 / SYSTEM_SCENE_SYNCHRONIZED_PLANET_DISPLAY_CYCLE_SECONDS_38BIS_T6
+    : MAX_UNSYNCHRONIZED_PLANET_DISPLAY_CYCLES_PER_REAL_SECOND;
+
+  // tanh(rate / ceiling) preserves genuinely slow physical spin without
+  // speeding it up, and asymptotically bounds highly accelerated playback.
   const displayCyclesPerRealSecond =
-    MAX_UNSYNCHRONIZED_PLANET_DISPLAY_CYCLES_PER_REAL_SECOND *
-    Math.tanh(
-      physicalCyclesPerRealSecond /
-      MAX_UNSYNCHRONIZED_PLANET_DISPLAY_CYCLES_PER_REAL_SECOND,
-    );
+    maxDisplayCyclesPerRealSecond *
+    Math.tanh(physicalCyclesPerRealSecond / maxDisplayCyclesPerRealSecond);
 
   return normalizeRadians(
     epochSpinRadians +

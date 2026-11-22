@@ -33,6 +33,9 @@ const GLSL_COMMON_MARKER =
   '#include <common>';
 const GLSL_OPAQUE_MARKER =
   '#include <opaque_fragment>';
+const GLSL_DEFAULT_NORMAL_VERTEX_MARKER =
+  '#include <defaultnormal_vertex>';
+
 
 export function buildSystemSceneDayNightMaterialProfileV1(
   optics: SystemSceneAtmosphereOpticsV1,
@@ -124,6 +127,15 @@ export function installSystemSceneDayNightMaterialV1(
           value: binding.orbitalHomeFlagsView ?? new THREE.Vector2(0, 0),
         };
       }
+      // StandardMaterial interpolates the unperturbed geometry normal before
+      // normal_fragment_maps changes `normal` for local surface relief.
+      // Unit tests may supply fragment-only shader doubles; real Three.js
+      // standard shaders always include the vertex-stage normal chunk.
+      if (typeof shader.vertexShader === 'string') {
+        shader.vertexShader = patchSystemSceneDayNightVertexShaderVISSURF6(
+          shader.vertexShader,
+        );
+      }
       shader.fragmentShader =
         patchSystemSceneDayNightFragmentShaderV1(
           shader.fragmentShader,
@@ -133,7 +145,7 @@ export function installSystemSceneDayNightMaterialV1(
 
   material.customProgramCacheKey =
     () =>
-      `${upstreamProgramKey}|GENESIS-25.6-DAY-NIGHT-V1-${profile.atmospherePresent ? 'ATM' : 'VAC'}-${nightLightsTexture === null ? 'NO-CIV' : 'CIV-LIGHTS-V1'}`;
+      `${upstreamProgramKey}|GENESIS-25.6-DAY-NIGHT-V1-${profile.atmospherePresent ? 'ATM' : 'VAC'}-${nightLightsTexture === null ? 'NO-CIV' : 'CIV-LIGHTS-V1'}|GEOM-NORMAL-VISSURF6`;
 
   material.userData['genesisDayNightPipeline'] =
     Object.freeze({
@@ -143,6 +155,23 @@ export function installSystemSceneDayNightMaterialV1(
     });
 
   material.needsUpdate = true;
+}
+
+/** Preserve geometric view-space normals for planet-scale day/night masks. */
+export function patchSystemSceneDayNightVertexShaderVISSURF6(
+  vertexShader: string,
+): string {
+  if (!vertexShader.includes(GLSL_COMMON_MARKER) ||
+      !vertexShader.includes(GLSL_DEFAULT_NORMAL_VERTEX_MARKER)) {
+    throw new RangeError(
+      'VISSURF.6 requires Three.js standard <common> and <defaultnormal_vertex> vertex chunks.',
+    );
+  }
+  return vertexShader
+    .replace(GLSL_COMMON_MARKER,
+      `${GLSL_COMMON_MARKER}\nvarying vec3 vGenesisGeometricNormalView;`)
+    .replace(GLSL_DEFAULT_NORMAL_VERTEX_MARKER,
+      `${GLSL_DEFAULT_NORMAL_VERTEX_MARKER}\nvGenesisGeometricNormalView = normalize(transformedNormal);`);
 }
 
 export function patchSystemSceneDayNightFragmentShaderV1(
@@ -161,12 +190,12 @@ export function patchSystemSceneDayNightFragmentShaderV1(
   const withUniforms =
     fragmentShader.replace(
       GLSL_COMMON_MARKER,
-      `${GLSL_COMMON_MARKER}${civilizationLights ? '\nuniform sampler2D uGenesisCivilizationLights;\nuniform vec3 uGenesisOrbitalHomeDirectionsView[2];\nuniform vec2 uGenesisOrbitalHomeFlags;' : ''}\nuniform vec3 uGenesisLightDirectionsView[3];\nuniform vec3 uGenesisLightWeights;\nuniform float uGenesisTerminatorSoftness;\nuniform float uGenesisNightFloor;\nuniform float uGenesisTwilightGlow;\nuniform float uGenesisAtmospherePresent;\nuniform vec3 uGenesisAtmosphereDayTint;\nuniform vec3 uGenesisAtmosphereNightTint;`,
+      `${GLSL_COMMON_MARKER}${civilizationLights ? '\nuniform sampler2D uGenesisCivilizationLights;\nuniform vec3 uGenesisOrbitalHomeDirectionsView[2];\nuniform vec2 uGenesisOrbitalHomeFlags;' : ''}\nvarying vec3 vGenesisGeometricNormalView;\nuniform vec3 uGenesisLightDirectionsView[3];\nuniform vec3 uGenesisLightWeights;\nuniform float uGenesisTerminatorSoftness;\nuniform float uGenesisNightFloor;\nuniform float uGenesisTwilightGlow;\nuniform float uGenesisAtmospherePresent;\nuniform vec3 uGenesisAtmosphereDayTint;\nuniform vec3 uGenesisAtmosphereNightTint;`,
     );
 
   return withUniforms.replace(
     GLSL_OPAQUE_MARKER,
-    `float genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(normalize(normal), normalize(uGenesisLightDirectionsView[2])));\nfloat genesisWeightedDay0 = genesisDayFactor0 * genesisWeight0;
+    `vec3 genesisGeometricNormal = normalize(vGenesisGeometricNormalView);\n#ifdef DOUBLE_SIDED\ngenesisGeometricNormal *= gl_FrontFacing ? 1.0 : -1.0;\n#endif\nfloat genesisTerminatorWidth = max(0.008, uGenesisTerminatorSoftness);\nfloat genesisWeight0 = max(uGenesisLightWeights.x, 0.0);\nfloat genesisWeight1 = max(uGenesisLightWeights.y, 0.0);\nfloat genesisWeight2 = max(uGenesisLightWeights.z, 0.0);\nfloat genesisDayFactor0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(genesisGeometricNormal, normalize(uGenesisLightDirectionsView[0])));\nfloat genesisDayFactor1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(genesisGeometricNormal, normalize(uGenesisLightDirectionsView[1])));\nfloat genesisDayFactor2 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth, dot(genesisGeometricNormal, normalize(uGenesisLightDirectionsView[2])));\nfloat genesisWeightedDay0 = genesisDayFactor0 * genesisWeight0;
 float genesisWeightedDay1 = genesisDayFactor1 * genesisWeight1;
 float genesisWeightedDay2 = genesisDayFactor2 * genesisWeight2;
 float genesisDayFactor = clamp(genesisWeightedDay0 + genesisWeightedDay1 + genesisWeightedDay2, 0.0, 1.0);
@@ -177,9 +206,9 @@ ${civilizationLights ? `// VISCIV.6d: native orbital home star(s), NOT the brigh
 // S-type worlds have one home star; circumbinary P-type worlds have two.
 // Any direct home-star illumination switches off the local urban network.
 float genesisHomeDay0 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth,
-  dot(normalize(normal), normalize(uGenesisOrbitalHomeDirectionsView[0]))) * uGenesisOrbitalHomeFlags.x;
+  dot(genesisGeometricNormal, normalize(uGenesisOrbitalHomeDirectionsView[0]))) * uGenesisOrbitalHomeFlags.x;
 float genesisHomeDay1 = smoothstep(-genesisTerminatorWidth, genesisTerminatorWidth,
-  dot(normalize(normal), normalize(uGenesisOrbitalHomeDirectionsView[1]))) * uGenesisOrbitalHomeFlags.y;
+  dot(genesisGeometricNormal, normalize(uGenesisOrbitalHomeDirectionsView[1]))) * uGenesisOrbitalHomeFlags.y;
 float genesisHomeDayFactor = max(genesisHomeDay0, genesisHomeDay1);
 float genesisHomeDarkness = 1.0 - smoothstep(0.46, 0.54, genesisHomeDayFactor);
 // All active stars still determine whether the world is in deep night.
@@ -192,7 +221,7 @@ float genesisUrbanVisibility = clamp(
   0.0, 1.0);
 vec3 genesisUrbanEmission = texture2D(uGenesisCivilizationLights, vMapUv).rgb;
 outgoingLight += genesisUrbanEmission * genesisUrbanVisibility * 2.30;` : ''}
-float genesisTwilight0 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(normalize(normal), normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.070 * (0.40 + 0.60 * genesisDayFactor);\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
+float genesisTwilight0 = exp(-abs(dot(genesisGeometricNormal, normalize(uGenesisLightDirectionsView[0]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight1 = exp(-abs(dot(genesisGeometricNormal, normalize(uGenesisLightDirectionsView[1]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilight2 = exp(-abs(dot(genesisGeometricNormal, normalize(uGenesisLightDirectionsView[2]))) / max(0.02, genesisTerminatorWidth * 1.35));\nfloat genesisTwilightBand = clamp(genesisTwilight0 * genesisWeight0 + genesisTwilight1 * genesisWeight1 + genesisTwilight2 * genesisWeight2, 0.0, 1.0);\nfloat genesisTwilightEnergy = genesisTwilightBand * uGenesisTwilightGlow * uGenesisAtmospherePresent * 0.070 * (0.40 + 0.60 * genesisDayFactor);\noutgoingLight += uGenesisAtmosphereDayTint * genesisTwilightEnergy;\n${GLSL_OPAQUE_MARKER}`,
   );
 }
 

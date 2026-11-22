@@ -20,6 +20,7 @@ import {
 import * as THREE from 'three';
 import { createVida38InfrastructureSurfaceVisual386, vida38MoonVisibleInfrastructurePlans386c2, type Vida38InfrastructureVisual386 } from '../infrastructure/vida38-infrastructure-render-38-6';
 import type { SystemScenePlanetLightBindingV1 } from '../system/system-scene-atmosphere-material';
+import { updatePreviewStellarLightBindingVISSURF6 } from './scientific-body-preview-stellar-binding-vissurf6';
 
 import {
   createSystemScenePlanetAppearanceV1,
@@ -32,12 +33,15 @@ import {
 
 import {
   systemSceneBodyAxialTiltRadians,
-  systemSceneBodyDisplaySpinRadians,
 } from '../system/system-scene-body-render-state';
 
 import {
   systemSceneMoonDisplaySpinRadiansV2,
 } from '../system/system-scene-moon-spin-presentation';
+
+import {
+  scientificBodyPreviewPlanetSpinRadians38bisT5,
+} from './scientific-body-preview-planet-spin-38bis-t5';
 
 import {
   systemSceneBodyLodSegmentsV1,
@@ -144,16 +148,10 @@ const ISOLATED_NON_BODY_AUTOROTATE_CYCLE_SECONDS =
 const MINOR_BODY_INSPECTION_FILL_INTENSITY =
   0.90;
 
-/** VIS-3D.2d: 1024×512 remains the normal preview/cloud resolution. */
+/** VIS-3D.2d: 1024×512 atlas for both solid surface and cloud layer. */
 const SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED: SystemScenePlanetTextureDimensionsV1 = Object.freeze({
   width: 1024,
   height: 512,
-});
-
-/** VISSURF.2: only solid terrain uses 2048x1024; clouds remain 1024x512. */
-const SCIENTIFIC_PREVIEW_SOLID_SURFACE_DETAIL_VISSURF2: SystemScenePlanetTextureDimensionsV1 = Object.freeze({
-  width: 2048,
-  height: 1024,
 });
 
 
@@ -457,7 +455,10 @@ export class ScientificBodyPreview
 
   private infrastructureVisuals: Array<{visual:Vida38InfrastructureVisual386;radius:number}> = [];
 
-  private civilizationLightBinding: SystemScenePlanetLightBindingV1 | null = null;
+  private stellarLightBinding: SystemScenePlanetLightBindingV1 | null = null;
+
+  /** Owned preview-only lighting; disposed/rebuilt when the inspected body changes. */
+  private readonly previewSceneLights: THREE.Light[] = [];
 
   private orbitalSurfaceShadowVISCIV6n: OrbitalSurfaceShadowBindingVISCIV6n | null = null;
 
@@ -639,6 +640,8 @@ export class ScientificBodyPreview
         .set(false);
       this.artificialSatellitesVisible
         .set(false);
+      // Do not leave the previous planet's lights attached to a reused canvas.
+      this.addLighting();
       this.rebuildScene();
     }
   }
@@ -664,6 +667,7 @@ export class ScientificBodyPreview
       ?.disconnect();
 
     this.disposeSceneResources();
+    this.previewSceneLights.length = 0;
 
     this.renderer
       ?.dispose();
@@ -1034,14 +1038,20 @@ export class ScientificBodyPreview
     }
   }
 
+  private previewStellarSources() {
+    return this.model.kind === ScientificBodyPreviewKind.PLANET
+      ? (this.model.primary.stellarLightSources ?? this.model.primary.civilizationStarSources)
+      : undefined;
+  }
+
   private addLighting():
     void {
 
     if (this.scene === null) return;
+    for (const light of this.previewSceneLights) this.scene.remove(light);
+    this.previewSceneLights.length = 0;
 
-    const sources = this.model.kind === ScientificBodyPreviewKind.PLANET
-      ? this.model.primary.civilizationStarSources
-      : undefined;
+    const sources = this.previewStellarSources();
 
     const ambient = new THREE.HemisphereLight(
       0xbcd9f3,
@@ -1049,12 +1059,14 @@ export class ScientificBodyPreview
       sources?.length ? 0.28 : 1.10,
     );
     this.scene.add(ambient);
+    this.previewSceneLights.push(ambient);
 
     if (sources && sources.length > 0) {
       for (const source of sources) {
         const stellar = new THREE.DirectionalLight(0xffffff, 2.35 * source.weight01);
         stellar.position.set(source.x * 5, source.y * 5, source.z * 5);
         this.scene.add(stellar);
+        this.previewSceneLights.push(stellar);
       }
       return;
     }
@@ -1064,6 +1076,7 @@ export class ScientificBodyPreview
     const rim = new THREE.DirectionalLight(0x78cfff, 0.75);
     rim.position.set(-4.0, 1.0, -3.0);
     this.scene.add(key, rim);
+    this.previewSceneLights.push(key, rim);
   }
 
   private rebuildScene():
@@ -1400,14 +1413,11 @@ export class ScientificBodyPreview
         },
         false,
         planet.opticalPhotosphereTemperatureKelvin ?? null,
-        planet.surface?.solidSurfaceAvailable === true && planet.giantAtmosphere === null
-          ? SCIENTIFIC_PREVIEW_SOLID_SURFACE_DETAIL_VISSURF2
-          : SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED,
+        SCIENTIFIC_PREVIEW_PLANET_TEXTURE_BALANCED,
       );
 
-    if (planet.nightCivilizationTier !== null && planet.nightCivilizationTier !== undefined) {
-      this.civilizationLightBinding = appearance.lightBinding;
-    }
+    // Stellar day/night is physical; do not gate it on native civilization.
+    this.stellarLightBinding = appearance.lightBinding;
 
     const segments =
       systemSceneBodyLodSegmentsV1(
@@ -2094,7 +2104,7 @@ export class ScientificBodyPreview
           this.localSpinSimulationDay,
           timing,
         )
-      : systemSceneBodyDisplaySpinRadians(
+      : scientificBodyPreviewPlanetSpinRadians38bisT5(
           spin,
           this.localSpinSimulationDay,
           timing,
@@ -2442,7 +2452,7 @@ export class ScientificBodyPreview
             step.rootYawDeltaRadians;
         }
 
-        this.updateCivilizationLightBinding();
+        this.updateStellarLightBinding();
         this.updateArtificialSatelliteBinding();
         this.orbitalSurfaceShadowVISCIV6n?.update(
           this.camera, this.artificialSatellitesVisible(),
@@ -2482,34 +2492,17 @@ export class ScientificBodyPreview
   }
 
   /** Keep the emissive-night mask aligned with the actual preview's stellar lights. */
-  private updateCivilizationLightBinding(): void {
-    const binding = this.civilizationLightBinding;
+  private updateStellarLightBinding(): void {
+    const binding = this.stellarLightBinding;
     const camera = this.camera;
-    if (binding === null || camera === null || this.model.kind !== ScientificBodyPreviewKind.PLANET) return;
+    if (binding === null || camera === null ||
+        this.model.kind !== ScientificBodyPreviewKind.PLANET) return;
     camera.updateMatrixWorld();
-    const sources = this.model.primary.civilizationStarSources ?? [];
-    const weights = [0, 0, 0];
-    const homeDirections = binding.orbitalHomeDirectionsView;
-    const homeFlags = binding.orbitalHomeFlagsView;
-    homeFlags?.set(0, 0);
-    let homeIndex = 0;
-    for (let i = 0; i < 3; i++) {
-      const source = sources[i];
-      const direction = binding.lightDirectionsView[i]!;
-      if (source) {
-        direction.set(source.x, source.y, source.z).transformDirection(camera.matrixWorldInverse);
-        weights[i] = source.weight01;
-        if (source.isOrbitalHost && homeDirections && homeFlags && homeIndex < 2) {
-          homeDirections[homeIndex]!.copy(direction);
-          if (homeIndex === 0) homeFlags.x = 1;
-          else homeFlags.y = 1;
-          homeIndex += 1;
-        }
-      } else {
-        direction.set(1, 0, 0);
-      }
-    }
-    binding.lightWeightsView.set(weights[0]!, weights[1]!, weights[2]!);
+    updatePreviewStellarLightBindingVISSURF6(
+      binding,
+      this.previewStellarSources() ?? [],
+      camera.matrixWorldInverse,
+    );
   }
 
   private applyArtificialSatelliteVisibility():
@@ -2536,7 +2529,7 @@ export class ScientificBodyPreview
     this.artificialSatelliteCameraDirection
       .subVectors(this.cameraWorldPositionScratch(), this.artificialSatellitePlanetWorldPosition)
       .normalize();
-    const sources = this.model.primary.civilizationStarSources ?? [];
+    const sources = this.previewStellarSources() ?? [];
     let weightedNight = 0;
     let totalWeight = 0;
     for (const source of sources) {
@@ -2626,7 +2619,7 @@ export class ScientificBodyPreview
     this.localSpinBindings =
       [];
     this.infrastructureVisuals = [];
-    this.civilizationLightBinding = null;
+    this.stellarLightBinding = null;
     this.orbitalSurfaceShadowVISCIV6n = null;
     this.artificialSatelliteBindings =
       [];

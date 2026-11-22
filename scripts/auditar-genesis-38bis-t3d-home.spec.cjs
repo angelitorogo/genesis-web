@@ -1,0 +1,17 @@
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const root = process.cwd();
+const read = file => fs.readFileSync(path.join(root, 'src/app/presentation/genesis-archive', file), 'utf8');
+const html = read('genesis-archive.html');
+const css = read('genesis-archive.scss');
+const spec = read('genesis-archive.spec.ts');
+const router = fs.readFileSync(path.join(root, 'src/app/app.routes.ts'), 'utf8');
+assert.match(router, /path:\s*['"]['"],\s*pathMatch:\s*['"]full['"]/);
+assert.match(html, /<header class="archive-header">[\s\S]*?<genesis-section-title[\s\S]*?<a class="archive-home-link" routerLink="\/" data-testid="archive-home-link">[\s\S]*?Volver a Home[\s\S]*?<\/a>/);
+assert.ok(html.indexOf('data-testid="archive-home-link"') < html.indexOf('@if (facade.state()'), 'El enlace a Home debe funcionar aunque el Archivo esté vacío o cargando');
+assert.equal((html.match(/data-testid="archive-home-link"/g)||[]).length, 1);
+assert.match(css, /\.archive-home-link:focus-visible/);
+assert.match(spec, /ofrece regresar a Home incluso con Archivo vacío/);
+assert.doesNotMatch(html, /archive-home-link[^>]*queryParams=/);
+console.log('PASS 38.bis-T3d: ruta Home real, acceso permanente, estilo, foco y regresión.');

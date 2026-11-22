@@ -205,3 +205,11 @@
 .archive-progress-state[data-status='ACTIVE']{color:#8bdfff}
 .archive-progress-state[data-status='INTERRUPTED'],.archive-progress-state[data-status='OUTDATED']{color:#ffd392}
 .archive-progress-state[data-status='FAILED']{color:#ffaaa0}
+
+/* 38.bis-T3d · Navegación directa a Home, disponible incluso si el Archivo está cargando o vacío. */
+.archive-header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.archive-header genesis-section-title{min-width:0;flex:1 1 25rem}
+.archive-home-link{display:inline-flex;align-items:center;justify-content:center;gap:.55rem;flex:0 0 auto;min-height:2.75rem;box-sizing:border-box;padding:.7rem 1rem;border:1px solid rgba(106,215,255,.28);border-radius:8px;background:rgba(16,42,59,.85);color:#b9edff;font:700 .75rem var(--genesis-font-mono,monospace);letter-spacing:.05em;text-decoration:none;white-space:nowrap;transition:border-color 160ms ease,background-color 160ms ease}
+.archive-home-link:hover{border-color:#7edcff;background:#16394e}
+.archive-home-link:focus-visible{outline:2px solid #7edcff;outline-offset:3px}
+@media(max-width:38rem){.archive-home-link{order:-1}}

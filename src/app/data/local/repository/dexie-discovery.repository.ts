@@ -83,6 +83,16 @@ export interface ProceduralTargetSeedResolver {
   ): string;
 }
 
+/** T3b: an Archive catalogue only changes when a persisted discovery
+ * enters or leaves CONFIRMED. Intermediate exploratory transitions must not
+ * schedule expensive background work for 14 unrelated categories. */
+export function archiveConfirmedStateChanged38BisT3b(
+  previousCode:number|undefined, nextCode:number|undefined,
+):boolean {
+  const confirmed=DiscoveryState.CONFIRMED.code;
+  return previousCode!==nextCode && (previousCode===confirmed||nextCode===confirmed);
+}
+
 export class DexieDiscoveryRepository
   implements DiscoveryRepository {
 
@@ -235,12 +245,12 @@ export class DexieDiscoveryRepository
       state ===
       DiscoveryState.UNKNOWN
     ) {
-      await this.database
-        .discoveries
-        .delete(
-          key,
-        );
-      await this.notifyArchive38BisB6(generationKey,locator,targetType.name);
+      // Invalidate only a previously confirmed object. Removing a DETECTED,
+      // DISCOVERED or CATALOGUED record cannot change the confirmed Archive.
+      const previous=await this.database.discoveries.get(key);
+      await this.database.discoveries.delete(key);
+      if(archiveConfirmedStateChanged38BisT3b(previous?.discoveryStateCode,undefined))
+        await this.notifyArchive38BisB6(generationKey,locator,targetType.name);
       return;
     }
 
@@ -305,7 +315,7 @@ export class DexieDiscoveryRepository
       .put(
         entity,
       );
-    if(existing?.discoveryStateCode!==state.code)
+    if(archiveConfirmedStateChanged38BisT3b(existing?.discoveryStateCode,state.code))
       await this.notifyArchive38BisB6(generationKey,locator,targetType.name);
   }
 

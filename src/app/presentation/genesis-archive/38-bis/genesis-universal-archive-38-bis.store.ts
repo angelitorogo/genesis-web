@@ -141,6 +141,27 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
 
   /** Existing sections/sort revisions are authoritative completed checkpoints.
    * In-progress metadata is only a hint; never treat it as a published index. */
+  /** T3b: coherent metadata snapshot for a fast Archive opening. Sections,
+   * secondary revisions, checkpoints and pending jobs share one read-only
+   * IndexedDB transaction. An update cannot complete between reading a stale
+   * section and reading an already-cleared queue. No scientific rows are read. */
+  async openingSnapshot38BisT3b(scope:string):Promise<Readonly<{
+    progress:ArchiveProgressSnapshot38BisB4;
+    jobs:readonly ArchiveDirtyJob38BisB6[];
+  }>>{
+    await this.open();
+    return this.transaction('r',this.sections,this.sortRevisions,this.progressCheckpoints,this.dirtyJobs,
+      async()=>{
+        const [sections,sortRevisions,checkpoints,jobs]=await Promise.all([
+          this.sections.where('scope').equals(scope).toArray(),
+          this.sortRevisions.where('scope').equals(scope).toArray(),
+          this.progressCheckpoints.where('scope').equals(scope).toArray(),
+          this.dirtyJobs.where('scope').equals(scope).toArray(),
+        ]);
+        return {progress:{sections,sortRevisions,checkpoints},jobs};
+      });
+  }
+
   async progressFor(scope:string):Promise<ArchiveProgressSnapshot38BisB4> {
     await this.open();
     const [sections,sortRevisions,checkpoints]=await Promise.all([

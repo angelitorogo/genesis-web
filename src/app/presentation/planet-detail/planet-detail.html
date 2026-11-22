@@ -151,10 +151,20 @@
                   </dl>
                 </section>
 
+                @if (verifiedPlanetBiology38BisT4(); as biologiaPersistida) {
+                  @if (biologiaPersistida.colonization.colonies.length > 0) {
+                    <p class="planet-detail__empty-detail" data-testid="planet-confirmed-colonies-38bis-t4">
+                      Colonización tecnológica VIDA.8 confirmada ·
+                      {{ biologiaPersistida.colonization.colonies.length }}
+                      {{ biologiaPersistida.colonization.colonies.length === 1 ? 'colonia' : 'colonias' }}.
+                      La ubicación de sus construcciones es una reconstrucción procedural no observada.
+                    </p>
+                  }
+                }
                 <app-scientific-body-preview [orbitalInfrastructureDebug]="orbitalInfrastructureDebug"
                   class="planet-detail__preview"
                   data-testid="planet-scientific-preview"
-                  [model]="card.preview"
+                  [model]="planetPreview38BisT4() ?? card.preview"
                 ></app-scientific-body-preview>
 
 
@@ -339,12 +349,14 @@
                           <small>SECCIÓN 07</small>
                           <h2 id="planet-section-title-vida">Vida</h2>
                         </header>
-                        @if (card.confirmedBiologyVIDA9; as vida) {
+                        @if (persistedPlanetPending38BisT4()) {
+                          <p class="planet-detail__empty-detail" role="status">Verificando registro biológico planetario persistido…</p>
+                        } @else if (verifiedPlanetBiology38BisT4(); as vida) {
                           <app-vida9-full-system-biology-panel [record]="vida"
                             [rutaBaseEspecies]="rutaBaseEspecies()"
                             [parametrosOrigen]="sourceQueryParams()"></app-vida9-full-system-biology-panel>
                         } @else {
-                          <p class="planet-detail__empty-detail">Información biológica no disponible para este cuerpo.</p>
+                          <p class="planet-detail__empty-detail">Registro biológico persistido no disponible o no verificable. No se puede deducir ausencia de vida ni de colonias.</p>
                         }
                       </article>
                     }

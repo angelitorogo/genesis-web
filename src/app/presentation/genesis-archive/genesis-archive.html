@@ -1,8 +1,13 @@
 <genesis-screen>
   <main class="genesis-archive" data-testid="genesis-archive-page">
-    <genesis-section-title eyebrow="CATÁLOGO CIENTÍFICO UNIVERSAL" title="Archivo GENESIS"
-      description="Catálogo científico de objetos confirmados, con índices locales y acceso a sus fichas originales.">
-    </genesis-section-title>
+    <header class="archive-header">
+      <genesis-section-title eyebrow="CATÁLOGO CIENTÍFICO UNIVERSAL" title="Archivo GENESIS"
+        description="Catálogo científico de objetos confirmados, con índices locales y acceso a sus fichas originales.">
+      </genesis-section-title>
+      <a class="archive-home-link" routerLink="/" data-testid="archive-home-link">
+        <span aria-hidden="true">←</span> Volver a Home
+      </a>
+    </header>
 
     @if (facade.state() === 'loading') {
       <section class="archive-state" role="status">{{ facade.progress() || 'Abriendo el índice local de conocimiento…' }}</section>

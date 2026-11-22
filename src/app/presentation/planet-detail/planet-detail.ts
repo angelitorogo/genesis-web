@@ -1,4 +1,7 @@
 import { effect, signal } from '@angular/core';
+import type { Vida9BiologyRecord } from '../../domain/life/vida9-biology-exploration';
+import { PlanetConfirmedBiologyDataSource38BisT4 } from './planet-confirmed-biology-38bis-t4';
+import { planetPreviewWithVerifiedBiology38BisT4 } from './planet-confirmed-preview-38bis-t4';
 import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import { planetMoonColonizationView386b } from './planet-moon-colonization-38-6b';
 import { PlanetMoonColonizationDataSource386b } from './planet-moon-colonization-data-source-38-6b';
@@ -148,6 +151,66 @@ export class PlanetDetailPage
             : PlanetScientificCardAssembler.build(model, this.requestedBodyIndex));
       },
     );
+
+  /** 38.bis-T4: the Archive and the planet fiche must use the SAME persisted,
+   * validated CT-0 planet record, just as moons do since 38.bis-a4. */
+  private readonly planetBiologySource38BisT4=inject(PlanetConfirmedBiologyDataSource38BisT4);
+  private readonly storedPlanetBiology38BisT4=signal<{
+    readonly identityKey:string;readonly record:Vida9BiologyRecord|null;
+  }|null>(null);
+
+  private readonly planetBiologyRequest38BisT4=computed(()=>{
+    const model=this.facade.model(),resolved=this.resolution(),body=this.requestedBodyIndex;
+    if(!model || model.locatorKind!==ArchiveDiscoveryLocatorKind.SYSTEM ||
+       model.discoveryState.code<DiscoveryState.CONFIRMED.code ||
+       model.generatorVersionCode!==3 || body===null || resolved?.kind!=='AVAILABLE')return null;
+    const request={confirmed:true,universeSeed:model.universeSeed,
+      generatorVersionCode:model.generatorVersionCode,galaxyIndex:model.galaxyIndex,
+      sectorKey:model.sectorKey,galacticObjectIndex:model.galacticObjectIndex,
+      bodyIndex:body} as const;
+    const identityKey=[model.universeSeed,model.generatorVersionCode,model.galaxyIndex,
+      model.sectorKey,model.galacticObjectIndex,body].join('|');
+    return {identityKey,request,generated:resolved.card.confirmedBiologyVIDA9??null};
+  });
+
+  private readonly planetBiologyLoad38BisT4=effect((onCleanup)=>{
+    const context=this.planetBiologyRequest38BisT4();
+    this.storedPlanetBiology38BisT4.set(null);
+    if(!context)return;
+    let obsolete=false;
+    onCleanup(()=>{obsolete=true;});
+    void (async()=>{
+      let record=await this.planetBiologySource38BisT4.read(context.request);
+      if(!record && context.generated){
+        // The confirmed fiche may be opened before the async VIDA.9 indexer
+        // inserts the record. Preserve an existing immutable row if present.
+        // Never overwrite a different historic CT-0 projection.
+        try {
+          await this.vida3Private.ensureBiologyVIDA9(context.generated);
+          record=await this.planetBiologySource38BisT4.read(context.request);
+        }catch { /* A historical mismatch is UNKNOWN, not zero colonies. */ }
+      }
+      if(!obsolete)this.storedPlanetBiology38BisT4.set({identityKey:context.identityKey,record});
+    })().catch(()=>{
+      if(!obsolete)this.storedPlanetBiology38BisT4.set({identityKey:context.identityKey,record:null});
+    });
+  });
+
+  readonly persistedPlanetPending38BisT4=computed(()=>{
+    const context=this.planetBiologyRequest38BisT4();
+    return context!==null && this.storedPlanetBiology38BisT4()?.identityKey!==context.identityKey;
+  });
+  readonly verifiedPlanetBiology38BisT4=computed(()=>{
+    const context=this.planetBiologyRequest38BisT4();
+    const value=this.storedPlanetBiology38BisT4();
+    return context && value?.identityKey===context.identityKey?value.record:null;
+  });
+  readonly planetPreview38BisT4=computed(()=>{
+    const resolved=this.resolution();
+    if(resolved?.kind!=='AVAILABLE')return null;
+    return planetPreviewWithVerifiedBiology38BisT4(
+      resolved.card.preview,this.verifiedPlanetBiology38BisT4());
+  });
 
   private readonly lunarColonySource386b = inject(PlanetMoonColonizationDataSource386b);
   private readonly lunarColonyCounts386b = signal<ReadonlyMap<number,number|null>|null>(null);

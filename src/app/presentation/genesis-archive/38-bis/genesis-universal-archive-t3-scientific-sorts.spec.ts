@@ -14,7 +14,10 @@ let sequence=0;
 const row=(id:string,galaxyIndex:string,category:'planets'|'moons',
   life='Sin determinar',colonies='Sin determinar',civilization='Sin determinar'):
   UniversalArchiveRow38Bis=>({
-    id,scope,galaxyIndex,category,subtype:'ALL',title:id,
+    // Match wrapRow() in the production index: the IndexedDB row identity
+    // includes scope, category and galaxy before the native source id.
+    // Using a bare 'A'/'B' here changes the tie-break order in fake-indexeddb.
+    id:JSON.stringify([scope,category,galaxyIndex,id]),scope,galaxyIndex,category,subtype:'ALL',title:id,
     sortTitle:id.toLowerCase()+'\0'+id,subtitle:'',
     cells:{life,colonies,civilization},actions:[],
   });
@@ -70,19 +73,40 @@ describe('38.bis-T3 · 7 ordenaciones, persistencia e incrementos locales',()=>{
     await store.publish(section('1','planets',2),[
       row('B','1','planets','Sí','No'),row('C','1','planets')]);
     for(const galaxy of ['0','1'])await store.ensureSortField(scope,'planets',galaxy,'life');
-    expect((await store.page(filter('planets','life'))).items.map(r=>r.id)).toEqual(['A','D','B','C']);
-    expect((await store.page(filter('planets','life',true))).items.map(r=>r.id)).toEqual(['B','D','A','C']);
+    expect((await store.page(filter('planets','life'))).items.map(r=>r.title)).toEqual(['A','D','B','C']);
+    expect((await store.page(filter('planets','life',true))).items.map(r=>r.title)).toEqual(['B','D','A','C']);
     const subset=await store.page(filter('planets','life',true,{galaxyIndex:'1',search:'B'}));
     expect(subset.total).toBe(1);
-    expect(subset.items[0]?.id).toBe('B');
+    expect(subset.items[0]?.title).toBe('B');
+  });
+
+  it('utiliza la identidad compuesta real y pagina sin romper empates entre galaxias',async()=>{
+    const left=Array.from({length:13},(_,n)=>row('A'+String(n+1).padStart(2,'0'),'0','planets','Sí'));
+    const right=Array.from({length:13},(_,n)=>row('B'+String(n+1).padStart(2,'0'),'1','planets','Sí'));
+    // Native object identifiers can repeat in different galaxies without
+    // colliding in the persisted universal archive key.
+    expect(row('X','0','planets','Sí').id).not.toBe(row('X','1','planets','Sí').id);
+    expect(left[0]?.id).toBe(JSON.stringify([scope,'planets','0','A01']));
+    await store.publish(section('0','planets',left.length),left);
+    await store.publish(section('1','planets',right.length),right);
+    for(const galaxy of ['0','1'])await store.ensureSortField(scope,'planets',galaxy,'life');
+    const first=await store.page(filter('planets','life',false,{page:1}));
+    const second=await store.page(filter('planets','life',false,{page:2}));
+    expect(first.total).toBe(26);
+    expect(first.items.map(r=>r.title)).toEqual([
+      ...left.map(r=>r.title),...right.slice(0,12).map(r=>r.title)]);
+    expect(second.items.map(r=>r.title)).toEqual(['B13']);
+    const reverse=await store.page(filter('planets','life',true,{page:1}));
+    expect(reverse.items.map(r=>r.title)).toEqual([
+      ...[...right].reverse().map(r=>r.title),...left.slice(1).reverse().map(r=>r.title)]);
   });
 
   it('ordena por nombre público de galaxia, no por índice ni bloque de fragmento',async()=>{
     await store.publish(section('0','moons',1),[row('Z1','0','moons')]);
     await store.publish(section('1','moons',2),[row('A1','1','moons'),row('A2','1','moons')]);
     for(const galaxy of ['0','1'])await store.ensureSortField(scope,'moons',galaxy,'galaxy',projection);
-    expect((await store.page(filter('moons','galaxy'))).items.map(r=>r.id)).toEqual(['A1','A2','Z1']);
-    expect((await store.page(filter('moons','galaxy',true))).items.map(r=>r.id)).toEqual(['Z1','A2','A1']);
+    expect((await store.page(filter('moons','galaxy'))).items.map(r=>r.title)).toEqual(['A1','A2','Z1']);
+    expect((await store.page(filter('moons','galaxy',true))).items.map(r=>r.title)).toEqual(['Z1','A2','A1']);
   });
 
   it('conserva los campos utilizados al publicar otra revisión y reconstruye SOLO el fragmento afectado',async()=>{
@@ -98,7 +122,7 @@ describe('38.bis-T3 · 7 ordenaciones, persistencia e incrementos locales',()=>{
     expect((await store.sortRevisions.get(JSON.stringify([scope,'planets','0','life'])))?.sourceRevision)
       .toBe('A');
     await store.ensureSortField(scope,'planets','0','life');
-    expect((await store.page(filter('planets','life',true))).items.map(r=>r.id))
+    expect((await store.page(filter('planets','life',true))).items.map(r=>r.title))
       .toEqual(['B','C','A']);
     expect((await store.sortRevisions.get(JSON.stringify([scope,'planets','0','life'])))?.sourceRevision)
       .toBe('B');
@@ -111,7 +135,7 @@ describe('38.bis-T3 · 7 ordenaciones, persistencia e incrementos locales',()=>{
     const saved=await store.sortRevisions.get(JSON.stringify([scope,'planets','0','life']));
     expect(saved?.sourceRevision).toMatch(/^stale\|/u);
     await store.ensureSortField(scope,'planets','0','life');
-    expect((await store.page(filter('planets','life'))).items.map(r=>r.id)).toEqual(['B']);
+    expect((await store.page(filter('planets','life'))).items.map(r=>r.title)).toEqual(['B']);
   });
 
   it('conserva intactos los índices existentes al abrir la base y la cola es independiente',async()=>{
@@ -124,7 +148,7 @@ describe('38.bis-T3 · 7 ordenaciones, persistencia e incrementos locales',()=>{
       const sections=await reopened.sectionsFor(scope);
       expect(sections).toHaveLength(1);
       expect(await reopened.usedSortFields38BisT3(scope,'planets')).toEqual(['life']);
-      expect((await reopened.page(filter('planets','life'))).items[0]?.id).toBe('A');
+      expect((await reopened.page(filter('planets','life'))).items[0]?.title).toBe('A');
       expect(await reopened.knowledgeJobsFor38BisT3(scope)).toHaveLength(0);
     }finally{reopened.close();}
   });

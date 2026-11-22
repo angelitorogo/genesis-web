@@ -39,6 +39,23 @@ describe(
   'ScientificBodyPreview absolute SystemScene visual parity',
   () => {
 
+    it('VISSURF.6 uses the same stellar sources without life and with native civilization', () => {
+      const scene = systemSceneFixture();
+      const target = planetTarget();
+      const sterile = ScientificBodyPreviewAssembler.planet(target, scene);
+      const native = ScientificBodyPreviewAssembler.planet(
+        target, scene, undefined, null, 'ADVANCED',
+      );
+      if (sterile.kind !== ScientificBodyPreviewKind.PLANET ||
+          native.kind !== ScientificBodyPreviewKind.PLANET) {
+        throw new Error('Expected planet fiche previews');
+      }
+      expect(sterile.primary.stellarLightSources?.length).toBeGreaterThan(0);
+      expect(sterile.primary.stellarLightSources).toEqual(native.primary.stellarLightSources);
+      expect(sterile.primary.nightCivilizationTier).toBeNull();
+      expect(native.primary.nightCivilizationTier).toBe('ADVANCED');
+    });
+
     it(
       'should project the exact giant-atmosphere, rings, shape and texture identities used by SystemScene without leaking raw route seeds',
       () => {
