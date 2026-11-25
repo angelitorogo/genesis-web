@@ -391,6 +391,8 @@ export class SystemSceneCameraController {
 
     bodyRadiusScene:
       number,
+    framingRadiusScene: number = bodyRadiusScene,
+    preferredViewDirection: THREE.Vector3 | null = null,
   ): void {
 
     this.bodyTrackingActive =
@@ -432,6 +434,9 @@ export class SystemSceneCameraController {
       );
     }
 
+    if (preferredViewDirection !== null && preferredViewDirection.lengthSq() > 1e-10) {
+      this.trackingViewDirection.copy(preferredViewDirection);
+    }
     this.trackingViewDirection.normalize();
 
     // Tracking zoom is relative to the selected body's rendered extent,
@@ -444,7 +449,7 @@ export class SystemSceneCameraController {
 
     this.trackingDesiredDistance =
       systemSceneBodyFocusDistance(
-        bodyRadiusScene,
+        Math.max(bodyRadiusScene, framingRadiusScene),
         this.controls.minDistance,
         this.controls.maxDistance,
         this.laboratoryCloseZoom,

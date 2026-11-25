@@ -316,7 +316,7 @@ import {
 
 import {
   systemSceneMinorBodyPresentationTimeScale,
-  systemSceneMoonPresentationTimeScale,
+  systemSceneMoonGroupPresentationTimeScaleV1,
 } from './system-scene-secondary-motion';
 
 import {
@@ -457,6 +457,8 @@ export interface SystemSceneBodySnapshot {
 
   readonly radiusScene:
     number;
+  /** COLVIS.1: source physical size, read-only renderer input, never displayed as a new observation. */
+  readonly physicalRadiusEarthCOLVIS1?: number;
 
   /** Star-only optical reference retained when the photosphere is envelope-limited. */
   readonly opticalRadiusScene?:
@@ -3699,6 +3701,7 @@ function projectSceneGeometry(
             planetRadiusSceneByOrdinal.get(
               planet.planetOrdinal,
             )!,
+          physicalRadiusEarthCOLVIS1: planet.radiusEarth,
           position:
             orbitalContributionPositionScene(
               motionContributions,
@@ -4594,6 +4597,13 @@ function projectMoonLayer(
             left.orbit.semiMajorAxisKilometers -
             right.orbit.semiMajorAxisKilometers,
         );
+    // Match the scientific fiche: one cadence for the host's visible moons.
+    // Never recompute a per-moon visual multiplier when the focus changes.
+    const moonGroupTimeScale = relevantMoons.length === 0 ? null :
+      systemSceneMoonGroupPresentationTimeScaleV1(
+        relevantMoons.map(moon => moon.orbit.orbitalPeriodDays),
+        playbackDaysPerRealSecond,
+      );
 
     for (
       let index = 0;
@@ -4718,11 +4728,7 @@ function projectMoonLayer(
           scale:
             1,
           linearScenePerAu,
-          presentationTimeScale:
-            systemSceneMoonPresentationTimeScale(
-              moon.orbit.orbitalPeriodDays,
-              playbackDaysPerRealSecond,
-            ),
+          presentationTimeScale: moonGroupTimeScale!,
         } satisfies SystemSceneMotionContributionSnapshot);
 
       const motionContributions =

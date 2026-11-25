@@ -262,8 +262,20 @@ export class GenesisUniversalArchiveFacade38Bis {
       const pendingKeys=new Set(dirty.map(j=>j.category+'|'+j.galaxyIndex));
       this.dirtyJobCountSignal38BisT3.set(dirty.length);
       this.sectionsSignal.set(sections);
+      // T7b: detectar solo metadatos del índice colonial YA leídos, sin abrir
+      // ni escanear VIDA.9. Un índice T7/T7a con población no evaluable debe
+      // reconstruirse al abrir la categoría; los otros catálogos no se tocan.
+      const colonialCategory38BisT7b=currentCategory==='colonies'||
+        currentCategory==='colonized-planets'||currentCategory==='colonized-moons'
+          ? currentCategory : null;
+      const staleColonialIndices38BisT7b=colonialCategory38BisT7b!==null
+        ?galaxies.filter(g=>sections.some(s=>s.category===currentCategory&&
+          s.galaxyIndex===g.index&&!s.sourceRevision.includes('population-t7b-v2')))
+        :[];
+      const staleColonialGalaxies38BisT7b=new Set(staleColonialIndices38BisT7b.map(g=>g.index));
       this.verifiedSectionsSignal.set(new Set(sections.filter(s=>s.category===currentCategory &&
-        !pendingKeys.has(s.category+'|'+s.galaxyIndex)).map(s=>s.galaxyIndex)));
+        !pendingKeys.has(s.category+'|'+s.galaxyIndex) &&
+        !staleColonialGalaxies38BisT7b.has(s.galaxyIndex)).map(s=>s.galaxyIndex)));
       this.verifiedStatisticsSignal.set(new Set(sections.filter(s=>
         (s.category==='civilizations'||s.category==='colonies')&&
         !pendingKeys.has(s.category+'|'+s.galaxyIndex)).map(s=>s.category+'|'+s.galaxyIndex)));
@@ -282,6 +294,11 @@ export class GenesisUniversalArchiveFacade38Bis {
       await this.refreshPage();
       if(call!==this.loadSequence)return;
       if(dirty.length>0)this.schedulePendingRefresh38BisT3(key,scope,call);
+      // Solo la categoría colonial abierta se recupera, y exclusivamente en
+      // galaxias sin revisión T7b. Esto evita la reconstrucción universal al entrar.
+      if(colonialCategory38BisT7b!==null && staleColonialIndices38BisT7b.length>0){
+        void this.buildCategory(key,staleColonialIndices38BisT7b,colonialCategory38BisT7b,call);
+      }
       // An empty (new) Archive can be indexed by explicit refresh or future
       // confirmation events. Entry itself NEVER starts the 210-fragment pass.
     }catch(error){if(call!==this.loadSequence)return;
@@ -310,7 +327,9 @@ export class GenesisUniversalArchiveFacade38Bis {
           this.sectionsSignal(),sections,selected,selectedGalaxy);
         this.sectionsSignal.set(sections);
         this.verifiedSectionsSignal.set(new Set(sections.filter(s=>s.category===selected&&
-          !pending.has(s.category+'|'+s.galaxyIndex)).map(s=>s.galaxyIndex)));
+          !pending.has(s.category+'|'+s.galaxyIndex)&&
+          !(selected!==null && ['colonies','colonized-planets','colonized-moons'].includes(selected)&&
+            !s.sourceRevision.includes('population-t7b-v2'))).map(s=>s.galaxyIndex)));
         this.verifiedStatisticsSignal.set(new Set(sections.filter(s=>
           (s.category==='civilizations'||s.category==='colonies')&&
           !pending.has(s.category+'|'+s.galaxyIndex)).map(s=>s.category+'|'+s.galaxyIndex)));

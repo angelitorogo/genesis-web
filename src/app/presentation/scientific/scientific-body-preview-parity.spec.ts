@@ -291,7 +291,30 @@ describe(
         expect(moon.hostPlanet).toEqual(
           planet.primary,
         );
-        expect(moon.moons).toEqual(
+        // VISSURF.6: la ficha lunar principal incorpora iluminación
+        // estelar local. Es un dato de presentación del cuerpo enfocado,
+        // no otra arquitectura lunar ni una geometría de selección.
+        // Comparamos íntegramente los campos compartidos y comprobamos
+        // aparte la procedencia de la iluminación adicional.
+        expect(moon.moons).toHaveLength(
+          planet.moons.length,
+        );
+        const sharedMoonArchitecture = moon.moons.map(visual => {
+          const { stellarLightSources, ...shared } = visual;
+          if (visual.moonOrdinal === moon.primary.moonOrdinal) {
+            expect(visual).toBe(moon.primary);
+            expect(stellarLightSources).toEqual(
+              moon.primary.stellarLightSources,
+            );
+            expect(stellarLightSources?.length).toBeGreaterThan(0);
+          } else {
+            // Los cuerpos de contexto no deben recibir artificialmente
+            // la iluminación propia del cuerpo seleccionado.
+            expect(stellarLightSources).toBeUndefined();
+          }
+          return shared;
+        });
+        expect(sharedMoonArchitecture).toEqual(
           planet.moons,
         );
         expect(moon.epochSimulationDay).toBe(
@@ -417,6 +440,7 @@ function systemSceneFixture():
       {
         id: 'star-A',
         kind: 'star',
+        position: { x: 1, y: 0, z: 0 }, // VISSURF.6 source direction.
         compactHostKind: undefined,
         sourceLuminositySolar: 0.92,
         sourceEffectiveTemperatureKelvin: 5570,

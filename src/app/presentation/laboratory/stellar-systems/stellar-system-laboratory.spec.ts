@@ -11,7 +11,7 @@ import {
 } from '../../../domain/planetary/planet-type';
 
 import {
-  systemSceneMoonPresentationTimeScale,
+  systemSceneMoonGroupPresentationTimeScaleV1,
 } from '../../system/system-scene-secondary-motion';
 
 import {
@@ -590,6 +590,12 @@ describe(
           ),
         ).toBe(true);
 
+        const periodByMoon = new Map(snapshot.moons.map(moon => {
+          const id = moon.motionContributions.at(-1)!.motionId;
+          const motion = snapshot.motions.find(entry => entry.id === id)!;
+          return [moon.id, motion.periodDays] as const;
+        }));
+
         for (
           const moon
           of snapshot.moons
@@ -613,10 +619,11 @@ describe(
 
           expect(
             localContribution.presentationTimeScale,
-            `${moon.label} must use the point-24.6 cadence limiter for the current renderer playback rate`,
+            `${moon.label} must use MOONCAD.1 host-group 90s cadence, shared with scientific fiches`,
           ).toBeCloseTo(
-            systemSceneMoonPresentationTimeScale(
-              localMotion!.periodDays,
+            systemSceneMoonGroupPresentationTimeScaleV1(
+              snapshot.moons.filter(m=>m.hostPlanetId===moon.hostPlanetId)
+                .map(m=>periodByMoon.get(m.id)!),
               snapshot.simulation.playbackDaysPerRealSecond,
             ),
             12,

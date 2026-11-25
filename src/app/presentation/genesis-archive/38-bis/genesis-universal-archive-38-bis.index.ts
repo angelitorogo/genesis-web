@@ -37,6 +37,8 @@ import {
   universalArchiveSearchKey38Bis, GENESIS_UNIVERSAL_ARCHIVE_REVISION_38BIS,
 } from './genesis-universal-archive-38-bis.model';
 import {summarizeArchiveColonies38Bis} from './genesis-universal-archive-38-bis-colonization-stats';
+import {archiveColonialPopulation38BisT7,archiveColonialPopulationLabel38BisT7}
+  from './genesis-universal-archive-colonial-population-38bis-t7';
 import {diagnoseColonyOrigin38Bis} from './genesis-universal-archive-38-bis-origin-diagnostics';
 import {reconcileColonyOrigin38Bis} from './genesis-universal-archive-38-bis-origin-reconciliation';
 export {diagnoseColonyOrigin38Bis} from './genesis-universal-archive-38-bis-origin-diagnostics';
@@ -165,6 +167,7 @@ export function projectColonyRow(scope:string,category:UniversalArchiveIndexedCa
   const chosen=colony??colonies[0]!;
   const count=colonies.length;
   const colonyOrdinal=colony?colonies.findIndex(entry=>entry.id===colony.id)+1:0;
+  const population=archiveColonialPopulation38BisT7(colony?[colony]:colonies);
   const title=colony?`${label} · Colonia ${colonyOrdinal}`:label;
   const id=archiveRowId(scope,category,galaxyIndex,record.bodyStorageKey+(colony?'|'+colony.id:''));
   return Object.freeze({id,scope,category,galaxyIndex,
@@ -177,6 +180,7 @@ export function projectColonyRow(scope:string,category:UniversalArchiveIndexedCa
     cells:Object.freeze({system,body:label,kind:colonyLabel(record.identity.kind),
       ...(record.identity.kind==='MOON'&&hostPlanetName?{planet:hostPlanetName}:{}),
       count:String(colony?1:count),
+      population:archiveColonialPopulationLabel38BisT7(population),
       ...(founder?.speciesName&&founder.planetName?{
         species:founder.speciesName,originPlanet:founder.planetName}:{}),
       ...(!founder?{origin:colony?
@@ -185,6 +189,7 @@ export function projectColonyRow(scope:string,category:UniversalArchiveIndexedCa
       technology:colony?colonyTechnology(colony.settlement.habitatTechnology):'Varias instalaciones',
       purpose:colony?colonyFunction(colony.settlement.function):'Consultar ficha',
       tier:chosen.origin.tier==='VERY_ADVANCED'?'Muy avanzada':'Avanzada'}),
+    sortNumbers:Object.freeze({population:population?.midpoint??null}),
     actions:Object.freeze([{label:'Abrir ficha del cuerpo',route:archiveBodyRoute(record)},
       ...(founder?[{label:'Ver mundo natal',route:founder.route}]:[])]),
   });
@@ -315,12 +320,11 @@ export class GenesisUniversalArchiveIndex38Bis {
       ?await repository.getKnownDiscoveriesInGalaxy(key,galaxy)
       :(await repository.getKnownDiscoveries(key)).filter(d=>d.locator.galaxyIndex===galaxy);
     const originalRevision=galaxyKnowledgeRevision(galaxy,known);
-    // T3 boolean sort keys depend on confirmed VIDA.9 knowledge too.
+    // T3: los criterios booleanos de planeta/luna dependen de VIDA.9 confirmado.
     const biological=category==='planets'||category==='moons'||
       category==='civilizations'||COLONY_CATEGORIES.has(category);
     let vida9Count=0;let vida9Revision='0';
-    // For planet/moon boolean sorts, an unconfirmed VIDA.9 body is not part
-    // of the observable scientific revision, even as metadata.
+    // Nunca incorporar en la huella pública registros de sistemas sin confirmar.
     const publicBodyCategory=category==='planets'||category==='moons';
     const confirmedBiologicalSystems=publicBodyCategory?confirmedSystems38Bis(known):null;
     if(biological && key.generatorVersionCode===3){
@@ -348,9 +352,9 @@ export class GenesisUniversalArchiveIndex38Bis {
       originalRevision,biological?vida9Count:'-',biological?vida9Revision:'-',
       ['planets','moons','asteroids','comets','tno','captured'].includes(category)
         ?'public-numeric-sort-b3-v1':'-',
-      category==='colonies'?'founder-reconciliation-a3-v1-lunar-designation-a4-public-origins-a6':
-      category==='colonized-moons'?'lunar-designation-a4-public-origins-a6-host-planet-b1':
-      category==='colonized-planets'?'public-origins-a6':
+      category==='colonies'?'founder-reconciliation-a3-v1-lunar-designation-a4-public-origins-a6-population-t7b-v2':
+      category==='colonized-moons'?'lunar-designation-a4-public-origins-a6-host-planet-b1-population-t7b-v2':
+      category==='colonized-planets'?'public-origins-a6-population-t7b-v2':
       category==='civilizations'?'tier-stats-v1':'-'].join('|');
     await this.store.open();
     const saved=await this.store.sections.get([scope,category,galaxyIndex]);
@@ -360,7 +364,11 @@ export class GenesisUniversalArchiveIndex38Bis {
     let rows:UniversalArchiveRow38Bis[];
     let complete=true;
     if(COLONY_CATEGORIES.has(category)){
-      const cacheKey=JSON.stringify([scope,galaxyIndex,revision]);
+      // Las tres vistas derivan del mismo conjunto de colonias certificadas.
+      // La caché comparte una sola proyección por revisión biológica/galáctica,
+      // no tres escaneos VIDA.9 por las distintas revisiones de categoría.
+      const cacheKey=JSON.stringify([scope,galaxyIndex,GALAXY_SCIENTIFIC_MODEL_VERSION,
+        originalRevision,vida9Count,vida9Revision,'colony-projection-population-t7b-v2']);
       let projected=force?undefined:this.colonialProjectionCache.get(cacheKey);
       if(!projected){
         projected=await this.colonialRows(key,galaxy,known,scope,onProgress);

@@ -5,7 +5,7 @@ import { VIDA6_REVISION, type Vida6Species } from '../../domain/life/vida6-ecosy
 import { VIDA7_REVISION, type Vida7Civilization, type Vida7IntelligentSpecies } from '../../domain/life/vida7-intelligence-civilizations';
 import type { Vida38ConfirmedBiologySource } from './vida38-species-visual-contract';
 import { vida38SpeciesVisualContractFromConfirmedV1 } from './vida38-species-visual-contract';
-import { createVida38SpeciesPreviewModelV1, describeVida38SpeciesPreviewV1 } from './vida38-species-visual-preview-scene';
+import { createVida38SpeciesPreviewModelV1, describeVida38SpeciesPreviewV1, vida38CanonicalCivilizationTier387 } from './vida38-species-visual-preview-scene';
 import { buildVida38HumanoidRawMesh, auditVida38HumanoidRawMesh, deriveVida38HumanoidAnatomy } from './vida38-humanoid-organic-field-38-2e';
 
 function species(partial: Partial<Vida6Species> & { id: string; proceduralName: string; group: Vida6Species['group'] }): Vida6Species {
@@ -232,5 +232,41 @@ describe('Fase 38.2 — representación 3D procedural de especies', () => {
     expect(audit.nonManifoldEdges).toBe(0);
     expect(audit.components).toBe(1);
     model.dispose();
+  });
+});
+
+
+describe('GENESIS 38.7 — la inteligencia no constituye evidencia civilizatoria', () => {
+  it('only authorizes a civilization tier explicitly present in the VIDA.7 visual contract', () => {
+    const source = contractOf(species({
+      id: 'vida6:no-civilization', proceduralName: 'No Civilization', group: 'REPTILES',
+      habitat: 'SURFACE_SOIL',
+      phenotype: { bodyPlan: 'TETRAPOD', covering: 'SCALES', locomotion: 'WALKING',
+        bodyLengthMeters: 1.7, primaryColorHex: '#8395A5', secondaryColorHex: '#B1AA91',
+        pattern: 'SOLID', appendagePairs: 2, bioluminescent: false },
+    }));
+    const intelligentWithoutCivilization = {
+      ...source,
+      intelligence: { lineage: 'REPTILIAN' as const, civilizationTier: null },
+    };
+    expect(vida38CanonicalCivilizationTier387(intelligentWithoutCivilization)).toBeNull();
+    expect(describeVida38SpeciesPreviewV1(intelligentWithoutCivilization).specialistIntelligenceDeferred).toBe(false);
+    expect(vida38CanonicalCivilizationTier387({ ...source,
+      intelligence: { lineage: 'REPTILIAN' as const, civilizationTier: 'ADVANCED' as const },
+    })).toBe('ADVANCED');
+  });
+  it('never promotes phase-37 candidate signals or unknown tier aliases to an actual civilization', () => {
+    const base = contractOf(species({
+      id: 'vida6:signal-only', proceduralName: 'Signal Candidate', group: 'REPTILES',
+      habitat: 'SURFACE_SOIL',
+      phenotype: { bodyPlan: 'TETRAPOD', covering: 'SCALES', locomotion: 'WALKING',
+        bodyLengthMeters: 1.7, primaryColorHex: '#8395A5', secondaryColorHex: '#B1AA91',
+        pattern: 'SOLID', appendagePairs: 2, bioluminescent: false },
+    }));
+    const misleading = { ...base, intelligence: {
+      lineage: 'REPTILIAN' as const, civilizationTier: null,
+      civilizationLevel: 'VERY_ADVANCED', technosignature: 'CANDIDATE',
+    } };
+    expect(vida38CanonicalCivilizationTier387(misleading)).toBeNull();
   });
 });

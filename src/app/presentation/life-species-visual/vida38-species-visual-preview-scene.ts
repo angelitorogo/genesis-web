@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { genesisVisualTrace388 } from '../visual-provenance/genesis-visual-provenance-38-8';
 import { enforceVida38AdvancedReptilianVisibleRenderer38S6 } from './vida38-advanced-reptilian-runtime-38-2s6';
 import { createVida38AdvancedReptilianPreview38S2, isVida38AdvancedReptilian38S } from './vida38-advanced-reptilian-preview-38-2s2';
 import { createVida38CivilizedHumanoidPreview38R, isVida38VeryAdvancedHumanoid38R } from './vida38-civilized-humanoid-preview-38-2r';
@@ -52,14 +53,35 @@ export interface Vida38SpeciesPreviewDescriptorV1 {
 }
 
 
+/** 38.7: intelligence is NOT evidence of a civilization. The public VIDA.7
+ * visual contract carries an explicit nullable tier; never promote lineage to
+ * PRIMITIVE or infer a tier from unrelated descriptions/technosignatures. */
+export function vida38CanonicalCivilizationTier387(
+  contract: Vida38SpeciesVisualContract,
+): 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null {
+  const intelligence = contract.intelligence;
+  if (!intelligence) return null;
+  const tier = intelligence.civilizationTier;
+  return tier === 'PRIMITIVE' || tier === 'ADVANCED' || tier === 'VERY_ADVANCED'
+    ? tier : null;
+}
 function civilizationLevelFrom(contract: Vida38SpeciesVisualContract): 'PRIMITIVE' | 'ADVANCED' | 'VERY_ADVANCED' | null {
+  // The canonical contract always includes civilizationTier (explicitly null
+  // when there is intelligence but NO civilization). Only older laboratory
+  // fixtures without that field may use aliases for backwards compatibility.
+  const canonical = vida38CanonicalCivilizationTier387(contract);
   const intelligence = contract.intelligence as unknown as Record<string, unknown> | null;
-  if (intelligence === null) return null;
-  const value = String(intelligence['civilizationLevel'] ?? intelligence['civilisationLevel'] ?? intelligence['societyLevel'] ?? intelligence['stage'] ?? intelligence['civilizationStage'] ?? '').toUpperCase();
-  if (value === 'VERY_ADVANCED') return 'VERY_ADVANCED';
-  if (value === 'ADVANCED') return 'ADVANCED';
-  if (value === 'PRIMITIVE') return 'PRIMITIVE';
-  return intelligence['lineage'] ? 'PRIMITIVE' : null;
+  if (!intelligence || 'civilizationTier' in intelligence) return canonical;
+  const nestedCivilization = intelligence['civilization'];
+  const nestedSociety = intelligence['society'];
+  const nestedLevel = (nestedCivilization && typeof nestedCivilization === 'object'
+    ? (nestedCivilization as Record<string, unknown>)['level'] : undefined) ??
+    (nestedSociety && typeof nestedSociety === 'object'
+      ? (nestedSociety as Record<string, unknown>)['level'] : undefined);
+  const value = String(intelligence['civilizationLevel'] ?? intelligence['civilisationLevel'] ??
+    intelligence['societyLevel'] ?? intelligence['stage'] ?? intelligence['civilizationStage'] ??
+    nestedLevel ?? '').toUpperCase();
+  return value === 'PRIMITIVE' || value === 'ADVANCED' || value === 'VERY_ADVANCED' ? value : null;
 }
 function isCivilizedReptilian(contract: Vida38SpeciesVisualContract): boolean {
   const intelligence = contract.intelligence as unknown as Record<string, unknown> | null;
@@ -662,6 +684,16 @@ export function createVida38SpeciesPreviewModelV1(contract: Vida38SpeciesVisualC
   const descriptor = describeVida38SpeciesPreviewV1(contract);
   const root = new THREE.Group();
   const subject = new THREE.Group();
+  // 38.8: metadata only. The existing VIDA.9/38.7 grant determines access.
+  root.userData['genesisVisualTrace38_8'] = genesisVisualTrace388(
+    'SPECIES', contract.speciesId, contract.appearanceFingerprint,
+  );
+  if (contract.intelligence?.civilizationTier !== null &&
+      contract.intelligence?.civilizationTier !== undefined) {
+    subject.userData['genesisCivilizationVisualTrace38_8'] = genesisVisualTrace388(
+      'CIVILIZATION', contract.speciesId, contract.appearanceFingerprint,
+    );
+  }
   root.add(subject);
   const rng = new Rng(hash32(`${contract.variantSeedUint32}|${contract.appearanceFingerprint}|38.2`));
   addBaseCue(root, descriptor, rng);

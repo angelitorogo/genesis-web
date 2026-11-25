@@ -1,3 +1,4 @@
+import { ArchiveStellarSystemKnowledgeLevel } from '../genesis-archive/archive-stellar-system-card';
 import { buildSystemScenePlanetTextureV1 } from './system-scene-planet-texture';
 import { buildSystemScenePlanetSurfacePresentationV1 } from './system-scene-planet-surface-presentation';
 import { buildSystemScenePlanetSurfaceTextureV1, type SystemScenePlanetVegetationProfileV1 } from './system-scene-planet-surface-texture';
@@ -77,7 +78,10 @@ describe('VISCIV.1d identical observed surface and night geography across fiche 
   it('uses the actual VIDA.9 vegetation profile when decorating the system body', () => {
     const planet = { id: planetId, visualCivilizationTier: null };
     const base = {
+      knowledgeLevel: ArchiveStellarSystemKnowledgeLevel.CONFIRMED,
+      discoveryStateCode: 5,
       planets: [planet],
+      moons: [],
       stars: [],
       scientificPlanetBindings: [{ sceneBodyId: planetId, bodyIndex: '2' }],
     } as unknown as SystemSceneSnapshot;

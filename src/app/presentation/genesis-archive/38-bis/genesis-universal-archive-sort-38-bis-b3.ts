@@ -57,12 +57,14 @@ const OPTIONS:Readonly<Record<Exclude<UniversalArchiveIndexedCategory38Bis,'sect
   civilizations:[name,text('planet','Planeta natal'),text('system','Sistema'),tier,text('lineage','Linaje')],
   colonies:[name,text('system','Sistema'),text('species','Especie fundadora'),
     text('originPlanet','Planeta natal'),text('kind','Clase'),text('technology','Hábitat'),
-    text('purpose','Función')],
+    text('purpose','Función'),number('population','Habitantes (estimación)')],
   'colonized-planets':[name,text('system','Sistema'),number('count','Número de colonias'),
-    text('species','Especie fundadora'),text('originPlanet','Planeta natal'),text('kind','Clase')],
+    text('species','Especie fundadora'),text('originPlanet','Planeta natal'),text('kind','Clase'),
+    number('population','Habitantes coloniales (estimación)')],
   'colonized-moons':[name,text('system','Sistema'),text('planet','Planeta anfitrión'),
     number('count','Número de colonias'),text('species','Especie fundadora'),
-    text('originPlanet','Planeta natal'),text('kind','Clase')],
+    text('originPlanet','Planeta natal'),text('kind','Clase'),
+    number('population','Habitantes coloniales (estimación)')],
 };
 export function archiveSortOptions38BisB3(category:UniversalArchiveIndexedCategory38Bis):readonly ArchiveSortOption38BisB3[]{
   return category==='sectors'?[name]:OPTIONS[category];
@@ -93,6 +95,8 @@ export function archiveSortValue38BisB3(row:UniversalArchiveRow38Bis,
   if(option.kind==='number'){
     const raw=row.sortNumbers?.[option.key];
     if(raw!==undefined)return raw!==null && Number.isFinite(raw)?raw:null;
+    // No convertir la banda poblacional pública en un número falso.
+    if(option.key==='population')return null;
     return archiveNumericCell38BisB3(row.cells[option.key]);
   }
   const raw=row.cells[option.key];

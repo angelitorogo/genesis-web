@@ -130,8 +130,11 @@ describe('38.bis-b6c · avisos del Archivo fuera de transacciones científicas',
       expect(result.globalDiscoveryPointsAfter).toBe(750n);
       expect(await discoveries.getState(key,new GalaxyLocator(0n))).toBe(DiscoveryState.CATALOGUED);
       expect(await points.getGlobalDiscoveryPoints(key)).toBe(750n);
-      await waitFor(()=>jobs.length>=2); // VISITED outside transaction; CATALOGUED after commit.
-      expect(await archive.table('jobs').get('galaxy-0')).toBeDefined();
+      // T3b only invalidates the CONFIRMED catalog. VISITED/CATALOGUED
+      // never expose a galaxy in the Archive, nor enqueue its derived index.
+      await new Promise<void>(resolve=>setTimeout(resolve,20));
+      expect(jobs).toEqual([]);
+      expect(await archive.table('jobs').get('galaxy-0')).toBeUndefined();
     } finally {
       database.closeDatabase();
       await new Dexie('genesis-b6c-galaxy-runtime-'+dbId,deps).delete();

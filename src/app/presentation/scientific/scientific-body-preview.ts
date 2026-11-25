@@ -244,6 +244,9 @@ export interface ScientificMoonOrbitPreviewVisual {
 }
 
 export interface ScientificMoonPreviewVisual {
+  /** VISCORB.1: stellar field independent of life/civilization knowledge. */
+  readonly stellarLightSources?: readonly ScientificPlanetStarLightSourceV1[];
+
   readonly title:
     string;
 
@@ -700,6 +703,9 @@ export class ScientificBodyPreviewAssembler {
     const moonInfrastructure = vida38InfrastructurePlansFromConfirmed386(confirmedBiology);
     const primary = Object.freeze({
       ...moonVisual(scene,sourceMoon,target.detail.orbit.semiMajorAxisPlanetRadii),
+      stellarLightSources: buildPreviewStellarLightSourcesVISSURF6(
+        scene.stars, sourceMoon.position, new Set<string>(),
+      ),
       ...(moonInfrastructure.length ? {infrastructurePlans:moonInfrastructure} : {}),
     });
 

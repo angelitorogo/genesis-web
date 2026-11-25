@@ -182,6 +182,14 @@ export class DiscoveredGalaxiesFacade {
       '',
     );
 
+  // Physical galaxy type and sector-grid denominator are deterministic for
+  // a given universe/version/index. Reuse them on subsequent page visits;
+  // explored-sector numerators are still recalculated from persisted knowledge.
+  private readonly staticGalaxyMetadataCache = new Map<string, Readonly<{
+    type: GalaxyType;
+    totalSectors: bigint;
+  }>>();
+
   private refreshSequence =
     0;
 
@@ -291,6 +299,30 @@ export class DiscoveredGalaxiesFacade {
         galaxyIndex,
       ) ??
       null;
+  }
+
+  private getStaticGalaxyMetadata(
+    generationKey: UniverseGenerationKey,
+    galaxyIndex: bigint,
+  ): Readonly<{ type: GalaxyType; totalSectors: bigint }> {
+    const identity = `${generationKey.universeSeed.serialize()}/${generationKey.generatorVersionCode}/${galaxyIndex}`;
+    const cached = this.staticGalaxyMetadataCache.get(identity);
+    if (cached !== undefined) {
+      this.staticGalaxyMetadataCache.delete(identity);
+      this.staticGalaxyMetadataCache.set(identity, cached);
+      return cached;
+    }
+    const galaxy = GalaxyGenerator.generate(generationKey, galaxyIndex);
+    const grid = GalaxySectorGridGenerator.generate(galaxy);
+    const result = Object.freeze({
+      type: galaxy.type,
+      totalSectors: grid.sideLengthInSectors * grid.sideLengthInSectors,
+    });
+    this.staticGalaxyMetadataCache.set(identity, result);
+    if (this.staticGalaxyMetadataCache.size > 64) {
+      this.staticGalaxyMetadataCache.delete(this.staticGalaxyMetadataCache.keys().next().value!);
+    }
+    return result;
   }
 
   async refresh():
@@ -448,25 +480,17 @@ export class DiscoveredGalaxiesFacade {
           continue;
         }
 
-        const galaxy =
-          GalaxyGenerator.generate(
-            generationKey,
-            entry.galaxyIndex,
-          );
+        const staticMetadata = this.getStaticGalaxyMetadata(
+          generationKey,
+          entry.galaxyIndex,
+        );
 
         galaxyTypesByIndex.set(
           entry.galaxyIndex,
-          galaxy.type,
+          staticMetadata.type,
         );
 
-        const grid =
-          GalaxySectorGridGenerator.generate(
-            galaxy,
-          );
-
-        const totalSectors =
-          grid.sideLengthInSectors *
-          grid.sideLengthInSectors;
+        const totalSectors = staticMetadata.totalSectors;
 
         exploredPercentageByIndex.set(
           entry.galaxyIndex,

@@ -34,11 +34,13 @@ const DEFINITIONS:Readonly<Record<Exclude<UniversalArchiveIndexedCategory38Bis,'
     ['diameter','Diámetro'],['orbit','Órbita']],
   civilizations:[['planet','Planeta'],['system','Sistema'],['tier','Nivel'],['lineage','Linaje']],
   colonies:[['system','Sistema'],['species','Especie fundadora'],
-    ['originPlanet','Planeta natal'],['kind','Clase']],
+    ['originPlanet','Planeta natal'],['kind','Clase'],['population','Población colonial']],
   'colonized-planets':[['galaxy','Galaxia'],['system','Sistema'],['count','Colonias'],
-    ['species','Especie fundadora'],['originPlanet','Planeta natal'],['kind','Clase']],
+    ['species','Especie fundadora'],['originPlanet','Planeta natal'],['kind','Clase'],
+    ['population','Población colonial total']],
   'colonized-moons':[['galaxy','Galaxia'],['system','Sistema'],['planet','Planeta'],
-    ['count','Colonias'],['species','Especie fundadora'],['originPlanet','Planeta natal'],['kind','Clase']],
+    ['count','Colonias'],['species','Especie fundadora'],['originPlanet','Planeta natal'],['kind','Clase'],
+    ['population','Población colonial total']],
 };
 
 /** Conserva la posición visual del campo, incluso si el censo aún no lo permite evaluar. */
@@ -52,7 +54,15 @@ export function archiveCompactFields38BisB1(row:UniversalArchiveRow38Bis,
     const displayed=(key==='life'||key==='colonies'||key==='civilization') &&
       (value==='No evaluable'||value==='No determinado'||value==='Sin registro')
       ?'Sin determinar':value;
-    return {key,label,value:displayed||'No evaluable'};
+    // T7c: las filas persistidas en IndexedDB antes de esta presentación
+    // conservan el sufijo obsoleto. Limpiarlo aquí evita reindexar o alterar
+    // la cifra científica, la ordenación o el fragmento persistido.
+    const colonial=(row.category==='colonies'||row.category==='colonized-planets'||
+      row.category==='colonized-moons');
+    const compact=colonial&&key==='population'
+      ? displayed.replace(/\s+hab\.\s*\(intervalo estimado\)\s*$/iu,'')
+      : displayed;
+    return {key,label,value:compact||'No evaluable'};
   });
 }
 

@@ -9,9 +9,15 @@ export const VIDA38_COLONIAL_COMPLEX_REVISION_386C = 'VIDA.38.6c/colonial-comple
 
 export type Vida38ColonyPartRole386c =
   | 'ACCESS' | 'MAIN_MODULE' | 'AUXILIARY' | 'ANTENNA' | 'VENT'
-  | 'CONNECTION' | 'FOUNDATION' | 'PRESSURIZED_DOME';
-export type Vida38ColonyPartShape386c = 'BOX' | 'CYLINDER' | 'DOME' | 'MAST';
-export type Vida38ColonyPartMaterial386c = 'HULL' | 'DARK' | 'PANEL' | 'ACCENT' | 'DOME';
+  | 'CONNECTION' | 'FOUNDATION' | 'PRESSURIZED_DOME'
+  | 'BRIDGE' | 'TECH_NODE' | 'PANEL' | 'SENSOR' | 'EXTRACTOR'
+  | 'HABITAT' | 'BIOLAB' | 'ENVIRONMENTAL_COVER';
+export type Vida38ColonyPartShape386c = 'BOX' | 'CYLINDER' | 'DOME' | 'MAST' | 'HEX' | 'TAPER' | 'RING'
+  | 'HUMAN_HAB' | 'HUMAN_HANGAR' | 'HUMAN_ARCOLOGY' | 'HUMAN_BRIDGE'
+  | 'REPTILE_KEEP' | 'REPTILE_SHELL' | 'REPTILE_CITADEL' | 'REPTILE_SPINE' | 'REPTILE_CAUSEWAY'
+  | 'INSECT_POD' | 'INSECT_HIVE' | 'INSECT_SPIRE' | 'INSECT_CELL' | 'INSECT_TUNNEL';
+export type Vida38ColonyPartMaterial386c = 'HULL' | 'DARK' | 'PANEL' | 'ACCENT' | 'DOME' | 'BASALT' | 'CERAMIC'
+  | 'HUMAN_ALLOY' | 'HUMAN_GLASS' | 'REPTILE_SCUTE' | 'REPTILE_CORE' | 'INSECT_CHITIN' | 'INSECT_PEARL';
 
 /** All dimensions are dimensionless multiples of the already-derived 38.6
  * site size. They have NO geophysical or civilizational meaning. */

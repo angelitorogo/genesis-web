@@ -11,6 +11,7 @@ import { GalaxyKnowledgePlanetsMoonsCatalogDataSource } from './galaxy-knowledge
 import { GalaxyKnowledgeGalacticObjectsCatalogDataSource } from './galaxy-knowledge-galactic-objects-catalog.data-source';
 import { GalaxyKnowledgeMinorBodiesCatalogDataSource } from './galaxy-knowledge-minor-bodies-catalog.data-source';
 import { GalaxyKnowledgeCivilizationsCatalogDataSource } from './galaxy-knowledge-civilizations-catalog.data-source';
+import { GALAXY_KNOWLEDGE_CATALOG_PAGE_CACHE_CAT1 } from '../runtime/galaxy-knowledge-catalog-page-cache.runtime';
 
 export interface GalaxyKnowledgeCatalogDataSource {
   describe(
@@ -30,6 +31,7 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
   private readonly galacticObjects = inject(GalaxyKnowledgeGalacticObjectsCatalogDataSource);
   private readonly minorBodies = inject(GalaxyKnowledgeMinorBodiesCatalogDataSource);
   private readonly injector = inject(Injector);
+  private readonly pageCache = inject(GALAXY_KNOWLEDGE_CATALOG_PAGE_CACHE_CAT1);
   private get civilizations(): GalaxyKnowledgeCivilizationsCatalogDataSource {
     return this.injector.get(GalaxyKnowledgeCivilizationsCatalogDataSource);
   }
@@ -76,6 +78,12 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
   }
 
   async query(
+    request: GalaxyKnowledgeCatalogDataRequest,
+  ): Promise<GalaxyKnowledgeCatalogDataResult> {
+    return this.pageCache.resolve(request, () => this.queryUncached(request));
+  }
+
+  private async queryUncached(
     request: GalaxyKnowledgeCatalogDataRequest,
   ): Promise<GalaxyKnowledgeCatalogDataResult> {
     if (request.query.category === 'civilizations') return this.civilizations.query(request);

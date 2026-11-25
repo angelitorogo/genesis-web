@@ -12,6 +12,11 @@ export interface GalaxyKnowledgeSnapshotEntity {
    */
   readonly statisticsJson?: string;
   readonly explorationTelemetryJson?: string;
+  /** CACHE-GAL.3: persisted, confirmed-only scientific projection. The record
+   * is read-model data, never private Ground Truth nor an observation grant. */
+  readonly confirmedScientificTelemetryJson?: string;
+  /** Includes galaxy knowledge revision and its persisted DiscoveryState. */
+  readonly confirmedScientificTelemetryRevision?: string;
   readonly waterWorldIndexJson?: string;
   readonly waterMoonIndexJson?: string;
   readonly planetMoonCatalogJson?: string;
@@ -21,6 +26,8 @@ export interface GalaxyKnowledgeSnapshotEntity {
   readonly civilizationKnowledgeJson?: string;
   /** Revision of the canonical set of confirmed systems. */
   readonly civilizationKnowledgeRevision?: string;
+  /** CACHE-CAT.1: bounded observed catalogue pages, never Ground Truth. */
+  readonly catalogPagesJson?: string;
 
   readonly updatedAtEpochMs: number;
 }

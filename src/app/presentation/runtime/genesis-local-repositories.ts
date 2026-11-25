@@ -1,3 +1,5 @@
+import Dexie from 'dexie';
+import { GalaxyDiscoveryReadCacheRuntime, galaxyDiscoveryCacheAffectedByMutation } from './galaxy-discovery-read-cache.runtime';
 import {
   InjectionToken,
 } from '@angular/core';
@@ -95,6 +97,16 @@ function createGenesisLocalRepositories():
   const database =
     new GenesisIndexedDb();
 
+  const discoveryRepository = new GalaxyDiscoveryReadCacheRuntime(
+    new DexieDiscoveryRepository(database, TARGET_SEED_RESOLVER),
+    () => Dexie.currentTransaction !== null,
+  );
+  // A discovery can also change through a scientific transaction, restore or
+  // another Dexie connection. Do not rely solely on setState() on this facade.
+  Dexie.on('storagemutated', parts => {
+    if (galaxyDiscoveryCacheAffectedByMutation(parts)) discoveryRepository.invalidate();
+  });
+
   return Object.freeze({
     universeRepository:
       new DexieUniverseRepository(
@@ -111,10 +123,6 @@ function createGenesisLocalRepositories():
         database,
       ),
 
-    discoveryRepository:
-      new DexieDiscoveryRepository(
-        database,
-        TARGET_SEED_RESOLVER,
-      ),
+    discoveryRepository,
   });
 }

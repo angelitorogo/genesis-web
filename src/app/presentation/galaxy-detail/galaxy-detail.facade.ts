@@ -298,6 +298,14 @@ export class GalaxyDetailFacade {
   private readonly accretionSuccessSignal = signal('');
   private readonly accretionErrorSignal = signal('');
 
+  // Confirmed-only telemetry is expensive to reproject. Keep a bounded hot
+  // result keyed by the persisted *galaxy* knowledge revision. Any discovery
+  // transition forces a new snapshot and invalidates the derived telemetry.
+  private readonly scientificTelemetryCache = new Map<string, Readonly<{
+    revision: string;
+    telemetry: GalaxyExplorationTelemetry;
+  }>>();
+
   private loadSequence =
     0;
 
@@ -527,12 +535,17 @@ export class GalaxyDetailFacade {
         globalDiscoveryPoints,
       ] =
         await Promise.all([
-          this
-            .repositories
-            .discoveryRepository
-            .getKnownDiscoveries(
-              generationKey,
-            ),
+          // The detail projection needs only persisted rows belonging to the
+          // requested galaxy. Avoid rehydrating the *entire* universe on every
+          // navigation; the repository's compound galaxy index is authoritative.
+          this.repositories.discoveryRepository.getKnownDiscoveriesInGalaxy
+            ? this.repositories.discoveryRepository.getKnownDiscoveriesInGalaxy(
+                generationKey,
+                galaxyIndex,
+              )
+            : this.repositories.discoveryRepository.getKnownDiscoveries(
+                generationKey,
+              ),
 
           this
             .repositories
@@ -617,12 +630,46 @@ export class GalaxyDetailFacade {
       const explorationTelemetry =
         knowledgeSnapshot.explorationTelemetry;
 
-      const confirmedDiscoveries = confirmedScientificDiscoveries38BisB7(knownDiscoveries);
-      const scientificTelemetry = GalaxyExplorationTelemetryEngine.build(
-        generationKey, galaxyIndex, DiscoveryState.CONFIRMED, confirmedDiscoveries,
-        generateKnownCompactHostCatalog(generationKey, galaxyIndex, confirmedDiscoveries)
-          .map(entry => entry.host),
-      );
+      let scientificTelemetry: GalaxyExplorationTelemetry;
+      if (this.galaxyKnowledgeSnapshotRuntime.resolveConfirmedTelemetry) {
+        // CACHE-GAL.3: IndexedDB-derived fragment survives visiting *all*
+        // galaxies, even after every bounded in-memory cache is evicted.
+        scientificTelemetry = await this.galaxyKnowledgeSnapshotRuntime.resolveConfirmedTelemetry(
+          generationKey, galaxyIndex, discoveryState, knownDiscoveries,
+          knowledgeSnapshot.knowledgeRevision,
+        );
+      } else {
+        // Compatibility with older runtime mocks and external adapters.
+        const telemetryCacheKey = [
+          generationKey.universeSeed.serialize(),
+          generationKey.generatorVersionCode,
+          galaxyIndex.toString(),
+        ].join('/');
+        const cachedTelemetry = this.scientificTelemetryCache.get(telemetryCacheKey);
+        const telemetryRevision = `${knowledgeSnapshot.knowledgeRevision}/${discoveryState.code}`;
+        if (cachedTelemetry?.revision === telemetryRevision) {
+          scientificTelemetry = cachedTelemetry.telemetry;
+          this.scientificTelemetryCache.delete(telemetryCacheKey);
+          this.scientificTelemetryCache.set(telemetryCacheKey, cachedTelemetry);
+        } else {
+          const confirmedDiscoveries = confirmedScientificDiscoveries38BisB7(knownDiscoveries);
+          scientificTelemetry = GalaxyExplorationTelemetryEngine.build(
+            generationKey, galaxyIndex, DiscoveryState.CONFIRMED, confirmedDiscoveries,
+            generateKnownCompactHostCatalog(generationKey, galaxyIndex, confirmedDiscoveries)
+              .map(entry => entry.host),
+          );
+          this.scientificTelemetryCache.delete(telemetryCacheKey);
+          this.scientificTelemetryCache.set(telemetryCacheKey, Object.freeze({
+            revision: telemetryRevision,
+            telemetry: scientificTelemetry,
+          }));
+          if (this.scientificTelemetryCache.size > 4) {
+            this.scientificTelemetryCache.delete(this.scientificTelemetryCache.keys().next().value!);
+          }
+        }
+
+      }
+      if (loadId !== this.loadSequence) return;
 
       const scientificProfile =
         GalaxyScientificProfileEngine

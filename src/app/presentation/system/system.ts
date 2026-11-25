@@ -47,7 +47,27 @@ import { SystemTechnosignatureAlert37a } from './system-technosignature-alert-37
 import { SystemV2SingleScientificSession } from './system-v2-single-scientific-session';
 import { SystemCompactHostScientificSession } from './system-compact-host-scientific-session';
 import { SystemSceneCivilizationVisualsDataSource } from './system-scene-civilization-visuals.data-source';
-import { decorateSystemSceneSnapshotWithCivilizationTiers, type SystemSceneCivilizationVisualRecord } from './system-scene-civilization-visuals';
+import {
+  decorateSystemSceneSnapshotWithCivilizationTiers,
+  stripSystemSceneBiologyVisuals387,
+  type SystemSceneCivilizationVisualRecord,
+} from './system-scene-civilization-visuals';
+
+/** 38.7: never reuse biological visuals across universes, generations or systems. */
+export function systemSceneBiologyIdentity387(model: Readonly<{
+  universeSeed: string;
+  generatorVersionCode: number;
+  galaxyIndex: bigint;
+  sectorKey: bigint;
+  galacticObjectIndex: bigint;
+}> | null): string | null {
+  if (!model || typeof model.universeSeed !== 'string' || model.universeSeed.length === 0 ||
+      !Number.isSafeInteger(model.generatorVersionCode)) return null;
+  return JSON.stringify([
+    model.universeSeed, model.generatorVersionCode,
+    String(model.galaxyIndex), String(model.sectorKey), String(model.galacticObjectIndex),
+  ]);
+}
 
 @Component({
   selector:
@@ -85,8 +105,10 @@ export class SystemPage
       ActivatedRoute,
     );
 
-  /** Route-scoped, nonpersistent VISCIV.6e diagnostic switch. */
-  readonly orbitalInfrastructureDebug = this.route.snapshot.queryParamMap.get('debugOrbital') === '1';
+  /** VISCIV.6e: recover the optional diagnostics input used by system.html. */
+  get orbitalInfrastructureDebug(): boolean {
+    return this.route.snapshot.queryParamMap.get('debugOrbital') === '1';
+  }
 
   private readonly systemSceneCivilizationVisuals =
     inject(
@@ -96,6 +118,9 @@ export class SystemPage
   private readonly sceneCivilizationTiers = signal<ReadonlyMap<string, SystemSceneCivilizationVisualRecord>>(
     new Map(),
   );
+
+  /** 38.7: bind the asynchronous biological projection to its exact system. */
+  private readonly sceneCivilizationIdentity = signal<string | null>(null);
 
   private civilizationVisualsRequestId = 0;
 
@@ -141,10 +166,15 @@ export class SystemPage
 
         const snapshot = this.compactSession()?.scene ?? this.multihostSession()?.scene ?? this.v2SingleSession()?.scene ?? SystemSceneSnapshotBuilder.build(model);
 
-        return decorateSystemSceneSnapshotWithCivilizationTiers(
-          snapshot,
-          this.sceneCivilizationTiers(),
-        );
+        const sceneIdentity = systemSceneBiologyIdentity387(model);
+        const authorized =
+          model.stellarSystemCard.knowledgeLevel === ArchiveStellarSystemKnowledgeLevel.CONFIRMED &&
+          model.discoveryState.code >= 5 &&
+          sceneIdentity !== null &&
+          sceneIdentity === this.sceneCivilizationIdentity();
+        return authorized
+          ? decorateSystemSceneSnapshotWithCivilizationTiers(snapshot, this.sceneCivilizationTiers())
+          : stripSystemSceneBiologyVisuals387(snapshot);
       },
     );
 
@@ -291,11 +321,15 @@ export class SystemPage
     model: ReturnType<ArchiveDiscoveryDetailFacade['model']>,
   ): Promise<void> {
     const requestId = ++this.civilizationVisualsRequestId;
+    const identity = systemSceneBiologyIdentity387(model);
     if (
       model === null ||
+      identity === null ||
       model.locatorKind !== ArchiveDiscoveryLocatorKind.SYSTEM ||
+      model.discoveryState.code < 5 ||
       model.stellarSystemCard?.knowledgeLevel !== ArchiveStellarSystemKnowledgeLevel.CONFIRMED
     ) {
+      this.sceneCivilizationIdentity.set(null);
       this.sceneCivilizationTiers.set(new Map());
       return;
     }
@@ -313,6 +347,8 @@ export class SystemPage
       return;
     }
 
+    // The identity changes only with the exact, current successful request.
+    this.sceneCivilizationIdentity.set(identity);
     this.sceneCivilizationTiers.set(tiers);
   }
 

@@ -1,6 +1,7 @@
 import {
   type SystemSceneGiantAtmospherePresentationSnapshot,
 } from './system-scene-giant-atmosphere-presentation';
+import { refineGiantAtmosphereMultiresVISCATM1 } from './system-scene-giant-atmosphere-multires-viscatm1';
 
 export const SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_WIDTH = 256;
 export const SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_HEIGHT = 128;
@@ -86,6 +87,28 @@ export function buildSystemSceneGiantAtmosphereTextureV1(
     );
   const width = assertTextureDimension(input.width, SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_WIDTH, 'width');
   const height = assertTextureDimension(input.height, SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_HEIGHT, 'height');
+  // VISCATM.1b: fiche and focused SystemScene MUST reconstruct from the
+  // same canonical 256x128 base. Building the 1024 atlas independently gave
+  // different high-frequency bands, despite matching planet identity/seed.
+  if (width > SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_WIDTH && height === width / 2) {
+    const base = buildSystemSceneGiantAtmosphereTextureV1({
+      ...input, width: SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_WIDTH,
+      height: SYSTEM_SCENE_GIANT_ATMOSPHERE_TEXTURE_HEIGHT,
+      visualSeedUint32: seedUint32,
+    });
+    return Object.freeze({
+      ...base, width, height,
+      albedoRgba: refineGiantAtmosphereMultiresVISCATM1(
+        base.albedoRgba, base.width, base.height, width,
+        seedUint32, input.atmosphere, 'CLOUD_TOPS',
+      ),
+      upperHazeRgba: base.upperHazeRgba === null ? null :
+        refineGiantAtmosphereMultiresVISCATM1(
+          base.upperHazeRgba, base.width, base.height, width,
+          seedUint32, input.atmosphere, 'UPPER_HAZE',
+        ),
+    });
+  }
   const albedoRgba = new Uint8Array(width * height * 4);
   const upperHazeRgba =
     input.atmosphere.presentationUpperHaze01 > 0.08
@@ -258,6 +281,8 @@ export function buildSystemSceneGiantAtmosphereTextureV1(
     seedUint32,
     width,
     height,
+    // Preserve the historic custom-dimension API. The runtime and scientific
+    // fiche use 2:1 atlases; non-equirectangular test/custom sizes retain V1.
     albedoRgba,
     upperHazeRgba,
   });

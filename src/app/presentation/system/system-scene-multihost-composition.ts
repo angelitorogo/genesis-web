@@ -9,7 +9,7 @@ import {
 } from '../../simulation/stellar/stellar-multihost-public-designation';
 import { projectSystemSceneMotionContributions } from './system-scene-motion-projection';
 import { buildLinearFitSystemScale } from './system-scene-scale-projection';
-import { systemSceneMoonPresentationTimeScale } from './system-scene-secondary-motion';
+import { systemSceneMoonGroupPresentationTimeScaleV1 } from './system-scene-secondary-motion';
 import { v2PlanetTimeScale } from './system-scene-v2-planet-cadence';
 import { assertSystemSceneProjectionSnapshot } from './system-scene-projection-contract';
 import { SystemSceneMultihostMaterializedSources } from './system-scene-multihost-materialized-sources';
@@ -36,7 +36,6 @@ const LOCAL_RADIUS = 2.15;
 const INNER_VISUAL_SECONDS = 300;
 const OUTER_VISUAL_SECONDS = 720;
 const PLANET_MIN_SECONDS = 100;
-const MOON_MIN_SECONDS = 42;
 const MINOR_MIN_SECONDS = 90;
 
 export class SystemSceneMultihostComposition {
@@ -189,6 +188,27 @@ export class SystemSceneMultihostComposition {
         return { motionId, radiusAu: motion.semiMajorAxisAu };
       }).sort((a, b) => a.radiusAu - b.radiusAu);
       const planetRank = new Map(rankedPlanetMotions.map((item, index) => [item.motionId, index + 1]));
+      // Every host planet retains the SAME 90-second outer-moon cadence as
+      // its scientific fiche. Each moon contribution receives the host-group
+      // multiplier, without restricting it to the old single-moon limiter.
+      const periodsByPlanetId = new Map<string, number[]>();
+      for (const moon of local.moons) {
+        const ownMotionId = moon.motionContributions.at(-1)?.motionId;
+        const period = ownMotionId === undefined ? undefined : motionIndex.get(ownMotionId)?.periodDays;
+        if (period === undefined) {
+          throw new Error('Multihost lunar presentation has no authoritative orbital period.');
+        }
+        const periods = periodsByPlanetId.get(moon.hostPlanetId) ?? [];
+        periods.push(period);
+        periodsByPlanetId.set(moon.hostPlanetId, periods);
+      }
+      const moonCadenceByMotionId = new Map<string, number>();
+      for (const moon of local.moons) {
+        const motionId = moon.motionContributions.at(-1)!.motionId;
+        const periods = periodsByPlanetId.get(moon.hostPlanetId)!;
+        moonCadenceByMotionId.set(motionId,
+          systemSceneMoonGroupPresentationTimeScaleV1(periods, playback));
+      }
       const scales = new Map<string, number>();
       const cometVisuals = new Map<string, V2CometVisualOrbit>();
       const ownStar = local.stars[0]!;
@@ -223,8 +243,7 @@ export class SystemSceneMultihostComposition {
         Object.freeze([...hostAnchor, ...parts.map(part => {
           const physical = motionIndex.get(part.motionId);
           const radialRank = planetRank.get(part.motionId);
-          const minimum = part.motionId.startsWith('moon-') ? MOON_MIN_SECONDS :
-            part.motionId.startsWith('planet-') ? PLANET_MIN_SECONDS : MINOR_MIN_SECONDS;
+          const minimum = part.motionId.startsWith('planet-') ? PLANET_MIN_SECONDS : MINOR_MIN_SECONDS;
           const previousTime = part.presentationTimeScale ?? 1;
           // Each materialized host can have a different local playback clock.
           // Preserve its category/rank-defined VISUAL duration on the aggregate
@@ -240,9 +259,9 @@ export class SystemSceneMultihostComposition {
             ...(cometVisuals.has(part.motionId)
               ? { presentationEccentricity: cometVisuals.get(part.motionId)!.eccentricity } : {}),
             linearScenePerAu: scales.get(part.motionId) ?? part.linearScenePerAu ?? local.scale.orbitScaleScenePerAu * factor,
-            presentationTimeScale: planetCadence ?? minorCadence ?? (physical === undefined ? previousTime : Math.min(previousTime,
-              physical.periodDays / (playback * minimum),
-              part.motionId.startsWith('moon-') ? systemSceneMoonPresentationTimeScale(physical.periodDays, playback) : 1)),
+            presentationTimeScale: moonCadenceByMotionId.get(part.motionId) ?? planetCadence ?? minorCadence ??
+              (physical === undefined ? previousTime : Math.min(previousTime,
+                physical.periodDays / (playback * minimum))),
           });
         })]);
       const star = local.stars[0]!;

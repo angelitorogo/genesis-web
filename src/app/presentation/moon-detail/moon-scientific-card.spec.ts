@@ -699,6 +699,7 @@ function previewSceneResolver():
           1,
         proceduralIdentity:
           'G3/S-17/O8',
+        stars: [], // VISSURF.6 source contract: no luminous stars in this fixture.
         planets: [],
         moons: [
           {

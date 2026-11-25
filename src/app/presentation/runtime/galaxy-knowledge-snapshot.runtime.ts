@@ -1,4 +1,5 @@
 import { canonicalGalaxyKnownDiscoveries } from '../../domain/exploration/galaxy-known-discoveries-canonical';
+import { confirmedScientificDiscoveries38BisB7 } from '../../domain/exploration/scientific-confirmation-38-bis-b7';
 import {
   InjectionToken,
 } from '@angular/core';
@@ -17,6 +18,7 @@ import {
 } from '../../domain/discovery/known-discovery';
 
 import {
+  DiscoveryState,
   type DiscoveryStateValue,
 } from '../../domain/discovery/discovery-state';
 
@@ -81,6 +83,16 @@ export interface GalaxyKnowledgeSnapshotRuntime {
     galaxyState: DiscoveryStateValue,
     knownDiscoveries: readonly KnownDiscovery[],
   ): Promise<GalaxyKnowledgeSnapshot>;
+
+  /** Optional for tests implementing the earlier contract. Production stores
+   * confirmed-only projections in IndexedDB so LRU eviction is cheap. */
+  resolveConfirmedTelemetry?(
+    generationKey: UniverseGenerationKey,
+    galaxyIndex: bigint,
+    galaxyState: DiscoveryStateValue,
+    knownDiscoveries: readonly KnownDiscovery[],
+    knowledgeRevision: string,
+  ): Promise<GalaxyExplorationTelemetry>;
 }
 
 export const GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME =
@@ -100,10 +112,34 @@ export const GALAXY_KNOWLEDGE_SNAPSHOT_RUNTIME =
 export class DexieGalaxyKnowledgeSnapshotRuntime
   implements GalaxyKnowledgeSnapshotRuntime {
 
+  // A single hot galaxy snapshot is insufficient for A -> B -> A navigation.
+  // Keep a small, revision-scoped LRU of *derived observed knowledge*, never
+  // private procedural data. Revision equality is checked before every hit.
+  private readonly hotSnapshots = new Map<string, GalaxyKnowledgeSnapshot>();
+  private readonly maxHotSnapshots = 6;
+  // Keep memory bounded; the durable scientific fragment survives any LRU
+  // eviction and a complete component/application reload.
+  private readonly confirmedTelemetryHot = new Map<string, Readonly<{
+    revision: string;
+    telemetry: GalaxyExplorationTelemetry;
+  }>>();
+  private readonly confirmedTelemetryInflight = new Map<string, Promise<GalaxyExplorationTelemetry>>();
+  private readonly latestConfirmedTelemetryRevision = new Map<string, string>();
+  private readonly maxConfirmedTelemetryHot = 6;
+
   constructor(
     private readonly repository: GalaxyKnowledgeSnapshotRepository,
     private readonly clock: () => number = Date.now,
   ) {}
+
+  private remember(identity: string, snapshot: GalaxyKnowledgeSnapshot): GalaxyKnowledgeSnapshot {
+    this.hotSnapshots.delete(identity);
+    this.hotSnapshots.set(identity, snapshot);
+    if (this.hotSnapshots.size > this.maxHotSnapshots) {
+      this.hotSnapshots.delete(this.hotSnapshots.keys().next().value!);
+    }
+    return snapshot;
+  }
 
   async resolve(
     generationKey: UniverseGenerationKey,
@@ -124,6 +160,20 @@ export class DexieGalaxyKnowledgeSnapshotRuntime
         canonicalKnown,
       );
 
+    const identity = [
+      generationKey.universeSeed.serialize(),
+      generationKey.generatorVersionCode,
+      galaxyIndex.toString(10),
+      GALAXY_SCIENTIFIC_MODEL_VERSION,
+    ].join('/');
+    const hot = this.hotSnapshots.get(identity);
+    if (hot?.knowledgeRevision === knowledgeRevision) {
+      return this.remember(identity, hot);
+    }
+    // An earlier identity with changed confirmed knowledge must not survive
+    // this read, even if the persisted snapshot has not yet been rewritten.
+    this.hotSnapshots.delete(identity);
+
     const existing =
       await this.repository.get(
         generationKey,
@@ -137,7 +187,7 @@ export class DexieGalaxyKnowledgeSnapshotRuntime
       existing.statisticsJson !== undefined &&
       existing.explorationTelemetryJson !== undefined
     ) {
-      return restoreSnapshot(existing);
+      return this.remember(identity, restoreSnapshot(existing));
     }
 
     const statistics =
@@ -197,11 +247,125 @@ export class DexieGalaxyKnowledgeSnapshotRuntime
 
     await this.repository.put(entity);
 
-    return Object.freeze({
+    return this.remember(identity, Object.freeze({
       knowledgeRevision,
       statistics,
       explorationTelemetry,
+    }));
+  }
+
+  async resolveConfirmedTelemetry(
+    generationKey: UniverseGenerationKey,
+    galaxyIndex: bigint,
+    galaxyState: DiscoveryStateValue,
+    knownDiscoveries: readonly KnownDiscovery[],
+    knowledgeRevision: string,
+  ): Promise<GalaxyExplorationTelemetry> {
+    // Knowledge revision is always computed from the canonical *persisted*
+    // discovery rows by resolve(); no signal or procedural private data used.
+    const identity = [
+      generationKey.universeSeed.serialize(),
+      generationKey.generatorVersionCode,
+      galaxyIndex.toString(10),
+      GALAXY_SCIENTIFIC_MODEL_VERSION,
+    ].join('/');
+    const revision = `${knowledgeRevision}/${galaxyState.code}`;
+    this.latestConfirmedTelemetryRevision.set(identity, revision);
+    const cached = this.confirmedTelemetryHot.get(identity);
+    if (cached?.revision === revision) {
+      this.confirmedTelemetryHot.delete(identity);
+      this.confirmedTelemetryHot.set(identity, cached);
+      return cached.telemetry;
+    }
+    this.confirmedTelemetryHot.delete(identity);
+
+    const pendingKey = `${identity}|${revision}`;
+    const inflight = this.confirmedTelemetryInflight.get(pendingKey);
+    if (inflight) return inflight;
+
+    const pending = this.loadConfirmedTelemetry(
+      generationKey, galaxyIndex, knownDiscoveries, knowledgeRevision, revision,
+    ).then(telemetry => {
+      // Do not overwrite a newer revision already warmed by a concurrent load.
+      if (this.latestConfirmedTelemetryRevision.get(identity) === revision) {
+        this.confirmedTelemetryHot.delete(identity);
+        this.confirmedTelemetryHot.set(identity, Object.freeze({revision, telemetry}));
+        if (this.confirmedTelemetryHot.size > this.maxConfirmedTelemetryHot) {
+          this.confirmedTelemetryHot.delete(this.confirmedTelemetryHot.keys().next().value!);
+        }
+      }
+      return telemetry;
     });
+    this.confirmedTelemetryInflight.set(pendingKey, pending);
+    try {
+      return await pending;
+    } finally {
+      if (this.confirmedTelemetryInflight.get(pendingKey) === pending) {
+        this.confirmedTelemetryInflight.delete(pendingKey);
+      }
+    }
+  }
+
+  private async loadConfirmedTelemetry(
+    generationKey: UniverseGenerationKey,
+    galaxyIndex: bigint,
+    knownDiscoveries: readonly KnownDiscovery[],
+    knowledgeRevision: string,
+    revision: string,
+  ): Promise<GalaxyExplorationTelemetry> {
+    const persisted = await this.repository.get(
+      generationKey, galaxyIndex, GALAXY_SCIENTIFIC_MODEL_VERSION,
+    );
+    if (
+      persisted?.knowledgeRevision === knowledgeRevision &&
+      persisted.confirmedScientificTelemetryRevision === revision &&
+      persisted.confirmedScientificTelemetryJson !== undefined
+    ) {
+      // A damaged derived fragment may be safely rebuilt. A different
+      // revision MUST NEVER be reused, even if the old one was CONFIRMED.
+      try {
+        return restoreTelemetryJson(persisted.confirmedScientificTelemetryJson);
+      } catch {
+        // Recalculate from authorized records and overwrite this fragment.
+      }
+    }
+
+    const confirmedDiscoveries = confirmedScientificDiscoveries38BisB7(knownDiscoveries);
+    const computed = GalaxyExplorationTelemetryEngine.build(
+      generationKey,
+      galaxyIndex,
+      // Confirmed-only telemetry is a projection, not an upgrade to the
+      // planet/galaxy's persisted discovery state.
+      DiscoveryState.CONFIRMED,
+      confirmedDiscoveries,
+      generateKnownCompactHostCatalog(generationKey, galaxyIndex, confirmedDiscoveries)
+        .map(entry => entry.host),
+    );
+
+    const json = stringifyBigIntTree(computed);
+    const update = this.repository.updateConfirmedScientificTelemetryIfRevisionMatches;
+    if (update) {
+      // Atomic compare-and-update prevents an old background projection from
+      // overwriting a newer galaxy snapshot after an observation transition.
+      await update.call(
+        this.repository, generationKey, galaxyIndex,
+        GALAXY_SCIENTIFIC_MODEL_VERSION, knowledgeRevision, revision, json,
+      );
+    } else {
+      // Backwards-compatible mock repository. Production always uses the
+      // atomic path above; never use an unsafe read-modify-write there.
+      const latest = await this.repository.get(
+        generationKey, galaxyIndex, GALAXY_SCIENTIFIC_MODEL_VERSION,
+      );
+      if (latest?.knowledgeRevision === knowledgeRevision) {
+        await this.repository.put({
+          ...latest,
+          confirmedScientificTelemetryRevision: revision,
+          confirmedScientificTelemetryJson: json,
+        });
+      }
+    }
+    return computed;
   }
 }
 
@@ -346,17 +510,7 @@ function restoreSnapshot(
       stateCounts: GalaxyKnowledgeStatistics['stateCounts'];
     };
 
-  const rawTelemetry =
-    parseBigIntTree(
-      entity.explorationTelemetryJson,
-    ) as {
-      totalSectors: bigint | null;
-      exploredPercentageBasisPoints: bigint | null;
-      inventory: GalaxyExplorationTelemetry['inventory'];
-      breakdown: GalaxyExplorationTelemetry['breakdown'];
-      compactHostSystems?: GalaxyExplorationTelemetry['compactHostSystems'];
-      compactHostPlanets?: bigint;
-    };
+  const explorationTelemetry = restoreTelemetryJson(entity.explorationTelemetryJson);
 
   const statistics =
     new GalaxyKnowledgeStatistics(
@@ -367,15 +521,6 @@ function restoreSnapshot(
       rawStatistics.stateCounts,
     );
 
-  const explorationTelemetry =
-    new GalaxyExplorationTelemetry(
-      rawTelemetry.totalSectors,
-      rawTelemetry.exploredPercentageBasisPoints,
-      rawTelemetry.inventory,
-      rawTelemetry.breakdown,
-      rawTelemetry.compactHostSystems,
-      rawTelemetry.compactHostPlanets ?? 0n,
-    );
 
   return Object.freeze({
     knowledgeRevision:
@@ -384,4 +529,24 @@ function restoreSnapshot(
     statistics,
     explorationTelemetry,
   });
+}
+
+/** Restore through the same domain invariant checks as the existing snapshot. */
+function restoreTelemetryJson(json: string): GalaxyExplorationTelemetry {
+  const raw = parseBigIntTree(json) as {
+    totalSectors: bigint | null;
+    exploredPercentageBasisPoints: bigint | null;
+    inventory: GalaxyExplorationTelemetry['inventory'];
+    breakdown: GalaxyExplorationTelemetry['breakdown'];
+    compactHostSystems?: GalaxyExplorationTelemetry['compactHostSystems'];
+    compactHostPlanets?: bigint;
+  };
+  return new GalaxyExplorationTelemetry(
+    raw.totalSectors,
+    raw.exploredPercentageBasisPoints,
+    raw.inventory,
+    raw.breakdown,
+    raw.compactHostSystems,
+    raw.compactHostPlanets ?? 0n,
+  );
 }

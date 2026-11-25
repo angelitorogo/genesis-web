@@ -1,6 +1,12 @@
 import { Routes } from '@angular/router';
 
 export const genesisRoutes: Routes = [
+  {
+    path: 'laboratorio/colvis1',
+    loadComponent: () => import('./presentation/colvis1-laboratory/colvis1-laboratory')
+      .then(module => module.Colvis1Laboratory),
+    title: 'Arquitectura colonial | Laboratorio GENESIS',
+  },
   // VIDA38_2OE5B_LAB_INDEX: acceso directo desde el índice de Laboratorio.
   {
     path: 'laboratorio/reptilianos-civilizados',

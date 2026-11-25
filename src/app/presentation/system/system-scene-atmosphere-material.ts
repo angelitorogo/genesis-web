@@ -255,6 +255,11 @@ export function createSystemSceneAtmosphereShellMaterialV1(
         uGenesisFrontHaze: {
           value: optics.presentationFrontHaze01,
         },
+        // 1b: cloud decks are already an optical layer. Avoid double-hazing
+        // the *front* of a deep-envelope giant, without removing the limb.
+        uGenesisDeepEnvelopeClarity: {
+          value: optics.deepEnvelope ? 1 : 0,
+        },
         // The shell is an actual optical volume: ray length depends on the
         // distance of a viewing ray from the solid surface/cloud tops.
         uGenesisCoreRadiusRatio: {
@@ -310,6 +315,7 @@ uniform vec3 uGenesisDayTint;
 uniform vec3 uGenesisNightTint;
 uniform float uGenesisRimStrength;
 uniform float uGenesisFrontHaze;
+uniform float uGenesisDeepEnvelopeClarity;
 uniform float uGenesisCoreRadiusRatio;
 uniform float uGenesisTerminatorSoftness;
 uniform float uGenesisTwilightGlow;
@@ -359,10 +365,16 @@ void main() {
   float genesisIllumination = 0.08 + 0.92 * genesisDay;
   // D.4d: depth across the illuminated hemisphere, not just a bright rim.
   // The bounded pressure-derived uniforms keep trace-gas worlds transparent.
+  // The central cloud disk must retain contrast, particularly for ice giants.
+  // Keep tangential optical depth at the limb (1b protects geometric halo).
+  float genesisClarity = uGenesisDeepEnvelopeClarity *
+    (1.0 - smoothstep(0.34, 0.89, genesisImpact));
   float genesisFrontVeil = uGenesisFrontHaze *
-    (0.18 + 0.25 * genesisLimb) * genesisIllumination;
+    (0.18 + 0.25 * genesisLimb) * genesisIllumination *
+    mix(1.0, 0.35, genesisClarity);
   float genesisOpticalDepth = 1.0 - exp(-genesisRayDepth *
-    (0.22 * uGenesisFrontHaze + 0.075 * uGenesisRimStrength));
+    (0.22 * uGenesisFrontHaze + 0.075 * uGenesisRimStrength) *
+    mix(1.0, 0.47, genesisClarity));
   float genesisLimbScattering = genesisLimb * uGenesisRimStrength *
     genesisIllumination * 0.48;
   float genesisTwilightScattering = genesisLimb * genesisTwilight *

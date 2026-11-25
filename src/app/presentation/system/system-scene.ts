@@ -1,9 +1,14 @@
+import { ViscorbSystemLocalPresentationV1, viscorbOrbitGeometryRadiiV1 } from './viscorb-system-local-presentation';
+import { viscorbStellarViewDirectionV1 } from './viscorb-stellar-frame';
 import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
 import { buildAtmosphereOpticalScienceV1 } from './system-scene-atmosphere-optical-science';
 import { resolveSystemSceneAtmospherePhotosphereKelvinV4 } from './system-scene-atmosphere-photosphere-v4';
 import { systemSceneCometActivityVisualParityV1 } from './system-scene-comet-activity-parity';
 import { createSystemSceneTnoRenderableV1 } from './system-scene-tno-renderable';
+import { genesisVisualSceneTrace388 } from '../visual-provenance/genesis-visual-provenance-38-8';
 import { createSystemSceneCapturedRenderableV1 } from './system-scene-captured-renderable';
+import { attachScientificMinorBodyAtlasVis3d2e, type ScientificMinorBodySurfaceKindVis3d2e } from '../scientific-body-preview/scientific-minor-body-texture-vis3d2e';
+import { systemSceneMinorBodyAtlasSource387x, systemSceneMinorBodyNeedsAtlas387x } from './system-scene-minor-body-parity-38-7x';
 import { v2CometStellarIrradianceAtDay } from './system-scene-v2-comet-stellar-flux';
 import {
   isPlatformBrowser,
@@ -32,6 +37,9 @@ import {
 } from '@angular/core';
 
 import * as THREE from 'three';
+import { systemSceneHasConfirmedColonyT7n, systemSceneColonyBodyRingDiameterT7n } from './system-scene-colonies-t7n';
+import { systemSceneColonySiteMarkerPresentationT7t,
+  systemSceneColonySiteMarkerWorldDiameterT7t } from './system-scene-colony-sites-t7t';
 import { installVida38ColonialRadialOcclusion386c4 } from '../infrastructure/vida38-colonial-radial-occlusion-38-6c4';
 import { createVida38InfrastructureSurfaceVisual386, vida38MoonVisibleInfrastructurePlans386c2, type Vida38InfrastructureVisual386 } from '../infrastructure/vida38-infrastructure-render-38-6';
 import { createCompactHostLaboratoryVisual, orientCompactBlackHoleToCamera } from './system-compact-host-laboratory-visual';
@@ -162,10 +170,19 @@ import { systemScenePlanetTextureCacheKeyVISCIV1b } from './system-scene-planet-
 import type { Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
 import { resolveOrbitalHomeStarIdsVISCIV6d } from './system-scene-civilization-host-light-visciv6d';
 
+import { GIANT_ATMOSPHERE_FINE_SEGMENTS_VISCATM1C,
+  giantAtmosphereFineShellRequiredVISCATM1c,
+} from './system-scene-giant-atmosphere-geometry-viscatm1c';
+
 import {
   buildSystemSceneGiantAtmosphereTextureV1,
   type SystemSceneGiantAtmosphereTextureData,
 } from './system-scene-giant-atmosphere-texture';
+import {
+  refineGiantAtmosphereMultiresVISCATM1,
+  GIANT_ATMOSPHERE_DETAIL_VERSION_VISCATM1,
+  giantAtmosphereFocusWidthVISCATM1,
+} from './system-scene-giant-atmosphere-multires-viscatm1';
 
 import {
   buildSystemSceneGlslMaterialProfileV1,
@@ -202,6 +219,13 @@ import {
 import { buildSystemSceneMoonTextureV1 } from './system-scene-moon-texture';
 import type { SystemSceneMoonPresentationV1 } from './system-scene-moon-presentation';
 import { shouldUseMoonDetailLUNSURF1 } from './system-scene-moon-surface-detail-lunsurf1';
+import { PlanetaryLodGroupControllerV1, lodgrpEstimateBytesV1,
+  type LodgrpGroupV1 } from './system-scene-planetary-lod-group-lodgrp1';
+import { LodgrpTimingsV2, lodgrpProximityV2, lodgrpPrioritiseMoonsV2,
+  lodgrpUnstagedAtlasesV2, lodgrpTerminateWorkerV2 }
+  from './system-scene-planetary-lod-acceleration-lodgrp2';
+import type { LodgrpAtlasRequestV1, LodgrpAtlasResultV1,
+  LodgrpAtlasRoleV1, LodgrpSourceTextureV1 } from './system-scene-group-atlas-lodgrp1';
 
 import {
   systemSceneMoonDisplaySpinRadiansV2,
@@ -313,6 +337,8 @@ export type SystemSceneMinorBodyLayerKey =
   | 'capturedObjects';
 
 export interface SystemSceneLayerVisibility {
+  /** T7n: cuerpos colonizados; desactivado por defecto y opcional para runtimes previos. */
+  readonly colonies?: boolean;
   /** Only supplied by the binary/triple laboratory. */
   readonly orbits?: boolean;
   readonly planets:
@@ -614,6 +640,9 @@ export class SystemScene
       true,
     );
 
+  private readonly coloniesVisibleSignalT7n=signal(false);
+  private lastColonySystemIdentityT7n:string|null=null;
+
   private readonly moonsVisibleSignal =
     signal(
       false,
@@ -714,6 +743,19 @@ export class SystemScene
 
   readonly planetsVisible =
     this.planetsVisibleSignal.asReadonly();
+
+  readonly coloniesVisibleT7n=this.coloniesVisibleSignalT7n.asReadonly();
+
+  colonialBodiesCountT7n():number{
+    return [...this.snapshot.planets,...this.snapshot.moons]
+      .filter(body=>systemSceneHasConfirmedColonyT7n(body.visualInfrastructurePlans)).length;
+  }
+
+  toggleColoniesT7n():void{
+    if(this.colonialBodiesCountT7n()===0)return;
+    this.coloniesVisibleSignalT7n.update(value=>!value);
+    this.applyLayerVisibility();
+  }
 
   readonly moonsVisible =
     this.moonsVisibleSignal.asReadonly();
@@ -1346,6 +1388,14 @@ export class SystemScene
   ):
     void {
 
+    if(changes['snapshot']!==undefined){
+      // No reiniciar la capa si el mismo sistema emite un snapshot nuevo.
+      const identity=`${this.snapshot.universeSeed}|${this.snapshot.proceduralIdentity}`;
+      if(identity!==this.lastColonySystemIdentityT7n){
+        this.coloniesVisibleSignalT7n.set(false);
+        this.lastColonySystemIdentityT7n=identity;
+      }
+    }
     if (
       (changes['snapshot'] !== undefined ||
         changes['laboratoryCloseZoom'] !== undefined) &&
@@ -1391,6 +1441,7 @@ export class SystemScene
       ?.setLayerVisibility?.({
         ...(this.laboratoryOrbitControls || this.laboratoryMultipleControls || this.gameplaySceneControls
           ? { orbits: this.orbitLinesVisibleSignal() } : {}),
+        ...(this.coloniesVisibleSignalT7n()?{colonies:true}:{}),
         planets:
           this.planetsVisibleSignal() &&
           this.snapshot.planets.length + (this.snapshot.pulsarPlanetVisuals?.length ?? 0) >
@@ -2073,11 +2124,58 @@ class ThreeSystemSceneRuntime
   private readonly bodyLodBindings =
     new Map<string, SystemSceneBodyLodBindingV1>();
 
+  /** VISCATM.1c: only the inspected giant uses high-tessellation geometry.
+   * The resource is shared across cloud tops, translucent haze and shell. */
+  private giantAtmosphereFineSphereVISCATM1c: THREE.SphereGeometry | null = null;
+  private focusedGiantAtmosphereVISCATM1c: string | null = null;
+  private readonly giantAtmosphereShellsVISCATM1c = new Map<string, readonly {
+    mesh: THREE.Mesh;
+    originalGeometry: THREE.SphereGeometry;
+    originalScale: THREE.Vector3;
+    radius: number;
+  }[]>();
+
+  /** 38.7x: one high-detail minor-body atlas at a time; restores native
+   * materials when zooming away and frees the GPU texture on scene disposal. */
+  private readonly minorBodyAtlasSources387x = new Map<string, {
+    group: THREE.Group;
+    radiusScene: number;
+    body: SystemSceneMinorBodySnapshot;
+    surfaces: readonly THREE.Mesh[];
+    kind: ScientificMinorBodySurfaceKindVis3d2e;
+    seedUint32: number;
+  }>();
+  private focusedMinorBodyAtlas387x: {
+    id: string;
+    texture: THREE.DataTexture;
+    materials: readonly { material: THREE.MeshStandardMaterial; originalMap: THREE.Texture | null }[];
+    detailedGeometry: {
+      mesh: THREE.Mesh;
+      originalGeometry: THREE.BufferGeometry;
+      originalScale: THREE.Vector3;
+      temporaryGeometry: THREE.BufferGeometry;
+    } | null;
+  } | null = null;
+
+  /** T7n: indicadores verdes del cuerpo entero; T7t añade otra capa por emplazamiento. */
+  private readonly colonyBodyMarkerBindingsT7n:Array<{marker:THREE.Sprite;kind:'planet'|'moon'}>=[];
+  /** T7t: círculos pequeños por colonia, visibles SOLO al activar COLONIAS. */
+  private readonly colonySiteMarkerBindingsT7t:Array<{
+    marker:THREE.Sprite;anchor:THREE.Group;body:THREE.Group;
+    kind:'planet'|'moon';radius:number;
+  }>=[];
+  private readonly colonySiteCameraT7t=new THREE.Vector3();
+  private readonly colonySiteWorldT7t=new THREE.Vector3();
+  private readonly colonySiteCenterT7t=new THREE.Vector3();
+  private readonly colonySiteNormalT7t=new THREE.Vector3();
+  private readonly colonySiteToCameraT7t=new THREE.Vector3();
+
   private readonly infrastructureVisualBindings386: Array<{bodyId:string;radius:number;visual:Vida38InfrastructureVisual386}> = [];
 
   /** VIS-3D.1: at most one near-camera planet carries extra GPU texture maps. */
   private detailedPlanetTexture: {
     id: string;
+    detailWidth: number;
     material: THREE.MeshStandardMaterial;
     originalMap: THREE.Texture | null;
     originalRoughness: THREE.Texture | null;
@@ -2105,6 +2203,40 @@ class ThreeSystemSceneRuntime
     normalScale: THREE.Vector2;
     textures: readonly THREE.DataTexture[];
   } | null = null;
+
+  /** LODGRP.1: one planetary system at a time. HD CPU atlases are generated
+   * by a real module Worker, GPU upload is metered, and visible maps swap in
+   * one commit. Individual zoom refiners remain only as a graceful fallback. */
+  private readonly planetaryLodGroupLODGRP1 = new PlanetaryLodGroupControllerV1();
+  private planetaryLodWorkerLODGRP1: Worker | null = null;
+  private planetaryLodBusyLODGRP1 = false;
+  /** LODGRP.2: stage GPU maps as soon as each worker atlas arrives. */
+  private readonly planetaryLodStagedIdsLODGRP2 = new Set<string>();
+  private readonly planetaryLodTimingsLODGRP2 = new LodgrpTimingsV2();
+  private planetaryLodJobStartLODGRP2 = 0;
+  private planetaryLodLastCheckLODGRP1 = -Infinity;
+  private planetaryLodEntryStateLODGRP1: 'OUT'|'PREPARING'|'IN' = 'OUT';
+  private planetaryLodGpuQueueLODGRP1: Array<{id:string;role:LodgrpAtlasRoleV1;texture:THREE.DataTexture}> = [];
+  private planetaryLodGpuReadyLODGRP1: Array<{id:string;role:LodgrpAtlasRoleV1;texture:THREE.DataTexture}> = [];
+  private planetaryLodInstalledLODGRP1: Array<{
+    material: THREE.MeshStandardMaterial | THREE.MeshPhysicalMaterial;
+    originalMap: THREE.Texture | null;
+    originalRoughness: THREE.Texture | null;
+    originalBump: THREE.Texture | null;
+    originalNormal: THREE.Texture | null;
+    originalEmissive: THREE.Texture | null;
+    originalNormalScale: THREE.Vector2;
+    originalRoughnessValue: number;
+    cloudMaterial: THREE.MeshStandardMaterial | null;
+    originalCloud: THREE.Texture | null;
+  }> = [];
+  private planetaryLodRequestFrameLODGRP1 = false;
+  private planetaryLodPreparationStartLODGRP1 = 0;
+  private readonly planetaryLodDebugLODGRP1 = typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('genesisLodGrpDebug') === '1';
+  private planetaryLodLastFrameLODGRP1 = 0;
+  private readonly planetaryLodFrameSamplesLODGRP1:number[]=[];
+  private readonly planetaryLodApoapsisCacheLODGRP1=new Map<string,number>();
 
   /** Hidden moon layers defer 25.10 texture/material creation until first reveal. */
   private readonly pendingMoonVisuals =
@@ -2192,6 +2324,9 @@ class ThreeSystemSceneRuntime
 
   private readonly artificialSatelliteLightDirection =
     new THREE.Vector3();
+
+  /** VISCORB.1: transient local presentation of an already known moon system. */
+  private readonly viscorbLocalPresentation = new ViscorbSystemLocalPresentationV1();
 
   private readonly animatedOrbits =
     new Map<string, THREE.LineLoop>();
@@ -2333,6 +2468,7 @@ class ThreeSystemSceneRuntime
     SystemSceneLayerVisibility =
     Object.freeze({
       planets: true,
+      colonies:false,
       orbits: true,
       moons: false,
       habitableZone: false,
@@ -2669,6 +2805,9 @@ class ThreeSystemSceneRuntime
 
     this.scene.name =
       `GENESIS System ${snapshot.proceduralIdentity}`;
+    // 38.8: informational provenance only; never a discovery gate or shader change.
+    this.scene.userData['genesisVisualTrace38_8'] =
+      genesisVisualSceneTrace388(snapshot.proceduralIdentity);
 
     this
       .renderer
@@ -2883,6 +3022,8 @@ class ThreeSystemSceneRuntime
   ): void {
 
     this.assertAlive();
+    const previousMoonsLODGRP1=this.layerVisibility.moons;
+    const previousPlanetsLODGRP1=this.layerVisibility.planets;
     this.layerVisibility =
       Object.freeze({
         ...visibility,
@@ -2892,14 +3033,37 @@ class ThreeSystemSceneRuntime
       visibility.moons
     ) {
       this.materializePendingMoonVisuals();
+      // Re-enable the local orbit frame while continuing to follow its host.
+      const host = this.trackedBodyId === null ? null :
+        this.bodySnapshotById.get(this.trackedBodyId);
+      if (host?.kind === 'planet' && this.currentSnapshot &&
+          !this.viscorbLocalPresentation.resume(host.id)) {
+        this.viscorbLocalPresentation.begin(
+          host, this.currentSnapshot.planets, this.currentSnapshot.moons,
+          this.currentSnapshot.orbits, this.currentSnapshot.scale,
+          this.animatedBodies, this.animatedOrbits,
+        );
+      }
+    } else {
+      this.viscorbLocalPresentation.release();
     }
 
+    if (previousMoonsLODGRP1 !== visibility.moons ||
+        previousPlanetsLODGRP1 !== visibility.planets)
+      this.resetPlanetaryLodGroupLODGRP1(false);
     this.applyLayerVisibilityToObjects();
     this.renderFrame();
   }
 
   private applyLayerVisibilityToObjects():
     void {
+    for(const {marker,kind} of this.colonyBodyMarkerBindingsT7n){
+      marker.visible=!!this.layerVisibility.colonies &&
+        (kind==='planet'?this.layerVisibility.planets:this.layerVisibility.moons);
+    }
+    // Sin marcas de emplazamientos cuando COLONIAS está desactivado.
+    // La visibilidad por hemisferio y zoom se actualiza en cada fotograma.
+    for(const {marker} of this.colonySiteMarkerBindingsT7t)marker.visible=false;
     for (
       const object
       of this.planetLayerObjects
@@ -3188,6 +3352,8 @@ class ThreeSystemSceneRuntime
     this.motionById.clear();
 
     this.clearFrameObjects();
+    this.giantAtmosphereFineSphereVISCATM1c?.dispose();
+    this.giantAtmosphereFineSphereVISCATM1c = null;
     this.cameraController.dispose();
     this.releaseDetailedPlanetTexture();
     this.releaseFocusedLunarSurfaceLUNSURF1();
@@ -3245,22 +3411,46 @@ class ThreeSystemSceneRuntime
       return false;
     }
 
-    this.scene.updateMatrixWorld(
-      true,
-    );
+    // Restore any previous local moon frame before following another body.
+    if (this.viscorbLocalPresentation.hostId !== null) {
+      this.viscorbLocalPresentation.endImmediately();
+      this.applySimulationDay(this.lightingSimulationDay);
+    }
+    this.scene.updateMatrixWorld(true);
+    object.getWorldPosition(this.trackedWorldPosition);
+    this.trackedBodyId = bodyId;
+    // Start worker module loading at the BEGINNING of the camera journey.
+    // Heavy atlas work still starts only when the group proximity policy allows.
+    if (body.kind === 'planet' || body.kind === 'moon')
+      this.ensurePlanetaryLodWorkerLODGRP1();
 
-    object.getWorldPosition(
-      this.trackedWorldPosition,
-    );
+    const localOrbitExtent =
+      body.kind === 'planet' && this.layerVisibility.moons && this.currentSnapshot
+        ? this.viscorbLocalPresentation.begin(
+            body, this.currentSnapshot.planets,
+            this.currentSnapshot.moons.filter(moon => this.isBodySnapshotVisible(moon)),
+            this.currentSnapshot.orbits, this.currentSnapshot.scale,
+            this.animatedBodies, this.animatedOrbits,
+          )
+        : null;
 
-    this.trackedBodyId =
-      bodyId;
-
+    const stellarSources = this.currentSnapshot?.stars.flatMap(star => {
+      const starObject = this.animatedBodies.get(star.id);
+      if (!starObject) return [];
+      const position = starObject.getWorldPosition(new THREE.Vector3());
+      return [{id:star.id,x:position.x,y:position.y,z:position.z,
+        sourceLuminositySolar:star.sourceLuminositySolar}];
+    }) ?? [];
+    const direction = body.kind === 'planet'
+      ? viscorbStellarViewDirectionV1(
+          this.trackedWorldPosition, stellarSources, body.orbitalHomeStarIds ?? [],
+        ) : null;
     this.cameraController.beginBodyTracking(
       this.trackedWorldPosition,
-      systemSceneVisualExtentRadiusScene(
-        body,
-      ),
+      systemSceneVisualExtentRadiusScene(body),
+      Math.max(systemSceneVisualExtentRadiusScene(body),
+        localOrbitExtent === null ? 0 : localOrbitExtent * 0.34),
+      direction === null ? null : new THREE.Vector3(direction.x,direction.y,direction.z),
     );
 
     this.updateAnimationLoop();
@@ -3277,6 +3467,7 @@ class ThreeSystemSceneRuntime
     this.scene.updateMatrixWorld(true);
     star.getWorldPosition(this.trackedWorldPosition);
     this.trackedBodyId = starId;
+    this.viscorbLocalPresentation.release();
     this.cameraController.beginBodyTracking(this.trackedWorldPosition, radiusScene);
     this.updateAnimationLoop();
     this.renderFrame();
@@ -3290,6 +3481,7 @@ class ThreeSystemSceneRuntime
 
     this.trackedBodyId =
       null;
+    this.viscorbLocalPresentation.release();
 
     this.cameraController.stopBodyTracking();
 
@@ -4758,11 +4950,30 @@ class ThreeSystemSceneRuntime
       sphere,
     );
     if (planet.visualInfrastructurePlans?.length && planet.surfaceStyle !== 'gaseous') {
-      const infra = createVida38InfrastructureSurfaceVisual386(planet.visualInfrastructurePlans,planet.radiusScene,appearance.nightLightsTexture,null,true);
+      const infra = createVida38InfrastructureSurfaceVisual386(planet.visualInfrastructurePlans,planet.radiusScene,appearance.nightLightsTexture,null,true,planet.physicalRadiusEarthCOLVIS1??null,{
+        temperatureKelvin:planet.surfaceEnvironment?.meanSurfaceTemperatureKelvin??null,
+        pressurePascal:planet.surfaceEnvironment?.retainedSurfacePressurePascal??null,
+        iceCoverage01:planet.surfaceEnvironment?.surfaceIceCoverageFraction01??null},false,false);
       this.installColonialNaturalShading386c3(infra,appearance.lightBinding);
       spinPivot.add(infra.group);
+      this.addColonySiteMarkersT7t(spinPivot,infra,planet.radiusScene,'planet');
+      if(systemSceneHasConfirmedColonyT7n(planet.visualInfrastructurePlans))
+        this.addColonyBodyMarkerT7n(spinPivot,planet.radiusScene,'planet');
       this.frameDisposables.push(...infra.resources);
       this.infrastructureVisualBindings386.push({bodyId:planet.id,radius:planet.radiusScene,visual:infra});
+    }
+
+    if (planet.giantAtmosphere !== null) {
+      const shellBindings = appearance.overlays.filter(
+        (overlay): overlay is THREE.Mesh<THREE.SphereGeometry> =>
+          overlay instanceof THREE.Mesh && overlay.geometry instanceof THREE.SphereGeometry,
+      ).map(mesh => ({
+        mesh,
+        originalGeometry: mesh.geometry,
+        originalScale: mesh.scale.clone(),
+        radius: mesh.geometry.parameters.radius,
+      }));
+      this.giantAtmosphereShellsVISCATM1c.set(planet.id, shellBindings);
     }
 
     for (
@@ -5332,9 +5543,14 @@ class ThreeSystemSceneRuntime
         ? {geometry:renderable.surfaceMesh.geometry,geometryScale:1,
            radiusEarth:moon.visualPresentation.sourceRadiusEarth}
         : null;
-      const infra = createVida38InfrastructureSurfaceVisual386(moonInfrastructure,radius,null,irregularSurface,true);
+      const infra = createVida38InfrastructureSurfaceVisual386(moonInfrastructure,radius,null,irregularSurface,true,moon.visualPresentation.sourceRadiusEarth,{
+        temperatureKelvin:moon.visualPresentation.sourceEstimatedSurfaceTemperatureKelvin,
+        pressurePascal:null,iceCoverage01:moon.visualPresentation.presentationIceCoverage01},false,false);
       if (moonLight) this.installColonialNaturalShading386c3(infra,moonLight);
       spinPivot.add(infra.group);
+      this.addColonySiteMarkersT7t(spinPivot,infra,radius,'moon');
+      if(systemSceneHasConfirmedColonyT7n(moonInfrastructure))
+        this.addColonyBodyMarkerT7n(spinPivot,radius,'moon');
       this.frameDisposables.push(...infra.resources);
       this.infrastructureVisualBindings386.push({bodyId:moon.id,radius,visual:infra});
     }
@@ -5619,6 +5835,22 @@ class ThreeSystemSceneRuntime
       }
     }
 
+    const atlasSource387x = systemSceneMinorBodyAtlasSource387x(body);
+    if (atlasSource387x !== null) {
+      const surfaces: THREE.Mesh[] = [];
+      group.traverse(child => {
+        if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+          surfaces.push(child);
+        }
+      });
+      if (surfaces.length > 0) {
+        this.minorBodyAtlasSources387x.set(body.id, {
+          group, radiusScene: body.radiusScene, body, surfaces,
+          kind: atlasSource387x.kind, seedUint32: atlasSource387x.seedUint32,
+        });
+      }
+    }
+
     if (minorLight !== null) {
       this.bodyLightBindings.set(body.id, minorLight);
       installV2BodyLightingOnSurfaces(group, minorLight);
@@ -5787,7 +6019,7 @@ class ThreeSystemSceneRuntime
         );
       const radius =
         visible
-          ? this.selectionProxyRadii[index]!
+          ? this.selectionProxyRadii[index]! * group.scale.x
           : 1e-6;
 
       if (visible) {
@@ -6473,6 +6705,9 @@ class ThreeSystemSceneRuntime
 
   private clearFrameObjects():
     void {
+    this.viscorbLocalPresentation.endImmediately();
+    this.resetPlanetaryLodGroupLODGRP1(true);
+    this.planetaryLodApoapsisCacheLODGRP1.clear();
 
     if (
       this.selectionMarker !==
@@ -6485,6 +6720,9 @@ class ThreeSystemSceneRuntime
     this.trackedBodyId =
       null;
     this.cameraController.stopBodyTracking();
+
+    this.releaseFocusedMinorBodyAtlas387x();
+    this.minorBodyAtlasSources387x.clear();
 
     disposeResources(
       this.frameDisposables,
@@ -6547,12 +6785,16 @@ class ThreeSystemSceneRuntime
     this.capturedObjectLayerObjects.length =
       0;
     this.minorBodyOrbitLayerKeys.clear();
+    this.updateGiantAtmosphereFineGeometryVISCATM1c(null);
+    this.giantAtmosphereShellsVISCATM1c.clear();
     this.bodySnapshotById.clear();
     this.releaseDetailedPlanetTexture();
     this.releaseFocusedLunarSurfaceLUNSURF1();
     this.lunarSurfaceFocusSourcesLUNSURF1.clear();
     this.bodyLodBindings.clear();
     this.infrastructureVisualBindings386.length = 0;
+    this.colonyBodyMarkerBindingsT7n.length=0;
+    this.colonySiteMarkerBindingsT7t.length=0;
     this.pendingMoonVisuals.clear();
     this.animatedBodies.clear();
     this.spinningBodies.clear();
@@ -6665,6 +6907,15 @@ class ThreeSystemSceneRuntime
       planetObject.getWorldPosition(
         this.planetLightPlanetWorldPosition,
       );
+      // VISCORB.1: enlarged presentation orbits must not change the scientific
+      // stellar direction/flux of a moon. Use its untouched projected position.
+      if (body.kind === 'moon') {
+        const physical = this.viscorbLocalPresentation.physicalMoonPosition(body.id);
+        if (physical !== null) {
+          this.planetLightPlanetWorldPosition.copy(physical)
+            .applyMatrix4(this.presentationRoot.matrixWorld);
+        }
+      }
       const tripleFluxes = tripleSources === null ? null : v2TripleBodyLightFluxes(
         body.motionContributions, snapshot.motions, tripleSources, this.lightingSimulationDay,
       );
@@ -6793,10 +7044,415 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  /** Visible bodies only. Neither private moon records nor undiscovered
+   * infrastructure are ever consulted to build a group. */
+  private planetaryLodMembersLODGRP1(hostId:string): readonly string[] {
+    if (!this.currentSnapshot || !this.layerVisibility.moons) return [];
+    return this.currentSnapshot.moons
+      .filter(moon => moon.hostPlanetId === hostId && this.isBodySnapshotVisible(moon) &&
+        this.lunarSurfaceFocusSourcesLUNSURF1.has(moon.id))
+      .map(moon => moon.id);
+  }
+
+  private planetaryLodGroupGiantLODGRP1(hostId:string): boolean {
+    const body = this.bodySnapshotById.get(hostId);
+    return body?.kind === 'planet' && body.giantAtmosphere !== null;
+  }
+
+  /** Independent from each moon's pixel diameter. Following ANY moon keeps
+   * its host group's LOD and prevents texture regeneration on a focus change. */
+  private updatePlanetaryLodGroupLODGRP1(): void {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    if (now - this.planetaryLodLastCheckLODGRP1 < 120 &&
+        this.planetaryLodGpuQueueLODGRP1.length === 0 &&
+        this.planetaryLodGroupLODGRP1.status.phase !== 'READY') return;
+    this.planetaryLodLastCheckLODGRP1 = now;
+    if (!this.currentSnapshot || !this.layerVisibility.planets) {
+      this.resetPlanetaryLodGroupLODGRP1(false);return;
+    }
+    const focusId = this.trackedBodyId;
+    const focus = focusId ? this.bodySnapshotById.get(focusId) : null;
+    const forcedHost = focus?.kind === 'planet' ? focus.id
+      : focus?.kind === 'moon' ? focus.hostPlanetId : null;
+    let best: {hostId:string;pixels:number;followed:boolean} | null = null;
+    for (const host of this.currentSnapshot.planets) {
+      const object = this.animatedBodies.get(host.id);
+      if (!object || !objectHierarchyVisible(object)) continue;
+      object.getWorldPosition(this.lodWorldPosition);
+      const dist = this.cameraWorldPosition.distanceTo(this.lodWorldPosition);
+      const centre = this.lodWorldPosition.project(this.camera);
+      const explicit = forcedHost === host.id;
+      const inView = centre.z >= -1 && centre.z <= 1 &&
+        Math.abs(centre.x) <= 1.35 && Math.abs(centre.y) <= 1.35;
+      const moonIds = this.planetaryLodMembersLODGRP1(host.id);
+      // Apoapsis from existing VISCORB orbit geometry (no changed orbital
+      // elements). The projected enquiry is bounded to prevent giant remote
+      // orbits from preloading the entire stellar scene.
+      let outerRadius=host.radiusScene;
+      let nearestMoonPixels=0;
+      for (const id of moonIds) {
+        const moon=this.bodySnapshotById.get(id);
+        if (moon?.kind !== 'moon') continue;
+        const line=this.animatedOrbits.get(moon.orbitId);
+        if (line) {
+          let apoapsis=this.planetaryLodApoapsisCacheLODGRP1.get(moon.orbitId);
+          if (apoapsis===undefined) {
+            apoapsis=viscorbOrbitGeometryRadiiV1(line.geometry)?.apoapsis ?? 0;
+            this.planetaryLodApoapsisCacheLODGRP1.set(moon.orbitId,apoapsis);
+          }
+          outerRadius=Math.max(outerRadius,apoapsis * Math.max(1,line.scale.x));
+        }
+        const moonObject=this.animatedBodies.get(id);
+        if (!moonObject || !objectHierarchyVisible(moonObject)) continue;
+        moonObject.getWorldPosition(this.lodWorldPosition);
+        const moonCentre=this.lodWorldPosition.project(this.camera);
+        if (moonCentre.z < -1 || moonCentre.z > 1 ||
+          Math.abs(moonCentre.x) > 1.35 || Math.abs(moonCentre.y) > 1.35) continue;
+        const moonDist=this.cameraWorldPosition.distanceTo(this.lodWorldPosition);
+        const moonRadius=this.bodyLodBindings.get(id)?.radiusScene ?? moon.radiusScene;
+        const effectiveRadius=moonRadius * moonObject.scale.x;
+        nearestMoonPixels=Math.max(nearestMoonPixels,
+          systemSceneProjectedDiameterPixelsV1(Math.max(effectiveRadius,host.radiusScene*.4),
+            Math.max(moonDist,moonRadius*1.05),this.camera.fov,this.viewportHeightPixels));
+      }
+      if (!explicit && !inView && nearestMoonPixels < 35) continue;
+      const visualEnvelope=Math.min(Math.max(host.radiusScene*2,outerRadius),host.radiusScene*24);
+      const hostPixels=inView ? systemSceneProjectedDiameterPixelsV1(visualEnvelope,
+        Math.max(dist,host.radiusScene*1.05),this.camera.fov,this.viewportHeightPixels):0;
+      const pixels=Math.max(hostPixels,nearestMoonPixels);
+      if (!explicit && pixels < 35) continue;
+      if (!best || (explicit && !best.followed) ||
+          (explicit === best.followed && pixels > best.pixels))
+        best = {hostId:host.id,pixels,followed:explicit};
+    }
+    const currentlyActive = this.planetaryLodGroupLODGRP1.hostId;
+    const sameHost = best?.hostId === currentlyActive;
+    const proximity = best === null ? 'OUT' : lodgrpProximityV2(best.pixels,
+      best.followed,
+      sameHost ? this.planetaryLodEntryStateLODGRP1 : 'OUT');
+    if (!best || proximity === 'OUT') {
+      if (currentlyActive !== null) this.resetPlanetaryLodGroupLODGRP1(false);
+      this.planetaryLodEntryStateLODGRP1='OUT';return;
+    }
+    this.planetaryLodEntryStateLODGRP1=proximity;
+    const members=this.planetaryLodMembersLODGRP1(best.hostId);
+    // Prioritise the moon being followed, then those nearer the camera. The
+    // controller compares membership as a set: focus changes cannot restart it.
+    const scores=new Map<string,number>();
+    for (const moonId of members) {
+      const moonObject=this.animatedBodies.get(moonId);
+      if (!moonObject) continue;
+      moonObject.getWorldPosition(this.lodWorldPosition);
+      scores.set(moonId,-this.cameraWorldPosition.distanceTo(this.lodWorldPosition));
+    }
+    const orderedMembers=lodgrpPrioritiseMoonsV2(members,
+      focus?.kind==='moon' ? focus.id : this.selectedBodyId,scores);
+    const group:LodgrpGroupV1={hostId:best.hostId,moonIds:orderedMembers,
+      requestedBytes:lodgrpEstimateBytesV1(members.length)};
+    if (this.planetaryLodGroupLODGRP1.begin(group)) {
+      this.cancelPlanetaryLodWorkerLODGRP1();
+      this.releasePlanetaryLodGpuLODGRP1();
+      this.releaseDetailedPlanetTexture();
+      this.releaseFocusedLunarSurfaceLUNSURF1();
+      this.planetaryLodPreparationStartLODGRP1=now;
+      this.planetaryLodTimingsLODGRP2.begin(now);
+      // Cache hits can be uploaded while the worker calculates missing moons.
+      this.stagePlanetaryLodGpuLODGRP1();
+      if (this.planetaryLodGroupLODGRP1.status.phase === 'READY')
+        this.planetaryLodTimingsLODGRP2.cpuCompleted(now);
+      this.debugPlanetaryLodLODGRP1('start');
+      this.requestNextPlanetaryLodBodyLODGRP1();
+    }
+    // Queued maps are prepared concurrently with the remaining CPU atlases.
+    // This is intentionally NOT gated on phase READY.
+    if (this.planetaryLodGroupLODGRP1.status.phase === 'READY')
+      this.stagePlanetaryLodGpuLODGRP1();
+    // GPU upload one texture per frame. Map replacement is atomic only after
+    // all required textures have already been uploaded.
+    if (this.planetaryLodGpuQueueLODGRP1.length) {
+      const entry=this.planetaryLodGpuQueueLODGRP1.shift()!;
+      try {
+        const gpuStart=typeof performance!=='undefined'?performance.now():Date.now();
+        this.renderer.initTexture(entry.texture);
+        this.planetaryLodTimingsLODGRP2.uploaded(
+          (typeof performance!=='undefined'?performance.now():Date.now())-gpuStart);
+        this.planetaryLodGpuReadyLODGRP1.push(entry);
+      } catch {
+        this.planetaryLodGroupLODGRP1.fail();
+        this.releasePlanetaryLodGpuLODGRP1();
+        this.cancelPlanetaryLodWorkerLODGRP1(true);
+        this.debugPlanetaryLodLODGRP1('GPU upload failed; adaptive fallback');
+      }
+      this.wakePlanetaryLodFrameLODGRP1();
+    }
+    if (this.planetaryLodGroupLODGRP1.status.phase === 'READY' &&
+        !this.planetaryLodGpuQueueLODGRP1.length &&
+        this.planetaryLodGpuReadyLODGRP1.length) {
+      this.planetaryLodTimingsLODGRP2.gpuCompleted(
+        typeof performance!=='undefined'?performance.now():Date.now());
+      this.commitPlanetaryLodGroupLODGRP1();
+    }
+  }
+
+  /** Idle workers survive completed groups. Busy workers are terminated when
+   * cancelling obsolete work; a stale result can never overwrite a new group. */
+  private ensurePlanetaryLodWorkerLODGRP1(): void {
+    if (this.planetaryLodWorkerLODGRP1 || typeof Worker === 'undefined') return;
+    try {
+      const worker=new Worker(
+        new URL('./system-scene-group-atlas-lodgrp1.worker.ts',import.meta.url),{type:'module'});
+      this.planetaryLodWorkerLODGRP1=worker;
+      worker.onmessage=(event:MessageEvent<{
+        ok:boolean;result?:(LodgrpAtlasResultV1 & {cpuMs?:number});generation?:number;
+        error?:string;
+      }>)=>{
+        if (event.currentTarget !== this.planetaryLodWorkerLODGRP1) return;
+        this.planetaryLodBusyLODGRP1=false;
+        const now=typeof performance!=='undefined'?performance.now():Date.now();
+        const msg=event.data;
+        if (msg.ok && msg.result && this.planetaryLodGroupLODGRP1.accept(msg.result)) {
+          this.planetaryLodTimingsLODGRP2.generated(msg.result.cpuMs ?? 0,
+            now-this.planetaryLodJobStartLODGRP2,now);
+          // The GPU can start while this same worker generates the NEXT moon.
+          this.stagePlanetaryLodGpuLODGRP1();
+          if (this.planetaryLodGroupLODGRP1.status.phase === 'READY')
+            this.planetaryLodTimingsLODGRP2.cpuCompleted(now);
+          this.requestNextPlanetaryLodBodyLODGRP1();
+          this.wakePlanetaryLodFrameLODGRP1();
+        } else if (!msg.ok && msg.generation === this.planetaryLodGroupLODGRP1.status.generation) {
+          this.planetaryLodGroupLODGRP1.fail();
+          this.releasePlanetaryLodGpuLODGRP1();
+          this.debugPlanetaryLodLODGRP1(`worker: ${msg.error ?? 'failure'}`);
+          this.cancelPlanetaryLodWorkerLODGRP1(true);
+        }
+      };
+      worker.onerror=(event)=>{
+        if (event.currentTarget !== this.planetaryLodWorkerLODGRP1) return;
+        this.planetaryLodBusyLODGRP1=false;
+        this.planetaryLodGroupLODGRP1.fail();
+        this.releasePlanetaryLodGpuLODGRP1();
+        this.cancelPlanetaryLodWorkerLODGRP1(true);
+        this.debugPlanetaryLodLODGRP1('worker unavailable; adaptive fallback');
+      };
+    } catch {
+      this.planetaryLodWorkerLODGRP1=null;
+    }
+  }
+
+  private requestNextPlanetaryLodBodyLODGRP1(): void {
+    if (!this.planetaryLodGroupLODGRP1.preparing || this.planetaryLodBusyLODGRP1) return;
+    const id=this.planetaryLodGroupLODGRP1.pendingIds[0];
+    if (!id) return;
+    const body=this.bodySnapshotById.get(id);
+    let request:LodgrpAtlasRequestV1 | null=null;
+    if (body?.kind === 'planet') {
+      const binding=this.bodyLodBindings.get(id);
+      if (!binding?.planetSystemIdentity || !(binding.mesh.material instanceof THREE.MeshStandardMaterial)) {
+        this.planetaryLodGroupLODGRP1.fail();return;
+      }
+      const material=binding.mesh.material;
+      const spin=this.spinningBodies.get(id);
+      const cloud=spin?.children.find(child => child !== binding.mesh && child instanceof THREE.Mesh &&
+        child.material instanceof THREE.MeshStandardMaterial && child.material.transparent);
+      const cloudMap=cloud instanceof THREE.Mesh && cloud.material instanceof THREE.MeshStandardMaterial
+        ? cloud.material.map : null;
+      const source=(map:THREE.Texture|null):LodgrpSourceTextureV1 | undefined => {
+        if (!(map instanceof THREE.DataTexture)) return undefined;
+        const image=map.image as {width:number;height:number;data:Uint8Array};
+        return image?.data instanceof Uint8Array
+          ? {width:image.width,height:image.height,pixels:image.data} : undefined;
+      };
+      const originalMap=material.map;
+      const genericSeed=systemScenePlanetTextureSeed({systemIdentity:binding.planetSystemIdentity,
+        planetId:id,surfaceStyle:planetTextureSurfaceStyle(body)});
+      const seed=body.giantAtmosphere === null ? genericSeed :
+        originalMap instanceof THREE.DataTexture
+          ? (originalMap.userData['genesisGiantAtmosphereSeedVISCATM1'] as number | undefined) ?? genericSeed
+          : genericSeed;
+      const solidSource=originalMap instanceof THREE.DataTexture
+        ? (originalMap.userData['genesisSolidSurfaceSourceVISSURF1'] as SystemScenePlanetSurfaceTextureData | undefined) ?? null
+        : null;
+      const solidSeed=originalMap instanceof THREE.DataTexture
+        ? (originalMap.userData['genesisSolidSurfaceSeedVISSURF1'] as number | undefined) ?? seed : seed;
+      request={type:'planet',generation:this.planetaryLodGroupLODGRP1.status.generation,
+        bodyId:id,seed,solidSeed,giantAtmosphere:body.giantAtmosphere,
+        solidSource:solidSource?.surfaceClassMask ? solidSource : null,
+        source:{albedo:source(material.map),roughness:source(material.roughnessMap),
+          relief:source(material.bumpMap),emissive:source(material.emissiveMap),
+          cloud:source(cloudMap)}};
+    } else if (body?.kind === 'moon') {
+      const source=this.lunarSurfaceFocusSourcesLUNSURF1.get(id);
+      if (!source) {this.planetaryLodGroupLODGRP1.fail();return;}
+      request={type:'moon',generation:this.planetaryLodGroupLODGRP1.status.generation,
+        bodyId:id,presentation:source.presentation};
+    }
+    if (!request) {this.planetaryLodGroupLODGRP1.fail();return;}
+    try {
+      this.ensurePlanetaryLodWorkerLODGRP1();
+      if (!this.planetaryLodWorkerLODGRP1) throw new Error('Worker unavailable');
+      this.planetaryLodBusyLODGRP1=true;
+      this.planetaryLodJobStartLODGRP2=
+        typeof performance!=='undefined'?performance.now():Date.now();
+      this.planetaryLodWorkerLODGRP1.postMessage(request);
+    } catch {
+      this.planetaryLodBusyLODGRP1=false;
+      this.planetaryLodGroupLODGRP1.fail();
+      this.cancelPlanetaryLodWorkerLODGRP1();
+    }
+  }
+
+  private stagePlanetaryLodGpuLODGRP1(): void {
+    for (const atlas of lodgrpUnstagedAtlasesV2(
+      this.planetaryLodGroupLODGRP1.prepared,this.planetaryLodStagedIdsLODGRP2)) {
+      for (const [role,pixels] of Object.entries(atlas.maps) as [LodgrpAtlasRoleV1,Uint8Array][]) {
+        if (!(pixels instanceof Uint8Array)) continue;
+        const width=atlas.type==='moon' || (atlas.solid &&
+          role!=='cloud' && role!=='emissive') ? 1024 : atlas.width;
+        const texture=createRgbaDataTexture(width,width/2,pixels,`GENESIS LODGRP.1 ${atlas.bodyId} ${role}`);
+        if (role==='normal'||role==='roughness'||role==='relief') texture.colorSpace=THREE.NoColorSpace;
+        if (atlas.solid && (role==='albedo'||role==='normal'||role==='roughness'||role==='relief'))
+          prepareSolidSurfaceDataTextureVISSURF5c(texture,
+            role==='albedo'?'COLOR':role==='normal'?'NORMAL':role==='roughness'?'ROUGHNESS':'RELIEF');
+        if (atlas.type==='moon') texture.anisotropy=4;
+        this.planetaryLodGpuQueueLODGRP1.push({id:atlas.bodyId,role,texture});
+      }
+      this.planetaryLodStagedIdsLODGRP2.add(atlas.bodyId);
+    }
+    if (this.planetaryLodGpuQueueLODGRP1.length)
+      this.wakePlanetaryLodFrameLODGRP1();
+  }
+
+  private commitPlanetaryLodGroupLODGRP1(): void {
+    const staged=this.planetaryLodGpuReadyLODGRP1;
+    const mats:Array<(typeof this.planetaryLodInstalledLODGRP1)[number]>=[];
+    // Resolve all destination materials before applying any map, to prevent a
+    // partial group activation when the scene or layer changed meanwhile.
+    for (const id of this.planetaryLodGroupLODGRP1.memberIds) {
+      const body=this.bodySnapshotById.get(id);
+      const surface=body?.kind==='planet' ? this.bodyLodBindings.get(id)?.mesh
+        : this.lunarSurfaceFocusSourcesLUNSURF1.get(id)?.mesh;
+      if (!(surface?.material instanceof THREE.MeshStandardMaterial)) {
+        this.planetaryLodGroupLODGRP1.fail();
+        this.releasePlanetaryLodGpuLODGRP1();return;
+      }
+      const material=surface.material;
+      const cloud=body?.kind==='planet' ? this.spinningBodies.get(id)?.children.find(child =>
+        child !== surface && child instanceof THREE.Mesh &&
+        child.material instanceof THREE.MeshStandardMaterial && child.material.transparent) : null;
+      const cloudMaterial=cloud instanceof THREE.Mesh && cloud.material instanceof THREE.MeshStandardMaterial
+        ? cloud.material : null;
+      mats.push({material,originalMap:material.map,originalRoughness:material.roughnessMap,
+        originalBump:material.bumpMap,originalNormal:material.normalMap,
+        originalEmissive:material.emissiveMap,originalNormalScale:material.normalScale.clone(),
+        originalRoughnessValue:material.roughness,cloudMaterial,originalCloud:cloudMaterial?.map ?? null});
+    }
+    const ids=this.planetaryLodGroupLODGRP1.memberIds;
+    if (ids.some(id => !staged.some(x => x.id===id && x.role==='albedo'))) {
+      this.planetaryLodGroupLODGRP1.fail();this.releasePlanetaryLodGpuLODGRP1();return;
+    }
+    // Record originals BEFORE the first swap; any later failure can restore.
+    this.planetaryLodInstalledLODGRP1=mats;
+    for (let index=0;index<ids.length;index++) {
+      const id=ids[index]!;
+      const entry=mats[index]!;
+      const map=(role:LodgrpAtlasRoleV1)=>staged.find(x=>x.id===id&&x.role===role)?.texture ?? null;
+      const main=map('albedo');
+      if (!main) {this.planetaryLodGroupLODGRP1.fail();this.releasePlanetaryLodGpuLODGRP1();return;}
+      entry.material.map=main;
+      if (map('roughness')) entry.material.roughnessMap=map('roughness');
+      if (map('relief')) entry.material.bumpMap=map('relief');
+      if (map('normal')) {
+        entry.material.normalMap=map('normal');
+        if (this.bodySnapshotById.get(id)?.kind==='moon') entry.material.normalScale.set(.9,.9);
+        else configureSolidSurfaceNormalDetailVISSURF5c(entry.material,map('normal'),map('relief'));
+      }
+      if (map('emissive')) entry.material.emissiveMap=map('emissive');
+      if (entry.cloudMaterial && map('cloud')) {
+        entry.cloudMaterial.map=map('cloud');entry.cloudMaterial.needsUpdate=true;
+      }
+      if (this.bodySnapshotById.get(id)?.kind==='moon') entry.material.roughness=1;
+      entry.material.needsUpdate=true;
+    }
+    this.planetaryLodInstalledLODGRP1=mats;
+    this.planetaryLodGroupLODGRP1.activate();
+    this.planetaryLodTimingsLODGRP2.activated(
+      typeof performance!=='undefined'?performance.now():Date.now());
+    this.debugPlanetaryLodLODGRP1(`atomic HIGH after ${Math.round(
+      (typeof performance!=='undefined'?performance.now():Date.now())-
+        this.planetaryLodPreparationStartLODGRP1)} ms`);
+  }
+
+  private releasePlanetaryLodGpuLODGRP1(): void {
+    for (const entry of this.planetaryLodInstalledLODGRP1) {
+      entry.material.map=entry.originalMap;
+      entry.material.roughnessMap=entry.originalRoughness;
+      entry.material.bumpMap=entry.originalBump;
+      entry.material.normalMap=entry.originalNormal;
+      entry.material.emissiveMap=entry.originalEmissive;
+      entry.material.normalScale.copy(entry.originalNormalScale);
+      entry.material.roughness=entry.originalRoughnessValue;
+      entry.material.needsUpdate=true;
+      if (entry.cloudMaterial) {
+        entry.cloudMaterial.map=entry.originalCloud;
+        entry.cloudMaterial.needsUpdate=true;
+      }
+    }
+    this.planetaryLodInstalledLODGRP1=[];
+    for (const entry of [...this.planetaryLodGpuQueueLODGRP1,
+      ...this.planetaryLodGpuReadyLODGRP1]) entry.texture.dispose();
+    this.planetaryLodGpuQueueLODGRP1=[];
+    this.planetaryLodGpuReadyLODGRP1=[];
+    this.planetaryLodStagedIdsLODGRP2.clear();
+  }
+
+  private cancelPlanetaryLodWorkerLODGRP1(force=false): void {
+    // Reuse the module worker between successful groups; terminate only a
+    // still-running obsolete job or on system disposal/reconstruction.
+    if (lodgrpTerminateWorkerV2(this.planetaryLodBusyLODGRP1,force)) {
+      this.planetaryLodWorkerLODGRP1?.terminate();
+      this.planetaryLodWorkerLODGRP1=null;
+    }
+    this.planetaryLodBusyLODGRP1=false;
+  }
+  private resetPlanetaryLodGroupLODGRP1(clearCache:boolean): void {
+    this.cancelPlanetaryLodWorkerLODGRP1(clearCache);
+    this.releasePlanetaryLodGpuLODGRP1();
+    if (clearCache) this.planetaryLodGroupLODGRP1.reset();
+    else this.planetaryLodGroupLODGRP1.leave();
+    this.planetaryLodEntryStateLODGRP1='OUT';
+    this.planetaryLodLastCheckLODGRP1=-Infinity;
+  }
+  private wakePlanetaryLodFrameLODGRP1():void {
+    if (this.planetaryLodRequestFrameLODGRP1 || this.disposed || !this.pageVisible) return;
+    this.planetaryLodRequestFrameLODGRP1=true;
+    requestAnimationFrame(()=>{
+      this.planetaryLodRequestFrameLODGRP1=false;
+      if (!this.disposed && this.pageVisible) this.renderFrame();
+    });
+  }
+  private debugPlanetaryLodLODGRP1(message:string):void {
+    if (!this.planetaryLodDebugLODGRP1) return;
+    const samples=[...this.planetaryLodFrameSamplesLODGRP1].sort((a,b)=>a-b);
+    const avg=samples.length?samples.reduce((a,b)=>a+b,0)/samples.length:0;
+    const percentile=(p:number)=>samples[Math.min(samples.length-1,
+      Math.floor((samples.length-1)*p))]??0;
+    console.info('[GENESIS LODGRP.2]',message,this.planetaryLodGroupLODGRP1.status,
+      this.planetaryLodGroupLODGRP1.cacheStats,{
+        fps:avg>0?Math.round(1000/avg):null,
+        avgMs:Math.round(avg*10)/10,p95Ms:percentile(.95),p99Ms:percentile(.99),
+        gpuTextures:this.renderer.info.memory.textures,
+        gpuGeometries:this.renderer.info.memory.geometries,
+        drawCalls:this.renderer.info.render.calls,
+        phases:this.planetaryLodTimingsLODGRP2.snapshot(
+          typeof performance!=='undefined'?performance.now():Date.now()),
+      });
+  }
+
   private updateBodyLod(): void {
     if (
       this.bodyLodBindings.size ===
-        0 && this.lunarSurfaceFocusSourcesLUNSURF1.size === 0
+        0 && this.lunarSurfaceFocusSourcesLUNSURF1.size === 0 &&
+        this.minorBodyAtlasSources387x.size === 0
     ) {
       return;
     }
@@ -6807,6 +7463,12 @@ class ThreeSystemSceneRuntime
     this.camera.getWorldPosition(
       this.cameraWorldPosition,
     );
+    this.updatePlanetaryLodGroupLODGRP1();
+    const groupStatusLODGRP1 = this.planetaryLodGroupLODGRP1.status;
+    const groupHoldsLodLODGRP1 = groupStatusLODGRP1.hostId !== null &&
+      groupStatusLODGRP1.phase !== 'FAILED';
+    const groupMembersLODGRP1 = groupHoldsLodLODGRP1
+      ? new Set(this.planetaryLodGroupLODGRP1.memberIds) : null;
 
     let closestPlanet: { id: string; projectedDiameter: number; binding: SystemSceneBodyLodBindingV1 } | null = null;
 
@@ -6834,19 +7496,22 @@ class ThreeSystemSceneRuntime
           binding.radiusScene * 1.05,
         );
 
+      const effectiveRadius = binding.radiusScene * (
+        binding.kind === 'moon' ? this.animatedBodies.get(bodyId)?.scale.x ?? 1 : 1
+      );
       const projectedDiameter =
         systemSceneProjectedDiameterPixelsV1(
-          binding.radiusScene,
+          effectiveRadius,
           distance,
           this.camera.fov,
           this.viewportHeightPixels,
         );
 
-      const nextLevel =
-        systemSceneBodyLodLevelV1(
-          projectedDiameter,
-          binding.level,
-        );
+      const isGroupedLODGRP1 = groupMembersLODGRP1?.has(bodyId) ?? false;
+      const nextLevel = isGroupedLODGRP1
+        ? groupStatusLODGRP1.phase === 'HIGH' ? 'HIGH' :
+          groupStatusLODGRP1.phase === 'BUDGET_LIMITED' ? 'MEDIUM' : binding.level
+        : systemSceneBodyLodLevelV1(projectedDiameter,binding.level);
 
       if (binding.kind === 'planet' && binding.planetSystemIdentity !== undefined &&
           projectedDiameter >= 210 &&
@@ -6896,7 +7561,7 @@ class ThreeSystemSceneRuntime
       closestMoonLUNSURF1 = {id, projectedDiameter, ...source};
     }
     const moonPrevious = this.focusedLunarSurfaceLUNSURF1;
-    const moonFocus = closestMoonLUNSURF1 !== null &&
+    const moonFocus = !groupHoldsLodLODGRP1 && closestMoonLUNSURF1 !== null &&
       shouldUseMoonDetailLUNSURF1(closestMoonLUNSURF1.projectedDiameter,
         closestMoonLUNSURF1.id,moonPrevious?.id ?? null,
         closestPlanet?.projectedDiameter ?? null)
@@ -6910,11 +7575,163 @@ class ThreeSystemSceneRuntime
     // a dense system. Hysteresis prevents changes at the zoom boundary.
     const previous = this.detailedPlanetTexture;
     const candidate = closestPlanet?.projectedDiameter !== undefined &&
+      !groupHoldsLodLODGRP1 &&
       closestPlanet.projectedDiameter >= (previous?.id === closestPlanet.id ? 210 : 300)
       ? (moonFocus === null ? closestPlanet : null) : null;
-    if (candidate?.id !== previous?.id) {
+    // VISCATM.1: the same focused gas giant gains a final 1024 atlas only
+    // at very close zoom. Solid bodies and distant planets keep their budgets.
+    const candidateBody = candidate === null ? null : this.bodySnapshotById.get(candidate.id);
+    const detailWidth = candidateBody?.kind === 'planet' && candidateBody.giantAtmosphere !== null
+      ? giantAtmosphereFocusWidthVISCATM1(candidate!.projectedDiameter,
+          previous?.id === candidate!.id ? previous.detailWidth : null)
+      : PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width;
+    if (candidate?.id !== previous?.id ||
+        (candidate !== null && previous !== null && previous.detailWidth !== detailWidth)) {
       this.releaseDetailedPlanetTexture();
-      if (candidate !== null) this.installDetailedPlanetTexture(candidate.id, candidate.binding);
+      if (candidate !== null) this.installDetailedPlanetTexture(candidate.id, candidate.binding, detailWidth);
+    }
+
+    // VISCATM.1c: the fine unit sphere fixes faceted haze/shell silhouettes.
+    // This is independent of atlas width and limited to the visible focused
+    // giant; 40x28 baseline meshes remain unchanged for all other bodies.
+    const focusedBodyVISCATM1c = closestPlanet === null
+      ? null : this.bodySnapshotById.get(closestPlanet.id);
+    const visibleGiant = focusedBodyVISCATM1c?.kind === 'planet' &&
+      focusedBodyVISCATM1c.giantAtmosphere !== null;
+    const groupGiant = groupHoldsLodLODGRP1 && groupStatusLODGRP1.phase === 'HIGH' &&
+      this.planetaryLodGroupGiantLODGRP1(groupStatusLODGRP1.hostId!);
+    const geometryFocus = visibleGiant && !groupGiant && giantAtmosphereFineShellRequiredVISCATM1c(
+      closestPlanet!.projectedDiameter,
+      this.focusedGiantAtmosphereVISCATM1c === closestPlanet!.id,
+    ) ? closestPlanet!.id : groupGiant ? groupStatusLODGRP1.hostId : null;
+    this.updateGiantAtmosphereFineGeometryVISCATM1c(geometryFocus);
+
+    // 38.7x: the same microstructure atlas as the fiche for a single nearby
+    // asteroid/comet/TNO/captured body. At distance the canonical light LOD
+    // continues unchanged; no atlas is generated for unseen bodies.
+    let closestMinor: {id: string; projectedDiameter: number} | null = null;
+    for (const [id, source] of this.minorBodyAtlasSources387x) {
+      if (!objectHierarchyVisible(source.group)) continue;
+      source.group.getWorldPosition(this.lodWorldPosition);
+      const distance = Math.max(source.radiusScene * 1.05,
+        this.lodWorldPosition.distanceTo(this.cameraWorldPosition));
+      const projectedDiameter = systemSceneProjectedDiameterPixelsV1(
+        source.radiusScene, distance, this.camera.fov, this.viewportHeightPixels);
+      if (!systemSceneMinorBodyNeedsAtlas387x(projectedDiameter,
+            id === this.focusedMinorBodyAtlas387x?.id)) continue;
+      const centre = this.lodWorldPosition.project(this.camera);
+      if (centre.z < -1 || centre.z > 1 || Math.abs(centre.x) > 1.3 ||
+          Math.abs(centre.y) > 1.3) continue;
+      if (closestMinor === null || projectedDiameter > closestMinor.projectedDiameter) {
+        closestMinor = {id, projectedDiameter};
+      }
+    }
+    if (closestMinor?.id !== this.focusedMinorBodyAtlas387x?.id) {
+      this.releaseFocusedMinorBodyAtlas387x();
+      if (closestMinor !== null) this.installFocusedMinorBodyAtlas387x(closestMinor.id);
+    }
+  }
+
+  private updateGiantAtmosphereFineGeometryVISCATM1c(id: string | null): void {
+    const oldId = this.focusedGiantAtmosphereVISCATM1c;
+    if (oldId !== null && oldId !== id) {
+      const previous = this.bodyLodBindings.get(oldId);
+      if (previous !== undefined) {
+        previous.mesh.geometry = this.sphereGeometryPool.get(previous.kind, previous.level);
+      }
+      for (const shell of this.giantAtmosphereShellsVISCATM1c.get(oldId) ?? []) {
+        shell.mesh.geometry = shell.originalGeometry;
+        shell.mesh.scale.copy(shell.originalScale);
+      }
+      this.focusedGiantAtmosphereVISCATM1c = null;
+    }
+    if (id === null) return;
+    const binding = this.bodyLodBindings.get(id);
+    if (binding?.kind !== 'planet') return;
+    if (this.focusedGiantAtmosphereVISCATM1c === id &&
+        this.giantAtmosphereFineSphereVISCATM1c !== null &&
+        binding.mesh.geometry === this.giantAtmosphereFineSphereVISCATM1c) {
+      return; // Keep shader and geometry stable; avoid writes each frame.
+    }
+    if (this.giantAtmosphereFineSphereVISCATM1c === null) {
+      const segments = GIANT_ATMOSPHERE_FINE_SEGMENTS_VISCATM1C;
+      this.giantAtmosphereFineSphereVISCATM1c = new THREE.SphereGeometry(
+        1, segments.widthSegments, segments.heightSegments,
+      );
+    }
+    // The base mesh already has planet radius in its scale. The overlay
+    // spheres have their radius baked in their legacy geometry instead.
+    binding.mesh.geometry = this.giantAtmosphereFineSphereVISCATM1c;
+    for (const shell of this.giantAtmosphereShellsVISCATM1c.get(id) ?? []) {
+      shell.mesh.geometry = this.giantAtmosphereFineSphereVISCATM1c;
+      shell.mesh.scale.copy(shell.originalScale).multiplyScalar(shell.radius);
+    }
+    this.focusedGiantAtmosphereVISCATM1c = id;
+  }
+
+  private releaseFocusedMinorBodyAtlas387x(): void {
+    const previous = this.focusedMinorBodyAtlas387x;
+    if (previous === null) return;
+    for (const binding of previous.materials) {
+      binding.material.map = binding.originalMap;
+      binding.material.needsUpdate = true;
+    }
+    if (previous.detailedGeometry !== null) {
+      const detail = previous.detailedGeometry;
+      detail.mesh.geometry = detail.originalGeometry;
+      detail.mesh.scale.copy(detail.originalScale);
+      detail.temporaryGeometry.dispose();
+    }
+    previous.texture.dispose();
+    this.focusedMinorBodyAtlas387x = null;
+  }
+
+  private installFocusedMinorBodyAtlas387x(id: string): void {
+    const source = this.minorBodyAtlasSources387x.get(id);
+    if (!source) return;
+    const uniqueMaterials = [...new Set(source.surfaces.map(surface => surface.material))]
+      .filter((material): material is THREE.MeshStandardMaterial =>
+        material instanceof THREE.MeshStandardMaterial);
+    if (uniqueMaterials.length === 0) return;
+    const materials = uniqueMaterials.map(material => ({material, originalMap: material.map}));
+    // TNO/CAP small-diameter renderers use a low-poly orbital silhouette;
+    // at close range reuse the *fiche* geometry (radius 1) scaled to the
+    // physical scene radius, without altering its identity or composition.
+    let detailedGeometry: {
+      mesh: THREE.Mesh; originalGeometry: THREE.BufferGeometry;
+      originalScale: THREE.Vector3; temporaryGeometry: THREE.BufferGeometry;
+    } | null = null;
+    if (source.radiusScene < 0.12 && source.surfaces.length === 1) {
+      const body = source.body;
+      const detailed = source.kind === 'TNO' && body.tnoPresentation != null
+        ? createSystemSceneTnoRenderableV1(1, body.tnoPresentation)
+        : source.kind === 'CAPTURED' && body.capturedPresentation != null
+          ? createSystemSceneCapturedRenderableV1(1, body.capturedPresentation) : null;
+      if (detailed !== null) {
+        const surface = source.surfaces[0]!;
+        detailedGeometry = {
+          mesh: surface, originalGeometry: surface.geometry,
+          originalScale: surface.scale.clone(), temporaryGeometry: detailed.surface.geometry,
+        };
+        surface.geometry = detailed.surface.geometry;
+        surface.scale.multiplyScalar(source.radiusScene);
+        // The temporary material is not used: the existing material retains
+        // precisely the source's reflectance and is restored on release.
+        const temporaryMaterial = detailed.surface.material;
+        if (temporaryMaterial instanceof THREE.Material) temporaryMaterial.dispose();
+      }
+    }
+    try {
+      const atlas = attachScientificMinorBodyAtlasVis3d2e(
+        source.surfaces, source.kind, source.seedUint32);
+      this.focusedMinorBodyAtlas387x = {id, texture: atlas, materials, detailedGeometry};
+    } catch (error) {
+      if (detailedGeometry !== null) {
+        detailedGeometry.mesh.geometry = detailedGeometry.originalGeometry;
+        detailedGeometry.mesh.scale.copy(detailedGeometry.originalScale);
+        detailedGeometry.temporaryGeometry.dispose();
+      }
+      throw error;
     }
   }
 
@@ -6941,12 +7758,108 @@ class ThreeSystemSceneRuntime
     });
   }
 
+  /** T7t: utiliza los pivotes ya empleados por los edificios de cada
+   * colonia. NO recupera los anillos antiguos de COLVIS.2: hacerlo suprimiría
+   * los emisores nocturnos de T7r en este mismo renderizador. */
+  private addColonySiteMarkersT7t(
+    pivot:THREE.Group,visual:Vida38InfrastructureVisual386,
+    radius:number,kind:'planet'|'moon',
+  ):void{
+    const anchors=visual.colonialSiteAnchorsT7t??[];
+    if(!anchors.length)return;
+    const materials=new Map<number,THREE.SpriteMaterial>();
+    for(const anchor of anchors){
+      let material=materials.get(anchor.markerHex);
+      if(!material){
+        material=new THREE.SpriteMaterial({
+          map:this.selectionRingTexture,color:anchor.markerHex,
+          transparent:true,opacity:.96,toneMapped:false,
+          depthTest:true,depthWrite:false,
+        });
+        materials.set(anchor.markerHex,material);
+        this.frameDisposables.push(material);
+      }
+      const marker=new THREE.Sprite(material);
+      marker.name='T7t confirmed colonial site marker (optional, no physical geometry)';
+      // Los pivotes HIGH están en las coordenadas locales de spinPivot,
+      // incluso si el LOD alto no se está dibujando actualmente.
+      marker.position.copy(anchor.site.position).multiplyScalar(1.003);
+      marker.visible=false;
+      marker.renderOrder=93;
+      // Un indicador informativo no debe interceptar la selección del cuerpo.
+      marker.raycast=()=>{};
+      pivot.add(marker);
+      this.colonySiteMarkerBindingsT7t.push({
+        marker,anchor:anchor.site,body:visual.group,kind,radius,
+      });
+    }
+  }
+
+  /** T7t: el anillo solo aparece en el hemisferio visible y cuando el globo
+   * ya tiene tamaño en pantalla suficiente para distinguir asentamientos. */
+  private updateColonySiteMarkersT7t():void{
+    if(!this.colonySiteMarkerBindingsT7t.length)return;
+    if(!this.layerVisibility.colonies){
+      for(const {marker} of this.colonySiteMarkerBindingsT7t)marker.visible=false;
+      return;
+    }
+    this.scene.updateMatrixWorld(true);
+    this.camera.updateMatrixWorld(true);
+    this.camera.getWorldPosition(this.colonySiteCameraT7t);
+    for(const binding of this.colonySiteMarkerBindingsT7t){
+      const {marker,anchor,body,kind,radius}=binding;
+      const bodyLayer=kind==='planet'?this.layerVisibility.planets:this.layerVisibility.moons;
+      if(!bodyLayer){marker.visible=false;continue;}
+      body.getWorldPosition(this.colonySiteCenterT7t);
+      anchor.getWorldPosition(this.colonySiteWorldT7t);
+      this.colonySiteNormalT7t.subVectors(this.colonySiteWorldT7t,this.colonySiteCenterT7t).normalize();
+      this.colonySiteToCameraT7t.subVectors(this.colonySiteCameraT7t,this.colonySiteWorldT7t);
+      const distanceToSite=this.colonySiteToCameraT7t.length();
+      const facing=distanceToSite>0
+        ?this.colonySiteNormalT7t.dot(this.colonySiteToCameraT7t)/distanceToSite:-1;
+      const bodyDistance=Math.max(radius*1.05,
+        this.colonySiteCameraT7t.distanceTo(this.colonySiteCenterT7t));
+      const bodyPixels=systemSceneProjectedDiameterPixelsV1(
+        radius,bodyDistance,this.camera.fov,this.viewportHeightPixels);
+      const presentation=systemSceneColonySiteMarkerPresentationT7t(
+        true,bodyLayer,bodyPixels,facing);
+      marker.visible=presentation.visible;
+      if(!marker.visible)continue;
+      const diameter=systemSceneColonySiteMarkerWorldDiameterT7t(
+        presentation.diameterPixels,distanceToSite,this.camera.fov,
+        this.viewportHeightPixels,radius);
+      marker.scale.set(diameter,diameter,1);
+    }
+  }
+
+  /** T7n: marca VERDE opcional del cuerpo anfitrión completo.
+   * Sprite reutiliza el atlas de selección, sin instanciar círculos por colonia. */
+  private addColonyBodyMarkerT7n(
+    pivot:THREE.Group,radius:number,kind:'planet'|'moon',
+  ):void{
+    const diameter=systemSceneColonyBodyRingDiameterT7n(radius);
+    if(!(diameter>0))return;
+    const material=new THREE.SpriteMaterial({
+      map:this.selectionRingTexture,color:0x33ff7a,transparent:true,opacity:.96,
+      toneMapped:false,depthTest:false,depthWrite:false,
+    });
+    const marker=new THREE.Sprite(material);
+    marker.name='T7n confirmed colonized body marker (optional green ring)';
+    marker.scale.set(diameter,diameter,1);
+    marker.renderOrder=95;
+    marker.visible=false;
+    pivot.add(marker);
+    this.colonyBodyMarkerBindingsT7n.push({marker,kind});
+    this.frameDisposables.push(material);
+  }
+
   private updateColonialNightLighting386c3(): void {
     for(const {bodyId,visual} of this.infrastructureVisualBindings386) {
       const light=this.bodyLightBindings.get(bodyId);
       if(!light) continue;
       visual.updateColonialNightLighting386c3(
-        light.lightDirectionsView,light.lightWeightsView,this.camera.matrixWorldInverse);
+        light.lightDirectionsView,light.lightWeightsView,this.camera.matrixWorldInverse,
+        this.camera,this.viewportHeightPixels);
     }
   }
 
@@ -7027,7 +7940,10 @@ class ThreeSystemSceneRuntime
     this.detailedPlanetTexture = null;
   }
 
-  private installDetailedPlanetTexture(id: string, binding: SystemSceneBodyLodBindingV1): void {
+  private installDetailedPlanetTexture(
+    id: string, binding: SystemSceneBodyLodBindingV1,
+    detailWidth: number = PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width,
+  ): void {
     const body = this.bodySnapshotById.get(id);
     if (body?.kind !== 'planet' || binding.planetSystemIdentity === undefined ||
         !(binding.mesh.material instanceof THREE.MeshStandardMaterial)) return;
@@ -7049,11 +7965,17 @@ class ThreeSystemSceneRuntime
 
     // Reuse the already computed D.4d atlas. No fresh physical projection,
     // planetary generation or high-cost semantic-mask classification on zoom.
-    const seed = systemScenePlanetTextureSeed({
+    const genericSeed = systemScenePlanetTextureSeed({
       systemIdentity: binding.planetSystemIdentity,
       planetId: id,
       surfaceStyle: planetTextureSurfaceStyle(body),
     });
+    const canonicalGiantSeed = originalMap instanceof THREE.DataTexture
+      ? originalMap.userData['genesisGiantAtmosphereSeedVISCATM1'] as number | undefined
+      : undefined;
+    const seed = body.giantAtmosphere === null
+      ? genericSeed
+      : canonicalGiantSeed ?? genericSeed;
     const detailTextures: THREE.DataTexture[] = [];
     const solidSource = originalMap instanceof THREE.DataTexture
       ? originalMap.userData['genesisSolidSurfaceSourceVISSURF1'] as SystemScenePlanetSurfaceTextureData | undefined
@@ -7081,10 +8003,21 @@ class ThreeSystemSceneRuntime
             : old === originalBump ? detailedSolid.reliefRgba : null;
       const width = solidBytes !== null
         ? SOLID_PLANET_DETAIL_WIDTH_VISSURF2.closeSystem
-        : PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width;
+        : body.giantAtmosphere !== null && (kind === 'GAS' ||
+            (kind === 'CLOUD' && old === originalCloud))
+          ? detailWidth
+          : PLANET_TEXTURE_DETAIL_SIZES_V1.closeSystem.width;
+      const isGiantCloudDetail = body.giantAtmosphere !== null &&
+        (kind === 'GAS' || (kind === 'CLOUD' && old === originalCloud));
+      const pixels = solidBytes ?? (isGiantCloudDetail
+        ? refineGiantAtmosphereMultiresVISCATM1(
+            image.data, image.width, image.height, width, seed,
+            body.giantAtmosphere!, kind === 'GAS' ? 'CLOUD_TOPS' : 'UPPER_HAZE',
+          )
+        : refinePlanetRgbaTextureV1(image.data, image.width, image.height, width, seed, kind));
       const refined = createRgbaDataTexture(width, width / 2,
-        solidBytes ?? refinePlanetRgbaTextureV1(image.data, image.width, image.height, width, seed, kind),
-        `GENESIS ${solidBytes === null ? 'VIS-3D.1' : 'VISSURF.2'} ${kind} (zoom)`);
+        pixels,
+        `GENESIS ${isGiantCloudDetail ? 'VISCATM.1' : solidBytes === null ? 'VIS-3D.1' : 'VISSURF.2'} ${kind} (zoom)`);
       if (kind === 'DATA') refined.colorSpace = THREE.NoColorSpace;
       if (solidBytes !== null) {
         prepareSolidSurfaceDataTextureVISSURF5c(refined,
@@ -7123,7 +8056,7 @@ class ThreeSystemSceneRuntime
       cloudMaterial.needsUpdate = true;
     }
     this.detailedPlanetTexture = {
-      id, material, originalMap, originalRoughness, originalBump, originalNormal, originalEmissive,
+      id, detailWidth, material, originalMap, originalRoughness, originalBump, originalNormal, originalEmissive,
       cloudMaterial, originalCloud, detailTextures,
     };
   }
@@ -7299,10 +8232,30 @@ class ThreeSystemSceneRuntime
       return;
     }
 
+    if (this.planetaryLodDebugLODGRP1) {
+      const now=typeof performance!=='undefined'?performance.now():Date.now();
+      if (this.planetaryLodLastFrameLODGRP1>0) {
+        this.planetaryLodFrameSamplesLODGRP1.push(now-this.planetaryLodLastFrameLODGRP1);
+        if (this.planetaryLodFrameSamplesLODGRP1.length>120)
+          this.planetaryLodFrameSamplesLODGRP1.shift();
+      }
+      this.planetaryLodLastFrameLODGRP1=now;
+    }
+    this.viscorbLocalPresentation.update(
+      this.lightingSimulationDay,
+      typeof performance === 'undefined' ? 0 : performance.now(),
+      (contributions, day, scale) => this.positionFromContributions(contributions, day, scale),
+    );
     this.updateBodyLod();
     this.updateInfrastructureLod386();
     this.updateMinorBodyInstanceBatches();
     this.updateSelectionProxyBatch();
+    if (this.viscorbLocalPresentation.hostId !== null) {
+      for (const marker of this.orbitalRiskMarkers) {
+        const object = this.animatedBodies.get(marker.targetBodyId);
+        if (object) marker.sprite.position.copy(object.position);
+      }
+    }
     for (const blackHole of this.compactBlackHoleBillboards) {
       orientCompactBlackHoleToCamera(blackHole, this.camera);
     }
@@ -7312,6 +8265,7 @@ class ThreeSystemSceneRuntime
       shadow.update(this.camera, this.layerVisibility.artificialSatellites);
     }
     this.updateColonialNightLighting386c3();
+    this.updateColonySiteMarkersT7t();
     this.updateArtificialSatelliteLighting();
     if (this.compactBlackHoleBodyOcclusion.length > 0) {
       // Camera and orbital motion can both reverse near/far order at any time.
@@ -7468,7 +8422,9 @@ export function createSystemScenePlanetAppearanceV1(
           });
         })()
       : textureCache.acquire(
-          systemScenePlanetTextureCacheKeyVISCIV1b(systemIdentity, planet.id, textureWidth, planet.visualCivilizationTier),
+          systemScenePlanetTextureCacheKeyVISCIV1b(systemIdentity, planet.id, textureWidth,
+            planet.visualCivilizationTier, planet.visualVegetationProfile) +
+            (planet.giantAtmosphere === null ? '' : `|VISCATM.${GIANT_ATMOSPHERE_DETAIL_VERSION_VISCATM1}`),
           planet.giantAtmosphere === null
             ? (planet.visualCivilizationTier === null || planet.visualCivilizationTier === undefined
                 ? 1280 * 1024
@@ -7827,6 +8783,7 @@ export function createSystemScenePlanetAppearanceV1(
       planet,
       atmosphereOptics,
       lightBinding,
+      planet.giantAtmosphere !== null && textureWidth >= 512,
     );
 
   if (
@@ -7942,7 +8899,12 @@ function createSystemScenePlanetTextureResourceV1(
     kind: PlanetTextureRefinementKind,
   ): Uint8Array => textureWidth === width
     ? rgba
-    : refinePlanetRgbaTextureV1(rgba, width, height, textureWidth, visualSeed, kind);
+    : giantAtmosphereTexture !== null && kind === 'GAS'
+      ? refineGiantAtmosphereMultiresVISCATM1(
+          rgba, width, height, textureWidth, visualSeed,
+          planet.giantAtmosphere!, 'CLOUD_TOPS',
+        )
+      : refinePlanetRgbaTextureV1(rgba, width, height, textureWidth, visualSeed, kind);
   const imageWidth = textureWidth;
   const imageHeight = textureWidth / 2;
 
@@ -7967,6 +8929,11 @@ function createSystemScenePlanetTextureResourceV1(
             : `GENESIS cached physical surface 25.11 v${semanticSurface.version}`,
         );
 
+  // VISCATM.1: a zoomed SystemScene planet must reuse the exact canonical
+  // cloud-top identity used by its fiche, not the generic rocky-planet seed.
+  if (giantAtmosphereTexture !== null) {
+    surfaceTexture.userData['genesisGiantAtmosphereSeedVISCATM1'] = visualSeed;
+  }
   if (semanticSurface?.surfaceClassMask) {
     surfaceTexture.userData['genesisSolidSurfaceSourceVISSURF1'] = semanticSurface;
     surfaceTexture.userData['genesisSolidSurfaceSeedVISSURF1'] =
@@ -8016,7 +8983,12 @@ function createSystemScenePlanetTextureResourceV1(
   const cloudWidth = Math.min(textureWidth, PLANET_TEXTURE_DETAIL_SIZES_V1.scientificPreview.width);
   const refineCloud = (rgba: Uint8Array, width: number, height: number,
     kind: 'CLOUD' | 'WEATHER_CLOUD'): Uint8Array => cloudWidth === width
-    ? rgba : refinePlanetRgbaTextureV1(rgba, width, height, cloudWidth, visualSeed, kind);
+    ? rgba : giantAtmosphereTexture !== null && kind === 'CLOUD'
+      ? refineGiantAtmosphereMultiresVISCATM1(
+          rgba, width, height, cloudWidth, visualSeed,
+          planet.giantAtmosphere!, 'UPPER_HAZE',
+        )
+      : refinePlanetRgbaTextureV1(rgba, width, height, cloudWidth, visualSeed, kind);
   const cloudTexture =
     semanticSurface?.cloudRgba !== null &&
     semanticSurface?.cloudRgba !== undefined
@@ -8323,10 +9295,10 @@ function cloudLayerMeshOrNull(
     return null;
   }
 
-  const segments =
-    systemSceneSphereSegments(
-      'planet',
-    );
+  const giantCloudWidth = (cachedCloudTexture?.image as {width?: number} | undefined)?.width ?? 256;
+  const segments = giantCloudWidth >= 512
+    ? GIANT_ATMOSPHERE_FINE_SEGMENTS_VISCATM1C
+    : systemSceneSphereSegments('planet');
 
   const geometry =
     new THREE.SphereGeometry(
@@ -8345,9 +9317,11 @@ function cloudLayerMeshOrNull(
       transparent:
         true,
       opacity:
-        0.78,
+        0.56, // VISCATM.1b: preserve cloud-top detail through upper haze
+      // VISCATM.1c: preserve subpixel cloud-edge transparency instead of
+      // hard alpha cutouts on individual triangles at the limb.
       alphaTest:
-        0.012,
+        0,
       depthWrite:
         false,
       roughness:
@@ -8392,6 +9366,8 @@ function atmosphereLayerMeshOrNull(
 
   lightBinding:
     SystemScenePlanetLightBindingV1,
+
+  highDetailGiantVISCATM1c = false,
 ): {
   readonly mesh:
     THREE.Mesh;
@@ -8416,10 +9392,9 @@ function atmosphereLayerMeshOrNull(
     return null;
   }
 
-  const segments =
-    systemSceneSphereSegments(
-      'planet',
-    );
+  const segments = highDetailGiantVISCATM1c && optics.deepEnvelope
+    ? GIANT_ATMOSPHERE_FINE_SEGMENTS_VISCATM1C
+    : systemSceneSphereSegments('planet');
 
   const geometry =
     new THREE.SphereGeometry(

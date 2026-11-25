@@ -1,0 +1,32 @@
+'use strict';
+/** ARCHHOME.1: auditoría portable sin dependencias para el enlace Home del Archivo GENESIS. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = process.argv[2] ? path.resolve(process.argv[2]) : process.cwd();
+const read = (p) => fs.readFileSync(path.join(root,p),'utf8');
+const html = read('src/app/presentation/genesis-archive/genesis-archive.html');
+const css = read('src/app/presentation/genesis-archive/genesis-archive.scss');
+const routes = read('src/app/app.routes.ts');
+const component = read('src/app/presentation/genesis-archive/genesis-archive.ts');
+const test = read('src/app/presentation/genesis-archive/genesis-archive.spec.ts');
+let checks=0;
+const check=(label,action)=>{action();checks++;};
+check('Cabecera única con título científico',()=>assert.equal((html.match(/class="archive-header"/g)||[]).length,1));
+check('Botón de Home único',()=>assert.equal((html.match(/data-testid="archive-home-link"/g)||[]).length,1));
+check('Enlace de Home exacto',()=>assert.match(html,/<a\b[^>]*class="archive-home-link"[^>]*routerLink="\/"[^>]*data-testid="archive-home-link"[^>]*>/));
+check('Etiqueta accesible',()=>assert.match(html,/aria-hidden="true">←<\/span> Volver a Home/));
+check('Botón fuera de los estados condicionales',()=>assert.ok(html.indexOf('data-testid="archive-home-link"') < html.indexOf('@if (facade.state()')));
+check('Botón dentro del encabezado del Archivo',()=>{
+  const start=html.indexOf('<header class="archive-header">');
+  const end=html.indexOf('</header>',start);
+  const link=html.indexOf('data-testid="archive-home-link"');
+  assert.ok(start>=0 && start<link && link<end);
+});
+check('Ruta raiz Home conservada',()=>assert.match(routes,/path:\s*'',\s*pathMatch:\s*'full'/));
+check('RouterLink está importado por el componente',()=>assert.match(component,/imports:\s*\[[^\]]*RouterLink/));
+check('Estilo de cabecera existente',()=>assert.match(css,/\.archive-header\s*\{/));
+check('Estilo de botón existente',()=>assert.match(css,/\.archive-home-link\s*\{/));
+check('Test de regreso a Home ya disponible',()=>assert.match(test,/ofrece regresar a Home incluso con Archivo vacío/));
+check('Test verifica href',()=>assert.match(test,/getAttribute\('href'\)\)\.toBe\('\/'\)/));
+console.log(`PASS GENESIS ARCHHOME.1 — ${checks} comprobaciones portátiles · Home, ruta, estados, estilos y regresión`);

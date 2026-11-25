@@ -22,6 +22,17 @@ export interface GalaxyKnowledgeSnapshotRepository {
   put(
     entity: GalaxyKnowledgeSnapshotEntity,
   ): Promise<void>;
+
+  /** Optional for older mocks. Production updates one fragment atomically and
+   * only when the underlying known-discovery revision still matches. */
+  updateConfirmedScientificTelemetryIfRevisionMatches?(
+    generationKey: UniverseGenerationKey,
+    galaxyIndex: bigint,
+    scientificModelVersion: number,
+    expectedKnowledgeRevision: string,
+    confirmedTelemetryRevision: string,
+    confirmedTelemetryJson: string,
+  ): Promise<boolean>;
 }
 
 export class DexieGalaxyKnowledgeSnapshotRepository
@@ -58,5 +69,27 @@ export class DexieGalaxyKnowledgeSnapshotRepository
 
     await this.database.openDatabase();
     await this.database.galaxyKnowledgeSnapshots.put(entity);
+  }
+
+  async updateConfirmedScientificTelemetryIfRevisionMatches(
+    generationKey: UniverseGenerationKey,
+    galaxyIndex: bigint,
+    scientificModelVersion: number,
+    expectedKnowledgeRevision: string,
+    confirmedTelemetryRevision: string,
+    confirmedTelemetryJson: string,
+  ): Promise<boolean> {
+    await this.database.openDatabase();
+    const { universeSeed, generatorVersionCode } = generationKeyStorageParts(generationKey);
+    const key = [universeSeed, generatorVersionCode, galaxyIndex.toString(10), scientificModelVersion] as const;
+    return this.database.transaction('rw', this.database.galaxyKnowledgeSnapshots, async () => {
+      const stored = await this.database.galaxyKnowledgeSnapshots.get(key);
+      if (!stored || stored.knowledgeRevision !== expectedKnowledgeRevision) return false;
+      await this.database.galaxyKnowledgeSnapshots.update(key, {
+        confirmedScientificTelemetryRevision: confirmedTelemetryRevision,
+        confirmedScientificTelemetryJson: confirmedTelemetryJson,
+      });
+      return true;
+    });
   }
 }

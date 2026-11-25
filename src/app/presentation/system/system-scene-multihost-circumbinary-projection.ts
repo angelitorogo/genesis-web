@@ -1,4 +1,5 @@
 import { PlanetType } from '../../domain/planetary/planet-type';
+import { systemSceneMoonGroupPresentationTimeScaleV1 } from './system-scene-secondary-motion';
 import { v2PlanetTimeScale } from './system-scene-v2-planet-cadence';
 import { type GeneratedMultipleHost } from '../../simulation/stellar/stellar-multihost-formation';
 import {
@@ -15,7 +16,6 @@ import { type SystemSceneSnapshot, type SystemSceneOrbitalMotionSnapshot,
   type SystemSceneHabitableZoneSnapshot } from './system-scene-snapshot';
 
 const AU_KILOMETERS = 149_597_870.7;
-const MOON_ORBIT_SECONDS = 42;
 const COLORS: Readonly<Record<PlanetType, string>> = Object.freeze({
   [PlanetType.ROCKY]: '#9A8F86', [PlanetType.SUPER_EARTH]: '#8FA292',
   [PlanetType.DESERT]: '#C8A36A', [PlanetType.OCEAN]: '#4B7FCB',
@@ -120,6 +120,11 @@ export function appendSystemSceneMultihostCircumbinary(
     planets.push(planetBody);
     visualOuterRadius = Math.max(visualOuterRadius, axis * (1 + motion.eccentricity) + 0.5);
 
+    const moonGroupTimeScale = moonSystem.relevantMoons.length === 0 ? null :
+      systemSceneMoonGroupPresentationTimeScaleV1(
+        moonSystem.relevantMoons.map(moon => moon.orbit.orbitalPeriodDays),
+        playback,
+      );
     for (const [moonIndex, moon] of [...moonSystem.relevantMoons]
       .sort((left, right) => left.orbit.semiMajorAxisKilometers - right.orbit.semiMajorAxisKilometers)
       .entries()) {
@@ -168,7 +173,7 @@ export function appendSystemSceneMultihostCircumbinary(
       motions.push(moonMotion);
       const localMoon: SystemSceneMotionContributionSnapshot = Object.freeze({
         motionId: moonMotionId, scale: 1, linearScenePerAu: moonScenePerAu,
-        presentationTimeScale: Math.min(1, moonMotion.periodDays / (playback * MOON_ORBIT_SECONDS)),
+        presentationTimeScale: moonGroupTimeScale!,
       });
       const moonParts = Object.freeze([...parts, localMoon]);
       const publicMoonDesignation = stellarMultihostPublicMoonDesignation(

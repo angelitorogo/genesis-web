@@ -31,9 +31,9 @@ describe('38.bis-b1 · listados compactos, campos científicos y navegación',()
   });
   it('mantiene la procedencia y el planeta anfitrión de las colonias sin inventarlos',()=>{
     expect(keys('civilizations')).toEqual(['Planeta','Sistema','Nivel','Linaje']);
-    expect(keys('colonies')).toEqual(['Sistema','Especie fundadora','Planeta natal','Clase']);
-    expect(keys('colonized-planets')).toEqual(['Galaxia','Sistema','Colonias','Especie fundadora','Planeta natal','Clase']);
-    expect(keys('colonized-moons')).toEqual(['Galaxia','Sistema','Planeta','Colonias','Especie fundadora','Planeta natal','Clase']);
+    expect(keys('colonies')).toEqual(['Sistema','Especie fundadora','Planeta natal','Clase','Población colonial']);
+    expect(keys('colonized-planets')).toEqual(['Galaxia','Sistema','Colonias','Especie fundadora','Planeta natal','Clase','Población colonial total']);
+    expect(keys('colonized-moons')).toEqual(['Galaxia','Sistema','Planeta','Colonias','Especie fundadora','Planeta natal','Clase','Población colonial total']);
     expect(archiveCompactFields38BisB1(row('colonized-moons',{count:'1',planet:'Aaras A-11'}),'Elixisis')
       .find(field=>field.key==='planet')?.value).toBe('Aaras A-11');
     expect(archiveCompactFields38BisB1(row('colonies',{count:'1'}),'Elixisis')

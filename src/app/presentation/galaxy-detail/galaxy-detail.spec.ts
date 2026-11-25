@@ -420,6 +420,41 @@ describe(
       });
     }
 
+    it('CACHE-GAL.2: A -> B -> A uses the indexed galaxy-scoped rows, never a universe-wide hydration', async () => {
+      const states = new Map<bigint, DiscoveryStateValue>([
+        [0n, DiscoveryState.DISCOVERED],
+        [1n, DiscoveryState.DETECTED],
+      ]);
+      const base = repositories(states);
+      const scopedReads: bigint[] = [];
+      const strict: GenesisLocalRepositories = {
+        ...base,
+        discoveryRepository: {
+          ...base.discoveryRepository,
+          getState: base.discoveryRepository.getState.bind(base.discoveryRepository),
+          setState: base.discoveryRepository.setState.bind(base.discoveryRepository),
+          getKnownDiscoveriesInSector: base.discoveryRepository.getKnownDiscoveriesInSector.bind(base.discoveryRepository),
+          async getKnownDiscoveries() {
+            throw new Error('Galaxy detail must not rehydrate the entire universe');
+          },
+          async getKnownDiscoveriesInGalaxy(_key, galaxyIndex) {
+            scopedReads.push(galaxyIndex);
+            return [new KnownDiscovery(generationKey, new GalaxyLocator(galaxyIndex),
+              states.get(galaxyIndex) ?? DiscoveryState.UNKNOWN)];
+          },
+        },
+      };
+      configure('0', strict);
+      const facade = TestBed.inject(GalaxyDetailFacade);
+      await facade.load('0');
+      expect(facade.model()).not.toBeNull();
+      await facade.load('1');
+      expect(facade.model()).not.toBeNull();
+      await facade.load('0');
+      expect(facade.model()).not.toBeNull();
+      expect(scopedReads).toEqual([0n, 1n, 0n]);
+    });
+
     it(
       'should load the default B5 origin galaxy with its bootstrap statistics and global PD affordability without changing focus',
       async () => {

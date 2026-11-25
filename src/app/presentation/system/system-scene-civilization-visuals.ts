@@ -1,46 +1,76 @@
-import { ArchiveStellarSystemKnowledgeLevel } from '../genesis-archive/archive-stellar-system-card';
-import type { Vida38InfrastructurePlan386 } from '../infrastructure/vida38-infrastructure-plan-38-6';
 import { type Vida7CivilizationTier } from '../../domain/life/vida7-intelligence-civilizations';
+import { ArchiveStellarSystemKnowledgeLevel } from '../genesis-archive/archive-stellar-system-card';
+import { DiscoveryState } from '../../domain/discovery/discovery-state';
 import type { SystemScenePlanetVegetationProfileV1 } from './system-scene-planet-surface-texture';
+import type { Vida38InfrastructurePlan386 } from '../infrastructure/vida38-infrastructure-plan-38-6';
 import type { SystemSceneBodySnapshot, SystemSceneSnapshot } from './system-scene-snapshot';
 
-function sceneRecord386(snapshot:SystemSceneSnapshot,
-  record:SystemSceneCivilizationVisualRecord|undefined,
-  bodyIndex:string,moonIndex:string|null):SystemSceneCivilizationVisualRecord|undefined {
-  if (!record) return undefined;
-  if (record.universeSeed !== undefined && record.universeSeed !== snapshot.universeSeed) return undefined;
-  if (record.generatorVersionCode !== undefined && record.generatorVersionCode !== snapshot.generatorVersionCode) return undefined;
-  if (record.systemKey !== undefined && record.systemKey !==
-      [snapshot.address.galaxyIndex,snapshot.address.sectorKey,snapshot.address.galacticObjectIndex].join('/')) return undefined;
-  const expected = snapshot.address === undefined ? null :
-    [snapshot.address.galaxyIndex,snapshot.address.sectorKey,snapshot.address.galacticObjectIndex,
-      bodyIndex,moonIndex === null ? 'PLANET':'MOON',moonIndex ?? '-'].join(':');
-  if (expected !== null && record.infrastructurePlans?.some(p=>p.bodyStorageKey!==expected)) return undefined;
-  return record;
+/** 38.7x: independent key for a moon. Never overwrite its parent planet's
+ * biology when both have VIDA.9 records with the same bodyIndex. */
+export function systemSceneMoonVisualKey387x(bodyIndex: string, moonIndex: string): string {
+  return `${bodyIndex}:MOON:${moonIndex}`;
+}
+
+/** Fail closed on a non-confirmed or stale scene, including infrastructure. */
+export function stripSystemSceneBiologyVisuals387(snapshot: SystemSceneSnapshot): SystemSceneSnapshot {
+  let leaked = false;
+  const safePlanets = snapshot.planets.map(planet => {
+    if ((planet.visualCivilizationTier ?? null) === null &&
+        (planet.visualVegetationProfile ?? null) === null &&
+        (planet.visualInfrastructurePlans?.length ?? 0) === 0) return planet;
+    leaked = true;
+    return Object.freeze({
+      ...planet,
+      visualCivilizationTier: null,
+      visualVegetationProfile: null,
+      visualInfrastructurePlans: Object.freeze([]),
+    });
+  });
+  const safeMoons = snapshot.moons.map(moon => {
+    if ((moon.visualInfrastructurePlans?.length ?? 0) === 0) return moon;
+    leaked = true;
+    return Object.freeze({ ...moon, visualInfrastructurePlans: Object.freeze([]) });
+  });
+  return leaked ? Object.freeze({
+    ...snapshot, planets: Object.freeze(safePlanets), moons: Object.freeze(safeMoons),
+  }) : snapshot;
+}
+
+/** Never merge a record belonging to another system or universe. */
+export function systemSceneVisualRecordAuthorized387x(
+  record: SystemSceneCivilizationVisualRecord,
+  snapshot: SystemSceneSnapshot,
+): boolean {
+  return (record.universeSeed === undefined || record.universeSeed === snapshot.universeSeed) &&
+    (record.generatorVersionCode === undefined ||
+      record.generatorVersionCode === snapshot.generatorVersionCode) &&
+    (record.systemKey === undefined || record.systemKey ===
+      `${snapshot.address.galaxyIndex}/${snapshot.address.sectorKey}/${snapshot.address.galacticObjectIndex}`);
 }
 
 export function decorateSystemSceneSnapshotWithCivilizationTiers(
   snapshot: SystemSceneSnapshot,
   tiersByBodyIndex: ReadonlyMap<string, SystemSceneCivilizationVisualRecord>,
 ): SystemSceneSnapshot {
-  // A stale asynchronous read must never decorate another or unconfirmed scene.
-  if (snapshot.knowledgeLevel !== undefined &&
-      snapshot.knowledgeLevel !== ArchiveStellarSystemKnowledgeLevel.CONFIRMED) return snapshot;
-  if (tiersByBodyIndex.size === 0) {
-    return snapshot;
+  if (snapshot.knowledgeLevel !== ArchiveStellarSystemKnowledgeLevel.CONFIRMED ||
+      snapshot.discoveryStateCode !== DiscoveryState.CONFIRMED.code) {
+    return stripSystemSceneBiologyVisuals387(snapshot);
   }
 
+  if (tiersByBodyIndex.size === 0) return snapshot;
+
   let changed = false;
-  const stars = snapshot.stars.map(star => star);
   const planets = snapshot.planets.map(planet => {
     const bodyIndex = bodyIndexForPlanet(snapshot, planet.id);
-    const record = bodyIndex === null ? undefined : sceneRecord386(snapshot,tiersByBodyIndex.get(bodyIndex),bodyIndex,null);
+    const candidate = bodyIndex === null ? undefined : tiersByBodyIndex.get(bodyIndex);
+    const record = candidate && systemSceneVisualRecordAuthorized387x(candidate, snapshot)
+      ? candidate : undefined;
     const tier = record?.tier ?? null;
     const vegetationProfile = record?.vegetationProfile ?? null;
-    const infrastructurePlans = record?.infrastructurePlans ?? null;
+    const infrastructurePlans = record?.infrastructurePlans ?? Object.freeze([]);
     if ((planet.visualCivilizationTier ?? null) === tier &&
         (planet.visualVegetationProfile ?? null) === vegetationProfile &&
-        (planet.visualInfrastructurePlans ?? null) === infrastructurePlans) {
+        (planet.visualInfrastructurePlans ?? null) === (record?.infrastructurePlans ?? null)) {
       return planet;
     }
     changed = true;
@@ -48,27 +78,44 @@ export function decorateSystemSceneSnapshotWithCivilizationTiers(
       ...planet,
       visualCivilizationTier: tier,
       visualVegetationProfile: vegetationProfile,
-      visualInfrastructurePlans: infrastructurePlans ?? undefined,
+      visualInfrastructurePlans: infrastructurePlans,
     });
   });
-
-  const moons = (snapshot.moons ?? []).map(moon => {
-    const binding = snapshot.scientificMoonBindings?.find(entry => entry.sceneBodyId === moon.id);
-    const legacyOrdinal = /^moon-\d+-(\d+)$/.exec(moon.id);
-    const bodyIndex = binding?.bodyIndex ?? (snapshot.scientificMoonBindings === undefined
-      ? bodyIndexForPlanet(snapshot,moon.hostPlanetId) : null);
-    const moonIndex = binding?.moonIndex ?? (snapshot.scientificMoonBindings === undefined && legacyOrdinal
-      ? (BigInt(legacyOrdinal[1]!) - 1n).toString() : null);
-    const record = bodyIndex === null || moonIndex === null ? undefined
-      : sceneRecord386(snapshot,tiersByBodyIndex.get(`${bodyIndex}:MOON:${moonIndex}`),bodyIndex,moonIndex);
-    const plans = record?.infrastructurePlans ?? null;
-    if ((moon.visualInfrastructurePlans ?? null) === plans) return moon;
+  const moons = snapshot.moons.map(moon => {
+    const moonBinding = bodyIndicesForMoon387x(snapshot, moon.id);
+    const candidate = moonBinding === null ? undefined : tiersByBodyIndex.get(
+      systemSceneMoonVisualKey387x(moonBinding.bodyIndex, moonBinding.moonIndex),
+    );
+    const record = candidate && systemSceneVisualRecordAuthorized387x(candidate, snapshot)
+      ? candidate : undefined;
+    const infrastructurePlans = record?.infrastructurePlans ?? Object.freeze([]);
+    if ((moon.visualInfrastructurePlans ?? null) === (record?.infrastructurePlans ?? null)) return moon;
     changed = true;
-    return Object.freeze({...moon,visualInfrastructurePlans:plans ?? undefined});
+    return Object.freeze({ ...moon, visualInfrastructurePlans: infrastructurePlans });
   });
-  if (!changed) return snapshot;
-  return Object.freeze({...snapshot,stars:Object.freeze(stars),
-    planets:Object.freeze(planets),moons:Object.freeze(moons)});
+
+  return changed ? Object.freeze({
+    ...snapshot, planets: Object.freeze(planets), moons: Object.freeze(moons),
+  }) : snapshot;
+}
+
+/** The same binding/legacy rules as the moon scientific route. */
+export function bodyIndicesForMoon387x(
+  snapshot: SystemSceneSnapshot, sceneBodyId: string,
+): Readonly<{bodyIndex: string; moonIndex: string}> | null {
+  if (snapshot.scientificMoonBindings !== undefined) {
+    const matching = snapshot.scientificMoonBindings.filter(binding => binding.sceneBodyId === sceneBodyId);
+    return matching.length === 1 ? Object.freeze({
+      bodyIndex: matching[0]!.bodyIndex, moonIndex: matching[0]!.moonIndex,
+    }) : null;
+  }
+  if (snapshot.scientificPlanetBindings !== undefined) return null;
+  const match = /^moon-([1-9]\d*)-([1-9]\d*)$/.exec(sceneBodyId);
+  if (!match) return null;
+  return Object.freeze({
+    bodyIndex: (BigInt(match[1]!) - 1n).toString(),
+    moonIndex: (BigInt(match[2]!) - 1n).toString(),
+  });
 }
 
 export function bodyIndexForPlanet(
@@ -91,13 +138,17 @@ export function bodyIndexForPlanet(
 
 export interface SystemSceneCivilizationVisualRecord {
   readonly bodyIndex: string;
+  /** Null is a confirmed biosphere without a VIDA.7 civilization. */
+  readonly tier: Vida7CivilizationTier | null;
+  readonly vegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
+  /** 38.6: optional provenance of the confirmed system. Older fixtures omit it. */
   readonly universeSeed?: string;
   readonly generatorVersionCode?: number;
   readonly systemKey?: string;
+  /** Null identifies a planet; a string identifies a moon of bodyIndex. */
   readonly moonIndex?: string | null;
-  readonly tier: Vida7CivilizationTier | null;
+  /** VIDA.7 / VIDA.8-backed infrastructure, never inferred from a signal. */
   readonly infrastructurePlans?: readonly Vida38InfrastructurePlan386[];
-  readonly vegetationProfile?: SystemScenePlanetVegetationProfileV1 | null;
 }
 
 export function civilizationVisualMapOf(
@@ -106,7 +157,8 @@ export function civilizationVisualMapOf(
   const map = new Map<string, SystemSceneCivilizationVisualRecord>();
   for (const record of records) {
     map.set(record.moonIndex === null || record.moonIndex === undefined
-      ? record.bodyIndex : `${record.bodyIndex}:MOON:${record.moonIndex}`, record);
+      ? record.bodyIndex
+      : systemSceneMoonVisualKey387x(record.bodyIndex, record.moonIndex), record);
   }
   return map;
 }

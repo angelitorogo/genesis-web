@@ -18,6 +18,7 @@ const cataloguedSystem = (): SystemSceneSnapshot => ({
   generatorVersionCode: 3,
   address: { galaxyIndex: '0', sectorKey: '3', galacticObjectIndex: '11' },
   knowledgeLevel: ArchiveStellarSystemKnowledgeLevel.CONFIRMED,
+  discoveryStateCode: 5, // 38.7: confirmed persisted state, not just a UI label.
   stars: [],
   moons: [],
   planets: [{ id: 'planet-advanced', radiusScene: 0.77, label: 'Prueba VISCIV.6e', visualCivilizationTier: null }],

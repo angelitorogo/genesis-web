@@ -24,6 +24,16 @@ describe('38.2o.d4 — ropa futurista, ojos visibles y cola del color corporal',
     model.dispose();
   });
 
+  it('no transforma una inteligencia sin civilización canónica en una civilización visual', () => {
+    const model = createVida38SpeciesPreviewModelV1(reptilian('rep:canonical-null', {
+      lineage: 'REPTILIAN', civilizationTier: null,
+      civilization: { level: 'VERY_ADVANCED' },
+    }), { humanoidQuality: 'LOW' });
+    expect(model.subject.userData['vida38ReptilianLevel38OD']).toBeUndefined();
+    expect(model.subject.userData['genesisCivilizationVisualTrace38_8']).toBeUndefined();
+    model.dispose();
+  });
+
   it('cola y base usan el mismo color base del cuerpo', () => {
     const model = createVida38SpeciesPreviewModelV1(reptilian('rep:tail', { lineage: 'REPTILIAN', civilizationLevel: 'VERY_ADVANCED' }), { humanoidQuality: 'LOW' });
     expect(model.subject.userData['vida38IntegratedSdfTail38OD5']).toBe(true);

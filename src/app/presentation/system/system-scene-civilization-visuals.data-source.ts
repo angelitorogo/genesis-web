@@ -54,9 +54,11 @@ export class SystemSceneCivilizationVisualsDataSource {
         for (let index=0;index<block.length;index++) {
           const key=block[index]!;
           const row=rows[index];
+          // 38.7x: a confirmed world may carry vegetation without any
+          // civilization. Cheap scan only decides what to VERIFY with VIDA.9;
+          // unverified private JSON never goes directly to SystemScene.
           if (!row || typeof row.payloadJson !== 'string' ||
-            (!row.payloadJson.includes('"nativeCivilizationPresent":true') &&
-             !row.payloadJson.includes('"colonialPopulationPresent":true'))) continue;
+              !systemSceneBiologyMayHaveVisibleFeatures387x(row.payloadJson)) continue;
           try {
             const record=await repo.get(key[0],key[1],key[2]);
             if (!record) continue;
@@ -65,14 +67,16 @@ export class SystemSceneCivilizationVisualsDataSource {
             const tier=record.identity.kind==='PLANET'
               ? extractConfirmedCivilization(row,new Set([systemKey]))?.intelligence.civilization?.tier ?? null
               : null;
-            if (tier === null && plan.length === 0) continue;
+            const vegetationProfile = record.identity.kind === 'PLANET'
+              ? resolvePlanetVegetationPreviewProfileV1(record, undefined)
+              : null;
+            if (tier === null && plan.length === 0 && vegetationProfile === null) continue;
             collected.push(Object.freeze({
               universeSeed:request.universeSeed,generatorVersionCode:request.generatorVersionCode,
               systemKey,bodyIndex:record.identity.bodyIndex,
               moonIndex:record.identity.kind==='MOON'?record.identity.moonIndex:null,
               tier,infrastructurePlans:plan,
-              vegetationProfile:record.identity.kind==='PLANET' && tier!==null
-                ? resolvePlanetVegetationPreviewProfileV1(record,undefined):null,
+              vegetationProfile,
             }));
           } catch(error) {
             console.warn('38.6: registro biológico no verificable; infraestructura omitida',key[2],error);
@@ -95,4 +99,13 @@ export class SystemSceneCivilizationVisualsDataSource {
 
     return civilizationVisualMapOf(records);
   }
+}
+
+
+/** Fast *candidate* check only; the actual VIDA.9 record is always verified
+ * using the repository before any visual data can reach the renderer. */
+export function systemSceneBiologyMayHaveVisibleFeatures387x(payloadJson: string): boolean {
+  return payloadJson.includes('"nativeCivilizationPresent":true') ||
+    payloadJson.includes('"colonialPopulationPresent":true') ||
+    payloadJson.includes('"PLANTS_TREES"');
 }

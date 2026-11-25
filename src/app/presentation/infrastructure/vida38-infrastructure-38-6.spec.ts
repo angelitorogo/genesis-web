@@ -138,6 +138,7 @@ describe('38.6 · frontera de presentación en SystemScene',()=>{
       generatorVersionCode:3,
       address:{galaxyIndex:0n,sectorKey:1n,galacticObjectIndex:2n},
       knowledgeLevel:ArchiveStellarSystemKnowledgeLevel.CONFIRMED,
+      discoveryStateCode: 5,
       stars:[],planets:[{id:'planet-alpha',visualCivilizationTier:null}],
       moons:[{id:'moon-beta',hostPlanetId:'planet-alpha'}],
       scientificPlanetBindings:[{sceneBodyId:'planet-alpha',bodyIndex:'3'}],

@@ -39,7 +39,7 @@ function fixture(): Vida38InfrastructurePlan386 {
 function probeShader(material:THREE.MeshStandardMaterial) {
   const shader = {
     uniforms: {} as Record<string,{value:unknown}>,
-    vertexShader: '#include <common>\n#include <begin_vertex>\n#include <project_vertex>\n',
+    vertexShader: '#include <common>\n#include <begin_vertex>\n#include <defaultnormal_vertex>\n#include <project_vertex>\n',
     fragmentShader: '#include <common>\nvec3 normal = vec3(0.0,1.0,0.0);\nvec3 outgoingLight=vec3(1.0);\n#include <opaque_fragment>\n',
   };
   material.onBeforeCompile(shader as unknown as Parameters<typeof material.onBeforeCompile>[0],

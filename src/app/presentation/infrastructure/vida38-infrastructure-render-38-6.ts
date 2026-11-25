@@ -2,10 +2,16 @@
  * Shared by fiche previews and SystemScene. No edits to scientific geometry.
  */
 import * as THREE from 'three';
+import { genesisVisualTrace388 } from '../visual-provenance/genesis-visual-provenance-38-8';
 import type { Vida38InfrastructurePlan386 } from './vida38-infrastructure-plan-38-6';
 import { createVida38DayUrbanSurface386a } from './vida38-day-urban-visual-38-6a';
 import { vida38ColonialComplexLayout386c, type Vida38ColonyVisualPart386c } from './vida38-colonial-complex-38-6c';
 import { vida38ColonialDirectStellarExposure386c3, vida38ColonialLampOpacity386c3 } from './vida38-colonial-night-lighting-38-6c3';
+import {colonialNightVisibilityT7r,colonialNightGlowSceneSizeT7r} from './vida38-colonial-night-visibility-38bis-t7r';
+import type { Colvis1HostEnvironment } from './colvis1-colonial-architecture';
+import { colvis2LayoutFromVerifiedPlan, type Colvis2Layout } from './colvis2-colonial-architecture';
+import { colvis2SculptedGeometry, COLVIS2_SCULPTED_SHAPES } from './colvis2-architecture-geometry';
+import { colvis3ColonyDetailsFromVerifiedPlanT7c, colvis3MarkerRadiusSceneT7c, type Colvis3ColonyDetailsT7c } from './colvis3-colony-visibility-t7c';
 
 /** Optional geometry for a tiny irregular moon. Never a scientific world radius.
  * Source geometry must be the SAME mesh that the corresponding moon renderer
@@ -43,12 +49,20 @@ export interface Vida38InfrastructureVisual386 {
   readonly dayClusterCount: number;
   /** Mutable view-space centre, used exclusively for colonial horizon masking. */
   readonly colonialBodyCenterView386c4: THREE.Vector3;
+  /** Verified colonies actually present in this rendered body, not laboratory fixtures. */
+  readonly colonialSitesCOLVIS2: readonly Readonly<{id:string;site:THREE.Group;footprintScene:number;bodyRadiusScene:number;details:Colvis3ColonyDetailsT7c}>[];
+  /** T7t: pivotes de TODOS los asentamientos coloniales autorizados,
+   * incluidos planes antiguos sin arquitectura COLVIS. No crea indicadores por sí solo. */
+  readonly colonialSiteAnchorsT7t?: readonly Readonly<{id:string;site:THREE.Group;markerHex:number}>[];
+  /** Conceal optical location markers in physically scaled close-up views. */
+  setColonialInspectionActiveCOLVIS2(active:boolean):void;
   updateProjectedDiameterPixels(diameter: number): void;
   /** SystemScene-only: update artificial equipment indicators with its REAL
    * multistellar light binding; never modify surface emission or star flux. */
   updateColonialNightLighting386c3(
     directionsView: readonly THREE.Vector3[], weights: THREE.Vector3,
     cameraMatrixWorldInverse: THREE.Matrix4,
+    camera?:THREE.PerspectiveCamera,viewportHeightPixels?:number,
   ): void;
 }
 
@@ -78,9 +92,24 @@ export function createVida38InfrastructureSurfaceVisual386(
   irregularMoonSurface: Vida38IrregularMoonSurface386c2 | null = null,
   /** Opt-in ONLY from confirmed SystemScene, never from a private catalogue. */
   colonialNightIndicators386c3 = false,
+  /** Source physical radius, for COLVIS.1 metric geometry only. */
+  physicalRadiusEarthCOLVIS1: number | null = null,
+  environmentCOLVIS1:Colvis1HostEnvironment | null = null,
+  /** Only the fiche's UI locator grows: SystemScene retains COLVIS.2 scale. */
+  colonyMarkerEnhancementT7c = false,
+  /** T7n: ocultar marcadores de emplazamiento SOLO en SystemScene. */
+  showColonyLocationRingsT7n = true,
 ): Vida38InfrastructureVisual386 {
   const group = new THREE.Group();
   group.name = 'VIDA.38.6 reconstructed surface infrastructure (not observed coordinates)';
+  // 38.8: provenance for the VERIFIED existing plans, not newly discovered data.
+  // Native and colonial infrastructure retain their distinct VIDA authorities.
+  group.userData['genesisVisualTrace38_8'] = Object.freeze(plans.map(plan =>
+    genesisVisualTrace388(
+      plan.provenance === 'VIDA8_COLONIAL_SETTLEMENT'
+        ? 'COLONIAL_INFRASTRUCTURE' : 'CIVILIZATION',
+      plan.id, plan.seedUint32,
+    )));
   const resources: {dispose():void}[] = [];
   const medium = new THREE.Group();
   const high = new THREE.Group();
@@ -89,16 +118,60 @@ export function createVida38InfrastructureSurfaceVisual386(
   const distantColonies = new THREE.Group();
   distantColonies.name = 'VIDA.38.6c1 distant colonial infrastructure';
   const distantColonySites: THREE.Group[] = [];
+  const colonialSitesCOLVIS2:Array<Readonly<{id:string;site:THREE.Group;footprintScene:number;bodyRadiusScene:number;details:Colvis3ColonyDetailsT7c}>>=[];
+  const colonialSiteAnchorsT7t:Array<Readonly<{id:string;site:THREE.Group;markerHex:number}>>=[];
+  const colonialLocationMarkersCOLVIS2:THREE.Mesh[]=[];
+  const distantLocationMarkersT7c=new Set<THREE.Mesh>();
+  let colonialInspectionActiveT7p=false;
+  const setColonialInspectionActiveCOLVIS2=(active:boolean):void=>{
+    colonialInspectionActiveT7p=active;
+    for(const marker of colonialLocationMarkersCOLVIS2)marker.visible=!active;
+    // Un modal siempre muestra el LOD alto real, sin mezclar copias de
+    // distancia/media a consecuencia del zoom óptico o de la cámara orbital.
+    if(active)updateProjectedDiameterPixelsT7p(1200);
+  };
+  let updateProjectedDiameterPixelsT7p:(diameter:number)=>void=()=>{};
   const colonialLampBindings: Array<{site:THREE.Group;material:THREE.MeshBasicMaterial}> = [];
+  /** T7r: emisores ópticos visibles a escala del globo (sin contornos UI).
+   * Sprites independientes del LOD; el cuerpo celeste sigue ocultando su cara posterior. */
+  const colonialNightBeaconsT7r:Array<{site:THREE.Group;material:THREE.SpriteMaterial;
+    sprite:THREE.Sprite}> = [];
+  let colonialNightGlowTextureT7r:THREE.DataTexture|null=null;
+  function nightGlowTextureT7r():THREE.DataTexture{
+    if(colonialNightGlowTextureT7r)return colonialNightGlowTextureT7r;
+    const n=64,rgba=new Uint8Array(n*n*4);
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+      const dx=(x+.5)/n*2-1,dy=(y+.5)/n*2-1;
+      const r2=dx*dx+dy*dy;
+      // Punto luminoso suave, sin anillo, base, flecha ni halo de selección.
+      const core=Math.exp(-r2*27);
+      const halo=Math.exp(-r2*7)*.28;
+      const rays=Math.exp(-dx*dx*120)*Math.exp(-dy*dy*2)*.12+
+        Math.exp(-dy*dy*120)*Math.exp(-dx*dx*2)*.12;
+      const alpha=Math.min(1,core+halo+rays);
+      const j=(y*n+x)*4;
+      rgba[j]=255;rgba[j+1]=255;rgba[j+2]=255;rgba[j+3]=Math.round(alpha*255);
+    }
+    const texture=new THREE.DataTexture(rgba,n,n,THREE.RGBAFormat);
+    texture.needsUpdate=true;
+    texture.magFilter=THREE.LinearFilter;texture.minFilter=THREE.LinearFilter;
+    colonialNightGlowTextureT7r=texture;resources.push(texture);
+    return texture;
+  }
   /** Moon/planet centre IN VIEW SPACE, independent of each site's pivot.
    * Shared with colonial reflection shaders, refreshed after orbital motion. */
   const colonialBodyCenterView386c4 = new THREE.Vector3();
   const colonialBodyCenterWorld386c4 = new THREE.Vector3();
   const lampWorldQuaternion = new THREE.Quaternion();
   const lampNormalView = new THREE.Vector3();
+  const beaconViewPositionT7r=new THREE.Vector3();
+  const beaconNormalViewT7r=new THREE.Vector3();
+  const beaconToCameraT7r=new THREE.Vector3();
+  const beaconWorldQuaternionT7r=new THREE.Quaternion();
   const updateColonialNightLighting386c3 = (
     directionsView: readonly THREE.Vector3[], weights: THREE.Vector3,
     cameraMatrixWorldInverse: THREE.Matrix4,
+    camera?:THREE.PerspectiveCamera,viewportHeightPixels?:number,
   ):void => {
     // Site geometry is instanced inside a rotated, moving body. Its own mesh
     // origin is the settlement, NOT the lunar centre; use the parent group.
@@ -111,12 +184,42 @@ export function createVida38InfrastructureSurfaceVisual386(
       material.opacity = vida38ColonialLampOpacity386c3(
         vida38ColonialDirectStellarExposure386c3(lampNormalView,directionsView,weights));
     }
+    // T7r: el volumen físico de una luz colonial puede proyectar < 1 píxel.
+    // Solo SystemScene aporta cámara para esta ayuda óptica, siempre por detrás
+    // de la superficie al estar en el hemisferio oculto (depthTest=true).
+    for(const beacon of colonialNightBeaconsT7r){
+      const {site,material,sprite}=beacon;
+      site.getWorldQuaternion(beaconWorldQuaternionT7r);
+      beaconNormalViewT7r.copy(UP).applyQuaternion(beaconWorldQuaternionT7r)
+        .transformDirection(cameraMatrixWorldInverse);
+      sprite.getWorldPosition(beaconViewPositionT7r).applyMatrix4(cameraMatrixWorldInverse);
+      const distance=beaconViewPositionT7r.length();
+      beaconToCameraT7r.copy(beaconViewPositionT7r).negate().normalize();
+      const facing=beaconNormalViewT7r.dot(beaconToCameraT7r);
+      const exposure=vida38ColonialDirectStellarExposure386c3(
+        beaconNormalViewT7r,directionsView,weights);
+      const heightPixelsT7r=viewportHeightPixels??0;
+      if(!camera||heightPixelsT7r<=0){
+        material.opacity=0;sprite.visible=false;continue;
+      }
+      const bodyPixels=bodyRadiusScene*heightPixelsT7r/
+        Math.max(distance,1e-8)/Math.tan(camera.fov*Math.PI/360);
+      const visibility=colonialNightVisibilityT7r(exposure,facing,bodyPixels);
+      material.opacity=visibility.opacity;
+      sprite.visible=visibility.opacity>.015;
+      if(sprite.visible){
+        const size=colonialNightGlowSceneSizeT7r(
+          visibility.diameterPixels,distance,camera.fov,heightPixelsT7r);
+        sprite.scale.set(size,size,1);
+      }
+    }
   };
   group.add(medium,high);
   const maxSites = Math.min(plans.length,20);
   const base = bodyRadiusScene * .0056;
   if (!(bodyRadiusScene > 0) || !Number.isFinite(bodyRadiusScene)) {
     return Object.freeze({group,resources:Object.freeze(resources),siteCount:0,dayClusterCount:0,colonialBodyCenterView386c4,
+      colonialSitesCOLVIS2:Object.freeze([]),colonialSiteAnchorsT7t:Object.freeze([]),setColonialInspectionActiveCOLVIS2,
       updateProjectedDiameterPixels: (_diameter:number)=>{medium.visible=false;high.visible=false;},
       updateColonialNightLighting386c3});
   }
@@ -141,6 +244,69 @@ export function createVida38InfrastructureSurfaceVisual386(
   const colonyDome = material('#819eae',.22);
   const colonyMastGeometry = new THREE.CylinderGeometry(.18,.21,1,8);
   const colonyPadGeometry = new THREE.CylinderGeometry(.5,.55,1,12);
+  const colonyHexGeometry = new THREE.CylinderGeometry(.8,.86,1,6);
+  const colonyTaperGeometry = new THREE.CylinderGeometry(.42,.85,1,6);
+  const colonyRingGeometry = new THREE.TorusGeometry(.75,.075,6,18);
+  colonyRingGeometry.rotateX(-Math.PI/2);
+  const colonyBasalt = material('#5d686f',.25);
+  const colonyCeramic = material('#b1bdc6',.28);
+  const colonyServiceVehicleGeometry = new THREE.BoxGeometry(1,1,1);
+  const sculptedCOLVIS2=new Map<Vida38ColonyVisualPart386c['shape'],THREE.BufferGeometry>();
+  // Only generate prefab geometry actually used by this body's VERIFIED
+  // colonial plans. Native settlements and uncolonized worlds allocate none.
+  const neededCOLVIS2=new Set<Vida38ColonyVisualPart386c['shape']>();
+  const cachedLayoutsCOLVIS2=new Map<string,Colvis2Layout>();
+  if(physicalRadiusEarthCOLVIS1!==null && physicalRadiusEarthCOLVIS1>0){
+    for(const plan of plans.slice(0,maxSites)){
+      const layout=colvis2LayoutFromVerifiedPlan(plan,environmentCOLVIS1);
+      if(layout){cachedLayoutsCOLVIS2.set(plan.id,layout);
+        for(const part of layout.high)neededCOLVIS2.add(part.shape);}
+    }
+  }
+  for(const shape of COLVIS2_SCULPTED_SHAPES){
+    if(!neededCOLVIS2.has(shape))continue;
+    const geometry=colvis2SculptedGeometry(shape);
+    sculptedCOLVIS2.set(shape,geometry);resources.push(geometry);
+  }
+  const hasCOLVIS2=neededCOLVIS2.size>0;
+  const humanAlloyCOLVIS2=hasCOLVIS2?material('#92a6b4',.74):colonyHull;
+  const humanGlassCOLVIS2=hasCOLVIS2?new THREE.MeshStandardMaterial({color:'#9bb9c7',metalness:.36,roughness:.24}):colonyPanel;
+  const reptileScuteCOLVIS2=hasCOLVIS2?new THREE.MeshStandardMaterial({color:'#655c56',metalness:.48,roughness:.63}):colonyBasalt;
+  const reptileCoreCOLVIS2=hasCOLVIS2?new THREE.MeshStandardMaterial({color:'#ad8e6e',metalness:.64,roughness:.36}):colonyAccent;
+  const insectChitinCOLVIS2=hasCOLVIS2?new THREE.MeshStandardMaterial({color:'#637c70',metalness:.16,roughness:.47}):colonyHull;
+  const insectPearlCOLVIS2=hasCOLVIS2?new THREE.MeshStandardMaterial({color:'#b2c9a4',metalness:.23,roughness:.30}):colonyCeramic;
+  if(hasCOLVIS2)resources.push(humanAlloyCOLVIS2,humanGlassCOLVIS2,reptileScuteCOLVIS2,reptileCoreCOLVIS2,insectChitinCOLVIS2,insectPearlCOLVIS2);
+  // A small outlined SITE LOCATOR is an interface aid, never a physical
+  // megastructure. It is hidden when inspecting the actual colony geometry.
+  const sculptedFinishesCOLVIS2=new Map<THREE.Material,THREE.Material>();
+  // El laboratorio y las fichas conservan sus anillos: SystemScene los desactiva.
+  const locationRingCOLVIS2=hasCOLVIS2 && showColonyLocationRingsT7n
+    ?new THREE.TorusGeometry(1,.10,8,32):null;
+  locationRingCOLVIS2?.rotateX(-Math.PI/2);
+  if(locationRingCOLVIS2)resources.push(locationRingCOLVIS2);
+  const locatorMaterialsT7c=new Map<number,THREE.MeshBasicMaterial>();
+  // El anillo es una ayuda de localización óptica, NO geometría medida.
+  // Material compartido por color: a lo sumo unas pocas asignaciones por cuerpo.
+  function locationMarkerCOLVIS2(site:THREE.Group,details:Colvis3ColonyDetailsT7c,distant=false):void{
+    if(!locationRingCOLVIS2)return;
+    const color=colonyMarkerEnhancementT7c?details.markerHex:0xa8e4f0;
+    let material=locatorMaterialsT7c.get(color);
+    if(!material){
+      material=new THREE.MeshBasicMaterial({color,
+        transparent:true,opacity:colonyMarkerEnhancementT7c ? .97 : .80,
+        depthTest:true,depthWrite:false,toneMapped:false,side:THREE.DoubleSide});
+      locatorMaterialsT7c.set(color,material);resources.push(material);
+    }
+    const marker=new THREE.Mesh(locationRingCOLVIS2,material);
+    marker.name='COLVIS.2 confirmed colony location indicator (NOT physical infrastructure)';
+    marker.scale.setScalar(bodyRadiusScene*(colonyMarkerEnhancementT7c ? .035 : .014));
+    marker.position.y=bodyRadiusScene*.003;
+    marker.frustumCulled=false;marker.renderOrder=2;
+    site.add(marker);colonialLocationMarkersCOLVIS2.push(marker);
+    if(distant)distantLocationMarkersT7c.add(marker);
+  }
+  resources.push(colonyHexGeometry,colonyTaperGeometry,colonyRingGeometry,
+    colonyBasalt,colonyCeramic,colonyServiceVehicleGeometry);
   // Tiny self-luminous lamps; NO THREE.Light, shadow spill or star reflections.
   const colonyLampGeometry = colonialNightIndicators386c3
     ? new THREE.SphereGeometry(1,8,6) : null;
@@ -215,20 +381,27 @@ export function createVida38InfrastructureSurfaceVisual386(
    * edits or scientific changes. */
   function colonyComplex(container:THREE.Group,
     parts:readonly Vida38ColonyVisualPart386c[], visualSize:number,
-    siteSurfaceRadius: number, siteNormal: THREE.Vector3, siteOrientation: THREE.Quaternion):void {
+    siteSurfaceRadius: number, siteNormal: THREE.Vector3, siteOrientation: THREE.Quaternion,
+    verticalSize=visualSize):void {
     const geometryOf=(shape:Vida38ColonyVisualPart386c['shape']):THREE.BufferGeometry=>
       shape==='BOX'?boxGeometry:shape==='DOME'?domeGeometry:
-      shape==='MAST'?colonyMastGeometry:colonyPadGeometry;
+      shape==='MAST'?colonyMastGeometry:shape==='HEX'?colonyHexGeometry:
+      shape==='TAPER'?colonyTaperGeometry:shape==='RING'?colonyRingGeometry:
+      sculptedCOLVIS2.get(shape)??colonyPadGeometry;
     const materialOf=(finish:Vida38ColonyVisualPart386c['finish']):THREE.Material=>
       finish==='HULL'?colonyHull:finish==='DARK'?colonyDark:
-      finish==='PANEL'?colonyPanel:finish==='ACCENT'?colonyAccent:colonyDome;
+      finish==='PANEL'?colonyPanel:finish==='ACCENT'?colonyAccent:
+      finish==='BASALT'?colonyBasalt:finish==='CERAMIC'?colonyCeramic:
+      finish==='HUMAN_ALLOY'?humanAlloyCOLVIS2:finish==='HUMAN_GLASS'?humanGlassCOLVIS2:
+      finish==='REPTILE_SCUTE'?reptileScuteCOLVIS2:finish==='REPTILE_CORE'?reptileCoreCOLVIS2:
+      finish==='INSECT_CHITIN'?insectChitinCOLVIS2:finish==='INSECT_PEARL'?insectPearlCOLVIS2:colonyDome;
     const buckets=new Map<string,{geometry:THREE.BufferGeometry;mat:THREE.Material;
-      matrices:THREE.Matrix4[];roles:Set<string>}>();
+      matrices:THREE.Matrix4[];roles:Set<string>;groundable:boolean[];supportLiftScene:number[]}>();
     const tilt=new THREE.Quaternion(),yawRotation=new THREE.Quaternion();
     const position=new THREE.Vector3(); const radialUp=new THREE.Vector3();
     const tangentPosition=new THREE.Vector3(), partDirection=new THREE.Vector3();
     const scale=new THREE.Vector3(); const transform=new THREE.Matrix4();
-    const siteOffset=bodyRadiusScene*.0007;
+    const siteOffset=Math.min(bodyRadiusScene*.0007,verticalSize*.08);
     for(const part of parts){
       const x=part.x*visualSize,z=part.z*visualSize;
       const radial2=x*x+z*z;
@@ -242,12 +415,25 @@ export function createVida38InfrastructureSurfaceVisual386(
         : bodyRadiusScene;
       const surfaceY=Math.sqrt(Math.max(0,surfaceRadius*surfaceRadius-radial2))-siteSurfaceRadius;
       radialUp.set(x/siteSurfaceRadius,Math.sqrt(Math.max(0,1-radial2/(siteSurfaceRadius*siteSurfaceRadius))),z/siteSurfaceRadius);
-      const geo=geometryOf(part.shape),mat=materialOf(part.finish);
+      const geo=geometryOf(part.shape);
+      let mat=materialOf(part.finish);
+      if(sculptedCOLVIS2.has(part.shape)){
+        let colored=sculptedFinishesCOLVIS2.get(mat);
+        if(!colored){
+          const variant=(mat as THREE.MeshStandardMaterial).clone();
+          variant.vertexColors=true;variant.needsUpdate=true;
+          sculptedFinishesCOLVIS2.set(mat,variant);resources.push(variant);colored=variant;
+        }
+        mat=colored;
+      }
       geo.computeBoundingBox();
       const minY=geo.boundingBox?.min.y??-.5;
-      const sy=part.height*visualSize;
-      position.set(x,surfaceY-siteOffset,z).addScaledVector(radialUp,
-        (-minY*sy)+(part.lift*visualSize)+bodyRadiusScene*.00004);
+      const sy=part.height*verticalSize;
+      // Sculpted COLVIS.2 prefabs are authored with a physical ground-contact
+      // origin (minY ~= 0). Do not sink them by the legacy foundation inset.
+      const groundInset=sculptedCOLVIS2.has(part.shape)?0:siteOffset;
+      position.set(x,surfaceY-groundInset,z).addScaledVector(radialUp,
+        (-minY*sy)+(part.lift*verticalSize)+Math.min(bodyRadiusScene*.00004,verticalSize*.03));
       tilt.setFromUnitVectors(UP,radialUp);
       yawRotation.setFromAxisAngle(UP,part.yaw);
       tilt.multiply(yawRotation);
@@ -255,8 +441,15 @@ export function createVida38InfrastructureSurfaceVisual386(
       transform.compose(position,tilt,scale);
       const key=part.shape+'|'+part.finish;
       let bucket=buckets.get(key);
-      if(!bucket){bucket={geometry:geo,mat,matrices:[],roles:new Set<string>()};buckets.set(key,bucket);}
+      if(!bucket){bucket={geometry:geo,mat,matrices:[],roles:new Set<string>(),groundable:[],supportLiftScene:[]};buckets.set(key,bucket);}
       bucket.matrices.push(transform.clone());bucket.roles.add(part.role);
+      // T7o: solo elementos cuya elevación arquitectónica sea cero.
+      // Puentes, nodos y anillos levantados conservan su altura original.
+      bucket.groundable.push(part.lift<=.001);
+      // T7p: conserva la elevación proyectada de cada módulo respecto a SU
+      // suelo local. El apoyo se reajusta junto al resto de la colonia sin
+      // borrar puentes ni cápsulas diseñados para quedar elevados.
+      bucket.supportLiftScene.push(Math.max(0,part.lift*verticalSize));
     }
     for(const [key,bucket] of buckets){
       const inst=new THREE.InstancedMesh(bucket.geometry,bucket.mat,bucket.matrices.length);
@@ -265,7 +458,9 @@ export function createVida38InfrastructureSurfaceVisual386(
       inst.instanceMatrix.needsUpdate=true;
       inst.frustumCulled=false;
       inst.castShadow=false;inst.receiveShadow=true;
-      inst.userData={colonialVisual386c:true,elementRoles:[...bucket.roles]};
+      inst.userData={colonialVisual386c:true,elementRoles:[...bucket.roles],
+        colvis2GroundEligibleT7o:bucket.groundable,
+        colvis2SupportLiftSceneT7p:bucket.supportLiftScene};
       container.add(inst);
       resources.push(inst); // Instance buffers must also be released on teardown.
     }
@@ -280,7 +475,7 @@ export function createVida38InfrastructureSurfaceVisual386(
     container: THREE.Group, parts:readonly Vida38ColonyVisualPart386c[],
     visualSize:number, siteSurfaceRadius:number, siteNormal:THREE.Vector3,
     siteOrientation:THREE.Quaternion, mat:THREE.MeshBasicMaterial, limit:number,
-    distant=false,
+    distant=false, verticalSize=visualSize,
   ):void {
     if (!colonyLampGeometry) return;
     const candidates = parts.filter(p=>
@@ -288,8 +483,14 @@ export function createVida38InfrastructureSurfaceVisual386(
       (p.role==='ACCESS' && p.finish==='DARK') ||
       (p.role==='ANTENNA' && p.finish==='HULL') ||
       (p.role==='AUXILIARY' && p.finish==='HULL') ||
+      (p.role==='TECH_NODE' && p.finish==='CERAMIC') ||
+      (p.role==='BRIDGE' && p.shape==='RING') ||
       p.role==='PRESSURIZED_DOME');
-    const selected=candidates.slice(0,limit);
+    // COLVIS.2/T7s changed the sculpted part families. Some verified
+    // extraction habitats no longer have the old role/finish combinations.
+    // Use actual modeled parts as carriers instead of losing all night lights.
+    const carriers = candidates.length > 0 ? candidates : parts;
+    const selected=carriers.slice(0,limit);
     if(!selected.length) return;
     const inst = new THREE.InstancedMesh(colonyLampGeometry,mat,selected.length);
     inst.name='VIDA.38.6c3 artificial colony lamps (no emitted terrain light)';
@@ -298,7 +499,7 @@ export function createVida38InfrastructureSurfaceVisual386(
     const position=new THREE.Vector3(), tangent=new THREE.Vector3(), sampledDirection=new THREE.Vector3();
     const radialUp=new THREE.Vector3();
     const scale=new THREE.Vector3(), rotation=new THREE.Quaternion();
-    const siteOffset=bodyRadiusScene*.0007;
+    const siteOffset=Math.min(bodyRadiusScene*.0007,verticalSize*.08);
     for(let j=0;j<selected.length;j++) {
       const part=selected[j]!;
       const x=part.x*visualSize,z=part.z*visualSize;
@@ -310,9 +511,13 @@ export function createVida38InfrastructureSurfaceVisual386(
       const surfaceY=Math.sqrt(Math.max(0,sampleRadius*sampleRadius-radial2))-siteSurfaceRadius;
       radialUp.set(x/siteSurfaceRadius,
         Math.sqrt(Math.max(0,1-radial2/(siteSurfaceRadius*siteSurfaceRadius))),z/siteSurfaceRadius);
-      const height=(part.height+part.lift+.26)*visualSize;
-      position.set(x,surfaceY-siteOffset,z).addScaledVector(radialUp,height);
-      const dotSize=visualSize*(distant?.58:.24);
+      const height=(part.height+part.lift+.26)*verticalSize;
+      // Sculpted COLVIS.2 prefabs are authored with a physical ground-contact
+      // origin (minY ~= 0). Do not sink them by the legacy foundation inset.
+      const groundInset=sculptedCOLVIS2.has(part.shape)?0:siteOffset;
+      position.set(x,surfaceY-groundInset,z).addScaledVector(radialUp,height);
+      // T7n: luces puntuales legibles en el hemisferio oscuro; NO son anillos UI.
+      const dotSize=visualSize*(distant?.95:(showColonyLocationRingsT7n?.24:.38));
       scale.setScalar(dotSize);
       matrix.compose(position,rotation,scale);
       inst.setMatrixAt(j,matrix);
@@ -324,6 +529,8 @@ export function createVida38InfrastructureSurfaceVisual386(
     resources.push(inst);
   }
 
+  const colvisActivitySites: Array<{vehicle:THREE.Mesh;site:THREE.Group;
+    radius:number; altitude:number; phase:number; speed:number}> = [];
   for (let i=0;i<maxSites;i++) {
     const plan = plans[i]!;
     if (!Number.isFinite(plan.latitudeRadians) || !Number.isFinite(plan.longitudeRadians) ||
@@ -336,7 +543,8 @@ export function createVida38InfrastructureSurfaceVisual386(
     // Only the radial contact height is corrected to the mesh actually shown.
     const siteSurfaceRadius = colonial ? surfaceRadiusAt(normal) : bodyRadiusScene;
     for (const site of [siteMedium,siteHigh]) {
-      site.position.copy(normal).multiplyScalar(siteSurfaceRadius+bodyRadiusScene*.0007);
+      site.position.copy(normal).multiplyScalar(siteSurfaceRadius+(plan.colonyArchitectureCOLVIS1 && physicalRadiusEarthCOLVIS1 &&
+        physicalRadiusEarthCOLVIS1>0?0:bodyRadiusScene*.0007));
       site.quaternion.setFromUnitVectors(UP,normal);
       site.rotateY(fraction(plan.seedUint32,7)*Math.PI*2);
     }
@@ -352,13 +560,47 @@ export function createVida38InfrastructureSurfaceVisual386(
     // The main procedural anchor is unchanged, and all new volumes remain
     // within its local region. No added colonies or scientific installations.
     if(colonial){
-      const layout=vida38ColonialComplexLayout386c(plan);
+      // Un único anclaje por plan confirmado. Reutiliza la misma latitud,
+      // longitud y radio visible que los edificios, incluso en lunas irregulares.
+      // No depende del LOD ni del tipo de arquitectura COLVIS.
+      colonialSiteAnchorsT7t.push(Object.freeze({
+        id:plan.id,site:siteHigh,
+        markerHex:colvis3ColonyDetailsFromVerifiedPlanT7c(plan)?.markerHex??0xff4fd8,
+      }));
+      const physicalLayout=cachedLayoutsCOLVIS2.get(plan.id)??null;
+      const validPhysicalRadius=Number.isFinite(physicalRadiusEarthCOLVIS1) &&
+        physicalRadiusEarthCOLVIS1 !== null && physicalRadiusEarthCOLVIS1 > 0;
+      const layout=physicalLayout && validPhysicalRadius
+        ? physicalLayout : vida38ColonialComplexLayout386c(plan);
+      const verifiedDetailsT7c=physicalLayout && validPhysicalRadius
+        ? colvis3ColonyDetailsFromVerifiedPlanT7c(plan):null;
       if(layout){
         siteMedium.name='VIDA.38.6c colonial complex MEDIUM';
         siteHigh.name='VIDA.38.6c colonial complex HIGH';
-        const visualSize=size*layout.visualScaleMultiplier*colonyMoonScale;
-        colonyComplex(siteMedium,layout.medium,visualSize,siteSurfaceRadius,normal,siteMedium.quaternion);
-        colonyComplex(siteHigh,layout.high,visualSize,siteSurfaceRadius,normal,siteHigh.quaternion);
+        // Physical COLVIS geometry: km / (source physical R_E * 6371 km) * render radius.
+        // The old 38.6c optical multiplier survives ONLY for old fixture layouts.
+        const sourceRadiusKm=physicalRadiusEarthCOLVIS1! * 6371;
+        const safeFootprintRadiusKm=physicalLayout && validPhysicalRadius
+          ? Math.min(physicalLayout.footprintRadiusKm,sourceRadiusKm*.0075)
+          : 0;
+        const visualSize=physicalLayout && validPhysicalRadius
+          ? bodyRadiusScene*safeFootprintRadiusKm/(sourceRadiusKm*physicalLayout.unitExtent)
+          : size*('visualScaleMultiplier' in layout ? layout.visualScaleMultiplier:1)*colonyMoonScale;
+        // COLVIS.1 divided the vertical scale by a fixed 4.2 factor, making
+        // already tiny buildings even flatter. Use the actual highest part
+        // so physical heights remain capped but are no longer unnecessarily lost.
+        const highestPart=physicalLayout?Math.max(1,...physicalLayout.high.map(part=>part.height+part.lift)):1;
+        const verticalSize=physicalLayout && validPhysicalRadius
+          ? Math.min(visualSize, bodyRadiusScene*Math.min(physicalLayout.maximumHeightKm,sourceRadiusKm*.0015)/(sourceRadiusKm*highestPart))
+          : visualSize;
+        colonyComplex(siteMedium,layout.medium,visualSize,siteSurfaceRadius,normal,siteMedium.quaternion,verticalSize);
+        if(physicalLayout && validPhysicalRadius && verifiedDetailsT7c){
+          colonialSitesCOLVIS2.push(Object.freeze({id:plan.id,site:siteHigh,
+            footprintScene:visualSize*physicalLayout.unitExtent,bodyRadiusScene,details:verifiedDetailsT7c}));
+          locationMarkerCOLVIS2(siteMedium,verifiedDetailsT7c);
+          locationMarkerCOLVIS2(siteHigh,verifiedDetailsT7c);
+        }
+        colonyComplex(siteHigh,layout.high,visualSize,siteSurfaceRadius,normal,siteHigh.quaternion,verticalSize);
         // Reuse the exact medium-LOD geometry as a real, surface-anchored
         // distant silhouette, not an overlay sprite or another colony.
         // Matching the medium LOD at 200px prevents visual teleportation.
@@ -366,19 +608,65 @@ export function createVida38InfrastructureSurfaceVisual386(
         siteDistant.name = 'VIDA.38.6c1 distant colonial site';
         siteDistant.position.copy(siteMedium.position);
         siteDistant.quaternion.copy(siteMedium.quaternion);
-        colonyComplex(siteDistant,layout.medium,visualSize,siteSurfaceRadius,normal,siteDistant.quaternion);
+        colonyComplex(siteDistant,layout.medium,visualSize,siteSurfaceRadius,normal,siteDistant.quaternion,verticalSize);
+        if(verifiedDetailsT7c)locationMarkerCOLVIS2(siteDistant,verifiedDetailsT7c,true);
         if (colonialNightIndicators386c3 && colonyLampGeometry) {
           // One independent material per real colony; shared by its 3 LODs.
           // Opacity follows aggregate stellar illumination, including B/C stars.
           const lampMaterial = new THREE.MeshBasicMaterial({
-            color:'#d1ecff',toneMapped:false,transparent:true,opacity:1,
+            color:verifiedDetailsT7c?.lampHex??0xd1ecff,toneMapped:false,transparent:true,opacity:1,
             depthTest:true,depthWrite:false,
           });
           resources.push(lampMaterial);
-          addColonialLamps386c3(siteMedium,layout.medium,visualSize,siteSurfaceRadius,normal,siteMedium.quaternion,lampMaterial,2);
-          addColonialLamps386c3(siteHigh,layout.high,visualSize,siteSurfaceRadius,normal,siteHigh.quaternion,lampMaterial,5);
-          addColonialLamps386c3(siteDistant,layout.medium,visualSize,siteSurfaceRadius,normal,siteDistant.quaternion,lampMaterial,1,true);
+          const lampBudget=verifiedDetailsT7c?.lampBudget??5;
+          addColonialLamps386c3(siteMedium,layout.medium,visualSize,siteSurfaceRadius,normal,siteMedium.quaternion,lampMaterial,verifiedDetailsT7c?Math.min(7,lampBudget):2,false,verticalSize);
+          addColonialLamps386c3(siteHigh,layout.high,visualSize,siteSurfaceRadius,normal,siteHigh.quaternion,lampMaterial,lampBudget,false,verticalSize);
+          addColonialLamps386c3(siteDistant,layout.medium,visualSize,siteSurfaceRadius,normal,siteDistant.quaternion,lampMaterial,Math.min(5,lampBudget),true,verticalSize);
           colonialLampBindings.push({site:siteHigh,material:lampMaterial});
+          // T7r: pequeños puntos luminosos realmente perceptibles en la cara
+          // oscura de SystemScene, sin marcador circular ni falsos PointLight.
+          // No dependen del LOD de los edificios ni del botón COLONIAS.
+          if(!showColonyLocationRingsT7n){
+            const beaconSite=new THREE.Group();
+            beaconSite.name='T7r night emission anchors (confirmed colony only)';
+            beaconSite.position.copy(siteHigh.position);
+            beaconSite.quaternion.copy(siteHigh.quaternion);
+            group.add(beaconSite);
+            const count=verifiedDetailsT7c?.lampBudget && verifiedDetailsT7c.lampBudget>=8?4:3;
+            for(let j=0;j<count;j++){
+              const angle=2*Math.PI*fraction(plan.seedUint32,2300+j);
+              const radius=j===0?0:visualSize*(.65+.85*fraction(plan.seedUint32,2500+j));
+              const lamp=new THREE.SpriteMaterial({
+                map:nightGlowTextureT7r(),color:verifiedDetailsT7c?.lampHex??0xd1ecff,
+                transparent:true,toneMapped:false,opacity:0,depthTest:true,
+                depthWrite:false,blending:THREE.AdditiveBlending,
+              });
+              const sprite=new THREE.Sprite(lamp);
+              sprite.name='T7r colony night equipment point (NOT selection ring)';
+              sprite.position.set(
+                Math.cos(angle)*radius,
+                Math.max(verticalSize*.70,bodyRadiusScene*.000008),
+                Math.sin(angle)*radius,
+              );
+              sprite.visible=false;
+              sprite.renderOrder=4;
+              beaconSite.add(sprite);
+              colonialNightBeaconsT7r.push({site:beaconSite,material:lamp,sprite});
+              resources.push(lamp);
+            }
+          }
+        }
+        if(physicalLayout && validPhysicalRadius && physicalLayout.habitatTechnology!=='SUBSURFACE_VAULT'){
+          // A tiny LOCAL surface service vehicle, not an orbital object or a
+          // scientific new asset. Movement is real-time presentation, never CT-0.
+          const vehicle=new THREE.Mesh(colonyServiceVehicleGeometry,colonyAccent);
+          vehicle.name='COLVIS.1 slow local service traffic';
+          vehicle.scale.set(visualSize*.12,verticalSize*.13,visualSize*.20);
+          vehicle.castShadow=false;
+          siteHigh.add(vehicle);
+          colvisActivitySites.push({vehicle,site:siteHigh,radius:visualSize*1.9,
+            altitude:verticalSize*.13,phase:fraction(plan.seedUint32,812)*Math.PI*2,
+            speed:physicalLayout.founderTier==='VERY_ADVANCED'?.035:.020});
         }
         distantColonies.add(siteDistant);
         distantColonySites.push(siteDistant);
@@ -449,7 +737,20 @@ export function createVida38InfrastructureSurfaceVisual386(
   // plan was authorized and accepted by the 38.6c layout.
   if(distantColonySites.length>0)group.add(distantColonies);
   let selected = -2;
+  // Bound slow motion to actual elapsed seconds; independent of simulation
+  // speed and planetary spin. No allocation, new orbit or physics mutation.
+  const initialColvisSeconds=typeof performance!=='undefined'?performance.now()/1000:0;
   const setLevel = (diameter:number):void=>{
+    if(colonialInspectionActiveT7p)diameter=1200;
+    if(colvisActivitySites.length>0){
+      const elapsed=typeof performance!=='undefined' ? Math.max(0,performance.now()/1000-initialColvisSeconds) : 0;
+      for(const activity of colvisActivitySites){
+        const angle=activity.phase+elapsed*activity.speed;
+        activity.vehicle.position.set(Math.cos(angle)*activity.radius,
+          activity.altitude,Math.sin(angle)*activity.radius);
+        activity.vehicle.rotation.y=-angle;
+      }
+    }
     const valid = Number.isFinite(diameter) && diameter > 0;
     const next = !valid ? -1 : diameter<200 ? 0 : diameter<380 ? 1 : 2;
     if (next!==selected){
@@ -464,11 +765,27 @@ export function createVida38InfrastructureSurfaceVisual386(
       // its apparent size STILL increases monotonically when zooming in.
       // No coordinates, scientific dimensions, or visibility permissions change.
       const scale = vida38ColonialDistantScale386c1(diameter);
-      for(const site of distantColonySites)site.scale.setScalar(scale);
+      for(const site of distantColonySites){
+        site.scale.setScalar(scale);
+        // A location indicator is NOT a physical building and should not
+        // inherit the legacy optical gain applied to distant geometry.
+        // Los indicadores se actualizan abajo en unidades de pantalla, no de edificios.
+      }
+    }
+    // Compatibility: enlarge only fiches. Preserve SystemScene's marker size.
+    const uiRadius=colonyMarkerEnhancementT7c
+      ? colvis3MarkerRadiusSceneT7c(bodyRadiusScene,diameter):bodyRadiusScene*.014;
+    for(const marker of colonialLocationMarkersCOLVIS2){
+      const gain=distantLocationMarkersT7c.has(marker)&&next===0
+        ? vida38ColonialDistantScale386c1(diameter):1;
+      marker.scale.setScalar(uiRadius/gain);
     }
   };
+  updateProjectedDiameterPixelsT7p=setLevel;
   setLevel(0);
   return Object.freeze({group,resources:Object.freeze(resources),siteCount:maxSites,colonialBodyCenterView386c4,
+    colonialSitesCOLVIS2:Object.freeze(colonialSitesCOLVIS2),
+    colonialSiteAnchorsT7t:Object.freeze(colonialSiteAnchorsT7t),setColonialInspectionActiveCOLVIS2,
     dayClusterCount:dayUrban.plan?.clusters.length ?? 0,
     updateProjectedDiameterPixels:setLevel,updateColonialNightLighting386c3});
 }

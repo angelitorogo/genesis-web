@@ -43,6 +43,17 @@
         </button>
       }
 
+      @if (colonyInspectionChoicesCOLVIS2().length > 0) {
+        <div class="scientific-preview__colony-inspector" data-testid="colvis2-colony-inspection">
+          <select aria-label="Inspeccionar colonia confirmada" [value]="colonyInspectionIndexCOLVIS2() ?? -1"
+            (change)="chooseColonyInspectionCOLVIS2($any($event.target).value)">
+            <option value="-1">Vista general</option>
+            @for (index of colonyInspectionChoicesCOLVIS2(); track index) {
+              <option [value]="index">Inspeccionar colonia {{index + 1}}</option>
+            }
+          </select>
+        </div>
+      }
       <button
         type="button"
         class="scientific-preview__action"
@@ -63,14 +74,25 @@
     </div>
   </header>
 
-  <div class="scientific-preview__viewport">
+  @if (colonyInspectionIndexCOLVIS2() !== null) {
+    <button type="button" class="scientific-preview__colony-scrim" tabindex="-1"
+      aria-label="Cerrar inspección ampliada de colonia"
+      data-testid="t7c-colony-backdrop" (click)="exitColonyInspectionCOLVIS2()"></button>
+  }
+  <div class="scientific-preview__viewport"
+    [class.scientific-preview__viewport--colony-modal]="colonyInspectionIndexCOLVIS2() !== null"
+    [attr.role]="colonyInspectionIndexCOLVIS2() !== null ? 'dialog' : null"
+    [attr.aria-modal]="colonyInspectionIndexCOLVIS2() !== null ? 'true' : null"
+    [attr.aria-label]="colonyInspectionIndexCOLVIS2() !== null ? 'Inspección ampliada de colonia confirmada' : null">
     <canvas
       #canvas
       class="scientific-preview__canvas"
       data-testid="scientific-body-preview-canvas"
       tabindex="0"
       role="img"
-      [attr.aria-label]="model.accessibleLabel + ' Arrastra para rotar; usa la rueda o las teclas más y menos para zoom; flechas para orientar y Home para restablecer.'"
+      [attr.aria-label]="colonyInspectionIndexCOLVIS2() !== null
+        ? 'Inspección colonial: arrastra o usa las flechas para orbitar alrededor de la colonia; rueda o más y menos para ampliar; Esc para cerrar.'
+        : model.accessibleLabel + ' Arrastra para rotar; usa la rueda o las teclas más y menos para zoom; flechas para orientar y Home para restablecer.'"
       (pointerdown)="onPointerDown($event)"
       (pointermove)="onPointerMove($event)"
       (pointerup)="onPointerUp($event)"
@@ -78,6 +100,31 @@
       (wheel)="onWheel($event)"
       (keydown)="onKeyDown($event)"
     ></canvas>
+
+    @if (colonyInspectionDetailsT7c(); as colony) {
+      <aside class="scientific-preview__colony-panel" data-testid="t7c-colony-details">
+        <header>
+          <div><small>INSPECCIÓN COLONIAL · COLVIS.2</small>
+            <h3>Colonia confirmada {{(colonyInspectionIndexCOLVIS2() ?? 0) + 1}}</h3>
+          </div>
+          <button type="button" class="scientific-preview__action"
+            data-testid="t7c-colony-close" (click)="exitColonyInspectionCOLVIS2()"
+            aria-label="Cerrar inspección colonial">CERRAR ✕</button>
+        </header>
+        <p class="scientific-preview__colony-note">Reconstrucción arquitectónica procedural;
+          sus coordenadas y edificios no son observaciones científicas.</p>
+        <dl>
+          <div><dt>Cuerpo anfitrión</dt><dd>{{colonyHostBodyLabelT7d()}}</dd></div>
+          <div><dt>Destino</dt><dd>{{colony.destinationLabel}}</dd></div>
+          <div><dt>Función</dt><dd>{{colony.purposeLabel}}</dd></div>
+          <div><dt>Civilización fundadora</dt><dd>{{colony.tierLabel}} · {{colony.lineageLabel}}</dd></div>
+          <div><dt>Tamaño colonial</dt><dd>{{colony.bandLabel}}</dd></div>
+          <div><dt>Hábitat</dt><dd>{{colony.technologyLabel}}</dd></div>
+          <div><dt>Población</dt><dd>{{colony.populationLabel}}</dd></div>
+        </dl>
+        <p class="scientific-preview__colony-hint">Arrastra para orbitar alrededor de la colonia · rueda para acercar o alejar · Esc para cerrar</p>
+      </aside>
+    }
 
     @if (orbitalInfrastructureDiagnosticVISCIV6e(); as debug) {
       <aside class="scientific-preview__orbital-debug" data-testid="visciv6e-planet-diagnostic"
@@ -107,6 +154,9 @@
   <footer class="scientific-preview__legend">
     <span>Arrastrar · rotar</span>
     <span>Rueda / + − · zoom</span>
+    @if (colonyInspectionChoicesCOLVIS2().length > 0 && colonyInspectionIndexCOLVIS2() === null) {
+      <span data-testid="t7c-colony-click-help">Clic en el marcador luminoso · ampliar colonia</span>
+    }
     @if (contextEnabled() && (model.kind === 'PLANET' || model.kind === 'MOON')) {
       <span>Órbitas keplerianas a escala relativa · tamaños de cuerpos amplificados · tiempo orbital acelerado uniformemente</span>
     }

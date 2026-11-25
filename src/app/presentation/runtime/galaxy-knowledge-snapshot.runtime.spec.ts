@@ -117,6 +117,37 @@ describe(
       },
     );
 
+    it('CACHE-GAL.2: reuses snapshots across A -> B -> A, and invalidates after new knowledge', async () => {
+      const stored = new Map<string, GalaxyKnowledgeSnapshotEntity>();
+      const reads: string[] = [];
+      const repository: GalaxyKnowledgeSnapshotRepository = {
+        async get(_key, galaxyIndex) {
+          const id = galaxyIndex.toString();
+          reads.push(id);
+          return stored.get(id);
+        },
+        async put(entity) {
+          stored.set(entity.galaxyIndex, entity);
+        },
+      };
+      const runtime = new DexieGalaxyKnowledgeSnapshotRuntime(repository, () => 123);
+      const aRows = [new KnownDiscovery(generationKey,
+        new GalaxyLocator(0n), DiscoveryState.DISCOVERED)];
+      const bRows = [new KnownDiscovery(generationKey,
+        new GalaxyLocator(1n), DiscoveryState.DISCOVERED)];
+      const firstA = await runtime.resolve(generationKey, 0n, DiscoveryState.DISCOVERED, aRows);
+      await runtime.resolve(generationKey, 1n, DiscoveryState.DISCOVERED, bRows);
+      const secondA = await runtime.resolve(generationKey, 0n, DiscoveryState.DISCOVERED, aRows);
+      expect(secondA).toBe(firstA);
+      expect(reads).toEqual(['0', '1']);
+
+      const updatedA = [...aRows,
+        new KnownDiscovery(generationKey, new SectorLocator(0n, 9n), DiscoveryState.DETECTED)];
+      const newA = await runtime.resolve(generationKey, 0n, DiscoveryState.DISCOVERED, updatedA);
+      expect(newA.knowledgeRevision).not.toBe(firstA.knowledgeRevision);
+      expect(reads).toEqual(['0', '1', '0']);
+    });
+
     it(
       'changes the revision whenever persisted knowledge in that galaxy changes',
       () => {

@@ -1,3 +1,37 @@
+/**
+ * Visual moon cadence shared by scientific fiches and SystemScene.
+ * The slowest satellite displayed around a planet completes one orbit every
+ * 90 real seconds; inner moons keep their physical relative angular speeds.
+ * Scientific orbital elements, epochs and periods are never rewritten.
+ */
+export const SCIENTIFIC_MOON_OUTERMOST_CYCLE_REAL_SECONDS_V1 = 90;
+
+export function scientificMoonGroupDaysPerRealSecondV1(
+  visibleOrbitalPeriodsDays: readonly number[],
+): number {
+  if (visibleOrbitalPeriodsDays.length === 0) {
+    throw new RangeError('Moon group cadence requires at least one visible moon.');
+  }
+  let outerPeriodDays = 0;
+  for (const periodDays of visibleOrbitalPeriodsDays) {
+    assertPositiveFinite(periodDays, 'moon orbital periodDays');
+    outerPeriodDays = Math.max(outerPeriodDays, periodDays);
+  }
+  return outerPeriodDays / SCIENTIFIC_MOON_OUTERMOST_CYCLE_REAL_SECONDS_V1;
+}
+
+/** Multiplier applied ONLY to the local lunar motion contribution.
+ * The host planet and star continue to use the existing SystemScene clock.
+ */
+export function systemSceneMoonGroupPresentationTimeScaleV1(
+  visibleOrbitalPeriodsDays: readonly number[],
+  playbackDaysPerRealSecond: number,
+): number {
+  assertPositiveFinite(playbackDaysPerRealSecond, 'playbackDaysPerRealSecond');
+  return scientificMoonGroupDaysPerRealSecondV1(visibleOrbitalPeriodsDays) /
+    playbackDaysPerRealSecond;
+}
+
 const TARGET_MINIMUM_MOON_ORBIT_REAL_SECONDS =
   8;
 

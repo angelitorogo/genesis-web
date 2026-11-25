@@ -31,6 +31,15 @@ export interface Vida38InfrastructurePlan386 {
   readonly habitat: string;
   readonly purpose: string;
   readonly habitatTechnology: Vida8HabitatTechnology | null;
+  /** COLVIS.1 visual-only provenance copied from VERIFIED VIDA.8, never persisted. */
+  readonly colonyArchitectureCOLVIS1?: Readonly<{
+    founderTier: 'ADVANCED' | 'VERY_ADVANCED';
+    destinationKind: 'PLANET' | 'MOON';
+    populationRange: readonly [number, number];
+    function: 'RESEARCH' | 'EXTRACTION' | 'HABITATION' | 'BIOSPHERE_CONSERVATION';
+    founderSpeciesId: string;
+    founderSourceBodyStorageKey: string;
+  }>;
 }
 
 function hash32(value: string): number {
@@ -92,7 +101,8 @@ function recordAuthorized(record: Vida9BiologyRecord | null | undefined): record
 function plan(record: Vida9BiologyRecord, provenance: Vida38InfrastructurePlan386['provenance'],
   id: string, form: Vida38InfrastructurePlan386['form'], scale: Vida38InfrastructurePlan386['scale'],
   tier: Vida38InfrastructurePlan386['tier'], lineage: Vida7CivilizableLineage, habitat: string, purpose: string,
-  habitatTechnology: Vida8HabitatTechnology | null): Vida38InfrastructurePlan386 {
+  habitatTechnology: Vida8HabitatTechnology | null,
+  colonyArchitectureCOLVIS1?: Vida38InfrastructurePlan386['colonyArchitectureCOLVIS1']): Vida38InfrastructurePlan386 {
   const key = [VIDA38_INFRASTRUCTURE_REVISION_386,record.identity.universeSeed,
     record.identity.generatorVersionCode,record.bodyStorageKey,provenance,id].join('|');
   const seedUint32 = hash32(key);
@@ -102,6 +112,7 @@ function plan(record: Vida9BiologyRecord, provenance: Vida38InfrastructurePlan38
     locationStatus: 'RECONSTRUCTED_NOT_OBSERVED',
     ...vida38InfrastructureAnchor386(seedUint32),
     form, scale, tier, lineage, habitat, purpose, habitatTechnology,
+    ...(colonyArchitectureCOLVIS1 ? {colonyArchitectureCOLVIS1} : {}),
   });
 }
 
@@ -157,7 +168,11 @@ export function vida38InfrastructurePlansFromConfirmed386(
       if (result.length >= 20) break;
       result.push(plan(record,'VIDA8_COLONIAL_SETTLEMENT',colony.id + '|' + settlement.id,
         'COLONIAL_HABITAT',settlement.populationBand,'COLONIAL',colony.origin.lineage,
-        settlement.habitatTechnology,settlement.function,settlement.habitatTechnology));
+        settlement.habitatTechnology,settlement.function,settlement.habitatTechnology,
+        Object.freeze({founderTier:colony.origin.tier,destinationKind:record.identity.kind,
+          populationRange:settlement.colonialPopulationRange,function:settlement.function,
+          founderSpeciesId:colony.origin.founderSpeciesId,
+          founderSourceBodyStorageKey:colony.origin.sourceBodyStorageKey})));
     }
   }
   return Object.freeze(result);

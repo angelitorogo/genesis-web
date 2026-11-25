@@ -7,6 +7,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  HostListener,
   inject,
   Input,
   OnChanges,
@@ -18,6 +19,18 @@ import {
 } from '@angular/core';
 
 import * as THREE from 'three';
+import { genesisVisualTrace388, type GenesisVisualSubjectKind388 } from '../visual-provenance/genesis-visual-provenance-38-8';
+import { GIANT_ATMOSPHERE_FINE_SEGMENTS_VISCATM1C } from '../system/system-scene-giant-atmosphere-geometry-viscatm1c';
+import { scientificMoonGroupDaysPerRealSecondV1 } from '../system/system-scene-secondary-motion';
+import { scientificPreviewDaylightCameraT7s } from './scientific-preview-daylight-camera-t7s';
+import { viscorbPreviewStellarSourcesV1 } from './viscorb-preview-stellar-illumination';
+import { viscorbLocalOrbitLayoutV1, viscorbPresentedMoonRadiusV1 } from '../system/viscorb-local-orbit-projection';
+import { colvis3ColonyOrbitOffsetT7n } from '../infrastructure/colvis3-colony-orbit-camera-t7n';
+import { attachColvis3ColonyGroundContactT7o, type Colvis3ColonyGroundContactT7o } from '../infrastructure/colvis3-colony-ground-contact-t7o';
+import { COLVIS3_MAX_INSPECTION_ZOOM_T7E } from '../infrastructure/colvis3-colony-camera-t7e';
+import { colvis3ColonyOpticalFramingT7m } from '../infrastructure/colvis3-colony-optical-zoom-t7m';
+import { attachColvis3NativeTerrainT7i, type Colvis3NativeTerrainT7i } from '../infrastructure/colvis3-native-terrain-t7i';
+import { colvis3IsColonyClickT7c, type Colvis3ColonyDetailsT7c } from '../infrastructure/colvis3-colony-visibility-t7c';
 import { createVida38InfrastructureSurfaceVisual386, vida38MoonVisibleInfrastructurePlans386c2, type Vida38InfrastructureVisual386 } from '../infrastructure/vida38-infrastructure-render-38-6';
 import type { SystemScenePlanetLightBindingV1 } from '../system/system-scene-atmosphere-material';
 import { updatePreviewStellarLightBindingVISSURF6 } from './scientific-body-preview-stellar-binding-vissurf6';
@@ -135,9 +148,6 @@ const MAX_CAMERA_DISTANCE =
 
 const LOCAL_OUTERMOST_ORBIT_RADIUS =
   4.35;
-
-const LOCAL_OUTERMOST_ORBIT_CYCLE_SECONDS =
-  90;
 
 const LOCAL_ORBIT_SEGMENT_COUNT =
   160;
@@ -412,6 +422,175 @@ export class ScientificBodyPreview
   readonly artificialSatellitesVisible =
     signal(false);
 
+  /** COLVIS.2: null = original body framing; index = verified colony close-up. */
+  readonly colonyInspectionIndexCOLVIS2=signal<number|null>(null);
+  private colonyInspectionZoomCOLVIS2=1;
+  /** T7n: cámara orbital alrededor de la colonia, sin rotar el cuerpo ni sus luces. */
+  private colonyOrbitAzimuthT7n=0;
+  private colonyOrbitElevationT7n=Math.atan2(.68,.73);
+  private colonySurfaceContextT7e:Colvis3NativeTerrainT7i|null=null;
+  private colonyGroundContactT7o:Colvis3ColonyGroundContactT7o|null=null;
+  private previousBodyOverflowT7d:string|null=null;
+  private previousHtmlOverflowT7d:string|null=null;
+
+  colonyInspectionChoicesCOLVIS2():readonly number[]{
+    const total=this.infrastructureVisuals.reduce((sum,item)=>sum+item.visual.colonialSitesCOLVIS2.length,0);
+    return Array.from({length:total},(_,i)=>i);
+  }
+
+  colonyInspectionDetailsT7c():Colvis3ColonyDetailsT7c|null{
+    const index=this.colonyInspectionIndexCOLVIS2();
+    return index===null?null:this.infrastructureVisuals.flatMap(entry=>entry.visual.colonialSitesCOLVIS2)[index]?.details??null;
+  }
+
+  colonyHostBodyLabelT7d():string{
+    return this.model.accessibleLabel
+      .replace(/\.?\s*Representación tridimensional con paridad visual SystemScene\.?/gu,'')
+      .replace(/\.?\s*Puede activarse el planeta anfitrión y las demás lunas relevantes\.?/gu,'')
+      .replace(/\s{2,}/gu,' ')
+      .replace(/\s+([.,;:])/gu,'$1')
+      .trim();
+  }
+
+  /** Solo geometría COLVIS.2 confirmada; no abre fichas de colonias privadas. */
+  @HostListener('document:keydown.escape')
+  onColonyEscapeT7c():void{
+    if(this.colonyInspectionIndexCOLVIS2()!==null)this.exitColonyInspectionCOLVIS2();
+  }
+
+  chooseColonyInspectionCOLVIS2(value:string):void{
+    if(value==='-1'){this.exitColonyInspectionCOLVIS2();return;}
+    this.inspectColonyCOLVIS2(Number(value));
+  }
+
+  /** T7i: project detail on the host body's native material, never on a
+   * separate curved PlaneGeometry (source of T7h's visible grey wedges). */
+  private attachColonySurfaceContextT7e(index:number):void{
+    this.detachColonySurfaceContextT7e();
+    let currentIndex=0;
+    for(const entry of this.infrastructureVisuals){
+      for(const colony of entry.visual.colonialSitesCOLVIS2){
+        if(currentIndex++!==index)continue;
+        const seed=Array.from(colony.id).reduce((hash,char)=>
+          Math.imul(hash^char.charCodeAt(0),16777619)>>>0,2166136261);
+        this.scene?.updateMatrixWorld(true);
+        this.colonySurfaceContextT7e=attachColvis3NativeTerrainT7i(
+          entry.surfaceMesh,colony.site,seed,colony.details.destination==='MOON',
+          colony.footprintScene,entry.radius);
+        return;
+      }
+    }
+  }
+
+  private detachColonySurfaceContextT7e():void{
+    this.colonyGroundContactT7o?.dispose();
+    this.colonyGroundContactT7o=null;
+    this.colonySurfaceContextT7e?.dispose();
+    this.colonySurfaceContextT7e=null;
+  }
+
+  inspectColonyCOLVIS2(index:number):void{
+    const choices=this.colonyInspectionChoicesCOLVIS2();
+    if(!Number.isInteger(index)||!choices.includes(index))return;
+    this.colonyInspectionIndexCOLVIS2.set(index);
+    this.colonyInspectionZoomCOLVIS2=1;
+    this.colonyOrbitAzimuthT7n=0;
+    this.colonyOrbitElevationT7n=Math.atan2(.68,.73);
+    this.autoRotate.set(false);
+    this.lockBackgroundScrollT7d();
+    this.attachColonySurfaceContextT7e(index);
+    for(const {visual} of this.infrastructureVisuals){
+      visual.setColonialInspectionActiveCOLVIS2(true);
+      visual.updateProjectedDiameterPixels(1200);
+    }
+    // T7o: contacto por geometría realmente renderizada, una sola vez al abrir.
+    // El raycast no crea mallas ni modifica las instancias de SystemScene.
+    let indexT7o=0;
+    for(const entry of this.infrastructureVisuals){
+      for(const colony of entry.visual.colonialSitesCOLVIS2){
+        if(indexT7o++!==index)continue;
+        this.scene?.updateMatrixWorld(true);
+        this.colonyGroundContactT7o=attachColvis3ColonyGroundContactT7o(
+          entry.surfaceMesh,colony.site,colony.footprintScene);
+      }
+    }
+    this.updateColonyInspectionCameraCOLVIS2();
+    // El mismo WebGL y la misma geometría se amplían: no se crea otro visor.
+    if(isPlatformBrowser(this.platformId))this.canvasRef.nativeElement.focus();
+  }
+
+  exitColonyInspectionCOLVIS2():void{
+    this.detachColonySurfaceContextT7e();
+    this.colonyInspectionIndexCOLVIS2.set(null);
+    this.colonyInspectionZoomCOLVIS2=1;
+    this.unlockBackgroundScrollT7d();
+    for(const {visual} of this.infrastructureVisuals)visual.setColonialInspectionActiveCOLVIS2(false);
+    if(this.camera){this.camera.up.set(0,1,0);this.camera.zoom=1;this.camera.near=.01;this.camera.far=80;this.camera.updateProjectionMatrix();}
+    this.fitCurrentModelCamera();
+    this.resize();
+  }
+
+  private lockBackgroundScrollT7d():void{
+    if(!isPlatformBrowser(this.platformId))return;
+    const body=document.body;
+    const html=document.documentElement;
+    if(this.previousBodyOverflowT7d===null)this.previousBodyOverflowT7d=body.style.overflow;
+    if(this.previousHtmlOverflowT7d===null)this.previousHtmlOverflowT7d=html.style.overflow;
+    body.style.overflow='hidden';
+    html.style.overflow='hidden';
+  }
+
+  private unlockBackgroundScrollT7d():void{
+    if(!isPlatformBrowser(this.platformId))return;
+    const body=document.body;
+    const html=document.documentElement;
+    body.style.overflow=this.previousBodyOverflowT7d??'';
+    html.style.overflow=this.previousHtmlOverflowT7d??'';
+    this.previousBodyOverflowT7d=null;
+    this.previousHtmlOverflowT7d=null;
+  }
+
+  private updateColonyInspectionCameraCOLVIS2():void{
+    const index=this.colonyInspectionIndexCOLVIS2();
+    const camera=this.camera;if(index===null||!camera)return;
+    const entry=this.infrastructureVisuals.flatMap(item=>item.visual.colonialSitesCOLVIS2)[index];
+    if(!entry){this.exitColonyInspectionCOLVIS2();return;}
+    this.scene?.updateMatrixWorld(true);
+    const position=entry.site.getWorldPosition(new THREE.Vector3());
+    const bodyCentre=entry.site.parent?.parent?.getWorldPosition(new THREE.Vector3())??
+      position.clone().add(new THREE.Vector3(0,-entry.bodyRadiusScene,0));
+    // The infrastructure parent is the body-relative LOD group. Its world
+    // position is exactly the host body's centre (independent of spin/tilt).
+    const siteRotation=entry.site.getWorldQuaternion(new THREE.Quaternion());
+    const normal=new THREE.Vector3(0,1,0).applyQuaternion(siteRotation).normalize();
+    const tangent=new THREE.Vector3(0,0,1).applyQuaternion(siteRotation).normalize();
+    const optical=colvis3ColonyOpticalFramingT7m(
+      entry.footprintScene,entry.bodyRadiusScene,this.colonyInspectionZoomCOLVIS2);
+    if(!optical)return;
+    const framing=optical.framing;
+    const groundTarget=position.clone().addScaledVector(normal,entry.footprintScene*.12);
+    const target=groundTarget.lerp(bodyCentre,framing.bodyCentreBlend);
+    // T7f keeps the inspection local: terrain detail covers the visible field
+    // instead of transitioning to a more distant whole-globe presentation.
+    // T7h: solo variar opacidad por LOD. No tocar bumpScale ni recompilar
+    // materiales durante el zoom: el terreno queda detrás de los edificios.
+    this.colonySurfaceContextT7e?.setZoom(this.colonyInspectionZoomCOLVIS2);
+    camera.up.copy(normal);
+    const orbitOffset=colvis3ColonyOrbitOffsetT7n(normal,tangent,
+      this.colonyOrbitAzimuthT7n,this.colonyOrbitElevationT7n,framing.distanceScene);
+    camera.position.copy(target).add(orbitOffset);
+    camera.lookAt(target);
+    // T7m: NO desplazar la cámara en función de la rueda. Cambiar solo la
+    // proyección amplía edificios y accidentes del suelo con el mismo factor.
+    camera.zoom=optical.cameraZoom;
+    camera.near=framing.nearScene;
+    camera.far=framing.farScene;
+    camera.updateProjectionMatrix();
+    // T7l: recalculate terrain coordinates in exactly the same camera frame
+    // used to render the colony, including tiny or irregular host moons.
+    this.colonySurfaceContextT7e?.updateFrame(camera);
+  }
+
   private readonly platformId =
     inject(
       PLATFORM_ID,
@@ -453,7 +632,7 @@ export class ScientificBodyPreview
     LocalScientificSpinBinding[] =
       [];
 
-  private infrastructureVisuals: Array<{visual:Vida38InfrastructureVisual386;radius:number}> = [];
+  private infrastructureVisuals: Array<{visual:Vida38InfrastructureVisual386;radius:number;surfaceMesh:THREE.Mesh}> = [];
 
   private stellarLightBinding: SystemScenePlanetLightBindingV1 | null = null;
 
@@ -500,6 +679,10 @@ export class ScientificBodyPreview
 
   private pointerY =
     0;
+
+  private pointerStartXT7c=0;
+  private pointerStartYT7c=0;
+  private pointerDraggedT7c=false;
 
   private readonly visibilityHandler =
     () => {
@@ -636,6 +819,9 @@ export class ScientificBodyPreview
       this.renderer !==
         null
     ) {
+      this.detachColonySurfaceContextT7e();
+      this.colonyInspectionIndexCOLVIS2.set(null);
+      this.unlockBackgroundScrollT7d();
       this.contextEnabled
         .set(false);
       this.artificialSatellitesVisible
@@ -650,6 +836,8 @@ export class ScientificBodyPreview
     void {
 
     this.stopAnimation();
+    this.detachColonySurfaceContextT7e();
+    this.unlockBackgroundScrollT7d();
 
     if (
       isPlatformBrowser(
@@ -784,6 +972,7 @@ export class ScientificBodyPreview
           !value,
       );
 
+    this.colonyInspectionIndexCOLVIS2.set(null);
     this.rebuildScene();
   }
 
@@ -800,6 +989,8 @@ export class ScientificBodyPreview
   resetView():
     void {
 
+    if(this.colonyInspectionIndexCOLVIS2()!==null){this.exitColonyInspectionCOLVIS2();return;}
+
     if (
       this.root ===
         null
@@ -809,11 +1000,7 @@ export class ScientificBodyPreview
 
     this.root
       .rotation
-      .set(
-        -0.14,
-        0.42,
-        0,
-      );
+      .set(-0.14, 0.42, 0);
 
     this.fitCurrentModelCamera();
   }
@@ -836,6 +1023,9 @@ export class ScientificBodyPreview
       event.clientX;
     this.pointerY =
       event.clientY;
+    this.pointerStartXT7c=event.clientX;
+    this.pointerStartYT7c=event.clientY;
+    this.pointerDraggedT7c=false;
 
     this.canvasRef
       .nativeElement
@@ -869,6 +1059,17 @@ export class ScientificBodyPreview
       event.clientX;
     this.pointerY =
       event.clientY;
+    if(Math.hypot(event.clientX-this.pointerStartXT7c,
+      event.clientY-this.pointerStartYT7c)>7)this.pointerDraggedT7c=true;
+
+    if(this.colonyInspectionIndexCOLVIS2()!==null){
+      // Vista orbital: el terreno, la colonia y la iluminación permanecen inmóviles.
+      this.colonyOrbitAzimuthT7n += deltaX*.008;
+      this.colonyOrbitElevationT7n=clamp(
+        this.colonyOrbitElevationT7n+deltaY*.006,.20,1.48);
+      this.updateColonyInspectionCameraCOLVIS2();
+      return;
+    }
 
     this.root.rotation.y +=
       deltaX *
@@ -912,6 +1113,42 @@ export class ScientificBodyPreview
           event.pointerId,
         );
     }
+    if(event.type==='pointerup'&&!this.pointerDraggedT7c &&
+       Math.hypot(event.clientX-this.pointerStartXT7c,event.clientY-this.pointerStartYT7c)<=7 &&
+       this.colonyInspectionIndexCOLVIS2()===null){
+      this.pickVerifiedColonyT7c(event.clientX,event.clientY,
+        Math.hypot(event.clientX-this.pointerStartXT7c,event.clientY-this.pointerStartYT7c));
+    }
+  }
+
+  /** Proyección y prueba de hemisferio: un marcador detrás del planeta NO
+   * se selecciona por tener las mismas coordenadas de pantalla. */
+  private pickVerifiedColonyT7c(clientX:number,clientY:number,pointerTravel:number):void {
+    const camera=this.camera,scene=this.scene;
+    if(!camera||!scene)return;
+    const rect=this.canvasRef.nativeElement.getBoundingClientRect();
+    if(rect.width<=0||rect.height<=0)return;
+    scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+    const cameraPosition=camera.getWorldPosition(new THREE.Vector3());
+    let closest=24,found:number|null=null,index=0;
+    for(const {visual} of this.infrastructureVisuals){
+      const centre=visual.group.getWorldPosition(new THREE.Vector3());
+      for(const {site,bodyRadiusScene} of visual.colonialSitesCOLVIS2){
+        const position=site.getWorldPosition(new THREE.Vector3());
+        const outward=position.clone().sub(centre);
+        const visible=outward.dot(cameraPosition.clone().sub(position))>-(bodyRadiusScene*bodyRadiusScene*.008);
+        const projected=position.clone().project(camera);
+        const x=rect.left+(projected.x+1)*rect.width*.5;
+        const y=rect.top+(1-projected.y)*rect.height*.5;
+        const distance=Math.hypot(clientX-x,clientY-y);
+        if(projected.z>=-1 && projected.z<=1 && distance<closest &&
+          colvis3IsColonyClickT7c(pointerTravel,distance,visible)){
+          closest=distance;found=index;
+        }
+        index++;
+      }
+    }
+    if(found!==null)this.inspectColonyCOLVIS2(found);
   }
 
   onWheel(
@@ -920,6 +1157,10 @@ export class ScientificBodyPreview
   ): void {
 
     event.preventDefault();
+    if(this.colonyInspectionIndexCOLVIS2()!==null){
+      this.colonyInspectionZoomCOLVIS2=clamp(this.colonyInspectionZoomCOLVIS2*(event.deltaY>0?1.24:.81),.32,COLVIS3_MAX_INSPECTION_ZOOM_T7E);
+      this.updateColonyInspectionCameraCOLVIS2();return;
+    }
 
     const direction =
       Math.sign(
@@ -952,6 +1193,16 @@ export class ScientificBodyPreview
         null
     ) {
       return;
+    }
+
+    if(this.colonyInspectionIndexCOLVIS2()!==null &&
+       ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)){
+      if(event.key==='ArrowLeft')this.colonyOrbitAzimuthT7n-=.10;
+      if(event.key==='ArrowRight')this.colonyOrbitAzimuthT7n+=.10;
+      if(event.key==='ArrowUp')this.colonyOrbitElevationT7n=clamp(this.colonyOrbitElevationT7n-.08,.20,1.48);
+      if(event.key==='ArrowDown')this.colonyOrbitElevationT7n=clamp(this.colonyOrbitElevationT7n+.08,.20,1.48);
+      this.updateColonyInspectionCameraCOLVIS2();
+      event.preventDefault();return;
     }
 
     switch (
@@ -989,6 +1240,10 @@ export class ScientificBodyPreview
 
       case '+':
       case '=':
+        if(this.colonyInspectionIndexCOLVIS2()!==null){
+          this.colonyInspectionZoomCOLVIS2=clamp(this.colonyInspectionZoomCOLVIS2*.81,.32,COLVIS3_MAX_INSPECTION_ZOOM_T7E);
+          this.updateColonyInspectionCameraCOLVIS2();break;
+        }
         this.cameraDistance =
           clamp(
             this.cameraDistance *
@@ -1001,6 +1256,10 @@ export class ScientificBodyPreview
 
       case '-':
       case '_':
+        if(this.colonyInspectionIndexCOLVIS2()!==null){
+          this.colonyInspectionZoomCOLVIS2=clamp(this.colonyInspectionZoomCOLVIS2*1.24,.32,COLVIS3_MAX_INSPECTION_ZOOM_T7E);
+          this.updateColonyInspectionCameraCOLVIS2();break;
+        }
         this.cameraDistance =
           clamp(
             this.cameraDistance *
@@ -1039,9 +1298,7 @@ export class ScientificBodyPreview
   }
 
   private previewStellarSources() {
-    return this.model.kind === ScientificBodyPreviewKind.PLANET
-      ? (this.model.primary.stellarLightSources ?? this.model.primary.civilizationStarSources)
-      : undefined;
+    return viscorbPreviewStellarSourcesV1(this.model);
   }
 
   private addLighting():
@@ -1089,6 +1346,12 @@ export class ScientificBodyPreview
       return;
     }
 
+    // Restore the body-scale camera after any COLVIS.2 close inspection.
+    // Model/context switches must never inherit microscopic near/far planes.
+    this.detachColonySurfaceContextT7e();
+    this.colonyInspectionIndexCOLVIS2.set(null);
+    this.unlockBackgroundScrollT7d();
+    if(this.camera){this.camera.up.set(0,1,0);this.camera.zoom=1;this.camera.near=.01;this.camera.far=80;this.camera.updateProjectionMatrix();}
     this.disposeSceneResources();
 
     if (
@@ -1105,6 +1368,17 @@ export class ScientificBodyPreview
       new THREE.Group();
     root.name =
       'GENESIS scientific body preview';
+    // 38.8: trace the *already authorized* model; never reinterpret science.
+    const visualKind388: GenesisVisualSubjectKind388 =
+      this.model.kind === ScientificBodyPreviewKind.PLANET ? 'PLANET' :
+      this.model.kind === ScientificBodyPreviewKind.MOON ? 'MOON' :
+      this.model.kind === ScientificBodyPreviewKind.ASTEROID ? 'ASTEROID' :
+      this.model.kind === ScientificBodyPreviewKind.COMET ? 'COMET' :
+      this.model.kind === ScientificBodyPreviewKind.TRANS_NEPTUNIAN_OBJECT
+        ? 'TRANS_NEPTUNIAN_OBJECT' : 'CAPTURED_EXTRASOLAR_OBJECT';
+    root.userData['genesisVisualTrace38_8'] = genesisVisualTrace388(
+      visualKind388, this.model.accessibleLabel,
+    );
     root.rotation
       .set(
         -0.14,
@@ -1223,80 +1497,23 @@ export class ScientificBodyPreview
       return;
     }
 
-    const maximumApoapsisPlanetRadii =
-      Math.max(
-        ...moons.map(
-          moon =>
-            moon.orbit.apoapsisPlanetRadii,
-        ),
-      );
-
-    const localScenePerPlanetRadius =
-      LOCAL_OUTERMOST_ORBIT_RADIUS /
-      Math.max(
-        maximumApoapsisPlanetRadii,
-        1e-6,
-      );
-
-    const minimumPeriapsisScene =
-      Math.min(
-        ...moons.map(
-          moon =>
-            moon.orbit.periapsisPlanetRadii *
-            localScenePerPlanetRadius,
-        ),
-      );
-
-    const ringExtentPlanetRadii =
-      planet.ring?.outerRadiusPlanetRadii ??
-      1;
-
-    const maximumReadablePlanetRadius =
-      minimumPeriapsisScene /
-      Math.max(
-        ringExtentPlanetRadii +
-          0.75,
-        1.75,
-      );
-
-    const planetRadius =
-      clamp(
-        maximumReadablePlanetRadius,
-        0.18,
-        0.78,
-      );
-
-    this.addPlanet(
-      planet,
-      planetRadius,
-      new THREE.Vector3(),
+    const localLayout = viscorbLocalOrbitLayoutV1(
+      moons.map(moon => ({
+        periapsisPlanetRadii: moon.orbit.periapsisPlanetRadii,
+        apoapsisPlanetRadii: moon.orbit.apoapsisPlanetRadii,
+        radiusEarth: moon.radiusEarth,
+      })),
+      planet.ring?.outerRadiusPlanetRadii ?? 1,
     );
+    if (localLayout === null) return;
 
-    const maximumMoonRadiusEarth =
-      Math.max(
-        ...moons.map(
-          moon =>
-            moon.radiusEarth,
-        ),
-        1e-6,
-      );
-
-    const maximumDisplayedMoonRadius =
-      clamp(
-        planetRadius *
-          0.26,
-        0.065,
-        0.18,
-      );
+    const localScenePerPlanetRadius = localLayout.scenePerPlanetRadius;
+    this.addPlanet(planet, localLayout.planetRadius, new THREE.Vector3());
 
     this.localDaysPerRealSecond =
-      Math.max(
-        ...moons.map(
-          moon =>
-            moon.orbit.orbitalPeriodDays,
-        ),
-      ) /
-      LOCAL_OUTERMOST_ORBIT_CYCLE_SECONDS;
+      scientificMoonGroupDaysPerRealSecondV1(
+        moons.map(moon => moon.orbit.orbitalPeriodDays),
+      );
 
     for (
       const moon
@@ -1319,13 +1536,10 @@ export class ScientificBodyPreview
             this.localSimulationDay,
           );
 
-      const moonRadius =
-        Math.max(
-          0.028,
-          maximumDisplayedMoonRadius *
-          moon.radiusEarth /
-          maximumMoonRadiusEarth,
-        );
+      const moonRadius = viscorbPresentedMoonRadiusV1(
+        localLayout,
+        moon.radiusEarth,
+      );
 
       const runtime =
         this.addMoon(
@@ -1419,11 +1633,9 @@ export class ScientificBodyPreview
     // Stellar day/night is physical; do not gate it on native civilization.
     this.stellarLightBinding = appearance.lightBinding;
 
-    const segments =
-      systemSceneBodyLodSegmentsV1(
-        'planet',
-        'HIGH',
-      );
+    const segments = planet.giantAtmosphere !== null
+      ? GIANT_ATMOSPHERE_FINE_SEGMENTS_VISCATM1C
+      : systemSceneBodyLodSegmentsV1('planet', 'HIGH');
     const geometry =
       new THREE.SphereGeometry(
         1,
@@ -1452,10 +1664,13 @@ export class ScientificBodyPreview
     sphere.scale.setScalar(radius);
     spinPivot.add(sphere);
     if (planet.infrastructurePlans?.length && planet.surfaceStyle !== 'gaseous') {
-      const infra = createVida38InfrastructureSurfaceVisual386(planet.infrastructurePlans,radius,appearance.nightLightsTexture);
+      const infra = createVida38InfrastructureSurfaceVisual386(planet.infrastructurePlans,radius,appearance.nightLightsTexture,null,true,planet.radiusEarth,{
+        temperatureKelvin:planet.surface?.meanSurfaceTemperatureKelvin??null,
+        pressurePascal:planet.surface?.retainedSurfacePressurePascal??null,
+        iceCoverage01:planet.surface?.surfaceIceCoverageFraction01??null},true);
       spinPivot.add(infra.group);
       this.resources.push(...infra.resources);
-      this.infrastructureVisuals.push({visual:infra,radius});
+      this.infrastructureVisuals.push({visual:infra,radius,surfaceMesh:sphere});
     }
 
     for (const overlay of appearance.overlays) {
@@ -1776,10 +1991,12 @@ export class ScientificBodyPreview
         ? {geometry:renderable.surfaceMesh.geometry,
            geometryScale:radius/presentationRadius,radiusEarth:moon.radiusEarth}
         : null;
-      const infra = createVida38InfrastructureSurfaceVisual386(moonInfrastructure,radius,null,irregularSurface);
+      const infra = createVida38InfrastructureSurfaceVisual386(moonInfrastructure,radius,null,irregularSurface,true,moon.radiusEarth,{
+        temperatureKelvin:moon.sourceMoonPresentation?.sourceEstimatedSurfaceTemperatureKelvin??null,
+        pressurePascal:null,iceCoverage01:moon.presentationIceCoverage01},true);
       spinPivot.add(infra.group);
       this.resources.push(...infra.resources);
-      this.infrastructureVisuals.push({visual:infra,radius});
+      this.infrastructureVisuals.push({visual:infra,radius,surfaceMesh:renderable.surfaceMesh});
     }
     axialPivot.add(
       spinPivot,
@@ -2255,20 +2472,38 @@ export class ScientificBodyPreview
       return;
     }
 
-    this.camera.position
-      .set(
+    // T7s reparado: orientar la *cámara* de la ficha planetaria hacia la
+    // iluminación real del preview. Girar la esfera no cambia qué hemisferio
+    // ilumina una luz direccional fija. No alterar SystemScene ni el modal.
+    const daylight =
+      (this.model.kind === ScientificBodyPreviewKind.PLANET ||
+       this.model.kind === ScientificBodyPreviewKind.MOON) &&
+      this.colonyInspectionIndexCOLVIS2() === null
+        ? scientificPreviewDaylightCameraT7s(this.previewStellarSources())
+        : null;
+
+    if (daylight !== null) {
+      this.camera.position.set(
+        daylight.x * this.cameraDistance,
+        daylight.y * this.cameraDistance,
+        daylight.z * this.cameraDistance,
+      );
+      // Evitar la singularidad lookAt si la luz está sobre uno de los polos.
+      this.camera.up.set(
         0,
-        this.cameraDistance *
-          0.08,
+        Math.abs(daylight.y) > 0.985 ? 0 : 1,
+        Math.abs(daylight.y) > 0.985 ? -1 : 0,
+      );
+    } else {
+      this.camera.position.set(
+        0,
+        this.cameraDistance * 0.08,
         this.cameraDistance,
       );
+      this.camera.up.set(0, 1, 0);
+    }
 
-    this.camera
-      .lookAt(
-        0,
-        0,
-        0,
-      );
+    this.camera.lookAt(0, 0, 0);
   }
 
   private resize():
@@ -2453,11 +2688,13 @@ export class ScientificBodyPreview
         }
 
         this.updateStellarLightBinding();
+        this.updateColonyNightLightsT7c();
         this.updateArtificialSatelliteBinding();
         this.orbitalSurfaceShadowVISCIV6n?.update(
           this.camera, this.artificialSatellitesVisible(),
         );
         this.updateInfrastructureLod386();
+        this.updateColonyInspectionCameraCOLVIS2();
         this.renderer
           .render(
             this.scene,
@@ -2474,6 +2711,35 @@ export class ScientificBodyPreview
       window.requestAnimationFrame(
         frame,
       );
+  }
+
+  /** Fichas: misma iluminación multiestrrella que la escena 3D.
+   * Son puntos MeshBasicMaterial (sin focos planetarios ni iluminación inventada).
+   * La función de encendido combina las contribuciones de las estrellas.
+   */
+  private updateColonyNightLightsT7c():void{
+    if(!this.camera||this.infrastructureVisuals.length===0)return;
+    this.camera.updateMatrixWorld(true);
+    this.scene?.updateMatrixWorld(true);
+    const sources=this.previewStellarSources();
+    const directions:THREE.Vector3[]=[];
+    const weights=new THREE.Vector3();
+    if(sources?.length){
+      for(const source of sources.slice(0,3)){
+        const d=new THREE.Vector3(source.x,source.y,source.z);
+        if(d.lengthSq()<=1e-12)continue;
+        directions.push(d.normalize().transformDirection(this.camera.matrixWorldInverse));
+        weights.setComponent(directions.length-1,Math.max(0,Math.min(1,source.weight01)));
+      }
+    }
+    if(directions.length===0){
+      directions.push(new THREE.Vector3(4.5,3,5).normalize()
+        .transformDirection(this.camera.matrixWorldInverse));
+      weights.x=1;
+    }
+    for(const {visual} of this.infrastructureVisuals){
+      visual.updateColonialNightLighting386c3(directions,weights,this.camera.matrixWorldInverse);
+    }
   }
 
   private updateInfrastructureLod386(): void {
@@ -2619,6 +2885,7 @@ export class ScientificBodyPreview
     this.localSpinBindings =
       [];
     this.infrastructureVisuals = [];
+    this.colonyInspectionIndexCOLVIS2.set(null);
     this.stellarLightBinding = null;
     this.orbitalSurfaceShadowVISCIV6n = null;
     this.artificialSatelliteBindings =
