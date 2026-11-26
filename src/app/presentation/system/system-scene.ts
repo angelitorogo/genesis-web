@@ -2507,6 +2507,19 @@ class ThreeSystemSceneRuntime
   private readonly cameraController:
     SystemSceneCameraController;
 
+  /** 38.9: identities shared by all animation frames of the current snapshot.
+   * This is NOT a scientific cache: rebuilding a snapshot rebuilds all lookups.
+   * In particular, no planet/moon array or host-star Set is allocated per frame.
+   */
+  private lightingTargets389: readonly (
+    SystemSceneSnapshot['planets'][number] |
+    SystemSceneSnapshot['moons'][number] |
+    SystemSceneSnapshot['minorBodies'][number]
+  )[] = [];
+  private readonly orbitalHomeStars389 = new Map<string, readonly string[]>();
+  private readonly starsById389 = new Map<string, SystemSceneSnapshot['stars'][number]>();
+  private hasCompactLightingHost389 = false;
+
   private currentSnapshot:
     SystemSceneSnapshot | null =
     null;
@@ -2819,6 +2832,18 @@ class ThreeSystemSceneRuntime
     this.lastTelemetryTimestamp = Number.NEGATIVE_INFINITY;
     this.currentSnapshot =
       snapshot;
+    // 38.9: build identity-only lighting indexes once for this scene, not at
+    // 60 FPS. Dynamics (positions, fluxes, weights) remain live and unchanged.
+    this.lightingTargets389 = systemSceneLightingTargets(snapshot);
+    this.starsById389.clear();
+    for (const star of snapshot.stars) this.starsById389.set(star.id, star);
+    this.orbitalHomeStars389.clear();
+    for (const planet of snapshot.planets) {
+      this.orbitalHomeStars389.set(planet.id,
+        resolveOrbitalHomeStarIdsVISCIV6d(planet, snapshot.stars));
+    }
+    this.hasCompactLightingHost389 = snapshot.stars.some(
+      star => star.compactHostKind !== undefined);
     this.simulationClock =
       new SystemSimulationClock(
         snapshot.simulation
@@ -6705,6 +6730,11 @@ class ThreeSystemSceneRuntime
 
   private clearFrameObjects():
     void {
+    // 38.9: release snapshot identity lookups together with scene resources.
+    this.lightingTargets389 = [];
+    this.starsById389.clear();
+    this.orbitalHomeStars389.clear();
+    this.hasCompactLightingHost389 = false;
     this.viscorbLocalPresentation.endImmediately();
     this.resetPlanetaryLodGroupLODGRP1(true);
     this.planetaryLodApoapsisCacheLODGRP1.clear();
@@ -6884,7 +6914,7 @@ class ThreeSystemSceneRuntime
 
     for (
       const body
-      of systemSceneLightingTargets(snapshot)
+      of this.lightingTargets389
     ) {
       const binding =
         this.bodyLightBindings.get(
@@ -6990,12 +7020,12 @@ class ThreeSystemSceneRuntime
         );
 
       if (body.kind === 'planet' && binding.orbitalHomeDirectionsView && binding.orbitalHomeFlagsView) {
-        const homeIds = resolveOrbitalHomeStarIdsVISCIV6d(body, snapshot.stars);
+        const homeIds = this.orbitalHomeStars389.get(body.id) ?? [];
         const homeFlags = binding.orbitalHomeFlagsView;
         homeFlags.set(0, 0);
         for (let hostIndex = 0; hostIndex < Math.min(2, homeIds.length); hostIndex += 1) {
           const homeId = homeIds[hostIndex]!;
-          const homeStar = snapshot.stars.find(star => star.id === homeId);
+          const homeStar = this.starsById389.get(homeId);
           if (!homeStar || (homeStar.sourceLuminositySolar ?? 0) <= 0) continue;
           const homeObject = this.animatedBodies.get(homeId);
           if (!homeObject) continue;
@@ -7035,8 +7065,7 @@ class ThreeSystemSceneRuntime
         // If no directional emission or separate disk-inspection lighting is
         // available, only the bounded albedo-following fill remains.
         binding.lightWeightsView.set(
-          snapshot.stars.some(star => star.compactHostKind !== undefined)
-            ? 0 : 1,
+          this.hasCompactLightingHost389 ? 0 : 1,
           0,
           0,
         );
@@ -7213,6 +7242,14 @@ class ThreeSystemSceneRuntime
         if (msg.ok && msg.result && this.planetaryLodGroupLODGRP1.accept(msg.result)) {
           this.planetaryLodTimingsLODGRP2.generated(msg.result.cpuMs ?? 0,
             now-this.planetaryLodJobStartLODGRP2,now);
+          // 38.9: reject an over-budget active atlas group before any further
+          // GPU staging. Restore native materials and release staged maps.
+          if (this.planetaryLodGroupLODGRP1.status.phase === 'BUDGET_LIMITED') {
+            this.releasePlanetaryLodGpuLODGRP1();
+            this.debugPlanetaryLodLODGRP1('actual CPU atlas budget; adaptive fallback');
+            this.wakePlanetaryLodFrameLODGRP1();
+            return;
+          }
           // The GPU can start while this same worker generates the NEXT moon.
           this.stagePlanetaryLodGpuLODGRP1();
           if (this.planetaryLodGroupLODGRP1.status.phase === 'READY')
@@ -7467,8 +7504,7 @@ class ThreeSystemSceneRuntime
     const groupStatusLODGRP1 = this.planetaryLodGroupLODGRP1.status;
     const groupHoldsLodLODGRP1 = groupStatusLODGRP1.hostId !== null &&
       groupStatusLODGRP1.phase !== 'FAILED';
-    const groupMembersLODGRP1 = groupHoldsLodLODGRP1
-      ? new Set(this.planetaryLodGroupLODGRP1.memberIds) : null;
+    // 38.9: the controller owns a stable membership Set. No new Set per frame.
 
     let closestPlanet: { id: string; projectedDiameter: number; binding: SystemSceneBodyLodBindingV1 } | null = null;
 
@@ -7507,7 +7543,8 @@ class ThreeSystemSceneRuntime
           this.viewportHeightPixels,
         );
 
-      const isGroupedLODGRP1 = groupMembersLODGRP1?.has(bodyId) ?? false;
+      const isGroupedLODGRP1 = groupHoldsLodLODGRP1 &&
+        this.planetaryLodGroupLODGRP1.hasMember(bodyId);
       const nextLevel = isGroupedLODGRP1
         ? groupStatusLODGRP1.phase === 'HIGH' ? 'HIGH' :
           groupStatusLODGRP1.phase === 'BUDGET_LIMITED' ? 'MEDIUM' : binding.level
@@ -8222,6 +8259,13 @@ class ThreeSystemSceneRuntime
     }
   }
 
+  /** Stable projection callback for the VISCORB blend (38.9). */
+  private readonly projectLocalMotion389 = (
+    contributions: readonly SystemSceneMotionContributionSnapshot[],
+    day: number,
+    scale: SystemSceneScaleSnapshot,
+  ): THREE.Vector3 => this.positionFromContributions(contributions, day, scale);
+
   private renderFrame():
     void {
 
@@ -8244,7 +8288,7 @@ class ThreeSystemSceneRuntime
     this.viscorbLocalPresentation.update(
       this.lightingSimulationDay,
       typeof performance === 'undefined' ? 0 : performance.now(),
-      (contributions, day, scale) => this.positionFromContributions(contributions, day, scale),
+      this.projectLocalMotion389,
     );
     this.updateBodyLod();
     this.updateInfrastructureLod386();

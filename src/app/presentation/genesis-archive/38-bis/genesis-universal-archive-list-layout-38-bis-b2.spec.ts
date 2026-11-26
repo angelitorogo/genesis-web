@@ -34,6 +34,7 @@ describe('38.bis-b2 — metadatos etiqueta/valor en todos los listados',()=>{
     category:selectedCategory,page:selectedPage,busy:signal(false),progress:signal(''),
     indexProgress:signal([]),indexProgressStored:signal(0),indexProgressTotal:signal(0),
     sortIndexStats38BisT3:signal({valid:0,stale:0}),dirtyJobCount38BisT3:signal(0),
+    updateJobsArchfast1:signal([]),
     progressDetails:vi.fn(()=>[]),
     selectedGalaxy:signal(null),selectedSubtype:signal(null),direction:signal('asc'),
     sortKey:signal('name'),sortOptions:signal([]),

@@ -626,7 +626,12 @@ describe(
           },
         }).facade;
         await confirmed.load(params);
+        // NUCLEUS-SYNC.1 publishes the CONFIRMED card before the optional
+        // radio/lensing/completion studies: wait for the independent 28.5 read.
         expect(confirmed.model()?.scientificAction).toBeNull();
+        await vi.waitFor(() =>
+          expect(confirmed.model()?.relativisticJetAnalysis?.canAnalyze).toBe(true),
+        );
         expect(confirmed.model()?.galacticObjectCard?.nextScientificStep)
           .toBe('Confirmar la galaxia y observar el disco de acreción desde su ficha');
         expect(confirmed.model()?.relativisticJetAnalysis?.canAnalyze)
@@ -694,6 +699,9 @@ describe(
             .facade;
 
         await detected.load(params);
+        await vi.waitFor(() =>
+          expect(detected.model()?.relativisticJetAnalysis?.canAnalyze).toBe(true),
+        );
         await detected.performRelativisticJetAnalysis();
 
         expect(
@@ -731,6 +739,9 @@ describe(
             .facade;
 
         await notDetected.load(params);
+        await vi.waitFor(() =>
+          expect(notDetected.model()?.relativisticJetAnalysis?.canAnalyze).toBe(true),
+        );
         await notDetected.performRelativisticJetAnalysis();
 
         expect(
@@ -738,6 +749,41 @@ describe(
         ).toBe(
           'Análisis completado · no detección persistida como evidencia científica · sin coste ni recompensa directa de PD.',
         );
+      },
+    );
+
+    it(
+      'does not report a 28.5 non-detection while a committed study is still unreadable',
+      async () => {
+        const v2 = new UniverseGenerationKey(
+          UniverseSeed.parse(DEFAULT_UNIVERSE_SEED), GeneratorVersion.V2,
+        );
+        const facade = configure({
+          universes: [v2],
+          discoveryState: DiscoveryState.CONFIRMED,
+          scientificActionsEnabled: true,
+          relativisticJetAnalysisStatus: {
+            analyzed: false, canAnalyze: true,
+            instrumentLabel: 'Radio · nivel 4',
+            requirementLabel: 'Disponible',
+            analyzedInstrumentLabel: null, facts: Object.freeze([]),
+          },
+          // The transaction commits, but the auxiliary read-back has not
+          // materialized yet. This must NOT become a scientific non-detection.
+          relativisticJetAnalysisAnalyzedStatus: null,
+        }).facade;
+        await facade.load({
+          locatorKind: ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT,
+          galaxyIndex: '0', sectorKey: '0', galacticObjectIndex: '0',
+          universeSeed: v2.universeSeed.serialize(), generatorVersionCode: '2',
+        });
+        await vi.waitFor(() =>
+          expect(facade.model()?.relativisticJetAnalysis?.canAnalyze).toBe(true),
+        );
+        await facade.performRelativisticJetAnalysis();
+        expect(facade.relativisticJetAnalysisFeedback()).toBeNull();
+        expect(facade.relativisticJetAnalysisError()).toContain('guardado');
+        expect(facade.refreshRequired()).toBe(true);
       },
     );
 
@@ -801,10 +847,9 @@ describe(
             .facade;
 
         await detected.load(params);
-
-        expect(
-          detected.model()?.gravitationalLensingReconstruction?.canAnalyze,
-        ).toBe(true);
+        await vi.waitFor(() =>
+          expect(detected.model()?.gravitationalLensingReconstruction?.canAnalyze).toBe(true),
+        );
 
         await detected.performGravitationalLensingReconstruction();
 
@@ -839,6 +884,9 @@ describe(
             .facade;
 
         await notDetected.load(params);
+        await vi.waitFor(() =>
+          expect(notDetected.model()?.gravitationalLensingReconstruction?.canAnalyze).toBe(true),
+        );
         await notDetected.performGravitationalLensingReconstruction();
 
         expect(

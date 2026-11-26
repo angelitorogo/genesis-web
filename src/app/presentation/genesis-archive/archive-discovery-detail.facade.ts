@@ -1348,20 +1348,39 @@ export class ArchiveDiscoveryDetailFacade {
         locator,
       );
 
-      await this.resolveDetails(request, null, true, this.lastCommittedGalacticObjectState);
-
-      const detected =
-        this.model()
-          ?.relativisticJetAnalysis
-          ?.facts
-          .some(
-            fact =>
-              fact.label ===
-                'Resultado de la campaña' &&
-              fact.value ===
-                'Firma de jet relativista colimado detectada',
-          ) ??
-        false;
+      // NUCLEUS-SYNC.1 publishes the canonical card before auxiliary 28.5/28.6
+      // readbacks complete. The action result must be based on the persisted
+      // observation status, never on an as-yet-null optional UI projection.
+      const synchronized = await this.resolveDetails(
+        request, null, true, this.lastCommittedGalacticObjectState,
+      );
+      if (!synchronized) return;
+      const resolvedVersion = this.resolutionVersion;
+      let status = this.model()?.relativisticJetAnalysis ?? null;
+      if (status === null) {
+        status = await this.relativisticJetAnalysisObservationRuntime.inspect(
+          generationKey, locator,
+        );
+        // Navigation or another scientific action may supersede this response.
+        if (resolvedVersion !== this.resolutionVersion) return;
+        const current = this.stateSignal();
+        if (current.kind !== 'content') return;
+        this.stateSignal.set({
+          kind: 'content',
+          model: Object.freeze({ ...current.model, relativisticJetAnalysis: status }),
+        });
+      }
+      if (status === null || !status.analyzed) {
+        this.refreshRequiredSignal.set(true);
+        this.relativisticJetAnalysisErrorSignal.set(
+          'El análisis está guardado, pero aún no se ha podido leer su resultado. Actualiza la ficha sin repetir la observación.',
+        );
+        return;
+      }
+      const detected = status.facts.some(
+        fact => fact.label === 'Resultado de la campaña' &&
+          fact.value === 'Firma de jet relativista colimado detectada',
+      );
 
       this.relativisticJetAnalysisFeedbackSignal.set(
         detected
@@ -1423,20 +1442,38 @@ export class ArchiveDiscoveryDetailFacade {
         locator,
       );
 
-      await this.resolveDetails(request, null, true, this.lastCommittedGalacticObjectState);
-
-      const detected =
-        this.model()
-          ?.gravitationalLensingReconstruction
-          ?.facts
-          .some(
-            fact =>
-              fact.label ===
-                'Resultado de la campaña' &&
-              fact.value ===
-                'Configuración de lente gravitacional reconstruible detectada',
-          ) ??
-        false;
+      // Resolve the finished observation independently from the three
+      // background studies. A pending auxiliary read must not be mistaken for
+      // a scientific non-detection after successful persistence.
+      const synchronized = await this.resolveDetails(
+        request, null, true, this.lastCommittedGalacticObjectState,
+      );
+      if (!synchronized) return;
+      const resolvedVersion = this.resolutionVersion;
+      let status = this.model()?.gravitationalLensingReconstruction ?? null;
+      if (status === null) {
+        status = await this.gravitationalLensingReconstructionObservationRuntime.inspect(
+          generationKey, locator,
+        );
+        if (resolvedVersion !== this.resolutionVersion) return;
+        const current = this.stateSignal();
+        if (current.kind !== 'content') return;
+        this.stateSignal.set({
+          kind: 'content',
+          model: Object.freeze({ ...current.model, gravitationalLensingReconstruction: status }),
+        });
+      }
+      if (status === null || !status.analyzed) {
+        this.refreshRequiredSignal.set(true);
+        this.gravitationalLensingReconstructionErrorSignal.set(
+          'La reconstrucción está guardada, pero aún no se ha podido leer su resultado. Actualiza la ficha sin repetir la observación.',
+        );
+        return;
+      }
+      const detected = status.facts.some(
+        fact => fact.label === 'Resultado de la campaña' &&
+          fact.value === 'Configuración de lente gravitacional reconstruible detectada',
+      );
 
       this.gravitationalLensingReconstructionFeedbackSignal.set(
         detected

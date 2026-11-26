@@ -8,6 +8,7 @@ import {UNIVERSAL_ARCHIVE_CATEGORIES_38BIS,type UniversalArchiveCategory38Bis,ty
 import {archiveSortOptions38BisB3} from './38-bis/genesis-universal-archive-sort-38-bis-b3';
 import type {ArchiveProgressCategorySummary38BisB4,ArchiveProgressGalaxyDetail38BisB4} from './38-bis/genesis-universal-archive-progress-38-bis-b4';
 import type {UniversalArchiveIndexedCategory38Bis} from './38-bis/genesis-universal-archive-38-bis.model';
+import type {ArchiveDirtyJob38BisB6} from './38-bis/genesis-universal-archive-dirty-38-bis-b6';
 
 describe('38.bis — Archivo GENESIS universal',()=>{
   const state=signal<'empty'|'ready'>('empty');
@@ -19,12 +20,15 @@ describe('38.bis — Archivo GENESIS universal',()=>{
   const indexProgressTotal=computed(()=>indexProgress().reduce((total,part)=>total+part.total,0));
   const progressDetails=vi.fn((_category:UniversalArchiveIndexedCategory38Bis):
     readonly ArchiveProgressGalaxyDetail38BisB4[]=>[]);
+  type DisplayJob = ArchiveDirtyJob38BisB6 & {readonly galaxyTitle:string;readonly categoryTitle:string;readonly fieldTitle:string|null};
+  const updateJobsArchfast1=signal<readonly DisplayJob[]>([]);
   const stub={
     state,error:signal(''),universes:signal([]),galaxies:signal([]),
     selectedUniverseRef:signal('PUBLIC-REF'),indexedGalaxies:signal(0),
     sections:signal([]),category,busy:signal(false),progress:signal(''),
     indexProgress,indexProgressStored,indexProgressTotal,progressDetails,
     sortIndexStats38BisT3:signal({valid:0,stale:0}),dirtyJobCount38BisT3:signal(0),
+    updateJobsArchfast1,
     page,selectedGalaxy:signal(null),selectedSubtype:signal(null),
     direction:signal('asc'),pageNumber:signal(1),pageSize:signal(25),
     sortKey:signal('name'),minimum:signal(null),maximum:signal(null),
@@ -37,6 +41,7 @@ describe('38.bis — Archivo GENESIS universal',()=>{
   };
   beforeEach(()=>{
     state.set('empty');category.set(null);page.set(null);indexProgress.set([]);
+    updateJobsArchfast1.set([]);
     stub.sortKey.set('name');stub.direction.set('asc');
     stub.load.mockClear();progressDetails.mockClear();
     TestBed.configureTestingModule({imports:[GenesisArchive],providers:[provideRouter([]),
@@ -83,6 +88,24 @@ describe('38.bis — Archivo GENESIS universal',()=>{
     expect(panel?.textContent).toContain('0 ordenaciones vigentes');
     expect(panel?.textContent).toContain('Planetas');
     expect(progressDetails).toHaveBeenCalledWith('planets');
+  });
+  it('ARCHFAST.1 muestra progreso real por galaxia y campo solo mientras exista el trabajo',()=>{
+    state.set('ready');
+    updateJobsArchfast1.set([{
+      id:'test-job',scope:'test-scope',universeSeed:'test-seed',generatorVersionCode:3,
+      galaxyIndex:'4',category:'moons',status:'RUNNING',phase:'SORTS',
+      completedSorts:7,totalSorts:12,currentField:'mass',serial:1,attempts:0,
+      updatedAtEpochMs:1,startedAtEpochMs:1,
+      galaxyTitle:'Erylaune',categoryTitle:'Lunas',fieldTitle:'Masa',
+    }]);
+    const fixture=TestBed.createComponent(GenesisArchive);fixture.detectChanges();
+    const detail=fixture.nativeElement.querySelector('[data-testid="archive-maintenance-detail"]') as HTMLElement|null;
+    expect(detail?.textContent).toContain('Erylaune');
+    expect(detail?.textContent).toContain('Lunas');
+    expect(detail?.textContent).toContain('7 / 12');
+    expect(detail?.textContent).toContain('Masa');
+    updateJobsArchfast1.set([]);fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="archive-maintenance-detail"]')).toBeNull();
   });
   it('muestra ordenación específica, búsqueda y rango únicamente para magnitudes numéricas',()=>{
     state.set('ready');category.set('planets');
