@@ -202,6 +202,7 @@ describe(
         ).toHaveBeenCalledWith(
           request,
           visitedSnapshot,
+          true, // LIVE-SCI.1: never unmount the system card between stages.
         );
       },
     );

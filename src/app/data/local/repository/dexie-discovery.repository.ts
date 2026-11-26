@@ -319,6 +319,80 @@ export class DexieDiscoveryRepository
       await this.notifyArchive38BisB6(generationKey,locator,targetType.name);
   }
 
+  /** BULKCONF-ARCHPERF.1 — an atomic batch of canonical QA discoveries.
+   * Never writes an already CONFIRMED row and never downgrades another state.
+   * The caller registers an Archive GALAXY invalidation before work begins;
+   * emitting per-target events here would saturate the derived index queue.
+   */
+  async confirmLocatorsBatch(
+    generationKey: UniverseGenerationKey,
+    locators: readonly ProceduralLocator[],
+  ): Promise<number> {
+    if (locators.length === 0) return 0;
+    if (locators.length > 256) {
+      throw new RangeError('Bulk confirmation batches may not exceed 256 targets.');
+    }
+    await ensureUniverseExists(this.database, generationKey);
+    const { universeSeed, generatorVersionCode } =
+      generationKeyStorageParts(generationKey);
+    const candidates = new Map<string, {
+      readonly locator: ProceduralLocator;
+      readonly key: readonly [string, number, number, string];
+    }>();
+    for (const locator of locators) {
+      const targetTypeCode = DiscoveryTargetType.fromLocator(locator).code;
+      const targetSeed = this.resolveTargetSeed(generationKey, locator);
+      const key = [universeSeed, generatorVersionCode, targetTypeCode,
+        targetSeed] as const;
+      const identity = JSON.stringify(key);
+      const previous = candidates.get(identity);
+      if (previous && !proceduralLocatorsEqual(previous.locator, locator)) {
+        throw new CorruptLocalDataError('Two bulk targets have the same persisted identity.');
+      }
+      candidates.set(identity, { locator, key });
+    }
+
+    const entries = [...candidates.values()];
+    return this.database.transaction('rw', this.database.discoveries, async () => {
+      // The read and write are in one native transaction: a parallel tab
+      // cannot race an older value into this confirmation.
+      const existing = await this.database.discoveries.bulkGet(
+        entries.map(entry => [...entry.key]),
+      );
+      const now = this.clock();
+      const changed: NonNullable<ReturnType<typeof createDiscoveryEntity>>[] = [];
+      for (let i = 0; i < entries.length; i += 1) {
+        const entry = entries[i]!;
+        const old = existing[i];
+        if (old) {
+          this.assertSpatialIntegrity(old);
+          if (!proceduralLocatorsEqual(rehydrateDiscoveryLocator(old), entry.locator)) {
+            throw new CorruptLocalDataError(
+              'Persisted discovery locator does not match the bulk-confirmation target.',
+            );
+          }
+          if (old.discoveryStateCode === DiscoveryState.CONFIRMED.code) continue;
+        }
+        const entity = createDiscoveryEntity({
+          universeSeed,
+          generatorVersionCode,
+          targetTypeCode: entry.key[2],
+          targetSeed: entry.key[3],
+          ...locatorToPersistedLineage(entry.locator),
+          state: DiscoveryState.CONFIRMED,
+          firstKnownAtEpochMs: old?.firstKnownAtEpochMs ?? now,
+          updatedAtEpochMs: now,
+        });
+        if (!entity) throw new CorruptLocalDataError('Invalid bulk-confirmation state.');
+        changed.push(entity);
+      }
+      if (changed.length > 0) {
+        await this.database.discoveries.bulkPut(changed);
+      }
+      return changed.length;
+    });
+  }
+
   private async notifyArchive38BisB6(generationKey:UniverseGenerationKey,
     locator:ProceduralLocator,kind:string):Promise<void>{
     await publishGenesisKnowledgeCommit38BisB6({
@@ -374,6 +448,33 @@ export class DexieDiscoveryRepository
           entity,
         ),
     );
+  }
+
+  /**
+   * EXPLORATION FASTSCAN.1 — GALAXY-only read through the existing compound
+   * primary index. Both the universe and target type are bounded in IndexedDB;
+   * unlike getKnownDiscoveries(), no non-galaxy records are materialized.
+   * The target-seed boundary is safe because normalized seeds are hexadecimal.
+   */
+  async getKnownGalaxyDiscoveries(
+    generationKey: UniverseGenerationKey,
+  ): Promise<readonly KnownDiscovery[]> {
+    await ensureUniverseExists(this.database, generationKey);
+    const { universeSeed, generatorVersionCode } =
+      generationKeyStorageParts(generationKey);
+    const targetTypeCode = DiscoveryTargetType.GALAXY.code;
+    const entities = await this.database.discoveries
+      .where('[universeSeed+generatorVersionCode+targetTypeCode+targetSeed]')
+      .between(
+        [universeSeed, generatorVersionCode, targetTypeCode, ''],
+        [universeSeed, generatorVersionCode, targetTypeCode, '\uffff'],
+        true,
+        true,
+      )
+      .toArray();
+
+    sortDiscoveryEntities(entities);
+    return entities.map(entity => this.toKnownDiscovery(generationKey, entity));
   }
 
   /**

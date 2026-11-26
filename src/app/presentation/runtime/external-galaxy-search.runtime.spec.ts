@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import { vi } from 'vitest';
 
 import {
   IDBKeyRange,
@@ -11,6 +12,7 @@ import {
 
 import {
   GalaxyLocator,
+  SectorLocator,
 } from '../../domain/generation/procedural-locator';
 
 import {
@@ -1479,6 +1481,32 @@ describe(
         ).toHaveLength(
           1,
         );
+      },
+    );
+    it(
+      'FASTSCAN.1 reads only indexed galaxy discoveries without touching the full catalogue',
+      async () => {
+        await discoveryRepository.setState(
+          generationKey, new GalaxyLocator(0n), DiscoveryState.CONFIRMED,
+        );
+        await discoveryRepository.setState(
+          generationKey, new GalaxyLocator(8n), DiscoveryState.DETECTED,
+        );
+        await discoveryRepository.setState(
+          generationKey, new SectorLocator(0n, 0n), DiscoveryState.DISCOVERED,
+        );
+        const selected = await discoveryRepository.getKnownGalaxyDiscoveries(generationKey);
+        expect(selected.map(x => (x.locator as GalaxyLocator).galaxyIndex).sort((a, b) => a < b ? -1 : a > b ? 1 : 0)).toEqual([0n, 8n]);
+        expect(selected.every(x => x.locator instanceof GalaxyLocator)).toBe(true);
+
+        const slowPath = vi.spyOn(discoveryRepository, 'getKnownDiscoveries')
+          .mockRejectedValue(new Error('FASTSCAN must not scan the entire discovery catalogue'));
+        await pointsRepository.setGlobalDiscoveryPoints(generationKey, 100n);
+        const status = await runtime.getStatus(generationKey);
+        expect(status.knownExternalGalaxyCount).toBe(1n);
+        await runtime.search(generationKey);
+        expect(slowPath).not.toHaveBeenCalled();
+        slowPath.mockRestore();
       },
     );
   },

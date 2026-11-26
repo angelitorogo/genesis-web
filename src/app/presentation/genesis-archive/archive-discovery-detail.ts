@@ -8,8 +8,11 @@ import {
 
 import {
   ActivatedRoute,
+  type ParamMap,
   RouterLink,
 } from '@angular/router';
+
+import { combineLatest, type Subscription } from 'rxjs';
 
 import {
   DiscoveredToVisitedEntryKind,
@@ -31,6 +34,7 @@ import {
 import {
   ArchiveDiscoveryDetailFacade,
   ArchiveDiscoveryLocatorKind,
+  type ArchiveDiscoveryDetailRequest,
 } from './archive-discovery-detail.facade';
 
 import {
@@ -91,6 +95,11 @@ export class ArchiveDiscoveryDetail
   private eventHorizonAutoAdvanceTimer:
     ReturnType<typeof setInterval> | null =
     null;
+
+  /** Angular can reuse this component when navigating between galactic nuclei. */
+  private nucleusRouteSubscription: Subscription | null = null;
+  private routedIdentity: string | null = null;
+  private routedNucleus = false;
 
   private static readonly EVENT_HORIZON_AUTO_ADVANCE_MS =
     900;
@@ -268,8 +277,9 @@ export class ArchiveDiscoveryDetail
   ngOnDestroy():
     void {
 
-    this
-      .stopEventHorizonAutoAdvance();
+    this.nucleusRouteSubscription?.unsubscribe();
+    this.nucleusRouteSubscription = null;
+    this.stopEventHorizonAutoAdvance();
   }
 
   private syncEventHorizonAutoAdvance():
@@ -351,88 +361,75 @@ export class ArchiveDiscoveryDetail
       null;
   }
 
-  ngOnInit():
-    void {
-
-    const locatorKind =
-      this
-        .route
-        .snapshot
-        .data[
-          'archiveDiscoveryLocatorKind'
-        ] ??
-      null;
-
-    const isStellarSystem =
-      locatorKind ===
-      ArchiveDiscoveryLocatorKind.SYSTEM;
-
-    void this
-      .facade
-      .load({
-        locatorKind,
-
-        galaxyIndex:
-          this
-            .route
-            .snapshot
-            .paramMap
-            .get(
-              'galaxyIndex',
-            ),
-
-        sectorKey:
-          this
-            .route
-            .snapshot
-            .paramMap
-            .get(
-              'sectorKey',
-            ),
-
-        galacticObjectIndex:
-          this
-            .route
-            .snapshot
-            .paramMap
-            .get(
-              'galacticObjectIndex',
-            ),
-
-        universeRef:
-          this
-            .route
-            .snapshot
-            .queryParamMap
-            .get(
-              'u',
-            ),
-
-        universeSeed:
-          this
-            .route
-            .snapshot
-            .queryParamMap
-            .get(
-              'seed',
-            ),
-
-        generatorVersionCode:
-          this
-            .route
-            .snapshot
-            .queryParamMap
-            .get(
-              'version',
-            ),
-
-        includeStellarSystemScientificProgression:
-          isStellarSystem,
-
-        stellarSystemEntryKind:
-          isStellarSystem
-            ? DiscoveredToVisitedEntryKind.DETAILED_CARD
-            : null,
-      });
+  /** This presentation guard also keeps legacy snapshot-only test fixtures usable. */
+  nucleusSupplementaryWarning(): string | null {
+    const read = this.facade.nucleusSupplementaryWarning;
+    return typeof read === 'function' ? read() : null;
   }
+
+  /** The same request shape is used on first entry and route reuse. */
+  private routeRequest(
+    locatorKind: string | null,
+    params: ParamMap,
+    query: ParamMap,
+  ): ArchiveDiscoveryDetailRequest {
+    const isStellarSystem =
+      locatorKind === ArchiveDiscoveryLocatorKind.SYSTEM;
+
+    return {
+      locatorKind,
+      galaxyIndex: params.get('galaxyIndex'),
+      sectorKey: params.get('sectorKey'),
+      galacticObjectIndex: params.get('galacticObjectIndex'),
+      universeRef: query.get('u'),
+      universeSeed: query.get('seed'),
+      generatorVersionCode: query.get('version'),
+      includeStellarSystemScientificProgression: isStellarSystem,
+      stellarSystemEntryKind: isStellarSystem
+        ? DiscoveredToVisitedEntryKind.DETAILED_CARD
+        : null,
+    };
+  }
+
+  /** The frozen centre is object 0 of sector 0 in each galaxy. */
+  private isNucleusRoute(request: ArchiveDiscoveryDetailRequest): boolean {
+    return request.locatorKind === ArchiveDiscoveryLocatorKind.GALACTIC_OBJECT &&
+      request.sectorKey === '0' && request.galacticObjectIndex === '0';
+  }
+
+  ngOnInit(): void {
+    const initial = this.routeRequest(
+      this.route.snapshot.data['archiveDiscoveryLocatorKind'] ?? null,
+      this.route.snapshot.paramMap,
+      this.route.snapshot.queryParamMap,
+    );
+    this.routedIdentity = JSON.stringify(initial);
+    this.routedNucleus = this.isNucleusRoute(initial);
+    void this.facade.load(initial);
+
+    // On Angular route reuse, ngOnInit() is not called again. Follow the
+    // address of the nuclear object; do not change ordinary object workflows.
+    // A snapshot-only mock still supports the previous initialization path.
+    if (!this.route.paramMap || !this.route.queryParamMap || !this.route.data) {
+      return;
+    }
+    this.nucleusRouteSubscription = combineLatest([
+      this.route.paramMap,
+      this.route.queryParamMap,
+      this.route.data,
+    ]).subscribe(([params, query, data]) => {
+      const next = this.routeRequest(
+        data['archiveDiscoveryLocatorKind'] ?? null, params, query,
+      );
+      const identity = JSON.stringify(next);
+      if (identity === this.routedIdentity) return;
+      const isNucleus = this.isNucleusRoute(next);
+      if (!this.routedNucleus && !isNucleus) return;
+      this.routedIdentity = identity;
+      this.routedNucleus = isNucleus;
+      this.stopEventHorizonAutoAdvance();
+      void this.facade.load(next);
+    });
+  }
+
 }

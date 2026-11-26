@@ -33,6 +33,7 @@ export class CodesPage {
   private readonly civilizationKnowledge = inject(GalaxyCivilizationKnownIndex);
   readonly code = signal(TEST_PD_CODE);
   readonly pending = signal(false);
+  readonly bulkProgress = signal<{ done: string; total: string } | null>(null);
   readonly feedback = signal<Feedback>(null);
 
   setCode(value: string): void {
@@ -44,6 +45,7 @@ export class CodesPage {
     event.preventDefault();
     if (this.pending()) return;
     this.pending.set(true);
+    this.bulkProgress.set(null);
     this.feedback.set(null);
     try {
       const universes = await this.repositories.universeRepository.getAll();
@@ -54,7 +56,10 @@ export class CodesPage {
       }
       const normalizedCode = normalizeRedemptionCode(this.code());
       if (normalizedCode === CONFIRM_FOCUSED_GALAXY_CODE) {
-        const confirmation = await this.focusedGalaxyConfirmation.confirmFocusedGalaxy(generationKey);
+        const confirmation = await this.focusedGalaxyConfirmation.confirmFocusedGalaxy(
+          generationKey,
+          (done, total) => this.bulkProgress.set({done: done.toString(), total: total.toString()}),
+        );
         switch (confirmation.kind) {
           case 'confirmed':
             // The administrative full-galaxy confirmation uses the same
@@ -62,7 +67,12 @@ export class CodesPage {
             // Trigger only AFTER the galaxy's discovery writes have committed.
             if(generationKey.generatorVersion===GeneratorVersion.V3){
               void (async()=>{
-                const known=await this.repositories.discoveryRepository.getKnownDiscoveries(generationKey);
+                // FASTSCAN/BULKCONF: the post-confirmation biology job must
+                // not hydrate discoveries from every galaxy in the universe.
+                const discoveries=this.repositories.discoveryRepository;
+                const known=discoveries.getKnownDiscoveriesInGalaxy
+                  ? await discoveries.getKnownDiscoveriesInGalaxy(generationKey,confirmation.galaxyIndex)
+                  : await discoveries.getKnownDiscoveries(generationKey);
                 const systems=new Set(known.filter(d=>d.locator instanceof SystemLocator &&
                     d.locator.galaxyIndex===confirmation.galaxyIndex &&
                     d.state.code>=DiscoveryState.CONFIRMED.code)
@@ -117,6 +127,7 @@ export class CodesPage {
     } catch {
       this.feedback.set({ kind: 'error', message: 'No se ha podido guardar el canje. No se ha confirmado ningún premio.' });
     } finally {
+      this.bulkProgress.set(null);
       this.pending.set(false);
     }
   }

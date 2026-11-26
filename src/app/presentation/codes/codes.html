@@ -12,9 +12,15 @@
           placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" [value]="code()"
           (input)="setCode(codeInput.value)" #codeInput [disabled]="pending()" required />
         <button data-testid="codes-accept" type="submit" [disabled]="pending() || !code().trim()">
-          {{ pending() ? 'Validando…' : 'Aceptar' }}
+          {{ bulkProgress() ? 'Confirmando galaxia…' : pending() ? 'Validando…' : 'Aceptar' }}
         </button>
       </form>
+      @if (bulkProgress(); as progress) {
+        <p class="genesis-codes__progress" role="status" aria-live="polite" data-testid="codes-bulk-progress">
+          Confirmación masiva: {{ progress.done }} / {{ progress.total }} sectores procesados.
+          Se conservan los descubrimientos ya confirmados. Puedes reanudar tras una interrupción.
+        </p>
+      }
       @if (feedback(); as result) {
         <p class="genesis-codes__feedback" data-testid="codes-feedback"
           [attr.data-kind]="result.kind" [attr.role]="result.kind === 'error' ? 'alert' : 'status'">

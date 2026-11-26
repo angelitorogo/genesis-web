@@ -248,6 +248,21 @@ export class DexieExternalGalaxySearchRuntime
       DexieExternalGalaxySearchStateRepository,
   ) {}
 
+  /**
+   * Use the indexed galaxy-only read model in production. Legacy repository
+   * doubles retain the original fallback; draw, persistence and PD rules remain
+   * unchanged and continue to run atomically inside the existing transaction.
+   */
+  private async getKnownGalaxyDiscoveries(
+    generationKey: UniverseGenerationKey,
+  ) {
+    if (this.discoveryRepository.getKnownGalaxyDiscoveries !== undefined) {
+      return this.discoveryRepository.getKnownGalaxyDiscoveries(generationKey);
+    }
+    const known = await this.discoveryRepository.getKnownDiscoveries(generationKey);
+    return known.filter(item => item.locator instanceof GalaxyLocator);
+  }
+
   async getStatus(
     generationKey:
       UniverseGenerationKey,
@@ -284,11 +299,7 @@ export class DexieExternalGalaxySearchRuntime
                   generationKey,
                 ),
 
-              this
-                .discoveryRepository
-                .getKnownDiscoveries(
-                  generationKey,
-                ),
+              this.getKnownGalaxyDiscoveries(generationKey),
             ]);
 
           const lifetimeEarnedDiscoveryPoints =
@@ -560,11 +571,7 @@ export class DexieExternalGalaxySearchRuntime
             generationKey,
           ),
 
-        this
-          .discoveryRepository
-          .getKnownDiscoveries(
-            generationKey,
-          ),
+        this.getKnownGalaxyDiscoveries(generationKey),
       ]);
 
     const consecutiveFailedSearchesBefore =

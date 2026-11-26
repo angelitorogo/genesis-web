@@ -12,6 +12,13 @@ export interface ArchiveDirtyJob38BisB6 {
   readonly galaxyIndex:string;
   readonly category:UniversalArchiveIndexedCategory38Bis;
   readonly status:ArchiveDirtyStatus38BisB6;
+  /** ARCHFAST.1: persisted, diagnostic-only maintenance progress. */
+  readonly phase?:'FRAGMENT'|'SORTS';
+  readonly currentField?:string;
+  readonly completedSorts?:number;
+  readonly totalSorts?:number;
+  readonly completedPages?:number;
+  readonly totalPages?:number;
   /** Incremented on every new notification. A running job cannot erase it. */
   readonly serial:number;
   readonly attempts:number;

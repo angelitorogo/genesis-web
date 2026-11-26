@@ -78,3 +78,20 @@ export async function publishGenesisKnowledgeCommit38BisB6(
   pending.set(JSON.stringify([event.universeSeed,event.generatorVersionCode,
     event.galaxyIndex,event.kind]),event);
 }
+
+/** BULKCONF-ARCHPERF.1: persist the derived-index dirty state BEFORE
+ * starting multiple scientific transactions. Called outside Dexie transactions.
+ * Await listeners so that a tab interruption cannot leave committed fragments
+ * without a previously queued Archive reconciliation.
+ */
+export async function markGalaxyArchiveDirtyForBulkConfirmation38BisB6(
+  event: GenesisKnowledgeCommit38BisB6,
+): Promise<void> {
+  if (Dexie.currentTransaction) {
+    throw new Error('Bulk Archive invalidation must be outside a scientific transaction.');
+  }
+  // Unlike ordinary best-effort notifications, a bulk operation must await
+  // the Archive maintainer's durable queue write before any scientific batch.
+  // If this first registration fails, the caller does not begin its changes.
+  await Promise.all([...listeners].map(listener => Promise.resolve(listener(event))));
+}

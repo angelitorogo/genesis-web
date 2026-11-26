@@ -1,0 +1,14 @@
+/* FASTSCAN.1 — lightweight GPU-transformed, deterministic UI-only starfield. */
+.exploration__warp{position:absolute;inset:0;overflow:hidden;display:grid;place-items:end center;isolation:isolate;background:radial-gradient(ellipse at 50% 47%,rgba(18,48,78,.34),rgba(2,5,11,.99) 72%)}
+.exploration__warp-stars{position:absolute;inset:0;overflow:hidden;pointer-events:none;perspective:600px}
+.exploration__warp-stars::before{content:'';position:absolute;inset:0;background:repeating-radial-gradient(circle at 50% 48%,transparent 0 58px,rgba(85,193,255,.03) 59px,transparent 60px 90px);opacity:.45}
+.exploration__warp-streak{position:absolute;left:50%;top:48%;width:var(--warp-length);height:2px;margin-top:-1px;transform-origin:left center;border-radius:99px;background:linear-gradient(90deg,transparent,#bcecff 70%,white);box-shadow:0 0 5px rgba(91,207,255,.5);opacity:0;animation:genesis-warp-flight var(--warp-duration) linear var(--warp-delay) infinite;will-change:transform,opacity}
+.exploration__warp-streak:nth-of-type(5n){height:1px;filter:brightness(.7)}
+.exploration__warp-streak:nth-of-type(8n){height:3px;filter:brightness(1.2)}
+.exploration__warp-core{position:absolute;left:50%;top:48%;width:42px;height:42px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(221,251,255,.78),rgba(74,169,248,.3) 16%,rgba(20,81,142,.12) 35%,transparent 72%);box-shadow:0 0 55px rgba(65,160,255,.12);animation:genesis-warp-core 1.2s ease-in-out infinite alternate}
+.exploration__warp-copy{position:relative;z-index:1;width:100%;padding:2rem 1rem 1.65rem;text-align:center;background:linear-gradient(transparent,rgba(2,5,11,.87) 48%);box-sizing:border-box}
+.exploration__warp-copy h4{margin:.55rem 0;font-size:clamp(1rem,2.3vw,1.25rem);color:#e5f7ff}
+.exploration__warp-copy p:last-child{margin:0;font-size:.78rem;color:var(--genesis-color-text-muted)}
+@keyframes genesis-warp-flight{0%{transform:rotate(var(--warp-angle)) translateX(4px) scaleX(.12);opacity:0}15%{opacity:.95}80%{opacity:.85}100%{transform:rotate(var(--warp-angle)) translateX(340px) scaleX(2.2);opacity:0}}
+@keyframes genesis-warp-core{from{opacity:.48;filter:brightness(.75)}to{opacity:.95;filter:brightness(1.35)}}
+@media(prefers-reduced-motion:reduce){.exploration__warp-streak,.exploration__warp-core{animation:none;will-change:auto}.exploration__warp-streak{opacity:.4;transform:rotate(var(--warp-angle)) translateX(65px)}}

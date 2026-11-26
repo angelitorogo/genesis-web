@@ -905,5 +905,21 @@ describe(
         ).toBeNull();
       },
     );
+    it('FASTSCAN.1 shows deterministic light-speed streaks and prevents duplicate searches', async () => {
+      globalDiscoveryPoints = 200n;
+      const { fixture, element } = await fixtureAndElement();
+      fixture.componentInstance.searchExternalGalaxy();
+      fixture.detectChanges();
+      expect(element.querySelector('[data-testid="external-galaxy-warp"]')).not.toBeNull();
+      expect(element.querySelectorAll('.exploration__warp-streak')).toHaveLength(52);
+      expect((element.querySelector('[data-testid="external-galaxy-search-action"]') as HTMLButtonElement).disabled).toBe(true);
+      fixture.componentInstance.searchExternalGalaxy();
+      // The second attempt must not consume a second opportunity.
+      await new Promise<void>(resolve => setTimeout(resolve, 1420));
+      fixture.detectChanges();
+      expect(element.querySelector('[data-testid="external-galaxy-warp"]')).toBeNull();
+      expect(element.querySelector('[data-testid="external-galaxy-search-result"]')).not.toBeNull();
+      expect(consumedSearchOpportunities).toBe(1n);
+    });
   },
 );

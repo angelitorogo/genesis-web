@@ -15,6 +15,7 @@ import {
   GalaxyLocator,
   type GalacticObjectLocator,
   type SectorLocator,
+  type ProceduralLocator,
   type SystemLocator,
 } from '../../domain/generation/procedural-locator';
 
@@ -46,6 +47,9 @@ import {
 import {
   GENESIS_LOCAL_REPOSITORIES,
 } from '../runtime/genesis-local-repositories';
+import { markGalaxyArchiveDirtyForBulkConfirmation38BisB6 } from
+  '../../data/local/repository/genesis-knowledge-commits-38-bis-b6';
+import { withBulkGalaxyConfirmationSession } from './bulk-galaxy-confirmation-session';
 
 /**
  * Administrative QA code. It is intentionally not a reward/entitlement code:
@@ -54,8 +58,9 @@ import {
 export const CONFIRM_FOCUSED_GALAXY_CODE =
   'C0DE-6A1A-C0DE-F11A';
 
-const YIELD_EVERY_SECTORS =
-  16;
+/** IndexedDB bulkGet/bulkPut is bounded to keep transactions short. */
+const TARGETS_PER_BATCH = 256;
+const YIELD_EVERY_SECTORS = 16;
 
 export interface FocusedGalaxyConfirmationSectorPlan {
   readonly sectorLocator:
@@ -138,8 +143,8 @@ export class FocusedGalaxyConfirmationRuntime {
   ) {}
 
   async confirmFocusedGalaxy(
-    generationKey:
-      UniverseGenerationKey,
+    generationKey: UniverseGenerationKey,
+    reportProgress?: (completedSectors: bigint, totalSectors: bigint) => void,
   ): Promise<FocusedGalaxyConfirmationResult> {
 
     // The QA materializer supports public V2 and V3 addresses. V1 stays
@@ -195,105 +200,91 @@ export class FocusedGalaxyConfirmationRuntime {
         galaxyIndex,
       );
 
-    await this
-      .discoveryRepository
-      .setState(
-        generationKey,
-        galaxyLocator,
-        DiscoveryState.CONFIRMED,
-      );
+    reportProgress?.(0n, plan.totalSectors);
+    // BULKCONF-ARCHPERF.1: index jobs must be durable BEFORE any batch
+    // modifies discoveries. A crash/reload can then reconcile partial work.
+    // The Archive worker is paused (also across tabs with Web Locks) while
+    // science writes progress, avoiding repeated regeneration of partial data.
+    const archiveEvent = {
+      universeSeed: generationKey.universeSeed.serialize(),
+      generatorVersionCode: generationKey.generatorVersionCode,
+      galaxyIndex: galaxyIndex.toString(),
+      kind: 'GALAXY' as const,
+    };
 
-    let sectors =
-      0n;
+    return withBulkGalaxyConfirmationSession(async () => {
+      await markGalaxyArchiveDirtyForBulkConfirmation38BisB6(archiveEvent);
 
-    let systems =
-      0n;
+      let sectors = 0n;
+      let systems = 0n;
+      let galacticObjects = 0n;
+      let sinceYield = 0;
+      const batch: ProceduralLocator[] = [galaxyLocator];
 
-    let galacticObjects =
-      0n;
+      const flush = async (): Promise<void> => {
+        if (batch.length === 0) return;
+        if (this.discoveryRepository.confirmLocatorsBatch) {
+          await this.discoveryRepository.confirmLocatorsBatch(generationKey, batch);
+        } else {
+          // Alternative repositories and older test doubles retain the same
+          // safe semantics, albeit without Dexie's bulk-write fast path.
+          for (const locator of batch) {
+            const state = await this.discoveryRepository.getState(generationKey, locator);
+            if (state !== DiscoveryState.CONFIRMED) {
+              await this.discoveryRepository.setState(generationKey, locator, DiscoveryState.CONFIRMED);
+            }
+          }
+        }
+        batch.length = 0;
+      };
 
-    let sinceYield =
-      0;
-
-    for (
-      const sector
-      of plan.sectors
-    ) {
-      await this
-        .discoveryRepository
-        .setState(
-          generationKey,
+      for (const sector of plan.sectors) {
+        const locators: ProceduralLocator[] = [
           sector.sectorLocator,
-          DiscoveryState.CONFIRMED,
-        );
-
-      sectors +=
-        1n;
-
-      for (
-        const systemLocator
-        of sector.systemLocators
-      ) {
-        await this
-          .discoveryRepository
-          .setState(
-            generationKey,
-            systemLocator,
-            DiscoveryState.CONFIRMED,
-          );
-
-        systems +=
-          1n;
+          ...sector.systemLocators,
+          ...sector.galacticObjectLocators,
+        ];
+        // Even an old-sector CONFIRMED state cannot be trusted as a full
+        // checkpoint: legacy code could have been interrupted mid-sector.
+        // Reconcile every canonical child, but write only missing states.
+        for (const locator of locators) {
+          if (batch.length >= TARGETS_PER_BATCH) await flush();
+          batch.push(locator);
+        }
+        sectors += 1n;
+        systems += BigInt(sector.systemLocators.length);
+        galacticObjects += BigInt(sector.galacticObjectLocators.length);
+        sinceYield += 1;
+        if (sinceYield >= YIELD_EVERY_SECTORS) {
+          sinceYield = 0;
+          await flush();
+          reportProgress?.(sectors, plan.totalSectors);
+          await yieldToEventLoop();
+        }
       }
-
-      for (
-        const objectLocator
-        of sector.galacticObjectLocators
-      ) {
-        await this
-          .discoveryRepository
-          .setState(
-            generationKey,
-            objectLocator,
-            DiscoveryState.CONFIRMED,
-          );
-
-        galacticObjects +=
-          1n;
-      }
-
-      sinceYield +=
-        1;
+      await flush();
+      reportProgress?.(sectors, plan.totalSectors);
 
       if (
-        sinceYield >=
-        YIELD_EVERY_SECTORS
-      ) {
-        sinceYield =
-          0;
-
-        await yieldToEventLoop();
-      }
-    }
-
-    if (
       sectors !==
       plan.totalSectors
-    ) {
-      throw new RangeError(
-        `Focused-galaxy confirmation enumerated ${sectors.toString()} sectors but expected ${plan.totalSectors.toString()}.`,
-      );
-    }
+      ) {
+        throw new RangeError(
+          `Focused-galaxy confirmation enumerated ${sectors.toString()} sectors but expected ${plan.totalSectors.toString()}.`,
+        );
+      }
 
-    return {
-      kind:
-        'confirmed',
-
-      galaxyIndex,
-      sectors,
-      systems,
-      galacticObjects,
-    };
+      // A final invalidation captures the complete canonical knowledge state.
+      // No per-system Archive notification is emitted during bulk writes.
+      await markGalaxyArchiveDirtyForBulkConfirmation38BisB6(archiveEvent);
+      return {
+        kind: 'confirmed' as const,
+        galaxyIndex,
+        sectors,
+        systems,
+        galacticObjects,
+      };
+    });
   }
 }
 

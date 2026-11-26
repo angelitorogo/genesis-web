@@ -1,6 +1,7 @@
 /** 38.bis-b6 · Always-on, low-priority Archive upkeep. No navigation to
  * /archive is necessary. All source reads remain knowledge-safe. */
 import {inject,Injectable} from '@angular/core';
+import {isBulkGalaxyConfirmationActive} from '../../codes/bulk-galaxy-confirmation-session';
 import {UniverseGenerationKey} from '../../../domain/generation/universe-generation-key';
 import {GeneratorVersion} from '../../../domain/generation/generator-version';
 import {UniverseSeed} from '../../../domain/universe/universe-seed';
@@ -45,6 +46,9 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
       GeneratorVersion.fromCodeOrNull(event.generatorVersionCode)===null ||
       !/^(0|[1-9]\d*)$/.test(event.galaxyIndex))return;
     const key=this.keyFor(event.universeSeed,event.generatorVersionCode);
+    // A committed discovery invalidates a shared ARCHFAST snapshot even when
+    // the queue already has a job for this galaxy.
+    this.index.invalidateArchiveFastGalaxy(key,event.galaxyIndex);
     await this.index.store.enqueueKnowledgeChange38BisB6(event,archive38BisScope(key));
     this.schedule(1800);
   }
@@ -70,6 +74,10 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
    * reindex. Heavy catalogue queries yield between requests via their source. */
   private async tick():Promise<void>{
     if(!this.active||this.working)return;
+    if (isBulkGalaxyConfirmationActive()) {
+      this.schedule(2500);
+      return;
+    }
     this.working=true;
     let processed=false;
     try{
@@ -112,18 +120,17 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
       }
       // ensure() checks persisted galaxy discovery revision and VIDA.9 digest
       // fingerprint. It rebuilds only the affected galaxy/category, atomically.
-      await this.index.ensure(key,job.galaxyIndex,job.category);
-      // Rebuild only fields the player has actually used for this category,
-      // including used fields in other galaxies (new galaxy enrollment).
-      const fields=await this.index.store.usedSortFields38BisT3(archive38BisScope(key),job.category);
-      if(fields.length){
-        const profile=GalaxyGeneralProfileEngine.build(key,BigInt(job.galaxyIndex),state);
-        const galaxyTitle=profile.knownName??profile.designationCode;
-        for(const field of fields){
-          await this.index.ensureSort38BisT3(key,job.galaxyIndex,job.category,field,galaxyTitle);
-          await new Promise<void>(resolve=>setTimeout(resolve,0));
-        }
-      }
+      await this.index.ensure(key,job.galaxyIndex,job.category,undefined,false,true,
+        (done,total)=>this.index.store.setKnowledgeChangeProgressArchfast1(
+          job,'FRAGMENT',undefined,0,0,done,total));
+      // Existing scientific sort intents are retained; only stale fields are
+      // built. Their source rows (and any biological projection) are reused.
+      const profile=GalaxyGeneralProfileEngine.build(key,BigInt(job.galaxyIndex),state);
+      const galaxyTitle=profile.knownName??profile.designationCode;
+      await this.index.store.setKnowledgeChangeProgressArchfast1(job,'SORTS',undefined,0,0);
+      await this.index.ensureUsedSortsArchfast1(key,job.galaxyIndex,job.category,
+        galaxyTitle,(field,done,total)=>
+          this.index.store.setKnowledgeChangeProgressArchfast1(job,'SORTS',field,done,total));
       await this.index.store.finishKnowledgeChange38BisB6(job);
     }catch(error){
       await this.index.store.finishKnowledgeChange38BisB6(job,

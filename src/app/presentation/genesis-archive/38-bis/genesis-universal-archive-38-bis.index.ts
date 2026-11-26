@@ -4,6 +4,7 @@
  */
 import {inject,Injectable} from '@angular/core';
 import {DiscoveryState} from '../../../domain/discovery/discovery-state';
+import type {KnownDiscovery} from '../../../domain/discovery/known-discovery';
 import {isConfirmedScientificGalaxy38BisB7} from '../../../domain/exploration/scientific-confirmation-38-bis-b7';
 import {archiveMoonDesignation38BisA4} from './genesis-archive-moon-designation-38-bis-a4';
 import {archiveSharedFounderA6} from './genesis-universal-archive-public-labels-a6';
@@ -205,6 +206,28 @@ export class GenesisUniversalArchiveIndex38Bis {
   // Small derived read-model only: no private VIDA.9 payload is retained here.
   private readonly colonialProjectionCache=new Map<string,ReadonlyMap<UniversalArchiveIndexedCategory38Bis,UniversalArchiveRow38Bis[]>>();
 
+  /** ARCHFAST.1: a bounded, short-lived snapshot shared only by the automatic
+   * maintenance of ONE galaxy. Normal UI requests retain their independent
+   * revision checks. A new local scientific commit invalidates it immediately.
+   * The bulk-confirmation Web Lock prevents concurrent bulk writes in other tabs. */
+  private archiveFastSnapshot: {
+    readonly identity:string;
+    readonly expiresAt:number;
+    readonly known:readonly KnownDiscovery[];
+    readonly revision:string;
+    readonly biological:Map<'public'|'all',Readonly<{count:number;revision:string}>>;
+  }|null=null;
+
+  invalidateArchiveFastGalaxy(key:UniverseGenerationKey,galaxyIndex:string):void {
+    if(this.archiveFastSnapshot?.identity===JSON.stringify([archive38BisScope(key),galaxyIndex]))
+      this.archiveFastSnapshot=null;
+  }
+
+  releaseArchiveFastGalaxy(key:UniverseGenerationKey,galaxyIndex:string):void {
+    this.invalidateArchiveFastGalaxy(key,galaxyIndex);
+  }
+
+
   async knownGalaxies(key:UniverseGenerationKey):Promise<readonly KnownArchiveGalaxy38Bis[]> {
     await this.sourceDb.openDatabase();
     const seed=key.universeSeed.serialize(),version=key.generatorVersionCode;
@@ -276,7 +299,9 @@ export class GenesisUniversalArchiveIndex38Bis {
   /** Builds a persisted sort from confirmed read-models, deduplicating a UI
    * request racing against an always-on background refresh. */
   ensureSort38BisT3(key:UniverseGenerationKey,galaxyIndex:string,
-    category:UniversalArchiveIndexedCategory38Bis,field:string,galaxyTitle:string):Promise<void> {
+    category:UniversalArchiveIndexedCategory38Bis,field:string,galaxyTitle:string,
+    sharedRows?:readonly UniversalArchiveRow38Bis[],
+    preparedProject?:(rows:readonly UniversalArchiveRow38Bis[])=>Promise<readonly UniversalArchiveRow38Bis[]>):Promise<void> {
     const scope=archive38BisScope(key);
     const identity=JSON.stringify([scope,galaxyIndex,category,field]);
     const pending=this.sorting38BisT3.get(identity);
@@ -287,19 +312,56 @@ export class GenesisUniversalArchiveIndex38Bis {
         return this.enrichVisibleBiologyB1(key,rows);
       return rows;
     };
-    const task=this.store.ensureSortField(scope,category,galaxyIndex,field,project);
+    const task=this.store.ensureSortField(scope,category,galaxyIndex,field,
+      preparedProject??project,sharedRows);
     this.sorting38BisT3.set(identity,task);
     void task.finally(()=>{if(this.sorting38BisT3.get(identity)===task)this.sorting38BisT3.delete(identity);})
       .catch(()=>undefined);
     return task;
   }
 
+  /** ARCHFAST.1: during a consolidated galactic update, read the published
+   * fragment ONCE for all used sort columns; biological projection is likewise
+   * computed once, without changing the independently committed column format. */
+  async ensureUsedSortsArchfast1(key:UniverseGenerationKey,galaxyIndex:string,
+    category:UniversalArchiveIndexedCategory38Bis,galaxyTitle:string,
+    onField?:(field:string,done:number,total:number)=>Promise<void>|void):Promise<void> {
+    const scope=archive38BisScope(key);
+    const fields=await this.store.usedSortFields38BisT3(scope,category);
+    if(fields.length===0)return;
+    const outdated=await this.store.outdatedSortFieldsArchfast1(scope,category,galaxyIndex,fields);
+    if(outdated.length===0)return;
+    const sourceRows=await this.store.sortSourceRowsArchfast1(scope,category,galaxyIndex);
+    let biologyRows:Promise<readonly UniversalArchiveRow38Bis[]>|null=null;
+    let galaxyRows:readonly UniversalArchiveRow38Bis[]|null=null;
+    for(let i=0;i<outdated.length;i++){
+      const field=outdated[i]!;
+      await onField?.(field,i,outdated.length);
+      const project=async():Promise<readonly UniversalArchiveRow38Bis[]>=>{
+        if(field==='galaxy'){
+          galaxyRows??=sourceRows.map(row=>({...row,cells:{...row.cells,galaxy:galaxyTitle}}));
+          return galaxyRows;
+        }
+        if(['life','colonies','civilization'].includes(field)){
+          biologyRows??=this.enrichVisibleBiologyB1(key,sourceRows);
+          return biologyRows;
+        }
+        return sourceRows;
+      };
+      await this.ensureSort38BisT3(key,galaxyIndex,category,field,galaxyTitle,
+        sourceRows,project);
+      // Yield between independent transactions; never freeze the 3D scene.
+      if(i%3===2)await new Promise<void>(resolve=>setTimeout(resolve,0));
+    }
+  }
+
   ensure(key:UniverseGenerationKey,galaxyIndex:string,category:UniversalArchiveIndexedCategory38Bis,
-    onProgress?:(info:string)=>void,force=false):Promise<UniversalArchiveSection38Bis> {
+    onProgress?:(info:string)=>void,force=false,consolidate=false,
+    onIndexedPages?:(completed:number,total:number)=>Promise<void>|void):Promise<UniversalArchiveSection38Bis> {
     const id=JSON.stringify([archive38BisScope(key),galaxyIndex,category]);
     const existing=this.pending.get(id);
     if(existing)return existing;
-    const promise=this.ensureFresh(key,galaxyIndex,category,onProgress,force).catch(async error=>{
+    const promise=this.ensureFresh(key,galaxyIndex,category,onProgress,force,consolidate,onIndexedPages).catch(async error=>{
       // Store the failed attempt independently of the last fully published section.
       try{await this.store.checkpoint(archive38BisScope(key),category,galaxyIndex,'base','ERROR');}
       catch{ /* A checkpoint must never replace the original indexing error. */ }
@@ -311,15 +373,24 @@ export class GenesisUniversalArchiveIndex38Bis {
   }
 
   private async ensureFresh(key:UniverseGenerationKey,galaxyIndex:string,
-    category:UniversalArchiveIndexedCategory38Bis,onProgress?:(info:string)=>void,force=false):Promise<UniversalArchiveSection38Bis> {
+    category:UniversalArchiveIndexedCategory38Bis,onProgress?:(info:string)=>void,force=false,
+    consolidate=false,
+    onIndexedPages?:(completed:number,total:number)=>Promise<void>|void):Promise<UniversalArchiveSection38Bis> {
     const galaxy=BigInt(galaxyIndex),scope=archive38BisScope(key);
     const repository=this.repository.discoveryRepository;
     const state=await repository.getState(key,new GalaxyLocator(galaxy));
     if(!isConfirmedScientificGalaxy38BisB7(state))throw new Error('38.bis-b7: solo se indexan galaxias confirmadas');
-    const known=repository.getKnownDiscoveriesInGalaxy
+    const identity=JSON.stringify([scope,galaxyIndex]);
+    const savedSnapshot=consolidate && this.archiveFastSnapshot?.identity===identity &&
+      this.archiveFastSnapshot.expiresAt>Date.now()?this.archiveFastSnapshot:null;
+    const known=savedSnapshot?.known ?? (repository.getKnownDiscoveriesInGalaxy
       ?await repository.getKnownDiscoveriesInGalaxy(key,galaxy)
-      :(await repository.getKnownDiscoveries(key)).filter(d=>d.locator.galaxyIndex===galaxy);
-    const originalRevision=galaxyKnowledgeRevision(galaxy,known);
+      :(await repository.getKnownDiscoveries(key)).filter(d=>d.locator.galaxyIndex===galaxy));
+    const originalRevision=savedSnapshot?.revision??galaxyKnowledgeRevision(galaxy,known);
+    if(consolidate&&!savedSnapshot){
+      this.archiveFastSnapshot={identity,expiresAt:Date.now()+90_000,known,
+        revision:originalRevision,biological:new Map()};
+    }
     // T3: los criterios booleanos de planeta/luna dependen de VIDA.9 confirmado.
     const biological=category==='planets'||category==='moons'||
       category==='civilizations'||COLONY_CATEGORIES.has(category);
@@ -327,7 +398,12 @@ export class GenesisUniversalArchiveIndex38Bis {
     // Nunca incorporar en la huella pública registros de sistemas sin confirmar.
     const publicBodyCategory=category==='planets'||category==='moons';
     const confirmedBiologicalSystems=publicBodyCategory?confirmedSystems38Bis(known):null;
-    if(biological && key.generatorVersionCode===3){
+    const biologyKey: 'public'|'all'=publicBodyCategory?'public':'all';
+    const previousFingerprint=consolidate && this.archiveFastSnapshot?.identity===identity
+      ?this.archiveFastSnapshot.biological.get(biologyKey):undefined;
+    if(previousFingerprint && biological && key.generatorVersionCode===3){
+      vida9Count=previousFingerprint.count;vida9Revision=previousFingerprint.revision;
+    }else if(biological && key.generatorVersionCode===3){
       await this.sourceDb.openDatabase();
       let hashA=2166136261,hashB=2246822519;
       await this.sourceDb.privateBiologicalRecordsVIDA9
@@ -347,6 +423,8 @@ export class GenesisUniversalArchiveIndex38Bis {
           }
         });
       vida9Revision=(hashA>>>0).toString(16)+'-'+(hashB>>>0).toString(16);
+      if(consolidate && this.archiveFastSnapshot?.identity===identity)
+        this.archiveFastSnapshot.biological.set(biologyKey,{count:vida9Count,revision:vida9Revision});
     }
     const revision=[GENESIS_UNIVERSAL_ARCHIVE_REVISION_38BIS,GALAXY_SCIENTIFIC_MODEL_VERSION,
       originalRevision,biological?vida9Count:'-',biological?vida9Revision:'-',
@@ -407,6 +485,8 @@ export class GenesisUniversalArchiveIndex38Bis {
         if(result.page.knowledgeComplete===false)complete=false;
         if(totalPages>1&&result.page.items.length===0)throw new Error('38.bis: paginación incompleta');
         rows.push(...result.page.items.map(row=>wrapRow(scope,category,galaxyIndex,row)));
+        if(onIndexedPages && (page===totalPages||page%12===0))
+          await onIndexedPages(page,totalPages);
         if(page%12===0){onProgress?.(`${category}: galaxia ${galaxyIndex}, página ${page}/${totalPages}`);
           await yieldArchiveUi38Bis();}
       }

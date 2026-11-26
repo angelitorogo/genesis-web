@@ -12,6 +12,7 @@ import {
 } from '../../domain/discovery/discovery-state';
 
 import { type KnownDiscovery } from '../../domain/discovery/known-discovery';
+import { isGalacticNucleusLocator } from '../../domain/universe/galactic-center';
 
 import {
   type DiscoveredToVisitedEntryKindValue,
@@ -30,6 +31,7 @@ import {
 import {
   ExtremeType,
   extremeTypeDefinition,
+  type ExtremeType as ExtremeTypeValue,
 } from '../../domain/galactic-object/extreme-object-type';
 
 import {
@@ -534,6 +536,21 @@ export class ArchiveDiscoveryDetailFacade {
     ProceduralLocator | null =
     null;
 
+  /** The transaction has committed, even if a subsequent IndexedDB read lags. */
+  private lastCommittedGalacticObjectState:
+    DiscoveryStateValue | null = null;
+
+  /** Discard late resolutions from a route or operation that was superseded. */
+  private resolutionVersion = 0;
+
+  private readonly refreshRequiredSignal = signal(false);
+  readonly refreshRequired = this.refreshRequiredSignal.asReadonly();
+
+  /** Auxiliary nuclear studies never determine the canonical discovery stage. */
+  private readonly nucleusSupplementaryWarningSignal = signal<string | null>(null);
+  readonly nucleusSupplementaryWarning =
+    this.nucleusSupplementaryWarningSignal.asReadonly();
+
   private readonly actionPendingSignal =
     signal(
       false,
@@ -677,6 +694,10 @@ export class ArchiveDiscoveryDetailFacade {
       ArchiveDiscoveryDetailRequest,
   ): Promise<void> {
 
+    this.lastCommittedGalacticObjectState = null;
+    this.refreshRequiredSignal.set(false);
+    this.nucleusSupplementaryWarningSignal.set(null);
+
     this
       .actionFeedbackSignal
       .set(
@@ -735,6 +756,24 @@ export class ArchiveDiscoveryDetailFacade {
       .resolveDetails(
         request,
       );
+  }
+
+  /** Refresh only the read model; never repeat an already committed action. */
+  async retryScientificCardRefresh(): Promise<void> {
+    const request = this.currentRequest;
+    if (request === null || this.actionPending()) return;
+    this.actionPendingSignal.set(true);
+    this.actionErrorSignal.set(null);
+    try {
+      const refreshed = await this.resolveDetails(
+        request, null, true, this.lastCommittedGalacticObjectState,
+      );
+      if (refreshed) {
+        this.actionFeedbackSignal.set('Ficha científica sincronizada con el conocimiento persistido.');
+      }
+    } finally {
+      this.actionPendingSignal.set(false);
+    }
   }
 
   startEventHorizonApproach():
@@ -934,7 +973,7 @@ export class ArchiveDiscoveryDetailFacade {
 
       await this
         .resolveDetails(
-          request,
+          request, null, true, this.lastCommittedGalacticObjectState,
         );
     } catch {
       // 28.2 remains a usable simulation even if local persistence fails.
@@ -987,7 +1026,7 @@ export class ArchiveDiscoveryDetailFacade {
     }
 
     if (
-      this.actionPending()
+      this.actionPending() || this.refreshRequired()
     ) {
       return;
     }
@@ -1005,6 +1044,27 @@ export class ArchiveDiscoveryDetailFacade {
       );
 
     try {
+      // LIVE-SCI.2: the Archive card is a snapshot. Another observation or a
+      // delayed read may have advanced the persisted state since it was built.
+      // Never submit an old action or claim a second PD reward against it.
+      const persistedBeforeAction = await this.repositories.discoveryRepository
+        .getState(generationKey, locator);
+      if (this.currentRequest === null ||
+          JSON.stringify(this.currentRequest) !== JSON.stringify(request)) return;
+      if (persistedBeforeAction.code !== model.discoveryState.code) {
+        const synchronized = await this.resolveDetails(
+          request, null, true, this.lastCommittedGalacticObjectState,
+        );
+        if (synchronized) {
+          this.actionFeedbackSignal.set(
+            'El conocimiento del objeto ya había cambiado. Ficha sincronizada sin repetir la observación ni conceder PD.',
+          );
+        } else {
+          this.refreshRequiredSignal.set(true);
+        }
+        return;
+      }
+
       const level =
         ObservationInstrumentLevel
           .fromRank(
@@ -1032,31 +1092,91 @@ export class ArchiveDiscoveryDetailFacade {
               .actionType,
           );
 
-      // PERF-GO1: retain the mounted scientific card while the new persisted
-      // knowledge level is being resolved. Only route navigation shows loading.
-      await this
-        .resolveDetails(
-          request,
-          null,
-          true,
-        );
+      // Navigation can happen while IndexedDB is committing. Do not publish
+      // the previous object's result in another object's Archive detail.
+      if (this.currentRequest === null ||
+          JSON.stringify(this.currentRequest) !== JSON.stringify(request)) return;
 
-      this
-        .actionFeedbackSignal
-        .set(
-          `${action.label} completado · +${committed.actionResult.awardedDiscoveryPoints} PD · ${stateLabel(committed.actionResult.newDiscoveryState)}.`,
+      // The action is already atomic and persisted. A separate readback may
+      // momentarily be stale; never restore the previous scientific stage or
+      // leave the old action executable after the transaction succeeded.
+      this.lastCommittedGalacticObjectState = committed.actionResult.newDiscoveryState;
+      let refreshed = await this.resolveDetails(
+        request, null, true, this.lastCommittedGalacticObjectState,
+      );
+      // One bounded read-only retry covers transient cross-connection reads.
+      // No scientific operation or PD write is repeated.
+      if (!refreshed && this.currentRequest !== null &&
+          JSON.stringify(this.currentRequest) === JSON.stringify(request)) {
+        refreshed = await this.resolveDetails(
+          request, null, true, this.lastCommittedGalacticObjectState,
         );
+      }
+
+      this.actionFeedbackSignal.set(
+        refreshed
+          ? `${action.label} completado · +${committed.actionResult.awardedDiscoveryPoints} PD · ${stateLabel(committed.actionResult.newDiscoveryState)}.`
+          : `${action.label} guardada · +${committed.actionResult.awardedDiscoveryPoints} PD. La ficha necesita sincronizarse; no vuelvas a ejecutar la acción.`,
+      );
     } catch (
       error
     ) {
-      this
-        .actionErrorSignal
-        .set(
-          error instanceof
-            Error
-            ? error.message
-            : 'No se pudo completar la acción científica.',
+      // A late failure from the previous galaxy cannot become the new
+      // nucleus card's error after Angular has reused the Archive route.
+      if (isGalacticNucleusLocator(locator) &&
+          (this.currentRequest === null ||
+            JSON.stringify(this.currentRequest) !== JSON.stringify(request))) {
+        return;
+      }
+      // The transaction reads DiscoveryState again atomically. If that
+      // authoritative read sees a newer stage, the old button must disappear
+      // immediately rather than exposing the internal isStateEligible error.
+      // Read-only recovery: never re-run commitAction or award PD twice.
+      const isStateConflict = error instanceof RangeError &&
+        error.message.includes('isStateEligible=false');
+      let persistedAfterFailure: DiscoveryStateValue | null = null;
+      try {
+        if (this.currentRequest !== null &&
+            JSON.stringify(this.currentRequest) === JSON.stringify(request)) {
+          persistedAfterFailure = await this.repositories.discoveryRepository
+            .getState(generationKey, locator);
+        }
+      } catch {
+        // The original error and the retry control remain available.
+      }
+      const differsFromCard = persistedAfterFailure !== null &&
+        persistedAfterFailure.code !== model.discoveryState.code;
+      if ((isStateConflict || differsFromCard) &&
+          this.currentRequest !== null &&
+          JSON.stringify(this.currentRequest) === JSON.stringify(request)) {
+        let synchronized = await this.resolveDetails(
+          request, null, true, this.lastCommittedGalacticObjectState,
         );
+        if (synchronized &&
+            this.model()?.discoveryState.code === model.discoveryState.code) {
+          synchronized = await this.resolveDetails(
+            request, null, true, this.lastCommittedGalacticObjectState,
+          );
+        }
+        if (synchronized &&
+            this.model()?.discoveryState.code !== model.discoveryState.code) {
+          this.actionFeedbackSignal.set(
+            'El conocimiento persistido ya había avanzado. Ficha sincronizada; no se ha repetido la observación ni concedido PD.',
+          );
+          this.actionErrorSignal.set(null);
+        } else {
+          this.refreshRequiredSignal.set(true);
+          this.actionErrorSignal.set(
+            'El estado científico guardado no coincide con la ficha. Pulsa «Actualizar ficha»; no repitas la observación.',
+          );
+        }
+        return;
+      }
+      this.actionErrorSignal.set(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo completar la acción científica.',
+      );
     } finally {
       this
         .actionPendingSignal
@@ -1108,7 +1228,7 @@ export class ArchiveDiscoveryDetailFacade {
         locator,
       );
 
-      await this.resolveDetails(request);
+      await this.resolveDetails(request, null, true, this.lastCommittedGalacticObjectState);
 
       this.actionFeedbackSignal.set(
         'Sincronización completada · período de pulsos medido y evidencia temporal persistida · sin coste ni recompensa directa de PD.',
@@ -1168,7 +1288,7 @@ export class ArchiveDiscoveryDetailFacade {
         locator,
       );
 
-      await this.resolveDetails(request);
+      await this.resolveDetails(request, null, true, this.lastCommittedGalacticObjectState);
 
       this.magnetarActivityFeedbackSignal.set(
         'Monitorización completada · campo dipolar inferido y actividad de estallidos persistida · sin coste ni recompensa directa de PD.',
@@ -1228,7 +1348,7 @@ export class ArchiveDiscoveryDetailFacade {
         locator,
       );
 
-      await this.resolveDetails(request);
+      await this.resolveDetails(request, null, true, this.lastCommittedGalacticObjectState);
 
       const detected =
         this.model()
@@ -1303,7 +1423,7 @@ export class ArchiveDiscoveryDetailFacade {
         locator,
       );
 
-      await this.resolveDetails(request);
+      await this.resolveDetails(request, null, true, this.lastCommittedGalacticObjectState);
 
       const detected =
         this.model()
@@ -1433,7 +1553,7 @@ export class ArchiveDiscoveryDetailFacade {
 
       await this
         .resolveDetails(
-          request,
+          request, null, true, this.lastCommittedGalacticObjectState,
         );
 
       const rewardSuffix =
@@ -1621,8 +1741,7 @@ export class ArchiveDiscoveryDetailFacade {
 
       await this
         .resolveDetails(
-          request,
-          progressionSnapshot,
+          request, progressionSnapshot, true,
         );
 
       const rewardSuffix =
@@ -1671,29 +1790,26 @@ export class ArchiveDiscoveryDetailFacade {
       null,
 
     preserveCurrentContent = false,
-  ): Promise<void> {
+    committedGalacticObjectState: DiscoveryStateValue | null = null,
+  ): Promise<boolean> {
 
-    // PERF-GO1: prevent tearing down costly procedural WebGL renderers between
-    // scientific stages. Initial navigation still exposes the loading state.
-    if (!preserveCurrentContent || this.state().kind !== 'content') {
-      this
-        .stateSignal
-        .set({
-          kind:
-            'loading',
-        });
+    // Retain the same renderer/canvas until the next fully assembled model
+    // can be published atomically. Only route navigation enters 'loading'.
+    // A late action belonging to a previous route may never overwrite the
+    // current object's scientific card (Angular can reuse the same facade).
+    if (preserveCurrentContent && this.currentRequest !== null &&
+        JSON.stringify(this.currentRequest) !== JSON.stringify(request)) {
+      return false;
+    }
+    const version = ++this.resolutionVersion;
+    const keepContent = preserveCurrentContent && this.state().kind === 'content';
+    if (!keepContent) {
+      this.stateSignal.set({ kind: 'loading' });
+      this.currentGenerationKey = null;
+      this.currentLocator = null;
     }
 
-    this.currentRequest =
-      Object.freeze({
-        ...request,
-      });
-
-    this.currentGenerationKey =
-      null;
-
-    this.currentLocator =
-      null;
+    this.currentRequest = Object.freeze({ ...request });
 
     try {
       const parsed =
@@ -1714,18 +1830,12 @@ export class ArchiveDiscoveryDetailFacade {
           universes,
         );
 
-      if (
-        generationKey ===
-          null
-      ) {
-        this
-          .stateSignal
-          .set({
-            kind:
-              'not-found',
-          });
-
-        return;
+      if (generationKey === null) {
+        if (version !== this.resolutionVersion) return false;
+        if (!keepContent) this.stateSignal.set({ kind: 'not-found' });
+        else this.actionErrorSignal.set('No se pudo sincronizar el universo de la ficha. Reintenta actualizar sin repetir la observación.');
+        if (keepContent) this.refreshRequiredSignal.set(true);
+        return false;
       }
 
       const locator =
@@ -1742,19 +1852,14 @@ export class ArchiveDiscoveryDetailFacade {
             locator,
           );
 
-      if (
-        !DiscoveryState.isKnown(
-          persistedDiscoveryState,
-        )
-      ) {
-        this
-          .stateSignal
-          .set({
-            kind:
-              'not-found',
-          });
-
-        return;
+      if (!DiscoveryState.isKnown(persistedDiscoveryState) &&
+          !(locator instanceof GalacticObjectLocator && committedGalacticObjectState !== null &&
+            DiscoveryState.isKnown(committedGalacticObjectState))) {
+        if (version !== this.resolutionVersion) return false;
+        if (!keepContent) this.stateSignal.set({ kind: 'not-found' });
+        else this.actionErrorSignal.set('El registro recién actualizado no está disponible para lectura. Reintenta sincronizar la ficha.');
+        if (keepContent) this.refreshRequiredSignal.set(true);
+        return false;
       }
 
       const shouldLoadStellarSystemProgression =
@@ -1799,10 +1904,18 @@ export class ArchiveDiscoveryDetailFacade {
               ).snapshot
           : null;
 
+      // A successfully committed scientific action is authoritative for the
+      // current object. Never demote its UI because a separate readback or a
+      // test double still exposes the preceding discovery level.
+      const synchronizedObjectState =
+        locator instanceof GalacticObjectLocator &&
+        committedGalacticObjectState !== null &&
+        committedGalacticObjectState.code > persistedDiscoveryState.code
+          ? committedGalacticObjectState
+          : persistedDiscoveryState;
+
       const discoveryState =
-        stellarSystemProgression
-          ?.discoveryState ??
-        persistedDiscoveryState;
+        stellarSystemProgression?.discoveryState ?? synchronizedObjectState;
 
       const stellarSystemScientificCampaign =
         stellarSystemProgression ===
@@ -1897,64 +2010,58 @@ export class ArchiveDiscoveryDetailFacade {
               )
           : null;
 
-      const relativisticJetAnalysis =
+      // NUCLEUS-SYNC.1: publish the nuclear scientific stage and its 3D card
+      // BEFORE querying optional 28.5/28.6/28.7 studies. A rejected or slow
+      // complementary operation must never roll back an already committed
+      // DETECTED -> DISCOVERED -> CATALOGUED -> CONFIRMED transition.
+      const isConfirmedActiveNucleus =
         locator instanceof GalacticObjectLocator &&
+        isGalacticNucleusLocator(locator) &&
         galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
-        (
-          galacticObjectCard.extremeType === ExtremeType.MICROQUASAR ||
-          galacticObjectCard.scientificSubject ===
-            GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
-        )
-          ? await this
-              .relativisticJetAnalysisObservationRuntime
-              .inspect(
-                generationKey,
-                locator,
-              )
+        galacticObjectCard.scientificSubject ===
+          GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS;
+
+      const relativisticJetAnalysis = isConfirmedActiveNucleus
+        ? null
+        : locator instanceof GalacticObjectLocator &&
+            galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
+            galacticObjectCard.extremeType === ExtremeType.MICROQUASAR
+          ? await this.relativisticJetAnalysisObservationRuntime.inspect(
+              generationKey, locator,
+            )
           : null;
 
-      const gravitationalLensingReconstruction =
-        locator instanceof GalacticObjectLocator &&
-        galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
-        (
-          galacticObjectCard.extremeType ===
-            ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE ||
-          galacticObjectCard.scientificSubject ===
-            GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
-        )
-          ? await this
-              .gravitationalLensingReconstructionObservationRuntime
-              .inspect(
-                generationKey,
-                locator,
-              )
+      const gravitationalLensingReconstruction = isConfirmedActiveNucleus
+        ? null
+        : locator instanceof GalacticObjectLocator &&
+            galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
+            galacticObjectCard.extremeType === ExtremeType.INTERMEDIATE_MASS_BLACK_HOLE
+          ? await this.gravitationalLensingReconstructionObservationRuntime.inspect(
+              generationKey, locator,
+            )
           : null;
-
 
       const completionExtremeType =
         galacticObjectCard?.extremeType ??
-        (
-          galacticObjectCard?.scientificSubject ===
-            GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
-            ? galacticObjectCard.render.kind ===
-                ArchiveGalacticObjectRenderKind.QUASAR_NUCLEUS
-              ? ExtremeType.QUASAR
-              : ExtremeType.AGN
-            : null
-        );
+        (galacticObjectCard?.scientificSubject ===
+          GalacticObjectScientificSubject.ACTIVE_GALACTIC_NUCLEUS
+          ? galacticObjectCard.render.kind ===
+              ArchiveGalacticObjectRenderKind.QUASAR_NUCLEUS
+            ? ExtremeType.QUASAR
+            : ExtremeType.AGN
+          : null);
 
-      const extremeScientificCompletion =
-        locator instanceof GalacticObjectLocator &&
-        galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
-        completionExtremeType !== null
-          ? await this
-              .extremeScientificCompletionRuntime
-              .settle(
-                generationKey,
-                locator,
-                completionExtremeType,
-                galacticObjectCard.scientificSubject,
-              )
+      const extremeScientificCompletion = isConfirmedActiveNucleus
+        ? null
+        : locator instanceof GalacticObjectLocator &&
+            galacticObjectCard?.knowledgeLevel === 'CONFIRMED' &&
+            completionExtremeType !== null
+          ? await this.extremeScientificCompletionRuntime.settle(
+              generationKey,
+              locator,
+              completionExtremeType,
+              galacticObjectCard.scientificSubject,
+            )
           : null;
 
       const extremeScientificEpistemicBoundary =
@@ -1990,6 +2097,7 @@ export class ArchiveDiscoveryDetailFacade {
             )
           : null;
 
+      if (version !== this.resolutionVersion) return false;
       this.currentGenerationKey =
         generationKey;
 
@@ -2104,22 +2212,86 @@ export class ArchiveDiscoveryDetailFacade {
               protoplanetaryDiskAnalysis,
             }),
         });
-    } catch (
-      error
-    ) {
-      this
-        .stateSignal
-        .set({
-          kind:
-            'error',
-
-          message:
-            error instanceof
-              Error
-              ? error.message
-              : 'No se pudo resolver la ficha del descubrimiento.',
-        });
+      if (this.refreshRequiredSignal()) this.actionErrorSignal.set(null);
+      this.refreshRequiredSignal.set(false);
+      if (isConfirmedActiveNucleus &&
+          locator instanceof GalacticObjectLocator &&
+          galacticObjectCard !== null &&
+          completionExtremeType !== null) {
+        this.nucleusSupplementaryWarningSignal.set(null);
+        void this.resolveNucleusSupplementaryScience(
+          generationKey, locator, completionExtremeType,
+          galacticObjectCard.scientificSubject, version,
+        );
+      }
+      return true;
+    } catch (error) {
+      if (version !== this.resolutionVersion) return false;
+      const message = error instanceof Error
+        ? error.message
+        : 'No se pudo resolver la ficha del descubrimiento.';
+      if (keepContent) {
+        // Persisted science is not rolled back by a failed presentation read.
+        // Do not destroy a mounted 3D scene or silently re-enable the old action.
+        this.refreshRequiredSignal.set(true);
+        this.actionErrorSignal.set(`La observación está guardada, pero la ficha no se ha actualizado: ${message}`);
+      } else {
+        this.stateSignal.set({ kind: 'error', message });
+      }
+      return false;
     }
+  }
+
+  /**
+   * Post-confirmation studies are independent of the primary nucleus card.
+   * The version guard also prevents a late result from a former galaxy from
+   * replacing the card after an Angular route reuse.
+   * Completion settles rewards atomically in its own runtime; never duplicate
+   * that transaction when a presentation read fails.
+   */
+  private async resolveNucleusSupplementaryScience(
+    generationKey: UniverseGenerationKey,
+    locator: GalacticObjectLocator,
+    extremeType: ExtremeTypeValue,
+    scientificSubject: GalacticObjectScientificSubject | null,
+    version: number,
+  ): Promise<void> {
+    const [jet, lensing, completion] = await Promise.allSettled([
+      Promise.resolve().then(() =>
+        this.relativisticJetAnalysisObservationRuntime.inspect(generationKey, locator)),
+      Promise.resolve().then(() =>
+        this.gravitationalLensingReconstructionObservationRuntime.inspect(generationKey, locator)),
+      Promise.resolve().then(() =>
+        this.extremeScientificCompletionRuntime.settle(
+          generationKey, locator, extremeType, scientificSubject)),
+    ]);
+
+    if (version !== this.resolutionVersion) return;
+    const current = this.stateSignal();
+    if (current.kind !== 'content') return;
+
+    const issues = [
+      jet.status === 'rejected' ? 'jets relativistas' : null,
+      lensing.status === 'rejected' ? 'lente gravitacional' : null,
+      completion.status === 'rejected' ? 'expediente científico' : null,
+    ].filter((item): item is string => item !== null);
+
+    this.stateSignal.set({
+      kind: 'content',
+      model: Object.freeze({
+        ...current.model,
+        relativisticJetAnalysis: jet.status === 'fulfilled' ? jet.value : null,
+        gravitationalLensingReconstruction:
+          lensing.status === 'fulfilled' ? lensing.value : null,
+        extremeScientificCompletion:
+          completion.status === 'fulfilled' ? completion.value : null,
+      }),
+    });
+    this.nucleusSupplementaryWarningSignal.set(
+      issues.length > 0
+        ? `Los estudios complementarios de ${issues.join(', ')} no se han podido actualizar. La confirmación científica se conserva; puedes reintentar sin repetir la observación.`
+        : null,
+    );
   }
 
   private async buildScientificActionModel(

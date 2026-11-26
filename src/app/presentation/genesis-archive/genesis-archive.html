@@ -48,6 +48,35 @@
             Los catálogos y las ordenaciones utilizadas se actualizan por eventos de conocimiento confirmado.
             Entrar al Archivo reutiliza los índices persistidos sin revisar todas las galaxias.
             Las actualizaciones interrumpidas se reanudan desde la cola persistente.</p>
+          @if (facade.updateJobsArchfast1().length > 0) {
+            <div class="archive-maintenance" data-testid="archive-maintenance-detail">
+              <strong>Actualizaciones por galaxia, categoría y ordenación</strong>
+              <p class="archive-coverage">La cola se conserva tras recargar. «En ejecución» identifica el trabajo
+                actual; las ordenaciones completadas se publican individualmente y no se repiten si su revisión sigue vigente.</p>
+              @for (job of facade.updateJobsArchfast1(); track job.id) {
+                <div class="archive-maintenance__job" [attr.data-status]="job.status"
+                  [attr.data-galaxy]="job.galaxyIndex" [attr.data-category]="job.category">
+                  <strong>{{job.galaxyTitle}} · {{job.categoryTitle}}</strong>
+                  <span>{{job.status === 'PENDING' ? 'Pendiente' :
+                    job.status === 'RUNNING' ? 'En ejecución' : 'Error'}}</span>
+                  @if (job.status === 'RUNNING') {
+                    <span>{{job.phase === 'SORTS' ? 'Ordenaciones' : 'Catálogo científico'}}
+                      @if (job.phase === 'FRAGMENT' && job.totalPages) {
+                        · Página {{job.completedPages ?? 0}} / {{job.totalPages}}
+                      }
+                      @if (job.phase === 'SORTS' && job.totalSorts) {
+                        · {{job.completedSorts ?? 0}} / {{job.totalSorts}}
+                        @if (job.currentField) { · Campo: {{job.fieldTitle}} }
+                      }
+                    </span>
+                  }
+                  @if (job.status === 'ERROR') {
+                    <span>Intentos: {{job.attempts}} · {{job.error ?? 'Error sin detalle'}}</span>
+                  }
+                </div>
+              }
+            </div>
+          }
           <div class="archive-index-checkpoints__categories" data-testid="archive-index-progress-categories">
             @for (part of facade.indexProgress(); track part.category) {
               <div class="archive-index-checkpoints__category">

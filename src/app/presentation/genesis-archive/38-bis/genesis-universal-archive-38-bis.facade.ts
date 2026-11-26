@@ -1,5 +1,5 @@
 /** 38.bis · Fast global archive: compact dashboard + lazy indexed lists. */
-import {computed,inject,Injectable,signal} from '@angular/core';
+import {computed,DestroyRef,inject,Injectable,signal} from '@angular/core';
 import type {UniverseGenerationKey} from '../../../domain/generation/universe-generation-key';
 import {GENESIS_LOCAL_REPOSITORIES} from '../../runtime/genesis-local-repositories';
 import {UniverseSeedFacade} from '../../universe/universe-seed.facade';
@@ -14,6 +14,8 @@ import {archiveProgressOverview38BisB4,archiveProgressDetails38BisB4,
 import {combineArchiveColonies38Bis,diagnoseArchiveCivilizationCoverage38Bis} from './genesis-universal-archive-38-bis-colonization-stats';
 import {archiveIndexPlan38BisT2,archiveIndexTaskKey38BisT2} from './genesis-universal-archive-index-plan-38bis-t2';
 import {archiveVisibleFragmentChanged38BisT3b} from './genesis-universal-archive-t3b-update-policy';
+import type {ArchiveDirtyJob38BisB6} from './genesis-universal-archive-dirty-38-bis-b6';
+import {subscribeGenesisKnowledgeCommits38BisB6} from '../../../data/local/repository/genesis-knowledge-commits-38-bis-b6';
 import {type UniversalArchivePage38Bis,type UniversalArchiveCategory38Bis,
   type UniversalArchiveIndexedCategory38Bis,type UniversalArchiveSection38Bis,
   type UniversalArchivePageSize38Bis,universalArchiveCategory38Bis,
@@ -35,6 +37,7 @@ export interface ArchiveCategoryCount38Bis {readonly count:number|null;readonly 
 @Injectable({providedIn:'root'})
 export class GenesisUniversalArchiveFacade38Bis {
   private readonly repositories=inject(GENESIS_LOCAL_REPOSITORIES);
+  private readonly destroyRef=inject(DestroyRef);
   private readonly seed=inject(UniverseSeedFacade);
   private readonly index=inject(GenesisUniversalArchiveIndex38Bis);
   private readonly stateSignal=signal<UniversalArchiveState38Bis>('loading');
@@ -54,6 +57,7 @@ export class GenesisUniversalArchiveFacade38Bis {
   private readonly progressSignal=signal('');
   private readonly progressSnapshotSignal=signal<ArchiveProgressSnapshot38BisB4>(EMPTY_ARCHIVE_PROGRESS_38BIS_B4);
   private readonly dirtyJobCountSignal38BisT3=signal(0);
+  private readonly updateJobsSignalArchfast1=signal<readonly ArchiveDirtyJob38BisB6[]>([]);
   /** Comprobaciones completadas en esta apertura; no deben confundirse con índices persistidos. */
   private readonly checkedCatalogSignal=signal<ReadonlySet<string>>(new Set<string>());
   private readonly activeProgressSignal=signal<ArchiveProgressActive38BisB4|null>(null);
@@ -73,6 +77,24 @@ export class GenesisUniversalArchiveFacade38Bis {
   private progressRefreshSequence=0;
   private pendingRefreshTimer38BisT3:ReturnType<typeof setTimeout>|null=null;
 
+  constructor(){
+    // ARCHFAST.1: a new commit arriving WHILE the Archive is open must become
+    // visible even if it was completely idle when the page was first loaded.
+    const stop=subscribeGenesisKnowledgeCommits38BisB6(event=>{
+      const key=this.generationKey;
+      if(!key||this.stateSignal()!=='ready'||
+        key.universeSeed.serialize()!==event.universeSeed||
+        key.generatorVersionCode!==event.generatorVersionCode)return;
+      const scope=this.scopeSignal();
+      if(scope)this.schedulePendingRefresh38BisT3(key,scope,this.loadSequence);
+    });
+    this.destroyRef.onDestroy(()=>{
+      stop();
+      if(this.pendingRefreshTimer38BisT3!==null)clearTimeout(this.pendingRefreshTimer38BisT3);
+    });
+  }
+
+
   readonly state=this.stateSignal.asReadonly();
   readonly error=this.errorSignal.asReadonly();
   readonly universes=this.optionsSignal.asReadonly();
@@ -89,6 +111,20 @@ export class GenesisUniversalArchiveFacade38Bis {
       .map(c=>c.id as UniversalArchiveIndexedCategory38Bis),this.progressSnapshotSignal(),
       this.activeProgressSignal(),this.checkedCatalogSignal()));
   readonly dirtyJobCount38BisT3=this.dirtyJobCountSignal38BisT3.asReadonly();
+  /** The persisted queue is the source of truth for each active maintenance
+   * task. No inferred percentages for procedural generation are displayed. */
+  readonly updateJobsArchfast1=computed(()=>{
+    const names=new Map(this.galaxies().map(g=>[g.index,g.title]));
+    const categories=new Map<UniversalArchiveCategory38Bis,string>(
+      UNIVERSAL_ARCHIVE_CATEGORIES_38BIS.map(c=>[c.id,c.label]));
+    return this.updateJobsSignalArchfast1().map(job=>({
+      ...job,galaxyTitle:names.get(job.galaxyIndex)??`Galaxia ${job.galaxyIndex}`,
+      categoryTitle:categories.get(job.category)??job.category,
+      fieldTitle:job.currentField?
+        archiveSortOption38BisB3(job.category,job.currentField).label:null,
+    })).sort((a,b)=>a.galaxyTitle.localeCompare(b.galaxyTitle,'es')||
+      a.categoryTitle.localeCompare(b.categoryTitle,'es'));
+  });
   readonly sortIndexStats38BisT3=computed(()=>{
     const snapshot=this.progressSnapshotSignal();
     const current=new Map(snapshot.sections.map(s=>
@@ -199,6 +235,7 @@ export class GenesisUniversalArchiveFacade38Bis {
     if(this.pendingRefreshTimer38BisT3!==null){clearTimeout(this.pendingRefreshTimer38BisT3);this.pendingRefreshTimer38BisT3=null;}
     this.progressSnapshotSignal.set(EMPTY_ARCHIVE_PROGRESS_38BIS_B4);
     this.dirtyJobCountSignal38BisT3.set(0);
+    this.updateJobsSignalArchfast1.set([]);
     this.checkedCatalogSignal.set(new Set<string>());
     this.activeProgressSignal.set(null);
     const currentCategory=universalArchiveCategory38Bis(raw.category);
@@ -261,6 +298,7 @@ export class GenesisUniversalArchiveFacade38Bis {
       const sections=snapshot.sections.filter(s=>allowedGalaxies.has(s.galaxyIndex));
       const pendingKeys=new Set(dirty.map(j=>j.category+'|'+j.galaxyIndex));
       this.dirtyJobCountSignal38BisT3.set(dirty.length);
+      this.updateJobsSignalArchfast1.set(dirty.filter(j=>allowedGalaxies.has(j.galaxyIndex)));
       this.sectionsSignal.set(sections);
       // T7b: detectar solo metadatos del índice colonial YA leídos, sin abrir
       // ni escanear VIDA.9. Un índice T7/T7a con población no evaluable debe
@@ -319,6 +357,8 @@ export class GenesisUniversalArchiveFacade38Bis {
         if(call!==this.loadSequence||scope!==this.scopeSignal())return;
         const pending=new Set(jobs.map(j=>j.category+'|'+j.galaxyIndex));
         this.dirtyJobCountSignal38BisT3.set(jobs.length);
+        this.updateJobsSignalArchfast1.set(jobs.filter(j=>
+          this.galaxies().some(g=>g.index===j.galaxyIndex)));
         const selected=this.category();
         const selectedGalaxy=this.selectedGalaxy();
         const allowed=new Set(this.galaxies().map(g=>g.index));

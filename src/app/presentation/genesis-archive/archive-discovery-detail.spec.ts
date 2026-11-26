@@ -13,7 +13,7 @@ import {
 } from '@angular/router';
 
 import {
-  vi,
+  vi, describe, it, expect, beforeEach,
 } from 'vitest';
 
 import {
@@ -197,6 +197,7 @@ describe(
                   errorMessage: () =>
                     '',
 
+                  refreshRequired: () => false,
                   load,
                 },
               },
@@ -578,6 +579,7 @@ describe(
                     '',
                   actionPending: () =>
                     false,
+                  refreshRequired: () => false,
                   actionFeedback: () =>
                     null,
                   actionError: () =>
@@ -917,6 +919,7 @@ describe(
 
                   actionPending: () =>
                     false,
+                  refreshRequired: () => false,
 
                   actionFeedback: () =>
                     null,

@@ -56,6 +56,21 @@ export class GalaxyDiscoveryReadCacheRuntime implements DiscoveryRepository {
     }
   }
 
+  async confirmLocatorsBatch(
+    generationKey: UniverseGenerationKey,
+    locators: readonly ProceduralLocator[],
+  ): Promise<number> {
+    if (!this.source.confirmLocatorsBatch) {
+      throw new Error('El repositorio no admite confirmación por lotes.');
+    }
+    this.invalidate();
+    try {
+      return await this.source.confirmLocatorsBatch(generationKey, locators);
+    } finally {
+      this.invalidate();
+    }
+  }
+
   getKnownDiscoveries(generationKey: UniverseGenerationKey): Promise<readonly KnownDiscovery[]> {
     // Reads inside a Dexie transaction must see that transaction's own writes
     // and must never await a promise originating outside its transaction zone.

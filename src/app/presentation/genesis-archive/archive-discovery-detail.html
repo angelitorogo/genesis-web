@@ -93,6 +93,20 @@
               </span>
             </header>
 
+            @if (facade.refreshRequired()) {
+              <section class="archive-discovery-detail__panel archive-discovery-detail__panel--error"
+                role="alert" data-testid="archive-discovery-detail-refresh-required">
+                El nivel de conocimiento persistido y esta ficha necesitan sincronizarse.
+                No repitas la observación: actualiza el contenido sin recargar la página.
+                <button genesis-primary-button type="button"
+                  data-testid="archive-discovery-detail-retry-refresh"
+                  [disabled]="facade.actionPending()"
+                  (click)="facade.retryScientificCardRefresh()">
+                  {{ facade.actionPending() ? 'Sincronizando…' : 'Actualizar ficha' }}
+                </button>
+              </section>
+            }
+
             @if (model.stellarSystemCard; as systemCard) {
               <section
                 class="archive-discovery-detail__science-card archive-discovery-detail__system-card"
@@ -743,7 +757,7 @@
                           genesis-primary-button
                           type="button"
                           data-testid="archive-galactic-object-action-button"
-                          [disabled]="facade.actionPending()"
+                          [disabled]="facade.actionPending() || facade.refreshRequired()"
                           (click)="performScientificAction()"
                         >
                           @if (facade.actionPending()) {
@@ -959,7 +973,7 @@
                           genesis-primary-button
                           type="button"
                           data-testid="archive-pulsar-timing-button"
-                          [disabled]="facade.actionPending()"
+                          [disabled]="facade.actionPending() || facade.refreshRequired()"
                           (click)="performPulsarTimingObservation()"
                         >
                           @if (facade.actionPending()) {
@@ -1037,7 +1051,7 @@
                           genesis-primary-button
                           type="button"
                           data-testid="archive-magnetar-activity-button"
-                          [disabled]="facade.actionPending()"
+                          [disabled]="facade.actionPending() || facade.refreshRequired()"
                           (click)="performMagnetarActivityObservation()"
                         >
                           @if (facade.actionPending()) {
@@ -1115,7 +1129,7 @@
                           genesis-primary-button
                           type="button"
                           data-testid="archive-relativistic-jet-analysis-button"
-                          [disabled]="facade.actionPending()"
+                          [disabled]="facade.actionPending() || facade.refreshRequired()"
                           (click)="performRelativisticJetAnalysis()"
                         >
                           @if (facade.actionPending()) {
@@ -1198,7 +1212,7 @@
                           genesis-primary-button
                           type="button"
                           data-testid="archive-gravitational-lensing-reconstruction-button"
-                          [disabled]="facade.actionPending()"
+                          [disabled]="facade.actionPending() || facade.refreshRequired()"
                           (click)="performGravitationalLensingReconstruction()"
                         >
                           @if (facade.actionPending()) {
@@ -1304,6 +1318,25 @@
                           <span>Se concederá automáticamente al registrar el último estudio aplicable.</span>
                         </div>
                       }
+                    </section>
+                  }
+
+                  @if (nucleusSupplementaryWarning(); as nucleusWarning) {
+                    <section
+                      class="archive-discovery-detail__scientific-action"
+                      data-testid="archive-nucleus-supplementary-warning"
+                      role="status"
+                    >
+                      <p>{{ nucleusWarning }}</p>
+                      <button
+                        genesis-primary-button
+                        type="button"
+                        data-testid="archive-nucleus-retry-supplementary"
+                        [disabled]="facade.actionPending()"
+                        (click)="facade.retryScientificCardRefresh()"
+                      >
+                        REINTENTAR ESTUDIOS COMPLEMENTARIOS
+                      </button>
                     </section>
                   }
 

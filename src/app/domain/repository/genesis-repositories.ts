@@ -143,12 +143,32 @@ export interface DiscoveryRepository {
       DiscoveryStateValue,
   ): Promise<void>;
 
+  /** BULKCONF-ARCHPERF.1: optional atomic, confirmation-only write path.
+   * Returns the number of genuinely changed discoveries. Implementations
+   * must leave CONFIRMED rows untouched and preserve firstKnownAtEpochMs.
+   * Archive invalidation for a full-galaxy operation is managed by its caller.
+   */
+  confirmLocatorsBatch?(
+    generationKey: UniverseGenerationKey,
+    locators: readonly ProceduralLocator[],
+  ): Promise<number>;
+
   getKnownDiscoveries(
     generationKey:
       UniverseGenerationKey,
   ): Promise<
     readonly KnownDiscovery[]
   >;
+
+  /**
+   * EXPLORATION FASTSCAN.1: indexed, universe-scoped GALAXY discoveries only.
+   * Avoid loading every star, body, system and sector for an external search.
+   * Optional to keep older repository doubles/implementations compatible.
+   */
+  getKnownGalaxyDiscoveries?(
+    generationKey:
+      UniverseGenerationKey,
+  ): Promise<readonly KnownDiscovery[]>;
 
   getKnownDiscoveriesInSector(
     generationKey:

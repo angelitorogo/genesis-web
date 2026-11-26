@@ -1,0 +1,30 @@
+'use strict';
+/** LIVE-SCI.1 · Static contract audit (not a substitute for Vitest/build). */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const read = p => fs.readFileSync(path.join(root, p), 'utf8');
+const facade = read('src/app/presentation/genesis-archive/archive-discovery-detail.facade.ts');
+const template = read('src/app/presentation/genesis-archive/archive-discovery-detail.html');
+const tests = read('src/app/presentation/genesis-archive/archive-scientific-stage-live-sync.spec.ts');
+let checks = 0;
+function check(condition, message) { assert.ok(condition, message); checks++; }
+check(facade.includes('lastCommittedGalacticObjectState = committed.actionResult.newDiscoveryState'), 'Committed state is authoritative.');
+check(facade.includes('committedGalacticObjectState.code > persistedDiscoveryState.code'), 'Readbacks cannot demote committed states.');
+check(facade.includes('JSON.stringify(this.currentRequest) !== JSON.stringify(request)'), 'Obsolete route must not replace current detail.');
+check(facade.includes('version !== this.resolutionVersion'), 'Stale asynchronous resolution must be discarded.');
+check(facade.includes('preserveCurrentContent && this.state().kind'), 'Mounted 3D kept between scientific stages.');
+check(facade.includes('this.refreshRequiredSignal.set(true)'), 'Failed readback is recoverable.');
+check(facade.includes('async retryScientificCardRefresh()'), 'Retry available without repeating an action.');
+check(facade.includes('One bounded read-only retry'), 'Automatic retry is bounded.');
+check(!facade.includes('setGlobalDiscoveryPoints('), 'Facade may not write discovery points.');
+check(!facade.includes('setState('), 'Facade may not write scientific discovery state.');
+check(template.includes('archive-discovery-detail-retry-refresh'), 'Retry control exists only if synchronization fails.');
+check(template.includes('facade.actionPending() || facade.refreshRequired()'), 'Action cannot execute twice while stale.');
+check(tests.includes("setup('stale')"), 'Stale readback regression included.');
+check(tests.includes("setup('failed-read')"), 'Persisted success / failed presentation regression included.');
+check(tests.includes("setup('transient')"), 'Automatic transient retry regression included.');
+check(tests.includes('toHaveBeenCalledTimes(1)'), 'No repeated PD-generating commit.');
+check(tests.includes('DiscoveryState.CONFIRMED.code'), 'Confirmed transition included.');
+console.log(`GENESIS LIVE-SCI.1: ${checks}/${checks} comprobaciones estructurales correctas.`);

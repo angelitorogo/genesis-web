@@ -96,9 +96,28 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
       const job=await this.dirtyJobs.where('status').equals('PENDING').first();
       if(!job)return null;
       const claimed:ArchiveDirtyJob38BisB6={...job,status:'RUNNING',
-        startedAtEpochMs:now,updatedAtEpochMs:now};
+        startedAtEpochMs:now,updatedAtEpochMs:now,phase:'FRAGMENT',
+        currentField:undefined,completedSorts:0,totalSorts:0,
+        completedPages:0,totalPages:0};
       await this.dirtyJobs.put(claimed);
       return claimed;
+    });
+  }
+
+  /** ARCHFAST.1: status-only updates, serial-checked. A new knowledge commit
+   * wins over a stale worker; progress never creates scientific discoveries. */
+  async setKnowledgeChangeProgressArchfast1(claimed:ArchiveDirtyJob38BisB6,
+    phase:'FRAGMENT'|'SORTS',currentField:string|undefined,
+    completedSorts:number,totalSorts:number,
+    completedPages?:number,totalPages?:number):Promise<void>{
+    await this.open();
+    await this.transaction('rw',this.dirtyJobs,async()=>{
+      const current=await this.dirtyJobs.get(claimed.id);
+      if(!current||current.serial!==claimed.serial||current.status!=='RUNNING')return;
+      await this.dirtyJobs.put({...current,phase,currentField,completedSorts,totalSorts,
+        completedPages:completedPages??current.completedPages,
+        totalPages:totalPages??current.totalPages,
+        updatedAtEpochMs:Date.now()});
     });
   }
 
@@ -320,6 +339,29 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
       .filter(field=>archiveSortOption38BisB3(category,field).key===field && field!=='name');
   }
 
+  /** ARCHFAST.1: decide which previously requested sort columns genuinely need
+   * regeneration, without reading the potentially huge scientific row table. */
+  async outdatedSortFieldsArchfast1(scope:string,category:UniversalArchiveIndexedCategory38Bis,
+    galaxyIndex:string,fields:readonly string[]):Promise<readonly string[]> {
+    await this.open();
+    const section=await this.sections.get([scope,category,galaxyIndex]);
+    if(!section)throw new Error('ARCHFAST.1: catálogo científico todavía no publicado');
+    const valid=fields.filter(field=>field!=='name'&&
+      archiveSortOption38BisB3(category,field).key===field);
+    const revisions=await this.sortRevisions.bulkGet(valid.map(field=>
+      sortRevisionId(scope,category,galaxyIndex,field)));
+    return valid.filter((field,i)=>revisions[i]?.sourceRevision!==section.sourceRevision);
+  }
+
+  /** The shared data buffer is ephemeral, local to one updated fragment; it
+   * never becomes part of a second cache or leaks across universes/galaxies. */
+  async sortSourceRowsArchfast1(scope:string,category:UniversalArchiveIndexedCategory38Bis,
+    galaxyIndex:string):Promise<readonly UniversalArchiveRow38Bis[]> {
+    await this.open();
+    return this.rows.where('[scope+category+galaxyIndex]')
+      .equals([scope,category,galaxyIndex]).toArray();
+  }
+
   /** A small scoped queue lookup; it does not examine scientific records. */
   async knowledgeJobsFor38BisT3(scope:string):Promise<readonly ArchiveDirtyJob38BisB6[]> {
     await this.open();return this.dirtyJobs.where('scope').equals(scope).toArray();
@@ -329,7 +371,8 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
    * No toca datos científicos ni requiere releer los catálogos galácticos. */
   async ensureSortField(scope:string,category:UniversalArchiveIndexedCategory38Bis,
     galaxyIndex:string,field:string,
-    project?:(rows:readonly UniversalArchiveRow38Bis[])=>Promise<readonly UniversalArchiveRow38Bis[]>):Promise<void> {
+    project?:(rows:readonly UniversalArchiveRow38Bis[])=>Promise<readonly UniversalArchiveRow38Bis[]>,
+    sharedRows?:readonly UniversalArchiveRow38Bis[]):Promise<void> {
     const option=archiveSortOption38BisB3(category,field);
     if(option.kind==='name')return;
     await this.open();
@@ -339,9 +382,11 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
     if((await this.sortRevisions.get(id))?.sourceRevision===source.sourceRevision)return;
     await this.checkpoint(scope,category,galaxyIndex,option.key,'RUNNING');
     try {
-    const rows=await this.rows.where('[scope+category+galaxyIndex]')
+    const rows=sharedRows??await this.rows.where('[scope+category+galaxyIndex]')
       .equals([scope,category,galaxyIndex]).toArray();
-    if(rows.length!==source.count)throw new Error('38.bis-b3: fragmento de ordenación incompleto');
+    if(rows.length!==source.count || rows.some(row=>row.scope!==scope ||
+      row.category!==category || row.galaxyIndex!==galaxyIndex))
+      throw new Error('38.bis-b3: fragmento de ordenación incompleto');
     // Biology / galaxy projection stays outside the generic disposable store.
     // Values come only from the confirmed VIDA.9 view, never Ground Truth.
     const projected=project?await project(rows):rows;

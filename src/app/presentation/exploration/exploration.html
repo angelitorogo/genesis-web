@@ -339,6 +339,7 @@
                         [disabled]="
                           !externalStatus.searchOpportunityAvailable ||
                           facade.externalSearchPending() ||
+                          warpActive() ||
                           facade.externalFocusPending() ||
                           facade.externalFocusChoiceRequired()
                         "
@@ -346,8 +347,8 @@
                       >
                         <span aria-hidden="true">◇</span>
 
-                        @if (facade.externalSearchPending()) {
-                          BUSCANDO...
+                        @if (warpActive() || facade.externalSearchPending()) {
+                          REALIZANDO BARRIDO...
                         } @else if (externalStatus.searchOpportunityAvailable) {
                           BUSCAR GALAXIA EXTERNA · {{ externalStatus.availableSearchOpportunities }} DISPONIBLES
                         } @else {
@@ -370,7 +371,25 @@
                       class="exploration__reading"
                       data-testid="external-galaxy-search-reading"
                     >
-                      @if (facade.externalSearchResult(); as searchResult) {
+                      @if (warpActive()) {
+                        <div class="exploration__warp" data-testid="external-galaxy-warp" role="status" aria-live="polite">
+                          <div class="exploration__warp-stars" aria-hidden="true">
+                            @for (streak of warpStreaks; track streak.id) {
+                              <i class="exploration__warp-streak"
+                                [style.--warp-angle]="streak.angle"
+                                [style.--warp-delay]="streak.delay"
+                                [style.--warp-duration]="streak.duration"
+                                [style.--warp-length]="streak.length"></i>
+                            }
+                            <div class="exploration__warp-core"></div>
+                          </div>
+                          <div class="exploration__warp-copy">
+                            <p class="exploration__label">TRÁNSITO INTERESTELAR · BARRIDO EXTRAGALÁCTICO</p>
+                            <h4>Explorando el horizonte galáctico</h4>
+                            <p>Analizando señales de galaxias fuera del foco actual…</p>
+                          </div>
+                        </div>
+                      } @else if (facade.externalSearchResult(); as searchResult) {
                         <div
                           class="exploration__detection"
                           data-testid="external-galaxy-search-result"

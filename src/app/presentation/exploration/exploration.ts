@@ -3,6 +3,7 @@ import {
   Component,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 
 import {
@@ -36,6 +37,20 @@ import {
   ExplorationFacade,
 } from './exploration.facade';
 
+// Immutable presentation-only particles. Never consume the universe seed.
+const EXTERNAL_WARP_STREAKS = Object.freeze(
+  Array.from({ length: 52 }, (_, id) => Object.freeze({
+    id,
+    angle: `${(id * 137.50776) % 360}deg`,
+    delay: `${-((id * 0.127) % 1.45)}s`,
+    duration: `${(0.76 + ((id * 7) % 9) * 0.065).toFixed(3)}s`,
+    length: `${16 + (id * 13) % 28}px`,
+  })),
+);
+
+const EXTERNAL_WARP_MINIMUM_VISIBLE_MS = 1350;
+
+
 @Component({
   selector:
     'app-exploration',
@@ -54,6 +69,7 @@ import {
   styleUrls: [
     './exploration.scss',
     './exploration-opportunity-toast.scss',
+    './exploration-warp.scss',
   ],
 
   changeDetection:
@@ -66,6 +82,9 @@ export class Exploration
     inject(
       ExplorationFacade,
     );
+
+  readonly warpStreaks = EXTERNAL_WARP_STREAKS;
+  readonly warpActive = signal(false);
 
   ngOnInit():
     void {
@@ -113,10 +132,28 @@ export class Exploration
 
   searchExternalGalaxy():
     void {
+    // One command per click, including the short presentation phase.
+    if (this.warpActive() || this.facade.externalSearchPending()) {
+      return;
+    }
+    this.warpActive.set(true);
+    void this.runExternalWarpSearch();
+  }
 
-    void this
-      .facade
-      .searchExternalGalaxy();
+  private async runExternalWarpSearch(): Promise<void> {
+    const started = performance.now();
+    try {
+      // The real search is never delayed or replaced with a random animation.
+      // A short visual hold makes even indexed sub-second searches legible.
+      await this.facade.searchExternalGalaxy();
+      const remaining = EXTERNAL_WARP_MINIMUM_VISIBLE_MS -
+        (performance.now() - started);
+      if (remaining > 0) {
+        await new Promise<void>(resolve => setTimeout(resolve, remaining));
+      }
+    } finally {
+      this.warpActive.set(false);
+    }
   }
 
   remainOnCurrentGalaxy():

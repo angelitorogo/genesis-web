@@ -54,7 +54,7 @@ import {
 } from '../../domain/observation/observation-instrument-capability';
 
 import {
-  vi,
+  vi, describe, it, expect,
 } from 'vitest';
 
 import {

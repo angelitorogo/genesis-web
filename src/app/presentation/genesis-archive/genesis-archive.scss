@@ -213,3 +213,13 @@
 .archive-home-link:hover{border-color:#7edcff;background:#16394e}
 .archive-home-link:focus-visible{outline:2px solid #7edcff;outline-offset:3px}
 @media(max-width:38rem){.archive-home-link{order:-1}}
+
+/* ARCHFAST.1 · Only queued work is shown; idle Archive rendering stays unchanged. */
+.archive-maintenance{display:grid;gap:.45rem;max-height:20rem;overflow:auto;
+  border:1px solid #274356;border-radius:9px;padding:.8rem}
+.archive-maintenance>strong{font-size:.86rem;color:#e8f6ff}
+.archive-maintenance__job{display:flex;align-items:center;flex-wrap:wrap;gap:.35rem 1rem;
+  border:1px solid #253f50;border-radius:7px;padding:.55rem .65rem;font-size:.76rem;color:#b7d6e6}
+.archive-maintenance__job>strong{min-width:min(100%,13rem);color:#edf7ff}
+.archive-maintenance__job[data-status='RUNNING']{border-color:#4b849a}
+.archive-maintenance__job[data-status='ERROR']{border-color:#955e5e}
