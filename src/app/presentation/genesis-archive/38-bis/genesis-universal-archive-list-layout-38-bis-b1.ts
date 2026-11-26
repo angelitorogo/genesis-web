@@ -4,6 +4,7 @@
 import type {UniversalArchiveRow38Bis,UniversalArchiveIndexedCategory38Bis,
   UniversalArchiveAction38Bis} from './genesis-universal-archive-38-bis.model';
 import {archivePublicCopyA6} from './genesis-universal-archive-public-labels-a6';
+import {stellarCatalogPublicCellLabel} from '../../galaxy-knowledge-catalog/stellar-catalog-public-labels';
 
 export interface ArchiveCompactField38BisB1 {
   readonly key:string;
@@ -14,6 +15,13 @@ export interface ArchiveCompactField38BisB1 {
 type Definition = readonly (readonly [key:string,label:string])[];
 const DEFINITIONS:Readonly<Record<Exclude<UniversalArchiveIndexedCategory38Bis,'sectors'>,Definition>>={
   systems:[['galaxy','Galaxia'],['state','Estado'],['multiplicity','Tipo de sistema']],
+  // STARCAT.1a: claves idénticas a las publicadas por projectStarCatalogRowStarcat1.
+  // Los valores son físicos, nunca radios de presentación STARVIS.1.
+  stars:[['system','Sistema'],['component','Componente'],
+    ['evolution','Estado evolutivo'],['stage','Etapa evolutiva'],
+    ['spectral','Clase espectral'],['family','Familia espectral'],
+    ['radius','Radio físico'],['mass','Masa'],
+    ['temperature','Temperatura efectiva'],['luminosity','Luminosidad'],['age','Edad']],
   planets:[['system','Sistema'],['galaxy','Galaxia'],['state','Estado'],['type','Tipo'],
     ['mass','Masa'],['radius','Radio'],['life','Vida'],['colonies','Colonias'],
     ['civilization','Civilización']],
@@ -50,7 +58,7 @@ export function archiveCompactFields38BisB1(row:UniversalArchiveRow38Bis,
   return definition.map(([key,label])=>{
     const original=key==='galaxy'?galaxyName:row.cells[key];
     const value=typeof original==='string'&&original.trim()
-      ? archivePublicCopyA6(original) : 'No evaluable';
+      ? archivePublicCopyA6(stellarCatalogPublicCellLabel(row.category,key,original)) : 'No evaluable';
     const displayed=(key==='life'||key==='colonies'||key==='civilization') &&
       (value==='No evaluable'||value==='No determinado'||value==='Sin registro')
       ?'Sin determinar':value;
@@ -71,6 +79,7 @@ export function archiveCompactFields38BisB1(row:UniversalArchiveRow38Bis,
 export function archiveCompactActions38BisB1(row:UniversalArchiveRow38Bis):readonly UniversalArchiveAction38Bis[]{
   const labels:Readonly<Record<Exclude<UniversalArchiveIndexedCategory38Bis,'sectors'>,readonly string[]>>={
     systems:['Abrir ficha científica','Ir al sistema'],
+    stars:['Abrir ficha del sistema','Ver escena científica 3D'],
     planets:['Abrir ficha científica','Abrir sistema anfitrión'],
     moons:['Abrir ficha científica','Abrir planeta anfitrión','Abrir sistema'],
     clusters:['Abrir ficha científica'],nebulae:['Abrir ficha científica'],

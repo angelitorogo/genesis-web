@@ -16,6 +16,7 @@ import { GalaxyKnowledgeGalacticObjectsCatalogDataSource } from './galaxy-knowle
 import { GalaxyKnowledgeMinorBodiesCatalogDataSource } from './galaxy-knowledge-minor-bodies-catalog.data-source';
 import { GalaxyKnowledgePlanetsMoonsCatalogDataSource } from './galaxy-knowledge-planets-moons-catalog.data-source';
 import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-systems-catalog.data-source';
+import { GalaxyKnowledgeStarsCatalogDataSource } from './galaxy-knowledge-stars-catalog.data-source';
 
 const generationKey = new UniverseGenerationKey(
   UniverseSeed.parse('7F21-A9D4-18CE-4B70-92F1-6A0C-6E35-D8B1'),
@@ -24,6 +25,7 @@ const generationKey = new UniverseGenerationKey(
 
 const categories: readonly GalaxyKnowledgeCatalogCategory[] = Object.freeze([
   'systems',
+  'stars',
   'planets',
   'moons',
   'clusters',
@@ -72,6 +74,10 @@ describe('26.1c.7 galaxy knowledge catalogue regression matrix', () => {
       describe: vi.fn(() => descriptor('systems')),
       query: vi.fn(async () => pageResult()),
     };
+    const stars = {
+      describe: vi.fn(() => descriptor('stars')),
+      query: vi.fn(async () => pageResult()),
+    };
     const planetsMoons = {
       describe: vi.fn((category: 'planets' | 'moons') => descriptor(category)),
       query: vi.fn(async () => pageResult()),
@@ -89,6 +95,7 @@ describe('26.1c.7 galaxy knowledge catalogue regression matrix', () => {
       providers: [
         PendingGalaxyKnowledgeCatalogDataSource,
         { provide: GalaxyKnowledgeSystemsCatalogDataSource, useValue: systems },
+        { provide: GalaxyKnowledgeStarsCatalogDataSource, useValue: stars },
         { provide: GalaxyKnowledgePlanetsMoonsCatalogDataSource, useValue: planetsMoons },
         { provide: GalaxyKnowledgeGalacticObjectsCatalogDataSource, useValue: galacticObjects },
         { provide: GalaxyKnowledgeMinorBodiesCatalogDataSource, useValue: minorBodies },
@@ -116,6 +123,8 @@ describe('26.1c.7 galaxy knowledge catalogue regression matrix', () => {
     }
 
     expect(systems.describe).toHaveBeenCalledTimes(1);
+    expect(stars.describe).toHaveBeenCalledTimes(1);
+    expect(stars.query).toHaveBeenCalledTimes(1);
     expect(systems.query).toHaveBeenCalledTimes(1);
     expect(planetsMoons.describe).toHaveBeenCalledTimes(2);
     expect(planetsMoons.query).toHaveBeenCalledTimes(2);

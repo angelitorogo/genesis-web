@@ -74,6 +74,7 @@ describe('38.bis — Archivo GENESIS universal',()=>{
     expect(element.querySelector('[data-testid="archive-dashboard"]')).toBeTruthy();
     expect(element.querySelector('[data-category="colonized-moons"]')).toBeTruthy();
     expect(element.querySelector('[data-category="extremes"]')).toBeTruthy();
+    expect(element.querySelector('[data-category="stars"]')).toBeTruthy();
     expect(element.querySelector('[data-category="sectors"]')).toBeNull();
     expect(element.textContent).toContain('Pendiente de indexar');
   });

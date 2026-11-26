@@ -81,11 +81,11 @@ describe('26.1c.8 restored per-category catalogue columns', () => {
     );
   });
 
-  it('separates preference keys for all ten object categories', () => {
+  it('separates preference keys for all eleven non-biological object categories', () => {
     const categories = [
-      'systems', 'planets', 'moons', 'clusters', 'nebulae', 'extremes',
+      'systems', 'stars', 'planets', 'moons', 'clusters', 'nebulae', 'extremes',
       'asteroids', 'comets', 'tno', 'captured',
     ] as const;
-    expect(new Set(categories.map(catalogColumnsStorageKey)).size).toBe(10);
+    expect(new Set(categories.map(catalogColumnsStorageKey)).size).toBe(11);
   });
 });

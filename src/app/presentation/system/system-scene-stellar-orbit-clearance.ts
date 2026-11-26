@@ -1,6 +1,7 @@
 export interface SystemSceneStellarOrbitClearanceStarInputV5 {
   readonly id: string;
   readonly label: string;
+  readonly starvis1OptIn?: boolean;
   readonly baseRadiusScene: number;
   readonly baseOpticalRadiusScene: number;
   readonly maxCenterExcursionScene: number;
@@ -190,9 +191,8 @@ export function buildSystemSceneStellarOrbitClearanceV5(
           true;
 
         const radiusScene =
-          Math.min(
-            star.baseRadiusScene,
-            MIN_RENDERED_STAR_RADIUS_SCENE,
+          star.starvis1OptIn ? 0 : Math.min(
+            star.baseRadiusScene, MIN_RENDERED_STAR_RADIUS_SCENE,
           );
 
         const opticalRadiusScene =
@@ -217,24 +217,21 @@ export function buildSystemSceneStellarOrbitClearanceV5(
 
       const maxPhotosphereRadiusScene =
         Math.max(
-          MIN_RENDERED_STAR_RADIUS_SCENE,
+          star.starvis1OptIn ? 0 : MIN_RENDERED_STAR_RADIUS_SCENE,
           Math.min(
             availableOpticalRadiusScene *
-              MAX_PHOTOSPHERE_TO_AVAILABLE_OPTICAL_RATIO,
+              (star.starvis1OptIn ? 0.82 : MAX_PHOTOSPHERE_TO_AVAILABLE_OPTICAL_RATIO),
             periapsis *
-              (readabilityTargetRadiusScene === null
-                ? MAX_PHOTOSPHERE_TO_PERIAPSIS_RATIO
-                : 0.28),
+              (star.starvis1OptIn ? 0.78 :
+                readabilityTargetRadiusScene === null
+                  ? MAX_PHOTOSPHERE_TO_PERIAPSIS_RATIO : 0.28),
           ),
         );
 
       const radiusScene =
         Math.max(
-          MIN_RENDERED_STAR_RADIUS_SCENE,
-          Math.min(
-            star.baseRadiusScene,
-            maxPhotosphereRadiusScene,
-          ),
+          star.starvis1OptIn ? 0 : MIN_RENDERED_STAR_RADIUS_SCENE,
+          Math.min(star.baseRadiusScene, maxPhotosphereRadiusScene),
         );
 
       const opticalRadiusScene =

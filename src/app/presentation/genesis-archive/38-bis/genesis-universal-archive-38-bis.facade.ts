@@ -250,6 +250,7 @@ export class GenesisUniversalArchiveFacade38Bis {
     this.selectedGalaxySignal.set(galaxyIndex);
     this.selectedSubtypeSignal.set(raw.subtype==='PRIMITIVE'||raw.subtype==='ADVANCED'||
       raw.subtype==='VERY_ADVANCED'||raw.subtype==='PLANET'||raw.subtype==='MOON'||
+      ['WHITE_DWARF','BROWN_DWARF','MAIN_SEQUENCE','GIANT','SUPERGIANT','NEUTRON_STAR','STELLAR_BLACK_HOLE'].includes(raw.subtype??'')||
       ['BLACK_HOLE','NEUTRON_STAR','GALACTIC_NUCLEUS','SUPERNOVA_REMNANT','COMPACT_BINARY','HIGH_ENERGY_SOURCE'].includes(raw.subtype??'')?raw.subtype:null);
     this.selectedDirectionSignal.set(raw.direction==='desc'?'desc':'asc');
     const sortCategory=currentCategory===null||currentCategory==='galaxies'?'sectors':currentCategory;
@@ -565,7 +566,7 @@ export class GenesisUniversalArchiveFacade38Bis {
       // the 50 or so missing fragments, then validate the saved 160 against the
       // live confirmed scientific revision without rebuilding unchanged rows.
       const sequence:readonly UniversalArchiveIndexedCategory38Bis[]=[
-        'colonized-moons','colonized-planets','colonies','systems','civilizations',
+        'colonized-moons','colonized-planets','colonies','systems','stars','civilizations',
         'extremes','clusters','nebulae','planets','moons','asteroids','comets','tno','captured'];
       const stored=new Set(this.sectionsSignal().map(s=>archiveIndexTaskKey38BisT2(s.category,s.galaxyIndex)));
       const tasks=archiveIndexPlan38BisT2(sequence,galaxies,stored,this.checkedCatalogSignal());

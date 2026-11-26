@@ -11,6 +11,7 @@ export type GalaxyKnowledgeCatalogDirection = 'asc' | 'desc';
 
 export type GalaxyKnowledgeCatalogCategory =
   | 'systems'
+  | 'stars'
   | 'planets'
   | 'moons'
   | 'clusters'
@@ -124,6 +125,7 @@ export interface GalaxyKnowledgeCatalogRawQuery {
 
 const CATEGORY_DEFINITIONS: readonly GalaxyKnowledgeCatalogCategoryDefinition[] = Object.freeze([
   Object.freeze({ category: 'systems', label: 'Sistemas', singularLabel: 'Sistema' }),
+  Object.freeze({ category: 'stars', label: 'Estrellas', singularLabel: 'Estrella' }),
   Object.freeze({ category: 'planets', label: 'Planetas', singularLabel: 'Planeta' }),
   Object.freeze({ category: 'moons', label: 'Lunas', singularLabel: 'Luna' }),
   Object.freeze({ category: 'clusters', label: 'Cúmulos', singularLabel: 'Cúmulo' }),

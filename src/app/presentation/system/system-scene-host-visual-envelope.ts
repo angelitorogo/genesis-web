@@ -2,6 +2,9 @@ export interface SystemSceneHostVisualStarInputV3 {
   readonly id:
     string;
 
+  /** STARVIS.1 opts into its larger size ranges; legacy callers unchanged. */
+  readonly starvis1OptIn?: boolean;
+
   /** Existing point-24.5 exaggerated photosphere radius. */
   readonly baseRadiusScene:
     number;
@@ -208,6 +211,8 @@ export function buildSystemSceneHostVisualEnvelopeV3(
       ? nearestPlanetPeriapsisRadiusScene!
       : null;
 
+  const starvisActive = safeStars.some(star => star.starvis1OptIn === true);
+
   const hzEnvelopeLimit =
     hzInner === null
       ? Number.POSITIVE_INFINITY
@@ -215,7 +220,7 @@ export function buildSystemSceneHostVisualEnvelopeV3(
           MIN_RENDERED_STAR_RADIUS_SCENE,
           Math.min(
             hzInner *
-              MAX_HOST_ENVELOPE_TO_HZ_INNER_RATIO,
+              (starvisActive ? 0.88 : MAX_HOST_ENVELOPE_TO_HZ_INNER_RATIO),
             hzInner -
               Math.min(
                 MIN_HZ_CLEARANCE_SCENE,
@@ -232,7 +237,7 @@ export function buildSystemSceneHostVisualEnvelopeV3(
           MIN_RENDERED_STAR_RADIUS_SCENE,
           Math.min(
             planetPeriapsis *
-              MAX_HOST_ENVELOPE_TO_INNER_PLANET_RATIO,
+              (starvisActive ? 0.88 : MAX_HOST_ENVELOPE_TO_INNER_PLANET_RATIO),
             planetPeriapsis -
               Math.min(
                 MIN_PLANET_CLEARANCE_SCENE,
@@ -253,21 +258,18 @@ export function buildSystemSceneHostVisualEnvelopeV3(
     hzInner === null
       ? Number.POSITIVE_INFINITY
       : hzInner *
-        MAX_STAR_TO_HZ_INNER_RATIO;
+        (starvisActive ? 0.88 : MAX_STAR_TO_HZ_INNER_RATIO);
 
   const planetPhotosphereLimit =
     planetPeriapsis === null
       ? Number.POSITIVE_INFINITY
       : planetPeriapsis *
-        MAX_STAR_TO_INNER_PLANET_RATIO;
+        (starvisActive ? 0.88 : MAX_STAR_TO_INNER_PLANET_RATIO);
 
   const maxPhotosphereRadiusScene =
     Math.max(
-      MIN_RENDERED_STAR_RADIUS_SCENE,
-      Math.min(
-        hzPhotosphereLimit,
-        planetPhotosphereLimit,
-      ),
+      starvisActive ? 0 : MIN_RENDERED_STAR_RADIUS_SCENE,
+      Math.min(hzPhotosphereLimit, planetPhotosphereLimit),
     );
 
   const layouts =
@@ -293,14 +295,14 @@ export function buildSystemSceneHostVisualEnvelopeV3(
 
           const excursionAllowance =
             Math.max(
-              MIN_RENDERED_STAR_RADIUS_SCENE,
+              star.starvis1OptIn ? 0 : MIN_RENDERED_STAR_RADIUS_SCENE,
               maxAllowedEnvelopeRadiusScene -
                 star.maxCenterExcursionScene,
             );
 
           const radiusScene =
             Math.max(
-              MIN_RENDERED_STAR_RADIUS_SCENE,
+              star.starvis1OptIn ? 0 : MIN_RENDERED_STAR_RADIUS_SCENE,
               Math.min(
                 star.baseRadiusScene,
                 maxPhotosphereRadiusScene,

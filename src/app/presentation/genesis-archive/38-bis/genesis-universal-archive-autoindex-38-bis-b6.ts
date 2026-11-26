@@ -30,6 +30,11 @@ export class GenesisUniversalArchiveAutoIndex38BisB6 {
     if(this.active)return;
     this.active=true;
     this.unsubscribe=subscribeGenesisKnowledgeCommits38BisB6(event=>this.record(event));
+    // New categories must also be indexed for galaxies confirmed before this
+    // release, without a destructive reindex or another mass confirmation.
+    void this.index.store.enqueueMissingStarsStarcat1().then(added=>{
+      if(added>0)this.schedule(1200);
+    }).catch(error=>console.warn('STARCAT.1: no se pudo iniciar el índice de estrellas',error));
     this.schedule(1500);
   }
 

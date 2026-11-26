@@ -4738,20 +4738,29 @@ class ThreeSystemSceneRuntime
       },
     );
 
+    const opticalRadiusScene =
+      star.opticalRadiusScene ?? star.radiusScene;
     const optics =
       stellarOpticalProfile(
         star,
       );
+    const starvisOpticalScale = star.starvisOpticalScale ?? 1;
+    const starvisGlareScale = star.starvisGlareScale ?? 1;
+    // Every billboard is capped in the same scene-space orbital corridor.
+    const starvisDiameter = (scale: number): number =>
+      Math.min(opticalRadiusScene * scale * starvisOpticalScale,
+        star.starvisOpticalBudgetScene === undefined
+          ? Number.POSITIVE_INFINITY
+          : Math.max(0, star.starvisOpticalBudgetScene * 2));
 
-    const opticalRadiusScene =
-      star.opticalRadiusScene ??
-      star.radiusScene;
+
 
     const coronaMaterial =
       stellarSpriteMaterial(
         this.starHaloTexture,
         star.colorHex,
-        optics.coronaOpacity,
+        optics.coronaOpacity * (star.starvisFamily === 'BROWN_DWARF' ? 0.18 :
+          star.starvisFamily === 'WHITE_DWARF' ? 0.42 : 1),
       );
 
     const corona =
@@ -4760,8 +4769,7 @@ class ThreeSystemSceneRuntime
       );
 
     const coronaDiameter =
-      opticalRadiusScene *
-      optics.coronaDiameterScale;
+      starvisDiameter(optics.coronaDiameterScale);
 
     corona.scale.set(
       coronaDiameter,
@@ -4775,7 +4783,7 @@ class ThreeSystemSceneRuntime
       stellarSpriteMaterial(
         this.starBloomTexture,
         star.colorHex,
-        optics.bloomOpacity,
+        optics.bloomOpacity * (star.starvisFamily === 'BROWN_DWARF' ? 0.2 : 1),
       );
 
     const bloom =
@@ -4784,8 +4792,7 @@ class ThreeSystemSceneRuntime
       );
 
     const bloomDiameter =
-      opticalRadiusScene *
-      optics.bloomDiameterScale;
+      starvisDiameter(optics.bloomDiameterScale);
 
     bloom.scale.set(
       bloomDiameter,
@@ -4808,8 +4815,7 @@ class ThreeSystemSceneRuntime
       );
 
     const aureoleDiameter =
-      opticalRadiusScene *
-      optics.aureoleDiameterScale;
+      starvisDiameter(optics.aureoleDiameterScale);
 
     aureole.scale.set(
       aureoleDiameter,
@@ -4826,7 +4832,7 @@ class ThreeSystemSceneRuntime
           star.colorHex,
           optics.energy01,
         ),
-        optics.glareOpacity,
+        optics.glareOpacity * starvisGlareScale,
       );
 
     const glare =
@@ -4835,10 +4841,8 @@ class ThreeSystemSceneRuntime
       );
 
     glare.scale.set(
-      opticalRadiusScene *
-        optics.glareDiameterScale,
-      opticalRadiusScene *
-        optics.glareDiameterScale,
+      starvisDiameter(optics.glareDiameterScale) * starvisGlareScale,
+      starvisDiameter(optics.glareDiameterScale) * starvisGlareScale,
       1,
     );
     glare.name =

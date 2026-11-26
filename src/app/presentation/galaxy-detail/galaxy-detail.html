@@ -1006,6 +1006,21 @@
                 </dl>
               </details>
 
+              <article class="gd__knowledge-card" data-testid="galaxy-detail-stars-category">
+                <span>ESTRELLAS INDIVIDUALES CONFIRMADAS</span>
+                <strong>
+                  <a class="gd__catalog-count-link"
+                    [routerLink]="['/galaxies', model.profile.galaxyIndex.toString(), 'knowledge', 'stars']"
+                    [queryParams]="{ u: model.routeUniverseRef }"
+                    data-testid="galaxy-detail-stars-catalog-link">
+                    {{ formatBigInt(confirmedStellarComponents(
+                      model.scientificTelemetry.breakdown.systems.single,
+                      model.scientificTelemetry.breakdown.systems.binary,
+                      model.scientificTelemetry.breakdown.systems.triple)) }}
+                  </a>
+                </strong>
+              </article>
+
               <details class="gd__knowledge-card" data-testid="galaxy-detail-star-clusters-breakdown">
                 <summary>
                   <span>CÚMULOS</span>

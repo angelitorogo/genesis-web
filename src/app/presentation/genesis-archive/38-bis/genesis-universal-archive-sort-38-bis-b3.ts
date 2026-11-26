@@ -20,6 +20,12 @@ const tier={key:'tier',label:'Nivel tecnológico',kind:'tier'} as const;
 const OPTIONS:Readonly<Record<Exclude<UniversalArchiveIndexedCategory38Bis,'sectors'>,
   readonly ArchiveSortOption38BisB3[]>>={
   systems:[name,text('state','Estado'),text('multiplicity','Tipo de sistema')],
+  stars:[name,text('system','Sistema anfitrión'),text('component','Componente'),
+    text('evolution','Estado evolutivo'),text('stage','Etapa evolutiva'),
+    text('spectral','Clase espectral'),text('family','Familia espectral'),
+    number('radius','Radio (R☉)'),number('mass','Masa (M☉)'),
+    number('temperature','Temperatura efectiva (K)'),number('luminosity','Luminosidad (L☉)'),
+    number('age','Edad (Ga)')],
   planets:[name,text('galaxy','Galaxia'),boolean('life','Vida'),boolean('colonies','Colonias'),
     boolean('civilization','Civilización'),text('system','Sistema'),text('state','Estado'),text('type','Tipo planetario'),
     number('mass','Masa (M⊕)'),number('radius','Radio'),number('orbit','Semieje mayor'),

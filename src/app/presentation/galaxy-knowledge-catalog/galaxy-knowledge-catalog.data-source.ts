@@ -6,6 +6,7 @@ import {
   type GalaxyKnowledgeCatalogDataResult,
   type GalaxyKnowledgeCatalogDescriptor,
 } from './galaxy-knowledge-catalog.model';
+import { GalaxyKnowledgeStarsCatalogDataSource } from './galaxy-knowledge-stars-catalog.data-source';
 import { GalaxyKnowledgeSystemsCatalogDataSource } from './galaxy-knowledge-systems-catalog.data-source';
 import { GalaxyKnowledgePlanetsMoonsCatalogDataSource } from './galaxy-knowledge-planets-moons-catalog.data-source';
 import { GalaxyKnowledgeGalacticObjectsCatalogDataSource } from './galaxy-knowledge-galactic-objects-catalog.data-source';
@@ -32,6 +33,9 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
   private readonly minorBodies = inject(GalaxyKnowledgeMinorBodiesCatalogDataSource);
   private readonly injector = inject(Injector);
   private readonly pageCache = inject(GALAXY_KNOWLEDGE_CATALOG_PAGE_CACHE_CAT1);
+  private get stars(): GalaxyKnowledgeStarsCatalogDataSource {
+    return this.injector.get(GalaxyKnowledgeStarsCatalogDataSource);
+  }
   private get civilizations(): GalaxyKnowledgeCivilizationsCatalogDataSource {
     return this.injector.get(GalaxyKnowledgeCivilizationsCatalogDataSource);
   }
@@ -41,6 +45,7 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
     subtype: string | null,
   ): GalaxyKnowledgeCatalogDescriptor {
     if (category === 'civilizations') return this.civilizations.describe(subtype);
+    if (category === 'stars') return this.stars.describe(subtype);
     if (category === 'systems') {
       return this.systems.describe(subtype);
     }
@@ -87,6 +92,7 @@ export class PendingGalaxyKnowledgeCatalogDataSource implements GalaxyKnowledgeC
     request: GalaxyKnowledgeCatalogDataRequest,
   ): Promise<GalaxyKnowledgeCatalogDataResult> {
     if (request.query.category === 'civilizations') return this.civilizations.query(request);
+    if (request.query.category === 'stars') return this.stars.query(request);
     if (request.query.category === 'systems') {
       return this.systems.query(request);
     }
@@ -119,6 +125,7 @@ export const GALAXY_KNOWLEDGE_CATALOG_DATA_SOURCE =
 function categoryTitle(category: GalaxyKnowledgeCatalogCategory): string {
   switch (category) {
     case 'systems': return 'Sistemas conocidos';
+    case 'stars': return 'Estrellas conocidas';
     case 'planets': return 'Planetas conocidos';
     case 'moons': return 'Lunas conocidas';
     case 'clusters': return 'Cúmulos conocidos';

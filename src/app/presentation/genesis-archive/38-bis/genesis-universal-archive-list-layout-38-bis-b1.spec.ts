@@ -22,6 +22,23 @@ describe('38.bis-b1 · listados compactos, campos científicos y navegación',()
     expect(keys('planets')).toEqual(['Sistema','Galaxia','Estado','Tipo','Masa','Radio','Vida','Colonias','Civilización']);
     expect(keys('moons')).toEqual(['Planeta','Sistema','Galaxia','Composición','Masa','Radio','Vida','Colonias']);
   });
+  it('STARCAT.1a presenta campos científicos y conserva únicamente acciones certificadas',()=>{
+    expect(keys('stars')).toEqual(['Sistema','Componente','Estado evolutivo',
+      'Etapa evolutiva','Clase espectral','Familia espectral',
+      'Radio físico','Masa','Temperatura efectiva','Luminosidad','Edad']);
+    const fiche=action('Abrir ficha del sistema',['/archive/system','7','2','1']);
+    const scene=action('Ver escena científica 3D',['/system','7','2','1']);
+    const extra=action('Acción no certificada',['/unknown']);
+    const star=row('stars',{system:'Paedoria',component:'A',
+      evolution:'WHITE_DWARF',radius:'0,012 R☉',temperature:'11.000 K'},
+      [extra,scene,fiche]);
+    expect(archiveCompactFields38BisB1(star,'Galaxia')
+      .find(field=>field.key==='radius')?.value).toBe('0,012 R☉');
+    expect(archiveCompactFields38BisB1(star,'Galaxia')
+      .find(field=>field.key==='evolution')?.value).toBe('Enana blanca');
+    expect(archiveCompactActions38BisB1(star)).toEqual([fiche,scene]);
+    expect(archiveCompactActions38BisB1(row('stars',{},[scene]))).toEqual([scene]);
+  });
   it('conserva todas las familias de objetos y exactamente las magnitudes solicitadas',()=>{
     expect(keys('clusters')).toEqual(['Tipo','Estado','Estrellas','Masa','Edad']);
     expect(keys('nebulae')).toEqual(['Tipo','Estado','Radio','Masa','Temperatura']);

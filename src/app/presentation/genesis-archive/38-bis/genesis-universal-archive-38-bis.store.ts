@@ -72,6 +72,34 @@ export class GenesisUniversalArchiveStore38Bis extends Dexie {
     });
   }
 
+  /** STARCAT.1 migration: prime only the missing star fragments for already
+   * indexed, confirmed galaxies. This is metadata-only (no universe scan),
+   * idempotent and preserves the retry state of existing dirty jobs. */
+  async enqueueMissingStarsStarcat1(now=Date.now()):Promise<number>{
+    await this.open();
+    const existing=await this.sections.toArray();
+    const galaxySystems=existing.filter(section=>section.category==='systems');
+    const stars=new Set(existing.filter(section=>section.category==='stars')
+      .map(section=>section.scope+'|'+section.galaxyIndex));
+    let added=0;
+    await this.transaction('rw',this.dirtyJobs,async()=>{
+      for(const section of galaxySystems){
+        if(stars.has(section.scope+'|'+section.galaxyIndex))continue;
+        const pieces=section.scope.split('|');
+        if(pieces.length!==3)continue;
+        const version=Number(pieces[2]);
+        if(!Number.isInteger(version)||version<1||version>3)continue;
+        const id=JSON.stringify([section.scope,section.galaxyIndex,'stars']);
+        if(await this.dirtyJobs.get(id))continue;
+        const event:GenesisKnowledgeCommit38BisB6={kind:'SYSTEM',universeSeed:pieces[1]!,
+          generatorVersionCode:version,galaxyIndex:section.galaxyIndex};
+        await this.dirtyJobs.put(archiveDirtyJob38BisB6(event,section.scope,'stars',undefined,now));
+        added++;
+      }
+    });
+    return added;
+  }
+
   /** Persisted/coalesced after a knowledge transaction commits. Repeated body
    * discoveries do not create duplicate work for the same galaxy/category. */
   async enqueueKnowledgeChange38BisB6(event:GenesisKnowledgeCommit38BisB6,scope:string,

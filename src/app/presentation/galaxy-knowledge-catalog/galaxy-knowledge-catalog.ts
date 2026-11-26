@@ -15,6 +15,7 @@ import { combineLatest } from 'rxjs';
 
 import { GenesisScreen } from '../../ui/layout/genesis-screen/genesis-screen';
 import { GalaxyKnowledgeCatalogFacade } from './galaxy-knowledge-catalog.facade';
+import {stellarCatalogPublicCellLabel} from './stellar-catalog-public-labels';
 import { CATALOG_ATMOSPHERE_GASES, parseCatalogAtmosphereFilter, type CatalogGasRange } from './galaxy-knowledge-atmosphere-filter';
 import { AtmosphereGas } from '../../domain/planetary/atmosphere-gas';
 import {
@@ -46,6 +47,7 @@ import {
 export class GalaxyKnowledgeCatalogPage implements OnInit {
   readonly facade = inject(GalaxyKnowledgeCatalogFacade);
   readonly pageSizes = GALAXY_KNOWLEDGE_CATALOG_PAGE_SIZES;
+  readonly publicCellLabel = stellarCatalogPublicCellLabel;
   searchDraft = '';
   readonly atmosphericGases=CATALOG_ATMOSPHERE_GASES;
   gasRows: Array<{gas:AtmosphereGas;min:string;max:string}> = [];

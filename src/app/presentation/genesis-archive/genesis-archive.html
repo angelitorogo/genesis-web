@@ -259,6 +259,20 @@
                   }
                 </select>
               </label>
+              @if (facade.category() === 'stars') {
+                <label>ESTADO EVOLUTIVO
+                  <select data-testid="archive-star-evolution-filter" [value]="facade.selectedSubtype()??''" (change)="changeSubtype($event)">
+                    <option value="">Todos</option>
+                    <option value="MAIN_SEQUENCE">Secuencia principal</option>
+                    <option value="BROWN_DWARF">Enanas marrones</option>
+                    <option value="WHITE_DWARF">Enanas blancas</option>
+                    <option value="GIANT">Gigantes (RGB y AGB)</option>
+                    <option value="SUPERGIANT">Supergigantes</option>
+                    <option value="NEUTRON_STAR">Estrellas de neutrones</option>
+                    <option value="STELLAR_BLACK_HOLE">Remanentes: agujero negro estelar</option>
+                  </select>
+                </label>
+              }
               @if (facade.category() === 'civilizations') {
                 <label>NIVEL
                   <select data-testid="archive-tier-filter" [value]="facade.selectedSubtype()??''" (change)="changeSubtype($event)">

@@ -118,6 +118,11 @@ import {
 } from '../genesis-archive/archive-stellar-system-card';
 
 
+import { systemSceneStarvis1Profile, systemSceneStarvis1SafeRadius,
+  type StarvisEvolutionState, type StarvisGiantStage,
+  type StarvisSpectralFamily, type StarvisFamily,
+} from './system-scene-star-visual-profile-starvis1';
+
 import {
   adaptiveSystemPlanetRadiusScene,
   adaptiveSystemStarRadiusScene,
@@ -463,6 +468,13 @@ export interface SystemSceneBodySnapshot {
   /** Star-only optical reference retained when the photosphere is envelope-limited. */
   readonly opticalRadiusScene?:
     number;
+
+  /** STARVIS.1: presentation identity, never persisted or used in physics. */
+  readonly starvisFamily?: StarvisFamily;
+  readonly starvisOpticalScale?: number;
+  readonly starvisGlareScale?: number;
+  /** Conservative projected gap to an orbital corridor, for sprite capping. */
+  readonly starvisOpticalBudgetScene?: number;
 
   readonly position:
     SystemSceneVector3;
@@ -1015,6 +1027,10 @@ interface ResolvedStarSceneSource {
 
   readonly radiusSolar:
     number;
+
+  readonly evolutionStateStarvis1: StarvisEvolutionState;
+  readonly spectralFamilyStarvis1: StarvisSpectralFamily;
+  readonly giantStageStarvis1: StarvisGiantStage | null;
 
   readonly effectiveTemperatureKelvin: number;
 
@@ -1923,6 +1939,9 @@ function resolveStarSources(
         primarySpectralAppearance.color.hex,
       radiusSolar:
         primaryPhysicalProperties.radiusSolar,
+      evolutionStateStarvis1: system.primaryStar.evolutionState.name,
+      spectralFamilyStarvis1: primarySpectralAppearance.spectralType.family,
+      giantStageStarvis1: system.primaryStar.postMainSequenceStage?.name ?? null,
       effectiveTemperatureKelvin: primaryPhysicalProperties.effectiveTemperatureKelvin,
       massSolar:
         primaryPhysicalProperties.currentMassSolar,
@@ -2041,6 +2060,9 @@ function companionSource(
       companion.spectralAppearance.color.hex,
     radiusSolar:
       companion.physicalProperties.radiusSolar,
+    evolutionStateStarvis1: companion.currentEvolutionState.name,
+    spectralFamilyStarvis1: companion.spectralAppearance.spectralType.family,
+    giantStageStarvis1: companion.lifetimeProfile.evolutionAssessment.postMainSequenceStage?.name ?? null,
     effectiveTemperatureKelvin: companion.physicalProperties.effectiveTemperatureKelvin,
     massSolar:
       companion.physicalProperties.currentMassSolar,
@@ -2534,9 +2556,13 @@ function projectSceneGeometry(
         star =>
           [
             star.id,
-            adaptiveSystemStarRadiusScene(
-              star.radiusSolar,
-            ),
+            systemSceneStarvis1Profile({
+              evolutionState: star.evolutionStateStarvis1,
+              giantStage: star.giantStageStarvis1,
+              spectralFamily: star.spectralFamilyStarvis1,
+              radiusSolar: star.radiusSolar,
+              effectiveTemperatureKelvin: star.effectiveTemperatureKelvin,
+            })?.requestedRadiusScene ?? adaptiveSystemStarRadiusScene(star.radiusSolar),
           ] as const,
       ),
     );
@@ -2940,6 +2966,16 @@ function projectSceneGeometry(
       ),
     );
 
+  const starvisProfileById = new Map(world.stars.map(star => [star.id,
+    systemSceneStarvis1Profile({
+      evolutionState: star.evolutionStateStarvis1,
+      spectralFamily: star.spectralFamilyStarvis1,
+      giantStage: star.giantStageStarvis1,
+      radiusSolar: star.radiusSolar,
+      effectiveTemperatureKelvin: star.effectiveTemperatureKelvin,
+    }),
+  ] as const));
+
   const hostVisualEnvelope =
     buildSystemSceneHostVisualEnvelopeV3(
       world.stars.map(
@@ -2960,6 +2996,7 @@ function projectSceneGeometry(
           return Object.freeze({
             id:
               star.id,
+            starvis1OptIn: starvisProfileById.get(star.id) !== null,
             baseRadiusScene:
               starOpticalRadiusSceneById.get(
                 star.id,
@@ -3082,6 +3119,7 @@ function projectSceneGeometry(
               star.id,
             label:
               star.label,
+            starvis1OptIn: starvisProfileById.get(star.id) !== null,
             baseRadiusScene:
               starRadiusSceneById.get(
                 star.id,
@@ -3123,58 +3161,28 @@ function projectSceneGeometry(
     );
   }
 
-  /*
-   * 28.2e regression guard — renderer-only body hierarchy.
-   *
-   * V5 is allowed to shrink stellar photospheres to preserve the real
-   * planetary-orbit clearance. Planet presentation radii, however, were
-   * computed before that V5 pass. In a very narrow multistellar case this can
-   * leave a large planet microscopically larger than the final smallest
-   * photosphere even though the orbital clearance itself is correct.
-   *
-   * Keep AU/orbits/physics untouched. Only cap the already-presentation-only
-   * planet proxy after the final stellar photospheres are known.
-   */
-  const smallestRenderedStarRadiusScene =
-    stellarOrbitClearance.stars.reduce(
-      (
-        minimum,
-        star,
-      ) =>
-        Math.min(
-          minimum,
-          star.radiusScene,
-        ),
-      Number.POSITIVE_INFINITY,
-    );
-
-  if (
-    Number.isFinite(
-      smallestRenderedStarRadiusScene,
-    ) &&
-    smallestRenderedStarRadiusScene >
-      0
-  ) {
-    const maximumPlanetRadiusScene =
-      smallestRenderedStarRadiusScene *
-      0.96;
-
-    for (
-      const [
-        ordinal,
-        radiusScene,
-      ]
-      of planetRadiusSceneByOrdinal
-    ) {
-      planetRadiusSceneByOrdinal.set(
-        ordinal,
-        Math.min(
-          radiusScene,
-          maximumPlanetRadiusScene,
-        ),
-      );
-    }
+  // STARVIS.1 final presentation-only safety after V3/V4/V5 limiters.
+  // HZ limits alone are not sufficient: use the *projected* nearest planetary
+  // periapsis and a conservative stellar centre excursion, including planets'
+  // rendered bodies. Never increase a radius that an earlier deconflicter cut.
+  for (const star of world.stars) {
+    const existing = starRadiusSceneById.get(star.id)!;
+    const isHost = world.multiplicityName === 'SINGLE' || star.label !== 'C';
+    const radiusScene = isHost ? systemSceneStarvis1SafeRadius({
+      requestedRadiusScene: existing,
+      planetPeriapsisScene: projectedNearestPlanetPeriapsisScene,
+      maxRelativeCenterExcursionScene: starMaxCenterExcursionSceneById.get(star.id) ?? 0,
+      planetRadiusScene: maxPlanetRadiusScene,
+    }) : existing;
+    starRadiusSceneById.set(star.id, radiusScene);
+    // Glow reference follows the *final* photosphere, never rescales it up.
+    starOpticalRadiusSceneById.set(star.id,
+      Math.min(starOpticalRadiusSceneById.get(star.id) ?? existing,
+        radiusScene * (starvisProfileById.get(star.id)?.family === 'WHITE_DWARF' ? 1.06 : 1.16)));
   }
+
+  // STARVIS.1: do not shrink real planetary presentation to the tiny
+  // photosphere of a white dwarf. Planet/orbit safety is enforced above.
 
   const triplePlanetaryLayout =
     world.multiplicityName ===
@@ -3498,6 +3506,15 @@ function projectSceneGeometry(
             ),
           sourceLuminositySolar:
             star.luminositySolar,
+          starvisFamily: starvisProfileById.get(star.id)?.family,
+          starvisOpticalScale: starvisProfileById.get(star.id)?.opticalScale,
+          starvisGlareScale: starvisProfileById.get(star.id)?.glareScale,
+          starvisOpticalBudgetScene: projectedNearestPlanetPeriapsisScene === null ||
+            (world.multiplicityName !== 'SINGLE' && star.label === 'C')
+            ? undefined
+            : Math.max(0, (projectedNearestPlanetPeriapsisScene -
+                (starMaxCenterExcursionSceneById.get(star.id) ?? 0) -
+                maxPlanetRadiusScene) * 0.84),
           ...((generatorVersionCode === 2 || generatorVersionCode === 3) ? {
             sourceRadiusSolar: star.radiusSolar,
             sourceEffectiveTemperatureKelvin: star.effectiveTemperatureKelvin,

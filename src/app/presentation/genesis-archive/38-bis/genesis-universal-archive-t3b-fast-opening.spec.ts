@@ -76,17 +76,17 @@ describe('38.bis-T3b — apertura por metadatos y actualización solo CONFIRMED'
     }finally{store.close();await store.delete();}
   });
 
-  it('recupera los 210 fragmentos en una sola lectura y sin verificar ciencia ni ordenaciones',async()=>{
+  it('recupera los 225 fragmentos en una sola lectura y sin verificar ciencia ni ordenaciones',async()=>{
     const key=new UniverseGenerationKey(UniverseSeed.parse(seed),GeneratorVersion.V3);
     const galaxies=Array.from({length:15},(_,n)=>({index:String(n),title:'Galaxia '+n,stateCode:5}));
     const categories=UNIVERSAL_ARCHIVE_CATEGORIES_38BIS
       .filter(c=>c.id!=='galaxies'&&c.id!=='sectors').map(c=>c.id);
-    expect(categories).toHaveLength(14);
+    expect(categories).toHaveLength(15);
     const sections=galaxies.flatMap(g=>categories.map(c=>({
       scope:'scope-test',category:c,galaxyIndex:g.index,count:0,
       sourceRevision:'revision-conservada',indexedAtEpochMs:1,knowledgeComplete:true,
     } as UniversalArchiveSection38Bis)));
-    expect(sections).toHaveLength(210);
+    expect(sections).toHaveLength(225);
     const openingSnapshot38BisT3b=vi.fn(async()=>({
       progress:{sections,sortRevisions:[],checkpoints:[]},jobs:[],
     }));
@@ -108,7 +108,7 @@ describe('38.bis-T3b — apertura por metadatos y actualización solo CONFIRMED'
     const facade=TestBed.inject(GenesisUniversalArchiveFacade38Bis);
     await facade.load(params);
     expect(facade.state()).toBe('ready');
-    expect(facade.indexProgressStored()).toBe(210);
+    expect(facade.indexProgressStored()).toBe(225);
     expect(facade.page()?.total).toBe(0);
     expect(openingSnapshot38BisT3b).toHaveBeenCalledTimes(1);
     expect(progressFor).not.toHaveBeenCalled();

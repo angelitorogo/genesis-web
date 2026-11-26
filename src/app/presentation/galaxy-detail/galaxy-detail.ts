@@ -534,6 +534,12 @@ export class GalaxyDetailPage
     );
   }
 
+  /** STARCAT.1: conservative aggregate of CONFIRMED stellar components.
+   * Unclassified systems do not contribute invented components. */
+  confirmedStellarComponents(single:bigint,binary:bigint,triple:bigint):bigint {
+    return single+2n*binary+3n*triple;
+  }
+
   formatBigInt(
     value:
       bigint | null,

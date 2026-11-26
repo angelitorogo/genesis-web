@@ -152,6 +152,17 @@
             </form>
           }
 
+          @if (model.descriptor.category === 'stars') {
+            <nav class="gkc__civilization-filters" aria-label="Filtrar estrellas por estado o espectro" data-testid="gkc-star-filters">
+              <a [routerLink]="[]" [queryParams]="{type:null,page:1}" queryParamsHandling="merge">Todas</a>
+              <a [routerLink]="[]" [queryParams]="{type:'WHITE_DWARF',page:1}" queryParamsHandling="merge">Enanas blancas</a>
+              <a [routerLink]="[]" [queryParams]="{type:'BROWN_DWARF',page:1}" queryParamsHandling="merge">Enanas marrones</a>
+              <a [routerLink]="[]" [queryParams]="{type:'MAIN_SEQUENCE',page:1}" queryParamsHandling="merge">Secuencia principal</a>
+              <a [routerLink]="[]" [queryParams]="{type:'RGB',page:1}" queryParamsHandling="merge">Gigantes rojas</a>
+              <a [routerLink]="[]" [queryParams]="{type:'AGB',page:1}" queryParamsHandling="merge">AGB</a>
+              <a [routerLink]="[]" [queryParams]="{type:'SUPERGIANT',page:1}" queryParamsHandling="merge">Supergigantes</a>
+            </nav>
+          }
           @if (model.descriptor.category === 'civilizations') {
             <nav class="gkc__civilization-filters" aria-label="Filtrar civilizaciones por nivel" data-testid="gkc-civilization-filters">
               <a [routerLink]="[]" [queryParams]="{type:null,page:1}" queryParamsHandling="merge">Todas</a>
@@ -319,7 +330,7 @@
                             class="gkc__value-cell"
                             [class.gkc__right]="column.align === 'end'"
                           >
-                            {{ row.cells[column.key] ?? '—' }}
+                            {{ publicCellLabel(model.descriptor.category, column.key, row.cells[column.key]) }}
                           </td>
                         }
                         <td class="gkc__actions-column">

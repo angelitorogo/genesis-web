@@ -801,6 +801,10 @@ describe(
               'systems',
             ],
             [
+              'galaxy-detail-stars-catalog-link',
+              'stars',
+            ],
+            [
               'galaxy-detail-clusters-catalog-link',
               'clusters',
             ],

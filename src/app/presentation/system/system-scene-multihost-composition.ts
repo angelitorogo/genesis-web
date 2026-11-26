@@ -270,14 +270,22 @@ export class SystemSceneMultihostComposition {
       const star = local.stars[0]!;
       // V2 source radii are already reduced once. Keep frozen V1 presentation.
       const isV2 = (formation.parentGenerationKey.generatorVersionCode === 2 || formation.parentGenerationKey.generatorVersionCode === 3);
-      const starRadius = isV2
-        ? Math.max(0.055, Math.min(0.19, star.radiusScene * factor))
-        : Math.max(0.075, Math.min(0.24, star.radiusScene * factor));
+      // STARVIS.1: local photospheres have already passed orbital clearance.
+      // All their host planets and orbit guides are scaled by the same factor;
+      // hard minimum/maximum radii here would erase white-dwarf/giant identity.
+      const starRadius = star.starvisFamily === undefined
+        ? isV2 ? Math.max(0.055, Math.min(0.19, star.radiusScene * factor))
+          : Math.max(0.075, Math.min(0.24, star.radiusScene * factor))
+        : Math.max(0, star.radiusScene * factor);
       stars.push(Object.freeze({ ...star, id: namespaced(star.id), label: source.label,
         title: source.publicStellarDesignation, orbitId: `mh-orbit-star-${source.label.toLowerCase()}`,
         motionContributions: hostAnchor, position: position(hostAnchor), radiusScene: starRadius,
-        opticalRadiusScene: Math.max(starRadius, Math.min(isV2 ? 0.235 : 0.3,
-          (star.opticalRadiusScene ?? star.radiusScene) * factor)), }));
+        opticalRadiusScene: star.starvisFamily === undefined
+          ? Math.max(starRadius, Math.min(isV2 ? 0.235 : 0.3,
+              (star.opticalRadiusScene ?? star.radiusScene) * factor))
+          : Math.max(starRadius, (star.opticalRadiusScene ?? star.radiusScene) * factor),
+        starvisOpticalBudgetScene: star.starvisOpticalBudgetScene === undefined
+          ? undefined : star.starvisOpticalBudgetScene * factor, }));
       for (const orbit of local.orbits) {
         const physical = orbit.motionId === null ? undefined : motionIndex.get(orbit.motionId);
         const linear = orbit.motionId === null ? undefined : scales.get(orbit.motionId);

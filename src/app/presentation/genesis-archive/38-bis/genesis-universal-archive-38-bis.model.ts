@@ -5,6 +5,7 @@ export const UNIVERSAL_ARCHIVE_CATEGORIES_38BIS = Object.freeze([
   {id:'galaxies',label:'Galaxias',description:'Galaxias científicamente confirmadas en este universo.'},
   {id:'sectors',label:'Sectores',description:'Sectores confirmados registrados en este universo.'},
   {id:'systems',label:'Sistemas',description:'Sistemas estelares confirmados.'},
+  {id:'stars',label:'Estrellas',description:'Componentes estelares individuales A/B/C de sistemas confirmados.'},
   {id:'planets',label:'Planetas',description:'Planetas confirmados o autorizados por un sistema confirmado.'},
   {id:'moons',label:'Lunas',description:'Lunas públicas autorizadas por un sistema confirmado.'},
   {id:'clusters',label:'Cúmulos',description:'Cúmulos estelares confirmados.'},

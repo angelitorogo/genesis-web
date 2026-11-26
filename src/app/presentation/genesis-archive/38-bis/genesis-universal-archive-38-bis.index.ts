@@ -145,7 +145,8 @@ function archiveRowId(scope:string,category:UniversalArchiveIndexedCategory38Bis
 function wrapRow(scope:string,category:UniversalArchiveIndexedCategory38Bis,
   galaxyIndex:string,row:GalaxyKnowledgeCatalogRow):UniversalArchiveRow38Bis {
   const title=row.title.trim()||'Sin designación';
-  const subtype=category==='civilizations'
+  const subtype=category==='stars' ? (row.cells['evolution']??'ALL')
+    : category==='civilizations'
     ? universalArchiveCivilizationSubtype38Bis(row.cells['tier']??'')
     : category==='extremes' ? universalArchiveExtremeFamily38Bis(row.cells['family']??'') : 'ALL';
   return Object.freeze({id:archiveRowId(scope,category,galaxyIndex,row.id),scope,category,
@@ -433,7 +434,8 @@ export class GenesisUniversalArchiveIndex38Bis {
       category==='colonies'?'founder-reconciliation-a3-v1-lunar-designation-a4-public-origins-a6-population-t7b-v2':
       category==='colonized-moons'?'lunar-designation-a4-public-origins-a6-host-planet-b1-population-t7b-v2':
       category==='colonized-planets'?'public-origins-a6-population-t7b-v2':
-      category==='civilizations'?'tier-stats-v1':'-'].join('|');
+      category==='civilizations'?'tier-stats-v1':
+      category==='stars'?'individual-stellar-components-starcat1-v1':'-'].join('|');
     await this.store.open();
     const saved=await this.store.sections.get([scope,category,galaxyIndex]);
     if(!force && saved?.sourceRevision===revision)return saved;

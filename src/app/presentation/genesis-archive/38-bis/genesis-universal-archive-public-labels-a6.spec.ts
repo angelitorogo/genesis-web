@@ -31,6 +31,16 @@ describe('38.bis-a6 · designaciones públicas y procedencias sin códigos inter
     expect(archivePublicCopyA6('Evidencia CT-0 · VIDA.9')).toBe('Evidencia');
     expect(archivePublicCopyA6('Tipo espectral B-V · 0,012 M⊕')).toBe('Tipo espectral B-V · 0,012 M⊕');
   });
+  it('traduce estados estelares heredados sin reindexar ni cambiar el subtipo almacenado',()=>{
+    const persisted=row('stars','Estrella catalogada',{
+      evolution:'MAIN_SEQUENCE',stage:'RED_GIANT_BRANCH',spectral:'G2',radius:'1 R☉',
+    });
+    const visible=archivePublicCellsA6(persisted);
+    expect(visible).toContainEqual({key:'evolution',value:'Secuencia principal'});
+    expect(visible).toContainEqual({key:'stage',value:'Gigante roja (RGB)'});
+    expect(visible).toContainEqual({key:'spectral',value:'G2'});
+    expect(persisted.cells['evolution']).toBe('MAIN_SEQUENCE');
+  });
   it('proyecta especie y planeta natal verificados en filas de colonias individuales y agrupadas',()=>{
     const data={body:'Aaras A-11 I',kind:'Luna',system:'Aaras',count:'1',
       species:'Ismera on7',originPlanet:'Xephus A-3',tier:'Avanzada',

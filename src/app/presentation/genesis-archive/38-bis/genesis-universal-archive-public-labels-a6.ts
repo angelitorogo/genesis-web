@@ -1,6 +1,7 @@
 /** 38.bis-a6 · Presentación pública, sin exponer códigos internos del índice.
  * Todas las referencias científicas y rutas permanecen en el modelo indexado. */
 import type {UniversalArchiveRow38Bis,UniversalArchiveVerifiedFounder38Bis} from './genesis-universal-archive-38-bis.model';
+import {stellarCatalogPublicCellLabel} from '../../galaxy-knowledge-catalog/stellar-catalog-public-labels';
 
 export interface ArchiveNamedGalaxyA6 {readonly index:string;readonly title:string;}
 
@@ -44,7 +45,8 @@ export function archivePublicCellsA6(row:UniversalArchiveRow38Bis):readonly {key
     : Object.keys(row.cells);
   return priority
     .filter(key=>typeof row.cells[key]==='string'&&row.cells[key]!.trim().length>0)
-    .map(key=>({key,value:archivePublicCopyA6(row.cells[key]!)}))
+    .map(key=>({key,value:archivePublicCopyA6(
+      stellarCatalogPublicCellLabel(row.category,key,row.cells[key]))}))
     .filter(field=>field.value.length>0)
     .slice(0,5);
 }

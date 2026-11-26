@@ -28,17 +28,17 @@ export interface ArchiveDirtyJob38BisB6 {
 }
 
 export const ARCHIVE_DIRTY_CATEGORIES_38BIS_B6=Object.freeze({
-  GALAXY:['systems','planets','moons','clusters','nebulae','extremes',
+  GALAXY:['systems','stars','planets','moons','clusters','nebulae','extremes',
     'asteroids','comets','tno','captured','civilizations','colonies',
     'colonized-planets','colonized-moons'],
   SECTOR:[], // No Sector list in 38.bis; other discoveries emit their own events.
   GALACTIC_OBJECT:['systems','clusters','nebulae','extremes'],
-  SYSTEM:['systems','planets','moons','asteroids','comets','tno','captured',
+  SYSTEM:['systems','stars','planets','moons','asteroids','comets','tno','captured',
     'civilizations','colonies','colonized-planets','colonized-moons'],
   BODY:['planets','moons','asteroids','comets','tno','captured'],
   CIVILIZATION:['civilizations','colonies','colonized-planets','colonized-moons'],
   VIDA9:['planets','moons','civilizations','colonies','colonized-planets','colonized-moons'],
-  RESTORE:['systems','planets','moons','clusters','nebulae','extremes',
+  RESTORE:['systems','stars','planets','moons','clusters','nebulae','extremes',
     'asteroids','comets','tno','captured','civilizations',
     'colonies','colonized-planets','colonized-moons'],
 } as const satisfies Record<GenesisKnowledgeCommit38BisB6['kind'],readonly UniversalArchiveIndexedCategory38Bis[]>);

@@ -8,12 +8,13 @@ import type {UniversalArchiveIndexedCategory38Bis,UniversalArchivePage38Bis,
   UniversalArchiveRow38Bis,UniversalArchiveCategory38Bis} from './genesis-universal-archive-38-bis.model';
 
 const categories:readonly UniversalArchiveIndexedCategory38Bis[]=[
-  'systems','planets','moons','clusters','nebulae','extremes','asteroids',
+  'systems','stars','planets','moons','clusters','nebulae','extremes','asteroids',
   'comets','tno','captured','civilizations','colonies','colonized-planets','colonized-moons',
 ];
 
 function sample(category:UniversalArchiveIndexedCategory38Bis):UniversalArchiveRow38Bis {
-  const actionLabel=category==='civilizations'?'Ver especie':
+  const actionLabel=category==='stars'?'Abrir ficha del sistema':
+    category==='civilizations'?'Ver especie':
     category==='colonies'||category==='colonized-planets'||category==='colonized-moons'
       ?'Abrir ficha del cuerpo':'Abrir ficha científica';
   return {
