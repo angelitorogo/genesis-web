@@ -316,7 +316,7 @@ import {
 
 import {
   systemSceneMinorBodyPresentationTimeScale,
-  systemSceneMoonGroupPresentationTimeScaleV1,
+  systemSceneMoonPresentationTimeScaleV3,
 } from './system-scene-secondary-motion';
 
 import {
@@ -4597,13 +4597,8 @@ function projectMoonLayer(
             left.orbit.semiMajorAxisKilometers -
             right.orbit.semiMajorAxisKilometers,
         );
-    // Match the scientific fiche: one cadence for the host's visible moons.
-    // Never recompute a per-moon visual multiplier when the focus changes.
-    const moonGroupTimeScale = relevantMoons.length === 0 ? null :
-      systemSceneMoonGroupPresentationTimeScaleV1(
-        relevantMoons.map(moon => moon.orbit.orbitalPeriodDays),
-        playbackDaysPerRealSecond,
-      );
+    // MOONCAD.3: stable radius-aware cadence by host, independent of focus.
+    const moonAxes = relevantMoons.map(moon => moon.orbit.semiMajorAxisKilometers);
 
     for (
       let index = 0;
@@ -4728,7 +4723,13 @@ function projectMoonLayer(
           scale:
             1,
           linearScenePerAu,
-          presentationTimeScale: moonGroupTimeScale!,
+          presentationTimeScale: systemSceneMoonPresentationTimeScaleV3(
+            moon.orbit.orbitalPeriodDays,
+            moon.orbit.semiMajorAxisKilometers,
+            moonAxes,
+            playbackDaysPerRealSecond,
+            moon.orbit.eccentricity,
+          ),
         } satisfies SystemSceneMotionContributionSnapshot);
 
       const motionContributions =

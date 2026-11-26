@@ -1,5 +1,5 @@
 import { MinorBodyKind } from '../../domain/planetary/minor-body-kind';
-import { systemSceneMoonGroupPresentationTimeScaleV1 } from './system-scene-secondary-motion';
+import { systemSceneMoonPresentationTimeScaleV3 } from './system-scene-secondary-motion';
 import { buildSystemSceneTnoPresentationV1 } from './system-scene-tno-presentation';
 import { buildSystemSceneCapturedPresentationV1 } from './system-scene-captured-presentation';
 import { type CompactHostPlanetarySystem } from '../../domain/planetary/compact-host-planetary-system';
@@ -73,12 +73,12 @@ export function projectCompactHostSecondaries(system: CompactHostPlanetarySystem
   const moonBindings:{sceneBodyId:string;bodyIndex:string;moonIndex:string}[]=[];
   const secondaries=system.secondaries;
   // Compact-host scenes use 1 simulation day per real second.
-  // Group by real host ordinal, never by relative scene size or camera focus.
-  const periodsByHost = new Map<number, number[]>();
+  // MOONCAD.3 bounds speed using physical semi-major axis ratios per host.
+  const axesByHost = new Map<number, number[]>();
   for (const moon of secondaries.moons) {
-    const periods = periodsByHost.get(moon.parentPlanetOrdinal) ?? [];
-    periods.push(moon.orbitalPeriodDays);
-    periodsByHost.set(moon.parentPlanetOrdinal, periods);
+    const axes = axesByHost.get(moon.parentPlanetOrdinal) ?? [];
+    axes.push(moon.semiMajorAxisAu);
+    axesByHost.set(moon.parentPlanetOrdinal, axes);
   }
 
   for (const moon of secondaries.moons) {
@@ -115,8 +115,13 @@ export function projectCompactHostSecondaries(system: CompactHostPlanetarySystem
     const localScale=localDistance/moon.semiMajorAxisAu;
     const parent=planet.motionContributions;
     const child:SystemSceneMotionContributionSnapshot = Object.freeze({motionId,scale:1,linearScenePerAu:localScale,
-      presentationTimeScale:systemSceneMoonGroupPresentationTimeScaleV1(
-        periodsByHost.get(moon.parentPlanetOrdinal)!, 1)});
+      presentationTimeScale:systemSceneMoonPresentationTimeScaleV3(
+        moon.orbitalPeriodDays,
+        moon.semiMajorAxisAu,
+        axesByHost.get(moon.parentPlanetOrdinal)!,
+        1,
+        moon.eccentricity,
+      )});
     const motionParts=Object.freeze([...parent,child]);
     motions.push(Object.freeze({id:motionId,semiMajorAxisAu:moon.semiMajorAxisAu,
       eccentricity:moon.eccentricity,periodDays:moon.orbitalPeriodDays,

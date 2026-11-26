@@ -9,7 +9,7 @@ import {
 } from '../../simulation/stellar/stellar-multihost-public-designation';
 import { projectSystemSceneMotionContributions } from './system-scene-motion-projection';
 import { buildLinearFitSystemScale } from './system-scene-scale-projection';
-import { systemSceneMoonGroupPresentationTimeScaleV1 } from './system-scene-secondary-motion';
+import { systemSceneMoonPresentationTimeScaleV3 } from './system-scene-secondary-motion';
 import { v2PlanetTimeScale } from './system-scene-v2-planet-cadence';
 import { assertSystemSceneProjectionSnapshot } from './system-scene-projection-contract';
 import { SystemSceneMultihostMaterializedSources } from './system-scene-multihost-materialized-sources';
@@ -188,26 +188,29 @@ export class SystemSceneMultihostComposition {
         return { motionId, radiusAu: motion.semiMajorAxisAu };
       }).sort((a, b) => a.radiusAu - b.radiusAu);
       const planetRank = new Map(rankedPlanetMotions.map((item, index) => [item.motionId, index + 1]));
-      // Every host planet retains the SAME 90-second outer-moon cadence as
-      // its scientific fiche. Each moon contribution receives the host-group
-      // multiplier, without restricting it to the old single-moon limiter.
-      const periodsByPlanetId = new Map<string, number[]>();
+      // MOONCAD.3: cap lunar tangential speed relative to the innermost
+      // orbit of each host, even when the outer orbital radius is huge.
+      const axesByPlanetId = new Map<string, number[]>();
       for (const moon of local.moons) {
         const ownMotionId = moon.motionContributions.at(-1)?.motionId;
-        const period = ownMotionId === undefined ? undefined : motionIndex.get(ownMotionId)?.periodDays;
-        if (period === undefined) {
-          throw new Error('Multihost lunar presentation has no authoritative orbital period.');
+        const motion = ownMotionId === undefined ? undefined : motionIndex.get(ownMotionId);
+        if (motion === undefined) {
+          throw new Error('Multihost lunar presentation has no authoritative orbital motion.');
         }
-        const periods = periodsByPlanetId.get(moon.hostPlanetId) ?? [];
-        periods.push(period);
-        periodsByPlanetId.set(moon.hostPlanetId, periods);
+        const axes = axesByPlanetId.get(moon.hostPlanetId) ?? [];
+        axes.push(motion.semiMajorAxisAu);
+        axesByPlanetId.set(moon.hostPlanetId, axes);
       }
       const moonCadenceByMotionId = new Map<string, number>();
       for (const moon of local.moons) {
         const motionId = moon.motionContributions.at(-1)!.motionId;
-        const periods = periodsByPlanetId.get(moon.hostPlanetId)!;
+        const motion = motionIndex.get(motionId)!;
+        const axes = axesByPlanetId.get(moon.hostPlanetId)!;
         moonCadenceByMotionId.set(motionId,
-          systemSceneMoonGroupPresentationTimeScaleV1(periods, playback));
+          systemSceneMoonPresentationTimeScaleV3(
+            motion.periodDays, motion.semiMajorAxisAu, axes, playback,
+            motion.eccentricity,
+          ));
       }
       const scales = new Map<string, number>();
       const cometVisuals = new Map<string, V2CometVisualOrbit>();

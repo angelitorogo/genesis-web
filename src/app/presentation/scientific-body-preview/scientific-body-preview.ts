@@ -21,7 +21,7 @@ import {
 import * as THREE from 'three';
 import { genesisVisualTrace388, type GenesisVisualSubjectKind388 } from '../visual-provenance/genesis-visual-provenance-38-8';
 import { GIANT_ATMOSPHERE_FINE_SEGMENTS_VISCATM1C } from '../system/system-scene-giant-atmosphere-geometry-viscatm1c';
-import { scientificMoonGroupDaysPerRealSecondV1 } from '../system/system-scene-secondary-motion';
+import { scientificMoonDaysPerRealSecondV3 } from '../system/system-scene-secondary-motion';
 import { scientificPreviewDaylightCameraT7s } from './scientific-preview-daylight-camera-t7s';
 import { viscorbPreviewStellarSourcesV1 } from './viscorb-preview-stellar-illumination';
 import { viscorbLocalOrbitLayoutV1, viscorbPresentedMoonRadiusV1 } from '../system/viscorb-local-orbit-projection';
@@ -338,6 +338,8 @@ interface LocalScientificMoonBinding {
 
   readonly spinPivot:
     THREE.Group;
+
+  readonly orbitalDaysPerRealSecond: number;
 }
 
 interface LocalScientificSpinBinding {
@@ -655,6 +657,10 @@ export class ScientificBodyPreview
     new THREE.Vector3();
 
   private localSimulationDay =
+    0;
+
+  /** Baseline epoch; localSimulationDay advances as a real-second clock for moons. */
+  private localOrbitEpochSimulationDay =
     0;
 
   private localSpinSimulationDay =
@@ -1401,6 +1407,9 @@ export class ScientificBodyPreview
         ? this.model.epochSimulationDay
         : 0;
 
+    this.localOrbitEpochSimulationDay =
+      this.localSimulationDay;
+
     this.localSpinSimulationDay =
       this.localSimulationDay;
 
@@ -1510,10 +1519,10 @@ export class ScientificBodyPreview
     const localScenePerPlanetRadius = localLayout.scenePerPlanetRadius;
     this.addPlanet(planet, localLayout.planetRadius, new THREE.Vector3());
 
-    this.localDaysPerRealSecond =
-      scientificMoonGroupDaysPerRealSecondV1(
-        moons.map(moon => moon.orbit.orbitalPeriodDays),
-      );
+    // MOONCAD.3: each moon uses a host-relative, radius-aware slow cadence.
+    // Large outer orbits take longer than 120 s rather than sweeping rapidly.
+    this.localDaysPerRealSecond = 1;
+    const moonAxes = moons.map(moon => moon.orbit.semiMajorAxisPlanetRadii);
 
     for (
       const moon
@@ -1568,6 +1577,12 @@ export class ScientificBodyPreview
               runtime.axialPivot,
             spinPivot:
               runtime.spinPivot,
+            orbitalDaysPerRealSecond: scientificMoonDaysPerRealSecondV3(
+              moon.orbit.orbitalPeriodDays,
+              moon.orbit.semiMajorAxisPlanetRadii,
+              moonAxes,
+              moon.orbit.eccentricity,
+            ),
           });
       }
     }
@@ -2262,7 +2277,9 @@ export class ScientificBodyPreview
         SystemOrbitalMotionEngine
           .positionAtSimulationDay(
             binding.motion,
-            this.localSimulationDay,
+            this.localOrbitEpochSimulationDay +
+              (this.localSimulationDay - this.localOrbitEpochSimulationDay) *
+              binding.orbitalDaysPerRealSecond,
           );
 
       binding.axialPivot.position
